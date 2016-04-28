@@ -8,9 +8,9 @@ StreamingPro is not a complete
 application, but rather a code library and API that can easily be used
 to build your streaming application which may run on Spark Streaming and Storm.
 
-StreamingPro also make it possible that assembling components in configuration file to build a
-multi streaming job instead of programing. Of source ,we also encourage you program using API provided
-by StreamingPro which is more easy to use.
+StreamingPro also make it possible that all you should do to build streaming program is assembling components(eg. SQL Component) in configuration file. 
+Of source , if you are a geek who like do every thing by programing,we also encourage you use API provided
+by StreamingPro which is more easy to use then original API designed by Spark/Storm.
 
 
 ## Setup Project
@@ -21,7 +21,7 @@ Since this project  depends on
 * [csdn_common](https://github.com/allwefantasy/csdn_common.git)
 * [ServiceframeworkDispatcher](https://github.com/allwefantasy/ServiceframeworkDispatcher.git)
 
-you should install them in your local maven repository/private maven repository .
+you should install them in your local maven repository/private maven repository to resolve the dependency issue.
 
 Step 1
 
@@ -153,11 +153,11 @@ done .
 }
 ```
 
-Step1: Configure  MockInputStreamCompositor to generate some lines.
-Step2: Configure  SingleColumnJSONCompositor to convert string to Json string.
-Step3: Configure  JSONTableCompositor to map Json to SQL table.
-Step4: Configure  multi SQLCompositor to process data 
-Step5: Finally, configure SQLPrintOutputCompositor to print result.
+* Step1: Configure  MockInputStreamCompositor to generate some lines.
+* Step2: Configure  SingleColumnJSONCompositor to convert string to Json string.
+* Step3: Configure  JSONTableCompositor to map Json to SQL table.
+* Step4: Configure  multi SQLCompositor to process data 
+* Step5: Finally, configure SQLPrintOutputCompositor to print result.
 
 
 ## How To Add New Compositor
