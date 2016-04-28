@@ -166,14 +166,21 @@ In StreamingPro,every transformation can be implemented by Compositor. Suppose
 you wanna implements `map` function in Spark Streaming and convert a line into json 
 string.
 
-Create a class `AddColumnForJSONCompositor` which extends `BaseMapCompositor`
+Create a class `SingleColumnJSONCompositor` which extends `BaseMapCompositor`
 
 ```
-class AddColumnForJSONCompositor[T] extends BaseMapCompositor[T, String, String] {
+class SingleColumnJSONCompositor[T] extends BaseMapCompositor[T, String, String] with CompositorHelper {
+
+  def name = {
+    config("name", _configParams)
+  }
+
   override def map: (String) => String = {
+    require(name.isDefined, "please set column name by variable `name` in config file")
+    val _name = name.get
     (line: String) => {
-      val res = JSONObject.fromObject(line)
-      res.put("d", "1")
+      val res = new JSONObject()
+      res.put(_name, line)
       res.toString
     }
   }
