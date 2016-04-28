@@ -209,7 +209,8 @@ class RepartitionCompositor[T, S: ClassTag, U: ClassTag] extends Compositor[T] w
 
    override def result(alg: util.List[Processor[T]], ref: util.List[Strategy[T]], middleResult: util.List[T], params: util.Map[Any, Any]): util.List[T] = {
      val dstream = middleResult(0).asInstanceOf[DStream[S]]
-     val newDstream = dstream.repartition(num.get)
+     val _num = num.get
+     val newDstream = dstream.repartition(_num)
      List(newDstream.asInstanceOf[T])
    }
 
