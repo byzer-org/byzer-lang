@@ -1,0 +1,40 @@
+{
+
+  "test": {
+    "desc": "测试",
+    "strategy": "streaming.core.strategy.SparkStreamingStrategy",
+    "algorithm": [],
+    "ref": [],
+    "compositor": [
+      {
+        "name": "streaming.core.compositor.kafka.MockKafkaStreamingCompositor",
+        "params": [
+          {
+            "metadata.broker.list":"xxx",
+            "auto.offset.reset":"largest",
+            "topics":"xxx"
+          }
+        ]
+      },
+      {
+        "name": "streaming.core.compositor.spark.JSONTableCompositor",
+        "params": [{"tableName":"test"}
+        ]
+      },
+      {
+        "name": "streaming.core.compositor.spark.SQLCompositor",
+        "params": [{"sql":"select a from test"}
+        ]
+      },
+      {
+        "name": "streaming.core.compositor.RDDPrintOutputCompositor",
+        "params": [
+          {
+          }
+        ]
+      }
+    ],
+    "configParams": {
+    }
+  }
+}
