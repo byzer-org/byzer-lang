@@ -118,7 +118,7 @@
         <dependency>
             <groupId>net.csdn</groupId>
             <artifactId>ServiceFramework</artifactId>
-            <version>1.2.9-SNAPSHOT</version>
+            <version>1.3.0-SNAPSHOT</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.slf4j</groupId>
@@ -189,14 +189,10 @@
             </exclusions>
         </dependency>
         <dependency>
-            <groupId>csdn-data-sdk</groupId>
-            <artifactId>StrategyDispatcher</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
+            <groupId>serviceframework</groupId>
+            <artifactId>Dispatcher</artifactId>
+            <version>1.0-SNAPSHOT</version>
             <exclusions>
-                <exclusion>
-                    <groupId>csdn</groupId>
-                    <artifactId>program-stats-client</artifactId>
-                </exclusion>
                 <exclusion>
                     <groupId>net.csdn</groupId>
                     <artifactId>ServiceFramework</artifactId>
@@ -206,7 +202,7 @@
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-streaming-kafka_2.10</artifactId>
-            <version>1.5.1</version>
+            <version>${spark.version}</version>
         </dependency>
 
 
