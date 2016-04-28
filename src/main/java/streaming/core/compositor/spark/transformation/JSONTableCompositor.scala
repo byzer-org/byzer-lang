@@ -1,40 +1,41 @@
-package streaming.core.compositor.spark
+package streaming.core.compositor.spark.transformation
 
 import java.util
 
 import org.apache.log4j.Logger
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.{DataFrame, SQLContext}
+import org.apache.spark.sql.SQLContext
 import serviceframework.dispatcher.{Compositor, Processor, Strategy}
 
 import scala.collection.JavaConversions._
 
 
-class SQLCompositor[T] extends Compositor[T] {
+class JSONTableCompositor[T] extends Compositor[T] {
 
   private var _configParams: util.List[util.Map[Any, Any]] = _
-  val logger = Logger.getLogger(classOf[SQLCompositor[T]].getName)
+  val logger = Logger.getLogger(classOf[JSONTableCompositor[T]].getName)
 
   override def initialize(typeFilters: util.List[String], configParams: util.List[util.Map[Any, Any]]): Unit = {
     this._configParams = configParams
   }
 
-  def sql = {
-    _configParams(0).get("sql").toString
+
+  def tableName = {
+    _configParams(0).get("tableName").toString
   }
 
-  def outputTable = {
-    _configParams(0).get("outputTable").toString
-  }
 
   override def result(alg: util.List[Processor[T]], ref: util.List[Strategy[T]], middleResult: util.List[T], params: util.Map[Any, Any]): util.List[T] = {
-    var dataFrame: DataFrame = null
-    val func = params.get("table").asInstanceOf[(RDD[String]) => SQLContext]
-    params.put("sql",(rdd:RDD[String])=>{
-      val sqlContext = func(rdd)
-      dataFrame = sqlContext.sql(sql)
-      dataFrame
+
+    params.put("_table_", (rdd: RDD[String]) => {
+      val sqlContext = new SQLContext(rdd.sparkContext)
+      val jsonRdd = sqlContext.read.json(rdd)
+      jsonRdd.registerTempTable(tableName)
+      sqlContext
     })
+
     middleResult
+
   }
+
 }

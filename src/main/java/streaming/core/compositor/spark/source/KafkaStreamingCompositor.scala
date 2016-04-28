@@ -1,4 +1,4 @@
-package streaming.core.compositor.kafka
+package streaming.core.compositor.spark.source
 
 import java.util
 
@@ -6,7 +6,7 @@ import kafka.serializer.StringDecoder
 import org.apache.log4j.Logger
 import org.apache.spark.streaming.kafka.KafkaUtils
 import serviceframework.dispatcher.{Compositor, Processor, Strategy}
-import streaming.core.strategy.platform.{SparkStreamingRuntime, PlatformManager}
+import streaming.core.strategy.platform.SparkStreamingRuntime
 
 import scala.collection.JavaConversions._
 

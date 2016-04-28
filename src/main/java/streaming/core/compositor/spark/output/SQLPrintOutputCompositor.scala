@@ -1,4 +1,4 @@
-package streaming.core.compositor
+package streaming.core.compositor.spark.output
 
 import java.util
 
@@ -9,10 +9,10 @@ import org.apache.spark.streaming.dstream.DStream
 import serviceframework.dispatcher.{Compositor, Processor, Strategy}
 
 
-class RDDPrintOutputCompositor[T] extends Compositor[T] {
+class SQLPrintOutputCompositor[T] extends Compositor[T] {
 
   private var _configParams: util.List[util.Map[Any, Any]] = _
-  val logger = Logger.getLogger(classOf[RDDPrintOutputCompositor[T]].getName)
+  val logger = Logger.getLogger(classOf[SQLPrintOutputCompositor[T]].getName)
 
   override def initialize(typeFilters: util.List[String], configParams: util.List[util.Map[Any, Any]]): Unit = {
     this._configParams = configParams
@@ -20,7 +20,7 @@ class RDDPrintOutputCompositor[T] extends Compositor[T] {
 
   override def result(alg: util.List[Processor[T]], ref: util.List[Strategy[T]], middleResult: util.List[T], params: util.Map[Any, Any]): util.List[T] = {
     val dstream = middleResult.get(0).asInstanceOf[DStream[String]]
-    val func = params.get("sql").asInstanceOf[(RDD[String]) => DataFrame]
+    val func = params.get("_func_").asInstanceOf[(RDD[String]) => DataFrame]
     dstream.foreachRDD { rdd =>
       val df = func(rdd)
       df.show()
