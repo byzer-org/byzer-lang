@@ -63,11 +63,14 @@ streaming.core.LocalStreamingApp
 
 when stared , you can see some message like follow:
 
+
+```
 +---+---+
 |  a|  b|
 +---+---+
 |  1|  5|
 +---+---+
+```
 
 Congratulation, everything is fine and you just run your first Spark Streaming Application.
 
