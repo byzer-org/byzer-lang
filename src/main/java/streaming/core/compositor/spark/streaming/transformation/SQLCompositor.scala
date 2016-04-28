@@ -19,11 +19,11 @@ class SQLCompositor[T] extends Compositor[T] with CompositorHelper {
   }
 
   def sql = {
-    config("sql", _configParams)
+    config[String]("sql", _configParams)
   }
 
   def outputTableName = {
-    config("outputTableName", _configParams)
+    config[String]("outputTableName", _configParams)
   }
 
   val TABLE = "_table_"
@@ -32,14 +32,14 @@ class SQLCompositor[T] extends Compositor[T] with CompositorHelper {
   override def result(alg: util.List[Processor[T]], ref: util.List[Strategy[T]], middleResult: util.List[T], params: util.Map[Any, Any]): util.List[T] = {
 
     require(sql.isDefined, "please set sql  by variable `sql` in config file")
-
+    val _sql = sql.get
     if (params.containsKey(TABLE)) {
       //parent compositor is  tableCompositor
 
       val func = params.get(TABLE).asInstanceOf[(RDD[String]) => SQLContext]
       params.put(FUNC, (rdd: RDD[String]) => {
         val sqlContext = func(rdd)
-        val df = sqlContext.sql(sql.get)
+        val df = sqlContext.sql(_sql)
         outputTableName match {
           case Some(tableName) =>
             val newDf = df.sqlContext.read.json(df.toJSON)
@@ -60,7 +60,7 @@ class SQLCompositor[T] extends Compositor[T] with CompositorHelper {
             newDf.registerTempTable(tableName)
           case None =>
         }
-        df.sqlContext.sql(sql.get)
+        df.sqlContext.sql(_sql)
       })
     }
     params.remove(TABLE)

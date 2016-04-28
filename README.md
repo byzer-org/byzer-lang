@@ -190,6 +190,32 @@ class SingleColumnJSONCompositor[T] extends BaseMapCompositor[T, String, String]
 override map method and do anything you want to the line putted by Streaming program.
 
 
+or you want add `repartition` function, do like follow:
+
+```
+class RepartitionCompositor[T, S: ClassTag, U: ClassTag] extends Compositor[T] with CompositorHelper{
+
+   protected var _configParams: util.List[util.Map[Any, Any]] = _
+
+   val logger = Logger.getLogger(classOf[SQLCompositor[T]].getName)
+
+   override def initialize(typeFilters: util.List[String], configParams: util.List[util.Map[Any, Any]]): Unit = {
+     this._configParams = configParams
+   }
+
+   def num = {
+     config[Int]("num",_configParams)
+   }
+
+   override def result(alg: util.List[Processor[T]], ref: util.List[Strategy[T]], middleResult: util.List[T], params: util.Map[Any, Any]): util.List[T] = {
+     val dstream = middleResult(0).asInstanceOf[DStream[S]]
+     val newDstream = dstream.repartition(num.get)
+     List(newDstream.asInstanceOf[T])
+   }
+
+ }
+```
+
 
 
 

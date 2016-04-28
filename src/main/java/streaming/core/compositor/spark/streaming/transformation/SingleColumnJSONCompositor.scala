@@ -9,7 +9,7 @@ import streaming.core.compositor.spark.streaming.CompositorHelper
 class SingleColumnJSONCompositor[T] extends BaseMapCompositor[T, String, String] with CompositorHelper {
 
   def name = {
-    config("name", _configParams)
+    config[String]("name", _configParams)
   }
 
   override def map: (String) => String = {

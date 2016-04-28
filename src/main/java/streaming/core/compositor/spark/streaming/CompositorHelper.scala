@@ -8,9 +8,9 @@ import scala.collection.JavaConversions._
  */
 trait CompositorHelper {
 
-  def config(name: String, _configParams: util.List[util.Map[Any, Any]]) = {
+  def config[T](name: String, _configParams: util.List[util.Map[Any, Any]]) = {
     if (_configParams.size() > 0 && _configParams(0).containsKey(name)) {
-      Some(_configParams(0).get(name).asInstanceOf[String])
+      Some(_configParams(0).get(name).asInstanceOf[T])
     } else None
   }
 
