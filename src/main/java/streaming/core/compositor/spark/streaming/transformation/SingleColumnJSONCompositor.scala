@@ -1,7 +1,7 @@
-package streaming.core.compositor.spark.transformation
+package streaming.core.compositor.spark.streaming.transformation
 
 import net.sf.json.JSONObject
-import streaming.core.compositor.spark.CompositorHelper
+import streaming.core.compositor.spark.streaming.CompositorHelper
 
 /**
  * 4/28/16 WilliamZhu(allwefantasy@gmail.com)
@@ -13,6 +13,7 @@ class SingleColumnJSONCompositor[T] extends BaseMapCompositor[T, String, String]
   }
 
   override def map: (String) => String = {
+    require(name.isDefined, "please set column name by variable `name` in config file")
     val _name = name.get
     (line: String) => {
       val res = new JSONObject()

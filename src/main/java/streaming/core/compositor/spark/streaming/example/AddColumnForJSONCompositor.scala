@@ -1,7 +1,7 @@
-package streaming.core.compositor.spark.example
+package streaming.core.compositor.spark.streaming.example
 
 import net.sf.json.JSONObject
-import streaming.core.compositor.spark.transformation.BaseMapCompositor
+import streaming.core.compositor.spark.streaming.transformation.BaseMapCompositor
 
 /**
  * 4/28/16 WilliamZhu(allwefantasy@gmail.com)

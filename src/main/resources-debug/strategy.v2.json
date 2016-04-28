@@ -6,7 +6,7 @@
     "ref": [],
     "compositor": [
       {
-        "name": "streaming.core.compositor.spark.source.MockInputStreamCompositor",
+        "name": "streaming.core.compositor.spark.streaming.source.MockInputStreamCompositor",
         "params": [
           {
             "metadata.broker.list": "xxx",
@@ -16,7 +16,7 @@
         ]
       },
       {
-        "name": "streaming.core.compositor.spark.transformation.SingleColumnJSONCompositor",
+        "name": "streaming.core.compositor.spark.streaming.transformation.SingleColumnJSONCompositor",
         "params": [
           {
             "name": "a"
@@ -24,7 +24,7 @@
         ]
       },
       {
-        "name": "streaming.core.compositor.spark.transformation.JSONTableCompositor",
+        "name": "streaming.core.compositor.spark.streaming.transformation.JSONTableCompositor",
         "params": [
           {
             "tableName": "test"
@@ -32,7 +32,7 @@
         ]
       },
       {
-        "name": "streaming.core.compositor.spark.transformation.SQLCompositor",
+        "name": "streaming.core.compositor.spark.streaming.transformation.SQLCompositor",
         "params": [
           {
             "sql": "select a, \"5\" as b from test",
@@ -41,7 +41,7 @@
         ]
       },
       {
-        "name": "streaming.core.compositor.spark.transformation.SQLCompositor",
+        "name": "streaming.core.compositor.spark.streaming.transformation.SQLCompositor",
         "params": [
           {
             "sql": "select a,b from test2"
@@ -49,7 +49,7 @@
         ]
       },
       {
-        "name": "streaming.core.compositor.spark.output.SQLPrintOutputCompositor",
+        "name": "streaming.core.compositor.spark.streaming.output.SQLPrintOutputCompositor",
         "params": [
           {
           }

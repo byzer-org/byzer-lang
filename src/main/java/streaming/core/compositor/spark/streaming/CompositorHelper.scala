@@ -1,4 +1,4 @@
-package streaming.core.compositor.spark
+package streaming.core.compositor.spark.streaming
 
 import java.util
 import scala.collection.JavaConversions._

@@ -1,4 +1,4 @@
-package streaming.core.compositor.spark.output
+package streaming.core.compositor.spark.streaming.output
 
 import java.util
 

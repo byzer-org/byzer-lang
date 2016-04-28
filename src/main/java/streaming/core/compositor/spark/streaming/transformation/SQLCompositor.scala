@@ -1,4 +1,4 @@
-package streaming.core.compositor.spark.transformation
+package streaming.core.compositor.spark.streaming.transformation
 
 import java.util
 
@@ -6,7 +6,7 @@ import org.apache.log4j.Logger
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, SQLContext}
 import serviceframework.dispatcher.{Compositor, Processor, Strategy}
-import streaming.core.compositor.spark.CompositorHelper
+import streaming.core.compositor.spark.streaming.CompositorHelper
 
 
 class SQLCompositor[T] extends Compositor[T] with CompositorHelper {
@@ -30,6 +30,8 @@ class SQLCompositor[T] extends Compositor[T] with CompositorHelper {
   val FUNC = "_func_"
 
   override def result(alg: util.List[Processor[T]], ref: util.List[Strategy[T]], middleResult: util.List[T], params: util.Map[Any, Any]): util.List[T] = {
+
+    require(sql.isDefined, "please set sql  by variable `sql` in config file")
 
     if (params.containsKey(TABLE)) {
       //parent compositor is  tableCompositor
