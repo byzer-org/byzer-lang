@@ -81,7 +81,7 @@ when stared , you can see some message like follow:
 +---+---+
 |  a|  b|
 +---+---+
-|  1|  5|
+|  3|  5|
 +---+---+
 ```
 
@@ -97,14 +97,13 @@ done .
     "desc": "测试",
     "strategy": "streaming.core.strategy.SparkStreamingStrategy",
     "algorithm": [],
-    "ref": [],
+    "ref": [
+      "testJoinTable"
+    ],
     "compositor": [
       {
         "name": "streaming.core.compositor.spark.streaming.source.MockInputStreamCompositor",
-        "params": [
-          {           
-          }
-        ]
+        "params": [{"data1":["1","2","3"]}]
       },
       {
         "name": "streaming.core.compositor.spark.streaming.transformation.SingleColumnJSONCompositor",
@@ -135,7 +134,7 @@ done .
         "name": "streaming.core.compositor.spark.streaming.transformation.SQLCompositor",
         "params": [
           {
-            "sql": "select a,b from test2"
+            "sql": "select t2.a,t2.b from test2 t2, testJoinTable t3 where t2.a = t3.a"
           }
         ]
       },
@@ -149,15 +148,42 @@ done .
     ],
     "configParams": {
     }
+  },
+  "testJoinTable": {
+    "desc": "测试",
+    "strategy": "streaming.core.strategy.SparkStreamingRefStrategy",
+    "algorithm": [],
+    "ref": [],
+    "compositor": [
+      {
+        "name": "streaming.core.compositor.spark.source.MockJsonCompositor",
+        "params": [
+          {"a":"3"},
+          {"a":"4"},
+          {"a":"5"}
+        ]
+      },
+      {
+        "name": "streaming.core.compositor.spark.transformation.JSONTableCompositor",
+        "params": [
+          {
+            "tableName": "testJoinTable"
+          }
+        ]
+      }
+    ],
+    "configParams": {
+    }
   }
 }
 ```
 
-* Step1: Configure  MockInputStreamCompositor to generate some lines.
-* Step2: Configure  SingleColumnJSONCompositor to convert string to Json string.
-* Step3: Configure  JSONTableCompositor to map Json to SQL table.
-* Step4: Configure  multi SQLCompositor to process data 
-* Step5: Finally, configure SQLPrintOutputCompositor to print result.
+* Step1: configure  MockInputStreamCompositor to generate some lines (streaming data).
+* Step2: create  new strategy `testJoinTable` represents dataSource  like Mysql or TexFile then map to table
+* Step2: configure  SingleColumnJSONCompositor to convert string to Json string.
+* Step3: configure  JSONTableCompositor to map Json to SQL table.
+* Step4: configure  multi SQLCompositor to process data , and you can use table `testJoinTable` in sql.
+* Step5: finally, configure SQLPrintOutputCompositor to print result.
 
 
 ## How To Add New Compositor
