@@ -91,6 +91,20 @@ Congratulations, everything is fine and you just run your first Spark Streaming 
 You can find `strategy.v2.json` in `src/main/resource-debug` directory which describe what your streaming application have 
 done .
 
+Suppose your streaming data source is Kafka,and you need metadata from MySQL to process lines from Kafka.
+Then you can do like follow:
+
+1. create new job flow named `test`.
+1. create new dataSource named `testJoinTable`
+1. declare table `testJoinTable` in `test`.`ref`
+1. configure  MockInputStreamCompositor to mock kafka source
+1. configure  SingleColumnJSONCompositor to convert string to Json string with key named `a`
+1. configure  JSONTableCompositor  to create sql table `test`
+1. configure  multi SQLCompositor to process data , and you can use table `testJoinTable` in sql.
+1. finally, configure SQLPrintOutputCompositor to print result.
+
+here is the detail of  configuration:  
+
 ```
 {
   "test": {
@@ -178,12 +192,7 @@ done .
 }
 ```
 
-* Step1: configure  MockInputStreamCompositor to generate some lines (streaming data).
-* Step2: create  new strategy `testJoinTable` represents dataSource  like Mysql or TexFile then map to table
-* Step2: configure  SingleColumnJSONCompositor to convert string to Json string.
-* Step3: configure  JSONTableCompositor to map Json to SQL table.
-* Step4: configure  multi SQLCompositor to process data , and you can use table `testJoinTable` in sql.
-* Step5: finally, configure SQLPrintOutputCompositor to print result.
+
 
 
 ## How To Add New Compositor
