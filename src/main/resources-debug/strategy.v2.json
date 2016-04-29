@@ -3,17 +3,13 @@
     "desc": "测试",
     "strategy": "streaming.core.strategy.SparkStreamingStrategy",
     "algorithm": [],
-    "ref": [],
+    "ref": [
+      "testJoinTable"
+    ],
     "compositor": [
       {
         "name": "streaming.core.compositor.spark.streaming.source.MockInputStreamCompositor",
-        "params": [
-          {
-            "metadata.broker.list": "xxx",
-            "auto.offset.reset": "largest",
-            "topics": "xxx"
-          }
-        ]
+        "params": [{"data1":["1","2","3"]}]
       },
       {
         "name": "streaming.core.compositor.spark.streaming.transformation.SingleColumnJSONCompositor",
@@ -44,7 +40,7 @@
         "name": "streaming.core.compositor.spark.streaming.transformation.SQLCompositor",
         "params": [
           {
-            "sql": "select a,b from test2"
+            "sql": "select t2.a,t2.b from test2 t2, testJoinTable t3 where t2.a = t3.a"
           }
         ]
       },
@@ -52,6 +48,32 @@
         "name": "streaming.core.compositor.spark.streaming.output.SQLPrintOutputCompositor",
         "params": [
           {
+          }
+        ]
+      }
+    ],
+    "configParams": {
+    }
+  },
+  "testJoinTable": {
+    "desc": "测试",
+    "strategy": "streaming.core.strategy.SparkStreamingRefStrategy",
+    "algorithm": [],
+    "ref": [],
+    "compositor": [
+      {
+        "name": "streaming.core.compositor.spark.source.MockJsonCompositor",
+        "params": [
+          {"a":"3"},
+          {"a":"4"},
+          {"a":"5"}
+        ]
+      },
+      {
+        "name": "streaming.core.compositor.spark.transformation.JSONTableCompositor",
+        "params": [
+          {
+            "tableName": "testJoinTable"
           }
         ]
       }

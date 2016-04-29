@@ -5,9 +5,7 @@ import java.util
 import org.apache.log4j.Logger
 import serviceframework.dispatcher.{Compositor, Processor, Strategy}
 
-import scala.collection.JavaConversions._
-
-class SparkStreamingStrategy[T] extends Strategy[T] with DebugTrait with JobStrategy {
+class SparkStreamingRefStrategy[T] extends Strategy[T] with DebugTrait with JobStrategy {
 
   var _name: String = _
   var _ref: util.List[Strategy[T]] = _
@@ -35,10 +33,6 @@ class SparkStreamingStrategy[T] extends Strategy[T] with DebugTrait with JobStra
   }
 
   def result(params: util.Map[Any, Any]): util.List[T] = {
-
-    ref.foreach { r =>
-      r.result(params)
-    }
 
     if (compositor != null && compositor.size() > 0) {
       var middleR = compositor.get(0).result(processor, ref, null, params)

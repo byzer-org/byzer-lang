@@ -7,6 +7,7 @@ import net.csdn.common.settings.ImmutableSettings.settingsBuilder
 import net.csdn.common.settings.Settings
 import serviceframework.dispatcher.StrategyDispatcher
 import streaming.common.ParamsUtil
+import streaming.core.strategy.JobStrategy
 import streaming.core.strategy.platform.PlatformManager
 
 import scala.collection.JavaConversions._
@@ -23,7 +24,7 @@ object StreamingApp {
     //获取启动参数
     val params = new ParamsUtil(args)
     require(params.hasParam("streaming.name"), "Application name should be set")
-    var apps: Array[String] = dispatcher.strategies.keys().toArray
+    var apps: Array[String] = dispatcher.strategies.filter(f=>f._2.isInstanceOf[JobStrategy]).keys.toArray
     if (params.hasParam("streaming.apps"))
       apps = params.getParam("streaming.apps").split(",")
 
