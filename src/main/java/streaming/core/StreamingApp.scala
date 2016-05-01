@@ -3,6 +3,8 @@ package streaming.core
 import java.util
 import java.util.{List => JList, Map => JMap}
 
+import net.csdn.ServiceFramwork
+import net.csdn.bootstrap.Application
 import net.csdn.common.settings.ImmutableSettings.settingsBuilder
 import net.csdn.common.settings.Settings
 import serviceframework.dispatcher.StrategyDispatcher
@@ -20,11 +22,17 @@ object StreamingApp {
     new StrategyDispatcher[Any](setting)
   }
 
+  def startRestServer = {
+    ServiceFramwork.scanService.setLoader(classOf[StreamingApp])
+    ServiceFramwork.enableNoThreadJoin()
+    Application.main(Array())
+  }
+
   def main(args: Array[String]): Unit = {
     //获取启动参数
     val params = new ParamsUtil(args)
     require(params.hasParam("streaming.name"), "Application name should be set")
-    var apps: Array[String] = dispatcher.strategies.filter(f=>f._2.isInstanceOf[JobStrategy]).keys.toArray
+    var apps: Array[String] = dispatcher.strategies.filter(f => f._2.isInstanceOf[JobStrategy]).keys.toArray
     if (params.hasParam("streaming.apps"))
       apps = params.getParam("streaming.apps").split(",")
 
@@ -39,7 +47,13 @@ object StreamingApp {
         contextParams.put("_runtime_", runtime)
         dispatcher.dispatch(contextParams)
     }
+    runtime.startRuntime
+    if (params.getBooleanParam("streaming.rest", false)) {
+      startRestServer
+    }
     runtime.awaitTermination
   }
 
 }
+
+class StreamingApp

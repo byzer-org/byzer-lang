@@ -10,7 +10,8 @@ object LocalStreamingApp {
     StreamingApp.main(Array(
       "-streaming.master", "local[2]",
       "-streaming.duration", "30",
-      "-streaming.name", "测试呀"
+      "-streaming.name", "god",
+      "-streaming.rest", "true"
     ))
   }
 

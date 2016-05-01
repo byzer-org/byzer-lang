@@ -8,6 +8,6 @@ import java.util.{List => JList, Map => JMap}
 object PlatformManager {
 
   def getRuntime(name: String, params: JMap[Any, Any]) = {
-    new SparkStreamingRuntime(params)
+    SparkStreamingRuntime.getOrCreate(params)
   }
 }
