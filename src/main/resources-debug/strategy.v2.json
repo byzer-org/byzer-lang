@@ -80,5 +80,47 @@
     ],
     "configParams": {
     }
+  },
+  "testMap": {
+    "desc": "测试Map",
+    "strategy": "streaming.core.strategy.SparkStreamingStrategy",
+    "algorithm": [],
+    "ref": [],
+    "compositor": [
+      {
+        "name": "streaming.core.compositor.spark.streaming.source.MockInputStreamCompositor",
+        "params": [{"data1":["name,spark","name,streaming","streaming,work"]}]
+      },
+      {
+        "name": "streaming.core.compositor.spark.streaming.transformation.RepartitionCompositor",
+        "params": [{
+          "num":2
+        }
+        ]
+      },
+      {
+        "name": "streaming.core.compositor.spark.streaming.transformation.SplitFlatMapCompositor",
+        "params": [{
+          "separator":","
+        }]
+      },
+      {
+        "name": "streaming.core.compositor.spark.streaming.transformation.RddTransformCompositor",
+        "params": [{}]
+      },
+      {
+        "name": "streaming.core.compositor.spark.streaming.transformation.SumByKeyCompositor",
+        "params": [{}]
+      },
+      {
+        "name": "streaming.core.compositor.spark.streaming.output.ConsoleOutputCompositor",
+        "params": [
+          {
+          }
+        ]
+      }
+    ],
+    "configParams": {
+    }
   }
 }

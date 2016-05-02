@@ -8,31 +8,26 @@ import serviceframework.dispatcher.{Compositor, Processor, Strategy}
 import streaming.core.compositor.spark.streaming.CompositorHelper
 
 import scala.collection.JavaConversions._
+import org.apache.spark.streaming.StreamingContext._
+
+import scala.reflect.ClassTag
 
 /**
-  * 4/28/16 WilliamZhu(allwefantasy@gmail.com)
-  * 2016-05-02 bbword 1、去掉无用的类型参数；2、修正Logger中的类型
-  *
+  * @author bbword 2016-05-02
   */
-class RepartitionCompositor[T] extends Compositor[T] with CompositorHelper {
+class GroupByKeyCompositor[T] extends Compositor[T] with CompositorHelper {
 
   protected var _configParams: util.List[util.Map[Any, Any]] = _
 
-  val logger = Logger.getLogger(classOf[RepartitionCompositor[T]].getName)
+  val logger = Logger.getLogger(classOf[GroupByKeyCompositor[T]].getName)
 
   override def initialize(typeFilters: util.List[String], configParams: util.List[util.Map[Any, Any]]): Unit = {
     this._configParams = configParams
   }
 
-  def num = {
-    config[Int]("num", _configParams)
-  }
-
   override def result(alg: util.List[Processor[T]], ref: util.List[Strategy[T]], middleResult: util.List[T], params: util.Map[Any, Any]): util.List[T] = {
-    val dstream = middleResult(0).asInstanceOf[DStream[T]]
-    val _num = num.get
-    val newDstream = dstream.repartition(_num)
+    val dstream = middleResult(0).asInstanceOf[DStream[(Any,Any)]]
+    val newDstream = dstream.groupByKey()
     List(newDstream.asInstanceOf[T])
   }
-
 }
