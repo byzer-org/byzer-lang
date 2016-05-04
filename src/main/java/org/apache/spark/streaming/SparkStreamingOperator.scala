@@ -10,12 +10,16 @@ import scala.collection.mutable.ArrayBuffer
 /**
  * 5/3/16 WilliamZhu(allwefantasy@gmail.com)
  */
-class StreamingInfoCollector {
-  def inputStreamId(ssc: StreamingContext,index: Int) = {
+class SparkStreamingOperator(ssc: StreamingContext) {
+  def inputStreamId(index: Int) = {
     ssc.graph.getInputStreams()(index).id
   }
 
-  def snapShotInputStreamState(ssc: StreamingContext) = {
+  def isStreamingCanStop() = {
+    ssc.scheduler.getPendingTimes().size == 0
+  }
+
+  def snapShotInputStreamState() = {
     val buffer = new ArrayBuffer[(Int, Any)]()
     ssc.graph.getInputStreams().foreach { inputDStream =>
       inputDStream match {
@@ -36,7 +40,7 @@ class StreamingInfoCollector {
     buffer.toMap
   }
 
-  def setInputStreamState(ssc: StreamingContext,inputId: Int, state: Any) = {
+  def setInputStreamState(inputId: Int, state: Any) = {
     val inputDStream = ssc.graph.getInputStreams().filter(f => f.id == inputId).head
     inputDStream match {
       case dkid: DirectKafkaInputDStream[_, _, _, _, _] =>

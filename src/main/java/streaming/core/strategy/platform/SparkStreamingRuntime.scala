@@ -5,7 +5,7 @@ import java.util.concurrent.atomic.AtomicReference
 import java.util.{List => JList, Map => JMap}
 
 import net.csdn.common.logging.Loggers
-import org.apache.spark.streaming.{Seconds, StreamingContext, StreamingInfoCollector}
+import org.apache.spark.streaming.{Seconds, SparkStreamingOperator, StreamingContext}
 import org.apache.spark.{SparkConf, SparkContext}
 
 import scala.collection.JavaConversions._
@@ -24,8 +24,11 @@ class SparkStreamingRuntime(_params: JMap[Any, Any]) {
   var streamingContext: StreamingContext = createRuntime
 
 
-  var streamingRuntimeInfo: SparkStreamingRuntimeInfo = new SparkStreamingRuntimeInfo()
+  var streamingRuntimeInfo: SparkStreamingRuntimeInfo = new SparkStreamingRuntimeInfo(streamingContext)
 
+  def resetStreamingRuntimeInfo = {
+    streamingRuntimeInfo.sparkStreamingOperator = new SparkStreamingOperator(streamingContext)
+  }
 
   def params = _params
 
@@ -46,13 +49,12 @@ class SparkStreamingRuntime(_params: JMap[Any, Any]) {
     new StreamingContext(SparkStreamingRuntime.sparkContext.get(), Seconds(duration))
   }
 
-  def destroyRuntime(stopGraceful:Boolean,stopSparkContext: Boolean = false) = {
-
+  def destroyRuntime(stopGraceful: Boolean, stopSparkContext: Boolean = false) = {
 
 
     logger.info("SparkStreamingRuntime stopping.....")
     val inputStreamIdToJobName = streamingRuntimeInfo.jobNameToInputStreamId.map(f => (f._2, f._1))
-    streamingRuntimeInfo.collector.snapShotInputStreamState(streamingContext).foreach { inputStream =>
+    streamingRuntimeInfo.sparkStreamingOperator.snapShotInputStreamState().foreach { inputStream =>
       logger.info(s"SparkStreamingRuntime save inputstream state:" +
         s" ${inputStreamIdToJobName(inputStream._1)} => ${inputStream._2}")
       streamingRuntimeInfo.jobNameToState.put(inputStreamIdToJobName(inputStream._1), inputStream._2)
@@ -71,7 +73,7 @@ class SparkStreamingRuntime(_params: JMap[Any, Any]) {
       val inputStreamId = streamingRuntimeInfo.jobNameToInputStreamId.get(jobName)
       logger.info(s"SparkStreamingRuntime restore inputstream state:" +
         s" ${jobName} => ${f._2}")
-      streamingRuntimeInfo.collector.setInputStreamState(streamingContext,inputStreamId, f._2)
+      streamingRuntimeInfo.sparkStreamingOperator.setInputStreamState(inputStreamId, f._2)
     }
     streamingContext.start()
     streamingRuntimeInfo.jobNameToState.clear()
@@ -85,11 +87,11 @@ class SparkStreamingRuntime(_params: JMap[Any, Any]) {
   SparkStreamingRuntime.setLastInstantiatedContext(self)
 }
 
-class SparkStreamingRuntimeInfo {
+class SparkStreamingRuntimeInfo(ssc: StreamingContext) {
   val jobNameToInputStreamId = new ConcurrentHashMap[String, Int]()
   val jobNameToState = new ConcurrentHashMap[String, Any]()
   val inputStreamIdToState = new ConcurrentHashMap[String, (Int, Any)]()
-  val collector: StreamingInfoCollector = new StreamingInfoCollector()
+  var sparkStreamingOperator: SparkStreamingOperator = new SparkStreamingOperator(ssc)
 }
 
 object SparkStreamingRuntime {

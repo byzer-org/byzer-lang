@@ -40,8 +40,8 @@ class PlatformManager {
 
     val params = config.get()
 
-    val lastSparkStreamingRuntimeInfo =  if (reRun) {
-      val tempRuntime = PlatformManager.getRuntime(params.getParam("streaming.name"), Map[Any,Any]())
+    val lastSparkStreamingRuntimeInfo = if (reRun) {
+      val tempRuntime = PlatformManager.getRuntime(params.getParam("streaming.name"), Map[Any, Any]())
       SparkStreamingRuntime.clearLastInstantiatedContext()
       Some(tempRuntime.streamingRuntimeInfo)
     } else None
@@ -56,7 +56,9 @@ class PlatformManager {
     val runtime = PlatformManager.getRuntime(params.getParam("streaming.name"), tempParams)
 
     lastSparkStreamingRuntimeInfo match {
-      case Some(ssri)=>  runtime.streamingRuntimeInfo = ssri
+      case Some(ssri) =>
+        runtime.streamingRuntimeInfo = ssri
+        runtime.resetStreamingRuntimeInfo
       case None =>
     }
 
@@ -65,7 +67,7 @@ class PlatformManager {
       jobName =>
         dispatcher.dispatch(Dispatcher.contextParams(jobName))
         val index = jobCounter.get()
-        val inputStreamId = runtime.streamingRuntimeInfo.collector.inputStreamId(runtime.streamingContext,index)
+        val inputStreamId = runtime.streamingRuntimeInfo.sparkStreamingOperator.inputStreamId(index)
         runtime.streamingRuntimeInfo.jobNameToInputStreamId.put(jobName, inputStreamId)
         jobCounter.incrementAndGet()
     }

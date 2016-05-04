@@ -1,5 +1,7 @@
 package streaming.rest
 
+import java.util.concurrent.atomic.AtomicInteger
+
 import net.csdn.annotation.rest.At
 import net.csdn.modules.http.ApplicationController
 import net.csdn.modules.http.RestRequest.Method._
@@ -19,10 +21,21 @@ class RestController extends ApplicationController {
 
   @At(path = Array("/job/add"), types = Array(POST))
   def addJob = {
+    val waitCounter = new AtomicInteger(0)
+    while (!runtime.streamingRuntimeInfo.sparkStreamingOperator.isStreamingCanStop()
+      && waitCounter.get() < paramAsInt("waitRound", 1000)) {
+      Thread.sleep(50)
+      waitCounter.incrementAndGet()
+    }
     dispatcher.createStrategy(param("name"), JSONObject.fromObject(request.contentAsString()))
-    runtime.destroyRuntime(false)
-    platformManager.run(null, true)
-    render(200, "ok")
+    if (runtime.streamingRuntimeInfo.sparkStreamingOperator.isStreamingCanStop()) {
+      runtime.destroyRuntime(false)
+      platformManager.run(null, true)
+      render(200, "ok")
+    } else {
+      render(400, "timeout")
+    }
+
   }
 
   def platformManager = PlatformManager.getOrCreate
