@@ -314,6 +314,18 @@ class RepartitionCompositor[T, S: ClassTag, U: ClassTag] extends Compositor[T] w
 ```
 
 
+## Add other Runtime support 
+
+For now, StreamingPro can run on Spark Streaming. If you want it runs on other
+ platform like Storm/Fink, you can do something follow: 
+
+```
+ class StormRuntime extends StreamingRuntime with PlatformManagerListener  
+```
+
+
+
+
 
 
 
