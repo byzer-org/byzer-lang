@@ -6,12 +6,23 @@ This document is for StreamingPro developers. User's manual is now on its way.
 
 StreamingPro is not a complete
 application, but rather a code library and API that can easily be used
-to build your streaming application which may run on Spark Streaming and Storm.
+to build your streaming application which may run on Spark Streaming.
 
 StreamingPro also make it possible that all you should do to build streaming program is assembling components(eg. SQL Component) in configuration file. 
 Of source , if you are a geek who like do every thing by programing,we also encourage you use API provided
 by StreamingPro which is more easy to use then original API designed by Spark/Storm.
 
+## Features
+
+* Setup job flows with configuration
+* Supports Add/Update/Remove job flows dynamically at runtime via Rest API 
+* Brand new API to make program modularized 
+* Support for job flows building by writing SQL  
+
+Notes: 
+
+Feature 2  is available only when Spark Streaming receives data from 
+Kafka using  Direct Approach (No Receivers) mode.
 
 ## Setup Project
 
@@ -190,6 +201,59 @@ here is the detail of  configuration:
     }
   }
 }
+```
+
+## Dynamically add Job via Rest API
+
+```
+curl -XPOST 'http://127.0.0.1:9003/job/add?name=newjob' -d '
+{
+    "desc": "测试",
+    "strategy": "streaming.core.strategy.SparkStreamingStrategy",
+    "algorithm": [],
+    "ref": [],
+    "compositor": [
+      {
+        "name": "streaming.core.compositor.spark.streaming.source.MockInputStreamCompositor",
+        "params": [{"data1":["me","you","her"]}]
+      },
+      {
+        "name": "streaming.core.compositor.spark.streaming.transformation.SingleColumnJSONCompositor",
+        "params": [
+          {
+            "name": "a"
+          }
+        ]
+      },
+      {
+        "name": "streaming.core.compositor.spark.streaming.transformation.JSONTableCompositor",
+        "params": [
+          {
+            "tableName": "test"
+          }
+        ]
+      },
+      {
+        "name": "streaming.core.compositor.spark.streaming.transformation.SQLCompositor",
+        "params": [
+          {
+            "sql": "select a, \"5\" as b from test",
+            "outputTableName": "test2"
+          }
+        ]
+      },      
+      {
+        "name": "streaming.core.compositor.spark.streaming.output.SQLPrintOutputCompositor",
+        "params": [
+          {
+          }
+        ]
+      }
+    ],
+    "configParams": {
+    }
+  }
+'
 ```
 
 ## How To Add New Compositor
