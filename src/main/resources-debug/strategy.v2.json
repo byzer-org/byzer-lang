@@ -9,7 +9,7 @@
     "compositor": [
       {
         "name": "streaming.core.compositor.spark.streaming.source.MockInputStreamCompositor",
-        "params": [{"data1":["1","2","3"]}]
+        "params": [{"data1":["1","2","3"],"data2":["1","2","3"],"data3":["1","2","3"],"data4":["1","2","3"]}]
       },
       {
         "name": "streaming.core.compositor.spark.streaming.transformation.SingleColumnJSONCompositor",

@@ -192,9 +192,6 @@ here is the detail of  configuration:
 }
 ```
 
-
-
-
 ## How To Add New Compositor
 
 In StreamingPro,every transformation can be implemented by Compositor. Suppose 
