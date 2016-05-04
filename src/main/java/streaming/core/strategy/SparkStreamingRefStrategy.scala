@@ -5,7 +5,7 @@ import java.util
 import org.apache.log4j.Logger
 import serviceframework.dispatcher.{Compositor, Processor, Strategy}
 
-class SparkStreamingRefStrategy[T] extends Strategy[T] with DebugTrait with JobStrategy {
+class SparkStreamingRefStrategy[T] extends Strategy[T] with DebugTrait {
 
   var _name: String = _
   var _ref: util.List[Strategy[T]] = _
