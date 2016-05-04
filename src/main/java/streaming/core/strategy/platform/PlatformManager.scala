@@ -11,6 +11,7 @@ import streaming.core.strategy.JobStrategy
 import streaming.core.{Dispatcher, StreamingApp}
 
 import scala.collection.JavaConversions._
+import scala.collection.mutable.ArrayBuffer
 
 /**
  * 4/27/16 WilliamZhu(allwefantasy@gmail.com)
@@ -23,6 +24,16 @@ class PlatformManager {
 
   def dispatcher: StrategyDispatcher[Any] = {
     Dispatcher.dispatcher
+  }
+
+  val listeners = new ArrayBuffer[PlatformManagerListener]()
+
+  def register(listener: PlatformManagerListener) = {
+    listeners += listener
+  }
+
+  def unRegister(listener: PlatformManagerListener) = {
+    listeners -= listener
   }
 
   def startRestServer = {
@@ -40,7 +51,7 @@ class PlatformManager {
 
     val params = config.get()
 
-    val lastSparkStreamingRuntimeInfo = if (reRun) {
+    val lastStreamingRuntimeInfo = if (reRun) {
       val tempRuntime = PlatformManager.getRuntime(params.getParam("streaming.name"), Map[Any, Any]())
       SparkStreamingRuntime.clearLastInstantiatedContext()
       Some(tempRuntime.streamingRuntimeInfo)
@@ -55,10 +66,10 @@ class PlatformManager {
     params.getParamsMap.filter(f => f._1.startsWith("streaming.")).foreach { f => tempParams.put(f._1, f._2) }
     val runtime = PlatformManager.getRuntime(params.getParam("streaming.name"), tempParams)
 
-    lastSparkStreamingRuntimeInfo match {
+    lastStreamingRuntimeInfo match {
       case Some(ssri) =>
-        runtime.streamingRuntimeInfo = ssri
-        runtime.resetStreamingRuntimeInfo
+        runtime.configureStreamingRuntimeInfo(ssri)
+        runtime.resetRuntimeOperator(null)
       case None =>
     }
 
@@ -67,8 +78,10 @@ class PlatformManager {
       jobName =>
         dispatcher.dispatch(Dispatcher.contextParams(jobName))
         val index = jobCounter.get()
-        val inputStreamId = runtime.streamingRuntimeInfo.sparkStreamingOperator.inputStreamId(index)
-        runtime.streamingRuntimeInfo.jobNameToInputStreamId.put(jobName, inputStreamId)
+
+        listeners.foreach { listener =>
+          listener.processEvent(JobFlowGenerate(jobName, index, dispatcher.findStrategies(jobName).get.head))
+        }
         jobCounter.incrementAndGet()
     }
 
@@ -117,8 +130,16 @@ object PlatformManager {
     }
   }
 
-  def getRuntime(name: String, params: JMap[Any, Any]) = {
-    SparkStreamingRuntime.getOrCreate(params)
+  def getRuntime(name: String, params: JMap[Any, Any]): StreamingRuntime = {
+    params.get("stream.platform") match {
+      case platform: String if platform == "spark" =>
+        SparkStreamingRuntime.getOrCreate(params)
+      case platform: String if platform == "storm" =>
+        null
+      case _ => SparkStreamingRuntime.getOrCreate(params)
+    }
+
+
   }
 
 }
