@@ -43,10 +43,27 @@ class SparkStreamingRuntime(_params: JMap[Any, Any]) {
     }
     conf.setAppName(params.get("streaming.name").toString)
     val duration = params.getOrElse("streaming.duration", "10").toString.toInt
-    if (SparkStreamingRuntime.sparkContext.get() == null) {
-      SparkStreamingRuntime.sparkContext.set(new SparkContext(conf))
+
+    if (params.containsKey("streaming.checkpoint")) {
+      val checkpoinDir = params.get("streaming.checkpoint").toString
+      StreamingContext.getActiveOrCreate(checkpoinDir,
+        () => {
+          val ssc = new StreamingContext(conf, Seconds(duration))
+          if (SparkStreamingRuntime.sparkContext.get() == null) {
+            SparkStreamingRuntime.sparkContext.set(ssc.sparkContext)
+          }
+          ssc.checkpoint(checkpoinDir)
+          ssc
+        }
+      )
+    } else {
+      if (SparkStreamingRuntime.sparkContext.get() == null) {
+        SparkStreamingRuntime.sparkContext.set(new SparkContext(conf))
+      }
+      new StreamingContext(SparkStreamingRuntime.sparkContext.get(), Seconds(duration))
     }
-    new StreamingContext(SparkStreamingRuntime.sparkContext.get(), Seconds(duration))
+
+
   }
 
   def destroyRuntime(stopGraceful: Boolean, stopSparkContext: Boolean = false) = {
@@ -75,6 +92,7 @@ class SparkStreamingRuntime(_params: JMap[Any, Any]) {
         s" ${jobName} => ${f._2}")
       streamingRuntimeInfo.sparkStreamingOperator.setInputStreamState(inputStreamId, f._2)
     }
+
     streamingContext.start()
     streamingRuntimeInfo.jobNameToState.clear()
   }
