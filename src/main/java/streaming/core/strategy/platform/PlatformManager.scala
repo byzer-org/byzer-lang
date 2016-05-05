@@ -64,7 +64,7 @@ class PlatformManager {
 
     val tempParams = new java.util.HashMap[Any, Any]()
     params.getParamsMap.filter(f => f._1.startsWith("streaming.")).foreach { f => tempParams.put(f._1, f._2) }
-    val runtime = PlatformManager.getRuntime(params.getParam("streaming.name"), tempParams)
+    val runtime = PlatformManager.getRuntime(params.getParam("streaming.platform"), tempParams)
 
     lastStreamingRuntimeInfo match {
       case Some(ssri) =>
