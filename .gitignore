@@ -107,3 +107,4 @@ project/plugins/project/
 /src/main/resources-debug/hdfs-site.xml
 /src/main/resources-debug/yarn-site.xml
 /src/main/resources-debug/mapred-site.xml
+/src/main/resources-debug/strategy.v2.json
