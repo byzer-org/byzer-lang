@@ -38,7 +38,9 @@ class SparkStreamingOperator(_ssr: SparkStreamingRuntime) extends RuntimeOperato
   }
 
   def directKafkaDStreamsMap = {
-    inputDStreams.filter(is => is.isInstanceOf[DirectKafkaInputDStream[_, _, _, _, _]]).map(f => (f.id, f)).toMap
+    inputDStreams.filter { is =>
+      is.isInstanceOf[DirectKafkaInputDStream[_, _, _, _, _]]
+    }.map(f => f.id).toSet
   }
 
 

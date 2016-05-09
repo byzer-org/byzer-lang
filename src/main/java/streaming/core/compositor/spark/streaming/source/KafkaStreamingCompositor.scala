@@ -39,16 +39,8 @@ class KafkaStreamingCompositor[T] extends Compositor[T] {
       ssc,
       getKafkaParams,
       getTopics)
-
-    restore(runtime)
-
     val tempStream = kafkaStream.map(f => f._2)
     List(tempStream.asInstanceOf[T])
-  }
-
-  def restore(runtime: SparkStreamingRuntime) = {
-    val jobName = runtime.params.get("_client_").asInstanceOf[String]
-    runtime.streamingRuntimeInfo.sparkStreamingOperator.directKafkaRecoverSource.restoreJobSate(jobName)
   }
 
 }

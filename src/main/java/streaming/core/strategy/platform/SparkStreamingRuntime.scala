@@ -5,7 +5,7 @@ import java.util.concurrent.atomic.AtomicReference
 import java.util.{List => JList, Map => JMap}
 
 import net.csdn.common.logging.Loggers
-import org.apache.spark.streaming.scheduler.{StreamingListener, StreamingListenerBatchStarted}
+import org.apache.spark.streaming.scheduler.{StreamingListener, StreamingListenerBatchCompleted}
 import org.apache.spark.streaming.{Seconds, SparkStreamingOperator, StreamingContext, Time}
 import org.apache.spark.{SparkConf, SparkContext}
 
@@ -85,12 +85,9 @@ class SparkStreamingRuntime(_params: JMap[Any, Any]) extends StreamingRuntime wi
 
   override def startRuntime = {
 
-    _streamingRuntimeInfo.sparkStreamingOperator.testInputRecoverSource.restoreJobSate()
-
-    _streamingRuntimeInfo.jobNameToState.foreach { f =>
-      val jobName = f._1
-      val inputStreamId = _streamingRuntimeInfo.jobNameToInputStreamId.get(jobName)
-      _streamingRuntimeInfo.sparkStreamingOperator.setInputStreamState(inputStreamId, f._2)
+    streamingRuntimeInfo.jobNameToInputStreamId.foreach { f =>
+      _streamingRuntimeInfo.sparkStreamingOperator.directKafkaRecoverSource.restoreJobSate(f._1)
+      _streamingRuntimeInfo.sparkStreamingOperator.testInputRecoverSource.restoreJobSate(f._1)
     }
 
     streamingContext.start()
@@ -123,8 +120,8 @@ class SparkStreamingRuntimeInfo(ssr: SparkStreamingRuntime) extends StreamingRun
 
 class BatchStreamingListener(runtime: SparkStreamingRuntime) extends StreamingListener {
 
-  override def onBatchStarted(batchStarted: StreamingListenerBatchStarted): Unit = {
-    val time = batchStarted.batchInfo.batchTime
+  override def onBatchCompleted(batchCompleted: StreamingListenerBatchCompleted): Unit = {
+    val time = batchCompleted.batchInfo.batchTime
     val operator = runtime.streamingRuntimeInfo.sparkStreamingOperator
 
     //first check kafka offset which on direct approach, later we will add more sources
@@ -133,6 +130,8 @@ class BatchStreamingListener(runtime: SparkStreamingRuntime) extends StreamingLi
 
     runtime.streamingRuntimeInfo.lastTime = time
   }
+
+
 }
 
 object SparkStreamingRuntime {

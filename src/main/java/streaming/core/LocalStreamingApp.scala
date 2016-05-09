@@ -11,7 +11,8 @@ object LocalStreamingApp {
       "-streaming.master", "local[2]",
       "-streaming.duration", "20",
       "-streaming.name", "god",
-      "-streaming.rest", "true"
+      "-streaming.rest", "true",
+      "-streaming.testinputstream.offsetPath", "/tmp/localstreampingapp"
     ))
   }
 

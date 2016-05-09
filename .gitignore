@@ -102,3 +102,8 @@ project/plugins/project/
 .worksheet
 
 /logs
+
+/src/main/resources-debug/core-site.xml
+/src/main/resources-debug/hdfs-site.xml
+/src/main/resources-debug/yarn-site.xml
+/src/main/resources-debug/mapred-site.xml
