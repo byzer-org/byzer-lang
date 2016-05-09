@@ -32,7 +32,13 @@ class RestController extends ApplicationController {
     dispatcher.createStrategy(param("name"), JSONObject.fromObject(request.contentAsString()))
     if (_runtime.streamingRuntimeInfo.sparkStreamingOperator.isStreamingCanStop()) {
       _runtime.destroyRuntime(false)
-      platformManager.run(null, true)
+      new Thread(new Runnable {
+        override def run(): Unit = {
+          platformManager.run(null, true)
+        }
+
+      }).start()
+
       render(200, "ok")
     } else {
       render(400, "timeout")

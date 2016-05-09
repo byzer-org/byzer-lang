@@ -96,38 +96,40 @@ class DirectKafkaRecoverSource(operator: SparkStreamingOperator) extends SparkSt
   }
 
 
-  def kafkaOffset(context: StreamingContext, pathDir: String, suffix: String) = {
+  def kafkaOffset(context: StreamingContext, pathDir: String, suffix: String): Map[TopicAndPartition, Long] = {
+
+    val fileSystem = FileSystem.get(context.sparkContext.hadoopConfiguration)
+
+    if (!fileSystem.exists(new Path(pathDir))) {
+      return null
+    }
+
     val files = FileSystem.get(context.sparkContext.hadoopConfiguration).listStatus(new Path(pathDir)).toList
     if (files.length == 0) {
-      null
-    } else {
-      val restoreKafkaFile = files.filter(f => f.getPath.getName.endsWith("_" + suffix)).
-        sortBy(f => f.getPath.getName).reverse.head.getPath.getName
-
-
-      val fileSystem = FileSystem.get(context.sparkContext.hadoopConfiguration)
-
-      //clean old files
-      val fileList = files.filter(f => f.getPath.getName.endsWith("_" + suffix)).
-        sortBy(f => f.getPath.getName).reverse
-
-      fileList.slice(5, fileList.size).foreach { f =>
-        fileSystem.delete(f.getPath, false)
-      }
-
-
-      val lines = context.sparkContext.textFile(pathDir + "/" + restoreKafkaFile).map { f =>
-        val Array(topic, partition, from) = f.split(",")
-        (topic, partition.toInt, from.toLong)
-      }.collect().groupBy(f => f._1)
-
-      val fromOffsets = lines.flatMap { topicPartitions =>
-        topicPartitions._2.map { f =>
-          (TopicAndPartition(f._1, f._2), f._3)
-        }.toMap
-      }
-      fromOffsets
+      return null
     }
+
+    val jobFiles = files.filter(f => f.getPath.getName.endsWith("_" + suffix)).sortBy(f => f.getPath.getName).reverse
+    if (jobFiles.length == 0) return null
+
+    val restoreKafkaFile = jobFiles.head.getPath.getName
+
+    jobFiles.slice(1, jobFiles.size).foreach { f =>
+      fileSystem.delete(f.getPath, false)
+    }
+
+
+    val lines = context.sparkContext.textFile(pathDir + "/" + restoreKafkaFile).map { f =>
+      val Array(topic, partition, from) = f.split(",")
+      (topic, partition.toInt, from.toLong)
+    }.collect().groupBy(f => f._1)
+
+    val fromOffsets = lines.flatMap { topicPartitions =>
+      topicPartitions._2.map { f =>
+        (TopicAndPartition(f._1, f._2), f._3)
+      }.toMap
+    }
+    fromOffsets
 
 
   }

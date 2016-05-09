@@ -46,7 +46,7 @@ class TestInputStreamRecoverSource(operator: SparkStreamingOperator) extends Spa
           foreach { f =>
           val state = stateFromHDFS(ssc, pathDir, f._1)
           if (state != -1) {
-            operator.setInputStreamState(f._2,state)
+            operator.setInputStreamState(f._2, state)
           }
 
         }
@@ -100,20 +100,24 @@ class TestInputStreamRecoverSource(operator: SparkStreamingOperator) extends Spa
 
 
   def stateFromHDFS(context: StreamingContext, pathDir: String, suffix: String): Int = {
+    val fileSystem = FileSystem.get(context.sparkContext.hadoopConfiguration)
+
+    if (!fileSystem.exists(new Path(pathDir))) {
+      return -1
+    }
+
     val files = FileSystem.get(context.sparkContext.hadoopConfiguration).listStatus(new Path(pathDir)).toList
     if (files.length == 0) {
       return -1
     }
 
-    val restoreKafkaFile = files.filter(f => f.getPath.getName.endsWith("_" + suffix)).
-      sortBy(f => f.getPath.getName).reverse.head.getPath.getName
+    val jobFiles = files.filter(f => f.getPath.getName.endsWith("_" + suffix)).sortBy(f => f.getPath.getName).reverse
+    if (jobFiles.length == 0) return -1
 
-    val fileSystem = FileSystem.get(context.sparkContext.hadoopConfiguration)
+    val restoreKafkaFile = jobFiles.head.getPath.getName
 
-    val fileList = files.filter(f => f.getPath.getName.endsWith("_" + suffix)).
-      sortBy(f => f.getPath.getName).reverse
 
-    fileList.slice(1, fileList.size).foreach { f =>
+    jobFiles.slice(1, jobFiles.size).foreach { f =>
       fileSystem.delete(f.getPath, false)
     }
 

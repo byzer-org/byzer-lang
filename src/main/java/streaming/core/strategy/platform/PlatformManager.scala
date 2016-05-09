@@ -89,7 +89,6 @@ class PlatformManager {
     if (params.getBooleanParam("streaming.rest", false) && !reRun) {
       startRestServer
     }
-
     runtime.awaitTermination
   }
 
