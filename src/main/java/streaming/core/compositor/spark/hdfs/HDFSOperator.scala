@@ -9,6 +9,8 @@ import org.apache.hadoop.fs.{FSDataOutputStream, FileSystem, Path}
 object HDFSOperator {
 
 
+
+
   def saveFile(path: String, fileName: String, iterator: Iterator[(String, String)]) = {
 
     var dos: FSDataOutputStream = null
