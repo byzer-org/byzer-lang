@@ -5,7 +5,8 @@ import java.util.concurrent.atomic.AtomicReference
 import java.util.{List => JList, Map => JMap}
 
 import net.csdn.common.logging.Loggers
-import org.apache.spark.streaming.{Seconds, SparkStreamingOperator, StreamingContext}
+import org.apache.spark.streaming.scheduler.{StreamingListener, StreamingListenerBatchStarted}
+import org.apache.spark.streaming.{Seconds, SparkStreamingOperator, StreamingContext, Time}
 import org.apache.spark.{SparkConf, SparkContext}
 
 import scala.collection.JavaConversions._
@@ -23,13 +24,15 @@ class SparkStreamingRuntime(_params: JMap[Any, Any]) extends StreamingRuntime wi
 
   var streamingContext: StreamingContext = createRuntime
 
+  streamingContext.addStreamingListener(new BatchStreamingListener(this))
 
-  private var _streamingRuntimeInfo: SparkStreamingRuntimeInfo = new SparkStreamingRuntimeInfo(streamingContext)
+
+  private var _streamingRuntimeInfo: SparkStreamingRuntimeInfo = new SparkStreamingRuntimeInfo(this)
 
   override def streamingRuntimeInfo = _streamingRuntimeInfo
 
   override def resetRuntimeOperator(runtimeOperator: RuntimeOperator) = {
-    _streamingRuntimeInfo.sparkStreamingOperator = new SparkStreamingOperator(streamingContext)
+    _streamingRuntimeInfo.sparkStreamingOperator = new SparkStreamingOperator(this)
   }
 
   override def configureStreamingRuntimeInfo(streamingRuntimeInfo: StreamingRuntimeInfo) = {
@@ -73,29 +76,20 @@ class SparkStreamingRuntime(_params: JMap[Any, Any]) extends StreamingRuntime wi
 
   override def destroyRuntime(stopGraceful: Boolean, stopSparkContext: Boolean = false) = {
 
-
-    logger.info("SparkStreamingRuntime stopping.....")
-    val inputStreamIdToJobName = _streamingRuntimeInfo.jobNameToInputStreamId.map(f => (f._2, f._1))
-    _streamingRuntimeInfo.sparkStreamingOperator.snapShotInputStreamState().foreach { inputStream =>
-      logger.info(s"SparkStreamingRuntime save inputstream state:" +
-        s" ${inputStreamIdToJobName(inputStream._1)} => ${inputStream._2}")
-      _streamingRuntimeInfo.jobNameToState.put(inputStreamIdToJobName(inputStream._1), inputStream._2)
-    }
-
+    //clear inputDStreamId
     _streamingRuntimeInfo.jobNameToInputStreamId.clear()
-    _streamingRuntimeInfo.inputStreamIdToState.clear()
 
     streamingContext.stop(stopSparkContext, stopGraceful)
     true
   }
 
   override def startRuntime = {
-    logger.info("SparkStreamingRuntime start.....")
+
+    _streamingRuntimeInfo.sparkStreamingOperator.testInputRecoverSource.restoreJobSate()
+
     _streamingRuntimeInfo.jobNameToState.foreach { f =>
       val jobName = f._1
       val inputStreamId = _streamingRuntimeInfo.jobNameToInputStreamId.get(jobName)
-      logger.info(s"SparkStreamingRuntime restore inputstream state:" +
-        s" ${jobName} => ${f._2}")
       _streamingRuntimeInfo.sparkStreamingOperator.setInputStreamState(inputStreamId, f._2)
     }
 
@@ -120,11 +114,25 @@ class SparkStreamingRuntime(_params: JMap[Any, Any]) extends StreamingRuntime wi
   }
 }
 
-class SparkStreamingRuntimeInfo(ssc: StreamingContext) extends StreamingRuntimeInfo {
+class SparkStreamingRuntimeInfo(ssr: SparkStreamingRuntime) extends StreamingRuntimeInfo {
   val jobNameToInputStreamId = new ConcurrentHashMap[String, Int]()
   val jobNameToState = new ConcurrentHashMap[String, Any]()
-  val inputStreamIdToState = new ConcurrentHashMap[String, (Int, Any)]()
-  var sparkStreamingOperator: SparkStreamingOperator = new SparkStreamingOperator(ssc)
+  var lastTime: Time = _
+  var sparkStreamingOperator: SparkStreamingOperator = new SparkStreamingOperator(ssr)
+}
+
+class BatchStreamingListener(runtime: SparkStreamingRuntime) extends StreamingListener {
+
+  override def onBatchStarted(batchStarted: StreamingListenerBatchStarted): Unit = {
+    val time = batchStarted.batchInfo.batchTime
+    val operator = runtime.streamingRuntimeInfo.sparkStreamingOperator
+
+    //first check kafka offset which on direct approach, later we will add more sources
+    operator.directKafkaRecoverSource.saveJobSate(time)
+    operator.testInputRecoverSource.saveJobSate(time)
+
+    runtime.streamingRuntimeInfo.lastTime = time
+  }
 }
 
 object SparkStreamingRuntime {

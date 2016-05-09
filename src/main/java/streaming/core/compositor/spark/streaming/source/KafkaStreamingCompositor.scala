@@ -33,9 +33,22 @@ class KafkaStreamingCompositor[T] extends Compositor[T] {
   }
 
   override def result(alg: util.List[Processor[T]], ref: util.List[Strategy[T]], middleResult: util.List[T], params: util.Map[Any, Any]): util.List[T] = {
-    val ssc = params.get("_runtime_").asInstanceOf[SparkStreamingRuntime].streamingContext
-    val kafkaStream = KafkaUtils.createDirectStream[String, String, StringDecoder, StringDecoder](ssc, getKafkaParams, getTopics).map(f => f._2)
-    List(kafkaStream.asInstanceOf[T])
+    val runtime = params.get("_runtime_").asInstanceOf[SparkStreamingRuntime]
+    val ssc = runtime.streamingContext
+    val kafkaStream = KafkaUtils.createDirectStream[String, String, StringDecoder, StringDecoder](
+      ssc,
+      getKafkaParams,
+      getTopics)
+
+    restore(runtime)
+
+    val tempStream = kafkaStream.map(f => f._2)
+    List(tempStream.asInstanceOf[T])
+  }
+
+  def restore(runtime: SparkStreamingRuntime) = {
+    val jobName = runtime.params.get("_client_").asInstanceOf[String]
+    runtime.streamingRuntimeInfo.sparkStreamingOperator.directKafkaRecoverSource.restoreJobSate(jobName)
   }
 
 }

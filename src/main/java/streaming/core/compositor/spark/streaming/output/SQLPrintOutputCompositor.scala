@@ -7,6 +7,8 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.streaming.dstream.DStream
 import serviceframework.dispatcher.{Compositor, Processor, Strategy}
+import streaming.core.compositor.spark.hdfs.HDFSOperator
+import streaming.core.strategy.platform.SparkStreamingRuntime
 
 
 class SQLPrintOutputCompositor[T] extends Compositor[T] {

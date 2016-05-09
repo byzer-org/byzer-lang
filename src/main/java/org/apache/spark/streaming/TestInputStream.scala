@@ -28,7 +28,12 @@ class TestInputStream[T: ClassTag](_ssc: StreamingContext, input: Seq[Seq[T]], n
       return None
     }
     // Report the input data's information to InputInfoTracker for testing
-    val inputInfo = StreamInputInfo(id, selectedInput.length.toLong)
+
+    val metadata = Map(
+      "offsets" -> currentOffset,
+      StreamInputInfo.METADATA_KEY_DESCRIPTION -> "")
+
+    val inputInfo = StreamInputInfo(id, selectedInput.length.toLong, metadata)
     ssc.scheduler.inputInfoTracker.reportInfo(validTime, inputInfo)
     currentOffset = currentOffset + 1
     val rdd = ssc.sc.makeRDD(selectedInput, numPartitions)
