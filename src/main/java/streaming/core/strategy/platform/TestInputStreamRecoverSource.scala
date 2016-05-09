@@ -4,7 +4,6 @@ import java.text.SimpleDateFormat
 import java.util.Date
 
 import org.apache.hadoop.fs.{FileSystem, Path}
-import org.apache.spark.SparkException
 import org.apache.spark.streaming.{SparkStreamingOperator, StreamingContext, TestInputStream, Time}
 import streaming.core.compositor.spark.hdfs.HDFSOperator
 
@@ -45,14 +44,21 @@ class TestInputStreamRecoverSource(operator: SparkStreamingOperator) extends Spa
         ssr.streamingRuntimeInfo.jobNameToInputStreamId.filter(f => directKafkaMap.contains(f._2)).
           filter(f => f._1 == jobName).
           foreach { f =>
-          operator.setInputStreamState(f._2, stateFromHDFS(ssc, pathDir, f._1))
+          val state = stateFromHDFS(ssc, pathDir, f._1)
+          if (state != -1) {
+            operator.setInputStreamState(f._2,state)
+          }
+
         }
       case None =>
         ssr.streamingRuntimeInfo.jobNameToInputStreamId.filter(f => directKafkaMap.contains(f._2)).
           filter(f => f._1 == jobName).
           foreach { f =>
           val state = operator.ssr.streamingRuntimeInfo.jobNameToState.get(f._1)
-          operator.setInputStreamState(f._2, state)
+          if (state != null) {
+            operator.setInputStreamState(f._2, state)
+          }
+
         }
 
 
@@ -93,10 +99,10 @@ class TestInputStreamRecoverSource(operator: SparkStreamingOperator) extends Spa
   }
 
 
-  def stateFromHDFS(context: StreamingContext, pathDir: String, suffix: String) = {
+  def stateFromHDFS(context: StreamingContext, pathDir: String, suffix: String): Int = {
     val files = FileSystem.get(context.sparkContext.hadoopConfiguration).listStatus(new Path(pathDir)).toList
     if (files.length == 0) {
-      throw new SparkException(s"no upgradePath: $pathDir ")
+      return -1
     }
 
     val restoreKafkaFile = files.filter(f => f.getPath.getName.endsWith("_" + suffix)).

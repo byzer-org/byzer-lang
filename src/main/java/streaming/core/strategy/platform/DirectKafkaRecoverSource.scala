@@ -5,7 +5,6 @@ import java.util.Date
 
 import kafka.common.TopicAndPartition
 import org.apache.hadoop.fs.{FileSystem, Path}
-import org.apache.spark.SparkException
 import org.apache.spark.streaming.kafka.OffsetRange
 import org.apache.spark.streaming.{SparkStreamingOperator, StreamingContext, Time}
 import streaming.core.compositor.spark.hdfs.HDFSOperator
@@ -46,14 +45,19 @@ class DirectKafkaRecoverSource(operator: SparkStreamingOperator) extends SparkSt
         ssr.streamingRuntimeInfo.jobNameToInputStreamId.filter(f => directKafkaMap.contains(f._2)).
           filter(f => f._1 == jobName).
           foreach { f =>
-          operator.setInputStreamState(f._2, kafkaOffset(ssc, pathDir, f._1))
+          val state = kafkaOffset(ssc, pathDir, f._1)
+          if (state != null) {
+            operator.setInputStreamState(f._2, state)
+          }
         }
       case None =>
         ssr.streamingRuntimeInfo.jobNameToInputStreamId.filter(f => directKafkaMap.contains(f._2)).
           filter(f => f._1 == jobName).
           foreach { f =>
           val state = operator.ssr.streamingRuntimeInfo.jobNameToState.get(f._1)
-          operator.setInputStreamState(f._2, state)
+          if (state != null) {
+            operator.setInputStreamState(f._2, state)
+          }
         }
     }
   }
@@ -95,35 +99,37 @@ class DirectKafkaRecoverSource(operator: SparkStreamingOperator) extends SparkSt
   def kafkaOffset(context: StreamingContext, pathDir: String, suffix: String) = {
     val files = FileSystem.get(context.sparkContext.hadoopConfiguration).listStatus(new Path(pathDir)).toList
     if (files.length == 0) {
-      throw new SparkException(s"no upgradePath: $pathDir ")
+      null
+    } else {
+      val restoreKafkaFile = files.filter(f => f.getPath.getName.endsWith("_" + suffix)).
+        sortBy(f => f.getPath.getName).reverse.head.getPath.getName
+
+
+      val fileSystem = FileSystem.get(context.sparkContext.hadoopConfiguration)
+
+      //clean old files
+      val fileList = files.filter(f => f.getPath.getName.endsWith("_" + suffix)).
+        sortBy(f => f.getPath.getName).reverse
+
+      fileList.slice(5, fileList.size).foreach { f =>
+        fileSystem.delete(f.getPath, false)
+      }
+
+
+      val lines = context.sparkContext.textFile(pathDir + "/" + restoreKafkaFile).map { f =>
+        val Array(topic, partition, from) = f.split(",")
+        (topic, partition.toInt, from.toLong)
+      }.collect().groupBy(f => f._1)
+
+      val fromOffsets = lines.flatMap { topicPartitions =>
+        topicPartitions._2.map { f =>
+          (TopicAndPartition(f._1, f._2), f._3)
+        }.toMap
+      }
+      fromOffsets
     }
 
-    val restoreKafkaFile = files.filter(f => f.getPath.getName.endsWith("_" + suffix)).
-      sortBy(f => f.getPath.getName).reverse.head.getPath.getName
 
-
-    val fileSystem = FileSystem.get(context.sparkContext.hadoopConfiguration)
-
-    //clean old files
-    val fileList = files.filter(f => f.getPath.getName.endsWith("_" + suffix)).
-      sortBy(f => f.getPath.getName).reverse
-
-    fileList.slice(5, fileList.size).foreach { f =>
-      fileSystem.delete(f.getPath, false)
-    }
-
-
-    val lines = context.sparkContext.textFile(pathDir + "/" + restoreKafkaFile).map { f =>
-      val Array(topic, partition, from) = f.split(",")
-      (topic, partition.toInt, from.toLong)
-    }.collect().groupBy(f => f._1)
-
-    val fromOffsets = lines.flatMap { topicPartitions =>
-      topicPartitions._2.map { f =>
-        (TopicAndPartition(f._1, f._2), f._3)
-      }.toMap
-    }
-    fromOffsets
   }
 
 
