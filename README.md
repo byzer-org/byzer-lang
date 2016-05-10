@@ -31,7 +31,7 @@ Kafka using  Direct Approach (No Receivers) mode.
 * [Dynamically add Job via Rest API](https://github.com/allwefantasy/streamingpro/wiki/Dynamically-add-Job-via-Rest-API)
 * [How To Add New Compositor](https://github.com/allwefantasy/streamingpro/wiki/How-To-Add-New-Compositor)
 * [Recovery](https://github.com/allwefantasy/streamingpro/wiki/Recovery)
-* [Compositors-introduction](https://github.com/allwefantasy/streamingpro/wiki/Common-compositors-introduction)
+* [Compositor introduction](https://github.com/allwefantasy/streamingpro/wiki/Common-compositors-introduction)
 * [Programing]()
 
 
