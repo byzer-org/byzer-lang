@@ -37,16 +37,18 @@ by StreamingPro which is more easy to use then original API designed by Spark/St
 
 ### Architecture  
 
-![](http://upload-images.jianshu.io/upload_images/1063603-383c19104e141031.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![](https://github.com/allwefantasy/streamingpro/blob/master/images/Snip20160510_3.png)
+[If no picture show,please click me](http://upload-images.jianshu.io/upload_images/1063603-383c19104e141031.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 ### Declarative workflows  
 
-![](http://upload-images.jianshu.io/upload_images/1063603-968e744a1ef2e334.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![](https://github.com/allwefantasy/streamingpro/blob/master/images/Snip20160510_4.png)
+[If no picture show,please click me](http://upload-images.jianshu.io/upload_images/1063603-968e744a1ef2e334.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 ### Implementation
 
-![](http://upload-images.jianshu.io/upload_images/1063603-26dd2d88611a8b93.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
-
+![](https://github.com/allwefantasy/streamingpro/blob/master/images/Snip20160510_1.png)
+[If no picture show,please click me](http://upload-images.jianshu.io/upload_images/1063603-26dd2d88611a8b93.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 
 
