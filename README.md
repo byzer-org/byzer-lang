@@ -14,37 +14,30 @@ by StreamingPro which is more easy to use then original API designed by Spark/St
 
 ## Features
 
-* Setup job flows with configuration
-* Supports Add/Update/Remove job flows dynamically at runtime via Rest API 
-* Brand new API to make program modularized 
-* Support for job flows building by writing SQL  
+* Pure spark streaming program (Storm/Spark in future)
+* No need of coding, only declarative workflows
+* SQL ETL support  
+* Data continuously streamed in & processed in near real-time
+* dynamically CURD of workflows  at runtime via Rest API (in single instance or multiple instances) 
+* Flexible workflows (input, output, parsers, etc...) 
+* High performance
+* Scalable   
 
-Notes: 
-
-Feature 2  is available only when Spark Streaming receives data from 
-Kafka using  Direct Approach (No Receivers) mode.
 
 ## Documents
 
-* [Properties](https://github.com/allwefantasy/streamingpro/wiki/User's-manual)
-* [Setup-Project](https://github.com/allwefantasy/streamingpro/wiki/Setup-Project)
-* [Run Your First Application](https://github.com/allwefantasy/streamingpro/wiki/Run-your-first-application)
+* [Properties](https://github.com/allwefantasy/streamingpro/wiki/Properties)
+* [Build](https://github.com/allwefantasy/streamingpro/wiki/Build)
+* [Run your first application](https://github.com/allwefantasy/streamingpro/wiki/Run-your-first-application)
+* [Submit application](https://github.com/allwefantasy/streamingpro/wiki/Submit-application)
 * [Dynamically add Job via Rest API](https://github.com/allwefantasy/streamingpro/wiki/Dynamically-add-Job-via-Rest-API)
-* [How To Add New Compositor](https://github.com/allwefantasy/streamingpro/wiki/How-To-Add-New-Compositor)
+* [dynamically CURD of workflows  at runtime via Rest API](https://github.com/allwefantasy/streamingpro/wiki/How-To-Add-New-Compositor)
 * [Recovery](https://github.com/allwefantasy/streamingpro/wiki/Recovery)
-* [Compositor introduction](https://github.com/allwefantasy/streamingpro/wiki/Common-compositors-introduction)
-* [Programing]()
+* [Useful modules introduction](https://github.com/allwefantasy/streamingpro/wiki/Common-compositors-introduction)
+* [Other runtime support](https://github.com/allwefantasy/streamingpro/wiki/Runtime-support)
 
 
 
-## Add other Runtime support 
-
-For now, StreamingPro can run on Spark Streaming. If you want it runs on other
- platform like Storm/Fink, you can do something follow: 
-
-```
- class StormRuntime extends StreamingRuntime with PlatformManagerListener  
-```
 
 
 
