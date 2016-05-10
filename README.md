@@ -1,5 +1,7 @@
 # StreamingPro
 
+[If github is too slow to view ,please click me](http://www.jianshu.com/p/3c19f8b9341c)
+
 StreamingPro is not a complete
 application, but rather a code library and API that can easily be used
 to build your streaming application which may run on Spark Streaming.
@@ -33,7 +35,7 @@ by StreamingPro which is more easy to use then original API designed by Spark/St
 * [Other runtime support](https://github.com/allwefantasy/streamingpro/wiki/Runtime-support)
 
 
-### Architecture 
+### Architecture  
 
 ![](https://github.com/allwefantasy/streamingpro/blob/master/images/Snip20160510_3.png)
 
