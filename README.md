@@ -1,9 +1,5 @@
 # StreamingPro
 
-This document is for StreamingPro developers. User's manual is now on its way.
-
-## Introduction
-
 StreamingPro is not a complete
 application, but rather a code library and API that can easily be used
 to build your streaming application which may run on Spark Streaming.
@@ -16,7 +12,7 @@ by StreamingPro which is more easy to use then original API designed by Spark/St
 
 * Pure spark streaming program (Storm/Spark in future)
 * No need of coding, only declarative workflows
-* SQL ETL support  
+* SQL-Oriented workflows support  
 * Data continuously streamed in & processed in near real-time
 * dynamically CURD of workflows  at runtime via Rest API (in single instance or multiple instances) 
 * Flexible workflows (input, output, parsers, etc...) 
@@ -35,6 +31,12 @@ by StreamingPro which is more easy to use then original API designed by Spark/St
 * [Recovery](https://github.com/allwefantasy/streamingpro/wiki/Recovery)
 * [Useful modules introduction](https://github.com/allwefantasy/streamingpro/wiki/Common-compositors-introduction)
 * [Other runtime support](https://github.com/allwefantasy/streamingpro/wiki/Runtime-support)
+
+
+## Architecture 
+
+![](https://github.com/allwefantasy/streamingpro/blob/master/Snip20160510_1.png)
+
 
 
 
