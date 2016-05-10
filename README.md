@@ -33,12 +33,17 @@ by StreamingPro which is more easy to use then original API designed by Spark/St
 * [Other runtime support](https://github.com/allwefantasy/streamingpro/wiki/Runtime-support)
 
 
-## Architecture 
+### Architecture 
 
-![](https://github.com/allwefantasy/streamingpro/blob/master/images/Snip20160510_1.png)
 ![](https://github.com/allwefantasy/streamingpro/blob/master/images/Snip20160510_3.png)
+
+### Declarative workflows  
+
 ![](https://github.com/allwefantasy/streamingpro/blob/master/images/Snip20160510_4.png)
 
+### Implementation
+
+![](https://github.com/allwefantasy/streamingpro/blob/master/images/Snip20160510_1.png)
 
 
 
