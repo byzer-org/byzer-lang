@@ -35,7 +35,9 @@ by StreamingPro which is more easy to use then original API designed by Spark/St
 
 ## Architecture 
 
-![](https://github.com/allwefantasy/streamingpro/blob/master/Snip20160510_1.png)
+![](https://github.com/allwefantasy/streamingpro/blob/master/images/Snip20160510_1.png)
+![](https://github.com/allwefantasy/streamingpro/blob/master/images/Snip20160510_3.png)
+![](https://github.com/allwefantasy/streamingpro/blob/master/images/Snip20160510_4.png)
 
 
 
