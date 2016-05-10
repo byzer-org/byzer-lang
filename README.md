@@ -24,6 +24,7 @@ Notes:
 Feature 2  is available only when Spark Streaming receives data from 
 Kafka using  Direct Approach (No Receivers) mode.
 
+## Documents
 
 * [Properties](https://github.com/allwefantasy/streamingpro/wiki/User's-manual)
 * [Setup-Project](https://github.com/allwefantasy/streamingpro/wiki/Setup-Project)
