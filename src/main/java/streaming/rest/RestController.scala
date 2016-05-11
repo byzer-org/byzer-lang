@@ -3,7 +3,8 @@ package streaming.rest
 import java.util.concurrent.atomic.AtomicInteger
 
 import net.csdn.annotation.rest.At
-import net.csdn.modules.http.ApplicationController
+import net.csdn.common.collections.WowCollections
+import net.csdn.modules.http.{ViewType, ApplicationController}
 import net.csdn.modules.http.RestRequest.Method._
 import net.sf.json.JSONObject
 import serviceframework.dispatcher.StrategyDispatcher
@@ -17,6 +18,11 @@ class RestController extends ApplicationController {
   def stopRuntime = {
     runtime.destroyRuntime(true)
     render(200, "ok")
+  }
+
+  @At(path = Array("/index"), types = Array(GET))
+  def index = {
+    renderHtml(200, "/rest/index.vm",WowCollections.map())
   }
 
   @At(path = Array("/job/add"), types = Array(POST))

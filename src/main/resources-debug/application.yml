@@ -18,17 +18,27 @@ test:
            disable: true
 master:
     host: allwefantasy
+
 application:
-    controller: streaming.rest
+    controllerNames: streaming.rest.RestController
     service:
     util:
     test:
     static:
-           enable: false
+           enable: true
     template:
         engine:
-           enable: false
+           enable: true
 
+serviceframework:
+    template:
+        loader:
+             classpath:
+                  enable: true
+    static:
+        loader:
+             classpath:
+                  enable: true
 ###############http config##################
 http:
     port: 9003
