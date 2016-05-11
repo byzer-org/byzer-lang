@@ -7,11 +7,12 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SQLContext
 import serviceframework.dispatcher.{Compositor, Processor, Strategy}
 import streaming.core.compositor.spark.streaming.CompositorHelper
+import streaming.core.strategy.ParamsValidator
 
 import scala.collection.JavaConversions._
 
 
-class JSONTableCompositor[T] extends Compositor[T] with CompositorHelper {
+class JSONTableCompositor[T] extends Compositor[T] with CompositorHelper with ParamsValidator {
 
   private var _configParams: util.List[util.Map[Any, Any]] = _
   val logger = Logger.getLogger(classOf[JSONTableCompositor[T]].getName)
@@ -40,4 +41,9 @@ class JSONTableCompositor[T] extends Compositor[T] with CompositorHelper {
 
   }
 
+  override def valid(params: util.Map[Any, Any]): (Boolean, String) = {
+    if (tableName.isDefined) (true, "")
+    else
+      (false, s"Job name = ${params("_client_")}, Compositor=JSONTableCompositor,Message = tableName required in JSONTableCompositor")
+  }
 }

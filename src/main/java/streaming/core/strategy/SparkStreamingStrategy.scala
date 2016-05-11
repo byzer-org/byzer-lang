@@ -36,6 +36,14 @@ class SparkStreamingStrategy[T] extends Strategy[T] with DebugTrait with JobStra
 
   def result(params: util.Map[Any, Any]): util.List[T] = {
 
+    val validateResult = compositor.filter(f => f.isInstanceOf[ParamsValidator]).map { f =>
+      f.asInstanceOf[ParamsValidator].valid(params)
+    }.filterNot(f => f._1)
+
+    if (validateResult.size > 0) {
+      throw new IllegalArgumentException(validateResult.map(f => f._2).mkString("\n"))
+    }
+
     ref.foreach { r =>
       r.result(params)
     }

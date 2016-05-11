@@ -5,6 +5,8 @@ import java.util
 import org.apache.log4j.Logger
 import serviceframework.dispatcher.{Compositor, Processor, Strategy}
 
+import scala.collection.JavaConversions._
+
 class SparkStreamingRefStrategy[T] extends Strategy[T] with DebugTrait {
 
   var _name: String = _
@@ -33,6 +35,15 @@ class SparkStreamingRefStrategy[T] extends Strategy[T] with DebugTrait {
   }
 
   def result(params: util.Map[Any, Any]): util.List[T] = {
+
+    val validateResult = compositor.filter(f => f.isInstanceOf[ParamsValidator]).map { f =>
+      f.asInstanceOf[ParamsValidator].valid(params)
+    }.filterNot(f => f._1)
+
+    if (validateResult.size > 0) {
+      throw new IllegalArgumentException(validateResult.map(f => f._2).mkString("\n"))
+    }
+
 
     if (compositor != null && compositor.size() > 0) {
       var middleR = compositor.get(0).result(processor, ref, null, params)
