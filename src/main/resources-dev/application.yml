@@ -1,0 +1,52 @@
+mode:
+    production
+
+production:
+    datasources:
+        mysql:
+            disable: true
+        mongodb:
+           disable: true
+        redis:
+           disable: true
+
+test:
+    datasources:
+        mysql:
+           disable: true
+        mongodb:
+           disable: true
+master:
+    host: allwefantasy
+
+application:
+    controllerNames: streaming.rest.RestController
+    service:
+    util:
+    test:
+    static:
+           enable: true
+    template:
+        engine:
+           enable: true
+
+serviceframework:
+    template:
+        loader:
+             classpath:
+                  enable: true
+    static:
+        loader:
+             classpath:
+                  enable: true
+###############http config##################
+http:
+    port: 9003
+    disable: false
+thrift:
+    disable: true
+dubbo:
+    disable: true
+
+
+

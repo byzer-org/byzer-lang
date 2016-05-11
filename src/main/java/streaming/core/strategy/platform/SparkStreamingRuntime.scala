@@ -131,7 +131,6 @@ class BatchStreamingListener(runtime: SparkStreamingRuntime) extends StreamingLi
     runtime.streamingRuntimeInfo.lastTime = time
   }
 
-
 }
 
 object SparkStreamingRuntime {

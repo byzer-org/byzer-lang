@@ -103,7 +103,7 @@
             <dependencies>
                 <dependency>
                     <groupId>org.elasticsearch</groupId>
-                    <artifactId>elasticsearch-hadoop</artifactId>
+                    <artifactId>elasticsearch-spark_2.10</artifactId>
                     <version>2.3.1</version>
                     <exclusions>
                         <exclusion>
@@ -131,11 +131,6 @@
                             <artifactId>hive-service</artifactId>
                         </exclusion>
                     </exclusions>
-                </dependency>
-                <dependency>
-                    <groupId>org.elasticsearch</groupId>
-                    <artifactId>elasticsearch-spark_2.10</artifactId>
-                    <version>2.3.1</version>
                 </dependency>
             </dependencies>
         </profile>

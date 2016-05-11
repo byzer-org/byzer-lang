@@ -4,31 +4,42 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import net.csdn.annotation.rest.At
 import net.csdn.common.collections.WowCollections
-import net.csdn.modules.http.{ViewType, ApplicationController}
 import net.csdn.modules.http.RestRequest.Method._
+import net.csdn.modules.http.{ApplicationController, ViewType}
 import net.sf.json.JSONObject
 import serviceframework.dispatcher.StrategyDispatcher
-import streaming.core.strategy.platform.{PlatformManager, SparkStreamingRuntime}
+import streaming.core.strategy.platform.{PlatformManager, SparkRuntime, SparkStreamingRuntime}
+
+import scala.collection.JavaConversions._
 
 /**
  * 4/30/16 WilliamZhu(allwefantasy@gmail.com)
  */
 class RestController extends ApplicationController {
-  @At(path = Array("/runtime/stop"), types = Array(GET))
+  @At(path = Array("/runtime/spark/streaming/stop"), types = Array(GET))
   def stopRuntime = {
-    runtime.destroyRuntime(true)
+    runtime(PlatformManager.SPAKR_STREAMING).destroyRuntime(true)
     render(200, "ok")
+  }
+
+  @At(path = Array("/runtime/spark/sql"), types = Array(POST))
+  def sql = {
+    if (!runtime(PlatformManager.SPARK).isInstanceOf[SparkRuntime]) render(400, "only support spark application")
+    val sparkRuntime = runtime(PlatformManager.SPARK).asInstanceOf[SparkRuntime]
+    sparkRuntime.operator.createTable(param("resource"), param("tableName"), params().filter(f => f._1.startsWith("es.")).toMap)
+    val result = sparkRuntime.operator.runSQL(param("sql")).mkString("\n")
+    render(result, ViewType.string)
   }
 
   @At(path = Array("/index"), types = Array(GET))
   def index = {
-    renderHtml(200, "/rest/index.vm",WowCollections.map())
+    renderHtml(200, "/rest/index.vm", WowCollections.map())
   }
 
-  @At(path = Array("/job/add"), types = Array(POST))
+  @At(path = Array("/runtime/spark/streaming/job/add"), types = Array(POST))
   def addJob = {
-    if (!runtime.isInstanceOf[SparkStreamingRuntime]) render(400, "only support Spark Streaming")
-    val _runtime = runtime.asInstanceOf[SparkStreamingRuntime]
+    if (!runtime(PlatformManager.SPAKR_STREAMING).isInstanceOf[SparkStreamingRuntime]) render(400, "only support spark streaming application")
+    val _runtime = runtime(PlatformManager.SPAKR_STREAMING).asInstanceOf[SparkStreamingRuntime]
     val waitCounter = new AtomicInteger(0)
     while (!_runtime.streamingRuntimeInfo.sparkStreamingOperator.isStreamingCanStop()
       && waitCounter.get() < paramAsInt("waitRound", 1000)) {
@@ -56,5 +67,5 @@ class RestController extends ApplicationController {
 
   def dispatcher = StrategyDispatcher.getOrCreate()
 
-  def runtime = PlatformManager.getRuntime(null, new java.util.HashMap[Any, Any]())
+  def runtime(name: String) = PlatformManager.getRuntime(name, new java.util.HashMap[Any, Any]())
 }

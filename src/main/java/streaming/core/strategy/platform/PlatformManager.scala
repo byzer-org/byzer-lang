@@ -130,16 +130,18 @@ object PlatformManager {
   }
 
   def getRuntime(name: String, params: JMap[Any, Any]): StreamingRuntime = {
-    params.get("stream.platform") match {
+    name match {
       case platform: String if platform == "spark" =>
-        SparkStreamingRuntime.getOrCreate(params)
+        SparkRuntime.getOrCreate(params)
       case platform: String if platform == "storm" =>
         null
       case _ => SparkStreamingRuntime.getOrCreate(params)
     }
 
-
   }
+  def SPAKR_STREAMING = "spark_streaming"
+  def STORM = "storm"
+  def SPARK = "spark"
 
 }
 
