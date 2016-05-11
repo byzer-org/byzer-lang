@@ -73,11 +73,11 @@ class SparkStreamingOperator(_ssr: SparkStreamingRuntime) extends RuntimeOperato
     val inputDStream = ssc.graph.getInputStreams().filter(f => f.id == inputId).head
     inputDStream match {
       case dkid: DirectKafkaInputDStream[_, _, _, _, _] =>
-        val field = classOf[DirectKafkaInputDStream[_, _, _, _, _]].getDeclaredField("currentOffset")
+        val field = classOf[DirectKafkaInputDStream[_, _, _, _, _]].getDeclaredField("currentOffsets")
         field.setAccessible(true)
         field.set(dkid, state)
       case test: TestInputStream[_] =>
-        val field = classOf[TestInputStream[_]].getDeclaredField("currentOffset")
+        val field = classOf[TestInputStream[_]].getDeclaredField("currentOffsets")
         field.setAccessible(true)
         field.set(test, state)
       case _ =>
@@ -87,11 +87,11 @@ class SparkStreamingOperator(_ssr: SparkStreamingRuntime) extends RuntimeOperato
   def setInputStreamState(inputDStream: InputDStream[(String, String)], state: Any) = {
     inputDStream match {
       case dkid: DirectKafkaInputDStream[_, _, _, _, _] =>
-        val field = classOf[DirectKafkaInputDStream[_, _, _, _, _]].getDeclaredField("currentOffset")
+        val field = classOf[DirectKafkaInputDStream[_, _, _, _, _]].getDeclaredField("currentOffsets")
         field.setAccessible(true)
         field.set(dkid, state)
       case test: TestInputStream[_] =>
-        val field = classOf[TestInputStream[_]].getDeclaredField("currentOffset")
+        val field = classOf[TestInputStream[_]].getDeclaredField("currentOffsets")
         field.setAccessible(true)
         field.set(test, state)
       case _ =>
