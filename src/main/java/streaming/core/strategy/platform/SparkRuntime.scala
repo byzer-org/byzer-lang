@@ -6,6 +6,7 @@ import java.util.{List => JList, Map => JMap}
 
 import net.csdn.common.logging.Loggers
 import org.apache.spark.{SparkConf, SparkContext, SparkRuntimeOperator}
+import streaming.common.ParamsHelper._
 
 import scala.collection.JavaConversions._
 
@@ -47,7 +48,9 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
   }
 
   override def awaitTermination: Unit = {
-    Thread.currentThread().join()
+    if (params.paramAsBoolean("streaming.spark.service", false)) {
+      Thread.currentThread().join()
+    }
   }
 
   override def streamingRuntimeInfo: StreamingRuntimeInfo = sparkRuntimeInfo

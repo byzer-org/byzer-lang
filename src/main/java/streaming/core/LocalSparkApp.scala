@@ -9,7 +9,8 @@ object LocalSparkApp {
       "-streaming.master", "local[2]",
       "-streaming.name", "god",
       "-streaming.rest", "true",
-      "-streaming.platform", "spark"
+      "-streaming.platform", "spark",
+      "-streaming.spark.service", "true"
     ))
   }
 }
