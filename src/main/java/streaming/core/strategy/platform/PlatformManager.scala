@@ -73,6 +73,10 @@ class PlatformManager {
       case None =>
     }
 
+    if (params.getBooleanParam("streaming.rest", false) && !reRun) {
+      startRestServer
+    }
+
     val jobCounter = new AtomicInteger(0)
     jobs.foreach {
       jobName =>
@@ -86,9 +90,7 @@ class PlatformManager {
     }
 
     runtime.startRuntime
-    if (params.getBooleanParam("streaming.rest", false) && !reRun) {
-      startRestServer
-    }
+
     runtime.awaitTermination
   }
 

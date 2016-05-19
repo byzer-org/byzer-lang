@@ -2,6 +2,7 @@ package streaming.common
 
 import java.util.{Map => JMap}
 
+
 /**
  * 5/14/16 WilliamZhu(allwefantasy@gmail.com)
  */
@@ -13,19 +14,33 @@ object ParamsHelper {
 
 class Params(_params: JMap[Any, Any]) {
   def paramAsInt(key: String, defaultValue: Int = 0) = {
-    _params.getOrDefault(key, defaultValue).toString.toInt
+    if(_params.containsKey(key)){
+      _params.get(key).toString.toInt
+    }else
+    defaultValue
   }
 
   def paramAsDouble(key: String, defaultValue: Double = 0) = {
-    _params.getOrDefault(key, defaultValue).toString.toDouble
+    if(_params.containsKey(key)){
+      _params.get(key).toString.toDouble
+    }else
+      defaultValue
+
   }
 
   def param(key: String, defaultValue: String = null) = {
-    _params.getOrDefault(key, defaultValue).toString
+    if(_params.containsKey(key)){
+      _params.get(key).toString
+    }else
+      defaultValue
+
   }
 
   def paramAsBoolean(key: String, defaultValue: Boolean = false) = {
-    _params.getOrDefault(key, defaultValue).toString.toBoolean
+    if(_params.containsKey(key)){
+      _params.get(key).toString.toBoolean
+    }else
+      defaultValue
   }
 
 }
