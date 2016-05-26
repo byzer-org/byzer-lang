@@ -51,7 +51,7 @@ assembling components(eg. SQL Component) in configuration file.
 * [Build](https://github.com/allwefantasy/streamingpro/wiki/Build)
 * [Run your first application](https://github.com/allwefantasy/streamingpro/wiki/Run-your-first-application)
 * [Submit application](https://github.com/allwefantasy/streamingpro/wiki/Submit-application)
-* [dynamically CURD of workflows  at runtime via Rest API](https://github.com/allwefantasy/streamingpro/wiki/How-To-Add-New-Compositor)
+* [dynamically CURD of workflows  at runtime via Rest API](https://github.com/allwefantasy/streamingpro/wiki/Dynamically-add-Job-via-Rest-API)
 * [Recovery](https://github.com/allwefantasy/streamingpro/wiki/Recovery)
 * [Useful modules introduction](https://github.com/allwefantasy/streamingpro/wiki/Common-compositors-introduction)
 * [Other runtime support](https://github.com/allwefantasy/streamingpro/wiki/Runtime-support)
