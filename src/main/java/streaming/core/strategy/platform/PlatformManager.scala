@@ -1,5 +1,6 @@
 package streaming.core.strategy.platform
 
+import java.util
 import java.util.concurrent.atomic.{AtomicInteger, AtomicReference}
 import java.util.{List => JList, Map => JMap}
 
@@ -22,8 +23,8 @@ class PlatformManager {
   self =>
   val config = new AtomicReference[ParamsUtil]()
 
-  def dispatcher: StrategyDispatcher[Any] = {
-    Dispatcher.dispatcher
+  def findDispatcher(contextParams: JMap[Any, Any]): StrategyDispatcher[Any] = {
+    Dispatcher.dispatcher(contextParams)
   }
 
   val listeners = new ArrayBuffer[PlatformManagerListener]()
@@ -57,14 +58,20 @@ class PlatformManager {
       Some(tempRuntime.streamingRuntimeInfo)
     } else None
 
+
+    val tempParams = new java.util.HashMap[Any, Any]()
+    params.getParamsMap.filter(f => f._1.startsWith("streaming.")).foreach { f => tempParams.put(f._1, f._2) }
+    val runtime = PlatformManager.getRuntime(params.getParam("streaming.platform"), tempParams)
+
+
+    val dispatcher = findDispatcher(Dispatcher.contextParams(""))
+
     var jobs: Array[String] = dispatcher.strategies.filter(f => f._2.isInstanceOf[JobStrategy]).keys.toArray
 
     if (params.hasParam("streaming.jobs"))
       jobs = params.getParam("streaming.jobs").split(",")
 
-    val tempParams = new java.util.HashMap[Any, Any]()
-    params.getParamsMap.filter(f => f._1.startsWith("streaming.")).foreach { f => tempParams.put(f._1, f._2) }
-    val runtime = PlatformManager.getRuntime(params.getParam("streaming.platform"), tempParams)
+
 
     lastStreamingRuntimeInfo match {
       case Some(ssri) =>
@@ -76,6 +83,7 @@ class PlatformManager {
     if (params.getBooleanParam("streaming.rest", false) && !reRun) {
       startRestServer
     }
+
 
     val jobCounter = new AtomicInteger(0)
     jobs.foreach {
@@ -141,8 +149,11 @@ object PlatformManager {
     }
 
   }
+
   def SPAKR_STREAMING = "spark_streaming"
+
   def STORM = "storm"
+
   def SPARK = "spark"
 
 }

@@ -7,7 +7,7 @@ import net.csdn.common.collections.WowCollections
 import net.csdn.modules.http.RestRequest.Method._
 import net.csdn.modules.http.{ApplicationController, ViewType}
 import net.sf.json.JSONObject
-import serviceframework.dispatcher.StrategyDispatcher
+import streaming.core.Dispatcher
 import streaming.core.strategy.platform.{PlatformManager, SparkRuntime, SparkStreamingRuntime}
 
 import scala.collection.JavaConversions._
@@ -65,7 +65,9 @@ class RestController extends ApplicationController {
 
   def platformManager = PlatformManager.getOrCreate
 
-  def dispatcher = StrategyDispatcher.getOrCreate()
+  def dispatcher = {
+    platformManager.findDispatcher(Dispatcher.contextParams(""))
+  }
 
   def runtime(name: String) = PlatformManager.getRuntime(name, new java.util.HashMap[Any, Any]())
 }
