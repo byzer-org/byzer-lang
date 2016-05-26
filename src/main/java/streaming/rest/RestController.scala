@@ -33,7 +33,7 @@ class RestController extends ApplicationController {
 
   @At(path = Array("/index"), types = Array(GET))
   def index = {
-    renderHtml(200, "/rest/index.vm", WowCollections.map())
+    renderHtml(200, "/rest/streamingpro.vm", WowCollections.map())
   }
 
   @At(path = Array("/runtime/spark/streaming/job/add"), types = Array(POST))

@@ -15,7 +15,8 @@ object LocalStreamingApp {
       "-streaming.duration", "20",
       "-streaming.name", "god",
       "-streaming.rest", "true"
-      ,"-streaming.job.file.path",""
+      ,"-streaming.job.file.path","hdfs://cdn237:8020/tmp/bb.yml"
+      ,"-streaming.driver.port","9902"
       //"-streaming.testinputstream.offsetPath", "/tmp/localstreampingapp"
     ))
   }

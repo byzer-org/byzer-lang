@@ -21,11 +21,11 @@ class TestInputStream[T: ClassTag](_ssc: StreamingContext, input: Seq[Seq[T]], n
   def compute(validTime: Time): Option[RDD[T]] = {
     logInfo("Computing RDD for time " + validTime)
 
-    val selectedInput = if (currentOffset < input.size) input(currentOffset) else Seq[T]()
+    val selectedInput = if (currentOffset < input.size) input(currentOffset) else input(0)
 
     // lets us test cases where RDDs are not created
     if (selectedInput == null) {
-      return None
+      currentOffset = 0
     }
     // Report the input data's information to InputInfoTracker for testing
 
