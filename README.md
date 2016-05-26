@@ -45,6 +45,8 @@ assembling components(eg. SQL Component) in configuration file.
 
 ## Documents
 
+* [Three steps to run your first application](https://github.com/allwefantasy/streamingpro/wiki/Three-steps-to-run-your-first-application)
+* [三步跑起你的第一个应用](https://github.com/allwefantasy/streamingpro/wiki/三步跑起你的第一个应用)
 * [Properties](https://github.com/allwefantasy/streamingpro/wiki/Properties)
 * [Build](https://github.com/allwefantasy/streamingpro/wiki/Build)
 * [Run your first application](https://github.com/allwefantasy/streamingpro/wiki/Run-your-first-application)
