@@ -53,6 +53,12 @@ class SparkStreamingRuntime(_params: JMap[Any, Any]) extends StreamingRuntime wi
     conf.setAppName(params.get("streaming.name").toString)
     val duration = params.getOrElse("streaming.duration", "10").toString.toInt
 
+    params.filter(f => f._1.toString.startsWith("streaming.spark.")).foreach { f =>
+      val key = f._1.toString
+      conf.set(key.substring("streaming".length+1), f._2.toString)
+    }
+
+
     if (params.containsKey("streaming.checkpoint")) {
       val checkpoinDir = params.get("streaming.checkpoint").toString
       StreamingContext.getActiveOrCreate(checkpoinDir,

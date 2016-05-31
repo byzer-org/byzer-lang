@@ -77,7 +77,7 @@ class SparkStreamingOperator(_ssr: SparkStreamingRuntime) extends RuntimeOperato
         field.setAccessible(true)
         field.set(dkid, state)
       case test: TestInputStream[_] =>
-        val field = classOf[TestInputStream[_]].getDeclaredField("currentOffsets")
+        val field = classOf[TestInputStream[_]].getDeclaredField("currentOffset")
         field.setAccessible(true)
         field.set(test, state)
       case _ =>
@@ -91,7 +91,7 @@ class SparkStreamingOperator(_ssr: SparkStreamingRuntime) extends RuntimeOperato
         field.setAccessible(true)
         field.set(dkid, state)
       case test: TestInputStream[_] =>
-        val field = classOf[TestInputStream[_]].getDeclaredField("currentOffsets")
+        val field = classOf[TestInputStream[_]].getDeclaredField("currentOffset")
         field.setAccessible(true)
         field.set(test, state)
       case _ =>

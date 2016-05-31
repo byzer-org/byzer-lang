@@ -37,6 +37,7 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
     if (params.containsKey("streaming.master")) {
       conf.setMaster(params.get("streaming.master").toString)
     }
+
     conf.setAppName(params.get("streaming.name").toString)
 
     val tempContext = new SparkContext(conf)

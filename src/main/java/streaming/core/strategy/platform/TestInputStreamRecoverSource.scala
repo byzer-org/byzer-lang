@@ -101,12 +101,11 @@ class TestInputStreamRecoverSource(operator: SparkStreamingOperator) extends Spa
 
   def stateFromHDFS(context: StreamingContext, pathDir: String, suffix: String): Int = {
     val fileSystem = FileSystem.get(context.sparkContext.hadoopConfiguration)
-
     if (!fileSystem.exists(new Path(pathDir))) {
       return -1
     }
 
-    val files = FileSystem.get(context.sparkContext.hadoopConfiguration).listStatus(new Path(pathDir)).toList
+    val files = fileSystem.listStatus(new Path(pathDir)).toList
     if (files.length == 0) {
       return -1
     }
