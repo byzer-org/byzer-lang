@@ -54,9 +54,14 @@ class SQLESOutputCompositor[T] extends Compositor[T] with CompositorHelper with 
     val _cfg = cfg
     dstream.foreachRDD { rdd =>
       val df = func(rdd)
-      val fmt = DateTimeFormat.forPattern(_timeFormat).withLocale(Locale.ENGLISH)
-      val timeStamp = new DateTime(fmt).toString(fmt)
-      val finalResource = if (timeformat.isEmpty) _resource else _resource + "_" + timeStamp
+
+      val finalResource = if (!_timeFormat.isEmpty) {
+        val fmt = DateTimeFormat.forPattern(_timeFormat).withLocale(Locale.ENGLISH)
+        _resource + "_" + DateTime.now().toString(fmt)
+      } else {
+        _resource
+      }
+
       df.saveToEs(finalResource, _cfg)
     }
     params.remove("sql")
