@@ -52,12 +52,13 @@ class SQLESOutputCompositor[T] extends Compositor[T] with CompositorHelper with 
     val _resource = resource.get
     val _timeFormat = timeformat.getOrElse("")
     val _cfg = cfg
+
     dstream.foreachRDD { rdd =>
       val df = func(rdd)
-
       val finalResource = if (!_timeFormat.isEmpty) {
         val fmt = DateTimeFormat.forPattern(_timeFormat).withLocale(Locale.ENGLISH)
-        _resource + "_" + DateTime.now().toString(fmt)
+        val Array(index, ty) = _resource.split("/")
+        index + "_" + DateTime.now().toString(fmt) + "/" + ty
       } else {
         _resource
       }
