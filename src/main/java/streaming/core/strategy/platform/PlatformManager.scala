@@ -1,6 +1,5 @@
 package streaming.core.strategy.platform
 
-import java.util
 import java.util.concurrent.atomic.{AtomicInteger, AtomicReference}
 import java.util.{List => JList, Map => JMap}
 
@@ -25,6 +24,10 @@ class PlatformManager {
 
   def findDispatcher(contextParams: JMap[Any, Any]): StrategyDispatcher[Any] = {
     Dispatcher.dispatcher(contextParams)
+  }
+
+  def findDispatcher: StrategyDispatcher[Any] = {
+    Dispatcher.dispatcher(Dispatcher.contextParams)
   }
 
   val listeners = new ArrayBuffer[PlatformManagerListener]()
@@ -53,7 +56,7 @@ class PlatformManager {
     val params = config.get()
 
     val lastStreamingRuntimeInfo = if (reRun) {
-      val tempRuntime = PlatformManager.getRuntime(params.getParam("streaming.name"), Map[Any, Any]())
+      val tempRuntime = PlatformManager.getRuntime
       SparkStreamingRuntime.clearLastInstantiatedContext()
       Some(tempRuntime.streamingRuntimeInfo)
     } else None
@@ -61,10 +64,10 @@ class PlatformManager {
 
     val tempParams = new java.util.HashMap[Any, Any]()
     params.getParamsMap.filter(f => f._1.startsWith("streaming.")).foreach { f => tempParams.put(f._1, f._2) }
-    val runtime = PlatformManager.getRuntime(params.getParam("streaming.platform"), tempParams)
+    val runtime = PlatformManager.getRuntime
 
 
-    val dispatcher = findDispatcher(Dispatcher.contextParams(""))
+    val dispatcher = findDispatcher
 
     var jobs: Array[String] = dispatcher.strategies.filter(f => f._2.isInstanceOf[JobStrategy]).keys.toArray
 
@@ -88,7 +91,7 @@ class PlatformManager {
     val jobCounter = new AtomicInteger(0)
     jobs.foreach {
       jobName =>
-        dispatcher.dispatch(Dispatcher.contextParams(jobName))
+        dispatcher.dispatch(Dispatcher.contextParams)
         val index = jobCounter.get()
 
         listeners.foreach { listener =>
@@ -133,19 +136,23 @@ object PlatformManager {
     }
   }
 
-  private[platform] def setLastInstantiatedContext(sparkStreamingRuntime: PlatformManager): Unit = {
+  private[platform] def setLastInstantiatedContext(platformManager: PlatformManager): Unit = {
     INSTANTIATION_LOCK.synchronized {
-      lastInstantiatedContext.set(sparkStreamingRuntime)
+      lastInstantiatedContext.set(platformManager)
     }
   }
 
-  def getRuntime(name: String, params: JMap[Any, Any]): StreamingRuntime = {
-    name match {
+  def getRuntime: StreamingRuntime = {
+    val params: JMap[String, String] = getOrCreate.config.get().getParamsMap
+    val tempParams: JMap[Any, Any] = params.map(f => (f._1.asInstanceOf[Any], f._2.asInstanceOf[Any]))
+    val platformName = params.get("streaming.platform")
+    platformName match {
       case platform: String if platform == "spark" =>
-        SparkRuntime.getOrCreate(params)
+
+        SparkRuntime.getOrCreate(tempParams)
       case platform: String if platform == "storm" =>
         null
-      case _ => SparkStreamingRuntime.getOrCreate(params)
+      case _ => SparkStreamingRuntime.getOrCreate(tempParams)
     }
 
   }

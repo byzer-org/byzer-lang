@@ -11,7 +11,7 @@ import streaming.core.strategy.platform.PlatformManager
  */
 class SpecificPortGenerator extends PortGenerator {
   override def getPort: Int = {
-    val runtime = PlatformManager.getRuntime(PlatformManager.SPAKR_STREAMING, new util.HashMap[Any, Any]())
+    val runtime = PlatformManager.getRuntime
     runtime.params.paramAsInt("streaming.driver.port", 9003)
   }
 }

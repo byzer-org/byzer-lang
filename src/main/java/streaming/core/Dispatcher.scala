@@ -23,9 +23,10 @@ object Dispatcher {
 
   }
 
-  def contextParams(name: String) = {
-    val runtime = PlatformManager.getRuntime(null, new java.util.HashMap[Any, Any]())
-    val tempParams = runtime.params
+  def contextParams = {
+    val runtime = PlatformManager.getRuntime
+    val tempParams: java.util.Map[Any, Any] = runtime.params
+    val name = tempParams.get("streaming.platform").toString
     val contextParams: java.util.HashMap[Any, Any] = new java.util.HashMap[Any, Any]()
     tempParams.foreach(f => contextParams += (f._1 -> f._2))
     contextParams.put("_client_", name)
