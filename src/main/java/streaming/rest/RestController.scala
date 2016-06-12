@@ -37,8 +37,16 @@ class RestController extends ApplicationController {
       sparkRuntime.operator.createTable(tableToPath._2, tableToPath._1, newParams)
     }
 
-    val result = sparkRuntime.operator.runSQL(param("sql")).mkString("\n")
-    render(result, ViewType.string)
+    val result = sparkRuntime.operator.runSQL(param("sql")).mkString(",")
+
+    renderHtml(200, "/rest/sqlui-result.vm", WowCollections.map(
+      "feeds", result
+    ))
+  }
+
+  @At(path = Array("/sqlui"), types = Array(GET))
+  def sqlui = {
+    renderHtml(200, "/rest/sqlui.vm", WowCollections.map())
   }
 
   @At(path = Array("/index"), types = Array(GET))
