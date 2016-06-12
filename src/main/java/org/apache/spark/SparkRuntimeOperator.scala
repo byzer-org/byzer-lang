@@ -11,7 +11,7 @@ class SparkRuntimeOperator(sparkContext: SparkContext) extends RuntimeOperator {
   def createTable(resource: String, tableName: String, dataSourceOptions: Map[String, String]) = {
     //val esOptions = Map("es.nodes"->"192.168.1.2,192.168.1.3", "es.scroll.size"->"1000", "es.field.read.as.array.include"->"SampleField")
     //"org.elasticsearch.spark.sql"
-    val loader_clzz = dataSourceOptions("loader_clzz")
+    val loader_clzz = dataSourceOptions("loader_clzz."+tableName)
     val df = SQLContext.getOrCreate(sparkContext).read.format(loader_clzz).options(dataSourceOptions - loader_clzz).load(resource)
     df.registerTempTable(tableName)
   }

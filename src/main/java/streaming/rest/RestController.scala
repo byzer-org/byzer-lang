@@ -25,9 +25,16 @@ class RestController extends ApplicationController {
   def sql = {
     if (!runtime.isInstanceOf[SparkRuntime]) render(400, "only support spark application")
     val sparkRuntime = runtime.asInstanceOf[SparkRuntime]
-    val tableToPaths = params().filter(f=>f._1.startsWith("tableName.")).map(table=>(table._1.split("\\.").last,table._2))
-    tableToPaths.foreach{ tableToPath=>
-      sparkRuntime.operator.createTable(tableToPath._2, tableToPath._1, params().toMap)
+    val tableToPaths = params().filter(f => f._1.startsWith("tableName.")).map(table => (table._1.split("\\.").last, table._2))
+    tableToPaths.foreach { tableToPath =>
+      val tableName = tableToPath._1
+      val loaderClzz = params.filter(f => f._1 == s"loader_clzz.${tableName}").head
+      val newParams = params.filter(f => f._1.startsWith(s"loader_param.${tableName}.")).map { f =>
+        val coms = f._1.split("\\.")
+        val paramStr = coms.takeRight(coms.length - 2).mkString(".")
+        (paramStr, f._2)
+      }.toMap + loaderClzz
+      sparkRuntime.operator.createTable(tableToPath._2, tableToPath._1, newParams)
     }
 
     val result = sparkRuntime.operator.runSQL(param("sql")).mkString("\n")
