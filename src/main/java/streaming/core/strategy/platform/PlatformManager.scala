@@ -27,7 +27,7 @@ class PlatformManager {
   }
 
   def findDispatcher: StrategyDispatcher[Any] = {
-    Dispatcher.dispatcher(Dispatcher.contextParams)
+    Dispatcher.dispatcher(Dispatcher.contextParams(""))
   }
 
   val listeners = new ArrayBuffer[PlatformManagerListener]()
@@ -91,7 +91,7 @@ class PlatformManager {
     val jobCounter = new AtomicInteger(0)
     jobs.foreach {
       jobName =>
-        dispatcher.dispatch(Dispatcher.contextParams)
+        dispatcher.dispatch(Dispatcher.contextParams(jobName))
         val index = jobCounter.get()
 
         listeners.foreach { listener =>
