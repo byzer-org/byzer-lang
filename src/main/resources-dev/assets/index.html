@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="UTF-8">
+	<head>
+		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+		<meta charset="utf-8" />
+		<title>Letl - REST元数据 Admin</title>
+
+		<meta name="description" content="Dynamic tables and grids using jqGrid plugin" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+
+		<!-- bootstrap & fontawesome -->
+		<link rel="stylesheet" href="/ace/css/bootstrap.min.css" />
+		<link rel="stylesheet" href="/ace/css/font-awesome.min.css" />
+
+		<!-- page specific plugin styles -->
+		<link rel="stylesheet" href="/ace/css/jquery-ui.min.css" />
+		<link rel="stylesheet" href="/ace/css/datepicker.css" />
+		<link rel="stylesheet" href="/ace/css/ui.jqgrid.css" />
+
+		<!-- text fonts -->
+		<link rel="stylesheet" href="/ace/css/ace-fonts.css" />
+
+		<!-- ace styles -->
+		<link rel="stylesheet" href="/ace/css/ace.min.css" id="main-ace-style" />
+
+		<!--[if lte IE 9]>
+			<link rel="stylesheet" href="/ace/css/ace-part2.min.css" />
+		<![endif]-->
+		<link rel="stylesheet" href="/ace/css/ace-skins.min.css" />
+		<link rel="stylesheet" href="/ace/css/ace-rtl.min.css" />
+
+		<!--[if lte IE 9]>
+		  <link rel="stylesheet" href="/ace/css/ace-ie.min.css" />
+		<![endif]-->
+
+		<!-- inline styles related to this page -->
+
+		<!-- ace settings handler -->
+		<script src="/ace/js/ace-extra.min.js"></script>
+
+		<!-- HTML5shiv and Respond.js for IE8 to support HTML5 elements and media queries -->
+
+		<!--[if lte IE 8]>
+		<script src="/ace/js/html5shiv.min.js"></script>
+		<script src="/ace/js/respond.min.js"></script>
+		<![endif]-->
+	</head>
+
+	<body class="no-skin">
+		<!-- #section:basics/navbar.layout -->
+		<!-- /section:basics/navbar.layout -->
+		<div class="main-container" id="main-container">
+			<script type="text/javascript">
+				try{ace.settings.check('main-container' , 'fixed')}catch(e){}
+			</script>
+
+
+			<!-- /section:basics/sidebar -->
+			<div class="main-content">			
+				<!-- /section:basics/content.breadcrumbs -->
+				<div class="page-content">
+
+					<!-- /section:settings.box -->
+					<div class="page-content-area">
+
+						<div class="row">
+							<div class="col-xs-12">
+
+								<table id="grid-table"></table>
+
+								<div id="grid-pager"></div>
+
+								<script type="text/javascript">
+									var $path_base = "..";//in Ace demo this will be used for editurl parameter
+								</script>
+
+								<!-- PAGE CONTENT ENDS -->
+							</div><!-- /.col -->
+						</div><!-- /.row -->
+					</div><!-- /.page-content-area -->
+				</div><!-- /.page-content -->
+			</div><!-- /.main-content -->
+
+			<div class="footer">
+				<div class="footer-inner">
+					<!-- #section:basics/footer -->
+
+
+					<!-- /section:basics/footer -->
+				</div>
+			</div>
+
+			<a href="#" id="btn-scroll-up" class="btn-scroll-up btn btn-sm btn-inverse">
+				<i class="ace-icon fa fa-angle-double-up icon-only bigger-110"></i>
+			</a>
+		</div><!-- /.main-container -->
+
+		<!-- basic scripts -->
+
+		<!--[if !IE]> -->
+		<script type="text/javascript">
+			window.jQuery || document.write("<script src='/ace/js/jquery.min.js'>"+"<"+"/script>");
+		</script>
+
+		<!-- <![endif]-->
+
+		<!--[if IE]>
+<script type="text/javascript">
+ window.jQuery || document.write("<script src='/ace/js/jquery1x.min.js'>"+"<"+"/script>");
+</script>
+<![endif]-->
+		<script type="text/javascript">
+			if('ontouchstart' in document.documentElement) document.write("<script src='/ace/js/jquery.mobile.custom.min.js'>"+"<"+"/script>");
+		</script>
+		<script src="/ace/js/bootstrap.min.js"></script>
+
+		<!-- page specific plugin scripts -->
+		<script src="/ace/js/date-time/bootstrap-datepicker.min.js"></script>
+		<script src="/ace/js/jqGrid/jquery.jqGrid.min.js"></script>
+		<script src="/ace/js/jqGrid/i18n/grid.locale-cn.js"></script>
+
+		<!-- ace scripts -->
+		<script src="/ace/js/ace-elements.min.js"></script>
+		<script src="/ace/js/ace.min.js"></script>
+
+		<!-- inline scripts related to this page -->
+		<script type="text/javascript">
+
+			
+			jQuery(function($) {
+				var grid_selector = "#grid-table";
+				var pager_selector = "#grid-pager";
+				
+				//resize to fit page size
+				$(window).on('resize.jqGrid', function () {
+					$(grid_selector).jqGrid( 'setGridWidth', $(".page-content").width() );
+			    })
+				//resize on sidebar collapse/expand
+				var parent_column = $(grid_selector).closest('[class*="col-"]');
+				$(document).on('settings.ace.jqGrid' , function(ev, event_name, collapsed) {
+					if( event_name === 'sidebar_collapsed' || event_name === 'main_container_fixed' ) {
+						//setTimeout is for webkit only to give time for DOM changes and then redraw!!!
+						setTimeout(function() {
+							$(grid_selector).jqGrid( 'setGridWidth', parent_column.width() );
+						}, 0);
+					}
+			    })
+			
+			
+			
+				jQuery(grid_selector).jqGrid({
+					//direction: "rtl",
+			
+					//subgrid options
+					subGrid : true,
+					//subGridModel: [{ name : ['No','Item Name','Qty'], width : [55,200,80] }],
+					//datatype: "xml",
+					subGridOptions : {
+						plusicon : "ace-icon fa fa-plus center bigger-110 blue",
+						minusicon  : "ace-icon fa fa-minus center bigger-110 blue",
+						openicon : "ace-icon fa fa-chevron-right center orange"
+					},
+					//for this example we are using local data
+					subGridRowExpanded: function (subgridDivId, rowId) {
+						var subgridTableId = subgridDivId + "_t";
+						$("#" + subgridDivId).html("<table id='" + subgridTableId + "'></table>");
+						$("#" + subgridTableId).jqGrid({
+							datatype: 'local',
+							data: (function(){
+								var rowData = $('#grid-table').jqGrid('getRowData',rowId);
+								var sm=rowData.metrics;
+								if(sm) {
+									var smarr=sm.split(",");
+									var kpdata=[];
+									$.each(smarr,function(k,v){
+										var kparr=v.split(":");
+										kpdata.push({"key":kparr[0],"path":kparr[1]});
+									});
+									return kpdata;
+								}
+								return [];
+							})(),
+							colNames: ['指标名称','抽取路径'],
+							colModel: [
+								{ name: 'key', width: 300 },
+								{ name: 'path', width: 300 },
+							]
+						});
+					},
+					
+			
+					url: "/resthunter/metalist",
+					jsonReader : {repeatitems : false, userdata : "userdata"},
+					datatype: "json",
+					height: "100%",
+					colNames:[ '','ID','元数据类型','应用名称','应用类型', '调用URL','监控指标'],
+					colModel:[
+						{name:'testUrl',index:'', width:30, sorttype:"string", editable: false,formatter:function(cellvalue, options, rowObject){
+						  console.log(rowObject.id);
+						  return "<a href=\"/resthunter/test?id="+rowObject.id+"\" style='text-decoration:underline;color:blue' target=_blank>测试</a>";
+						}},					
+						{name:'id',index:'id', width:70, sorttype:"string", editable: true,editoptions:{size:"80",maxlength:"80"}},
+						{name:'logtype',index:'logtype',width:30, editable:true,edittype:"select",editoptions:{value:{"REST":"REST","FLUME":"FLUME"}}},
+						{name:'appname',index:'appname', width:70,editable: true,editoptions:{size:"80",maxlength:"80"}},
+						{name:'apptype',index:'apptype', width:30, editable: true,edittype:"select",editoptions:{value:{"ES":"ES","STORM":"STORM","YARN":"YARN","ZOOKEEPER":"ZOOKEEPER"}}},
+						{name:'url',index:'url', width:200, editable: true,editoptions:{size:"80",maxlength:"1000"}},
+						{name:'metrics',index:'metrics', width:150, sortable:false,editable: true,edittype:"custom", edittype:"custom", editoptions:{custom_element: multiFormItem, custom_value: multiFormItemValue}} 
+					], 
+			
+					viewrecords : true,
+					rowNum:10,
+					rowList:[10,20,30],
+					pager : pager_selector,
+					altRows: true,
+					//toppager: true,
+					
+					multiselect: true,
+					//multikey: "ctrlKey",
+			        multiboxonly: true,
+			
+					loadComplete : function(jdata) {
+						var table = this;
+						setTimeout(function(){
+							styleCheckbox(table);
+							
+							updateActionIcons(table);
+							updatePagerIcons(table);
+							enableTooltips(table);
+						}, 0);
+					},
+			
+					editurl: "/resthunter/create",//nothing is saved
+					caption: "REST元数据"
+			
+					//,autowidth: true,
+			
+			
+					/**
+					,
+					grouping:true, 
+					groupingView : { 
+						 groupField : ['name'],
+						 groupDataSorted : true,
+						 plusicon : 'fa fa-chevron-down bigger-110',
+						 minusicon : 'fa fa-chevron-up bigger-110'
+					},
+					caption: "Grouping"
+					*/
+			
+				});
+				$(window).triggerHandler('resize.jqGrid');//trigger window resize to make the grid get the correct size
+				
+				
+			
+				//enable search/filter toolbar
+				//jQuery(grid_selector).jqGrid('filterToolbar',{defaultSearch:true,stringResult:true});
+				//jQuery(grid_selector).filterToolbar({});
+			
+			
+				//switch element when editing inline
+				function aceSwitch( cellvalue, options, cell ) {
+					setTimeout(function(){
+						$(cell) .find('input[type=checkbox]')
+							.addClass('ace ace-switch ace-switch-5')
+							.after('<span class="lbl"></span>');
+					}, 0);
+				}
+				//enable datepicker
+				function pickDate( cellvalue, options, cell ) {
+					setTimeout(function(){
+						$(cell) .find('input[type=text]')
+								.datepicker({format:'yyyy-mm-dd' , autoclose:true}); 
+					}, 0);
+				}
+			
+			
+				//navButtons
+				jQuery(grid_selector).jqGrid('navGrid',pager_selector,
+					{ 	//navbar options
+						edit: true,
+						editicon : 'ace-icon fa fa-pencil blue',
+						add: true,
+						addicon : 'ace-icon fa fa-plus-circle purple',
+						del: true,
+						delicon : 'ace-icon fa fa-trash-o red',
+						search: false,
+						searchicon : 'ace-icon fa fa-search orange',
+						refresh: true,
+						refreshicon : 'ace-icon fa fa-refresh green',
+						view: true,
+						viewicon : 'ace-icon fa fa-search-plus grey',
+					},
+					{
+						//edit record form
+						//closeAfterEdit: true,
+						url:"/resthunter/create",
+						mtype:"POST",
+						width: 700,
+						recreateForm: true,
+						beforeShowForm : function(e) {						    
+							var form = $(e[0]);
+							form.closest('.ui-jqdialog').find('.ui-jqdialog-titlebar').wrapInner('<div class="widget-header" />')
+							style_edit_form(form);
+						}
+					},
+					{
+						//new record form
+						url:"/resthunter/create",
+						mtype:"POST",						
+						width: 700,
+						closeAfterAdd: true,
+						recreateForm: true,
+						viewPagerButtons: false,
+						beforeShowForm : function(e) {
+							var form = $(e[0]);
+							form.closest('.ui-jqdialog').find('.ui-jqdialog-titlebar')
+							.wrapInner('<div class="widget-header" />')
+							style_edit_form(form);
+						}
+					},
+					{
+						//delete record form
+						url:"/resthunter/delete",
+						mtype:"POST",						
+						recreateForm: true,
+						beforeShowForm : function(e) {
+							var form = $(e[0]);
+							if(form.data('styled')) return false;
+							
+							form.closest('.ui-jqdialog').find('.ui-jqdialog-titlebar').wrapInner('<div class="widget-header" />')
+							style_delete_form(form);
+							
+							form.data('styled', true);
+						}
+					},
+					{
+						//search form
+						recreateForm: true,
+						afterShowSearch: function(e){
+							var form = $(e[0]);
+							form.closest('.ui-jqdialog').find('.ui-jqdialog-title').wrap('<div class="widget-header" />')
+							style_search_form(form);
+						},
+						afterRedraw: function(){
+							style_search_filters($(this));
+						}
+						,
+						multipleSearch: true,
+						
+						multipleGroup:true,
+						showQuery: true
+						
+					},
+					{
+						//view record form
+						recreateForm: true,
+						width: 700,
+						beforeShowForm: function(e){
+							var form = $(e[0]);
+							form.closest('.ui-jqdialog').find('.ui-jqdialog-title').wrap('<div class="widget-header" />');
+							form.closest('.ui-jqdialog-content').find(".form-view-label").css("width",100);
+						}
+					}
+				)
+			
+			
+				
+				function style_edit_form(form) {
+					//enable datepicker on "sdate" field and switches for "stock" field
+					form.width=500
+					form.find('input[name=sdate]').datepicker({format:'yyyy-mm-dd' , autoclose:true})
+						.end().find('input[name=stock]')
+							.addClass('ace ace-switch ace-switch-5').after('<span class="lbl"></span>');
+							   //don't wrap inside a label element, the checkbox value won't be submitted (POST'ed)
+							  //.addClass('ace ace-switch ace-switch-5').wrap('<label class="inline" />').after('<span class="lbl"></span>');
+			
+					//update buttons classes
+					var buttons = form.next().find('.EditButton .fm-button');
+					buttons.addClass('btn btn-sm').find('[class*="-icon"]').hide();//ui-icon, s-icon
+					buttons.eq(0).addClass('btn-primary').prepend('<i class="ace-icon fa fa-check"></i>');
+					buttons.eq(1).prepend('<i class="ace-icon fa fa-times"></i>')
+					
+					buttons = form.next().find('.navButton a');
+					buttons.find('.ui-icon').hide();
+					buttons.eq(0).append('<i class="ace-icon fa fa-chevron-left"></i>');
+					buttons.eq(1).append('<i class="ace-icon fa fa-chevron-right"></i>');		
+				}
+			
+				function style_delete_form(form) {
+					var buttons = form.next().find('.EditButton .fm-button');
+					buttons.addClass('btn btn-sm btn-white btn-round').find('[class*="-icon"]').hide();//ui-icon, s-icon
+					buttons.eq(0).addClass('btn-danger').prepend('<i class="ace-icon fa fa-trash-o"></i>');
+					buttons.eq(1).addClass('btn-default').prepend('<i class="ace-icon fa fa-times"></i>')
+				}
+				
+				function style_search_filters(form) {
+					form.find('.delete-rule').val('X');
+					form.find('.add-rule').addClass('btn btn-xs btn-primary');
+					form.find('.add-group').addClass('btn btn-xs btn-success');
+					form.find('.delete-group').addClass('btn btn-xs btn-danger');
+				}
+				function style_search_form(form) {
+					var dialog = form.closest('.ui-jqdialog');
+					var buttons = dialog.find('.EditTable')
+					buttons.find('.EditButton a[id*="_reset"]').addClass('btn btn-sm btn-info').find('.ui-icon').attr('class', 'ace-icon fa fa-retweet');
+					buttons.find('.EditButton a[id*="_query"]').addClass('btn btn-sm btn-inverse').find('.ui-icon').attr('class', 'ace-icon fa fa-comment-o');
+					buttons.find('.EditButton a[id*="_search"]').addClass('btn btn-sm btn-purple').find('.ui-icon').attr('class', 'ace-icon fa fa-search');
+				}
+				
+				function beforeDeleteCallback(e) {
+					var form = $(e[0]);
+					if(form.data('styled')) return false;
+					
+					form.closest('.ui-jqdialog').find('.ui-jqdialog-titlebar').wrapInner('<div class="widget-header" />')
+					style_delete_form(form);
+					
+					form.data('styled', true);
+				}
+				
+				function beforeEditCallback(e) {
+					var form = $(e[0]);
+					form.closest('.ui-jqdialog').find('.ui-jqdialog-titlebar').wrapInner('<div class="widget-header" />')
+					style_edit_form(form);
+				}
+			
+			
+			
+				//it causes some flicker when reloading or navigating grid
+				//it may be possible to have some custom formatter to do this as the grid is being created to prevent this
+				//or go back to default browser checkbox styles for the grid
+				function styleCheckbox(table) {
+				/**
+					$(table).find('input:checkbox').addClass('ace')
+					.wrap('<label />')
+					.after('<span class="lbl align-top" />')
+			
+			
+					$('.ui-jqgrid-labels th[id*="_cb"]:first-child')
+					.find('input.cbox[type=checkbox]').addClass('ace')
+					.wrap('<label />').after('<span class="lbl align-top" />');
+				*/
+				}
+				
+			
+				//unlike navButtons icons, action icons in rows seem to be hard-coded
+				//you can change them like this in here if you want
+				function updateActionIcons(table) {
+					/**
+					var replacement = 
+					{
+						'ui-ace-icon fa fa-pencil' : 'ace-icon fa fa-pencil blue',
+						'ui-ace-icon fa fa-trash-o' : 'ace-icon fa fa-trash-o red',
+						'ui-icon-disk' : 'ace-icon fa fa-check green',
+						'ui-icon-cancel' : 'ace-icon fa fa-times red'
+					};
+					$(table).find('.ui-pg-div span.ui-icon').each(function(){
+						var icon = $(this);
+						var $class = $.trim(icon.attr('class').replace('ui-icon', ''));
+						if($class in replacement) icon.attr('class', 'ui-icon '+replacement[$class]);
+					})
+					*/
+				}
+				
+				//replace icons with FontAwesome icons like above
+				function updatePagerIcons(table) {
+					var replacement = 
+					{
+						'ui-icon-seek-first' : 'ace-icon fa fa-angle-double-left bigger-140',
+						'ui-icon-seek-prev' : 'ace-icon fa fa-angle-left bigger-140',
+						'ui-icon-seek-next' : 'ace-icon fa fa-angle-right bigger-140',
+						'ui-icon-seek-end' : 'ace-icon fa fa-angle-double-right bigger-140'
+					};
+					$('.ui-pg-table:not(.navtable) > tbody > tr > .ui-pg-button > .ui-icon').each(function(){
+						var icon = $(this);
+						var $class = $.trim(icon.attr('class').replace('ui-icon', ''));
+						
+						if($class in replacement) icon.attr('class', 'ui-icon '+replacement[$class]);
+					})
+				}
+			
+				function enableTooltips(table) {
+					$('.navtable .ui-pg-button').tooltip({container:'body'});
+					$(table).find('.ui-pg-div').tooltip({container:'body'});
+				}
+			
+				//var selr = jQuery(grid_selector).jqGrid('getGridParam','selrow');
+			
+				$(document).on('ajaxloadstart', function(e) {
+					$(grid_selector).jqGrid('GridUnload');
+					$('.ui-jqdialog').remove();
+				});
+				
+
+
+				function multiFormItem(value, options) {
+					var templateContainer=$("<div class=\"widget-box\">\n" +
+					"  <div class=\"widget-body\">\n" + 
+					"    <div class=\"widget-main\">\n" + 
+					"    </div>\n" + 
+					"</div>");
+					if(!value) value=":";
+					var vArr=value.split(",");
+					$.each(vArr,function(k,v){
+						var templateFormContainer=$("      <form class=\"form-inline\">\n" + 
+						"        <label class=\"inline\">\n" + 
+						"          <span class=\"lbl\">指标主键：</span>\n" + 
+						"        </label>\n" + 
+						"        <input type=\"text\" class=\"form-control\" name=\"key\" placeholder=\"key_metric_name\" />\n" + 
+						"        <label class=\"inline\">\n" + 
+						"          <span class=\"lbl\">抽取路径：</span>\n" + 
+						"        </label>\n" + 
+						"        <input type=\"text\" class=\"form-control\" name=\"path\" placeholder=\"JsonPath Of Metric\"  />\n" + 
+						"        <button type=\"button\" class=\"btn btn-info btn-sm\">\n" + 
+						"          <i class=\"ace-icon fa fa-plus-circle purple\"></i>\n" + 
+						"        </button>\n" + 
+						"        <button type=\"button\" class=\"btn btn-info btn-sm\">\n" + 
+						"          <i class=\"ace-icon fa fa-trash-o red\"></i>\n" + 
+						"        </button>\n" + 
+						"      </form>\n");
+						kp=v.split(":");
+						templateFormContainer.find(":input[name='key']").val(kp[0]);
+						templateFormContainer.find(":input[name='path']").val(kp[1]);
+						
+						var eBtns=templateFormContainer.find("button");
+						var eTemplate=templateContainer.find(".widget-main");
+						$(eBtns[0]).click(function(){
+							eTemplate.append(templateFormContainer.clone(true));
+						})
+						$(eBtns[1]).click(function(){
+							if(eTemplate.find(".form-inline").length>1) $(this).closest(".form-inline").remove();
+						})
+						eTemplate.append(templateFormContainer);					
+					});
+                    return templateContainer;
+				};
+
+				function multiFormItemValue(elem, operation, value) {
+					if (operation === 'get') {
+						var kpvalue="";
+					    $('.form-inline',elem).each(function(k,v){
+								var key=$(v).find(":input[name='key']").val();						
+								var path=$(v).find(":input[name='path']").val();
+								if(key && path) kpvalue+=key+":"+path+",";
+							}
+						);
+						if(kpvalue.lastIndexOf(",")==kpvalue.length-1) kpvalue=kpvalue.substring(0,kpvalue.length-1);
+						return kpvalue;
+					} else if (operation === 'set') {
+						var formTemplate=$('.form-inline',elem)[0];					
+						var container=$(elem);
+						$('.form-inline',elem).each(function(k,v){v.remove();});
+						if(!value) value=":";
+						var vArr=value.split(",");
+						$.each(vArr,function(k,v){
+							var formClone= $(formTemplate).clone(true);							
+							kp=v.split(":");
+							formClone.find(":input[name='key']").val(kp[0]);
+							formClone.find(":input[name='path']").val(kp[1]);
+							container.append(formClone);
+						});					
+					}
+				};				
+			});
+		</script>
+	</body>
+</html>
