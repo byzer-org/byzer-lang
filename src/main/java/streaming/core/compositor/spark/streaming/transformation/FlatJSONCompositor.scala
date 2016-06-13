@@ -36,9 +36,13 @@ class FlatJSONCompositor[T] extends Compositor[T] {
       _jsonKeyPath.map { kPath =>
         val key = kPath._1
         val path = kPath._2
-        val value = JSONPath.read(line, path).asInstanceOf[Any]
-        (key, value)
-      }
+        try {
+          (key,JSONPath.read(line, path).asInstanceOf[Any])
+        } catch {
+          case e:Exception => ("", "")
+        }
+
+      }.filter(f=> !f._1.isEmpty)
     }
     List(newDstream.asInstanceOf[T])
   }
