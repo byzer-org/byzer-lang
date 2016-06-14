@@ -10,7 +10,8 @@ object LocalSparkApp {
       "-streaming.name", "god",
       "-streaming.rest", "true",
       "-streaming.platform", "spark",
-      "-streaming.spark.service", "true"
+      "-streaming.spark.service", "true",
+      "-streaming.driver.port", "9004"
     ))
   }
 }

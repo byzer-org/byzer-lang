@@ -41,8 +41,9 @@ serviceframework:
                   enable: true
 ###############http config##################
 http:
-    port: 9003
     disable: false
+    class:
+        port: streaming.common.SpecificPortGenerator
 thrift:
     disable: true
 dubbo:
