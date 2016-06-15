@@ -1,13 +1,11 @@
-package streaming.nginx
+package streaming.common.nginx.parser
 
-import org.joda.time.DateTime
-import org.joda.time.format.DateTimeFormat
 
 import scala.collection.mutable.ArrayBuffer
 
 /**
-  * Created by allwefantasy on 1/28/16.
-  */
+ * Created by allwefantasy on 1/28/16.
+ */
 object NginxParser {
   def parse(line: String) = {
     Extractor.parse(line)
@@ -17,13 +15,6 @@ object NginxParser {
 object Extractor {
   private def isPosValid(pos: Position) = {
     pos.clzz != "-" && pos.start > -1 && pos.end > -1
-  }
-
-  val getKeepPosition = List((0 to 11), (13 to 13), (15 to 15), (26 to 26)).flatMap(f => f.map(k => k)).toList
-
-  def filterBlocks(positionsKeep: List[Int], items: ArrayBuffer[String]) = {
-    val time = DateTime.parse(items(2).substring(1, items(2).length - 1), DateTimeFormat.forPattern("dd/MMM/yyyy:HH:mm:ss Z")).toString("yyyyMMddHH")
-    (time, positionsKeep.map(f => items(f)).mkString(" "))
   }
 
   def parse(line: String) = {
@@ -180,14 +171,5 @@ class OtherExtractor {
     return Position(-1, -1, "-")
   }
 }
-
-//class SpaceExtractor {
-//  var Space_START = false
-//  var tempPos = -1
-//
-//  def extract(i: Int, line: String): Position = {
-//
-//  }
-//}
 
 case class Position(start: Int, end: Int, clzz: String)

@@ -45,8 +45,12 @@ class SQLParquetOutputCompositor[T] extends Compositor[T] with CompositorHelper 
     val _cfg = cfg
     val _mode = if (mode.isDefined) mode.get else "ErrorIfExists"
     dstream.foreachRDD { rdd =>
-      val df = func(rdd)
-      df.write.options(_cfg).mode(SaveMode.valueOf(_mode)).parquet(_resource)
+      try {
+        val df = func(rdd)
+        df.write.options(_cfg).mode(SaveMode.valueOf(_mode)).parquet(_resource)
+      } catch {
+        case e: Exception => e.printStackTrace()
+      }
     }
     params.remove("sql")
     new util.ArrayList[T]()

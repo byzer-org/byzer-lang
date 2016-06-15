@@ -7,8 +7,6 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.streaming.dstream.DStream
 import serviceframework.dispatcher.{Compositor, Processor, Strategy}
-import streaming.core.compositor.spark.hdfs.HDFSOperator
-import streaming.core.strategy.platform.SparkStreamingRuntime
 
 
 class SQLPrintOutputCompositor[T] extends Compositor[T] {
@@ -24,8 +22,13 @@ class SQLPrintOutputCompositor[T] extends Compositor[T] {
     val dstream = middleResult.get(0).asInstanceOf[DStream[String]]
     val func = params.get("_func_").asInstanceOf[(RDD[String]) => DataFrame]
     dstream.foreachRDD { rdd =>
-      val df = func(rdd)
-      df.show()
+      try {
+        val df = func(rdd)
+        df.show()
+      } catch {
+        case e: Exception =>  e.printStackTrace()
+      }
+
     }
     params.remove("sql")
     new util.ArrayList[T]()

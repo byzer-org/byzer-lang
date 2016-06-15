@@ -50,8 +50,12 @@ class SQLOutputCompositor[T] extends Compositor[T] with CompositorHelper with Pa
     val _mode = if (mode.isDefined) mode.get else "ErrorIfExists"
     val _format = format.get
     dstream.foreachRDD { rdd =>
-      val df = func(rdd)
-      df.write.options(_cfg).mode(SaveMode.valueOf(_mode)).format(_format).save(_resource)
+      try {
+        val df = func(rdd)
+        df.write.options(_cfg).mode(SaveMode.valueOf(_mode)).format(_format).save(_resource)
+      } catch {
+        case e: Exception => e.printStackTrace()
+      }
     }
     params.remove("sql")
     new util.ArrayList[T]()
