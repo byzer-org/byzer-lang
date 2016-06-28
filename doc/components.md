@@ -201,6 +201,7 @@ if timeFormat configured,then the index name will be es.resource_yyyyMMdd
 ```
 convert java map to JSON. So we can use `JSONTableCompositor` to register table.
 
+
 ### SparkStreamingStrategy (strategy)
 
 ```

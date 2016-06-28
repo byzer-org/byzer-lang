@@ -34,7 +34,7 @@ serviceframework:
     template:
         loader:
              classpath:
-                  enable: true
+                  enable: false
     static:
         loader:
              classpath:

@@ -1,5 +1,7 @@
 package streaming.core
 
+import org.apache.velocity.app.Velocity
+
 /**
  * 5/11/16 WilliamZhu(allwefantasy@gmail.com)
  */
