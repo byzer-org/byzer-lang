@@ -36,8 +36,8 @@ class RestController extends ApplicationController {
       }.toMap + loaderClzz
       sparkRuntime.operator.createTable(tableToPath._2, tableToPath._1, newParams)
     }
-
-    val result = sparkRuntime.operator.runSQL(param("sql")).mkString(",")
+    val sql=if(param("sql").contains(" limit ")) param("sql") else param("sql")+" limit 1000"
+    val result = sparkRuntime.operator.runSQL(sql).mkString(",")
     if(param("resultType","html")=="json")
       render(200, "["+result+"]", ViewType.json)
     else
