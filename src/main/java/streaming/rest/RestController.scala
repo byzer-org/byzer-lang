@@ -38,10 +38,10 @@ class RestController extends ApplicationController {
     }
 
     val result = sparkRuntime.operator.runSQL(param("sql")).mkString(",")
-
-    renderHtml(200, "/rest/sqlui-result.vm", WowCollections.map(
-      "feeds", result
-    ))
+    if(param("resultType","html")=="json")
+      render(200, result, ViewType.json)
+    else
+      renderHtml(200, "/rest/sqlui-result.vm", WowCollections.map("feeds", result))
   }
 
   @At(path = Array("/sqlui"), types = Array(GET))
