@@ -24,7 +24,7 @@ class SQLSourceCompositor[T] extends Compositor[T] with CompositorHelper {
   override def result(alg: util.List[Processor[T]], ref: util.List[Strategy[T]], middleResult: util.List[T], params: util.Map[Any, Any]): util.List[T] = {
     val sc = sparkContext(params)
     val df = SQLContext.getOrCreate(sc).read.format(_configParams(0)("format").toString).options(
-      (_configParams(0) - "format").map(f => (f._1.asInstanceOf[String], f._2.asInstanceOf[String])).toMap).load()
+      (_configParams(0) - "format" - "path").map(f => (f._1.asInstanceOf[String], f._2.asInstanceOf[String])).toMap).load(_configParams(0)("path").toString)
     List(df.toJSON.asInstanceOf[T])
   }
 }
