@@ -21,7 +21,7 @@ class RestController extends ApplicationController {
     render(200, "ok")
   }
 
-  @At(path = Array("/runtime/spark/sql"), types = Array(POST))
+  @At(path = Array("/runtime/spark/sql"), types = Array(GET,POST))
   def sql = {
     if (!runtime.isInstanceOf[SparkRuntime]) render(400, "only support spark application")
     val sparkRuntime = runtime.asInstanceOf[SparkRuntime]
@@ -36,12 +36,12 @@ class RestController extends ApplicationController {
       }.toMap + loaderClzz
       sparkRuntime.operator.createTable(tableToPath._2, tableToPath._1, newParams)
     }
-
-    val result = sparkRuntime.operator.runSQL(param("sql")).mkString(",")
-
-    renderHtml(200, "/rest/sqlui-result.vm", WowCollections.map(
-      "feeds", result
-    ))
+    val sql=if(param("sql").contains(" limit ")) param("sql") else param("sql")+" limit 1000"
+    val result = sparkRuntime.operator.runSQL(sql).mkString(",")
+    if(param("resultType","html")=="json")
+      render(200, "["+result+"]", ViewType.json)
+    else
+      renderHtml(200, "/rest/sqlui-result.vm", WowCollections.map("feeds", result))
   }
 
   @At(path = Array("/sqlui"), types = Array(GET))
