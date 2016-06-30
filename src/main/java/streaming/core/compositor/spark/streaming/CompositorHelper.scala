@@ -1,7 +1,8 @@
 package streaming.core.compositor.spark.streaming
 
 import java.util
-import streaming.core.strategy.platform.SparkStreamingRuntime
+
+import streaming.core.strategy.platform.{SparkRuntime, SparkStreamingRuntime}
 
 import scala.collection.JavaConversions._
 
@@ -16,8 +17,20 @@ trait CompositorHelper {
     } else None
   }
 
-  def sparkStreamingRuntime(params:util.Map[Any,Any]) = {
+  def sparkStreamingRuntime(params: util.Map[Any, Any]) = {
     params.get("_runtime_").asInstanceOf[SparkStreamingRuntime]
+  }
+
+  def sparkRuntime(params: util.Map[Any, Any]) = {
+    params.get("_runtime_").asInstanceOf[SparkRuntime]
+  }
+
+  def sparkContext(params: util.Map[Any, Any]) = {
+    params.get("_runtime_") match {
+      case a: SparkStreamingRuntime => a.streamingContext.sparkContext
+      case b: SparkRuntime => b.sparkContext
+      case _ => throw new RuntimeException("get _runtime_ fail")
+    }
   }
 
 }
