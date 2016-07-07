@@ -5,8 +5,13 @@ import java.util.{List => JList, Map => JMap}
 
 import net.csdn.ServiceFramwork
 import net.csdn.bootstrap.Application
+import net.csdn.common.logging.Loggers
+import net.csdn.common.network.NetworkUtils.StackType
+import net.csdn.common.settings.ImmutableSettings
+import net.csdn.common.settings.ImmutableSettings._
 import serviceframework.dispatcher.StrategyDispatcher
 import streaming.common.ParamsUtil
+import streaming.common.zk.{ZKClient, ZKConfUtil}
 import streaming.core.strategy.JobStrategy
 import streaming.core.{Dispatcher, StreamingApp}
 
@@ -21,6 +26,8 @@ import scala.collection.mutable.ArrayBuffer
 class PlatformManager {
   self =>
   val config = new AtomicReference[ParamsUtil]()
+
+  val logger = Loggers.getLogger(classOf[PlatformManager])
 
   def findDispatcher(contextParams: JMap[Any, Any]): StrategyDispatcher[Any] = {
     Dispatcher.dispatcher(contextParams)
@@ -45,6 +52,31 @@ class PlatformManager {
     ServiceFramwork.enableNoThreadJoin()
     Application.main(Array())
   }
+
+  def registerToZk(params: ParamsUtil) = {
+    val settingsB: ImmutableSettings.Builder = settingsBuilder()
+    settingsB.put(ServiceFramwork.mode + ".zk.conf_root_dir", params.getParam("streaming.zk.conf_root_dir"))
+    settingsB.put(ServiceFramwork.mode + ".zk.servers", params.getParam("streaming.zk.servers"))
+    zk = new ZKClient(settingsB.build())
+    val client = zk.zkConfUtil.client
+
+    if (!client.exists(ZKConfUtil.CONF_ROOT_DIR)) {
+      client.createPersistent(ZKConfUtil.CONF_ROOT_DIR, true);
+    }
+
+    if (client.exists(ZKConfUtil.CONF_ROOT_DIR + "/address")) {
+      throw new RuntimeException(s"${ZKConfUtil.CONF_ROOT_DIR} already exits in zookeeper")
+    }
+    val hostAddress = net.csdn.common.network.NetworkUtils.getFirstNonLoopbackAddress(StackType.IPv4).getHostAddress
+    val port = params.getParam("streaming.driver.port", "9003")
+    logger.info(s"register ip and port to zookeeper:\n" +
+      s"zk=[${params.getParam("streaming.zk.servers")}]\n" +
+      s"${ZKConfUtil.CONF_ROOT_DIR}/address=${hostAddress}:${port}")
+
+    client.createEphemeral(ZKConfUtil.CONF_ROOT_DIR + "/address", hostAddress + ":" + port)
+  }
+
+  var zk: ZKClient = null
 
 
   def run(_params: ParamsUtil, reRun: Boolean = false) = {
@@ -86,7 +118,9 @@ class PlatformManager {
     if (params.getBooleanParam("streaming.rest", false) && !reRun) {
       startRestServer
     }
-
+    if (params.hasParam("streaming.zk.conf_root_dir") && !reRun) {
+      registerToZk(params)
+    }
 
     val jobCounter = new AtomicInteger(0)
     jobs.foreach {
