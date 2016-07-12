@@ -48,6 +48,8 @@ assembling components(eg. SQL Component) in configuration file.
 * [Three steps to run your first application](https://github.com/allwefantasy/streamingpro/wiki/Three-steps-to-run-your-first-application)
 * [三步跑起你的第一个应用](https://github.com/allwefantasy/streamingpro/wiki/三步跑起你的第一个应用)
 * [利用StreamingPro实现SQL-交互式查询](https://github.com/allwefantasy/streamingpro/wiki/利用StreamingPro实现SQL-交互式查询)
+* [使用Spark SQL 构建流式处理程序](http://www.jianshu.com/p/d10edd6c7cf9)
+* [使用Spark SQL构建批处理程序](http://www.jianshu.com/p/7f6cb8eaadef)
 * [Properties](https://github.com/allwefantasy/streamingpro/wiki/Properties)
 * [Build](https://github.com/allwefantasy/streamingpro/wiki/Build)
 * [Run your first application](https://github.com/allwefantasy/streamingpro/wiki/Run-your-first-application)
