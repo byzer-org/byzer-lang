@@ -1,5 +1,3 @@
-# StreamingPro
-
 Declarative workflows for building Spark Streaming  
 
 ## Spark Streaming 
@@ -15,8 +13,8 @@ represented internally as a sequence of RDDs.
 
 ## StreamingPro
 
-StreamingPro is not a complete
-application, but rather  a extensible and programmable framework for spark streaming (also include spark,storm) 
+StreamingPro is not only a complete
+application, but also  a extensible and programmable framework for spark streaming (also include spark,storm) 
 that can easily be used to build your streaming application.
 
 
