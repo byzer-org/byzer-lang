@@ -10,10 +10,27 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <scala.version>2.10.3</scala.version>
         <scala.2.version>2.10</scala.2.version>
-        <spark.version>1.6.1</spark.version>
+        <spark.version>1.5.1</spark.version>
     </properties>
 
     <profiles>
+
+        <profile>
+            <id>spark-1.5.1</id>
+            <!-- default -->
+            <properties>
+                <spark.version>1.5.1</spark.version>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>spark-1.6.1</id>
+            <!-- default -->
+            <properties>
+                <spark.version>1.6.1</spark.version>
+            </properties>
+        </profile>
+
         <profile>
             <id>online</id>
             <properties>

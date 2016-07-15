@@ -3,7 +3,8 @@ package streaming.core.compositor.spark.transformation
 import java.util
 
 import org.apache.log4j.Logger
-import org.apache.spark.sql.DataFrame
+import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.{DataFrame, SQLContext}
 import serviceframework.dispatcher.{Compositor, Processor, Strategy}
 import streaming.core.compositor.spark.streaming.CompositorHelper
 import streaming.core.strategy.ParamsValidator
@@ -29,13 +30,20 @@ class JSONTableCompositor[T] extends Compositor[T] with CompositorHelper with Pa
   override def result(alg: util.List[Processor[T]], ref: util.List[Strategy[T]], middleResult: util.List[T], params: util.Map[Any, Any]): util.List[T] = {
     val _tableName = tableName.get
 
+    val newDF = middleResult.get(0) match {
+      case rdd: RDD[String] =>
+        val sqlContext = SQLContext.getOrCreate(rdd.sparkContext)
+        import sqlContext.implicits._
+        rdd.toDF()
+
+      case df: DataFrame => df
+    }
+
     params.put("_table_", (df: DataFrame) => {
       df.registerTempTable(_tableName)
       df.sqlContext
     })
-
-    middleResult
-
+    List(newDF.asInstanceOf[T])
   }
 
   override def valid(params: util.Map[Any, Any]): (Boolean, String) = {
