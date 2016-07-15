@@ -42,14 +42,14 @@ class SQLOutputCompositor[T] extends Compositor[T] with CompositorHelper with Pa
   }
 
   override def result(alg: util.List[Processor[T]], ref: util.List[Strategy[T]], middleResult: util.List[T], params: util.Map[Any, Any]): util.List[T] = {
-    val rdd = middleResult.get(0).asInstanceOf[RDD[String]]
-    val func = params.get("_func_").asInstanceOf[(RDD[String]) => DataFrame]
+    val oldDf = middleResult.get(0).asInstanceOf[DataFrame]
+    val func = params.get("_func_").asInstanceOf[(DataFrame) => DataFrame]
     val _resource = path.get
     val _cfg = cfg
     val _mode = if (mode.isDefined) mode.get else "ErrorIfExists"
     val _format = format.get
     try {
-      val df = func(rdd)
+      val df = func(oldDf)
       df.write.options(_cfg).mode(SaveMode.valueOf(_mode)).format(_format).save(_resource)
     } catch {
       case e: Exception => e.printStackTrace()
