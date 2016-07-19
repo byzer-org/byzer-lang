@@ -3,7 +3,7 @@ package streaming.core
 import java.util.{Map => JMap}
 
 import serviceframework.dispatcher.StrategyDispatcher
-import streaming.core.strategy.platform.{PlatformManager, SparkStreamingRuntime}
+import streaming.core.strategy.platform.{PlatformManager, SparkRuntime, SparkStreamingRuntime}
 
 import scala.collection.JavaConversions._
 
@@ -13,8 +13,14 @@ import scala.collection.JavaConversions._
 object Dispatcher {
   def dispatcher(contextParams: JMap[Any, Any]): StrategyDispatcher[Any] = {
     if (contextParams.containsKey("streaming.job.file.path")) {
-      val runtime = contextParams.get("_runtime_").asInstanceOf[SparkStreamingRuntime]
-      val jobConfigStr = runtime.streamingContext.sparkContext.
+      val runtime = contextParams.get("_runtime_")
+
+      val sparkContext = runtime match {
+        case s: SparkStreamingRuntime => s.streamingContext.sparkContext
+        case s2: SparkRuntime => s2.sparkContext
+      }
+
+      val jobConfigStr = sparkContext.
         textFile(contextParams.get("streaming.job.file.path").toString).collect().mkString("\n")
       StrategyDispatcher.getOrCreate(jobConfigStr)
     } else {
@@ -23,7 +29,7 @@ object Dispatcher {
 
   }
 
-  def contextParams(jobName:String) = {
+  def contextParams(jobName: String) = {
     val runtime = PlatformManager.getRuntime
     val tempParams: java.util.Map[Any, Any] = runtime.params
     val contextParams: java.util.HashMap[Any, Any] = new java.util.HashMap[Any, Any]()
