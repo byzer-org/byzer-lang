@@ -10,7 +10,8 @@ object LocalSparkApp {
       "-streaming.name", "god",
       "-streaming.rest", "false",
       "-streaming.platform", "spark",
-      "-streaming.spark.service", "false"
+      "-streaming.spark.service", "false",
+      "-streaming.sql.source.path","abc"
       //"-streaming.driver.port", "9005"
       //"-streaming.zk.servers", "127.0.0.1",
       //"-streaming.zk.conf_root_dir", "/streamingpro/jack"

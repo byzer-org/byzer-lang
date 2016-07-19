@@ -44,7 +44,7 @@ class SQLOutputCompositor[T] extends Compositor[T] with CompositorHelper with Pa
   override def result(alg: util.List[Processor[T]], ref: util.List[Strategy[T]], middleResult: util.List[T], params: util.Map[Any, Any]): util.List[T] = {
     val oldDf = middleResult.get(0).asInstanceOf[DataFrame]
     val func = params.get("_func_").asInstanceOf[(DataFrame) => DataFrame]
-    val _resource = path.get
+    val _resource = if(params.containsKey("streaming.sql.out.path")) params("streaming.sql.out.path").toString else path.get
     val _cfg = cfg
     val _mode = if (mode.isDefined) mode.get else "ErrorIfExists"
     val _format = format.get
