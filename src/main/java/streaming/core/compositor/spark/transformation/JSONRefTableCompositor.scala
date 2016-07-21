@@ -12,10 +12,10 @@ import streaming.core.strategy.ParamsValidator
 import scala.collection.JavaConversions._
 
 
-class JSONTableCompositor[T] extends Compositor[T] with CompositorHelper with ParamsValidator {
+class JSONRefTableCompositor[T] extends Compositor[T] with CompositorHelper with ParamsValidator {
 
   private var _configParams: util.List[util.Map[Any, Any]] = _
-  val logger = Logger.getLogger(classOf[JSONTableCompositor[T]].getName)
+  val logger = Logger.getLogger(classOf[JSONRefTableCompositor[T]].getName)
 
   override def initialize(typeFilters: util.List[String], configParams: util.List[util.Map[Any, Any]]): Unit = {
     this._configParams = configParams
@@ -37,11 +37,7 @@ class JSONTableCompositor[T] extends Compositor[T] with CompositorHelper with Pa
 
       case df: DataFrame => df
     }
-
-    params.put("_table_", (df: DataFrame) => {
-      df.registerTempTable(_tableName)
-      df.sqlContext
-    })
+    newDF.registerTempTable(_tableName)
     List(newDF.asInstanceOf[T])
   }
 
