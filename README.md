@@ -35,9 +35,9 @@ assembling components(eg. SQL Component) in configuration file.
 
 ## downloads
 
-> 链接: http://pan.baidu.com/s/1hrN9qHQ 密码: pqjk
-> 
-> 链接: http://pan.baidu.com/s/1kUKfyGf 密码: wwee
+> 链接: http://pan.baidu.com/s/1minPZny 密码: 9jsz
+>
+> 链接: http://pan.baidu.com/s/1eRZjib4 密码: 48fr
 
 ## Documents
 
