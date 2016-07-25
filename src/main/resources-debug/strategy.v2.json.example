@@ -70,7 +70,7 @@
         ]
       },
       {
-        "name": "streaming.core.compositor.spark.transformation.JSONTableCompositor",
+        "name": "streaming.core.compositor.spark.transformation.JSONRefTableCompositor",
         "params": [
           {
             "tableName": "testJoinTable"

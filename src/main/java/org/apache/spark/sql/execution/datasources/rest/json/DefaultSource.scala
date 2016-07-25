@@ -2,6 +2,7 @@ package org.apache.spark.sql.execution.datasources.rest.json
 
 import java.io.{ByteArrayOutputStream, CharArrayWriter}
 import java.net.URL
+import java.util.concurrent.atomic.{AtomicBoolean, AtomicInteger, AtomicReference}
 
 import com.fasterxml.jackson.core._
 import com.google.common.base.Objects
@@ -20,7 +21,6 @@ import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.analysis.HiveTypeCoercion
 import org.apache.spark.sql.catalyst.expressions.GenericMutableRow
 import org.apache.spark.sql.catalyst.util.DateTimeUtils
-
 import org.apache.spark.sql.execution.datasources.rest.json.JacksonUtils.nextUntil
 import org.apache.spark.sql.sources._
 import org.apache.spark.sql.types._
@@ -43,8 +43,9 @@ class DefaultSource extends RelationProvider with DataSourceRegister {
     val samplingRatio = parameters.get("samplingRatio").map(_.toDouble).getOrElse(1.0)
     val url = parameters.getOrElse("url", "")
     val xPath = parameters.getOrElse("xPath", "$")
+    val tryTimes = parameters.get("tryTimes").map(_.toInt).getOrElse(3)
 
-    new RestJSONRelation(None, url, xPath, samplingRatio, None)(sqlContext)
+    new RestJSONRelation(None, url, xPath, samplingRatio, tryTimes, None)(sqlContext)
   }
 
 }
@@ -54,6 +55,7 @@ private[sql] class RestJSONRelation(
                                      val url: String,
                                      val xPath: String,
                                      val samplingRatio: Double,
+                                     val tryFetchTimes: Int,
                                      val maybeDataSchema: Option[StructType]
                                      )(@transient val sqlContext: SQLContext)
   extends BaseRelation with TableScan {
@@ -75,6 +77,24 @@ private[sql] class RestJSONRelation(
 
 
   private def createBaseRdd(inputPaths: Array[String]): RDD[String] = {
+    val counter = new AtomicInteger()
+    val success = new AtomicBoolean(false)
+    val holder = new AtomicReference[RDD[String]]()
+    do {
+      tryCreateBaseRDD(inputPaths: Array[String]) match {
+        case Some(i) =>
+          counter.incrementAndGet()
+          success.set(true)
+          holder.set(i)
+        case None =>
+          counter.incrementAndGet()
+          throw new RuntimeException(s"try fetch ${inputPaths(0)} ${tryFetchTimes} times,still fail.")
+      }
+    } while (!success.get() && counter.get() < tryFetchTimes)
+    holder.get()
+  }
+
+  private def tryCreateBaseRDD(inputPaths: Array[String]): Option[RDD[String]] = {
     val url = inputPaths.head
     val res = Request.Get(new URL(url).toURI).execute()
     val response = res.returnResponse()
@@ -83,9 +103,9 @@ private[sql] class RestJSONRelation(
       import scala.collection.JavaConversions._
       val extractContent = JSONArray.fromObject(JSONPath.read(content, xPath)).
         map(f => JSONObject.fromObject(f).toString).toSeq
-      sqlContext.sparkContext.makeRDD(extractContent)
+      Some(sqlContext.sparkContext.makeRDD(extractContent))
     } else {
-      sqlContext.sparkContext.makeRDD(Seq())
+      None
     }
   }
 
@@ -168,7 +188,7 @@ private class JsonOutputWriter(
   override def write(row: Row): Unit = throw new UnsupportedOperationException("call writeInternal")
 
   override protected[sql] def writeInternal(row: InternalRow): Unit = {
-    JacksonGenerator(dataSchema, gen,row)
+    JacksonGenerator(dataSchema, gen, row)
     gen.flush()
 
     result.set(writer.toString)
@@ -618,6 +638,7 @@ private[sql] object JacksonParser {
     }
   }
 }
+
 private[sql] object JacksonGenerator {
   /** Transforms a single Row to JSON using Jackson
     *
