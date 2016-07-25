@@ -2,12 +2,11 @@ package streaming.core.compositor.spark.transformation
 
 import java.util
 
-import net.sf.json.JSONObject
 import org.apache.log4j.Logger
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.DataFrame
 import serviceframework.dispatcher.{Compositor, Processor, Strategy}
-import streaming.common.JSONPath
+import streaming.common.json.parser.JSONParser
 
 import scala.collection.JavaConversions._
 
@@ -42,47 +41,8 @@ class FlatMergeJSONCompositor[T] extends Compositor[T] {
     val _jsonKeyPaths = jsonKeyPaths
 
     val newRDD = rdd.flatMap { line =>
-
-
-      val item = new util.HashMap[String, Object]()
-      val basicProperty = List(_jsonKeyPaths.head)
-
-      basicProperty.map { _jsonKeyPath =>
-
-        _jsonKeyPath.foreach { kPath =>
-
-          val key = kPath._1
-          val path = kPath._2
-          try {
-            item.put(key, JSONPath.read(line, path).asInstanceOf[Object])
-          } catch {
-            case e: Exception =>
-          }
-
-        }
-      }
-
-
-      val subProperties = _jsonKeyPaths.subList(1, _jsonKeyPaths.length)
-
-      subProperties.map { _jsonKeyPath =>
-        val temp = new util.HashMap[String, Object]()
-        _jsonKeyPath.map { kPath =>
-          val path = kPath._2
-          if (path.endsWith("_map_")) {
-            val newPath = path.replaceAll("\\._map_", "")
-            JSONPath.read(line, newPath).asInstanceOf[java.util.Map[String, java.util.Map[String, Object]]].map { k =>
-              val newKey = newPath.substring(2,newPath.length).split("\\.").mkString("_")
-              temp.put(newKey, k._1)
-              temp.putAll(k._2)
-              temp.putAll(item)
-            }
-          }
-        }
-        JSONObject.fromObject(temp).toString
-      }
+      JSONParser(line, _jsonKeyPaths.toList)
     }
-
     List(newRDD.asInstanceOf[T])
   }
 
