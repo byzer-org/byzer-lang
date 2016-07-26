@@ -11,7 +11,7 @@ object LocalSparkApp {
       "-streaming.rest", "false",
       "-streaming.platform", "spark",
       "-streaming.spark.service", "false",
-      "-streaming.sql.source.path","abc"
+      "-streaming.sql.source.path","hdfs://m2:8020/data/raw/live-hls-formated/20160725/19/cdn148-16-52_2016072519.1469444764341"
       //"-streaming.driver.port", "9005"
       //"-streaming.zk.servers", "127.0.0.1",
       //"-streaming.zk.conf_root_dir", "/streamingpro/jack"
