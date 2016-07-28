@@ -57,13 +57,13 @@ class SQLCompositor[T] extends Compositor[T] with CompositorHelper {
       // if not ,parent is SQLCompositor
       val func = params.get(FUNC).asInstanceOf[(DataFrame) => DataFrame]
       params.put(FUNC, (df: DataFrame) => {
-        val newDF = func(df)
+        val newDF = func(df).sqlContext.sql(_sql)
         outputTableName match {
           case Some(tableName) =>
             newDF.registerTempTable(tableName)
           case None =>
         }
-        newDF.sqlContext.sql(_sql)
+        newDF
       })
     }
     params.remove(TABLE)

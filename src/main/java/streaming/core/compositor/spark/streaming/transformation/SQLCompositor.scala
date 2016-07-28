@@ -8,6 +8,8 @@ import org.apache.spark.sql.{DataFrame, SQLContext}
 import serviceframework.dispatcher.{Compositor, Processor, Strategy}
 import streaming.core.compositor.spark.streaming.CompositorHelper
 
+import scala.collection.JavaConversions._
+
 
 class SQLCompositor[T] extends Compositor[T] with CompositorHelper {
 
@@ -19,7 +21,11 @@ class SQLCompositor[T] extends Compositor[T] with CompositorHelper {
   }
 
   def sql = {
-    config[String]("sql", _configParams)
+    _configParams.get(0).get("sql") match {
+      case a: util.List[String] => Some(a.mkString(" "))
+      case a: String => Some(a)
+      case _ => None
+    }
   }
 
   def outputTableName = {
@@ -34,33 +40,39 @@ class SQLCompositor[T] extends Compositor[T] with CompositorHelper {
     require(sql.isDefined, "please set sql  by variable `sql` in config file")
     val _sql = sql.get
     if (params.containsKey(TABLE)) {
+
       //parent compositor is  tableCompositor
 
-      val func = params.get(TABLE).asInstanceOf[(RDD[String]) => SQLContext]
-      params.put(FUNC, (rdd: RDD[String]) => {
-        val sqlContext = func(rdd)
-        val df = sqlContext.sql(_sql)
+      val func = params.get(TABLE).asInstanceOf[(DataFrame) => SQLContext]
+      params.put(FUNC, (df: DataFrame) => {
+        val sqlContext = func(df)
+        val newDF = sqlContext.sql(_sql)
         outputTableName match {
           case Some(tableName) =>
-            val newDf = df.sqlContext.read.json(df.toJSON)
-            newDf.registerTempTable(tableName)
+            newDF.registerTempTable(tableName)
           case None =>
         }
-        df
+        newDF
       })
 
     } else {
       // if not ,parent is SQLCompositor
-      val func = params.get(FUNC).asInstanceOf[(RDD[String]) => DataFrame]
-      params.put(FUNC, (rdd: RDD[String]) => {
-        val df = func(rdd)
+      val func = params.get(FUNC).asInstanceOf[(DataFrame) => DataFrame]
+      params.put(FUNC, (rddOrDF: Any) => {
+        val oldDF = rddOrDF match {
+          case rdd: RDD[String] =>
+            val sqlContext = SQLContext.getOrCreate(rdd.sparkContext)
+            sqlContext.read.json(rdd)
+          case df: DataFrame => df
+        }
+
+        val newDF = func(oldDF).sqlContext.sql(_sql)
         outputTableName match {
           case Some(tableName) =>
-            val newDf = df.sqlContext.read.json(df.toJSON)
-            newDf.registerTempTable(tableName)
+            newDF.registerTempTable(tableName)
           case None =>
         }
-        df.sqlContext.sql(_sql)
+        newDF
       })
     }
     params.remove(TABLE)
