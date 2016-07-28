@@ -31,13 +31,20 @@ class AlgorithmCompositor[T] extends Compositor[T] with CompositorHelper {
     if (instance.get() == null) {
       instance.compareAndSet(null, Class.forName(clzzName).
         getConstructors.head.
-        newInstance(path))
+        newInstance(path, parameters))
     }
     instance.get()
   }
 
   def path = {
     config[String]("path", _configParams).get
+  }
+
+  def parameters = {
+    import scala.collection.JavaConversions._
+    (_configParams(0) - "path" - "algorithm" - "outputTableName").map { f =>
+      (f._1.toString, f._2.toString)
+    }.toMap
   }
 
   override def initialize(typeFilters: util.List[String], configParams: util.List[util.Map[Any, Any]]): Unit = {

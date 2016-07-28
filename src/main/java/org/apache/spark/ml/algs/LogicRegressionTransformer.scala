@@ -7,7 +7,7 @@ import org.apache.spark.sql.DataFrame
 /**
  * 7/28/16 WilliamZhu(allwefantasy@gmail.com)
  */
-class LogicRegressionTransformer(path: String)extends BaseAlgorithmTransformer {
+class LogicRegressionTransformer(path: String,parameters:Map[String,String])extends BaseAlgorithmTransformer {
 
   val model = LogisticRegressionModel.load(path)
 

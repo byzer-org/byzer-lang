@@ -8,7 +8,7 @@ import org.apache.spark.sql.DataFrame
 /**
   * 7/28/16 WilliamZhu(allwefantasy@gmail.com)
   */
-class LinearRegressionTransformer(path: String)extends BaseAlgorithmTransformer {
+class LinearRegressionTransformer(path: String,parameters:Map[String,String])extends BaseAlgorithmTransformer {
 
    val model = LinearRegressionModel.load(path)
 
