@@ -62,13 +62,13 @@ class AlgorithmCompositor[T] extends Compositor[T] with CompositorHelper {
 
     val func = params.get(FUNC).asInstanceOf[(DataFrame) => DataFrame]
     params.put(FUNC, (df: DataFrame) => {
-      val newDF = func(df)
+      val newDF = algorithm(path).asInstanceOf[BaseAlgorithmTransformer].transform(func(df))
       outputTableName match {
         case Some(tableName) =>
           newDF.registerTempTable(tableName)
         case None =>
       }
-      algorithm(path).asInstanceOf[BaseAlgorithmTransformer].transform(newDF)
+      newDF
     })
 
     params.remove(TABLE)

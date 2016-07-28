@@ -14,15 +14,25 @@ class ALSTransformer(path: String, parameters: Map[String, String]) extends Base
   val matrixFactorizationModel = new MatrixFactorizationModel(model.rank, convertToRDD(model.userFactors), convertToRDD(model.itemFactors))
 
   def transform(df: DataFrame): DataFrame = {
-    if(parameters.contains("recommendByUser")){
-      matrixFactorizationModel.recommendProducts()
+
+
+    if (parameters.contains("recommendUsersForProductsNum")) {
+      import df.sqlContext.implicits._
+      val dataset = matrixFactorizationModel.recommendUsersForProducts(parameters.get("recommendUsersForProductsNum").
+        map(f => f.toInt).getOrElse(10)).toDF("user", "ratings")
+      df.join(dataset, dataset("user") === df("user"), "left").
+        select(df("user"),df("item"),dataset("ratings")).filter($"ratings".isNotNull)
+    } else {
+      val newDF = model.transform(df)
+      newDF
     }
-    model.transform(df)
+
   }
 
+
   private def convertToRDD(dataFrame: DataFrame) = {
-    dataFrame.select("id", "features").map { case (id: Int, features: Array[Float]) =>
-      (id, features.map(_.toDouble).array)
+    dataFrame.select("id", "features").map { row =>
+      (row.getInt(0), row.getSeq[Float](1).map(_.toDouble).toArray)
     }
   }
 
