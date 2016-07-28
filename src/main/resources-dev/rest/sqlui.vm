@@ -93,6 +93,7 @@
 													<select class="form-control" name="loader_clzz">
 														<option value="org.elasticsearch.spark.sql">elasticsearch</option>
 														<option value="parquet">parquet</option>
+														<option value="org.apache.spark.sql.execution.datasources.hdfs">hdfs</option>
 													</select>
 												</label>
 												<label class="inline">
