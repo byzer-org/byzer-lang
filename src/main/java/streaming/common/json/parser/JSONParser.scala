@@ -2,7 +2,7 @@ package streaming.common.json.parser
 
 import java.util
 
-import net.sf.json.JSONObject
+import net.sf.json.{JSONArray, JSONObject}
 import streaming.common.JSONPath
 
 import scala.collection.JavaConversions._
@@ -56,8 +56,16 @@ class JSONParser(jsonStr: String,
       case s if path.endsWith("_map_") =>
 
         val newPath = path.replaceAll("\\._map_", "")
-        val res = JSONPath.read(line, newPath).
-          asInstanceOf[java.util.Map[String, java.util.Map[String, Object]]].
+
+        val rawData:Any = JSONPath.read(line, newPath)
+        var data: Any = rawData
+        if (rawData.isInstanceOf[String]) {
+          data = JSONObject.fromObject(rawData)
+        } else {
+          data = rawData
+        }
+
+        val res = data.asInstanceOf[java.util.Map[String, java.util.Map[String, Object]]].
           map { k =>
           val newKey = newPath.substring(2, newPath.length).split("\\.").mkString("_")
           temp.put(newKey, k._1)
@@ -73,7 +81,16 @@ class JSONParser(jsonStr: String,
       case s if path.endsWith("_array_") =>
 
         val newPath = path.replaceAll("\\._array_", "")
-        val res = JSONPath.read(line, newPath).
+
+        val rawData:Any = JSONPath.read(line, newPath)
+        var data: Any = rawData
+        if (rawData.isInstanceOf[String]) {
+          data = JSONArray.fromObject(rawData)
+        } else {
+          data = rawData
+        }
+
+        val res = data.
           asInstanceOf[java.util.List[java.util.Map[String, Object]]].
           map { k =>
           val newKey = newPath.substring(2, newPath.length).split("\\.").mkString("_")
