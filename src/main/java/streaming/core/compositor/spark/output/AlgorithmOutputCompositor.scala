@@ -4,7 +4,7 @@ import java.util
 import java.util.concurrent.atomic.AtomicReference
 
 import org.apache.log4j.Logger
-import org.apache.spark.ml.BaseAlgorithmEnhancer
+import org.apache.spark.ml.BaseAlgorithmEstimator
 import org.apache.spark.ml.recommendation.ALSModel
 import org.apache.spark.sql.DataFrame
 import serviceframework.dispatcher.{Compositor, Processor, Strategy}
@@ -23,9 +23,9 @@ class AlgorithmOutputCompositor[T] extends Compositor[T] with CompositorHelper {
   val logger = Logger.getLogger(classOf[SQLCompositor[T]].getName)
 
   val mapping = Map(
-    "als" -> "org.apache.spark.ml.algs.ALSEnhancer",
-    "lr" -> "org.apache.spark.ml.algs.LinearRegressionEnhancer",
-    "lr2" -> "org.apache.spark.ml.algs.LogicRegressionEnhancer"
+    "als" -> "org.apache.spark.ml.algs.ALSEstimator",
+    "lr" -> "org.apache.spark.ml.algs.LinearRegressionEstimator",
+    "lr2" -> "org.apache.spark.ml.algs.LogicRegressionEstimator"
   )
 
   val instance = new AtomicReference[Any]()
@@ -67,7 +67,7 @@ class AlgorithmOutputCompositor[T] extends Compositor[T] with CompositorHelper {
       val bae = algorithm(
         df,
         newParams).
-        asInstanceOf[BaseAlgorithmEnhancer]
+        asInstanceOf[BaseAlgorithmEstimator]
       val model = bae.fit
       model.asInstanceOf[ALSModel].save(path)
     } catch {

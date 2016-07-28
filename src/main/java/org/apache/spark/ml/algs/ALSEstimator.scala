@@ -2,14 +2,14 @@ package org.apache.spark.ml.algs
 
 import org.apache.spark.ml.evaluation.Evaluator
 import org.apache.spark.ml.recommendation.{ALSModel, ALS}
-import org.apache.spark.ml.{BaseAlgorithmEnhancer, Estimator, Model}
+import org.apache.spark.ml.{BaseAlgorithmEstimator, Estimator, Model}
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions._
 
 /**
  * 7/27/16 WilliamZhu(allwefantasy@gmail.com)
  */
-class ALSEnhancer(training: DataFrame, params: Array[Map[String, Any]]) extends BaseAlgorithmEnhancer {
+class ALSEstimator(training: DataFrame, params: Array[Map[String, Any]]) extends BaseAlgorithmEstimator {
 
   val als: ALS = new ALS()
 

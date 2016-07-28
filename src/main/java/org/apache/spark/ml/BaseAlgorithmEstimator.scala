@@ -10,7 +10,7 @@ import org.apache.spark.sql.functions._
 /**
  * 7/27/16 WilliamZhu(allwefantasy@gmail.com)
  */
-trait BaseAlgorithmEnhancer {
+trait BaseAlgorithmEstimator {
 
   def name: String
 

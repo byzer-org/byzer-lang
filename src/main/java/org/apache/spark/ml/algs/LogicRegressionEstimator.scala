@@ -4,13 +4,13 @@ import org.apache.spark.ml.classification.{LogisticRegressionModel, LogisticRegr
 import org.apache.spark.ml.evaluation.{BinaryClassificationEvaluator, Evaluator, RegressionEvaluator}
 import org.apache.spark.ml.regression.LinearRegression
 import org.apache.spark.ml.tuning.TrainValidationSplit
-import org.apache.spark.ml.{BaseAlgorithmEnhancer, Estimator, Model}
+import org.apache.spark.ml.{BaseAlgorithmEstimator, Estimator, Model}
 import org.apache.spark.sql.DataFrame
 
 /**
   * 7/27/16 WilliamZhu(allwefantasy@gmail.com)
   */
-class LogicRegressionEnhancer(training: DataFrame, params: Array[Map[String, Any]]) extends BaseAlgorithmEnhancer {
+class LogicRegressionEstimator(training: DataFrame, params: Array[Map[String, Any]]) extends BaseAlgorithmEstimator {
 
    val lr = new LogisticRegression()
 
