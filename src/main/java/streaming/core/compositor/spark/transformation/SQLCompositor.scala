@@ -3,10 +3,11 @@ package streaming.core.compositor.spark.transformation
 import java.util
 
 import org.apache.log4j.Logger
-import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, SQLContext}
 import serviceframework.dispatcher.{Compositor, Processor, Strategy}
 import streaming.core.compositor.spark.streaming.CompositorHelper
+
+import scala.collection.JavaConversions._
 
 
 class SQLCompositor[T] extends Compositor[T] with CompositorHelper {
@@ -19,7 +20,11 @@ class SQLCompositor[T] extends Compositor[T] with CompositorHelper {
   }
 
   def sql = {
-    config[String]("sql", _configParams)
+    _configParams.get(0).get("sql") match {
+      case a: util.List[String] => Some(a.mkString(" "))
+      case a: String => Some(a)
+      case _ => None
+    }
   }
 
   def outputTableName = {
@@ -52,13 +57,13 @@ class SQLCompositor[T] extends Compositor[T] with CompositorHelper {
       // if not ,parent is SQLCompositor
       val func = params.get(FUNC).asInstanceOf[(DataFrame) => DataFrame]
       params.put(FUNC, (df: DataFrame) => {
-        val newDF = func(df)
+        val newDF = func(df).sqlContext.sql(_sql)
         outputTableName match {
           case Some(tableName) =>
             newDF.registerTempTable(tableName)
           case None =>
         }
-        newDF.sqlContext.sql(_sql)
+        newDF
       })
     }
     params.remove(TABLE)
