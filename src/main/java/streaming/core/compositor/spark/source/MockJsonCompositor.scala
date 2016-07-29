@@ -27,6 +27,8 @@ class MockJsonCompositor[T] extends Compositor[T] with CompositorHelper {
 
   override def result(alg: util.List[Processor[T]], ref: util.List[Strategy[T]], middleResult: util.List[T], params: util.Map[Any, Any]): util.List[T] = {
     val rdd = sparkContext(params).makeRDD[String](data)
-    List(rdd.asInstanceOf[T])
+    val sqlContext = org.apache.spark.sql.SQLContext.getOrCreate(sparkContext(params))
+    val df = sqlContext.read.json(rdd)
+    List(df.asInstanceOf[T])
   }
 }
