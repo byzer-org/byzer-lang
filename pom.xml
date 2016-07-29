@@ -32,6 +32,14 @@
         </profile>
 
         <profile>
+            <id>spark-2.0.0</id>
+            <!-- default -->
+            <properties>
+                <spark.version>2.0.0</spark.version>
+            </properties>
+        </profile>
+
+        <profile>
             <id>online</id>
             <properties>
                 <mode>online</mode>
