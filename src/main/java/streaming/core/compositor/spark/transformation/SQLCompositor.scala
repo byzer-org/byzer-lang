@@ -41,9 +41,9 @@ class SQLCompositor[T] extends Compositor[T] with CompositorHelper {
     if (params.containsKey(TABLE)) {
       //parent compositor is  tableCompositor
 
-      val func = params.get(TABLE).asInstanceOf[(DataFrame) => SQLContext]
-      params.put(FUNC, (df: DataFrame) => {
-        val sqlContext = func(df)
+      val func = params.get(TABLE).asInstanceOf[(Any) => SQLContext]
+      params.put(FUNC, (rddOrDF: Any) => {
+        val sqlContext = func(rddOrDF)
         val newDF = sqlContext.sql(_sql)
         outputTableName match {
           case Some(tableName) =>
