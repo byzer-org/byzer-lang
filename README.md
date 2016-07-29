@@ -35,9 +35,9 @@ assembling components(eg. SQL Component) in configuration file.
 
 ## downloads
 
-> Spark 1.6.1 预编译版本： 链接:  http://pan.baidu.com/s/1gfFeT6V 密码: xdym
+> Spark 1.6.1 预编译版本： http://share.weiyun.com/7c4b806011dc4e03d39279eafae916d7
 >
-> Spark 1.5.1 预编译版本： 链接: http://pan.baidu.com/s/1hsuKfGw 密码: 8kg8
+> Spark 1.5.1 预编译版本： http://share.weiyun.com/ae04f46d42af3025be00ebf0d83e8a53
 
 ## Documents
 
