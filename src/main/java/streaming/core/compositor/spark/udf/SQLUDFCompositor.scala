@@ -1,5 +1,6 @@
-package streaming.core.compositor.spark.streaming.transformation
+package streaming.core.compositor.spark.udf
 
+import java.lang.reflect.Modifier
 import java.util
 
 import org.apache.log4j.Logger
@@ -27,7 +28,13 @@ class SQLUDFCompositor[T] extends Compositor[T] with CompositorHelper {
     _configParams(0).foreach { f =>
       val objMethod = Class.forName(f._2.toString)
       objMethod.getMethods.foreach { f =>
-        f.invoke(null, sqlContext.udf)
+        try {
+          if (Modifier.isStatic(f.getModifiers)) {
+            f.invoke(null, sqlContext.udf)
+          }
+        } catch {
+          case e: Exception => logger.info(s"${f.getName} missing")
+        }
       }
     }
     middleResult

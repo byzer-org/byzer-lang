@@ -206,7 +206,6 @@
             <groupId>org.ansj</groupId>
             <artifactId>ansj_seg</artifactId>
             <version>5.0</version>
-            <scope>system</scope>
             <systemPath>${project.basedir}/lib/ansj_seg-5.0.0-all-in-one.jar</systemPath>
         </dependency>
 
