@@ -5,7 +5,6 @@ import java.util.concurrent.atomic.AtomicReference
 
 import org.apache.log4j.Logger
 import org.apache.spark.ml.BaseAlgorithmEstimator
-import org.apache.spark.ml.recommendation.ALSModel
 import org.apache.spark.sql.DataFrame
 import serviceframework.dispatcher.{Compositor, Processor, Strategy}
 import streaming.core.compositor.spark.streaming.CompositorHelper
@@ -63,13 +62,13 @@ class AlgorithmOutputCompositor[T] extends Compositor[T] with CompositorHelper {
 
     try {
       val df = func(oldDf)
-      val newParams = _configParams.tail.map(f => f.map(k => (k._1.asInstanceOf[String], k._2)).toMap).toArray
+      val newParams = _configParams.map(f => f.map(k => (k._1.asInstanceOf[String], k._2)).toMap).toArray
       val bae = algorithm(
         df,
         newParams).
         asInstanceOf[BaseAlgorithmEstimator]
       val model = bae.fit
-      model.asInstanceOf[ALSModel].save(path)
+      model.getClass.getMethod("save", classOf[String]).invoke(model, path)
     } catch {
       case e: Exception => e.printStackTrace()
     }

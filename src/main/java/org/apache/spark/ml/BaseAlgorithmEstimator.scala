@@ -1,11 +1,12 @@
 package org.apache.spark.ml
 
 import org.apache.spark.ml.evaluation.Evaluator
+import org.apache.spark.ml.linalg.Vectors
 import org.apache.spark.ml.param.ParamMap
 import org.apache.spark.ml.tuning.ParamGridBuilder
-import org.apache.spark.mllib.linalg.Vectors
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.types.DoubleType
 
 /**
  * 7/27/16 WilliamZhu(allwefantasy@gmail.com)
@@ -14,16 +15,23 @@ trait BaseAlgorithmEstimator {
 
   def name: String
 
-  def source(training: DataFrame): DataFrame = {
+  def source(training: DataFrame, vectorSize: Int): DataFrame = {
 
-    val t = udf { features: String =>
-      val v = features.split(",").map(_.toDouble)
-      Vectors.dense(v)
+    val t = udf { (features: String) =>
+
+      if (!features.contains(":")) {
+        val v = features.split(",|\\s+").map(_.toDouble)
+        Vectors.dense(v)
+      } else {
+        val v = features.split(",|\\s+").map(_.split(":")).map(f => (f(0).toInt, f(1).toDouble))
+        Vectors.sparse(vectorSize, v)
+      }
+
     }
 
     training.select(
-      col("label"),
-      t(col("features"))(0) as "features"
+      col("label") cast(DoubleType),
+      t(col("features")) as "features"
     )
   }
 

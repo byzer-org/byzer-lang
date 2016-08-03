@@ -1,7 +1,7 @@
 package org.apache.spark.ml.algs
 
 import org.apache.spark.ml.evaluation.Evaluator
-import org.apache.spark.ml.recommendation.{ALSModel, ALS}
+import org.apache.spark.ml.recommendation.ALS
 import org.apache.spark.ml.{BaseAlgorithmEstimator, Estimator, Model}
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions._
@@ -13,7 +13,7 @@ class ALSEstimator(training: DataFrame, params: Array[Map[String, Any]]) extends
 
   val als: ALS = new ALS()
 
-  override def source(training: DataFrame): DataFrame = {
+  override def source(training: DataFrame, vectorSize: Int): DataFrame = {
 
     val t = udf { features: String =>
       val Array(user, item, rank) = features.split(",")
@@ -29,8 +29,12 @@ class ALSEstimator(training: DataFrame, params: Array[Map[String, Any]]) extends
   }
 
   override def fit: Model[_] = {
-    val paramGrid = mlParams(params)
-    als.fit(source(training), paramGrid(0))
+    val paramGrid = mlParams(params.tail)
+    val vectorSize = if (params.head.contains("dicTable")) {
+      training.sqlContext.table(params.head.getOrElse("dicTable", "").toString).count()
+    } else 0l
+
+    als.fit(source(training, vectorSize.toInt), paramGrid(0))
   }
 
   override def algorithm: Estimator[_] = als

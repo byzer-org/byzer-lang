@@ -30,9 +30,6 @@ import streaming.common.JSONPath
 
 import scala.collection.mutable.ArrayBuffer
 
-/**
- * 7/22/16 WilliamZhu(allwefantasy@gmail.com)
- */
 class DefaultSource extends RelationProvider with DataSourceRegister {
   override def shortName(): String = "restJSON"
 
@@ -41,7 +38,7 @@ class DefaultSource extends RelationProvider with DataSourceRegister {
                                parameters: Map[String, String]
                                ): BaseRelation = {
     val samplingRatio = parameters.get("samplingRatio").map(_.toDouble).getOrElse(1.0)
-    val url = parameters.getOrElse("url", "")
+    val url = parameters.getOrElse("url", parameters.getOrElse("path",""))
     val xPath = parameters.getOrElse("xPath", "$")
     val tryTimes = parameters.get("tryTimes").map(_.toInt).getOrElse(3)
 
@@ -75,7 +72,6 @@ private[sql] class RestJSONRelation(
 
   override def schema: StructType = dataSchema
 
-
   private def createBaseRdd(inputPaths: Array[String]): RDD[String] = {
     val counter = new AtomicInteger()
     val success = new AtomicBoolean(false)
@@ -108,7 +104,6 @@ private[sql] class RestJSONRelation(
       None
     }
   }
-
 
   lazy val dataSchema = {
     val jsonSchema = maybeDataSchema.getOrElse {
@@ -203,7 +198,7 @@ private class JsonOutputWriter(
   }
 }
 
-private[sql] object InferSchema {
+private object InferSchema {
   /**
    * Infer the type of a collection of json records in three stages:
    * 1. Infer the type of each record
@@ -304,9 +299,6 @@ private[sql] object InferSchema {
     }
   }
 
-  /**
-   * Convert NullType to StringType and remove StructTypes with no fields
-   */
   private def canonicalizeType: DataType => Option[DataType] = {
     case at@ArrayType(elementType, _) =>
       for {
@@ -335,18 +327,14 @@ private[sql] object InferSchema {
     case other => Some(other)
   }
 
-  /**
-   * Remove top-level ArrayType wrappers and merge the remaining schemas
-   */
+
   private def compatibleRootType: (DataType, DataType) => DataType = {
     case (ArrayType(ty1, _), ty2) => compatibleRootType(ty1, ty2)
     case (ty1, ArrayType(ty2, _)) => compatibleRootType(ty1, ty2)
     case (ty1, ty2) => compatibleType(ty1, ty2)
   }
 
-  /**
-   * Returns the most general data type for two given data types.
-   */
+
   private[json] def compatibleType(t1: DataType, t2: DataType): DataType = {
     HiveTypeCoercion.findTightestCommonTypeOfTwo(t1, t2).getOrElse {
       // t1 or t2 is a StructType, ArrayType, or an unexpected type.
@@ -388,9 +376,7 @@ private[sql] object InferSchema {
 import com.fasterxml.jackson.core.{JsonParser, JsonToken}
 
 private object JacksonUtils {
-  /**
-   * Advance the parser until a null or a specific token is found
-   */
+
   def nextUntil(parser: JsonParser, stopOn: JsonToken): Boolean = {
     parser.nextToken() match {
       case null => false
@@ -407,9 +393,6 @@ private[sql] object JacksonParser {
     parseJson(json, schema, columnNameOfCorruptRecords)
   }
 
-  /**
-   * Parse the current token (and related children) according to a desired schema
-   */
   private[sql] def convertField(
                                  factory: JsonFactory,
                                  parser: JsonParser,
@@ -564,9 +547,6 @@ private[sql] object JacksonParser {
     row
   }
 
-  /**
-   * Parse an object as a Map, preserving all fields
-   */
   private def convertMap(
                           factory: JsonFactory,
                           parser: JsonParser,
@@ -640,12 +620,7 @@ private[sql] object JacksonParser {
 }
 
 private[sql] object JacksonGenerator {
-  /** Transforms a single Row to JSON using Jackson
-    *
-    * @param rowSchema the schema object used for conversion
-    * @param gen a JsonGenerator object
-    * @param row The row to convert
-    */
+
   def apply(rowSchema: StructType, gen: JsonGenerator)(row: Row): Unit = {
     def valWriter: (DataType, Any) => Unit = {
       case (_, null) | (NullType, _) => gen.writeNull()
@@ -722,14 +697,6 @@ private[sql] object JacksonGenerator {
     valWriter(rowSchema, row)
   }
 
-  /** Transforms a single InternalRow to JSON using Jackson
-    *
-    * TODO: make the code shared with the other apply method.
-    *
-    * @param rowSchema the schema object used for conversion
-    * @param gen a JsonGenerator object
-    * @param row The row to convert
-    */
   def apply(rowSchema: StructType, gen: JsonGenerator, row: InternalRow): Unit = {
     def valWriter: (DataType, Any) => Unit = {
       case (_, null) | (NullType, _) => gen.writeNull()
@@ -786,5 +753,3 @@ private[sql] object JacksonGenerator {
     valWriter(rowSchema, row)
   }
 }
-
-

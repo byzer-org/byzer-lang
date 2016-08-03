@@ -6,12 +6,9 @@ import java.util.{List => JList, Map => JMap}
 import net.csdn.ServiceFramwork
 import net.csdn.bootstrap.Application
 import net.csdn.common.logging.Loggers
-import net.csdn.common.network.NetworkUtils.StackType
-import net.csdn.common.settings.ImmutableSettings
-import net.csdn.common.settings.ImmutableSettings._
 import serviceframework.dispatcher.StrategyDispatcher
-import streaming.common.zk.{ZKClient, ZKConfUtil}
-import streaming.common.{ParamsUtil, SQLContextHolder}
+import streaming.common.zk.{ZKClient, ZkRegister}
+import streaming.common.{ParamsUtil, SQLContextHolder, SparkCompatibility}
 import streaming.core.strategy.JobStrategy
 import streaming.core.{Dispatcher, StreamingApp}
 
@@ -53,27 +50,12 @@ class PlatformManager {
     Application.main(Array())
   }
 
+  def preCompile(runtime: StreamingRuntime) = {
+    SparkCompatibility.preCompile(runtime)
+  }
+
   def registerToZk(params: ParamsUtil) = {
-    val settingsB: ImmutableSettings.Builder = settingsBuilder()
-    settingsB.put(ServiceFramwork.mode + ".zk.conf_root_dir", params.getParam("streaming.zk.conf_root_dir"))
-    settingsB.put(ServiceFramwork.mode + ".zk.servers", params.getParam("streaming.zk.servers"))
-    zk = new ZKClient(settingsB.build())
-    val client = zk.zkConfUtil.client
-
-    if (!client.exists(ZKConfUtil.CONF_ROOT_DIR)) {
-      client.createPersistent(ZKConfUtil.CONF_ROOT_DIR, true);
-    }
-
-    if (client.exists(ZKConfUtil.CONF_ROOT_DIR + "/address")) {
-      throw new RuntimeException(s"${ZKConfUtil.CONF_ROOT_DIR} already exits in zookeeper")
-    }
-    val hostAddress = net.csdn.common.network.NetworkUtils.getFirstNonLoopbackAddress(StackType.IPv4).getHostAddress
-    val port = params.getParam("streaming.driver.port", "9003")
-    logger.info(s"register ip and port to zookeeper:\n" +
-      s"zk=[${params.getParam("streaming.zk.servers")}]\n" +
-      s"${ZKConfUtil.CONF_ROOT_DIR}/address=${hostAddress}:${port}")
-
-    client.createEphemeral(ZKConfUtil.CONF_ROOT_DIR + "/address", hostAddress + ":" + port)
+    zk = ZkRegister.registerToZk(params)
   }
 
   var zk: ZKClient = null
@@ -98,6 +80,9 @@ class PlatformManager {
     params.getParamsMap.filter(f => f._1.startsWith("streaming.")).foreach { f => tempParams.put(f._1, f._2) }
     val runtime = PlatformManager.getRuntime
 
+    if (params.getBooleanParam("streaming.compatibility.crossversion", false)) {
+      preCompile(runtime)
+    }
 
     val dispatcher = findDispatcher
 

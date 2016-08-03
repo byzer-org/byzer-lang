@@ -16,16 +16,19 @@ class LinearRegressionEstimator(training: DataFrame, params: Array[Map[String, A
   override def name: String = "lr"
 
   override def fit: Model[_] = {
-    val paramGrid = mlParams(params)
+    val paramGrid = mlParams(params.tail)
+    val vectorSize = if (params.head.contains("dicTable")) {
+      training.sqlContext.table(params.head.getOrElse("dicTable", "").toString).count()
+    } else 0l
     if (params.length <= 1) {
-      lr.fit(source(training), paramGrid(0))
+      lr.fit(source(training,vectorSize.toInt), paramGrid(0))
     } else {
       val trainValidationSplit = new TrainValidationSplit()
         .setEstimator(lr)
         .setEvaluator(evaluator)
         .setEstimatorParamMaps(paramGrid)
         .setTrainRatio(0.8)
-      trainValidationSplit.fit(training)
+      trainValidationSplit.fit(source(training,vectorSize.toInt))
     }
 
   }
