@@ -47,17 +47,6 @@ class PlatformManager {
     listeners -= listener
   }
 
-  def createSQLContextHolder(params: java.util.Map[Any, Any], runtime: StreamingRuntime) = {
-    val sc = runtime match {
-      case a: SparkStreamingRuntime => a.streamingContext.sparkContext
-      case b: SparkRuntime => b.sparkContext
-      case _ => throw new RuntimeException("get _runtime_ fail")
-    }
-    new SQLContextHolder(
-      params.containsKey("streaming.enableHiveSupport") &&
-        params.get("streaming.enableHiveSupport").toString.toBoolean, sc)
-  }
-
   def startRestServer = {
     ServiceFramwork.scanService.setLoader(classOf[StreamingApp])
     ServiceFramwork.enableNoThreadJoin()
@@ -133,7 +122,6 @@ class PlatformManager {
       registerToZk(params)
     }
 
-    SQLContextHolder.setActive(createSQLContextHolder(tempParams, runtime))
 
     val jobCounter = new AtomicInteger(0)
     jobs.foreach {
@@ -189,11 +177,23 @@ object PlatformManager {
     }
   }
 
+  private def createSQLContextHolder(params: java.util.Map[Any, Any], runtime: StreamingRuntime) = {
+    val sc = runtime match {
+      case a: SparkStreamingRuntime => a.streamingContext.sparkContext
+      case b: SparkRuntime => b.sparkContext
+      case _ => throw new RuntimeException("get _runtime_ fail")
+    }
+    new SQLContextHolder(
+      params.containsKey("streaming.enableHiveSupport") &&
+        params.get("streaming.enableHiveSupport").toString.toBoolean, sc)
+  }
+
   def getRuntime: StreamingRuntime = {
     val params: JMap[String, String] = getOrCreate.config.get().getParamsMap
     val tempParams: JMap[Any, Any] = params.map(f => (f._1.asInstanceOf[Any], f._2.asInstanceOf[Any]))
+
     val platformName = params.get("streaming.platform")
-    platformName match {
+    val runtime = platformName match {
       case platform: String if platform == "spark" =>
 
         SparkRuntime.getOrCreate(tempParams)
@@ -201,7 +201,12 @@ object PlatformManager {
         null
       case _ => SparkStreamingRuntime.getOrCreate(tempParams)
     }
+    if (SQLContextHolder.sqlContextHolder == null) {
+      SQLContextHolder.setActive(createSQLContextHolder(tempParams, runtime))
+      tempParams.put("_sqlContextHolder_", SQLContextHolder.getOrCreate())
+    }
 
+    runtime
   }
 
   def SPAKR_STREAMING = "spark_streaming"
