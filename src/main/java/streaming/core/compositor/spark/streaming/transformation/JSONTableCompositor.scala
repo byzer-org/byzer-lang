@@ -33,8 +33,7 @@ class JSONTableCompositor[T] extends Compositor[T] with CompositorHelper with Pa
     params.put("_table_", (rddOrDF: Any) => {
       val newDF = rddOrDF match {
         case rdd: RDD[String] =>
-          val sqlContext = SQLContext.getOrCreate(rdd.sparkContext)
-          sqlContext.read.json(rdd)
+          sqlContextHolder(params).read.json(rdd)
 
         case df: DataFrame =>
           df

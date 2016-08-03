@@ -24,7 +24,7 @@ class SQLUDFCompositor[T] extends Compositor[T] with CompositorHelper {
 
   override def result(alg: util.List[Processor[T]], ref: util.List[Strategy[T]], middleResult: util.List[T], params: util.Map[Any, Any]): util.List[T] = {
     val sc = sparkContext(params)
-    val sqlContext = SQLContext.getOrCreate(sc)
+    val sqlContext = sqlContextHolder(params)
     _configParams(0).foreach { f =>
       val objMethod = Class.forName(f._2.toString)
       objMethod.getMethods.foreach { f =>

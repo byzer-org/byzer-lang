@@ -10,7 +10,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <scala.version>2.10.3</scala.version>
         <scala.2.version>2.10</scala.2.version>
-        <spark.version>1.5.1</spark.version>
+        <spark.version>1.6.1</spark.version>
     </properties>
 
     <profiles>
@@ -48,6 +48,12 @@
                 <dependency>
                     <groupId>org.apache.spark</groupId>
                     <artifactId>spark-streaming_2.10</artifactId>
+                    <version>${spark.version}</version>
+                    <scope>provided</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.spark</groupId>
+                    <artifactId>spark-hive_2.10</artifactId>
                     <version>${spark.version}</version>
                     <scope>provided</scope>
                 </dependency>
@@ -97,6 +103,12 @@
                 </dependency>
                 <dependency>
                     <groupId>org.apache.spark</groupId>
+                    <artifactId>spark-hive_2.10</artifactId>
+                    <version>${spark.version}</version>
+                    <scope>provided</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.spark</groupId>
                     <artifactId>spark-mllib_2.10</artifactId>
                     <version>${spark.version}</version>
                     <scope>provided</scope>
@@ -141,6 +153,11 @@
                 <dependency>
                     <groupId>org.apache.spark</groupId>
                     <artifactId>spark-streaming-kafka_2.10</artifactId>
+                    <version>${spark.version}</version>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.spark</groupId>
+                    <artifactId>spark-hive_2.10</artifactId>
                     <version>${spark.version}</version>
                 </dependency>
                 <dependency>
@@ -206,6 +223,7 @@
             <groupId>org.ansj</groupId>
             <artifactId>ansj_seg</artifactId>
             <version>5.0</version>
+            <scope>system</scope>
             <systemPath>${project.basedir}/lib/ansj_seg-5.0.0-all-in-one.jar</systemPath>
         </dependency>
 

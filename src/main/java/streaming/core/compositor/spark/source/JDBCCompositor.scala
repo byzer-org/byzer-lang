@@ -23,7 +23,7 @@ class JDBCCompositor[T] extends Compositor[T] with CompositorHelper {
 
   override def result(alg: util.List[Processor[T]], ref: util.List[Strategy[T]], middleResult: util.List[T], params: util.Map[Any, Any]): util.List[T] = {
     val ssc = sparkStreamingRuntime(params).streamingContext
-    val df = SQLContext.getOrCreate(ssc.sparkContext).read.format("jdbc").options(
+    val df = sqlContextHolder(params).read.format("jdbc").options(
       _configParams(0).map(f => (f._1.asInstanceOf[String], f._2.asInstanceOf[String])).toMap).load()
     List(df.toJSON.asInstanceOf[T])
   }

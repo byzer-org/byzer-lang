@@ -10,8 +10,8 @@ import net.csdn.common.network.NetworkUtils.StackType
 import net.csdn.common.settings.ImmutableSettings
 import net.csdn.common.settings.ImmutableSettings._
 import serviceframework.dispatcher.StrategyDispatcher
-import streaming.common.ParamsUtil
 import streaming.common.zk.{ZKClient, ZKConfUtil}
+import streaming.common.{ParamsUtil, SQLContextHolder}
 import streaming.core.strategy.JobStrategy
 import streaming.core.{Dispatcher, StreamingApp}
 
@@ -45,6 +45,17 @@ class PlatformManager {
 
   def unRegister(listener: PlatformManagerListener) = {
     listeners -= listener
+  }
+
+  def createSQLContextHolder(params: java.util.Map[Any, Any], runtime: StreamingRuntime) = {
+    val sc = runtime match {
+      case a: SparkStreamingRuntime => a.streamingContext.sparkContext
+      case b: SparkRuntime => b.sparkContext
+      case _ => throw new RuntimeException("get _runtime_ fail")
+    }
+    new SQLContextHolder(
+      params.containsKey("streaming.enableHiveSupport") &&
+        params.get("streaming.enableHiveSupport").toString.toBoolean, sc)
   }
 
   def startRestServer = {
@@ -121,6 +132,8 @@ class PlatformManager {
     if (params.hasParam("streaming.zk.conf_root_dir") && !reRun) {
       registerToZk(params)
     }
+
+    SQLContextHolder.setActive(createSQLContextHolder(tempParams, runtime))
 
     val jobCounter = new AtomicInteger(0)
     jobs.foreach {

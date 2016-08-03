@@ -3,10 +3,11 @@ package streaming.core.compositor.spark.transformation
 import java.util
 
 import org.apache.log4j.Logger
-import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.{SQLContext, DataFrame}
 import serviceframework.dispatcher.{Compositor, Processor, Strategy}
 import streaming.core.compositor.spark.streaming.CompositorHelper
 import streaming.core.strategy.ParamsValidator
+import org.apache.spark.sql.hive.HiveContext
 
 import scala.collection.JavaConversions._
 

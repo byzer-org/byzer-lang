@@ -1,6 +1,7 @@
 package streaming.core.compositor.spark.udf.func
 
 import org.ansj.splitWord.analysis.NlpAnalysis
+import org.apache.spark.mllib.linalg.Vectors
 import org.apache.spark.sql.UDFRegistration
 
 import scala.collection.JavaConversions._
@@ -14,4 +15,12 @@ object AnalysisFunctions {
       NlpAnalysis.parse(co).getTerms.map(f => f.getName).toArray
     })
   }
+
+  def vectorize(uDFRegistration: UDFRegistration) = {
+    uDFRegistration.register("vectorize", (co: String) => {
+      val items = co.split("\\s+")
+      Vectors.sparse(items.head.toInt, items.tail.map(f => f.split(":")).map(f => (f(0).toInt, f(1).toDouble)).sortBy(f => f._1))
+    })
+  }
+
 }
