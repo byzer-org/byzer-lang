@@ -33,7 +33,7 @@ class ALSTransformer(path: String, parameters: Map[String, String]) extends Base
 
   private def convertToRDD(dataFrame: DataFrame) = {
     import dataFrame.sqlContext.implicits._
-    val res = if (!dataFrame.sqlContext.sparkContext.version.startsWith("2")) {
+    val res = if (!org.apache.spark.SPARK_REVISION.startsWith("2")) {
       dataFrame.select(dataFrame("id"), dataFrame("features")).map { row =>
         (row.getInt(0), row.getSeq[Float](1).map(_.toDouble).toArray)
       }

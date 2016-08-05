@@ -1,12 +1,12 @@
 package org.apache.spark.ml
 
 import org.apache.spark.ml.evaluation.Evaluator
-import org.apache.spark.ml.linalg.Vectors
 import org.apache.spark.ml.param.ParamMap
 import org.apache.spark.ml.tuning.ParamGridBuilder
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.types.DoubleType
+import streaming.common.CodeTemplateFunctions
+
 
 /**
  * 7/27/16 WilliamZhu(allwefantasy@gmail.com)
@@ -15,25 +15,18 @@ trait BaseAlgorithmEstimator {
 
   def name: String
 
+
   def source(training: DataFrame, vectorSize: Int): DataFrame = {
 
-    val t = udf { (features: String) =>
-
-      if (!features.contains(":")) {
-        val v = features.split(",|\\s+").map(_.toDouble)
-        Vectors.dense(v)
-      } else {
-        val v = features.split(",|\\s+").map(_.split(":")).map(f => (f(0).toInt, f(1).toDouble))
-        Vectors.sparse(vectorSize, v)
-      }
-
-    }
+    //val t = CodeTemplateFunctions.vectorize(vectorSize).asInstanceOf[UserDefinedFunction]
+    val t = CodeTemplateFunctions.vectorizeByReflect(vectorSize)
 
     training.select(
-      col("label") cast(DoubleType),
+      col("label") cast (org.apache.spark.sql.types.DoubleType),
       t(col("features")) as "features"
     )
   }
+
 
   def mlParams(multiParams: Array[Map[String, Any]]): Array[ParamMap] = {
     val paramGrid = new ParamGridBuilder()
