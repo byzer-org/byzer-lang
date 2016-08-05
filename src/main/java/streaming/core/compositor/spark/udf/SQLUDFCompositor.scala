@@ -33,7 +33,8 @@ class SQLUDFCompositor[T] extends Compositor[T] with CompositorHelper {
             f.invoke(null, sqlContext.udf)
           }
         } catch {
-          case e: Exception => logger.info(s"${f.getName} missing")
+          case e: Exception =>
+            logger.info(s"${f.getName} missing",e)
         }
       }
     }

@@ -7,6 +7,10 @@ import streaming.core.strategy.platform.{SparkRuntime, SparkStreamingRuntime, St
  * 8/3/16 WilliamZhu(allwefantasy@gmail.com)
  */
 object SparkCompatibility {
+
+  def sparkVersion = {
+     org.apache.spark.SPARK_VERSION
+  }
   def preCompile(runtime: StreamingRuntime) = {
     val sc = runtime match {
       case a: SparkStreamingRuntime =>

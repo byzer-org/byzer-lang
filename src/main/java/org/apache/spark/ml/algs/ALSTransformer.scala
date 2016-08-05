@@ -5,6 +5,7 @@ import org.apache.spark.ml.recommendation.ALSModel
 import org.apache.spark.mllib.recommendation.MatrixFactorizationModel
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.DataFrame
+import streaming.common.SparkCompatibility
 
 /**
  * 7/28/16 WilliamZhu(allwefantasy@gmail.com)
@@ -33,7 +34,7 @@ class ALSTransformer(path: String, parameters: Map[String, String]) extends Base
 
   private def convertToRDD(dataFrame: DataFrame) = {
     import dataFrame.sqlContext.implicits._
-    val res = if (!org.apache.spark.SPARK_REVISION.startsWith("2")) {
+    val res = if (!SparkCompatibility.sparkVersion.startsWith("2")) {
       dataFrame.select(dataFrame("id"), dataFrame("features")).map { row =>
         (row.getInt(0), row.getSeq[Float](1).map(_.toDouble).toArray)
       }

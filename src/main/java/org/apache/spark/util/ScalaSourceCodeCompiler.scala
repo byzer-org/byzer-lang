@@ -1,6 +1,5 @@
 package org.apache.spark.util
 
-import org.apache.spark.sql.catalyst.expressions.codegen.{CodeAndComment, CodeFormatter, CodeGenerator}
 import streaming.common.CodeTemplates
 
 import scala.collection.mutable.ArrayBuffer
@@ -24,13 +23,13 @@ object ScalaSourceCodeCompiler {
     ref
   }
 
-  def compileCode3[T](codeBody: String, references: Array[Any]): T = {
-    val code = CodeFormatter.stripOverlappingComments(
-      new CodeAndComment(codeBody, Map()))
-
-    val c = CodeGenerator.compile(code)
-    c.generate(references).asInstanceOf[T]
-  }
+  //  def compileCode3[T](codeBody: String, references: Array[Any]): T = {
+  //    val code = CodeFormatter.stripOverlappingComments(
+  //      new CodeAndComment(codeBody, Map()))
+  //
+  //    val c = CodeGenerator.compile(code)
+  //    c.generate(references).asInstanceOf[T]
+  //  }
 
   def main(args: Array[String]): Unit = {
     val abc = CodeTemplates.spark_after_2_0_rest_json_source_string
