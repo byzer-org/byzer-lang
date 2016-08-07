@@ -33,7 +33,5 @@ object functions2 {
         newInstance(f, Schema(udt, nullable = true).dataType, inputTypes)
 
     }
-
-
   }
 }
