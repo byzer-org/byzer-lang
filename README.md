@@ -1,4 +1,4 @@
-Declarative workflows for building Spark Streaming  
+Declarative workflows for building Spark Streaming  / Spark batch programe / Spark SQL Server
 
 ## Spark Streaming 
 
@@ -47,6 +47,7 @@ assembling components(eg. SQL Component) in configuration file.
 * [使用Spark SQL 构建流式处理程序](http://www.jianshu.com/p/d10edd6c7cf9)
 * [使用Spark SQL构建批处理程序](http://www.jianshu.com/p/7f6cb8eaadef)
 * [流式计算常见模块用法说明](http://www.jianshu.com/p/9c0d00498cb8)
+* [用线性回归无编码实现文章浏览数预测](http://www.jianshu.com/p/d053a21944f5)
 * [Properties](https://github.com/allwefantasy/streamingpro/wiki/Properties)
 * [Build](https://github.com/allwefantasy/streamingpro/wiki/Build)
 * [Run your first application](https://github.com/allwefantasy/streamingpro/wiki/Run-your-first-application)
