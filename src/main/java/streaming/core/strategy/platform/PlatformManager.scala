@@ -6,12 +6,9 @@ import java.util.{List => JList, Map => JMap}
 import net.csdn.ServiceFramwork
 import net.csdn.bootstrap.Application
 import net.csdn.common.logging.Loggers
-import net.csdn.common.network.NetworkUtils.StackType
-import net.csdn.common.settings.ImmutableSettings
-import net.csdn.common.settings.ImmutableSettings._
 import serviceframework.dispatcher.StrategyDispatcher
-import streaming.common.ParamsUtil
-import streaming.common.zk.{ZKClient, ZKConfUtil}
+import streaming.common.zk.{ZKClient, ZkRegister}
+import streaming.common.{ParamsUtil, SQLContextHolder, SparkCompatibility}
 import streaming.core.strategy.JobStrategy
 import streaming.core.{Dispatcher, StreamingApp}
 
@@ -53,27 +50,12 @@ class PlatformManager {
     Application.main(Array())
   }
 
+  def preCompile(runtime: StreamingRuntime) = {
+    SparkCompatibility.preCompile(runtime)
+  }
+
   def registerToZk(params: ParamsUtil) = {
-    val settingsB: ImmutableSettings.Builder = settingsBuilder()
-    settingsB.put(ServiceFramwork.mode + ".zk.conf_root_dir", params.getParam("streaming.zk.conf_root_dir"))
-    settingsB.put(ServiceFramwork.mode + ".zk.servers", params.getParam("streaming.zk.servers"))
-    zk = new ZKClient(settingsB.build())
-    val client = zk.zkConfUtil.client
-
-    if (!client.exists(ZKConfUtil.CONF_ROOT_DIR)) {
-      client.createPersistent(ZKConfUtil.CONF_ROOT_DIR, true);
-    }
-
-    if (client.exists(ZKConfUtil.CONF_ROOT_DIR + "/address")) {
-      throw new RuntimeException(s"${ZKConfUtil.CONF_ROOT_DIR} already exits in zookeeper")
-    }
-    val hostAddress = net.csdn.common.network.NetworkUtils.getFirstNonLoopbackAddress(StackType.IPv4).getHostAddress
-    val port = params.getParam("streaming.driver.port", "9003")
-    logger.info(s"register ip and port to zookeeper:\n" +
-      s"zk=[${params.getParam("streaming.zk.servers")}]\n" +
-      s"${ZKConfUtil.CONF_ROOT_DIR}/address=${hostAddress}:${port}")
-
-    client.createEphemeral(ZKConfUtil.CONF_ROOT_DIR + "/address", hostAddress + ":" + port)
+    zk = ZkRegister.registerToZk(params)
   }
 
   var zk: ZKClient = null
@@ -98,6 +80,9 @@ class PlatformManager {
     params.getParamsMap.filter(f => f._1.startsWith("streaming.")).foreach { f => tempParams.put(f._1, f._2) }
     val runtime = PlatformManager.getRuntime
 
+    if (params.getBooleanParam("streaming.compatibility.crossversion", false)) {
+      preCompile(runtime)
+    }
 
     val dispatcher = findDispatcher
 
@@ -121,6 +106,7 @@ class PlatformManager {
     if (params.hasParam("streaming.zk.conf_root_dir") && !reRun) {
       registerToZk(params)
     }
+
 
     val jobCounter = new AtomicInteger(0)
     jobs.foreach {
@@ -176,11 +162,23 @@ object PlatformManager {
     }
   }
 
+  private def createSQLContextHolder(params: java.util.Map[Any, Any], runtime: StreamingRuntime) = {
+    val sc = runtime match {
+      case a: SparkStreamingRuntime => a.streamingContext.sparkContext
+      case b: SparkRuntime => b.sparkContext
+      case _ => throw new RuntimeException("get _runtime_ fail")
+    }
+    new SQLContextHolder(
+      params.containsKey("streaming.enableHiveSupport") &&
+        params.get("streaming.enableHiveSupport").toString.toBoolean, sc)
+  }
+
   def getRuntime: StreamingRuntime = {
     val params: JMap[String, String] = getOrCreate.config.get().getParamsMap
     val tempParams: JMap[Any, Any] = params.map(f => (f._1.asInstanceOf[Any], f._2.asInstanceOf[Any]))
+
     val platformName = params.get("streaming.platform")
-    platformName match {
+    val runtime = platformName match {
       case platform: String if platform == "spark" =>
 
         SparkRuntime.getOrCreate(tempParams)
@@ -188,7 +186,12 @@ object PlatformManager {
         null
       case _ => SparkStreamingRuntime.getOrCreate(tempParams)
     }
+    if (SQLContextHolder.sqlContextHolder == null) {
+      SQLContextHolder.setActive(createSQLContextHolder(tempParams, runtime))
+      tempParams.put("_sqlContextHolder_", SQLContextHolder.getOrCreate())
+    }
 
+    runtime
   }
 
   def SPAKR_STREAMING = "spark_streaming"

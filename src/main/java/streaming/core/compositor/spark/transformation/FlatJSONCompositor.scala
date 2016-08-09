@@ -35,15 +35,19 @@ class FlatJSONCompositor[T] extends Compositor[T] {
 
   override def result(alg: util.List[Processor[T]], ref: util.List[Strategy[T]], middleResult: util.List[T], params: util.Map[Any, Any]): util.List[T] = {
 
-    val rdd = middleResult(0) match {
-      case df: DataFrame => df.toJSON
-      case rd: Any => rd.asInstanceOf[RDD[String]]
-    }
     val _jsonKeyPaths = jsonKeyPaths
 
-    val newRDD = rdd.flatMap { line =>
-      JSONParser(line, _jsonKeyPaths.toList)
+    val newRDD = middleResult(0) match {
+      case df: DataFrame =>
+        import df.sqlContext.implicits._
+        df.toJSON.flatMap { line =>
+        JSONParser(line, _jsonKeyPaths.toList)
+      }.toDF()
+      case rd: Any => rd.asInstanceOf[RDD[String]].flatMap { line =>
+        JSONParser(line, _jsonKeyPaths.toList)
+      }
     }
+
     List(newRDD.asInstanceOf[T])
   }
 

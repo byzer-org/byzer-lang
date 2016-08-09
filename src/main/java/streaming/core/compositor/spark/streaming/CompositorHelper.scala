@@ -2,6 +2,8 @@ package streaming.core.compositor.spark.streaming
 
 import java.util
 
+import org.apache.spark.sql.SQLContext
+import streaming.common.SQLContextHolder
 import streaming.core.strategy.platform.{SparkRuntime, SparkStreamingRuntime}
 
 import scala.collection.JavaConversions._
@@ -31,6 +33,10 @@ trait CompositorHelper {
       case b: SparkRuntime => b.sparkContext
       case _ => throw new RuntimeException("get _runtime_ fail")
     }
+  }
+
+  def sqlContextHolder(params: util.Map[Any, Any]) = {
+    params.get("_sqlContextHolder_").asInstanceOf[SQLContextHolder].getOrCreate()
   }
 
 }

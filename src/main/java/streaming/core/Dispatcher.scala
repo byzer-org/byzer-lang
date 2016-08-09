@@ -3,6 +3,7 @@ package streaming.core
 import java.util.{Map => JMap}
 
 import serviceframework.dispatcher.StrategyDispatcher
+import streaming.common.SQLContextHolder
 import streaming.core.strategy.platform.{PlatformManager, SparkRuntime, SparkStreamingRuntime}
 
 import scala.collection.JavaConversions._

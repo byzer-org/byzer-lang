@@ -1,0 +1,20 @@
+import org.apache.spark.ml.evaluation.Evaluator
+import org.apache.spark.ml.param.ParamMap
+import org.apache.spark.ml.tuning.ParamGridBuilder
+import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.functions._
+import org.apache.spark.sql.types.DoubleType
+import org.apache.spark.ml.linalg.Vectors
+
+val t = udf { (features: String) =>
+
+      if (!features.contains(":")) {
+        val v = features.split(",|\\s+").map(_.toDouble)
+        Vectors.dense(v)
+      } else {
+        val v = features.split(",|\\s+").map(_.split(":")).map(f => (f(0).toInt, f(1).toDouble))
+        Vectors.sparse(vectorSize, v)
+      }
+
+    }
+t

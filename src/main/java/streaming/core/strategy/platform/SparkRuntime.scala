@@ -22,7 +22,7 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
 
   var sparkContext: SparkContext = createRuntime
 
-  val sparkRuntimeOperator = new SparkRuntimeOperator(sparkContext)
+  val sparkRuntimeOperator = new SparkRuntimeOperator(_params, sparkContext)
 
   var sparkRuntimeInfo = new SparkRuntimeInfo()
 

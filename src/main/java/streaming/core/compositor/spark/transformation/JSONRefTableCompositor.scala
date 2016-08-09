@@ -32,8 +32,7 @@ class JSONRefTableCompositor[T] extends Compositor[T] with CompositorHelper with
 
     val newDF = middleResult.get(0) match {
       case rdd: RDD[String] =>
-        val sqlContext = SQLContext.getOrCreate(rdd.sparkContext)
-        sqlContext.read.json(rdd)
+        sqlContextHolder(params).read.json(rdd)
 
       case df: DataFrame => df
     }
