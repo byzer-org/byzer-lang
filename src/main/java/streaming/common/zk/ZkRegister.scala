@@ -25,7 +25,8 @@ object ZkRegister {
     }
 
     if (client.exists(ZKConfUtil.CONF_ROOT_DIR + "/address")) {
-      throw new RuntimeException(s"${ZKConfUtil.CONF_ROOT_DIR} already exits in zookeeper")
+      client.delete(ZKConfUtil.CONF_ROOT_DIR + "/address")
+      logger.error(s"${ZKConfUtil.CONF_ROOT_DIR} already exits in zookeeper")
     }
     val hostAddress = net.csdn.common.network.NetworkUtils.getFirstNonLoopbackAddress(StackType.IPv4).getHostAddress
     val port = params.getParam("streaming.driver.port", "9003")

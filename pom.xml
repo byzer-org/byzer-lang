@@ -4,7 +4,7 @@
 
     <groupId>streaming.king</groupId>
     <artifactId>streamingpro</artifactId>
-    <version>0.3.3-SNAPSHOT-${mode}-mllib-${spark.version}</version>
+    <version>0.3.3-SNAPSHOT-${mode}-${spark.version}</version>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -220,13 +220,13 @@
     </profiles>
     <dependencies>
 
-        <dependency>
-            <groupId>org.ansj</groupId>
-            <artifactId>ansj_seg</artifactId>
-            <version>5.0</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/lib/ansj_seg-5.0.0-all-in-one.jar</systemPath>
-        </dependency>
+        <!--<dependency>-->
+            <!--<groupId>org.ansj</groupId>-->
+            <!--<artifactId>ansj_seg</artifactId>-->
+            <!--<version>5.0</version>-->
+            <!--<scope>system</scope>-->
+            <!--<systemPath>${project.basedir}/lib/ansj_seg-5.0.0-all-in-one.jar</systemPath>-->
+        <!--</dependency>-->
 
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>

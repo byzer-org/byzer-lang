@@ -1,6 +1,5 @@
 package streaming.core.compositor.spark.udf.func
 
-import org.ansj.splitWord.analysis.NlpAnalysis
 import org.apache.spark.sql.UDFRegistration
 
 import scala.collection.JavaConversions._
@@ -12,7 +11,10 @@ import scala.collection.mutable
 object MLFunctions {
   def parse(uDFRegistration: UDFRegistration) = {
     uDFRegistration.register("parse", (co: String) => {
-      NlpAnalysis.parse(co).getTerms.map(f => f.getName).toArray
+      val parseMethod = Class.forName("org.ansj.splitWord.analysis.NlpAnalysis").getMethod("parse", classOf[String])
+      val tmp = parseMethod.invoke(null, co)
+      val terms = tmp.getClass.getMethod("getTerms").invoke(tmp).asInstanceOf[java.util.List[Any]]
+      terms.map(f => f.asInstanceOf[ {def getName: String}].getName).toArray
     })
   }
 
