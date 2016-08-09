@@ -20,6 +20,7 @@
             <properties>
                 <spark.version>1.5.1</spark.version>
                 <spark.streaming.kafka.artifactId>spark-streaming-kafka_2.10</spark.streaming.kafka.artifactId>
+                <serviceframework.version>1.3.0-SNAPSHOT</serviceframework.version>
             </properties>
         </profile>
 
@@ -29,6 +30,7 @@
             <properties>
                 <spark.version>1.6.1</spark.version>
                 <spark.streaming.kafka.artifactId>spark-streaming-kafka_2.10</spark.streaming.kafka.artifactId>
+                <serviceframework.version>1.3.0-SNAPSHOT</serviceframework.version>
             </properties>
         </profile>
 
@@ -37,6 +39,7 @@
             <properties>
                 <spark.version>2.0.0</spark.version>
                 <spark.streaming.kafka.artifactId>spark-streaming-kafka-0-8_2.10</spark.streaming.kafka.artifactId>
+                <serviceframework.version>1.3.2-SNAPSHOT-9.2.16</serviceframework.version>
             </properties>
         </profile>
 
@@ -219,11 +222,11 @@
     <dependencies>
 
         <!--<dependency>-->
-            <!--<groupId>org.ansj</groupId>-->
-            <!--<artifactId>ansj_seg</artifactId>-->
-            <!--<version>5.0</version>-->
-            <!--<scope>system</scope>-->
-            <!--<systemPath>${project.basedir}/lib/ansj_seg-5.0.0-all-in-one.jar</systemPath>-->
+        <!--<groupId>org.ansj</groupId>-->
+        <!--<artifactId>ansj_seg</artifactId>-->
+        <!--<version>5.0</version>-->
+        <!--<scope>system</scope>-->
+        <!--<systemPath>${project.basedir}/lib/ansj_seg-5.0.0-all-in-one.jar</systemPath>-->
         <!--</dependency>-->
 
         <dependency>
@@ -256,43 +259,47 @@
         <dependency>
             <groupId>net.csdn</groupId>
             <artifactId>ServiceFramework</artifactId>
-            <version>1.3.0-SNAPSHOT</version>
+            <version>1.3.2-SNAPSHOT-9.2.16</version>
             <exclusions>
-                    <exclusion>
-                        <groupId>org.slf4j</groupId>
-                        <artifactId>slf4j-api</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.slf4j</groupId>
-                        <artifactId>jcl-over-slf4j</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.slf4j</groupId>
-                        <artifactId>slf4j-log4j12</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.slf4j</groupId>
-                        <artifactId>jcl-over-slf4j</artifactId>
-                    </exclusion>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-api</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>jcl-over-slf4j</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-log4j12</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>jcl-over-slf4j</artifactId>
+                </exclusion>
                 <!--<exclusion>-->
-                    <!--<groupId>org.eclipse.jetty</groupId>-->
-                    <!--<artifactId>jetty-server</artifactId>-->
+                <!--<groupId>org.eclipse.jetty</groupId>-->
+                <!--<artifactId>jetty-server</artifactId>-->
                 <!--</exclusion>-->
                 <!--<exclusion>-->
-                    <!--<groupId>org.eclipse.jetty</groupId>-->
-                    <!--<artifactId>jetty-io</artifactId>-->
+                <!--<groupId>org.eclipse.jetty</groupId>-->
+                <!--<artifactId>jetty-servlet</artifactId>-->
                 <!--</exclusion>-->
                 <!--<exclusion>-->
-                    <!--<groupId>org.eclipse.jetty</groupId>-->
-                    <!--<artifactId>jetty-http</artifactId>-->
+                <!--<groupId>org.eclipse.jetty</groupId>-->
+                <!--<artifactId>jetty-io</artifactId>-->
                 <!--</exclusion>-->
                 <!--<exclusion>-->
-                    <!--<groupId>org.eclipse.jetty</groupId>-->
-                    <!--<artifactId>jetty-util</artifactId>-->
+                <!--<groupId>org.eclipse.jetty</groupId>-->
+                <!--<artifactId>jetty-http</artifactId>-->
                 <!--</exclusion>-->
                 <!--<exclusion>-->
-                    <!--<groupId>org.eclipse.jetty</groupId>-->
-                    <!--<artifactId>jetty-continuation</artifactId>-->
+                <!--<groupId>org.eclipse.jetty</groupId>-->
+                <!--<artifactId>jetty-util</artifactId>-->
+                <!--</exclusion>-->
+                <!--<exclusion>-->
+                <!--<groupId>org.eclipse.jetty</groupId>-->
+                <!--<artifactId>jetty-continuation</artifactId>-->
                 <!--</exclusion>-->
                 <!--mongo相关-->
                 <exclusion>
@@ -312,8 +319,8 @@
                     <artifactId>libthrift</artifactId>
                 </exclusion>
                 <!--<exclusion>-->
-                    <!--<groupId>org.apache.httpcomponents</groupId>-->
-                    <!--<artifactId>httpclient</artifactId>-->
+                <!--<groupId>org.apache.httpcomponents</groupId>-->
+                <!--<artifactId>httpclient</artifactId>-->
                 <!--</exclusion>-->
                 <exclusion>
                     <groupId>mysql</groupId>
@@ -321,8 +328,8 @@
                 </exclusion>
 
                 <!--<exclusion>-->
-                    <!--<groupId>org.apache.velocity</groupId>-->
-                    <!--<artifactId>velocity</artifactId>-->
+                <!--<groupId>org.apache.velocity</groupId>-->
+                <!--<artifactId>velocity</artifactId>-->
                 <!--</exclusion>-->
                 <exclusion>
                     <groupId>com.101tec</groupId>
@@ -331,6 +338,14 @@
                 <exclusion>
                     <groupId>com.alibaba</groupId>
                     <artifactId>dubbo</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>junit</groupId>
+                    <artifactId>junit</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.scala-lang</groupId>
+                    <artifactId>jline</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
@@ -348,9 +363,9 @@
 
 
         <!--<dependency>-->
-            <!--<groupId>org.carbondata</groupId>-->
-            <!--<artifactId>carbon-hadoop</artifactId>-->
-            <!--<version>0.1.0-SNAPSHOT</version>-->
+        <!--<groupId>org.carbondata</groupId>-->
+        <!--<artifactId>carbon-hadoop</artifactId>-->
+        <!--<version>0.1.0-SNAPSHOT</version>-->
         <!--</dependency>-->
 
         <dependency>
