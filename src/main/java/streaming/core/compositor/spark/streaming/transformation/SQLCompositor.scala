@@ -61,12 +61,9 @@ class SQLCompositor[T] extends Compositor[T] with CompositorHelper {
       params.put(FUNC, (rddOrDF: Any) => {
         val oldDF = rddOrDF match {
           case rdd: RDD[String] =>
-<<<<<<< HEAD
-            val sqlContext = SQLContext.getOrCreate(rdd.sparkContext)
-=======
             val sqlContext = sqlContextHolder(params)
->>>>>>> mllib
             sqlContext.read.json(rdd)
+
           case df: DataFrame => df
         }
 
