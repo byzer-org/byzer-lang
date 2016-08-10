@@ -12,6 +12,7 @@
         <scala.2.version>2.10</scala.2.version>
         <spark.version>1.6.1</spark.version>
         <spark.streaming.kafka.artifactId>spark-streaming-kafka_2.10</spark.streaming.kafka.artifactId>
+        <serviceframework.version>1.3.0-SNAPSHOT</serviceframework.version>
     </properties>
 
     <profiles>
