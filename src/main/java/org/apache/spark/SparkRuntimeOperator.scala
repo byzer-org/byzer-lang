@@ -4,7 +4,6 @@ import java.util.{Map => JMap}
 
 import _root_.streaming.common.SQLContextHolder
 import _root_.streaming.core.strategy.platform.RuntimeOperator
-import org.apache.spark.sql.SQLContext
 
 /**
  * 5/11/16 WilliamZhu(allwefantasy@gmail.com)

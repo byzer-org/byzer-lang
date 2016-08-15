@@ -38,7 +38,7 @@ class SQLCompositor[T] extends Compositor[T] with CompositorHelper {
   override def result(alg: util.List[Processor[T]], ref: util.List[Strategy[T]], middleResult: util.List[T], params: util.Map[Any, Any]): util.List[T] = {
 
     require(sql.isDefined, "please set sql  by variable `sql` in config file")
-    val _sql = sql.get
+    val _sql = translateSQL(sql.get,params)
     if (params.containsKey(TABLE)) {
 
       //parent compositor is  tableCompositor

@@ -10,10 +10,9 @@ object LocalSparkApp {
       "-streaming.name", "god",
       "-streaming.rest", "true",
       "-streaming.platform", "spark",
-      "-streaming.compatibility.crossversion", "false",
       "-streaming.enableHiveSupport", "false",
-      "-streaming.spark.service", "true",
-      "-streaming.sql.out.path","file:///tmp/test/pdate=20160809"
+      "-streaming.spark.service", "true"
+      //"-streaming.sql.out.path","file:///tmp/test/pdate=20160809"
 
       //"-streaming.jobs","idf-compute"
       //"-streaming.sql.source.path","hdfs://m2:8020/data/raw/live-hls-formated/20160725/19/cdn148-16-52_2016072519.1469444764341"

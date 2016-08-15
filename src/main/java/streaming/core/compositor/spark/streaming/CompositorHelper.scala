@@ -2,7 +2,6 @@ package streaming.core.compositor.spark.streaming
 
 import java.util
 
-import org.apache.spark.sql.SQLContext
 import streaming.common.SQLContextHolder
 import streaming.core.strategy.platform.{SparkRuntime, SparkStreamingRuntime}
 
@@ -37,6 +36,15 @@ trait CompositorHelper {
 
   def sqlContextHolder(params: util.Map[Any, Any]) = {
     params.get("_sqlContextHolder_").asInstanceOf[SQLContextHolder].getOrCreate()
+  }
+
+  def translateSQL(_sql: String, params: util.Map[Any, Any]) = {
+    var sql: String = _sql
+    params.filter(_._1.toString.startsWith("streaming.sql.params.")).foreach { p =>
+      val key = p._1.toString.split("\\.").last
+      sql = sql.replaceAll(key, p._2.toString)
+    }
+    sql
   }
 
 }
