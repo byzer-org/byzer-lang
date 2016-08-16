@@ -11,7 +11,8 @@ object LocalSparkApp {
       "-streaming.rest", "true",
       "-streaming.platform", "spark",
       "-streaming.enableHiveSupport", "false",
-      "-streaming.spark.service", "true"
+      "-streaming.spark.service", "false",
+      "-streaming.sql.params.jack", "\"jack\""
       //"-streaming.sql.out.path","file:///tmp/test/pdate=20160809"
 
       //"-streaming.jobs","idf-compute"

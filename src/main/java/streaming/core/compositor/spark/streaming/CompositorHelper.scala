@@ -42,7 +42,7 @@ trait CompositorHelper {
     var sql: String = _sql
     params.filter(_._1.toString.startsWith("streaming.sql.params.")).foreach { p =>
       val key = p._1.toString.split("\\.").last
-      sql = sql.replaceAll(key, p._2.toString)
+      sql = sql.replaceAll(":" + key, p._2.toString)
     }
     sql
   }
