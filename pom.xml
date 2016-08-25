@@ -4,7 +4,7 @@
 
     <groupId>streaming.king</groupId>
     <artifactId>streamingpro</artifactId>
-    <version>0.3.6-SNAPSHOT-${mode}-${spark.version}</version>
+    <version>0.3.7-SNAPSHOT-${mode}-${spark.version}</version>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
