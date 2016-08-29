@@ -1,5 +1,4 @@
 
-[![Build Status](https://travis-ci.org/allwefantasy/streamingpro.svg?branch=master)](https://travis-ci.org/allwefantasy/streamingpro)
 
 Declarative workflows for building Spark Streaming  / Spark batch programe / Spark SQL Server
 
