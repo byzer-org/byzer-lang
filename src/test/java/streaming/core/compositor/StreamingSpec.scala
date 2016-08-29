@@ -51,5 +51,27 @@ class StreamingSpec extends BasicStreamingOperation {
     }
   }
 
+  "streaming source from map" should "convert correctly" in {
+
+    withStreamingContext(setupStreamingContext(streamingParams, "classpath:///test/streaming-test-scalamaptojson.json")) { runtime: SparkStreamingRuntime =>
+      val batchCounter = new BatchCounter(runtime.streamingContext)
+      runtime.startRuntime
+      val clock = manualClock(runtime.streamingContext)
+      clock.advance(2000)
+      batchCounter.waitUntilBatchesCompleted(1, 4000)
+      val sd = Dispatcher.dispatcher(null)
+      val strategies = sd.findStrategies("scalamaptojson").get
+
+      strategies.size should be(1)
+
+      val output = strategies.head.compositor.last.asInstanceOf[SQLUnitTestCompositor[Any]]
+      val result = output.result.head
+
+      result.size should be(1)
+
+      result.head.getAs[String]("a") should be("yes")
+    }
+  }
+
 
 }

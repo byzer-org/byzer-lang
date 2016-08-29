@@ -16,7 +16,6 @@ import scala.collection.JavaConversions._
 class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with PlatformManagerListener {
   self =>
 
-  private val logger = Loggers.getLogger(classOf[SparkRuntime])
 
   def name = "SPARK"
 
@@ -58,6 +57,7 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
 
   override def destroyRuntime(stopGraceful: Boolean, stopContext: Boolean): Boolean = {
     sparkContext.stop()
+    SparkRuntime.clearLastInstantiatedContext()
     true
   }
 

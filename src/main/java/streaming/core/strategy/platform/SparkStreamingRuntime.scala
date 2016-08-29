@@ -5,8 +5,8 @@ import java.util.concurrent.atomic.AtomicReference
 import java.util.{List => JList, Map => JMap}
 
 import net.csdn.common.logging.Loggers
-import org.apache.spark.streaming.scheduler.{StreamingListener, StreamingListenerBatchCompleted}
 import org.apache.spark.streaming._
+import org.apache.spark.streaming.scheduler.{StreamingListener, StreamingListenerBatchCompleted}
 import org.apache.spark.{SparkConf, SparkContext}
 
 import scala.collection.JavaConversions._
@@ -25,10 +25,6 @@ class SparkStreamingRuntime(_params: JMap[Any, Any]) extends StreamingRuntime wi
   var streamingContext: StreamingContext = createRuntime
 
   streamingContext.addStreamingListener(new BatchStreamingListener(this))
-
-  if(_params.getOrElse("streaming.unittest",false).toString.toBoolean){
-    new BatchCounter(streamingContext)
-  }
 
 
   private var _streamingRuntimeInfo: SparkStreamingRuntimeInfo = new SparkStreamingRuntimeInfo(this)
@@ -59,7 +55,7 @@ class SparkStreamingRuntime(_params: JMap[Any, Any]) extends StreamingRuntime wi
 
     params.filter(f => f._1.toString.startsWith("streaming.spark.")).foreach { f =>
       val key = f._1.toString
-      conf.set(key.substring("streaming".length+1), f._2.toString)
+      conf.set(key.substring("streaming".length + 1), f._2.toString)
     }
 
 
@@ -88,8 +84,9 @@ class SparkStreamingRuntime(_params: JMap[Any, Any]) extends StreamingRuntime wi
 
     //clear inputDStreamId
     _streamingRuntimeInfo.jobNameToInputStreamId.clear()
-
     streamingContext.stop(stopSparkContext, stopGraceful)
+    SparkStreamingRuntime.clearLastInstantiatedContext()
+    SparkStreamingRuntime.sparkContext.set(null)
     true
   }
 
