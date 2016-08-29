@@ -483,8 +483,29 @@
                         <include>**/*.java</include>
                         <include>**/*.scala</include>
                     </includes>
+                    <skipTests>true</skipTests>
                 </configuration>
+
             </plugin>
+
+
+            <plugin>
+                <groupId>org.scalatest</groupId>
+                <artifactId>scalatest-maven-plugin</artifactId>
+                <version>1.0</version>
+                <executions>
+                    <execution>
+                        <id>test</id>
+                        <goals>
+                            <goal>test</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+
+
+
             <plugin>
                 <groupId>org.scala-tools</groupId>
                 <artifactId>maven-scala-plugin</artifactId>

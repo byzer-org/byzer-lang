@@ -1,32 +1,22 @@
 package streaming.core.compositor
 
 import org.apache.spark.streaming.{BasicStreamingOperation, BatchCounter}
-import org.scalatest._
-import streaming.common.ParamsUtil
 import streaming.core.Dispatcher
 import streaming.core.compositor.spark.streaming.output.SQLUnitTestCompositor
-import streaming.core.strategy.platform.{PlatformManager, SparkStreamingRuntime}
+import streaming.core.strategy.platform.SparkStreamingRuntime
 
 import scala.collection.JavaConversions._
 
 /**
  * 8/29/16 WilliamZhu(allwefantasy@gmail.com)
  */
-class StreamingSpec extends FlatSpec with Matchers with BasicStreamingOperation {
+class StreamingSpec extends BasicStreamingOperation {
 
-
-  val batchParams = Array(
-    "-streaming.master", "local[2]",
-    "-streaming.name", "unit-test",
-    "-streaming.rest", "true",
-    "-streaming.platform", "spark",
-    "-streaming.enableHiveSupport", "false",
-    "-streaming.spark.service", "false")
 
   val streamingParams = Array(
     "-streaming.master", "local[2]",
     "-streaming.name", "unit-test",
-    "-streaming.rest", "true",
+    "-streaming.rest", "false",
     "-streaming.platform", "spark_streaming",
     "-streaming.enableHiveSupport", "false",
     "-streaming.spark.service", "false",
@@ -38,9 +28,9 @@ class StreamingSpec extends FlatSpec with Matchers with BasicStreamingOperation 
   )
 
 
-  "streaming" should "run only one batch then exist" in {
+  "streaming with join table" should "run normally" in {
 
-    withStreamingContext(setupStreamingContext("classpath:///strategy.v2.json")) { runtime: SparkStreamingRuntime =>
+    withStreamingContext(setupStreamingContext(streamingParams, "classpath:///test/streaming-test.json")) { runtime: SparkStreamingRuntime =>
       val batchCounter = new BatchCounter(runtime.streamingContext)
       runtime.startRuntime
       val clock = manualClock(runtime.streamingContext)
@@ -58,16 +48,7 @@ class StreamingSpec extends FlatSpec with Matchers with BasicStreamingOperation 
 
       result.head.getAs[String]("a") should be("3")
       result.head.getAs[String]("b") should be("5")
-
     }
-  }
-
-  def setupStreamingContext(configFilePath: String) = {
-    val extraParam = Array("-streaming.job.file.path", configFilePath)
-    val params = new ParamsUtil(streamingParams ++ extraParam)
-    PlatformManager.getOrCreate.run(params, false)
-    val runtime = PlatformManager.getRuntime.asInstanceOf[SparkStreamingRuntime]
-    runtime
   }
 
 

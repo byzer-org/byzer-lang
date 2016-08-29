@@ -25,6 +25,10 @@ class SQLContextHolder(hiveEnable: Boolean, sparkContext: SparkContext) {
       }
     }
   }
+
+  def clear = {
+    hiveContextRef.set(null)
+  }
 }
 
 object SQLContextHolder {
