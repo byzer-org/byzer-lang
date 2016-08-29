@@ -1,4 +1,7 @@
-language: java
+language: scala
+
+scala:
+  - 2.10.3
 
 jdk:
   - oraclejdk8
@@ -6,5 +9,6 @@ jdk:
 
 
 script:
+  - export TRAVIS_SCALA_VERSION=2.10.3
   - ulimit -a
   - mvn test
