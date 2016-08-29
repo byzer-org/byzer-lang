@@ -3,7 +3,6 @@ package streaming.core
 import java.util.{Map => JMap}
 
 import serviceframework.dispatcher.StrategyDispatcher
-import streaming.common.SQLContextHolder
 import streaming.core.strategy.platform.{PlatformManager, SparkRuntime, SparkStreamingRuntime}
 
 import scala.collection.JavaConversions._
@@ -13,7 +12,7 @@ import scala.collection.JavaConversions._
  */
 object Dispatcher {
   def dispatcher(contextParams: JMap[Any, Any]): StrategyDispatcher[Any] = {
-    if (contextParams.containsKey("streaming.job.file.path")) {
+    if (contextParams!=null && contextParams.containsKey("streaming.job.file.path")) {
       val runtime = contextParams.get("_runtime_")
 
       val sparkContext = runtime match {
@@ -21,8 +20,20 @@ object Dispatcher {
         case s2: SparkRuntime => s2.sparkContext
       }
 
-      val jobConfigStr = sparkContext.
-        textFile(contextParams.get("streaming.job.file.path").toString).collect().mkString("\n")
+      val jobFilePath = contextParams.get("streaming.job.file.path").toString
+
+      var jobConfigStr = "{}"
+
+      if (jobFilePath.startsWith("classpath://")) {
+        val cleanJobFilePath = jobFilePath.substring("classpath://".length)
+        jobConfigStr = scala.io.Source.fromInputStream(
+          Dispatcher.getClass.getResourceAsStream(cleanJobFilePath)).getLines().
+          mkString("\n")
+      } else {
+        jobConfigStr = sparkContext.
+          textFile(jobFilePath).collect().mkString("\n")
+      }
+
       StrategyDispatcher.getOrCreate(jobConfigStr)
     } else {
       StrategyDispatcher.getOrCreate(null)
