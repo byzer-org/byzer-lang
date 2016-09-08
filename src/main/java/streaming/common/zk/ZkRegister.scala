@@ -5,6 +5,7 @@ import net.csdn.common.logging.Loggers
 import net.csdn.common.network.NetworkUtils.StackType
 import net.csdn.common.settings.ImmutableSettings
 import net.csdn.common.settings.ImmutableSettings._
+import org.I0Itec.zkclient.IZkDataListener
 import streaming.common.ParamsUtil
 
 /**
@@ -12,6 +13,7 @@ import streaming.common.ParamsUtil
  */
 object ZkRegister {
   val logger = Loggers.getLogger(classOf[ZkRegister])
+
 
   def registerToZk(params: ParamsUtil) = {
     val settingsB: ImmutableSettings.Builder = settingsBuilder()
@@ -34,7 +36,24 @@ object ZkRegister {
       s"zk=[${params.getParam("streaming.zk.servers")}]\n" +
       s"${ZKConfUtil.CONF_ROOT_DIR}/address=${hostAddress}:${port}")
 
-    client.createEphemeral(ZKConfUtil.CONF_ROOT_DIR + "/address", hostAddress + ":" + port)
+
+    val address = ZKConfUtil.CONF_ROOT_DIR + "/address";
+
+    client.createEphemeral(, hostAddress + ":" + port)
+
+    //if Ephemeral node was removed by zookeeper cause some unexpected reason,we should monitor
+    // this event and create the node  again.
+    client.subscribeDataChanges(address, new IZkDataListener {
+      override def handleDataChange(s: String, o: scala.Any): Unit = {
+        // do nothing
+      }
+
+      override def handleDataDeleted(s: String): Unit = {
+        logger.error(s"${address}=${s} removed by zookeeper, create again")
+        client.createEphemeral(address, hostAddress + ":" + port)
+      }
+    })
+
     zk
   }
 }
