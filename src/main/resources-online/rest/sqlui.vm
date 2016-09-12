@@ -73,7 +73,15 @@
 												<label class="inline">
 													<span class="lbl">查询语句：</span>	
 													<textarea class="form-control" name="sql" placeholder="Default Text" rows="8" cols="130"></textarea>	
-												</label>	
+												</label>
+												<label class="inline">
+													<span class="lbl">结果类型：</span>
+													<select class="form-control" name="resultType">
+														<option value="html">html</option>
+														<option value="json">json</option>
+														<option value="csv">csv</option>
+													</select>
+												</label>
 												<button type="button" class="btn btn-info btn-sm">
 													<i class="ace-icon fa fa-key bigger-110"></i>提交
 												</button>											
