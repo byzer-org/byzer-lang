@@ -4,7 +4,7 @@
 
     <groupId>streaming.king</groupId>
     <artifactId>streamingpro</artifactId>
-    <version>0.3.8-SNAPSHOT-${mode}-${spark.version}</version>
+    <version>0.3.9-SNAPSHOT-${mode}-${spark.version}</version>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -584,16 +584,6 @@
         </plugins>
     </build>
 
-    <distributionManagement>
-        <repository>
-            <id>releases</id>
-            <name>releases</name>
-            <url>http://mvn.letv.com/nexus/content/repositories/releases/</url>
-        </repository>
-        <snapshotRepository>
-            <id>snapshots</id>
-            <url>http://mvn.letv.com/nexus/content/repositories/snapshots</url>
-        </snapshotRepository>
-    </distributionManagement>
+
 
 </project>

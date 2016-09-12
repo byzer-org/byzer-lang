@@ -1,0 +1,71 @@
+{
+  "convert_data_parquet": {
+    "desc": "测试",
+    "strategy": "streaming.core.strategy.SparkStreamingStrategy",
+    "algorithm": [],
+    "ref": ["testJoinTable"],
+    "compositor": [
+      {
+        "name": "streaming.core.compositor.spark.source.SQLSourceCompositor",
+        "params": [
+          {
+            "path": "file:///tmp/hdfsfile",
+            "format": "org.apache.spark.sql.execution.datasources.hdfs",
+            "fieldName": "raw"
+          }
+        ]
+      },
+      {
+        "name": "streaming.core.compositor.spark.transformation.JSONTableCompositor",
+        "params": [
+          {
+            "tableName": "test"
+          }
+        ]
+      },
+      {
+        "name": "streaming.core.compositor.spark.transformation.SQLCompositor",
+        "params": [
+          {
+            "sql": "select split(test.raw,'\t')[1] as tp  from test,testJoinTable where test.raw = testJoinTable.a limit 100"
+          }
+        ]
+      },
+      {
+        "name": "streaming.core.compositor.spark.output.SQLUnitTestCompositor",
+        "params": [
+          {
+          }
+        ]
+      }
+    ],
+    "configParams": {
+    }
+  },
+  "testJoinTable": {
+    "desc": "测试",
+    "strategy": "streaming.core.strategy.SparkStreamingRefStrategy",
+    "algorithm": [],
+    "ref": [],
+    "compositor": [
+      {
+        "name": "streaming.core.compositor.spark.source.MockJsonCompositor",
+        "params": [
+          {"a":"3"},
+          {"a":"4"},
+          {"a":"5"}
+        ]
+      },
+      {
+        "name": "streaming.core.compositor.spark.transformation.JSONRefTableCompositor",
+        "params": [
+          {
+            "tableName": "testJoinTable"
+          }
+        ]
+      }
+    ],
+    "configParams": {
+    }
+  }
+}

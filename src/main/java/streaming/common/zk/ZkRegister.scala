@@ -39,7 +39,7 @@ object ZkRegister {
 
     val address = ZKConfUtil.CONF_ROOT_DIR + "/address";
 
-    client.createEphemeral(, hostAddress + ":" + port)
+    client.createEphemeral(address, hostAddress + ":" + port)
 
     //if Ephemeral node was removed by zookeeper cause some unexpected reason,we should monitor
     // this event and create the node  again.
