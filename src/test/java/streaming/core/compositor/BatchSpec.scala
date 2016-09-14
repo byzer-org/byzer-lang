@@ -1,11 +1,9 @@
 package streaming.core.compositor
 
 import java.nio.charset.Charset
-import java.util.concurrent.atomic.AtomicReference
 
 import com.google.common.io.Files
 import org.apache.spark.streaming.BasicStreamingOperation
-import serviceframework.dispatcher.StrategyDispatcher
 import streaming.core.Dispatcher
 import streaming.core.compositor.spark.output.SQLUnitTestCompositor
 import streaming.core.strategy.platform.SparkRuntime
@@ -45,7 +43,32 @@ class BatchSpec extends BasicStreamingOperation {
 
       result.size should be(1)
 
-      result.head.getAs[String]("tp") should be ("bbc")
+      result.head.getAs[String]("tp") should be("bbc")
+
+      file.delete()
+
+    }
+  }
+
+  "batch-with-script" should "run normally" in {
+    val file = new java.io.File("/tmp/hdfsfile/abc.txt")
+    Files.createParentDirs(file)
+    Files.write("kk\tbb", file, Charset.forName("utf-8"))
+
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/batch-test-script.json")) { runtime: SparkRuntime =>
+
+      val sd = Dispatcher.dispatcher(null)
+      val strategies = sd.findStrategies("convert_data_parquet").get
+      strategies.size should be(1)
+
+      val output = strategies.head.compositor.last.asInstanceOf[SQLUnitTestCompositor[Any]]
+      val result = output.result.head
+
+      result.size should be(1)
+
+      result.head.getAs[String]("a") should be("kk")
+
+      println("a=>" +result.head.getAs[String]("a")+",b=>"+result.head.getAs[String]("b"))
 
       file.delete()
 

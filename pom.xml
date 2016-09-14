@@ -501,6 +501,9 @@
                         </goals>
                     </execution>
                 </executions>
+                <configuration>
+                    <argLine>-XX:MaxPermSize=128m</argLine>
+                </configuration>
             </plugin>
 
 
