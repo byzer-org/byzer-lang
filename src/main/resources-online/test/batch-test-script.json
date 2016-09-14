@@ -24,23 +24,17 @@
         ]
       },
       {
-        "name": "streaming.core.compositor.spark.transformation.SQLCompositor",
-        "params": [
-          {
-            "sql": "select raw  from test ",
-            "outputTableName": "test2"
-          }
-        ]
-      },
-      {
         "name": "streaming.core.compositor.spark.transformation.ScriptCompositor",
         "params": [
           {
-            "inputTableName": "test2",
+            "inputTableName": "test",
             "outputTableName": "test3"
           },
           {
-            "raw": "val Array(a,b)=rawLine.split(\"\t\");Map(\"a\"->a,\"b\"->b)"
+            "raw": [
+              "val Array(a,b)=rawLine.split(\"\t\");",
+              "Map(\"a\"->a,\"b\"->b)"
+            ]
           }
         ]
       },
