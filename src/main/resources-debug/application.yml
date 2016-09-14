@@ -16,8 +16,6 @@ test:
            disable: true
         mongodb:
            disable: true
-master:
-    host: allwefantasy
 
 application:
     controllerNames: streaming.rest.RestController
@@ -34,7 +32,7 @@ serviceframework:
     template:
         loader:
              classpath:
-                  enable: false
+                  enable: true
     static:
         loader:
              classpath:

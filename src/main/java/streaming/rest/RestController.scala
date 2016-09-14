@@ -12,16 +12,16 @@ import streaming.core.strategy.platform.{PlatformManager, SparkRuntime, SparkStr
 import scala.collection.JavaConversions._
 
 /**
- * 4/30/16 WilliamZhu(allwefantasy@gmail.com)
- */
-class RestController extends ApplicationController {
+  * 4/30/16 WilliamZhu(allwefantasy@gmail.com)
+  */
+class RestController extends ApplicationController with CSVRender {
   @At(path = Array("/runtime/spark/streaming/stop"), types = Array(GET))
   def stopRuntime = {
     runtime.destroyRuntime(true)
     render(200, "ok")
   }
 
-  @At(path = Array("/runtime/spark/sql"), types = Array(GET,POST))
+  @At(path = Array("/runtime/spark/sql"), types = Array(GET, POST))
   def sql = {
     if (!runtime.isInstanceOf[SparkRuntime]) render(400, "only support spark application")
     val sparkRuntime = runtime.asInstanceOf[SparkRuntime]
@@ -36,12 +36,13 @@ class RestController extends ApplicationController {
       }.toMap + loaderClzz
       sparkRuntime.operator.createTable(tableToPath._2, tableToPath._1, newParams)
     }
-    val sql=if(param("sql").contains(" limit ")) param("sql") else param("sql")+" limit 1000"
+    val sql = if (param("sql").contains(" limit ")) param("sql") else param("sql") + " limit 1000"
     val result = sparkRuntime.operator.runSQL(sql).mkString(",")
-    if(param("resultType","html")=="json")
-      render(200, "["+result+"]", ViewType.json)
-    else
-      renderHtml(200, "/rest/sqlui-result.vm", WowCollections.map("feeds", result))
+    param("resultType", "html") match {
+      case "json" => render(200, "[" + result + "]", ViewType.json)
+      case "csv" => renderJsonAsCsv(this.restResponse, "[" + result + "]")
+      case _ => renderHtml(200, "/rest/sqlui-result.vm", WowCollections.map("feeds", result))
+    }
   }
 
   @At(path = Array("/sqlui"), types = Array(GET))
