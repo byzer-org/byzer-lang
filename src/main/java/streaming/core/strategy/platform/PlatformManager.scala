@@ -6,7 +6,6 @@ import java.util.{List => JList, Map => JMap}
 import net.csdn.ServiceFramwork
 import net.csdn.bootstrap.Application
 import net.csdn.common.logging.Loggers
-import org.apache.spark.Logging
 import serviceframework.dispatcher.StrategyDispatcher
 import streaming.common.zk.{ZKClient, ZkRegister}
 import streaming.common.{ParamsUtil, SQLContextHolder, SparkCompatibility}
@@ -21,7 +20,7 @@ import scala.collection.mutable.ArrayBuffer
  */
 
 
-class PlatformManager extends Logging{
+class PlatformManager {
   self =>
   val config = new AtomicReference[ParamsUtil]()
 
@@ -134,7 +133,7 @@ class PlatformManager extends Logging{
   PlatformManager.setLastInstantiatedContext(self)
 }
 
-object PlatformManager extends Logging{
+object PlatformManager {
   private val INSTANTIATION_LOCK = new Object()
 
   /**
@@ -197,7 +196,6 @@ object PlatformManager extends Logging{
       case _ => SparkStreamingRuntime.getOrCreate(tempParams)
     }
     if (SQLContextHolder.sqlContextHolder == null) {
-      logInfo("....create sqlContextHolder.....")
       SQLContextHolder.setActive(createSQLContextHolder(tempParams, runtime))
       tempParams.put("_sqlContextHolder_", SQLContextHolder.getOrCreate())
     }

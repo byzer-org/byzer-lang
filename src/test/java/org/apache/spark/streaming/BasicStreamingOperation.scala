@@ -1,6 +1,5 @@
 package org.apache.spark.streaming
 
-import org.apache.spark.Logging
 import org.apache.spark.util.ManualClock
 import org.scalatest._
 import serviceframework.dispatcher.StrategyDispatcher
@@ -10,7 +9,7 @@ import streaming.core.strategy.platform.{PlatformManager, SparkRuntime, SparkStr
 /**
  * 8/29/16 WilliamZhu(allwefantasy@gmail.com)
  */
-trait BasicStreamingOperation extends FlatSpec with Logging with Matchers {
+trait BasicStreamingOperation extends FlatSpec with Matchers {
 
   def manualClock(streamingContext: StreamingContext) = {
     streamingContext.scheduler.clock.asInstanceOf[ManualClock]
@@ -28,7 +27,7 @@ trait BasicStreamingOperation extends FlatSpec with Logging with Matchers {
         runtime.destroyRuntime(false, true)
       } catch {
         case e: Exception =>
-          logError("Error stopping StreamingContext", e)
+          e.printStackTrace()
       }
     }
   }
@@ -45,7 +44,7 @@ trait BasicStreamingOperation extends FlatSpec with Logging with Matchers {
         runtime.destroyRuntime(false, true)
       } catch {
         case e: Exception =>
-          logError("Error stopping StreamingContext", e)
+          e.printStackTrace()
       }
     }
   }

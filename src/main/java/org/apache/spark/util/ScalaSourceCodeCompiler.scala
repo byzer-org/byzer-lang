@@ -1,7 +1,7 @@
 package org.apache.spark.util
 
 import com.google.common.cache.{CacheBuilder, CacheLoader}
-import org.apache.spark.Logging
+
 import streaming.common.CodeTemplates
 
 import scala.collection.mutable.ArrayBuffer
@@ -18,7 +18,7 @@ trait StreamingProGenerateClass {
   def execute(rawLine: String): Map[String, Any]
 }
 
-object ScalaSourceCodeCompiler extends Logging {
+object ScalaSourceCodeCompiler  {
 
   private val scriptCache = CacheBuilder.newBuilder()
     .maximumSize(100)
@@ -40,7 +40,7 @@ object ScalaSourceCodeCompiler extends Logging {
           val result = compileCode(wrapper)
           val endTime = System.nanoTime()
           def timeMs: Double = (endTime - startTime).toDouble / 1000000
-          logInfo(s"Code generated in $timeMs ms")
+
           result.asInstanceOf[StreamingProGenerateClass]
         }
       })
