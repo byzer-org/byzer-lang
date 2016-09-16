@@ -39,8 +39,13 @@ class ScriptCompositor[T] extends Compositor[T] with CompositorHelper {
   def outputTableName = {
     config[String]("outputTableName", _configParams)
   }
+
   def inputTableName = {
     config[String]("inputTableName", _configParams)
+  }
+
+  def source = {
+    config[String]("source", _configParams)
   }
 
   override def result(alg: util.List[Processor[T]], ref: util.List[Strategy[T]], middleResult: util.List[T], params: util.Map[Any, Any]): util.List[T] = {
@@ -51,7 +56,7 @@ class ScriptCompositor[T] extends Compositor[T] with CompositorHelper {
       val func = params.get(TABLE).asInstanceOf[(Any) => SQLContext]
       params.put(FUNC, (rddOrDF: Any) => {
         val sqlContext = func(rddOrDF)
-        val newDF = createDF(params,sqlContext.table(inputTableName.get))
+        val newDF = createDF(params, sqlContext.table(inputTableName.get))
         outputTableName match {
           case Some(tableName) =>
             newDF.registerTempTable(tableName)
@@ -64,7 +69,7 @@ class ScriptCompositor[T] extends Compositor[T] with CompositorHelper {
       // if not ,parent is SQLCompositor
       val func = params.get(FUNC).asInstanceOf[(DataFrame) => DataFrame]
       params.put(FUNC, (df: DataFrame) => {
-        val newDF = createDF(params,func(df).sqlContext.table(inputTableName.get))
+        val newDF = createDF(params, func(df).sqlContext.table(inputTableName.get))
         outputTableName match {
           case Some(tableName) =>
             newDF.registerTempTable(tableName)
@@ -81,11 +86,20 @@ class ScriptCompositor[T] extends Compositor[T] with CompositorHelper {
 
   def createDF(params: util.Map[Any, Any], df: DataFrame) = {
     val _script = scripts
+    val _source = source.getOrElse("")
+
+    val _maps = _script.map { fieldAndCode =>
+      var scriptCode = fieldAndCode._2
+      if ("file" == _source || fieldAndCode._2.startsWith("file:/") || fieldAndCode._2.startsWith("hdfs:/")) {
+        scriptCode = df.sqlContext.sparkContext.textFile(fieldAndCode._2).collect().mkString("\n")
+      }
+      (fieldAndCode._1, scriptCode)
+    }
 
     val jsonRdd = df.rdd.map { row =>
-      val maps = _script.flatMap { fieldAndCode =>
-        val executor = ScalaSourceCodeCompiler.execute(fieldAndCode._2)
-        executor.execute(row.getAs[String](fieldAndCode._1))
+      val maps = _maps.flatMap { f =>
+        val executor = ScalaSourceCodeCompiler.execute(f._2)
+        executor.execute(row.getAs[String](f._1))
       }
 
       val newMaps = row.schema.fieldNames.map(f => (f, row.getAs(f))).toMap ++ maps
