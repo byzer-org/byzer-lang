@@ -38,9 +38,9 @@ assembling components(eg. SQL Component) in configuration file.
 ## downloads
 
 
-> Precomile version based on Spark 1.6.1 ： http://share.weiyun.com/9dabb088c3643957798927de6928027e
+> Precomile version based on Spark 1.6.1 ： http://share.weiyun.com/4dffd0da6f3b6ed778a5285f67c30dc8
 >
-> Precomile version based on Spark 2.0.0:  http://share.weiyun.com/503b9f6f2c4fb61e7e3868cc57ef2e36
+> Precomile version based on Spark 2.0.0:  http://share.weiyun.com/cf8c438cb4abcb51fa4b1d0f2c374fed
 >
 > [Spark 2.0 based on Scala 2.10](http://share.weiyun.com/91dc6441759e61825ee25fd8f2404067)
 
