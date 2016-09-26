@@ -1,11 +1,48 @@
 
 Everything in StreamingPro is designed around compositors which describe the flow of streaming job and composed by strategy. Some powerful Compositor can have their own config file.  
 
-### Kafka Compositor(Source Compositor)
+### SQLSource Compositor(Batch Source Compositor)
 
 ```
 {
    "name": "streaming.core.compositor.spark.streaming.source.KafkaStreamingCompositor",
+   "params": [{
+                 "format":"org.apache.spark.sql.execution.datasources.kafka",
+                 "path":"/tmp/offset/yyyyMMddHHmmss_jobname",
+                  
+                 "topics":"your topic",
+                 "metadata.broker.list":"brokers"
+             }]
+}
+
+```
+
+format contains:
+
+```
+parquet
+json
+org.apache.spark.sql.execution.datasources.kafka
+org.apache.spark.sql.execution.datasources.hdfs
+org.elasticsearch.spark.sql
+com.databricks.spark.csv
+
+```
+
+/tmp/offset/yyyyMMddHHmmss_jobname  content:
+
+```
+topic,partition ,offset
+.....
+topic,partition ,offset
+```
+
+
+### Kafka Compositor(Streaming Source Compositor)
+
+```
+{
+   "name": "streaming.core.compositor.spark.source.SQLSourceCompositor",
    "params": [{
                  "topics":"your topic",
                  "metadata.broker.list":"brokers",
@@ -15,7 +52,7 @@ Everything in StreamingPro is designed around compositors which describe the flo
 
 ```
 
-### MockInputStreamCompositor(Source Compositor)
+### MockInputStreamCompositor(Streaming Source Compositor)
 
 ```
 {
@@ -31,7 +68,7 @@ Everything in StreamingPro is designed around compositors which describe the flo
 
 You can provide any data in `params` ,and every batch will read one of them in order. This compositor is useful when you are testing.
 
-### MockInputStreamFromPathCompositor (Source Compositor)
+### MockInputStreamFromPathCompositor (Streaming Source Compositor)
 
 ```
 {
@@ -42,7 +79,7 @@ You can provide any data in `params` ,and every batch will read one of them in o
 
 Load test data from file.
 
-### JDBC Compositor(Source Compositor)
+### JDBC Compositor(Batch Source Compositor)
 
 ```
 {
