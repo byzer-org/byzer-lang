@@ -1,11 +1,90 @@
 
-Everything in StreamingPro is designed around compositors which describe the flow of streaming job and composed by strategy. Some powerful Compositor can have their own config file.  
+StreamingPro is a fast,expresivive,and convenient cluster system running on Spark with streaming,batch,interactive,mllib support. 
 
-### SQLSource Compositor(Batch Source Compositor)
+It make devlopers more easy to build spark application without coding  by means of:
+
+* Many powerfull modules which are easy to be reused
+* SQL-Based processing 
+* Script support
+* Any data collection is treated  as table.
+
+The  job  in StreamingPro is described by a json file . There are three main elements in it :
+
+* Compositor  (Module)
+* Strategy (How to combine configured moudles to work together)
+* Ref (Register some extra libs can be resued by other jobs eg. UDF/meta-data Source)
 
 ```
 {
-   "name": "streaming.core.compositor.spark.streaming.source.KafkaStreamingCompositor",
+  //jobname
+  "esToCsv": {
+    "desc": "job descriptions",
+    "strategy": "streaming.core.strategy.SparkStreamingStrategy",//Strategy,default is linear combination
+    "algorithm": [],// 
+    "ref": [], // where you can  refrence  some common data source 
+    "compositor": [
+      {
+        "name": "...source.SQLSourceCompositor",//data source
+        "params": [
+          {
+            "format": "org.elasticsearch.spark.sql",//like jdbc driver  which can tell system how to communicate with storage.
+            "path": "index/type",// path
+            "es.nodes": "", //  paramters provied by specific storage . here is some paramters about elasticsearch
+            "es.mapping.date.rich": "false",
+            "es.scroll.size": "5000"
+          }
+        ]
+      },
+      {
+        "name": "....transformation.JSONTableCompositor",
+        "params": [
+          {
+            "tableName": "table1"  //module, register data source as a table named 'table1'
+          }
+        ]
+      },
+      {
+        "name": "....transformation.SQLCompositor",
+        "params": [
+          {
+            "sql": "select * from table1" // writting SQLs.
+          }
+        ]
+      },
+      {
+        "name": "...output.SQLOutputCompositor",// Data persistence .
+        "params": [
+          {
+            "format": "com.databricks.spark.csv",
+            "path": "/tmp/csv-table1",
+            "header": "true",
+            "inferSchema": "true"
+          }
+        ]
+      }
+    ],
+    "configParams": {
+    }
+  }
+}
+```
+
+
+We also  divide  job flow into three  parts:
+
+* Source .  The sources have two main types:
+     
+     * Streaming source . In streaming mode,  you should conver raw lines to json or map then  register them as  table.
+     * Batch Source. In batch mode,  they are automatically converted to  table .
+ 
+* Transformation. The lazy operation can be applied on the table,most important compositores are SQLCompositor and ScriptCompositor
+* Output.  Data persistence 
+
+### SQLSourceCompositor(Batch mode)
+
+```
+{
+   "name": "streaming.core.compositor.spark.source.SQLSourceCompositor",
    "params": [{
                  "format":"org.apache.spark.sql.execution.datasources.kafka",
                  "path":"/tmp/offset/yyyyMMddHHmmss_jobname",
