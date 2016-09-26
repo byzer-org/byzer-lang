@@ -114,7 +114,10 @@ class DirectKafkaRecoverSource(operator: SparkStreamingOperator) extends SparkSt
 
     val restoreKafkaFile = jobFiles.head.getPath.getName
 
-    jobFiles.slice(1, jobFiles.size).foreach { f =>
+    val keepNum = if(operator.ssr.params.containsKey("streaming.kafka.offset.num"))  operator.ssr.params.get("streaming.kafka.offset.num").toString.toInt
+    else 1
+
+    jobFiles.slice(keepNum, jobFiles.size).foreach { f =>
       fileSystem.delete(f.getPath, false)
     }
 
