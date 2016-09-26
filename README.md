@@ -1,31 +1,22 @@
 
 
-Declarative workflows for building Spark Streaming  / Spark batch programe / Spark SQL Server
+StreamingPro is a fast,expresivive,and convenient cluster system running on Spark with streaming,batch,interactive,machine learning support.
 
-## Spark Streaming 
+It make devlopers more easy to build spark application without writing any code by means of:
 
-Spark Streaming is an extension of the core Spark API that enables stream processing 
-from a variety of sources. 
-Spark is a extensible and programmable framework for massive distributed processing of datasets, 
-called Resilient Distributed Datasets (RDD). Spark Streaming receives input data streams and 
-divides the data into batches, which are then processed by the Spark engine to generate the results.
-   
-Spark Streaming data is organized into a sequence of DStreams, 
-represented internally as a sequence of RDDs.
+* Using json file in combination with many powerful modules which are easy to be reused provides the user declarative configurations to  build your spark application.
+* Data processing are SQL-Based 
+* Script support 
+ 
 
-## StreamingPro
-
-StreamingPro is not only a complete
-application, but also  a extensible and programmable framework for spark streaming (also include spark,storm) 
-that can easily be used to build your streaming application.
+StreamingPro is not only a out of box complete
+application, but also  a extensible and programmable framework for spark since you can develop you ower compositors (moduler). 
 
 
-StreamingPro also make it possible that all you should do to build streaming program is 
-assembling components(eg. SQL Component) in configuration file. 
 
 ## Features
 
-* Pure Spark Streaming(Or normal Spark) program (Storm in future)
+* Pure Spark Streaming(Or normal Spark) program
 * No need of coding, only declarative workflows
 * Rest API for interactive
 * SQL-Oriented workflows support  
