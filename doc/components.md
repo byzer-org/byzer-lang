@@ -82,6 +82,8 @@ We also  divide  job flow into three  parts:
 
 ### SQLSourceCompositor(Batch mode)
 
+Reading from Kafka:
+
 ```
 {
    "name": "streaming.core.compositor.spark.source.SQLSourceCompositor",
@@ -90,7 +92,7 @@ We also  divide  job flow into three  parts:
                  "path":"/tmp/offset/yyyyMMddHHmmss_jobname",
                   
                  "topics":"your topic",
-                 "metadata.broker.list":"brokers"
+                 "metadata.broker.list":"youre brokers"
              }]
 }
 
@@ -116,6 +118,31 @@ topic,partition ,offset
 topic,partition ,offset
 ```
 
+Reading from parquet:
+
+
+```
+{
+   "name": "streaming.core.compositor.spark.source.SQLSourceCompositor",
+   "params": [{
+                 "format":"parquet",
+                 "path":"/tmp/parquet-dir/"                
+             }]
+}
+```
+
+Reading from hdfs:
+
+
+```
+{
+   "name": "streaming.core.compositor.spark.source.SQLSourceCompositor",
+   "params": [{
+                 "format":"org.apache.spark.sql.execution.datasources.hdfs",
+                 "path":"/tmp/parquet-dir/"                
+             }]
+}
+```
 
 ### Kafka Compositor(Streaming Source Compositor)
 
@@ -131,7 +158,10 @@ topic,partition ,offset
 
 ```
 
+
 ### MockInputStreamCompositor(Streaming Source Compositor)
+
+Streaming mode:
 
 ```
 {
@@ -147,6 +177,20 @@ topic,partition ,offset
 
 You can provide any data in `params` ,and every batch will read one of them in order. This compositor is useful when you are testing.
 
+Notice before mapping data from this compositoer,  you should provide SingleColumnJSONCompositor  to convert data to table with only one column:
+
+```
+ {
+        "name": "streaming.core.compositor.spark.streaming.transformation.SingleColumnJSONCompositor",
+        "params": [
+          {
+            "name": "a"
+          }
+        ]
+      },
+```
+
+
 ### MockInputStreamFromPathCompositor (Streaming Source Compositor)
 
 ```
@@ -157,6 +201,19 @@ You can provide any data in `params` ,and every batch will read one of them in o
 ```
 
 Load test data from file.
+
+Notice before mapping data from this compositoer,  you should provide SingleColumnJSONCompositor  to convert data to table with only one column:
+
+```
+ {
+        "name": "streaming.core.compositor.spark.streaming.transformation.SingleColumnJSONCompositor",
+        "params": [
+          {
+            "name": "a"
+          }
+        ]
+      },
+```
 
 ### JDBC Compositor(Batch Source Compositor)
 
@@ -182,23 +239,21 @@ More properties:
 |fetchSize|The JDBC fetch size, which determines how many rows to fetch per round trip. This can help performance on JDBC drivers which default to low fetch size (eg. Oracle with 10 rows).|
 
 
-### SingleColumnJSONCompositor(transformation)
+
+### JSONTableCompositor(transformation)
+
+Batch Mode:
 
 ```
 {
-        "name": "streaming.core.compositor.spark.streaming.transformation.SingleColumnJSONCompositor",
+        "name": "streaming.core.compositor.spark.transformation.JSONTableCompositor",
         "params": [{
-            "name": "a"
+            "tableName": "test"
           }]
 }
 ```
 
-This compositor responsible for transforming log line to JSon format with specified column name.
-
-Suppose you have one line like `i am streaming pro`, then this compositor will wrap this line to JSon string '{"a":"i am streaming pro"}'. Of course ,you can define the column name.
-
-
-### JSONTableCompositor(transformation)
+Streaming Mode:
 
 ```
 {
@@ -209,57 +264,12 @@ Suppose you have one line like `i am streaming pro`, then this compositor will w
 }
 ```
 
-Map JSon to Table named "tableName" which defined in params.
-
-
-### ScalaMapToJSONCompositor
-
-```
-{
-        "name": "streaming.core.compositor.spark.streaming.transformation.ScalaMapToJSONCompositor",
-        "params": [{}]
-}
-```
-
-Convert Scala Map to json String
-
-### JavaMapToJSONCompositor 
-
-```
-{
-        "name": "streaming.core.compositor.spark.streaming.transformation.JavaMapToJSONCompositor",
-        "params": [{}]
-}
-```
-
-Convert Java Map to json String
-
-
-
-### FlatJSONCompositor
-
-```
-{
-        "name": "streaming.core.compositor.spark.streaming.transformation.FlatJSONCompositor",
-        "params": [{"a":"$['store']['book'][0]['title']"}]
-}
-```
-
-Extracting value from json by XPATH,and named a new name . XPATH grammar: [JsonPath](https://github.com/jayway/JsonPath)
-
-
-### NginxParserCompositor 
-
-```
-{
-        "name": "streaming.core.compositor.spark.streaming.transformation.NginxParserCompositor",
-        "params": [{"time":0,"url":1}]
-}
-```
-
+Once you have defined  source , you should register it as a table,So you can  reference  this table in SQLs .
 
 
 ### SQLCompositor(transformation)
+
+Streaming mode:
 
 ```
 {
@@ -272,6 +282,95 @@ Extracting value from json by XPATH,and named a new name . XPATH grammar: [JsonP
         ]
       }
 ```
+
+Batch mode:
+
+```
+{
+        "name": "streaming.core.compositor.spark.transformation.SQLCompositor",
+        "params": [
+          {
+            "sql": "select a, \"5\" as b from test",
+            "outputTableName": "test2"
+          }
+        ]
+      }
+```
+
+The data source table manipulated in this compositor  is specified in SQL string , the output should be  declared  explicitly  by configuring outputTableName  in params block.
+
+
+
+### SingleColumnJSONCompositor(transformation)
+
+Streaming mode:
+
+```
+{
+        "name": "streaming.core.compositor.spark.streaming.transformation.SingleColumnJSONCompositor",
+        "params": [{
+            "name": "a"
+          }]
+}
+```
+
+Batch mode:
+
+```
+{
+        "name": "streaming.core.compositor.spark.transformation.SingleColumnJSONCompositor",
+        "params": [{
+            "name": "a"
+          }]
+}
+```
+
+This compositor responsible for transforming log line to JSon format with specified column name.
+
+Suppose you have one line like `i am streaming pro`, then this compositor will wrap this line to JSon string '{"a":"i am streaming pro"}'. Of course ,you can define the column name.
+
+
+
+### ScalaMapToJSONCompositor
+
+Streaming mode:
+
+```
+{
+        "name": "streaming.core.compositor.spark.streaming.transformation.ScalaMapToJSONCompositor",
+        "params": [{}]
+}
+```
+
+Convert Scala Map to json String
+
+### JavaMapToJSONCompositor 
+
+Streaming mode:
+
+```
+{
+        "name": "streaming.core.compositor.spark.streaming.transformation.JavaMapToJSONCompositor",
+        "params": [{}]
+}
+```
+
+Convert Java Map to json String
+
+
+ 
+
+### NginxParserCompositor 
+
+```
+{
+        "name": "streaming.core.compositor.spark.streaming.transformation.NginxParserCompositor",
+        "params": [{"time":0,"url":1}]
+}
+```
+
+ScalaMapToJSONCompositor should be required after this compositor. 
+
 
 ### SQLPrintOutputCompositor(output)
 
@@ -301,21 +400,28 @@ print output
 }
 ```
 
-if timeFormat configured,then the index name will be es.resource_yyyyMMdd
+###  SQLOutputCompositor 
 
-
-### JavaMapToJSONCompositor
+Batch mode:
 
 ```
  {
-        "name": "streaming.core.compositor.spark.streaming.transformation.JavaMapToJSONCompositor",
+        "name": "streaming.core.compositor.spark.output.SQLOutputCompositor",
         "params": [
           {
+            "format": "com.databricks.spark.csv",
+            "path": "/tmp/csv-table1",
+            "header": "true",
+            "inferSchema": "true"
           }
         ]
-      },
+      }
 ```
-convert java map to JSON. So we can use `JSONTableCompositor` to register table.
+
+Save Data as csv format. 
+
+if timeFormat configured,then the index name will be es.resource_yyyyMMdd
+
 
 
 ### SparkStreamingStrategy (strategy)
