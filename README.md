@@ -29,9 +29,9 @@ application, but also  a extensible and programmable framework for spark since y
 ## downloads
 
 
-> Precomile version based on Spark 1.6.1 ： http://share.weiyun.com/4dffd0da6f3b6ed778a5285f67c30dc8
+> Precomile version based on Spark 1.6.1 ： http://share.weiyun.com/b1d38eb9436d4e05e60b44caee42ce10
 >
-> Precomile version based on Spark 2.0.0:  http://share.weiyun.com/cf8c438cb4abcb51fa4b1d0f2c374fed
+> Precomile version based on Spark 2.0.0:  http://share.weiyun.com/62297a8023d6809efa6346370d4b39ea
 >
 > [Spark 2.0 based on Scala 2.10](http://share.weiyun.com/91dc6441759e61825ee25fd8f2404067)
 
