@@ -110,4 +110,30 @@ class BatchSpec extends BasicStreamingOperation {
   }
 
 
+  "batch-with-inline-script-doc" should "run normally" in {
+    val file = new java.io.File("/tmp/hdfsfile/abc.txt")
+    Files.createParentDirs(file)
+    Files.write("kk\tbb", file, Charset.forName("utf-8"))
+
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/batch-test-script-doc.json")) { runtime: SparkRuntime =>
+
+      val sd = Dispatcher.dispatcher(null)
+      val strategies = sd.findStrategies("convert_data_parquet").get
+      strategies.size should be(1)
+
+      val output = strategies.head.compositor.last.asInstanceOf[SQLUnitTestCompositor[Any]]
+      val result = output.result.head
+
+      result.size should be(1)
+
+      result.head.getAs[String]("a") should be("kk")
+
+      println("a=>" + result.head.getAs[String]("a") + ",b=>" + result.head.getAs[String]("b"))
+
+      file.delete()
+
+    }
+  }
+
+
 }

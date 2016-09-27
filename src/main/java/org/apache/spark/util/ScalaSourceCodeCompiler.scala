@@ -1,9 +1,10 @@
 package org.apache.spark.util
 
 import com.google.common.cache.{CacheBuilder, CacheLoader}
-
 import streaming.common.CodeTemplates
 
+import scala.collection.Iterator
+import scala.collection.convert.Wrappers.{IteratorWrapper, JIteratorWrapper}
 import scala.collection.mutable.ArrayBuffer
 import scala.reflect.io.AbstractFile
 import scala.tools.nsc.GenericRunnerSettings
@@ -16,23 +17,40 @@ import scala.tools.reflect.ToolBox
 
 trait StreamingProGenerateClass {
   def execute(rawLine: String): Map[String, Any]
+
+  def execute(doc: Map[String, Any]): Map[String, Any]
 }
 
-object ScalaSourceCodeCompiler  {
+case class ScriptCacheKey(prefix:String,code:String)
+
+object ScalaSourceCodeCompiler {
 
   private val scriptCache = CacheBuilder.newBuilder()
     .maximumSize(100)
     .build(
-      new CacheLoader[String, StreamingProGenerateClass]() {
-        override def load(code: String):StreamingProGenerateClass  = {
+      new CacheLoader[ScriptCacheKey, StreamingProGenerateClass]() {
+        override def load(scriptCacheKey: ScriptCacheKey): StreamingProGenerateClass = {
           val startTime = System.nanoTime()
+
+          val function1 =  s"""
+                              |    def execute(rawLine:String):Map[String,Any] = {
+                              |         ${if(scriptCacheKey.prefix != "rawLine") "Map[String,Any]()" else scriptCacheKey.code}
+                              |    }
+              """.stripMargin
+
+          val function2 =  s"""
+                              |    def execute(doc:Map[String,Any]):Map[String,Any] = {
+                              |         ${if(scriptCacheKey.prefix == "rawLine") "Map[String,Any]()" else scriptCacheKey.code}
+              |    }
+              """.stripMargin
+
           val wrapper = s"""
                            import org.apache.spark.util.StreamingProGenerateClass
 
                            class StreamingProUDF_${startTime} extends StreamingProGenerateClass {
-                             def execute(rawLine:String):Map[String,Any] = {
-                                ${code}
-                             }
+                              ${function1}
+
+                              ${function2}
                            }
                            new StreamingProUDF_${startTime}()
             """
@@ -45,8 +63,8 @@ object ScalaSourceCodeCompiler  {
         }
       })
 
-  def execute(code: String): StreamingProGenerateClass = {
-    scriptCache.get(code)
+  def execute(scriptCacheKey: ScriptCacheKey): StreamingProGenerateClass = {
+    scriptCache.get(scriptCacheKey)
   }
 
   def compileCode(code: String): Any = {

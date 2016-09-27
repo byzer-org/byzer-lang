@@ -5,7 +5,7 @@ import java.util
 import net.liftweb.{json => SJSon}
 import org.apache.log4j.Logger
 import org.apache.spark.sql.{DataFrame, SQLContext}
-import org.apache.spark.util.ScalaSourceCodeCompiler
+import org.apache.spark.util.{ScalaSourceCodeCompiler, ScriptCacheKey}
 import serviceframework.dispatcher.{Compositor, Processor, Strategy}
 import streaming.core.compositor.spark.streaming.CompositorHelper
 
@@ -35,6 +35,7 @@ class ScriptCompositor[T] extends Compositor[T] with CompositorHelper {
 
   val TABLE = "_table_"
   val FUNC = "_func_"
+  val LANGSET = Set("scala", "python")
 
   def outputTableName = {
     config[String]("outputTableName", _configParams)
@@ -46,6 +47,18 @@ class ScriptCompositor[T] extends Compositor[T] with CompositorHelper {
 
   def source = {
     config[String]("source", _configParams)
+  }
+
+  def lang = {
+    config[String]("lang", _configParams)
+  }
+
+  def useDocMap = {
+    config[Boolean]("useDocMap", _configParams)
+  }
+
+  def ignoreOldColumns = {
+    config[Boolean]("ignoreOldColumns", _configParams)
   }
 
   override def result(alg: util.List[Processor[T]], ref: util.List[Strategy[T]], middleResult: util.List[T], params: util.Map[Any, Any]): util.List[T] = {
@@ -87,6 +100,8 @@ class ScriptCompositor[T] extends Compositor[T] with CompositorHelper {
   def createDF(params: util.Map[Any, Any], df: DataFrame) = {
     val _script = scripts
     val _source = source.getOrElse("")
+    val _useDocMap = useDocMap.getOrElse(false)
+    val _ignoreOldColumns = ignoreOldColumns.getOrElse(false)
 
     val _maps = _script.map { fieldAndCode =>
       var scriptCode = fieldAndCode._2
@@ -98,11 +113,17 @@ class ScriptCompositor[T] extends Compositor[T] with CompositorHelper {
 
     val jsonRdd = df.rdd.map { row =>
       val maps = _maps.flatMap { f =>
-        val executor = ScalaSourceCodeCompiler.execute(f._2)
-        executor.execute(row.getAs[String](f._1))
+        val executor = ScalaSourceCodeCompiler.execute(ScriptCacheKey(if (_useDocMap) "doc" else "rawLine", f._2))
+        if (_useDocMap) {
+          executor.execute(row.getValuesMap(row.schema.fieldNames))
+        } else {
+          executor.execute(row.getAs[String](f._1))
+        }
       }
 
-      val newMaps = row.schema.fieldNames.map(f => (f, row.getAs(f))).toMap ++ maps
+      val newMaps = if (_ignoreOldColumns) maps
+      else row.schema.fieldNames.map(f => (f, row.getAs(f))).toMap ++ maps
+
       implicit val formats = SJSon.Serialization.formats(SJSon.NoTypeHints)
       SJSon.Serialization.write(newMaps)
 
