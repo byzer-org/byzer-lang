@@ -15,22 +15,19 @@ object  RegexParser {
 object LogParser {
   var regexer: Regex = null
 
-  def parse(line: String, patten: String, keys: Array[String]): mutable.HashMap[String, String] = {
+  def parse(line: String, patten: String, keys: Array[String]): scala.collection.immutable.Map[String, String] = {
     if (regexer == null) {
       regexer = new Regex(patten, keys: _*)
     }
-
     val regexFind = regexer findFirstMatchIn line
-
+    val ret = new mutable.HashMap[String, String]()
     if (!regexFind.isDefined) {
-      return null
+      return ret.toMap
     }
     val _match = regexFind.get
-    val ret = new mutable.HashMap[String, String]()
-
     for (key <- keys) {
         ret.put(key, _match.group(key))
     }
-    ret
+    ret.toMap
   }
 }

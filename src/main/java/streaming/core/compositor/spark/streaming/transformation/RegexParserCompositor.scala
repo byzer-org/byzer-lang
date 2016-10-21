@@ -2,6 +2,7 @@ package streaming.core.compositor.spark.streaming.transformation
 
 import java.util
 
+import net.sf.json.JSONArray
 import org.apache.log4j.Logger
 import org.apache.spark.streaming.dstream.DStream
 import serviceframework.dispatcher.{Compositor, Processor, Strategy}
@@ -27,7 +28,7 @@ class RegexParserCompositor[T] extends Compositor[T] with CompositorHelper {
 
 
   def keys = {
-    _configParams(0).get("captureNames").asInstanceOf[Seq[String]]
+    _configParams(0).get("captureNames").asInstanceOf[JSONArray].map(k => k.asInstanceOf[String]).toSeq
   }
 
   def patten = {
@@ -36,7 +37,7 @@ class RegexParserCompositor[T] extends Compositor[T] with CompositorHelper {
 
   override def result(alg: util.List[Processor[T]], ref: util.List[Strategy[T]], middleResult: util.List[T], params: util.Map[Any, Any]): util.List[T] = {
     val dstream = middleResult(0).asInstanceOf[DStream[String]]
-    val _keys = keys.toArray
+    val _keys =  keys.toArray
     val _patten = patten
     val newDstream = dstream.map { line =>
       RegexParser.parse(line, _patten, _keys)
