@@ -6,10 +6,12 @@ import net.sf.json.{JSONArray, JSONObject}
 import org.apache.log4j.Logger
 import org.apache.spark.streaming.TestInputStream
 import serviceframework.dispatcher.{Compositor, Processor, Strategy}
+import streaming.core.compositor.spark.streaming.CompositorHelper
 import streaming.core.strategy.platform.SparkStreamingRuntime
 
 import scala.collection.JavaConversions._
 import scala.io.Source
+import scala.util.Random
 
 
 class MockInputStreamCompositor[T] extends Compositor[T] {
@@ -74,3 +76,4 @@ class MockInputStreamFromPathCompositor[T] extends Compositor[T] {
     List((new TestInputStream[String](ssc, data, 1)).asInstanceOf[T])
   }
 }
+

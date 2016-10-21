@@ -1,10 +1,9 @@
 package org.apache.spark.util
 
 import com.google.common.cache.{CacheBuilder, CacheLoader}
+import org.apache.spark.sql.types.StructType
 import streaming.common.CodeTemplates
 
-import scala.collection.Iterator
-import scala.collection.convert.Wrappers.{IteratorWrapper, JIteratorWrapper}
 import scala.collection.mutable.ArrayBuffer
 import scala.reflect.io.AbstractFile
 import scala.tools.nsc.GenericRunnerSettings
@@ -16,14 +15,67 @@ import scala.tools.reflect.ToolBox
  */
 
 trait StreamingProGenerateClass {
-  def execute(rawLine: String): Map[String, Any]
+ def execute(rawLine: String): Map[String, Any] = {
+    Map[String, Any]()
+  }
 
-  def execute(doc: Map[String, Any]): Map[String, Any]
+  def execute(doc: Map[String, Any]): Map[String, Any] = {
+    Map[String, Any]()
+  }
+
+  def schema(): Option[StructType] = {
+    None
+  }
 }
 
-case class ScriptCacheKey(prefix:String,code:String)
+
+case class ScriptCacheKey(prefix: String, code: String)
 
 object ScalaSourceCodeCompiler {
+
+
+  def generateStreamingProGenerateClass(scriptCacheKey: ScriptCacheKey) = {
+    val startTime = System.nanoTime()
+    val function1 = if(scriptCacheKey.prefix =="rawLine") { s"""
+                       |override  def execute(rawLine:String):Map[String,Any] = {
+                       | ${scriptCacheKey.code}
+        |}
+              """.stripMargin } else  ""
+
+    val function2 = if(scriptCacheKey.prefix =="doc") { s"""
+                       |override  def execute(doc:Map[String,Any]):Map[String,Any] = {
+                       | ${scriptCacheKey.code}
+        |}
+              """.stripMargin } else ""
+
+
+    val function3 = if(scriptCacheKey.prefix =="schema") { s"""
+                       |override  def schema():Option[StructType] = {
+                       | ${scriptCacheKey.code}
+        |}
+              """.stripMargin } else ""
+
+
+    val wrapper = s"""
+                     |import org.apache.spark.util.StreamingProGenerateClass
+                     |import org.apache.spark.sql.types._
+                     |class StreamingProUDF_${startTime} extends StreamingProGenerateClass {
+                                                          |
+                                                          | ${function1}
+        |
+        | ${function2}
+        |
+        | ${function3}
+        |
+        |}
+        |new StreamingProUDF_${startTime}()
+            """.stripMargin
+
+    val result = compileCode(wrapper)
+
+    result.asInstanceOf[StreamingProGenerateClass]
+  }
+
 
   private val scriptCache = CacheBuilder.newBuilder()
     .maximumSize(100)
@@ -31,35 +83,10 @@ object ScalaSourceCodeCompiler {
       new CacheLoader[ScriptCacheKey, StreamingProGenerateClass]() {
         override def load(scriptCacheKey: ScriptCacheKey): StreamingProGenerateClass = {
           val startTime = System.nanoTime()
-
-          val function1 =  s"""
-                              |    def execute(rawLine:String):Map[String,Any] = {
-                              |         ${if(scriptCacheKey.prefix != "rawLine") "Map[String,Any]()" else scriptCacheKey.code}
-                              |    }
-              """.stripMargin
-
-          val function2 =  s"""
-                              |    def execute(doc:Map[String,Any]):Map[String,Any] = {
-                              |         ${if(scriptCacheKey.prefix == "rawLine") "Map[String,Any]()" else scriptCacheKey.code}
-              |    }
-              """.stripMargin
-
-          val wrapper = s"""
-                           import org.apache.spark.util.StreamingProGenerateClass
-
-                           class StreamingProUDF_${startTime} extends StreamingProGenerateClass {
-                              ${function1}
-
-                              ${function2}
-                           }
-                           new StreamingProUDF_${startTime}()
-            """
-
-          val result = compileCode(wrapper)
+          val res = generateStreamingProGenerateClass(scriptCacheKey)
           val endTime = System.nanoTime()
           def timeMs: Double = (endTime - startTime).toDouble / 1000000
-
-          result.asInstanceOf[StreamingProGenerateClass]
+          res
         }
       })
 
