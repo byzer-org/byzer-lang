@@ -20,7 +20,7 @@ trait BasicStreamingOperation extends FlatSpec with Matchers {
       block(runtime)
     } finally {
       try {
-        StrategyDispatcher.clear
+    //    StrategyDispatcher.clear
         PlatformManager.getOrCreate
         SQLContextHolder.sqlContextHolder.clear
         SQLContextHolder.sqlContextHolder = null
@@ -37,7 +37,7 @@ trait BasicStreamingOperation extends FlatSpec with Matchers {
       block(runtime)
     } finally {
       try {
-        StrategyDispatcher.clear
+     //   StrategyDispatcher.clear
         PlatformManager.getOrCreate
         SQLContextHolder.sqlContextHolder.clear
         SQLContextHolder.sqlContextHolder = null

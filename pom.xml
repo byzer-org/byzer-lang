@@ -59,6 +59,9 @@
             <properties>
                 <mode>online</mode>
             </properties>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
             <dependencies>
                 <dependency>
                     <groupId>org.apache.spark</groupId>
@@ -155,9 +158,6 @@
         </profile>
         <profile>
             <id>debug</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
             <properties>
                 <mode>debug</mode>
             </properties>
@@ -488,7 +488,7 @@
 
             </plugin>
 
-
+            <!--
             <plugin>
                 <groupId>org.scalatest</groupId>
                 <artifactId>scalatest-maven-plugin</artifactId>
@@ -505,7 +505,7 @@
                     <argLine>-XX:MaxPermSize=128m</argLine>
                 </configuration>
             </plugin>
-
+            -->
 
 
 
@@ -550,7 +550,29 @@
                 </configuration>
 
             </plugin>
-
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>2.4.3</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <artifactSet>
+                                <excludes>
+                                    <exclude>junit:junit</exclude>
+                                    <exclude>jmock:*</exclude>
+                                    <exclude>*:xml-apis</exclude>
+                                    <exclude>org.apache.maven:lib:tests</exclude>
+                                </excludes>
+                            </artifactSet>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
 
             <!--   要将源码放上去，需要加入这个插件    -->
             <plugin>
