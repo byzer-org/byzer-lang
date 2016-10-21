@@ -19,14 +19,9 @@ object LogParser {
     if (regexer == null) {
       regexer = new Regex(patten, keys: _*)
     }
-    println(s"patten1 ${patten}")
-    for(key <- keys) {
-      println(s"keys1 ${key}")
-    }
     val regexFind = regexer findFirstMatchIn line
     val ret = new mutable.HashMap[String, String]()
     if (!regexFind.isDefined) {
-      ret.put("aaa", "nomatch")
       return ret.toMap
     }
     val _match = regexFind.get

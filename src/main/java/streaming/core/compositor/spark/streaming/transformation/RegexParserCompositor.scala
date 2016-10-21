@@ -39,10 +39,6 @@ class RegexParserCompositor[T] extends Compositor[T] with CompositorHelper {
     val dstream = middleResult(0).asInstanceOf[DStream[String]]
     val _keys =  keys.toArray
     val _patten = patten
-    println(s"patten ${patten}")
-    for(key <- _keys) {
-      println(s"keys ${key}")
-    }
     val newDstream = dstream.map { line =>
       RegexParser.parse(line, _patten, _keys)
     }
