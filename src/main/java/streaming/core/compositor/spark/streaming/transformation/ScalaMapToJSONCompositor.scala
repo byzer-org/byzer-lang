@@ -16,8 +16,6 @@ class ScalaMapToJSONCompositor[T] extends BaseMapCompositor[T, Map[String, Strin
 
 class JavaMapToJSONCompositor[T] extends BaseMapCompositor[T, java.util.Map[String, String], String] with CompositorHelper {
   override def map: (java.util.Map[String, String]) => String = { line =>
-    val a = JSONObject.fromObject(line).toString()
-    println(s"dfsfdsdfsfdsfd ${a}")
-    a
+    JSONObject.fromObject(line).toString()
   }
 }
