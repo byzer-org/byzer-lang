@@ -49,7 +49,7 @@ application, but also  a extensible and programmable framework for spark since y
 * [StreamingPro添加Scala script 模块支持](http://www.jianshu.com/p/b33c36cd3481)
 * [Properties](https://github.com/allwefantasy/streamingpro/wiki/Properties)
 * [Build](https://github.com/allwefantasy/streamingpro/wiki/Build)
-* [Run your first application](https://github.com/allwefantasy/streamingpro/wiki/Run-your-first-application)
+* [Run your first application](docs/Run-your-first-application.md)
 * [Submit application](https://github.com/allwefantasy/streamingpro/wiki/Submit-application)
 * [dynamically CURD of workflows  at runtime via Rest API](https://github.com/allwefantasy/streamingpro/wiki/Dynamically-add-Job-via-Rest-API)
 * [Recovery](https://github.com/allwefantasy/streamingpro/wiki/Recovery)
