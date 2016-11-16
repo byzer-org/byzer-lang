@@ -39,6 +39,7 @@ class SQLCompositor[T] extends Compositor[T] with CompositorHelper {
 
     require(sql.isDefined, "please set sql  by variable `sql` in config file")
     val _sql = translateSQL(sql.get,params)
+    val _outputTableName = outputTableName
     if (params.containsKey(TABLE)) {
       //parent compositor is  tableCompositor
 
@@ -46,7 +47,7 @@ class SQLCompositor[T] extends Compositor[T] with CompositorHelper {
       params.put(FUNC, (rddOrDF: Any) => {
         val sqlContext = func(rddOrDF)
         val newDF = sqlContext.sql(_sql)
-        outputTableName match {
+        _outputTableName match {
           case Some(tableName) =>
             newDF.registerTempTable(tableName)
           case None =>
@@ -59,7 +60,7 @@ class SQLCompositor[T] extends Compositor[T] with CompositorHelper {
       val func = params.get(FUNC).asInstanceOf[(DataFrame) => DataFrame]
       params.put(FUNC, (df: DataFrame) => {
         val newDF = func(df).sqlContext.sql(_sql)
-        outputTableName match {
+        _outputTableName match {
           case Some(tableName) =>
             newDF.registerTempTable(tableName)
           case None =>
