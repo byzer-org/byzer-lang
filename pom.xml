@@ -11,6 +11,7 @@
         <scala.version>2.10.3</scala.version>
         <scala.2.version>2.10</scala.2.version>
         <spark.version>1.6.1</spark.version>
+        <streamingpro.version>0.4.6</streamingpro.version>
         <spark.streaming.kafka.artifactId>spark-streaming-kafka_2.10</spark.streaming.kafka.artifactId>
         <serviceframework.version>1.3.0-SNAPSHOT</serviceframework.version>
     </properties>
@@ -34,6 +35,7 @@
                 <spark.streaming.kafka.artifactId>spark-streaming-kafka_2.10</spark.streaming.kafka.artifactId>
                 <spark.sql.kafka.artifactId>spark-streaming-kafka_2.10</spark.sql.kafka.artifactId>
                 <serviceframework.version>1.3.0-SNAPSHOT</serviceframework.version>
+                <structured.streaming.artifacteId>structured-streaming-stub</structured.streaming.artifacteId>
             </properties>
         </profile>
 
@@ -44,6 +46,7 @@
                 <spark.streaming.kafka.artifactId>spark-streaming-kafka-0-8_2.10</spark.streaming.kafka.artifactId>
                 <spark.sql.kafka.artifactId>spark-sql-kafka-0-10_2.10</spark.sql.kafka.artifactId>
                 <serviceframework.version>1.3.2-SNAPSHOT-9.2.16</serviceframework.version>
+                <structured.streaming.artifacteId>structured-streaming-core</structured.streaming.artifacteId>
             </properties>
         </profile>
 
@@ -463,6 +466,12 @@
         </dependency>
 
         <dependency>
+            <groupId>streamingpro.king</groupId>
+            <artifactId>${structured.streaming.artifacteId}</artifactId>
+            <version>${streamingpro.version}-SNAPSHOT-online-2.0.2</version>
+        </dependency>
+
+        <dependency>
             <groupId>org.scalactic</groupId>
             <artifactId>scalactic_2.10</artifactId>
             <version>3.0.0</version>
@@ -597,15 +606,5 @@
         </plugins>
     </build>
 
-    <distributionManagement>
-        <repository>
-            <id>releases</id>
-            <name>releases</name>
-            <url>http://mvn.letv.com/nexus/content/repositories/releases/</url>
-        </repository>
-        <snapshotRepository>
-            <id>snapshots</id>
-            <url>http://mvn.letv.com/nexus/content/repositories/snapshots</url>
-        </snapshotRepository>
-    </distributionManagement>
+
 </project>

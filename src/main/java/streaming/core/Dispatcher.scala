@@ -2,9 +2,10 @@ package streaming.core
 
 import java.util.{Map => JMap}
 
+import org.apache.spark.SparkContext
 import serviceframework.dispatcher.StrategyDispatcher
 import streaming.common.DefaultShortNameMapping
-import streaming.core.strategy.platform.{SparkStructuredStreamingRuntime, PlatformManager, SparkRuntime, SparkStreamingRuntime}
+import streaming.core.strategy.platform.{ PlatformManager, SparkRuntime, SparkStreamingRuntime}
 
 import scala.collection.JavaConversions._
 
@@ -20,7 +21,10 @@ object Dispatcher {
       val sparkContext = runtime match {
         case s: SparkStreamingRuntime => s.streamingContext.sparkContext
         case s2: SparkRuntime => s2.sparkContext
-        case s3: SparkStructuredStreamingRuntime => s3.sparkSession.sparkContext
+        case _ =>
+          Class.forName("streaming.core.strategy.platform.SparkStructuredStreamingRuntime").
+            getMethod("sparkContext").
+            invoke(runtime).asInstanceOf[SparkContext]
       }
 
       val jobFilePath = contextParams.get("streaming.job.file.path").toString

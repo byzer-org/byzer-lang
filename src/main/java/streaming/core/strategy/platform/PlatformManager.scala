@@ -6,6 +6,7 @@ import java.util.{List => JList, Map => JMap}
 import net.csdn.ServiceFramwork
 import net.csdn.bootstrap.Application
 import net.csdn.common.logging.Loggers
+import org.apache.spark.SparkContext
 import serviceframework.dispatcher.StrategyDispatcher
 import streaming.common.zk.{ZKClient, ZkRegister}
 import streaming.common.{ParamsUtil, SQLContextHolder, SparkCompatibility}
@@ -173,12 +174,20 @@ object PlatformManager {
   }
 
   private def createSQLContextHolder(params: java.util.Map[Any, Any], runtime: StreamingRuntime) = {
+
     val sc = runtime match {
       case a: SparkStreamingRuntime => a.streamingContext.sparkContext
       case b: SparkRuntime => b.sparkContext
-      case c: SparkStructuredStreamingRuntime => c.sparkSession.sparkContext
-      case _ => throw new RuntimeException("get _runtime_ fail")
+      case _ => try {
+        Class.forName("streaming.core.strategy.platform.SparkStructuredStreamingRuntime").
+          getMethod("sparkContext").
+          invoke(runtime).asInstanceOf[SparkContext]
+      } catch {
+        case e: Exception => throw new RuntimeException(s"No spark context is found in runtime(${runtime.getClass.getCanonicalName})")
+      }
     }
+
+
     new SQLContextHolder(
       params.containsKey("streaming.enableHiveSupport") &&
         params.get("streaming.enableHiveSupport").toString.toBoolean, sc)
@@ -193,8 +202,10 @@ object PlatformManager {
       case platform: String if platform == SPARK =>
         SparkRuntime.getOrCreate(tempParams)
 
-      case platform: String if (platform == SparkStructuredStreamingRuntime || platform == SPAKR_S_S) =>
-        SparkStructuredStreamingRuntime.getOrCreate(tempParams)
+      case platform: String if (platform == SPAKR_STRUCTURED_STREAMING || platform == SPAKR_S_S) =>
+        Class.forName("streaming.core.strategy.platform.SparkStructuredStreamingRuntime").
+          getMethod("getOrCreate", classOf[JMap[Any, Any]]).
+          invoke(null, tempParams).asInstanceOf[StreamingRuntime]
 
       case platform: String if platform == "storm" =>
         null

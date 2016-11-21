@@ -12,11 +12,7 @@
       },
       {
         "name": "ss.table",
-        "params": [
-          {
-            "tableName": "test"
-          }
-        ]
+        "params": [{"tableName": "test"}]
       },
       {
         "name": "ss.sql",
