@@ -15,8 +15,10 @@ object LocalStreamingApp {
       "-streaming.duration", "20",
       "-streaming.name", "god",
       "-streaming.rest", "false"
-     // ,"-streaming.job.file.path","hdfs://cdn237:8020/tmp/bb.yml"
-      ,"-streaming.driver.port","9902"
+      ,"-streaming.job.file.path","classpath:///test/ss-test.json"
+      ,"-streaming.driver.port","9902",
+      "-streaming.platform", "ss",
+      "-streaming.checkpoint","file:///tmp/ss"
      // ,"-streaming.testinputstream.offsetPath", "hdfs://cdn237:8020/tmp/localstreampingapp"
      // ,"-streaming.spark.hadoop.fs.defaultFS","hdfs://cdn237:8020"
     ))

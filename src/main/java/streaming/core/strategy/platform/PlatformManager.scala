@@ -111,6 +111,7 @@ class PlatformManager {
     val jobCounter = new AtomicInteger(0)
     jobs.foreach {
       jobName =>
+
         dispatcher.dispatch(Dispatcher.contextParams(jobName))
         val index = jobCounter.get()
 
@@ -175,6 +176,7 @@ object PlatformManager {
     val sc = runtime match {
       case a: SparkStreamingRuntime => a.streamingContext.sparkContext
       case b: SparkRuntime => b.sparkContext
+      case c: SparkStructuredStreamingRuntime => c.sparkSession.sparkContext
       case _ => throw new RuntimeException("get _runtime_ fail")
     }
     new SQLContextHolder(
@@ -188,11 +190,15 @@ object PlatformManager {
 
     val platformName = params.get("streaming.platform")
     val runtime = platformName match {
-      case platform: String if platform == "spark" =>
-
+      case platform: String if platform == SPARK =>
         SparkRuntime.getOrCreate(tempParams)
+
+      case platform: String if (platform == SparkStructuredStreamingRuntime || platform == SPAKR_S_S) =>
+        SparkStructuredStreamingRuntime.getOrCreate(tempParams)
+
       case platform: String if platform == "storm" =>
         null
+
       case _ => SparkStreamingRuntime.getOrCreate(tempParams)
     }
     if (SQLContextHolder.sqlContextHolder == null) {
@@ -204,6 +210,10 @@ object PlatformManager {
   }
 
   def SPAKR_STREAMING = "spark_streaming"
+
+  def SPAKR_STRUCTURED_STREAMING = "spark_structured_streaming"
+
+  def SPAKR_S_S = "ss"
 
   def STORM = "storm"
 
