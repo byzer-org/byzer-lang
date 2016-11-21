@@ -2,6 +2,7 @@ package streaming.core.compositor.spark.ss.source
 
 import java.util
 
+import net.sf.json.JSONArray
 import org.apache.log4j.Logger
 import org.apache.spark.sql.execution.streaming.MemoryStream
 import serviceframework.dispatcher.{Compositor, Processor, Strategy}
@@ -22,13 +23,17 @@ class MockSQLSourceCompositor[T] extends Compositor[T] with CompositorHelper {
     this._configParams = configParams
   }
 
+  def data = {
+    _configParams(0).map(f => f._2.asInstanceOf[JSONArray].map(k => k.asInstanceOf[String]).toSeq).toSeq
+  }
+
   override def result(alg: util.List[Processor[T]], ref: util.List[Strategy[T]], middleResult: util.List[T], params: util.Map[Any, Any]): util.List[T] = {
     val sparkSSRt = sparkStructuredStreamingRuntime(params)
     val sparkSession = sparkSSRt.sparkSession
     import sparkSession.implicits._
     implicit val sqlContext = sparkSession.sqlContext
-    val inputData = MemoryStream[Int]
-    inputData.addData(Seq(1, 2, 3, 4))
+    val inputData = MemoryStream[String]
+    inputData.addData(data.flatMap(f=>f).seq)
     val df = inputData.toDS()
     List(df.asInstanceOf[T])
   }
