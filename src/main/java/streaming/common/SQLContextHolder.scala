@@ -9,7 +9,7 @@ import org.apache.spark.sql.hive.HiveContext
 /**
  * 8/3/16 WilliamZhu(allwefantasy@gmail.com)
  */
-class SQLContextHolder(hiveEnable: Boolean, sparkContext: SparkContext) {
+class SQLContextHolder(hiveEnable: Boolean, sparkContext: SparkContext, hiveOption: Option[Map[String,String]] = None) {
 
   val hiveContextRef = new AtomicReference[HiveContext]()
 
@@ -17,7 +17,18 @@ class SQLContextHolder(hiveEnable: Boolean, sparkContext: SparkContext) {
     synchronized {
       if (hiveEnable) {
         if (hiveContextRef.get() == null) {
-          hiveContextRef.set(new org.apache.spark.sql.hive.HiveContext(sparkContext))
+          val hiveContext = hiveOption match {
+            case Some(info) =>
+              val hiveContext = Class.forName(info("className")).
+               getConstructor(classOf[SparkContext],classOf[String],classOf[String]).
+              newInstance(sparkContext,info("store"),info("meta")).asInstanceOf[HiveContext]
+              if(sparkContext.getConf.contains("spark.deploy.zookeeper.url")){
+                hiveContext.setConf("spark.deploy.zookeeper.url",sparkContext.getConf.get("spark.deploy.zookeeper.url"))
+              }
+              hiveContext
+            case None => new org.apache.spark.sql.hive.HiveContext(sparkContext)
+          }
+          hiveContextRef.set(hiveContext.asInstanceOf[HiveContext])
         }
         hiveContextRef.get()
       } else {

@@ -173,7 +173,6 @@
                 <mode>debug</mode>
             </properties>
             <dependencies>
-
                 <dependency>
                     <groupId>org.apache.spark</groupId>
                     <artifactId>${spark.streaming.kafka.artifactId}</artifactId>
@@ -229,6 +228,17 @@
         </profile>
 
         <profile>
+            <id>carbondata</id>
+            <dependencies>
+                <dependency>
+                    <groupId>org.apache.carbondata</groupId>
+                    <artifactId>carbondata-spark</artifactId>
+                    <version>0.3.0-incubating-SNAPSHOT</version>
+                </dependency>
+            </dependencies>
+        </profile>
+
+        <profile>
             <id>build-distr</id>
             <build>
                 <plugins>
@@ -266,6 +276,7 @@
         <!--<scope>system</scope>-->
         <!--<systemPath>${project.basedir}/lib/ansj_seg-5.0.0-all-in-one.jar</systemPath>-->
         <!--</dependency>-->
+
 
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
@@ -360,10 +371,10 @@
                 <!--<groupId>org.apache.httpcomponents</groupId>-->
                 <!--<artifactId>httpclient</artifactId>-->
                 <!--</exclusion>-->
-                <exclusion>
-                    <groupId>mysql</groupId>
-                    <artifactId>mysql-connector-java</artifactId>
-                </exclusion>
+                <!--<exclusion>-->
+                    <!--<groupId>mysql</groupId>-->
+                    <!--<artifactId>mysql-connector-java</artifactId>-->
+                <!--</exclusion>-->
 
                 <!--<exclusion>-->
                 <!--<groupId>org.apache.velocity</groupId>-->
@@ -480,7 +491,6 @@
         </dependency>
 
 
-
         <dependency>
             <groupId>org.scalactic</groupId>
             <artifactId>scalactic_2.10</artifactId>
@@ -534,8 +544,6 @@
                     <argLine>-XX:MaxPermSize=128m</argLine>
                 </configuration>
             </plugin>
-
-
 
 
             <plugin>
@@ -615,5 +623,15 @@
 
         </plugins>
     </build>
-
+    <distributionManagement>
+        <repository>
+            <id>releases</id>
+            <name>releases</name>
+            <url>http://mvn.letv.com/nexus/content/repositories/releases/</url>
+        </repository>
+        <snapshotRepository>
+            <id>snapshots</id>
+            <url>http://mvn.letv.com/nexus/content/repositories/snapshots</url>
+        </snapshotRepository>
+    </distributionManagement>
 </project>

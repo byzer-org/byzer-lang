@@ -5,7 +5,7 @@ import java.util.{Map => JMap}
 import org.apache.spark.SparkContext
 import serviceframework.dispatcher.StrategyDispatcher
 import streaming.common.DefaultShortNameMapping
-import streaming.core.strategy.platform.{ PlatformManager, SparkRuntime, SparkStreamingRuntime}
+import streaming.core.strategy.platform.{StreamingRuntime, PlatformManager, SparkRuntime, SparkStreamingRuntime}
 
 import scala.collection.JavaConversions._
 
@@ -16,16 +16,9 @@ object Dispatcher {
   def dispatcher(contextParams: JMap[Any, Any]): StrategyDispatcher[Any] = {
     val defaultShortNameMapping = new DefaultShortNameMapping()
     if (contextParams!=null && contextParams.containsKey("streaming.job.file.path")) {
-      val runtime = contextParams.get("_runtime_")
+      val runtime = contextParams.get("_runtime_").asInstanceOf[StreamingRuntime]
 
-      val sparkContext = runtime match {
-        case s: SparkStreamingRuntime => s.streamingContext.sparkContext
-        case s2: SparkRuntime => s2.sparkContext
-        case _ =>
-          Class.forName("streaming.core.strategy.platform.SparkStructuredStreamingRuntime").
-            getMethod("sparkContext").
-            invoke(runtime).asInstanceOf[SparkContext]
-      }
+      val sparkContext = PlatformManager.getRuntimeContext(runtime)
 
       val jobFilePath = contextParams.get("streaming.job.file.path").toString
 

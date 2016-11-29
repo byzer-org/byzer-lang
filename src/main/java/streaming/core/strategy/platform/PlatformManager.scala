@@ -169,28 +169,47 @@ object PlatformManager {
     }
   }
 
+  def getRuntimeContext(runtime: StreamingRuntime) = {
+
+    runtime match {
+      case s: SparkStreamingRuntime => s.streamingContext.sparkContext
+      case s2: SparkRuntime => s2.sparkContext
+      case _ =>
+        Class.forName(runtime.getClass.getName).
+          getMethod("sparkContext").
+          invoke(runtime).asInstanceOf[SparkContext]
+    }
+
+  }
+
+  def createRuntimeByPlatform(name: String, tempParams: java.util.Map[Any, Any]) = {
+    Class.forName(name).
+      getMethod("getOrCreate", classOf[JMap[Any, Any]]).
+      invoke(null, tempParams).asInstanceOf[StreamingRuntime]
+  }
+
+
   def clear = {
     lastInstantiatedContext.set(null)
   }
 
-  private def createSQLContextHolder(params: java.util.Map[Any, Any], runtime: StreamingRuntime) = {
+  def createSQLContextHolder(params: java.util.Map[Any, Any], runtime: StreamingRuntime) = {
 
-    val sc = runtime match {
-      case a: SparkStreamingRuntime => a.streamingContext.sparkContext
-      case b: SparkRuntime => b.sparkContext
-      case _ => try {
-        Class.forName("streaming.core.strategy.platform.SparkStructuredStreamingRuntime").
-          getMethod("sparkContext").
-          invoke(runtime).asInstanceOf[SparkContext]
-      } catch {
-        case e: Exception => throw new RuntimeException(s"No spark context is found in runtime(${runtime.getClass.getCanonicalName})")
-      }
+    val sc = getRuntimeContext(runtime)
+
+    if (params.containsKey("streaming.enableCarbonDataSupport")
+      && params.get("streaming.enableCarbonDataSupport").toString.toBoolean
+    ) {
+      new SQLContextHolder(
+        true, sc, Some(Map("className" -> "org.apache.spark.sql.CarbonContext",
+          "store" -> params.getOrElse("streaming.carbondata.store","").toString,
+          "meta" -> params.getOrElse("streaming.carbondata.meta","").toString)))
+    } else {
+      new SQLContextHolder(
+        params.containsKey("streaming.enableHiveSupport") &&
+          params.get("streaming.enableHiveSupport").toString.toBoolean, sc)
     }
 
-
-    new SQLContextHolder(
-      params.containsKey("streaming.enableHiveSupport") &&
-        params.get("streaming.enableHiveSupport").toString.toBoolean, sc)
   }
 
   def getRuntime: StreamingRuntime = {
@@ -202,15 +221,14 @@ object PlatformManager {
       case platform: String if platform == SPARK =>
         SparkRuntime.getOrCreate(tempParams)
 
-      case platform: String if (platform == SPAKR_STRUCTURED_STREAMING || platform == SPAKR_S_S) =>
-        Class.forName("streaming.core.strategy.platform.SparkStructuredStreamingRuntime").
-          getMethod("getOrCreate", classOf[JMap[Any, Any]]).
-          invoke(null, tempParams).asInstanceOf[StreamingRuntime]
+      case platform: String if platform == SPAKR_STREAMING =>
+        SparkStreamingRuntime.getOrCreate(tempParams)
 
       case platform: String if platform == "storm" =>
-        null
+        throw new RuntimeException("Platform storm is not supported yet")
 
-      case _ => SparkStreamingRuntime.getOrCreate(tempParams)
+      case _ =>
+        createRuntimeByPlatform(platformNameMapping(platformName), tempParams)
     }
     if (SQLContextHolder.sqlContextHolder == null) {
       SQLContextHolder.setActive(createSQLContextHolder(tempParams, runtime))
@@ -229,6 +247,11 @@ object PlatformManager {
   def STORM = "storm"
 
   def SPARK = "spark"
+
+  def platformNameMapping = Map[String, String](
+    SPAKR_S_S -> "streaming.core.strategy.platform.SparkStructuredStreamingRuntime",
+    SPAKR_STRUCTURED_STREAMING -> "streaming.core.strategy.platform.SparkStructuredStreamingRuntime"
+  )
 
 }
 

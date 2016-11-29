@@ -7,7 +7,6 @@ import serviceframework.dispatcher.Strategy
 
 trait StreamingRuntime {
 
-
   def startRuntime: StreamingRuntime
 
   def destroyRuntime(stopGraceful: Boolean, stopContext: Boolean = false): Boolean
@@ -20,7 +19,7 @@ trait StreamingRuntime {
 
   def awaitTermination
 
-  def params:JMap[Any,Any]
+  def params: JMap[Any, Any]
 
 }
 

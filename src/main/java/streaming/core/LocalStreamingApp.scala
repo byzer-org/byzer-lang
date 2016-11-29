@@ -15,10 +15,14 @@ object LocalStreamingApp {
       "-streaming.duration", "20",
       "-streaming.name", "god",
       "-streaming.rest", "false"
-      ,"-streaming.job.file.path","classpath:///test/ss-test.json"
+      ,"-streaming.job.file.path","classpath:///test/streaming-test-carbondata.json"
       ,"-streaming.driver.port","9902",
-      "-streaming.platform", "ss",
-      "-streaming.checkpoint","file:///tmp/ss"
+      "-streaming.platform", "spark_streaming",
+      "-streaming.enableCarbonDataSupport", "true",
+      "-streaming.carbondata.store", "/tmp/carbondata/store",
+      "-streaming.carbondata.meta", "/tmp/carbondata/meta"
+      //, "-spark.deploy.zookeeper.url","127.0.0.1"
+      //, "-streaming.checkpoint","file:///tmp/ss"
      // ,"-streaming.testinputstream.offsetPath", "hdfs://cdn237:8020/tmp/localstreampingapp"
      // ,"-streaming.spark.hadoop.fs.defaultFS","hdfs://cdn237:8020"
     ))
