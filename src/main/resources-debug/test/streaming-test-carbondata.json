@@ -1,7 +1,7 @@
 {
   "test": {
     "desc": "测试",
-    "strategy": "streaming.core.strategy.SparkStreamingStrategy",
+    "strategy": "spark",
     "algorithm": [],
     "ref": [
       "testJoinTable"
@@ -73,7 +73,7 @@
           {
             "format": "carbondata",
             "mode": "Append",
-            "tableName": "carbon4",
+            "tableName": "carbon100",
             "compress": "true",
             "useKettle": "false",
             "tempCSV":"false"
@@ -86,7 +86,7 @@
   },
   "testJoinTable": {
     "desc": "测试",
-    "strategy": "streaming.core.strategy.SparkStreamingRefStrategy",
+    "strategy": "refTable",
     "algorithm": [],
     "ref": [],
     "compositor": [
@@ -105,7 +105,7 @@
         ]
       },
       {
-        "name": "streaming.core.compositor.spark.transformation.JSONRefTableCompositor",
+        "name": "batch.refTable",
         "params": [
           {
             "tableName": "testJoinTable"

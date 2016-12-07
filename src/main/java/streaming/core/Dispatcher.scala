@@ -2,10 +2,9 @@ package streaming.core
 
 import java.util.{Map => JMap}
 
-import org.apache.spark.SparkContext
 import serviceframework.dispatcher.StrategyDispatcher
 import streaming.common.DefaultShortNameMapping
-import streaming.core.strategy.platform.{StreamingRuntime, PlatformManager, SparkRuntime, SparkStreamingRuntime}
+import streaming.core.strategy.platform.{PlatformManager, StreamingRuntime}
 
 import scala.collection.JavaConversions._
 
@@ -15,7 +14,7 @@ import scala.collection.JavaConversions._
 object Dispatcher {
   def dispatcher(contextParams: JMap[Any, Any]): StrategyDispatcher[Any] = {
     val defaultShortNameMapping = new DefaultShortNameMapping()
-    if (contextParams!=null && contextParams.containsKey("streaming.job.file.path")) {
+    if (contextParams != null && contextParams.containsKey("streaming.job.file.path")) {
       val runtime = contextParams.get("_runtime_").asInstanceOf[StreamingRuntime]
 
       val sparkContext = PlatformManager.getRuntimeContext(runtime)
@@ -34,9 +33,12 @@ object Dispatcher {
           textFile(jobFilePath).collect().mkString("\n")
       }
 
-      StrategyDispatcher.getOrCreate(jobConfigStr,defaultShortNameMapping)
+      if (jobConfigStr == null || jobConfigStr.isEmpty)
+        jobConfigStr = "{}"
+
+      StrategyDispatcher.getOrCreate(jobConfigStr, defaultShortNameMapping)
     } else {
-      StrategyDispatcher.getOrCreate(null,defaultShortNameMapping)
+      StrategyDispatcher.getOrCreate(null, defaultShortNameMapping)
     }
 
   }

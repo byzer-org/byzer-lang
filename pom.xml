@@ -233,7 +233,7 @@
                 <dependency>
                     <groupId>org.apache.carbondata</groupId>
                     <artifactId>carbondata-spark</artifactId>
-                    <version>0.3.0-incubating-SNAPSHOT</version>
+                    <version>1.0.0-incubating-SNAPSHOT</version>
                 </dependency>
             </dependencies>
         </profile>
