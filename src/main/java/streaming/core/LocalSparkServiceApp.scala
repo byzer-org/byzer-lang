@@ -11,11 +11,11 @@ object LocalSparkServiceApp {
       "-streaming.rest", "true",
       "-streaming.platform", "spark",
       "-streaming.job.file.path","classpath:///test/empty.json",
-      "-streaming.enableHiveSupport", "false",
-      "-streaming.spark.service", "true",
-      "-streaming.enableCarbonDataSupport", "true",
-      "-streaming.carbondata.store", "/tmp/carbondata/store",
-      "-streaming.carbondata.meta", "/tmp/carbondata/meta"
+//      "-streaming.enableHiveSupport", "false",
+      "-streaming.spark.service", "true"
+//      "-streaming.enableCarbonDataSupport", "true",
+//      "-streaming.carbondata.store", "/tmp/carbondata/store",
+//      "-streaming.carbondata.meta", "/tmp/carbondata/meta"
       //"-streaming.sql.out.path","file:///tmp/test/pdate=20160809"
 
       //"-streaming.jobs","idf-compute"

@@ -20,7 +20,7 @@ class SparkRuntimeOperator(params: JMap[Any, Any], sparkContext: SparkContext) e
     val options = if (loader_clzz == "carbondata") {
       dataSourceOptions + ("tableName" -> resource)
     } else {
-      dataSourceOptions + ("paths" -> resource) + ("path" -> resource)
+      dataSourceOptions + ("path" -> resource)
     }
 
     if (loader_clzz == "carbondata") {
