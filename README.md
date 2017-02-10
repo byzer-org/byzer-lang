@@ -1,5 +1,4 @@
 
-
 StreamingPro is a fast,expresivive,and convenient cluster system running on Spark with streaming,batch,interactive,machine learning support.
 
 It make devlopers more easy to build spark application without writing any code by means of:
