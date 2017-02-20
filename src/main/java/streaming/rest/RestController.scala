@@ -7,9 +7,11 @@ import net.csdn.common.collections.WowCollections
 import net.csdn.modules.http.RestRequest.Method._
 import net.csdn.modules.http.{ApplicationController, ViewType}
 import net.sf.json.JSONObject
+import streaming.common.SQLContextHolder
 import streaming.core.strategy.platform.{PlatformManager, SparkRuntime, SparkStreamingRuntime}
 
 import scala.collection.JavaConversions._
+import scala.util.parsing.json.JSONArray
 
 /**
   * 4/30/16 WilliamZhu(allwefantasy@gmail.com)
@@ -43,6 +45,30 @@ class RestController extends ApplicationController with CSVRender {
       case "csv" => renderJsonAsCsv(this.restResponse, "[" + result + "]")
       case _ => renderHtml(200, "/rest/sqlui-result.vm", WowCollections.map("feeds", result))
     }
+  }
+
+  @At(path = Array("/run/sql"), types = Array(GET, POST))
+  def ddlSql = {
+    if (!runtime.isInstanceOf[SparkRuntime]) render(400, "only support spark application")
+    val res = SQLContextHolder.getOrCreate.getOrCreate().sql(param("sql")).toJSON.collect().mkString(",")
+    render("[" + res + "]")
+  }
+
+  @At(path = Array("/table/create"), types = Array(GET, POST))
+  def tableCreate = {
+    val sparkRuntime = runtime.asInstanceOf[SparkRuntime]
+    if (!runtime.isInstanceOf[SparkRuntime]) render(400, "only support spark application")
+
+    try {
+      sparkRuntime.operator.createTable(param("tableName"), param("tableName"), params().toMap)
+    } catch {
+      case e: Exception =>
+        e.printStackTrace()
+        render(e.getMessage)
+    }
+
+    render("register success")
+
   }
 
   @At(path = Array("/sql"), types = Array(GET, POST))

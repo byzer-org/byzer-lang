@@ -6,8 +6,8 @@ import _root_.streaming.common.SQLContextHolder
 import _root_.streaming.core.strategy.platform.RuntimeOperator
 
 /**
- * 5/11/16 WilliamZhu(allwefantasy@gmail.com)
- */
+  * 5/11/16 WilliamZhu(allwefantasy@gmail.com)
+  */
 class SparkRuntimeOperator(params: JMap[Any, Any], sparkContext: SparkContext) extends RuntimeOperator {
 
   def createTable(resource: String, tableName: String, dataSourceOptions: Map[String, String]) = {
@@ -20,7 +20,12 @@ class SparkRuntimeOperator(params: JMap[Any, Any], sparkContext: SparkContext) e
     val options = if (loader_clzz == "carbondata") {
       dataSourceOptions + ("tableName" -> resource)
     } else {
-      dataSourceOptions + ("path" -> resource)
+      if (dataSourceOptions.contains("path") || dataSourceOptions.contains("paths")) {
+        dataSourceOptions
+      } else {
+        dataSourceOptions + ("path" -> resource)
+      }
+
     }
 
     if (loader_clzz == "carbondata") {
@@ -29,7 +34,7 @@ class SparkRuntimeOperator(params: JMap[Any, Any], sparkContext: SparkContext) e
 
     val df = SQLContextHolder.getOrCreate.getOrCreate().
       read.format(loader_clzz).
-      options(options - loader_clzz).
+      options(options - loader_clzz - ("loader_clzz." + tableName)).
       load()
 
     df.registerTempTable(tableName)

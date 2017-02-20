@@ -6,7 +6,8 @@ import java.util.{List => JList, Map => JMap}
 import net.csdn.ServiceFramwork
 import net.csdn.bootstrap.Application
 import net.csdn.common.logging.Loggers
-import org.apache.spark.SparkContext
+import org.apache.spark.{SparkContext, SparkEnv}
+import org.apache.spark.sql.hive.thriftserver.{HiveThriftServer2, HiveThriftServer3}
 import serviceframework.dispatcher.StrategyDispatcher
 import streaming.common.zk.{ZKClient, ZkRegister}
 import streaming.common.{ParamsUtil, SQLContextHolder, SparkCompatibility}
@@ -49,6 +50,10 @@ class PlatformManager {
     ServiceFramwork.scanService.setLoader(classOf[StreamingApp])
     ServiceFramwork.enableNoThreadJoin()
     Application.main(Array())
+  }
+
+  def startThriftServer = {
+    HiveThriftServer3.run(SQLContextHolder.sqlContextHolder.hiveContextRef.get())
   }
 
   def preCompile(runtime: StreamingRuntime) = {
@@ -104,6 +109,15 @@ class PlatformManager {
     if (params.getBooleanParam("streaming.rest", false) && !reRun) {
       startRestServer
     }
+
+    if (params.getBooleanParam("streaming.thrift", false)
+      && !reRun
+      && params.getBooleanParam("streaming.enableHiveSupport",false)
+      && runtime.isInstanceOf[SparkRuntime]
+    ) {
+      startThriftServer
+    }
+
     if (params.hasParam("streaming.zk.conf_root_dir") && !reRun) {
       registerToZk(params)
     }
@@ -200,14 +214,21 @@ object PlatformManager {
     if (params.containsKey("streaming.enableCarbonDataSupport")
       && params.get("streaming.enableCarbonDataSupport").toString.toBoolean
     ) {
+
+      val hiveOption = Map(
+        "className" -> "org.apache.spark.sql.CarbonContext",
+        "store" -> params.getOrElse("streaming.carbondata.store","").toString,
+        "meta" -> params.getOrElse("streaming.carbondata.meta","").toString
+
+      )
       new SQLContextHolder(
-        true, sc, Some(Map("className" -> "org.apache.spark.sql.CarbonContext",
-          "store" -> params.getOrElse("streaming.carbondata.store","").toString,
-          "meta" -> params.getOrElse("streaming.carbondata.meta","").toString)))
+        true, sc, Some(hiveOption))
+
     } else {
+
       new SQLContextHolder(
         params.containsKey("streaming.enableHiveSupport") &&
-          params.get("streaming.enableHiveSupport").toString.toBoolean, sc)
+          params.get("streaming.enableHiveSupport").toString.toBoolean, sc, None)
     }
 
   }
