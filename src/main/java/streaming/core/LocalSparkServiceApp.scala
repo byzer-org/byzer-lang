@@ -1,8 +1,8 @@
 package streaming.core
 
 /**
- * 5/11/16 WilliamZhu(allwefantasy@gmail.com)
- */
+  * 5/11/16 WilliamZhu(allwefantasy@gmail.com)
+  */
 object LocalSparkServiceApp {
   def main(args: Array[String]): Unit = {
     StreamingApp.main(Array(
@@ -11,13 +11,13 @@ object LocalSparkServiceApp {
       "-streaming.rest", "true",
       "-streaming.thrift", "true",
       "-streaming.platform", "spark",
-      "-streaming.job.file.path","classpath:///test/empty.json",
+      "-streaming.job.file.path", "classpath:///test/empty.json",
       "-streaming.enableHiveSupport", "true",
-      "-streaming.spark.service", "true"
-
-//      "-streaming.enableCarbonDataSupport", "true",
-//      "-streaming.carbondata.store", "/tmp/carbondata/store",
- //     "-streaming.carbondata.meta", "/tmp/carbondata/meta"
+      "-streaming.spark.service", "true",
+      "-streaming.enableCarbonDataSupport", "true",
+      "-streaming.carbondata.store", "/tmp/carbondata/store",
+      "-streaming.carbondata.meta", "/tmp/carbondata/meta",
+      "-spark.sql.hive.thriftServer.singleSession","true"
       //"-streaming.sql.out.path","file:///tmp/test/pdate=20160809"
 
       //"-streaming.jobs","idf-compute"

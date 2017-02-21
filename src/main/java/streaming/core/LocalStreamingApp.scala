@@ -16,9 +16,9 @@ object LocalStreamingApp {
       "-streaming.name", "god",
       "-streaming.rest", "false"
       ,"-streaming.driver.port","9902",
-      "-streaming.platform", "spark_streaming"
-      //"-streaming.enableCarbonDataSupport", "true"
-      //"-streaming.carbondata.store", "/tmp/carbondata/store",
+      "-streaming.platform", "spark_streaming",
+      "-streaming.enableCarbonDataSupport", "true",
+      "-streaming.carbondata.store", "/tmp/carbondata/store"
       //"-streaming.carbondata.meta", "/tmp/carbondata/meta"
       //, "-spark.deploy.zookeeper.url","127.0.0.1"
       //, "-streaming.checkpoint","file:///tmp/ss"

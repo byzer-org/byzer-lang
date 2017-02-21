@@ -24,9 +24,9 @@ object ScalaJdbcConnectSelect {
 
       // create the statement, and run the select query
       val statement = connection.createStatement()
-      val resultSet = statement.executeQuery("SELECT * FROM src")
+      val resultSet = statement.executeQuery("SELECT * FROM test_table ")
       while ( resultSet.next() ) {
-        println(" tp = "+ resultSet.getString("tp"))
+        println(" city = "+ resultSet.getString("city") )
       }
     } catch {
       case e => e.printStackTrace

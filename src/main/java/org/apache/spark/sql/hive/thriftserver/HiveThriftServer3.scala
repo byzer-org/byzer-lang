@@ -67,7 +67,7 @@ object HiveThriftServer3 extends Logging {
       val server = new HiveThriftServer3(SparkSQLEnv.hiveContext)
       server.init(SparkSQLEnv.hiveContext.hiveconf)
       server.start()
-      logInfo("HiveThriftServer2 started")
+      logInfo("HiveThriftServer2 started:"+hiveContext.getClass)
       listener = new HiveThriftServer2Listener(server, SparkSQLEnv.hiveContext.conf)
       HiveThriftServer2.listener = listener
       SparkSQLEnv.sparkContext.addSparkListener(listener)
