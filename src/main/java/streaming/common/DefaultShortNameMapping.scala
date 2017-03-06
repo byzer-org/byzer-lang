@@ -15,13 +15,16 @@ class DefaultShortNameMapping extends ShortNameMapping {
     "sql.udf" -> "streaming.core.compositor.spark.udf.SQLUDFCompositor",
 
     "batch.source" -> "streaming.core.compositor.spark.source.SQLSourceCompositor",
+    "batch.sources" -> "streaming.core.compositor.spark.source.MultiSQLSourceCompositor",
     "batch.sql" -> "streaming.core.compositor.spark.transformation.SQLCompositor",
     "batch.table" -> "streaming.core.compositor.spark.transformation.JSONTableCompositor",
     "batch.refTable" -> "streaming.core.compositor.spark.transformation.JSONRefTableCompositor",
     "batch.script" -> "streaming.core.compositor.spark.transformation.ScriptCompositor",
     "batch.columns" -> "streaming.core.compositor.spark.transformation.SingleColumnJSONCompositor",
     "batch.output" -> "streaming.core.compositor.spark.output.SQLOutputCompositor",
-    "batch.output.console" -> "streaming.core.compositor.spark.output.SQLOutputCompositor",
+    "batch.output.console" -> "streaming.core.compositor.spark.output.SQLPrintCompositor",
+    "batch.outputs" -> "streaming.core.compositor.spark.output.MultiSQLOutputCompositor",
+
 
     "stream.source.kafka" -> "streaming.core.compositor.spark.streaming.source.KafkaStreamingCompositor",
     "stream.sql" -> "streaming.core.compositor.spark.streaming.transformation.SQLCompositor",

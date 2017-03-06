@@ -24,10 +24,12 @@ object ScalaJdbcConnectSelect {
 
       // create the statement, and run the select query
       val statement = connection.createStatement()
+      val start = System.currentTimeMillis()
       val resultSet = statement.executeQuery("SELECT * FROM test_table ")
       while ( resultSet.next() ) {
         println(" city = "+ resultSet.getString("city") )
       }
+      println(System.currentTimeMillis() - start)
     } catch {
       case e => e.printStackTrace
     }

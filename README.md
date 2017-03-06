@@ -28,7 +28,7 @@ application, but also  a extensible and programmable framework for spark since y
 ## downloads
 
 
-> Precomile version based on Spark 1.6.1 ： https://pan.baidu.com/s/1boTu0Mj
+> Precomile version based on Spark 1.6.1 ： https://pan.baidu.com/s/1eRO5Wga
 >
 > Precomile version based on Spark 2.0.0:  http://pan.baidu.com/s/1mijmgi8
 >

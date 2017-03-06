@@ -15,6 +15,7 @@
         <streamingpro.version>0.4.7</streamingpro.version>
         <spark.streaming.kafka.artifactId>spark-streaming-kafka_2.10</spark.streaming.kafka.artifactId>
         <serviceframework.version>1.3.0-SNAPSHOT</serviceframework.version>
+        <scope>provided</scope>
     </properties>
 
 
@@ -23,6 +24,10 @@
             <id>artima</id>
             <name>Artima Maven Repository</name>
             <url>http://repo.artima.com/releases</url>
+        </repository>
+        <repository>
+            <id>cloudera</id>
+            <url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>
         </repository>
     </repositories>
 
@@ -55,113 +60,29 @@
             <id>online</id>
             <properties>
                 <mode>online</mode>
+                <scope>provided</scope>
             </properties>
             <dependencies>
-                <dependency>
-                    <groupId>org.apache.spark</groupId>
-                    <artifactId>spark-streaming_2.10</artifactId>
-                    <version>${spark.version}</version>
-                    <scope>provided</scope>
-                </dependency>
-                <dependency>
-                    <groupId>org.apache.spark</groupId>
-                    <artifactId>spark-hive_2.10</artifactId>
-                    <version>${spark.version}</version>
-                    <scope>provided</scope>
-                </dependency>
-                <dependency>
-                    <groupId>org.apache.spark</groupId>
-                    <artifactId>spark-sql_2.10</artifactId>
-                    <version>${spark.version}</version>
-                    <scope>provided</scope>
-                </dependency>
                 <dependency>
                     <groupId>org.apache.spark</groupId>
                     <artifactId>${spark.streaming.kafka.artifactId}</artifactId>
                     <version>${spark.version}</version>
                 </dependency>
 
-                <dependency>
-                    <groupId>org.apache.spark</groupId>
-                    <artifactId>${spark.sql.kafka.artifactId}</artifactId>
-                    <version>${spark.version}</version>
-                    <scope>provided</scope>
-                </dependency>
-
-                <dependency>
-                    <groupId>org.apache.spark</groupId>
-                    <artifactId>spark-core_2.10</artifactId>
-                    <version>${spark.version}</version>
-                    <scope>provided</scope>
-                </dependency>
-                <dependency>
-                    <groupId>org.apache.spark</groupId>
-                    <artifactId>spark-mllib_2.10</artifactId>
-                    <version>${spark.version}</version>
-                    <scope>provided</scope>
-                </dependency>
-                <dependency>
-                    <groupId>org.scala-lang</groupId>
-                    <artifactId>scala-library</artifactId>
-                    <version>${scala.version}</version>
-                    <scope>provided</scope>
-                </dependency>
             </dependencies>
         </profile>
         <profile>
             <id>dev</id>
             <properties>
                 <mode>dev</mode>
+                <scope>provided</scope>
             </properties>
             <dependencies>
-                <dependency>
-                    <groupId>org.apache.spark</groupId>
-                    <artifactId>spark-streaming_2.10</artifactId>
-                    <version>${spark.version}</version>
-                    <scope>provided</scope>
-                </dependency>
-                <dependency>
-                    <groupId>org.apache.spark</groupId>
-                    <artifactId>spark-hive_2.10</artifactId>
-                    <version>${spark.version}</version>
-                    <scope>provided</scope>
-                </dependency>
-                <dependency>
-                    <groupId>org.apache.spark</groupId>
-                    <artifactId>spark-mllib_2.10</artifactId>
-                    <version>${spark.version}</version>
-                    <scope>provided</scope>
-                </dependency>
-                <dependency>
-                    <groupId>org.apache.spark</groupId>
-                    <artifactId>spark-core_2.10</artifactId>
-                    <version>${spark.version}</version>
-                    <scope>provided</scope>
-                </dependency>
                 <dependency>
                     <groupId>org.apache.spark</groupId>
                     <artifactId>${spark.streaming.kafka.artifactId}</artifactId>
                     <version>${spark.version}</version>
                 </dependency>
-                <dependency>
-                    <groupId>org.apache.spark</groupId>
-                    <artifactId>${spark.sql.kafka.artifactId}</artifactId>
-                    <version>${spark.version}</version>
-                    <scope>provided</scope>
-                </dependency>
-                <dependency>
-                    <groupId>org.apache.spark</groupId>
-                    <artifactId>spark-sql_2.10</artifactId>
-                    <version>${spark.version}</version>
-                    <scope>provided</scope>
-                </dependency>
-                <dependency>
-                    <groupId>org.scala-lang</groupId>
-                    <artifactId>scala-library</artifactId>
-                    <version>${scala.version}</version>
-                    <scope>provided</scope>
-                </dependency>
-
             </dependencies>
         </profile>
         <profile>
@@ -171,51 +92,10 @@
             </activation>
             <properties>
                 <mode>local</mode>
+                <scope>compile</scope>
             </properties>
-            <dependencies>
-                <dependency>
-                    <groupId>org.apache.spark</groupId>
-                    <artifactId>${spark.streaming.kafka.artifactId}</artifactId>
-                    <version>${spark.version}</version>
-                </dependency>
-                <dependency>
-                    <groupId>org.apache.spark</groupId>
-                    <artifactId>${spark.sql.kafka.artifactId}</artifactId>
-                    <version>${spark.version}</version>
-                </dependency>
-                <dependency>
-                    <groupId>org.apache.spark</groupId>
-                    <artifactId>spark-hive_2.10</artifactId>
-                    <version>${spark.version}</version>
-                </dependency>
-                <dependency>
-                    <groupId>org.apache.spark</groupId>
-                    <artifactId>spark-streaming_2.10</artifactId>
-                    <version>${spark.version}</version>
-                </dependency>
-                <dependency>
-                    <groupId>org.apache.spark</groupId>
-                    <artifactId>spark-mllib_2.10</artifactId>
-                    <version>${spark.version}</version>
-                </dependency>
-                <dependency>
-                    <groupId>org.apache.spark</groupId>
-                    <artifactId>spark-core_2.10</artifactId>
-                    <version>${spark.version}</version>
-                </dependency>
-                <dependency>
-                    <groupId>org.apache.spark</groupId>
-                    <artifactId>spark-sql_2.10</artifactId>
-                    <version>${spark.version}</version>
-                </dependency>
-                <dependency>
-                    <groupId>org.scala-lang</groupId>
-                    <artifactId>scala-library</artifactId>
-                    <version>${scala.version}</version>
-                </dependency>
-
-            </dependencies>
         </profile>
+
         <profile>
             <id>structured-streaming</id>
             <dependencies>
@@ -249,7 +129,7 @@
         </profile>
 
         <profile>
-            <id>build-distr</id>
+            <id>shade</id>
             <build>
                 <plugins>
                     <plugin>
@@ -281,8 +161,80 @@
             </build>
         </profile>
 
+        <profile>
+            <id>build-distr</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <artifactId>maven-assembly-plugin</artifactId>
+                        <version>3.0.0</version>
+                        <configuration>
+                            <descriptorRefs>
+                                <descriptorRef>jar-with-dependencies</descriptorRef>
+                            </descriptorRefs>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>make-assembly</id> <!-- this is used for inheritance merges -->
+                                <phase>package</phase> <!-- bind to the packaging phase -->
+                                <goals>
+                                    <goal>single</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
     </profiles>
     <dependencies>
+
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-streaming_2.10</artifactId>
+            <version>${spark.version}</version>
+            <scope>${scope}</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-hive_2.10</artifactId>
+            <version>${spark.version}</version>
+            <scope>${scope}</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-sql_2.10</artifactId>
+            <version>${spark.version}</version>
+            <scope>${scope}</scope>
+        </dependency>
+
+
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>${spark.sql.kafka.artifactId}</artifactId>
+            <version>${spark.version}</version>
+            <scope>${scope}</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-core_2.10</artifactId>
+            <version>${spark.version}</version>
+            <scope>${scope}</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-mllib_2.10</artifactId>
+            <version>${spark.version}</version>
+            <scope>${scope}</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-library</artifactId>
+            <version>${scala.version}</version>
+            <scope>${scope}</scope>
+        </dependency>
 
         <!--<dependency>-->
         <!--<groupId>org.ansj</groupId>-->

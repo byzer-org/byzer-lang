@@ -8,8 +8,8 @@ import serviceframework.dispatcher.{Compositor, Processor, Strategy}
 import streaming.core.compositor.spark.streaming.CompositorHelper
 
 /**
- * 8/2/16 WilliamZhu(allwefantasy@gmail.com)
- */
+  * 8/2/16 WilliamZhu(allwefantasy@gmail.com)
+  */
 abstract class BaseDFCompositor[T] extends Compositor[T] with CompositorHelper {
   protected var _configParams: util.List[util.Map[Any, Any]] = _
   val logger = Logger.getLogger(classOf[SQLCompositor[T]].getName)
@@ -32,6 +32,13 @@ abstract class BaseDFCompositor[T] extends Compositor[T] with CompositorHelper {
 
 
   override def result(alg: util.List[Processor[T]], ref: util.List[Strategy[T]], middleResult: util.List[T], params: util.Map[Any, Any]): util.List[T] = {
+
+    if (!params.containsKey(TABLE) && !params.containsKey(FUNC)) {
+      val df = sqlContextHolder(params).table(inputTableName.get)
+      val newDf = createDF(params, df)
+      newDf.registerTempTable(outputTableName.get)
+      return middleResult
+    }
 
     if (params.containsKey(TABLE)) {
       //parent compositor is  tableCompositor
