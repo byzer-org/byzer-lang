@@ -12,13 +12,14 @@ object LocalStreamingApp {
   def main(args: Array[String]): Unit = {
     StreamingApp.main(Array(
       "-streaming.master", "local[2]",
-      "-streaming.duration", "20",
+      "-streaming.duration", "10",
+      "-spark.sql.shuffle.partitions","1",
       "-streaming.name", "god",
       "-streaming.rest", "false"
       ,"-streaming.driver.port","9902",
-      "-streaming.platform", "spark_streaming",
-      "-streaming.enableCarbonDataSupport", "true",
-      "-streaming.carbondata.store", "/tmp/carbondata/store"
+      "-streaming.platform", "spark_streaming"
+      //"-streaming.enableCarbonDataSupport", "true",
+      //"-streaming.carbondata.store", "/tmp/carbondata/store"
       //"-streaming.carbondata.meta", "/tmp/carbondata/meta"
       //, "-spark.deploy.zookeeper.url","127.0.0.1"
       //, "-streaming.checkpoint","file:///tmp/ss"

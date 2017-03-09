@@ -8,15 +8,15 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, SaveMode}
 import org.apache.spark.streaming.dstream.DStream
 import serviceframework.dispatcher.{Compositor, Processor, Strategy}
-import streaming.common.SparkCompatibility
+import streaming.common.{SQLContextHolder, SparkCompatibility}
 import streaming.core.compositor.spark.streaming.CompositorHelper
 import streaming.core.strategy.ParamsValidator
 
 import scala.collection.JavaConversions._
 
 /**
- * 5/11/16 WilliamZhu(allwefantasy@gmail.com)
- */
+  * 5/11/16 WilliamZhu(allwefantasy@gmail.com)
+  */
 class SQLOutputCompositor[T] extends Compositor[T] with CompositorHelper with ParamsValidator {
 
   private var _configParams: util.List[util.Map[Any, Any]] = _
@@ -52,10 +52,15 @@ class SQLOutputCompositor[T] extends Compositor[T] with CompositorHelper with Pa
     val _cfg = cfg
     val _mode = if (mode.isDefined) mode.get else "ErrorIfExists"
     val _format = format.get
-
+    val _inputTableName = config[String]("inputTableName", _configParams).get
     dstream.foreachRDD { rdd =>
       try {
-        val df = func(rdd)
+        val df = if (func == null && _inputTableName != null) {
+          sqlContextHolder(params).table(_inputTableName)
+        } else {
+          func(rdd)
+        }
+
         val writer = df.write
         val tempDf = writer.options(_cfg).mode(SaveMode.valueOf(_mode)).format(_format)
 
@@ -64,7 +69,7 @@ class SQLOutputCompositor[T] extends Compositor[T] with CompositorHelper with Pa
           _cfg.foreach(kv => properties.put(kv._1, kv._2))
           tempDf.jdbc(_cfg("url"), _cfg("dbtable"), properties)
         }
-        if(_resource=="-"||_resource.isEmpty){
+        if (_resource == "-" || _resource.isEmpty) {
           tempDf.save()
         } else tempDf.save(_resource)
 

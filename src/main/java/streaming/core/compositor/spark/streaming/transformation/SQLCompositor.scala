@@ -9,6 +9,7 @@ import serviceframework.dispatcher.{Compositor, Processor, Strategy}
 import streaming.core.compositor.spark.streaming.CompositorHelper
 
 import scala.collection.JavaConversions._
+import scala.collection.mutable.ArrayBuffer
 
 
 class SQLCompositor[T] extends Compositor[T] with CompositorHelper {
@@ -38,8 +39,27 @@ class SQLCompositor[T] extends Compositor[T] with CompositorHelper {
   override def result(alg: util.List[Processor[T]], ref: util.List[Strategy[T]], middleResult: util.List[T], params: util.Map[Any, Any]): util.List[T] = {
 
     require(sql.isDefined, "please set sql  by variable `sql` in config file")
-    val _sql = translateSQL(sql.get,params)
+    val _sql = translateSQL(sql.get, params)
     val _outputTableName = outputTableName
+
+
+    if (!params.containsKey(TABLE) && !params.containsKey(FUNC)) {
+      val func = () => {
+        val df = sqlContextHolder(params).sql(_sql)
+        df.registerTempTable(_outputTableName.get)
+      }
+      if (params.containsKey("sqlList")) {
+        params.get("sqlList").asInstanceOf[ArrayBuffer[() => Unit]] += func
+      } else {
+        val sqlList = ArrayBuffer[() => Unit]()
+        sqlList += func
+        params.put("sqlList", sqlList)
+      }
+
+      return middleResult
+    }
+
+
     if (params.containsKey(TABLE)) {
 
       //parent compositor is  tableCompositor

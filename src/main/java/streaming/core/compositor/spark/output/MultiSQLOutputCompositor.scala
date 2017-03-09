@@ -46,12 +46,11 @@ class MultiSQLOutputCompositor[T] extends Compositor[T] with CompositorHelper wi
         val properties = new Properties()
         options.foreach(kv => properties.put(kv._1, kv._2))
         tempDf.jdbc(options("url"), options("dbtable"), properties)
+      }else{
+        if(_resource=="-"||_resource.isEmpty){
+          tempDf.save()
+        }else tempDf.save(_resource)
       }
-      if(_resource=="-"||_resource.isEmpty){
-        tempDf.save()
-      }else tempDf.save(_resource)
-
-
     }
     new util.ArrayList[T]()
   }

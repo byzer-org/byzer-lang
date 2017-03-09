@@ -27,12 +27,14 @@ class DefaultShortNameMapping extends ShortNameMapping {
 
 
     "stream.source.kafka" -> "streaming.core.compositor.spark.streaming.source.KafkaStreamingCompositor",
+    "stream.sources.kafka" -> "streaming.core.compositor.spark.streaming.source.MultiKafkaStreamingCompositor",
     "stream.sql" -> "streaming.core.compositor.spark.streaming.transformation.SQLCompositor",
     "stream.table" -> "streaming.core.compositor.spark.streaming.transformation.JSONTableCompositor",
     "stream.refTable" -> "streaming.core.compositor.spark.transformation.JSONRefTableCompositor",
     "stream.columns" -> "streaming.core.compositor.spark.streaming.transformation.SingleColumnJSONCompositor",
     "stream.source.mock.json" -> "streaming.core.compositor.spark.streaming.source.MockInputStreamCompositor",
     "stream.output" -> "streaming.core.compositor.spark.streaming.output.SQLOutputCompositor",
+    "stream.outputs" -> "streaming.core.compositor.spark.streaming.output.MultiSQLOutputCompositor",
     "stream.output.csv" -> "streaming.core.compositor.spark.streaming.output.SQLCSVOutputCompositor",
     "stream.output.parquet" -> "streaming.core.compositor.spark.streaming.output.SQLParquetOutputCompositor",
     "stream.output.es" -> "streaming.core.compositor.spark.streaming.output.SQLESOutputCompositor",
