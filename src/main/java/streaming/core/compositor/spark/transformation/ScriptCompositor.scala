@@ -87,7 +87,7 @@ class ScriptCompositor[T] extends BaseDFCompositor[T] {
       Map("anykey" -> _script)
     }
 
-    val schemaScript = loadScriptFromFile(_schema)
+
 
 
     val rawRdd = df.rdd.map { row =>
@@ -110,6 +110,7 @@ class ScriptCompositor[T] extends BaseDFCompositor[T] {
 
     if (schema != None) {
 
+      val schemaScript = loadScriptFromFile(_schema)
       val rowRdd = rawRdd.map { newMaps =>
         val schemaExecutor = ScalaSourceCodeCompiler.execute(ScriptCacheKey("schema", schemaScript))
         val st = schemaExecutor.schema().get
