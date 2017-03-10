@@ -41,16 +41,20 @@ class MultiSQLOutputCompositor[T] extends Compositor[T] with CompositorHelper wi
 
       _configParams.foreach { config =>
 
-        val _cfg = config.map(f => (f._1.asInstanceOf[String], f._2.asInstanceOf[String])).toMap
+        val name = config.getOrElse("name","").toString
+        val _cfg = config.map(f => (f._1.toString, f._2.toString)).map { f =>
+          (f._1, params.getOrElse(s"streaming.sql.out.${name}.${f._1}", f._2).toString)
+        }.toMap
+
         val tableName = _cfg("inputTableName")
         val options = _cfg - "path" - "mode" - "format"
         val path = _cfg("path")
         val mode = _cfg.getOrElse("mode", "ErrorIfExists")
         val format = _cfg("format")
-        val outputPath = _cfg.getOrElse("outputPath", "streaming.sql.out.path")
+        val outputPath = _cfg.getOrElse("outputPath", "streaming.sql.out.path."+_cfg.getOrElse("name",""))
         val sqlContext = sqlContextHolder(params)
         val _resource = if (params.containsKey(outputPath)) params(outputPath).toString else path
-
+        val dbtable = if (options.containsKey("dbtable")) options("dbtable") else _resource
         try {
           val tempDf = sqlContext.table(tableName).write.options(options).mode(SaveMode.valueOf(mode)).format(format)
           if (format == "console") {
@@ -59,7 +63,7 @@ class MultiSQLOutputCompositor[T] extends Compositor[T] with CompositorHelper wi
             if (SparkCompatibility.sparkVersion.startsWith("1.6") && format == "jdbc") {
               val properties = new Properties()
               options.foreach(kv => properties.put(kv._1, kv._2))
-              tempDf.jdbc(options("url"), options("dbtable"), properties)
+              tempDf.jdbc(options("url"), dbtable, properties)
             } else {
               if (_resource == "-" || _resource.isEmpty) {
                 tempDf.save()

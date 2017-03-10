@@ -23,10 +23,16 @@ class MultiSQLSourceCompositor[T] extends Compositor[T] with CompositorHelper {
   override def result(alg: util.List[Processor[T]], ref: util.List[Strategy[T]], middleResult: util.List[T], params: util.Map[Any, Any]): util.List[T] = {
 
     _configParams.foreach { sourceConfig =>
-      val sourcePath = if (params.containsKey("streaming.sql.source.path")) params("streaming.sql.source.path").toString else sourceConfig("path").toString
+      val name = sourceConfig.getOrElse("name", "").toString
+
+      val _cfg = sourceConfig.map(f => (f._1.toString, f._2.toString)).map { f =>
+        (f._1, params.getOrElse(s"streaming.sql.out.${name}.${f._1}", f._2).toString)
+      }.toMap
+
+      val sourcePath = _cfg("path")
       val df = sqlContextHolder(params).read.format(sourceConfig("format").toString).options(
-        (sourceConfig - "format" - "path" - "outputTable").map(f => (f._1.toString, f._2.toString)).toMap).load(sourcePath)
-      df.registerTempTable(sourceConfig("outputTable").toString)
+        (_cfg - "format" - "path" - "outputTable").map(f => (f._1.toString, f._2.toString))).load(sourcePath)
+      df.registerTempTable(_cfg("outputTable"))
     }
     List()
   }

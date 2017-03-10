@@ -81,10 +81,17 @@ class MultiKafkaStreamingCompositor[T] extends Compositor[T] with CompositorHelp
 
     _configParams.filterNot(p => isStreaming(p)).foreach { sourceConfig =>
       val sqlContext = sqlContextHolder(params)
-      val sourcePath = if (params.containsKey("streaming.sql.source.path")) params("streaming.sql.source.path").toString else sourceConfig("path").toString
-      val df = sqlContext.read.format(sourceConfig("format").toString).options(
-        (sourceConfig - "format" - "path" - "outputTable").map(f => (f._1.toString, f._2.toString)).toMap).load(sourcePath)
-      df.registerTempTable(sourceConfig("outputTable").toString)
+
+      val name = sourceConfig.getOrElse("name","").toString
+      val _cfg = sourceConfig.map(f => (f._1.toString, f._2.toString)).map { f =>
+        (f._1, params.getOrElse(s"streaming.sql.out.${name}.${f._1}", f._2).toString)
+      }.toMap
+
+      val sourcePath = _cfg("path")
+
+      val df = sqlContext.read.format(_cfg("format")).options(
+        (_cfg - "format" - "path" - "outputTable").map(f => (f._1.toString, f._2.toString))).load(sourcePath)
+      df.registerTempTable(_cfg("outputTable"))
     }
 
     List(kafkaStream.asInstanceOf[T])
