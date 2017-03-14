@@ -10,7 +10,10 @@ import _root_.streaming.core.strategy.platform.RuntimeOperator
   */
 class SparkRuntimeOperator(params: JMap[Any, Any], sparkContext: SparkContext) extends RuntimeOperator {
 
-  def createTable(resource: String, tableName: String, dataSourceOptions: Map[String, String]) = {
+  def createTable(resource: String, tableName: String, dataSourceOptions: Map[String, String]): Unit = {
+
+    val sqlContext = SQLContextHolder.getOrCreate.getOrCreate()
+
     //val esOptions = Map("es.nodes"->"192.168.1.2,192.168.1.3", "es.scroll.size"->"1000", "es.field.read.as.array.include"->"SampleField")
     //"org.elasticsearch.spark.sql"
     var loader_clzz = dataSourceOptions("loader_clzz." + tableName)
@@ -32,7 +35,7 @@ class SparkRuntimeOperator(params: JMap[Any, Any], sparkContext: SparkContext) e
       loader_clzz = "org.apache.spark.sql.CarbonSource"
     }
 
-    val df = SQLContextHolder.getOrCreate.getOrCreate().
+    val df = sqlContext.
       read.format(loader_clzz).
       options(options - loader_clzz - ("loader_clzz." + tableName)).
       load()

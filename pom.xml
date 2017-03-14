@@ -142,18 +142,15 @@
                                 <goals>
                                     <goal>shade</goal>
                                 </goals>
-                                <!--<configuration>-->
-                                    <!--<relocations>-->
-                                        <!--<relocation>-->
-                                            <!--<pattern>com.fasterxml</pattern>-->
-                                            <!--<shadedPattern>com.dxy.data.com.fasterxml</shadedPattern>-->
-                                        <!--</relocation>-->
-                                        <!--<relocation>-->
-                                            <!--<pattern>org.apache.http</pattern>-->
-                                            <!--<shadedPattern>com.dxy.data.org.apache.http</shadedPattern>-->
-                                        <!--</relocation>-->
-                                    <!--</relocations>-->
-                                <!--</configuration>-->
+                                <configuration>
+                                    <relocations>
+                                        <relocation>
+                                            <pattern>org.eclipse.jetty</pattern>
+                                            <shadedPattern>streaming.king.org.eclipse.jetty</shadedPattern>
+                                        </relocation>
+
+                                    </relocations>
+                                </configuration>
                             </execution>
                         </executions>
                     </plugin>

@@ -27,7 +27,9 @@ class RestController extends ApplicationController with CSVRender {
   def sql = {
     if (!runtime.isInstanceOf[SparkRuntime]) render(400, "only support spark application")
     val sparkRuntime = runtime.asInstanceOf[SparkRuntime]
+    val sqlContext = SQLContextHolder.getOrCreate.getOrCreate()
     val tableToPaths = params().filter(f => f._1.startsWith("tableName.")).map(table => (table._1.split("\\.").last, table._2))
+
     tableToPaths.foreach { tableToPath =>
       val tableName = tableToPath._1
       val loaderClzz = params.filter(f => f._1 == s"loader_clzz.${tableName}").head
@@ -36,10 +38,15 @@ class RestController extends ApplicationController with CSVRender {
         val paramStr = coms.takeRight(coms.length - 2).mkString(".")
         (paramStr, f._2)
       }.toMap + loaderClzz
-      sparkRuntime.operator.createTable(tableToPath._2, tableToPath._1, newParams)
+
+      if (!sqlContext.tableNames().contains(tableToPath._1) || paramAsBoolean("forceCreateTable", false)) {
+        sparkRuntime.operator.createTable(tableToPath._2, tableToPath._1, newParams)
+      }
     }
+
     val sql = if (param("sql").contains(" limit ")) param("sql") else param("sql") + " limit 1000"
     val result = sparkRuntime.operator.runSQL(sql).mkString(",")
+
     param("resultType", "html") match {
       case "json" => render(200, "[" + result + "]", ViewType.json)
       case "csv" => renderJsonAsCsv(this.restResponse, "[" + result + "]")

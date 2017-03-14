@@ -12,7 +12,7 @@ object ScalaJdbcConnectSelect {
   def main(args: Array[String]) {
     // connect to the database named "mysql" on the localhost
     val driver = "com.mysql.jdbc.Driver"
-    val url = "jdbc:hive2://localhost:10000/default"
+    val url = "jdbc:hive2://127.0.0.1:10000/default"
 
     // there's probably a better way to do this
     var connection:Connection = null
