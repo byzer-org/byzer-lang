@@ -1,6 +1,7 @@
 package org.apache.spark.util
 
 import com.google.common.cache.{CacheBuilder, CacheLoader}
+import org.apache.spark.sql.SQLContext
 import org.apache.spark.sql.types.StructType
 import streaming.common.CodeTemplates
 
@@ -26,7 +27,13 @@ trait StreamingProGenerateClass {
   def schema(): Option[StructType] = {
     None
   }
+
+  def execute(context: SQLContext): Unit = {
+
+  }
 }
+
+
 
 
 case class ScriptCacheKey(prefix: String, code: String)
@@ -55,9 +62,17 @@ object ScalaSourceCodeCompiler {
         |}
               """.stripMargin } else ""
 
+    val function4 = if(scriptCacheKey.prefix =="context") { s"""
+                                                           |override  def execute(context: SQLContext): Unit = {
+                                                           |
+                                                           | ${scriptCacheKey.code}
+                                                           |}
+              """.stripMargin } else ""
+
 
     val wrapper = s"""
                      |import org.apache.spark.util.StreamingProGenerateClass
+                     |import org.apache.spark.sql.SQLContext
                      |import org.apache.spark.sql.types._
                      |class StreamingProUDF_${startTime} extends StreamingProGenerateClass {
                                                           |
@@ -66,6 +81,8 @@ object ScalaSourceCodeCompiler {
         | ${function2}
         |
         | ${function3}
+        |
+        | ${function4}
         |
         |}
         |new StreamingProUDF_${startTime}()

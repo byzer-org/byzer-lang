@@ -2,11 +2,11 @@ package streaming.core.compositor
 
 import java.io.File
 import java.nio.charset.Charset
-import java.util
 
 import com.google.common.io.Files
 import net.sf.json.{JSONArray, JSONObject}
 import org.apache.spark.streaming.BasicStreamingOperation
+import streaming.common.SQLContextHolder
 import streaming.core.Dispatcher
 import streaming.core.compositor.spark.output.{MultiSQLOutputCompositor, SQLUnitTestCompositor}
 import streaming.core.strategy.platform.SparkRuntime
@@ -174,6 +174,38 @@ class BatchSpec extends BasicStreamingOperation {
       result.head.getAs[String]("a") should be("kk")
 
       println("a=>" + result.head.getAs[String]("a") + ",b=>" + result.head.getAs[String]("b"))
+
+      file.delete()
+
+    }
+  }
+
+  "batch-script-df" should "run normally" in {
+    val file = new java.io.File("/tmp/hdfsfile/abc.txt")
+    Files.createParentDirs(file)
+    val obj = new JSONObject()
+    obj.put("a", "yes")
+    obj.put("b", "no")
+    Files.write(obj.toString(), file, Charset.forName("utf-8"))
+
+
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/batch-script-df.json")) { runtime: SparkRuntime =>
+
+      val sd = Dispatcher.dispatcher(null)
+      val strategies = sd.findStrategies("batch-console").get
+      strategies.size should be(1)
+
+      val output = strategies.head.compositor.last.asInstanceOf[MultiSQLOutputCompositor[_]]
+
+      val configParams = getCompositorParam(output)
+
+      val finalOutputTable = configParams(0)("inputTableName").toString
+
+      val name  = SQLContextHolder.getOrCreate().getOrCreate().table(finalOutputTable).schema.get(0).name
+
+      name should startWith("t")
+
+      println(name)
 
       file.delete()
 
