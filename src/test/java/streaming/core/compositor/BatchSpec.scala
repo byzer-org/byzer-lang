@@ -2,18 +2,20 @@ package streaming.core.compositor
 
 import java.io.File
 import java.nio.charset.Charset
+import java.util
 
 import com.google.common.io.Files
+import net.sf.json.{JSONArray, JSONObject}
 import org.apache.spark.streaming.BasicStreamingOperation
 import streaming.core.Dispatcher
-import streaming.core.compositor.spark.output.SQLUnitTestCompositor
+import streaming.core.compositor.spark.output.{MultiSQLOutputCompositor, SQLUnitTestCompositor}
 import streaming.core.strategy.platform.SparkRuntime
 
 import scala.collection.JavaConversions._
 
 /**
- * 8/29/16 WilliamZhu(allwefantasy@gmail.com)
- */
+  * 8/29/16 WilliamZhu(allwefantasy@gmail.com)
+  */
 class BatchSpec extends BasicStreamingOperation {
 
 
@@ -178,7 +180,54 @@ class BatchSpec extends BasicStreamingOperation {
     }
   }
 
+  "batch console" should "run normally" in {
+    val file = new java.io.File("/tmp/hdfsfile/abc.txt")
+    Files.createParentDirs(file)
+    val obj = new JSONObject()
+    obj.put("a", "yes")
+    obj.put("b", "no")
+    Files.write(obj.toString(), file, Charset.forName("utf-8"))
 
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/batch-console.json")) { runtime: SparkRuntime =>
+
+      val sd = Dispatcher.dispatcher(null)
+      val strategies = sd.findStrategies("batch-console").get
+      strategies.size should be(1)
+      file.delete()
+
+    }
+  }
+
+  "batch  with repartition" should "should have only 3 file" in {
+
+    val file = new java.io.File("/tmp/hdfsfile/abc.txt")
+    Files.createParentDirs(file)
+    var obj = new JSONObject()
+    obj.put("a", "yes")
+    obj.put("b", "no")
+    val array = new JSONArray()
+    array.add(obj)
+    obj = new JSONObject()
+    obj.put("a", "wow")
+    obj.put("b", "no")
+    array.add(obj)
+    array.add(obj)
+
+    Files.write(array.toString(), file, Charset.forName("utf-8"))
+
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/batch-repartition.json")) { runtime: SparkRuntime =>
+
+      val sd = Dispatcher.dispatcher(null)
+      val strategies = sd.findStrategies("batch-console").get
+      strategies.size should be(1)
+      val output = strategies.head.compositor.last.asInstanceOf[MultiSQLOutputCompositor[_]]
+      val configParams = getCompositorParam(output)
+      val fileNum = new File(configParams(0)("path").toString.substring("file://".length)).list().filter(f => f.startsWith("part-r-"))
+      fileNum should have size (3)
+      file.delete()
+
+    }
+  }
 
 
 }

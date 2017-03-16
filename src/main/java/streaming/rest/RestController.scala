@@ -57,7 +57,8 @@ class RestController extends ApplicationController with CSVRender {
   @At(path = Array("/run/sql"), types = Array(GET, POST))
   def ddlSql = {
     if (!runtime.isInstanceOf[SparkRuntime]) render(400, "only support spark application")
-    val res = SQLContextHolder.getOrCreate.getOrCreate().sql(param("sql")).toJSON.collect().mkString(",")
+    val sqlContext = SQLContextHolder.getOrCreate.getOrCreate()
+    val res = sqlContext.sql(param("sql")).toJSON.collect().mkString(",")
     render("[" + res + "]")
   }
 

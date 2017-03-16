@@ -41,7 +41,7 @@ class MultiSQLOutputCompositor[T] extends Compositor[T] with CompositorHelper wi
 
       _configParams.foreach { config =>
 
-        val name = config.getOrElse("name","").toString
+        val name = config.getOrElse("name", "").toString
         val _cfg = config.map(f => (f._1.toString, f._2.toString)).map { f =>
           (f._1, params.getOrElse(s"streaming.sql.out.${name}.${f._1}", f._2).toString)
         }.toMap
@@ -51,14 +51,24 @@ class MultiSQLOutputCompositor[T] extends Compositor[T] with CompositorHelper wi
         val path = _cfg("path")
         val mode = _cfg.getOrElse("mode", "ErrorIfExists")
         val format = _cfg("format")
-        val outputPath = _cfg.getOrElse("outputPath", "streaming.sql.out.path."+_cfg.getOrElse("name",""))
+        val outputPath = _cfg.getOrElse("outputPath", "streaming.sql.out.path." + _cfg.getOrElse("name", ""))
         val sqlContext = sqlContextHolder(params)
         val _resource = if (params.containsKey(outputPath)) params(outputPath).toString else path
         val dbtable = if (options.containsKey("dbtable")) options("dbtable") else _resource
+
+        val outputFileNum = _cfg.getOrElse("outputFileNum", "-1").toInt
+
         try {
-          val tempDf = sqlContext.table(tableName).write.options(options).mode(SaveMode.valueOf(mode)).format(format)
+
+          var newTableDF = sqlContext.table(tableName)
+
+          if (outputFileNum != -1) {
+            newTableDF = newTableDF.repartition(outputFileNum)
+          }
+
+          val tempDf = newTableDF.write.options(options).mode(SaveMode.valueOf(mode)).format(format)
           if (format == "console") {
-            sqlContext.table(tableName).show(_cfg.getOrElse("showNum", "100").toInt)
+            newTableDF.show(_cfg.getOrElse("showNum", "100").toInt)
           } else {
             if (SparkCompatibility.sparkVersion.startsWith("1.6") && format == "jdbc") {
               val properties = new Properties()

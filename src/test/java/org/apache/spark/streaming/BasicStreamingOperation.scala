@@ -2,13 +2,13 @@ package org.apache.spark.streaming
 
 import org.apache.spark.util.ManualClock
 import org.scalatest._
-import serviceframework.dispatcher.StrategyDispatcher
+import serviceframework.dispatcher.{Compositor, StrategyDispatcher}
 import streaming.common.{ParamsUtil, SQLContextHolder}
 import streaming.core.strategy.platform.{PlatformManager, SparkRuntime, SparkStreamingRuntime}
 
 /**
- * 8/29/16 WilliamZhu(allwefantasy@gmail.com)
- */
+  * 8/29/16 WilliamZhu(allwefantasy@gmail.com)
+  */
 trait BasicStreamingOperation extends FlatSpec with Matchers {
 
   def manualClock(streamingContext: StreamingContext) = {
@@ -47,6 +47,12 @@ trait BasicStreamingOperation extends FlatSpec with Matchers {
           e.printStackTrace()
       }
     }
+  }
+
+  def getCompositorParam(item: Compositor[_]) = {
+    val field = item.getClass.getDeclaredField("_configParams")
+    field.setAccessible(true)
+    field.get(item).asInstanceOf[java.util.List[java.util.Map[Any, Any]]]
   }
 
   def setupBatchContext(batchParams: Array[String], configFilePath: String) = {

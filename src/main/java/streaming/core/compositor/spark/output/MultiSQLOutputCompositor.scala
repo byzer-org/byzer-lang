@@ -30,7 +30,7 @@ class MultiSQLOutputCompositor[T] extends Compositor[T] with CompositorHelper wi
 
     _configParams.foreach { config =>
 
-      val name = config.getOrElse("name","").toString
+      val name = config.getOrElse("name", "").toString
       val _cfg = config.map(f => (f._1.toString, f._2.toString)).map { f =>
         (f._1, params.getOrElse(s"streaming.sql.out.${name}.${f._1}", f._2).toString)
       }.toMap
@@ -40,21 +40,32 @@ class MultiSQLOutputCompositor[T] extends Compositor[T] with CompositorHelper wi
       val _resource = _cfg("path")
       val mode = _cfg.getOrElse("mode", "ErrorIfExists")
       val format = _cfg("format")
+      val outputFileNum = _cfg.getOrElse("outputFileNum", "-1").toInt
 
       val dbtable = if (options.containsKey("dbtable")) options("dbtable") else _resource
 
-      val tempDf = sqlContextHolder(params).table(tableName).write.options(options).mode(SaveMode.valueOf(mode)).format(format)
+      var newTableDF = sqlContextHolder(params).table(tableName)
 
-      if (SparkCompatibility.sparkVersion.startsWith("1.6") && format == "jdbc") {
-        val properties = new Properties()
-        options.foreach(kv => properties.put(kv._1, kv._2))
-        tempDf.jdbc(options("url"), dbtable, properties)
+      if (outputFileNum != -1) {
+        newTableDF = newTableDF.repartition(outputFileNum)
+      }
+
+      if (format == "console") {
+        newTableDF.show(_cfg.getOrElse("showNum", "100").toInt)
       } else {
-        if (_resource == "-" || _resource.isEmpty) {
-          tempDf.save()
-        } else tempDf.save(_resource)
+        val tempDf = newTableDF.write.options(options).mode(SaveMode.valueOf(mode)).format(format)
+        if (SparkCompatibility.sparkVersion.startsWith("1.6") && format == "jdbc") {
+          val properties = new Properties()
+          options.foreach(kv => properties.put(kv._1, kv._2))
+          tempDf.jdbc(options("url"), dbtable, properties)
+        } else {
+          if (_resource == "-" || _resource.isEmpty) {
+            tempDf.save()
+          } else tempDf.save(_resource)
+        }
       }
     }
+
     new util.ArrayList[T]()
   }
 
