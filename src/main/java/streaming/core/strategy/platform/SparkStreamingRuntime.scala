@@ -160,9 +160,9 @@ object SparkStreamingRuntime {
     INSTANTIATION_LOCK.synchronized {
       if (lastInstantiatedContext.get() == null) {
         new SparkStreamingRuntime(params)
+        PlatformManager.getOrCreate.register(lastInstantiatedContext.get())
       }
     }
-    PlatformManager.getOrCreate.register(lastInstantiatedContext.get())
     lastInstantiatedContext.get()
   }
 
