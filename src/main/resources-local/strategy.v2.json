@@ -1,0 +1,56 @@
+{
+  "example": {
+    "desc": "测试",
+    "strategy": "spark",
+    "algorithm": [],
+    "ref": [],
+    "compositor": [
+      {
+        "name": "stream.sources.kafka",
+        "params": [
+          {
+            "path": "file:///tmp/sample.csv",
+            "format": "com.databricks.spark.csv",
+            "outputTable": "test",
+            "header": "true"
+          },
+          {
+            "topics":"test",
+            "zk":"127.0.0.1",
+            "groupId":"kk3",
+            "outputTable": "abc"
+
+          }
+        ]
+      },
+      {
+        "name": "stream.sql",
+        "params": [
+          {
+            "sql": "select * from test",
+            "outputTableName": "finalOutputTable"
+          }
+        ]
+      },
+      {
+        "name": "stream.outputs",
+        "params": [
+          {
+            "name":"jack",
+            "format": "jdbc",
+            "path": "-",
+            "driver":"com.mysql.jdbc.Driver",
+            "url":"jdbc:mysql://127.0.0.1/alarm-test?characterEncoding=utf8",
+            "inputTableName": "finalOutputTable",
+            "user":"~",
+            "password":"~",
+            "dbtable":"aaa",
+            "mode":"Overwrite"
+          }
+        ]
+      }
+    ],
+    "configParams": {
+    }
+  }
+}
