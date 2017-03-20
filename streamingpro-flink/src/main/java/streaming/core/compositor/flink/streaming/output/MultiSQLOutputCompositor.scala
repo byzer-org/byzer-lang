@@ -4,10 +4,11 @@ import java.util
 
 import org.apache.flink.table.api.TableEnvironment
 import org.apache.flink.table.api.scala.StreamTableEnvironment
-import org.apache.flink.table.sinks.CsvTableSink
+import org.apache.flink.table.sinks.{ConsoleTableSink, CsvTableSink}
 import org.apache.log4j.Logger
 import serviceframework.dispatcher.{Compositor, Processor, Strategy}
 import streaming.core.compositor.flink.streaming.CompositorHelper
+import streaming.core.strategy.ParamsValidator
 
 import scala.collection.JavaConversions._
 

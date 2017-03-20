@@ -6,7 +6,7 @@ import net.sf.json.JSONArray
 import org.apache.log4j.Logger
 import org.apache.spark.streaming.dstream.DStream
 import serviceframework.dispatcher.{Compositor, Processor, Strategy}
-import streaming.common.regex.parser.RegexParser
+import streaming.common.regex.RegexParser
 import streaming.core.compositor.spark.streaming.CompositorHelper
 
 import scala.collection.JavaConversions._

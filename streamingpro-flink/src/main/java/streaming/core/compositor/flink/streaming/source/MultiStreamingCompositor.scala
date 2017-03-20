@@ -9,6 +9,8 @@ import org.apache.flink.streaming.util.serialization.SimpleStringSchema
 import org.apache.flink.table.api.TableEnvironment
 import org.apache.log4j.Logger
 import serviceframework.dispatcher.{Compositor, Processor, Strategy}
+import streaming.core.compositor.flink.streaming.CompositorHelper
+import streaming.core.strategy.platform.FlinkStreamingRuntime
 
 import scala.collection.JavaConversions._
 

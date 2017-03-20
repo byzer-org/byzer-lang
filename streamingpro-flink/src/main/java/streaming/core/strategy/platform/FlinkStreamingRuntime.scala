@@ -39,6 +39,10 @@ class FlinkStreamingRuntime(_params: JMap[Any, Any]) extends StreamingRuntime wi
   override def processEvent(event: Event): Unit = {}
 
   FlinkStreamingRuntime.setLastInstantiatedContext(this)
+
+  override def startThriftServer: Unit = {}
+
+  override def startHttpServer: Unit = {}
 }
 
 object FlinkStreamingRuntime {

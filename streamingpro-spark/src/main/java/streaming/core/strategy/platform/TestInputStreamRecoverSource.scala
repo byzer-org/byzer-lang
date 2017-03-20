@@ -5,7 +5,7 @@ import java.util.Date
 
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.spark.streaming.{SparkStreamingOperator, StreamingContext, TestInputStream, Time}
-import streaming.core.compositor.spark.hdfs.HDFSOperator
+import streaming.common.HDFSOperator
 
 /**
  * 5/9/16 WilliamZhu(allwefantasy@gmail.com)
