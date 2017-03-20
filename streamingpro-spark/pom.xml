@@ -61,6 +61,12 @@
                     <groupId>org.apache.spark</groupId>
                     <artifactId>spark-hive-thriftserver_2.10</artifactId>
                     <version>${spark.version}</version>
+                    <exclusions>
+                        <exclusion>
+                            <groupId>org.eclipse.jetty.aggregate</groupId>
+                            <artifactId>jetty-all</artifactId>
+                        </exclusion>
+                    </exclusions>
                 </dependency>
             </dependencies>
         </profile>
