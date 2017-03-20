@@ -1,0 +1,55 @@
+{
+  "scalamaptojson": {
+    "desc": "测试",
+    "strategy": "streaming.core.strategy.SparkStreamingStrategy",
+    "algorithm": [],
+    "ref": [
+    ],
+    "compositor": [
+      {
+        "name": "streaming.core.compositor.source.MockScalaMapInStreaming"
+      },
+      {
+        "name": "streaming.core.compositor.spark.streaming.transformation.ScalaMapToJSONCompositor",
+        "params": [
+          {
+          }
+        ]
+      },
+      {
+        "name": "streaming.core.compositor.spark.streaming.transformation.JSONTableCompositor",
+        "params": [
+          {
+            "tableName": "test"
+          }
+        ]
+      },
+      {
+        "name": "streaming.core.compositor.spark.streaming.transformation.SQLCompositor",
+        "params": [
+          {
+            "sql": "select * from test",
+            "outputTableName": "test2"
+          }
+        ]
+      },
+      {
+        "name": "streaming.core.compositor.spark.streaming.transformation.SQLCompositor",
+        "params": [
+          {
+            "sql": "select a from test2"
+          }
+        ]
+      },
+      {
+        "name": "streaming.core.compositor.spark.streaming.output.SQLUnitTestCompositor",
+        "params": [
+          {
+          }
+        ]
+      }
+    ],
+    "configParams": {
+    }
+  }
+}
