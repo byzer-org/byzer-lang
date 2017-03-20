@@ -18,8 +18,8 @@ import scala.collection.JavaConversions._
 import scala.collection.mutable.ArrayBuffer
 
 /**
- * 4/27/16 WilliamZhu(allwefantasy@gmail.com)
- */
+  * 4/27/16 WilliamZhu(allwefantasy@gmail.com)
+  */
 
 
 class PlatformManager {
@@ -112,7 +112,7 @@ class PlatformManager {
 
     if (params.getBooleanParam("streaming.thrift", false)
       && !reRun
-      && params.getBooleanParam("streaming.enableHiveSupport",false)
+      && params.getBooleanParam("streaming.enableHiveSupport", false)
       && runtime.isInstanceOf[SparkRuntime]
     ) {
       startThriftServer
@@ -153,15 +153,15 @@ object PlatformManager {
   private val INSTANTIATION_LOCK = new Object()
 
   /**
-   * Reference to the last created SQLContext.
-   */
+    * Reference to the last created SQLContext.
+    */
   @transient private val lastInstantiatedContext = new AtomicReference[PlatformManager]()
 
   /**
-   * Get the singleton SQLContext if it exists or create a new one using the given SparkContext.
-   * This function can be used to create a singleton SQLContext object that can be shared across
-   * the JVM.
-   */
+    * Get the singleton SQLContext if it exists or create a new one using the given SparkContext.
+    * This function can be used to create a singleton SQLContext object that can be shared across
+    * the JVM.
+    */
   def getOrCreate: PlatformManager = {
     INSTANTIATION_LOCK.synchronized {
       if (lastInstantiatedContext.get() == null) {
@@ -217,8 +217,8 @@ object PlatformManager {
 
       val hiveOption = Map(
         "className" -> "org.apache.spark.sql.CarbonContext",
-        "store" -> params.getOrElse("streaming.carbondata.store","").toString,
-        "meta" -> params.getOrElse("streaming.carbondata.meta","").toString
+        "store" -> params.getOrElse("streaming.carbondata.store", "").toString,
+        "meta" -> params.getOrElse("streaming.carbondata.meta", "").toString
 
       )
       new SQLContextHolder(
@@ -251,7 +251,7 @@ object PlatformManager {
       case _ =>
         createRuntimeByPlatform(platformNameMapping(platformName), tempParams)
     }
-    if (SQLContextHolder.sqlContextHolder == null) {
+    if (SQLContextHolder.sqlContextHolder == null && platformName.startsWith("spark")) {
       SQLContextHolder.setActive(createSQLContextHolder(tempParams, runtime))
       tempParams.put("_sqlContextHolder_", SQLContextHolder.getOrCreate())
     }
@@ -269,9 +269,12 @@ object PlatformManager {
 
   def SPARK = "spark"
 
+  def FLINK_STREAMING = "flink_streaming"
+
   def platformNameMapping = Map[String, String](
     SPAKR_S_S -> "streaming.core.strategy.platform.SparkStructuredStreamingRuntime",
-    SPAKR_STRUCTURED_STREAMING -> "streaming.core.strategy.platform.SparkStructuredStreamingRuntime"
+    SPAKR_STRUCTURED_STREAMING -> "streaming.core.strategy.platform.SparkStructuredStreamingRuntime",
+    FLINK_STREAMING -> "streaming.core.strategy.platform.FlinkStreamingRuntime"
   )
 
 }

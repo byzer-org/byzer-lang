@@ -11,6 +11,7 @@ class DefaultShortNameMapping extends ShortNameMapping {
     "spark" -> "streaming.core.strategy.SparkStreamingStrategy",
     "refTable" -> "streaming.core.strategy.SparkStreamingRefStrategy",
     "refFunction" -> "streaming.core.strategy.SparkStreamingRefStrategy",
+    "flink" -> "streaming.core.strategy.SparkStreamingStrategy",
 
     "sql.udf" -> "streaming.core.compositor.spark.udf.SQLUDFCompositor",
 
@@ -52,7 +53,11 @@ class DefaultShortNameMapping extends ShortNameMapping {
     "ss.table" -> "streaming.core.compositor.spark.transformation.JSONTableCompositor",
     "ss.refTable" -> "streaming.core.compositor.spark.transformation.JSONRefTableCompositor",
     "ss.script" -> "streaming.core.compositor.spark.transformation.ScriptCompositor",
-    "ss.output" -> "streaming.core.compositor.spark.ss.output.SQLOutputCompositor"
+    "ss.output" -> "streaming.core.compositor.spark.ss.output.SQLOutputCompositor",
+
+    "flink.sources" -> "streaming.core.compositor.flink.streaming.source.MultiStreamingCompositor",
+    "flink.sql" -> "streaming.core.compositor.flink.streaming.transformation.SQLCompositor",
+    "flink.outputs" -> "streaming.core.compositor.flink.streaming.output.MultiSQLOutputCompositor"
   )
 
   override def forName(shortName: String): String = {

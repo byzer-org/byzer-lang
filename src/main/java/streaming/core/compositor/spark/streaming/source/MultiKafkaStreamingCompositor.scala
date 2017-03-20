@@ -16,11 +16,11 @@ import streaming.core.strategy.platform.SparkStreamingRuntime
 import scala.collection.JavaConversions._
 
 
-class MultiStreamingCompositor[T] extends Compositor[T] with CompositorHelper {
+class MultiKafkaStreamingCompositor[T] extends Compositor[T] with CompositorHelper {
 
   private var _configParams: util.List[util.Map[Any, Any]] = _
 
-  val logger = Logger.getLogger(classOf[MultiStreamingCompositor[T]].getName)
+  val logger = Logger.getLogger(classOf[MultiKafkaStreamingCompositor[T]].getName)
 
   override def initialize(typeFilters: util.List[String], configParams: util.List[util.Map[Any, Any]]): Unit = {
     this._configParams = configParams

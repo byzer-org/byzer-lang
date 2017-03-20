@@ -4,6 +4,7 @@ import java.util.{Map => JMap}
 
 import serviceframework.dispatcher.StrategyDispatcher
 import streaming.common.DefaultShortNameMapping
+import streaming.core.compositor.spark.hdfs.HDFSOperator
 import streaming.core.strategy.platform.{PlatformManager, StreamingRuntime}
 
 import scala.collection.JavaConversions._
@@ -17,7 +18,7 @@ object Dispatcher {
     if (contextParams != null && contextParams.containsKey("streaming.job.file.path")) {
       val runtime = contextParams.get("_runtime_").asInstanceOf[StreamingRuntime]
 
-      val sparkContext = PlatformManager.getRuntimeContext(runtime)
+
 
       val jobFilePath = contextParams.get("streaming.job.file.path").toString
 
@@ -29,8 +30,7 @@ object Dispatcher {
           Dispatcher.getClass.getResourceAsStream(cleanJobFilePath)).getLines().
           mkString("\n")
       } else {
-        jobConfigStr = sparkContext.
-          textFile(jobFilePath).collect().mkString("\n")
+        jobConfigStr = HDFSOperator.readFile(jobFilePath)
       }
 
       if (jobConfigStr == null || jobConfigStr.isEmpty)
