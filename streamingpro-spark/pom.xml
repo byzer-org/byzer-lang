@@ -107,6 +107,20 @@
                     <groupId>org.apache.carbondata</groupId>
                     <artifactId>carbondata-spark</artifactId>
                     <version>1.0.0-incubating</version>
+                    <exclusions>
+                        <exclusion>
+                            <groupId>pentaho-kettle</groupId>
+                            <artifactId>kettle-engine</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>pentaho-kettle</groupId>
+                            <artifactId>kettle-core</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>pentaho-kettle</groupId>
+                            <artifactId>kettle-db</artifactId>
+                        </exclusion>
+                    </exclusions>
                 </dependency>
             </dependencies>
         </profile>
@@ -157,13 +171,6 @@
 
         <dependency>
             <groupId>org.apache.spark</groupId>
-            <artifactId>${spark.sql.kafka.artifactId}</artifactId>
-            <version>${spark.version}</version>
-            <scope>${scope}</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.spark</groupId>
             <artifactId>spark-core_2.10</artifactId>
             <version>${spark.version}</version>
             <scope>${scope}</scope>
@@ -193,6 +200,12 @@
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>${spark.streaming.kafka.artifactId}</artifactId>
+            <version>${spark.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>${spark.sql.kafka.artifactId}</artifactId>
             <version>${spark.version}</version>
         </dependency>
 

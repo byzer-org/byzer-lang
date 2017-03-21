@@ -57,7 +57,11 @@ class DefaultShortNameMapping extends ShortNameMapping {
 
     "flink.sources" -> "streaming.core.compositor.flink.streaming.source.MultiStreamingCompositor",
     "flink.sql" -> "streaming.core.compositor.flink.streaming.transformation.SQLCompositor",
-    "flink.outputs" -> "streaming.core.compositor.flink.streaming.output.MultiSQLOutputCompositor"
+    "flink.outputs" -> "streaming.core.compositor.flink.streaming.output.MultiSQLOutputCompositor",
+
+    "flink.stream.sources" -> "streaming.core.compositor.flink.streaming.source.MultiStreamingCompositor",
+    "flink.stream.sql" -> "streaming.core.compositor.flink.streaming.transformation.SQLCompositor",
+    "flink.stream.outputs" -> "streaming.core.compositor.flink.streaming.output.MultiSQLOutputCompositor"
   )
 
   override def forName(shortName: String): String = {
