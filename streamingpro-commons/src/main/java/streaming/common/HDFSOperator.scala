@@ -21,8 +21,8 @@ object HDFSOperator {
       br = new BufferedReader(new InputStreamReader(fs.open(new Path(path))))
       line = br.readLine()
       while (line != null) {
-        line = br.readLine()
         result += line
+        line = br.readLine()
       }
     } finally {
       if (br != null) br.close()
@@ -60,5 +60,9 @@ object HDFSOperator {
       }
     }
 
+  }
+
+  def main(args: Array[String]): Unit = {
+    println(readFile("file:///Users/allwefantasy/streamingpro/flink.json"))
   }
 }
