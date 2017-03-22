@@ -195,6 +195,17 @@
             <version>${spark.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>com.twitter</groupId>
+            <artifactId>util-core_2.10</artifactId>
+            <version>6.34.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.twitter</groupId>
+            <artifactId>util-eval_2.10</artifactId>
+            <version>6.34.0</version>
+        </dependency>
+
     </dependencies>
 
 

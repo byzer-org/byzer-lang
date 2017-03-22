@@ -1,35 +1,44 @@
 {
-  "example": {
+  "convert-multi-csv-to-json": {
     "desc": "测试",
-    "strategy": "flink",
+    "strategy": "spark",
     "algorithm": [],
     "ref": [],
     "compositor": [
       {
-        "name": "flink.sources",
+        "name": "batch.sources",
         "params": [
           {
-            "format": "socket",
-            "outputTable": "test"
+            "path": "file:///tmp/sample.csv",
+            "format": "com.databricks.spark.csv",
+            "outputTable": "doctorIndex",
+            "header": "true"
+          },
+          {
+            "path": "file:///tmp/sample.csv",
+            "format": "com.databricks.spark.csv",
+            "outputTable": "test2",
+            "header": "true"
           }
         ]
       },
       {
-        "name": "flink.sql",
+        "name": "batch.row.index",
         "params": [
           {
-            "sql": "select * from test",
-            "outputTableName": "finalOutputTable"
+            "inputTableName":  "doctorIndex",
+            "outputTableName":  "doctorIndex2",
+            "rankField":  "rank"
           }
         ]
       },
       {
-        "name": "flink.outputs",
+        "name": "batch.outputs",
         "params": [
           {
-            "name":"jack",
             "format": "console",
-            "inputTableName": "finalOutputTable"
+            "inputTableName": "doctorIndex2",
+            "path":"-"
           }
         ]
       }

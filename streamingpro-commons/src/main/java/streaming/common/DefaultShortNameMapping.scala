@@ -22,6 +22,7 @@ class DefaultShortNameMapping extends ShortNameMapping {
     "batch.refTable" -> "streaming.core.compositor.spark.transformation.JSONRefTableCompositor",
     "batch.script" -> "streaming.core.compositor.spark.transformation.ScriptCompositor",
     "batch.script.df" -> "streaming.core.compositor.spark.transformation.DFScriptCompositor",
+    "batch.row.index" -> "streaming.core.compositor.spark.transformation.RowNumberCompositor",
     "batch.columns" -> "streaming.core.compositor.spark.transformation.SingleColumnJSONCompositor",
     "batch.output" -> "streaming.core.compositor.spark.output.SQLOutputCompositor",
     "batch.output.console" -> "streaming.core.compositor.spark.output.SQLPrintCompositor",
@@ -57,11 +58,7 @@ class DefaultShortNameMapping extends ShortNameMapping {
 
     "flink.sources" -> "streaming.core.compositor.flink.streaming.source.MultiStreamingCompositor",
     "flink.sql" -> "streaming.core.compositor.flink.streaming.transformation.SQLCompositor",
-    "flink.outputs" -> "streaming.core.compositor.flink.streaming.output.MultiSQLOutputCompositor",
-
-    "flink.stream.sources" -> "streaming.core.compositor.flink.streaming.source.MultiStreamingCompositor",
-    "flink.stream.sql" -> "streaming.core.compositor.flink.streaming.transformation.SQLCompositor",
-    "flink.stream.outputs" -> "streaming.core.compositor.flink.streaming.output.MultiSQLOutputCompositor"
+    "flink.outputs" -> "streaming.core.compositor.flink.streaming.output.MultiSQLOutputCompositor"
   )
 
   override def forName(shortName: String): String = {
