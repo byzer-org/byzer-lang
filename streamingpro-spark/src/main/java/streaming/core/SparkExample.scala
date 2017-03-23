@@ -16,11 +16,9 @@ object SparkExample {
     val context = new SQLContext(sc)
     context.read.format("com.databricks.spark.csv").load("file:///tmp/sample.csv").registerTempTable("doctorIndex")
 
-    val script = "val a =()=> {\n      import org.apache.spark.sql.types.{LongType, StructField, StructType}\n\n      val inputTableName = \"doctorIndex\"\n      val outputTableName = \"doctorIndex2\"\n      val rankField = \"rank\"\n\n      val table = context.table(inputTableName)\n      val schema = table.schema\n      val rdd = table.rdd\n      val newSchema = new StructType(schema.fields ++ Array(StructField(rankField, LongType)))\n\n      val newRowsWithScore = rdd.zipWithIndex().map { f =>\n        org.apache.spark.sql.Row.fromSeq(f._1.toSeq ++ Array(f._2))\n      }\n\n      context.createDataFrame(newRowsWithScore, newSchema).registerTempTable(outputTableName)\n    }\n    a()"
+    val script = " import org.apache.spark.sql.types.{LongType, StructField, StructType}\n\n    val context = aContext.asInstanceOf[org.apache.spark.sql.SQLContext]\n    val inputTableName = \"doctorIndex\"\n    val outputTableName = \"doctorIndex2\"\n    val rankField = \"rank\"\n\n    val table = context.table(inputTableName)\n    val schema = table.schema\n    val rdd = table.rdd\n    val newSchema = new StructType(schema.fields ++ Array(StructField(rankField, LongType)))\n\n    val newRowsWithScore = rdd.zipWithIndex().map { f =>\n      org.apache.spark.sql.Row.fromSeq(f._1.toSeq ++ Array(f._2))\n    }\n\n    context.createDataFrame(newRowsWithScore, newSchema).registerTempTable(outputTableName)"
 
-    val abcc = ScalaSourceCodeCompiler.execute(ScriptCacheKey("context", script))
-    abcc.execute(context)
-
+    val abcc = ScalaSourceCodeCompiler.compileAndRun(script, Map("aContext" -> context))
     context.sql("select * from doctorIndex2").show(1000)
     sc.stop()
   }
@@ -30,27 +28,25 @@ class Rank(context: SQLContext) {
 
   def rank = {
 
-    val a =()=> {
-      import org.apache.spark.sql.types.{LongType, StructField, StructType}
+    import org.apache.spark.sql.types.{LongType, StructField, StructType}
 
-      val inputTableName = "doctorIndex"
-      val outputTableName = "doctorIndex2"
-      val rankField = "rank"
+    //val context = aContext.asInstanceOf[org.apache.spark.sql.SQLContext]
+    val inputTableName = "doctorIndex"
+    val outputTableName = "doctorIndex2"
+    val rankField = "rank"
 
-      val table = context.table(inputTableName)
-      val schema = table.schema
-      val rdd = table.rdd
-      val newSchema = new StructType(schema.fields ++ Array(StructField(rankField, LongType)))
+    val table = context.table(inputTableName)
+    val schema = table.schema
+    val rdd = table.rdd
+    val newSchema = new StructType(schema.fields ++ Array(StructField(rankField, LongType)))
 
-      val newRowsWithScore = rdd.zipWithIndex().map { f =>
-        org.apache.spark.sql.Row.fromSeq(f._1.toSeq ++ Array(f._2))
-      }
-
-      context.createDataFrame(newRowsWithScore, newSchema).registerTempTable(outputTableName)
+    val newRowsWithScore = rdd.zipWithIndex().map { f =>
+      org.apache.spark.sql.Row.fromSeq(f._1.toSeq ++ Array(f._2))
     }
-    a()
 
+    context.createDataFrame(newRowsWithScore, newSchema).registerTempTable(outputTableName)
   }
+
 }
 
 
