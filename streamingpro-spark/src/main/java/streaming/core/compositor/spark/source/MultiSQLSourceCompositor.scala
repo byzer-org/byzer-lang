@@ -26,7 +26,7 @@ class MultiSQLSourceCompositor[T] extends Compositor[T] with CompositorHelper {
       val name = sourceConfig.getOrElse("name", "").toString
 
       val _cfg = sourceConfig.map(f => (f._1.toString, f._2.toString)).map { f =>
-        (f._1, params.getOrElse(s"streaming.sql.out.${name}.${f._1}", f._2).toString)
+        (f._1, params.getOrElse(s"streaming.sql.source.${name}.${f._1}", f._2).toString)
       }.toMap
 
       val sourcePath = _cfg("path")
