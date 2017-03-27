@@ -1,0 +1,44 @@
+{
+  "batch-console": {
+    "desc": "测试",
+    "strategy": "spark",
+    "algorithm": [],
+    "ref": [],
+    "compositor": [
+      {
+        "name": "batch.sources",
+        "params": [
+          {
+            "path": "file:///tmp/hdfsfile/abc.txt",
+            "format": "json",
+            "outputTable": "test"
+
+          }
+        ]
+      },
+      {
+        "name": "batch.script.df",
+        "params": [
+          {
+            "script": "context.sql(\"select a as t from test\").registerTempTable(\"finalOutputTable\")",
+            "source": "-"
+          }
+        ]
+      },
+      {
+        "name": "batch.outputs",
+        "params": [
+          {
+            "name":"jack",
+            "format": "console",
+            "path": "-",
+            "inputTableName": "finalOutputTable",
+            "mode":"Overwrite"
+          }
+        ]
+      }
+    ],
+    "configParams": {
+    }
+  }
+}

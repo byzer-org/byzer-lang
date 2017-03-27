@@ -1,0 +1,49 @@
+{
+  "convert-multi-csv-to-json": {
+    "desc": "测试",
+    "strategy": "spark",
+    "algorithm": [],
+    "ref": [],
+    "compositor": [
+      {
+        "name": "batch.sources",
+        "params": [
+          {
+            "path": "file:///tmp/sample.csv",
+            "format": "com.databricks.spark.csv",
+            "outputTable": "doctorIndex",
+            "header": "true"
+          },
+          {
+            "path": "file:///tmp/sample.csv",
+            "format": "com.databricks.spark.csv",
+            "outputTable": "test2",
+            "header": "true"
+          }
+        ]
+      },
+      {
+        "name": "batch.row.index",
+        "params": [
+          {
+            "inputTableName":  "doctorIndex",
+            "outputTableName":  "doctorIndex2",
+            "rankField":  "rank"
+          }
+        ]
+      },
+      {
+        "name": "batch.outputs",
+        "params": [
+          {
+            "format": "console",
+            "inputTableName": "doctorIndex2",
+            "path":"-"
+          }
+        ]
+      }
+    ],
+    "configParams": {
+    }
+  }
+}

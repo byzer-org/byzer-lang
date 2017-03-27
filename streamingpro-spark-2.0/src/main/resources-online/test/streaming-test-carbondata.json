@@ -1,0 +1,119 @@
+{
+  "test": {
+    "desc": "测试",
+    "strategy": "spark",
+    "algorithm": [],
+    "ref": [
+      "testJoinTable"
+    ],
+    "compositor": [
+      {
+        "name": "streaming.core.compositor.spark.streaming.source.MockInputStreamCompositor",
+        "params": [
+          {
+            "data1": [
+              "1",
+              "2",
+              "3"
+            ],
+            "data2": [
+              "1",
+              "2",
+              "3"
+            ],
+            "data3": [
+              "1",
+              "2",
+              "3"
+            ],
+            "data4": [
+              "1",
+              "2",
+              "3"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "streaming.core.compositor.spark.streaming.transformation.SingleColumnJSONCompositor",
+        "params": [
+          {
+            "name": "a"
+          }
+        ]
+      },
+      {
+        "name": "stream.table",
+        "params": [
+          {
+            "tableName": "test"
+          }
+        ]
+      },
+      {
+        "name": "stream.sql",
+        "params": [
+          {
+            "sql": "select a, \"5\" as b from test",
+            "outputTableName": "test2"
+          }
+        ]
+      },
+      {
+        "name": "stream.sql",
+        "params": [
+          {
+            "sql": "select t2.a,t2.b from test2 t2, testJoinTable t3 where t2.a = t3.a"
+          }
+        ]
+      },
+      {
+        "name": "stream.output.carbondata",
+        "params": [
+          {
+            "format": "carbondata",
+            "mode": "Append",
+            "tableName": "carbon100",
+            "compress": "true",
+            "useKettle": "false",
+            "tempCSV":"false"
+          }
+        ]
+      }
+    ],
+    "configParams": {
+    }
+  },
+  "testJoinTable": {
+    "desc": "测试",
+    "strategy": "refTable",
+    "algorithm": [],
+    "ref": [],
+    "compositor": [
+      {
+        "name": "streaming.core.compositor.spark.source.MockJsonCompositor",
+        "params": [
+          {
+            "a": "3"
+          },
+          {
+            "a": "4"
+          },
+          {
+            "a": "5"
+          }
+        ]
+      },
+      {
+        "name": "batch.refTable",
+        "params": [
+          {
+            "tableName": "testJoinTable"
+          }
+        ]
+      }
+    ],
+    "configParams": {
+    }
+  }
+}

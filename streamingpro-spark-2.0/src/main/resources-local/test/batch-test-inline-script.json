@@ -1,0 +1,60 @@
+{
+  "convert_data_parquet": {
+    "desc": "测试",
+    "strategy": "streaming.core.strategy.SparkStreamingStrategy",
+    "algorithm": [],
+    "ref": [],
+    "compositor": [
+      {
+        "name": "streaming.core.compositor.spark.source.SQLSourceCompositor",
+        "params": [
+          {
+            "path": "file:///tmp/hdfsfile",
+            "format": "org.apache.spark.sql.execution.datasources.hdfs",
+            "fieldName": "raw"
+          }
+        ]
+      },
+      {
+        "name": "streaming.core.compositor.spark.transformation.JSONTableCompositor",
+        "params": [
+          {
+            "tableName": "test"
+          }
+        ]
+      },
+      {
+        "name": "streaming.core.compositor.spark.transformation.ScriptCompositor",
+        "params": [
+          {
+            "inputTableName": "test",
+            "outputTableName": "test3"
+          },
+          {
+            "raw": [
+              "val Array(a,b)=rawLine.split(\"\t\");",
+              "Map(\"a\"->a,\"b\"->b)"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "streaming.core.compositor.spark.transformation.SQLCompositor",
+        "params": [
+          {
+            "sql": "select a,b  from test3 "
+          }
+        ]
+      },
+      {
+        "name": "streaming.core.compositor.spark.output.SQLUnitTestCompositor",
+        "params": [
+          {
+          }
+        ]
+      }
+    ],
+    "configParams": {
+    }
+  }
+}

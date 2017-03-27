@@ -1,0 +1,39 @@
+{
+  "scalamaptojson": {
+    "desc": "测试",
+    "strategy": "spark",
+    "algorithm": [],
+    "ref": [
+    ],
+    "compositor": [
+      {
+        "name": "ss.source.mock",
+        "params": [{"duration1":["1","2","3"]}]
+      },
+      {
+        "name": "ss.table",
+        "params": [{"tableName": "test"}]
+      },
+      {
+        "name": "ss.sql",
+        "params": [
+          {
+            "sql": "select value + 100 from test",
+            "outputTableName": "test2"
+          }
+        ]
+      },
+      {
+        "name": "ss.output",
+        "params": [
+          {
+            "mode": "append",
+            "format": "console"
+          }
+        ]
+      }
+    ],
+    "configParams": {
+    }
+  }
+}

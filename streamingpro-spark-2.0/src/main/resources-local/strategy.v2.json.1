@@ -1,0 +1,79 @@
+{
+  "als_training": {
+    "desc": "测试",
+    "strategy": "streaming.core.strategy.SparkStreamingStrategy",
+    "algorithm": [],
+    "ref": [],
+    "compositor": [
+      {
+        "name": "streaming.core.compositor.spark.source.MockJsonCompositor",
+        "params": [
+          {
+            "a": "http://123.com/path?userId=1&itemId=2"
+          },
+          {
+            "a": "http://123.com/path?userId=2&itemId=3"
+          },
+          {
+            "a": "http://123.com/path?userId=2&itemId=2"
+          },
+          {
+            "a": "http://123.com/path?userId=3&itemId=2"
+          }
+        ]
+      },
+      {
+        "name": "streaming.core.compositor.spark.transformation.JSONTableCompositor",
+        "params": [
+          {
+            "tableName": "test"
+          }
+        ]
+      },
+      {
+        "name": "streaming.core.compositor.spark.transformation.SQLCompositor",
+        "params": [
+          {
+            "sql": [
+              "select",
+              "split(split(split(a,'\\?')[1],'&')[0],'=')[1] as user, ",
+              "split(split(split(a,'\\?')[1],'&')[1],'=')[1] as item,",
+              "split(split(split(a,'\\?')[1],'&')[0],'=')[1] as label,",
+              "'1.0' as rating",
+              "from test"
+            ],
+            "outputTableName":"test2"
+          }
+        ]
+      },
+      {
+        "name": "streaming.core.compositor.spark.transformation.SQLCompositor",
+        "params": [
+          {
+            "sql": [
+              "select",
+              "concat_ws(',',user,item,rating) as features,",
+              "label",
+              "from test2"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "streaming.core.compositor.spark.output.AlgorithmOutputCompositor",
+        "params": [
+          {
+            "path": "file:///tmp/als_log",
+            "algorithm": "als"
+          },
+          {
+            "rank": 10,
+            "alpha": 1.0
+          }
+        ]
+      }
+    ],
+    "configParams": {
+    }
+  }
+}

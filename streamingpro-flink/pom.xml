@@ -5,23 +5,24 @@
     <parent>
         <artifactId>streamingpro</artifactId>
         <groupId>streaming.king</groupId>
-        <version>0.4.14-SNAPSHOT-${mode}</version>
+        <version>0.4.14-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>streamingpro.flink</artifactId>
-    <version>0.4.14-SNAPSHOT-${mode}-${flink.version}</version>
+    <version>0.4.14-SNAPSHOT-${flink.version}</version>
 
 <dependencies>
     <dependency>
         <groupId>streaming.king</groupId>
         <artifactId>streamingpro-common</artifactId>
-        <version>0.4.14-SNAPSHOT-${mode}</version>
+        <version>0.4.14-SNAPSHOT</version>
     </dependency>
     <dependency>
         <groupId>org.apache.flink</groupId>
         <artifactId>flink-streaming-scala_2.10</artifactId>
         <version>1.2.0</version>
+        <scope>${scope}</scope>
         <exclusions>
             <exclusion>
                 <groupId>org.scala-lang</groupId>
@@ -51,6 +52,23 @@
     </dependency>
 </dependencies>
     <profiles>
+        <profile>
+            <id>online</id>
+            <properties>
+                <mode>online</mode>
+                <scope>provided</scope>
+            </properties>
+        </profile>
+        <profile>
+            <id>local</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <mode>local</mode>
+                <scope>compile</scope>
+            </properties>
+        </profile>
         <profile>
             <id>shade</id>
             <build>
