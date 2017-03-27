@@ -29,21 +29,6 @@
             </properties>
         </profile>
     <profile>
-        <id>carbondata</id>
-        <dependencies>
-            <dependency>
-                <groupId>org.apache.carbondata</groupId>
-                <artifactId>carbondata-spark</artifactId>
-                <version>1.0.0-incubating</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.spark</groupId>
-                <artifactId>spark-repl_2.10</artifactId>
-                <version>${spark.version}</version>
-            </dependency>
-        </dependencies>
-    </profile>
-    <profile>
         <id>hive-thrift-server</id>
         <dependencies>
             <dependency>

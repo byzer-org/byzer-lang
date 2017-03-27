@@ -7,28 +7,34 @@
     ],
     "compositor": [
       {
-        "name": "ss.source.mock",
-        "params": [{"duration1":["1","2","3"]}]
-      },
-      {
-        "name": "ss.table",
-        "params": [{"tableName": "test"}]
+        "name": "ss.sources",
+        "params": [
+          {
+            "format": "socket",
+            "outputTable": "test",
+            "port":"9999",
+            "host":"localhost",
+            "path": "-"
+          }
+        ]
       },
       {
         "name": "ss.sql",
         "params": [
           {
-            "sql": "select value + 100 from test",
-            "outputTableName": "test2"
+            "sql": "select test.value + 100 from test",
+            "outputTableName": "test3"
           }
         ]
       },
       {
-        "name": "ss.output",
+        "name": "ss.outputs",
         "params": [
           {
             "mode": "append",
-            "format": "console"
+            "format": "console",
+            "inputTableName": "test3",
+            "path": "-"
           }
         ]
       }

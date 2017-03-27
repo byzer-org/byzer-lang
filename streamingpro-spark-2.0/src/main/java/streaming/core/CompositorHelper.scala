@@ -2,8 +2,7 @@ package streaming.core
 
 import java.util
 
-import streaming.core.common.SQLContextHolder
-
+import org.apache.spark.sql.SparkSession
 import scala.collection.JavaConversions._
 
 /**
@@ -30,8 +29,8 @@ trait CompositorHelper {
     sql
   }
 
-  def sqlContextHolder(params: util.Map[Any, Any]) = {
-    params.get("_sqlContextHolder_").asInstanceOf[SQLContextHolder].getOrCreate()
+  def sparkSession(params: util.Map[Any, Any]) = {
+    params.get("_session_").asInstanceOf[SparkSession]
   }
 
 

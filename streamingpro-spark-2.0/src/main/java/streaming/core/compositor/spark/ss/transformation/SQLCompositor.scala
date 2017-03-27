@@ -42,8 +42,8 @@ class SQLCompositor[T] extends Compositor[T] with CompositorHelper {
     val _sql = translateSQL(sql.get, params)
     val _outputTableName = outputTableName
 
-    val df = sqlContextHolder(params).sql(_sql)
+    val df = sparkSession(params).sql(_sql)
     df.createOrReplaceTempView(_outputTableName.get)
-    return middleResult
+    middleResult
   }
 }

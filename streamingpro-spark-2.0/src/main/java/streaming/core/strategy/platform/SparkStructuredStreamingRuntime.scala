@@ -4,27 +4,24 @@ import java.util.concurrent.atomic.AtomicReference
 import java.util.{Map => JMap}
 
 import org.apache.log4j.Logger
-import org.apache.spark.sql.SparkSessionAdaptor
+
+import org.apache.spark.sql.{SparkSession}
 import org.apache.spark.{SparkConf, SparkContext}
-import streaming.core.common.SQLContextHolder
 
 import scala.collection.JavaConversions._
 
 /**
- * 11/20/16 WilliamZhu(allwefantasy@gmail.com)
- */
-class SparkStructuredStreamingRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with PlatformManagerListener with PlatformHelper{
+  * 11/20/16 WilliamZhu(allwefantasy@gmail.com)
+  */
+class SparkStructuredStreamingRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with PlatformManagerListener  {
   self =>
 
   private val logger = Logger.getLogger(classOf[SparkStructuredStreamingRuntime])
 
   def name = "SPAKR_STRUCTURED_STREAMING"
 
-  var sparkSessionAdaptor: SparkSessionAdaptor = createRuntime
+  var sparkSession: SparkSession = createRuntime
 
-  def sparkContext = {
-    sparkSessionAdaptor.sparkSession.sparkContext
-  }
 
   override def streamingRuntimeInfo = null
 
@@ -53,14 +50,15 @@ class SparkStructuredStreamingRuntime(_params: JMap[Any, Any]) extends Streaming
       val key = f._1.toString
       conf.set(key.substring("streaming".length + 1), f._2.toString)
     }
-
-    new SparkSessionAdaptor(conf)
+    val sparkSession = SparkSession.builder().config(conf).enableHiveSupport()
+    if (params.containsKey("streaming.enableHiveSupport") &&
+      params.get("streaming.enableHiveSupport").toString.toBoolean) {
+      sparkSession.enableHiveSupport()
+    }
+    sparkSession.getOrCreate()
   }
 
-  if (SQLContextHolder.sqlContextHolder == null) {
-    SQLContextHolder.setActive(createSQLContextHolder(params, this))
-    params.put("_sqlContextHolder_", SQLContextHolder.getOrCreate())
-  }
+  params.put("_session_", sparkSession)
 
   override def startRuntime: StreamingRuntime = {
     this
@@ -88,15 +86,15 @@ object SparkStructuredStreamingRuntime {
   private val INSTANTIATION_LOCK = new Object()
 
   /**
-   * Reference to the last created SQLContext.
-   */
+    * Reference to the last created SQLContext.
+    */
   @transient private val lastInstantiatedContext = new AtomicReference[SparkStructuredStreamingRuntime]()
 
   /**
-   * Get the singleton SQLContext if it exists or create a new one using the given SparkContext.
-   * This function can be used to create a singleton SQLContext object that can be shared across
-   * the JVM.
-   */
+    * Get the singleton SQLContext if it exists or create a new one using the given SparkContext.
+    * This function can be used to create a singleton SQLContext object that can be shared across
+    * the JVM.
+    */
   def getOrCreate(params: JMap[Any, Any]): SparkStructuredStreamingRuntime = {
     INSTANTIATION_LOCK.synchronized {
       if (lastInstantiatedContext.get() == null) {
@@ -121,37 +119,3 @@ object SparkStructuredStreamingRuntime {
   }
 }
 
-trait PlatformHelper {
-  def createSQLContextHolder(params: java.util.Map[Any, Any], runtime: StreamingRuntime) = {
-
-    val sc = getRuntimeContext(runtime)
-
-    if (params.containsKey("streaming.enableCarbonDataSupport")
-      && params.get("streaming.enableCarbonDataSupport").toString.toBoolean
-    ) {
-
-      val hiveOption = Map(
-        "className" -> "org.apache.spark.sql.CarbonContext",
-        "store" -> params.getOrElse("streaming.carbondata.store", "").toString,
-        "meta" -> params.getOrElse("streaming.carbondata.meta", "").toString
-
-      )
-      new SQLContextHolder(
-        true, sc, Some(hiveOption))
-
-    } else {
-
-      new SQLContextHolder(
-        params.containsKey("streaming.enableHiveSupport") &&
-          params.get("streaming.enableHiveSupport").toString.toBoolean, sc, None)
-    }
-
-  }
-  def getRuntimeContext(runtime: StreamingRuntime) = {
-
-    Class.forName(runtime.getClass.getName).
-      getMethod("sparkContext").
-      invoke(runtime).asInstanceOf[SparkContext]
-
-  }
-}

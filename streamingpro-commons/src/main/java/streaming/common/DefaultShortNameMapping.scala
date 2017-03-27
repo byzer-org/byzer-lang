@@ -48,13 +48,9 @@ class DefaultShortNameMapping extends ShortNameMapping {
     "stream.output.unittest" -> "streaming.core.compositor.spark.streaming.output.SQLUnitTestCompositor",
     "stream.output.print" -> "streaming.core.compositor.spark.streaming.output.SQLPrintOutputCompositor",
 
-    "ss.source" -> "streaming.core.compositor.spark.ss.source.SQLSourceCompositor",
-    "ss.source.mock" -> "streaming.core.compositor.spark.ss.source.MockSQLSourceCompositor",
-    "ss.sql" -> "streaming.core.compositor.spark.transformation.SQLCompositor",
-    "ss.table" -> "streaming.core.compositor.spark.transformation.JSONTableCompositor",
-    "ss.refTable" -> "streaming.core.compositor.spark.transformation.JSONRefTableCompositor",
-    "ss.script" -> "streaming.core.compositor.spark.transformation.ScriptCompositor",
-    "ss.output" -> "streaming.core.compositor.spark.ss.output.SQLOutputCompositor",
+    "ss.sources" -> "streaming.core.compositor.spark.ss.source.MultiSQLSourceCompositor",
+    "ss.sql" -> "streaming.core.compositor.spark.ss.transformation.SQLCompositor",
+    "ss.outputs" -> "streaming.core.compositor.spark.ss.output.MultiSQLOutputCompositor",
 
     "flink.sources" -> "streaming.core.compositor.flink.streaming.source.MultiStreamingCompositor",
     "flink.sql" -> "streaming.core.compositor.flink.streaming.transformation.SQLCompositor",
