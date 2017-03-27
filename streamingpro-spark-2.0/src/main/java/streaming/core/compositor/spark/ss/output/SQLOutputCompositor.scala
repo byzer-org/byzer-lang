@@ -8,7 +8,6 @@ import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.streaming.ProcessingTime
 import serviceframework.dispatcher.{Compositor, Processor, Strategy}
 import streaming.core.CompositorHelper
-import streaming.core.compositor.spark.streaming.CompositorHelper
 import streaming.core.strategy.ParamsValidator
 
 import scala.collection.JavaConversions._
