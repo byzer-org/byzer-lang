@@ -27,7 +27,7 @@ object CarbonExample {
                         ) STORED BY 'carbondata'
            """)
 
-    cc.sql("desc t3").show(1000,false)
+    cc.sql("desc formatted t3").show(1000,false)
 
 
 

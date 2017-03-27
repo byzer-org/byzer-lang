@@ -10,6 +10,7 @@
         <module>streamingpro-flink</module>
         <module>streamingpro-spark</module>
         <module>streamingpro-commons</module>
+        <module>streamingpro-spark-2.0</module>
     </modules>
 
     <properties>
