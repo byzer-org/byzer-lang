@@ -5,7 +5,7 @@
     <parent>
         <artifactId>streamingpro</artifactId>
         <groupId>streaming.king</groupId>
-        <version>0.4.14-SNAPSHOT-${mode}-${spark.version}</version>
+        <version>0.4.14-SNAPSHOT-${mode}</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 

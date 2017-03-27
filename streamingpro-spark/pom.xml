@@ -5,7 +5,7 @@
     <parent>
         <artifactId>streamingpro</artifactId>
         <groupId>streaming.king</groupId>
-        <version>0.4.14-SNAPSHOT-${mode}-${spark.version}</version>
+        <version>0.4.14-SNAPSHOT-${mode}</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -17,21 +17,9 @@
             <!-- default -->
             <properties>
                 <spark.version>1.6.1</spark.version>
-                <spark.streaming.kafka.artifactId>spark-streaming-kafka_2.10</spark.streaming.kafka.artifactId>
-                <spark.sql.kafka.artifactId>spark-streaming-kafka_2.10</spark.sql.kafka.artifactId>
-                <serviceframework.version>1.3.0-SNAPSHOT</serviceframework.version>
-                <structured.streaming.artifacteId>structured-streaming-stub</structured.streaming.artifacteId>
-            </properties>
-        </profile>
-
-        <profile>
-            <id>spark-2.0.2</id>
-            <properties>
-                <spark.version>spark-2.0.2</spark.version>
-                <spark.streaming.kafka.artifactId>spark-streaming-kafka-0-8_2.10</spark.streaming.kafka.artifactId>
-                <spark.sql.kafka.artifactId>spark-sql-kafka-0-10_2.10</spark.sql.kafka.artifactId>
-                <serviceframework.version>1.3.2-SNAPSHOT-9.2.16</serviceframework.version>
-                <structured.streaming.artifacteId>structured-streaming-core</structured.streaming.artifacteId>
+                <spark.streaming.kafka.artifactId>spark-streaming-kafka_${scala.binary.version}</spark.streaming.kafka.artifactId>
+                <spark.sql.kafka.artifactId>spark-streaming-kafka_${scala.binary.version}</spark.sql.kafka.artifactId>
+                <serviceframework.version>1.3.2-SNAPSHOT-${scala.binary.version}</serviceframework.version>
             </properties>
         </profile>
 
@@ -91,16 +79,6 @@
             </build>
         </profile>
         <profile>
-            <id>structured-streaming</id>
-            <dependencies>
-                <dependency>
-                    <groupId>streamingpro.king</groupId>
-                    <artifactId>${structured.streaming.artifacteId}</artifactId>
-                    <version>${streamingpro.version}-SNAPSHOT-online-2.0.2</version>
-                </dependency>
-            </dependencies>
-        </profile>
-        <profile>
             <id>carbondata</id>
             <dependencies>
                 <dependency>
@@ -137,19 +115,19 @@
 
         <dependency>
             <groupId>org.apache.spark</groupId>
-            <artifactId>spark-streaming_2.10</artifactId>
+            <artifactId>spark-streaming_${scala.binary.version}</artifactId>
             <version>${spark.version}</version>
             <scope>${scope}</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
-            <artifactId>spark-hive_2.10</artifactId>
+            <artifactId>spark-hive_${scala.binary.version}</artifactId>
             <version>${spark.version}</version>
             <scope>${scope}</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
-            <artifactId>spark-sql_2.10</artifactId>
+            <artifactId>spark-sql_${scala.binary.version}</artifactId>
             <version>${spark.version}</version>
             <scope>${scope}</scope>
         </dependency>
@@ -157,19 +135,19 @@
 
         <dependency>
             <groupId>org.apache.spark</groupId>
-            <artifactId>spark-core_2.10</artifactId>
+            <artifactId>spark-core_${scala.binary.version}</artifactId>
             <version>${spark.version}</version>
             <scope>${scope}</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
-            <artifactId>spark-mllib_2.10</artifactId>
+            <artifactId>spark-mllib_${scala.binary.version}</artifactId>
             <version>${spark.version}</version>
             <scope>${scope}</scope>
         </dependency>
         <dependency>
             <groupId>com.databricks</groupId>
-            <artifactId>spark-csv_2.10</artifactId>
+            <artifactId>spark-csv_${scala.binary.version}</artifactId>
             <version>1.4.0</version>
             <exclusions>
                 <exclusion>
