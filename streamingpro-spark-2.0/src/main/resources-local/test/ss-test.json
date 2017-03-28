@@ -15,6 +15,12 @@
             "port":"9999",
             "host":"localhost",
             "path": "-"
+          },
+          {
+            "format": "com.databricks.spark.csv",
+            "outputTable": "sample",
+            "header":"true",
+            "path": "/Users/allwefantasy/streamingpro/sample.csv"
           }
         ]
       },
@@ -22,7 +28,7 @@
         "name": "ss.sql",
         "params": [
           {
-            "sql": "select test.value + 100 from test",
+            "sql": "select city from test left join sample on test.value == sample.name",
             "outputTableName": "test3"
           }
         ]

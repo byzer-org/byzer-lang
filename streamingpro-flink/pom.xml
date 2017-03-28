@@ -50,6 +50,17 @@
         <artifactId>flink-table_2.10</artifactId>
         <version>1.2.0</version>
     </dependency>
+    <dependency>
+        <groupId>org.scalactic</groupId>
+        <artifactId>scalactic_${scala.binary.version}</artifactId>
+        <version>3.0.0</version>
+    </dependency>
+    <dependency>
+        <groupId>org.scalatest</groupId>
+        <artifactId>scalatest_${scala.binary.version}</artifactId>
+        <version>3.0.0</version>
+        <scope>test</scope>
+    </dependency>
 </dependencies>
     <profiles>
         <profile>
