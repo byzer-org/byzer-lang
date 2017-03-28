@@ -27,19 +27,19 @@ application, but also  a extensible and programmable framework for spark since y
 
 ## downloads
 
+Download page: https://pan.baidu.com/s/1miDfTI4
 
-> Precomile version based on Spark 1.6.1 ： https://pan.baidu.com/s/1eRO5Wga
->
-> Precomile version based on Spark 2.0.0:  http://pan.baidu.com/s/1mijmgi8
->
-> [Spark 2.0 based on Scala 2.10] http://pan.baidu.com/s/1mhH1NQS
-
-> Precomile version based on Spark 2.0.2 supporting structrued streaming: https://pan.baidu.com/s/1geNIq1X 
-> [Spark 2.0.2 based on Scala 2.10](https://pan.baidu.com/s/1hrCkVEc)
+```
+streamingpro-spark-0.4.14-SNAPSHOT.jar  for  spark 1.6+,scala 2.10
+streamingpro-spark-2.0-0.4.14-SNAPSHOT.jar  for  spark 2.0+,scala 2.11
+streamingpro.flink-0.4.14-SNAPSHOT-online-1.2.0.jar for flink 1.2.0, scala 2.10
+```
 
 
 
 ## Documents
+
+More Chinese articles: http://www.jianshu.com/c/759bc22b9e15
 
 * [Three steps to run your first application](https://github.com/allwefantasy/streamingpro/wiki/Three-steps-to-run-your-first-application)
 
