@@ -38,15 +38,15 @@
                                 <goals>
                                     <goal>shade</goal>
                                 </goals>
-                                <configuration>
-                                    <relocations>
-                                        <relocation>
-                                            <pattern>org.eclipse.jetty</pattern>
-                                            <shadedPattern>streaming.king.org.eclipse.jetty</shadedPattern>
-                                        </relocation>
+                                <!--<configuration>-->
+                                    <!--<relocations>-->
+                                        <!--<relocation>-->
+                                            <!--<pattern>org.eclipse.jetty</pattern>-->
+                                            <!--<shadedPattern>streaming.king.org.eclipse.jetty</shadedPattern>-->
+                                        <!--</relocation>-->
 
-                                    </relocations>
-                                </configuration>
+                                    <!--</relocations>-->
+                                <!--</configuration>-->
                             </execution>
                         </executions>
                     </plugin>
