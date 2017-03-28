@@ -301,23 +301,6 @@
             </plugin>
 
 
-            <plugin>
-                <groupId>org.scalatest</groupId>
-                <artifactId>scalatest-maven-plugin</artifactId>
-                <version>1.0</version>
-                <executions>
-                    <execution>
-                        <id>test</id>
-                        <goals>
-                            <goal>test</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <argLine>-XX:MaxPermSize=128m</argLine>
-                </configuration>
-            </plugin>
-
 
             <plugin>
                 <groupId>org.scala-tools</groupId>

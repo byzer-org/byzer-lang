@@ -120,6 +120,7 @@
                     </plugin>
                 </plugins>
             </build>
+
         </profile>
 
         <profile>
@@ -148,4 +149,24 @@
             </build>
         </profile>
     </profiles>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.scalatest</groupId>
+                <artifactId>scalatest-maven-plugin</artifactId>
+                <version>1.0</version>
+                <executions>
+                    <execution>
+                        <id>test</id>
+                        <goals>
+                            <goal>test</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <argLine>-XX:MaxPermSize=128m</argLine>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 </project>

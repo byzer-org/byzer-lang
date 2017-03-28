@@ -50,7 +50,7 @@ class SparkStructuredStreamingRuntime(_params: JMap[Any, Any]) extends Streaming
       val key = f._1.toString
       conf.set(key.substring("streaming".length + 1), f._2.toString)
     }
-    val sparkSession = SparkSession.builder().config(conf).enableHiveSupport()
+    val sparkSession = SparkSession.builder().config(conf)
     if (params.containsKey("streaming.enableHiveSupport") &&
       params.get("streaming.enableHiveSupport").toString.toBoolean) {
       sparkSession.enableHiveSupport()
