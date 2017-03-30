@@ -6,39 +6,23 @@
     "ref": [],
     "compositor": [
       {
-        "name": "batch.sources",
+        "name": "stream.sources.kafka",
         "params": [
           {
-            "path": "file:///tmp/sample.csv",
-            "format": "com.databricks.spark.csv",
-            "outputTable": "doctorIndex",
-            "header": "true"
-          },
-          {
-            "path": "file:///tmp/sample.csv",
-            "format": "com.databricks.spark.csv",
+            "format": "socket",
             "outputTable": "test2",
-            "header": "true"
+            "hostname": "127.0.0.1",
+            "port": "9999"
           }
         ]
       },
       {
-        "name": "batch.row.index",
-        "params": [
-          {
-            "inputTableName":  "doctorIndex",
-            "outputTableName":  "doctorIndex2",
-            "rankField":  "rank"
-          }
-        ]
-      },
-      {
-        "name": "batch.outputs",
+        "name": "stream.outputs",
         "params": [
           {
             "format": "console",
-            "inputTableName": "doctorIndex2",
-            "path":"-"
+            "inputTableName": "test2",
+            "path": "-"
           }
         ]
       }

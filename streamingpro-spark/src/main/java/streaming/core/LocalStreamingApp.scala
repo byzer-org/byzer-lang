@@ -15,12 +15,9 @@ object LocalStreamingApp {
       "-streaming.duration", "10",
       "-spark.sql.shuffle.partitions","1",
       "-streaming.name", "god",
-      "-streaming.rest", "false"
-      ,"-streaming.driver.port","9902",
-      "-streaming.platform", "spark_streaming",
-      "-streaming.sql.out.jack.user","root",
-      "-streaming.sql.out.jack.password","csdn.net",
-      "-streaming.sql.out.jack.url","jdbc:mysql://127.0.0.1/alarm_test?characterEncoding=utf8"
+      "-streaming.rest", "true"
+      ,"-streaming.driver.port","9003",
+      "-streaming.platform", "spark_streaming"
       //"-streaming.enableCarbonDataSupport", "true",
       //"-streaming.carbondata.store", "/tmp/carbondata/store"
       //"-streaming.carbondata.meta", "/tmp/carbondata/meta"

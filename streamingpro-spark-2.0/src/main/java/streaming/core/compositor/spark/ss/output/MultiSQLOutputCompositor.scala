@@ -80,7 +80,6 @@ class MultiSQLOutputCompositor[T] extends Compositor[T] with CompositorHelper wi
     }
     spark.streams.awaitAnyTermination()
 
-    params.remove("sql")
     new util.ArrayList[T]()
   }
 
