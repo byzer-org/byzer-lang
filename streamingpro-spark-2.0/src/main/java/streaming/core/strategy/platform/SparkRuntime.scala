@@ -3,7 +3,7 @@ package streaming.core.strategy.platform
 import java.util.concurrent.atomic.AtomicReference
 import java.util.{Map => JMap}
 
-import org.apache.spark.SparkConf
+import org.apache.spark.{SparkConf, SparkRuntimeOperator}
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.hive.thriftserver.HiveThriftServer2
 
@@ -18,7 +18,10 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime  with Platf
 
   var sparkSession: SparkSession = createRuntime
 
-  def operator = null
+
+  def operator = {
+    new SparkRuntimeOperator(sparkSession)
+  }
 
   def createRuntime = {
     val conf = new SparkConf()

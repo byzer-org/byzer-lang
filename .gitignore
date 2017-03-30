@@ -115,3 +115,5 @@ project/plugins/project/
 /src/main/resources-dev/mapred-site.xml
 /src/main/resources-dev/strategy.v2.json
 /lib/
+
+/metastore_db
