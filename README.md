@@ -10,26 +10,25 @@ StreamingPro is not only an out-of-box complete application, but also an extensi
 
 ## Features
 
-* Pure Spark Streaming (Or normal Spark) program
+* Pure Spark Streaming (or normal Spark) program
 * No need of coding, only declarative workflows
 * Rest API for interactive querying
 * SQL-Oriented workflows support
 * Data continuously streamed in & processed in near real-time
 * dynamically CURD of workflows at runtime via Rest API 
-* Flexible workflows (input, output, parsers, etc...) 
+* Flexible workflows (input, output, parsers, etc) 
 * High performance
-* Scalable   
+* Scalable
 
-## Downloads
+## Download
 
 Download page: https://pan.baidu.com/s/1miDfTI4
 
 ```
-streamingpro-spark-0.4.14-SNAPSHOT.jar  for  spark 1.6+,scala 2.10
-streamingpro-spark-2.0-0.4.14-SNAPSHOT.jar  for  spark 2.0+,scala 2.11
+streamingpro-spark-0.4.14-SNAPSHOT.jar for spark 1.6+, scala 2.10
+streamingpro-spark-2.0-0.4.14-SNAPSHOT.jar for spark 2.0+, scala 2.11
 streamingpro.flink-0.4.14-SNAPSHOT-online-1.2.0.jar for flink 1.2.0, scala 2.10
 ```
-
 
 
 ## Documents
@@ -59,24 +58,24 @@ More Chinese articles: http://www.jianshu.com/c/759bc22b9e15
 * [Other runtime support](https://github.com/allwefantasy/streamingpro/wiki/Runtime-support)
 
 
-### Architecture  
+## Architecture
 
 ![](https://github.com/allwefantasy/streamingpro/blob/master/images/Snip20160510_3.png)
-[If no picture show,please click me](http://upload-images.jianshu.io/upload_images/1063603-383c19104e141031.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+[If no picture is shown, please click me.](http://upload-images.jianshu.io/upload_images/1063603-383c19104e141031.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 
-[If github is too slow to view ,please click me](http://www.jianshu.com/p/3c19f8b9341c)
+[If github is too slow to view, please click me.](http://www.jianshu.com/p/3c19f8b9341c)
 
 
 ## Declarative workflows for building Spark Streaming  
 
 ![](https://github.com/allwefantasy/streamingpro/blob/master/images/Snip20160510_4.png)
-[If no picture show,please click me](http://upload-images.jianshu.io/upload_images/1063603-968e744a1ef2e334.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+[If no picture is shown, please click me.](http://upload-images.jianshu.io/upload_images/1063603-968e744a1ef2e334.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
-### Implementation
+## Implementation
 
 ![](https://github.com/allwefantasy/streamingpro/blob/master/images/Snip20160510_1.png)
-[If no picture show,please click me](http://upload-images.jianshu.io/upload_images/1063603-26dd2d88611a8b93.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+[If no picture is shown, please click me.](http://upload-images.jianshu.io/upload_images/1063603-26dd2d88611a8b93.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 
 
