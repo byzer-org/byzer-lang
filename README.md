@@ -1,40 +1,34 @@
+StreamingPro is a fast, expressive, and convenient system running on Spark with streaming, batch, interactive query, and machine learning support.
 
-StreamingPro is a fast,expresivive,and convenient cluster system running on Spark with streaming,batch,interactive,machine learning support.
+StreamingPro makes it easier to build spark applications without writing any code by means of:
 
-It make devlopers more easy to build spark application without writing any code by means of:
-
-* Using json file in combination with many powerful modules which are easy to be reused provides the user declarative configurations to  build your spark application.
-* Data processing are SQL-Based 
-* Script support 
+* Using json file in combination with modules, which are easy to be reused. This provides users declarative configurations to build spark applications.
+* Data processing is based on SQL.
+* Script support. 
  
-
-StreamingPro is not only a out of box complete
-application, but also  a extensible and programmable framework for spark since you can develop you ower compositors (moduler). 
-
-
+StreamingPro is not only an out-of-box complete application, but also an extensible and programmable framework for spark since you can develop you ower compositors(a.k.a moduler). 
 
 ## Features
 
-* Pure Spark Streaming(Or normal Spark) program
+* Pure Spark Streaming (or normal Spark) program
 * No need of coding, only declarative workflows
-* Rest API for interactive
-* SQL-Oriented workflows support  
+* Rest API for interactive querying
+* SQL-Oriented workflows support
 * Data continuously streamed in & processed in near real-time
-* dynamically CURD of workflows  at runtime via Rest API 
-* Flexible workflows (input, output, parsers, etc...) 
+* dynamically CURD of workflows at runtime via Rest API 
+* Flexible workflows (input, output, parsers, etc) 
 * High performance
-* Scalable   
+* Scalable
 
-## downloads
+## Download
 
 Download page: https://pan.baidu.com/s/1miDfTI4
 
 ```
-streamingpro-spark-0.4.14-SNAPSHOT.jar  for  spark 1.6+,scala 2.10
-streamingpro-spark-2.0-0.4.14-SNAPSHOT.jar  for  spark 2.0+,scala 2.11
+streamingpro-spark-0.4.14-SNAPSHOT.jar for spark 1.6+, scala 2.10
+streamingpro-spark-2.0-0.4.14-SNAPSHOT.jar for spark 2.0+, scala 2.11
 streamingpro.flink-0.4.14-SNAPSHOT-online-1.2.0.jar for flink 1.2.0, scala 2.10
 ```
-
 
 
 ## Documents
@@ -64,24 +58,24 @@ More Chinese articles: http://www.jianshu.com/c/759bc22b9e15
 * [Other runtime support](https://github.com/allwefantasy/streamingpro/wiki/Runtime-support)
 
 
-### Architecture  
+## Architecture
 
 ![](https://github.com/allwefantasy/streamingpro/blob/master/images/Snip20160510_3.png)
-[If no picture show,please click me](http://upload-images.jianshu.io/upload_images/1063603-383c19104e141031.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+[If no picture is shown, please click me.](http://upload-images.jianshu.io/upload_images/1063603-383c19104e141031.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 
-[If github is too slow to view ,please click me](http://www.jianshu.com/p/3c19f8b9341c)
+[If github is too slow to view, please click me.](http://www.jianshu.com/p/3c19f8b9341c)
 
 
 ## Declarative workflows for building Spark Streaming  
 
 ![](https://github.com/allwefantasy/streamingpro/blob/master/images/Snip20160510_4.png)
-[If no picture show,please click me](http://upload-images.jianshu.io/upload_images/1063603-968e744a1ef2e334.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+[If no picture is shown, please click me.](http://upload-images.jianshu.io/upload_images/1063603-968e744a1ef2e334.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
-### Implementation
+## Implementation
 
 ![](https://github.com/allwefantasy/streamingpro/blob/master/images/Snip20160510_1.png)
-[If no picture show,please click me](http://upload-images.jianshu.io/upload_images/1063603-26dd2d88611a8b93.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+[If no picture is shown, please click me.](http://upload-images.jianshu.io/upload_images/1063603-26dd2d88611a8b93.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 
 
