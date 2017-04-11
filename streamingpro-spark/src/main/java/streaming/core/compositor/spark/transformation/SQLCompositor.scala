@@ -43,8 +43,19 @@ class SQLCompositor[T] extends Compositor[T] with CompositorHelper {
 
     if (!params.containsKey(TABLE) && !params.containsKey(FUNC)) {
       val df = sqlContextHolder(params).sql(_sql)
-      df.registerTempTable(_outputTableName.get)
-      return middleResult
+
+
+      config[String]("type", _configParams) match {
+        case Some(name) if name == "ddl" => df.show(1)
+        case _ =>
+      }
+
+      _outputTableName match {
+        case Some(name) => df.registerTempTable(name)
+        case None =>
+      }
+
+      return if (middleResult == null) List() else middleResult
     }
 
     if (params.containsKey(TABLE)) {
