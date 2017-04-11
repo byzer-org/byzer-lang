@@ -36,11 +36,23 @@ class SQLCompositor[T] extends Compositor[T] with CompositorHelper {
   override def result(alg: util.List[Processor[T]], ref: util.List[Strategy[T]], middleResult: util.List[T], params: util.Map[Any, Any]): util.List[T] = {
 
     require(sql.isDefined, "please set sql  by variable `sql` in config file")
+
+
     val _sql = translateSQL(sql.get, params)
     val _outputTableName = outputTableName
 
     val df = sparkSession(params).sql(_sql)
-    df.createOrReplaceTempView(_outputTableName.get)
-    middleResult
+
+    config[String]("type", _configParams) match {
+      case Some(name) if name == "ddl" => df.show(1)
+      case _ =>
+    }
+
+    _outputTableName match {
+      case Some(name) => df.createOrReplaceTempView(name)
+      case None =>
+    }
+
+    if (middleResult == null) List() else middleResult
   }
 }
