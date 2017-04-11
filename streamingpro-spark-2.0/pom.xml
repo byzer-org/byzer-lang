@@ -95,6 +95,21 @@
                 <scope>compile</scope>
             </properties>
         </profile>
+        <!--<profile>-->
+            <!--<id>carbondata</id>-->
+            <!--<dependencies>-->
+                <!--<dependency>-->
+                    <!--<groupId>org.apache.carbondata</groupId>-->
+                    <!--<artifactId>carbondata-spark2</artifactId>-->
+                    <!--<version>1.1.0-rc1</version>-->
+                <!--</dependency>-->
+                <!--<dependency>-->
+                    <!--<groupId>org.apache.spark</groupId>-->
+                    <!--<artifactId>spark-repl_${scala.binary.version}</artifactId>-->
+                    <!--<version>${spark.version}</version>-->
+                <!--</dependency>-->
+            <!--</dependencies>-->
+        <!--</profile>-->
     <profile>
         <id>hive-thrift-server</id>
         <dependencies>

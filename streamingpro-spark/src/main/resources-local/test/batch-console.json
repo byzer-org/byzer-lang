@@ -39,6 +39,7 @@
       }
     ],
     "configParams": {
+      "topic":"abc"
     }
   }
 }
