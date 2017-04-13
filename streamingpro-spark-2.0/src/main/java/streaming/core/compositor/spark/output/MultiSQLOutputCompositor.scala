@@ -40,6 +40,7 @@ class MultiSQLOutputCompositor[T] extends Compositor[T] with CompositorHelper wi
       val mode = _cfg.getOrElse("mode", "ErrorIfExists")
       val format = _cfg("format")
       val outputFileNum = _cfg.getOrElse("outputFileNum", "-1").toInt
+      val partitionBy = _cfg.getOrElse("partitionBy", "")
 
       val dbtable = if (options.containsKey("dbtable")) options("dbtable") else _resource
 
@@ -52,7 +53,15 @@ class MultiSQLOutputCompositor[T] extends Compositor[T] with CompositorHelper wi
       if (format == "console") {
         newTableDF.show(_cfg.getOrElse("showNum", "100").toInt)
       } else {
-        val tempDf = newTableDF.write.options(options).mode(SaveMode.valueOf(mode)).format(format)
+
+        var tempDf = if (!partitionBy.isEmpty) {
+          newTableDF.write.partitionBy(partitionBy.split(","): _*)
+        } else {
+          newTableDF.write
+        }
+
+        tempDf = tempDf.options(options).mode(SaveMode.valueOf(mode)).format(format)
+
         if (_resource == "-" || _resource.isEmpty) {
           tempDf.save()
         } else tempDf.save(_resource)
