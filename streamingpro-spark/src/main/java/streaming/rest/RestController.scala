@@ -11,7 +11,6 @@ import streaming.common.SQLContextHolder
 import streaming.core.strategy.platform.{PlatformManager, SparkRuntime, SparkStreamingRuntime}
 
 import scala.collection.JavaConversions._
-import scala.util.parsing.json.JSONArray
 
 /**
   * 4/30/16 WilliamZhu(allwefantasy@gmail.com)
@@ -91,6 +90,13 @@ class RestController extends ApplicationController with CSVRender {
       case "csv" => renderJsonAsCsv(this.restResponse, "[" + result + "]")
       case _ => renderHtml(200, "/rest/sqlui-result.vm", WowCollections.map("feeds", result))
     }
+  }
+
+
+  @At(path = Array("/refresh"), types = Array(GET, POST))
+  def refreshTable = {
+    Class.forName("org.apache.spark.sql.CarbonContext").getMethod("refreshCache").invoke(SQLContextHolder.getOrCreate.getOrCreate())
+    render("SUCCESS", ViewType.string)
   }
 
   @At(path = Array("/sqlui"), types = Array(GET))

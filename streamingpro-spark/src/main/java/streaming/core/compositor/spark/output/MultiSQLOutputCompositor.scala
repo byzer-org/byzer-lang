@@ -42,6 +42,8 @@ class MultiSQLOutputCompositor[T] extends Compositor[T] with CompositorHelper wi
       val format = _cfg("format")
       val outputFileNum = _cfg.getOrElse("outputFileNum", "-1").toInt
 
+      val partitionBy = _cfg.getOrElse("partitionBy", "")
+
       val dbtable = if (options.containsKey("dbtable")) options("dbtable") else _resource
 
       var newTableDF = sqlContextHolder(params).table(tableName)
@@ -53,7 +55,15 @@ class MultiSQLOutputCompositor[T] extends Compositor[T] with CompositorHelper wi
       if (format == "console") {
         newTableDF.show(_cfg.getOrElse("showNum", "100").toInt)
       } else {
-        val tempDf = newTableDF.write.options(options).mode(SaveMode.valueOf(mode)).format(format)
+
+        var tempDf = if (!partitionBy.isEmpty) {
+          newTableDF.write.partitionBy(partitionBy.split(","): _*)
+        } else {
+          newTableDF.write
+        }
+
+        tempDf = tempDf.options(options).mode(SaveMode.valueOf(mode)).format(format)
+
         if (SparkCompatibility.sparkVersion.startsWith("1.6") && format == "jdbc") {
           val properties = new Properties()
           options.foreach(kv => properties.put(kv._1, kv._2))
