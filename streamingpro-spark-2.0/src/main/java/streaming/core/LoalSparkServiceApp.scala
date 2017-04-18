@@ -9,13 +9,16 @@ object LocalSparkServiceApp {
       "-streaming.master", "local[2]",
       "-streaming.name", "god",
       "-streaming.rest", "true",
-      "-streaming.thrift", "true",
+      "-streaming.thrift", "false",
       "-streaming.platform", "spark",
       "-streaming.job.file.path", "classpath:///test/empty.json",
       "-streaming.enableHiveSupport", "true",
       "-streaming.spark.service", "true",
       "-streaming.enableCarbonDataSupport", "true",
-      "-spark.sql.hive.thriftServer.singleSession","true"
+      "-streaming.carbondata.store", "/data/carbon/store",
+      "-streaming.carbondata.meta", "/data/carbon/meta",
+      "-spark.sql.hive.thriftServer.singleSession","true",
+      "-streaming.driver.port", "9004"
       //"-streaming.sql.out.path","file:///tmp/test/pdate=20160809"
 
       //"-streaming.jobs","idf-compute"

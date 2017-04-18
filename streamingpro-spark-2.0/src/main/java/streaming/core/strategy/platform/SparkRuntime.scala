@@ -5,6 +5,7 @@ import java.util.{Map => JMap}
 
 import org.apache.spark.{SparkConf, SparkRuntimeOperator}
 import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.hive.HiveContext
 import org.apache.spark.sql.hive.thriftserver.HiveThriftServer2
 
 import scala.collection.JavaConversions._
@@ -12,7 +13,7 @@ import scala.collection.JavaConversions._
 /**
   * Created by allwefantasy on 30/3/2017.
   */
-class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime  with PlatformManagerListener {
+class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with PlatformManagerListener {
 
   def name = "SPARK"
 
@@ -40,10 +41,21 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime  with Platf
       params.get("streaming.enableHiveSupport").toString.toBoolean) {
       sparkSession.enableHiveSupport()
     }
-    sparkSession.getOrCreate()
+
+    if (params.containsKey("streaming.enableCarbonDataSupport") &&
+      params.get("streaming.enableCarbonDataSupport").toString.toBoolean) {
+      val carbonBuilder = Class.forName("org.apache.spark.sql.CarbonSession$CarbonBuilder").
+        getConstructor(classOf[SparkSession.Builder]).
+        newInstance(sparkSession)
+      Class.forName("org.apache.spark.sql.CarbonSession$CarbonBuilder").
+        getMethod("getOrCreateCarbonSession", classOf[String], classOf[String]).
+        invoke(carbonBuilder, params("streaming.carbondata.store").toString, params("streaming.carbondata.meta").toString).asInstanceOf[SparkSession]
+    } else {
+      sparkSession.getOrCreate()
+    }
   }
 
-   params.put("_session_", sparkSession)
+  params.put("_session_", sparkSession)
 
 
   override def startRuntime: StreamingRuntime = {
@@ -79,7 +91,7 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime  with Platf
   SparkRuntime.setLastInstantiatedContext(this)
 
   override def startThriftServer: Unit = {
-    HiveThriftServer2.startWithContext(sparkSession.sqlContext)
+    HiveThriftServer2.startWithContext(sparkSession.sqlContext.asInstanceOf[HiveContext])
   }
 
   override def startHttpServer: Unit = {}
