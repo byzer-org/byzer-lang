@@ -13,9 +13,11 @@ object LocalSparkApp {
       "-streaming.name", "god",
       "-streaming.rest", "false",
       "-streaming.platform", "spark",
-      "-streaming.enableHiveSupport", "false",
       "-streaming.spark.service", "false",
-      "-streaming.sql.params.jack", "\"jack\""
+      "-streaming.enableHiveSupport", "true",
+      "-streaming.enableCarbonDataSupport", "true",
+      "-streaming.carbondata.store", "/tmp/carbondata/store",
+      "-streaming.carbondata.meta", "/tmp/carbondata/meta"
       //"-streaming.sql.out.path","file:///tmp/test/pdate=20160809"
 
       //"-streaming.jobs","idf-compute"

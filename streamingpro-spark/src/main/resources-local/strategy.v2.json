@@ -6,23 +6,21 @@
     "ref": [],
     "compositor": [
       {
-        "name": "stream.sources.kafka",
+        "name": "batch.sources",
         "params": [
           {
-            "format": "socket",
+            "format": "json",
+            "header": "true",
             "outputTable": "test2",
-            "hostname": "127.0.0.1",
-            "port": "9999"
+            "path": "file:///Users/allwefantasy/streamingpro/sample.json"
           }
         ]
       },
       {
-        "name": "stream.outputs",
+        "name": "batch.sql",
         "params": [
           {
-            "format": "console",
-            "inputTableName": "test2",
-            "path": "-"
+            "sql": "INSERT INTO TABLE jack.test_table1001 select * from test2"
           }
         ]
       }
