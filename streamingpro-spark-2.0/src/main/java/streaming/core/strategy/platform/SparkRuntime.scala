@@ -1,8 +1,10 @@
 package streaming.core.strategy.platform
 
 import java.util.concurrent.atomic.AtomicReference
+import java.util.logging.Logger
 import java.util.{Map => JMap}
 
+import org.apache.hadoop.conf.Configuration
 import org.apache.spark.{SparkConf, SparkRuntimeOperator}
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.hive.HiveContext
@@ -14,6 +16,8 @@ import scala.collection.JavaConversions._
   * Created by allwefantasy on 30/3/2017.
   */
 class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with PlatformManagerListener {
+
+  val logger = Logger.getLogger(getClass.getName)
 
   def name = "SPARK"
 
@@ -44,6 +48,11 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
 
     if (params.containsKey("streaming.enableCarbonDataSupport") &&
       params.get("streaming.enableCarbonDataSupport").toString.toBoolean) {
+      val url = params.getOrElse("streaming.hive.PlatformManager.jdo.option.ConnectionURL", "").toString
+      if (!url.isEmpty) {
+        logger.info("set hive javax.jdo.option.ConnectionURL=" + url)
+        sparkSession.config("javax.jdo.option.ConnectionURL", url)
+      }
       val carbonBuilder = Class.forName("org.apache.spark.sql.CarbonSession$CarbonBuilder").
         getConstructor(classOf[SparkSession.Builder]).
         newInstance(sparkSession)
