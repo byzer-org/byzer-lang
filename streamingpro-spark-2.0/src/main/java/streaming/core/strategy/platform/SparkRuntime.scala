@@ -48,7 +48,7 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
 
     if (params.containsKey("streaming.enableCarbonDataSupport") &&
       params.get("streaming.enableCarbonDataSupport").toString.toBoolean) {
-      val url = params.getOrElse("streaming.hive.PlatformManager.jdo.option.ConnectionURL", "").toString
+      val url = params.getOrElse("streaming.hive.javax.jdo.option.ConnectionURL", "").toString
       if (!url.isEmpty) {
         logger.info("set hive javax.jdo.option.ConnectionURL=" + url)
         sparkSession.config("javax.jdo.option.ConnectionURL", url)

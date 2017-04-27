@@ -49,7 +49,7 @@ class SQLCompositor[T] extends Compositor[T] with CompositorHelper {
     }
 
     _outputTableName match {
-      case Some(name) => df.createOrReplaceTempView(name)
+      case Some(name) if !name.isEmpty && name != "-" => df.createOrReplaceTempView(name)
       case None =>
     }
 
