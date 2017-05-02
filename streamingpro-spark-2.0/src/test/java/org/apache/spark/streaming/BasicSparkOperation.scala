@@ -1,5 +1,6 @@
 package org.apache.spark.streaming
 
+import net.csdn.common.reflect.ReflectHelper
 import org.scalatest.{FlatSpec, Matchers}
 import serviceframework.dispatcher.{Compositor, StrategyDispatcher}
 import streaming.common.ParamsUtil
@@ -26,9 +27,8 @@ class BasicSparkOperation extends FlatSpec with Matchers {
   }
 
   def getCompositorParam(item: Compositor[_]) = {
-    val field = item.getClass.getDeclaredField("_configParams")
-    field.setAccessible(true)
-    field.get(item).asInstanceOf[java.util.List[java.util.Map[Any, Any]]]
+    ReflectHelper.field(item,"_configParams").
+      asInstanceOf[java.util.List[java.util.Map[Any, Any]]]
   }
 
   def setupBatchContext(batchParams: Array[String], configFilePath: String) = {
