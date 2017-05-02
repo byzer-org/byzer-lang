@@ -45,9 +45,6 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with SparkP
     tempContext
   }
 
-  if (params.getOrElse("streaming.compatibility.crossversion", "false").toString.toBoolean) {
-    SparkCompatibility.preCompile(this)
-  }
 
   if (SQLContextHolder.sqlContextHolder == null) {
     SQLContextHolder.setActive(createSQLContextHolder(params, this))

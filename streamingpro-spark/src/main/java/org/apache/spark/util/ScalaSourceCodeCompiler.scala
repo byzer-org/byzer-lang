@@ -3,10 +3,7 @@ package org.apache.spark.util
 import com.google.common.cache.{CacheBuilder, CacheLoader}
 import org.apache.spark.sql.SQLContext
 import org.apache.spark.sql.types.StructType
-import streaming.common.CodeTemplates
 
-import scala.collection.mutable.ArrayBuffer
-import scala.reflect.io.AbstractFile
 import scala.tools.nsc.GenericRunnerSettings
 import scala.tools.nsc.interpreter.IMain
 import scala.tools.reflect.ToolBox
