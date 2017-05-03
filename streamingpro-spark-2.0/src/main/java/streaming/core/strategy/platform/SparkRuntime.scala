@@ -1,10 +1,10 @@
 package streaming.core.strategy.platform
 
+import java.lang.reflect.Modifier
 import java.util.concurrent.atomic.AtomicReference
 import java.util.logging.Logger
 import java.util.{Map => JMap}
 
-import org.apache.hadoop.conf.Configuration
 import org.apache.spark.{SparkConf, SparkRuntimeOperator}
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.hive.HiveContext
@@ -66,6 +66,21 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
 
   params.put("_session_", sparkSession)
 
+  registerUDF
+
+  def registerUDF = {
+    Class.forName("streaming.core.compositor.spark.udf.Functions").getMethods.foreach { f =>
+      try {
+        if (Modifier.isStatic(f.getModifiers)) {
+          f.invoke(null, sparkSession.udf)
+        }
+      } catch {
+        case e: Exception =>
+          e.printStackTrace()
+      }
+    }
+
+  }
 
   override def startRuntime: StreamingRuntime = {
     this

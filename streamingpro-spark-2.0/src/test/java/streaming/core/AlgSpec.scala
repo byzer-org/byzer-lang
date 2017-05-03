@@ -10,7 +10,7 @@ import org.apache.spark.streaming.BasicSparkOperation
 
 import scala.collection.JavaConversions._
 import streaming.core.Dispatcher
-import streaming.core.compositor.spark.output.AlgorithmOutputCompositor
+import streaming.core.compositor.spark.output.{AlgorithmOutputCompositor, MultiSQLOutputCompositor}
 import streaming.core.compositor.spark.source.MultiSQLSourceCompositor
 import streaming.core.strategy.platform.SparkRuntime
 
@@ -56,6 +56,34 @@ class AlgSpec extends BasicSparkOperation {
 
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/alg-lr.json")) { runtime: SparkRuntime =>
       assume(new File(cleanPath(outputPath)).exists())
+    }
+
+  }
+
+  "generate article vector" should "success" in {
+
+    val contextParams: java.util.Map[Any, Any] = new util.HashMap[Any, Any]()
+    contextParams.put("streaming.job.file.path", "classpath:///test/alg-lr2.json")
+    val sd = Dispatcher.dispatcher(contextParams)
+    val source = sd.findStrategies("alg").get.head.compositor.head.asInstanceOf[MultiSQLSourceCompositor[Any]]
+    val output = sd.findStrategies("alg").get.head.compositor.last.asInstanceOf[MultiSQLOutputCompositor[Any]]
+
+
+
+    val filePath = getCompositorParam(source).head.get("path").toString
+    val outputPath = getCompositorParam(output).head.get("path").toString
+    val outputPath2 = getCompositorParam(output).last.get("path").toString
+
+    new File(cleanPath(filePath)).delete()
+    FileUtils.deleteDirectory(new File(cleanPath(outputPath)))
+    FileUtils.deleteDirectory(new File(cleanPath(outputPath2)))
+
+    val fileInput = scala.io.Source.fromInputStream(this.getClass.getResourceAsStream("/data/mllib/sample_article.txt"))
+    Files.write(fileInput.getLines().mkString("\n"), new File(cleanPath(filePath)), Charset.forName("utf-8"))
+
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/alg-lr2.json")) { runtime: SparkRuntime =>
+      assume(new File(cleanPath(outputPath)).exists())
+      assume(new File(cleanPath(outputPath2)).exists())
     }
 
   }

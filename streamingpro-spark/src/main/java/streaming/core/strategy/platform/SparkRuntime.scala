@@ -1,5 +1,6 @@
 package streaming.core.strategy.platform
 
+import java.lang.reflect.Modifier
 import java.util.concurrent.atomic.AtomicReference
 import java.util.{List => JList, Map => JMap}
 
@@ -51,6 +52,21 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with SparkP
     params.put("_sqlContextHolder_", SQLContextHolder.getOrCreate())
   }
 
+  registerUDF
+
+  def registerUDF = {
+    Class.forName("streaming.core.compositor.spark.udf.Functions").getMethods.foreach { f =>
+      try {
+        if (Modifier.isStatic(f.getModifiers)) {
+          f.invoke(null, sparkSession.udf)
+        }
+      } catch {
+        case e: Exception =>
+          e.printStackTrace()
+      }
+    }
+
+  }
   override def startRuntime: StreamingRuntime = {
     this
   }

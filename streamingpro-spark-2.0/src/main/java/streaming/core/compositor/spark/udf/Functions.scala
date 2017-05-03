@@ -1,24 +1,13 @@
-package streaming.core.compositor.spark.udf.func
+package streaming.core.compositor.spark.udf
 
 import org.apache.spark.sql.UDFRegistration
-
 import scala.collection.JavaConversions._
+
 import scala.collection.mutable
 
 /**
- * 7/29/16 WilliamZhu(allwefantasy@gmail.com)
- */
-object MLFunctions {
-  def parse(uDFRegistration: UDFRegistration) = {
-     Functions.parse(uDFRegistration)
-  }
-
-  def mkString(uDFRegistration: UDFRegistration) = {
-    Functions.mkString(uDFRegistration)
-  }
-
-}
-
+  * Created by allwefantasy on 3/5/2017.
+  */
 object Functions {
   def parse(uDFRegistration: UDFRegistration) = {
     uDFRegistration.register("parse", (co: String) => {
@@ -34,5 +23,4 @@ object Functions {
       co.mkString(sep)
     })
   }
-
 }
