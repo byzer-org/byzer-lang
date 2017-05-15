@@ -4,11 +4,11 @@ import java.lang.reflect.Modifier
 import java.util.concurrent.atomic.AtomicReference
 import java.util.{List => JList, Map => JMap}
 
-import net.csdn.common.logging.Loggers
 import org.apache.spark.sql.hive.thriftserver.HiveThriftServer3
 import org.apache.spark.{SparkConf, SparkContext, SparkRuntimeOperator}
 import streaming.common.ParamsHelper._
 import streaming.common.{SQLContextHolder, SparkCompatibility}
+import streaming.core.JobCanceller
 
 import scala.collection.JavaConversions._
 
@@ -43,6 +43,10 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with SparkP
 
     val tempContext = new SparkContext(conf)
 
+    if (params.containsKey("streaming.job.cancel") && params.get("streaming.job.cancel").toString.toBoolean) {
+      JobCanceller.init(tempContext)
+    }
+
     tempContext
   }
 
@@ -55,10 +59,10 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with SparkP
   registerUDF
 
   def registerUDF = {
-    Class.forName("streaming.core.compositor.spark.udf.Functions").getMethods.foreach { f =>
+    Class.forName("streaming.core.compositor.spark.udf.func.Functions").getMethods.foreach { f =>
       try {
         if (Modifier.isStatic(f.getModifiers)) {
-          f.invoke(null, sparkSession.udf)
+          f.invoke(null, SQLContextHolder.sqlContextHolder.getOrCreate().udf)
         }
       } catch {
         case e: Exception =>
@@ -67,6 +71,7 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with SparkP
     }
 
   }
+
   override def startRuntime: StreamingRuntime = {
     this
   }

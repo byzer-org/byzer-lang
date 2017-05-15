@@ -8,6 +8,7 @@ import net.csdn.modules.http.RestRequest.Method._
 import net.csdn.modules.http.{ApplicationController, ViewType}
 import net.sf.json.JSONObject
 import streaming.common.SQLContextHolder
+import streaming.core.JobCanceller
 import streaming.core.strategy.platform.{PlatformManager, SparkRuntime, SparkStreamingRuntime}
 
 import scala.collection.JavaConversions._
@@ -56,8 +57,10 @@ class RestController extends ApplicationController with CSVRender {
   @At(path = Array("/run/sql"), types = Array(GET, POST))
   def ddlSql = {
     val sqlContext = SQLContextHolder.getOrCreate.getOrCreate()
-    val res = sqlContext.sql(param("sql")).toJSON.collect().mkString(",")
-    render("[" + res + "]")
+    JobCanceller.runWithGroup(sqlContext.sparkContext, paramAsLong("timeout", 30000), () => {
+      val res = sqlContext.sql(param("sql")).toJSON.collect().mkString(",")
+      render("[" + res + "]")
+    })
   }
 
   @At(path = Array("/table/create"), types = Array(GET, POST))

@@ -104,7 +104,6 @@ class PlatformManager {
 
     if (params.getBooleanParam("streaming.thrift", false)
       && !reRun
-      && params.getBooleanParam("streaming.enableHiveSupport", false)
     ) {
       startThriftServer(runtime)
     }

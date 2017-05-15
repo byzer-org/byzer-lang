@@ -6,11 +6,11 @@ import scala.collection.JavaConversions._
 import scala.collection.mutable
 
 /**
- * 7/29/16 WilliamZhu(allwefantasy@gmail.com)
- */
+  * 7/29/16 WilliamZhu(allwefantasy@gmail.com)
+  */
 object MLFunctions {
   def parse(uDFRegistration: UDFRegistration) = {
-     Functions.parse(uDFRegistration)
+    Functions.parse(uDFRegistration)
   }
 
   def mkString(uDFRegistration: UDFRegistration) = {
@@ -32,6 +32,13 @@ object Functions {
   def mkString(uDFRegistration: UDFRegistration) = {
     uDFRegistration.register("mkString", (sep: String, co: mutable.WrappedArray[String]) => {
       co.mkString(sep)
+    })
+  }
+
+  def sleep(uDFRegistration: UDFRegistration) = {
+    uDFRegistration.register("sleep", (sleep: Long) => {
+      Thread.sleep(sleep)
+      ""
     })
   }
 

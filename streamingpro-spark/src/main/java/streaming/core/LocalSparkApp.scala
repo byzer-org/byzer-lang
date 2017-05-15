@@ -11,11 +11,13 @@ object LocalSparkApp {
     StreamingApp.main(Array(
       "-streaming.master", "local[2]",
       "-streaming.name", "god",
-      "-streaming.rest", "false",
+      "-streaming.rest", "true",
       "-streaming.platform", "spark",
-      "-streaming.spark.service", "false",
+      "-streaming.spark.service", "true",
       "-streaming.enableHiveSupport", "true",
+      "-streaming.thrift", "false",
       "-streaming.enableCarbonDataSupport", "true",
+      "-streaming.job.cancel","true",
       "-streaming.carbondata.store", "/tmp/carbondata/store",
       "-streaming.carbondata.meta", "/tmp/carbondata/meta"
       //"-streaming.sql.out.path","file:///tmp/test/pdate=20160809"
