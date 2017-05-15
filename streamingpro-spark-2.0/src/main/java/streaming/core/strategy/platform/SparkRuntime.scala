@@ -9,6 +9,7 @@ import org.apache.spark.{SparkConf, SparkRuntimeOperator}
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.hive.HiveContext
 import org.apache.spark.sql.hive.thriftserver.HiveThriftServer2
+import streaming.core.JobCanceller
 
 import scala.collection.JavaConversions._
 
@@ -46,7 +47,7 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
       sparkSession.enableHiveSupport()
     }
 
-    if (params.containsKey("streaming.enableCarbonDataSupport") &&
+   val ss = if (params.containsKey("streaming.enableCarbonDataSupport") &&
       params.get("streaming.enableCarbonDataSupport").toString.toBoolean) {
       val url = params.getOrElse("streaming.hive.javax.jdo.option.ConnectionURL", "").toString
       if (!url.isEmpty) {
@@ -62,6 +63,11 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
     } else {
       sparkSession.getOrCreate()
     }
+
+    if (params.containsKey("streaming.job.cancel") && params.get("streaming.job.cancel").toString.toBoolean) {
+      JobCanceller.init(ss.sparkContext)
+    }
+    ss
   }
 
   params.put("_session_", sparkSession)

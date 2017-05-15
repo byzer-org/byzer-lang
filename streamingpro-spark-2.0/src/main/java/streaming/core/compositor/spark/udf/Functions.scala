@@ -23,4 +23,11 @@ object Functions {
       co.mkString(sep)
     })
   }
+
+  def sleep(uDFRegistration: UDFRegistration) = {
+    uDFRegistration.register("sleep", (sleep: Long) => {
+      Thread.sleep(sleep)
+      ""
+    })
+  }
 }

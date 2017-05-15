@@ -5,8 +5,10 @@ import net.csdn.common.collections.WowCollections
 import net.csdn.common.exception.RenderFinish
 import net.csdn.modules.http.{ApplicationController, ViewType}
 import net.csdn.modules.http.RestRequest.Method._
-import org.apache.spark.sql.execution.streaming.{SQLExecute}
+import org.apache.spark.sql.execution.streaming.SQLExecute
+import streaming.core.JobCanceller
 import streaming.core.strategy.platform.{PlatformManager, SparkRuntime, SparkStructuredStreamingRuntime}
+
 import scala.collection.JavaConversions._
 
 /**
@@ -59,8 +61,10 @@ class RestController extends ApplicationController {
   @At(path = Array("/run/sql"), types = Array(GET, POST))
   def ddlSql = {
     val sparkSession = runtime.asInstanceOf[SparkRuntime].sparkSession
-    val res = sparkSession.sql(param("sql")).toJSON.collect().mkString(",")
-    render("[" + res + "]")
+    JobCanceller.runWithGroup(sparkSession.sparkContext, paramAsLong("timeout", 30000), () => {
+      val res = sparkSession.sql(param("sql")).toJSON.collect().mkString(",")
+      render("[" + res + "]")
+    })
   }
 
   @At(path = Array("/table/create"), types = Array(GET, POST))

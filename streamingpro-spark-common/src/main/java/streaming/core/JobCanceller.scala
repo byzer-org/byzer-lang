@@ -14,8 +14,6 @@ import scala.collection.mutable.ArrayBuffer
   */
 object JobCanceller {
   val logger = Logger.getLogger(classOf[JobCanceller])
-  val groupIdToTime = new java.util.concurrent.ConcurrentHashMap[String, JobTime]()
-  val nextGroupId = new AtomicInteger(0)
   var jobCanceller: JobCanceller = _
 
   def init(sc: SparkContext, initialDelay: Long = 30, checkTimeInterval: Long = 5) = {
@@ -30,10 +28,10 @@ object JobCanceller {
 
   def runWithGroup(sc: SparkContext, timeout: Long, f: () => Unit) = {
 
-    val groupId = JobCanceller.nextGroupId.incrementAndGet().toString
+    val groupId = jobCanceller.nextGroupId.incrementAndGet().toString
     sc.setJobGroup(groupId, "", true)
     try {
-      groupIdToTime.put(groupId, JobTime(System.currentTimeMillis(), timeout))
+      jobCanceller.groupIdToTime.put(groupId, JobTime(System.currentTimeMillis(), timeout))
       f()
     }
     finally {
@@ -44,6 +42,8 @@ object JobCanceller {
 }
 
 class JobCanceller(sc: SparkContext, initialDelay: Long, checkTimeInterval: Long) {
+  val groupIdToTime = new java.util.concurrent.ConcurrentHashMap[String, JobTime]()
+  val nextGroupId = new AtomicInteger(0)
   val logger = Logger.getLogger(classOf[JobCanceller])
   val executor = Executors.newSingleThreadScheduledExecutor()
 
@@ -51,7 +51,7 @@ class JobCanceller(sc: SparkContext, initialDelay: Long, checkTimeInterval: Long
     executor.scheduleWithFixedDelay(new Runnable {
       override def run(): Unit = {
         val items = new ArrayBuffer[String]()
-        JobCanceller.groupIdToTime.foreach { f =>
+        groupIdToTime.foreach { f =>
           val elapseTime = System.currentTimeMillis() - f._2.startTime
           if (elapseTime >= f._2.timeout) {
             items += f._1
@@ -59,7 +59,7 @@ class JobCanceller(sc: SparkContext, initialDelay: Long, checkTimeInterval: Long
           }
         }
 
-        items.foreach(f=>JobCanceller.groupIdToTime.remove(f))
+        items.foreach(f => groupIdToTime.remove(f))
       }
     }, initialDelay, checkTimeInterval, TimeUnit.SECONDS)
   }
