@@ -34,7 +34,7 @@ class MultiSQLSourceCompositor[T] extends Compositor[T] with CompositorHelper {
       val sourcePath = _cfg("path")
       val df = sparkSession(params).read.format(sourceConfig("format").toString).options(
         (_cfg - "format" - "path" - "outputTable").map(f => (f._1.toString, f._2.toString))).load(sourcePath)
-      df.createOrReplaceTempView(_cfg("outputTable"))
+      df.createOrReplaceTempView(_cfg.getOrElse("outputTable", _cfg.getOrElse("outputTableName", "")))
     }
     List()
   }

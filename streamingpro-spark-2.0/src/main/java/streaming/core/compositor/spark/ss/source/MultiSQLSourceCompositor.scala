@@ -43,14 +43,14 @@ class MultiSQLSourceCompositor[T] extends Compositor[T] with CompositorHelper {
           import spark.implicits._
           implicit val sqlContext = spark.sqlContext
           val inputData = MemoryStream[String]
-          inputData.addData(JSONArray.fromObject(_cfg("data")).map(f=>f.toString).seq)
+          inputData.addData(JSONArray.fromObject(_cfg("data")).map(f => f.toString).seq)
           val df = inputData.toDS()
           df.createOrReplaceTempView(_configParams(0)("outputTable").toString)
 
         case _ =>
           val df = spark.read.format(_cfg("format")).options(
             (_cfg - "format" - "path" - "outputTable" - "data").map(f => (f._1.toString, f._2.toString))).load(sourcePath)
-          df.createOrReplaceTempView(_cfg("outputTable"))
+          df.createOrReplaceTempView(_cfg.getOrElse("outputTable", _cfg.getOrElse("outputTableName", "")))
       }
 
     }

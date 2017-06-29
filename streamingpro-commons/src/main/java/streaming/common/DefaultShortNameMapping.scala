@@ -3,8 +3,8 @@ package streaming.common
 import serviceframework.dispatcher.ShortNameMapping
 
 /**
- * 11/21/16 WilliamZhu(allwefantasy@gmail.com)
- */
+  * 11/21/16 WilliamZhu(allwefantasy@gmail.com)
+  */
 
 class DefaultShortNameMapping extends ShortNameMapping {
   private val compositorNameMap: Map[String, String] = Map[String, String](
@@ -34,6 +34,7 @@ class DefaultShortNameMapping extends ShortNameMapping {
 
     "stream.source.kafka" -> "streaming.core.compositor.spark.streaming.source.KafkaStreamingCompositor",
     "stream.sources.kafka" -> "streaming.core.compositor.spark.streaming.source.MultiKafkaStreamingCompositor",
+    "stream.sources" -> "streaming.core.compositor.spark.streaming.source.MultiSQLSourceCompositor",
     "stream.sql" -> "streaming.core.compositor.spark.streaming.transformation.SQLCompositor",
     "stream.table" -> "streaming.core.compositor.spark.streaming.transformation.JSONTableCompositor",
     "stream.refTable" -> "streaming.core.compositor.spark.transformation.JSONRefTableCompositor",
@@ -47,6 +48,7 @@ class DefaultShortNameMapping extends ShortNameMapping {
     "stream.script" -> "streaming.core.compositor.spark.transformation.ScriptCompositor",
     "stream.script.df" -> "streaming.core.compositor.spark.transformation.DFScriptCompositor",
     "stream.output.carbondata" -> "streaming.core.compositor.spark.streaming.output.CarbonDataOutputCompositor",
+    "stream.output" -> "streaming.core.compositor.spark.streaming.output.MultiSQLOutputCompositor",
     "stream.output.console" -> "streaming.core.compositor.spark.streaming.output.ConsoleOutputCompositor",
     "stream.output.unittest" -> "streaming.core.compositor.spark.streaming.output.SQLUnitTestCompositor",
     "stream.output.print" -> "streaming.core.compositor.spark.streaming.output.SQLPrintOutputCompositor",

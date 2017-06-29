@@ -66,18 +66,6 @@
             </exclusions>
         </dependency>
 
-        <dependency>
-            <groupId>org.apache.spark</groupId>
-            <artifactId>${spark.streaming.kafka.artifactId}</artifactId>
-            <version>${spark.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.spark</groupId>
-            <artifactId>${spark.sql.kafka.artifactId}</artifactId>
-            <version>${spark.version}</version>
-        </dependency>
-
 
     </dependencies>
 
