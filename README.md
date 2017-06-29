@@ -22,22 +22,15 @@ StreamingPro is not only an out-of-box complete application, but also an extensi
 
 ## Download
 
-Download page: https://pan.baidu.com/s/1miDfTI4
-
 ```
-streamingpro-spark-0.4.14-SNAPSHOT.jar for spark 1.6+, scala 2.10
-streamingpro-spark-2.0-0.4.14-SNAPSHOT.jar for spark 2.0+, scala 2.11
-streamingpro.flink-0.4.14-SNAPSHOT-online-1.2.0.jar for flink 1.2.0, scala 2.10
+Download page: https://pan.baidu.com/s/1i4POWvV
 ```
-
 
 ## Documents
 
 More Chinese articles: http://www.jianshu.com/c/759bc22b9e15
 
 * [Three steps to run your first application](https://github.com/allwefantasy/streamingpro/wiki/Three-steps-to-run-your-first-application)
-
-* [自己编译streamingpro](http://blog.csdn.net/itfootball/article/details/52875766)
 * [How to build streamingpro](https://github.com/allwefantasy/streamingpro/wiki/Build)
 
 * [三步跑起你的第一个应用](https://github.com/allwefantasy/streamingpro/wiki/三步跑起你的第一个应用)

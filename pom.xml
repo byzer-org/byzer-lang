@@ -5,7 +5,7 @@
     <groupId>streaming.king</groupId>
     <artifactId>streamingpro</artifactId>
     <packaging>pom</packaging>
-    <version>0.4.14-SNAPSHOT</version>
+    <version>0.4.15-SNAPSHOT</version>
     <modules>
         <module>streamingpro-commons</module>
         <module>streamingpro-spark-common</module>
@@ -20,7 +20,7 @@
         <spark.sql.kafka.artifactId>spark-streaming-kafka_2.10</spark.sql.kafka.artifactId>
         <streamingpro.version>0.4.7</streamingpro.version>
         <spark.streaming.kafka.artifactId>spark-streaming-kafka_2.10</spark.streaming.kafka.artifactId>
-        <serviceframework.version>1.3.2-SNAPSHOT-${scala.binary.version}</serviceframework.version>
+        <serviceframework.version>1.3.2-SNAPSHOT</serviceframework.version>
         <scope>provided</scope>
     </properties>
 
@@ -33,7 +33,7 @@
         </repository>
         <repository>
             <id>cloudera</id>
-            <url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>
+            <url>https://repositonry.cloudera.com/artifactory/cloudera-repos/</url>
         </repository>
         <repository>
             <id>pentaho-releases</id>
@@ -64,25 +64,39 @@
             <id>spark-1.6.1</id>
             <properties>
                 <spark.version>1.6.1</spark.version>
-                <spark.streaming.kafka.artifactId>spark-streaming-kafka_${scala.binary.version}</spark.streaming.kafka.artifactId>
+                <spark.streaming.kafka.artifactId>spark-streaming-kafka_${scala.binary.version}
+                </spark.streaming.kafka.artifactId>
                 <spark.sql.kafka.artifactId>spark-streaming-kafka_${scala.binary.version}</spark.sql.kafka.artifactId>
-                <serviceframework.version>1.3.2-SNAPSHOT-${scala.binary.version}</serviceframework.version>
             </properties>
             <modules>
                 <module>streamingpro-spark</module>
             </modules>
+            <dependencies>
+                <dependency>
+                    <groupId>net.csdn</groupId>
+                    <artifactId>serviceframework-jetty-9-server</artifactId>
+                    <version>${serviceframework.version}</version>
+                </dependency>
+            </dependencies>
         </profile>
         <profile>
             <id>spark-2.1.0</id>
             <properties>
-                <spark.streaming.kafka.artifactId>spark-streaming-kafka-0-8_${scala.binary.version}</spark.streaming.kafka.artifactId>
+                <spark.streaming.kafka.artifactId>spark-streaming-kafka-0-8_${scala.binary.version}
+                </spark.streaming.kafka.artifactId>
                 <spark.sql.kafka.artifactId>spark-sql-kafka-0-10_${scala.binary.version}</spark.sql.kafka.artifactId>
                 <spark.version>2.1.1</spark.version>
-                <serviceframework.version>1.3.2-SNAPSHOT-${scala.binary.version}</serviceframework.version>
             </properties>
             <modules>
                 <module>streamingpro-spark-2.0</module>
             </modules>
+            <dependencies>
+                <dependency>
+                    <groupId>net.csdn</groupId>
+                    <artifactId>serviceframework-jetty-9-server</artifactId>
+                    <version>${serviceframework.version}</version>
+                </dependency>
+            </dependencies>
         </profile>
 
         <profile>
@@ -90,6 +104,13 @@
             <modules>
                 <module>streamingpro-flink</module>
             </modules>
+            <dependencies>
+                <dependency>
+                    <groupId>net.csdn</groupId>
+                    <artifactId>serviceframework-jetty-9-server</artifactId>
+                    <version>${serviceframework.version}</version>
+                </dependency>
+            </dependencies>
         </profile>
 
     </profiles>
@@ -138,9 +159,10 @@
             <artifactId>lift-json_2.10</artifactId>
             <version>2.6.2</version>
         </dependency>
+
         <dependency>
             <groupId>net.csdn</groupId>
-            <artifactId>ServiceFramework</artifactId>
+            <artifactId>serviceframework-web_${scala.binary.version}</artifactId>
             <version>${serviceframework.version}</version>
             <exclusions>
                 <exclusion>
@@ -159,60 +181,12 @@
                     <groupId>org.slf4j</groupId>
                     <artifactId>jcl-over-slf4j</artifactId>
                 </exclusion>
-                <!--<exclusion>-->
-                <!--<groupId>org.eclipse.jetty</groupId>-->
-                <!--<artifactId>jetty-server</artifactId>-->
-                <!--</exclusion>-->
-                <!--<exclusion>-->
-                <!--<groupId>org.eclipse.jetty</groupId>-->
-                <!--<artifactId>jetty-servlet</artifactId>-->
-                <!--</exclusion>-->
-                <!--<exclusion>-->
-                <!--<groupId>org.eclipse.jetty</groupId>-->
-                <!--<artifactId>jetty-io</artifactId>-->
-                <!--</exclusion>-->
-                <!--<exclusion>-->
-                <!--<groupId>org.eclipse.jetty</groupId>-->
-                <!--<artifactId>jetty-http</artifactId>-->
-                <!--</exclusion>-->
-                <!--<exclusion>-->
-                <!--<groupId>org.eclipse.jetty</groupId>-->
-                <!--<artifactId>jetty-util</artifactId>-->
-                <!--</exclusion>-->
-                <!--<exclusion>-->
-                <!--<groupId>org.eclipse.jetty</groupId>-->
-                <!--<artifactId>jetty-continuation</artifactId>-->
-                <!--</exclusion>-->
-                <!--mongo相关-->
-                <exclusion>
-                    <groupId>net.csdn</groupId>
-                    <artifactId>MongoMongo</artifactId>
-                </exclusion>
-
-                <!--ORM(hibernate)相关-->
-                <exclusion>
-                    <groupId>net.csdn</groupId>
-                    <artifactId>ActiveORM</artifactId>
-                </exclusion>
 
                 <!--thrift相关-->
                 <exclusion>
                     <groupId>org.apache.thrift</groupId>
                     <artifactId>libthrift</artifactId>
                 </exclusion>
-                <!--<exclusion>-->
-                <!--<groupId>org.apache.httpcomponents</groupId>-->
-                <!--<artifactId>httpclient</artifactId>-->
-                <!--</exclusion>-->
-                <!--<exclusion>-->
-                <!--<groupId>mysql</groupId>-->
-                <!--<artifactId>mysql-connector-java</artifactId>-->
-                <!--</exclusion>-->
-
-                <!--<exclusion>-->
-                <!--<groupId>org.apache.velocity</groupId>-->
-                <!--<artifactId>velocity</artifactId>-->
-                <!--</exclusion>-->
                 <exclusion>
                     <groupId>com.101tec</groupId>
                     <artifactId>zkclient</artifactId>
@@ -231,6 +205,8 @@
                 </exclusion>
             </exclusions>
         </dependency>
+
+
         <dependency>
             <groupId>serviceframework</groupId>
             <artifactId>Dispatcher</artifactId>
@@ -268,8 +244,6 @@
         </dependency>
 
 
-
-
         <dependency>
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
@@ -299,7 +273,6 @@
                 </configuration>
 
             </plugin>
-
 
 
             <plugin>

@@ -9,7 +9,7 @@
         "name": "batch.sources",
         "params": [
           {
-            "path": "file:///tmp/hdfsfile/abc.txt",
+            "path": "file:///Users/allwefantasy/streamingpro/sample.json",
             "format": "json",
             "outputTable": "test"
 
@@ -20,7 +20,7 @@
         "name": "batch.script.df",
         "params": [
           {
-            "script": "context.sql(\"select a as t from test\").registerTempTable(\"finalOutputTable\")",
+            "script": "context.sql(\"select city as t from test\").registerTempTable(\"finalOutputTable\")",
             "source": "-"
           }
         ]

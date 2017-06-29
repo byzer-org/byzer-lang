@@ -5,12 +5,12 @@
     <parent>
         <artifactId>streamingpro</artifactId>
         <groupId>streaming.king</groupId>
-        <version>0.4.14-SNAPSHOT</version>
+        <version>0.4.15-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>streamingpro.flink</artifactId>
-    <version>0.4.14-SNAPSHOT-${flink.version}</version>
+    <version>0.4.15-SNAPSHOT-${flink.version}</version>
 
 <dependencies>
     <dependency>

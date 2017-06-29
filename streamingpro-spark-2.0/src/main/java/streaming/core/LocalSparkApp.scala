@@ -15,7 +15,7 @@ object LocalSparkApp {
       "-streaming.platform", "spark",
       "-streaming.enableHiveSupport", "false",
       "-streaming.spark.service", "false",
-      "-streaming.job.file.path","classpath:///test/batch-console.json"
+      "-streaming.job.file.path","classpath:///test/batch-script-df.json"
     ))
   }
 }

@@ -5,7 +5,7 @@
     <parent>
         <artifactId>streamingpro</artifactId>
         <groupId>streaming.king</groupId>
-        <version>0.4.14-SNAPSHOT</version>
+        <version>0.4.15-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -39,13 +39,13 @@
                                     <goal>shade</goal>
                                 </goals>
                                 <!--<configuration>-->
-                                    <!--<relocations>-->
-                                        <!--<relocation>-->
-                                            <!--<pattern>org.eclipse.jetty</pattern>-->
-                                            <!--<shadedPattern>streaming.king.org.eclipse.jetty</shadedPattern>-->
-                                        <!--</relocation>-->
+                                <!--<relocations>-->
+                                <!--<relocation>-->
+                                <!--<pattern>org.eclipse.jetty</pattern>-->
+                                <!--<shadedPattern>streaming.king.org.eclipse.jetty</shadedPattern>-->
+                                <!--</relocation>-->
 
-                                    <!--</relocations>-->
+                                <!--</relocations>-->
                                 <!--</configuration>-->
                             </execution>
                         </executions>
@@ -145,10 +145,12 @@
     </profiles>
 
     <dependencies>
+
+
         <dependency>
             <groupId>streaming.king</groupId>
             <artifactId>streamingpro-spark-common</artifactId>
-            <version>0.4.14-SNAPSHOT</version>
+            <version>${parent.version}</version>
         </dependency>
 
         <dependency>

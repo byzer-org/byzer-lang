@@ -15,7 +15,7 @@ object LocalSparkServiceApp {
       "-streaming.enableHiveSupport", "true",
       "-streaming.spark.service", "true",
       "-streaming.job.cancel","true",
-      "-streaming.enableCarbonDataSupport", "false",
+      "-streaming.enableCarbonDataSupport", "true",
       "-streaming.carbondata.store", "/data/carbon/store",
       "-streaming.carbondata.meta", "/data/carbon/meta",
       "-spark.sql.hive.thriftServer.singleSession","true",

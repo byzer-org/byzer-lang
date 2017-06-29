@@ -80,21 +80,6 @@ class RestController extends ApplicationController with CSVRender {
 
   }
 
-  @At(path = Array("/sql"), types = Array(GET, POST))
-  def hiveSql = {
-    if (!runtime.isInstanceOf[SparkRuntime]) render(400, "only support spark application")
-    val sparkRuntime = runtime.asInstanceOf[SparkRuntime]
-
-    val sql = if (param("sql").contains(" limit ")) param("sql") else param("sql") + " limit 1000"
-    val result = sparkRuntime.operator.runSQL(sql).mkString(",")
-
-    param("resultType", "html") match {
-      case "json" => render(200, "[" + result + "]", ViewType.json)
-      case "csv" => renderJsonAsCsv(this.restResponse, "[" + result + "]")
-      case _ => renderHtml(200, "/rest/sqlui-result.vm", WowCollections.map("feeds", result))
-    }
-  }
-
 
   @At(path = Array("/refresh"), types = Array(GET, POST))
   def refreshTable = {

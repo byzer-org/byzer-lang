@@ -14,11 +14,12 @@ object LocalSparkServiceApp {
       "-streaming.job.file.path", "classpath:///test/empty.json",
       "-streaming.enableHiveSupport", "true",
       "-streaming.spark.service", "true",
-      "-streaming.enableCarbonDataSupport", "true",
+      "-streaming.enableCarbonDataSupport", "false",
       "-streaming.carbondata.store", "/data/carbon/store",
       "-streaming.carbondata.meta", "/data/carbon/meta",
       "-spark.sql.hive.thriftServer.singleSession","true",
-      "-streaming.driver.port", "9004"
+      "-streaming.driver.port", "9003",
+    "-streaming.job.cancel", "true"
       //"-streaming.sql.out.path","file:///tmp/test/pdate=20160809"
 
       //"-streaming.jobs","idf-compute"
