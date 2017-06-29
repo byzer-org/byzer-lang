@@ -162,6 +162,26 @@
 
         <dependency>
             <groupId>net.csdn</groupId>
+            <artifactId>serviceframework-dispatcher_${scala.binary.version}</artifactId>
+            <version>${serviceframework.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.scala-lang</groupId>
+                    <artifactId>jline</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>junit</groupId>
+                    <artifactId>junit</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.alibaba</groupId>
+                    <artifactId>dubbo</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>net.csdn</groupId>
             <artifactId>serviceframework-web_${scala.binary.version}</artifactId>
             <version>${serviceframework.version}</version>
             <exclusions>
@@ -207,17 +227,7 @@
         </dependency>
 
 
-        <dependency>
-            <groupId>serviceframework</groupId>
-            <artifactId>Dispatcher</artifactId>
-            <version>1.0-SNAPSHOT-${scala.binary.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>net.csdn</groupId>
-                    <artifactId>ServiceFramework</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
+
 
         <dependency>
             <groupId>com.jayway.jsonpath</groupId>
