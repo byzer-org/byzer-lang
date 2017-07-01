@@ -39,6 +39,17 @@ class MultiSQLSourceCompositor[T] extends Compositor[T] with CompositorHelper {
           val df = spark.readStream.format(_cfg("format")).options(
             (_cfg - "format" - "path" - "outputTable").map(f => (f._1.toString, f._2.toString))).load(sourcePath)
           df.createOrReplaceTempView(_cfg("outputTable"))
+        case "kafka8" | "kafka9" =>
+          val format = "com.hortonworks.spark.sql.kafka08.KafkaSourceProvider"
+          /*
+             kafka.bootstrap.servers
+             kafka.metadata.broker
+             startingoffset smallest
+           */
+          val df = spark.readStream.format(format).options(
+            (_cfg - "format" - "path" - "outputTable").map(f => (f._1.toString, f._2.toString))).load(sourcePath)
+          df.createOrReplaceTempView(_cfg("outputTable"))
+
         case "mock" =>
           import spark.implicits._
           implicit val sqlContext = spark.sqlContext

@@ -10,10 +10,10 @@ object LocalStreamingApp {
       "-streaming.duration", "10",
       "-spark.sql.shuffle.partitions","1",
       "-streaming.name", "god",
-      "-streaming.rest", "true"
+      "-streaming.rest", "false"
       ,"-streaming.driver.port","9003",
       "-streaming.platform", "spark_structured_streaming",
-      "-streaming.job.file.path", "classpath:///test/ss-test.json"
+      "-streaming.job.file.path", "classpath:///test/ss-kafka.json"
     ))
   }
 }

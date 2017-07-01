@@ -84,7 +84,7 @@ class MultiSQLOutputCompositor[T] extends Compositor[T] with CompositorHelper wi
       val dstream = dstreamWithName._1
       dstream.foreachRDD { rdd =>
         import spark.implicits._
-        val df = rdd.toDF("id", "content")
+        val df = rdd.toDF("key", "value")
         df.createOrReplaceTempView(name)
         funcs.foreach { f =>
           try {
@@ -93,10 +93,8 @@ class MultiSQLOutputCompositor[T] extends Compositor[T] with CompositorHelper wi
             case e: Exception =>
               e.printStackTrace()
           }
-
-          output()
-
         }
+        output()
       }
     }
 
