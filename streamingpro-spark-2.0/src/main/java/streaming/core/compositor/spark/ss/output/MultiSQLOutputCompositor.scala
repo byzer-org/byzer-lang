@@ -66,12 +66,15 @@ class MultiSQLOutputCompositor[T] extends Compositor[T] with CompositorHelper wi
         val ssStream = newTableDF.writeStream
 
         if (_cfg.containsKey("checkpoint")) {
-          val checkpointDir = _cfg.get("checkpoint").toString
+          val checkpointDir = _cfg("checkpoint")
           ssStream.option("checkpointLocation", checkpointDir)
         }
-
+        if (dbtable != null && dbtable != "-") {
+          ssStream.option("path", dbtable)
+        }
         val query = ssStream.options(options).outputMode(mode).format(format)
-        query.trigger(ProcessingTime(_cfg.getOrElse("duration","10").toInt, TimeUnit.SECONDS)).start()
+
+        query.trigger(ProcessingTime(_cfg.getOrElse("duration", "10").toInt, TimeUnit.SECONDS)).start()
 
       } catch {
         case e: Exception => e.printStackTrace()

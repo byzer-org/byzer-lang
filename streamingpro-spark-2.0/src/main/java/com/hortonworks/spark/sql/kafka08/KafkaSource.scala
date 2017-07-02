@@ -28,6 +28,7 @@ import org.apache.spark.sql.execution.streaming._
 import org.apache.spark.sql.types._
 import org.apache.spark.streaming.kafka.{Broker, KafkaCluster, KafkaUtils, OffsetRange}
 import org.apache.spark.streaming.kafka.KafkaCluster.LeaderOffset
+import com.hortonworks.spark.sql.kafka08.KafkaSource._
 
 import com.hortonworks.spark.sql.kafka08.util.Logging
 
@@ -51,7 +52,7 @@ case class KafkaSource(
     sourceOptions.getOrElse("fetchOffset.numRetries", "3").toInt
 
   private lazy val initialPartitionOffsets = {
-    val metadataLog = new HDFSMetadataLog[KafkaSourceOffset](sqlContext.sparkSession, metadataPath)
+    val metadataLog = Kafka08HDFSMetadataLog.create(sqlContext, metadataPath,VERSION)
     metadataLog.get(0).getOrElse {
       val offsets = for {
         leaderOffsets <- (if (startFromSmallestOffset) {
@@ -152,7 +153,7 @@ case class KafkaSource(
 
 /** Companion object for the [[KafkaSource]]. */
 private[kafka08] object KafkaSource {
-
+  private[kafka08] val VERSION = 8
   def kafkaSchema: StructType = StructType(Seq(
     StructField("key", BinaryType),
     StructField("value", BinaryType),

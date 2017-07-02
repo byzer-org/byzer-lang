@@ -38,9 +38,10 @@
         "params": [
           {
             "mode": "append",
-            "format": "console",
+            "format": "parquet",
             "inputTableName": "test3",
-            "path": "-"
+            "checkpoint":"/tmp/ss-kafka/",
+            "path": "/tmp/ss-kafka-data"
           }
         ]
       }
