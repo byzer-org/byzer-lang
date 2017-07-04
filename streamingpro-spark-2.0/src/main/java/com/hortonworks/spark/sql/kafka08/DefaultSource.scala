@@ -20,14 +20,14 @@ package com.hortonworks.spark.sql.kafka08
 import java.{util => ju}
 
 import scala.collection.JavaConverters._
-
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.spark.sql.SQLContext
-import org.apache.spark.sql.execution.streaming.Source
-import org.apache.spark.sql.sources.{DataSourceRegister, StreamSourceProvider}
+import org.apache.spark.sql.execution.streaming.{Sink, Source}
+import org.apache.spark.sql.sources.{DataSourceRegister, StreamSinkProvider, StreamSourceProvider}
 import org.apache.spark.sql.types.StructType
-
 import com.hortonworks.spark.sql.kafka08.util.Logging
+import org.apache.spark.sql.kafka08.KafkaSink
+import org.apache.spark.sql.streaming.OutputMode
 
 /**
   * The provider class for the [[KafkaSource]]. This provider is designed such that it throws
@@ -35,7 +35,7 @@ import com.hortonworks.spark.sql.kafka08.util.Logging
   * missing options even before the query is started.
   */
 private[kafka08] class KafkaSourceProvider extends StreamSourceProvider
-  with DataSourceRegister with Logging {
+  with DataSourceRegister with StreamSinkProvider with Logging {
 
   import KafkaSourceProvider._
 
@@ -196,8 +196,12 @@ private[kafka08] class KafkaSourceProvider extends StreamSourceProvider
     def build(): ju.Map[String, String] = map
   }
 
+  override def createSink(sqlContext: SQLContext, parameters: Map[String, String], partitionColumns: Seq[String], outputMode: OutputMode): Sink = {
+    val defaultTopic = parameters.get(TOPICS).map(_.trim)
+    new KafkaSink(sqlContext,
+      new ju.HashMap[String, Object](parameters.asJava), defaultTopic)
+  }
 }
-
 private[kafka08] object KafkaSourceProvider {
   private val TOPICS = "topics"
   private val STARTING_OFFSET_OPTION_KEY = "startingoffset"
