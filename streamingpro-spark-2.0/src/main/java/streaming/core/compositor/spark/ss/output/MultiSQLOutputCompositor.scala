@@ -1,10 +1,13 @@
 package streaming.core.compositor.spark.ss.output
 
 import java.util
-
 import java.util.concurrent.TimeUnit
+
 import org.apache.log4j.Logger
+import org.apache.spark.sql.AnalysisException
+import org.apache.spark.sql.catalyst.expressions.Literal
 import org.apache.spark.sql.streaming.ProcessingTime
+import org.apache.spark.sql.types.StringType
 import serviceframework.dispatcher.{Compositor, Processor, Strategy}
 import streaming.core.CompositorHelper
 import streaming.core.strategy.ParamsValidator
@@ -37,7 +40,10 @@ class MultiSQLOutputCompositor[T] extends Compositor[T] with CompositorHelper wi
   }
 
   override def result(alg: util.List[Processor[T]], ref: util.List[Strategy[T]], middleResult: util.List[T], params: util.Map[Any, Any]): util.List[T] = {
-
+    val formatMapping = Map(
+      "kafka8" -> "com.hortonworks.spark.sql.kafka08",
+      "kafka9" -> "com.hortonworks.spark.sql.kafka08"
+    )
     val spark = sparkSession(params)
     _configParams.foreach { config =>
 
@@ -51,7 +57,7 @@ class MultiSQLOutputCompositor[T] extends Compositor[T] with CompositorHelper wi
         val options = _cfg - "path" - "mode" - "format"
         val _resource = _cfg("path")
         val mode = _cfg.getOrElse("mode", "ErrorIfExists")
-        val format = _cfg("format")
+        val format = formatMapping.getOrElse(_cfg("format"), _cfg("format"))
         val outputFileNum = _cfg.getOrElse("outputFileNum", "-1").toInt
 
         val dbtable = if (options.containsKey("dbtable")) options("dbtable") else _resource

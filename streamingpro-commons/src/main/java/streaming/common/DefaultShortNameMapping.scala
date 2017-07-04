@@ -52,6 +52,7 @@ class DefaultShortNameMapping extends ShortNameMapping {
     "stream.output.console" -> "streaming.core.compositor.spark.streaming.output.ConsoleOutputCompositor",
     "stream.output.unittest" -> "streaming.core.compositor.spark.streaming.output.SQLUnitTestCompositor",
     "stream.output.print" -> "streaming.core.compositor.spark.streaming.output.SQLPrintOutputCompositor",
+    "stream.script.df" -> "streaming.core.compositor.spark.transformation.DFScriptCompositor",
 
     "ss.sources" -> "streaming.core.compositor.spark.ss.source.MultiSQLSourceCompositor",
     "ss.sql" -> "streaming.core.compositor.spark.ss.transformation.SQLCompositor",

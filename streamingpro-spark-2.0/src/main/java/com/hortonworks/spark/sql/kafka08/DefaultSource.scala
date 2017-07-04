@@ -34,10 +34,10 @@ import org.apache.spark.sql.streaming.OutputMode
   * IllegalArgumentException when the Kafka Dataset is created, so that it can catch
   * missing options even before the query is started.
   */
-private[kafka08] class KafkaSourceProvider extends StreamSourceProvider
+private[kafka08] class DefaultSource extends StreamSourceProvider
   with DataSourceRegister with StreamSinkProvider with Logging {
 
-  import KafkaSourceProvider._
+  import DefaultSource._
 
   /**
     * Returns the name and schema of the source. In addition, it also verifies whether the options
@@ -202,7 +202,7 @@ private[kafka08] class KafkaSourceProvider extends StreamSourceProvider
       new ju.HashMap[String, Object](parameters.asJava), defaultTopic)
   }
 }
-private[kafka08] object KafkaSourceProvider {
+private[kafka08] object DefaultSource {
   private val TOPICS = "topics"
   private val STARTING_OFFSET_OPTION_KEY = "startingoffset"
   private val STARTING_OFFSET_OPTION_VALUES = Set("largest", "smallest")
