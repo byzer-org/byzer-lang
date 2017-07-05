@@ -36,8 +36,14 @@ private[kafka08] class KafkaWriteTask(
       if (topic == null) {
         throw new NullPointerException(s"null topic present in the data. Use the ")
       }
-      val record = new KeyedMessage[Array[Byte], Array[Byte]](topic.toString, key, value)
-      producer.send(record)
+      try {
+        val record = new KeyedMessage[Array[Byte], Array[Byte]](topic.toString, key, value)
+        producer.send(record)
+      } catch {
+        case e: Exception =>
+          failedWrite = e
+      }
+
     }
   }
 
