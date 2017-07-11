@@ -161,6 +161,12 @@
         </dependency>
 
         <dependency>
+            <groupId>org.kamranzafar</groupId>
+            <artifactId>jtar</artifactId>
+            <version>2.2</version>
+        </dependency>
+
+        <dependency>
             <groupId>net.csdn</groupId>
             <artifactId>serviceframework-dispatcher_${scala.binary.version}</artifactId>
             <version>${serviceframework.version}</version>
