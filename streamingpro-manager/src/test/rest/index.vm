@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Hello React!</title>
+    <script src="react/react.js"></script>
+    <script src="react/react-dom.js"></script>
+    <script src="react/browser.min.js"></script>
+  </head>
+  <body>
+    <div id="body"></div>
+    <script type="text/babel">
+      ReactDOM.render(
+        <h1>Welcome to StreamingPro!</h1>,
+        document.getElementById('body')
+      );
+    </script>
+  </body>
+</html>

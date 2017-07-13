@@ -9,6 +9,7 @@
     <modules>
         <module>streamingpro-commons</module>
         <module>streamingpro-spark-common</module>
+        <module>streamingpro-manager</module>
     </modules>
 
     <properties>
@@ -156,7 +157,7 @@
 
         <dependency>
             <groupId>net.liftweb</groupId>
-            <artifactId>lift-json_2.10</artifactId>
+            <artifactId>lift-json_${scala.binary.version}</artifactId>
             <version>2.6.2</version>
         </dependency>
 
