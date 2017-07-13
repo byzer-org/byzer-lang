@@ -7,6 +7,11 @@ import net.csdn.common.logging.Loggers
   */
 object ManagerConfiguration {
   var yarnUrl = ""
+  val liveness_check_interval = 30
+  val clean_check_interval = 30
+  val submit_progress_check_interval = 2
+  val submit_progress_check_expire_duration = 60 * 10
+  val resubmit_try_interval = 60
 }
 
 class SparkAppTool {

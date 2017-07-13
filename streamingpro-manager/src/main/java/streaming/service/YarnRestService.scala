@@ -9,7 +9,7 @@ import net.csdn.modules.threadpool.DefaultThreadPoolService
 import net.csdn.modules.transport.{DefaultHttpTransportService, HttpTransportService}
 import net.csdn.modules.transport.proxy.{AggregateRestClient, FirstMeetProxyStrategy}
 import org.apache.log4j.Logger
-import streaming.db.{DB, TSparkApplication, TSparkApplicationLog}
+import streaming.db.{DB, ManagerConfiguration, TSparkApplication, TSparkApplicationLog}
 import streaming.remote.YarnApplicationState.YarnApplicationState
 import streaming.remote.{YarnApplication, YarnController}
 import streaming.shell.AsyncShellCommand
@@ -70,7 +70,7 @@ object Scheduler {
         }
       }
     }
-      , 1, 30, TimeUnit.SECONDS)
+      , 1, ManagerConfiguration.liveness_check_interval, TimeUnit.SECONDS)
 
     buffer += sparkLogCheckerScheduler.scheduleAtFixedRate(new Runnable {
       override def run(): Unit = {
@@ -86,7 +86,7 @@ object Scheduler {
         }
 
       }
-    }, 1, 2, TimeUnit.SECONDS)
+    }, 1, ManagerConfiguration.submit_progress_check_interval, TimeUnit.SECONDS)
 
     buffer += sparkSchedulerCleanerScheduler.scheduleAtFixedRate(new Runnable {
       override def run(): Unit = {
@@ -94,7 +94,7 @@ object Scheduler {
         try {
           sparkSubmitTaskMap.filter { taskAndTime =>
             val elipseTime = System.currentTimeMillis() - taskAndTime._2
-            elipseTime > 10 * 60 * 1000 //ten minutes expire
+            elipseTime > ManagerConfiguration.submit_progress_check_expire_duration * 1000 //ten minutes expire
           }.foreach { task =>
             sparkSubmitTaskMap.remove(task)
             logger.error(s"Cleaner clean  task monitoring submit " +
@@ -105,7 +105,7 @@ object Scheduler {
 
           resubmitMap.filter { idAndTime =>
             val elipseTime = System.currentTimeMillis() - idAndTime._2
-            elipseTime > 5 * 60 * 1000 //ten minutes expire
+            elipseTime > ManagerConfiguration.submit_progress_check_expire_duration * 1000 / 2 //five minutes expire
           }.foreach { submit =>
             resubmitMap.remove(submit._1)
             logger.error(s"Cleaner clean  reSubmit App where id= ${submit._1}" +
@@ -118,7 +118,7 @@ object Scheduler {
 
 
       }
-    }, 1, 30, TimeUnit.SECONDS)
+    }, 1, ManagerConfiguration.clean_check_interval, TimeUnit.SECONDS)
   }
 
 
@@ -161,10 +161,10 @@ object Scheduler {
   def shouldStart(app: TSparkApplication, yarnUrl: String): Boolean = {
     if (!TSparkApplication.shouldWatch(app)) return false
 
-    if (resubmitMap.containsKey(app.id) && System.currentTimeMillis() - resubmitMap.get(app.id) < 1000 * 60) {
+    if (resubmitMap.containsKey(app.id) && System.currentTimeMillis() - resubmitMap.get(app.id) < 1000 * ManagerConfiguration.resubmit_try_interval) {
       return false
     }
-    if (resubmitMap.containsKey(app.id) && System.currentTimeMillis() - resubmitMap.get(app.id) > 1000 * 60) {
+    if (resubmitMap.containsKey(app.id) && System.currentTimeMillis() - resubmitMap.get(app.id) > 1000 * ManagerConfiguration.resubmit_try_interval) {
       logger.error(s"app.id=${app.id} try to start but failed in one minute")
       resubmitMap.remove(app.id)
     }
@@ -202,13 +202,13 @@ object Scheduler {
     if (result) {
       resubmitMap.put(app.id, System.currentTimeMillis())
       logger.error(s"${targetApp.id} ${app.url} ${targetApp.diagnostics} ${app.startTime}")
-      //      TSparkApplication.saveLog(new TSparkApplicationLog(0,
-      //        targetApp.id,
-      //        app.url,
-      //        app.source, "",
-      //        targetApp.diagnostics,
-      //        app.startTime,
-      //        System.currentTimeMillis()))
+      TSparkApplication.saveLog(new TSparkApplicationLog(0,
+        targetApp.id,
+        app.url,
+        app.source, "",
+        targetApp.diagnostics,
+        app.startTime,
+        System.currentTimeMillis()))
     }
     result
   }
