@@ -41,7 +41,16 @@
     "false",
     "true"
   ],
-
+  "mmspark.master": [
+    "yarn",
+    "local[1]",
+    "local[2]",
+    "local[4]"
+  ],
+  "mmspark.deploy-mode": [
+    "cluster",
+    "client"
+  ],
   "AppType": [
     "spark"
   ]

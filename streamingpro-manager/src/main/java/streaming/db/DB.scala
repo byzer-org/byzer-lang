@@ -40,6 +40,50 @@ class TSparkApplicationLog(val id: Long,
                            var endTime: Long
                           ) extends KeyedEntity[Long]
 
+class TSparkJar(val id: Long,
+                var name: String,
+                var path: String,
+                var createTime: Long
+               ) extends KeyedEntity[Long]
+
+object TSparkJar {
+  def find(id: Long) = {
+    transaction {
+      from(DB.tSparkJar)(s => where(s.id === id) select (s)).singleOption
+    }
+  }
+
+  def findByName(name: String) = {
+    transaction {
+      from(DB.tSparkJar)(s => where(s.name === name) select (s)).singleOption
+    }
+  }
+
+  def save(item: TSparkJar) = {
+    //implicit val formats = SJSon.Serialization.formats(SJSon.NoTypeHints)
+    transaction {
+      DB.tSparkJar.insert(item)
+    }
+  }
+
+  def reSave(app: TSparkJar) = {
+    transaction {
+      DB.tSparkJar.update(app)
+    }
+  }
+
+  def delete(id: Long) = {
+    transaction {
+      DB.tSparkJar.delete(id)
+    }
+  }
+
+  def list = {
+    transaction {
+      from(DB.tSparkJar)(s => select(s)).toList
+    }
+  }
+}
 
 object TSparkApplication extends PrimitiveTypeMode {
 
@@ -177,6 +221,7 @@ object DB extends Schema {
   val tParamsConf = table[TParamsConf]("t_params_conf")
   val tSparkApplication = table[TSparkApplication]("t_spark_application")
   val tSparkApplicationLog = table[TSparkApplicationLog]("t_spark_application_log")
+  val tSparkJar = table[TSparkJar]("t_spark_jar")
 
 
 }

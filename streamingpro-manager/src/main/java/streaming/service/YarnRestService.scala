@@ -12,7 +12,7 @@ import org.apache.log4j.Logger
 import streaming.db.{DB, ManagerConfiguration, TSparkApplication, TSparkApplicationLog}
 import streaming.remote.YarnApplicationState.YarnApplicationState
 import streaming.remote.{YarnApplication, YarnController}
-import streaming.shell.AsyncShellCommand
+import streaming.shell.{AsyncShellCommand, Md5, ShellCommand}
 
 import scala.collection.JavaConversions._
 import streaming.remote.YarnControllerE._
@@ -123,24 +123,43 @@ object Scheduler {
 
 
   def submitApp(app: TSparkApplication) = {
-    //val shellCommand = """ source /etc/profile ;cd $SPARK_HOME ; su - $SPARK_USER -c ' source /etc/profile ;cd $SPARK_HOME ;  """ + s"""  ${app.source}' """
-    val shellCommand =
-    s"""  ${app.source} """
-    val taskId = AsyncShellCommand.start(shellCommand, "", false)
-    logger.info(s"Put submit task ${Task(taskId, "", app.id)} in sparkSubmitTaskMap")
-    sparkSubmitTaskMap.put(Task(taskId, "", app.id), System.currentTimeMillis())
-    (taskId, "")
+    val prefix = "export SPARK_HOME=/opt/spark-2.1.1;export HADOOP_CONF_DIR=/etc/hadoop/conf;cd $SPARK_HOME;"
+    //val prefix = "source /etc/profile ;cd $SPARK_HOME ;"
+    var shellCommand = s"./bin/${app.source}"
+    if (shellCommand.contains("--master yarn") && shellCommand.contains("--deploy-mode client")) {
+      val fakeTaskId = "_" + Md5.MD5(shellCommand) + "_" + System.currentTimeMillis()
+      ShellCommand.exec(s"mkdir -p /tmp/mammuthus/${fakeTaskId}")
+      shellCommand = s"""$prefix nohup  ${shellCommand} > /tmp/mammuthus/${fakeTaskId}/stdout 2>&1 &"""
+      logger.info(shellCommand)
+      logger.info(ShellCommand.exec(shellCommand))
+      logger.info(s"spark yarn client mode : Put submit task ${Task(fakeTaskId, "", app.id)} in sparkSubmitTaskMap")
+      sparkSubmitTaskMap.put(Task(fakeTaskId, "", app.id), System.currentTimeMillis())
+      (fakeTaskId, "")
+    } else {
+      val taskId = AsyncShellCommand.start(prefix + shellCommand, System.currentTimeMillis() + "", false)
+      logger.info(s"spark yanr cluster/local mode: Put submit task ${Task(taskId, "", app.id)} in sparkSubmitTaskMap")
+      sparkSubmitTaskMap.put(Task(taskId, "", app.id), System.currentTimeMillis())
+      (taskId, "")
+    }
+
   }
 
   def checkSubmitAppStateTask(appId: Long, task: Task) = {
     val host = task.host
     val taskId = task.taskId
 
-    val shellProcessResult = AsyncShellCommand.progress(taskId, 0)
+    val shellProcessResult = if (taskId.startsWith("_")) {
+      ShellCommand.exec(s"cat /tmp/mammuthus/${taskId}/stdout")
+    } else {
+      val res = AsyncShellCommand.progress(taskId, 0)
+      if (res != null) {
+        res._2._2
+      } else null
+    }
     if (shellProcessResult != null) {
       //Application report for application_1457496292231_0022 (state: ACCEPTED)
       val app = TSparkApplication.find(appId).get
-      val accepLines = shellProcessResult._2._2.split("\n").
+      val accepLines = shellProcessResult.split("\n").
         filter(line => line.contains("state: ACCEPTED"))
       if (accepLines.size > 0) {
         val applicationId = accepLines.head.split("\\s").filter(block => block.startsWith("application_")).head

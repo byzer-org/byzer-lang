@@ -3,67 +3,87 @@
 <head>
     <title>确认参数</title>
     #parse("/rest/header.vm")
+     <style type="text/css">
+                .material-switch > input[type="checkbox"] {
+                    display: none;
+                }
+
+                .material-switch > label {
+                    cursor: pointer;
+                    height: 0px;
+                    position: relative;
+                    width: 40px;
+                }
+
+                .material-switch > label::before {
+                    background: rgb(0, 0, 0);
+                    box-shadow: inset 0px 0px 10px rgba(0, 0, 0, 0.5);
+                    border-radius: 8px;
+                    content: '';
+                    height: 16px;
+                    margin-top: -8px;
+                    position:absolute;
+                    opacity: 0.3;
+                    transition: all 0.4s ease-in-out;
+                    width: 40px;
+                }
+                .material-switch > label::after {
+                    background: rgb(255, 255, 255);
+                    border-radius: 16px;
+                    box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.3);
+                    content: '';
+                    height: 24px;
+                    left: -4px;
+                    margin-top: -8px;
+                    position: absolute;
+                    top: -4px;
+                    transition: all 0.3s ease-in-out;
+                    width: 24px;
+                }
+                .material-switch > input[type="checkbox"]:checked + label::before {
+                    background: inherit;
+                    opacity: 0.5;
+                }
+                .material-switch > input[type="checkbox"]:checked + label::after {
+                    background: inherit;
+                    left: 20px;
+                }
+</style>
+
 
 
 </head>
 <body data-spy="scroll" data-target=".navbar" style="margin-bottom: 50px">
 
-<div style="height:30px"></div>
+
 <div class="container">
-
-
-    <div class="row">
-        <div class="col-sm-4">
-            <h4>提交Spark任务</h4>
-
-
-        </div>
-    </div>
-            $msg
-
-
-                <div class="row">
-                        <div class="col-md-2">
-
-
-                            <div class="panel panel-default">
-                                <div class="panel-heading" >上传文件</div>
-                                <div class="panel-body">
-                                    <form ENCTYPE="multipart/form-data" method="post" action="/form/upload">
-                                        <input name="file" type="file"/>
-                                        <input name="redirect" type="hidden" value="/submit_job_index.html"/>
-                                        <input type="submit" value="上传job jar包"/>
-                                    </form>
-
-                                </div>
-                            </div>
-                        </div>
-                   <form action="/submit_job.html" id="slaveForm" method="post" class="form-horizontal">
-
+<h2>Spark 配置提交</h2>
+</div>
+<div class="container">
+<form action="/submit_job.html" id="slaveForm" method="post" class="form-horizontal">
+<div class="panel panel-default ">
+<div class="panel-heading">依赖jar包勾选</div>
+$jarDependencies
                    #foreach( $sub_params in $params )
+
 
                     <div class="panel panel-default ">
                         <div class="panel-heading">$sub_params.name</div>
-                        <div class="panel-body">
+
                              #foreach( $c in $sub_params.value)
-                                 <br/>
-                                <div class="form-group" #if($c.type=='hidden') style="display: none" #end >
-                                    <label class="col-sm-2 control-label" for="suffix_${c.name}" title="${c.desc}">
-                                            ${c.label}
-                                    </label>
+                             <div class="form-group" #if($c.type=='hidden') style="display: none" #end >
+                                                             <label class="col-sm-2 control-label" for="suffix_${c.name}" title="${c.desc}">
+                                                                     ${c.label}
+                                                             </label>
 
+                                                             <div class="col-sm-10">
+                                                                 <div class="col-sm-5">
+                                                                     ${c.value}
+                                                                 </div>
+                                                             </div>
 
-                                    <div class="col-sm-10">
-                                        <div class="col-sm-5">
-                                            ${c.value} <!--<span class="col-xs-6 help-block">${c.desc}</span>-->
-                                        </div>
-                                    </div>
-
-
-                                </div>
-
-                            #end
-                        </div>
+                              </div>
+                                #end
                     </div>
 
                 #end
@@ -75,9 +95,10 @@
 
 
 
-            </form>
+</form>
 
 
+<div>
 
 
 

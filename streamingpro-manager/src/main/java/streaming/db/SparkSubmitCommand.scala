@@ -14,14 +14,16 @@ object ManagerConfiguration {
   val resubmit_try_interval = 60
 }
 
-class SparkAppTool {
-  val logger = Loggers.getLogger(classOf[SparkAppTool])
+class SparkSubmitCommand {
+  val logger = Loggers.getLogger(classOf[SparkSubmitCommand])
 
 
   val keywords = Set(
     "class",
     "master",
+    "deploy-mode",
     "name",
+    "queue",
     "executor-memory",
     "driver-memory",
     "num-executors",
@@ -30,23 +32,29 @@ class SparkAppTool {
     "files")
 
   def process(params: Map[String, String]) = {
-    val sourceK = params.filter(f => f._1.startsWith("mmspark.")).map(f => (cut(f._1), f._2)).map { f =>
+    var jarPath = params.getOrElse("jarPath", "")
+    val sourceK = params.filter(f => f._1.startsWith("mmspark.")).map(f => (cut(f._1), f._2)).filter { f =>
+      f._2 != null && !f._2.isEmpty
+    }.map { f =>
       val paramKey = f._1
       val paramValue = f._2
       paramKey match {
         case pk if pk.startsWith("spark.") => s"""--conf "${paramKey}=${paramValue}" """
         case pk if keywords.contains(pk) => s"""--${paramKey} $paramValue """
-        case pk if pk == "args" => s"""$paramValue"""
+        case pk if pk == "args" => s"""$paramValue """
+        case pk if pk == "main_jar" =>
+          jarPath = paramValue
+          null
         case _ => s"""-${paramKey} $paramValue """
       }
 
-    }
+    }.filter(f => f != null)
 
-    val source = sourceK.filter(f => f.startsWith("--")).mkString(" ") + " " +
-      s"""  ${params("jarPath")}""" + " " +
-      sourceK.filter(f => f.startsWith("-") && !f.startsWith("--")).mkString(" ") + " " +
-      sourceK.filter(f => !f.startsWith("-") && !f.startsWith("--")).mkString(" ")
-
+    var source = sourceK.filter(f => f.startsWith("--")).mkString(" \\\n") + " \\\n" +
+      jarPath + " \\\n" +
+      sourceK.filter(f => f.startsWith("-") && !f.startsWith("--")).mkString(" \\\n") + " \\\n" +
+      sourceK.filter(f => !f.startsWith("-") && !f.startsWith("--")).mkString(" \\\n")
+    source = source.substring(0, source.length - 2)
     logger.info(source)
     TSparkApplication.save("", ManagerConfiguration.yarnUrl, "spark-submit " + source)
   }

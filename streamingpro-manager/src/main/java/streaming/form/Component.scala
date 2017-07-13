@@ -3,6 +3,7 @@ package streaming.form
 import com.google.common.base.Charsets
 import com.google.common.io.Resources
 import net.sf.json.{JSONArray, JSONObject}
+import streaming.db.TSparkJar
 
 import scala.io.Source
 import scala.collection.JavaConversions._
@@ -19,15 +20,17 @@ object DeployParameterService {
 
   def register() = {
     Map(
-      "select" -> new SelectParameterProcessor(),
-      "normal" -> new NoneAppParameterProcessor()
+      "select" -> new ComplexParameterProcessor(),
+      "normal" -> new NoneAppParameterProcessor(),
+      "checkbox" -> new ComplexParameterProcessor()
 
     )
   }
 
   def register2() = {
     Map(
-      "spark" -> new SparkParameter()
+      "spark" -> new SparkParameter(),
+      "jar" -> new TSparkJarParameter()
     )
   }
 
@@ -90,32 +93,13 @@ object DeployParameterService {
     }
   }
 
-  private def process(appInstallItem: AppParameters, priority: Int) = {
+  def process(appInstallItem: AppParameters, priority: Int) = {
     appInstallItem.param.filter(f => f.priority == priority).map {
       f =>
         val appParameterProcessor = parameterProcessorMapping(f.actionType)
         appParameterProcessor.process(f)
     }
   }
-
-
-}
-
-object AppInstallParameterActionType extends Enumeration {
-  type AppInstallParameterActionType = Value
-  val NODES = Value("nodes")
-  val NORMAL = Value("normal")
-  val DEPENDENCY = Value("dependency")
-  val PASSWORD = Value("password")
-  val MasterHost = Value("masterHost")
-  val SELECT = Value("select")
-}
-
-object FormType extends Enumeration {
-  type FormType = Value
-  val SELECT = Value("select")
-  val NORMAL = Value("normal")
-  val CHECKBOX = Value("checkbox")
 }
 
 case class AppParameters(clzz: String,
@@ -134,16 +118,64 @@ case class Parameter(name: String,
                      comment: String,
                      value: String)
 
+object AppInstallParameterActionType extends Enumeration {
+  type AppInstallParameterActionType = Value
+  val NODES = Value("nodes")
+  val NORMAL = Value("normal")
+  val DEPENDENCY = Value("dependency")
+  val PASSWORD = Value("password")
+  val MasterHost = Value("masterHost")
+  val SELECT = Value("select")
+}
+
+object FormType extends Enumeration {
+  type FormType = Value
+  val SELECT = Value("select")
+  val NORMAL = Value("normal")
+  val CHECKBOX = Value("checkbox")
+}
+
+
 object FormHelper {
   def formatFormItem(item: Parameter): Parameter = {
     FormType.withName(item.formType) match {
       case FormType.SELECT =>
-        val options = item.value.split(",").map(f => s"""<option value="${f}">${f}</option>""").mkString("")
+        val options = item.value.split(",").map { f =>
+          if (f.contains(":")) {
+            val Array(a, b) = f.split(":")
+            s"""<option value="${b}">${a}</option>"""
+          } else {
+            s"""<option value="${f}">${f}</option>"""
+          }
+
+        }.mkString("")
         item.copy(value = s"""<select name="${item.name}">${options}</select>""")
+
       case FormType.NORMAL =>
         item.copy(value = s"""<input type="text" name="${item.name}" value="${item.value}"/>""")
+
       case FormType.CHECKBOX =>
-        item
+        val options = item.value.split(",").map { f =>
+          val Array(a, b) = if (f.contains(":")) f.split(":") else Array(f, f)
+          s"""<li class="list-group-item">${a}
+              <div class="material-switch pull-right">
+              <input id="${b}" name="${item.name}" value="${b}" type="checkbox"/>
+              <label for="${b}" class="label-warning"></label>
+            </div>
+          </li>"""
+        }.mkString("")
+        val startHtml =
+          s"""
+             |         <div class="row">
+             |          <div class="col-xs-12">
+             |              <ul class="list-group">
+           """.stripMargin
+        val endHtml =
+          s"""
+             |            </div>
+             |    </div>
+           """.stripMargin
+        item.copy(value = startHtml + options + endHtml)
     }
 
   }
@@ -153,12 +185,11 @@ trait AppParameterProcessor {
   def process(actionType: Parameter): Parameter
 }
 
-class SelectParameterProcessor extends AppParameterProcessor {
+class ComplexParameterProcessor extends AppParameterProcessor {
   override def process(actionType: Parameter): Parameter = {
     if (!actionType.value.isEmpty) return actionType
     if (actionType.app.isEmpty || actionType.app == "-") return actionType
-    val v = DeployParameterService.parameterFieldMapping(actionType.app).asInstanceOf[BuildSelectParameterValues].
-      value(actionType).mkString(",")
+    val v = DeployParameterService.parameterFieldMapping(actionType.app).value(actionType).mkString(",")
     actionType.copy(value = v)
   }
 }
@@ -173,10 +204,18 @@ class SparkParameter extends BuildSelectParameterValues {
   override def value(actionType: Parameter): List[String] = {
     val str = Source.fromInputStream(this.getClass.getResourceAsStream("/sparkParameter.json")).getLines().mkString("\n")
     import scala.collection.JavaConversions._
-    val keyValue = JSONObject.fromObject(str).map { f =>
-      (f._1.asInstanceOf[String], f._2.asInstanceOf[JSONArray].map(f => f.asInstanceOf[String]).toList)
+    val keyValue = JSONObject.fromObject(str).map {
+      f =>
+        (f._1.asInstanceOf[String], f._2.asInstanceOf[JSONArray].map(f => f.asInstanceOf[String]).toList)
     }.toMap
     keyValue.getOrElse(actionType.name, List())
+  }
+}
+
+class TSparkJarParameter extends BuildSelectParameterValues {
+  override def value(actionType: Parameter): List[String] = {
+    val jrs = TSparkJar.list
+    jrs.map(f => f.name + ":" + f.path)
   }
 }
 
