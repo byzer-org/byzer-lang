@@ -1,0 +1,54 @@
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <!-- Bootstrap -->
+        <link href="/bootstrap/css/bootstrap.min.css" rel="stylesheet" media="screen">
+        <link href="/bootstrap/css/bootstrap-responsive.css" rel="stylesheet">
+        <link href="/bootstrap/css/react-bootstrap-treeview.css" rel="stylesheet">
+        <link href="/bootstrap/css/common.css" rel="stylesheet">
+        <link rel="apple-touch-icon-precomposed" sizes="144x144" href="/bootstrap/ico/apple-touch-icon-144-precomposed.png">
+        <link rel="apple-touch-icon-precomposed" sizes="114x114" href="/bootstrap/ico/apple-touch-icon-114-precomposed.png">
+        <link rel="apple-touch-icon-precomposed" sizes="72x72" href="/bootstrap/ico/apple-touch-icon-72-precomposed.png">
+        <link rel="apple-touch-icon-precomposed" href="/bootstrap/ico/apple-touch-icon-57-precomposed.png">
+
+    <style type="text/css">
+
+         body {
+            font-family: "Microsoft YaHei"
+         }
+         table {
+            font-family: "Microsoft YaHei"
+         }
+         button {
+            font-family: "Microsoft YaHei"
+         }
+         .table-bordered {
+                    -webkit-box-shadow: 0 1px 1px #ccc;
+                    -moz-box-shadow: 0 1px 1px #ccc;
+                    box-shadow: 0 1px 1px #ccc;
+                }
+
+            .table-bordered th {
+                    background-color: #dce9f9;
+                    background-image: -webkit-gradient(linear, left top, left bottom, from(#ebf3fc), to(#dce9f9));
+                    background-image: -webkit-linear-gradient(top, #ebf3fc, #dce9f9);
+                    background-image: -moz-linear-gradient(top, #ebf3fc, #dce9f9);
+                    background-image: -ms-linear-gradient(top, #ebf3fc, #dce9f9);
+                    background-image: -o-linear-gradient(top, #ebf3fc, #dce9f9);
+                    background-image: linear-gradient(top, #ebf3fc, #dce9f9);
+                    filter: progid:DXImageTransform.Microsoft.gradient(GradientType=0, startColorstr=#ebf3fc, endColorstr=#dce9f9);
+                    -ms-filter: "progid:DXImageTransform.Microsoft.gradient (GradientType=0, startColorstr=#ebf3fc, endColorstr=#dce9f9)";
+                }
+                .zebra th {
+                    background-color: #eee;
+                    background-image: -webkit-gradient(linear, left top, left bottom, from(#f5f5f5), to(#eee));
+                    background-image: -webkit-linear-gradient(top, #f5f5f5, #eee);
+                    background-image: -moz-linear-gradient(top, #f5f5f5, #eee);
+                    background-image: -ms-linear-gradient(top, #f5f5f5, #eee);
+                    background-image: -o-linear-gradient(top, #f5f5f5, #eee);
+                    background-image: linear-gradient(top, #f5f5f5, #eee);
+                    filter: progid:DXImageTransform.Microsoft.gradient(GradientType=0, startColorstr=#f5f5f5, endColorstr=#eeeeee);
+                    -ms-filter: "progid:DXImageTransform.Microsoft.gradient (GradientType=0, startColorstr=#f5f5f5, endColorstr=#eeeeee)";
+                }
+
+                body {margin-top: 25px;filter:progid:DXImageTransform.Microsoft.Gradient(GradientType=0, EndColorStr='#ff00ff', StartColorStr='#00ffff');}
+                td {text-align:center}
+         </style>

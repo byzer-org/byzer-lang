@@ -1,0 +1,49 @@
+{
+  "mmspark.spark.shuffle.manager": [
+    "tungsten-sort"
+  ],
+  "mmspark.spark.storage.memoryFraction": [
+    "0.1",
+    "0.3",
+    "0.05"
+  ],
+  "mmspark.executor-cores": [
+    "2",
+    "3"
+  ],
+  "mmspark.spark.locality.wait": [
+    "10ms",
+    "50ms"
+  ],
+  "mmspark.spark.serializer": [
+    "org.apache.spark.serializer.KryoSerializer",
+    "org.apache.spark.serializer.JavaSerializer"
+  ],
+  "mmspark.spark.io.compression.codec": [
+    "org.apache.spark.io.LZ4CompressionCodec",
+    "org.apache.spark.io.SnappyCompressionCodec"
+  ],
+  "mmspark.streaming.platform": [
+    "spark",
+    "ss",
+    "spark-streaming",
+    "flink"
+  ],
+  "mmspark.streaming.rest": [
+    "false",
+    "true"
+  ],
+  "mmspark.streaming.spark.service": [
+    "false",
+    "true"
+  ],
+  "mmspark.streaming.enableHiveSupport": [
+    "false",
+    "true"
+  ],
+
+  "AppType": [
+    "spark"
+  ]
+}
+

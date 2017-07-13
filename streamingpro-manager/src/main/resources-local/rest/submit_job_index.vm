@@ -1,0 +1,85 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+    <title>确认参数</title>
+    #parse("/rest/header.vm")
+
+
+</head>
+<body data-spy="scroll" data-target=".navbar" style="margin-bottom: 50px">
+
+<div style="height:30px"></div>
+<div class="container">
+
+
+    <div class="row">
+        <div class="col-sm-4">
+            <h4>提交Spark任务</h4>
+
+
+        </div>
+    </div>
+            $msg
+
+
+                <div class="row">
+                        <div class="col-md-2">
+
+
+                            <div class="panel panel-default">
+                                <div class="panel-heading" >上传文件</div>
+                                <div class="panel-body">
+                                    <form ENCTYPE="multipart/form-data" method="post" action="/form/upload">
+                                        <input name="file" type="file"/>
+                                        <input name="redirect" type="hidden" value="/submit_job_index.html"/>
+                                        <input type="submit" value="上传job jar包"/>
+                                    </form>
+
+                                </div>
+                            </div>
+                        </div>
+                   <form action="/submit_job.html" id="slaveForm" method="post" class="form-horizontal">
+
+                   #foreach( $sub_params in $params )
+
+                    <div class="panel panel-default ">
+                        <div class="panel-heading">$sub_params.name</div>
+                        <div class="panel-body">
+                             #foreach( $c in $sub_params.value)
+                                 <br/>
+                                <div class="form-group" #if($c.type=='hidden') style="display: none" #end >
+                                    <label class="col-sm-2 control-label" for="suffix_${c.name}" title="${c.desc}">
+                                            ${c.label}
+                                    </label>
+
+
+                                    <div class="col-sm-10">
+                                        <div class="col-sm-5">
+                                            ${c.value} <!--<span class="col-xs-6 help-block">${c.desc}</span>-->
+                                        </div>
+                                    </div>
+
+
+                                </div>
+
+                            #end
+                        </div>
+                    </div>
+
+                #end
+                 <input type="hidden" name="jarPath" value="${jarPath}"/>
+                <div class="col-sm-4 pull-right">
+                    <input type="submit" class="btn btn-primary  form-control" value="提交"/>
+                </div>
+
+
+
+
+            </form>
+
+
+
+
+
+</body>
+</html>
