@@ -14,13 +14,17 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <scala.version>2.10.3</scala.version>
-        <scala.binary.version>2.10</scala.binary.version>
-        <spark.version>1.6.1</spark.version>
+        <scala.version>2.11.8</scala.version>
+        <scala.binary.version>2.11</scala.binary.version>
+        <scala.jline.version>2.11.0-M3</scala.jline.version>
+
+        <spark.streaming.kafka.artifactId>spark-streaming-kafka-0-8_${scala.binary.version}
+        </spark.streaming.kafka.artifactId>
+        <spark.sql.kafka.artifactId>spark-sql-kafka-0-10_${scala.binary.version}</spark.sql.kafka.artifactId>
+        <spark.version>2.1.1</spark.version>
+
         <flink.version>1.2.0</flink.version>
-        <spark.sql.kafka.artifactId>spark-streaming-kafka_2.10</spark.sql.kafka.artifactId>
-        <streamingpro.version>0.4.7</streamingpro.version>
-        <spark.streaming.kafka.artifactId>spark-streaming-kafka_2.10</spark.streaming.kafka.artifactId>
+        
         <serviceframework.version>1.3.2-SNAPSHOT</serviceframework.version>
         <scope>provided</scope>
     </properties>
