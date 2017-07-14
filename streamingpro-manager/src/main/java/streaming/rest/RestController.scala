@@ -74,7 +74,7 @@ class RestController extends ApplicationController {
       installSteps("spark").map(f => f.priority).distinct.sortBy(f => f).map(f => DeployParameterService.installStep("spark", f).map(f => FormHelper.formatFormItem(f)))
 
     val jarPathMessage = if (isEmpty(param("jarPath"))) "" else s" jar is uploaded : ${param("jarPath")}"
-    renderHtml(200, "/rest/submit_job_index.vm", Map("params" -> view(List(
+    renderHtml(200, "/rest/submit_job.vm", Map("params" -> view(List(
       Map("name" -> "StreamingPro配置", "value" -> appParameters(0)),
       Map("name" -> "资源配置", "value" -> appParameters(2)),
       Map("name" -> "Spark参数配置", "value" -> appParameters(1))
@@ -93,6 +93,11 @@ class RestController extends ApplicationController {
 
     val (taskId, host) = Scheduler.submitApp(app)
     redirectTo("/process.html", Map("taskId" -> taskId, "appId" -> app.id))
+  }
+
+  @At(path = Array("/job_history.html"), types = Array(GET, POST))
+  def job_history = {
+
   }
 
   @At(path = Array("/jobs.html"), types = Array(GET, POST))
@@ -143,7 +148,7 @@ class RestController extends ApplicationController {
 
 
     }
-    renderHtml(200, "/rest/index.vm", Map("result" -> view(result)))
+    renderHtml(200, "/rest/jobs.vm", Map("result" -> view(result)))
   }
 
   @At(path = Array("/upload.html"), types = Array(RestRequest.Method.GET, RestRequest.Method.POST))
