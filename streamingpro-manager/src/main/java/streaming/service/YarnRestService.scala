@@ -140,7 +140,7 @@ object Scheduler {
 
   }
 
-  def checkSubmitAppStateTask(appId: Long, task: Task) = {
+  def checkSubmitAppStateTask(appId: Long, task: Task): Unit = {
     val host = task.host
     val taskId = task.taskId
 
@@ -154,7 +154,14 @@ object Scheduler {
     }
     if (shellProcessResult != null) {
       //Application report for application_1457496292231_0022 (state: ACCEPTED)
-      val app = TSparkApplication.find(appId).get
+      val app = TSparkApplication.find(appId) match {
+        case Some(i) => i
+        case None =>
+          sparkSubmitTaskMap.remove(task)
+          resubmitMap.remove(appId)
+          return
+      }
+
       val accepLines = shellProcessResult.split("\n").
         filter(line => line.contains("state: ACCEPTED"))
       if (accepLines.size > 0) {
