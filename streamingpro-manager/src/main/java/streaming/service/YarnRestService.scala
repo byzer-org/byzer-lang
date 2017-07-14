@@ -2,13 +2,11 @@ package streaming.service
 
 import java.util.concurrent.{ConcurrentHashMap, Executors, TimeUnit}
 
-import com.google.inject.Singleton
-import net.csdn.common.logging.{CSLogger, Loggers}
+import net.csdn.common.logging.Loggers
 import net.csdn.common.settings.{ImmutableSettings, Settings}
 import net.csdn.modules.threadpool.DefaultThreadPoolService
 import net.csdn.modules.transport.{DefaultHttpTransportService, HttpTransportService}
 import net.csdn.modules.transport.proxy.{AggregateRestClient, FirstMeetProxyStrategy}
-import org.apache.log4j.Logger
 import streaming.db.{DB, ManagerConfiguration, TSparkApplication, TSparkApplicationLog}
 import streaming.remote.YarnApplicationState.YarnApplicationState
 import streaming.remote.{YarnApplication, YarnController}
@@ -66,7 +64,7 @@ object Scheduler {
           }
         } catch {
           case e: Exception =>
-            logger.info("livenessCheckScheduler fail")
+            logger.info("livenessCheckScheduler fail", e)
         }
       }
     }
@@ -82,7 +80,7 @@ object Scheduler {
           }
         } catch {
           case e: Exception =>
-            logger.info("sparkLogCheckerScheduler fail")
+            logger.info("sparkLogCheckerScheduler fail", e)
         }
 
       }
@@ -113,7 +111,7 @@ object Scheduler {
           }
         } catch {
           case e: Exception =>
-            logger.info("sparkSchedulerCleanerScheduler fail")
+            logger.info("sparkSchedulerCleanerScheduler fail", e)
         }
 
 
@@ -189,42 +187,42 @@ object Scheduler {
       resubmitMap.remove(app.id)
     }
 
+    val states = Set(
+      YarnApplicationState.RUNNING,
+      YarnApplicationState.ACCEPTED,
+      YarnApplicationState.SUBMITTED,
+      YarnApplicationState.NEW,
+      YarnApplicationState.NEW_SAVING)
+
     //检查该应用在Yarn的状态
-    val appAlreadySubmit = YarnRestService.query(yarnUrl, (client, rm) => {
-      val tempAppList = client.apps(
-        List(
-          YarnApplicationState.RUNNING,
-          YarnApplicationState.ACCEPTED,
-          YarnApplicationState.SUBMITTED,
-          YarnApplicationState.NEW,
-          YarnApplicationState.NEW_SAVING
-        ).mkString(",")
-      ).app()
-      val name = app.source.split("--class").last.trim.split("\\s+").head
-
-      tempAppList.map(f => f.name == name).size > 0
-
-    })
-
-    //如果已经接受了，就不做检查了
-    if (appAlreadySubmit) return false
-
-    val targetApp = YarnRestService.query(yarnUrl, (client, rm) => {
-      val tempAppList = client.app(app.applicationId)
-      if (tempAppList.size() == 0) {
-        throw new RuntimeException(s"yarn.rm.address=${rm} reqeust fail.Please check RM")
+    val targetAppList = YarnRestService.query(yarnUrl, (client, rm) => {
+      val tempAppList = client.app(app.applicationId).app()
+      if (tempAppList == null) {
+        logger.error(s"ApplicationId: ${app.applicationId} is not found.Maybe fail to connect ${yarnUrl} . ")
+        List()
+      } else {
+        tempAppList
       }
-      val tempApp = tempAppList.get(0)
-      if (tempApp.getStatus != 200) throw new RuntimeException(s"yarn.rm.address=${rm} reqeust fail.Please check RM")
-      tempAppList.app()(0)
     })
+
+    //如果Yarn已经获得提交通知，就不做检查了
+    if (targetAppList.filter(f => states.contains(YarnApplicationState.withName(f.state))).size > 0) {
+      logger.info(s"applicationId: ${app.applicationId} already in  ACCEPTED/RUNNING/SUBMITTED/NEW/NEW_SAVING state,skip")
+      return false
+    }
+    if (targetAppList.size == 0) {
+      return false
+    }
+
+    val targetApp = targetAppList(0)
+    //如果状态是完成了，被杀，或者失败了，则会重新提交
     val result = (targetApp != null && (targetApp.state == YarnApplicationState.FAILED.toString ||
       targetApp.state == YarnApplicationState.KILLED.toString ||
       targetApp.state == YarnApplicationState.FINISHED.toString))
 
     if (result) {
+      logger.error(s"try to resubmit ${app.applicationId}; Fail application info: ${targetApp.id} ${app.url} ${targetApp.diagnostics} ${app.startTime}")
       resubmitMap.put(app.id, System.currentTimeMillis())
-      logger.error(s"${targetApp.id} ${app.url} ${targetApp.diagnostics} ${app.startTime}")
       TSparkApplication.saveLog(new TSparkApplicationLog(0,
         targetApp.id,
         app.url,

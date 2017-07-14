@@ -93,6 +93,9 @@ object TSparkApplication extends PrimitiveTypeMode {
     }
   }
 
+  /*
+    监控周期的功能现在还没有加上
+   */
   def shouldWatch(app: TSparkApplication) = {
     app.keepRunning == 0 &&
       app.watchInterval > 0 &&
