@@ -1,17 +1,39 @@
 package streaming.db
 
 import net.csdn.common.logging.Loggers
+import streaming.common.ParamsUtil
 
 /**
   * Created by allwefantasy on 12/7/2017.
   */
 object ManagerConfiguration {
-  var yarnUrl = ""
-  val liveness_check_interval = 30
+  var config: ParamsUtil = null
   val clean_check_interval = 30
   val submit_progress_check_interval = 2
   val submit_progress_check_expire_duration = 60 * 10
   val resubmit_try_interval = 60
+
+  def yarnUrl = {
+    config.getParam("yarnUrl")
+  }
+
+  def env = {
+    //eg. export SPARK_HOME=/opt/spark-2.1.1;export HADOOP_CONF_DIR=/etc/hadoop/conf;cd $SPARK_HOME;
+    //eg. source /etc/profile ;cd $SPARK_HOME ;
+    if (config.hasParam("env")) {
+      config.getParam("env")
+    } else {
+      "export SPARK_HOME=/opt/spark-2.1.1;export HADOOP_CONF_DIR=/etc/hadoop/conf;cd $SPARK_HOME;"
+    }
+
+  }
+
+  def liveness_check_interval = {
+    if (config.hasParam("liveness_check_interval")) {
+      config.getIntParam("liveness_check_interval")
+    } else 30
+  }
+
 }
 
 class SparkSubmitCommand {

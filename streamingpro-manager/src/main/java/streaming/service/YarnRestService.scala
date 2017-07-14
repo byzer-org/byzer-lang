@@ -123,8 +123,7 @@ object Scheduler {
 
 
   def submitApp(app: TSparkApplication) = {
-    val prefix = "export SPARK_HOME=/opt/spark-2.1.1;export HADOOP_CONF_DIR=/etc/hadoop/conf;cd $SPARK_HOME;"
-    //val prefix = "source /etc/profile ;cd $SPARK_HOME ;"
+    val prefix = ManagerConfiguration.env
     var shellCommand = s"./bin/${app.source}"
     if (shellCommand.contains("--master yarn") && shellCommand.contains("--deploy-mode client")) {
       val fakeTaskId = "_" + Md5.MD5(shellCommand) + "_" + System.currentTimeMillis()
@@ -180,13 +179,17 @@ object Scheduler {
   def shouldStart(app: TSparkApplication, yarnUrl: String): Boolean = {
     if (!TSparkApplication.shouldWatch(app)) return false
 
+    //如果任务已经被重新提交，并且小于一分钟，就不会再坐其他检查，直接跳过
     if (resubmitMap.containsKey(app.id) && System.currentTimeMillis() - resubmitMap.get(app.id) < 1000 * ManagerConfiguration.resubmit_try_interval) {
       return false
     }
+    //如果任务已经被重新提交，并且大于一分钟，会从resubmitMap剔除
     if (resubmitMap.containsKey(app.id) && System.currentTimeMillis() - resubmitMap.get(app.id) > 1000 * ManagerConfiguration.resubmit_try_interval) {
       logger.error(s"app.id=${app.id} try to start but failed in one minute")
       resubmitMap.remove(app.id)
     }
+
+    //检查该应用在Yarn的状态
     val appAlreadySubmit = YarnRestService.query(yarnUrl, (client, rm) => {
       val tempAppList = client.apps(
         List(
@@ -203,6 +206,7 @@ object Scheduler {
 
     })
 
+    //如果已经接受了，就不做检查了
     if (appAlreadySubmit) return false
 
     val targetApp = YarnRestService.query(yarnUrl, (client, rm) => {

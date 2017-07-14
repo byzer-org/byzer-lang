@@ -11,7 +11,8 @@ import org.apache.commons.fileupload.disk.DiskFileItemFactory
 import org.apache.commons.fileupload.servlet.ServletFileUpload
 import org.apache.commons.io.{FileUtils, FilenameUtils, IOUtils}
 import streaming.db._
-import streaming.form.{ComplexParameterProcessor, DeployParameterService, FormHelper, Parameter}
+import streaming.bean.{ComplexParameterProcessor, DeployParameterService, Parameter}
+import streaming.form.FormHelper
 import streaming.service.{Scheduler, YarnRestService}
 
 import scala.collection.JavaConversions._
