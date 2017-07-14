@@ -112,8 +112,6 @@ function($) {
 
 </head>
 <body data-spy="scroll" data-target=".navbar" style="margin-bottom: 50px">
-
-
 <div class="container">
       <div class="panel panel-default">
         <div class="panel-heading"><strong>上传Jar包</strong> <small></small></div>

@@ -13,7 +13,8 @@ import org.apache.commons.io.{FileUtils, FilenameUtils, IOUtils}
 import streaming.db._
 import streaming.bean.{ComplexParameterProcessor, DeployParameterService, Parameter}
 import streaming.form.FormHelper
-import streaming.service.{Scheduler, YarnRestService}
+import streaming.service.{Scheduler, YarnApplicationState, YarnRestService}
+import streaming.shell.ShellCommand
 
 import scala.collection.JavaConversions._
 
@@ -91,7 +92,7 @@ class RestController extends ApplicationController {
     }
 
     val (taskId, host) = Scheduler.submitApp(app)
-    redirectTo("/jobs.html", WowCollections.map())
+    redirectTo("/process.html", Map("taskId" -> taskId, "appId" -> app.id))
   }
 
   @At(path = Array("/jobs.html"), types = Array(GET, POST))
@@ -108,9 +109,10 @@ class RestController extends ApplicationController {
 
       val watch = TSparkApplication.shouldWatch(sparkApp)
 
-      val basicInfo = Map("yarnUrl" -> sparkApp.url, "watch" -> watch, "className" -> className, "app" -> sparkApp)
+      val basicInfo = Map("yarnUrl" -> sparkApp.url, "watch" -> watch, "className" -> className, "app" -> sparkApp, "state" -> "FAIL")
 
       val items = if (sparkApp.applicationId == null || sparkApp.applicationId.isEmpty) null else YarnRestService.findApp(sparkApp.url, sparkApp.applicationId)
+
       if (items == null || items.isEmpty) {
         logger.info(s"sparkApp.applicationId=${sparkApp.applicationId} not exits")
         val operate = Map("startOperate" -> startOperate,
@@ -136,7 +138,7 @@ class RestController extends ApplicationController {
           "running" -> running,
           "info" -> info
 
-        ) ++ basicInfo ++ operate
+        ) ++ basicInfo ++ operate ++ Map("state" -> info.state)
       }
 
 
@@ -147,6 +149,14 @@ class RestController extends ApplicationController {
   @At(path = Array("/upload.html"), types = Array(RestRequest.Method.GET, RestRequest.Method.POST))
   def upload = {
     renderHtml(200, "/rest/upload.vm", WowCollections.map())
+  }
+
+  @At(path = Array("/process.html"), types = Array(RestRequest.Method.GET, RestRequest.Method.POST))
+  def process = {
+    val taskId = param("taskId")
+    val app = TSparkApplication.find(paramAsLong("appId", -1)).get
+    val content = "Spark 提交参数为：\n" + app.source + "\n\n" + ShellCommand.exec("cat /tmp/mammuthus/" + taskId + "/stderr") + ShellCommand.exec("cat /tmp/mammuthus/" + taskId + "/stdout") //ShellCommand.readFile("/tmp/mammuthus/" + taskId, paramAsLong("offset", 0), paramAsLong("readSize", 1024))
+    renderHtml(200, "/rest/process.vm", Map("content" -> content, "taskId" -> taskId))
   }
 
   @At(path = Array("/form/upload"), types = Array(RestRequest.Method.GET, RestRequest.Method.POST))

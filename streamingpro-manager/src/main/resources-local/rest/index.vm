@@ -84,18 +84,11 @@
                 </td>
                 <td><a href="/app/spark-submit.html?id=${c.app.id}">${c.className}</a></td>
                 <td>
-                 #if( ! $c.running)
-                 <button class="btn btn-danger btn-lg">
-                     $c.running
-                 </button>
-                 #end
 
-                 #if($c.running)
-                    <button class="btn btn-success btn-lg">
-                    $c.running
-                 </button>
-                 #end
 
+                    <button #if( ! $c.running ) class="btn btn-danger btn-lg" #else  class="btn btn-success btn-lg" #end>
+                     ${c.state}
+                   </button>
 
                 </td>
                 <td>

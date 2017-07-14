@@ -1,0 +1,27 @@
+<div class="container">
+<div class="navbar">
+  <div class="navbar-inner">
+    <div class="container">
+      <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </a>
+      <div class="nav-collapse">
+        <ul class="nav">
+          <li><a href="/jobs.html" class="">Spark任务管理</a></li>
+        </ul>
+
+        <ul class="nav">
+             <li><a href="/submit_job_index.html">提交Spark任务</a></li>
+        </ul>
+
+        <ul class="nav">
+<li><a href="/upload.html">上传Jar包</a></li>
+                </ul>
+
+      </div><!-- /.nav-collapse -->
+    </div>
+  </div><!-- /navbar-inner -->
+</div>
+</div>

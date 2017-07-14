@@ -12,7 +12,6 @@ import streaming.remote.YarnApplicationState.YarnApplicationState
 import streaming.remote.{YarnApplication, YarnController}
 import streaming.shell.{AsyncShellCommand, Md5, ShellCommand}
 
-import scala.collection.JavaConversions._
 import streaming.remote.YarnControllerE._
 
 import scala.collection.mutable.ArrayBuffer

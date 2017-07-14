@@ -55,9 +55,8 @@
 </head>
 <body data-spy="scroll" data-target=".navbar" style="margin-bottom: 50px">
 
-
 <div class="container">
-<h2>Spark 配置提交</h2>
+<h2>Spark 任务提交</h2>
 </div>
 <div class="container">
 <form action="/submit_job.html" id="slaveForm" method="post" class="form-horizontal">

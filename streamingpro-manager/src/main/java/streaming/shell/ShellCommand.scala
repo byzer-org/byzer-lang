@@ -23,6 +23,31 @@ object ShellCommand extends TFileWriter {
     } else s"/bin/bash /tmp/$fileName"
   }
 
+  def readFile(dir: String, offset: Long, readSize: Long): (Long, String) = {
+    var fr = new RandomAccessFile(s"$dir/stderr", "r")
+    fr = if (fr.length() > 0) fr
+    else {
+      fr.close()
+      new RandomAccessFile(s"$dir/stdout", "r")
+    }
+    try {
+      val localOffset = offset match {
+        case x if x < 0 && fr.length() >= 10000 => 10000
+        case x if x < 0 && fr.length() < 10000 => 0
+        case x if x >= 0 => offset
+      }
+      fr.seek(localOffset)
+
+      val bytes = new Array[Byte](readSize.toInt)
+      val len = fr.read(bytes)
+      if (len > 0)
+        (fr.length(), new String(bytes, 0, len, "UTF-8"))
+      else
+        (0, "")
+    } finally fr.close()
+
+  }
+
 
   def exec(user: String, shellStr: String) = {
     logger.debug("shell " + shellStr)
