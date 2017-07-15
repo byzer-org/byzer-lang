@@ -7,7 +7,7 @@ import streaming.core.compositor.spark.api.OutputWriter
   * Created by allwefantasy on 15/7/2017.
   */
 class TestOutputWriter extends OutputWriter {
-  override def write(df: DataFrame): Unit = {
+  override def write(df: DataFrame, contextParams: Map[Any, Any], config: Map[String, String]): Unit = {
 
   }
 }

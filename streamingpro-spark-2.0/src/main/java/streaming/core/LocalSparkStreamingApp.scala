@@ -13,7 +13,7 @@ object LocalSparkStreamingApp {
       "-streaming.rest", "false",
       "-streaming.driver.port", "9003",
       "-streaming.platform", "spark_streaming",
-      "-streaming.job.file.path", "classpath:///test/streaming-example.json"
+      "-streaming.job.file.path", "classpath:///test/streaming-example2.json"
     ))
   }
 }

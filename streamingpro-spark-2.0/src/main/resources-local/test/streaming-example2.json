@@ -22,7 +22,7 @@
         "name": "stream.script.df",
         "params": [
           {
-            "clzz": "streaming.core.compositor.spark.api.example.TestOutputWriter",
+            "clzz": "streaming.core.compositor.spark.api.example.TestTransform",
             "source": "-"
           }
         ]

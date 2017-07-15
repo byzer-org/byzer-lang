@@ -18,11 +18,9 @@ class MultiSQLOutputCompositor[T] extends Compositor[T] with CompositorHelper wi
   private var _configParams: util.List[util.Map[Any, Any]] = _
   val logger = Logger.getLogger(classOf[MultiSQLOutputCompositor[T]].getName)
 
-
   override def initialize(typeFilters: util.List[String], configParams: util.List[util.Map[Any, Any]]): Unit = {
     this._configParams = configParams
   }
-
 
   override def result(alg: util.List[Processor[T]], ref: util.List[Strategy[T]], middleResult: util.List[T], params: util.Map[Any, Any]): util.List[T] = {
 
@@ -34,15 +32,8 @@ class MultiSQLOutputCompositor[T] extends Compositor[T] with CompositorHelper wi
       }.toMap
 
       val tableName = _cfg("inputTableName")
-      val options = _cfg - "path" - "mode" - "format"
-      val _resource = _cfg("path")
-      val mode = _cfg.getOrElse("mode", "ErrorIfExists")
-      val format = _cfg("format")
       val outputFileNum = _cfg.getOrElse("outputFileNum", "-1").toInt
       val partitionBy = _cfg.getOrElse("partitionBy", "")
-
-      val dbtable = if (options.containsKey("dbtable")) options("dbtable") else _resource
-
       var newTableDF = sparkSession(params).table(tableName)
 
       if (outputFileNum != -1) {
@@ -52,11 +43,19 @@ class MultiSQLOutputCompositor[T] extends Compositor[T] with CompositorHelper wi
       val _outputWriterClzz = _cfg.get("clzz")
 
       _outputWriterClzz match {
+
         case Some(clzz) =>
           import streaming.core.compositor.spark.api.OutputWriter
           Class.forName(clzz).getDeclaredConstructor(classOf[DataFrame]).
-            newInstance().asInstanceOf[OutputWriter].write(newTableDF)
+            newInstance().asInstanceOf[OutputWriter].write(newTableDF, params.toMap, _cfg)
+
         case None =>
+
+          val options = _cfg - "path" - "mode" - "format"
+          val dbtable = if (options.containsKey("dbtable")) options("dbtable") else _resource
+          val _resource = _cfg("path")
+          val mode = _cfg.getOrElse("mode", "ErrorIfExists")
+          val format = _cfg("format")
           if (format == "console") {
             newTableDF.show(_cfg.getOrElse("showNum", "100").toInt)
           } else {

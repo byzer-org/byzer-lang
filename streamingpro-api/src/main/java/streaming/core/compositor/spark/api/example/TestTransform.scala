@@ -8,6 +8,6 @@ import streaming.core.compositor.spark.api.{OutputWriter, Transform}
   */
 class TestTransform extends Transform {
   override def process(sQLContext: SQLContext, contextParams: Map[Any, Any], config: Map[String, String]): Unit = {
-    sQLContext.sql("select * from test2").createOrReplaceTempView("test3")
+    sQLContext.sql("select * from test").createOrReplaceTempView("test2")
   }
 }

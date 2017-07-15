@@ -10,6 +10,7 @@
         <module>streamingpro-commons</module>
         <module>streamingpro-spark-common</module>
         <module>streamingpro-manager</module>
+        <module>streamingpro-api</module>
     </modules>
 
     <properties>

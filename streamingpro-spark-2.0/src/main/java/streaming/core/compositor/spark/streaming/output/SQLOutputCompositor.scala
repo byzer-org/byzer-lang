@@ -63,7 +63,7 @@ class MultiSQLOutputCompositor[T] extends Compositor[T] with CompositorHelper wi
           case Some(clzz) =>
             import streaming.core.compositor.spark.api.OutputWriter
             Class.forName(clzz).getDeclaredConstructor(classOf[DataFrame]).
-              newInstance().asInstanceOf[OutputWriter].write(newTableDF)
+              newInstance().asInstanceOf[OutputWriter].write(newTableDF, params.toMap, _cfg)
           case None =>
             if (format == "console") {
               newTableDF.show(_cfg.getOrElse("showNum", "100").toInt)
