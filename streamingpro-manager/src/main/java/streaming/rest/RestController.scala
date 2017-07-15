@@ -26,6 +26,14 @@ class RestController extends ApplicationController {
 
   DB
 
+  @At(path = Array("/query.html"), types = Array(GET))
+  def query_index = {
+    renderHtml(200, "/rest/query.vm", pv(Map("sparkSqlServer" -> ManagerConfiguration.sparkSqlServer)))
+  }
+
+  @At(path = Array("/query"), types = Array(GET))
+  def query = {
+  }
 
   @At(path = Array("/spark_monitor"), types = Array(GET, POST))
   def spark_monitor = {
@@ -227,6 +235,8 @@ class RestController extends ApplicationController {
     navBuffer += HtmlHelper.link(url = "/submit_job.html", name = "提交任务", style = active("/submit_job.html"))
     navBuffer += HtmlHelper.link(url = "/jobs.html", name = "任务管理", style = active("/jobs.html"))
     navBuffer += HtmlHelper.link(url = "/upload.html", name = "Jar包上传", style = active("/upload.html"))
+    navBuffer += HtmlHelper.link(url = "/query.html", name = "Spark SQL Server", style = active("/query.html"))
+    navBuffer
   }
 
   def view(obj: AnyRef) = {

@@ -17,6 +17,10 @@ object ManagerConfiguration {
     config.getParam("yarnUrl")
   }
 
+  def sparkSqlServer = {
+    config.getParam("sparkSqlServer", "")
+  }
+
   def env = {
     //eg. export SPARK_HOME=/opt/spark-2.1.1;export HADOOP_CONF_DIR=/etc/hadoop/conf;cd $SPARK_HOME;
     //eg. source /etc/profile ;cd $SPARK_HOME ;
