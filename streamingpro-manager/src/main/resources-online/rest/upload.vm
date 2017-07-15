@@ -1,9 +1,9 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
 <head>
-    <title>确认参数</title>
+    <title>Jar包上传</title>
     #parse("/rest/header.vm")
-     <style type="text/css">
+    <style type="text/css">
                 .material-switch > input[type="checkbox"] {
                     display: none;
                 }
@@ -67,9 +67,11 @@
                   color: #222;
                   border-color: #222;
                 }
-</style>
 
-<script>
+
+    </style>
+
+    <script>
 function($) {
 
 
@@ -108,36 +110,40 @@ function($) {
     }
 
 }(jQuery);
-</script>
+
+
+    </script>
 
 </head>
-<body data-spy="scroll" data-target=".navbar" style="margin-bottom: 50px">
+<body>
 <div class="container">
-      <div class="panel panel-default">
-        <div class="panel-heading"><strong>上传Jar包</strong> <small></small></div>
+    #parse("/rest/menu.vm")
+</div>
+<div class="container">
+    <div class="panel panel-default">
         <div class="panel-body">
 
-          <!-- Standar Form -->
-          <h4>Select files from your computer</h4>
-          <form ENCTYPE="multipart/form-data" method="post" action="/form/upload" id="js-upload-form">
-            <div class="form-inline">
-              <div class="form-group">
-                <input type="file" name="files[]" id="js-upload-files" multiple>
-              </div>
-              <input name="redirect" type="hidden" value="/submit_job_index.html"/>
-              <button type="submit" class="btn btn-sm btn-primary" id="js-upload-submit">上传</button>
-            </div>
-          </form>
+            <!-- Standar Form -->
+            <h4>Select files from your computer</h4>
+            <form ENCTYPE="multipart/form-data" method="post" action="/form/upload" id="js-upload-form">
+                <div class="form-inline">
+                    <div class="form-group">
+                        <input type="file" name="files[]" id="js-upload-files" multiple>
+                    </div>
+                    <input name="redirect" type="hidden" value="/submit_job_index.html"/>
+                    <button type="submit" class="btn btn-sm btn-primary" id="js-upload-submit">上传</button>
+                </div>
+            </form>
 
-          <!-- Drop Zone -->
-          <h4>Or drag and drop files below</h4>
-          <div class="upload-drop-zone" id="drop-zone">
-            把文件拖拽到这里
-          </div>
+            <!-- Drop Zone -->
+            <h4>Or drag and drop files below</h4>
+            <div class="upload-drop-zone" id="drop-zone">
+                把文件拖拽到这里
+            </div>
 
         </div>
-      </div>
     </div>
+</div>
 
 </body>
 </html>

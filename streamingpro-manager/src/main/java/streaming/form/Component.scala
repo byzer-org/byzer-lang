@@ -1,5 +1,6 @@
 package streaming.form
 
+import com.sun.javafx.css.FontUnits.Style
 import streaming.bean.Parameter
 
 import scala.collection.JavaConversions._
@@ -26,8 +27,18 @@ object FormType extends Enumeration {
   val CHECKBOX = Value("checkbox")
 }
 
+object HtmlHelper {
+  def link(url: String, name: String, style: String = "") = {
+    s""" <a href="${url}" class="${style}">${name}</a>  """
+  }
+
+  def button(name: String, style: String) = {
+    s"""<button class="btn ${style} btn-lg">${name}</button>"""
+  }
+}
 
 object FormHelper {
+
   def formatFormItem(item: Parameter): Parameter = {
     FormType.withName(item.formType) match {
       case FormType.SELECT =>

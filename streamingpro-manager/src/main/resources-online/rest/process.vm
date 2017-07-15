@@ -1,7 +1,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
 <head>
-    <title>任务详情</title>
+    <title>信息回显</title>
     <link rel="stylesheet" href="/codemirror-4.10/lib/codemirror.css">
     <link rel="stylesheet" href="/codemirror-4.10/addon/display/fullscreen.css">
     <link rel="stylesheet" href="/codemirror-4.10/theme/midnight.css">
@@ -14,7 +14,7 @@
     <script src="/codemirror-4.10/mode/shell/shell.js"></script>
 
 
-    <link rel="stylesheet" href="/codemirror-4.10/addon/hint/show-hint.css" />
+    <link rel="stylesheet" href="/codemirror-4.10/addon/hint/show-hint.css"/>
     <script src="/codemirror-4.10/addon/hint/show-hint.js"></script>
     <script src="/codemirror-4.10/addon/display/fullscreen.js"></script>
     <script src="/codemirror-4.10/addon/selection/active-line.js"></script>
@@ -26,7 +26,7 @@
     <script src="/codemirror-4.10/addon/search/search.js"></script>
     <script src="/codemirror-4.10/addon/scroll/annotatescrollbar.js"></script>
     <script src="/codemirror-4.10/addon/search/matchesonscrollbar.js"></script>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- Bootstrap -->
     <link href="/bootstrap/css/bootstrap.min.css" rel="stylesheet" media="screen">
     <link href="/bootstrap/css/bootstrap-responsive.css" rel="stylesheet">
@@ -37,7 +37,7 @@
     <link rel="apple-touch-icon-precomposed" sizes="72x72" href="/bootstrap/ico/apple-touch-icon-72-precomposed.png">
     <link rel="apple-touch-icon-precomposed" href="/bootstrap/ico/apple-touch-icon-57-precomposed.png">
 
-<style type="text/css">
+    <style type="text/css">
 
      body {
         font-family: "Microsoft YaHei"
@@ -54,43 +54,49 @@
                 box-shadow: 0 1px 1px #ccc;
             }
 
-        .table-bordered th {
-                background-color: #dce9f9;
-                background-image: -webkit-gradient(linear, left top, left bottom, from(#ebf3fc), to(#dce9f9));
-                background-image: -webkit-linear-gradient(top, #ebf3fc, #dce9f9);
-                background-image: -moz-linear-gradient(top, #ebf3fc, #dce9f9);
-                background-image: -ms-linear-gradient(top, #ebf3fc, #dce9f9);
-                background-image: -o-linear-gradient(top, #ebf3fc, #dce9f9);
-                background-image: linear-gradient(top, #ebf3fc, #dce9f9);
-                filter: progid:DXImageTransform.Microsoft.gradient(GradientType=0, startColorstr=#ebf3fc, endColorstr=#dce9f9);
-                -ms-filter: "progid:DXImageTransform.Microsoft.gradient (GradientType=0, startColorstr=#ebf3fc, endColorstr=#dce9f9)";
-            }
-            .zebra th {
-                background-color: #eee;
-                background-image: -webkit-gradient(linear, left top, left bottom, from(#f5f5f5), to(#eee));
-                background-image: -webkit-linear-gradient(top, #f5f5f5, #eee);
-                background-image: -moz-linear-gradient(top, #f5f5f5, #eee);
-                background-image: -ms-linear-gradient(top, #f5f5f5, #eee);
-                background-image: -o-linear-gradient(top, #f5f5f5, #eee);
-                background-image: linear-gradient(top, #f5f5f5, #eee);
-                filter: progid:DXImageTransform.Microsoft.gradient(GradientType=0, startColorstr=#f5f5f5, endColorstr=#eeeeee);
-                -ms-filter: "progid:DXImageTransform.Microsoft.gradient (GradientType=0, startColorstr=#f5f5f5, endColorstr=#eeeeee)";
-            }
+    .table-bordered th {
+            background-color: #dce9f9;
+            background-image: -webkit-gradient(linear, left top, left bottom, from(#ebf3fc), to(#dce9f9));
+            background-image: -webkit-linear-gradient(top, #ebf3fc, #dce9f9);
+            background-image: -moz-linear-gradient(top, #ebf3fc, #dce9f9);
+            background-image: -ms-linear-gradient(top, #ebf3fc, #dce9f9);
+            background-image: -o-linear-gradient(top, #ebf3fc, #dce9f9);
+            background-image: linear-gradient(top, #ebf3fc, #dce9f9);
+            filter: progid:DXImageTransform.Microsoft.gradient(GradientType=0, startColorstr=#ebf3fc, endColorstr=#dce9f9);
+            -ms-filter: "progid:DXImageTransform.Microsoft.gradient (GradientType=0, startColorstr=#ebf3fc, endColorstr=#dce9f9)";
+        }
+    .zebra th {
+        background-color: #eee;
+        background-image: -webkit-gradient(linear, left top, left bottom, from(#f5f5f5), to(#eee));
+        background-image: -webkit-linear-gradient(top, #f5f5f5, #eee);
+        background-image: -moz-linear-gradient(top, #f5f5f5, #eee);
+        background-image: -ms-linear-gradient(top, #f5f5f5, #eee);
+        background-image: -o-linear-gradient(top, #f5f5f5, #eee);
+        background-image: linear-gradient(top, #f5f5f5, #eee);
+        filter: progid:DXImageTransform.Microsoft.gradient(GradientType=0, startColorstr=#f5f5f5, endColorstr=#eeeeee);
+        -ms-filter: "progid:DXImageTransform.Microsoft.gradient (GradientType=0, startColorstr=#f5f5f5, endColorstr=#eeeeee)";
+    }
 
-            body {margin-top: 25px;filter:progid:DXImageTransform.Microsoft.Gradient(GradientType=0, EndColorStr='#ff00ff', StartColorStr='#00ffff');}
-            td {text-align:center}
-     </style>
+    body {margin-top: 25px;filter:progid:DXImageTransform.Microsoft.Gradient(GradientType=0, EndColorStr='#ff00ff', StartColorStr='#00ffff');}
+    td {text-align:center}
+
+
+
+    </style>
 
     <style type="text/css">
         body {line-height: 1}
         th {text-decoration: "auto"}
+
+
+
     </style>
     <script type="text/javascript" src="/js/jquery-1.7.1.min.js"></script>
-        <script type="text/javascript" src="/js/jquery.cookie.js"></script>
-        <script type="text/javascript" src="/bootstrap/js/bootstrap.min.js"></script>
-        <script type="application/javascript" src="/js/log.js"></script>
+    <script type="text/javascript" src="/js/jquery.cookie.js"></script>
+    <script type="text/javascript" src="/bootstrap/js/bootstrap.min.js"></script>
+    <script type="application/javascript" src="/js/log.js"></script>
 
-        <script>
+    <script>
 
             //window.editor = 123;
             $(document).ready(function(){
@@ -135,17 +141,17 @@
                 reSizeHeight('showTable')
 
             })
-        </script>
+
+
+
+    </script>
 
 </head>
-<body data-spy="scroll" data-target=".navbar">
+<body>
 #parse("/rest/menu.vm")
-<br/>
 <div>
-<textarea id="area">${content}</textarea>
+    <textarea id="area">${content}</textarea>
 </div>
-
-
 
 
 </body>

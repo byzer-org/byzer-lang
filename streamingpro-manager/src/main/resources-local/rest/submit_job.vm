@@ -1,9 +1,9 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
 <head>
-    <title>确认参数</title>
+    <title>任务提交</title>
     #parse("/rest/header.vm")
-     <style type="text/css">
+    <style type="text/css">
                 .material-switch > input[type="checkbox"] {
                     display: none;
                 }
@@ -48,58 +48,49 @@
                     background: inherit;
                     left: 20px;
                 }
-</style>
 
+    </style>
 
 
 </head>
-<body data-spy="scroll" data-target=".navbar" style="margin-bottom: 50px">
-
+<body>
 <div class="container">
-<h2>Spark 任务提交</h2>
+    #parse("/rest/menu.vm")
 </div>
 <div class="container">
-<form action="/submit_job.html" id="slaveForm" method="post" class="form-horizontal">
-<div class="panel panel-default ">
-<div class="panel-heading">依赖jar包勾选</div>
-$jarDependencies
-                   #foreach( $sub_params in $params )
+    <form action="/submit_job" id="slaveForm" method="post" class="form-horizontal">
+        <div class="panel panel-default ">
+            <div class="panel-heading">依赖jar包勾选</div>
 
+            $jarDependencies
 
-                    <div class="panel panel-default ">
-                        <div class="panel-heading">$sub_params.name</div>
+            #foreach( $sub_params in $params )
+            <div class="panel panel-default ">
+                <div class="panel-heading">$sub_params.name</div>
 
-                             #foreach( $c in $sub_params.value)
-                             <div class="form-group" #if($c.type=='hidden') style="display: none" #end >
-                                                             <label class="col-sm-2 control-label" for="suffix_${c.name}" title="${c.desc}">
-                                                                     ${c.label}
-                                                             </label>
+                #foreach( $c in $sub_params.value)
+                <div class="form-group" #if($c.type=='hidden') style="display: none" #end>
+                    <label class="col-sm-2 control-label" for="suffix_${c.name}" title="${c.desc}">
+                        ${c.label}
+                    </label>
 
-                                                             <div class="col-sm-10">
-                                                                 <div class="col-sm-5">
-                                                                     ${c.value}
-                                                                 </div>
-                                                             </div>
-
-                              </div>
-                                #end
+                    <div class="col-sm-10">
+                        <div class="col-sm-5">
+                            ${c.value}
+                        </div>
                     </div>
 
-                #end
-                 <input type="hidden" name="jarPath" value="${jarPath}"/>
-                <div class="col-sm-4 pull-right">
-                    <input type="submit" class="btn btn-primary  form-control" value="提交"/>
                 </div>
+                #end
+            </div>
 
-
-
-
-</form>
-
-
-<div>
-
-
-
+            #end
+            <input type="hidden" name="jarPath" value="${jarPath}"/>
+            <div class="col-sm-4 pull-right">
+                <input type="submit" class="btn btn-primary  form-control" value="提交"/>
+            </div>
+        </div>
+    </form>
+</div>
 </body>
 </html>
