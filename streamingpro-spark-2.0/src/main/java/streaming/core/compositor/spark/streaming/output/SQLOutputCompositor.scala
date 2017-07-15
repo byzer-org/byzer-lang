@@ -4,7 +4,7 @@ import java.util
 import java.util.concurrent.TimeUnit
 
 import org.apache.log4j.Logger
-import org.apache.spark.sql.SaveMode
+import org.apache.spark.sql.{DataFrame, SaveMode}
 import org.apache.spark.sql.streaming.ProcessingTime
 import org.apache.spark.streaming.dstream.DStream
 import serviceframework.dispatcher.{Compositor, Processor, Strategy}
@@ -49,6 +49,7 @@ class MultiSQLOutputCompositor[T] extends Compositor[T] with CompositorHelper wi
         val format = _cfg("format")
         val outputFileNum = _cfg.getOrElse("outputFileNum", "-1").toInt
         val partitionBy = _cfg.getOrElse("partitionBy", "")
+        val _outputWriterClzz = _cfg.get("clzz")
 
         val dbtable = if (options.containsKey("dbtable")) options("dbtable") else _resource
 
@@ -58,25 +59,30 @@ class MultiSQLOutputCompositor[T] extends Compositor[T] with CompositorHelper wi
           newTableDF = newTableDF.repartition(outputFileNum)
         }
 
-        if (format == "console") {
-          newTableDF.show(_cfg.getOrElse("showNum", "100").toInt)
-        } else {
+        _outputWriterClzz match {
+          case Some(clzz) =>
+            import streaming.core.compositor.spark.api.OutputWriter
+            Class.forName(clzz).getDeclaredConstructor(classOf[DataFrame]).
+              newInstance().asInstanceOf[OutputWriter].write(newTableDF)
+          case None =>
+            if (format == "console") {
+              newTableDF.show(_cfg.getOrElse("showNum", "100").toInt)
+            } else {
 
-          var tempDf = if (!partitionBy.isEmpty) {
-            newTableDF.write.partitionBy(partitionBy.split(","): _*)
-          } else {
-            newTableDF.write
-          }
+              var tempDf = if (!partitionBy.isEmpty) {
+                newTableDF.write.partitionBy(partitionBy.split(","): _*)
+              } else {
+                newTableDF.write
+              }
 
-          tempDf = tempDf.options(options).mode(SaveMode.valueOf(mode)).format(format)
+              tempDf = tempDf.options(options).mode(SaveMode.valueOf(mode)).format(format)
 
-          if (_resource == "-" || _resource.isEmpty) {
-            tempDf.save()
-          } else tempDf.save(_resource)
+              if (_resource == "-" || _resource.isEmpty) {
+                tempDf.save()
+              } else tempDf.save(_resource)
+            }
         }
       }
-
-
     }
 
     dstreams.foreach { dstreamWithName =>

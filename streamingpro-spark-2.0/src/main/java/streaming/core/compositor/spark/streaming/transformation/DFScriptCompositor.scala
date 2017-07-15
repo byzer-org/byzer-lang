@@ -3,9 +3,11 @@ package streaming.core.compositor.spark.streaming.transformation
 import java.util
 
 import org.apache.log4j.Logger
+import org.apache.spark.sql.SQLContext
 import org.apache.spark.util.{ScalaSourceCodeCompiler, ScriptCacheKey}
 import serviceframework.dispatcher.{Compositor, Processor, Strategy}
 import streaming.core.CompositorHelper
+import streaming.core.compositor.spark.api.Transform
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable.ArrayBuffer
@@ -47,6 +49,7 @@ class DFScriptCompositor[T] extends Compositor[T] with CompositorHelper {
     val context = sparkSession(params)
     val _source = source.getOrElse("")
     val _script = script.getOrElse("")
+    val _transformClzz = config[String]("clzz", _configParams)
 
     val func = () => {
       def loadScriptFromFile(script: String) = {
@@ -60,8 +63,15 @@ class DFScriptCompositor[T] extends Compositor[T] with CompositorHelper {
         }
         else script
       }
-      val executor = ScalaSourceCodeCompiler.execute(ScriptCacheKey("context", loadScriptFromFile(_script)))
-      executor.execute(context.sqlContext)
+      _transformClzz match {
+        case Some(clzz) =>
+          Class.forName(clzz).newInstance().asInstanceOf[Transform].
+            process(context.sqlContext, params.toMap, _configParams.get(0).map(f => (f._1.toString, f._2.toString)).toMap)
+        case None =>
+          val executor = ScalaSourceCodeCompiler.execute(ScriptCacheKey("context", loadScriptFromFile(_script)))
+          executor.execute(context.sqlContext)
+      }
+
     }
     if (params.containsKey("sqlList")) {
       params.get("sqlList").asInstanceOf[ArrayBuffer[() => Unit]] += func
