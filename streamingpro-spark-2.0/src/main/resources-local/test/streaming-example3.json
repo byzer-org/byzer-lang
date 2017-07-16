@@ -40,8 +40,10 @@
         "name": "stream.outputs",
         "params": [
           {
-            "clzz": "streaming.core.compositor.spark.api.example.TestOutputWriter",
-            "inputTableName": "test3"
+            "mode": "Overwrite",
+            "format": "console",
+            "inputTableName": "test3",
+            "path": "-"
           }
         ]
       }
