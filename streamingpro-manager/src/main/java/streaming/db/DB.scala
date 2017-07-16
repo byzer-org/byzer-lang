@@ -1,5 +1,6 @@
 package streaming.db
 
+import java.io.File
 import java.util.Date
 
 import net.liftweb.{json => SJSon}
@@ -204,14 +205,43 @@ object TTestConf extends PrimitiveTypeMode {
 object DB extends Schema {
 
 
-  def init = {}
+  def parseConfig = {
+    var config = Map[String, String]()
 
-  val jdbcConfig = Source.fromInputStream(DB.getClass.getResourceAsStream("/jdbc.properties")).getLines().map {
-    f =>
-      val abc = f.split("=")
-      if (abc.length == 2) (abc(0), abc(1))
-      else (abc(0), abc.takeRight(abc.length - 1).mkString("="))
-  }.toMap
+    if (ManagerConfiguration.config.hasParam("jdbcPath")) {
+      val path = ManagerConfiguration.config.getParam("jdbcPath")
+
+      val configLines = path match {
+        case i if i.startsWith("classpath://") =>
+          Source.fromInputStream(DB.getClass.getResourceAsStream(path.substring("classpath://".length))).getLines()
+        case i if i.startsWith("/") =>
+          Source.fromFile(new File(i)).getLines()
+
+      }
+
+      config ++= configLines.map {
+        f =>
+          val abc = f.split("=")
+          if (abc.length == 2) (abc(0).trim, abc(1).trim)
+          else (abc(0), abc.takeRight(abc.length - 1).mkString("="))
+      }.toMap
+    }
+
+    if (ManagerConfiguration.config.hasParam("jdbc.url")) {
+      config += ("url" -> ManagerConfiguration.config.getParam("jdbc.url"))
+
+      if (ManagerConfiguration.config.hasParam("jdbc.userName")) {
+        config += ("userName" -> ManagerConfiguration.config.getParam("jdbc.userName"))
+      }
+      if (ManagerConfiguration.config.hasParam("jdbc.password")) {
+        config += "password" -> ManagerConfiguration.config.getParam("jdbc.password")
+      }
+
+    }
+    config
+  }
+
+  val jdbcConfig = parseConfig
 
   Class.forName("com.mysql.jdbc.Driver");
 

@@ -158,7 +158,7 @@ class RestController extends ApplicationController {
       else HtmlHelper.button("未监控", "btn-danger"))
 
       rowBuffer += (if (watch) HtmlHelper.link(s"/spark_monitor?command=stop&id=${sparkApp.id}", "取消监控")
-      else HtmlHelper.link(s"/spark_monitor?command=start&id=${sparkApp.id}", "监控"))
+      else if (isEmpty(sparkApp.applicationId)) "" else HtmlHelper.link(s"/spark_monitor?command=start&id=${sparkApp.id}", "监控"))
 
       val deleteOperate = if (yarnApp.map(f => f.state).mkString("") != YarnApplicationState.RUNNING.toString) HtmlHelper.link(url = s"/remove_job.html?id=${sparkApp.id}", name = "删除信息")
       else ""

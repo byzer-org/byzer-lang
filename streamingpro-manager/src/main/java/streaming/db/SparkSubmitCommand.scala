@@ -21,6 +21,10 @@ object ManagerConfiguration {
     config.getParam("sparkSqlServer", "")
   }
 
+  def jdbcPath = {
+    config.getParam("jdbcPath", "classpath:///jdbc.properties")
+  }
+
   def env = {
     //eg. export SPARK_HOME=/opt/spark-2.1.1;export HADOOP_CONF_DIR=/etc/hadoop/conf;cd $SPARK_HOME;
     //eg. source /etc/profile ;cd $SPARK_HOME ;

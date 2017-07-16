@@ -120,6 +120,12 @@
             <artifactId>serviceframework-jetty-9-server</artifactId>
             <version>${serviceframework.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.scalatest</groupId>
+            <artifactId>scalatest_${scala.binary.version}</artifactId>
+            <version>3.0.0</version>
+            <scope>test</scope>
+        </dependency>
 
     </dependencies>
 
