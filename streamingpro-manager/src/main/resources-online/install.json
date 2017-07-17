@@ -88,6 +88,18 @@
         "comment": ""
       },
       {
+        "name": "mmspark.streaming.driver.port",
+        "parameterType": "string",
+        "priority": 1,
+        "label": "http端口",
+        "desc": "",
+        "app": "spark",
+        "actionType": "normal",
+        "value": "9003",
+        "formType": "normal",
+        "comment": ""
+      },
+      {
         "name": "mmspark.streaming.enableHiveSupport",
         "parameterType": "string",
         "priority": 1,

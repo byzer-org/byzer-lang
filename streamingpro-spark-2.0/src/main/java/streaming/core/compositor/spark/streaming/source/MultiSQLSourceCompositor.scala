@@ -42,7 +42,7 @@ class MultiSQLSourceCompositor[T] extends Compositor[T] with CompositorHelper {
     }
 
     def getTopics(_cfg: Map[String, String]) = {
-      _cfg.get("topics").asInstanceOf[String].split(",").toSet
+      _cfg.getOrElse("topics", "").split(",").toSet
     }
 
     val dstreams = _configParams.map { sourceConfig =>
