@@ -14,7 +14,13 @@ object ShellCommand extends TFileWriter {
   val logger = Loggers.getLogger(classOf[ShellCommand])
 
   def exec(shellStr: String): String = {
-    exec("", shellStr)
+    try {
+      exec("", shellStr)
+    } catch {
+      case e: Exception =>
+        logger.info("exec fail", e)
+        ""
+    }
   }
 
   def wrapCommand(user: String, fileName: String) = {

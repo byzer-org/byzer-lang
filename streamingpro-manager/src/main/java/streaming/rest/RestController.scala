@@ -155,7 +155,7 @@ class RestController extends ApplicationController {
 
       rowBuffer += state
 
-      val startOperate = if (yarnApp.map(f => f.state).mkString("") != YarnApplicationState.RUNNING.toString) HtmlHelper.link(url = s"/submit_job.html?id=${sparkApp.id}", name = "启动")
+      val startOperate = if (yarnApp.map(f => f.state).mkString("") != YarnApplicationState.RUNNING.toString) HtmlHelper.link(url = s"/submit_job?id=${sparkApp.id}", name = "启动")
       else ""
 
       rowBuffer += startOperate
@@ -186,7 +186,9 @@ class RestController extends ApplicationController {
   def process = {
     val taskId = param("taskId")
     val app = TSparkApplication.find(paramAsLong("appId", -1)).get
-    val content = "Spark 提交参数为：\n" + app.source + "\n\n" + ShellCommand.exec("cat /tmp/mammuthus/" + taskId + "/stderr") + ShellCommand.exec("cat /tmp/mammuthus/" + taskId + "/stdout") //ShellCommand.readFile("/tmp/mammuthus/" + taskId, paramAsLong("offset", 0), paramAsLong("readSize", 1024))
+    val content = "Spark 提交参数为：\n" + app.source + "\n\n" +
+      ShellCommand.exec("cat /tmp/mammuthus/" + taskId + "/stderr") +
+      ShellCommand.exec("cat /tmp/mammuthus/" + taskId + "/stdout") //ShellCommand.readFile("/tmp/mammuthus/" + taskId, paramAsLong("offset", 0), paramAsLong("readSize", 1024))
     renderHtml(200, "/rest/process.vm", pv(Map("content" -> content, "taskId" -> taskId)))
   }
 

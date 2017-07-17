@@ -56,16 +56,16 @@ class MultiSQLSourceCompositor[T] extends Compositor[T] with CompositorHelper {
       val tableName = _cfg.getOrElse("outputTable", _cfg.getOrElse("outputTableName", ""))
 
       _cfg("format") match {
-        case "kafka" if _cfg.containsKey("direct") =>
+        case "kafka" =>
 
           (KafkaUtils.createDirectStream[String, String, StringDecoder, StringDecoder](
             runtime.streamingContext,
             _cfg - "format",
             getTopics(_cfg)), tableName)
 
-        case "kafka" if !_cfg.containsKey("direct") =>
-          (KafkaUtils.createStream(runtime.streamingContext, getZk(_cfg), getgroupId(_cfg), getTopics(_cfg).map(f => (f, 1)).toMap)
-            , tableName)
+        //        case "kafka" if !_cfg.containsKey("direct") =>
+        //          (KafkaUtils.createStream(runtime.streamingContext, getZk(_cfg), getgroupId(_cfg), getTopics(_cfg).map(f => (f, 1)).toMap)
+        //            , tableName)
 
         case "socket" =>
           (runtime.streamingContext.socketTextStream(_cfg.getOrElse("host", "localhost"), _cfg.getOrElse("port", "9999").toInt).map(f => (null, f)),

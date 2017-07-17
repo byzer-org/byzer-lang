@@ -130,7 +130,7 @@ function($) {
                     <div class="form-group">
                         <input type="file" name="files[]" id="js-upload-files" multiple>
                     </div>
-                    <input name="redirect" type="hidden" value="/submit_job_index.html"/>
+                    <input name="redirect" type="hidden" value="/submit_job.html"/>
                     <button type="submit" class="btn btn-sm btn-primary" id="js-upload-submit">上传</button>
                 </div>
             </form>

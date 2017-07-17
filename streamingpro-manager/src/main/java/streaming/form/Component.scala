@@ -27,7 +27,7 @@ object FormType extends Enumeration {
 
 object HtmlHelper {
   def link(url: String, name: String, style: String = "", target: String = "_blank") = {
-    s""" <a href="${url}" target="${target}" class="${style}">${name}</a>  """
+    s""" <a href="${url}" class="${style}">${name}</a>  """
   }
 
   def button(name: String, style: String) = {
