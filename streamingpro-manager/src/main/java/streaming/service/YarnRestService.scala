@@ -1,7 +1,9 @@
 package streaming.service
 
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.{ConcurrentHashMap, Executors, TimeUnit}
 
+import net.csdn.common.collections.WowCollections
 import net.csdn.common.logging.Loggers
 import net.csdn.common.settings.{ImmutableSettings, Settings}
 import net.csdn.modules.threadpool.DefaultThreadPoolService
@@ -11,7 +13,6 @@ import streaming.db.{DB, ManagerConfiguration, TSparkApplication, TSparkApplicat
 import streaming.remote.YarnApplicationState.YarnApplicationState
 import streaming.remote.{YarnApplication, YarnController}
 import streaming.shell.{AsyncShellCommand, Md5, ShellCommand}
-
 import streaming.remote.YarnControllerE._
 
 import scala.collection.mutable.ArrayBuffer
@@ -20,7 +21,10 @@ import scala.collection.mutable.ArrayBuffer
   * Created by allwefantasy on 12/7/2017.
   */
 class Scheduler {
-  Scheduler.start
+  if (ManagerConfiguration.enableScheduler) {
+    Scheduler.start
+  }
+
 }
 
 object Scheduler {
@@ -39,6 +43,7 @@ object Scheduler {
   val livenessCheckScheduler = Executors.newSingleThreadScheduledExecutor()
   val sparkSchedulerCleanerScheduler = Executors.newSingleThreadScheduledExecutor()
   val sparkLogCheckerScheduler = Executors.newSingleThreadScheduledExecutor()
+  val taskExecutor = Executors.newFixedThreadPool(ManagerConfiguration.taskThreads)
 
   def shutdown = {
     try {
@@ -144,12 +149,6 @@ object Scheduler {
       sparkSubmitTaskMap.put(Task(taskId, "", app.id), System.currentTimeMillis())
       (taskId, "")
     }
-    try {
-      val afterSubmit = ShellCommand.exec(app.afterShell)
-      logger.info("afterSubmit:" + afterSubmit)
-    } catch {
-      case e: Exception => logger.error("after submit execute shell fail")
-    }
 
     res
 
@@ -188,6 +187,51 @@ object Scheduler {
         logger.info(s"Remove submit check task ${task} from sparkSubmitTaskMap")
         sparkSubmitTaskMap.remove(task)
         resubmitMap.remove(app.id)
+        if (!WowCollections.isEmpty(app.afterShell)) {
+          val startTime = System.currentTimeMillis()
+          taskExecutor.execute(new Runnable {
+            override def run(): Unit = {
+              var state = YarnRestService.findApp(ManagerConfiguration.yarnUrl, applicationId).map(f => f.state).mkString("")
+              val finish_flag = new AtomicBoolean(false)
+              while (System.currentTimeMillis() - startTime < ManagerConfiguration.afterLogCheckTimeout * 1000 && !finish_flag.get()) {
+                if (state == YarnApplicationState.RUNNING.toString) {
+                  try {
+                    logger.info(s"$applicationId is running, execute callback shell script")
+                    ShellCommand.exec(app.afterShell)
+
+                  } catch {
+                    case e: Exception =>
+                      TSparkApplication.saveLog(new TSparkApplicationLog(
+                        -1,
+                        app.id,
+                        applicationId,
+                        app.url,
+                        app.source,
+                        app.parentApplicationId,
+                        e.getStackTrace.map(f => f.toString).mkString("\n"), app.startTime, System.currentTimeMillis()))
+                      logger.error(s"$applicationId is running, execute callback shell script fail", e)
+                  } finally {
+                    finish_flag.set(true)
+                  }
+
+                } else {
+                  Thread.sleep(2000)
+                  state = YarnRestService.findApp(ManagerConfiguration.yarnUrl, applicationId).map(f => f.state).mkString("")
+                }
+              }
+              if (!finish_flag.get()) {
+                TSparkApplication.saveLog(new TSparkApplicationLog(
+                  -1,
+                  app.id,
+                  applicationId,
+                  app.url,
+                  app.source,
+                  app.parentApplicationId,
+                  "execute after shell timeout: 60 seconds", app.startTime, System.currentTimeMillis()))
+              }
+            }
+          })
+        }
       } else {
         //logger.info(s"check application submit state from taskId:${accepLines.mkString("\n")}")
       }
@@ -244,7 +288,7 @@ object Scheduler {
     if (result) {
       logger.error(s"try to resubmit ${app.applicationId}; Fail application info: ${targetApp.id} ${app.url} ${targetApp.diagnostics} ${app.startTime}")
       resubmitMap.put(app.id, System.currentTimeMillis())
-      TSparkApplication.saveLog(new TSparkApplicationLog(0,
+      TSparkApplication.saveLog(new TSparkApplicationLog(0, app.id,
         targetApp.id,
         app.url,
         app.source, "",

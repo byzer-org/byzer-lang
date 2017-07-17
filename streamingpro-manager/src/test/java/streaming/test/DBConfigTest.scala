@@ -21,7 +21,7 @@ class DBConfigTest extends FlatSpec with Matchers {
     val item = DB.parseConfig
     assume(item("url") == "c1")
     assume(item("userName") == "c2")
-    assume(item("password") == "c")
+    assume(item("password") != "c")
   }
   "loading order" should "local path command" in {
 

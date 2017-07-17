@@ -17,8 +17,20 @@ object ManagerConfiguration {
     config.getParam("yarnUrl")
   }
 
+  def enableScheduler = {
+    config.getBooleanParam("enableScheduler", true)
+  }
+
+  def afterLogCheckTimeout = {
+    config.getIntParam("afterLogCheckTimeout", 60)
+  }
+
   def sparkSqlServer = {
     config.getParam("sparkSqlServer", "")
+  }
+
+  def taskThreads = {
+    config.getIntParam("taskThreads", 10)
   }
 
   def jdbcPath = {

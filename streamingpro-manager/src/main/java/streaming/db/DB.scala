@@ -34,6 +34,7 @@ class TSparkApplication(val id: Long,
                        ) extends KeyedEntity[Long]
 
 class TSparkApplicationLog(val id: Long,
+                           var appId: Long,
                            var applicationId: String,
                            var url: String,
                            var source: String,
@@ -120,6 +121,12 @@ object TSparkApplication extends PrimitiveTypeMode {
   def queryLog = {
     transaction {
       from(DB.tSparkApplicationLog)(s => select(s)).toList
+    }
+  }
+
+  def queryLog(appId: Long) = {
+    transaction {
+      from(DB.tSparkApplicationLog)(s => where(s.appId === appId) select (s)).toList
     }
   }
 
