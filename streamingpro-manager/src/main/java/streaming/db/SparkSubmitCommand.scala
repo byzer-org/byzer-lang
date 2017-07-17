@@ -63,6 +63,8 @@ class SparkSubmitCommand {
 
   def process(params: Map[String, String]) = {
     var jarPath = params.getOrElse("jarPath", "")
+    val beforeShell = params.getOrElse("beforeShell", "")
+    val afterShell = params.getOrElse("afterShell", "")
     val sourceK = params.filter(f => f._1.startsWith("mmspark.")).map(f => (cut(f._1), f._2)).filter { f =>
       f._2 != null && !f._2.isEmpty
     }.map { f =>
@@ -86,7 +88,7 @@ class SparkSubmitCommand {
       sourceK.filter(f => !f.startsWith("-") && !f.startsWith("--")).mkString(" \\\n")
     source = source.substring(0, source.length - 2)
     logger.info(source)
-    TSparkApplication.save("", ManagerConfiguration.yarnUrl, "spark-submit " + source)
+    TSparkApplication.save("", ManagerConfiguration.yarnUrl, "spark-submit " + source, beforeShell, afterShell)
   }
 
   private def cut(str: String) = {

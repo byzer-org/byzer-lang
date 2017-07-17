@@ -49,6 +49,7 @@
                     left: 20px;
                 }
 
+
     </style>
 
 
@@ -85,6 +86,8 @@
             </div>
 
             #end
+            提交前执行脚本：<textarea name="beforeShell"></textarea>
+            提交后执行脚本：<textarea name="afterShell"></textarea>
             <input type="hidden" name="jarPath" value="${jarPath}"/>
             <div class="col-sm-4 pull-right">
                 <input type="submit" class="btn btn-primary  form-control" value="提交"/>

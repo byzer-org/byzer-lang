@@ -1,6 +1,4 @@
 package streaming.form
-
-import com.sun.javafx.css.FontUnits.Style
 import streaming.bean.Parameter
 
 import scala.collection.JavaConversions._
@@ -28,8 +26,8 @@ object FormType extends Enumeration {
 }
 
 object HtmlHelper {
-  def link(url: String, name: String, style: String = "") = {
-    s""" <a href="${url}" class="${style}">${name}</a>  """
+  def link(url: String, name: String, style: String = "", target: String = "_blank") = {
+    s""" <a href="${url}" target="${target}" class="${style}">${name}</a>  """
   }
 
   def button(name: String, style: String) = {

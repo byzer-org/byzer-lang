@@ -26,6 +26,11 @@ class RestController extends ApplicationController {
 
   DB
 
+  @At(path = Array("/test.html"), types = Array(GET))
+  def test_index = {
+    renderHtml(200, "/rest/test.vm", WowCollections.map())
+  }
+
   @At(path = Array("/query.html"), types = Array(GET))
   def query_index = {
     renderHtml(200, "/rest/query.vm", pv(Map("sparkSqlServer" -> ManagerConfiguration.sparkSqlServer)))
@@ -108,7 +113,10 @@ class RestController extends ApplicationController {
 
   @At(path = Array("/jobs.html"), types = Array(GET, POST))
   def jobs = {
-    val sparkApps = TSparkApplication.list
+    var sparkApps = TSparkApplication.list
+    if (!isEmpty(param("search"))) {
+      sparkApps = sparkApps.filter(f => f.source.contains(param("search")))
+    }
 
     val result = sparkApps.zipWithIndex.map { case (sparkApp, index) =>
 

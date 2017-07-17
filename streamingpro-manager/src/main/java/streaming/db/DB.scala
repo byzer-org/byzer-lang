@@ -25,6 +25,8 @@ class TSparkApplication(val id: Long,
                         var parentApplicationId: String,
                         var url: String,
                         var source: String,
+                        var beforeShell: String,
+                        var afterShell: String,
                         var keepRunning: Int,
                         var watchInterval: Int,
                         var startTime: Long,
@@ -127,9 +129,9 @@ object TSparkApplication extends PrimitiveTypeMode {
     }
   }
 
-  def save(applicationId: String, url: String, source: String) = {
+  def save(applicationId: String, url: String, source: String, beforeShell: String, afterShell: String) = {
     //implicit val formats = SJSon.Serialization.formats(SJSon.NoTypeHints)
-    val temp = new TSparkApplication(0, "", "", url, source, 1, -1, System.currentTimeMillis(), 0)
+    val temp = new TSparkApplication(0, "", "", url, source, beforeShell, afterShell, 1, -1, System.currentTimeMillis(), 0)
     transaction {
       DB.tSparkApplication.insert(temp)
     }

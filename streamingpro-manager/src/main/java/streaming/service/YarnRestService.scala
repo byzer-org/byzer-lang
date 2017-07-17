@@ -122,7 +122,14 @@ object Scheduler {
   def submitApp(app: TSparkApplication) = {
     val prefix = ManagerConfiguration.env
     var shellCommand = s"./bin/${app.source}"
-    if (shellCommand.contains("--master yarn") && shellCommand.contains("--deploy-mode client")) {
+    try {
+      val beforeSubmit = ShellCommand.exec(app.beforeShell)
+      logger.info(s"beforeSubmit: ${beforeSubmit}")
+    } catch {
+      case e: Exception => logger.error("before submit execute shell fail")
+    }
+
+    val res = if (shellCommand.contains("--master yarn") && shellCommand.contains("--deploy-mode client")) {
       val fakeTaskId = "_" + Md5.MD5(shellCommand) + "_" + System.currentTimeMillis()
       ShellCommand.exec(s"mkdir -p /tmp/mammuthus/${fakeTaskId}")
       shellCommand = s"""$prefix nohup  ${shellCommand} > /tmp/mammuthus/${fakeTaskId}/stdout 2>&1 &"""
@@ -137,6 +144,14 @@ object Scheduler {
       sparkSubmitTaskMap.put(Task(taskId, "", app.id), System.currentTimeMillis())
       (taskId, "")
     }
+    try {
+      val afterSubmit = ShellCommand.exec(app.afterShell)
+      logger.info("afterSubmit:" + afterSubmit)
+    } catch {
+      case e: Exception => logger.error("after submit execute shell fail")
+    }
+
+    res
 
   }
 
