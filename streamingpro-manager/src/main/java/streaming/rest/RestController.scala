@@ -13,7 +13,7 @@ import org.apache.commons.io.{FileUtils, FilenameUtils, IOUtils}
 import streaming.db._
 import streaming.bean.{ComplexParameterProcessor, DeployParameterService, Parameter}
 import streaming.form.{FormHelper, HtmlHelper}
-import streaming.service.{Scheduler, YarnApplicationState, YarnRestService}
+import streaming.service.{MonitorScheduler, YarnApplicationState, YarnRestService}
 import streaming.shell.ShellCommand
 
 import scala.collection.JavaConversions._
@@ -102,7 +102,7 @@ class RestController extends ApplicationController {
       new SparkSubmitCommand().process(params().toMap)
     }
 
-    val (taskId, host) = Scheduler.submitApp(app)
+    val (taskId, host) = MonitorScheduler.submitApp(app)
     redirectTo("/process.html", pv(Map("taskId" -> taskId, "appId" -> app.id)))
   }
 

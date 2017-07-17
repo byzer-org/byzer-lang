@@ -7,7 +7,7 @@ import com.google.common.io.Files
 import org.scalatest.{FlatSpec, Matchers}
 import streaming.common.ParamsUtil
 import streaming.db.{DB, ManagerConfiguration, TSparkApplication}
-import streaming.service.{Scheduler, YarnRestService}
+import streaming.service.{MonitorScheduler, YarnRestService}
 import streaming.shell.ShellCommand
 
 /**
@@ -37,11 +37,11 @@ class YarnRestTest extends FlatSpec with Matchers {
     val app = TSparkApplication.save("application_1499754907574_36282", "master", "spark-submit...", "", "echo yes")
     val task = streaming.service.Task(taskId, "", app.id)
 
-    Scheduler.sparkSubmitTaskMap.put(task, System.currentTimeMillis())
+    MonitorScheduler.sparkSubmitTaskMap.put(task, System.currentTimeMillis())
 
 
-    Scheduler.checkSubmitAppStateTask(app.id, task)
-    assume(!Scheduler.sparkSubmitTaskMap.contains(task))
+    MonitorScheduler.checkSubmitAppStateTask(app.id, task)
+    assume(!MonitorScheduler.sparkSubmitTaskMap.contains(task))
     Thread.sleep(10 * 1000)
     val logs = TSparkApplication.queryLog(app.id)
 
@@ -63,12 +63,12 @@ class YarnRestTest extends FlatSpec with Matchers {
     val app = TSparkApplication.save("application_1499754907574_36282", "master", "spark-submit...", "", "echo yes")
     val task = streaming.service.Task(taskId, "", app.id)
 
-    Scheduler.sparkSubmitTaskMap.put(task, System.currentTimeMillis())
+    MonitorScheduler.sparkSubmitTaskMap.put(task, System.currentTimeMillis())
 
 
 
-    Scheduler.checkSubmitAppStateTask(app.id, task)
-    assume(!Scheduler.sparkSubmitTaskMap.contains(task))
+    MonitorScheduler.checkSubmitAppStateTask(app.id, task)
+    assume(!MonitorScheduler.sparkSubmitTaskMap.contains(task))
 
     content = "INFO  17-07 10:57:18,913 - Add WebUI Filter. org.apache.hadoop.yarn.server.webproxy.amfilter.AmIpFilter, Map(PROXY_HOSTS -> master1.uc.host.dxy, PROXY_URI_BASES -> http://master1.uc.host.dxy:8088/proxy/application_1499754907574_36282), /proxy/application_1499754907574_36282\nINFO  17-07 10:57:18,914 - Adding filter: org.apache.hadoop.yarn.server.webproxy.amfilter.AmIpFilter\nINFO  17-07 10:57:19,873 - Application report for application_1499754907574_36282 (state: RUNNING)"
     Files.write(content, new File(logPath), Charset.forName("utf-8"))
