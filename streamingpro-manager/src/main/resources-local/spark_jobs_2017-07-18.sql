@@ -7,7 +7,7 @@
 #
 # Host: 127.0.0.1 (MySQL 5.6.24)
 # Database: spark_jobs
-# Generation Time: 2017-07-13 10:24:37 +0000
+# Generation Time: 2017-07-18 09:43:08 +0000
 # ************************************************************
 
 
@@ -23,8 +23,6 @@
 # Dump of table t_params_conf
 # ------------------------------------------------------------
 
-DROP TABLE IF EXISTS `t_params_conf`;
-
 CREATE TABLE `t_params_conf` (
   `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `params` text,
@@ -36,14 +34,14 @@ CREATE TABLE `t_params_conf` (
 # Dump of table t_spark_application
 # ------------------------------------------------------------
 
-DROP TABLE IF EXISTS `t_spark_application`;
-
 CREATE TABLE `t_spark_application` (
   `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `applicationId` text,
   `parentApplicationId` text,
   `url` text,
   `source` text,
+  `beforeShell` text,
+  `afterShell` text,
   `keepRunning` int(11) DEFAULT NULL,
   `watchInterval` int(11) DEFAULT NULL,
   `startTime` bigint(20) DEFAULT NULL,
@@ -60,6 +58,7 @@ DROP TABLE IF EXISTS `t_spark_application_log`;
 
 CREATE TABLE `t_spark_application_log` (
   `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `appId` int(11) unsigned NOT NULL,
   `applicationId` text,
   `url` text,
   `source` text,
@@ -75,8 +74,6 @@ CREATE TABLE `t_spark_application_log` (
 # Dump of table t_spark_jar
 # ------------------------------------------------------------
 
-DROP TABLE IF EXISTS `t_spark_jar`;
-
 CREATE TABLE `t_spark_jar` (
   `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `name` varchar(512) DEFAULT NULL,
@@ -89,8 +86,6 @@ CREATE TABLE `t_spark_jar` (
 
 # Dump of table t_test_conf
 # ------------------------------------------------------------
-
-DROP TABLE IF EXISTS `t_test_conf`;
 
 CREATE TABLE `t_test_conf` (
   `id` int(11) unsigned NOT NULL AUTO_INCREMENT,

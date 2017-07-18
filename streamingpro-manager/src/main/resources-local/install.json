@@ -52,6 +52,18 @@
         "comment": ""
       },
       {
+        "name": "mmspark.streaming.kafka.offsetPath",
+        "parameterType": "string",
+        "priority": 1,
+        "label": "Kafka offset 保存目录",
+        "desc": "",
+        "app": "spark",
+        "actionType": "normal",
+        "value": "",
+        "formType": "normal",
+        "comment": ""
+      },
+      {
         "name": "mmspark.streaming.platform",
         "parameterType": "string",
         "priority": 1,
@@ -104,6 +116,18 @@
         "parameterType": "string",
         "priority": 1,
         "label": "启用Hive支持",
+        "desc": "",
+        "app": "spark",
+        "actionType": "select",
+        "value": "",
+        "formType": "select",
+        "comment": ""
+      },
+      {
+        "name": "mmspark.streaming.job.cancel",
+        "parameterType": "string",
+        "priority": 1,
+        "label": "启用查询超时功能",
         "desc": "",
         "app": "spark",
         "actionType": "select",
@@ -176,13 +200,75 @@
         "parameterType": "string",
         "priority": 2,
         "label": "本地性",
-        "desc": "单位是毫秒，本地性越强，意味着计算并发度越低",
+        "desc": "",
         "app": "spark",
         "actionType": "select",
         "value": "",
         "formType": "select",
         "comment": ""
       },
+      {
+        "name": "mmspark.spark.speculation",
+        "parameterType": "string",
+        "priority": 2,
+        "label": "speculation",
+        "desc": "",
+        "app": "spark",
+        "actionType": "select",
+        "value": "",
+        "formType": "select",
+        "comment": ""
+      },
+      {
+        "name": "mmspark.spark.speculation.quantile",
+        "parameterType": "string",
+        "priority": 2,
+        "label": "speculation.quantile",
+        "desc": "",
+        "app": "spark",
+        "actionType": "normal",
+        "value": "",
+        "formType": "normal",
+        "comment": ""
+      },
+      {
+        "name": "mmspark.spark.speculation.interval",
+        "parameterType": "string",
+        "priority": 2,
+        "label": "speculation.interval",
+        "desc": "",
+        "app": "spark",
+        "actionType": "normal",
+        "value": "",
+        "formType": "normal",
+        "comment": ""
+      },
+      {
+        "name": "mmspark.spark.speculation.multiplier",
+        "parameterType": "string",
+        "priority": 2,
+        "label": "speculation.multiplier",
+        "desc": "",
+        "app": "spark",
+        "actionType": "normal",
+        "value": "",
+        "formType": "normal",
+        "comment": ""
+      },
+
+      {
+        "name": "mmspark.spark.dynamicAllocation.enabled",
+        "parameterType": "string",
+        "priority": 2,
+        "label": "dynamicAllocation",
+        "desc": "",
+        "app": "spark",
+        "actionType": "select",
+        "value": "",
+        "formType": "select",
+        "comment": ""
+      },
+
       {
         "name": "mmspark.spark.sql.shuffle.partitions",
         "parameterType": "string",

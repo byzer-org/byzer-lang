@@ -83,7 +83,6 @@ class RestController extends ApplicationController {
     val appParameters = DeployParameterService.
       installSteps("spark").map(f => f.priority).distinct.sortBy(f => f).map(f => DeployParameterService.installStep("spark", f).map(f => FormHelper.formatFormItem(f)))
 
-    val jarPathMessage = if (isEmpty(param("jarPath"))) "" else s" jar is uploaded : ${param("jarPath")}"
     renderHtml(200, "/rest/submit_job.vm",
       pv(Map("params" -> view(List(
         Map("name" -> "StreamingPro配置", "value" -> appParameters(0)),

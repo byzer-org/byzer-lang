@@ -42,6 +42,7 @@ serviceframework:
 http:
     disable: false
     port: 9000
+    host: 172.16.2.3
 thrift:
     disable: true
 dubbo:

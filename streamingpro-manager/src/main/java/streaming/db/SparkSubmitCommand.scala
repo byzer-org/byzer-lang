@@ -1,7 +1,11 @@
 package streaming.db
 
+import java.io.File
+
 import net.csdn.common.logging.Loggers
 import streaming.common.ParamsUtil
+
+import scala.io.Source
 
 /**
   * Created by allwefantasy on 12/7/2017.
@@ -40,8 +44,8 @@ object ManagerConfiguration {
   def env = {
     //eg. export SPARK_HOME=/opt/spark-2.1.1;export HADOOP_CONF_DIR=/etc/hadoop/conf;cd $SPARK_HOME;
     //eg. source /etc/profile ;cd $SPARK_HOME ;
-    if (config.hasParam("env")) {
-      config.getParam("env")
+    if (config.hasParam("envPath")) {
+      Source.fromFile(new File(config.getParam("envPath"))).getLines().mkString("\n")
     } else {
       "export SPARK_HOME=/opt/spark-2.1.1;export HADOOP_CONF_DIR=/etc/hadoop/conf;cd $SPARK_HOME;"
     }

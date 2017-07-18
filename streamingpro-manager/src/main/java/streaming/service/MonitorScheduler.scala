@@ -190,7 +190,8 @@ object MonitorScheduler {
                 if (state == YarnApplicationState.RUNNING.toString) {
                   try {
                     logger.info(s"$applicationId is running, execute callback shell script")
-                    ShellCommand.exec(app.afterShell)
+                    val res = ShellCommand.exec(app.afterShell)
+                    logger.info(s"$applicationId is running, execute callback shell script:" + res)
 
                   } catch {
                     case e: Exception =>
