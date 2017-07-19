@@ -123,5 +123,11 @@ class RestController extends ApplicationController {
 
   }
 
+  @At(path = Array("/check"), types = Array(GET, POST))
+  def check = {
+    val sparkSession = runtime.asInstanceOf[SparkRuntime].sparkSession
+    render(sparkSession.table(param("name")))
+  }
+
   def runtime = PlatformManager.getRuntime
 }

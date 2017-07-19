@@ -80,6 +80,12 @@ class RestController extends ApplicationController with CSVRender {
 
   }
 
+  @At(path = Array("/check"), types = Array(GET, POST))
+  def check = {
+    val sqlContext = SQLContextHolder.getOrCreate.getOrCreate()
+    render(sqlContext.table(param("name")))
+  }
+
 
   @At(path = Array("/refresh"), types = Array(GET, POST))
   def refreshTable = {

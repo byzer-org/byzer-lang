@@ -157,6 +157,26 @@
         </profile>
 
         <profile>
+            <id>spark-2.2.0</id>
+            <properties>
+                <spark.streaming.kafka.artifactId>spark-streaming-kafka-0-8_${scala.binary.version}
+                </spark.streaming.kafka.artifactId>
+                <spark.sql.kafka.artifactId>spark-sql-kafka-0-10_${scala.binary.version}</spark.sql.kafka.artifactId>
+                <spark.version>2.2.0</spark.version>
+            </properties>
+            <modules>
+                <module>streamingpro-spark-2.0</module>
+            </modules>
+            <dependencies>
+                <dependency>
+                    <groupId>net.csdn</groupId>
+                    <artifactId>serviceframework-jetty-9-server</artifactId>
+                    <version>${serviceframework.version}</version>
+                </dependency>
+            </dependencies>
+        </profile>
+
+        <profile>
             <id>flink-1.2.0</id>
             <modules>
                 <module>streamingpro-flink</module>

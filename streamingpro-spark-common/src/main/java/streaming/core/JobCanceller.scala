@@ -27,17 +27,19 @@ object JobCanceller {
   }
 
   def runWithGroup(sc: SparkContext, timeout: Long, f: () => Unit) = {
-
-    val groupId = jobCanceller.nextGroupId.incrementAndGet().toString
-    sc.setJobGroup(groupId, "", true)
-    try {
-      jobCanceller.groupIdToTime.put(groupId, JobTime(System.currentTimeMillis(), timeout))
+    if (jobCanceller == null) {
       f()
+    } else {
+      val groupId = jobCanceller.nextGroupId.incrementAndGet().toString
+      sc.setJobGroup(groupId, "", true)
+      try {
+        jobCanceller.groupIdToTime.put(groupId, JobTime(System.currentTimeMillis(), timeout))
+        f()
+      }
+      finally {
+        sc.clearJobGroup()
+      }
     }
-    finally {
-      sc.clearJobGroup()
-    }
-
   }
 }
 
