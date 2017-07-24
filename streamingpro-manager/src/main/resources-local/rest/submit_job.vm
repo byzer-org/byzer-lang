@@ -50,6 +50,7 @@
                 }
 
 
+
     </style>
 
 
@@ -58,7 +59,7 @@
 <div class="container">
     #parse("/rest/menu.vm")
 </div>
-<div class="container">
+<div class="container" id="app">
     <form action="/submit_job" id="slaveForm" method="post" class="form-horizontal">
         <div class="panel panel-default ">
             <div class="panel-heading">依赖jar包勾选</div>
@@ -70,7 +71,7 @@
                 <div class="panel-heading">$sub_params.name</div>
 
                 #foreach( $c in $sub_params.value)
-                <div class="form-group" #if($c.type=='hidden') style="display: none" #end>
+                <div name="$c.parentName" class="form-group #if($helper.isNotEmpty($c.parentName)) hidden #end" >
                     <label class="col-sm-2 control-label" for="suffix_${c.name}" title="${c.desc}">
                         ${c.label}
                     </label>
@@ -96,5 +97,25 @@
     </form>
     <br/><br/>
 </div>
+
+    <script type="application/javascript">
+       var vm =  new Vue({
+            el: '#app',
+            data: {
+            },
+            methods: {
+              "toggle_child":function(event){
+                console.log(event.target.value)
+                if(event.target.value=='true'){
+                    $('div[name="'+event.target.name+'"]').removeClass("hidden")
+                }else {
+                    $('div[name="'+event.target.name+'"]').addClass("hidden")
+                }
+
+
+              }
+            }
+        })
+</script>
 </body>
 </html>

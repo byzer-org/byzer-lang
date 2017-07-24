@@ -11,8 +11,9 @@ import org.apache.commons.fileupload.disk.DiskFileItemFactory
 import org.apache.commons.fileupload.servlet.ServletFileUpload
 import org.apache.commons.io.{FileUtils, FilenameUtils, IOUtils}
 import streaming.db._
-import streaming.bean.{ComplexParameterProcessor, DeployParameterService, Parameter}
-import streaming.form.{FormHelper, HtmlHelper}
+import streaming.bean.{ComplexParameterProcessor, DeployParameterService}
+import streaming.form.HtmlHelper
+import streaming.helper.rest.RestHelper
 import streaming.service.{MonitorScheduler, YarnApplicationState, YarnRestService}
 import streaming.shell.ShellCommand
 
@@ -67,21 +68,28 @@ class RestController extends ApplicationController {
   @At(path = Array("/submit_job.html"), types = Array(GET, POST))
   def submit_job_index = {
 
-    val parameter = Parameter(
+    val parameter = TSparkJobParameter(
+      id = -1,
       name = "mmspark.jars",
+      parentName = "",
       parameterType = "string",
       app = "jar",
-      desc = "",
+      description = "",
       label = "依赖jar包勾选",
       priority = 0,
       formType = "checkbox",
       actionType = "checkbox",
-      comment = "", value = "")
+      comment = "",
+      value = "")
 
-    val jarDependencies = FormHelper.formatFormItem(new ComplexParameterProcessor().process(parameter)).value
+    val jarDependencies = new RestHelper().formatFormItem(new ComplexParameterProcessor().process(parameter)).value
 
     val appParameters = DeployParameterService.
-      installSteps("spark").map(f => f.priority).distinct.sortBy(f => f).map(f => DeployParameterService.installStep("spark", f).map(f => FormHelper.formatFormItem(f)))
+      process.map(f => (f.priority, f)).
+      groupBy(f => f._1).
+      map(f => (f._1, f._2.map(f => f._2))).toList.
+      sortBy(f => f._1)
+      .map(f => f._2.map(f => new RestHelper().formatFormItem(f)))
 
     renderHtml(200, "/rest/submit_job.vm",
       pv(Map("params" -> view(List(

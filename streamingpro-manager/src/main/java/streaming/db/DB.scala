@@ -50,6 +50,52 @@ class TSparkJar(val id: Long,
                 var createTime: Long
                ) extends KeyedEntity[Long]
 
+case class TSparkJobParameter(val id: Long,
+                         var name: String,
+                         var parentName:String,
+                         var parameterType: String,
+                         var app: String,
+                         var description: String,
+                         var label: String,
+                         var priority: Int,
+                         var formType: String,
+                         var actionType: String,
+                         var comment: String,
+                         var value: String) extends KeyedEntity[Long]
+
+class TSparkJobParameterValues(val id: Long,
+                               var name: String,
+                               var formType: Int,
+                               var value: String
+                              )extends KeyedEntity[Long]
+
+object TSparkJobParameter {
+  def save(item: TSparkJobParameter) = {
+    transaction {
+      DB.tSparkJobParameter.insert(item)
+    }
+  }
+  def find(id: Long) = {
+    transaction {
+      from(DB.tSparkJobParameter)(s => where(s.id === id) select (s)).singleOption
+    }
+  }
+  def list = {
+    transaction {
+      from(DB.tSparkJobParameter)(s => select(s)).toList
+    }
+  }
+}
+
+object TSparkJobParameterValues {
+  def save(item: TSparkJobParameterValues) = {
+    transaction {
+      DB.tSparkJobParameterValues.insert(item)
+    }
+  }
+}
+
+
 object TSparkJar {
   def find(id: Long) = {
     transaction {
@@ -259,11 +305,14 @@ object DB extends Schema {
       java.sql.DriverManager.getConnection(jdbcConfig("url"), jdbcConfig("userName"), jdbcConfig("password")),
       new MySQLAdapter)
   )
+
   val tTestConf = table[TTestConf]("t_test_conf")
   val tParamsConf = table[TParamsConf]("t_params_conf")
   val tSparkApplication = table[TSparkApplication]("t_spark_application")
   val tSparkApplicationLog = table[TSparkApplicationLog]("t_spark_application_log")
   val tSparkJar = table[TSparkJar]("t_spark_jar")
+  val tSparkJobParameter = table[TSparkJobParameter]("t_spark_job_parameter")
+  val tSparkJobParameterValues = table[TSparkJobParameterValues]("t_spark_job_parameter_values")
 
 
 }

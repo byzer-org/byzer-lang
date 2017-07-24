@@ -54,6 +54,7 @@
       {
         "name": "mmspark.streaming.kafka.offsetPath",
         "parameterType": "string",
+        "parentName": "mmspark.streaming.platform",
         "priority": 1,
         "label": "Kafka offset 保存目录",
         "desc": "",
@@ -104,6 +105,7 @@
         "parameterType": "string",
         "priority": 1,
         "label": "http端口",
+        "parentName": "mmspark.streaming.rest",
         "desc": "",
         "app": "spark",
         "actionType": "normal",
@@ -223,6 +225,7 @@
         "name": "mmspark.spark.speculation.quantile",
         "parameterType": "string",
         "priority": 2,
+        "parentName": "mmspark.spark.speculation",
         "label": "speculation.quantile",
         "desc": "",
         "app": "spark",
@@ -236,6 +239,7 @@
         "parameterType": "string",
         "priority": 2,
         "label": "speculation.interval",
+        "parentName": "mmspark.spark.speculation",
         "desc": "",
         "app": "spark",
         "actionType": "normal",
@@ -248,6 +252,7 @@
         "parameterType": "string",
         "priority": 2,
         "label": "speculation.multiplier",
+        "parentName": "mmspark.spark.speculation",
         "desc": "",
         "app": "spark",
         "actionType": "normal",
@@ -255,7 +260,6 @@
         "formType": "normal",
         "comment": ""
       },
-
       {
         "name": "mmspark.spark.dynamicAllocation.enabled",
         "parameterType": "string",
@@ -268,7 +272,6 @@
         "formType": "select",
         "comment": ""
       },
-
       {
         "name": "mmspark.spark.sql.shuffle.partitions",
         "parameterType": "string",

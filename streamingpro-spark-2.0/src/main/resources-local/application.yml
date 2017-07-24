@@ -41,6 +41,7 @@ serviceframework:
 ###############http config##################
 http:
     disable: false
+    host: 0.0.0.0
     class:
         port: streaming.common.SpecificPortGenerator
 thrift:

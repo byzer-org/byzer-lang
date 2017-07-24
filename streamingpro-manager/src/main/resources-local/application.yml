@@ -19,6 +19,7 @@ test:
 
 application:
     controllerNames: streaming.rest.RestController
+    helper: streaming.helper
     service:
     util:
     test:

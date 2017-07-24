@@ -19,3 +19,9 @@ object App {
     Application.main(Array())
   }
 }
+
+object StreamingManagerApp {
+  def main(args: Array[String]): Unit = {
+    App.main(args)
+  }
+}

@@ -1,5 +1,6 @@
 package streaming.form
-import streaming.bean.Parameter
+
+import streaming.db.TSparkJobParameter
 
 import scala.collection.JavaConversions._
 
@@ -35,51 +36,7 @@ object HtmlHelper {
   }
 }
 
-object FormHelper {
 
-  def formatFormItem(item: Parameter): Parameter = {
-    FormType.withName(item.formType) match {
-      case FormType.SELECT =>
-        val options = item.value.split(",").map { f =>
-          if (f.contains(":")) {
-            val Array(a, b) = f.split(":")
-            s"""<option value="${b}">${a}</option>"""
-          } else {
-            s"""<option value="${f}">${f}</option>"""
-          }
-
-        }.mkString("")
-        item.copy(value = s"""<select class="selectpicker" name="${item.name}">${options}</select>""")
-
-      case FormType.NORMAL =>
-        item.copy(value = s"""<input type="text" name="${item.name}" value="${item.value}"/>""")
-
-      case FormType.CHECKBOX =>
-        val options = item.value.split(",").map { f =>
-          val Array(a, b) = if (f.contains(":")) f.split(":") else Array(f, f)
-          s"""<li class="list-group-item">${a}
-              <div class="material-switch pull-right">
-              <input id="${b}" name="${item.name}" value="${b}" type="checkbox"/>
-              <label for="${b}" class="label-warning"></label>
-            </div>
-          </li>"""
-        }.mkString("")
-        val startHtml =
-          s"""
-             |         <div class="row">
-             |          <div class="col-xs-12">
-             |              <ul class="list-group">
-           """.stripMargin
-        val endHtml =
-          s"""
-             |            </div>
-             |    </div>
-           """.stripMargin
-        item.copy(value = startHtml + options + endHtml)
-    }
-
-  }
-}
 
 
 

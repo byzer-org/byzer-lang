@@ -3,8 +3,6 @@
 <head>
     <title>任务管理</title>
     #parse("/rest/header.vm")
-    <script src="/vue.js"></script>
-    <script src="/axios.min.js"></script>
 </head>
 <body>
 <div class="container">

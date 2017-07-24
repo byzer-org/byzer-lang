@@ -1,17 +1,15 @@
 package streaming.bean
 
 import net.sf.json.{JSONArray, JSONObject}
-import streaming.db.TSparkJar
-import scala.collection.JavaConversions._
+import streaming.db.{TSparkJar, TSparkJobParameter}
 
+import scala.collection.JavaConversions._
 import scala.io.Source
 
 /**
   * Created by allwefantasy on 14/7/2017.
   */
 object DeployParameterService {
-  val str = Source.fromInputStream(this.getClass.getResourceAsStream("/install.json")).getLines().mkString("\n")
-  val appParametersList = parseItems
   val parameterProcessorMapping = register()
   val parameterFieldMapping = register2()
 
@@ -43,55 +41,8 @@ object DeployParameterService {
     SJSon.Serialization.write(obj)
   }
 
-  def parseItems = {
-    val result = new scala.collection.mutable.ArrayBuffer[AppParameters]()
-
-    JSONArray.fromObject(str).foreach { f =>
-      val aii = f.asInstanceOf[JSONObject]
-      val item = AppParameters(aii.getString("clzz"), aii.getString("source"), aii.getString("registerType"), aii.getJSONArray("param").map { p =>
-        val aipp = p.asInstanceOf[JSONObject]
-        Parameter(
-          name = aipp.getString("name"),
-          parameterType = aipp.getString("parameterType"),
-          app = aipp.getString("app"),
-          desc = aipp.getString("desc"),
-          label = aipp.getString("label"),
-          priority = aipp.getInt("priority"),
-          formType = aipp.getString("formType"),
-          actionType = aipp.getString("actionType"),
-          comment = aipp.getString("comment"),
-          value = aipp.getString("value")
-        )
-      }.toList)
-      result += item
-    }
-    result
-  }
-
-  def appParameters(source: String) = {
-    val items = appParametersList.filter(f => f.source == source)
-    if (items.size > 0) Some(items(0)) else None
-
-  }
-
-  def installSteps(app: String) = {
-    appParameters(app) match {
-      case Some(i) => i.param.toList
-      case None => appParameters("_default_").get.param.toList
-    }
-  }
-
-  def installStep(app: String, priority: Int) = {
-    appParameters(app) match {
-      case Some(i) =>
-        process(i, priority)
-      case None =>
-        process(appParameters("_default_").get, priority)
-    }
-  }
-
-  def process(appInstallItem: AppParameters, priority: Int) = {
-    appInstallItem.param.filter(f => f.priority == priority).map {
+  def process() = {
+    TSparkJobParameter.list.map {
       f =>
         val appParameterProcessor = parameterProcessorMapping(f.actionType)
         appParameterProcessor.process(f)
@@ -99,43 +50,40 @@ object DeployParameterService {
   }
 }
 
-case class AppParameters(clzz: String,
-                         source: String,
-                         registerType: String,
-                         param: List[Parameter])
-
-case class Parameter(name: String,
-                     parameterType: String,
-                     app: String,
-                     desc: String,
-                     label: String,
-                     priority: Int,
-                     formType: String,
-                     actionType: String,
-                     comment: String,
-                     value: String)
 
 trait AppParameterProcessor {
-  def process(actionType: Parameter): Parameter
+  def process(actionType: TSparkJobParameter): TSparkJobParameter
 }
 
 class ComplexParameterProcessor extends AppParameterProcessor {
-  override def process(actionType: Parameter): Parameter = {
+  override def process(actionType: TSparkJobParameter): TSparkJobParameter = {
     if (!actionType.value.isEmpty) return actionType
     if (actionType.app.isEmpty || actionType.app == "-") return actionType
     val v = DeployParameterService.parameterFieldMapping(actionType.app).value(actionType).mkString(",")
-    actionType.copy(value = v)
+    new TSparkJobParameter(actionType.id,
+      actionType.name,
+      actionType.parentName,
+      actionType.parameterType,
+      actionType.app,
+      actionType.description,
+      actionType.label,
+      actionType.priority,
+      actionType.formType,
+      actionType.actionType,
+      actionType.actionType,
+      v)
+
   }
 }
 
 class NoneAppParameterProcessor extends AppParameterProcessor {
-  override def process(item: Parameter): Parameter = {
+  override def process(item: TSparkJobParameter): TSparkJobParameter = {
     item
   }
 }
 
 class SparkParameter extends BuildSelectParameterValues {
-  override def value(actionType: Parameter): List[String] = {
+  override def value(actionType: TSparkJobParameter): List[String] = {
     val str = Source.fromInputStream(this.getClass.getResourceAsStream("/sparkParameter.json")).getLines().mkString("\n")
     import scala.collection.JavaConversions._
     val keyValue = JSONObject.fromObject(str).map {
@@ -147,12 +95,12 @@ class SparkParameter extends BuildSelectParameterValues {
 }
 
 class TSparkJarParameter extends BuildSelectParameterValues {
-  override def value(actionType: Parameter): List[String] = {
+  override def value(actionType: TSparkJobParameter): List[String] = {
     val jrs = TSparkJar.list
     jrs.map(f => f.name + ":" + f.path)
   }
 }
 
 trait BuildSelectParameterValues {
-  def value(actionType: Parameter): List[String]
+  def value(actionType: TSparkJobParameter): List[String]
 }
