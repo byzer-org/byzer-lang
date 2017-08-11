@@ -32,6 +32,11 @@ class RestController extends ApplicationController {
     renderHtml(200, "/rest/test.vm", WowCollections.map())
   }
 
+  @At(path = Array("/parameters.html"), types = Array(GET))
+  def parameters_index = {
+    renderHtml(200, "/rest/parameters.vm", pv(Map()))
+  }
+
   @At(path = Array("/query.html"), types = Array(GET))
   def query_index = {
     renderHtml(200, "/rest/query.vm", pv(Map("sparkSqlServer" -> ManagerConfiguration.sparkSqlServer)))
