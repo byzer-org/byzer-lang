@@ -1,3 +1,5 @@
+[中文文档](https://github.com/allwefantasy/streamingpro/blob/master/README-CN.md)
+
 StreamingPro is a fast, expressive, and convenient system running on Spark with streaming, batch, interactive query, and machine learning support.
 
 StreamingPro makes it easier to build spark applications without writing any code by means of:
