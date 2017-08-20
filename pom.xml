@@ -5,7 +5,7 @@
     <groupId>streaming.king</groupId>
     <artifactId>streamingpro</artifactId>
     <packaging>pom</packaging>
-    <version>0.4.15-SNAPSHOT</version>
+    <version>1.0.0</version>
     <modules>
         <module>streamingpro-commons</module>
         <module>streamingpro-spark-common</module>
@@ -26,7 +26,7 @@
 
         <flink.version>1.2.0</flink.version>
 
-        <serviceframework.version>1.3.2-SNAPSHOT</serviceframework.version>
+        <serviceframework.version>2.0.0</serviceframework.version>
         <scope>provided</scope>
     </properties>
 

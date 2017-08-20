@@ -6,7 +6,7 @@ import net.csdn.common.path.Url
 import net.csdn.modules.http.{ApplicationController, ViewType}
 import net.csdn.modules.http.RestRequest.Method._
 import net.csdn.modules.transport.HttpTransportService
-import org.apache.spark.sql.SaveMode
+import org.apache.spark.sql.{DataFrameWriter, Row, SaveMode}
 import streaming.core.{AsyncJobRunner, DownloadRunner, JobCanceller}
 import streaming.core.strategy.platform.{PlatformManager, SparkRuntime}
 
@@ -47,6 +47,14 @@ class RestController extends ApplicationController {
     }
   }
 
+  def _save(dfWriter: DataFrameWriter[Row]) = {
+    if (hasParam("tableName")) {
+      dfWriter.saveAsTable(param("tableName"))
+    } else {
+      dfWriter.format(param("format", "csv")).save(param("path", "-"))
+    }
+  }
+
   @At(path = Array("/run/sql"), types = Array(GET, POST))
   def ddlSql = {
     val sparkSession = runtime.asInstanceOf[SparkRuntime].sparkSession
@@ -56,9 +64,10 @@ class RestController extends ApplicationController {
     }
 
     paramAsBoolean("async", false).toString match {
-      case "true" if param("callback", "") != "" =>
+      case "true" if hasParam("callback") =>
         AsyncJobRunner.run(() => {
-          sparkSession.sql(param("sql")).write.format(param("format", "csv")).mode(SaveMode.Overwrite).save(path)
+          val dfWriter = sparkSession.sql(param("sql")).write.mode(SaveMode.Overwrite)
+          _save(dfWriter)
           val htp = findService(classOf[HttpTransportService])
           import scala.collection.JavaConversions._
           htp.get(new Url(param("callback")), Map("url_path" -> s"""/download?fileType=raw&file_suffix=${param("format", "csv")}&paths=$path"""))
@@ -67,7 +76,8 @@ class RestController extends ApplicationController {
 
       case "false" if param("resultType", "") == "file" =>
         JobCanceller.runWithGroup(sparkSession.sparkContext, paramAsLong("timeout", 30000), () => {
-          sparkSession.sql(param("sql")).write.format(param("format", "csv")).mode(SaveMode.Overwrite).save(path)
+          val dfWriter = sparkSession.sql(param("sql")).write.mode(SaveMode.Overwrite)
+          _save(dfWriter)
           render(s"""/download?fileType=raw&file_suffix=${param("format", "csv")}&paths=$path""")
         })
 
