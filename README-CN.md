@@ -8,11 +8,11 @@
 1. [第一个流式程序](https://github.com/allwefantasy/streamingpro/blob/master/README-CN.md#第一个流式程序)
 1. [StreamingPro的一些参数](https://github.com/allwefantasy/streamingpro/blob/master/README-CN.md#StreamingPro的一些参数)
 1. [执行一个批处理任务](https://github.com/allwefantasy/streamingpro/blob/master/README-CN.md#执行一个批处理任务)
-1. [启动一个SQL server服务](https://github.com/allwefantasy/streamingpro/blob/master/README-CN.md#启动一个SQL server服务)
+1. [启动一个SQL server服务](https://github.com/allwefantasy/streamingpro/blob/master/README-CN.md#启动一个SQL-server服务)
 1. [基于StreamingPro编程](https://github.com/allwefantasy/streamingpro/blob/master/README-CN.md#基于StreamingPro编程)
 1. [对Flink的支持](https://github.com/allwefantasy/streamingpro/blob/master/README-CN.md#对Flink的支持)
-1. [StreamingPro Manager](https://github.com/allwefantasy/streamingpro/blob/master/README-CN.md#StreamingPro Manager)
-1. [StreamingPro json文件编辑器支持](https://github.com/allwefantasy/streamingpro/blob/master/README-CN.md#StreamingPro json文件编辑器支持)
+1. [StreamingPro Manager](https://github.com/allwefantasy/streamingpro/blob/master/README-CN.md#StreamingPro-Manager)
+1. [StreamingPro json文件编辑器支持](https://github.com/allwefantasy/streamingpro/blob/master/README-CN.md#StreamingPro-json文件编辑器支持)
 1. [StreamingPro对机器学习的支持](https://github.com/allwefantasy/streamingpro/blob/master/README-CN.md#StreamingPro对机器学习的支持)
 
 
