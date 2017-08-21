@@ -147,11 +147,49 @@ StreamingPro会通过'compositor'的概念来描述他们，你可以理解为�
  第一个表示我们对接的数据源是kafka 0.9，我们把Kafka的数据映射成表test。 因为我们可能还需要一些元数据，比如ip和城市的映射关系，
  所以我们还可以配置一些其他的非流式的数据源，我们这里配置了一个smaple.csv文件，并且命名为表sample。
 
+ 如果我们的输入输出都是Hive的话，可能就不需要batch.sources/batch.outputs 等组件了，通常一个batch.sql就够了。比如：
+
+ ```
+ "without-sources-job": {
+     "desc": "-",
+     "strategy": "spark",
+     "algorithm": [],
+     "ref": [],
+     "compositor": [
+       {
+         "name": "batch.sql",
+         "params": [
+           {
+             "sql": "select * from hiveTable",
+             "outputTableName": "puarquetTable"
+           }
+         ]
+       },
+       {
+         "name": "batch.outputs",
+         "params": [
+           {
+             "format": "parquet",
+             "inputTableName": "puarquetTable",
+             "path": "/tmp/wow",
+             "mode": "Overwrite"
+           }
+         ]
+       }
+     ],
+     "configParams": {
+     }
+   }
+
+ ```
+
+在批处理里，batch.sources/batch.outputs 都是可有可无的，但是对于流式程序，stream.sources/stream.outputs/ss.sources/ss.outputs 则是必须的。
+
 
  ## 第一个流式程序
 
  StreamingPro中，compositor的命名都是有迹可循。如果是Spark Streaming,则会以 stream. 开头，如果是Structured Streaming，则会
- 以 ss. 开头，普通批处理，则以 batch. 开哦图。我们这里举得例子会是Spark Streaming.
+ 以 ss. 开头，普通批处理，则以 batch. 开头。我们这里举的例子会是Spark Streaming.
 
 
  ```
@@ -264,7 +302,7 @@ job,比如：
 
 我们最好保持他们之间不存在依赖性。
 
-Socket 是个很好的测试途径。如果你需要换成kafka,只需把format换成kafka即可：
+Socket 是个很好的测试途径。如果你需要换成kafka,只需把format换成kafka即可，当然，对应的属性也需要做些调整：
 
 ```
 {
@@ -454,16 +492,19 @@ StreamingPro程序都是用这个类作为入口。`-streaming.` 都是streaming
 }
 ```
 
+
 这个例子显示了如何配置多个数据源，并且sql可以如何进行交互，最后如何进行输出。batch.sources,batch.sql,batch.outputs完全是
 以表来进行连接的，我们可以使用很多sql，通过生成中间表的形式来较为简单的完成一个任务。
 
 batch.sql 目前只能配置一条sql语句，但是一个配置文件可以写很多batch.sql。batch.sql之间可以互相依赖，并且有顺序之分。每个batch.sql
 都需要指定一个输出表，除非你执行的ddl语句。
 
+在这个例子中，batch.sql 其实是可有可无的，如果只是单纯同步数据，你可以只保留batch.sources/batch.outputs
+
 ## 执行Structured Streaming任务
 
-原生Structured Streaming不支持Kafka 0.8,0.9,所以StreamingPro提供了对老版本的支持，你可以通过kafka8,kakfa9来即可。如果是kafka 1.0之后，
-那么直接用kafka 作为format即可。和Spark Streaming一样，一个Job里只能包含一个Kafka源。一个简单示例如下：
+原生Structured Streaming不支持Kafka 0.8,0.9,所以StreamingPro则对此提供了支持，对应的format名称是 kafka8/kafka9。
+和Spark Streaming一样，一个Job里只能包含一个Kafka源。一个简单示例如下：
 
 
 
@@ -528,12 +569,12 @@ batch.sql 目前只能配置一条sql语句，但是一个配置文件可以写�
 
 ## 启动一个SQL server服务
 
-StreamingPro极大的简化了SQL Server，并且支持使用Rest形式的接口。你指要准备一个只包含
+StreamingPro极大的简化了SQL Server，除了thrift server以外，它也支持使用Rest形式的接口。你唯一需要做的就是准备一个只包含
 
 ```
 {}
 ```
-的query.json的文件，然后就可以启动一个Server。具体指令如下：
+的query.json的文件（名字可以任意），然后按如下的方式启动即可：
 
 ```
 SHome=/Users/allwefantasy/streamingpro
@@ -552,9 +593,7 @@ $SHome/streamingpro-spark-2.0-0.4.15-SNAPSHOT.jar    \
 -streaming.enableHiveSupport true
 ```
 
-之后你就可以通过http协议进行查询了。
-
-我们先通过接口创建一张表：
+启动后，我们可以测试下一下，我们先通过接口创建一张表：
 
 ```
 //CREATE TABLE IF NOT EXISTS zhl_table(id string, name string, city string, age Int)
@@ -640,7 +679,7 @@ curl --request POST \
 ## 基于StreamingPro编程
 
 通过添加UDF函数，可以很好的扩充SQL的功能。
-具体做法是，首先，在配置文件添加一个配置，
+具体做法是，在配置文件添加一个配置，
 
 ```
 "udf_register": {
