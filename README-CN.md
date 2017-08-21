@@ -441,6 +441,72 @@ StreamingPro程序都是用这个类作为入口。`-streaming.` 都是streaming
 batch.sql 目前只能配置一条sql语句，但是一个配置文件可以写很多batch.sql。batch.sql之间可以互相依赖，并且有顺序之分。每个batch.sql
 都需要指定一个输出表，除非你执行的ddl语句。
 
+## 执行Structured Streaming任务
+
+原生Structured Streaming不支持Kafka 0.8,0.9,所以StreamingPro提供了对老版本的支持，你可以通过kafka8,kakfa9来即可。如果是kafka 1.0之后，
+那么直接用kafka 作为format即可。和Spark Streaming一样，一个Job里只能包含一个Kafka源。一个简单示例如下：
+
+
+
+```
+{
+  "your-fist-ss-job": {
+    "desc": "测试",
+    "strategy": "spark",
+    "algorithm": [],
+    "ref": [
+    ],
+    "compositor": [
+      {
+        "name": "ss.sources",
+        "params": [
+          {
+            "format": "kafka9",
+            "outputTable": "test",
+            "kafka.bootstrap.servers": "127.0.0.1:9092",
+            "topics": "test",
+            "path": "-"
+          },
+          {
+            "format": "com.databricks.spark.csv",
+            "outputTable": "sample",
+            "header": "true",
+            "path": "/Users/allwefantasy/streamingpro/sample.csv"
+          }
+        ]
+      },
+      {
+        "name": "ss.sql",
+        "params": [
+          {
+            "sql": "select city as value from test left join sample on  CAST(test.value AS String) == sample.name",
+            "outputTableName": "test3"
+          }
+        ]
+      },
+      {
+        "name": "ss.outputs",
+        "params": [
+          {
+            "mode": "append",
+            "format": "kafka8",
+            "metadata.broker.list":"127.0.0.1:9092",
+            "topics":"test2",
+            "inputTableName": "test3",
+            "checkpoint":"/tmp/ss-kafka/",
+            "path": "/tmp/ss-kafka-data"
+          }
+        ]
+      }
+    ],
+    "configParams": {
+    }
+  }
+}
+```
+
+这个例子从Kafka读取，经过处理后写入Kafka的另外一个topic
+
 ## 启动一个SQL server服务
 
 StreamingPro极大的简化了SQL Server，并且支持使用Rest形式的接口。你指要准备一个只包含
