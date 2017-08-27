@@ -65,9 +65,9 @@ class RestController extends ApplicationController {
     } catch {
       case e: Exception =>
         e.printStackTrace()
-        render(400, e.getMessage)
+        render(400, e.getStackTrace.map(f => f.toString).mkString("\n"))
     }
-    render(200, "success")
+    render(200, WowCollections.map())
   }
 
   @At(path = Array("/run/sql"), types = Array(GET, POST))
