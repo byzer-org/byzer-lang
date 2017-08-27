@@ -25,6 +25,18 @@ public interface DSLSQLVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitSql(DSLSQLParser.SqlContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link DSLSQLParser#booleanExpression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitBooleanExpression(DSLSQLParser.BooleanExpressionContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link DSLSQLParser#expression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitExpression(DSLSQLParser.ExpressionContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link DSLSQLParser#ender}.
 	 * @param ctx the parse tree
 	 * @return the visitor result

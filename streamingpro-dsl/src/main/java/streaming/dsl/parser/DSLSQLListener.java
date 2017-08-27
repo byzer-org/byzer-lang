@@ -30,6 +30,26 @@ public interface DSLSQLListener extends ParseTreeListener {
 	 */
 	void exitSql(DSLSQLParser.SqlContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link DSLSQLParser#booleanExpression}.
+	 * @param ctx the parse tree
+	 */
+	void enterBooleanExpression(DSLSQLParser.BooleanExpressionContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link DSLSQLParser#booleanExpression}.
+	 * @param ctx the parse tree
+	 */
+	void exitBooleanExpression(DSLSQLParser.BooleanExpressionContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link DSLSQLParser#expression}.
+	 * @param ctx the parse tree
+	 */
+	void enterExpression(DSLSQLParser.ExpressionContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link DSLSQLParser#expression}.
+	 * @param ctx the parse tree
+	 */
+	void exitExpression(DSLSQLParser.ExpressionContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link DSLSQLParser#ender}.
 	 * @param ctx the parse tree
 	 */

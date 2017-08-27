@@ -16,7 +16,16 @@ sql
     : 'load' format '.' path 'as' tableName
     | 'save' tableName 'as' format '.' path ('partitionBy' col)?
     | 'select' ~(';')* 'as' tableName
+    | 'connect' format 'where'? expression? booleanExpression* ('as' tableName)?
     |  SIMPLE_COMMENT
+    ;
+
+booleanExpression
+    : 'and' expression
+    ;
+
+expression
+    : identifier '=' STRING
     ;
 
 ender
@@ -34,6 +43,7 @@ path
 tableName
     : identifier
     ;
+
 
 col
     : identifier
