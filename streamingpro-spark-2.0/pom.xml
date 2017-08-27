@@ -130,6 +130,12 @@
 
         <dependency>
             <groupId>streaming.king</groupId>
+            <artifactId>streamingpro-dsl</artifactId>
+            <version>${parent.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>streaming.king</groupId>
             <artifactId>streamingpro-api</artifactId>
             <version>${parent.version}</version>
         </dependency>

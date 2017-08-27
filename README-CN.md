@@ -85,6 +85,7 @@ mvn -DskipTests clean package  -pl streamingpro-spark -am  -Ponline -Pscala-2.10
 |streamingpro-spark-2.0 | streamingpro对spark 2.x的支持||
 |streamingpro-api | streamingpro把底层的spark API暴露出来，方便用户灵活处理问题||
 |streamingpro-manager | 通过该模块，可以很方便的通过web界面启动，管理，监控 spark相关的应用||
+|streamingpro-dls | 自定义connect,load,select,save等语法，便于用类似sql的方式做批处理任务||
 
 ## 相关概念
 

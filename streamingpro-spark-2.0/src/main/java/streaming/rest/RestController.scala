@@ -9,6 +9,7 @@ import net.csdn.modules.transport.HttpTransportService
 import org.apache.spark.sql.{DataFrameWriter, Row, SaveMode}
 import streaming.core.{AsyncJobRunner, DownloadRunner, JobCanceller}
 import streaming.core.strategy.platform.{PlatformManager, SparkRuntime}
+import streaming.dsl.{ScriptSQLExec, ScriptSQLExecListener}
 
 import scala.collection.JavaConversions._
 
@@ -53,6 +54,20 @@ class RestController extends ApplicationController {
     } else {
       dfWriter.format(param("format", "csv")).save(param("path", "-"))
     }
+  }
+
+
+  @At(path = Array("/run/script"), types = Array(GET, POST))
+  def script = {
+    val sparkSession = runtime.asInstanceOf[SparkRuntime].sparkSession
+    try {
+      ScriptSQLExec.parse(param("sql"), new ScriptSQLExecListener(sparkSession))
+    } catch {
+      case e: Exception =>
+        e.printStackTrace()
+        render(400, e.getStackTrace.map(f => f.toString).mkString("\n"))
+    }
+    render(200, WowCollections.map())
   }
 
   @At(path = Array("/run/sql"), types = Array(GET, POST))
