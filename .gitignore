@@ -119,3 +119,5 @@ project/plugins/project/
 /metastore_db
 /streamingpro-manager/src/main/resources-online/jdbc.properties
 /streamingpro-manager/src/main/resources-local/jdbc.properties
+
+/streamingpro-dsl/gen
