@@ -1,5 +1,7 @@
 package streaming.dsl
 
+import java.util.concurrent.ConcurrentHashMap
+
 import org.antlr.v4.runtime.tree.{ErrorNode, ParseTreeWalker, TerminalNode}
 import org.antlr.v4.runtime.{ANTLRInputStream, CommonTokenStream, ParserRuleContext}
 import org.apache.spark.sql.{DataFrame, SparkSession}
@@ -13,10 +15,35 @@ import scala.collection.mutable.ArrayBuffer
   * Created by allwefantasy on 25/8/2017.
   */
 object ScriptSQLExec {
+
+  //dbName -> (format->jdbc,url->....)
+  val dbMapping = new ConcurrentHashMap[String, Map[String, String]]()
+
+  def options(name: String, _options: Map[String, String]) = {
+    dbMapping.put(name, _options)
+  }
+
   def main(args: Array[String]): Unit = {
-    //val input = "select a as b from skone.kbs as k; load jdbc.`mysql1.tb_v_user` as mysql_tb_user;\nsave csv_input_result as json.`/tmp/todd/result_json` partitionBy uid;\nselect a as j from b as k;"
-    val input = "connect jdbc where userName=10 and ... as db1"
+    val input2 = "" +
+      "select a as b from skone.kbs as k; " +
+      "load jdbc.`mysql1.tb_v_user` as mysql_tb_user;" +
+      "save csv_input_result as json.`/tmp/todd/result_json` partitionBy uid;" +
+      "select a as j from b as k;"
+
+    val input =
+      """connect jdbc where driver="com.mysql.jdbc.Driver"
+        |    and url="jdbc:mysql://127.0.0.1/alarm_test?characterEncoding=utf8"
+        |    and user="root"
+        |    and password="csdn.net"
+        |    as db1;
+        |load jdbc.`db1.t_report` as tr;
+        |select * from tr  as new_tr;
+        |save new_tr as json.`/tmp/todd`
+        |""".stripMargin
     parse(input, new ScriptSQLExecListener(null))
+    println(dbMapping)
+
+
 
   }
 
@@ -31,11 +58,6 @@ object ScriptSQLExec {
 
 class ScriptSQLExecListener(_sparkSession: SparkSession) extends DSLSQLListener {
   def sparkSession = _sparkSession
-  override def enterStatement(ctx: StatementContext): Unit = {}
-
-  override def exitStatement(ctx: StatementContext): Unit = {}
-
-  override def enterSql(ctx: SqlContext): Unit = {}
 
   override def exitSql(ctx: SqlContext): Unit = {
 
@@ -50,9 +72,16 @@ class ScriptSQLExecListener(_sparkSession: SparkSession) extends DSLSQLListener 
         new SaveAdaptor(this).parse(ctx)
 
       case "connect" =>
+        new ConnectAdaptor(this).parse(ctx)
     }
 
   }
+
+  override def enterStatement(ctx: StatementContext): Unit = {}
+
+  override def exitStatement(ctx: StatementContext): Unit = {}
+
+  override def enterSql(ctx: SqlContext): Unit = {}
 
   override def enterFormat(ctx: FormatContext): Unit = {}
 
@@ -105,4 +134,8 @@ class ScriptSQLExecListener(_sparkSession: SparkSession) extends DSLSQLListener 
   override def enterBooleanExpression(ctx: BooleanExpressionContext): Unit = {}
 
   override def exitBooleanExpression(ctx: BooleanExpressionContext): Unit = {}
+
+  override def enterDb(ctx: DbContext): Unit = {}
+
+  override def exitDb(ctx: DbContext): Unit = {}
 }

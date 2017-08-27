@@ -55,6 +55,12 @@ public interface DSLSQLVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitPath(DSLSQLParser.PathContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link DSLSQLParser#db}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitDb(DSLSQLParser.DbContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link DSLSQLParser#tableName}.
 	 * @param ctx the parse tree
 	 * @return the visitor result

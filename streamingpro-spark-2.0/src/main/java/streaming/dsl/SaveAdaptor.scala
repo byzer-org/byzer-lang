@@ -17,10 +17,11 @@ class SaveAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
           writer.mode(SaveMode.Overwrite)
 
         case s: PathContext =>
-          writer.save(s.getText)
+          writer.save(cleanStr(s.getText))
 
         case s: TableNameContext =>
-          writer = scriptSQLExecListener.sparkSession.sql(s.getText).write
+          writer = scriptSQLExecListener.sparkSession.table(s.getText).write
+        case _ =>
       }
     }
   }
