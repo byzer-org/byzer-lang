@@ -60,12 +60,30 @@ class RestController extends ApplicationController {
   @At(path = Array("/run/script"), types = Array(GET, POST))
   def script = {
     val sparkSession = runtime.asInstanceOf[SparkRuntime].sparkSession
+    val htp = findService(classOf[HttpTransportService])
+    if (paramAsBoolean("async", false) && !params().containsKey("callback")) {
+      render(400, "when async is set true ,then you should set callback url")
+    }
     try {
-      ScriptSQLExec.parse(param("sql"), new ScriptSQLExecListener(sparkSession))
+      if (paramAsBoolean("async", false)) {
+        AsyncJobRunner.run(() => {
+          try {
+            ScriptSQLExec.parse(param("sql"), new ScriptSQLExecListener(sparkSession))
+            htp.get(new Url(param("callback")), Map("stat" -> s"""success"""))
+          } catch {
+            case e: Exception =>
+              e.printStackTrace()
+              htp.get(new Url(param("callback")), Map("fail" -> s"""success"""))
+          }
+        })
+      } else {
+        ScriptSQLExec.parse(param("sql"), new ScriptSQLExecListener(sparkSession))
+      }
+
     } catch {
       case e: Exception =>
         e.printStackTrace()
-        render(400, e.getStackTrace.map(f => f.toString).mkString("\n"))
+        render(500, e.getStackTrace.map(f => f.toString).mkString("\n"))
     }
     render(200, WowCollections.map())
   }

@@ -30,6 +30,46 @@ public interface DSLSQLListener extends ParseTreeListener {
 	 */
 	void exitSql(DSLSQLParser.SqlContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link DSLSQLParser#overwrite}.
+	 * @param ctx the parse tree
+	 */
+	void enterOverwrite(DSLSQLParser.OverwriteContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link DSLSQLParser#overwrite}.
+	 * @param ctx the parse tree
+	 */
+	void exitOverwrite(DSLSQLParser.OverwriteContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link DSLSQLParser#append}.
+	 * @param ctx the parse tree
+	 */
+	void enterAppend(DSLSQLParser.AppendContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link DSLSQLParser#append}.
+	 * @param ctx the parse tree
+	 */
+	void exitAppend(DSLSQLParser.AppendContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link DSLSQLParser#errorIfExists}.
+	 * @param ctx the parse tree
+	 */
+	void enterErrorIfExists(DSLSQLParser.ErrorIfExistsContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link DSLSQLParser#errorIfExists}.
+	 * @param ctx the parse tree
+	 */
+	void exitErrorIfExists(DSLSQLParser.ErrorIfExistsContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link DSLSQLParser#ignore}.
+	 * @param ctx the parse tree
+	 */
+	void enterIgnore(DSLSQLParser.IgnoreContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link DSLSQLParser#ignore}.
+	 * @param ctx the parse tree
+	 */
+	void exitIgnore(DSLSQLParser.IgnoreContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link DSLSQLParser#booleanExpression}.
 	 * @param ctx the parse tree
 	 */
