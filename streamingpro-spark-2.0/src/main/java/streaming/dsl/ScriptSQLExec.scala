@@ -138,4 +138,20 @@ class ScriptSQLExecListener(_sparkSession: SparkSession) extends DSLSQLListener 
   override def enterDb(ctx: DbContext): Unit = {}
 
   override def exitDb(ctx: DbContext): Unit = {}
+
+  override def enterOverwrite(ctx: OverwriteContext): Unit = {}
+
+  override def exitOverwrite(ctx: OverwriteContext): Unit = {}
+
+  override def enterAppend(ctx: AppendContext): Unit = {}
+
+  override def exitAppend(ctx: AppendContext): Unit = {}
+
+  override def enterErrorIfExists(ctx: ErrorIfExistsContext): Unit = {}
+
+  override def exitErrorIfExists(ctx: ErrorIfExistsContext): Unit = {}
+
+  override def enterIgnore(ctx: IgnoreContext): Unit = {}
+
+  override def exitIgnore(ctx: IgnoreContext): Unit = {}
 }

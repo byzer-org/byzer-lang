@@ -25,6 +25,30 @@ public interface DSLSQLVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitSql(DSLSQLParser.SqlContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link DSLSQLParser#overwrite}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitOverwrite(DSLSQLParser.OverwriteContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link DSLSQLParser#append}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitAppend(DSLSQLParser.AppendContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link DSLSQLParser#errorIfExists}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitErrorIfExists(DSLSQLParser.ErrorIfExistsContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link DSLSQLParser#ignore}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitIgnore(DSLSQLParser.IgnoreContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link DSLSQLParser#booleanExpression}.
 	 * @param ctx the parse tree
 	 * @return the visitor result

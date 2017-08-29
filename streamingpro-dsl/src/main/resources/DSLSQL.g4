@@ -14,10 +14,26 @@ statement
 
 sql
     : 'load' format '.' path 'as' tableName
-    | 'save' tableName 'as' format '.' path ('partitionBy' col)?
+    | 'save' (overwrite | append | errorIfExists |ignore)* tableName 'as' format '.' path ('partitionBy' col)?
     | 'select' ~(';')* 'as' tableName
     | 'connect' format 'where'? expression? booleanExpression* ('as' db)?
     |  SIMPLE_COMMENT
+    ;
+
+overwrite
+    : 'overwrite'
+    ;
+
+append
+    : 'append'
+    ;
+
+errorIfExists
+    : 'errorIfExists'
+    ;
+
+ignore
+    : 'ignore'
     ;
 
 booleanExpression
