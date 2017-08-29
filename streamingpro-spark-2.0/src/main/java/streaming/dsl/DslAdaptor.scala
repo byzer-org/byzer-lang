@@ -9,6 +9,8 @@ trait DslAdaptor {
   def parse(ctx: SqlContext): Unit
 
   def cleanStr(str: String) = {
+    if(str.startsWith("`")||str.startsWith("\""))
     str.substring(1, str.length - 1)
+    else str
   }
 }
