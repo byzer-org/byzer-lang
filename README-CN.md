@@ -8,8 +8,16 @@
 1. [第一个流式程序](https://github.com/allwefantasy/streamingpro/blob/master/README-CN.md#第一个流式程序)
 1. [StreamingPro的一些参数](https://github.com/allwefantasy/streamingpro/blob/master/README-CN.md#StreamingPro的一些参数)
 1. [执行一个批处理任务](https://github.com/allwefantasy/streamingpro/blob/master/README-CN.md#执行一个批处理任务)
-1. [启动一个SQL server服务](https://github.com/allwefantasy/streamingpro/blob/master/README-CN.md#启动一个SQL-server服务)
+1. [执行Structured Streaming任务](https://github.com/allwefantasy/streamingpro/blob/master/README-CN.md#执行StructuredStreaming任务)
+1. [启动一个SQL server服务](https://github.com/allwefantasy/streamingpro/blob/master/README-CN.md#启动一个SQLServer服务)
+    * 启动StreamingPro SQL Server
+    * JDBC查询
+    * XQL查询语法
+    * 异步查询
 1. [基于StreamingPro编程](https://github.com/allwefantasy/streamingpro/blob/master/README-CN.md#基于StreamingPro编程)
+    * UDF 函数编写和配置
+    * Scala脚本编写与配置
+    * 基于streamingpro-api 高级编程
 1. [对Flink的支持](https://github.com/allwefantasy/streamingpro/blob/master/README-CN.md#对Flink的支持)
 1. [StreamingPro Manager](https://github.com/allwefantasy/streamingpro/blob/master/README-CN.md#StreamingPro-Manager)
 1. [StreamingPro json文件编辑器支持](https://github.com/allwefantasy/streamingpro/blob/master/README-CN.md#StreamingPro-json文件编辑器支持)
@@ -29,6 +37,15 @@ StreamingPro 支持以Spark,Flink等作为底层分布式计算引擎，通过�
 1. 使用Json描述文件实现完全配置化
 2. 标准化输入输出，中间处理可以采用SQL，支持UDF函数注册，支持自定义模块开发
 3. 支持Web化管理Spark应用的启动，监控
+
+如果更细节好处有：
+
+1. 跨版本：StreamingPro可以让你不用任何变更就可以轻易的运行在spark 1.6/2.1/2.2上。 
+2. 新语法：提供了新的DSl查询语法/Json配置语法
+3. 程序的管理工具：提供web界面启动/监控 Spark 程序
+4. 功能增强：2.1之后Structured Streaming 不支持kafka 0.8/0.9 ,Structured，此外还有比如spark streaming 支持offset 保存等
+5. 简化Spark SQL Server搭建成本：提供rest接口/thrift 接口，支持spark sql server 的负载均衡，自动将driver 注册到zookeeper上
+6. 探索更多的吧
 
 ## 编译
 
@@ -502,7 +519,7 @@ batch.sql 目前只能配置一条sql语句，但是一个配置文件可以写�
 
 在这个例子中，batch.sql 其实是可有可无的，如果只是单纯同步数据，你可以只保留batch.sources/batch.outputs
 
-## 执行Structured Streaming任务
+## 执行StructuredStreaming任务
 
 原生Structured Streaming不支持Kafka 0.8,0.9,所以StreamingPro则对此提供了支持，对应的format名称是 kafka8/kafka9。
 和Spark Streaming一样，一个Job里只能包含一个Kafka源。一个简单示例如下：
@@ -568,7 +585,7 @@ batch.sql 目前只能配置一条sql语句，但是一个配置文件可以写�
 
 这个例子从Kafka读取，经过处理后写入Kafka的另外一个topic
 
-## 启动一个SQL server服务
+## 启动一个SQLServer服务
 
 StreamingPro极大的简化了SQL Server，除了thrift server以外，它也支持使用Rest形式的接口。你唯一需要做的就是准备一个只包含
 
@@ -621,6 +638,8 @@ curl --request POST \
   --data 'sql=SELECT%20*%20FROM%zhl_table'
 ```
 
+### JDBC查询
+
 当然，因为我们开启了thrift server，你也可以写程序链接这个服务：
 
 ```
@@ -654,6 +673,8 @@ object ScalaJdbcConnectSelect {
 }
 ```
 
+### 异步查询
+
 有的时候，spark计算时间非常长，我们希望任务丢给spark计算，然后计算好了，再通知我们，streamingpro也支持这种功能。具体做法
 如下：
 
@@ -675,6 +696,8 @@ curl --request POST \
 |callback| 无|StreamingPro会调用该参数提供的接口告知下载地址。|
 |tableName| 无|如果该参数被配置，那么数据会被写入对应的hive表|
 |resultType| 无|async=false时，如果该参数被设置并且file时，那么接口返回一个地址而非结果|
+
+### XQL查询语法
 
 StreamingPro Rest服务除了支持SQL语句外也有自己的类SQL语法，一个典型的脚本如下：
 
@@ -714,6 +737,7 @@ curl --request POST \
 
 ## 基于StreamingPro编程
 
+### UDF 函数编写和配置
 通过添加UDF函数，可以很好的扩充SQL的功能。
 具体做法是，在配置文件添加一个配置，
 
@@ -762,6 +786,8 @@ object Functions {
 ```
 
 `your-first-batch-job` 下所有的batch.sql 就可以使用这个自定义的`mkString` 函数了。
+
+### Scala脚本编写和配置
 
 另外，StreamingPro也支持script脚本（目前只支持scala脚本），因为在配置文件中，如果能嵌入一些脚本，在特定场景里也是很方便的，
 这样既不需要编译啥的了。截止到这篇发布为止,支持脚本的有：
@@ -893,6 +919,7 @@ Some(StructType(Array(StructField("a", StringType, true),StructField("b", String
 ```
 
 
+## streamingpro api 高级编程
 StreamingPro也提供了API,可以定制任何你要的环节，并且和其他现有的组件可以很好的协同，当然，你也可以使用原始的Compositor接口，
 实现 非常高级的功能。目前支持的版本和类型有：
 Spark 2.+:
