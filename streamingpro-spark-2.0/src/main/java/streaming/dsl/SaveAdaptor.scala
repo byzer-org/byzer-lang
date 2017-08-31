@@ -29,6 +29,8 @@ class SaveAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
           mode = SaveMode.ErrorIfExists
         case s: IgnoreContext =>
           mode = SaveMode.Ignore
+        case s: ColContext =>
+          writer.partitionBy(cleanStr(s.getText))
         case _ =>
       }
     }
