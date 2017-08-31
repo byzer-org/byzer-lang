@@ -9,7 +9,7 @@ object LocalSparkServiceApp {
       "-streaming.master", "local[2]",
       "-streaming.name", "god",
       "-streaming.rest", "true",
-      "-streaming.thrift", "false",
+      "-streaming.thrift", "true",
       "-streaming.platform", "spark",
       "-streaming.job.file.path", "classpath:///test/empty.json",
       "-streaming.enableHiveSupport", "true",

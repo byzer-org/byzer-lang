@@ -121,7 +121,7 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
   SparkRuntime.setLastInstantiatedContext(this)
 
   override def startThriftServer: Unit = {
-    HiveThriftServer2.startWithContext(sparkSession.sqlContext.asInstanceOf[HiveContext])
+    HiveThriftServer2.startWithContext(sparkSession.sqlContext)
   }
 
   override def startHttpServer: Unit = {}
