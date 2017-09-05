@@ -1,27 +1,27 @@
 # StreamingPro 中文文档
 
 
-1. [概述](https://github.com/allwefantasy/streamingpro/blob/master/README-CN.md#概述)
-1. [编译](https://github.com/allwefantasy/streamingpro/blob/master/README-CN.md#编译)
-1. [项目模块说明](https://github.com/allwefantasy/streamingpro/blob/master/README-CN.md#项目模块说明)
-1. [相关概念](https://github.com/allwefantasy/streamingpro/blob/master/README-CN.md#相关概念)
-1. [第一个流式程序](https://github.com/allwefantasy/streamingpro/blob/master/README-CN.md#第一个流式程序)
-1. [StreamingPro的一些参数](https://github.com/allwefantasy/streamingpro/blob/master/README-CN.md#StreamingPro的一些参数)
-1. [执行一个批处理任务](https://github.com/allwefantasy/streamingpro/blob/master/README-CN.md#执行一个批处理任务)
-1. [执行Structured Streaming任务](https://github.com/allwefantasy/streamingpro/blob/master/README-CN.md#执行StructuredStreaming任务)
-1. [启动一个SQL server服务](https://github.com/allwefantasy/streamingpro/blob/master/README-CN.md#启动一个SQLServer服务)
+1. [概述](https://github.com/allwefantasy/streamingpro/blob/master/README.md#概述)
+1. [编译](https://github.com/allwefantasy/streamingpro/blob/master/README.md#编译)
+1. [项目模块说明](https://github.com/allwefantasy/streamingpro/blob/master/README.md#项目模块说明)
+1. [相关概念](https://github.com/allwefantasy/streamingpro/blob/master/README.md#相关概念)
+1. [第一个流式程序](https://github.com/allwefantasy/streamingpro/blob/master/README.md#第一个流式程序)
+1. [StreamingPro的一些参数](https://github.com/allwefantasy/streamingpro/blob/master/README.md#StreamingPro的一些参数)
+1. [执行一个批处理任务](https://github.com/allwefantasy/streamingpro/blob/master/README.md#执行一个批处理任务)
+1. [执行Structured Streaming任务](https://github.com/allwefantasy/streamingpro/blob/master/README.md#执行StructuredStreaming任务)
+1. [启动一个SQL server服务](https://github.com/allwefantasy/streamingpro/blob/master/README.md#启动一个SQLServer服务)
     * 启动StreamingPro SQL Server
     * JDBC查询
     * XQL查询语法
     * 异步查询
-1. [基于StreamingPro编程](https://github.com/allwefantasy/streamingpro/blob/master/README-CN.md#基于StreamingPro编程)
+1. [基于StreamingPro编程](https://github.com/allwefantasy/streamingpro/blob/master/README.md#基于StreamingPro编程)
     * UDF 函数编写和配置
     * Scala脚本编写与配置
     * 基于streamingpro-api 高级编程
-1. [对Flink的支持](https://github.com/allwefantasy/streamingpro/blob/master/README-CN.md#对Flink的支持)
-1. [StreamingPro Manager](https://github.com/allwefantasy/streamingpro/blob/master/README-CN.md#StreamingPro-Manager)
-1. [StreamingPro json文件编辑器支持](https://github.com/allwefantasy/streamingpro/blob/master/README-CN.md#StreamingPro-json文件编辑器支持)
-1. [StreamingPro对机器学习的支持](https://github.com/allwefantasy/streamingpro/blob/master/README-CN.md#StreamingPro对机器学习的支持)
+1. [对Flink的支持](https://github.com/allwefantasy/streamingpro/blob/master/README.md#对Flink的支持)
+1. [StreamingPro Manager](https://github.com/allwefantasy/streamingpro/blob/master/README.md#StreamingPro-Manager)
+1. [StreamingPro json文件编辑器支持](https://github.com/allwefantasy/streamingpro/blob/master/README.md#StreamingPro-json文件编辑器支持)
+1. [StreamingPro对机器学习的支持](https://github.com/allwefantasy/streamingpro/blob/master/README.md#StreamingPro对机器学习的支持)
 
 
 
@@ -172,6 +172,8 @@ StreamingPro会通过'compositor'的概念来描述他们，你可以理解为�
   ```
   select CAST(key AS STRING) as k, CAST(value AS STRING) as v from test
   ```
+  
+ 启动时，你需要把-streaming.platform 设置为 `ss`。 
 
  如果我们的输入输出都是Hive的话，可能就不需要batch.sources/batch.outputs 等组件了，通常一个batch.sql就够了。比如：
 
