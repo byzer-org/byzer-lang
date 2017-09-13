@@ -20,7 +20,9 @@ class LoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
           reader.format(s.getText)
 
         case s: PathContext =>
-          if (format != "jdbc") table = reader.load(cleanStr(s.getText))
+          if (format != "jdbc") {
+            table = reader.load(withPathPrefix(scriptSQLExecListener.pathPrefix, cleanStr(s.getText)))
+          }
           if (format == "jdbc") {
             val dbAndTable = cleanStr(s.getText).split("\\.")
             ScriptSQLExec.dbMapping.get(dbAndTable(0)).foreach { f =>

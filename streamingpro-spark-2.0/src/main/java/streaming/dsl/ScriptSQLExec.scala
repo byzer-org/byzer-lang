@@ -39,10 +39,9 @@ object ScriptSQLExec {
         |load jdbc.`db1.t_report` as tr;
         |select * from tr  as new_tr;
         |save new_tr as json.`/tmp/todd`
-        |""".stripMargin
-    parse(input, new ScriptSQLExecListener(null))
+        | """.stripMargin
+    parse(input, new ScriptSQLExecListener(null, null))
     println(dbMapping)
-
 
 
   }
@@ -56,8 +55,16 @@ object ScriptSQLExec {
   }
 }
 
-class ScriptSQLExecListener(_sparkSession: SparkSession) extends DSLSQLListener {
+class ScriptSQLExecListener(_sparkSession: SparkSession, _pathPrefix: String) extends DSLSQLListener {
   def sparkSession = _sparkSession
+
+  def pathPrefix: String = {
+    if (_pathPrefix == null || _pathPrefix.isEmpty) return ""
+    if (!_pathPrefix.endsWith("/")) {
+      return _pathPrefix + "/"
+    }
+    return _pathPrefix
+  }
 
   override def exitSql(ctx: SqlContext): Unit = {
 

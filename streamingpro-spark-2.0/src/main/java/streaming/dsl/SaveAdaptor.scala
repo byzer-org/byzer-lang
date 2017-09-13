@@ -16,7 +16,7 @@ class SaveAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
           writer.format(s.getText)
 
         case s: PathContext =>
-          writer.save(cleanStr(s.getText))
+          writer.save(withPathPrefix(scriptSQLExecListener.pathPrefix , cleanStr(s.getText)))
 
         case s: TableNameContext =>
           writer = scriptSQLExecListener.sparkSession.table(s.getText).write
