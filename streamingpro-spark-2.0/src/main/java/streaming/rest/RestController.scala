@@ -68,7 +68,7 @@ class RestController extends ApplicationController {
       if (paramAsBoolean("async", false)) {
         AsyncJobRunner.run(() => {
           try {
-            ScriptSQLExec.parse(param("sql"), new ScriptSQLExecListener(sparkSession))
+            ScriptSQLExec.parse(param("sql"), new ScriptSQLExecListener(sparkSession, param("prefixPath")))
             htp.get(new Url(param("callback")), Map("stat" -> s"""success"""))
           } catch {
             case e: Exception =>
@@ -77,7 +77,7 @@ class RestController extends ApplicationController {
           }
         })
       } else {
-        ScriptSQLExec.parse(param("sql"), new ScriptSQLExecListener(sparkSession))
+        ScriptSQLExec.parse(param("sql"), new ScriptSQLExecListener(sparkSession, param("prefixPath")))
       }
 
     } catch {
