@@ -1,5 +1,7 @@
 package streaming.rest
 
+import java.lang.reflect.Modifier
+
 import net.csdn.annotation.rest.At
 import net.csdn.common.collections.WowCollections
 import net.csdn.common.path.Url
@@ -7,6 +9,7 @@ import net.csdn.modules.http.{ApplicationController, ViewType}
 import net.csdn.modules.http.RestRequest.Method._
 import net.csdn.modules.transport.HttpTransportService
 import org.apache.spark.sql.{DataFrameWriter, Row, SaveMode}
+import streaming.common.JarUtil
 import streaming.core.{AsyncJobRunner, DownloadRunner, JobCanceller}
 import streaming.core.strategy.platform.{PlatformManager, SparkRuntime}
 import streaming.dsl.{ScriptSQLExec, ScriptSQLExecListener}
@@ -164,6 +167,32 @@ class RestController extends ApplicationController {
 
     render("register success")
 
+  }
+
+  @At(path = Array("/udf"), types = Array(GET, POST))
+  def udf = {
+    val sparkSession = runtime.asInstanceOf[SparkRuntime].sparkSession
+    sparkSession.sparkContext.addJar(param("path"))
+    try {
+      JarUtil.loadJar(param("path"))
+      val clzz = Class.forName(param("className"))
+      clzz.getMethods.foreach { f =>
+        try {
+          if (Modifier.isStatic(f.getModifiers)) {
+            f.invoke(null, sparkSession.udf)
+          }
+        } catch {
+          case e: Exception =>
+            logger.info(s"${f.getName} missing", e)
+        }
+      }
+
+    } catch {
+      case e: Exception =>
+        logger.error("udf register fail", e)
+        render(400, e.getCause)
+    }
+    render(200, "[]")
   }
 
   @At(path = Array("/check"), types = Array(GET, POST))
