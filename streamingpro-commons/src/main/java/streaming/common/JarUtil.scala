@@ -22,7 +22,7 @@ object JarUtil {
     val method = classOf[URLClassLoader].getDeclaredMethod("addURL", classOf[URL])
     method.setAccessible(true)
     method.invoke(classLoader, uri)
-    return Class.forName(className)
+    return Class.forName(className, true, classLoader)
   }
 }
 
