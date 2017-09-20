@@ -174,8 +174,7 @@ class RestController extends ApplicationController {
     val sparkSession = runtime.asInstanceOf[SparkRuntime].sparkSession
     sparkSession.sparkContext.addJar(param("path"))
     try {
-      JarUtil.loadJar(param("path"))
-      val clzz = Class.forName(param("className"))
+      val clzz = JarUtil.loadJar(param("path"), param("className"))
       clzz.getMethods.foreach { f =>
         try {
           if (Modifier.isStatic(f.getModifiers)) {
