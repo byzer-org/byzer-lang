@@ -10,14 +10,14 @@ class SaveAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
   override def parse(ctx: SqlContext): Unit = {
     var writer: DataFrameWriter[Row] = null
     var mode = SaveMode.ErrorIfExists
+    var final_path = ""
     (0 to ctx.getChildCount() - 1).foreach { tokenIndex =>
       ctx.getChild(tokenIndex) match {
         case s: FormatContext =>
           writer.format(s.getText)
 
         case s: PathContext =>
-          writer.save(withPathPrefix(scriptSQLExecListener.pathPrefix , cleanStr(s.getText)))
-
+          final_path = withPathPrefix(scriptSQLExecListener.pathPrefix, cleanStr(s.getText))
         case s: TableNameContext =>
           writer = scriptSQLExecListener.sparkSession.table(s.getText).write
           writer.mode(mode)
@@ -30,9 +30,10 @@ class SaveAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
         case s: IgnoreContext =>
           mode = SaveMode.Ignore
         case s: ColContext =>
-          writer.partitionBy(cleanStr(s.getText))
+          writer.partitionBy(cleanStr(s.getText).split(","): _*)
         case _ =>
       }
     }
+    writer.save(final_path)
   }
 }
