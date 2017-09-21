@@ -17,19 +17,33 @@ class LoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
           if (s.getText == "jdbc") {
             format = "jdbc"
           }
+          if (s.getText == "es") {
+            format = "org.elasticsearch.spark.sql"
+          }
           reader.format(s.getText)
 
         case s: PathContext =>
-          if (format != "jdbc") {
-            table = reader.load(withPathPrefix(scriptSQLExecListener.pathPrefix, cleanStr(s.getText)))
-          }
-          if (format == "jdbc") {
-            val dbAndTable = cleanStr(s.getText).split("\\.")
-            ScriptSQLExec.dbMapping.get(dbAndTable(0)).foreach { f =>
-              reader.option(f._1, f._2)
-            }
-            reader.option("dbtable", dbAndTable(1))
-            table = reader.load()
+
+          format match {
+            case "jdbc" =>
+              val dbAndTable = cleanStr(s.getText).split("\\.")
+              ScriptSQLExec.dbMapping.get(dbAndTable(0)).foreach { f =>
+                reader.option(f._1, f._2)
+              }
+              reader.option("dbtable", dbAndTable(1))
+              table = reader.load()
+
+            case "es" | "org.elasticsearch.spark.sql" =>
+
+              val dbAndTable = cleanStr(s.getText).split("\\.")
+              ScriptSQLExec.dbMapping.get(dbAndTable(0)).foreach {
+                f =>
+                  reader.option(f._1, f._2)
+              }
+              table = reader.load(dbAndTable(1))
+
+            case _ =>
+              table = reader.load(withPathPrefix(scriptSQLExecListener.pathPrefix, cleanStr(s.getText)))
           }
 
         case s: TableNameContext =>

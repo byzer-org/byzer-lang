@@ -12,6 +12,7 @@
         <module>streamingpro-manager</module>
         <module>streamingpro-api</module>
         <module>streamingpro-dsl</module>
+        <module>streamingpro-es</module>
     </modules>
 
     <properties>
