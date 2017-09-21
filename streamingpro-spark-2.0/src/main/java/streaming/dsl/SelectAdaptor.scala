@@ -11,13 +11,15 @@ import scala.collection.mutable.ArrayBuffer
 class SelectAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdaptor {
   override def parse(ctx: SqlContext): Unit = {
     val chunks = new ArrayBuffer[String]()
+    var newIndex = 0
     (0 to ctx.getChildCount - 1).foreach { index =>
       ctx.getChild(index).getText match {
         case "." =>
-          chunks(index - 1) = chunks(index - 1) + s".${ctx.getChild(index + 1)}"
+          chunks(newIndex - 1) = chunks(newIndex - 1) + s".${ctx.getChild(index + 1)}"
         case _ =>
           if (index == 0 || ctx.getChild(index - 1).getText != ".") {
             chunks += ctx.getChild(index).getText
+            newIndex += 1
           }
 
       }
