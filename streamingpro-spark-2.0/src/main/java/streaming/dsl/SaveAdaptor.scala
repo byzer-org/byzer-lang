@@ -11,13 +11,20 @@ class SaveAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
     var writer: DataFrameWriter[Row] = null
     var mode = SaveMode.ErrorIfExists
     var final_path = ""
+    var format = ""
     (0 to ctx.getChildCount() - 1).foreach { tokenIndex =>
       ctx.getChild(tokenIndex) match {
         case s: FormatContext =>
+          format = s.getText
           writer.format(s.getText)
 
         case s: PathContext =>
-          final_path = withPathPrefix(scriptSQLExecListener.pathPrefix, cleanStr(s.getText))
+          format match {
+            case "hive" => final_path = cleanStr(s.getText)
+            case _ =>
+              final_path = withPathPrefix(scriptSQLExecListener.pathPrefix, cleanStr(s.getText))
+          }
+
         case s: TableNameContext =>
           writer = scriptSQLExecListener.sparkSession.table(s.getText).write
           writer.mode(mode)
@@ -34,6 +41,11 @@ class SaveAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
         case _ =>
       }
     }
-    writer.save(final_path)
+
+    format match {
+      case "hive" => writer.saveAsTable(final_path)
+      case _ =>
+        writer.save(final_path)
+    }
   }
 }
