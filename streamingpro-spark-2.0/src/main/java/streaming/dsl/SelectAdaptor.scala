@@ -1,6 +1,7 @@
 package streaming.dsl
 
 import org.apache.spark.sql.SparkSession
+import streaming.dsl.parser.DSLSQLLexer
 import streaming.dsl.parser.DSLSQLParser.SqlContext
 
 import scala.collection.mutable.ArrayBuffer
@@ -10,22 +11,9 @@ import scala.collection.mutable.ArrayBuffer
   */
 class SelectAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdaptor {
   override def parse(ctx: SqlContext): Unit = {
-    val chunks = new ArrayBuffer[String]()
-    var newIndex = 0
-    (0 to ctx.getChildCount - 1).foreach { index =>
-      ctx.getChild(index).getText match {
-        case "." =>
-          chunks(newIndex - 1) = chunks(newIndex - 1) + s".${ctx.getChild(index + 1)}"
-        case _ =>
-          if (index == 0 || ctx.getChild(index - 1).getText != ".") {
-            chunks += ctx.getChild(index).getText
-            newIndex += 1
-          }
-
-      }
-    }
-    val tableName = chunks.last
-    val sql = (0 to chunks.length - 3).map(index => chunks(index)).mkString(" ")
+    val chunks = ctx.start.getTokenSource().asInstanceOf[DSLSQLLexer]._input.toString().split("\\s+").toList
+    val sql = chunks.take(chunks.length - 2).mkString(" ")
+    val tableName = chunks.last.replace(";", "")
     scriptSQLExecListener.sparkSession.sql(sql).createOrReplaceTempView(tableName)
   }
 }
