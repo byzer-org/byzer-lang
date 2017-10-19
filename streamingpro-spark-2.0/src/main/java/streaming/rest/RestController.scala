@@ -86,7 +86,8 @@ class RestController extends ApplicationController {
     } catch {
       case e: Exception =>
         e.printStackTrace()
-        render(500, e.getStackTrace.map(f => f.toString).mkString("\n"))
+        val msg = if (paramAsBoolean("show_stack", false)) e.getStackTrace.map(f => f.toString).mkString("\n") else ""
+        render(500, e.getMessage + "\n" + msg)
     }
     render(200, WowCollections.map())
   }
@@ -119,7 +120,15 @@ class RestController extends ApplicationController {
 
       case "false" if param("resultType", "") != "file" =>
         JobCanceller.runWithGroup(sparkSession.sparkContext, paramAsLong("timeout", 30000), () => {
-          val res = sparkSession.sql(param("sql")).toJSON.collect().mkString(",")
+          var res = ""
+          try {
+            res = sparkSession.sql(param("sql")).toJSON.collect().mkString(",")
+          } catch {
+            case e: Exception =>
+              e.printStackTrace()
+              val msg = if (paramAsBoolean("show_stack", false)) e.getStackTrace.map(f => f.toString).mkString("\n") else ""
+              render(500, e.getMessage + "\n" + msg)
+          }
           render("[" + res + "]")
         })
     }
