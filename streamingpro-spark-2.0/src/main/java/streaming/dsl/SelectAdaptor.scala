@@ -14,13 +14,13 @@ class SelectAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAda
   override def parse(ctx: SqlContext): Unit = {
     val input = ctx.start.getTokenSource().asInstanceOf[DSLSQLLexer]._input
 
-    val start = ctx.start.getStartIndex();
-    val stop = ctx.stop.getStopIndex();
-    val interval = new Interval(start, stop);
+    val start = ctx.start.getStartIndex()
+    val stop = ctx.stop.getStopIndex()
+    val interval = new Interval(start, stop)
     val originalText = input.getText(interval)
     val chunks = originalText.split("\\s+")
-    val sql = chunks.take(chunks.length - 2).mkString(" ")
     val tableName = chunks.last.replace(";", "")
+    val sql = originalText.replaceAll(s"as[\\s+|\n+]${tableName}", "")
     scriptSQLExecListener.sparkSession.sql(sql).createOrReplaceTempView(tableName)
   }
 }
