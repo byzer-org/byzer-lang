@@ -26,25 +26,24 @@ class SelectAdaptorSpec extends BasicSparkOperation {
         |as wq_tmp_test1
         |;
       """.stripMargin
-    //    val sparkSession = new SparkSession {
-    //      var m_sql = ""
-    //      var m_table = ""
-    //
-    //      override def sql(sqlText: String): DataFrame = {
-    //        m_sql = sqlText
-    //        new DataFrame(this, null, null) {
-    //          override def createOrReplaceTempView(viewName: String): Unit = {
-    //            m_table = viewName
-    //          }
-    //        }
-    //      }
-    //    }
-    //    ScriptSQLExec.parse(input, new ScriptSQLExecListener(sparkSession, null))
-    //    assert(sparkSession.m_table == "wq_tmp_test1")
-    //    assert(sparkSession.m_sql.split("\n").length == 3)
+    val _sparkSession = new {
+      var m_sql = ""
+      var m_table = ""
+
+      def sql(sqlText: String) = {
+        m_sql = sqlText
+        new {
+          def createOrReplaceTempView(viewName: String): Unit = {
+            m_table = viewName
+          }
+        }
+      }
+    }
+//    ScriptSQLExec.parse(input, new ScriptSQLExecListener(null, null){
+    //       def sparkSession = _sparkSession
+    //    })
+    //    assert(_sparkSession.m_table == "wq_tmp_test1")
+    //    assert(_sparkSession.m_sql.split("\n").length == 3)
 
   }
 }
-
-
-
