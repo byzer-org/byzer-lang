@@ -20,7 +20,7 @@ class SelectAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAda
     val originalText = input.getText(interval)
     val chunks = originalText.split("\\s+")
     val tableName = chunks.last.replace(";", "")
-    val sql = originalText.replaceAll(s"as[\\s+|\n+]${tableName}", "")
+    val sql = originalText.replaceAll(s"as[\\s|\\n]+${tableName}", "")
     scriptSQLExecListener.sparkSession.sql(sql).createOrReplaceTempView(tableName)
   }
 }
