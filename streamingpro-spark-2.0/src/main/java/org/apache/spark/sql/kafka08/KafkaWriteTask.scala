@@ -11,7 +11,7 @@ import org.apache.spark.sql.types.{BinaryType, StringType}
 /**
   * Created by allwefantasy on 3/7/2017.
   */
-private[kafka08] class KafkaWriteTask(
+class KafkaWriteTask(
                                        producerConfiguration: ju.Map[String, Object],
                                        inputSchema: Seq[Attribute],
                                        topic: Option[String]) {
