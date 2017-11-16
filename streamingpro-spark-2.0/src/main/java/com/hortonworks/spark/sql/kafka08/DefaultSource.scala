@@ -21,20 +21,22 @@ import java.{util => ju}
 
 import scala.collection.JavaConverters._
 import org.apache.kafka.clients.consumer.ConsumerConfig
-import org.apache.spark.sql.SQLContext
+import org.apache.spark.sql._
 import org.apache.spark.sql.execution.streaming.{Sink, Source}
-import org.apache.spark.sql.sources.{DataSourceRegister, StreamSinkProvider, StreamSourceProvider}
-import org.apache.spark.sql.types.StructType
+import org.apache.spark.sql.sources._
+import org.apache.spark.sql.types._
 import com.hortonworks.spark.sql.kafka08.util.Logging
-import org.apache.spark.sql.kafka08.KafkaSink
+import org.apache.spark.sql.kafka08.{KafkaSink, KafkaWriteTask}
 import org.apache.spark.sql.streaming.OutputMode
+
+import scala.tools.scalap.scalax.rules.scalasig.Attribute
 
 /**
   * The provider class for the [[KafkaSource]]. This provider is designed such that it throws
   * IllegalArgumentException when the Kafka Dataset is created, so that it can catch
   * missing options even before the query is started.
   */
-private[kafka08] class DefaultSource extends StreamSourceProvider
+private[kafka08] class DefaultSource extends StreamSourceProvider with CreatableRelationProvider
   with DataSourceRegister with StreamSinkProvider with Logging {
 
   import DefaultSource._
@@ -201,7 +203,64 @@ private[kafka08] class DefaultSource extends StreamSourceProvider
     new KafkaSink(sqlContext,
       new ju.HashMap[String, Object](parameters.asJava), defaultTopic)
   }
+
+  override def createRelation(sqlContext: SQLContext, mode: SaveMode, parameters: Map[String, String], data: DataFrame): BaseRelation = {
+    val relation = InsertKafkaRelation(data, parameters)(sqlContext)
+    relation.insert(data, SaveMode.Overwrite == mode)
+    relation
+  }
 }
+
+case class InsertKafkaRelation(
+                                dataFrame: DataFrame,
+                                parameters: Map[String, String]
+                              )(@transient val sqlContext: SQLContext)
+  extends BaseRelation with InsertableRelation with Logging {
+
+  override def schema: StructType = StructType(Seq(
+    StructField("key", BinaryType),
+    StructField("value", BinaryType),
+    StructField("topic", StringType)))
+
+
+  override def insert(data: DataFrame, overwrite: Boolean): Unit = {
+    import scala.collection.JavaConversions._
+    val qe = dataFrame.toJSON.queryExecution
+    val inputSchema = qe.logical.output
+    qe.toRdd.foreachPartition { iter =>
+      val writeTask = new KafkaWriteTask(parameters - "topic", inputSchema, parameters.get("topics"))
+      tryWithSafeFinally(block = writeTask.execute(iter))(
+        finallyBlock = writeTask.close())
+    }
+  }
+
+  def tryWithSafeFinally[T](block: => T)(finallyBlock: => Unit): T = {
+    var originalThrowable: Throwable = null
+    try {
+      block
+    } catch {
+      case t: Throwable =>
+        // Purposefully not using NonFatal, because even fatal exceptions
+        // we don't want to have our finallyBlock suppress
+        originalThrowable = t
+        throw originalThrowable
+    } finally {
+      try {
+        finallyBlock
+      } catch {
+        case t: Throwable =>
+          if (originalThrowable != null) {
+            originalThrowable.addSuppressed(t)
+            logger.warn(s"Suppressing exception in finally: " + t.getMessage, t)
+            throw originalThrowable
+          } else {
+            throw t
+          }
+      }
+    }
+  }
+}
+
 private[kafka08] object DefaultSource {
   private val TOPICS = "topics"
   private val STARTING_OFFSET_OPTION_KEY = "startingoffset"

@@ -121,3 +121,4 @@ project/plugins/project/
 /streamingpro-manager/src/main/resources-local/jdbc.properties
 
 /streamingpro-dsl/gen
+/streamingpro-hbase/streamingpro-hbase.iml
