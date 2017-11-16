@@ -51,7 +51,11 @@ case class InsertHBaseRelation(
     // it again does not help - it actually hurts. When we add support for
     // caching hConf across HBaseRelation, we can revisit broadcast'ing it (with a caching
     // mechanism in place)
-    new SerializableConfiguration(HBaseConfiguration.create())
+    val hc = HBaseConfiguration.create()
+    if (parameters.containsKey("zk") || parameters.containsKey("hbase.zookeeper.quorum")) {
+      hc.set("hbase.zookeeper.quorum", parameters.getOrElse("zk", parameters.getOrElse("hbase.zookeeper.quorum", "127.0.0.1:2181")))
+    }
+    new SerializableConfiguration(hc)
   }
 
   def hbaseConf = wrappedConf.value
