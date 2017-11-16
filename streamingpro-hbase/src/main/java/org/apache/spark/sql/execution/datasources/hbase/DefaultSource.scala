@@ -10,10 +10,12 @@ import org.apache.spark.internal.Logging
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, Row, SQLContext, SaveMode}
 import org.apache.spark.sql.sources._
-import org.apache.spark.sql.types.StructType
+import org.apache.spark.sql.types._
 import org.apache.spark.unsafe.types.UTF8String
 import org.apache.spark.util.SerializableConfiguration
+import org.joda.time.DateTime
 import org.json4s.DefaultFormats
+import org.apache.spark.util.Utils
 
 import scala.collection.JavaConversions._
 
@@ -101,21 +103,39 @@ case class InsertHBaseRelation(
     hbaseConf.set(TableOutputFormat.OUTPUT_TABLE, outputTableName)
     val job = Job.getInstance(hbaseConf)
     job.setOutputFormatClass(classOf[TableOutputFormat[String]])
+    val jobConfig = job.getConfiguration
+    val tempDir = Utils.createTempDir()
+    if (jobConfig.get("mapreduce.output.fileoutputformat.outputdir") == null) {
+      jobConfig.set("mapreduce.output.fileoutputformat.outputdir", tempDir.getPath + "/outputDataset")
+    }
 
     val fields = data.schema.toArray
     val rowkeyIndex = fields.zipWithIndex.filter(f => f._1.name == rowkey).head._2
     val otherFields = fields.zipWithIndex.filter(f => f._1.name != rowkey)
 
     val rdd = data.rdd //df.queryExecution.toRdd
-    //val schema = data.schema.zipWithIndex.map(f=>(f))
     val f = family
 
     def convertToPut(row: Row) = {
 
       val put = new Put(Bytes.toBytes(row.getString(rowkeyIndex)))
       otherFields.foreach { field =>
-        if (row.getString(field._2) != null) {
-          put.addColumn(Bytes.toBytes(f), Bytes.toBytes(field._1.name), Bytes.toBytes(row.getString(field._2)))
+        if (row.get(field._2) != null) {
+          val st = field._1
+
+          val c = st.dataType match {
+            case StringType => Bytes.toBytes(row.getString(field._2))
+            case FloatType => Bytes.toBytes(row.getFloat(field._2))
+            case DoubleType => Bytes.toBytes(row.getDouble(field._2))
+            case LongType => Bytes.toBytes(row.getLong(field._2))
+            case IntegerType => Bytes.toBytes(row.getInt(field._2))
+            case BooleanType => Bytes.toBytes(row.getBoolean(field._2))
+            case DateType => Bytes.toBytes(new DateTime(row.getDate(field._2)).getMillis)
+            case TimestampType => Bytes.toBytes(new DateTime(row.getTimestamp(field._2)).getMillis)
+            case _ => Bytes.toBytes(row.getString(field._2))
+          }
+
+          put.addColumn(Bytes.toBytes(f), Bytes.toBytes(field._1.name), c)
         }
       }
       (new ImmutableBytesWritable, put)
@@ -146,7 +166,21 @@ case class HBaseRelation(
 
         val content = line._2.getMap.navigableKeySet().flatMap { f =>
           line._2.getFamilyMap(f).map { c =>
-            (Bytes.toString(f) + ":" + Bytes.toString(c._1), Bytes.toString(c._2))
+            parameters.get("field.type") match {
+              case Some(i) =>
+                val value = i match {
+                  case "LongType" => Bytes.toLong(c._2)
+                  case "FloatType" => Bytes.toFloat(c._2)
+                  case "DoubleType" => Bytes.toDouble(c._2)
+                  case "IntegerType" => Bytes.toInt(c._2)
+                  case "BooleanType" => Bytes.toBoolean(c._2)
+                  case _ => Bytes.toString(c._2)
+                }
+
+                (Bytes.toString(f) + ":" + Bytes.toString(c._1), value)
+              case _ => (Bytes.toString(f) + ":" + Bytes.toString(c._1), Bytes.toString(c._2))
+            }
+
           }
         }.toMap
 

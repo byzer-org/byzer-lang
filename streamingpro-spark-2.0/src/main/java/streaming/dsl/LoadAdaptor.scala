@@ -54,7 +54,8 @@ class LoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
             reader.option(f._1, f._2)
         }
         table = reader.load(dbAndTable(1))
-
+      case "hbase" =>
+        table = reader.load()
       case _ =>
         table = reader.load(withPathPrefix(scriptSQLExecListener.pathPrefix, cleanStr(path)))
     }

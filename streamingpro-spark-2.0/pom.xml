@@ -134,6 +134,12 @@
             <artifactId>streamingpro-spark-common</artifactId>
             <version>${parent.version}</version>
         </dependency>
+        <dependency>
+            <groupId>streaming.king</groupId>
+            <artifactId>streamingpro-hbase</artifactId>
+            <version>${parent.version}</version>
+            <scope>provided</scope>
+        </dependency>
 
         <dependency>
             <groupId>streaming.king</groupId>
