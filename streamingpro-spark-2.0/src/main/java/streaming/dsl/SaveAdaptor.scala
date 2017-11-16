@@ -60,6 +60,8 @@ class SaveAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
       case "hive" => writer.saveAsTable(final_path)
       case "kafka8" | "kafka9" =>
         writer.option("topics", final_path).format("com.hortonworks.spark.sql.kafka08").save()
+      case "hbase" =>
+        writer.option("topics", final_path).format("org.apache.spark.sql.execution.datasources.hbase").save()
       case _ =>
         writer.save(final_path)
     }
