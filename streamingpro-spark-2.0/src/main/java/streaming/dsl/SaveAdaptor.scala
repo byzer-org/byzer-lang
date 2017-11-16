@@ -28,7 +28,7 @@ class SaveAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
 
         case s: PathContext =>
           format match {
-            case "hive" | "kafka8" | "kafka9" =>
+            case "hive" | "kafka8" | "kafka9" | "hbase" =>
               final_path = cleanStr(s.getText)
             case _ =>
               final_path = withPathPrefix(scriptSQLExecListener.pathPrefix, cleanStr(s.getText))
