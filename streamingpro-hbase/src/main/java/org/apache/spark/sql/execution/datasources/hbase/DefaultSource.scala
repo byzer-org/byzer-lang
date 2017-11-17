@@ -136,6 +136,9 @@ case class InsertHBaseRelation(
             case BooleanType => Bytes.toBytes(row.getBoolean(field._2))
             case DateType => Bytes.toBytes(new DateTime(row.getDate(field._2)).getMillis)
             case TimestampType => Bytes.toBytes(new DateTime(row.getTimestamp(field._2)).getMillis)
+            case BinaryType => row.getAs[Array[Byte]](field._2)
+            //            case ArrayType => Bytes.toBytes(row.getList(field._2).mkString(","))
+            //            case DecimalType.BigIntDecimal => Bytes.toBytes(row.getDecimal(field._2))
             case _ => Bytes.toBytes(row.getString(field._2))
           }
 
@@ -170,7 +173,9 @@ case class HBaseRelation(
 
         val content = line._2.getMap.navigableKeySet().flatMap { f =>
           line._2.getFamilyMap(f).map { c =>
-            parameters.get("field.type") match {
+
+            val columnName = Bytes.toString(f) + ":" + Bytes.toString(c._1)
+            parameters.get("field.type." + columnName) match {
               case Some(i) =>
                 val value = i match {
                   case "LongType" => Bytes.toLong(c._2)
@@ -178,11 +183,11 @@ case class HBaseRelation(
                   case "DoubleType" => Bytes.toDouble(c._2)
                   case "IntegerType" => Bytes.toInt(c._2)
                   case "BooleanType" => Bytes.toBoolean(c._2)
+                  case "ByteType" => Bytes.toByteArrays(c._2)
                   case _ => Bytes.toString(c._2)
                 }
-
-                (Bytes.toString(f) + ":" + Bytes.toString(c._1), value)
-              case _ => (Bytes.toString(f) + ":" + Bytes.toString(c._1), Bytes.toString(c._2))
+                (columnName, value)
+              case None => (columnName, Bytes.toString(c._2))
             }
 
           }
