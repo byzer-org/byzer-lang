@@ -5,7 +5,7 @@ import org.apache.spark.internal.Logging
 import org.apache.spark.sql.{DataFrame, SQLContext, SaveMode}
 import org.apache.spark.sql.sources._
 import org.apache.spark.sql.types.StructType
-import redis.clients.jedis.Protocol
+import redis.clients.jedis.{Jedis, Protocol}
 import redis.clients.util.JedisClusterCRC16
 
 /**
@@ -64,34 +64,47 @@ case class InsertRedisRelation(
     redisConfig.hosts.head
   }
 
+  def redis_write(block: Jedis => Unit) = {
+    val conn = getNode().connect
+    val pipeline = conn.pipelined
+    try {
+      block(conn)
+    } catch {
+      case e: Exception =>
+        log.info("redis write error", e)
+        throw e
+    } finally {
+      pipeline.sync
+      conn.close
+    }
+
+  }
+
   override def insert(data: DataFrame, overwrite: Boolean): Unit = {
     parameters.get("insertType") match {
       case Some("listInsert") =>
-        val conn = getNode().connect
-        val pipeline = conn.pipelined
-        val list_data = data.collect().map(f => f.getString(0))
-        if (overwrite) {
-          pipeline.del(tableName, tableName)
+        redis_write { pipeline =>
+          val list_data = data.collect().map(f => f.getString(0))
+          if (overwrite) {
+            pipeline.del(tableName, tableName)
+          }
+          list_data.foreach(f => pipeline.lpush(tableName, f))
+          if (parameters.contains("expire")) {
+            pipeline.expire(tableName, time_parse(parameters.get("expire").get))
+          }
         }
-        list_data.foreach(f => pipeline.lpush(tableName, f))
-        if (parameters.contains("expire")) {
-          pipeline.expire(tableName, time_parse(parameters.get("expire").get))
-        }
-        pipeline.sync
-        conn.close
+
       case Some("listInsertAsString") =>
-        val conn = getNode().connect
-        val pipeline = conn.pipelined
-        val list_data = data.collect().map(f => f.getString(0)).mkString(parameters.getOrElse("join", ",").toString())
-        if (overwrite) {
-          pipeline.del(tableName, tableName)
+        redis_write { pipeline =>
+          val list_data = data.collect().map(f => f.getString(0)).mkString(parameters.getOrElse("join", ",").toString())
+          if (overwrite) {
+            pipeline.del(tableName, tableName)
+          }
+          pipeline.set(tableName, list_data)
+          if (parameters.contains("expire")) {
+            pipeline.expire(tableName, time_parse(parameters.get("expire").get))
+          }
         }
-        pipeline.set(tableName, list_data)
-        if (parameters.contains("expire")) {
-          pipeline.expire(tableName, time_parse(parameters.get("expire").get))
-        }
-        pipeline.sync
-        conn.close
       case None =>
     }
   }
