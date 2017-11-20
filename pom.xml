@@ -13,6 +13,7 @@
         <module>streamingpro-api</module>
         <module>streamingpro-dsl</module>
         <module>streamingpro-hbase</module>
+        <module>streamingpro-redis</module>
     </modules>
 
     <properties>

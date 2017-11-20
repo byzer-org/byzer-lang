@@ -28,7 +28,7 @@ class SaveAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
 
         case s: PathContext =>
           format match {
-            case "hive" | "kafka8" | "kafka9" | "hbase" =>
+            case "hive" | "kafka8" | "kafka9" | "hbase" | "redis" =>
               final_path = cleanStr(s.getText)
             case _ =>
               final_path = withPathPrefix(scriptSQLExecListener.pathPrefix, cleanStr(s.getText))
@@ -62,6 +62,8 @@ class SaveAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
         writer.option("topics", final_path).format("com.hortonworks.spark.sql.kafka08").save()
       case "hbase" =>
         writer.option("outputTableName", final_path).format("org.apache.spark.sql.execution.datasources.hbase").save()
+      case "redis" =>
+        writer.option("outputTableName", final_path).format("org.apache.spark.sql.execution.datasources.redis").save()
       case _ =>
         writer.save(final_path)
     }

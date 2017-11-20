@@ -138,7 +138,13 @@
             <groupId>streaming.king</groupId>
             <artifactId>streamingpro-hbase</artifactId>
             <version>${parent.version}</version>
-            <scope>provided</scope>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>streaming.king</groupId>
+            <artifactId>streamingpro-redis</artifactId>
+            <version>${parent.version}</version>
+            <scope>compile</scope>
         </dependency>
 
         <dependency>
