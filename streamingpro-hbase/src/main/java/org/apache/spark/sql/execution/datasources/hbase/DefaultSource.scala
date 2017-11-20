@@ -126,7 +126,15 @@ case class InsertHBaseRelation(
       otherFields.foreach { field =>
         if (row.get(field._2) != null) {
           val st = field._1
-
+          val datatype = if (parameters.contains(s"field.type.${st.name}")) {
+            //StringType
+            val name = parameters(s"field.type.${st.name}")
+            name match {
+              case "StringType" => DataTypes.StringType
+              case "BinaryType" => DataTypes.BinaryType
+              case _ => DataTypes.StringType
+            }
+          } else st.dataType
           val c = st.dataType match {
             case StringType => Bytes.toBytes(row.getString(field._2))
             case FloatType => Bytes.toBytes(row.getFloat(field._2))
@@ -141,6 +149,8 @@ case class InsertHBaseRelation(
             //            case DecimalType.BigIntDecimal => Bytes.toBytes(row.getDecimal(field._2))
             case _ => Bytes.toBytes(row.getString(field._2))
           }
+
+
 
           put.addColumn(Bytes.toBytes(f), Bytes.toBytes(field._1.name), c)
         }
