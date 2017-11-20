@@ -69,17 +69,29 @@ case class InsertRedisRelation(
       case Some("listInsert") =>
         val conn = getNode().connect
         val pipeline = conn.pipelined
-        val list_data = data.collect().map(f => f.getString(0).getBytes())
+        val list_data = data.collect().map(f => f.getString(0))
         if (overwrite) {
           pipeline.del(tableName, tableName)
         }
-        list_data.foreach(f => pipeline.lpush(tableName.getBytes(), f))
+        list_data.foreach(f => pipeline.lpush(tableName, f))
         if (parameters.contains("expire")) {
           pipeline.expire(tableName, time_parse(parameters.get("expire").get))
         }
         pipeline.sync
         conn.close
-
+      case Some("listInsertAsString") =>
+        val conn = getNode().connect
+        val pipeline = conn.pipelined
+        val list_data = data.collect().map(f => f.getString(0)).mkString(parameters.getOrElse("join", ",").toString())
+        if (overwrite) {
+          pipeline.del(tableName, tableName)
+        }
+        pipeline.set(tableName, list_data)
+        if (parameters.contains("expire")) {
+          pipeline.expire(tableName, time_parse(parameters.get("expire").get))
+        }
+        pipeline.sync
+        conn.close
       case None =>
     }
   }
