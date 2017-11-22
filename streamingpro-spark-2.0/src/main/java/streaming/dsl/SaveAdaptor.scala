@@ -57,7 +57,9 @@ class SaveAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
     }
     writer = writer.options(option)
     format match {
-      case "hive" => writer.saveAsTable(final_path)
+      case "hive" =>
+        writer.format(option.getOrElse("file_format", "parquet"))
+        writer.saveAsTable(final_path)
       case "kafka8" | "kafka9" =>
         writer.option("topics", final_path).format("com.hortonworks.spark.sql.kafka08").save()
       case "hbase" =>
