@@ -8,6 +8,7 @@ import org.apache.spark.sql.sources._
 import org.apache.spark.sql.types.StructType
 import redis.clients.jedis.{Jedis, JedisSentinelPool, Protocol}
 import redis.clients.util.JedisClusterCRC16
+import scala.collection.JavaConversions._
 
 /**
   * Created by allwefantasy on 19/11/2017.
@@ -95,6 +96,15 @@ case class InsertSentinelRedisRelation(
           pipeline.set(tableName, list_data)
           if (parameters.contains("expire")) {
             pipeline.expire(tableName, time_parse(parameters.get("expire").get))
+          }
+        }
+      case Some("KVList") =>
+        redis_write { pipeline =>
+          val list_data = data.collect().map(f => (f.getString(0), f.getList[String](1))).map { f =>
+            pipeline.set(f._1, f._2.mkString(parameters.getOrElse("join", ",").toString()))
+            if (parameters.contains("expire")) {
+              pipeline.expire(f._1, time_parse(parameters.get("expire").get))
+            }
           }
         }
       case None =>
@@ -197,6 +207,15 @@ case class InsertRedisRelation(
           pipeline.set(tableName, list_data)
           if (parameters.contains("expire")) {
             pipeline.expire(tableName, time_parse(parameters.get("expire").get))
+          }
+        }
+      case Some("KVList") =>
+        redis_write { pipeline =>
+          val list_data = data.collect().map(f => (f.getString(0), f.getList[String](1))).map { f =>
+            pipeline.set(f._1, f._2.mkString(parameters.getOrElse("join", ",").toString()))
+            if (parameters.contains("expire")) {
+              pipeline.expire(f._1, time_parse(parameters.get("expire").get))
+            }
           }
         }
       case None =>
