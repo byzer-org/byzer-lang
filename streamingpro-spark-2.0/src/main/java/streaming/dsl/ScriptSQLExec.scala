@@ -68,7 +68,7 @@ class ScriptSQLExecListener(_sparkSession: SparkSession, _pathPrefix: String) ex
 
   override def exitSql(ctx: SqlContext): Unit = {
 
-    ctx.getChild(0).getText match {
+    ctx.getChild(0).getText.toLowerCase() match {
       case "load" =>
         new LoadAdaptor(this).parse(ctx)
 
@@ -80,6 +80,10 @@ class ScriptSQLExecListener(_sparkSession: SparkSession, _pathPrefix: String) ex
 
       case "connect" =>
         new ConnectAdaptor(this).parse(ctx)
+      case "create" =>
+        new CreateAdaptor(this).parse(ctx)
+      case "insert" =>
+        new InsertAdaptor(this).parse(ctx)
     }
 
   }

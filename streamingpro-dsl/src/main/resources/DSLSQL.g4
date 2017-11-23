@@ -13,10 +13,12 @@ statement
 
 
 sql
-    : 'load' format '.' path 'options'? expression? booleanExpression*  'as' tableName
-    | 'save' (overwrite | append | errorIfExists |ignore)* tableName 'as' format '.' path 'options'? expression? booleanExpression* ('partitionBy' col)?
-    | 'select' ~(';')* 'as' tableName
-    | 'connect' format 'where'? expression? booleanExpression* ('as' db)?
+    : ('load'|'LOAD') format '.' path 'options'? expression? booleanExpression*  'as' tableName
+    | ('save'|'SAVE') (overwrite | append | errorIfExists |ignore)* tableName 'as' format '.' path 'options'? expression? booleanExpression* ('partitionBy' col)?
+    | ('select'|'SELECT') ~(';')* 'as' tableName
+    | ('insert'|'INSERT') ~(';')*
+    | ('create'|'CREATE') ~(';')*
+    | ('connect'|'CONNECT') format 'where'? expression? booleanExpression* ('as' db)?
     |  SIMPLE_COMMENT
     ;
 
