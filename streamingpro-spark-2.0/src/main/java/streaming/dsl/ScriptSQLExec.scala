@@ -84,6 +84,8 @@ class ScriptSQLExecListener(_sparkSession: SparkSession, _pathPrefix: String) ex
         new CreateAdaptor(this).parse(ctx)
       case "insert" =>
         new InsertAdaptor(this).parse(ctx)
+      case "set" =>
+        new SetAdaptor(this).parse(ctx)
     }
 
   }

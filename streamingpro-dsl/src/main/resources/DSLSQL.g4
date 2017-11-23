@@ -18,6 +18,7 @@ sql
     | ('select'|'SELECT') ~(';')* 'as' tableName
     | ('insert'|'INSERT') ~(';')*
     | ('create'|'CREATE') ~(';')*
+    | ('set'|'SET') ~(';')*
     | ('connect'|'CONNECT') format 'where'? expression? booleanExpression* ('as' db)?
     |  SIMPLE_COMMENT
     ;
