@@ -28,7 +28,7 @@ class SaveAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
 
         case s: PathContext =>
           format match {
-            case "hive" | "kafka8" | "kafka9" | "hbase" | "redis" =>
+            case "hive" | "kafka8" | "kafka9" | "hbase" | "redis" | "es" =>
               final_path = cleanStr(s.getText)
             case _ =>
               final_path = withPathPrefix(scriptSQLExecListener.pathPrefix, cleanStr(s.getText))
@@ -55,8 +55,25 @@ class SaveAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
         case _ =>
       }
     }
+
+    val dbAndTable = final_path.split("\\.")
+    var connect_provied = false
+    if (dbAndTable.length == 2 && ScriptSQLExec.dbMapping.containsKey(dbAndTable(0))) {
+      ScriptSQLExec.dbMapping.get(dbAndTable(0)).foreach {
+        f =>
+          writer.option(f._1, f._2)
+      }
+      connect_provied = true
+    }
+
+    if (connect_provied) {
+      final_path = dbAndTable(1)
+    }
+
     writer = writer.options(option)
     format match {
+      case "es" =>
+        writer.save(final_path)
       case "hive" =>
         writer.format(option.getOrElse("file_format", "parquet"))
         writer.saveAsTable(final_path)
