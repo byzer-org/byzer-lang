@@ -9,11 +9,13 @@ import _root_.streaming.dsl.parser.DSLSQLParser._
 class SaveAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdaptor {
   override def parse(ctx: SqlContext): Unit = {
     var writer: DataFrameWriter[Row] = null
+    var oldDF: DataFrame = null
     var mode = SaveMode.ErrorIfExists
     var final_path = ""
     var format = ""
     var option = Map[String, String]()
     var tableName = ""
+    var partitionByCol = Array[String]()
 
     (0 to ctx.getChildCount() - 1).foreach { tokenIndex =>
       ctx.getChild(tokenIndex) match {
@@ -22,7 +24,7 @@ class SaveAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
           format match {
             case "hive" =>
             case _ =>
-              writer.format(s.getText)
+              format = s.getText
           }
 
 
@@ -36,8 +38,7 @@ class SaveAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
 
         case s: TableNameContext =>
           tableName = s.getText
-          writer = scriptSQLExecListener.sparkSession.table(s.getText).write
-          writer.mode(mode)
+          oldDF = scriptSQLExecListener.sparkSession.table(s.getText)
         case s: OverwriteContext =>
           mode = SaveMode.Overwrite
         case s: AppendContext =>
@@ -47,7 +48,7 @@ class SaveAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
         case s: IgnoreContext =>
           mode = SaveMode.Ignore
         case s: ColContext =>
-          writer.partitionBy(cleanStr(s.getText).split(","): _*)
+          partitionByCol = cleanStr(s.getText).split(",")
         case s: ExpressionContext =>
           option += (cleanStr(s.identifier().getText) -> cleanStr(s.STRING().getText))
         case s: BooleanExpressionContext =>
@@ -70,7 +71,11 @@ class SaveAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
       final_path = dbAndTable(1)
     }
 
-    writer = writer.options(option)
+    if (option.contains("fileNum")) {
+      oldDF = oldDF.repartition(option.getOrElse("fileNum", "").toString.toInt)
+    }
+    writer = oldDF.write
+    writer = writer.format(format).mode(mode).partitionBy(partitionByCol: _*).options(option)
     format match {
       case "es" =>
         writer.save(final_path)
