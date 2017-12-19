@@ -182,7 +182,7 @@ case class HBaseRelation(
     if (parameters.containsKey("zk") || parameters.containsKey("hbase.zookeeper.quorum")) {
       hc.set("hbase.zookeeper.quorum", parameters.getOrElse("zk", parameters.getOrElse("hbase.zookeeper.quorum", "127.0.0.1:2181")))
     }
-    hbaseConf.set(TableInputFormat.INPUT_TABLE, parameters("inputTableName"))
+    hc.set(TableInputFormat.INPUT_TABLE, parameters("inputTableName"))
     new SerializableConfiguration(hc)
   }
 
