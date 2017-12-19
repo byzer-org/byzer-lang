@@ -1,5 +1,7 @@
 package org.apache.spark.sql.execution.datasources.hbase
 
+import java.sql.Timestamp
+
 import org.apache.hadoop.hbase.{HBaseConfiguration, HColumnDescriptor, HTableDescriptor, TableName}
 import org.apache.hadoop.hbase.client.{ConnectionFactory, Put, Result}
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable
@@ -169,11 +171,25 @@ case class HBaseRelation(
                         )(@transient val sqlContext: SQLContext)
   extends BaseRelation with TableScan with Logging {
 
-  val hbaseConf = HBaseConfiguration.create()
+  private val wrappedConf = {
+    implicit val formats = DefaultFormats
 
+    // task is already broadcast; since hConf is per HBaseRelation (currently), broadcast'ing
+    // it again does not help - it actually hurts. When we add support for
+    // caching hConf across HBaseRelation, we can revisit broadcast'ing it (with a caching
+    // mechanism in place)
+    val hc = HBaseConfiguration.create()
+    if (parameters.containsKey("zk") || parameters.containsKey("hbase.zookeeper.quorum")) {
+      hc.set("hbase.zookeeper.quorum", parameters.getOrElse("zk", parameters.getOrElse("hbase.zookeeper.quorum", "127.0.0.1:2181")))
+    }
+    hbaseConf.set(TableInputFormat.INPUT_TABLE, parameters("inputTableName"))
+    new SerializableConfiguration(hc)
+  }
+
+  def hbaseConf = wrappedConf.value
 
   def buildScan(): RDD[Row] = {
-    hbaseConf.set(TableInputFormat.INPUT_TABLE, parameters("inputTableName"))
+
     val hBaseRDD = sqlContext.sparkContext.newAPIHadoopRDD(hbaseConf, classOf[TableInputFormat], classOf[ImmutableBytesWritable], classOf[Result])
       .map { line =>
         val rowKey = Bytes.toString(line._2.getRow)
@@ -193,7 +209,9 @@ case class HBaseRelation(
                   case "DoubleType" => Bytes.toDouble(c._2)
                   case "IntegerType" => Bytes.toInt(c._2)
                   case "BooleanType" => Bytes.toBoolean(c._2)
-                  case "ByteType" => Bytes.toByteArrays(c._2)
+                  case "BinaryType" => c._2
+                  case "TimestampType" => new Timestamp(Bytes.toLong(c._2))
+                  case "DateType" => new java.sql.Date(Bytes.toLong(c._2))
                   case _ => Bytes.toString(c._2)
                 }
                 (columnName, value)
