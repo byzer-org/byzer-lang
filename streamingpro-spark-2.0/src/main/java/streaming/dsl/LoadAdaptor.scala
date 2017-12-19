@@ -17,13 +17,7 @@ class LoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
     (0 to ctx.getChildCount() - 1).foreach { tokenIndex =>
       ctx.getChild(tokenIndex) match {
         case s: FormatContext =>
-          if (s.getText == "jdbc") {
-            format = "jdbc"
-          }
-          if (s.getText == "es") {
-            format = "org.elasticsearch.spark.sql"
-          }
-          reader.format(s.getText)
+          format = s.getText
         case s: ExpressionContext =>
           option += (cleanStr(s.identifier().getText) -> cleanStr(s.STRING().getText))
         case s: BooleanExpressionContext =>
@@ -44,7 +38,7 @@ class LoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
           reader.option(f._1, f._2)
         }
         reader.option("dbtable", dbAndTable(1))
-        table = reader.load()
+        table = reader.format("jdbc").load()
 
       case "es" | "org.elasticsearch.spark.sql" =>
 
@@ -53,11 +47,11 @@ class LoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
           f =>
             reader.option(f._1, f._2)
         }
-        table = reader.load(dbAndTable(1))
-      case "hbase" =>
-        table = reader.load()
+        table = reader.format("org.elasticsearch.spark.sql").load(dbAndTable(1))
+      case "hbase" | "org.apache.spark.sql.execution.datasources.hbase" =>
+        table = reader.format("org.apache.spark.sql.execution.datasources.hbase").load()
       case _ =>
-        table = reader.load(withPathPrefix(scriptSQLExecListener.pathPrefix, cleanStr(path)))
+        table = reader.format(format).load(withPathPrefix(scriptSQLExecListener.pathPrefix, cleanStr(path)))
     }
     table.createOrReplaceTempView(tableName)
   }
