@@ -56,11 +56,11 @@ format
     ;
 
 path
-    : quotedIdentifier
+    : quotedIdentifier | identifier
     ;
 
 db
-    :qualifiedName
+    :qualifiedName | identifier
     ;
 
 tableName
