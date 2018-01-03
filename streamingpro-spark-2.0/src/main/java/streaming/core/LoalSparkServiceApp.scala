@@ -12,7 +12,7 @@ object LocalSparkServiceApp {
       "-streaming.thrift", "false",
       "-streaming.platform", "spark",
       "-streaming.job.file.path", "classpath:///test/empty.json",
-      "-streaming.enableHiveSupport", "true",
+      "-streaming.enableHiveSupport", "false",
       "-streaming.spark.service", "true",
       "-streaming.job.cancel","true",
       "-streaming.enableCarbonDataSupport", "false",
