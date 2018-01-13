@@ -86,6 +86,10 @@ class ScriptSQLExecListener(_sparkSession: SparkSession, _pathPrefix: String) ex
         new InsertAdaptor(this).parse(ctx)
       case "set" =>
         new SetAdaptor(this).parse(ctx)
+      case "train" =>
+        new TrainAdaptor(this).parse(ctx)
+      case "register" =>
+        new RegisterAdaptor(this).parse(ctx)
     }
 
   }
@@ -167,4 +171,8 @@ class ScriptSQLExecListener(_sparkSession: SparkSession, _pathPrefix: String) ex
   override def enterIgnore(ctx: IgnoreContext): Unit = {}
 
   override def exitIgnore(ctx: IgnoreContext): Unit = {}
+
+  override def enterFunctionName(ctx: FunctionNameContext): Unit = {}
+
+  override def exitFunctionName(ctx: FunctionNameContext): Unit = {}
 }
