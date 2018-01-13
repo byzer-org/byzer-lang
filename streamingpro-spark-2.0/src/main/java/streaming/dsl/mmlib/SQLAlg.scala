@@ -1,5 +1,6 @@
 package streaming.dsl.mmlib
 
+
 import org.apache.spark.sql._
 import org.apache.spark.sql.expressions.UserDefinedFunction
 
@@ -12,4 +13,6 @@ trait SQLAlg {
   def load(path: String): Any
 
   def predict(_model: Any): UserDefinedFunction
+
+
 }

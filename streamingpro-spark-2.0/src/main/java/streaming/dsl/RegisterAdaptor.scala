@@ -22,7 +22,7 @@ class RegisterAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslA
         case _ =>
       }
     }
-    val alg = AglMapping.findAlg(format)
+    val alg = AlgMapping.findAlg(format)
     val model = alg.load(path)
     val udf = alg.predict(model)
     scriptSQLExecListener.sparkSession.udf.register(functionName, udf)

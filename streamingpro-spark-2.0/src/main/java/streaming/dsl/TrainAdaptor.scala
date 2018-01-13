@@ -28,18 +28,20 @@ class TrainAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdap
       }
     }
     val df = scriptSQLExecListener.sparkSession.table(tableName)
-    val sqlAlg = AglMapping.findAlg(format)
+    val sqlAlg = AlgMapping.findAlg(format)
     sqlAlg.train(df, path, options)
   }
 }
 
-object AglMapping {
+object AlgMapping {
   val mapping = Map[String, String](
-    "word2vec" -> "streaming.dsl.mmlib.algs.SQLWord2Vec"
+    "Word2vec" -> "streaming.dsl.mmlib.algs.SQLWord2Vec",
+    "NaiveBayes" -> "streaming.dsl.mmlib.algs.SQLNaiveBayes",
+    "RandomForest" -> "streaming.dsl.mmlib.algs.SQLRandomForest"
   )
 
   def findAlg(name: String) = {
-    mapping.get(name) match {
+    mapping.get(name.capitalize) match {
       case Some(clzz) =>
         Class.forName(clzz).newInstance().asInstanceOf[SQLAlg]
       case None =>
