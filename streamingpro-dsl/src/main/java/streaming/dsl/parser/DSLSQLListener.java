@@ -140,6 +140,16 @@ public interface DSLSQLListener extends ParseTreeListener {
 	 */
 	void exitTableName(DSLSQLParser.TableNameContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link DSLSQLParser#functionName}.
+	 * @param ctx the parse tree
+	 */
+	void enterFunctionName(DSLSQLParser.FunctionNameContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link DSLSQLParser#functionName}.
+	 * @param ctx the parse tree
+	 */
+	void exitFunctionName(DSLSQLParser.FunctionNameContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link DSLSQLParser#col}.
 	 * @param ctx the parse tree
 	 */

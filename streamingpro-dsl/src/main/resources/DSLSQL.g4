@@ -20,6 +20,8 @@ sql
     | ('create'|'CREATE') ~(';')*
     | ('set'|'SET') ~(';')*
     | ('connect'|'CONNECT') format 'where'? expression? booleanExpression* ('as' db)?
+    | ('train'|'TRAIN') tableName 'as' format '.' path 'where'? expression? booleanExpression*
+    | ('register'|'REGISTER') format '.' path 'as' functionName
     |  SIMPLE_COMMENT
     ;
 
@@ -67,6 +69,9 @@ tableName
     : identifier
     ;
 
+functionName
+    : identifier
+    ;
 
 col
     : identifier

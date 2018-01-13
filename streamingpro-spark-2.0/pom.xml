@@ -123,11 +123,11 @@
                             <artifactId>jetty-all</artifactId>
                         </exclusion>
                     </exclusions>
-                </dependency>
+                </dependency> df
+
             </dependencies>
         </profile>
     </profiles>
-
     <dependencies>
         <dependency>
             <groupId>streaming.king</groupId>
