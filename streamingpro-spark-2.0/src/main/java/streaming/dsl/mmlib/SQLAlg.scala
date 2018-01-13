@@ -10,9 +10,9 @@ import org.apache.spark.sql.expressions.UserDefinedFunction
 trait SQLAlg {
   def train(df: DataFrame, path: String, params: Map[String, String]): Unit
 
-  def load(path: String): Any
+  def load(sparkSession: SparkSession, path: String): Any
 
-  def predict(_model: Any): UserDefinedFunction
+  def predict(sparkSession: SparkSession, _model: Any): UserDefinedFunction
 
 
 }
