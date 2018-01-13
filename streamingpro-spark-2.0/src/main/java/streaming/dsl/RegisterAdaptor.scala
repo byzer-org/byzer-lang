@@ -23,8 +23,9 @@ class RegisterAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslA
       }
     }
     val alg = AlgMapping.findAlg(format)
-    val model = alg.load(path)
-    val udf = alg.predict(model)
+    val sparkSession = scriptSQLExecListener.sparkSession
+    val model = alg.load(sparkSession, path)
+    val udf = alg.predict(sparkSession, model)
     scriptSQLExecListener.sparkSession.udf.register(functionName, udf)
   }
 }
