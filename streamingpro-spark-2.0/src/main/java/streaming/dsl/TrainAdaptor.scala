@@ -37,7 +37,9 @@ object AlgMapping {
   val mapping = Map[String, String](
     "Word2vec" -> "streaming.dsl.mmlib.algs.SQLWord2Vec",
     "NaiveBayes" -> "streaming.dsl.mmlib.algs.SQLNaiveBayes",
-    "RandomForest" -> "streaming.dsl.mmlib.algs.SQLRandomForest"
+    "RandomForest" -> "streaming.dsl.mmlib.algs.SQLRandomForest",
+    "GBTRegressor" -> "streaming.dsl.mmlib.algs.SQLGBTRegressor",
+    "LDA" -> "streaming.dsl.mmlib.algs.SQLLDA"
   )
 
   def findAlg(name: String) = {

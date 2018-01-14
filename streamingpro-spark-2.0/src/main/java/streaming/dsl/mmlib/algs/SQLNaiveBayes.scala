@@ -23,7 +23,7 @@ class SQLNaiveBayes extends SQLAlg with Functions {
     model
   }
 
-  override def predict(sparkSession: SparkSession, _model: Any): UserDefinedFunction = {
+  override def predict(sparkSession: SparkSession, _model: Any,name:String): UserDefinedFunction = {
     val model = sparkSession.sparkContext.broadcast(_model.asInstanceOf[NaiveBayesModel])
 
     val f = (vec: Vector) => {
