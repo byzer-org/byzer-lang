@@ -39,7 +39,8 @@ object AlgMapping {
     "NaiveBayes" -> "streaming.dsl.mmlib.algs.SQLNaiveBayes",
     "RandomForest" -> "streaming.dsl.mmlib.algs.SQLRandomForest",
     "GBTRegressor" -> "streaming.dsl.mmlib.algs.SQLGBTRegressor",
-    "LDA" -> "streaming.dsl.mmlib.algs.SQLLDA"
+    "LDA" -> "streaming.dsl.mmlib.algs.SQLLDA",
+    "KMeans" -> "streaming.dsl.mmlib.algs.SQLKMeans"
   )
 
   def findAlg(name: String) = {
