@@ -28,7 +28,7 @@ class SQLWord2Vec extends SQLAlg with Functions {
       toMap
   }
 
-  def predict(sparkSession: SparkSession, _model: Any): UserDefinedFunction = {
+  def predict(sparkSession: SparkSession, _model: Any, name: String): UserDefinedFunction = {
     val model = sparkSession.sparkContext.broadcast(_model.asInstanceOf[Map[String, Array[Double]]])
 
     val f = (co: String) => {

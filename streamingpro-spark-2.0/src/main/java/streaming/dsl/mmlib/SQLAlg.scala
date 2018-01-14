@@ -12,7 +12,7 @@ trait SQLAlg {
 
   def load(sparkSession: SparkSession, path: String): Any
 
-  def predict(sparkSession: SparkSession, _model: Any): UserDefinedFunction
+  def predict(sparkSession: SparkSession, _model: Any, name: String): UserDefinedFunction
 
 
 }
