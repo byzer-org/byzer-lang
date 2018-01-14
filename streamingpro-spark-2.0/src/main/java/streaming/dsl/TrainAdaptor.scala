@@ -40,7 +40,8 @@ object AlgMapping {
     "RandomForest" -> "streaming.dsl.mmlib.algs.SQLRandomForest",
     "GBTRegressor" -> "streaming.dsl.mmlib.algs.SQLGBTRegressor",
     "LDA" -> "streaming.dsl.mmlib.algs.SQLLDA",
-    "KMeans" -> "streaming.dsl.mmlib.algs.SQLKMeans"
+    "KMeans" -> "streaming.dsl.mmlib.algs.SQLKMeans",
+    "FPGrowth" -> "streaming.dsl.mmlib.algs.SQLFPGrowth"
   )
 
   def findAlg(name: String) = {
