@@ -18,7 +18,7 @@ class RegisterAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslA
         case s: FormatContext =>
           format = s.getText
         case s: PathContext =>
-          path = cleanStr(s.getText)
+          path = withPathPrefix(scriptSQLExecListener.pathPrefix, cleanStr(s.getText))
         case _ =>
       }
     }

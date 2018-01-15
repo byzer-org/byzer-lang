@@ -19,7 +19,7 @@ class TrainAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdap
         case s: FormatContext =>
           format = s.getText
         case s: PathContext =>
-          path = cleanStr(s.getText)
+          path = withPathPrefix(scriptSQLExecListener.pathPrefix, cleanStr(s.getText))
         case s: ExpressionContext =>
           options += (cleanStr(s.identifier().getText) -> cleanStr(s.STRING().getText))
         case s: BooleanExpressionContext =>
