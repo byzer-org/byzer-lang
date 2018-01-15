@@ -43,7 +43,6 @@ object HSQLStringIndex {
     sparkSession.udf.register(name + "_r", (index: Double) => {
       model.value.labels(index.toInt)
     })
-
     UserDefinedFunction(f, DoubleType, Some(Seq(StringType)))
   }
 }
