@@ -42,7 +42,9 @@ object AlgMapping {
     "LDA" -> "streaming.dsl.mmlib.algs.SQLLDA",
     "KMeans" -> "streaming.dsl.mmlib.algs.SQLKMeans",
     "FPGrowth" -> "streaming.dsl.mmlib.algs.SQLFPGrowth",
-    "StringIndex" -> "streaming.dsl.mmlib.algs.SQLStringIndex"
+    "StringIndex" -> "streaming.dsl.mmlib.algs.SQLStringIndex",
+    "GBTs" -> "streaming.dsl.mmlib.algs.SQLGBTs",
+    "LSVM" -> "streaming.dsl.mmlib.algs.SQLLSVM"
   )
 
   def findAlg(name: String) = {
