@@ -17,6 +17,7 @@ trait Functions {
           case i if i.isAssignableFrom(classOf[Int]) => v.toInt
           case i if i.isAssignableFrom(classOf[Double]) => v.toDouble
           case i if i.isAssignableFrom(classOf[Float]) => v.toFloat
+          case i if i.isAssignableFrom(classOf[Boolean]) => v.toBoolean
           case _ => v
         }
         m.invoke(model, v2.asInstanceOf[AnyRef])
