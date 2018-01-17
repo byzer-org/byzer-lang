@@ -44,7 +44,8 @@ object AlgMapping {
     "FPGrowth" -> "streaming.dsl.mmlib.algs.SQLFPGrowth",
     "StringIndex" -> "streaming.dsl.mmlib.algs.SQLStringIndex",
     "GBTs" -> "streaming.dsl.mmlib.algs.SQLGBTs",
-    "LSVM" -> "streaming.dsl.mmlib.algs.SQLLSVM"
+    "LSVM" -> "streaming.dsl.mmlib.algs.SQLLSVM",
+    "TfIdf" -> "streaming.dsl.mmlib.algs.SQLTfIdf"
   )
 
   def findAlg(name: String) = {

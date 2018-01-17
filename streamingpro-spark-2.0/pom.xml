@@ -138,6 +138,12 @@
             <groupId>streaming.king</groupId>
             <artifactId>streamingpro-hbase</artifactId>
             <version>${parent.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.eclipse.jetty</groupId>
+                    <artifactId>jetty-server</artifactId>
+                </exclusion>
+            </exclusions>
             <scope>compile</scope>
         </dependency>
         <dependency>
