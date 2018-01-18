@@ -1,24 +1,24 @@
 package streaming.dsl.mmlib.algs
 
-import org.apache.spark.ml.feature.{HashingTF, IDF, IDFModel, IntTF}
+import org.apache.spark.ml.feature.{HashingTF, IDF, IDFModel}
 import org.apache.spark.ml.linalg.SQLDataTypes._
+import org.apache.spark.ml.linalg.Vector
 import org.apache.spark.mllib.feature
 import org.apache.spark.mllib.linalg.{Vectors => OldVectors}
-import org.apache.spark.sql.expressions.UserDefinedFunction
-import org.apache.spark.sql.types.{ArrayType, IntegerType, StringType}
 import streaming.dsl.mmlib.SQLAlg
 import org.apache.spark.sql.{SparkSession, _}
+import org.apache.spark.sql.expressions.UserDefinedFunction
+import org.apache.spark.sql.types.{ArrayType, StringType}
 
 
 /**
   * Created by allwefantasy on 17/1/2018.
   */
-class SQLTfIdf extends SQLAlg with Functions {
+class SQLHashTfIdf extends SQLAlg with Functions {
 
 
   override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
-    val sparkSession = df.sparkSession
-    val rfc = new IntTF()
+    val rfc = new HashingTF()
     configureModel(rfc, params)
     rfc.setOutputCol("__SQLTfIdf__")
     val featurizedData = rfc.transform(df)
@@ -37,14 +37,14 @@ class SQLTfIdf extends SQLAlg with Functions {
 
   override def predict(sparkSession: SparkSession, _model: Any, name: String): UserDefinedFunction = {
     val model = sparkSession.sparkContext.broadcast(_model.asInstanceOf[IDFModel])
-    val intTF = new feature.IntTF(model.value.idf.size).setBinary(true)
-    val idf = (words: Seq[Int]) => {
+    val hashingTF = new feature.HashingTF(model.value.idf.size).setBinary(true)
+    val idf = (words: Seq[String]) => {
       val idfModelField = model.value.getClass.getField("org$apache$spark$ml$feature$IDFModel$$idfModel")
       idfModelField.setAccessible(true)
       val idfModel = idfModelField.get(model.value).asInstanceOf[feature.IDFModel]
-      val vec = intTF.transform(words)
+      val vec = hashingTF.transform(words)
       idfModel.transform(vec).asML
     }
-    UserDefinedFunction(idf, VectorType, Some(Seq(ArrayType(IntegerType))))
+    UserDefinedFunction(idf, VectorType, Some(Seq(ArrayType(StringType))))
   }
 }

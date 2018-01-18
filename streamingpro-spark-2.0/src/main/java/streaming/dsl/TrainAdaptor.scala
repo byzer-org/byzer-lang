@@ -1,5 +1,6 @@
 package streaming.dsl
 
+import org.apache.spark.sql.SparkSession
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.parser.DSLSQLParser._
 
@@ -28,12 +29,12 @@ class TrainAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdap
       }
     }
     val df = scriptSQLExecListener.sparkSession.table(tableName)
-    val sqlAlg = AlgMapping.findAlg(format)
+    val sqlAlg = MLMapping.findAlg(format)
     sqlAlg.train(df, path, options)
   }
 }
 
-object AlgMapping {
+object MLMapping {
   val mapping = Map[String, String](
     "Word2vec" -> "streaming.dsl.mmlib.algs.SQLWord2Vec",
     "NaiveBayes" -> "streaming.dsl.mmlib.algs.SQLNaiveBayes",
@@ -45,8 +46,16 @@ object AlgMapping {
     "StringIndex" -> "streaming.dsl.mmlib.algs.SQLStringIndex",
     "GBTs" -> "streaming.dsl.mmlib.algs.SQLGBTs",
     "LSVM" -> "streaming.dsl.mmlib.algs.SQLLSVM",
+    "HashTfIdf" -> "streaming.dsl.mmlib.algs.SQLHashTfIdf",
     "TfIdf" -> "streaming.dsl.mmlib.algs.SQLTfIdf"
   )
+
+  def registerMLFunctions(sparkSession: SparkSession) = {
+    //collection operate
+    sparkSession.udf.register("map", (col: String, reg: String) => {
+
+    })
+  }
 
   def findAlg(name: String) = {
     mapping.get(name.capitalize) match {
