@@ -27,8 +27,10 @@
 1. [fink支持](https://github.com/allwefantasy/streamingpro/blob/master/docs/flink.md)
 
 ## 其他文档
-[英文文档](https://github.com/allwefantasy/streamingpro/blob/master/README-EN.md)
-[简书专栏](https://www.jianshu.com/c/759bc22b9e15)
+
+* [英文文档](https://github.com/allwefantasy/streamingpro/blob/master/README-EN.md)
+* [简书专栏](https://www.jianshu.com/c/759bc22b9e15)
+* [源码阅读-深入浅出StreamingPro](https://github.com/allwefantasy/streamingpro/issues/47)
 
 
 ## 概述
