@@ -21,16 +21,16 @@ mvn install -Pscala-2.10 -Pjetty-9 -Pweb-include-jetty-9
 ```
 git clone https://github.com/allwefantasy/streamingpro.git
 cd streamingpro
-mvn -DskipTests clean package  -pl streamingpro-spark-2.0 -am  -Ponline -Pscala-2.11  -Phive-thrift-server -Pspark-2.1.0 -Pshade
+mvn -DskipTests clean package  -pl streamingpro-spark-2.0 -am  -Ponline -Pscala-2.11  -Phive-thrift-server -Pspark-2.2.0 -Pshade
 
 ```
 
-如果你基于spark 2.2.0 ，那么可以执行如下命令
+如果你基于spark 2.1.0 ，你需要删除一个类（streaming.dsl.mmlib.algs.SQLFPGrowth）,之后可以执行如下命令：
 
 ```
 git clone https://github.com/allwefantasy/streamingpro.git
 cd streamingpro
-mvn -DskipTests clean package  -pl streamingpro-spark-2.0 -am  -Ponline -Pscala-2.11  -Phive-thrift-server -Pspark-2.2.0 -Pshade
+mvn -DskipTests clean package  -pl streamingpro-spark-2.0 -am  -Ponline -Pscala-2.11  -Phive-thrift-server -Pspark-2.1.0 -Pshade
 
 ```
 
