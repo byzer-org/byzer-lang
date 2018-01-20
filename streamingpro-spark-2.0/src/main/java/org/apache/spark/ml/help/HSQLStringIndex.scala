@@ -62,6 +62,6 @@ object HSQLStringIndex {
     sparkSession.udf.register(name + "_rarray", (indexs: Seq[Double]) => {
       indexs.map(index => f_r(index)).filterNot(f => f == "__unknow__").toArray
     })
-    UserDefinedFunction(f, DoubleType, Some(Seq(StringType)))
+    UserDefinedFunction(f, IntegerType, Some(Seq(StringType)))
   }
 }
