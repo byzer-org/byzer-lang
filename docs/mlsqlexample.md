@@ -77,5 +77,6 @@ save overwrite result as json.`/tmp/result`;
 * FPGrowth
 * GBTs
 * LSVM
+* LogisticRegressor
 ## 总结
 通过将机器学习算法SQL脚本化，很好的衔接了数据处理和训练，预测。同时服务化很好的解决了环境依赖问题。当然终究是没法取代写代码，但是简单的任务就可以用简单的方式解决了。
