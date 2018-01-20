@@ -1,81 +1,97 @@
-## 使用演示
+## MLSQL
 
-详细实现代码参看[xql-dsl](https://github.com/allwefantasy/streamingpro/tree/xql-dsl) 分支。首先我们需要启动StreamingPro作为一个sql server ，[如何启动](https://github.com/allwefantasy/streamingpro/blob/master/README.md#启动一个sqlserver服务)
-现在你可以通过rest接口提交SQL脚本给该服务了。
+MLSQL通过添加了两个特殊语法，使得SQL也能够支持机器学习。
 
-首先，我们加载一个csv文件：
+
+### 模型训练
+
+语法：
 
 ```sql
-load csv.`/tmp/test.csv` options header="True" as ct;
-```
- csv内容如下：
-
-```
-body
-a b c
-a d m
-j d c
-a b c
-b b c
-```
-这个csv文件被映射为表名ct。只有一个字段body。现在我们需要对body字段进行切分，这个也可以通过sql来完成：
-
-```
-select split(body," ") as words from ct as new_ct;
+-- 从tableName获取数据，通过where条件对Algorithm算法进行参数配置并且进行模型训练，最后
+-- 训练得到的模型会保存在path路径。
+train [tableName] as [Algorithm].[path] where [booleanExpression]
 ```
 
-新表叫new_ct,现在，可以开始训练了,把new_ct喂给word2vec即可：
+比如：
 
-```
-train new_ct as word2vec.`/tmp/w2v_model` where inputCol="words";
-```
-
-word2vec表示算法名， `/tmp/w2v_model ` 则表示把训练好的模型放在哪。where 后面是模型参数。
-
-最后，我们注册一个sql函数：
-
-```
-register word2vec.`/tmp/w2v_model` as w2v_predict;
+```sql
+train data as RandomForest.`/tmp/model` where inputCol="featrues" and maxDepth="3"
 ```
 
-其中w2v_predict是自定义函数名。这样，我们在sql里就可以用这个函数了。我们来用一把：
+这句话表示使用对表data中的featrues列使用RandomForest进行训练，树的深度为3。训练完成后的模型会保存在`tmp/model`。
 
-```
-select words[0] as w, w2v_predict(words[0]) as v from new_ct as result;
-```
-给一个词，就可以拿到这个词的向量了。
+很简单对么？
 
-我们把它保存成json格式作为结果：
+目前支持的模型有：
 
-```
-save result as csv.`/tmp/result`;
-```
-
-结果是这样的：![WX20180113-131009@2x.png](http://upload-images.jianshu.io/upload_images/1063603-63c169001e02e894.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/620)
-
-最后完整的脚本如下：
-
-```
-load csv.`/tmp/test.csv` options header="True" as ct;
-select split(body," ") as words from ct as new_ct;
-train new_ct as word2vec.`/tmp/w2v_model` where inputCol="words";
-register word2vec.`/tmp/w2v_model` as w2v_predict;
-select words[0] as w, w2v_predict(words[0]) as v from new_ct as result;
-save overwrite result as json.`/tmp/result`;
+```  
+    "Word2vec" -> "streaming.dsl.mmlib.algs.SQLWord2Vec",
+    "NaiveBayes" -> "streaming.dsl.mmlib.algs.SQLNaiveBayes",
+    "RandomForest" -> "streaming.dsl.mmlib.algs.SQLRandomForest",
+    "GBTRegressor" -> "streaming.dsl.mmlib.algs.SQLGBTRegressor",
+    "LDA" -> "streaming.dsl.mmlib.algs.SQLLDA",
+    "KMeans" -> "streaming.dsl.mmlib.algs.SQLKMeans",
+    "FPGrowth" -> "streaming.dsl.mmlib.algs.SQLFPGrowth",
+    "StringIndex" -> "streaming.dsl.mmlib.algs.SQLStringIndex",
+    "GBTs" -> "streaming.dsl.mmlib.algs.SQLGBTs",
+    "LSVM" -> "streaming.dsl.mmlib.algs.SQLLSVM",
+    "HashTfIdf" -> "streaming.dsl.mmlib.algs.SQLHashTfIdf",
+    "TfIdf" -> "streaming.dsl.mmlib.algs.SQLTfIdf"  
 ```
 
-大家可以用postman测试：
-![WX20180113-131211@2x.png](http://upload-images.jianshu.io/upload_images/1063603-1960fd63dd9f2fc3.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/620)
+如果需要知道算法的输入格式以及算法的参数,可以参看[Spark MLlib](https://spark.apache.org/docs/latest/ml-guide.html)。
+在MLSQL中，输入格式和算法的参数和Spark MLLib保持一致。
 
-##支持算法（不断更新）
+通常，大部分分类或者回归类算法，都支持libsvm格式。你可以通过SQL或者程序生成libsvm格式文件。之后可以通过
 
-* NaiveBayes
-* RandomForest
-* GBTRegressor
-* LDA
-* KMeans
-* FPGrowth
-* GBTs
-* LSVM
-## 总结
-通过将机器学习算法SQL脚本化，很好的衔接了数据处理和训练，预测。同时服务化很好的解决了环境依赖问题。当然终究是没法取代写代码，但是简单的任务就可以用简单的方式解决了。
+```sql
+load libsvm.`/data/mllib/sample_libsvm_data.txt` 
+as sample_table;
+```
+
+其中sample_table就是一个表，有label和features两个字段。load完成之后就可以喂给算法了。
+
+```sql
+train sample_table as RandomForest.`/tmp/zhuwl_rf_model` where maxDepth="3";
+```
+
+对于Word2Vec,输入的是字符串数组就行。
+LDA 我们建议输入Int数组。
+
+### 预测
+
+语法：
+
+```sql
+-- 从Path中加载Algorithm算法对应的模型，并且将该模型注册为一个叫做functionName的函数。
+register [Algorithm].[Path] as functionName;
+```
+
+比如：
+
+```
+register RandomForest.`/tmp/zhuwl_rf_model` as zhuwl_rf_predict;
+```
+
+接着我就可以在SQL中使用该函数了：
+
+```
+select zhuwl_rf_predict(features) as predict_label, label as original_label from sample_table;
+```
+
+很多模型会有多个预测函数。假设我们名字都叫predict
+
+LDA 有如下函数：
+
+* predict  参数为一次int类型，返回一个主题分布。
+* predict_doc 参数为一个int数组，返回一个主题分布
+
+StringIndex:
+
+* predict 参数为一个词汇，返回一个数字
+* predict_r 参数为一个数字，返回一个词
+* predict_array 参数为词汇数组，返回数字数组
+* predict_rarray 参数为数字数组，返回词汇数组
+
+

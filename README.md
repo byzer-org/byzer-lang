@@ -11,7 +11,8 @@
 ## SQL服务化：
 
 1. [SQL Server 服务](https://github.com/allwefantasy/streamingpro/blob/master/docs/sqlservice.md)
-1. [MLSQL-SQL支持机器学习](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql.md)
+1. [MLSQL示例](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsqlexample.md)
+1. [MLSQL使用手册](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql.md)
 
 ## 用配置来编程
 1. [Spark Streaming](https://github.com/allwefantasy/streamingpro/blob/master/docs/sparkstreamingjson.md)
