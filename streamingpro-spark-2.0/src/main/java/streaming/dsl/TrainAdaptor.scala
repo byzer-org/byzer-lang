@@ -47,7 +47,8 @@ object MLMapping {
     "GBTs" -> "streaming.dsl.mmlib.algs.SQLGBTs",
     "LSVM" -> "streaming.dsl.mmlib.algs.SQLLSVM",
     "HashTfIdf" -> "streaming.dsl.mmlib.algs.SQLHashTfIdf",
-    "TfIdf" -> "streaming.dsl.mmlib.algs.SQLTfIdf"
+    "TfIdf" -> "streaming.dsl.mmlib.algs.SQLTfIdf",
+    "LogisticRegressor" -> "streaming.dsl.mmlib.algs.SQLLogisticRegression"
   )
 
   def registerMLFunctions(sparkSession: SparkSession) = {
