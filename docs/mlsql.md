@@ -87,11 +87,198 @@ LDA 有如下函数：
 * predict  参数为一次int类型，返回一个主题分布。
 * predict_doc 参数为一个int数组，返回一个主题分布
 
-StringIndex:
 
-* predict 参数为一个词汇，返回一个数字
-* predict_r 参数为一个数字，返回一个词
+
+
+### Word2vec
+
+假设"/tmp/test.csv"内容为：
+
+```
+body
+a b c
+a d m
+j d c
+a b c
+b b c
+```
+
+通过Word2vec可以为里面每个字符计算一个向量。
+
+示例:
+
+```sql
+load csv.`/tmp/test.csv` options header="True" as ct;
+
+select split(body," ") as words from ct as new_ct;
+
+train new_ct as word2vec.`/tmp/w2v_model` where inputCol="words" and minCount="0";
+
+register word2vec.`/tmp/w2v_model` as w2v_predict;
+
+select words[0] as w, w2v_predict(words[0]) as v from new_ct as result;
+
+save overwrite result as json.`/tmp/result`;
+
+```
+
+### StringIndex
+
+StringIndex可以给每个词汇生成一个唯一的ID。
+
+```sql
+load csv.`/tmp/abc.csv` options header="True" as data;
+select explode(split(body," ")) as word from data as new_dt;
+train new_dt as StringIndex.`/tmp/model` where inputCol="word";
+register StringIndex.`/tmp/model` as predict;
+select predict_r(1)  from new_dt as result;
+save overwrite result as json.`/tmp/result`;
+```
+
+除了你注册的predict函数以外，StringIndex会隐式给你生成一些函数，包括：
+
+* predict    参数为一个词汇，返回一个数字
+* predict_r  参数为一个数字，返回一个词
 * predict_array 参数为词汇数组，返回数字数组
 * predict_rarray 参数为数字数组，返回词汇数组
+
+### TfIdf
+
+```sql
+--  加载文本数据
+load csv.`/tmp/test.csv` options header="True" 
+as zhuhl_ct;
+
+--分词
+select split(body," ") as words from zhuhl_ct 
+as zhuhl_new_ct;
+
+-- 把文章转化为数字序列，因为tfidf模型需要数字序列
+
+train word_table as StringIndex.`/tmp/zhuhl_si_model` where 
+inputCol="word" and handleInvalid="skip";
+
+register StringIndex.`/tmp/zhuhl_si_model` as zhuhl_si_predict;
+
+select zhuhl_si_predict_array(words) as int_word_seq from zhuhl_new_ct
+as int_word_seq_table;
+
+-- 训练一个tfidf模型
+train int_word_seq_table as TfIdf.`/tmp/zhuhl_tfidf_model` where 
+inputCol="words"
+and numFeatures="100" 
+and binary="true";
+
+--注册tfidf模型
+register TfIdf.`/tmp/zhuhl_tfidf_model` as zhuhl_tfidf_predict;
+
+--将文本转化为tf/idf向量
+select zhuhl_tfidf_predict(int_word_seq) as features from int_word_seq_table
+as lda_data;
+
+```
+
+通过tf/idf模型预测得到的就是向量，可以直接被其他算法使用。和libsvm 格式数据一致。
+
+### NaiveBayes
+ 
+示例：
+
+```sql
+load libsvm.`/spark-2.2.0-bin-hadoop2.7/data/mllib/sample_libsvm_data.txt` as data;
+train data as NaiveBayes.`/tmp/bayes_model`;
+register NaiveBayes.`/tmp/bayes_model` as bayes_predict;
+select bayes_predict(features)  from data as result;
+save overwrite result as json.`/tmp/result`;
+```
+
+### RandomForest
+
+```sql
+load libsvm.`/spark-2.2.0-bin-hadoop2.7/data/mllib/sample_libsvm_data.txt` as data;
+train data as RandomForest.`/tmp/model`;
+register RandomForest.`/tmp/model` as predict;
+select predict(features)  from data as result;
+save overwrite result as json.`/tmp/result`;
+```
+ 
+### GBTRegressor
+
+```sql
+load libsvm.`/spark-2.2.0-bin-hadoop2.7/data/mllib/sample_libsvm_data.txt` as data;
+train data as GBTRegressor.`/tmp/model`;
+register GBTRegressor.`/tmp/model` as predict;
+select predict(features)  from data as result;
+save overwrite result as json.`/tmp/result`;
+
+```
+
+
+### LDA 
+
+```sql
+load libsvm.`/spark-2.2.0-bin-hadoop2.7/data/mllib/sample_lda_libsvm_data.txt` as data;
+train data as LDA.`/tmp/model` where k="10" and maxIter="10";
+register LDA.`/tmp/model` as predict;
+select predict_v(features)  from data as result;
+save overwrite result as json.`/tmp/result`;
+```
+
+### KMeans
+
+```sql
+load libsvm.`/spark-2.2.0-bin-hadoop2.7/data/mllib/sample_kmeans_data.txt` as data;
+train data as KMeans.`/tmp/model` where k="10";
+register KMeans.`/tmp/model` as predict;
+select predict(features)  from data as result;
+save overwrite result as json.`/tmp/result`;
+```
+
+
+###FPGrowth
+
+abc.csv:
+
+```
+body
+1 2 5
+1 2 3 5
+1 2
+```
+
+示例:
+
+```sql
+load csv.`/tmp/abc.csv` options header="True" as data;
+select split(body," ") as items from data as new_dt;
+train new_dt as FPGrowth.`/tmp/model` where minSupport="0.5" and minConfidence="0.6" and itemsCol="items";
+register FPGrowth.`/tmp/model` as predict;
+select predict(items)  from new_dt as result;
+save overwrite result as json.`/tmp/result`;
+```
+
+
+
+
+### GBTs
+
+```sql
+load libsvm.`/spark-2.2.0-bin-hadoop2.7/data/mllib/sample_libsvm_data.txt` as data;
+train data as GBTs.`/tmp/model`;
+register GBTs.`/tmp/model` as predict;
+select predict(features)  from data as result;
+save overwrite result as json.`/tmp/result`;
+```
+
+### LSVM
+
+```sql
+load libsvm.`/Users/allwefantasy/Softwares/spark-2.2.0-bin-hadoop2.7/data/mllib/sample_libsvm_data.txt` as data;
+train data as LSVM.`/tmp/model` where maxIter="10" and regParam="0.1";
+register LSVM.`/tmp/model` as predict;
+select predict(features)  from data as result;
+save overwrite result as json.`/tmp/result`;
+```
+
 
 
