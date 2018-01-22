@@ -15,9 +15,8 @@ class SQLRowMatrix extends SQLAlg with Functions {
   override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
     val rdd = df.rdd.map { f =>
       val v = f.getAs(params.getOrElse("inputCol", "features").toString).asInstanceOf[Vector]
-      OldVectors.fromML(v)
-    }.zipWithIndex().map { f =>
-      IndexedRow(f._2, f._1)
+      val label = f.getAs(params.getOrElse("labelCol", "label").toString).asInstanceOf[Long]
+      IndexedRow(label, OldVectors.fromML(v))
     }
 
     val randRowMat = new IndexedRowMatrix(rdd).toBlockMatrix().transpose.toCoordinateMatrix().toRowMatrix()
