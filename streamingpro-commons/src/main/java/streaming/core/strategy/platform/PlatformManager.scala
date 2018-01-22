@@ -54,7 +54,6 @@ class PlatformManager {
     runtime.startThriftServer
   }
 
-
   def registerToZk(params: ParamsUtil) = {
     zk = ZkRegister.registerToZk(params)
   }
