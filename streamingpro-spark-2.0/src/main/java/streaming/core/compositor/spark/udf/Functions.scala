@@ -51,13 +51,13 @@ object Functions {
   }
 
   def vec_dense(uDFRegistration: UDFRegistration) = {
-    uDFRegistration.register("vec_norm", (vec1: Seq[Double]) => {
+    uDFRegistration.register("vec_dense", (vec1: Seq[Double]) => {
       Vectors.dense(vec1.toArray)
     })
   }
 
   def vec_sparse(uDFRegistration: UDFRegistration) = {
-    uDFRegistration.register("vec_norm", (size: Int, vec1: Map[Int, Double]) => {
+    uDFRegistration.register("vec_sparse", (size: Int, vec1: Map[Int, Double]) => {
       Vectors.sparse(size, vec1.toSeq)
     })
   }
