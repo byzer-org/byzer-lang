@@ -71,12 +71,12 @@
         </profile>
 
         <profile>
-            <id>carbondata-1.1.0</id>
+            <id>carbondata</id>
             <dependencies>
                 <dependency>
                     <groupId>org.apache.carbondata</groupId>
                     <artifactId>carbondata-spark2</artifactId>
-                    <version>1.1.0-incubating-SNAPSHOT</version>
+                    <version>1.2.0</version>
                 </dependency>
                 <dependency>
                     <groupId>org.apache.spark</groupId>
@@ -194,6 +194,13 @@
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-mllib_${scala.binary.version}</artifactId>
+            <version>${spark.version}</version>
+            <scope>${scope}</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-graphx_${scala.binary.version}</artifactId>
             <version>${spark.version}</version>
             <scope>${scope}</scope>
         </dependency>

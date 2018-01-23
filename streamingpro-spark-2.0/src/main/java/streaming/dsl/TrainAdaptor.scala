@@ -48,7 +48,8 @@ object MLMapping {
     "LSVM" -> "streaming.dsl.mmlib.algs.SQLLSVM",
     "HashTfIdf" -> "streaming.dsl.mmlib.algs.SQLHashTfIdf",
     "TfIdf" -> "streaming.dsl.mmlib.algs.SQLTfIdf",
-    "RowMatrix" -> "streaming.dsl.mmlib.algs.SQLRowMatrix"
+    "RowMatrix" -> "streaming.dsl.mmlib.algs.SQLRowMatrix",
+    "PageRank" -> "streaming.dsl.mmlib.algs.SQLPageRank"
   )
 
   def registerMLFunctions(sparkSession: SparkSession) = {
