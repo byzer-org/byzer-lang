@@ -1,10 +1,13 @@
 package streaming.core.compositor.spark.udf
 
-import org.apache.spark.sql.UDFRegistration
+import org.apache.spark.ml.feature.VectorAssembler
+import org.apache.spark.sql.{Row, UDFRegistration}
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable
 import org.apache.spark.ml.linalg.{DenseVector, SparseVector, Vector, Vectors}
+import org.apache.spark.mllib.linalg.{Vectors => OldVectors}
+import org.apache.spark.sql.functions._
 
 /**
   * Created by allwefantasy on 3/5/2017.
@@ -62,13 +65,24 @@ object Functions {
     })
   }
 
+  def vec_concat(uDFRegistration: UDFRegistration) = {
+    uDFRegistration.register("vec_concat", (vecs: Seq[Vector]) => {
+      FVectors.assemble(vecs: _*)
+    })
+  }
+
   /*
     1 - x.dot(y)/(x.norm(2)*y.norm(2))
    */
-//  def vec_cosine(uDFRegistration: UDFRegistration) = {
-//    uDFRegistration.register("vec_cosine", (vec1: Vector, vec2: Vector) => {
-//
-//      1 - vec1.toDense.dot(vec2) / Vectors.norm(vec1, 2) * Vectors.norm(vec2, 2)
-//    })
-//  }
+  def vec_cosine(uDFRegistration: UDFRegistration) = {
+    uDFRegistration.register("vec_cosine", (vec1: Vector, vec2: Vector) => {
+      val dot = new org.apache.spark.mllib.feature.ElementwiseProduct(OldVectors.fromML(vec1)).transform(OldVectors.fromML(vec2))
+      var value = 0d
+      val value_add = (a: Int, b: Double) => {
+        value += b
+      }
+      dot.foreachActive(value_add)
+      value / (Vectors.norm(vec1, 2) * Vectors.norm(vec2, 2))
+    })
+  }
 }
