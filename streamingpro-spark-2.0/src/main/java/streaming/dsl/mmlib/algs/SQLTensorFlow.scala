@@ -21,14 +21,21 @@ import scala.collection.JavaConverters._
   */
 class SQLTensorFlow extends SQLAlg with Functions {
   /*
-        train df as TF.`/tmp/cnn` where graphDefPath="python写的tf模型结构"
-        and `kafkaParam.bootstrap.servers`="127.0.0.1"
-        and `kafkaParam.topic` = "test.....
-        and `fitParam.0.epochs` = "5"
+       train data as TensorFlow.`/tmp/model`
+        where pythonDescPath="/tmp/wow.py"
+        and `kafkaParam.bootstrap.servers`="127.0.0.1:9092"
+        and `kafkaParam.topic`="test-9_1517059642136"
+        and `kafkaParam.group_id`="g_test-1"
+        and `kafkaParam.reuse`="true"
+        and `fitParam.0.epochs`="10"
+        and  `fitParam.0.max_records`="10"
+        and `fitParam.1.epochs`="21"
+        and  `fitParam.1.max_records`="11"
+        and `systemParam.pythonPath`="python";
    */
   override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
     var kafkaParam = mapParams("kafkaParam", params)
-    var systemParam = mapParams("systemParam", params)
+    val systemParam = mapParams("systemParam", params)
     //    SQLTensorFlow.executors.execute(new Runnable {
     //      override def run(): Unit = {
     //
@@ -44,30 +51,32 @@ class SQLTensorFlow extends SQLAlg with Functions {
       ExternalCommandRunner.pickle(iter, structType)
     }
     val topic = kafkaParam("topic") + "_" + System.currentTimeMillis()
-    kafkaParam += ("topic" -> topic)
+    if (!kafkaParam.getOrElse("reuse", "false").toBoolean) {
+      kafkaParam += ("topic" -> topic)
+      newRDD.foreachPartition { p =>
+        val props = new Properties()
+        kafkaParam.foreach(f => props.put(f._1, f._2))
+        props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer")
+        props.put("value.serializer", "org.apache.kafka.common.serialization.ByteArraySerializer")
+        val producer = new KafkaProducer[String, Array[Byte]](props)
+        try {
+          p.foreach { row =>
+            producer.send(new ProducerRecord[String, Array[Byte]](topic, row))
+          }
 
-    newRDD.foreachPartition { p =>
-      val props = new Properties()
-      kafkaParam.foreach(f => props.put(f._1, f._2))
-      props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer")
-      props.put("value.serializer", "org.apache.kafka.common.serialization.ByteArraySerializer")
-      val producer = new KafkaProducer[String, Array[Byte]](props)
-      try {
-        p.foreach { row =>
-          producer.send(new ProducerRecord[String, Array[Byte]](topic, row))
+          val out = new ByteArrayOutputStream()
+          ExternalCommandRunner.pickle("_stop_", out)
+          val stopMsg = out.toByteArray
+          out.close()
+
+          producer.send(new ProducerRecord[String, Array[Byte]](kafkaParam("topic"), stopMsg))
+        } finally {
+          producer.close()
         }
 
-        val out = new ByteArrayOutputStream()
-        ExternalCommandRunner.pickle("_stop_", out)
-        val stopMsg = out.toByteArray
-        out.close()
-
-        producer.send(new ProducerRecord[String, Array[Byte]](kafkaParam("topic"), stopMsg))
-      } finally {
-        producer.close()
       }
-
     }
+
     val stopFlagNum = newRDD.getNumPartitions
 
     val fitParam = arrayParams("fitParam", params)
@@ -109,5 +118,5 @@ class SQLTensorFlow extends SQLAlg with Functions {
 }
 
 object SQLTensorFlow {
-  val executors = Executors.newFixedThreadPool(3)
+  // val executors = Executors.newFixedThreadPool(3)
 }
