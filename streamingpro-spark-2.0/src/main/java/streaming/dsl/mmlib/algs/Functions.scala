@@ -25,4 +25,15 @@ trait Functions {
     }
   }
 
+  def mapParams(name: String, params: Map[String, String]) = {
+    params.filter(f => f._1.startsWith(name + ".")).map(f => (f._1.split("\\.").drop(1).mkString("."), f._2))
+  }
+
+  def arrayParams(name: String, params: Map[String, String]) = {
+    params.filter(f => f._1.startsWith(name + ".")).map { f =>
+      val Array(name, group, key) = f._1.split("\\.")
+      (group, key, f._2)
+    }.groupBy(f => f._1).map { f => f._2.map(k => (k._2, k._1)).toMap }.toArray
+  }
+
 }
