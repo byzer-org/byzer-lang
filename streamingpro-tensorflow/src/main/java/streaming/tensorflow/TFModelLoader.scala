@@ -1,7 +1,5 @@
 package streaming.tensorflow
 
-import java.nio.FloatBuffer
-
 import org.tensorflow.{SavedModelBundle, Tensor}
 
 /**
