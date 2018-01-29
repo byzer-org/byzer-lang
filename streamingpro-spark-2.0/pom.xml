@@ -155,14 +155,13 @@
 
         <dependency>
             <groupId>streaming.king</groupId>
-            <artifactId>streamingpro-tensorflow</artifactId>
+            <artifactId>streamingpro-dsl</artifactId>
             <version>${parent.version}</version>
-            <scope>compile</scope>
         </dependency>
 
         <dependency>
             <groupId>streaming.king</groupId>
-            <artifactId>streamingpro-dsl</artifactId>
+            <artifactId>streamingpro-tensorflow</artifactId>
             <version>${parent.version}</version>
         </dependency>
 
