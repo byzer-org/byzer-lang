@@ -14,6 +14,7 @@
         <module>streamingpro-dsl</module>
         <module>streamingpro-hbase</module>
         <module>streamingpro-redis</module>
+        <module>streamingpro-tensorflow</module>
     </modules>
 
     <properties>
