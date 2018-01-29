@@ -1,16 +1,19 @@
 package streaming.dsl.mmlib.algs
 
-import java.io.{BufferedOutputStream, ByteArrayOutputStream, DataOutputStream, FileOutputStream}
+import streaming.tensorflow.TFModelLoader
+import streaming.tensorflow.TFModelPredictor
+import java.io.ByteArrayOutputStream
 import java.util
 import java.util.Properties
-import java.util.concurrent.Executors
 
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
+import org.apache.spark.ml.linalg.{SparseVector, Vectors}
 import streaming.dsl.mmlib.SQLAlg
 import org.apache.spark.sql._
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.types._
 import org.apache.spark.util.ExternalCommandRunner
+import org.apache.spark.ml.linalg.SQLDataTypes._
 
 import scala.collection.JavaConverters._
 
@@ -64,11 +67,15 @@ class SQLTensorFlow extends SQLAlg with Functions {
             producer.send(new ProducerRecord[String, Array[Byte]](topic, row))
           }
 
-          val out = new ByteArrayOutputStream()
-          ExternalCommandRunner.pickle("_stop_", out)
-          val stopMsg = out.toByteArray
-          out.close()
+          def pickle(msg: String) = {
+            val out = new ByteArrayOutputStream()
+            ExternalCommandRunner.pickle(msg, out)
+            val stopMsg = out.toByteArray
+            out.close()
+            stopMsg
+          }
 
+          val stopMsg = pickle("_stop_")
           producer.send(new ProducerRecord[String, Array[Byte]](kafkaParam("topic"), stopMsg))
         } finally {
           producer.close()
@@ -88,7 +95,10 @@ class SQLTensorFlow extends SQLAlg with Functions {
 
     fitParamRDD.map { f =>
       val paramMap = new util.HashMap[String, Object]()
-      val item = f.asJava
+      var item = f.asJava
+      if (!f.contains("modelPath")) {
+        item = (f + ("modelPath" -> path)).asJava
+      }
       paramMap.put("fitParam", item)
       paramMap.put("kafkaParam", kafkaParam.asJava)
       paramMap.put("internalSystemParam", Map("stopFlagNum" -> stopFlagNum).asJava)
@@ -109,11 +119,18 @@ class SQLTensorFlow extends SQLAlg with Functions {
 
 
   override def load(sparkSession: SparkSession, path: String): Any = {
-    null
+    //val sess = TFModelLoader.load(path)
+    path
   }
 
   override def predict(sparkSession: SparkSession, _model: Any, name: String): UserDefinedFunction = {
-    null
+    val f = (v: SparseVector, inputName: String, outputName: String, outputSize: Int) => {
+      val modelBundle = TFModelLoader.load(_model.asInstanceOf[String])
+      val res = TFModelPredictor.run_float(modelBundle, inputName, outputName, outputSize, Array(v.toArray.map(f => f.toFloat)))
+      Vectors.dense(res.map(f => f.toDouble))
+
+    }
+    UserDefinedFunction(f, VectorType, Some(Seq(VectorType, StringType, StringType, IntegerType)))
   }
 }
 

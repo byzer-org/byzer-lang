@@ -92,15 +92,17 @@ object ExternalCommandRunner {
         fw.close()
       }
     }
-
     saveFile(scriptName, scriptContent)
-    val msg_queue = Source.fromInputStream(ExternalCommandRunner.getClass.getResourceAsStream("/python/msg_queue.py")).
-      getLines().mkString("\n")
-    saveFile("msg_queue.py", msg_queue)
-    val wrapperPythonScript = Source.fromInputStream(ExternalCommandRunner.getClass.getResourceAsStream("/python/tf.py")).
-      getLines().mkString("\n")
-    saveFile("tf.py", wrapperPythonScript)
-    // saveFile("__init__.py",".")
+
+    def savePythonFile(name: String) = {
+      val msg_queue = Source.fromInputStream(ExternalCommandRunner.getClass.getResourceAsStream("/python/" + name)).
+        getLines().mkString("\n")
+      saveFile(name, msg_queue)
+    }
+
+    savePythonFile("msg_queue.py")
+    savePythonFile("mlsql.py")
+    savePythonFile("mlsql_model.py")
 
     val proc = pb.start()
     val env = SparkEnv.get
@@ -239,7 +241,7 @@ object ExternalCommandRunner {
       InternalRow.fromSeq(
         f.schema.fieldNames.zipWithIndex.map {
           fieldAndindex =>
-            val (field,index) = fieldAndindex
+            val (field, index) = fieldAndindex
             val v = f.getValuesMap(f.schema.fieldNames)(field).asInstanceOf[Any]
             f.schema(index).dataType match {
               case sv: VectorUDT =>
