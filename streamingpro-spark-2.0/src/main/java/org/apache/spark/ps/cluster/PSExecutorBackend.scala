@@ -14,8 +14,8 @@ import scala.util.{Failure, Success}
 import java.lang.management.ManagementFactory
 import java.net.URL
 
-import org.apache.spark.deploy.worker.WorkerWatcher
-import org.apache.spark.executor.CoarseGrainedExecutorBackend
+import org.apache.spark.internal.config._
+import org.apache.spark.security.CryptoStreamUtils
 
 import scala.collection.mutable
 import scala.collection.JavaConversions._
@@ -24,7 +24,7 @@ import scala.collection.JavaConversions._
   * Created by allwefantasy on 30/1/2018.
   */
 class PSExecutorBackend(env: SparkEnv) extends ThreadSafeRpcEndpoint with Logging {
-  val rpcEnv: RpcEnv = env.rpcEnv
+
 
   var psDriverUrl: String = null
   var psExecutorId: String = null
@@ -35,6 +35,21 @@ class PSExecutorBackend(env: SparkEnv) extends ThreadSafeRpcEndpoint with Loggin
   var psDriverHost: String = null
   var workerUrl: Option[String] = None
   val userClassPath = new mutable.ListBuffer[URL]()
+
+  def createRpcEnv = {
+    val isDriver = env.executorId == SparkContext.DRIVER_IDENTIFIER
+    val bindAddress = hostname
+    val advertiseAddress = ""
+    val port = env.conf.getOption("spark.ps.executor.port").getOrElse("0").toInt
+    val ioEncryptionKey = if (env.conf.get(IO_ENCRYPTION_ENABLED)) {
+      Some(CryptoStreamUtils.createKey(sc.conf))
+    } else {
+      None
+    }
+    RpcEnv.create("PSExecutorBackend", bindAddress, advertiseAddress, port, env.conf,
+      env.securityManager, clientMode = !isDriver)
+  }
+
 
   def parseArgs = {
     val runtimeMxBean = ManagementFactory.getRuntimeMXBean();
@@ -74,8 +89,12 @@ class PSExecutorBackend(env: SparkEnv) extends ThreadSafeRpcEndpoint with Loggin
     psDriverUrl = psDriverHost + ":" + psDriverPort
   }
 
+  parseArgs
+
+  override val rpcEnv: RpcEnv = createRpcEnv
+
   override def onStart(): Unit = {
-    parseArgs
+
     logInfo("Connecting to driver: " + psDriverUrl)
     rpcEnv.asyncSetupEndpointRefByURI(psDriverUrl).flatMap { ref =>
       // This is a very fast action so we can use "ThreadUtils.sameThread"

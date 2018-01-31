@@ -2,10 +2,12 @@ package org.apache.spark.scheduler.cluster
 
 import java.util.concurrent.TimeUnit
 
-import org.apache.spark.SparkContext
+import org.apache.spark.{SparkContext, SparkEnv}
 import org.apache.spark.internal.Logging
+import org.apache.spark.internal.config._
 import org.apache.spark.ps.cluster.Message
 import org.apache.spark.rpc.{RpcAddress, RpcCallContext, RpcEnv, ThreadSafeRpcEndpoint}
+import org.apache.spark.security.CryptoStreamUtils
 import org.apache.spark.util.{ThreadUtils, Utils}
 
 import scala.collection.mutable.HashMap
@@ -13,7 +15,7 @@ import scala.collection.mutable.HashMap
 /**
   * Created by allwefantasy on 31/1/2018.
   */
-class PSDriverEndpoint(override val rpcEnv: RpcEnv, sc: SparkContext)
+class PSDriverEndpoint(sc: SparkContext)
   extends ThreadSafeRpcEndpoint with Logging {
   protected val addressToExecutorId = new HashMap[RpcAddress, String]
   private val executorDataMap = new HashMap[String, ExecutorData]()
@@ -73,4 +75,20 @@ class PSDriverEndpoint(override val rpcEnv: RpcEnv, sc: SparkContext)
 
 
   }
+
+  def createRpcEnv = {
+    val isDriver = sc.env.executorId == SparkContext.DRIVER_IDENTIFIER
+    val bindAddress = sc.conf.get(DRIVER_BIND_ADDRESS)
+    val advertiseAddress = sc.conf.get(DRIVER_HOST_ADDRESS)
+    val port = sc.conf.getOption("spark.ps.driver.port").getOrElse("7777").toInt
+    val ioEncryptionKey = if (sc.conf.get(IO_ENCRYPTION_ENABLED)) {
+      Some(CryptoStreamUtils.createKey(sc.conf))
+    } else {
+      None
+    }
+    RpcEnv.create("PSDriverEndpoint", bindAddress, advertiseAddress, port, sc.conf,
+      sc.env.securityManager, clientMode = !isDriver)
+  }
+
+  override val rpcEnv: RpcEnv = createRpcEnv
 }
