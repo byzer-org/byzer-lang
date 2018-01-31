@@ -130,6 +130,9 @@ class SQLTensorFlow extends SQLAlg with Functions {
       Vectors.dense(res.map(f => f.toDouble))
 
     }
+    //    sparkSession.udf.register("release_tensorflow_memory", (modelPath: String) => {
+    //      TFModelLoader.close(modelPath)
+    //    })
     UserDefinedFunction(f, VectorType, Some(Seq(VectorType, StringType, StringType, IntegerType)))
   }
 }
