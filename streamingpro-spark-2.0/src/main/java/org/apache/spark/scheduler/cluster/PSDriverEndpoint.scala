@@ -47,6 +47,7 @@ class PSDriverEndpoint(sc: SparkContext)
       val ks = sparkExecutorDataMap.keySet
       executorDataMap.foreach { ed =>
         if (ks.contains(ed._1)) {
+          logInfo("ps driver send message: Message.TensorFlowModelClean")
           ed._2.executorEndpoint.askSync[Boolean](Message.TensorFlowModelClean(modelPath))
         }
       }

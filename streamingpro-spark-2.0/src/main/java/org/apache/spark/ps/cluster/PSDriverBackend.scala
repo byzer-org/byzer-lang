@@ -10,10 +10,10 @@ import org.apache.spark.scheduler.cluster.PSDriverEndpoint
 class PSDriverBackend(sc: SparkContext) {
 
   val conf = sc.conf
-  var psDriverBackend: RpcEndpointRef = null
+  var psDriverRpcEndpointRef: RpcEndpointRef = null
 
   def start() = {
-    psDriverBackend = sc.env.rpcEnv.setupEndpoint("PSDriver", new PSDriverEndpoint(sc.env.rpcEnv, sc))
+    psDriverRpcEndpointRef = sc.env.rpcEnv.setupEndpoint("PSDriver", new PSDriverEndpoint(sc))
   }
 
 }

@@ -42,7 +42,7 @@ class PSExecutorBackend(env: SparkEnv) extends ThreadSafeRpcEndpoint with Loggin
     val advertiseAddress = ""
     val port = env.conf.getOption("spark.ps.executor.port").getOrElse("0").toInt
     val ioEncryptionKey = if (env.conf.get(IO_ENCRYPTION_ENABLED)) {
-      Some(CryptoStreamUtils.createKey(sc.conf))
+      Some(CryptoStreamUtils.createKey(env.conf))
     } else {
       None
     }
@@ -124,14 +124,15 @@ class PSExecutorBackend(env: SparkEnv) extends ThreadSafeRpcEndpoint with Loggin
 
   override def receiveAndReply(context: RpcCallContext): PartialFunction[Any, Unit] = {
     case Message.TensorFlowModelClean(modelPath) => {
+      logInfo("ps executor get message: Message.TensorFlowModelClean")
       TFModelLoader.close(modelPath)
       context.reply(true)
     }
   }
 }
 
-class ServiceSink(val property: Properties, val registry: MetricRegistry,
-                  securityMgr: SecurityManager) extends Sink {
+class PSServiceSink(val property: Properties, val registry: MetricRegistry,
+                    securityMgr: SecurityManager) extends Sink {
   val env = SparkEnv.get
 
 
