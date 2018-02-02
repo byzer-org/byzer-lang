@@ -5,10 +5,12 @@ import java.util.concurrent.atomic.AtomicReference
 import java.util.logging.Logger
 import java.util.{Map => JMap}
 
+import org.apache.spark.ps.cluster.PSDriverBackend
 import org.apache.spark.{SparkConf, SparkRuntimeOperator}
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.hive.HiveContext
+import org.apache.spark.ps.local.LocalPSSchedulerBackend
 import org.apache.spark.sql.hive.thriftserver.HiveThriftServer2
+import org.apache.spark.util.Utils
 import streaming.core.JobCanceller
 
 import scala.collection.JavaConversions._
@@ -21,6 +23,9 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
   val logger = Logger.getLogger(getClass.getName)
 
   def name = "SPARK"
+
+  var localSchedulerBackend: LocalPSSchedulerBackend = null
+  var psDriverBackend: PSDriverBackend = null
 
   var sparkSession: SparkSession = createRuntime
 
@@ -41,13 +46,27 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
 
     conf.setAppName(params.get("streaming.name").toString)
 
+    if (params.containsKey("streaming.ps.enable") && params.get("streaming.ps.enable").toString.toBoolean) {
+      def isLocalMaster(conf: SparkConf): Boolean = {
+        val master = conf.get("spark.master", "")
+        master == "local" || master.startsWith("local[")
+      }
+      if (!isLocalMaster(conf)) {
+        logger.info("register worker.sink.pservice.class with org.apache.spark.ps.cluster.PSServiceSink")
+        conf.set("spark.metrics.conf.executor.sink.pservice.class", "org.apache.spark.ps.cluster.PSServiceSink")
+      }
+    }
+
+
     val sparkSession = SparkSession.builder().config(conf)
     if (params.containsKey("streaming.enableHiveSupport") &&
       params.get("streaming.enableHiveSupport").toString.toBoolean) {
       sparkSession.enableHiveSupport()
     }
 
-   val ss = if (params.containsKey("streaming.enableCarbonDataSupport") &&
+
+
+    val ss = if (params.containsKey("streaming.enableCarbonDataSupport") &&
       params.get("streaming.enableCarbonDataSupport").toString.toBoolean) {
       val url = params.getOrElse("streaming.hive.javax.jdo.option.ConnectionURL", "").toString
       if (!url.isEmpty) {
@@ -67,6 +86,18 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
     if (params.containsKey("streaming.job.cancel") && params.get("streaming.job.cancel").toString.toBoolean) {
       JobCanceller.init(ss.sparkContext)
     }
+
+    if (params.containsKey("streaming.ps.enable") && params.get("streaming.ps.enable").toString.toBoolean) {
+      if (ss.sparkContext.isLocal) {
+        localSchedulerBackend = new LocalPSSchedulerBackend(ss.sparkContext)
+        localSchedulerBackend.start()
+      } else {
+        logger.info("start PSDriverBackend")
+        psDriverBackend = new PSDriverBackend(ss.sparkContext)
+        psDriverBackend.start()
+      }
+    }
+
     ss
   }
 

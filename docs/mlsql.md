@@ -23,23 +23,6 @@ train data as RandomForest.`/tmp/model` where inputCol="featrues" and maxDepth="
 
 很简单对么？
 
-目前支持的模型有：
-
-```  
-    "Word2vec" -> "streaming.dsl.mmlib.algs.SQLWord2Vec",
-    "NaiveBayes" -> "streaming.dsl.mmlib.algs.SQLNaiveBayes",
-    "RandomForest" -> "streaming.dsl.mmlib.algs.SQLRandomForest",
-    "GBTRegressor" -> "streaming.dsl.mmlib.algs.SQLGBTRegressor",
-    "LDA" -> "streaming.dsl.mmlib.algs.SQLLDA",
-    "KMeans" -> "streaming.dsl.mmlib.algs.SQLKMeans",
-    "FPGrowth" -> "streaming.dsl.mmlib.algs.SQLFPGrowth",
-    "StringIndex" -> "streaming.dsl.mmlib.algs.SQLStringIndex",
-    "GBTs" -> "streaming.dsl.mmlib.algs.SQLGBTs",
-    "LSVM" -> "streaming.dsl.mmlib.algs.SQLLSVM",
-    "HashTfIdf" -> "streaming.dsl.mmlib.algs.SQLHashTfIdf",
-    "TfIdf" -> "streaming.dsl.mmlib.algs.SQLTfIdf"  
-```
-
 如果需要知道算法的输入格式以及算法的参数,可以参看[Spark MLlib](https://spark.apache.org/docs/latest/ml-guide.html)。
 在MLSQL中，输入格式和算法的参数和Spark MLLib保持一致。
 

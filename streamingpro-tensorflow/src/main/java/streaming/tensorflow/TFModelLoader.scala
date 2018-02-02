@@ -13,7 +13,7 @@ object TFModelLoader {
   def load(modelPath: String) = synchronized {
     var count = 0
     val count_upper_bound = 10
-    //if take too much time to load 50s ,then maybe just return null
+    //if take too much time to load eg. 50s,then maybe just return null
     if (map.containsKey(modelPath) || loading_status_map.containsKey(modelPath)) {
       while (loading_status_map.containsKey(modelPath) && count < count_upper_bound) {
         Thread.sleep(5000)
@@ -32,6 +32,12 @@ object TFModelLoader {
     }
   }
 
+  def close(modelPath: String) = {
+    if (map.containsKey(modelPath)) {
+      val sm = map.remove(modelPath)
+      sm.close()
+    }
+  }
 
 }
 
