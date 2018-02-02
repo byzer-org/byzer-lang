@@ -15,39 +15,25 @@ import scala.collection.mutable.HashMap
 /**
   * Created by allwefantasy on 31/1/2018.
   */
-class PSDriverEndpoint(sc: SparkContext)
+class PSDriverEndpoint(sc: SparkContext, override val rpcEnv: RpcEnv)
   extends ThreadSafeRpcEndpoint with Logging {
   protected val addressToExecutorId = new HashMap[RpcAddress, String]
   private val executorDataMap = new HashMap[String, ExecutorData]()
-  private var sparkExecutorDataMap = new HashMap[String, ExecutorData]()
-  private val refreshThread =
-    ThreadUtils.newDaemonSingleThreadScheduledExecutor("ps-driver-refresh-thread")
-
+  //  private var sparkExecutorDataMap = new HashMap[String, ExecutorData]()
+  //  private val refreshThread =
+  ThreadUtils.newDaemonSingleThreadScheduledExecutor("ps-driver-refresh-thread")
 
   override def onStart() {
     // Periodically revive offers to allow delay scheduling to work
-    val refreshInterval = 1000
-
-    refreshThread.scheduleAtFixedRate(new Runnable {
-      override def run(): Unit = Utils.tryLogNonFatalError {
-        Option(self).foreach(_.send(Message.RefreshPSExecutors))
-      }
-    }, 0, refreshInterval, TimeUnit.MILLISECONDS)
+    logInfo("started PSDriverEndpoint")
   }
 
   override def receive: PartialFunction[Any, Unit] = {
-    case Message.RefreshPSExecutors =>
-      //.executorDataMap
-      val cgsb = sc.schedulerBackend.asInstanceOf[CoarseGrainedSchedulerBackend]
-      val field = CoarseGrainedSchedulerBackend.getClass.getDeclaredField("executorDataMap")
-      field.setAccessible(true)
-      sparkExecutorDataMap = field.get(cgsb).asInstanceOf[HashMap[String, ExecutorData]]
-
     case Message.TensorFlowModelClean(modelPath) =>
-      val ks = sparkExecutorDataMap.keySet
+      val ks = sc.getExecutorIds().toSet
+      logInfo(s"ps driver send message: Message.TensorFlowModelClean:executors:${ks}")
       executorDataMap.foreach { ed =>
         if (ks.contains(ed._1)) {
-          logInfo("ps driver send message: Message.TensorFlowModelClean")
           ed._2.executorEndpoint.askSync[Boolean](Message.TensorFlowModelClean(modelPath))
         }
       }
@@ -69,6 +55,7 @@ class PSDriverEndpoint(sc: SparkContext)
 
         val data = new ExecutorData(executorRef, executorRef.address, hostname,
           cores, cores, logUrls)
+        executorDataMap.put(executorId, data)
         executorRef.send(Message.RegisteredExecutor)
         // Note: some tests expect the reply to come after we put the executor in the map
         context.reply(true)
@@ -77,19 +64,5 @@ class PSDriverEndpoint(sc: SparkContext)
 
   }
 
-  def createRpcEnv = {
-    val isDriver = sc.env.executorId == SparkContext.DRIVER_IDENTIFIER
-    val bindAddress = sc.conf.get(DRIVER_BIND_ADDRESS)
-    val advertiseAddress = sc.conf.get(DRIVER_HOST_ADDRESS)
-    val port = sc.conf.getOption("spark.ps.driver.port").getOrElse("7777").toInt
-    val ioEncryptionKey = if (sc.conf.get(IO_ENCRYPTION_ENABLED)) {
-      Some(CryptoStreamUtils.createKey(sc.conf))
-    } else {
-      None
-    }
-    RpcEnv.create("PSDriverEndpoint", bindAddress, advertiseAddress, port, sc.conf,
-      sc.env.securityManager, clientMode = !isDriver)
-  }
 
-  override val rpcEnv: RpcEnv = createRpcEnv
 }

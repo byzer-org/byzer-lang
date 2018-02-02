@@ -52,7 +52,8 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
         master == "local" || master.startsWith("local[")
       }
       if (!isLocalMaster(conf)) {
-        conf.set("worker.sink.pservice.class", "org.apache.spark.ps.cluster.PSServiceSink")
+        logger.info("register worker.sink.pservice.class with org.apache.spark.ps.cluster.PSServiceSink")
+        conf.set("spark.metrics.conf.executor.sink.pservice.class", "org.apache.spark.ps.cluster.PSServiceSink")
       }
     }
 
@@ -91,6 +92,7 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
         localSchedulerBackend = new LocalPSSchedulerBackend(ss.sparkContext)
         localSchedulerBackend.start()
       } else {
+        logger.info("start PSDriverBackend")
         psDriverBackend = new PSDriverBackend(ss.sparkContext)
         psDriverBackend.start()
       }

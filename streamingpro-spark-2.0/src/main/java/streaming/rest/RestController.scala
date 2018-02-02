@@ -213,7 +213,7 @@ class RestController extends ApplicationController {
   @At(path = Array("/test"), types = Array(GET, POST))
   def test = {
     val psDriverBackend = runtime.asInstanceOf[SparkRuntime].psDriverBackend
-    psDriverBackend.psDriverRpcEndpointRef.send(Message.TensorFlowModelClean)
+    psDriverBackend.psDriverRpcEndpointRef.send(Message.TensorFlowModelClean("/tmp/ok"))
     render("{}")
   }
 
