@@ -1,6 +1,6 @@
 ## 使用演示
 
-详细实现代码参看[xql-dsl](https://github.com/allwefantasy/streamingpro/tree/xql-dsl) 分支。首先我们需要启动StreamingPro作为一个sql server ，[如何启动](https://github.com/allwefantasy/streamingpro/blob/master/README.md#启动一个sqlserver服务)
+首先我们需要启动StreamingPro作为一个sql server ，[如何启动](https://github.com/allwefantasy/streamingpro/blob/master/README.md#启动一个sqlserver服务)
 现在你可以通过rest接口提交SQL脚本给该服务了。
 
 首先，我们加载一个csv文件：
@@ -67,6 +67,7 @@ save overwrite result as json.`/tmp/result`;
 大家可以用postman测试：
 ![WX20180113-131211@2x.png](http://upload-images.jianshu.io/upload_images/1063603-1960fd63dd9f2fc3.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/620)
 
+
 ##支持算法（不断更新）
 
 * NaiveBayes
@@ -78,5 +79,6 @@ save overwrite result as json.`/tmp/result`;
 * GBTs
 * LSVM
 * LogisticRegressor
+
 ## 总结
 通过将机器学习算法SQL脚本化，很好的衔接了数据处理和训练，预测。同时服务化很好的解决了环境依赖问题。当然终究是没法取代写代码，但是简单的任务就可以用简单的方式解决了。

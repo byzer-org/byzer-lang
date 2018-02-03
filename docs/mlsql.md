@@ -23,23 +23,6 @@ train data as RandomForest.`/tmp/model` where inputCol="featrues" and maxDepth="
 
 很简单对么？
 
-目前支持的模型有：
-
-```  
-    "Word2vec" -> "streaming.dsl.mmlib.algs.SQLWord2Vec",
-    "NaiveBayes" -> "streaming.dsl.mmlib.algs.SQLNaiveBayes",
-    "RandomForest" -> "streaming.dsl.mmlib.algs.SQLRandomForest",
-    "GBTRegressor" -> "streaming.dsl.mmlib.algs.SQLGBTRegressor",
-    "LDA" -> "streaming.dsl.mmlib.algs.SQLLDA",
-    "KMeans" -> "streaming.dsl.mmlib.algs.SQLKMeans",
-    "FPGrowth" -> "streaming.dsl.mmlib.algs.SQLFPGrowth",
-    "StringIndex" -> "streaming.dsl.mmlib.algs.SQLStringIndex",
-    "GBTs" -> "streaming.dsl.mmlib.algs.SQLGBTs",
-    "LSVM" -> "streaming.dsl.mmlib.algs.SQLLSVM",
-    "HashTfIdf" -> "streaming.dsl.mmlib.algs.SQLHashTfIdf",
-    "TfIdf" -> "streaming.dsl.mmlib.algs.SQLTfIdf"  
-```
-
 如果需要知道算法的输入格式以及算法的参数,可以参看[Spark MLlib](https://spark.apache.org/docs/latest/ml-guide.html)。
 在MLSQL中，输入格式和算法的参数和Spark MLLib保持一致。
 
@@ -235,7 +218,7 @@ save overwrite result as json.`/tmp/result`;
 ```
 
 
-###FPGrowth
+### FPGrowth
 
 abc.csv:
 
@@ -279,6 +262,48 @@ register LSVM.`/tmp/model` as predict;
 select predict(features)  from data as result;
 save overwrite result as json.`/tmp/result`;
 ```
+
+
+### RowMatrix
+
+当你想计算向量两两相似的时候，RowMatrix提供了一个快速高效的方式。比如LDA计算出了每个文档的向量分布，接着我们需要任意给定一个文章，然后找到
+相似的文章， 则可以使用RowMatrix进行计算。无论如何，当文档到百万，计算量始终都是很大的（没有优化前会有万亿次计算），所以实际使用可以将数据
+先简单分类。之后在类里面再做相似度计算。
+
+另外RowMatrix需要两个字段，一个是向量，一个是数字，数字必须是从0开始递增，用来和矩阵行做对应，方便唯一标记一篇内容。
+如果你的数据不是这样的，比如你的文档的唯一编号是断开的或者是一个字符串，那么你可以使用StringIndex 去生成一个字段作为唯一标记。
+
+```sql
+load libsvm.`/spark-2.2.0-bin-hadoop2.7/data/mllib/sample_lda_libsvm_data.txt` as data;
+train data as LDA.`/tmp/model` where k="10" and maxIter="10";
+
+register LDA.`/tmp/model` as predict;
+
+select *,zhuhl_lda_predict_doc(features) as features from data
+as zhuhl_doclist;
+
+train zhuhl_doclist as RowMatrix.`/tmp/zhuhl_rm_model` where inputCol="features" and labelCol="label";
+register RowMatrix.`/tmp/zhuhl_rm_model` as zhuhl_rm_predict;
+
+select zhuhl_rm_predict(label) from data
+```
+
+### PageRank
+
+PageRank 可以对有关系对的东西进行建模，输入也很简答，只要item-item pair 就行。
+
+```
+load csv.`/spark-2.2.0-bin-hadoop2.7/data/mllib/pagerank_data.txt` as data;
+
+select cast(split(_c0," ")[0] as Long) as edgeSrc,cast(split(_c0," ")[1] as Long) as edgeDst from data
+as new_data;
+
+train new_data as PageRank.`/tmp/pr_model` ;
+register PageRank.`/tmp/pr_model` as zhl_pr_redict;
+
+select zhl_pr_redict(edgeSrc) from new_data;
+```
+
 
 
 

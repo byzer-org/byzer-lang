@@ -8,11 +8,14 @@
 1. [相关概念](https://github.com/allwefantasy/streamingpro/blob/master/README.md#相关概念)
 1. [StreamingPro的一些参数](https://github.com/allwefantasy/streamingpro/blob/master/README.md#StreamingPro的一些参数)
 
-## SQL服务化：
+## SQL服务 和 机器学习：
 
-1. [SQL Server 服务](https://github.com/allwefantasy/streamingpro/blob/master/docs/sqlservice.md)
-1. [MLSQL示例](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsqlexample.md)
-1. [MLSQL使用手册](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql.md)
+1. [SQL服务](https://github.com/allwefantasy/streamingpro/blob/master/docs/sqlservice.md)
+1. [为什么开发MLSQL](https://github.com/allwefantasy/streamingpro/blob/master/docs/why-develop-mlsql.md)
+1. [MLSQL手册](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql.md)
+1. [MLSQL编写Word2Vec脚本示例](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsqlexample.md)
+1. [MLSQL结合Tensorflow实现深度学习算法](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-tensorflow.md)
+1. [Vector操作函数](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-functions.md)
 
 ## 用配置来编程
 1. [Spark Streaming](https://github.com/allwefantasy/streamingpro/blob/master/docs/sparkstreamingjson.md)

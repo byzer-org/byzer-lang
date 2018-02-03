@@ -8,6 +8,7 @@ import net.csdn.common.path.Url
 import net.csdn.modules.http.{ApplicationController, ViewType}
 import net.csdn.modules.http.RestRequest.Method._
 import net.csdn.modules.transport.HttpTransportService
+import org.apache.spark.ps.cluster.Message
 import org.apache.spark.sql.{DataFrameWriter, Row, SaveMode}
 import streaming.common.JarUtil
 import streaming.core.{AsyncJobRunner, DownloadRunner, JobCanceller}
@@ -207,6 +208,13 @@ class RestController extends ApplicationController {
   def check = {
     val sparkSession = runtime.asInstanceOf[SparkRuntime].sparkSession
     render(sparkSession.table(param("name")))
+  }
+
+  @At(path = Array("/test"), types = Array(GET, POST))
+  def test = {
+    val psDriverBackend = runtime.asInstanceOf[SparkRuntime].psDriverBackend
+    psDriverBackend.psDriverRpcEndpointRef.send(Message.TensorFlowModelClean("/tmp/ok"))
+    render("{}")
   }
 
   def runtime = PlatformManager.getRuntime
