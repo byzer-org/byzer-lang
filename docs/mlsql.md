@@ -164,7 +164,7 @@ as lda_data;
 通过tf/idf模型预测得到的就是向量，可以直接被其他算法使用。和libsvm 格式数据一致。
 
 ### NaiveBayes
- 
+
 示例：
 
 ```sql
@@ -184,7 +184,7 @@ register RandomForest.`/tmp/model` as predict;
 select predict(features)  from data as result;
 save overwrite result as json.`/tmp/result`;
 ```
- 
+
 ### GBTRegressor
 
 ```sql
@@ -303,6 +303,20 @@ register PageRank.`/tmp/pr_model` as zhl_pr_redict;
 
 select zhl_pr_redict(edgeSrc) from new_data;
 ```
+
+
+
+
+### LogisticRegressor
+
+```sql
+load libsvm.`/tmp/lr.csv` options header="True" as lr;
+train lr as LogisticRegressor.`/tmp/linear_regression_model`;
+register LogisticRegressor.`/tmp/linear_regression_model` as lr_predict;
+select lr_predict(features) from lr as result;
+save overwrite result as json.`/tmp/lr_result.csv`;
+```
+
 
 
 
