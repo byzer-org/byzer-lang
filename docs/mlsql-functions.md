@@ -55,3 +55,9 @@ select vec_sparse(2,--此处传递一个map)
 ```sql
 select vec_cosine(vec_dense(array(1.0,2.0)),vec_dense(array(1.0,1.0)))
 ```
+
+### ngram
+
+```
+select ngram(array("a","b","c","d","e"),3) as 3ngr
+```

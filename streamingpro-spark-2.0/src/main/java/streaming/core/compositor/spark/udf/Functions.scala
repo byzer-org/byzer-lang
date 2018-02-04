@@ -85,4 +85,10 @@ object Functions {
       value / (Vectors.norm(vec1, 2) * Vectors.norm(vec2, 2))
     })
   }
+
+  def ngram(uDFRegistration: UDFRegistration) = {
+    uDFRegistration.register("ngram", (words: Seq[String], n: Int) => {
+      words.iterator.sliding(n).withPartial(false).map(_.mkString(" ")).toSeq
+    })
+  }
 }
