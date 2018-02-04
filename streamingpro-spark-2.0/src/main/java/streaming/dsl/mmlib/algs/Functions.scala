@@ -36,4 +36,15 @@ trait Functions {
     }.groupBy(f => f._1).map { f => f._2.map(k => (k._2, k._1)).toMap }.toArray
   }
 
+  def getModelConstructField(model: Any, modelName: String, fieldName: String) = {
+    val modelField = model.getClass.getDeclaredField("org$apache$spark$ml$feature$" + modelName + "$$" + fieldName)
+    modelField.setAccessible(true)
+    modelField.get(model)
+  }
+
+  def getModelField(model: Any,  fieldName: String) = {
+    val modelField = model.getClass.getDeclaredField(fieldName)
+    modelField.setAccessible(true)
+    modelField.get(model)
+  }
 }

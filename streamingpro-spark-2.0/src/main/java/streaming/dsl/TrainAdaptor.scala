@@ -51,15 +51,9 @@ object MLMapping {
     "LogisticRegressor" -> "streaming.dsl.mmlib.algs.SQLLogisticRegression",
     "RowMatrix" -> "streaming.dsl.mmlib.algs.SQLRowMatrix",
     "PageRank" -> "streaming.dsl.mmlib.algs.SQLPageRank",
-    "TensorFlow" -> "streaming.dsl.mmlib.algs.SQLTensorFlow"
+    "TensorFlow" -> "streaming.dsl.mmlib.algs.SQLTensorFlow",
+    "StandardScaler" -> "streaming.dsl.mmlib.algs.SQLStandardScaler"
   )
-
-  def registerMLFunctions(sparkSession: SparkSession) = {
-    //collection operate
-    sparkSession.udf.register("map", (col: String, reg: String) => {
-
-    })
-  }
 
   def findAlg(name: String) = {
     mapping.get(name.capitalize) match {

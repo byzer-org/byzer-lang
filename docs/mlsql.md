@@ -317,7 +317,15 @@ select lr_predict(features) from lr as result;
 save overwrite result as json.`/tmp/lr_result.csv`;
 ```
 
+### StandardScaler
 
+```
+load libsvm.`/Users/allwefantasy/Softwares/spark-2.2.0-bin-hadoop2.7/data/mllib/sample_libsvm_data.txt` as data;
+
+train data as StandardScaler.`/tmp/kk`where inputCol="features";
+register StandardScaler.`/tmp/kk` as predict;
+select predict(features) as k from data;
+```
 
 
 
