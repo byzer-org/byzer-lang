@@ -1,6 +1,7 @@
 import tensorflow as tf
 import os
 import shutil
+import pickle
 
 
 def save_model(path, session, input_tensor, output_tensor, overwrite=False):
@@ -16,3 +17,12 @@ def save_model(path, session, input_tensor, output_tensor, overwrite=False):
                                          signature_def_map={
                                              tf.saved_model.signature_constants.DEFAULT_SERVING_SIGNATURE_DEF_KEY: signature})
     builder.save()
+
+
+def sk_save_model(model_path, model):
+    dir_name = os.path.join(model_path + "_temp", "0")
+    if os.path.exists(dir_name):
+        shutil.rmtree(dir_name)
+    os.makedirs(dir_name)
+    with open(os.path.join(dir_name, "model.pickle"), "wb") as f:
+        pickle.dump(model, f, protocol=2)

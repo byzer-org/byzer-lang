@@ -38,6 +38,34 @@ object HDFSOperator {
     fs.listStatus(new Path(path)).filter(f => f.isDirectory)
   }
 
+  def saveBytesFile(path: String, fileName: String, bytes: Array[Byte]) = {
+
+    var dos: FSDataOutputStream = null
+    try {
+
+      val fs = FileSystem.get(new Configuration())
+      if (!fs.exists(new Path(path))) {
+        fs.mkdirs(new Path(path))
+      }
+      dos = fs.create(new Path(new java.io.File(path, fileName).getPath), true)
+      dos.write(bytes)
+    } catch {
+      case ex: Exception =>
+        println("file save exception")
+    } finally {
+      if (null != dos) {
+        try {
+          dos.close()
+        } catch {
+          case ex: Exception =>
+            println("close exception")
+        }
+        dos.close()
+      }
+    }
+
+  }
+
 
   def saveFile(path: String, fileName: String, iterator: Iterator[(String, String)]) = {
 
