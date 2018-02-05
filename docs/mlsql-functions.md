@@ -56,8 +56,19 @@ select vec_sparse(2,--此处传递一个map)
 select vec_cosine(vec_dense(array(1.0,2.0)),vec_dense(array(1.0,1.0)))
 ```
 
+### vec_slice 
+
+切割vector:
+
+
+```sql
+select vec_slice(vec_dense(array(1.0,2.0,3.0)),array(0,1))
+```
+
+
 ### ngram
 
-```
+```sql
 select ngram(array("a","b","c","d","e"),3) as 3ngr
 ```
+

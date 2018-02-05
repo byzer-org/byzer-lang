@@ -1,7 +1,7 @@
 package streaming.core.compositor.spark.udf
 
 import org.apache.spark.SparkException
-import org.apache.spark.ml.linalg.{Vector, Vectors}
+import org.apache.spark.ml.linalg.{SparseVector, Vector, Vectors}
 
 import scala.collection.mutable.ArrayBuilder
 
@@ -35,5 +35,21 @@ object FVectors {
         throw new SparkException(s"$o of type ${o.getClass.getName} is not supported.")
     }
     Vectors.sparse(cur, indices.result(), values.result()).compressed
+  }
+
+  def slice(vector: SparseVector, selectedIndices: Array[Int]): SparseVector = {
+    val values = vector.values
+    var currentIdx = 0
+    val (sliceInds, sliceVals) = selectedIndices.flatMap { origIdx =>
+      val iIdx = java.util.Arrays.binarySearch(selectedIndices, origIdx)
+      val i_v = if (iIdx >= 0) {
+        Iterator((currentIdx, values(iIdx)))
+      } else {
+        Iterator()
+      }
+      currentIdx += 1
+      i_v
+    }.unzip
+    new SparseVector(selectedIndices.length, sliceInds.toArray, sliceVals.toArray)
   }
 }
