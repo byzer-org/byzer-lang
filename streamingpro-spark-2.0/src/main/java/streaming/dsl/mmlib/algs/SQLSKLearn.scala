@@ -1,41 +1,22 @@
 package streaming.dsl.mmlib.algs
 
-import streaming.tensorflow.TFModelLoader
-import streaming.tensorflow.TFModelPredictor
-import java.io.ByteArrayOutputStream
+import java.io.File
+import java.nio.file.{Files, Paths}
 import java.util
-import java.util.Properties
 
-import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
-import org.apache.spark.ml.linalg.{SparseVector, Vectors}
-import streaming.dsl.mmlib.SQLAlg
-import org.apache.spark.sql._
+import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession}
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.types._
 import org.apache.spark.util.ExternalCommandRunner
-import org.apache.spark.ml.linalg.SQLDataTypes._
+import streaming.common.HDFSOperator
+import streaming.dsl.mmlib.SQLAlg
 
 import scala.collection.JavaConverters._
 
-
 /**
-  * Created by allwefantasy on 13/1/2018.
-  *
+  * Created by allwefantasy on 5/2/2018.
   */
-class SQLTensorFlow extends SQLAlg with Functions {
-  /*
-       train data as TensorFlow.`/tmp/model`
-        where pythonDescPath="/tmp/wow.py"
-        and `kafkaParam.bootstrap.servers`="127.0.0.1:9092"
-        and `kafkaParam.topic`="test-9_1517059642136"
-        and `kafkaParam.group_id`="g_test-1"
-        and `kafkaParam.reuse`="true"
-        and `fitParam.0.epochs`="10"
-        and  `fitParam.0.max_records`="10"
-        and `fitParam.1.epochs`="21"
-        and  `fitParam.1.max_records`="11"
-        and `systemParam.pythonPath`="python";
-   */
+class SQLSKLearn extends SQLAlg with Functions {
   override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
     val (kafkaParam, newRDD) = writeKafka(df, path, params)
     val systemParam = mapParams("systemParam", params)
@@ -49,7 +30,7 @@ class SQLTensorFlow extends SQLAlg with Functions {
     val userFileName = pathChunk(pathChunk.length - 1)
     val userPythonScriptList = df.sparkSession.sparkContext.textFile(params("pythonDescPath")).collect().mkString("\n")
 
-    fitParamRDD.map { f =>
+    val wowRDD = fitParamRDD.map { f =>
       val paramMap = new util.HashMap[String, Object]()
       var item = f.asJava
       if (!f.contains("modelPath")) {
@@ -69,30 +50,24 @@ class SQLTensorFlow extends SQLAlg with Functions {
         userFileName, modelPath = path
       )
       res.foreach(f => f)
-      ""
-    }.count()
+      //读取模型文件，保存到hdfs上，方便下次获取
+      val file = new File(new File(path + "_temp", "0"), "model.pickle")
+      val byteArray = Files.readAllBytes(Paths.get(file.getPath))
+      Row.fromSeq(Seq(byteArray))
+    }
+    df.sparkSession.createDataFrame(wowRDD, StructType(Seq(StructField("bytes", BinaryType)))).
+      write.
+      mode(SaveMode.Overwrite).
+      parquet(new File(path, "0").getPath)
+
   }
 
-
   override def load(sparkSession: SparkSession, path: String): Any = {
-    //val sess = TFModelLoader.load(path)
+    //sparkSession.sparkContext.objectFile[Bytes]()
     path
   }
 
   override def predict(sparkSession: SparkSession, _model: Any, name: String): UserDefinedFunction = {
-    val f = (v: SparseVector, inputName: String, outputName: String, outputSize: Int) => {
-      val modelBundle = TFModelLoader.load(_model.asInstanceOf[String])
-      val res = TFModelPredictor.run_float(modelBundle, inputName, outputName, outputSize, Array(v.toArray.map(f => f.toFloat)))
-      Vectors.dense(res.map(f => f.toDouble))
-
-    }
-    //    sparkSession.udf.register("release_tensorflow_memory", (modelPath: String) => {
-    //      TFModelLoader.close(modelPath)
-    //    })
-    UserDefinedFunction(f, VectorType, Some(Seq(VectorType, StringType, StringType, IntegerType)))
+    null
   }
-}
-
-object SQLTensorFlow {
-  // val executors = Executors.newFixedThreadPool(3)
 }

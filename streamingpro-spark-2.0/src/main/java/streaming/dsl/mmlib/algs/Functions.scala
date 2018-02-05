@@ -1,12 +1,20 @@
 package streaming.dsl.mmlib.algs
 
+import java.io.ByteArrayOutputStream
+import java.util.Properties
+
 import net.csdn.common.logging.Loggers
+import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
 import org.apache.spark.Partitioner
+import org.apache.spark.ml.classification.NaiveBayesModel
+import org.apache.spark.ml.linalg.SQLDataTypes._
+import org.apache.spark.ml.linalg.Vector
 import org.apache.spark.ml.{Estimator, Model}
 import org.apache.spark.ml.param.Params
 import org.apache.spark.ml.util.{MLReadable, MLWritable}
-import org.apache.spark.sql.{DataFrame, Dataset, functions => F}
-import org.apache.spark.util.WowXORShiftRandom
+import org.apache.spark.sql.expressions.UserDefinedFunction
+import org.apache.spark.sql.{DataFrame, Dataset, SparkSession, functions => F}
+import org.apache.spark.util.{ExternalCommandRunner, WowXORShiftRandom}
 import streaming.common.HDFSOperator
 
 import scala.collection.mutable.ArrayBuffer
@@ -133,4 +141,74 @@ trait Functions {
         f(df, 0)
     }
   }
+
+  def predict_classification(sparkSession: SparkSession, _model: Any, name: String) = {
+
+    val models = sparkSession.sparkContext.broadcast(_model.asInstanceOf[ArrayBuffer[Any]])
+
+    val f = (vec: Vector) => {
+      models.value.map { model =>
+        val predictRaw = model.getClass.getMethod("predictRaw", classOf[Vector]).invoke(model, vec).asInstanceOf[Vector]
+        val raw2probability = model.getClass.getMethod("raw2probability", classOf[Vector]).invoke(model, predictRaw).asInstanceOf[Vector]
+        //model.getClass.getMethod("probability2prediction", classOf[Vector]).invoke(model, raw2probability).asInstanceOf[Vector]
+        //概率，分类
+        (raw2probability(raw2probability.argmax), raw2probability)
+      }.sortBy(f => f._1).reverse.head._2
+    }
+
+    val f2 = (vec: Vector) => {
+      models.value.map { model =>
+        val predictRaw = model.getClass.getMethod("predictRaw", classOf[Vector]).invoke(model, vec).asInstanceOf[Vector]
+        val raw2probability = model.getClass.getMethod("raw2probability", classOf[Vector]).invoke(model, predictRaw).asInstanceOf[Vector]
+        //model.getClass.getMethod("probability2prediction", classOf[Vector]).invoke(model, raw2probability).asInstanceOf[Vector]
+        raw2probability
+      }
+    }
+
+    sparkSession.udf.register(name + "_raw", f2)
+
+    UserDefinedFunction(f, VectorType, Some(Seq(VectorType)))
+  }
+
+  def writeKafka(df: DataFrame, path: String, params: Map[String, String]) = {
+    var kafkaParam = mapParams("kafkaParam", params)
+    // we use pickler to write row to Kafka
+    val structType = df.schema
+
+    val newRDD = df.rdd.mapPartitions { iter =>
+      ExternalCommandRunner.pickle(iter, structType)
+    }
+    val topic = kafkaParam("topic") + "_" + System.currentTimeMillis()
+    if (!kafkaParam.getOrElse("reuse", "false").toBoolean) {
+      kafkaParam += ("topic" -> topic)
+      newRDD.foreachPartition { p =>
+        val props = new Properties()
+        kafkaParam.foreach(f => props.put(f._1, f._2))
+        props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer")
+        props.put("value.serializer", "org.apache.kafka.common.serialization.ByteArraySerializer")
+        val producer = new KafkaProducer[String, Array[Byte]](props)
+        try {
+          p.foreach { row =>
+            producer.send(new ProducerRecord[String, Array[Byte]](topic, row))
+          }
+
+          def pickle(msg: String) = {
+            val out = new ByteArrayOutputStream()
+            ExternalCommandRunner.pickle(msg, out)
+            val stopMsg = out.toByteArray
+            out.close()
+            stopMsg
+          }
+
+          val stopMsg = pickle("_stop_")
+          producer.send(new ProducerRecord[String, Array[Byte]](kafkaParam("topic"), stopMsg))
+        } finally {
+          producer.close()
+        }
+
+      }
+    }
+    (kafkaParam, newRDD)
+  }
+
 }
