@@ -71,6 +71,15 @@ object Functions {
     })
   }
 
+  def vec_slice(uDFRegistration: UDFRegistration) = {
+    uDFRegistration.register("vec_slice", (vec: Vector, inds: Seq[Int]) => {
+      vec match {
+        case features: DenseVector => Vectors.dense(inds.toArray.map(features.apply))
+        case features: SparseVector => FVectors.slice(features, inds.toArray)
+      }
+    })
+  }
+
   /*
     1 - x.dot(y)/(x.norm(2)*y.norm(2))
    */
@@ -86,9 +95,12 @@ object Functions {
     })
   }
 
+
   def ngram(uDFRegistration: UDFRegistration) = {
     uDFRegistration.register("ngram", (words: Seq[String], n: Int) => {
       words.iterator.sliding(n).withPartial(false).map(_.mkString(" ")).toSeq
     })
   }
+
+
 }
