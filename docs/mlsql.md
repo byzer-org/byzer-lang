@@ -26,21 +26,21 @@ train data as RandomForest.`/tmp/model` where inputCol="featrues" and maxDepth="
 如果需要知道算法的输入格式以及算法的参数,可以参看[Spark MLlib](https://spark.apache.org/docs/latest/ml-guide.html)。
 在MLSQL中，输入格式和算法的参数和Spark MLLib保持一致。
 
-通常，大部分分类或者回归类算法，都支持libsvm格式。你可以通过SQL或者程序生成libsvm格式文件。之后可以通过
+### 样本不均衡问题
 
-```sql
-load libsvm.`/data/mllib/sample_libsvm_data.txt` 
-as sample_table;
-```
+为了解决样本数据不平衡问题，所有模型（目前只支持贝叶斯）都支持一种特殊的训练方式。假设我们是一个二分类，A,B。 A 分类有100个样本，B分类有1000个。
+差距有十倍。为了得到一个更好的训练效果，我们会训练十个（最大样本数/最小样本数）模型。
 
-其中sample_table就是一个表，有label和features两个字段。load完成之后就可以喂给算法了。
+第一个模型：
 
-```sql
-train sample_table as RandomForest.`/tmp/zhuwl_rf_model` where maxDepth="3";
-```
+A拿到100,从B随机抽样10%(100/1000),训练。
 
-对于Word2Vec,输入的是字符串数组就行。
-LDA 我们建议输入Int数组。
+重复第一个模型十次。
+
+这个可以通过在where条件里把multiModels="true" 即可开启。
+
+在预测函数中，会自动拿到置信度最高模型作为预测结果。
+
 
 ### 预测
 

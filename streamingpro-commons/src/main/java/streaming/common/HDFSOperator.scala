@@ -3,9 +3,10 @@ package streaming.common
 import java.io.{BufferedReader, InputStreamReader}
 
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.{FSDataOutputStream, FileSystem, Path}
+import org.apache.hadoop.fs.{FSDataOutputStream, FileStatus, FileSystem, Path}
 
 import scala.collection.mutable.ArrayBuffer
+import scala.collection.JavaConversions._
 
 /**
   * 5/5/16 WilliamZhu(allwefantasy@gmail.com)
@@ -29,6 +30,12 @@ object HDFSOperator {
     }
     result.mkString("\n")
 
+  }
+
+
+  def listModelDirectory(path: String): Seq[FileStatus] = {
+    val fs = FileSystem.get(new Configuration())
+    fs.listStatus(new Path(path)).filter(f => f.isDirectory)
   }
 
 
