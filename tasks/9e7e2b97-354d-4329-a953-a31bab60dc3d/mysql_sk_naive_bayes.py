@@ -13,6 +13,7 @@ for items in rd(max_records=batch_size):
         continue
     X = [item["features"].toArray() for item in items]
     y = [item["label"] for item in items]
+    print("fit....")
     clf.partial_fit(X, y)
 
 mlsql_model.sk_save_model(model_path, clf)

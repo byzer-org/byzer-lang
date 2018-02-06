@@ -6,7 +6,6 @@ import java.util.Properties
 import net.csdn.common.logging.Loggers
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
 import org.apache.spark.Partitioner
-import org.apache.spark.ml.classification.NaiveBayesModel
 import org.apache.spark.ml.linalg.SQLDataTypes._
 import org.apache.spark.ml.linalg.Vector
 import org.apache.spark.ml.{Estimator, Model}
@@ -14,7 +13,7 @@ import org.apache.spark.ml.param.Params
 import org.apache.spark.ml.util.{MLReadable, MLWritable}
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.{DataFrame, Dataset, SparkSession, functions => F}
-import org.apache.spark.util.{ExternalCommandRunner, WowXORShiftRandom}
+import org.apache.spark.util.{ExternalCommandRunner, ObjPickle, WowXORShiftRandom}
 import streaming.common.HDFSOperator
 
 import scala.collection.mutable.ArrayBuffer
@@ -102,7 +101,9 @@ trait Functions {
     params.filter(f => f._1.startsWith(name + ".")).map { f =>
       val Array(name, group, key) = f._1.split("\\.")
       (group, key, f._2)
-    }.groupBy(f => f._1).map { f => f._2.map(k => (k._2, k._1)).toMap }.toArray
+    }.groupBy(f => f._1).map { f => f._2.map(k =>
+      (k._2, k._3)).toMap
+    }.toArray
   }
 
   def getModelConstructField(model: Any, modelName: String, fieldName: String) = {
@@ -176,7 +177,7 @@ trait Functions {
     val structType = df.schema
 
     val newRDD = df.rdd.mapPartitions { iter =>
-      ExternalCommandRunner.pickle(iter, structType)
+      ObjPickle.pickle(iter, structType)
     }
     val topic = kafkaParam("topic") + "_" + System.currentTimeMillis()
     if (!kafkaParam.getOrElse("reuse", "false").toBoolean) {
@@ -194,7 +195,7 @@ trait Functions {
 
           def pickle(msg: String) = {
             val out = new ByteArrayOutputStream()
-            ExternalCommandRunner.pickle(msg, out)
+            ObjPickle.pickle(msg, out)
             val stopMsg = out.toByteArray
             out.close()
             stopMsg
