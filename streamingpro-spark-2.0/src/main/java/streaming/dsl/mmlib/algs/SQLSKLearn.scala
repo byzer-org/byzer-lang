@@ -33,7 +33,8 @@ class SQLSKLearn extends SQLAlg with Functions {
 
     val fitParam = arrayParams("fitParam", params)
     val fitParamRDD = df.sparkSession.sparkContext.parallelize(fitParam, fitParam.length)
-
+    val pythonPath = systemParam.getOrElse("pythonPath", "python")
+    val pythonVer = systemParam.getOrElse("pythonVer", "2.7")
     val wowRDD = fitParamRDD.map { f =>
       val paramMap = new util.HashMap[String, Object]()
       var item = f.asJava
@@ -51,7 +52,7 @@ class SQLSKLearn extends SQLAlg with Functions {
       paramMap.put("internalSystemParam", Map("stopFlagNum" -> stopFlagNum).asJava)
       paramMap.put("systemParam", systemParam.asJava)
 
-      val pythonPath = systemParam.getOrElse("pythonPath", "python")
+
 
       val res = ExternalCommandRunner.run(Seq(pythonPath, userFileName),
         paramMap,
@@ -70,17 +71,28 @@ class SQLSKLearn extends SQLAlg with Functions {
       mode(SaveMode.Overwrite).
       parquet(new File(path, "0").getPath)
 
+    val tempRDD = df.sparkSession.sparkContext.parallelize(Seq(Map("pythonPath" -> pythonPath, "pythonVer" -> pythonVer)), 1).map { f =>
+      Row.fromSeq(Seq(f))
+    }
+    df.sparkSession.createDataFrame(tempRDD, StructType(Seq(StructField("systemParam", MapType(StringType, StringType))))).
+      write.
+      mode(SaveMode.Overwrite).
+      parquet(new File(path, "__meta__").getPath)
+
   }
 
   override def load(sparkSession: SparkSession, path: String): Any = {
     val models = sparkSession.read.parquet(new File(path, "0").getPath).collect().map(f => f.get(0).asInstanceOf[Array[Byte]]).toSeq
-    models
+    val metas = sparkSession.read.parquet(new File(path, "__meta__").getPath).collect().map(f => f.get(0).asInstanceOf[Map[String, String]]).toSeq
+    (models, metas)
   }
 
   override def predict(sparkSession: SparkSession, _model: Any, name: String): UserDefinedFunction = {
-    val models = sparkSession.sparkContext.broadcast(_model.asInstanceOf[Seq[Array[Byte]]])
-    val pythonPath = "python"
-    val pythonVer = "2.7"
+    val (modelsTemp, metasTemp) = _model.asInstanceOf[(Seq[Array[Byte]], Seq[Map[String, String]])]
+    val models = sparkSession.sparkContext.broadcast(modelsTemp)
+
+    val pythonPath = metasTemp(0)("pythonPath")
+    val pythonVer = metasTemp(0)("pythonVer")
 
     val sk_bayes = Source.fromInputStream(ExternalCommandRunner.getClass.getResourceAsStream("/python/sk_predict.py")).
       getLines().mkString("\n")
@@ -91,7 +103,7 @@ class SQLSKLearn extends SQLAlg with Functions {
     val item = new util.HashMap[String, String]()
     item.put("funcPath", "/tmp/" + System.currentTimeMillis())
     maps.put("systemParam", item)
-
+    //driver 节点执行
     val res = ExternalCommandRunner.run(Seq(pythonPath, userFileName),
       maps,
       MapType(StringType, MapType(StringType, StringType)),

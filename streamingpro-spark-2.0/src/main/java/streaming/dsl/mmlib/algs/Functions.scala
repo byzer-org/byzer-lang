@@ -119,7 +119,7 @@ trait Functions {
   }
 
   def loadModels(path: String, modelType: (String) => Any) = {
-    val files = HDFSOperator.listModelDirectory(path)
+    val files = HDFSOperator.listModelDirectory(path).filterNot(_.getPath.getName.startsWith("__"))
     val models = ArrayBuffer[Any]()
     files.foreach { f =>
       val model = modelType(f.getPath.toString)
