@@ -12,9 +12,10 @@
 
 1. [SQL服务](https://github.com/allwefantasy/streamingpro/blob/master/docs/sqlservice.md)
 1. [为什么开发MLSQL](https://github.com/allwefantasy/streamingpro/blob/master/docs/why-develop-mlsql.md)
-1. [MLSQL手册](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql.md)
-1. [MLSQL编写Word2Vec脚本示例](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsqlexample.md)
-1. [MLSQL结合Tensorflow实现深度学习算法](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-tensorflow.md)
+1. [MLSQL编写Word2Vec示例](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsqlexample.md)
+1. [MLSQL-分布式算法 based on spark MMLib](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql.md)
+1. [MLSQL-深度学习 based on TensorFlow](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-tensorflow.md)
+1. [MLSQL-单机算法 based on SKLearn](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-sklearn.md)
 1. [Vector操作函数](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-functions.md)
 
 ## 用配置来编程
