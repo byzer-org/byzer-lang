@@ -59,6 +59,12 @@ object Functions {
     })
   }
 
+  def vec_array(uDFRegistration: UDFRegistration) = {
+    uDFRegistration.register("vec_array", (vec1: Vector) => {
+      vec1.toArray
+    })
+  }
+
   def vec_sparse(uDFRegistration: UDFRegistration) = {
     uDFRegistration.register("vec_sparse", (size: Int, vec1: Map[Int, Double]) => {
       Vectors.sparse(size, vec1.toSeq)
