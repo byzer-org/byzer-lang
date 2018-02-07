@@ -4,6 +4,7 @@ import java.io.File
 import java.nio.file.{Files, Paths}
 import java.util
 
+import org.apache.commons.io.FileUtils
 import org.apache.spark.TaskContext
 import org.apache.spark.api.python.WowPythonRunner
 import org.apache.spark.ml.linalg.SQLDataTypes._
@@ -47,9 +48,14 @@ class SQLSKLearn extends SQLAlg with Functions {
         getLines().mkString("\n")
       val userFileName = s"mlsql_sk_${alg}.py"
 
+      val tempModelLocalPath = "/tmp/" + System.currentTimeMillis()
+
       paramMap.put("fitParam", item)
       paramMap.put("kafkaParam", kafkaParam.asJava)
-      paramMap.put("internalSystemParam", Map("stopFlagNum" -> stopFlagNum).asJava)
+      paramMap.put("internalSystemParam", Map(
+        "stopFlagNum" -> stopFlagNum,
+        "tempModelLocalPath" -> tempModelLocalPath
+      ).asJava)
       paramMap.put("systemParam", systemParam.asJava)
 
 
@@ -62,8 +68,9 @@ class SQLSKLearn extends SQLAlg with Functions {
       )
       res.foreach(f => f)
       //读取模型文件，保存到hdfs上，方便下次获取
-      val file = new File(new File(path + "_temp", "0"), "model.pickle")
+      val file = new File(new File(tempModelLocalPath), "model.pickle")
       val byteArray = Files.readAllBytes(Paths.get(file.getPath))
+      FileUtils.deleteDirectory(new File(tempModelLocalPath))
       Row.fromSeq(Seq(byteArray))
     }
     df.sparkSession.createDataFrame(wowRDD, StructType(Seq(StructField("bytes", BinaryType)))).
