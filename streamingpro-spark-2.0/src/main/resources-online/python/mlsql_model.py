@@ -21,7 +21,6 @@ def save_model(path, session, input_tensor, output_tensor, overwrite=False):
 
 def sk_save_model(model_path, model):
     dir_name = model_path
-    print("------{} {}".format((dir_name, model_path)))
     if os.path.exists(dir_name):
         shutil.rmtree(dir_name)
     os.makedirs(dir_name)

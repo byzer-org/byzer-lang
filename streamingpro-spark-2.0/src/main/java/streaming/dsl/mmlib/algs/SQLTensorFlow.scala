@@ -75,8 +75,8 @@ class SQLTensorFlow extends SQLAlg with Functions {
         userPythonScriptList,
         userFileName, modelPath = path
       )
-      res.foreach(f => f)
-      FileUtils.deleteDirectory(new File(tempModelLocalPath))
+      res.foreach(f => printlnl(f))
+      // FileUtils.deleteDirectory(new File(tempModelLocalPath))
       ""
     }.count()
   }
