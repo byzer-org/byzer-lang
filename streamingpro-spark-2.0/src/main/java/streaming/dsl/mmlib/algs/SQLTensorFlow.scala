@@ -7,6 +7,8 @@ import java.util
 import java.util.Properties
 
 import org.apache.commons.io.FileUtils
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
 import org.apache.spark.ml.linalg.{SparseVector, Vectors}
 import streaming.dsl.mmlib.SQLAlg
@@ -75,8 +77,11 @@ class SQLTensorFlow extends SQLAlg with Functions {
         userPythonScriptList,
         userFileName, modelPath = path
       )
-      res.foreach(f => printlnl(f))
-      // FileUtils.deleteDirectory(new File(tempModelLocalPath))
+      res.foreach(f => println(f))
+      val fs = FileSystem.get(new Configuration());
+      fs.copyFromLocalFile(new Path(tempModelLocalPath),
+        new Path(path))
+      FileUtils.deleteDirectory(new File(tempModelLocalPath))
       ""
     }.count()
   }
