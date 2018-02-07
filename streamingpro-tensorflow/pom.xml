@@ -21,6 +21,13 @@
             <artifactId>libtensorflow_jni_gpu</artifactId>
             <version>1.5.0-rc1</version>
         </dependency>
+
+        <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-client</artifactId>
+            <version>2.6.5</version>
+            <scope>compile</scope>
+        </dependency>
     </dependencies>
 
 </project>

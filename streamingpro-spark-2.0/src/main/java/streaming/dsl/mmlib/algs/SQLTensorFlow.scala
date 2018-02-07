@@ -15,7 +15,7 @@ import streaming.dsl.mmlib.SQLAlg
 import org.apache.spark.sql._
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.types._
-import org.apache.spark.util.ExternalCommandRunner
+import org.apache.spark.util.{ExternalCommandRunner, WowMD5}
 import org.apache.spark.ml.linalg.SQLDataTypes._
 
 import scala.collection.JavaConverters._
@@ -60,7 +60,7 @@ class SQLTensorFlow extends SQLAlg with Functions {
       }
       paramMap.put("fitParam", item)
       paramMap.put("kafkaParam", kafkaParam.asJava)
-      val tempModelLocalPath = "/tmp/" + System.currentTimeMillis()
+      val tempModelLocalPath = "/tmp/train/" + WowMD5.md5Hash(path)
 
       paramMap.put("internalSystemParam", Map(
         "stopFlagNum" -> stopFlagNum,
@@ -77,8 +77,14 @@ class SQLTensorFlow extends SQLAlg with Functions {
         userPythonScriptList,
         userFileName, modelPath = path
       )
-      res.foreach(f => println(f))
-      val fs = FileSystem.get(new Configuration());
+      res.foreach(f => f)
+      val fs = FileSystem.get(new Configuration())
+      //delete model path
+      //      if (fs.exists(new Path(path))) {
+      //        throw new RuntimeException(s"please delete ${path} manually")
+      //      }
+      fs.delete(new Path(path), true)
+      //copy
       fs.copyFromLocalFile(new Path(tempModelLocalPath),
         new Path(path))
       FileUtils.deleteDirectory(new File(tempModelLocalPath))

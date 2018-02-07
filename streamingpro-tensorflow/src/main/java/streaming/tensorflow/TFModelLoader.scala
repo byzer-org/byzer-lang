@@ -1,5 +1,12 @@
 package streaming.tensorflow
 
+import java.io.File
+import java.util.concurrent.TimeUnit
+
+import com.google.common.cache.{CacheBuilder, CacheLoader, RemovalListener, RemovalNotification}
+import org.apache.commons.io.FileUtils
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.{FileSystem, Path}
 import org.tensorflow.{SavedModelBundle, Tensor}
 
 /**
@@ -7,10 +14,35 @@ import org.tensorflow.{SavedModelBundle, Tensor}
   */
 object TFModelLoader {
 
+  val loader = new CacheLoader[String, SavedModelBundle]() {
+    override def load(key: String): SavedModelBundle = {
+      _load(key)
+    }
+  }
+  val cache = CacheBuilder.newBuilder().
+    maximumSize(10).
+    expireAfterAccess(5, TimeUnit.MINUTES).
+    removalListener(new RemovalListener[String, SavedModelBundle]() {
+      override def onRemoval(notification: RemovalNotification[String, SavedModelBundle]): Unit = {
+        notification.getValue.close()
+      }
+    }).build[String, SavedModelBundle](loader)
+
+
   val map = new java.util.concurrent.ConcurrentHashMap[String, SavedModelBundle]()
   val loading_status_map = new java.util.concurrent.ConcurrentHashMap[String, Int]()
 
-  def load(modelPath: String) = synchronized {
+  def md5Hash(text: String): String = java.security.MessageDigest.getInstance("MD5").digest(text.getBytes()).map(0xFF & _).map {
+    "%02x".format(_)
+  }.foldLeft("") {
+    _ + _
+  }
+
+  def load(modelPath: String) = {
+    cache.get(modelPath)
+  }
+
+  def _load(modelPath: String) = synchronized {
     var count = 0
     val count_upper_bound = 10
     //if take too much time to load eg. 50s,then maybe just return null
@@ -23,7 +55,13 @@ object TFModelLoader {
     } else {
       loading_status_map.put(modelPath, 1)
       try {
-        val smb = SavedModelBundle.load(modelPath, "serve")
+        val localPath = s"/tmp/${md5Hash(modelPath)}"
+        FileUtils.deleteDirectory(new File(localPath))
+        val fs = FileSystem.get(new Configuration())
+        fs.copyToLocalFile(new Path(modelPath),
+          new Path(localPath))
+
+        val smb = SavedModelBundle.load(localPath, "serve")
         map.put(modelPath, smb)
       } finally {
         loading_status_map.remove(modelPath)
@@ -35,6 +73,12 @@ object TFModelLoader {
   def close(modelPath: String) = {
     if (map.containsKey(modelPath)) {
       val sm = map.remove(modelPath)
+      try {
+        FileUtils.deleteDirectory(new File(s"/tmp/${md5Hash(modelPath)}"))
+      } catch {
+        case e: Exception =>
+          e.printStackTrace()
+      }
       sm.close()
     }
   }
