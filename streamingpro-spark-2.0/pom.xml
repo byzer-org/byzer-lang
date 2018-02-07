@@ -134,24 +134,24 @@
             <artifactId>streamingpro-spark-common</artifactId>
             <version>${parent.version}</version>
         </dependency>
-        <dependency>
-            <groupId>streaming.king</groupId>
-            <artifactId>streamingpro-hbase</artifactId>
-            <version>${parent.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.eclipse.jetty</groupId>
-                    <artifactId>jetty-server</artifactId>
-                </exclusion>
-            </exclusions>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>streaming.king</groupId>
-            <artifactId>streamingpro-redis</artifactId>
-            <version>${parent.version}</version>
-            <scope>compile</scope>
-        </dependency>
+        <!--<dependency>-->
+            <!--<groupId>streaming.king</groupId>-->
+            <!--<artifactId>streamingpro-hbase</artifactId>-->
+            <!--<version>${parent.version}</version>-->
+            <!--<exclusions>-->
+                <!--<exclusion>-->
+                    <!--<groupId>org.eclipse.jetty</groupId>-->
+                    <!--<artifactId>jetty-server</artifactId>-->
+                <!--</exclusion>-->
+            <!--</exclusions>-->
+            <!--<scope>compile</scope>-->
+        <!--</dependency>-->
+        <!--<dependency>-->
+            <!--<groupId>streaming.king</groupId>-->
+            <!--<artifactId>streamingpro-redis</artifactId>-->
+            <!--<version>${parent.version}</version>-->
+            <!--<scope>compile</scope>-->
+        <!--</dependency>-->
 
         <dependency>
             <groupId>streaming.king</groupId>
