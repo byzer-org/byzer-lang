@@ -4,7 +4,6 @@ import python_fun
 
 
 def predict(index, s):
-    # Row(age=11, name='Alice')
     items = [i for i in s]
     feature = VectorUDT().deserialize(pickle.loads(items[0]))
     model = pickle.loads(pickle.loads(items[1])[0])

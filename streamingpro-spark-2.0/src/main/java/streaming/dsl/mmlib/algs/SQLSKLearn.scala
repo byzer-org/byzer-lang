@@ -82,10 +82,10 @@ class SQLSKLearn extends SQLAlg with Functions {
     val pythonPath = "python"
     val pythonVer = "2.7"
 
-    val sk_bayes = Source.fromInputStream(ExternalCommandRunner.getClass.getResourceAsStream("/python/sk_bayes.py")).
+    val sk_bayes = Source.fromInputStream(ExternalCommandRunner.getClass.getResourceAsStream("/python/sk_predict.py")).
       getLines().mkString("\n")
 
-    val userFileName = "sk_bayes.py"
+    val userFileName = "sk_predict.py"
 
     val maps = new util.HashMap[String, java.util.Map[String, String]]()
     val item = new util.HashMap[String, String]()
