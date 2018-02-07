@@ -2,10 +2,11 @@ package streaming.dsl.mmlib.algs
 
 import streaming.tensorflow.TFModelLoader
 import streaming.tensorflow.TFModelPredictor
-import java.io.ByteArrayOutputStream
+import java.io.{ByteArrayOutputStream, File}
 import java.util
 import java.util.Properties
 
+import org.apache.commons.io.FileUtils
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
 import org.apache.spark.ml.linalg.{SparseVector, Vectors}
 import streaming.dsl.mmlib.SQLAlg
@@ -57,7 +58,13 @@ class SQLTensorFlow extends SQLAlg with Functions {
       }
       paramMap.put("fitParam", item)
       paramMap.put("kafkaParam", kafkaParam.asJava)
-      paramMap.put("internalSystemParam", Map("stopFlagNum" -> stopFlagNum).asJava)
+      val tempModelLocalPath = "/tmp/" + System.currentTimeMillis()
+
+      paramMap.put("internalSystemParam", Map(
+        "stopFlagNum" -> stopFlagNum,
+        "tempModelLocalPath" -> tempModelLocalPath
+      ).asJava)
+
       paramMap.put("systemParam", systemParam.asJava)
 
       val pythonPath = systemParam.getOrElse("pythonPath", "python")
@@ -69,6 +76,7 @@ class SQLTensorFlow extends SQLAlg with Functions {
         userFileName, modelPath = path
       )
       res.foreach(f => f)
+      FileUtils.deleteDirectory(new File(tempModelLocalPath))
       ""
     }.count()
   }

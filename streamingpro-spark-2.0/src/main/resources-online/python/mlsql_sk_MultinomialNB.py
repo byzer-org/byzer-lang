@@ -4,8 +4,9 @@ from sklearn.naive_bayes import MultinomialNB
 
 rd = mlsql.read_data()
 p = mlsql.params()["fitParam"]
+isp = mlsql.params()["internalSystemParam"]
 batch_size = int(p["batchSize"]) if "batchSize" in p else 1000
-model_path = p["modelPath"] if "modelPath" in p else "/tmp/"
+tempModelLocalPath = isp["tempModelLocalPath"] if "tempModelLocalPath" in p else "/tmp/"
 label_size = int(p["labelSize"]) if "labelSize" in p else "/tmp/"
 clf = MultinomialNB()
 for items in rd(max_records=batch_size):
@@ -15,4 +16,4 @@ for items in rd(max_records=batch_size):
     y = [item["label"] for item in items]
     clf.partial_fit(X, y, classes=range(label_size))
 
-mlsql_model.sk_save_model(model_path, clf)
+mlsql_model.sk_save_model(tempModelLocalPath, clf)

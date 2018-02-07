@@ -74,5 +74,5 @@ for items in rd(max_records=2):
             gs))
     sys.stdout.flush()
 p = mlsql.params()
-mlsql_model.save_model(p["fitParam"]["modelPath"], sess, input_x, input_y, True)
+mlsql_model.save_model(p["internalSystemParam"]["tempModelLocalPath"], sess, input_x, input_y, True)
 sess.close()
