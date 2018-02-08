@@ -319,7 +319,7 @@ save overwrite result as json.`/tmp/lr_result.csv`;
 
 ### StandardScaler
 
-```
+```sql
 load libsvm.`/Users/allwefantasy/Softwares/spark-2.2.0-bin-hadoop2.7/data/mllib/sample_libsvm_data.txt` as data;
 
 train data as StandardScaler.`/tmp/kk`where inputCol="features";
@@ -327,5 +327,84 @@ register StandardScaler.`/tmp/kk` as predict;
 select predict(features) as k from data;
 ```
 
+### DicOrTableToArray
+
+DicOrTableToArray 是一个很有意思的模型，很多场景我们需要把表或者字典转化为一个数组，然后在任何时候我都希望通过一个函数就获得这个数组，
+那么这个模型可以提供这个功能。
+
+示例：
 
 
+有文件/tmp/test.txt文件如下：
+
+```
+content
+a b c
+b c d
+e f g
+```
+
+有字典：/tmp/abc.txt:
+
+```
+a
+b
+c
+```
+
+
+
+```sql
+load csv.`/tmp/test.txt` options header="True" as data; 
+
+select split(content," ") as words from data 
+as newdata;
+
+train newdata as DicOrTableToArray.`/tmp/model` where 
+`dic.paths`="/tmp/abc.txt" 
+and `dic.names`="dic1";
+
+register DicOrTableToArray.`/tmp/model` as p;
+```
+
+dic.paths 指定字典的路径，多个按','分割
+dic.names 指定之巅的名称，多个按','分割
+
+table.paths 指定表，多个按','分割
+table.names 指定之巅的名称，多个按','分割
+
+之后就可以注册模型了，假设该函数为p，调用该函数并且传入字典名称，你可以随时一个字符串数组，
+并且通过array_slice,array_index等数组相关的函数进行操作。有的时候，我们希望对数组里的
+元素进行一一解析，一个简单的技巧是：
+
+我们先把数组转化为表：
+
+```sql
+select explode(k) as word from (select p("dic1") as k)
+as words_table;
+
+```
+
+接着就可以对每个元素做处理了:
+
+```sql
+select lower(word) from words_table
+as array_table;
+```
+
+处理完成后，我们希望能用相同的方式，比如调用一个函数，就能随时获取一个数组，这个时候我们复用下前面的训练：
+
+
+```sql
+train newdata as DicOrTableToArray.`/tmp/model2` where 
+`table.paths`="array_table" 
+and `table.names`="dic2";
+
+register DicOrTableToArray.`/tmp/model2` as p2;
+```
+
+现在，我们可以通过调用p2获取处理后的数组了：
+
+```
+select p2("dic2")  as k
+```

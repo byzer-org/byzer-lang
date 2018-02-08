@@ -102,6 +102,29 @@ object Functions {
   }
 
 
+  def array_intersect(uDFRegistration: UDFRegistration) = {
+    uDFRegistration.register("array_intersect", (vec1: Seq[String], vec2: Seq[String]) => {
+      vec1.intersect(vec2)
+    })
+  }
+
+  def array_index(uDFRegistration: UDFRegistration) = {
+    uDFRegistration.register("array_index", (vec1: Seq[String], word: Any) => {
+      vec1.indexOf(word)
+    })
+  }
+
+  def array_slice(uDFRegistration: UDFRegistration) = {
+    uDFRegistration.register("array_slice", (vec1: Seq[String], from: Int, to: Int) => {
+      if (to == -1) {
+        vec1.slice(from, vec1.length)
+      } else {
+        vec1.slice(from, to)
+      }
+    })
+  }
+
+
   def ngram(uDFRegistration: UDFRegistration) = {
     uDFRegistration.register("ngram", (words: Seq[String], n: Int) => {
       words.iterator.sliding(n).withPartial(false).map(_.mkString(" ")).toSeq
