@@ -53,7 +53,8 @@ object MLMapping {
     "PageRank" -> "streaming.dsl.mmlib.algs.SQLPageRank",
     "TensorFlow" -> "streaming.dsl.mmlib.algs.SQLTensorFlow",
     "StandardScaler" -> "streaming.dsl.mmlib.algs.SQLStandardScaler",
-    "SKLearn" -> "streaming.dsl.mmlib.algs.SQLSKLearn"
+    "SKLearn" -> "streaming.dsl.mmlib.algs.SQLSKLearn",
+    "DicTokenMatcher" -> "streaming.dsl.mmlib.algs.SQLDicTokenMatcher"
   )
 
   def findAlg(name: String) = {
