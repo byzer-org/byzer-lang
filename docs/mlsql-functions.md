@@ -72,3 +72,21 @@ select vec_slice(vec_dense(array(1.0,2.0,3.0)),array(0,1))
 select ngram(array("a","b","c","d","e"),3) as 3ngr
 ```
 
+### array_intersect
+
+```sql
+select array_intersect(array("a","b","c","d","e"),array("a")) as k
+```
+
+### array_index
+
+```sql
+select array_index(array("a","b","c","d","e"),"b") as k
+```
+
+### array_slice
+
+```sql
+select array_slice(array("a","b","c","d","e"),3,-1) as k
+```
+

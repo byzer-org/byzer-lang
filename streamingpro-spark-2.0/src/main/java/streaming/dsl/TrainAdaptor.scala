@@ -54,7 +54,7 @@ object MLMapping {
     "TensorFlow" -> "streaming.dsl.mmlib.algs.SQLTensorFlow",
     "StandardScaler" -> "streaming.dsl.mmlib.algs.SQLStandardScaler",
     "SKLearn" -> "streaming.dsl.mmlib.algs.SQLSKLearn",
-    "DicTokenMatcher" -> "streaming.dsl.mmlib.algs.SQLDicTokenMatcher"
+    "DicOrTableToArray" -> "streaming.dsl.mmlib.algs.SQLDicOrTableToArray"
   )
 
   def findAlg(name: String) = {
