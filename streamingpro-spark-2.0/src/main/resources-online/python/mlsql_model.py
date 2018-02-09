@@ -2,6 +2,7 @@ import tensorflow as tf
 import os
 import shutil
 import pickle
+import mlsql
 
 
 def save_model(path, session, input_tensor, output_tensor, overwrite=False):
@@ -19,8 +20,10 @@ def save_model(path, session, input_tensor, output_tensor, overwrite=False):
     builder.save()
 
 
-def sk_save_model(model_path, model):
-    dir_name = model_path
+def sk_save_model(model):
+    isp = mlsql.params()["internalSystemParam"]
+    tempModelLocalPath = isp["tempModelLocalPath"] if "tempModelLocalPath" in isp else "/tmp/"
+    dir_name = tempModelLocalPath
     if os.path.exists(dir_name):
         shutil.rmtree(dir_name)
     os.makedirs(dir_name)
