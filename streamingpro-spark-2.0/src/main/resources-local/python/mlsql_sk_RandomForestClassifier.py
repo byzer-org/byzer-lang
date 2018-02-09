@@ -1,8 +1,8 @@
 import mlsql_model
 import mlsql
-from sklearn.svm import SVC
+from sklearn.ensemble import RandomForestClassifier
 
-clf = SVC()
+clf = RandomForestClassifier()
 
 mlsql.sklearn_configure_params(clf)
 
