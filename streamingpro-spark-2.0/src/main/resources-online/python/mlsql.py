@@ -218,8 +218,9 @@ def sklearn_configure_params(clf):
         else:
             return convert_v
 
-    for name, dv in clf.get_params():
+    for name in clf.get_params():
         if name in fitParams:
+            dv = clf.get_params()[name]
             setattr(clf, name, t(dv, fitParams[name]))
 
 
