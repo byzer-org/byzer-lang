@@ -203,9 +203,24 @@ def params():
 
 def sklearn_configure_params(clf):
     fitParams = params()["fitParam"]
-    for name in clf.get_params():
+
+    def t(v, convert_v):
+        if type(v) == float:
+            return float(convert_v)
+        elif type(v) == int:
+            return int(convert_v)
+        elif type(v) == list:
+            if type(v[0]) == int:
+                return [int(i) for i in v]
+            if type(v[0]) == float:
+                return [float(i) for i in v]
+            return v
+        else:
+            return convert_v
+
+    for name, dv in clf.get_params():
         if name in fitParams:
-            setattr(clf, name, fitParams[name])
+            setattr(clf, name, t(dv, fitParams[name]))
 
 
 def sklearn_all_data():
