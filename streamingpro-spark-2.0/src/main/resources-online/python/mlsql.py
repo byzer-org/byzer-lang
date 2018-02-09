@@ -199,3 +199,59 @@ def read_data():
 
 def params():
     return _params
+
+
+def sklearn_configure_params(clf):
+    fitParams = params()["fitParam"]
+
+    def t(v, convert_v):
+        if type(v) == float:
+            return float(convert_v)
+        elif type(v) == int:
+            return int(convert_v)
+        elif type(v) == list:
+            if type(v[0]) == int:
+                return [int(i) for i in v]
+            if type(v[0]) == float:
+                return [float(i) for i in v]
+            return v
+        else:
+            return convert_v
+
+    for name, dv in clf.get_params():
+        if name in fitParams:
+            setattr(clf, name, t(dv, fitParams[name]))
+
+
+def sklearn_all_data():
+    rd = read_data()
+    fitParams = params()["fitParam"]
+    X = []
+    y = []
+    x_name = fitParams["inputCol"] if "inputCol" in fitParams else "features"
+    y_name = fitParams["label"] if "label" in fitParams else "label"
+    for items in rd(max_records=1000):
+        if len(items) == 0:
+            continue
+        X = X + [item[x_name].toArray() for item in items]
+        y = y + [item[y_name] for item in items]
+    return X, y
+
+
+def _get_param(p, name, default_value):
+    return p[name] if name in p else default_value
+
+
+def sklearn_batch_data(fn):
+    rd = read_data()
+    fitParams = params()["fitParam"]
+    batch_size = int(_get_param(fitParams, "batchSize", 1000))
+    label_size = int(_get_param(fitParams, "labelSize", -1))
+    x_name = _get_param(fitParams, "inputCol", "features")
+    y_name = _get_param(fitParams, "label", "label")
+    for items in rd(max_records=batch_size):
+        if len(items) == 0:
+            continue
+        X = [item[x_name].toArray() for item in items]
+        y = [item[y_name] for item in items]
+        fn(X, y, label_size)
