@@ -101,6 +101,19 @@ object Functions {
     })
   }
 
+  def onehot(uDFRegistration: UDFRegistration) = {
+    uDFRegistration.register("onehot", (a: Int, size: Int) => {
+      val oneValue = Array(1.0)
+      val emptyValues = Array.empty[Double]
+      val emptyIndices = Array.empty[Int]
+      if (a < size) {
+        Vectors.sparse(size, Array(a), oneValue)
+      } else {
+        Vectors.sparse(size, emptyIndices, emptyValues)
+      }
+    })
+  }
+
 
   def array_intersect(uDFRegistration: UDFRegistration) = {
     uDFRegistration.register("array_intersect", (vec1: Seq[String], vec2: Seq[String]) => {
