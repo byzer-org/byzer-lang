@@ -243,6 +243,10 @@ def _get_param(p, name, default_value):
     return p[name] if name in p else default_value
 
 
+def get_param(p, name, default_value):
+    return _get_param(p, name, default_value)
+
+
 def sklearn_batch_data(fn):
     rd = read_data()
     fitParams = params()["fitParam"]

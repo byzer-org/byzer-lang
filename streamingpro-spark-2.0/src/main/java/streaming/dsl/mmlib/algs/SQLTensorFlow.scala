@@ -19,6 +19,7 @@ import org.apache.spark.util.{ExternalCommandRunner, WowMD5}
 import org.apache.spark.ml.linalg.SQLDataTypes._
 
 import scala.collection.JavaConverters._
+import scala.io.Source
 
 
 /**
@@ -48,9 +49,14 @@ class SQLTensorFlow extends SQLAlg with Functions {
     val fitParam = arrayParams("fitParam", params)
     val fitParamRDD = df.sparkSession.sparkContext.parallelize(fitParam, fitParam.length)
 
-    val pathChunk = params("pythonDescPath").split("/")
-    val userFileName = pathChunk(pathChunk.length - 1)
-    val userPythonScriptList = df.sparkSession.sparkContext.textFile(params("pythonDescPath")).collect().mkString("\n")
+    var userFileName = ""
+    var userPythonScriptList = ""
+
+    if (params.contains("pythonDescPath")) {
+      val pathChunk = params("pythonDescPath").split("/")
+      userFileName = pathChunk(pathChunk.length - 1)
+      userPythonScriptList = df.sparkSession.sparkContext.textFile(params("pythonDescPath")).collect().mkString("\n")
+    }
 
     fitParamRDD.map { f =>
       val paramMap = new util.HashMap[String, Object]()
@@ -71,11 +77,22 @@ class SQLTensorFlow extends SQLAlg with Functions {
 
       val pythonPath = systemParam.getOrElse("pythonPath", "python")
 
-      val res = ExternalCommandRunner.run(Seq(pythonPath, userFileName),
+      var tfSource = userPythonScriptList
+      var tfName = userFileName
+      if (f.contains("alg")) {
+        val alg = f("alg")
+        tfSource = Source.fromInputStream(ExternalCommandRunner.getClass.getResourceAsStream(s"/python/mlsql_tf_${alg}.py")).
+          getLines().mkString("\n")
+        tfName = s"mlsql_tf_${alg}.py"
+      } else {
+        require(!tfSource.isEmpty, "pythonDescPath or fitParam.0.alg is required")
+      }
+
+      val res = ExternalCommandRunner.run(Seq(pythonPath, tfName),
         paramMap,
         MapType(StringType, MapType(StringType, StringType)),
-        userPythonScriptList,
-        userFileName, modelPath = path
+        tfSource,
+        tfName, modelPath = path
       )
       res.foreach(f => f)
       val fs = FileSystem.get(new Configuration())
