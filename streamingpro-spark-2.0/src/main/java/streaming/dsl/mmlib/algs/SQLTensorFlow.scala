@@ -116,7 +116,7 @@ class SQLTensorFlow extends SQLAlg with Functions {
   }
 
   override def predict(sparkSession: SparkSession, _model: Any, name: String): UserDefinedFunction = {
-    val f = (v: SparseVector, inputName: String, outputName: String, outputSize: Int) => {
+    val f = (v: org.apache.spark.ml.linalg.Vector, inputName: String, outputName: String, outputSize: Int) => {
       val modelBundle = TFModelLoader.load(_model.asInstanceOf[String])
       val res = TFModelPredictor.run_float(modelBundle, inputName, outputName, outputSize, Array(v.toArray.map(f => f.toFloat)))
       Vectors.dense(res.map(f => f.toDouble))

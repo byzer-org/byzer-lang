@@ -1,13 +1,11 @@
 package streaming.core.compositor.spark.udf
 
-import org.apache.spark.ml.feature.VectorAssembler
 import org.apache.spark.sql.{Row, UDFRegistration}
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable
 import org.apache.spark.ml.linalg.{DenseVector, SparseVector, Vector, Vectors}
 import org.apache.spark.mllib.linalg.{Vectors => OldVectors}
-import org.apache.spark.sql.functions._
 
 /**
   * Created by allwefantasy on 3/5/2017.
@@ -62,6 +60,12 @@ object Functions {
   def vec_array(uDFRegistration: UDFRegistration) = {
     uDFRegistration.register("vec_array", (vec1: Vector) => {
       vec1.toArray
+    })
+  }
+
+  def vec_mk_string(uDFRegistration: UDFRegistration) = {
+    uDFRegistration.register("vec_mk_string", (splitter: String, vec1: Vector) => {
+      vec1.toArray.mkString(splitter)
     })
   }
 
@@ -121,6 +125,7 @@ object Functions {
     })
   }
 
+
   def array_index(uDFRegistration: UDFRegistration) = {
     uDFRegistration.register("array_index", (vec1: Seq[String], word: Any) => {
       vec1.indexOf(word)
@@ -134,6 +139,44 @@ object Functions {
       } else {
         vec1.slice(from, to)
       }
+    })
+  }
+
+  def array_number_concat(uDFRegistration: UDFRegistration) = {
+
+    uDFRegistration.register("array_number_concat", (a: Seq[Seq[Number]]) => {
+      a.flatMap(f => f).map(f => f.doubleValue())
+    })
+  }
+
+  def array_concat(uDFRegistration: UDFRegistration) = {
+
+    uDFRegistration.register("array_concat", (a: Seq[Seq[String]]) => {
+      a.flatMap(f => f)
+    })
+  }
+
+  def array_number_to_string(uDFRegistration: UDFRegistration) = {
+    uDFRegistration.register("array_number_to_string", (a: Seq[Number]) => {
+      a.map(f => f.toString)
+    })
+  }
+
+  def array_string_to_double(uDFRegistration: UDFRegistration) = {
+    uDFRegistration.register("array_string_to_double", (a: Seq[String]) => {
+      a.map(f => f.toDouble)
+    })
+  }
+
+  def array_string_to_float(uDFRegistration: UDFRegistration) = {
+    uDFRegistration.register("array_string_to_float", (a: Seq[String]) => {
+      a.map(f => f.toFloat)
+    })
+  }
+
+  def array_string_to_int(uDFRegistration: UDFRegistration) = {
+    uDFRegistration.register("array_string_to_int", (a: Seq[String]) => {
+      a.map(f => f.toInt)
     })
   }
 

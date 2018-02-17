@@ -38,6 +38,13 @@ class SQLWord2Vec extends SQLAlg with Functions {
       }
 
     }
+
+    val f2 = (co: Seq[String]) => {
+      co.map(f(_))
+    }
+
+    sparkSession.udf.register(name+"_array",f2)
+
     UserDefinedFunction(f, ArrayType(DoubleType), Some(Seq(StringType)))
   }
 }
