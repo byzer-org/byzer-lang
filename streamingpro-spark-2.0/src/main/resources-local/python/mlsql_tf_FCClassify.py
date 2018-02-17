@@ -2,6 +2,7 @@ import tensorflow as tf
 import mlsql_model
 import mlsql
 import sys
+import mlsql_tf
 
 rd = mlsql.read_data()
 p = mlsql.params()
@@ -34,23 +35,6 @@ input_x = tf.placeholder(tf.float32, [None, featureSize], name=input_col)
 input_y = tf.placeholder(tf.float32, [None, label_size], name="input_y")
 global_step = tf.Variable(0, name='global_step', trainable=False)
 
-
-def fc_layer(input, size_in, size_out, active="relu", name="fc"):
-    with tf.name_scope(name):
-        w = tf.Variable(tf.truncated_normal([size_in, size_out], stddev=0.1), name="W_" + name)
-        b = tf.Variable(tf.constant(0.1, shape=[size_out], name="B_" + name))
-        if active == "sigmoid":
-            act = tf.nn.sigmoid(tf.matmul(input, w) + b)
-        elif active is None:
-            act = tf.matmul(input, w) + b
-        else:
-            act = tf.nn.relu(tf.matmul(input, w) + b)
-        tf.summary.histogram("W_" + name + "_weights", w)
-        tf.summary.histogram("B_" + name + "_biases", b)
-        tf.summary.histogram(name + "_activations", act)
-        return act
-
-
 input_size = featureSize
 output_size = label_size
 input_temp = input_x
@@ -58,11 +42,11 @@ output_temp = None
 
 for layer in layer_group:
     output_size = layer
-    output_temp = fc_layer(input_temp, input_size, output_size, "relu", "fc{}".format(layer))
+    output_temp = mlsql_tf.fc_layer(input_temp, input_size, output_size, "relu", "fc{}".format(layer))
     input_temp = output_temp
     input_size = output_size
 
-_logits = fc_layer(output_temp, input_size, label_size, "relu", "fc{}".format(label_size))
+_logits = mlsql_tf.fc_layer(output_temp, input_size, label_size, "relu", "fc{}".format(label_size))
 tf.identity(_logits, name=label_col)
 
 with tf.name_scope("xent"):
@@ -100,5 +84,5 @@ for ep in range(epochs):
                 gs, ep))
         sys.stdout.flush()
 
-mlsql_model.save_model(tempModelLocalPath, sess, input_x, input_y, True)
+mlsql_model.save_model(tempModelLocalPath, sess, input_x, _logits, True)
 sess.close()

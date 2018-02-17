@@ -92,6 +92,7 @@ object ExternalCommandRunner {
     savePythonFile("msg_queue.py")
     savePythonFile("mlsql.py")
     savePythonFile("mlsql_model.py")
+    savePythonFile("mlsql_tf.py")
     savePythonFile("python_fun.py")
 
     val proc = pb.start()

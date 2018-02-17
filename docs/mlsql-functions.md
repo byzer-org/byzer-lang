@@ -65,6 +65,21 @@ select vec_cosine(vec_dense(array(1.0,2.0)),vec_dense(array(1.0,1.0)))
 select vec_slice(vec_dense(array(1.0,2.0,3.0)),array(0,1))
 ```
 
+### vec_array
+
+把向量转化为数组
+
+```sql
+select vec_array(vec_dense(array(1.0,2.0))) 
+```
+
+### vec_mk_string
+
+把向量进行拼接
+
+```sql
+select vec_mk_string(vec_dense(array(1.0,2.0))) 
+```
 
 ### ngram
 
@@ -90,3 +105,26 @@ select array_index(array("a","b","c","d","e"),"b") as k
 select array_slice(array("a","b","c","d","e"),3,-1) as k
 ```
 
+### array_number_concat
+
+多个数组拼接成一个数组，并且展开。比如 [[1,2],[2,3]] => [1,2,2,3]
+
+### array_concat
+
+同array_number_concat，支持元素类型为字符串
+
+### array_number_to_string
+
+对数组内的元素做类型转换
+
+### array_string_to_double
+
+对数组内的元素做类型转换
+
+### array_string_to_float
+
+对数组内的元素做类型转换
+
+### array_string_to_int
+
+对数组内的元素做类型转换

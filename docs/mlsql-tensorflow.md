@@ -202,3 +202,4 @@ register TensorFlow.`/tmp/model`  as tf_predict;
 select vec_argmax(tf_predict(features,"input_x","result",2)) as predict_label,
 label from data as result;
 ```
+
