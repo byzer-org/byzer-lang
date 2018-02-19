@@ -20,6 +20,8 @@ sequenceLen = featureSize / wordEmbeddingSize
 label_size = int(mlsql.get_param(fitParams, "labelSize", -1))
 layer_group = [int(i) for i in mlsql.get_param(fitParams, "layerGroup", "300").split(",")]
 
+print_interval = int(mlsql.get_param(fitParams, "printInterval", 1))
+
 window_group = [int(i) for i in mlsql.get_param(fitParams, "windowGroup", "5,10,15").split(",")]
 
 batch_size = int(mlsql.get_param(fitParams, "batchSize", 32))
@@ -95,6 +97,10 @@ sess.run(tf.global_variables_initializer())
 
 saver = tf.train.Saver()
 
+test_items = mlsql.get_validate_data()
+TEST_X = [item[input_col].toArray() for item in test_items]
+TEST_Y = [item[label_col].toArray() for item in test_items]
+
 for ep in range(epochs):
     for items in rd(max_records=batch_size):
         X = [item[input_col].toArray() for item in items]
@@ -104,14 +110,15 @@ for ep in range(epochs):
         if gs % print_step == 0:
             [train_accuracy, s, loss] = sess.run([accurate, summ, xent],
                                                  feed_dict={input_x: X, input_y: Y})
-            # [test_accuracy, test_s, test_loss] = sess.run([accurate, summ, xent],
-            #                                               feed_dict={input_x: X_TEST, input_y: Y_TEST,
-            #                                                          keep_prob: 1.})
-
-            print('epoch: %d,train_accuracy %g, loss: %g, global step: %d' % (ep,
-                                                                              train_accuracy,
-                                                                              loss,
-                                                                              gs))
+        [test_accuracy, test_s, test_lost] = sess.run([accurate, summ, xent],
+                                                      feed_dict={input_x: TEST_X, input_y: TEST_Y})
+        if gs % print_interval == 0:
+            print('train_accuracy %g,test_accuracy %g, loss: %g,test_lost: %g, global step: %d, ep:%d' % (
+                train_accuracy,
+                test_accuracy,
+                loss,
+                test_lost,
+                gs, ep))
 
         sys.stdout.flush()
 mlsql_model.save_model(tempModelLocalPath, sess, input_x, _logits, True)
