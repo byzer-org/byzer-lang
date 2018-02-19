@@ -15,7 +15,7 @@ import streaming.dsl.mmlib.SQLAlg
 import org.apache.spark.sql._
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.types._
-import org.apache.spark.util.{ExternalCommandRunner, WowMD5}
+import org.apache.spark.util.{ExternalCommandRunner, ObjPickle, WowMD5}
 import org.apache.spark.ml.linalg.SQLDataTypes._
 
 import scala.collection.JavaConverters._
@@ -57,6 +57,16 @@ class SQLTensorFlow extends SQLAlg with Functions {
       userFileName = pathChunk(pathChunk.length - 1)
       userPythonScriptList = df.sparkSession.sparkContext.textFile(params("pythonDescPath")).collect().mkString("\n")
     }
+    val schema = df.schema
+    var rows = Array[Array[Byte]]()
+    //目前我们只支持同一个测试集
+    if (params.contains("validateTable")) {
+      val validateTable = params("validateTable")
+      rows = df.sparkSession.table(validateTable).rdd.mapPartitions { iter =>
+        ObjPickle.pickle(iter, schema)
+      }.collect()
+    }
+    val rowsBr = df.sparkSession.sparkContext.broadcast(rows)
 
     fitParamRDD.map { f =>
       val paramMap = new util.HashMap[String, Object]()
@@ -92,7 +102,7 @@ class SQLTensorFlow extends SQLAlg with Functions {
         paramMap,
         MapType(StringType, MapType(StringType, StringType)),
         tfSource,
-        tfName, modelPath = path
+        tfName, modelPath = path, validateData = rowsBr.value
       )
       res.foreach(f => f)
       val fs = FileSystem.get(new Configuration())

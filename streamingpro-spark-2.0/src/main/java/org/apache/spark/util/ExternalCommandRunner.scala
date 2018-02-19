@@ -1,15 +1,17 @@
 package org.apache.spark.util
 
 import java.io._
-
 import java.util.concurrent.atomic.AtomicReference
+
 import net.csdn.common.logging.Loggers
 import org.apache.spark.sql.types._
-import org.apache.spark.{SparkEnv}
+import org.apache.spark.SparkEnv
+
 import scala.collection.JavaConverters._
 import scala.collection.Map
 import scala.io.Source
 import ObjPickle._
+import org.apache.spark.sql.Row
 
 /**
   * Created by allwefantasy on 24/1/2018.
@@ -23,6 +25,7 @@ object ExternalCommandRunner {
           scriptContent: String,
           scriptName: String,
           modelPath: String,
+          validateData: Array[Array[Byte]] = Array(),
           envVars: Map[String, String] = Map(),
           separateWorkingDir: Boolean = true,
           bufferSize: Int = 1024,
@@ -65,12 +68,16 @@ object ExternalCommandRunner {
       }
     }
 
-    //使用pickle 把数据写到work目录，之后python程序会读取
-    val fileTemp = new File(taskDirectory + "/python_temp.pickle")
-    currentEnvVars.put("pickleFile", fileTemp.getPath)
-    val pythonTempFile = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(fileTemp)))
-    // writeIteratorToStream(ExternalCommandRunner.pickle(iter, schema), pythonTempFile)
-    pickle(iter, pythonTempFile)
+    def pickleFile(name: String, fileName: String, value: Any) = {
+      val fileTemp = new File(taskDirectory + "/" + fileName + ".pickle")
+      currentEnvVars.put(name, fileTemp.getPath)
+      val pythonTempFile = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(fileTemp)))
+      // writeIteratorToStream(ExternalCommandRunner.pickle(iter, schema), pythonTempFile)
+      pickle(value, pythonTempFile)
+    }
+    //使用pickle 把数据写到work目录，之后python程序会读取。首先是保存配置信息。
+    pickleFile("pickleFile", "python_temp", iter)
+    pickleFile("validateFile", "validate_table", validateData)
 
     def saveFile(scriptName: String, scriptContent: String) = {
       val scriptFile = new File(taskDirectory + s"/${scriptName}")
