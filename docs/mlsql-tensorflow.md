@@ -1,6 +1,6 @@
 ## MLSQL
 
-MSQL也支持tensorflow的训练和预测。
+MLSQL也支持tensorflow的训练和预测。
 
 ### 环境配置
 
