@@ -59,6 +59,14 @@ if "internalSystemParam" in _params:
 if "systemParam" in _params:
     systemParam = _params["systemParam"]
 
+validate_table_filename = os.path.join(os.getcwd(), "validate_table.pickle")
+raw_validate_data = load(validate_table_filename)
+validate_data = []
+for item in raw_validate_data:
+    with io.BytesIO(item) as f:
+        msg = pickle.load(f)
+        validate_data.append(msg)
+
 
 def read_data():
     # Update params
@@ -245,6 +253,10 @@ def _get_param(p, name, default_value):
 
 def get_param(p, name, default_value):
     return _get_param(p, name, default_value)
+
+
+def get_validate_data():
+    return validate_data
 
 
 def sklearn_batch_data(fn):
