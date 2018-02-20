@@ -5,7 +5,7 @@ import java.util.concurrent.atomic.AtomicReference
 import java.util.logging.Logger
 import java.util.{Map => JMap}
 
-import org.apache.spark.ps.cluster.PSDriverBackend
+import org.apache.spark.ps.cluster.{PSDriverBackend, PSExecutorBackend}
 import org.apache.spark.{SparkConf, SparkRuntimeOperator}
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.ps.local.LocalPSSchedulerBackend

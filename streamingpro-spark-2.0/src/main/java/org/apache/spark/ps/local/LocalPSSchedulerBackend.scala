@@ -21,7 +21,7 @@ private case class TensorFlowModelClean(modelPath: String)
 class LocalPSEndpoint(override val rpcEnv: RpcEnv,
                       userClassPath: Seq[URL]
 
-                   )
+                     )
   extends ThreadSafeRpcEndpoint with Logging {
 
   val localExecutorId = SparkContext.DRIVER_IDENTIFIER
@@ -69,6 +69,7 @@ class LocalPSSchedulerBackend(sparkContext: SparkContext)
     localEndpoint = rpcEnv.setupEndpoint("PSLocalSchedulerBackend", executorEndpoint)
     launcherBackend.setAppId(appId)
     launcherBackend.setState(SparkAppHandle.State.RUNNING)
+    LocalExecutorBackend.executorBackend = Some(this)
   }
 
   def stop() {
@@ -88,4 +89,8 @@ class LocalPSSchedulerBackend(sparkContext: SparkContext)
     }
   }
 
+}
+
+object LocalExecutorBackend {
+  var executorBackend: Option[LocalPSSchedulerBackend] = None
 }

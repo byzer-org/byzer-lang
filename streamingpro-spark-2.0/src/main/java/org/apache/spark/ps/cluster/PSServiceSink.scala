@@ -110,6 +110,7 @@ class PSServiceSink(val property: Properties, val registry: MetricRegistry,
         if (env.executorId != SparkContext.DRIVER_IDENTIFIER) {
           val rpcEnv = createRpcEnv
           val pSExecutorBackend = new PSExecutorBackend(env, rpcEnv, psDriverUrl, psExecutorId, hostname, cores)
+          PSExecutorBackend.executorBackend = Some(pSExecutorBackend)
           rpcEnv.setupEndpoint("ps-executor-endpoint", pSExecutorBackend)
         }
       }
@@ -125,3 +126,5 @@ class PSServiceSink(val property: Properties, val registry: MetricRegistry,
 
   }
 }
+
+

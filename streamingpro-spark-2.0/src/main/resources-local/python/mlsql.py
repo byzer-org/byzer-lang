@@ -191,7 +191,9 @@ def read_data():
                 msg_group = leave_msg_group
 
             if wait_count > 1:
-                print("queue get blocked count:{} when batch size is:{}".format(wait_count, max_records))
+                print("queue get blocked count:{} when batch size is:{} actually size is {}".format(wait_count,
+                                                                                                    max_records,
+                                                                                                    len(msg_group)))
             if print_consume_time:
                 ms = now_time() - start_time
                 print("queue fetch {} consume:{}".format(max_records, ms))

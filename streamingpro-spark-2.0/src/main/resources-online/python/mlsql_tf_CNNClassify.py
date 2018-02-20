@@ -20,6 +20,8 @@ sequenceLen = featureSize / wordEmbeddingSize
 label_size = int(mlsql.get_param(fitParams, "labelSize", -1))
 layer_group = [int(i) for i in mlsql.get_param(fitParams, "layerGroup", "300").split(",")]
 
+print_interval = int(mlsql.get_param(fitParams, "printInterval", 1))
+
 window_group = [int(i) for i in mlsql.get_param(fitParams, "windowGroup", "5,10,15").split(",")]
 
 batch_size = int(mlsql.get_param(fitParams, "batchSize", 32))
@@ -28,8 +30,6 @@ epochs = int(mlsql.get_param(fitParams, "epochs", 1))
 input_col = mlsql.get_param(fitParams, "inputCol", "features")
 label_col = mlsql.get_param(fitParams, "labelCol", "label")
 tempModelLocalPath = p["internalSystemParam"]["tempModelLocalPath"]
-
-print_step = int(mlsql.get_param(fitParams, "printStep", "1"))
 
 if featureSize < 0 or label_size < 0 or wordEmbeddingSize < 0:
     raise RuntimeError("featureSize or labelSize or wordEmbeddingSize is required")
@@ -95,24 +95,28 @@ sess.run(tf.global_variables_initializer())
 
 saver = tf.train.Saver()
 
+test_items = mlsql.get_validate_data()
+TEST_X = [item[input_col].toArray() for item in test_items]
+TEST_Y = [item[label_col].toArray() for item in test_items]
+
 for ep in range(epochs):
     for items in rd(max_records=batch_size):
         X = [item[input_col].toArray() for item in items]
         Y = [item[label_col].toArray() for item in items]
         _, gs = sess.run([train_step, global_step],
                          feed_dict={input_x: X, input_y: Y})
-        if gs % print_step == 0:
+        if gs % print_interval == 0:
             [train_accuracy, s, loss] = sess.run([accurate, summ, xent],
                                                  feed_dict={input_x: X, input_y: Y})
-            # [test_accuracy, test_s, test_loss] = sess.run([accurate, summ, xent],
-            #                                               feed_dict={input_x: X_TEST, input_y: Y_TEST,
-            #                                                          keep_prob: 1.})
+            [test_accuracy, test_s, test_lost] = sess.run([accurate, summ, xent],
+                                                          feed_dict={input_x: TEST_X, input_y: TEST_Y})
+            print('train_accuracy %g,test_accuracy %g, loss: %g,test_lost: %g, global step: %d, ep:%d' % (
+                train_accuracy,
+                test_accuracy,
+                loss,
+                test_lost,
+                gs, ep))
+            sys.stdout.flush()
 
-            print('epoch: %d,train_accuracy %g, loss: %g, global step: %d' % (ep,
-                                                                              train_accuracy,
-                                                                              loss,
-                                                                              gs))
-
-        sys.stdout.flush()
 mlsql_model.save_model(tempModelLocalPath, sess, input_x, _logits, True)
 sess.close()

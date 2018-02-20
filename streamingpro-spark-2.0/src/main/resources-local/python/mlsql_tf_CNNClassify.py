@@ -31,8 +31,6 @@ input_col = mlsql.get_param(fitParams, "inputCol", "features")
 label_col = mlsql.get_param(fitParams, "labelCol", "label")
 tempModelLocalPath = p["internalSystemParam"]["tempModelLocalPath"]
 
-print_step = int(mlsql.get_param(fitParams, "printStep", "1"))
-
 if featureSize < 0 or label_size < 0 or wordEmbeddingSize < 0:
     raise RuntimeError("featureSize or labelSize or wordEmbeddingSize is required")
 
@@ -107,19 +105,18 @@ for ep in range(epochs):
         Y = [item[label_col].toArray() for item in items]
         _, gs = sess.run([train_step, global_step],
                          feed_dict={input_x: X, input_y: Y})
-        if gs % print_step == 0:
+        if gs % print_interval == 0:
             [train_accuracy, s, loss] = sess.run([accurate, summ, xent],
                                                  feed_dict={input_x: X, input_y: Y})
-        [test_accuracy, test_s, test_lost] = sess.run([accurate, summ, xent],
-                                                      feed_dict={input_x: TEST_X, input_y: TEST_Y})
-        if gs % print_interval == 0:
+            [test_accuracy, test_s, test_lost] = sess.run([accurate, summ, xent],
+                                                          feed_dict={input_x: TEST_X, input_y: TEST_Y})
             print('train_accuracy %g,test_accuracy %g, loss: %g,test_lost: %g, global step: %d, ep:%d' % (
                 train_accuracy,
                 test_accuracy,
                 loss,
                 test_lost,
                 gs, ep))
+            sys.stdout.flush()
 
-        sys.stdout.flush()
 mlsql_model.save_model(tempModelLocalPath, sess, input_x, _logits, True)
 sess.close()
