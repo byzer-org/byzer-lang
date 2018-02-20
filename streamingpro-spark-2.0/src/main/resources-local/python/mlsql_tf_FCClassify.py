@@ -81,18 +81,18 @@ for ep in range(epochs):
         if len(X) > 0:
             _, gs = sess.run([train_step, global_step],
                              feed_dict={input_x: X, input_y: Y})
-            [train_accuracy, s, loss] = sess.run([accurate, summ, xent],
-                                                 feed_dict={input_x: X, input_y: Y})
-            [test_accuracy, test_s, test_lost] = sess.run([accurate, summ, xent],
-                                                          feed_dict={input_x: TEST_X, input_y: TEST_Y})
             if gs % print_interval == 0:
+                [train_accuracy, s, loss] = sess.run([accurate, summ, xent],
+                                                     feed_dict={input_x: X, input_y: Y})
+                [test_accuracy, test_s, test_lost] = sess.run([accurate, summ, xent],
+                                                              feed_dict={input_x: TEST_X, input_y: TEST_Y})
                 print('train_accuracy %g,test_accuracy %g, loss: %g, test_lost: %g,global step: %d, ep:%d' % (
                     train_accuracy,
                     test_accuracy,
                     loss,
                     test_lost,
                     gs, ep))
-            sys.stdout.flush()
+                sys.stdout.flush()
 
     mlsql_model.save_model(tempModelLocalPath, sess, input_x, _logits, True)
     sess.close()

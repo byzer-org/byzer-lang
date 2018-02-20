@@ -55,4 +55,8 @@ class PSExecutorBackend(env: SparkEnv, override val rpcEnv: RpcEnv, psDriverUrl:
   }
 }
 
+object PSExecutorBackend {
+  var executorBackend: Option[PSExecutorBackend] = None
+}
+
 
