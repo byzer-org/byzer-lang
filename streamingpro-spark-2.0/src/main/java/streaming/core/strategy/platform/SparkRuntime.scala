@@ -39,7 +39,6 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
     params.filter(f => f._1.toString.startsWith("spark.")).foreach { f =>
       conf.set(f._1.toString, f._2.toString)
     }
-
     if (params.containsKey("streaming.master")) {
       conf.setMaster(params.get("streaming.master").toString)
     }

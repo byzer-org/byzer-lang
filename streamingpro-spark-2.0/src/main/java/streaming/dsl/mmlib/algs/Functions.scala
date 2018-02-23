@@ -1,9 +1,12 @@
 package streaming.dsl.mmlib.algs
 
-import java.io.ByteArrayOutputStream
+import java.io.{ByteArrayOutputStream, File}
 import java.util.Properties
 
 import net.csdn.common.logging.Loggers
+import org.apache.commons.io.FileUtils
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
 import org.apache.spark.Partitioner
 import org.apache.spark.ml.linalg.SQLDataTypes._
@@ -13,7 +16,7 @@ import org.apache.spark.ml.param.Params
 import org.apache.spark.ml.util.{MLReadable, MLWritable}
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.{DataFrame, Dataset, SparkSession, functions => F}
-import org.apache.spark.util.{ExternalCommandRunner, ObjPickle, WowXORShiftRandom}
+import org.apache.spark.util.{ExternalCommandRunner, ObjPickle, WowMD5, WowXORShiftRandom}
 import streaming.common.HDFSOperator
 
 import scala.collection.mutable.ArrayBuffer
@@ -210,6 +213,22 @@ trait Functions {
       }
     }
     (kafkaParam, newRDD)
+  }
+
+  def copyToHDFS(tempModelLocalPath: String, path: String, clean: Boolean) = {
+    val fs = FileSystem.get(new Configuration())
+    fs.delete(new Path(path), true)
+    fs.copyFromLocalFile(new Path(tempModelLocalPath),
+      new Path(path))
+    FileUtils.forceDelete(new File(tempModelLocalPath))
+  }
+
+  def createTempModelLocalPath(path: String, autoCreateParentDir: Boolean = true) = {
+    val dir = "/tmp/train/" + WowMD5.md5Hash(path)
+    if (autoCreateParentDir) {
+      FileUtils.forceMkdir(new File(dir))
+    }
+    dir
   }
 
 }

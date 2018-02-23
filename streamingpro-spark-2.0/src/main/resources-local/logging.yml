@@ -1,4 +1,4 @@
-rootLogger: INFO,console,file
+rootLogger: INFO,console
 
 
 appender:
