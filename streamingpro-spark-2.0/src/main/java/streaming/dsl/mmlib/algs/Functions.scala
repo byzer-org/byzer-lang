@@ -1,7 +1,7 @@
 package streaming.dsl.mmlib.algs
 
 import java.io.{ByteArrayOutputStream, File}
-import java.util.Properties
+import java.util.{Collections, Properties, Random}
 
 import net.csdn.common.logging.Loggers
 import org.apache.commons.io.FileUtils
@@ -17,6 +17,16 @@ import org.apache.spark.ml.util.{MLReadable, MLWritable}
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.{DataFrame, Dataset, SparkSession, functions => F}
 import org.apache.spark.util.{ExternalCommandRunner, ObjPickle, WowMD5, WowXORShiftRandom}
+import org.deeplearning4j.eval.Evaluation
+import org.deeplearning4j.nn.conf.MultiLayerConfiguration
+import org.deeplearning4j.optimize.api.IterationListener
+import org.deeplearning4j.optimize.listeners.ScoreIterationListener
+import org.deeplearning4j.spark.api.RDDTrainingApproach
+import org.deeplearning4j.spark.impl.multilayer.SparkDl4jMultiLayer
+import org.deeplearning4j.spark.parameterserver.training.SharedTrainingMaster
+import org.deeplearning4j.util.ModelSerializer
+import org.nd4j.linalg.factory.Nd4j
+import org.nd4j.parameterserver.distributed.conf.VoidConfiguration
 import streaming.common.HDFSOperator
 
 import scala.collection.mutable.ArrayBuffer
@@ -229,6 +239,59 @@ trait Functions {
       FileUtils.forceMkdir(new File(dir))
     }
     dir
+  }
+
+  def dl4jClassificationTrain(df: DataFrame, path: String, params: Map[String, String], multiLayerConfiguration: () => MultiLayerConfiguration): Unit = {
+    require(params.contains("featureSize"), "featureSize is required")
+    require(params.contains("labelSize"), "labelSize is required")
+
+    val featureSize = params.getOrElse("featureSize", "-1").toInt
+    val labelSize = params.getOrElse("labelSize", "-1").toInt
+    val batchSize = params.getOrElse("batchSize", "32").toInt
+
+    val updatesThreshold = params.getOrElse("updatesThreshold", "0.003").toDouble
+    val workersPerNode = params.getOrElse("workersPerNode", "1").toInt
+    val learningRate = params.getOrElse("learningRate", "0.001").toDouble
+    val layerGroup = params.getOrElse("layerGroup", "300,100")
+    val epochs = params.getOrElse("epochs", "1").toInt
+    val validateTable = params.getOrElse("validateTable", "")
+
+    val tm = SQLDL4J.init2(df.sparkSession.sparkContext.isLocal, batchSizePerWorker = batchSize)
+
+    val netConf = multiLayerConfiguration()
+
+    val sparkNetwork = new SparkDl4jMultiLayer(df.sparkSession.sparkContext, netConf, tm)
+    sparkNetwork.setCollectTrainingStats(false)
+    sparkNetwork.setListeners(Collections.singletonList[IterationListener](new ScoreIterationListener(1)))
+
+    val newDataSetRDD = df.select(params.getOrElse("inputCol", "features"), params.getOrElse("outputCol", "label")).rdd.map { row =>
+      val features = row.getAs[Vector](0)
+      val label = row.getAs[Vector](1)
+      new org.nd4j.linalg.dataset.DataSet(Nd4j.create(features.toArray), Nd4j.create(label.toArray))
+    }.toJavaRDD()
+
+    (0 until epochs).foreach { i =>
+      sparkNetwork.fit(newDataSetRDD)
+    }
+
+    val tempModelLocalPath = createTempModelLocalPath(path)
+    ModelSerializer.writeModel(sparkNetwork.getNetwork, new File(tempModelLocalPath, "dl4j.model"), true)
+    copyToHDFS(tempModelLocalPath + "/dl4j.model", path + "/dl4j.model", true)
+
+    if (!validateTable.isEmpty) {
+
+      val testDataSetRDD = df.sparkSession.table(validateTable).select(params.getOrElse("inputCol", "features"), params.getOrElse("outputCol", "label")).rdd.map { row =>
+        val features = row.getAs[Vector](0)
+        val label = row.getAs[Vector](1)
+        new org.nd4j.linalg.dataset.DataSet(Nd4j.create(features.toArray), Nd4j.create(label.toArray))
+      }.toJavaRDD()
+
+      val evaluation = sparkNetwork.doEvaluation(testDataSetRDD, batchSize, new Evaluation(labelSize))(0); //Work-around for 0.9.1 bug: see https://deeplearning4j.org/releasenotes
+      logger.info("***** Evaluation *****")
+      logger.info(evaluation.stats())
+      logger.info("***** Example Complete *****")
+    }
+    tm.deleteTempFiles(df.sparkSession.sparkContext)
   }
 
 }

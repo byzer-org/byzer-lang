@@ -233,7 +233,6 @@
             <artifactId>spark-sql-kafka-0-10_${scala.binary.version}</artifactId>
             <version>${spark.version}</version>
         </dependency>
-
     </dependencies>
     <build>
         <plugins>
