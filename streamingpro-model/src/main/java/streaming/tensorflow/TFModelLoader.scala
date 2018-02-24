@@ -84,7 +84,7 @@ object TFModelLoader {
           new Path(localPath))
 
         val smb = SavedModelBundle.load(localPath, "serve")
-        return (smb, fs.getFileStatus(new Path(localPath)).getModificationTime)
+        return (smb, fs.getFileStatus(new Path(modelPath)).getModificationTime)
       } finally {
         loading_status_map.remove(modelPath)
       }
