@@ -55,7 +55,8 @@ object MLMapping {
     "StandardScaler" -> "streaming.dsl.mmlib.algs.SQLStandardScaler",
     "SKLearn" -> "streaming.dsl.mmlib.algs.SQLSKLearn",
     "DicOrTableToArray" -> "streaming.dsl.mmlib.algs.SQLDicOrTableToArray",
-    "SQLTableToMap" -> "streaming.dsl.mmlib.algs.SQLTableToMap"
+    "TableToMap" -> "streaming.dsl.mmlib.algs.SQLTableToMap",
+    "DL4J" -> "streaming.dsl.mmlib.algs.SQLDL4J"
   )
 
   def findAlg(name: String) = {
