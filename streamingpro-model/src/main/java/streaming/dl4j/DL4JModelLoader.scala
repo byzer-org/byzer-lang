@@ -88,7 +88,7 @@ object DL4JModelLoader {
         fs.copyToLocalFile(new Path(modelPath + "/dl4j.model"),
           new Path(localPath + "/dl4j.model"))
         val smb = ModelSerializer.restoreMultiLayerNetwork(localPath + "/dl4j.model")
-        return (smb, fs.getFileStatus(new Path(localPath + "/dl4j.model")).getModificationTime)
+        return (smb, fs.getFileStatus(new Path(modelPath + "/dl4j.model")).getModificationTime)
       } finally {
         loading_status_map.remove(modelPath)
       }
