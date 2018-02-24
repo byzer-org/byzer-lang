@@ -3,7 +3,7 @@ package streaming.dsl.mmlib.algs.dl4j
 import streaming.dl4j.DL4JModelLoader
 import streaming.dl4j.DL4JModelPredictor
 import java.io.File
-import java.util.Collections
+import java.util.{Collections, Random}
 
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.Functions
@@ -42,12 +42,13 @@ class FCClassify extends SQLAlg with Functions {
     val featureSize = params.getOrElse("featureSize", "-1").toInt
     val labelSize = params.getOrElse("labelSize", "-1").toInt
     val batchSize = params.getOrElse("batchSize", "32").toInt
-    val unicastPort = params.getOrElse("unicastPort", "40123").toInt
+    val unicastPort = params.getOrElse("unicastPort", (new Random(System.currentTimeMillis()).nextInt(65535 - 49152) + 49152).toString).toInt
     val updatesThreshold = params.getOrElse("updatesThreshold", "0.003").toDouble
     val workersPerNode = params.getOrElse("workersPerNode", "1").toInt
     val learningRate = params.getOrElse("learningRate", "0.001").toDouble
-    val layerGroup = params.getOrElse("layerGroup", "300")
+    val layerGroup = params.getOrElse("layerGroup", "300,100")
     val epochs = params.getOrElse("epochs", "1").toInt
+    val validateTable = params.getOrElse("validateTable", "")
 
     val voidConfiguration = VoidConfiguration.builder()
       .unicastPort(unicastPort)
@@ -61,8 +62,8 @@ class FCClassify extends SQLAlg with Functions {
       .workersPerNode(workersPerNode)
       .build()
 
-    val netConf = new NeuralNetConfiguration.Builder()
-      .seed(12345)
+    val layers = new NeuralNetConfiguration.Builder()
+      .seed(new Random(System.currentTimeMillis()).nextInt(9999999))
       .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
       .iterations(1)
       .activation(Activation.LEAKYRELU)
@@ -71,15 +72,23 @@ class FCClassify extends SQLAlg with Functions {
       .updater(Updater.NESTEROVS) // To configure: .updater(Nesterovs.builder().momentum(0.9).build())
       .regularization(true).l2(1e-4)
       .list()
-      .layer(0, new DenseLayer.Builder().nIn(featureSize).nOut(500).build())
-      .layer(1, new DenseLayer.Builder().nIn(500).nOut(100).build())
-      .layer(2, new OutputLayer.Builder(LossFunctions.LossFunction.NEGATIVELOGLIKELIHOOD)
-        .activation(Activation.SOFTMAX).nIn(100).nOut(labelSize).build())
-      .pretrain(false).backprop(true)
+
+    var nIn = featureSize
+    var finalLayers = layers
+    var layer_count = 0
+    layerGroup.split(",").map(f => f.toInt).foreach { size =>
+      finalLayers = layers.layer(layer_count, new DenseLayer.Builder().nIn(nIn).nOut(size).activation(Activation.RELU).build())
+      nIn = size
+      layer_count += 1
+    }
+
+    finalLayers = finalLayers.layer(layer_count, new OutputLayer.Builder(LossFunctions.LossFunction.NEGATIVELOGLIKELIHOOD)
+      .activation(Activation.SOFTMAX).nIn(nIn).nOut(labelSize).build())
+
+    val netConf = finalLayers.pretrain(false).backprop(true)
       .build()
-    //val net  = new ComputationGraph(netConf)
+
     val sparkNetwork = new SparkDl4jMultiLayer(df.sparkSession.sparkContext, netConf, tm)
-    //val sparkNet = new SparkComputationGraph(df.sparkSession.sparkContext, netConf, tm)
     sparkNetwork.setListeners(Collections.singletonList[IterationListener](new ScoreIterationListener(1)));
 
     val newDataSetRDD = df.select(params.getOrElse("inputCol", "features"), params.getOrElse("outputCol", "label")).rdd.map { row =>
@@ -96,13 +105,20 @@ class FCClassify extends SQLAlg with Functions {
     ModelSerializer.writeModel(sparkNetwork.getNetwork, new File(tempModelLocalPath, "dl4j.model"), true)
     copyToHDFS(tempModelLocalPath + "/dl4j.model", path + "/dl4j.model", true)
 
-    val evaluation = sparkNetwork.doEvaluation(newDataSetRDD, batchSize, new Evaluation(labelSize))(0); //Work-around for 0.9.1 bug: see https://deeplearning4j.org/releasenotes
-    logger.info("***** Evaluation *****")
-    logger.info(evaluation.stats())
-    //Delete the temp training files, now that we are done with them
-    tm.deleteTempFiles(df.sparkSession.sparkContext)
-    logger.info("***** Example Complete *****")
+    if (!validateTable.isEmpty) {
 
+      val testDataSetRDD = df.sparkSession.table(validateTable).select(params.getOrElse("inputCol", "features"), params.getOrElse("outputCol", "label")).rdd.map { row =>
+        val features = row.getAs[Vector](0)
+        val label = row.getAs[Vector](1)
+        new org.nd4j.linalg.dataset.DataSet(Nd4j.create(features.toArray), Nd4j.create(label.toArray))
+      }.toJavaRDD()
+
+      val evaluation = sparkNetwork.doEvaluation(testDataSetRDD, batchSize, new Evaluation(labelSize))(0); //Work-around for 0.9.1 bug: see https://deeplearning4j.org/releasenotes
+      logger.info("***** Evaluation *****")
+      logger.info(evaluation.stats())
+      logger.info("***** Example Complete *****")
+    }
+    tm.deleteTempFiles(df.sparkSession.sparkContext)
   }
 
   override def load(sparkSession: SparkSession, path: String): Any = {

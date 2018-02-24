@@ -12,6 +12,7 @@ import org.deeplearning4j.nn.api.Model
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
 import org.deeplearning4j.util.ModelSerializer
 import org.nd4j.linalg.factory.Nd4j
+import scala.collection.JavaConversions._
 
 /**
   * Created by allwefantasy on 28/1/2018.
@@ -89,7 +90,7 @@ object DL4JModelLoader {
 
 object DL4JModelPredictor {
   def run_double(modelBundle: MultiLayerNetwork, vec: org.apache.spark.ml.linalg.Vector) = {
-    val array = modelBundle.feedForward(Nd4j.create(vec.toArray), false).get(0).data().asDouble()
+    val array = modelBundle.feedForward(Nd4j.create(vec.toArray), false).last.data().asDouble()
     Vectors.dense(array)
   }
 }

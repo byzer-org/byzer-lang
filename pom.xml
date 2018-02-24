@@ -288,6 +288,14 @@
                     <groupId>org.slf4j</groupId>
                     <artifactId>jcl-over-slf4j</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>ch.qos.logback</groupId>
+                    <artifactId>logback-classic</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>ch.qos.logback</groupId>
+                    <artifactId>logback-core</artifactId>
+                </exclusion>
 
                 <!--thrift相关-->
                 <exclusion>
@@ -335,6 +343,14 @@
                     <groupId>org.slf4j</groupId>
                     <artifactId>jcl-over-slf4j</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>ch.qos.logback</groupId>
+                    <artifactId>logback-classic</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>ch.qos.logback</groupId>
+                    <artifactId>logback-core</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
 
@@ -344,6 +360,7 @@
             <artifactId>mysql-connector-java</artifactId>
             <version>5.1.22</version>
         </dependency>
+
 
         <dependency>
             <groupId>org.slf4j</groupId>
