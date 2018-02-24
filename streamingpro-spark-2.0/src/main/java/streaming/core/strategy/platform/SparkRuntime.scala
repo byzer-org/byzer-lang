@@ -12,6 +12,7 @@ import org.apache.spark.ps.local.LocalPSSchedulerBackend
 import org.apache.spark.sql.hive.thriftserver.HiveThriftServer2
 import org.apache.spark.util.Utils
 import streaming.core.JobCanceller
+import streaming.dsl.mmlib.algs.SQLDL4J
 
 import scala.collection.JavaConversions._
 
@@ -45,17 +46,19 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
 
     conf.setAppName(params.get("streaming.name").toString)
 
+    def isLocalMaster(conf: SparkConf): Boolean = {
+      val master = conf.get("spark.master", "")
+      master == "local" || master.startsWith("local[")
+    }
+
     if (params.containsKey("streaming.ps.enable") && params.get("streaming.ps.enable").toString.toBoolean) {
-      def isLocalMaster(conf: SparkConf): Boolean = {
-        val master = conf.get("spark.master", "")
-        master == "local" || master.startsWith("local[")
-      }
       if (!isLocalMaster(conf)) {
         logger.info("register worker.sink.pservice.class with org.apache.spark.ps.cluster.PSServiceSink")
         conf.set("spark.metrics.conf.executor.sink.pservice.class", "org.apache.spark.ps.cluster.PSServiceSink")
       }
     }
 
+    //    SQLDL4J.tm = SQLDL4J.init(isLocalMaster(conf))
 
     val sparkSession = SparkSession.builder().config(conf)
     if (params.containsKey("streaming.enableHiveSupport") &&
