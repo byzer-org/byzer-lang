@@ -83,9 +83,7 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
       sparkSession.getOrCreate()
     }
 
-    if (params.containsKey("streaming.job.cancel") && params.get("streaming.job.cancel").toString.toBoolean) {
-      StreamingproJobManager.init(ss.sparkContext)
-    }
+    StreamingproJobManager.init(ss.sparkContext)
 
     if (params.containsKey("streaming.ps.enable") && params.get("streaming.ps.enable").toString.toBoolean) {
       if (ss.sparkContext.isLocal) {
