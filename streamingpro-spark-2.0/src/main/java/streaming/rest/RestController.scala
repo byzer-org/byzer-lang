@@ -230,5 +230,18 @@ class RestController extends ApplicationController {
     render("{}")
   }
 
+  @At(path = Array("/runningjobs"), types = Array(GET, POST))
+  def getRunningJobGroup = {
+    val infoMap = StreamingproJobManager.getJobInfo
+    render(200, infoMap, ViewType.json)
+  }
+
+  @At(path = Array("/killjob"), types = Array(GET, POST))
+  def killJob = {
+    val groupId = param("groupId")
+    StreamingproJobManager.killJob(groupId)
+    render(200, "{}")
+  }
+
   def runtime = PlatformManager.getRuntime
 }

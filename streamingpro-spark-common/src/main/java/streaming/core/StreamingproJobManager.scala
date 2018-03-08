@@ -6,6 +6,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import org.apache.log4j.Logger
 import org.apache.spark.SparkContext
 import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 import scala.collection.mutable.ArrayBuffer
 
 import org.apache.spark.sql.SparkSession
@@ -60,6 +61,7 @@ object StreamingproJobManager {
   }
 
   def asyncRun(session: SparkSession, job: StreamingproJobInfo, f: () => Unit) = {
+    // TODO: (fchen) 改成callback
     _executor.execute(new Runnable {
       override def run(): Unit = {
         _jobManager.groupIdToStringproJobInfo.put(job.groupId, job)
@@ -78,6 +80,13 @@ object StreamingproJobManager {
     val groupId = _jobManager.nextGroupId.incrementAndGet().toString
     StreamingproJobInfo(owner, jobType, jobName, jobContent, groupId, startTime, timeout)
   }
+
+  def getJobInfo: Map[String, StreamingproJobInfo] =
+    _jobManager.groupIdToStringproJobInfo.asScala.toMap
+
+  def killJob(groupId: String): Unit = {
+    _jobManager.cancelJobGroup(groupId)
+  }
 }
 
 class StreamingproJobManager(sc: SparkContext, initialDelay: Long, checkTimeInterval: Long) {
@@ -89,16 +98,12 @@ class StreamingproJobManager(sc: SparkContext, initialDelay: Long, checkTimeInte
   def run = {
     executor.scheduleWithFixedDelay(new Runnable {
       override def run(): Unit = {
-        val items = new ArrayBuffer[String]()
         groupIdToStringproJobInfo.foreach { f =>
           val elapseTime = System.currentTimeMillis() - f._2.startTime
           if (elapseTime >= f._2.timeout) {
-            items += f._1
             cancelJobGroup(f._1)
           }
         }
-
-        items.foreach(f => groupIdToStringproJobInfo.remove(f))
       }
     }, initialDelay, checkTimeInterval, TimeUnit.SECONDS)
   }
@@ -106,6 +111,7 @@ class StreamingproJobManager(sc: SparkContext, initialDelay: Long, checkTimeInte
   def cancelJobGroup(groupId: String): Unit = {
     logger.info("JobCanceller Timer cancel job group " + groupId)
     sc.cancelJobGroup(groupId)
+    groupIdToStringproJobInfo.remove(groupId)
   }
 }
 
