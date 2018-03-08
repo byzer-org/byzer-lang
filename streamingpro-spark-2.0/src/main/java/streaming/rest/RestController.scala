@@ -2,6 +2,9 @@ package streaming.rest
 
 import java.lang.reflect.Modifier
 
+import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
+
 import net.csdn.annotation.rest.At
 import net.csdn.common.collections.WowCollections
 import net.csdn.common.path.Url
@@ -11,11 +14,9 @@ import net.csdn.modules.transport.HttpTransportService
 import org.apache.spark.ps.cluster.Message
 import org.apache.spark.sql.{DataFrameWriter, Row, SaveMode}
 import streaming.common.JarUtil
-import streaming.core.{AsyncJobRunner, DownloadRunner, JobCanceller}
+import streaming.core._
 import streaming.core.strategy.platform.{PlatformManager, SparkRuntime}
 import streaming.dsl.{ScriptSQLExec, ScriptSQLExecListener}
-
-import scala.collection.JavaConversions._
 
 /**
   * Created by allwefantasy on 28/3/2017.
@@ -63,14 +64,18 @@ class RestController extends ApplicationController {
 
   @At(path = Array("/run/script"), types = Array(GET, POST))
   def script = {
-    val sparkSession = runtime.asInstanceOf[SparkRuntime].sparkSession
+    val sparkSession= runtime.asInstanceOf[SparkRuntime].sparkSession
     val htp = findService(classOf[HttpTransportService])
     if (paramAsBoolean("async", false) && !params().containsKey("callback")) {
       render(400, "when async is set true ,then you should set callback url")
     }
     try {
+      val jobInfo = StreamingproJobManager.getStreamingproJobInfo(
+        param("owner"), StreamingproJobType.SQL, param("jobName"), param("sql"),
+        paramAsLong("timeout", 30000)
+      )
       if (paramAsBoolean("async", false)) {
-        AsyncJobRunner.run(() => {
+        StreamingproJobManager.asyncRun(sparkSession, jobInfo, () => {
           try {
             ScriptSQLExec.parse(param("sql"), new ScriptSQLExecListener(sparkSession, param("prefixPath")))
             htp.get(new Url(param("callback")), Map("stat" -> s"""success"""))
@@ -81,7 +86,9 @@ class RestController extends ApplicationController {
           }
         })
       } else {
-        ScriptSQLExec.parse(param("sql"), new ScriptSQLExecListener(sparkSession, param("prefixPath")))
+        StreamingproJobManager.asyncRun(sparkSession, jobInfo, () => {
+          ScriptSQLExec.parse(param("sql"), new ScriptSQLExecListener(sparkSession, param("prefixPath")))
+        })
       }
 
     } catch {
@@ -95,15 +102,21 @@ class RestController extends ApplicationController {
 
   @At(path = Array("/run/sql"), types = Array(GET, POST))
   def ddlSql = {
-    val sparkSession = runtime.asInstanceOf[SparkRuntime].sparkSession
+    val sparkRuntime = runtime.asInstanceOf[SparkRuntime]
+    val sparkSession = sparkRuntime.sparkSession
     val path = param("path", "-")
     if (paramAsBoolean("async", false) && path == "-") {
       render(s"""path should not be empty""")
     }
 
+    val jobInfo = StreamingproJobManager.getStreamingproJobInfo(
+      param("owner"), StreamingproJobType.SQL, param("jobName"), param("sql"),
+      paramAsLong("timeout", 30000)
+    )
+
     paramAsBoolean("async", false).toString match {
       case "true" if hasParam("callback") =>
-        AsyncJobRunner.run(() => {
+        StreamingproJobManager.run(sparkSession, jobInfo, () => {
           val dfWriter = sparkSession.sql(param("sql")).write.mode(SaveMode.Overwrite)
           _save(dfWriter)
           val htp = findService(classOf[HttpTransportService])
@@ -113,14 +126,14 @@ class RestController extends ApplicationController {
         render("[]")
 
       case "false" if param("resultType", "") == "file" =>
-        JobCanceller.runWithGroup(sparkSession.sparkContext, paramAsLong("timeout", 30000), () => {
+        StreamingproJobManager.run(sparkSession, jobInfo, () => {
           val dfWriter = sparkSession.sql(param("sql")).write.mode(SaveMode.Overwrite)
           _save(dfWriter)
           render(s"""/download?fileType=raw&file_suffix=${param("format", "csv")}&paths=$path""")
         })
 
       case "false" if param("resultType", "") != "file" =>
-        JobCanceller.runWithGroup(sparkSession.sparkContext, paramAsLong("timeout", 30000), () => {
+        StreamingproJobManager.run(sparkSession, jobInfo, () => {
           var res = ""
           try {
             res = sparkSession.sql(param("sql")).toJSON.collect().mkString(",")
