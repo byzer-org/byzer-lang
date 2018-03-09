@@ -1,6 +1,6 @@
 package streaming.core
 
-import java.util.concurrent.{Callable, ConcurrentHashMap, Executors, TimeUnit}
+import java.util.concurrent.{ConcurrentHashMap, Executors, TimeUnit}
 import java.util.concurrent.atomic.AtomicInteger
 
 import scala.collection.JavaConversions._
@@ -27,22 +27,6 @@ object StreamingproJobManager {
       }
     }
   }
-
-//  def runWithGroup(sc: SparkContext, timeout: Long, f: () => Unit) = {
-//    if (_jobManager == null) {
-//      f()
-//    } else {
-//      val groupId = _jobManager.nextGroupId.incrementAndGet().toString
-//      sc.setJobGroup(groupId, "", true)
-//      try {
-//        _jobManager.groupIdToTime.put(groupId, JobTime(System.currentTimeMillis(), timeout))
-//        f()
-//      }
-//      finally {
-//        sc.clearJobGroup()
-//      }
-//    }
-//  }
 
   def run(session: SparkSession, job: StreamingproJobInfo, f: () => Unit): Unit = {
     try {
@@ -95,17 +79,6 @@ object StreamingproJobManager {
     _jobManager.groupIdToStringproJobInfo.remove(groupId)
 
   }
-
-//  private class ASyncJobRunner(sparkSession: SparkSession,
-//                               jobInfo: StreamingproJobInfo,
-//                               function: () => Unit) extends Callable[String] {
-//    override def call(): String = {
-//      _jobManager.groupIdToStringproJobInfo.put(jobInfo.groupId, jobInfo)
-//      sparkSession.sparkContext.setJobGroup(jobInfo.groupId, jobInfo.jobName, true)
-//      function()
-//      jobInfo.groupId
-//    }
-//  }
 }
 
 class StreamingproJobManager(sc: SparkContext, initialDelay: Long, checkTimeInterval: Long) {

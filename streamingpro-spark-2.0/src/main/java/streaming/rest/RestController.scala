@@ -5,6 +5,8 @@ import java.lang.reflect.Modifier
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import net.csdn.annotation.rest.At
 import net.csdn.common.collections.WowCollections
 import net.csdn.common.path.Url
@@ -64,14 +66,14 @@ class RestController extends ApplicationController {
 
   @At(path = Array("/run/script"), types = Array(GET, POST))
   def script = {
-    val sparkSession= runtime.asInstanceOf[SparkRuntime].sparkSession
+    val sparkSession = runtime.asInstanceOf[SparkRuntime].sparkSession
     val htp = findService(classOf[HttpTransportService])
     if (paramAsBoolean("async", false) && !params().containsKey("callback")) {
       render(400, "when async is set true ,then you should set callback url")
     }
     try {
       val jobInfo = StreamingproJobManager.getStreamingproJobInfo(
-        param("owner"), StreamingproJobType.SQL, param("jobName"), param("sql"),
+        param("owner"), StreamingproJobType.SCRIPT, param("jobName"), param("sql"),
         paramAsLong("timeout", 30000)
       )
       if (paramAsBoolean("async", false)) {
@@ -233,7 +235,7 @@ class RestController extends ApplicationController {
   @At(path = Array("/runningjobs"), types = Array(GET, POST))
   def getRunningJobGroup = {
     val infoMap = StreamingproJobManager.getJobInfo
-    render(200, infoMap, ViewType.json)
+    render(200, toJsonString(infoMap))
   }
 
   @At(path = Array("/killjob"), types = Array(GET, POST))
@@ -244,4 +246,11 @@ class RestController extends ApplicationController {
   }
 
   def runtime = PlatformManager.getRuntime
+
+  private[this] val _mapper = new ObjectMapper()
+  _mapper.registerModule(DefaultScalaModule)
+
+  def toJsonString[T](obj: T): String = {
+    _mapper.writeValueAsString(obj)
+  }
 }
