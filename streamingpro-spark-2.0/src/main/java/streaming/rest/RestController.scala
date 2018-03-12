@@ -88,7 +88,7 @@ class RestController extends ApplicationController {
           }
         })
       } else {
-        StreamingproJobManager.asyncRun(sparkSession, jobInfo, () => {
+        StreamingproJobManager.run(sparkSession, jobInfo, () => {
           ScriptSQLExec.parse(param("sql"), new ScriptSQLExecListener(sparkSession, param("prefixPath")))
         })
       }
