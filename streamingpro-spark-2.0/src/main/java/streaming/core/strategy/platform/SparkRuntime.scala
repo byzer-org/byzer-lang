@@ -1,20 +1,18 @@
 package streaming.core.strategy.platform
 
 import java.lang.reflect.Modifier
+import java.util.{Map => JMap}
 import java.util.concurrent.atomic.AtomicReference
 import java.util.logging.Logger
-import java.util.{Map => JMap}
-
-import org.apache.spark.ps.cluster.{PSDriverBackend, PSExecutorBackend}
-import org.apache.spark.{SparkConf, SparkRuntimeOperator}
-import org.apache.spark.sql.SparkSession
-import org.apache.spark.ps.local.LocalPSSchedulerBackend
-import org.apache.spark.sql.hive.thriftserver.HiveThriftServer2
-import org.apache.spark.util.Utils
-import streaming.core.JobCanceller
-import streaming.dsl.mmlib.algs.SQLDL4J
 
 import scala.collection.JavaConversions._
+
+import org.apache.spark.{SparkConf, SparkRuntimeOperator}
+import org.apache.spark.ps.cluster.PSDriverBackend
+import org.apache.spark.ps.local.LocalPSSchedulerBackend
+import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.hive.thriftserver.HiveThriftServer2
+import streaming.core.StreamingproJobManager
 
 /**
   * Created by allwefantasy on 30/3/2017.
@@ -85,9 +83,7 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
       sparkSession.getOrCreate()
     }
 
-    if (params.containsKey("streaming.job.cancel") && params.get("streaming.job.cancel").toString.toBoolean) {
-      JobCanceller.init(ss.sparkContext)
-    }
+    StreamingproJobManager.init(ss.sparkContext)
 
     if (params.containsKey("streaming.ps.enable") && params.get("streaming.ps.enable").toString.toBoolean) {
       if (ss.sparkContext.isLocal) {
