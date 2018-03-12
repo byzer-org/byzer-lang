@@ -33,10 +33,12 @@ class SQLNaiveBayes extends SQLAlg with Functions {
 
     val models = sparkSession.sparkContext.broadcast(_model.asInstanceOf[ArrayBuffer[NaiveBayesModel]])
 
+    val raw2probabilityMethod = if (sparkSession.version.startsWith("2.3")) "raw2probabilityInPlace" else "raw2probability"
+
     val f = (vec: Vector) => {
       models.value.map { model =>
         val predictRaw = model.getClass.getMethod("predictRaw", classOf[Vector]).invoke(model, vec).asInstanceOf[Vector]
-        val raw2probability = model.getClass.getMethod("raw2probability", classOf[Vector]).invoke(model, predictRaw).asInstanceOf[Vector]
+        val raw2probability = model.getClass.getMethod(raw2probabilityMethod, classOf[Vector]).invoke(model, predictRaw).asInstanceOf[Vector]
         //model.getClass.getMethod("probability2prediction", classOf[Vector]).invoke(model, raw2probability).asInstanceOf[Vector]
         //概率，分类
         (raw2probability(raw2probability.argmax), raw2probability)
@@ -46,7 +48,7 @@ class SQLNaiveBayes extends SQLAlg with Functions {
     val f2 = (vec: Vector) => {
       models.value.map { model =>
         val predictRaw = model.getClass.getMethod("predictRaw", classOf[Vector]).invoke(model, vec).asInstanceOf[Vector]
-        val raw2probability = model.getClass.getMethod("raw2probability", classOf[Vector]).invoke(model, predictRaw).asInstanceOf[Vector]
+        val raw2probability = model.getClass.getMethod(raw2probabilityMethod, classOf[Vector]).invoke(model, predictRaw).asInstanceOf[Vector]
         //model.getClass.getMethod("probability2prediction", classOf[Vector]).invoke(model, raw2probability).asInstanceOf[Vector]
         raw2probability
       }

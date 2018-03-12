@@ -32,7 +32,7 @@
 
         <serviceframework.version>2.0.0</serviceframework.version>
         <scope>provided</scope>
-        <antlr4-runtime-versoin>4.5.3</antlr4-runtime-versoin>
+        <antlr4-runtime-versoin>4.7.1</antlr4-runtime-versoin>
     </properties>
 
 
@@ -132,7 +132,6 @@
                 <spark.streaming.kafka.artifactId>spark-streaming-kafka_${scala.binary.version}
                 </spark.streaming.kafka.artifactId>
                 <spark.sql.kafka.artifactId>spark-streaming-kafka_${scala.binary.version}</spark.sql.kafka.artifactId>
-                <antlr4-runtime-versoin>4.5.3</antlr4-runtime-versoin>
             </properties>
             <modules>
                 <module>streamingpro-spark</module>
@@ -153,7 +152,6 @@
                 <spark.sql.kafka.artifactId>spark-sql-kafka-0-10_${scala.binary.version}</spark.sql.kafka.artifactId>
                 <spark.version>2.1.1</spark.version>
                 <hadoop-client-version>2.6.0</hadoop-client-version>
-                <antlr4-runtime-versoin>4.5.3</antlr4-runtime-versoin>
             </properties>
             <modules>
                 <module>streamingpro-spark-2.0</module>
@@ -175,7 +173,6 @@
                 <spark.sql.kafka.artifactId>spark-sql-kafka-0-10_${scala.binary.version}</spark.sql.kafka.artifactId>
                 <spark.version>2.2.0</spark.version>
                 <hadoop-client-version>2.6.0</hadoop-client-version>
-                <antlr4-runtime-versoin>4.5.3</antlr4-runtime-versoin>
             </properties>
             <modules>
                 <module>streamingpro-spark-2.0</module>
@@ -241,7 +238,6 @@
                 <spark.sql.kafka.artifactId>spark-sql-kafka-0-10_${scala.binary.version}</spark.sql.kafka.artifactId>
                 <spark.version>2.3.0</spark.version>
                 <hadoop-client-version>2.6.5</hadoop-client-version>
-                <antlr4-runtime-versoin>4.7</antlr4-runtime-versoin>
             </properties>
             <modules>
                 <module>streamingpro-spark-2.0</module>
