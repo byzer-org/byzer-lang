@@ -243,16 +243,10 @@ trait Functions {
 
   def dl4jClassificationTrain(df: DataFrame, path: String, params: Map[String, String], multiLayerConfiguration: () => MultiLayerConfiguration): Unit = {
     require(params.contains("featureSize"), "featureSize is required")
-    require(params.contains("labelSize"), "labelSize is required")
 
-    val featureSize = params.getOrElse("featureSize", "-1").toInt
     val labelSize = params.getOrElse("labelSize", "-1").toInt
     val batchSize = params.getOrElse("batchSize", "32").toInt
 
-    val updatesThreshold = params.getOrElse("updatesThreshold", "0.003").toDouble
-    val workersPerNode = params.getOrElse("workersPerNode", "1").toInt
-    val learningRate = params.getOrElse("learningRate", "0.001").toDouble
-    val layerGroup = params.getOrElse("layerGroup", "300,100")
     val epochs = params.getOrElse("epochs", "1").toInt
     val validateTable = params.getOrElse("validateTable", "")
 
@@ -264,11 +258,23 @@ trait Functions {
     sparkNetwork.setCollectTrainingStats(false)
     sparkNetwork.setListeners(Collections.singletonList[IterationListener](new ScoreIterationListener(1)))
 
-    val newDataSetRDD = df.select(params.getOrElse("inputCol", "features"), params.getOrElse("outputCol", "label")).rdd.map { row =>
-      val features = row.getAs[Vector](0)
-      val label = row.getAs[Vector](1)
-      new org.nd4j.linalg.dataset.DataSet(Nd4j.create(features.toArray), Nd4j.create(label.toArray))
-    }.toJavaRDD()
+    val labelFieldName = params.getOrElse("outputCol", "label")
+    val newDataSetRDD = if (df.schema.fieldNames.contains(labelFieldName)) {
+
+      require(params.contains("labelSize"), "labelSize is required")
+
+      df.select(params.getOrElse("inputCol", "features"), params.getOrElse("outputCol", "label")).rdd.map { row =>
+        val features = row.getAs[Vector](0)
+        val label = row.getAs[Vector](1)
+        new org.nd4j.linalg.dataset.DataSet(Nd4j.create(features.toArray), Nd4j.create(label.toArray))
+      }.toJavaRDD()
+    } else {
+      df.select(params.getOrElse("inputCol", "features")).rdd.map { row =>
+        val features = row.getAs[Vector](0)
+        new org.nd4j.linalg.dataset.DataSet(Nd4j.create(features.toArray), Nd4j.zeros(0))
+      }.toJavaRDD()
+    }
+
 
     (0 until epochs).foreach { i =>
       sparkNetwork.fit(newDataSetRDD)

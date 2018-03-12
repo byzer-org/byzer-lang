@@ -135,6 +135,13 @@ class RestController extends ApplicationController {
     }
   }
 
+  @At(path = Array("/stat"), types = Array(GET, POST))
+  def stat = {
+    val sparkSession = runtime.asInstanceOf[SparkRuntime].sparkSession
+    sparkSession.sparkContext
+    render()
+  }
+
   @At(path = Array("/download"), types = Array(GET, POST))
   def download = {
     val filename = param("fileName", System.currentTimeMillis() + "")

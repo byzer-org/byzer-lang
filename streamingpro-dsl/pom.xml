@@ -14,7 +14,7 @@
         <dependency>
             <groupId>org.antlr</groupId>
             <artifactId>antlr4-runtime</artifactId>
-            <version>4.5.3</version>
+            <version>${antlr4-runtime-versoin}</version>
         </dependency>
         <!--<dependency>-->
             <!--<groupId>org.scala-lang</groupId>-->
