@@ -49,6 +49,8 @@ class LocalPSSchedulerBackend(sparkContext: SparkContext)
   private val userClassPath = getUserClasspath(sparkContext.getConf)
   private val launcherBackend = new LauncherBackend() {
     override def onStopRequest(): Unit = stop(SparkAppHandle.State.KILLED)
+
+    protected def conf: SparkConf = sparkContext.conf
   }
 
   /**

@@ -26,7 +26,7 @@ class PSDriverBackend(sc: SparkContext) extends Logging {
       None
     }
     logInfo(s"setup ps driver rpc env: ${bindAddress}:${port} clientMode=${!isDriver}")
-    RpcEnv.create("PSDriverEndpoint", bindAddress, advertiseAddress, port, sc.conf,
+    RpcEnv.create("PSDriverEndpoint", bindAddress, port, sc.conf,
       sc.env.securityManager, clientMode = !isDriver)
   }
 

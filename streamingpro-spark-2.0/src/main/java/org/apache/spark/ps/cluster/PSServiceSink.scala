@@ -96,7 +96,7 @@ class PSServiceSink(val property: Properties, val registry: MetricRegistry,
       None
     }
     //logInfo(s"setup ps driver rpc env: ${bindAddress}:${port} clientMode=${!isDriver}")
-    RpcEnv.create("PSExecutorBackend", bindAddress, advertiseAddress, port, env.conf,
+    RpcEnv.create("PSExecutorBackend", bindAddress, port, env.conf,
       env.securityManager, clientMode = !isDriver)
   }
 

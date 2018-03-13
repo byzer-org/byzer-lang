@@ -1,4 +1,4 @@
-// Generated from /Users/allwefantasy/CSDNWorkSpace/streamingpro/streamingpro-dsl/src/main/resources/DSLSQL.g4 by ANTLR 4.5.3
+// Generated from /Users/allwefantasy/CSDNWorkSpace/streamingpro/streamingpro-dsl/src/main/resources/DSLSQL.g4 by ANTLR 4.7.1
 
 package streaming.dsl.parser;
 
@@ -13,7 +13,7 @@ import java.util.ArrayList;
 
 @SuppressWarnings({"all", "warnings", "unchecked", "unused", "cast"})
 public class DSLSQLParser extends Parser {
-	static { RuntimeMetaData.checkVersion("4.5.3", RuntimeMetaData.VERSION); }
+	static { RuntimeMetaData.checkVersion("4.7.1", RuntimeMetaData.VERSION); }
 
 	protected static final DFA[] _decisionToDFA;
 	protected static final PredictionContextCache _sharedContextCache =
@@ -239,6 +239,7 @@ public class DSLSQLParser extends Parser {
 		try {
 			int _alt;
 			setState(170);
+			_errHandler.sync(this);
 			switch (_input.LA(1)) {
 			case T__0:
 			case T__1:
@@ -248,7 +249,10 @@ public class DSLSQLParser extends Parser {
 				_la = _input.LA(1);
 				if ( !(_la==T__0 || _la==T__1) ) {
 				_errHandler.recoverInline(this);
-				} else {
+				}
+				else {
+					if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
+					_errHandler.reportMatch(this);
 					consume();
 				}
 				setState(47);
@@ -258,6 +262,7 @@ public class DSLSQLParser extends Parser {
 				setState(49);
 				path();
 				setState(51);
+				_errHandler.sync(this);
 				_la = _input.LA(1);
 				if (_la==T__3) {
 					{
@@ -267,6 +272,7 @@ public class DSLSQLParser extends Parser {
 				}
 
 				setState(54);
+				_errHandler.sync(this);
 				_la = _input.LA(1);
 				if (_la==IDENTIFIER || _la==BACKQUOTED_IDENTIFIER) {
 					{
@@ -303,7 +309,10 @@ public class DSLSQLParser extends Parser {
 				_la = _input.LA(1);
 				if ( !(_la==T__5 || _la==T__6) ) {
 				_errHandler.recoverInline(this);
-				} else {
+				}
+				else {
+					if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
+					_errHandler.reportMatch(this);
 					consume();
 				}
 				setState(72);
@@ -312,6 +321,7 @@ public class DSLSQLParser extends Parser {
 				while ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__24) | (1L << T__25) | (1L << T__26) | (1L << T__27))) != 0)) {
 					{
 					setState(70);
+					_errHandler.sync(this);
 					switch (_input.LA(1)) {
 					case T__24:
 						{
@@ -356,6 +366,7 @@ public class DSLSQLParser extends Parser {
 				setState(79);
 				path();
 				setState(81);
+				_errHandler.sync(this);
 				_la = _input.LA(1);
 				if (_la==T__3) {
 					{
@@ -365,6 +376,7 @@ public class DSLSQLParser extends Parser {
 				}
 
 				setState(84);
+				_errHandler.sync(this);
 				_la = _input.LA(1);
 				if (_la==IDENTIFIER || _la==BACKQUOTED_IDENTIFIER) {
 					{
@@ -388,6 +400,7 @@ public class DSLSQLParser extends Parser {
 					_la = _input.LA(1);
 				}
 				setState(94);
+				_errHandler.sync(this);
 				_la = _input.LA(1);
 				if (_la==T__7) {
 					{
@@ -408,13 +421,16 @@ public class DSLSQLParser extends Parser {
 				_la = _input.LA(1);
 				if ( !(_la==T__8 || _la==T__9) ) {
 				_errHandler.recoverInline(this);
-				} else {
+				}
+				else {
+					if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
+					_errHandler.reportMatch(this);
 					consume();
 				}
 				setState(100);
 				_errHandler.sync(this);
 				_alt = getInterpreter().adaptivePredict(_input,10,_ctx);
-				while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER ) {
+				while ( _alt!=2 && _alt!= ATN.INVALID_ALT_NUMBER ) {
 					if ( _alt==1 ) {
 						{
 						{
@@ -422,7 +438,10 @@ public class DSLSQLParser extends Parser {
 						_la = _input.LA(1);
 						if ( _la <= 0 || (_la==T__10) ) {
 						_errHandler.recoverInline(this);
-						} else {
+						}
+						else {
+							if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
+							_errHandler.reportMatch(this);
 							consume();
 						}
 						}
@@ -446,7 +465,10 @@ public class DSLSQLParser extends Parser {
 				_la = _input.LA(1);
 				if ( !(_la==T__11 || _la==T__12) ) {
 				_errHandler.recoverInline(this);
-				} else {
+				}
+				else {
+					if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
+					_errHandler.reportMatch(this);
 					consume();
 				}
 				setState(109);
@@ -459,7 +481,10 @@ public class DSLSQLParser extends Parser {
 					_la = _input.LA(1);
 					if ( _la <= 0 || (_la==T__10) ) {
 					_errHandler.recoverInline(this);
-					} else {
+					}
+					else {
+						if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
+						_errHandler.reportMatch(this);
 						consume();
 					}
 					}
@@ -478,7 +503,10 @@ public class DSLSQLParser extends Parser {
 				_la = _input.LA(1);
 				if ( !(_la==T__13 || _la==T__14) ) {
 				_errHandler.recoverInline(this);
-				} else {
+				}
+				else {
+					if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
+					_errHandler.reportMatch(this);
 					consume();
 				}
 				setState(116);
@@ -491,7 +519,10 @@ public class DSLSQLParser extends Parser {
 					_la = _input.LA(1);
 					if ( _la <= 0 || (_la==T__10) ) {
 					_errHandler.recoverInline(this);
-					} else {
+					}
+					else {
+						if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
+						_errHandler.reportMatch(this);
 						consume();
 					}
 					}
@@ -510,7 +541,10 @@ public class DSLSQLParser extends Parser {
 				_la = _input.LA(1);
 				if ( !(_la==T__15 || _la==T__16) ) {
 				_errHandler.recoverInline(this);
-				} else {
+				}
+				else {
+					if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
+					_errHandler.reportMatch(this);
 					consume();
 				}
 				setState(123);
@@ -523,7 +557,10 @@ public class DSLSQLParser extends Parser {
 					_la = _input.LA(1);
 					if ( _la <= 0 || (_la==T__10) ) {
 					_errHandler.recoverInline(this);
-					} else {
+					}
+					else {
+						if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
+						_errHandler.reportMatch(this);
 						consume();
 					}
 					}
@@ -542,12 +579,16 @@ public class DSLSQLParser extends Parser {
 				_la = _input.LA(1);
 				if ( !(_la==T__17 || _la==T__18) ) {
 				_errHandler.recoverInline(this);
-				} else {
+				}
+				else {
+					if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
+					_errHandler.reportMatch(this);
 					consume();
 				}
 				setState(127);
 				format();
 				setState(129);
+				_errHandler.sync(this);
 				_la = _input.LA(1);
 				if (_la==T__19) {
 					{
@@ -557,6 +598,7 @@ public class DSLSQLParser extends Parser {
 				}
 
 				setState(132);
+				_errHandler.sync(this);
 				_la = _input.LA(1);
 				if (_la==IDENTIFIER || _la==BACKQUOTED_IDENTIFIER) {
 					{
@@ -580,6 +622,7 @@ public class DSLSQLParser extends Parser {
 					_la = _input.LA(1);
 				}
 				setState(142);
+				_errHandler.sync(this);
 				_la = _input.LA(1);
 				if (_la==T__4) {
 					{
@@ -600,7 +643,10 @@ public class DSLSQLParser extends Parser {
 				_la = _input.LA(1);
 				if ( !(_la==T__20 || _la==T__21) ) {
 				_errHandler.recoverInline(this);
-				} else {
+				}
+				else {
+					if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
+					_errHandler.reportMatch(this);
 					consume();
 				}
 				setState(145);
@@ -614,6 +660,7 @@ public class DSLSQLParser extends Parser {
 				setState(149);
 				path();
 				setState(151);
+				_errHandler.sync(this);
 				_la = _input.LA(1);
 				if (_la==T__19) {
 					{
@@ -623,6 +670,7 @@ public class DSLSQLParser extends Parser {
 				}
 
 				setState(154);
+				_errHandler.sync(this);
 				_la = _input.LA(1);
 				if (_la==IDENTIFIER || _la==BACKQUOTED_IDENTIFIER) {
 					{
@@ -655,7 +703,10 @@ public class DSLSQLParser extends Parser {
 				_la = _input.LA(1);
 				if ( !(_la==T__22 || _la==T__23) ) {
 				_errHandler.recoverInline(this);
-				} else {
+				}
+				else {
+					if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
+					_errHandler.reportMatch(this);
 					consume();
 				}
 				setState(163);
@@ -1345,6 +1396,7 @@ public class DSLSQLParser extends Parser {
 		enterRule(_localctx, 34, RULE_strictIdentifier);
 		try {
 			setState(217);
+			_errHandler.sync(this);
 			switch (_input.LA(1)) {
 			case IDENTIFIER:
 				enterOuterAlt(_localctx, 1);
@@ -1413,7 +1465,7 @@ public class DSLSQLParser extends Parser {
 	}
 
 	public static final String _serializedATN =
-		"\3\u0430\ud6d1\u8206\uad2d\u4417\uaef1\u8d80\uaadd\3(\u00e0\4\2\t\2\4"+
+		"\3\u608b\ua72a\u8133\ub9ed\u417c\u3be7\u7786\u5964\3(\u00e0\4\2\t\2\4"+
 		"\3\t\3\4\4\t\4\4\5\t\5\4\6\t\6\4\7\t\7\4\b\t\b\4\t\t\t\4\n\t\n\4\13\t"+
 		"\13\4\f\t\f\4\r\t\r\4\16\t\16\4\17\t\17\4\20\t\20\4\21\t\21\4\22\t\22"+
 		"\4\23\t\23\4\24\t\24\3\2\3\2\3\2\7\2,\n\2\f\2\16\2/\13\2\3\3\3\3\3\3\3"+
@@ -1431,18 +1483,18 @@ public class DSLSQLParser extends Parser {
 		"\n\21\f\21\16\21\u00d6\13\21\3\22\3\22\3\23\3\23\5\23\u00dc\n\23\3\24"+
 		"\3\24\3\24\2\2\25\2\4\6\b\n\f\16\20\22\24\26\30\32\34\36 \"$&\2\f\3\2"+
 		"\3\4\3\2\b\t\3\2\13\f\3\2\r\r\3\2\16\17\3\2\20\21\3\2\22\23\3\2\24\25"+
-		"\3\2\27\30\3\2\31\32\u00f0\2-\3\2\2\2\4\u00ac\3\2\2\2\6\u00ae\3\2\2\2"+
-		"\b\u00b0\3\2\2\2\n\u00b2\3\2\2\2\f\u00b4\3\2\2\2\16\u00b6\3\2\2\2\20\u00b9"+
-		"\3\2\2\2\22\u00bd\3\2\2\2\24\u00bf\3\2\2\2\26\u00c3\3\2\2\2\30\u00c7\3"+
-		"\2\2\2\32\u00c9\3\2\2\2\34\u00cb\3\2\2\2\36\u00cd\3\2\2\2 \u00cf\3\2\2"+
-		"\2\"\u00d7\3\2\2\2$\u00db\3\2\2\2&\u00dd\3\2\2\2()\5\4\3\2)*\5\22\n\2"+
-		"*,\3\2\2\2+(\3\2\2\2,/\3\2\2\2-+\3\2\2\2-.\3\2\2\2.\3\3\2\2\2/-\3\2\2"+
-		"\2\60\61\t\2\2\2\61\62\5\24\13\2\62\63\7\5\2\2\63\65\5\26\f\2\64\66\7"+
-		"\6\2\2\65\64\3\2\2\2\65\66\3\2\2\2\668\3\2\2\2\679\5\20\t\28\67\3\2\2"+
-		"\289\3\2\2\29=\3\2\2\2:<\5\16\b\2;:\3\2\2\2<?\3\2\2\2=;\3\2\2\2=>\3\2"+
-		"\2\2>@\3\2\2\2?=\3\2\2\2@A\7\7\2\2AB\5\32\16\2B\u00ad\3\2\2\2CJ\t\3\2"+
-		"\2DI\5\6\4\2EI\5\b\5\2FI\5\n\6\2GI\5\f\7\2HD\3\2\2\2HE\3\2\2\2HF\3\2\2"+
-		"\2HG\3\2\2\2IL\3\2\2\2JH\3\2\2\2JK\3\2\2\2KM\3\2\2\2LJ\3\2\2\2MN\5\32"+
+		"\3\2\27\30\3\2\31\32\2\u00f0\2-\3\2\2\2\4\u00ac\3\2\2\2\6\u00ae\3\2\2"+
+		"\2\b\u00b0\3\2\2\2\n\u00b2\3\2\2\2\f\u00b4\3\2\2\2\16\u00b6\3\2\2\2\20"+
+		"\u00b9\3\2\2\2\22\u00bd\3\2\2\2\24\u00bf\3\2\2\2\26\u00c3\3\2\2\2\30\u00c7"+
+		"\3\2\2\2\32\u00c9\3\2\2\2\34\u00cb\3\2\2\2\36\u00cd\3\2\2\2 \u00cf\3\2"+
+		"\2\2\"\u00d7\3\2\2\2$\u00db\3\2\2\2&\u00dd\3\2\2\2()\5\4\3\2)*\5\22\n"+
+		"\2*,\3\2\2\2+(\3\2\2\2,/\3\2\2\2-+\3\2\2\2-.\3\2\2\2.\3\3\2\2\2/-\3\2"+
+		"\2\2\60\61\t\2\2\2\61\62\5\24\13\2\62\63\7\5\2\2\63\65\5\26\f\2\64\66"+
+		"\7\6\2\2\65\64\3\2\2\2\65\66\3\2\2\2\668\3\2\2\2\679\5\20\t\28\67\3\2"+
+		"\2\289\3\2\2\29=\3\2\2\2:<\5\16\b\2;:\3\2\2\2<?\3\2\2\2=;\3\2\2\2=>\3"+
+		"\2\2\2>@\3\2\2\2?=\3\2\2\2@A\7\7\2\2AB\5\32\16\2B\u00ad\3\2\2\2CJ\t\3"+
+		"\2\2DI\5\6\4\2EI\5\b\5\2FI\5\n\6\2GI\5\f\7\2HD\3\2\2\2HE\3\2\2\2HF\3\2"+
+		"\2\2HG\3\2\2\2IL\3\2\2\2JH\3\2\2\2JK\3\2\2\2KM\3\2\2\2LJ\3\2\2\2MN\5\32"+
 		"\16\2NO\7\7\2\2OP\5\24\13\2PQ\7\5\2\2QS\5\26\f\2RT\7\6\2\2SR\3\2\2\2S"+
 		"T\3\2\2\2TV\3\2\2\2UW\5\20\t\2VU\3\2\2\2VW\3\2\2\2W[\3\2\2\2XZ\5\16\b"+
 		"\2YX\3\2\2\2Z]\3\2\2\2[Y\3\2\2\2[\\\3\2\2\2\\`\3\2\2\2][\3\2\2\2^_\7\n"+

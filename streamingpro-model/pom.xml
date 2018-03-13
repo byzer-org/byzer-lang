@@ -9,6 +9,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
+
     <artifactId>streamingpro-model</artifactId>
     <dependencies>
         <dependency>
@@ -23,20 +24,30 @@
         </dependency>
 
         <dependency>
-            <groupId>streaming.king</groupId>
-            <artifactId>streamingpro-common</artifactId>
-            <version>${parent.version}</version>
-        </dependency>
-
-        <dependency>
             <groupId>org.deeplearning4j</groupId>
             <artifactId>dl4j-spark_2.11</artifactId>
             <version>0.9.1_spark_2</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.spark</groupId>
+                    <artifactId>spark-sql_2.11</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.deeplearning4j</groupId>
             <artifactId>dl4j-spark-parameterserver_2.11</artifactId>
             <version>0.9.1_spark_2</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.spark</groupId>
+                    <artifactId>spark-mllib_2.11</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.spark</groupId>
+                    <artifactId>spark-core_2.11</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.nd4j</groupId>
@@ -48,6 +59,17 @@
         <dependency>
             <groupId>org.nd4j</groupId>
             <artifactId>nd4j-kryo_2.11</artifactId>
+            <version>0.9.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.bytedeco</groupId>
+            <artifactId>javacv-platform</artifactId>
+            <version>1.4</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.nd4j</groupId>
+            <artifactId>nd4j-cuda-7.5</artifactId>
             <version>0.9.1</version>
         </dependency>
 
