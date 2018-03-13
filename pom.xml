@@ -15,6 +15,7 @@
         <module>streamingpro-hbase</module>
         <module>streamingpro-redis</module>
         <module>streamingpro-model</module>
+        <module>streamingpro-dsl-legacy</module>
     </modules>
 
     <properties>
@@ -32,7 +33,6 @@
 
         <serviceframework.version>2.0.0</serviceframework.version>
         <scope>provided</scope>
-        <antlr4-runtime-versoin>4.7.1</antlr4-runtime-versoin>
     </properties>
 
 
@@ -162,6 +162,11 @@
                     <artifactId>serviceframework-jetty-9-server</artifactId>
                     <version>${serviceframework.version}</version>
                 </dependency>
+                <dependency>
+                    <groupId>streaming.king</groupId>
+                    <artifactId>streamingpro-dsl-legacy</artifactId>
+                    <version>1.0.0</version>
+                </dependency>
             </dependencies>
         </profile>
 
@@ -225,6 +230,11 @@
                             <artifactId>dubbo</artifactId>
                         </exclusion>
                     </exclusions>
+                </dependency>
+                <dependency>
+                    <groupId>streaming.king</groupId>
+                    <artifactId>streamingpro-dsl-legacy</artifactId>
+                    <version>1.0.0</version>
                 </dependency>
             </dependencies>
         </profile>
@@ -290,6 +300,11 @@
                             <artifactId>dubbo</artifactId>
                         </exclusion>
                     </exclusions>
+                </dependency>
+                <dependency>
+                    <groupId>streaming.king</groupId>
+                    <artifactId>streamingpro-dsl</artifactId>
+                    <version>1.0.0</version>
                 </dependency>
             </dependencies>
         </profile>
