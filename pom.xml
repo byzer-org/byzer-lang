@@ -11,11 +11,9 @@
         <module>streamingpro-spark-common</module>
         <module>streamingpro-manager</module>
         <module>streamingpro-api</module>
-        <module>streamingpro-dsl</module>
         <module>streamingpro-hbase</module>
         <module>streamingpro-redis</module>
         <module>streamingpro-model</module>
-        <module>streamingpro-dsl-legacy</module>
     </modules>
 
     <properties>
@@ -154,6 +152,7 @@
                 <hadoop-client-version>2.6.0</hadoop-client-version>
             </properties>
             <modules>
+                <module>streamingpro-dsl-legacy</module>
                 <module>streamingpro-spark-2.0</module>
             </modules>
             <dependencies>
@@ -161,11 +160,6 @@
                     <groupId>net.csdn</groupId>
                     <artifactId>serviceframework-jetty-9-server</artifactId>
                     <version>${serviceframework.version}</version>
-                </dependency>
-                <dependency>
-                    <groupId>streaming.king</groupId>
-                    <artifactId>streamingpro-dsl-legacy</artifactId>
-                    <version>1.0.0</version>
                 </dependency>
             </dependencies>
         </profile>
@@ -180,6 +174,7 @@
                 <hadoop-client-version>2.6.0</hadoop-client-version>
             </properties>
             <modules>
+                <module>streamingpro-dsl-legacy</module>
                 <module>streamingpro-spark-2.0</module>
             </modules>
             <dependencies>
@@ -230,11 +225,6 @@
                             <artifactId>dubbo</artifactId>
                         </exclusion>
                     </exclusions>
-                </dependency>
-                <dependency>
-                    <groupId>streaming.king</groupId>
-                    <artifactId>streamingpro-dsl-legacy</artifactId>
-                    <version>1.0.0</version>
                 </dependency>
             </dependencies>
         </profile>
@@ -250,6 +240,7 @@
                 <hadoop-client-version>2.6.5</hadoop-client-version>
             </properties>
             <modules>
+                <module>streamingpro-dsl</module>
                 <module>streamingpro-spark-2.0</module>
             </modules>
             <dependencies>
@@ -300,11 +291,6 @@
                             <artifactId>dubbo</artifactId>
                         </exclusion>
                     </exclusions>
-                </dependency>
-                <dependency>
-                    <groupId>streaming.king</groupId>
-                    <artifactId>streamingpro-dsl</artifactId>
-                    <version>1.0.0</version>
                 </dependency>
             </dependencies>
         </profile>
