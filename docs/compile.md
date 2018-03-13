@@ -21,7 +21,28 @@ mvn install -Pscala-2.10 -Pjetty-9 -Pweb-include-jetty-9
 ```
 git clone https://github.com/allwefantasy/streamingpro.git
 cd streamingpro
-mvn -DskipTests clean package  -pl streamingpro-spark-2.0 -am  -Ponline -Pscala-2.11  -Phive-thrift-server -Pspark-2.2.0 -Pshade
+mvn -DskipTests clean package  \
+-pl streamingpro-spark-2.0 -am  \
+-Ponline -Pscala-2.11  \
+-Phive-thrift-server \
+-Pspark-2.2.0 \
+-Pdsl \
+-Pshade 
+
+```
+
+如果你希望使用最新的spark 2.3.0 版本，
+
+```
+git clone https://github.com/allwefantasy/streamingpro.git
+cd streamingpro
+mvn -DskipTests clean package  \
+-pl streamingpro-spark-2.0 -am  \
+-Ponline -Pscala-2.11  \
+-Phive-thrift-server \
+-Pspark-2.3.0 \
+-Pdsl \
+-Pshade 
 
 ```
 
@@ -30,7 +51,14 @@ mvn -DskipTests clean package  -pl streamingpro-spark-2.0 -am  -Ponline -Pscala-
 ```
 git clone https://github.com/allwefantasy/streamingpro.git
 cd streamingpro
-mvn -DskipTests clean package  -pl streamingpro-spark-2.0 -am  -Ponline -Pscala-2.11  -Phive-thrift-server -Pspark-2.1.0 -Pshade
+mvn -DskipTests clean package  \
+-pl streamingpro-spark-2.0 \
+-am  \
+-Ponline \
+-Pscala-2.11  \
+-Phive-thrift-server \
+-Pspark-2.1.0 \
+-Pshade
 
 ```
 
@@ -41,3 +69,22 @@ git clone https://github.com/allwefantasy/streamingpro.git
 cd streamingpro
 mvn -DskipTests clean package  -pl streamingpro-spark -am  -Ponline -Pscala-2.10  -Pcarbondata -Phive-thrift-server -Pspark-1.6.1 -Pshade
 ```
+
+步骤三： 运行起来
+
+```
+./bin/spark-submit   --class streaming.core.StreamingApp \
+--master local[2] \
+--name sql-interactive \
+streamingpro-spark-2.0-1.0.0.jar    \
+-streaming.name sql-interactive    \
+-streaming.job.file.path file://$SHome/query.json \
+-streaming.platform spark   \
+-streaming.rest true   \
+-streaming.driver.port 9003   \
+-streaming.spark.service true \
+-streaming.thrift false \
+-streaming.enableHiveSupport true
+```
+
+现在就可以使用http进行交互了。
