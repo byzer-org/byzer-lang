@@ -85,6 +85,34 @@
                 </dependency>
             </dependencies>
         </profile>
+
+        <profile>
+            <id>dsl-legacy</id>
+            <activation>
+                <property>
+                    <name>!skipFirstProfile</name>
+                </property>
+            </activation>
+            <dependencies>
+                <dependency>
+                    <groupId>streaming.king</groupId>
+                    <artifactId>streamingpro-dsl</artifactId>
+                    <version>${parent.version}</version>
+                </dependency>
+            </dependencies>
+        </profile>
+
+        <profile>
+            <id>dsl</id>
+            <dependencies>
+                <dependency>
+                    <groupId>streaming.king</groupId>
+                    <artifactId>streamingpro-dsl-legacy</artifactId>
+                    <version>${parent.version}</version>
+                </dependency>
+            </dependencies>
+        </profile>
+
         <profile>
             <id>online</id>
             <properties>
@@ -133,6 +161,8 @@
             <artifactId>streamingpro-spark-common</artifactId>
             <version>${parent.version}</version>
         </dependency>
+
+
         <!--<dependency>-->
         <!--<groupId>streaming.king</groupId>-->
         <!--<artifactId>streamingpro-hbase</artifactId>-->
