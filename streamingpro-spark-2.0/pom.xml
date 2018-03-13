@@ -154,12 +154,6 @@
 
         <dependency>
             <groupId>streaming.king</groupId>
-            <artifactId>streamingpro-dsl</artifactId>
-            <version>${parent.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>streaming.king</groupId>
             <artifactId>streamingpro-model</artifactId>
             <version>${parent.version}</version>
         </dependency>
