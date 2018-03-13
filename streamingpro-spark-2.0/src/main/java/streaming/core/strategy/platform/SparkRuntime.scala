@@ -5,8 +5,8 @@ import java.util.{Map => JMap}
 import java.util.concurrent.atomic.AtomicReference
 import java.util.logging.Logger
 
-import scala.collection.JavaConversions._
 
+import scala.collection.JavaConversions._
 import org.apache.spark.{SparkConf, SparkRuntimeOperator}
 import org.apache.spark.ps.cluster.PSDriverBackend
 import org.apache.spark.ps.local.LocalPSSchedulerBackend
@@ -34,6 +34,7 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
   }
 
   def createRuntime = {
+    logger.info("create Runtime...")
     val conf = new SparkConf()
     params.filter(f => f._1.toString.startsWith("spark.")).foreach { f =>
       conf.set(f._1.toString, f._2.toString)
@@ -68,6 +69,7 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
 
     val ss = if (params.containsKey("streaming.enableCarbonDataSupport") &&
       params.get("streaming.enableCarbonDataSupport").toString.toBoolean) {
+      logger.info("carbondata enabled...")
       val url = params.getOrElse("streaming.hive.javax.jdo.option.ConnectionURL", "").toString
       if (!url.isEmpty) {
         logger.info("set hive javax.jdo.option.ConnectionURL=" + url)
@@ -86,6 +88,7 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
     StreamingproJobManager.init(ss.sparkContext)
 
     if (params.containsKey("streaming.ps.enable") && params.get("streaming.ps.enable").toString.toBoolean) {
+      logger.info("ps enabled...")
       if (ss.sparkContext.isLocal) {
         localSchedulerBackend = new LocalPSSchedulerBackend(ss.sparkContext)
         localSchedulerBackend.start()
@@ -104,9 +107,11 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
   registerUDF
 
   def registerUDF = {
+    logger.info("register functions.....")
     Class.forName("streaming.core.compositor.spark.udf.Functions").getMethods.foreach { f =>
       try {
         if (Modifier.isStatic(f.getModifiers)) {
+          logger.info(f.getName)
           f.invoke(null, sparkSession.udf)
         }
       } catch {
