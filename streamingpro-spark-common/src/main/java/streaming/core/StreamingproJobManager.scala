@@ -92,7 +92,7 @@ class StreamingproJobManager(sc: SparkContext, initialDelay: Long, checkTimeInte
       override def run(): Unit = {
         groupIdToStringproJobInfo.foreach { f =>
           val elapseTime = System.currentTimeMillis() - f._2.startTime
-          if (elapseTime >= f._2.timeout) {
+          if (f._2.timeout > 0 && elapseTime >= f._2.timeout) {
             cancelJobGroup(f._1)
           }
         }

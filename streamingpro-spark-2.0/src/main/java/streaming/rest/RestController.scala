@@ -74,7 +74,7 @@ class RestController extends ApplicationController {
     try {
       val jobInfo = StreamingproJobManager.getStreamingproJobInfo(
         param("owner"), StreamingproJobType.SCRIPT, param("jobName"), param("sql"),
-        paramAsLong("timeout", 30000)
+        paramAsLong("timeout", -1L)
       )
       if (paramAsBoolean("async", false)) {
         StreamingproJobManager.asyncRun(sparkSession, jobInfo, () => {
