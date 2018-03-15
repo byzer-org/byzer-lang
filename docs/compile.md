@@ -78,7 +78,7 @@ mvn -DskipTests clean package  -pl streamingpro-spark -am  -Ponline -Pscala-2.10
 --name sql-interactive \
 streamingpro-spark-2.0-1.0.0.jar    \
 -streaming.name sql-interactive    \
--streaming.job.file.path file://$SHome/query.json \
+-streaming.job.file.path file:///tmp/query.json \
 -streaming.platform spark   \
 -streaming.rest true   \
 -streaming.driver.port 9003   \
@@ -87,4 +87,4 @@ streamingpro-spark-2.0-1.0.0.jar    \
 -streaming.enableHiveSupport true
 ```
 
-现在就可以使用http进行交互了。
+现在就可以使用http进行交互了。其中query.json为一个只包含"{}"的配置文件。
