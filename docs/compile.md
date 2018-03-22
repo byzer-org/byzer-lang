@@ -31,6 +31,19 @@ mvn -DskipTests clean package  \
 
 ```
 
+如果提示streamingpro-dsl 依赖包无法找到，那么分别进入 streamingpro-dsl/streamingpro-dsl-legacy执行如下指令：
+
+```
+cd streamingpro-dsl
+mvn install
+cd ../streamingpro-dsl-legacy
+mvn install
+```
+
+如果还有其他问题，也可以参考这个：https://github.com/allwefantasy/streamingpro/issues/120 
+
+
+
 如果你希望使用最新的spark 2.3.0 版本，
 
 ```
@@ -78,7 +91,7 @@ mvn -DskipTests clean package  -pl streamingpro-spark -am  -Ponline -Pscala-2.10
 --name sql-interactive \
 streamingpro-spark-2.0-1.0.0.jar    \
 -streaming.name sql-interactive    \
--streaming.job.file.path file://$SHome/query.json \
+-streaming.job.file.path file:///tmp/query.json \
 -streaming.platform spark   \
 -streaming.rest true   \
 -streaming.driver.port 9003   \
@@ -87,4 +100,4 @@ streamingpro-spark-2.0-1.0.0.jar    \
 -streaming.enableHiveSupport true
 ```
 
-现在就可以使用http进行交互了。
+现在就可以使用http进行交互了。其中query.json为一个只包含"{}"的配置文件。
