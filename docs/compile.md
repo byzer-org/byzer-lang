@@ -31,6 +31,19 @@ mvn -DskipTests clean package  \
 
 ```
 
+如果提示streamingpro-dsl 依赖包无法找到，那么分别进入 streamingpro-dsl/streamingpro-dsl-legacy执行如下指令：
+
+```
+cd streamingpro-dsl
+mvn install
+cd ../streamingpro-dsl-legacy
+mvn install
+```
+
+如果还有其他问题，也可以参考这个：https://github.com/allwefantasy/streamingpro/issues/120 
+
+
+
 如果你希望使用最新的spark 2.3.0 版本，
 
 ```
