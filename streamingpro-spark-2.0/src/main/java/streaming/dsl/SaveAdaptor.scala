@@ -59,6 +59,7 @@ class SaveAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
 
     val dbAndTable = final_path.split("\\.")
     var connect_provied = false
+    writer = oldDF.write
     if (dbAndTable.length == 2 && ScriptSQLExec.dbMapping.containsKey(dbAndTable(0))) {
       ScriptSQLExec.dbMapping.get(dbAndTable(0)).foreach {
         f =>
@@ -74,7 +75,7 @@ class SaveAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
     if (option.contains("fileNum")) {
       oldDF = oldDF.repartition(option.getOrElse("fileNum", "").toString.toInt)
     }
-    writer = oldDF.write
+
     writer = writer.format(format).mode(mode).partitionBy(partitionByCol: _*).options(option)
     format match {
       case "es" =>
@@ -88,6 +89,8 @@ class SaveAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
         writer.option("outputTableName", final_path).format("org.apache.spark.sql.execution.datasources.hbase").save()
       case "redis" =>
         writer.option("outputTableName", final_path).format("org.apache.spark.sql.execution.datasources.redis").save()
+      case "mysql" =>
+        writer.partitionBy(null).format("jdbc").option("dbtable", final_path).save()
       case _ =>
         writer.save(final_path)
     }
