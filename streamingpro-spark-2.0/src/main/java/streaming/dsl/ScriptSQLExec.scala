@@ -56,6 +56,16 @@ object ScriptSQLExec {
 }
 
 class ScriptSQLExecListener(_sparkSession: SparkSession, _pathPrefix: String) extends DSLSQLListener {
+
+  private val _env = new scala.collection.mutable.HashMap[String, String]
+
+  def addEnv(k: String, v: String) = {
+    _env(k) = v
+    this
+  }
+
+  def env() = _env
+
   def sparkSession = _sparkSession
 
   def pathPrefix: String = {
@@ -175,4 +185,12 @@ class ScriptSQLExecListener(_sparkSession: SparkSession, _pathPrefix: String) ex
   override def enterFunctionName(ctx: FunctionNameContext): Unit = {}
 
   override def exitFunctionName(ctx: FunctionNameContext): Unit = {}
+
+  override def enterSetValue(ctx: SetValueContext): Unit = {}
+
+  override def exitSetValue(ctx: SetValueContext): Unit = {}
+
+  override def enterSetKey(ctx: SetKeyContext): Unit = {}
+
+  override def exitSetKey(ctx: SetKeyContext): Unit = {}
 }

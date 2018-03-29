@@ -2,6 +2,7 @@ package streaming.dsl
 
 import org.apache.spark.sql._
 import _root_.streaming.dsl.parser.DSLSQLParser._
+import _root_.streaming.dsl.template.TemplateMerge
 
 /**
   * Created by allwefantasy on 27/8/2017.
@@ -35,6 +36,8 @@ class SaveAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
             case _ =>
               final_path = withPathPrefix(scriptSQLExecListener.pathPrefix, cleanStr(s.getText))
           }
+
+          final_path = TemplateMerge.merge(final_path, scriptSQLExecListener.env().toMap)
 
         case s: TableNameContext =>
           tableName = s.getText
