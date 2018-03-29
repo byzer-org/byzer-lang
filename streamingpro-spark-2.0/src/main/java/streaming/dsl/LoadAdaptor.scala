@@ -2,6 +2,7 @@ package streaming.dsl
 
 import org.apache.spark.sql._
 import _root_.streaming.dsl.parser.DSLSQLParser._
+import template.TemplateMerge
 
 /**
   * Created by allwefantasy on 27/8/2017.
@@ -31,6 +32,7 @@ class LoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
       }
     }
     reader.options(option)
+    path = TemplateMerge.merge(path, scriptSQLExecListener.env().toMap)
     format match {
       case "jdbc" =>
         val dbAndTable = cleanStr(path).split("\\.")
