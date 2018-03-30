@@ -1049,9 +1049,7 @@ public class DSLSQLParser extends Parser {
 		public QuotedIdentifierContext quotedIdentifier() {
 			return getRuleContext(QuotedIdentifierContext.class,0);
 		}
-		public IdentifierContext identifier() {
-			return getRuleContext(IdentifierContext.class,0);
-		}
+		public TerminalNode STRING() { return getToken(DSLSQLParser.STRING, 0); }
 		public SetValueContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
 		}
@@ -1071,22 +1069,23 @@ public class DSLSQLParser extends Parser {
 		enterRule(_localctx, 22, RULE_setValue);
 		try {
 			setState(199);
-			_errHandler.sync(this);
-			switch ( getInterpreter().adaptivePredict(_input,22,_ctx) ) {
-			case 1:
+			switch (_input.LA(1)) {
+			case BACKQUOTED_IDENTIFIER:
 				enterOuterAlt(_localctx, 1);
 				{
 				setState(197);
 				quotedIdentifier();
 				}
 				break;
-			case 2:
+			case STRING:
 				enterOuterAlt(_localctx, 2);
 				{
 				setState(198);
-				identifier();
+				match(STRING);
 				}
 				break;
+			default:
+				throw new NoViableAltException(this);
 			}
 		}
 		catch (RecognitionException re) {
@@ -1565,7 +1564,7 @@ public class DSLSQLParser extends Parser {
 		"\7!\2\2\u00be\21\3\2\2\2\u00bf\u00c0\7\r\2\2\u00c0\23\3\2\2\2\u00c1\u00c2"+
 		"\5&\24\2\u00c2\25\3\2\2\2\u00c3\u00c6\5*\26\2\u00c4\u00c6\5&\24\2\u00c5"+
 		"\u00c3\3\2\2\2\u00c5\u00c4\3\2\2\2\u00c6\27\3\2\2\2\u00c7\u00ca\5*\26"+
-		"\2\u00c8\u00ca\5&\24\2\u00c9\u00c7\3\2\2\2\u00c9\u00c8\3\2\2\2\u00ca\31"+
+		"\2\u00c8\u00ca\7!\2\2\u00c9\u00c7\3\2\2\2\u00c9\u00c8\3\2\2\2\u00ca\31"+
 		"\3\2\2\2\u00cb\u00cc\5&\24\2\u00cc\33\3\2\2\2\u00cd\u00d0\5$\23\2\u00ce"+
 		"\u00d0\5&\24\2\u00cf\u00cd\3\2\2\2\u00cf\u00ce\3\2\2\2\u00d0\35\3\2\2"+
 		"\2\u00d1\u00d2\5&\24\2\u00d2\37\3\2\2\2\u00d3\u00d4\5&\24\2\u00d4!\3\2"+

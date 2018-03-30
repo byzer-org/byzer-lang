@@ -17,7 +17,7 @@ class SetAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapto
           key = s.getText
         case s: SetValueContext =>
           value = cleanStr(s.getText)
-          if (s.quotedIdentifier().BACKQUOTED_IDENTIFIER() != null) {
+          if (s.quotedIdentifier() != null && s.quotedIdentifier().BACKQUOTED_IDENTIFIER() != null) {
             value = ShellCommand.execSimpleCommand(value).trim
           }
 
