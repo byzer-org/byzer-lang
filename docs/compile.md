@@ -71,6 +71,7 @@ mvn -DskipTests clean package  \
 -Pscala-2.11  \
 -Phive-thrift-server \
 -Pspark-2.1.0 \
+-Pdsl \
 -Pshade
 
 ```
