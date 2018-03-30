@@ -88,11 +88,6 @@
 
         <profile>
             <id>dsl-legacy</id>
-            <activation>
-                <property>
-                    <name>!skipFirstProfile</name>
-                </property>
-            </activation>
             <dependencies>
                 <dependency>
                     <groupId>streaming.king</groupId>
