@@ -62,7 +62,7 @@ path
     ;
 
 setValue
-    : quotedIdentifier | identifier
+    : quotedIdentifier | STRING
     ;
 
 setKey
