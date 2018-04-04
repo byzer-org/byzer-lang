@@ -3,7 +3,7 @@ package streaming.crawler
 
 import java.security.cert.X509Certificate
 
-import org.apache.http.client.methods.HttpGet
+import org.apache.http.client.methods.{CloseableHttpResponse, HttpGet}
 import org.apache.http.conn.ssl.NoopHostnameVerifier
 import org.apache.http.impl.client.HttpClients
 import org.apache.http.ssl.{SSLContextBuilder, TrustStrategy}
@@ -34,15 +34,24 @@ object HttpClientCrawler {
 
   def request(url: String): Document = {
 
-    val httpget = new HttpGet(url)
-    val response = httpclient.execute(httpget)
+    var response: CloseableHttpResponse = null
     try {
+      val httpget = new HttpGet(url)
+
+      response = httpclient.execute(httpget)
       val entity = response.getEntity
       if (entity != null) {
         Jsoup.parse(EntityUtils.toString(entity))
       } else null
+    } catch {
+      case e: Exception =>
+        e.printStackTrace()
+        null
     } finally {
-      response.close();
+      if (response != null) {
+        response.close()
+      }
+
     }
   }
 

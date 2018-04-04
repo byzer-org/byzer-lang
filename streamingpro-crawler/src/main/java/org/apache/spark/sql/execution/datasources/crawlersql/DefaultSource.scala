@@ -33,6 +33,7 @@ case class CrawlerSqlRelation(
     import org.apache.spark.sql.types._
     StructType(
       Array(
+        StructField("root_url", StringType, false),
         StructField("url", StringType, false)
       )
     )
@@ -44,7 +45,13 @@ case class CrawlerSqlRelation(
     val matchXPath = parameters("matchXPath")
     val doc = HttpClientCrawler.request(url)
     val list = Xsoup.compile(matchXPath).evaluate(doc).list()
-    val res = sqlContext.sparkContext.makeRDD(list).map(f => Row.fromSeq(Seq(f)))
+    val res = sqlContext.sparkContext.makeRDD(list).map(f => Row.fromSeq(Seq(url, f))).distinct()
+
+//    //保存新抓取到的url
+//    val tempStore = parameters.getOrElse("tempStore", "/tmp/streamingpro_crawler")
+//    val mode = parameters.getOrElse("mode", "Append")
+//    sqlContext.sparkSession.createDataFrame(res, schema).write.mode(SaveMode.valueOf(mode)).parquet(tempStore)
+//    //返回结果
     res
   }
 }
