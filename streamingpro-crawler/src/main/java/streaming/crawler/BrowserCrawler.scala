@@ -2,7 +2,7 @@ package streaming.crawler
 
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
-import org.openqa.selenium.{By, Proxy, WebDriver}
+import org.openqa.selenium.{By, JavascriptExecutor, Proxy, WebDriver}
 import org.openqa.selenium.phantomjs.PhantomJSDriver
 import org.openqa.selenium.remote.{CapabilityType, DesiredCapabilities}
 import org.openqa.selenium.support.ui.{ExpectedConditions, WebDriverWait}
@@ -46,13 +46,25 @@ object BrowserCrawler {
 
   }
 
-  def request(url: String, c_flag: String, timeout: Int = 10, useProxy: Boolean = false): Document = {
+  def request(url: String, c_flag: String, pageNum: Int = 0, timeout: Int = 10, useProxy: Boolean = false): Document = {
     var webDriver: WebDriver = null
     try {
       webDriver = getPhantomJs(useProxy)
       webDriver.get(url)
       val wait = new WebDriverWait(webDriver, timeout)
       wait.until(ExpectedConditions.presenceOfElementLocated(By.id(c_flag)))
+
+      //---------------
+      if (pageNum > 0) {
+        val jse = webDriver.asInstanceOf[JavascriptExecutor]
+        (0 until pageNum).foreach { f =>
+          jse.executeScript("window.scrollBy(0,document.body.scrollHeight+50)", "")
+          Thread.sleep(1000)
+        }
+
+      }
+      //---------------
+
       val document = Jsoup.parse(webDriver.getPageSource())
       document
     } finally {

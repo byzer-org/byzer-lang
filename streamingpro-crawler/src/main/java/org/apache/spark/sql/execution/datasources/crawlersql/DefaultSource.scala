@@ -46,6 +46,12 @@ case class CrawlerSqlRelation(
   override def buildScan(): RDD[Row] = {
     val url = parameters("path")
     val matchXPath = parameters("matchXPath")
+
+    //scroll/paging
+    val pageType = parameters.getOrElse("page.type", "paging")
+    val pageNum = parameters.getOrElse("page.num", "1").toInt
+    val pageFlag = parameters.getOrElse("page.flag", "")
+
     val doc = HttpClientCrawler.request(url)
     val list = Xsoup.compile(matchXPath).evaluate(doc).list()
     //去重
