@@ -1,5 +1,7 @@
 package org.apache.spark.sql.execution.datasources.crawlersql
 
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.spark.internal.Logging
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, Row, SQLContext, SaveMode}
@@ -7,6 +9,7 @@ import org.apache.spark.sql.sources._
 import org.apache.spark.sql.types.StructType
 import streaming.crawler.HttpClientCrawler
 import us.codecraft.xsoup.Xsoup
+
 import scala.collection.JavaConversions._
 
 /**
@@ -45,13 +48,38 @@ case class CrawlerSqlRelation(
     val matchXPath = parameters("matchXPath")
     val doc = HttpClientCrawler.request(url)
     val list = Xsoup.compile(matchXPath).evaluate(doc).list()
+    //去重
     val res = sqlContext.sparkContext.makeRDD(list).map(f => Row.fromSeq(Seq(url, f))).distinct()
 
-//    //保存新抓取到的url
-//    val tempStore = parameters.getOrElse("tempStore", "/tmp/streamingpro_crawler")
-//    val mode = parameters.getOrElse("mode", "Append")
-//    sqlContext.sparkSession.createDataFrame(res, schema).write.mode(SaveMode.valueOf(mode)).parquet(tempStore)
-//    //返回结果
-    res
+    //保存新抓取到的url
+    val tempStore = parameters.getOrElse("tempStore", s"/tmp/streamingpro_crawler/${md5Hash(url)}")
+    val fs = FileSystem.get(new Configuration())
+
+    var result = res
+    if (fs.exists(new Path(tempStore))) {
+      val df_name = md5Hash(url) + System.currentTimeMillis()
+      sqlContext.sparkSession.createDataFrame(res, schema).createOrReplaceTempView(df_name)
+      sqlContext.sparkSession.read.parquet(tempStore).createOrReplaceTempView("url_history")
+
+      //过滤历史的
+      result = sqlContext.sparkSession.sql(
+        s"""
+           |select aut.url as url ,aut.root_url as root_url from ${df_name} aut
+           |left join url_history auh
+           |on aut.url=auh.url
+           |where auh.url is null
+      """.stripMargin).rdd
+    }
+
+    //返回结果
+    result
+  }
+
+  def md5Hash(text: String): String = java.security.MessageDigest.getInstance("MD5").digest(text.getBytes()).map(0xFF & _).map {
+    "%02x".format(_)
+  }.foldLeft("") {
+    _ + _
   }
 }
+
+

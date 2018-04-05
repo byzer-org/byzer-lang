@@ -19,6 +19,12 @@
             <scope>compile</scope>
         </dependency>
         <dependency>
+            <groupId>streaming.king</groupId>
+            <artifactId>streamingpro-spark-common</artifactId>
+            <version>${parent.version}</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-core_2.11</artifactId>
             <version>${spark.version}</version>

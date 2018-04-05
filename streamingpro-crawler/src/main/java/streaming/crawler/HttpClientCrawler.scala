@@ -23,7 +23,13 @@ object HttpClientCrawler {
 
     val routePlanner = new HttpRoutePlanner() {
       override def determineRoute(target: HttpHost, request: HttpRequest, context: HttpContext): HttpRoute = {
-        val Array(host, port) = ProxyUtil.getProxy().split(":")
+
+        var proxyStr = ""
+        do {
+          proxyStr = ProxyUtil.getProxy()
+        } while (proxyStr.length == 0)
+
+        val Array(host, port) = proxyStr.split(":")
         return new HttpRoute(target, null, new HttpHost(host, port.toInt),
           "https".equalsIgnoreCase(target.getSchemeName()))
       }

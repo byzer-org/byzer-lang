@@ -46,12 +46,12 @@ object BrowserCrawler {
 
   }
 
-  def request(url: String, c_flag: String): Document = {
+  def request(url: String, c_flag: String, timeout: Int = 10, useProxy: Boolean = false): Document = {
     var webDriver: WebDriver = null
     try {
-      webDriver = getPhantomJs(false)
+      webDriver = getPhantomJs(useProxy)
       webDriver.get(url)
-      val wait = new WebDriverWait(webDriver, 10)
+      val wait = new WebDriverWait(webDriver, timeout)
       wait.until(ExpectedConditions.presenceOfElementLocated(By.id(c_flag)))
       val document = Jsoup.parse(webDriver.getPageSource())
       document

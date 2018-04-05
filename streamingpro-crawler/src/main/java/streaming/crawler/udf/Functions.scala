@@ -48,4 +48,19 @@ object Functions {
 
     })
   }
+
+  def crawler_md5(uDFRegistration: UDFRegistration) = {
+    uDFRegistration.register("crawler_md5", (html: String) => {
+      if (html == null) null
+      else {
+        java.security.MessageDigest.getInstance("MD5").digest(html.getBytes()).map(0xFF & _).map {
+          "%02x".format(_)
+        }.foldLeft("") {
+          _ + _
+        }
+      }
+
+    })
+  }
+
 }
