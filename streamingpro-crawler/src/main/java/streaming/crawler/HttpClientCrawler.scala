@@ -3,9 +3,12 @@ package streaming.crawler
 
 import java.security.cert.X509Certificate
 
+import org.apache.http.{HttpHost, HttpRequest}
 import org.apache.http.client.methods.{CloseableHttpResponse, HttpGet}
+import org.apache.http.conn.routing.{HttpRoute, HttpRoutePlanner}
 import org.apache.http.conn.ssl.NoopHostnameVerifier
 import org.apache.http.impl.client.HttpClients
+import org.apache.http.protocol.HttpContext
 import org.apache.http.ssl.{SSLContextBuilder, TrustStrategy}
 import org.apache.http.util.EntityUtils
 import org.jsoup.Jsoup
@@ -16,29 +19,42 @@ import org.jsoup.nodes.Document
   */
 object HttpClientCrawler {
 
-  private def client = {
+  private def client(useProxy: Boolean) = {
+
+    val routePlanner = new HttpRoutePlanner() {
+      override def determineRoute(target: HttpHost, request: HttpRequest, context: HttpContext): HttpRoute = {
+        val Array(host, port) = ProxyUtil.getProxy().split(":")
+        return new HttpRoute(target, null, new HttpHost(host, port.toInt),
+          "https".equalsIgnoreCase(target.getSchemeName()))
+      }
+    }
+
     val acceptingTrustStrategy = new TrustStrategy {
       override def isTrusted(x509Certificates: Array[X509Certificate], s: String): Boolean = true
     }
     val sslContext = new SSLContextBuilder()
       .loadTrustMaterial(null, acceptingTrustStrategy).build();
 
-    val client = HttpClients.custom()
-      .setSSLContext(sslContext)
+    var client = HttpClients.custom()
+    if (useProxy) {
+      client = client.setRoutePlanner(routePlanner)
+    }
+    client.setSSLContext(sslContext)
       .setSSLHostnameVerifier(new NoopHostnameVerifier())
       .build()
-    client
   }
 
-  val httpclient = client
+  val httpclient = client(false)
+  val httpclientWithpProxy = client(true)
 
-  def request(url: String): Document = {
+  def request(url: String, useProxy: Boolean = false): Document = {
 
     var response: CloseableHttpResponse = null
+    val hc = if (useProxy) httpclientWithpProxy else httpclient
     try {
       val httpget = new HttpGet(url)
 
-      response = httpclient.execute(httpget)
+      response = hc.execute(httpget)
       val entity = response.getEntity
       if (entity != null) {
         Jsoup.parse(EntityUtils.toString(entity))
