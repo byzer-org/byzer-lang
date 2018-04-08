@@ -51,11 +51,14 @@ case class CrawlerSqlRelation(
     val pageType = parameters.getOrElse("page.type", "paging")
     val pageNum = parameters.getOrElse("page.num", "1").toInt
     val pageFlag = parameters.getOrElse("page.flag", "")
+    val pageScrollTime = parameters.getOrElse("page.scroll.time", "1000").toInt
+
+    val ptPath = parameters.getOrElse("phantomJSPath", "/usr/local/Cellar/phantomjs/2.1.1/bin/phantomjs")
 
     val doc = if (pageType == "paging") {
       HttpClientCrawler.request(url)
     } else {
-      BrowserCrawler.request(url, pageFlag, pageNum)
+      BrowserCrawler.request(url, ptPath, pageFlag, pageNum = pageNum, pageScrollTime = pageScrollTime)
     }
     val list = Xsoup.compile(matchXPath).evaluate(doc).list()
     log.info(s"fetch $url result  size:" + list.size())

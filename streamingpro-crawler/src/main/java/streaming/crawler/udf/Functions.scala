@@ -3,7 +3,7 @@ package streaming.crawler.udf
 import cn.edu.hfut.dmic.contentextractor.ContentExtractor
 import org.apache.spark.sql.UDFRegistration
 import org.jsoup.Jsoup
-import streaming.crawler.HttpClientCrawler
+import streaming.crawler.{BrowserCrawler, HttpClientCrawler}
 import us.codecraft.xsoup.Xsoup
 
 /**
@@ -31,6 +31,15 @@ object Functions {
   def crawler_request(uDFRegistration: UDFRegistration) = {
     uDFRegistration.register("crawler_request", (co: String) => {
       val doc = HttpClientCrawler.request(co)
+      if (doc == null) null
+      else
+        doc.html()
+    })
+  }
+
+  def crawler_browser_request(uDFRegistration: UDFRegistration) = {
+    uDFRegistration.register("crawler_browser_request", (co: String, ptPath: String, c_flag: String) => {
+      val doc = BrowserCrawler.request(co, ptPath, c_flag)
       if (doc == null) null
       else
         doc.html()

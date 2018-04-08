@@ -17,7 +17,8 @@
 
 package org.openqa.selenium.support.ui;
 
-import java.util.function.Function;
+import com.google.common.base.IFunction;
+
 
 /**
  * A generic interface for waiting until a condition is true or not null. The condition may take a
@@ -41,5 +42,5 @@ public interface Wait<F> {
    * @param isTrue the parameter to pass to the {@link ExpectedCondition}
    * @return truthy value from the isTrue condition
    */
-  <T> T until(Function<? super F, T> isTrue);
+  <T> T until(IFunction<? super F, T> isTrue);
 }

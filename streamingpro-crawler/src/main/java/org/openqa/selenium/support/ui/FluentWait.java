@@ -17,6 +17,7 @@
 
 package org.openqa.selenium.support.ui;
 
+import com.google.common.base.IFunction;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import org.openqa.selenium.TimeoutException;
@@ -239,7 +240,7 @@ public class FluentWait<T> implements Wait<T> {
    * @throws TimeoutException If the timeout expires.
    */
   @Override
-  public <V> V until(Function<? super T, V> isTrue) {
+  public <V> V until(IFunction<? super T, V> isTrue) {
     long end = clock.laterBy(timeout.toMillis());
     Throwable lastException;
     while (true) {
