@@ -52,7 +52,7 @@ object BrowserCrawler {
       webDriver = getPhantomJs(useProxy)
       webDriver.get(url)
       val wait = new WebDriverWait(webDriver, timeout)
-      wait.until(ExpectedConditions.presenceOfElementLocated(By.id(c_flag)))
+      //wait.until(ExpectedConditions.presenceOfElementLocated(By.id(c_flag)))
 
       //---------------
       if (pageNum > 0) {

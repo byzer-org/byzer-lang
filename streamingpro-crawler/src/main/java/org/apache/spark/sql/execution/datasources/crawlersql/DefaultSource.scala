@@ -7,7 +7,7 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, Row, SQLContext, SaveMode}
 import org.apache.spark.sql.sources._
 import org.apache.spark.sql.types.StructType
-import streaming.crawler.HttpClientCrawler
+import streaming.crawler.{BrowserCrawler, HttpClientCrawler}
 import us.codecraft.xsoup.Xsoup
 
 import scala.collection.JavaConversions._
@@ -52,8 +52,13 @@ case class CrawlerSqlRelation(
     val pageNum = parameters.getOrElse("page.num", "1").toInt
     val pageFlag = parameters.getOrElse("page.flag", "")
 
-    val doc = HttpClientCrawler.request(url)
+    val doc = if (pageType == "paging") {
+      HttpClientCrawler.request(url)
+    } else {
+      BrowserCrawler.request(url, pageFlag, pageNum)
+    }
     val list = Xsoup.compile(matchXPath).evaluate(doc).list()
+    log.info(s"fetch $url result  size:" + list.size())
     //去重
     val res = sqlContext.sparkContext.makeRDD(list).map(f => Row.fromSeq(Seq(url, f))).distinct()
 
@@ -76,6 +81,8 @@ case class CrawlerSqlRelation(
            |where auh.url is null
       """.stripMargin).rdd
     }
+
+    log.info(s"filtered fetch $url  result  size:" + result.count())
 
     //返回结果
     result

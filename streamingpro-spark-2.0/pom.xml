@@ -109,6 +109,17 @@
         </profile>
 
         <profile>
+            <id>crawler</id>
+            <dependencies>
+                <dependency>
+                    <groupId>streaming.king</groupId>
+                    <artifactId>streamigpro-crawler</artifactId>
+                    <version>${parent.version}</version>
+                </dependency>
+            </dependencies>
+        </profile>
+
+        <profile>
             <id>online</id>
             <properties>
                 <mode>online</mode>
@@ -190,12 +201,6 @@
         </dependency>
 
         <dependency>
-            <groupId>streaming.king</groupId>
-            <artifactId>streamigpro-crawler</artifactId>
-            <version>${parent.version}</version>
-        </dependency>
-
-        <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-streaming_${scala.binary.version}</artifactId>
             <version>${spark.version}</version>
@@ -239,6 +244,7 @@
             <groupId>org.scalactic</groupId>
             <artifactId>scalactic_${scala.binary.version}</artifactId>
             <version>3.0.0</version>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.scalatest</groupId>

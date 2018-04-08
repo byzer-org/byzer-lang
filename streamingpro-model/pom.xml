@@ -9,7 +9,9 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-
+    <properties>
+        <scala.binary.version>2.11</scala.binary.version>
+    </properties>
     <artifactId>streamingpro-model</artifactId>
     <dependencies>
         <dependency>
@@ -25,18 +27,22 @@
 
         <dependency>
             <groupId>org.deeplearning4j</groupId>
-            <artifactId>dl4j-spark_2.11</artifactId>
+            <artifactId>dl4j-spark_${scala.binary.version}</artifactId>
             <version>0.9.1_spark_2</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.apache.spark</groupId>
-                    <artifactId>spark-sql_2.11</artifactId>
+                    <artifactId>spark-sql_${scala.binary.version}</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.google.guava</groupId>
+                    <artifactId>guava</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
         <dependency>
             <groupId>org.deeplearning4j</groupId>
-            <artifactId>dl4j-spark-parameterserver_2.11</artifactId>
+            <artifactId>dl4j-spark-parameterserver_${scala.binary.version}</artifactId>
             <version>0.9.1_spark_2</version>
             <exclusions>
                 <exclusion>
@@ -46,6 +52,10 @@
                 <exclusion>
                     <groupId>org.apache.spark</groupId>
                     <artifactId>spark-core_2.11</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.google.guava</groupId>
+                    <artifactId>guava</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
@@ -58,8 +68,14 @@
 
         <dependency>
             <groupId>org.nd4j</groupId>
-            <artifactId>nd4j-kryo_2.11</artifactId>
+            <artifactId>nd4j-kryo_${scala.binary.version}</artifactId>
             <version>0.9.1</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.google.guava</groupId>
+                    <artifactId>guava</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.bytedeco</groupId>
