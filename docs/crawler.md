@@ -87,11 +87,21 @@ select crawler_md5(url) as md5_url
 
 ## 一个完整示例
 
+本脚本会抓取csdn ai 板块下的博文，并且自动下拉20次，大概得到上百条内容。最后解析出时间，标题，内容，然后保存
+到MySQL里。
 
 
 ```sql
 set resultTempStore="/tmp/streamingpro_crawler_content";
 set tempStore="/tmp/streamingpro_crawler/c61c326a525ce1ddb672147e0096ef26";
+
+--注册一张mysql数据库表
+connect mysql where url="..."
+and driver=""
+and user=""
+and password=""
+as mysql_crawler_db;
+
 
 -- 抓取列表页的url
 load crawlersql.`https://www.csdn.net/nav/ai` 
@@ -121,8 +131,8 @@ from aritle_list
 where html is not null
 as article_table;
 
--- 对最后的抓取结果进行保存
-save overwrite article_table as json.`/tmp/article_table`;
+-- 对最后的抓取结果保存到mysql里
+save append article_table as jdbc.`mysql_crawler_db.crawler_table`;
 
 -- 已经抓取过的url也需要进行增量存储，方便后续过滤
 save append aritle_url_table_source as parquet.`${tempStore}`;
