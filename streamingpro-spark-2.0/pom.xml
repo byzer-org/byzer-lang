@@ -5,7 +5,7 @@
     <parent>
         <artifactId>streamingpro</artifactId>
         <groupId>streaming.king</groupId>
-        <version>1.0.0</version>
+        <version>1.1.0</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -103,6 +103,17 @@
                 <dependency>
                     <groupId>streaming.king</groupId>
                     <artifactId>streamingpro-dsl-legacy</artifactId>
+                    <version>${parent.version}</version>
+                </dependency>
+            </dependencies>
+        </profile>
+
+        <profile>
+            <id>crawler</id>
+            <dependencies>
+                <dependency>
+                    <groupId>streaming.king</groupId>
+                    <artifactId>streamigpro-crawler</artifactId>
                     <version>${parent.version}</version>
                 </dependency>
             </dependencies>
@@ -233,6 +244,7 @@
             <groupId>org.scalactic</groupId>
             <artifactId>scalactic_${scala.binary.version}</artifactId>
             <version>3.0.0</version>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.scalatest</groupId>

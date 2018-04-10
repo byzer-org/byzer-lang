@@ -104,11 +104,18 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
 
   params.put("_session_", sparkSession)
 
-  registerUDF
+  registerUDF("streaming.core.compositor.spark.udf.Functions")
 
-  def registerUDF = {
+  if (params.containsKey("streaming.udf.clzznames")) {
+    params("streaming.udf.clzznames").toString.split(",").foreach { clzz =>
+      registerUDF(clzz)
+    }
+  }
+
+
+  def registerUDF(clzz: String) = {
     logger.info("register functions.....")
-    Class.forName("streaming.core.compositor.spark.udf.Functions").getMethods.foreach { f =>
+    Class.forName(clzz).getMethods.foreach { f =>
       try {
         if (Modifier.isStatic(f.getModifiers)) {
           logger.info(f.getName)

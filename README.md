@@ -1,5 +1,8 @@
 # StreamingPro 中文文档
 
+
+编译请务必参看[编译文档](https://github.com/allwefantasy/streamingpro/blob/master/docs/compile.md)哦。
+
 ## 概览：
 
 1. [概述](https://github.com/allwefantasy/streamingpro/blob/master/README.md#概述)
@@ -17,6 +20,10 @@
 1. [MLSQL-深度学习 based on TensorFlow](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-tensorflow.md)
 1. [MLSQL-单机算法 based on SKLearn](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-sklearn.md)
 1. [Vector操作函数](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-functions.md)
+
+## SQL爬虫
+
+1. [网页抓取](https://github.com/allwefantasy/streamingpro/blob/master/docs/crawler.md)
 
 ## 用配置来编程
 1. [Spark Streaming](https://github.com/allwefantasy/streamingpro/blob/master/docs/sparkstreamingjson.md)

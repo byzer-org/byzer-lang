@@ -5,7 +5,7 @@
     <groupId>streaming.king</groupId>
     <artifactId>streamingpro</artifactId>
     <packaging>pom</packaging>
-    <version>1.0.0</version>
+    <version>1.1.0</version>
     <modules>
         <module>streamingpro-commons</module>
         <module>streamingpro-spark-common</module>
@@ -28,6 +28,8 @@
         <spark.version>2.1.1</spark.version>
 
         <flink.version>1.2.0</flink.version>
+        <guava.version>16.0</guava.version>
+        <httpclient.version>4.5.3</httpclient.version>
 
         <serviceframework.version>2.0.0</serviceframework.version>
         <scope>provided</scope>
@@ -48,7 +50,7 @@
         </repository>
         <repository>
             <id>cloudera</id>
-            <url>https://repositonry.cloudera.com/artifactory/cloudera-repos/</url>
+            <url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>
         </repository>
     </repositories>
 
@@ -171,11 +173,11 @@
                 </spark.streaming.kafka.artifactId>
                 <spark.sql.kafka.artifactId>spark-sql-kafka-0-10_${scala.binary.version}</spark.sql.kafka.artifactId>
                 <spark.version>2.2.0</spark.version>
-                <hadoop-client-version>2.6.0</hadoop-client-version>
             </properties>
             <modules>
                 <module>streamingpro-dsl-legacy</module>
                 <module>streamingpro-spark-2.0</module>
+                <module>streamingpro-crawler</module>
             </modules>
             <dependencies>
                 <dependency>
@@ -237,11 +239,11 @@
                 </spark.streaming.kafka.artifactId>
                 <spark.sql.kafka.artifactId>spark-sql-kafka-0-10_${scala.binary.version}</spark.sql.kafka.artifactId>
                 <spark.version>2.3.0</spark.version>
-                <hadoop-client-version>2.6.5</hadoop-client-version>
             </properties>
             <modules>
                 <module>streamingpro-dsl</module>
                 <module>streamingpro-spark-2.0</module>
+                <module>streamingpro-crawler</module>
             </modules>
             <dependencies>
                 <dependency>
@@ -331,8 +333,25 @@
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>fluent-hc</artifactId>
-            <version>4.3.2</version>
+            <version>${httpclient.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.httpcomponents</groupId>
+                    <artifactId>httpclient</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>${httpclient.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-exec</artifactId>
+            <version>1.3</version>
+        </dependency>
+
         <dependency>
             <groupId>joda-time</groupId>
             <artifactId>joda-time</artifactId>
@@ -362,6 +381,11 @@
             <version>2.6.2</version>
         </dependency>
 
+        <!--<dependency>-->
+        <!--<groupId></groupId>-->
+        <!--<artifactId></artifactId>-->
+        <!--</dependency>-->
+
         <dependency>
             <groupId>net.csdn</groupId>
             <artifactId>serviceframework-dispatcher_${scala.binary.version}</artifactId>
@@ -379,7 +403,17 @@
                     <groupId>com.alibaba</groupId>
                     <artifactId>dubbo</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>org.apache.httpcomponents</groupId>
+                    <artifactId>httpclient</artifactId>
+                </exclusion>
             </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>${guava.version}</version>
         </dependency>
 
         <dependency>
@@ -432,6 +466,15 @@
                 <exclusion>
                     <groupId>org.scala-lang</groupId>
                     <artifactId>jline</artifactId>
+                </exclusion>
+
+                <exclusion>
+                    <groupId>com.google.guava</groupId>
+                    <artifactId>guava</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.httpcomponents</groupId>
+                    <artifactId>httpclient</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
@@ -549,15 +592,17 @@
                     </execution>
                 </executions>
             </plugin>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>2.3.2</version>
                 <configuration>
+                    <!--<compilerArgument>-parameters</compilerArgument>-->
                     <compilerArgument>-g</compilerArgument>
                     <verbose>true</verbose>
-                    <source>1.6</source>
-                    <target>1.6</target>
+                    <source>1.8</source>
+                    <target>1.8</target>
                 </configuration>
 
             </plugin>

@@ -52,6 +52,8 @@ class LoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
         table = reader.format("org.elasticsearch.spark.sql").load(dbAndTable(1))
       case "hbase" | "org.apache.spark.sql.execution.datasources.hbase" =>
         table = reader.format("org.apache.spark.sql.execution.datasources.hbase").load()
+      case "crawlersql" =>
+        table = reader.option("path",cleanStr(path)).format("org.apache.spark.sql.execution.datasources.crawlersql").load()
       case _ =>
         table = reader.format(format).load(withPathPrefix(scriptSQLExecListener.pathPrefix, cleanStr(path)))
     }
