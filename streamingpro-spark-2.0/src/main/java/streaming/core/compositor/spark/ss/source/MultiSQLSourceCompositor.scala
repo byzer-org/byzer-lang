@@ -37,7 +37,7 @@ class MultiSQLSourceCompositor[T] extends Compositor[T] with CompositorHelper {
       _cfg("format") match {
         case "kafka" | "socket" =>
           val df = spark.readStream.format(_cfg("format")).options(
-            (_cfg - "format" - "path" - "outputTable").map(f => (f._1.toString, f._2.toString))).load(sourcePath)
+            (_cfg - "format" - "path" - "outputTable")).load()
           df.createOrReplaceTempView(_cfg("outputTable"))
         case "kafka8" | "kafka9" =>
           val format = "com.hortonworks.spark.sql.kafka08"
@@ -47,7 +47,7 @@ class MultiSQLSourceCompositor[T] extends Compositor[T] with CompositorHelper {
              startingoffset smallest
            */
           val df = spark.readStream.format(format).options(
-            (_cfg - "format" - "path" - "outputTable").map(f => (f._1.toString, f._2.toString))).load(sourcePath)
+            (_cfg - "format" - "path" - "outputTable").map(f => (f._1.toString, f._2.toString))).load()
           df.createOrReplaceTempView(_cfg("outputTable"))
 
         case "mock" =>
