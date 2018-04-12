@@ -87,7 +87,7 @@
         </profile>
 
         <profile>
-            <id>dsl-legacy</id>
+            <id>dsl</id>
             <dependencies>
                 <dependency>
                     <groupId>streaming.king</groupId>
@@ -98,7 +98,7 @@
         </profile>
 
         <profile>
-            <id>dsl</id>
+            <id>dsl-legacy</id>
             <dependencies>
                 <dependency>
                     <groupId>streaming.king</groupId>

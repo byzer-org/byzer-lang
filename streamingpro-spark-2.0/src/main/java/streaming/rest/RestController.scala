@@ -4,6 +4,7 @@ import java.lang.reflect.Modifier
 
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
+import scala.util.control.NonFatal
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
@@ -79,7 +80,9 @@ class RestController extends ApplicationController {
       if (paramAsBoolean("async", false)) {
         StreamingproJobManager.asyncRun(sparkSession, jobInfo, () => {
           try {
-            ScriptSQLExec.parse(param("sql"), new ScriptSQLExecListener(sparkSession, param("prefixPath")))
+            val allPathPrefix = fromJson(param("allPathPrefix"), classOf[Map[String, String]])
+            val defaultPathPrefix = param("defaultPathPrefix")
+            ScriptSQLExec.parse(param("sql"), new ScriptSQLExecListener(sparkSession, defaultPathPrefix, allPathPrefix))
             htp.get(new Url(param("callback")), Map("stat" -> s"""success"""))
           } catch {
             case e: Exception =>
@@ -89,7 +92,9 @@ class RestController extends ApplicationController {
         })
       } else {
         StreamingproJobManager.run(sparkSession, jobInfo, () => {
-          ScriptSQLExec.parse(param("sql"), new ScriptSQLExecListener(sparkSession, param("prefixPath")))
+          val allPathPrefix = fromJson(param("allPathPrefix"), classOf[Map[String, String]])
+          val defaultPathPrefix = param("defaultPathPrefix")
+          ScriptSQLExec.parse(param("sql"), new ScriptSQLExecListener(sparkSession, defaultPathPrefix, allPathPrefix))
         })
       }
 
@@ -259,5 +264,15 @@ class RestController extends ApplicationController {
 
   def toJsonString[T](obj: T): String = {
     _mapper.writeValueAsString(obj)
+  }
+
+  def fromJson[T](json: String, `class`: Class[T]): T = {
+    try {
+      _mapper.readValue(json, `class`)
+    } catch {
+      case NonFatal(e) =>
+        logger.error(s"parse json error.", e)
+        null.asInstanceOf[T]
+    }
   }
 }

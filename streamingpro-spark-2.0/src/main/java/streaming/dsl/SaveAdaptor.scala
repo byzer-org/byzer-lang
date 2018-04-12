@@ -18,6 +18,8 @@ class SaveAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
     var tableName = ""
     var partitionByCol = Array[String]()
 
+    val owner = option.get("owner")
+
     (0 to ctx.getChildCount() - 1).foreach { tokenIndex =>
       ctx.getChild(tokenIndex) match {
         case s: FormatContext =>
@@ -34,7 +36,7 @@ class SaveAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
             case "hive" | "kafka8" | "kafka9" | "hbase" | "redis" | "es" =>
               final_path = cleanStr(s.getText)
             case _ =>
-              final_path = withPathPrefix(scriptSQLExecListener.pathPrefix, cleanStr(s.getText))
+              final_path = withPathPrefix(scriptSQLExecListener.pathPrefix(owner), cleanStr(s.getText))
           }
 
           final_path = TemplateMerge.merge(final_path, scriptSQLExecListener.env().toMap)

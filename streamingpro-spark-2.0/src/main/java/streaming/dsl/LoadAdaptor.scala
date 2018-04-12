@@ -55,7 +55,8 @@ class LoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
       case "crawlersql" =>
         table = reader.option("path",cleanStr(path)).format("org.apache.spark.sql.execution.datasources.crawlersql").load()
       case _ =>
-        table = reader.format(format).load(withPathPrefix(scriptSQLExecListener.pathPrefix, cleanStr(path)))
+        val owner = option.get("owner")
+        table = reader.format(format).load(withPathPrefix(scriptSQLExecListener.pathPrefix(owner), cleanStr(path)))
     }
     table.createOrReplaceTempView(tableName)
   }
