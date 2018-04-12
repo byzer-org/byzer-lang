@@ -13,6 +13,7 @@ class TrainAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdap
     var format = ""
     var path = ""
     var options = Map[String, String]()
+    val owner = options.get("owner")
     (0 to ctx.getChildCount() - 1).foreach { tokenIndex =>
       ctx.getChild(tokenIndex) match {
         case s: TableNameContext =>
@@ -20,7 +21,7 @@ class TrainAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdap
         case s: FormatContext =>
           format = s.getText
         case s: PathContext =>
-          path = withPathPrefix(scriptSQLExecListener.pathPrefix, cleanStr(s.getText))
+          path = withPathPrefix(scriptSQLExecListener.pathPrefix(owner), cleanStr(s.getText))
         case s: ExpressionContext =>
           options += (cleanStr(s.identifier().getText) -> cleanStr(s.STRING().getText))
         case s: BooleanExpressionContext =>
