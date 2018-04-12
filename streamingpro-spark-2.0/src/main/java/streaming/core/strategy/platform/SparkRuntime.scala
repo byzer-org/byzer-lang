@@ -1,17 +1,18 @@
 package streaming.core.strategy.platform
 
 import java.lang.reflect.Modifier
+import java.util.{Map => JMap}
 import java.util.concurrent.atomic.AtomicReference
 import java.util.logging.Logger
-import java.util.{Map => JMap}
 
-import org.apache.spark.{SparkConf, SparkRuntimeOperator}
-import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.hive.HiveContext
-import org.apache.spark.sql.hive.thriftserver.HiveThriftServer2
-import streaming.core.JobCanceller
 
 import scala.collection.JavaConversions._
+import org.apache.spark.{SparkConf, SparkRuntimeOperator}
+import org.apache.spark.ps.cluster.PSDriverBackend
+import org.apache.spark.ps.local.LocalPSSchedulerBackend
+import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.hive.thriftserver.HiveThriftServer2
+import streaming.core.StreamingproJobManager
 
 /**
   * Created by allwefantasy on 30/3/2017.
@@ -22,6 +23,9 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
 
   def name = "SPARK"
 
+  var localSchedulerBackend: LocalPSSchedulerBackend = null
+  var psDriverBackend: PSDriverBackend = null
+
   var sparkSession: SparkSession = createRuntime
 
 
@@ -30,16 +34,30 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
   }
 
   def createRuntime = {
+    logger.info("create Runtime...")
     val conf = new SparkConf()
     params.filter(f => f._1.toString.startsWith("spark.")).foreach { f =>
       conf.set(f._1.toString, f._2.toString)
     }
-
     if (params.containsKey("streaming.master")) {
       conf.setMaster(params.get("streaming.master").toString)
     }
 
     conf.setAppName(params.get("streaming.name").toString)
+
+    def isLocalMaster(conf: SparkConf): Boolean = {
+      val master = conf.get("spark.master", "")
+      master == "local" || master.startsWith("local[")
+    }
+
+    if (params.containsKey("streaming.ps.enable") && params.get("streaming.ps.enable").toString.toBoolean) {
+      if (!isLocalMaster(conf)) {
+        logger.info("register worker.sink.pservice.class with org.apache.spark.ps.cluster.PSServiceSink")
+        conf.set("spark.metrics.conf.executor.sink.pservice.class", "org.apache.spark.ps.cluster.PSServiceSink")
+      }
+    }
+
+    //    SQLDL4J.tm = SQLDL4J.init(isLocalMaster(conf))
 
     val sparkSession = SparkSession.builder().config(conf)
     if (params.containsKey("streaming.enableHiveSupport") &&
@@ -47,8 +65,11 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
       sparkSession.enableHiveSupport()
     }
 
-   val ss = if (params.containsKey("streaming.enableCarbonDataSupport") &&
+
+
+    val ss = if (params.containsKey("streaming.enableCarbonDataSupport") &&
       params.get("streaming.enableCarbonDataSupport").toString.toBoolean) {
+      logger.info("carbondata enabled...")
       val url = params.getOrElse("streaming.hive.javax.jdo.option.ConnectionURL", "").toString
       if (!url.isEmpty) {
         logger.info("set hive javax.jdo.option.ConnectionURL=" + url)
@@ -64,20 +85,40 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
       sparkSession.getOrCreate()
     }
 
-    if (params.containsKey("streaming.job.cancel") && params.get("streaming.job.cancel").toString.toBoolean) {
-      JobCanceller.init(ss.sparkContext)
+    StreamingproJobManager.init(ss.sparkContext)
+
+    if (params.containsKey("streaming.ps.enable") && params.get("streaming.ps.enable").toString.toBoolean) {
+      logger.info("ps enabled...")
+      if (ss.sparkContext.isLocal) {
+        localSchedulerBackend = new LocalPSSchedulerBackend(ss.sparkContext)
+        localSchedulerBackend.start()
+      } else {
+        logger.info("start PSDriverBackend")
+        psDriverBackend = new PSDriverBackend(ss.sparkContext)
+        psDriverBackend.start()
+      }
     }
+
     ss
   }
 
   params.put("_session_", sparkSession)
 
-  registerUDF
+  registerUDF("streaming.core.compositor.spark.udf.Functions")
 
-  def registerUDF = {
-    Class.forName("streaming.core.compositor.spark.udf.Functions").getMethods.foreach { f =>
+  if (params.containsKey("streaming.udf.clzznames")) {
+    params("streaming.udf.clzznames").toString.split(",").foreach { clzz =>
+      registerUDF(clzz)
+    }
+  }
+
+
+  def registerUDF(clzz: String) = {
+    logger.info("register functions.....")
+    Class.forName(clzz).getMethods.foreach { f =>
       try {
         if (Modifier.isStatic(f.getModifiers)) {
+          logger.info(f.getName)
           f.invoke(null, sparkSession.udf)
         }
       } catch {

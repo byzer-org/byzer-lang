@@ -2,6 +2,7 @@ package streaming.dsl
 
 import org.apache.spark.sql._
 import _root_.streaming.dsl.parser.DSLSQLParser._
+import template.TemplateMerge
 
 /**
   * Created by allwefantasy on 27/8/2017.
@@ -31,6 +32,7 @@ class LoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
       }
     }
     reader.options(option)
+    path = TemplateMerge.merge(path, scriptSQLExecListener.env().toMap)
     format match {
       case "jdbc" =>
         val dbAndTable = cleanStr(path).split("\\.")
@@ -50,8 +52,11 @@ class LoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
         table = reader.format("org.elasticsearch.spark.sql").load(dbAndTable(1))
       case "hbase" | "org.apache.spark.sql.execution.datasources.hbase" =>
         table = reader.format("org.apache.spark.sql.execution.datasources.hbase").load()
+      case "crawlersql" =>
+        table = reader.option("path",cleanStr(path)).format("org.apache.spark.sql.execution.datasources.crawlersql").load()
       case _ =>
-        table = reader.format(format).load(withPathPrefix(scriptSQLExecListener.pathPrefix, cleanStr(path)))
+        val owner = option.get("owner")
+        table = reader.format(format).load(withPathPrefix(scriptSQLExecListener.pathPrefix(owner), cleanStr(path)))
     }
     table.createOrReplaceTempView(tableName)
   }

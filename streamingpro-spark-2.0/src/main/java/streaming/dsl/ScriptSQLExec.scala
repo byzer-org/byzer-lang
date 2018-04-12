@@ -40,7 +40,7 @@ object ScriptSQLExec {
         |select * from tr  as new_tr;
         |save new_tr as json.`/tmp/todd`
         | """.stripMargin
-    parse(input, new ScriptSQLExecListener(null, null))
+    parse(input, new ScriptSQLExecListener(null, null, null))
     println(dbMapping)
 
 
@@ -55,15 +55,37 @@ object ScriptSQLExec {
   }
 }
 
-class ScriptSQLExecListener(_sparkSession: SparkSession, _pathPrefix: String) extends DSLSQLListener {
+class ScriptSQLExecListener(_sparkSession: SparkSession, _defaultPathPrefix: String, _allPathPrefix: Map[String, String]) extends DSLSQLListener {
+
+  private val _env = new scala.collection.mutable.HashMap[String, String]
+
+  def addEnv(k: String, v: String) = {
+    _env(k) = v
+    this
+  }
+
+  def env() = _env
+
   def sparkSession = _sparkSession
 
-  def pathPrefix: String = {
-    if (_pathPrefix == null || _pathPrefix.isEmpty) return ""
-    if (!_pathPrefix.endsWith("/")) {
-      return _pathPrefix + "/"
+  def pathPrefix(owner: Option[String]): String = {
+
+    if (_allPathPrefix != null && _allPathPrefix.nonEmpty && owner.isDefined) {
+      val pathPrefix = _allPathPrefix.get(owner.get)
+      if (pathPrefix.isDefined && pathPrefix.get.endsWith("/")) {
+        return pathPrefix.get
+      } else {
+        return pathPrefix.get + "/"
+      }
+    } else if(_defaultPathPrefix != null && _defaultPathPrefix.nonEmpty ) {
+      if (_defaultPathPrefix.endsWith("/")) {
+        return _defaultPathPrefix
+      } else {
+        return _defaultPathPrefix + "/"
+      }
+    } else {
+      return ""
     }
-    return _pathPrefix
   }
 
   override def exitSql(ctx: SqlContext): Unit = {
@@ -175,4 +197,12 @@ class ScriptSQLExecListener(_sparkSession: SparkSession, _pathPrefix: String) ex
   override def enterFunctionName(ctx: FunctionNameContext): Unit = {}
 
   override def exitFunctionName(ctx: FunctionNameContext): Unit = {}
+
+  override def enterSetValue(ctx: SetValueContext): Unit = {}
+
+  override def exitSetValue(ctx: SetValueContext): Unit = {}
+
+  override def enterSetKey(ctx: SetKeyContext): Unit = {}
+
+  override def exitSetKey(ctx: SetKeyContext): Unit = {}
 }

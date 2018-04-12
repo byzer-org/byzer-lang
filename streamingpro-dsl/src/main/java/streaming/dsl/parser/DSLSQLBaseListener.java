@@ -1,4 +1,4 @@
-// Generated from /Users/allwefantasy/CSDNWorkSpace/streamingpro/streamingpro-dsl/src/main/resources/DSLSQL.g4 by ANTLR 4.5.3
+// Generated from /Users/allwefantasy/CSDNWorkSpace/streamingpro/streamingpro-dsl/src/main/resources/DSLSQL.g4 by ANTLR 4.7.1
 
 package streaming.dsl.parser;
 
@@ -145,6 +145,30 @@ public class DSLSQLBaseListener implements DSLSQLListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitPath(DSLSQLParser.PathContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterSetValue(DSLSQLParser.SetValueContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitSetValue(DSLSQLParser.SetValueContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterSetKey(DSLSQLParser.SetKeyContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitSetKey(DSLSQLParser.SetKeyContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *

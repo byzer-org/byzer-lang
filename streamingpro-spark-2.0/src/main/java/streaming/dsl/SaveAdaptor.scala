@@ -2,6 +2,7 @@ package streaming.dsl
 
 import org.apache.spark.sql._
 import _root_.streaming.dsl.parser.DSLSQLParser._
+import _root_.streaming.dsl.template.TemplateMerge
 
 /**
   * Created by allwefantasy on 27/8/2017.
@@ -16,6 +17,8 @@ class SaveAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
     var option = Map[String, String]()
     var tableName = ""
     var partitionByCol = Array[String]()
+
+    val owner = option.get("owner")
 
     (0 to ctx.getChildCount() - 1).foreach { tokenIndex =>
       ctx.getChild(tokenIndex) match {
@@ -33,8 +36,10 @@ class SaveAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
             case "hive" | "kafka8" | "kafka9" | "hbase" | "redis" | "es" =>
               final_path = cleanStr(s.getText)
             case _ =>
-              final_path = withPathPrefix(scriptSQLExecListener.pathPrefix, cleanStr(s.getText))
+              final_path = withPathPrefix(scriptSQLExecListener.pathPrefix(owner), cleanStr(s.getText))
           }
+
+          final_path = TemplateMerge.merge(final_path, scriptSQLExecListener.env().toMap)
 
         case s: TableNameContext =>
           tableName = s.getText
@@ -85,11 +90,13 @@ class SaveAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
       case "kafka8" | "kafka9" =>
         writer.option("topics", final_path).format("com.hortonworks.spark.sql.kafka08").save()
       case "hbase" =>
-        writer.option("outputTableName", final_path).format("org.apache.spark.sql.execution.datasources.hbase").save()
+        writer.option("outputTableName", final_path).format(
+          option.getOrElse("implClass", "org.apache.spark.sql.execution.datasources.hbase")).save()
       case "redis" =>
-        writer.option("outputTableName", final_path).format("org.apache.spark.sql.execution.datasources.redis").save()
+        writer.option("outputTableName", final_path).format(
+          option.getOrElse("implClass", "org.apache.spark.sql.execution.datasources.redis")).save()
       case _ =>
-        writer.save(final_path)
+        writer.format(option.getOrElse("implClass", format)).save(final_path)
     }
   }
 }

@@ -1,5 +1,6 @@
 package streaming.dsl
 
+import org.apache.spark.sql.SparkSession
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.parser.DSLSQLParser._
 
@@ -12,6 +13,7 @@ class TrainAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdap
     var format = ""
     var path = ""
     var options = Map[String, String]()
+    val owner = options.get("owner")
     (0 to ctx.getChildCount() - 1).foreach { tokenIndex =>
       ctx.getChild(tokenIndex) match {
         case s: TableNameContext =>
@@ -19,7 +21,7 @@ class TrainAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdap
         case s: FormatContext =>
           format = s.getText
         case s: PathContext =>
-          path = withPathPrefix(scriptSQLExecListener.pathPrefix, cleanStr(s.getText))
+          path = withPathPrefix(scriptSQLExecListener.pathPrefix(owner), cleanStr(s.getText))
         case s: ExpressionContext =>
           options += (cleanStr(s.identifier().getText) -> cleanStr(s.STRING().getText))
         case s: BooleanExpressionContext =>
@@ -28,12 +30,12 @@ class TrainAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdap
       }
     }
     val df = scriptSQLExecListener.sparkSession.table(tableName)
-    val sqlAlg = AlgMapping.findAlg(format)
+    val sqlAlg = MLMapping.findAlg(format)
     sqlAlg.train(df, path, options)
   }
 }
 
-object AlgMapping {
+object MLMapping {
   val mapping = Map[String, String](
     "Word2vec" -> "streaming.dsl.mmlib.algs.SQLWord2Vec",
     "NaiveBayes" -> "streaming.dsl.mmlib.algs.SQLNaiveBayes",
@@ -44,7 +46,18 @@ object AlgMapping {
     "FPGrowth" -> "streaming.dsl.mmlib.algs.SQLFPGrowth",
     "StringIndex" -> "streaming.dsl.mmlib.algs.SQLStringIndex",
     "GBTs" -> "streaming.dsl.mmlib.algs.SQLGBTs",
-    "LSVM" -> "streaming.dsl.mmlib.algs.SQLLSVM"
+    "LSVM" -> "streaming.dsl.mmlib.algs.SQLLSVM",
+    "HashTfIdf" -> "streaming.dsl.mmlib.algs.SQLHashTfIdf",
+    "TfIdf" -> "streaming.dsl.mmlib.algs.SQLTfIdf",
+    "LogisticRegressor" -> "streaming.dsl.mmlib.algs.SQLLogisticRegression",
+    "RowMatrix" -> "streaming.dsl.mmlib.algs.SQLRowMatrix",
+    "PageRank" -> "streaming.dsl.mmlib.algs.SQLPageRank",
+    "TensorFlow" -> "streaming.dsl.mmlib.algs.SQLTensorFlow",
+    "StandardScaler" -> "streaming.dsl.mmlib.algs.SQLStandardScaler",
+    "SKLearn" -> "streaming.dsl.mmlib.algs.SQLSKLearn",
+    "DicOrTableToArray" -> "streaming.dsl.mmlib.algs.SQLDicOrTableToArray",
+    "TableToMap" -> "streaming.dsl.mmlib.algs.SQLTableToMap",
+    "DL4J" -> "streaming.dsl.mmlib.algs.SQLDL4J"
   )
 
   def findAlg(name: String) = {

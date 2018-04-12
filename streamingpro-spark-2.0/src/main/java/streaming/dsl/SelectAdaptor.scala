@@ -1,11 +1,10 @@
 package streaming.dsl
 
 import org.antlr.v4.runtime.misc.Interval
-import org.apache.spark.sql.SparkSession
 import streaming.dsl.parser.DSLSQLLexer
 import streaming.dsl.parser.DSLSQLParser.SqlContext
+import streaming.dsl.template.TemplateMerge
 
-import scala.collection.mutable.ArrayBuffer
 
 /**
   * Created by allwefantasy on 27/8/2017.
@@ -20,7 +19,8 @@ class SelectAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAda
     val originalText = input.getText(interval)
     val chunks = originalText.split("\\s+")
     val tableName = chunks.last.replace(";", "")
-    val sql = originalText.replaceAll(s"as[\\s|\\n]+${tableName}", "")
+    var sql = originalText.replaceAll(s"as[\\s|\\n]+${tableName}", "")
+    sql = TemplateMerge.merge(sql, scriptSQLExecListener.env().toMap)
     scriptSQLExecListener.sparkSession.sql(sql).createOrReplaceTempView(tableName)
   }
 }

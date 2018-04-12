@@ -3,9 +3,10 @@ package streaming.common
 import java.io.{BufferedReader, InputStreamReader}
 
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.{FSDataOutputStream, FileSystem, Path}
+import org.apache.hadoop.fs.{FSDataOutputStream, FileStatus, FileSystem, Path}
 
 import scala.collection.mutable.ArrayBuffer
+import scala.collection.JavaConversions._
 
 /**
   * 5/5/16 WilliamZhu(allwefantasy@gmail.com)
@@ -28,6 +29,40 @@ object HDFSOperator {
       if (br != null) br.close()
     }
     result.mkString("\n")
+
+  }
+
+
+  def listModelDirectory(path: String): Seq[FileStatus] = {
+    val fs = FileSystem.get(new Configuration())
+    fs.listStatus(new Path(path)).filter(f => f.isDirectory)
+  }
+
+  def saveBytesFile(path: String, fileName: String, bytes: Array[Byte]) = {
+
+    var dos: FSDataOutputStream = null
+    try {
+
+      val fs = FileSystem.get(new Configuration())
+      if (!fs.exists(new Path(path))) {
+        fs.mkdirs(new Path(path))
+      }
+      dos = fs.create(new Path(new java.io.File(path, fileName).getPath), true)
+      dos.write(bytes)
+    } catch {
+      case ex: Exception =>
+        println("file save exception")
+    } finally {
+      if (null != dos) {
+        try {
+          dos.close()
+        } catch {
+          case ex: Exception =>
+            println("close exception")
+        }
+        dos.close()
+      }
+    }
 
   }
 

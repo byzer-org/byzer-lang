@@ -19,7 +19,7 @@ import java.util.List;
  */
 public class DownloadRunner {
 
-    private static Logger logger = Logger.getLogger(JobCanceller.class);
+    private static Logger logger = Logger.getLogger(DownloadRunner.class);
 
     public static int getTarFileByPath(HttpServletResponse res, String pathStr) {
         String[] paths = pathStr.split(",");

@@ -5,7 +5,7 @@
     <parent>
         <artifactId>streamingpro</artifactId>
         <groupId>streaming.king</groupId>
-        <version>1.0.0</version>
+        <version>1.1.0</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -71,17 +71,50 @@
         </profile>
 
         <profile>
-            <id>carbondata-1.1.0</id>
+            <id>carbondata</id>
             <dependencies>
                 <dependency>
                     <groupId>org.apache.carbondata</groupId>
                     <artifactId>carbondata-spark2</artifactId>
-                    <version>1.1.0-incubating-SNAPSHOT</version>
+                    <version>1.2.0</version>
                 </dependency>
                 <dependency>
                     <groupId>org.apache.spark</groupId>
                     <artifactId>spark-repl_2.11</artifactId>
                     <version>${spark.version}</version>
+                </dependency>
+            </dependencies>
+        </profile>
+
+        <profile>
+            <id>dsl</id>
+            <dependencies>
+                <dependency>
+                    <groupId>streaming.king</groupId>
+                    <artifactId>streamingpro-dsl</artifactId>
+                    <version>${parent.version}</version>
+                </dependency>
+            </dependencies>
+        </profile>
+
+        <profile>
+            <id>dsl-legacy</id>
+            <dependencies>
+                <dependency>
+                    <groupId>streaming.king</groupId>
+                    <artifactId>streamingpro-dsl-legacy</artifactId>
+                    <version>${parent.version}</version>
+                </dependency>
+            </dependencies>
+        </profile>
+
+        <profile>
+            <id>crawler</id>
+            <dependencies>
+                <dependency>
+                    <groupId>streaming.king</groupId>
+                    <artifactId>streamigpro-crawler</artifactId>
+                    <version>${parent.version}</version>
                 </dependency>
             </dependencies>
         </profile>
@@ -134,22 +167,30 @@
             <artifactId>streamingpro-spark-common</artifactId>
             <version>${parent.version}</version>
         </dependency>
-        <dependency>
-            <groupId>streaming.king</groupId>
-            <artifactId>streamingpro-hbase</artifactId>
-            <version>${parent.version}</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>streaming.king</groupId>
-            <artifactId>streamingpro-redis</artifactId>
-            <version>${parent.version}</version>
-            <scope>compile</scope>
-        </dependency>
+
+
+        <!--<dependency>-->
+        <!--<groupId>streaming.king</groupId>-->
+        <!--<artifactId>streamingpro-hbase</artifactId>-->
+        <!--<version>${parent.version}</version>-->
+        <!--<exclusions>-->
+        <!--<exclusion>-->
+        <!--<groupId>org.eclipse.jetty</groupId>-->
+        <!--<artifactId>jetty-server</artifactId>-->
+        <!--</exclusion>-->
+        <!--</exclusions>-->
+        <!--<scope>compile</scope>-->
+        <!--</dependency>-->
+        <!--<dependency>-->
+        <!--<groupId>streaming.king</groupId>-->
+        <!--<artifactId>streamingpro-redis</artifactId>-->
+        <!--<version>${parent.version}</version>-->
+        <!--<scope>compile</scope>-->
+        <!--</dependency>-->
 
         <dependency>
             <groupId>streaming.king</groupId>
-            <artifactId>streamingpro-dsl</artifactId>
+            <artifactId>streamingpro-model</artifactId>
             <version>${parent.version}</version>
         </dependency>
 
@@ -193,9 +234,17 @@
         </dependency>
 
         <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-graphx_${scala.binary.version}</artifactId>
+            <version>${spark.version}</version>
+            <scope>${scope}</scope>
+        </dependency>
+
+        <dependency>
             <groupId>org.scalactic</groupId>
             <artifactId>scalactic_${scala.binary.version}</artifactId>
             <version>3.0.0</version>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.scalatest</groupId>
@@ -215,7 +264,6 @@
             <artifactId>spark-sql-kafka-0-10_${scala.binary.version}</artifactId>
             <version>${spark.version}</version>
         </dependency>
-
     </dependencies>
     <build>
         <plugins>

@@ -10,6 +10,7 @@ class RegisterAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslA
     var functionName = ""
     var format = ""
     var path = ""
+//    val owner = option.get("owner")
     (0 to ctx.getChildCount() - 1).foreach { tokenIndex =>
 
       ctx.getChild(tokenIndex) match {
@@ -18,11 +19,11 @@ class RegisterAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslA
         case s: FormatContext =>
           format = s.getText
         case s: PathContext =>
-          path = withPathPrefix(scriptSQLExecListener.pathPrefix, cleanStr(s.getText))
+          path = withPathPrefix(scriptSQLExecListener.pathPrefix(None), cleanStr(s.getText))
         case _ =>
       }
     }
-    val alg = AlgMapping.findAlg(format)
+    val alg = MLMapping.findAlg(format)
     val sparkSession = scriptSQLExecListener.sparkSession
     val model = alg.load(sparkSession, path)
     val udf = alg.predict(sparkSession, model, functionName)
