@@ -92,8 +92,8 @@ class RestController extends ApplicationController {
         })
       } else {
         StreamingproJobManager.run(sparkSession, jobInfo, () => {
-          val allPathPrefix = fromJson(param("allPathPrefix"), classOf[Map[String, String]])
-          val defaultPathPrefix = param("defaultPathPrefix")
+          val allPathPrefix = fromJson(param("allPathPrefix", "{}"), classOf[Map[String, String]])
+          val defaultPathPrefix = param("defaultPathPrefix", "")
           ScriptSQLExec.parse(param("sql"), new ScriptSQLExecListener(sparkSession, defaultPathPrefix, allPathPrefix))
         })
       }

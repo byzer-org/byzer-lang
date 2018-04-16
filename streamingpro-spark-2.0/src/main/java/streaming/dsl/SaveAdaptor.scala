@@ -1,15 +1,18 @@
 package streaming.dsl
 
+import java.util.concurrent.TimeUnit
+
 import org.apache.spark.sql._
 import _root_.streaming.dsl.parser.DSLSQLParser._
 import _root_.streaming.dsl.template.TemplateMerge
+import org.apache.spark.sql.streaming.{DataStreamWriter, Trigger}
 
 /**
   * Created by allwefantasy on 27/8/2017.
   */
 class SaveAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdaptor {
   override def parse(ctx: SqlContext): Unit = {
-    var writer: DataFrameWriter[Row] = null
+
     var oldDF: DataFrame = null
     var mode = SaveMode.ErrorIfExists
     var final_path = ""
@@ -62,6 +65,26 @@ class SaveAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
       }
     }
 
+    if (scriptSQLExecListener.env().contains("stream")) {
+      new StreamSaveAdaptor(option, oldDF, final_path, tableName, format, mode, partitionByCol).parse
+    } else {
+      new BatchSaveAdaptor(option, oldDF, final_path, tableName, format, mode, partitionByCol).parse
+    }
+
+  }
+}
+
+class BatchSaveAdaptor(var option: Map[String, String],
+                       var oldDF: DataFrame,
+                       var final_path: String,
+                       var tableName: String,
+                       var format: String,
+                       var mode: SaveMode,
+                       var partitionByCol: Array[String]
+                      ) {
+  def parse = {
+    var writer = oldDF.write
+
     val dbAndTable = final_path.split("\\.")
     var connect_provied = false
     if (dbAndTable.length == 2 && ScriptSQLExec.dbMapping.containsKey(dbAndTable(0))) {
@@ -79,7 +102,6 @@ class SaveAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
     if (option.contains("fileNum")) {
       oldDF = oldDF.repartition(option.getOrElse("fileNum", "").toString.toInt)
     }
-    writer = oldDF.write
     writer = writer.format(format).mode(mode).partitionBy(partitionByCol: _*).options(option)
     format match {
       case "es" =>
@@ -98,5 +120,51 @@ class SaveAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
       case _ =>
         writer.format(option.getOrElse("implClass", format)).save(final_path)
     }
+  }
+}
+
+class StreamSaveAdaptor(var option: Map[String, String],
+                        var oldDF: DataFrame,
+                        var final_path: String,
+                        var tableName: String,
+                        var format: String,
+                        var mode: SaveMode,
+                        var partitionByCol: Array[String]
+                       ) {
+  def parse = {
+    var writer: DataStreamWriter[Row] = oldDF.writeStream
+    val dbAndTable = final_path.split("\\.")
+    var connect_provied = false
+    if (dbAndTable.length == 2 && ScriptSQLExec.dbMapping.containsKey(dbAndTable(0))) {
+      ScriptSQLExec.dbMapping.get(dbAndTable(0)).foreach {
+        f =>
+          writer.option(f._1, f._2)
+      }
+      connect_provied = true
+    }
+
+    if (connect_provied) {
+      final_path = dbAndTable(1)
+    }
+
+    if (option.contains("fileNum")) {
+      oldDF = oldDF.repartition(option.getOrElse("fileNum", "").toString.toInt)
+    }
+    require(option.contains("checkpointLocation"), "checkpointLocation is required")
+    require(option.contains("duration"), "duration is required")
+    require(option.contains("mode"), "mode is required")
+
+
+    writer = writer.format(format).outputMode(option("mode")).
+      partitionBy(partitionByCol: _*).
+      options((option - "mode" - "duration"))
+
+    val dbtable = if (option.contains("dbtable")) option("dbtable") else final_path
+
+    if (dbtable != null && dbtable != "-") {
+      writer.option("path", dbtable)
+    }
+
+    writer.trigger(Trigger.ProcessingTime(option("duration").toInt, TimeUnit.SECONDS)).start()
   }
 }

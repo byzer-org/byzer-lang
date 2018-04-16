@@ -9,7 +9,7 @@ import template.TemplateMerge
   */
 class LoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdaptor {
   override def parse(ctx: SqlContext): Unit = {
-    val reader = scriptSQLExecListener.sparkSession.read
+
     var table: DataFrame = null
     var format = ""
     var option = Map[String, String]()
@@ -31,6 +31,27 @@ class LoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
         case _ =>
       }
     }
+
+
+    if (format.startsWith("kafka")) {
+      scriptSQLExecListener.addEnv("stream", "true")
+      new StreamLoadAdaptor(scriptSQLExecListener, option, path, tableName, format).parse
+    } else {
+      new BatchLoadAdaptor(scriptSQLExecListener, option, path, tableName, format).parse
+    }
+
+  }
+}
+
+class BatchLoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener,
+                       option: Map[String, String],
+                       var path: String,
+                       tableName: String,
+                       format: String
+                      ) extends DslTool {
+  def parse = {
+    var table: DataFrame = null
+    val reader = scriptSQLExecListener.sparkSession.read
     reader.options(option)
     path = TemplateMerge.merge(path, scriptSQLExecListener.env().toMap)
     format match {
@@ -53,11 +74,41 @@ class LoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
       case "hbase" | "org.apache.spark.sql.execution.datasources.hbase" =>
         table = reader.format("org.apache.spark.sql.execution.datasources.hbase").load()
       case "crawlersql" =>
-        table = reader.option("path",cleanStr(path)).format("org.apache.spark.sql.execution.datasources.crawlersql").load()
+        table = reader.option("path", cleanStr(path)).format("org.apache.spark.sql.execution.datasources.crawlersql").load()
       case _ =>
         val owner = option.get("owner")
         table = reader.format(format).load(withPathPrefix(scriptSQLExecListener.pathPrefix(owner), cleanStr(path)))
     }
+    table.createOrReplaceTempView(tableName)
+  }
+}
+
+class StreamLoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener,
+                        option: Map[String, String],
+                        var path: String,
+                        tableName: String,
+                        format: String
+                       ) extends DslTool {
+
+  def parse = {
+    var table: DataFrame = null
+    val reader = scriptSQLExecListener.sparkSession.readStream
+
+    format match {
+      case "kafka" | "socket" =>
+        table = reader.options(option).format(format).load()
+      case "kafka8" | "kafka9" =>
+        val format = "com.hortonworks.spark.sql.kafka08"
+        /*
+           kafka.bootstrap.servers
+           kafka.metadata.broker
+           startingoffset smallest
+         */
+        table = reader.format(format).options(option).load()
+      case _ =>
+    }
+
+    path = TemplateMerge.merge(path, scriptSQLExecListener.env().toMap)
     table.createOrReplaceTempView(tableName)
   }
 }
