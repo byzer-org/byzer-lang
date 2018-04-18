@@ -66,15 +66,16 @@ class SaveAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
     }
 
     if (scriptSQLExecListener.env().contains("stream")) {
-      new StreamSaveAdaptor(option, oldDF, final_path, tableName, format, mode, partitionByCol).parse
+      new StreamSaveAdaptor(scriptSQLExecListener, option, oldDF, final_path, tableName, format, mode, partitionByCol).parse
     } else {
-      new BatchSaveAdaptor(option, oldDF, final_path, tableName, format, mode, partitionByCol).parse
+      new BatchSaveAdaptor(scriptSQLExecListener, option, oldDF, final_path, tableName, format, mode, partitionByCol).parse
     }
 
   }
 }
 
-class BatchSaveAdaptor(var option: Map[String, String],
+class BatchSaveAdaptor(val scriptSQLExecListener: ScriptSQLExecListener,
+                       var option: Map[String, String],
                        var oldDF: DataFrame,
                        var final_path: String,
                        var tableName: String,
@@ -123,7 +124,8 @@ class BatchSaveAdaptor(var option: Map[String, String],
   }
 }
 
-class StreamSaveAdaptor(var option: Map[String, String],
+class StreamSaveAdaptor(val scriptSQLExecListener: ScriptSQLExecListener,
+                        var option: Map[String, String],
                         var oldDF: DataFrame,
                         var final_path: String,
                         var tableName: String,
@@ -154,7 +156,6 @@ class StreamSaveAdaptor(var option: Map[String, String],
     require(option.contains("duration"), "duration is required")
     require(option.contains("mode"), "mode is required")
 
-
     writer = writer.format(format).outputMode(option("mode")).
       partitionBy(partitionByCol: _*).
       options((option - "mode" - "duration"))
@@ -164,7 +165,10 @@ class StreamSaveAdaptor(var option: Map[String, String],
     if (dbtable != null && dbtable != "-") {
       writer.option("path", dbtable)
     }
-
+    scriptSQLExecListener.env().get("streamName") match {
+      case Some(name) => writer.queryName(name)
+      case None =>
+    }
     writer.trigger(Trigger.ProcessingTime(option("duration").toInt, TimeUnit.SECONDS)).start()
   }
 }

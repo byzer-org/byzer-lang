@@ -110,6 +110,7 @@ class StreamingproJobManager(sc: SparkContext, initialDelay: Long, checkTimeInte
 case object StreamingproJobType {
   val SCRIPT = "script"
   val SQL = "sql"
+  val STREAM = "stream"
 }
 
 case class StreamingproJobInfo(

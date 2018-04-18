@@ -74,7 +74,7 @@ class RestController extends ApplicationController {
     }
     try {
       val jobInfo = StreamingproJobManager.getStreamingproJobInfo(
-        param("owner"), StreamingproJobType.SCRIPT, param("jobName"), param("sql"),
+        param("owner"), param("jobType", StreamingproJobType.SCRIPT), param("jobName"), param("sql"),
         paramAsLong("timeout", -1L)
       )
       if (paramAsBoolean("async", false)) {
@@ -153,13 +153,6 @@ class RestController extends ApplicationController {
           render("[" + res + "]")
         })
     }
-  }
-
-  @At(path = Array("/stat"), types = Array(GET, POST))
-  def stat = {
-    val sparkSession = runtime.asInstanceOf[SparkRuntime].sparkSession
-    sparkSession.sparkContext
-    render()
   }
 
   @At(path = Array("/download"), types = Array(GET, POST))
@@ -248,6 +241,21 @@ class RestController extends ApplicationController {
   def getRunningJobGroup = {
     val infoMap = StreamingproJobManager.getJobInfo
     render(200, toJsonString(infoMap))
+  }
+
+  @At(path = Array("/stream/jobs/running"), types = Array(GET, POST))
+  def streamRunningJobs = {
+    val infoMap = runtime.asInstanceOf[SparkRuntime].sparkSession.streams.active.map { f =>
+      StreamingproJobInfo(null, StreamingproJobType.STREAM, f.name, f.lastProgress.json, f.id + "", -1l, -1l)
+    }
+    render(200, toJsonString(infoMap))
+  }
+
+  @At(path = Array("/stream/jobs/kill"), types = Array(GET, POST))
+  def killStreamJob = {
+    val groupId = param("groupId")
+    runtime.asInstanceOf[SparkRuntime].sparkSession.streams.get(groupId).stop()
+    render(200, "{}")
   }
 
   @At(path = Array("/killjob"), types = Array(GET, POST))
