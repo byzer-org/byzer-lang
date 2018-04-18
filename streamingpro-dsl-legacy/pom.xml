@@ -22,6 +22,4 @@
         <!--<version>${scala.version}</version>-->
         <!--</dependency>-->
     </dependencies>
-
-
 </project>

@@ -310,7 +310,57 @@
                 </dependency>
             </dependencies>
         </profile>
+        <profile>
+            <id>antlr4.7.1-maven</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.antlr</groupId>
+                        <artifactId>antlr4-maven-plugin</artifactId>
+                        <version>4.7.1</version>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>antlr4</goal>
+                                </goals>
+                                <!--<phase>generate-sources</phase>-->
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <visitor>true</visitor>
+                            <sourceDirectory>src/main/resources</sourceDirectory>
+                            <outputDirectory>src/main/java/streaming/dsl/parser</outputDirectory>
+                        </configuration>
+                    </plugin>
 
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>antlr4.5.3-maven</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.antlr</groupId>
+                        <artifactId>antlr4-maven-plugin</artifactId>
+                        <version>4.5.3</version>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>antlr4</goal>
+                                </goals>
+                                <!--<phase>generate-sources</phase>-->
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <visitor>true</visitor>
+                            <sourceDirectory>../streamingpro-dsl/src/main/resources</sourceDirectory>
+                            <outputDirectory>src/main/java/streaming/dsl/parser</outputDirectory>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
     </profiles>
     <dependencies>
 
