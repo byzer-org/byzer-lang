@@ -36,7 +36,10 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
   def createRuntime = {
     logger.info("create Runtime...")
     val conf = new SparkConf()
-    params.filter(f => f._1.toString.startsWith("spark.")).foreach { f =>
+    params.filter(f =>
+      f._1.toString.startsWith("spark.") ||
+        f._1.toString.startsWith("hive.")
+    ).foreach { f =>
       conf.set(f._1.toString, f._2.toString)
     }
     if (params.containsKey("streaming.master")) {

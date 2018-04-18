@@ -25,5 +25,6 @@ class SetAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapto
       }
     }
     scriptSQLExecListener.addEnv(key, value)
+    //scriptSQLExecListener.sparkSession.sql(ctx.)
   }
 }

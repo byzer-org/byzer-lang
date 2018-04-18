@@ -21,6 +21,10 @@
 1. [MLSQL-单机算法 based on SKLearn](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-sklearn.md)
 1. [Vector操作函数](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-functions.md)
 
+## SQL流式计算
+
+1. [流式计算](https://github.com/allwefantasy/streamingpro/blob/master/docs/sql-stream.md)
+
 ## SQL爬虫
 
 1. [网页抓取](https://github.com/allwefantasy/streamingpro/blob/master/docs/crawler.md)
