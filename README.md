@@ -23,7 +23,7 @@
 
 ## SQL流式计算
 
-1. [流式计算](https://github.com/allwefantasy/streamingpro/blob/master/docs/sql-stream.md)
+1. [流式计算](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-stream.md)
 
 ## SQL爬虫
 
