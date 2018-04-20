@@ -20,6 +20,7 @@
 1. [MLSQL-深度学习 based on TensorFlow](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-tensorflow.md)
 1. [MLSQL-单机算法 based on SKLearn](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-sklearn.md)
 1. [Vector操作函数](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-functions.md)
+1. [模型部署](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-model-deploy.md)
 
 ## SQL流式计算
 
