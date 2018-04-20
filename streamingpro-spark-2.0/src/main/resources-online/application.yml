@@ -18,7 +18,7 @@ test:
            disable: true
 
 application:
-    controllerNames: streaming.rest.RestController
+    controllerNames: streaming.rest.RestController,streaming.rest.RestPredictController
     service:
     util:
     test:
