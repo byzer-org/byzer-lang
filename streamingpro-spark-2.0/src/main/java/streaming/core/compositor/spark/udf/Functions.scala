@@ -187,5 +187,10 @@ object Functions {
     })
   }
 
+  def decodeKafka(uDFRegistration: UDFRegistration) = {
+    uDFRegistration.register("decodeKafka", (item: Array[Byte]) => {
+      new String(item, "utf-8")
+    })
+  }
 
 }
