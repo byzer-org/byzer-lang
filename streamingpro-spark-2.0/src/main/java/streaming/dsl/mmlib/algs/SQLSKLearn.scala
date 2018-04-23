@@ -4,6 +4,7 @@ import java.io.File
 import java.nio.file.{Files, Paths}
 import java.util
 
+import com.hortonworks.spark.sql.kafka08.KafkaOperator
 import org.apache.commons.io.FileUtils
 import org.apache.spark.TaskContext
 import org.apache.spark.api.python.WowPythonRunner
@@ -66,7 +67,13 @@ class SQLSKLearn extends SQLAlg with Functions {
         sk_bayes,
         userFileName, modelPath = path
       )
-      res.foreach(f => f)
+
+      if (!kafkaParam.contains("userName")) {
+        res.foreach(f => f)
+      } else {
+        KafkaOperator.writeKafka(kafkaParam, res)
+      }
+
       //读取模型文件，保存到hdfs上，方便下次获取
       val file = new File(new File(tempModelLocalPath), "model.pickle")
       val byteArray = Files.readAllBytes(Paths.get(file.getPath))

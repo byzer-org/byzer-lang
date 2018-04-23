@@ -6,6 +6,7 @@ import java.io.{ByteArrayOutputStream, File}
 import java.util
 import java.util.Properties
 
+import com.hortonworks.spark.sql.kafka08.KafkaOperator
 import org.apache.commons.io.FileUtils
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
@@ -104,7 +105,14 @@ class SQLTensorFlow extends SQLAlg with Functions {
         tfSource,
         tfName, modelPath = path, validateData = rowsBr.value
       )
-      res.foreach(f => f)
+
+      if (!kafkaParam.contains("userName")) {
+        res.foreach(f => f)
+      } else {
+        KafkaOperator.writeKafka(kafkaParam, res)
+      }
+
+
       val fs = FileSystem.get(new Configuration())
       //delete model path
       //      if (fs.exists(new Path(path))) {
