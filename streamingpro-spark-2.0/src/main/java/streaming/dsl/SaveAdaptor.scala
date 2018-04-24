@@ -118,6 +118,8 @@ class BatchSaveAdaptor(val scriptSQLExecListener: ScriptSQLExecListener,
       case "redis" =>
         writer.option("outputTableName", final_path).format(
           option.getOrElse("implClass", "org.apache.spark.sql.execution.datasources.redis")).save()
+      case "jdbc" =>
+        writer.option("dbtable", final_path).save()
       case _ =>
         writer.format(option.getOrElse("implClass", format)).save(final_path)
     }
