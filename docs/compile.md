@@ -19,7 +19,7 @@ mvn -DskipTests clean package  \
 -Ponline -Pscala-2.11  \
 -Phive-thrift-server \
 -Pspark-2.2.0 \
--Pdsl \
+-Pdsl-legacy \
 -Pcrawler \
 -Pshade 
 
@@ -116,7 +116,7 @@ mvn -DskipTests clean package  \
 -Pscala-2.11  \
 -Phive-thrift-server \
 -Pspark-2.1.0 \
--Pdsl \
+-Pdsl-legacy \
 -Pshade
 
 ```
