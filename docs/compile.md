@@ -25,6 +25,8 @@ mvn -DskipTests clean package  \
 
 ```
 
+如果要开启Carbondata支持，加上 `-Pcarbondata` 即可。
+
 如果提示streamingpro-dsl 依赖包无法找到，那么分别进入 streamingpro-dsl/streamingpro-dsl-legacy执行如下指令：
 
 ```
