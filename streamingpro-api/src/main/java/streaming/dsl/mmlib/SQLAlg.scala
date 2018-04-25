@@ -1,6 +1,5 @@
 package streaming.dsl.mmlib
 
-
 import org.apache.spark.sql._
 import org.apache.spark.sql.expressions.UserDefinedFunction
 

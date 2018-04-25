@@ -1,13 +1,11 @@
 package org.apache.spark.ps.cluster
 
+import streaming.tensorflow.TFModelLoader
 import java.util.{Locale}
-
 import org.apache.spark.internal.Logging
 import org.apache.spark.{SparkEnv}
 import org.apache.spark.rpc.{RpcCallContext, RpcEnv, ThreadSafeRpcEndpoint}
 import org.apache.spark.util.ThreadUtils
-import streaming.tensorflow.TFModelLoader
-
 import scala.util.{Failure, Success}
 
 

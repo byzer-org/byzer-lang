@@ -2,23 +2,23 @@ package streaming.dsl.mmlib.algs
 
 import java.util.Random
 
-import streaming.dl4j.{DL4JModelLoader, DL4JModelPredictor}
 import org.apache.spark.ml.linalg.SQLDataTypes._
-import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.types.StringType
+import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
 import org.deeplearning4j.spark.api.RDDTrainingApproach
-import org.deeplearning4j.spark.impl.paramavg.{ParameterAveragingTrainingMaster, ParameterAveragingTrainingWorker}
+import org.deeplearning4j.spark.impl.paramavg.ParameterAveragingTrainingMaster
 import org.deeplearning4j.spark.parameterserver.training.SharedTrainingMaster
 import org.nd4j.parameterserver.distributed.conf.VoidConfiguration
+import streaming.dl4j.{DL4JModelLoader, DL4JModelPredictor, Dl4jFunctions}
 import streaming.dsl.mmlib.SQLAlg
 
 
 /**
   * Created by allwefantasy on 15/1/2018.
   */
-class SQLDL4J extends SQLAlg with Functions {
+class SQLDL4J extends SQLAlg with Dl4jFunctions {
   override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
 
     require(params.contains("featureSize"), "featureSize is required")

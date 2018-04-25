@@ -125,6 +125,16 @@
         </profile>
 
         <profile>
+            <id>dl4j</id>
+            <dependencies>
+                <dependency>
+                    <groupId>streaming.king</groupId>
+                    <artifactId>streamingpro-dl4j</artifactId>
+                    <version>${parent.version}</version>
+                </dependency>
+            </dependencies>
+        </profile>
+        <profile>
             <id>online</id>
             <properties>
                 <mode>online</mode>
@@ -195,7 +205,7 @@
 
         <dependency>
             <groupId>streaming.king</groupId>
-            <artifactId>streamingpro-model</artifactId>
+            <artifactId>streamingpro-tensorflow</artifactId>
             <version>${parent.version}</version>
         </dependency>
 

@@ -1,12 +1,10 @@
 package streaming.dsl.mmlib.algs
 
 import java.io.{ByteArrayOutputStream, File}
-import java.util.{Collections, Properties, Random}
+import java.util.Properties
 
 import net.csdn.common.logging.Loggers
 import org.apache.commons.io.FileUtils
-import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
 import org.apache.spark.Partitioner
 import org.apache.spark.ml.linalg.SQLDataTypes._
@@ -17,16 +15,6 @@ import org.apache.spark.ml.util.{MLReadable, MLWritable}
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.{DataFrame, Dataset, SparkSession, functions => F}
 import org.apache.spark.util.{ExternalCommandRunner, ObjPickle, WowMD5, WowXORShiftRandom}
-import org.deeplearning4j.eval.Evaluation
-import org.deeplearning4j.nn.conf.MultiLayerConfiguration
-import org.deeplearning4j.optimize.api.IterationListener
-import org.deeplearning4j.optimize.listeners.ScoreIterationListener
-import org.deeplearning4j.spark.api.RDDTrainingApproach
-import org.deeplearning4j.spark.impl.multilayer.SparkDl4jMultiLayer
-import org.deeplearning4j.spark.parameterserver.training.SharedTrainingMaster
-import org.deeplearning4j.util.ModelSerializer
-import org.nd4j.linalg.factory.Nd4j
-import org.nd4j.parameterserver.distributed.conf.VoidConfiguration
 import streaming.common.HDFSOperator
 
 import scala.collection.mutable.ArrayBuffer
@@ -228,78 +216,11 @@ trait Functions {
   }
 
   def copyToHDFS(tempModelLocalPath: String, path: String, clean: Boolean) = {
-    val fs = FileSystem.get(new Configuration())
-    fs.delete(new Path(path), true)
-    fs.copyFromLocalFile(new Path(tempModelLocalPath),
-      new Path(path))
-    FileUtils.forceDelete(new File(tempModelLocalPath))
+    HDFSOperator.copyToHDFS(tempModelLocalPath, path, clean)
   }
 
   def createTempModelLocalPath(path: String, autoCreateParentDir: Boolean = true) = {
-    val dir = "/tmp/train/" + WowMD5.md5Hash(path)
-    if (autoCreateParentDir) {
-      FileUtils.forceMkdir(new File(dir))
-    }
-    dir
-  }
-
-  def dl4jClassificationTrain(df: DataFrame, path: String, params: Map[String, String], multiLayerConfiguration: () => MultiLayerConfiguration): Unit = {
-    require(params.contains("featureSize"), "featureSize is required")
-
-    val labelSize = params.getOrElse("labelSize", "-1").toInt
-    val batchSize = params.getOrElse("batchSize", "32").toInt
-
-    val epochs = params.getOrElse("epochs", "1").toInt
-    val validateTable = params.getOrElse("validateTable", "")
-
-    val tm = SQLDL4J.init2(df.sparkSession.sparkContext.isLocal, batchSizePerWorker = batchSize)
-
-    val netConf = multiLayerConfiguration()
-
-    val sparkNetwork = new SparkDl4jMultiLayer(df.sparkSession.sparkContext, netConf, tm)
-    sparkNetwork.setCollectTrainingStats(false)
-    sparkNetwork.setListeners(Collections.singletonList[IterationListener](new ScoreIterationListener(1)))
-
-    val labelFieldName = params.getOrElse("outputCol", "label")
-    val newDataSetRDD = if (df.schema.fieldNames.contains(labelFieldName)) {
-
-      require(params.contains("labelSize"), "labelSize is required")
-
-      df.select(params.getOrElse("inputCol", "features"), params.getOrElse("outputCol", "label")).rdd.map { row =>
-        val features = row.getAs[Vector](0)
-        val label = row.getAs[Vector](1)
-        new org.nd4j.linalg.dataset.DataSet(Nd4j.create(features.toArray), Nd4j.create(label.toArray))
-      }.toJavaRDD()
-    } else {
-      df.select(params.getOrElse("inputCol", "features")).rdd.map { row =>
-        val features = row.getAs[Vector](0)
-        new org.nd4j.linalg.dataset.DataSet(Nd4j.create(features.toArray), Nd4j.zeros(0))
-      }.toJavaRDD()
-    }
-
-
-    (0 until epochs).foreach { i =>
-      sparkNetwork.fit(newDataSetRDD)
-    }
-
-    val tempModelLocalPath = createTempModelLocalPath(path)
-    ModelSerializer.writeModel(sparkNetwork.getNetwork, new File(tempModelLocalPath, "dl4j.model"), true)
-    copyToHDFS(tempModelLocalPath + "/dl4j.model", path + "/dl4j.model", true)
-
-    if (!validateTable.isEmpty) {
-
-      val testDataSetRDD = df.sparkSession.table(validateTable).select(params.getOrElse("inputCol", "features"), params.getOrElse("outputCol", "label")).rdd.map { row =>
-        val features = row.getAs[Vector](0)
-        val label = row.getAs[Vector](1)
-        new org.nd4j.linalg.dataset.DataSet(Nd4j.create(features.toArray), Nd4j.create(label.toArray))
-      }.toJavaRDD()
-
-      val evaluation = sparkNetwork.doEvaluation(testDataSetRDD, batchSize, new Evaluation(labelSize))(0); //Work-around for 0.9.1 bug: see https://deeplearning4j.org/releasenotes
-      logger.info("***** Evaluation *****")
-      logger.info(evaluation.stats())
-      logger.info("***** Example Complete *****")
-    }
-    tm.deleteTempFiles(df.sparkSession.sparkContext)
+    HDFSOperator.createTempModelLocalPath(path, autoCreateParentDir)
   }
 
 }

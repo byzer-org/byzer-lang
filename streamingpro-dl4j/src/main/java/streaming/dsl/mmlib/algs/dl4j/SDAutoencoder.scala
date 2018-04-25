@@ -1,21 +1,12 @@
 package streaming.dsl.mmlib.algs.dl4j
 
-import java.util.{Random}
+import java.util.Random
 
-import streaming.dl4j.{DL4JModelLoader, DL4JModelPredictor}
-import org.apache.spark.sql.{DataFrame, SparkSession}
-import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.deeplearning4j.nn.api.OptimizationAlgorithm
-import org.deeplearning4j.nn.conf.layers.OutputLayer
+import org.deeplearning4j.nn.conf.layers.variational.{BernoulliReconstructionDistribution, VariationalAutoencoder}
 import org.deeplearning4j.nn.conf.{NeuralNetConfiguration, Updater}
-import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
 import org.deeplearning4j.nn.weights.WeightInit
 import org.nd4j.linalg.activations.Activation
-import org.nd4j.linalg.lossfunctions.LossFunctions.LossFunction
-import streaming.dsl.mmlib.SQLAlg
-import streaming.dsl.mmlib.algs.Functions
-import org.apache.spark.ml.linalg.SQLDataTypes._
-import org.deeplearning4j.nn.conf.layers.variational.{BernoulliReconstructionDistribution, VariationalAutoencoder}
 
 /**
   * Created by allwefantasy on 24/2/2018.

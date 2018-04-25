@@ -13,7 +13,8 @@
         <module>streamingpro-api</module>
         <module>streamingpro-hbase</module>
         <module>streamingpro-redis</module>
-        <module>streamingpro-model</module>
+        <module>streamingpro-dl4j</module>
+        <module>streamingpro-tensorflow</module>
     </modules>
 
     <properties>

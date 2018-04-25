@@ -1,5 +1,6 @@
 package org.apache.spark.ps.local
 
+import streaming.tensorflow.TFModelLoader
 import java.io.File
 import java.net.URL
 import org.apache.spark.{SparkConf, SparkContext, SparkEnv}
@@ -8,7 +9,7 @@ import org.apache.spark.launcher.{LauncherBackend, SparkAppHandle}
 import org.apache.spark.rpc.{RpcCallContext, RpcEndpointRef, RpcEnv, ThreadSafeRpcEndpoint}
 import org.apache.spark.scheduler._
 import org.apache.spark.scheduler.cluster.CoarseGrainedClusterMessages.StopExecutor
-import streaming.tensorflow.TFModelLoader
+
 
 private case class TensorFlowModelClean(modelPath: String)
 

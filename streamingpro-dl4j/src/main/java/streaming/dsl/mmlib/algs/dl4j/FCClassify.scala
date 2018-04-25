@@ -1,26 +1,23 @@
 package streaming.dsl.mmlib.algs.dl4j
 
-import streaming.dl4j.{DL4JModelLoader, DL4JModelPredictor}
 import java.util.Random
 
-import org.apache.spark.ml.linalg.SQLDataTypes._
-import streaming.dsl.mmlib.SQLAlg
-import streaming.dsl.mmlib.algs.Functions
-import org.apache.spark.sql._
 import org.apache.spark.sql.expressions.UserDefinedFunction
+import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.deeplearning4j.nn.api.OptimizationAlgorithm
 import org.deeplearning4j.nn.conf.layers.{DenseLayer, OutputLayer}
 import org.deeplearning4j.nn.conf.{NeuralNetConfiguration, Updater}
-import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
 import org.deeplearning4j.nn.weights.WeightInit
 import org.nd4j.linalg.activations.Activation
 import org.nd4j.linalg.lossfunctions.LossFunctions
+import streaming.dl4j.Dl4jFunctions
+import streaming.dsl.mmlib.SQLAlg
 
 
 /**
   * Created by allwefantasy on 23/2/2018.
   */
-class FCClassify extends SQLAlg with Functions {
+class FCClassify extends SQLAlg with Dl4jFunctions {
   def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
     dl4jClassificationTrain(df, path, params, () => {
 

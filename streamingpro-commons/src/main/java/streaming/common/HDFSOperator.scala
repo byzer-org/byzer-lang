@@ -1,7 +1,8 @@
 package streaming.common
 
-import java.io.{BufferedReader, InputStreamReader}
+import java.io.{BufferedReader, File, InputStreamReader}
 
+import org.apache.commons.io.FileUtils
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FSDataOutputStream, FileStatus, FileSystem, Path}
 
@@ -96,6 +97,23 @@ object HDFSOperator {
     }
 
   }
+
+  def copyToHDFS(tempModelLocalPath: String, path: String, clean: Boolean) = {
+    val fs = FileSystem.get(new Configuration())
+    fs.delete(new Path(path), true)
+    fs.copyFromLocalFile(new Path(tempModelLocalPath),
+      new Path(path))
+    FileUtils.forceDelete(new File(tempModelLocalPath))
+  }
+
+  def createTempModelLocalPath(path: String, autoCreateParentDir: Boolean = true) = {
+    val dir = "/tmp/train/" + Md5.md5Hash(path)
+    if (autoCreateParentDir) {
+      FileUtils.forceMkdir(new File(dir))
+    }
+    dir
+  }
+
 
   def main(args: Array[String]): Unit = {
     println(readFile("file:///Users/allwefantasy/streamingpro/flink.json"))

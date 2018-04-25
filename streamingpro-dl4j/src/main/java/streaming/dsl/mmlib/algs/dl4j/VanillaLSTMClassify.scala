@@ -2,16 +2,12 @@ package streaming.dsl.mmlib.algs.dl4j
 
 import java.util.Random
 
-import org.apache.spark.sql.{DataFrame, SparkSession}
-import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.deeplearning4j.nn.api.OptimizationAlgorithm
-import org.deeplearning4j.nn.conf.layers.{DenseLayer, GravesLSTM, OutputLayer}
+import org.deeplearning4j.nn.conf.layers.{GravesLSTM, OutputLayer}
 import org.deeplearning4j.nn.conf.{NeuralNetConfiguration, Updater}
 import org.deeplearning4j.nn.weights.WeightInit
 import org.nd4j.linalg.activations.Activation
 import org.nd4j.linalg.lossfunctions.LossFunctions
-import streaming.dsl.mmlib.SQLAlg
-import streaming.dsl.mmlib.algs.Functions
 
 /**
   * Created by allwefantasy on 26/2/2018.

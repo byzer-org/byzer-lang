@@ -4,8 +4,6 @@ import streaming.tensorflow.TFModelLoader
 import streaming.tensorflow.TFModelPredictor
 import java.io.{ByteArrayOutputStream, File}
 import java.util
-import java.util.Properties
-
 import com.hortonworks.spark.sql.kafka08.KafkaOperator
 import org.apache.commons.io.FileUtils
 import org.apache.hadoop.conf.Configuration

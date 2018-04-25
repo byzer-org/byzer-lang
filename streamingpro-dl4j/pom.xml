@@ -9,22 +9,19 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <properties>
-        <scala.binary.version>2.11</scala.binary.version>
-    </properties>
-    <artifactId>streamingpro-model</artifactId>
+    <artifactId>streamingpro-dl4j</artifactId>
+
     <dependencies>
         <dependency>
-            <groupId>org.tensorflow</groupId>
-            <artifactId>libtensorflow</artifactId>
-            <version>1.5.0-rc1</version>
+            <groupId>streaming.king</groupId>
+            <artifactId>streamingpro-api</artifactId>
+            <version>${parent.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.tensorflow</groupId>
-            <artifactId>libtensorflow_jni_gpu</artifactId>
-            <version>1.5.0-rc1</version>
+            <groupId>streaming.king</groupId>
+            <artifactId>streamingpro-common</artifactId>
+            <version>${parent.version}</version>
         </dependency>
-
         <dependency>
             <groupId>org.deeplearning4j</groupId>
             <artifactId>dl4j-spark_${scala.binary.version}</artifactId>
@@ -63,6 +60,7 @@
             <groupId>org.nd4j</groupId>
             <artifactId>nd4j-native-platform</artifactId>
             <version>0.9.1</version>
+
             <!--<classifier>macosx-x86_64</classifier>-->
         </dependency>
 
@@ -70,6 +68,7 @@
             <groupId>org.nd4j</groupId>
             <artifactId>nd4j-kryo_${scala.binary.version}</artifactId>
             <version>0.9.1</version>
+
             <exclusions>
                 <exclusion>
                     <groupId>com.google.guava</groupId>
@@ -81,14 +80,20 @@
             <groupId>org.bytedeco</groupId>
             <artifactId>javacv-platform</artifactId>
             <version>1.4</version>
+
         </dependency>
 
         <dependency>
             <groupId>org.nd4j</groupId>
             <artifactId>nd4j-cuda-7.5</artifactId>
             <version>0.9.1</version>
+
         </dependency>
-
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-sql_${scala.binary.version}</artifactId>
+            <version>${spark.version}</version>
+            <scope>${scope}</scope>
+        </dependency>
     </dependencies>
-
 </project>
