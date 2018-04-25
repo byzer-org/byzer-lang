@@ -108,16 +108,21 @@ object TFModelLoader {
 }
 
 object TFModelPredictor {
-  def run[T](modelBundle: SavedModelBundle, inputName: String, outputName: String, outputSize: Int, data: Array[Array[T]]) = {
+  def run_double(modelBundle: SavedModelBundle, inputName: String, outputName: String, outputSize: Int, data: Array[Array[Double]]) = {
     val inputTensor = Tensor.create(data)
     val res = modelBundle.session().runner().feed(inputName, inputTensor).fetch(outputName).run().get(0)
-    val resCopy = res.copyTo(Array.ofDim[T](1, outputSize))
+    val resCopy = res.copyTo(Array.ofDim[Double](1, outputSize))
     res.close()
     inputTensor.close()
     resCopy(0)
   }
-}
 
-class TFModelPredictor[T] {
-
+  def run_float(modelBundle: SavedModelBundle, inputName: String, outputName: String, outputSize: Int, data: Array[Array[Float]]) = {
+    val inputTensor = Tensor.create(data)
+    val res = modelBundle.session().runner().feed(inputName, inputTensor).fetch(outputName).run().get(0)
+    val resCopy = res.copyTo(Array.ofDim[Float](1, outputSize))
+    res.close()
+    inputTensor.close()
+    resCopy(0)
+  }
 }
