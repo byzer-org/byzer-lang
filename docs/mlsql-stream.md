@@ -19,7 +19,7 @@ set streamName="streamExample"
 -- 直接使用kafka即可。指的注意是参数遵循原有spark规范，比如1.0参数你需要查看spark
 -- 相关文档
 
-load kafka9.`` where `kafka.bootstrap.servers`="127.0.0.1:9092"
+load kafka9.`` options `kafka.bootstrap.servers`="127.0.0.1:9092"
 and `topics`="testM"
 as newkafkatable1;
 
