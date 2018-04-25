@@ -327,7 +327,7 @@
                             </execution>
                         </executions>
                         <configuration>
-                            <visitor>true</visitor>
+                            <visitor>false</visitor>
                             <sourceDirectory>src/main/resources</sourceDirectory>
                             <outputDirectory>src/main/java/streaming/dsl/parser</outputDirectory>
                         </configuration>
@@ -353,7 +353,7 @@
                             </execution>
                         </executions>
                         <configuration>
-                            <visitor>true</visitor>
+                            <visitor>false</visitor>
                             <sourceDirectory>../streamingpro-dsl/src/main/resources</sourceDirectory>
                             <outputDirectory>src/main/java/streaming/dsl/parser</outputDirectory>
                         </configuration>
