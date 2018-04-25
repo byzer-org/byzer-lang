@@ -10,20 +10,37 @@ class SetAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapto
   override def parse(ctx: SqlContext): Unit = {
     var key = ""
     var value = ""
+    var command = ""
+    var option = Map[String, String]()
     (0 to ctx.getChildCount() - 1).foreach { tokenIndex =>
 
       ctx.getChild(tokenIndex) match {
         case s: SetKeyContext =>
           key = s.getText
         case s: SetValueContext =>
-          value = cleanStr(s.getText)
           if (s.quotedIdentifier() != null && s.quotedIdentifier().BACKQUOTED_IDENTIFIER() != null) {
-            value = ShellCommand.execSimpleCommand(value).trim
+            command = cleanStr(s.getText)
           }
-
+        case s: ExpressionContext =>
+          option += (cleanStr(s.identifier().getText) -> cleanStr(s.STRING().getText))
+        case s: BooleanExpressionContext =>
+          option += (cleanStr(s.expression().identifier().getText) -> cleanStr(s.expression().STRING().getText))
         case _ =>
       }
     }
+
+    option.get("type") match {
+      case Some("sql") =>
+        val resultHead = scriptSQLExecListener.sparkSession.sql(command).collect().headOption
+        if (resultHead.isDefined) {
+          value = resultHead.get.get(0).toString
+        }
+      case Some("shell") =>
+        value = ShellCommand.execSimpleCommand(command).trim
+      case _ =>
+        value = ShellCommand.execSimpleCommand(command).trim
+    }
+
     scriptSQLExecListener.addEnv(key, value)
     //scriptSQLExecListener.sparkSession.sql(ctx.)
   }

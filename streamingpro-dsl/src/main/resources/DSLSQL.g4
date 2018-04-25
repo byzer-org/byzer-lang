@@ -18,7 +18,7 @@ sql
     | ('select'|'SELECT') ~(';')* 'as' tableName
     | ('insert'|'INSERT') ~(';')*
     | ('create'|'CREATE') ~(';')*
-    | ('set'|'SET') setKey '=' setValue
+    | ('set'|'SET') setKey '=' setValue 'options'? expression? booleanExpression*
     | ('connect'|'CONNECT') format 'where'? expression? booleanExpression* ('as' db)?
     | ('train'|'TRAIN') tableName 'as' format '.' path 'where'? expression? booleanExpression*
     | ('register'|'REGISTER') format '.' path 'as' functionName
