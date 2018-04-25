@@ -36,7 +36,7 @@ class RestPredictController extends ApplicationController {
     import sparkSession.implicits._
     //select vec_argmax(tf_predict(features,"features","label",2)) as predict_label
     val sql = param("sql", "").split("select").mkString("")
-    val res = sparkSession.createDataset(vectors).selectExpr(sql).toJSON.collect().mkString(",")
+    val res = sparkSession.createDataset(sparkSession.sparkContext.parallelize(vectors)).selectExpr(sql).toJSON.collect().mkString(",")
     render(200, res)
   }
 
