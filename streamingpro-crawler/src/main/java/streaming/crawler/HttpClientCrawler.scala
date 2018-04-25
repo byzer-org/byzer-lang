@@ -4,7 +4,7 @@ package streaming.crawler
 import java.security.cert.X509Certificate
 
 import org.apache.http.{HttpHost, HttpRequest}
-import org.apache.http.client.methods.{CloseableHttpResponse, HttpGet}
+import org.apache.http.client.methods.{CloseableHttpResponse, HttpGet, HttpPost}
 import org.apache.http.conn.routing.{HttpRoute, HttpRoutePlanner}
 import org.apache.http.conn.ssl.NoopHostnameVerifier
 import org.apache.http.impl.client.HttpClients
@@ -76,6 +76,7 @@ object HttpClientCrawler {
 
     }
   }
+
 
   def main(args: Array[String]): Unit = {
     //println(request("https://www.baidu.com"))
