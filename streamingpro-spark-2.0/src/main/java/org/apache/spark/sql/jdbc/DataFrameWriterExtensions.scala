@@ -11,7 +11,7 @@ object DataFrameWriterExtensions {
 
   implicit class Upsert(w: DataFrameWriter[Row]) {
     def upsert(idCol: Option[String], jdbcOptions: JDBCOptions, df: DataFrame): Unit = {
-      val idColumn = idCol.map(f => df.schema.filter(s => s.name == f).head)
+      val idColumn = idCol.map(f => df.schema.filter(s => f.split(",").contains(s.name)))
       val url = jdbcOptions.url
       val table = jdbcOptions.table
       val modeF = w.getClass.getDeclaredField("mode")
@@ -40,8 +40,10 @@ object DataFrameWriterExtensions {
         if (!tableExists) {
           val schema = JdbcUtils.schemaString(df, url, jdbcOptions.createTableColumnTypes)
           val dialect = JdbcDialects.get(url)
-          val pk = idColumn.collect { case c: StructField => s", primary key(${dialect.quoteIdentifier(c.name)})" }
-            .getOrElse("")
+          val pk = idColumn.map { f =>
+            val key = f.map(c => s"${dialect.quoteIdentifier(c.name)}").mkString(",")
+            s", primary key(${key})"
+          }.getOrElse("")
           val sql = s"CREATE TABLE $table ( $schema $pk )"
           val statement = conn.createStatement
           try {

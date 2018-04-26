@@ -15,7 +15,7 @@ import scala.util.control.NonFatal
 
 object UpsertUtils extends Logging {
 
-  def upsert(df: DataFrame, idCol: Option[StructField], jdbcOptions: JDBCOptions, isCaseSensitive: Boolean) {
+  def upsert(df: DataFrame, idCol: Option[Seq[StructField]], jdbcOptions: JDBCOptions, isCaseSensitive: Boolean) {
     val dialect = JdbcDialects.get(jdbcOptions.url)
     val nullTypes: Array[Int] = df.schema.fields.map { field =>
       getJdbcType(field.dataType, dialect).jdbcNullType
@@ -53,7 +53,7 @@ object UpsertUtils extends Logging {
                        getConnection: () => Connection,
                        table: String,
                        iterator: Iterator[Row],
-                       idColumn: Option[StructField],
+                       idColumn: Option[Seq[StructField]],
                        rddSchema: StructType,
                        nullTypes: Array[Int],
                        batchSize: Int,
@@ -162,7 +162,7 @@ object UpsertUtils extends Logging {
 
 trait UpsertBuilder {
 
-  def upsertStatement(conn: Connection, table: String, dialect: JdbcDialect, idField: Option[StructField],
+  def upsertStatement(conn: Connection, table: String, dialect: JdbcDialect, idField: Option[Seq[StructField]],
                       schema: StructType, isCaseSensitive: Boolean): UpsertInfo
 }
 
@@ -175,7 +175,7 @@ trait UpsertBuilder {
 case class UpsertInfo(stmt: PreparedStatement, schema: StructType)
 
 object UpsertBuilder {
-  val b = Map("postgres" -> PostgresUpsertBuilder, "h2" -> H2UpsertBuilder, "mysql" -> MysqlUpsertBuilder)
+  val b = Map("mysql" -> MysqlUpsertBuilder)
 
   def forDriver(driver: String): UpsertBuilder = {
     val builder = b.filterKeys(k => driver.toLowerCase().contains(k.toLowerCase()))
@@ -185,43 +185,14 @@ object UpsertBuilder {
 
 }
 
-object PostgresUpsertBuilder extends UpsertBuilder with Logging {
-  def upsertStatement(conn: Connection, table: String, dialect: JdbcDialect, idField: Option[StructField],
-                      schema: StructType, isCaseSensitive: Boolean) = {
-    idField match {
-      case Some(id) => {
-        val columns = schema.fields.map(f => dialect.quoteIdentifier(f.name)).mkString(",")
-        val placeholders = schema.fields.map(_ => "?").mkString(",")
-        val updateSchema = StructType(schema.fields.filterNot(_.name == id.name))
-        val updateColumns = updateSchema.fields.map(f => dialect.quoteIdentifier(f.name)).mkString(",")
-        val updatePlaceholders = updateSchema.fields.map(_ => "?").mkString(",")
-        val sql =
-          s"""insert into ${table} ($columns) values ($placeholders)
-              |on conflict (${dialect.quoteIdentifier(id.name)})
-              |do update set ($updateColumns) = ($updatePlaceholders)
-              |where ${table}.${dialect.quoteIdentifier(id.name)} = ?;""".stripMargin
-
-        log.debug(s"Using sql $sql")
-
-        val schemaFields = schema.fields ++ updateSchema.fields :+ id
-        val upsertSchema = StructType(schemaFields)
-        UpsertInfo(conn.prepareStatement(sql), upsertSchema)
-      }
-      case None => {
-        UpsertInfo(conn.prepareStatement(JdbcUtils.getInsertStatement(table, schema, None, isCaseSensitive, dialect)), schema)
-      }
-    }
-  }
-}
-
 object MysqlUpsertBuilder extends UpsertBuilder with Logging {
-  def upsertStatement(conn: Connection, table: String, dialect: JdbcDialect, idField: Option[StructField],
+  def upsertStatement(conn: Connection, table: String, dialect: JdbcDialect, idField: Option[Seq[StructField]],
                       schema: StructType, isCaseSensitive: Boolean) = {
     idField match {
       case Some(id) => {
         val columns = schema.fields.map(f => dialect.quoteIdentifier(f.name)).mkString(",")
         val placeholders = schema.fields.map(_ => "?").mkString(",")
-        val updateSchema = StructType(schema.fields.filterNot(_.name == id.name))
+        val updateSchema = StructType(schema.fields.filterNot(k => id.map(f => f.name).toSet.contains(k.name)))
         val updateColumns = updateSchema.fields.map(f => dialect.quoteIdentifier(f.name)).mkString(",")
         val updatePlaceholders = updateSchema.fields.map(_ => "?").mkString(",")
         val updateFields = updateColumns.split(",").zip(updatePlaceholders.split(",")).map(f => s"${f._1} = ${f._2}").mkString(",")
@@ -244,23 +215,3 @@ object MysqlUpsertBuilder extends UpsertBuilder with Logging {
   }
 }
 
-object H2UpsertBuilder extends UpsertBuilder {
-  def upsertStatement(conn: Connection, table: String, dialect: JdbcDialect, idField: Option[StructField],
-                      schema: StructType, isCaseSensitive: Boolean) = {
-    idField match {
-      case Some(id) => {
-        val columns = schema.fields.map(c => dialect.quoteIdentifier(c.name)).mkString(",")
-        val placeholders = schema.fields.map(_ => "?").mkString(",")
-        val pk = dialect.quoteIdentifier(id.name)
-        val sql =
-          s"""merge into ${table} ($columns) key($pk) values ($placeholders);"""
-            .stripMargin
-        //H2 is nice enough to keep the same parameter list
-        UpsertInfo(conn.prepareStatement(sql), schema)
-      }
-      case None => {
-        UpsertInfo(conn.prepareStatement(JdbcUtils.getInsertStatement(table, schema, None, isCaseSensitive, dialect)), schema)
-      }
-    }
-  }
-}
