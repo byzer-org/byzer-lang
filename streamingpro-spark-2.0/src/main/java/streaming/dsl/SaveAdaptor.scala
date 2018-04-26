@@ -36,10 +36,12 @@ class SaveAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
 
         case s: PathContext =>
           format match {
-            case "hive" | "kafka8" | "kafka9" | "hbase" | "redis" | "es" =>
+            case "hive" | "kafka8" | "kafka9" | "hbase" | "redis" | "es" | "jdbc" =>
               final_path = cleanStr(s.getText)
-            case _ =>
+            case "parquet" | "json" | "csv" | "orc" =>
               final_path = withPathPrefix(scriptSQLExecListener.pathPrefix(owner), cleanStr(s.getText))
+            case _ =>
+              final_path = cleanStr(s.getText)
           }
 
           final_path = TemplateMerge.merge(final_path, scriptSQLExecListener.env().toMap)

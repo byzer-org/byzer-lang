@@ -62,11 +62,11 @@ path
     ;
 
 setValue
-    : quotedIdentifier | STRING
+    : qualifiedName | quotedIdentifier | STRING
     ;
 
 setKey
-    : identifier
+    : qualifiedName
     ;
 
 db

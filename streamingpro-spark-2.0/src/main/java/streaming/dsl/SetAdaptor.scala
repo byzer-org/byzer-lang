@@ -11,6 +11,7 @@ class SetAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapto
     var key = ""
     var value = ""
     var command = ""
+    var original_command = ""
     var option = Map[String, String]()
     (0 to ctx.getChildCount() - 1).foreach { tokenIndex =>
 
@@ -18,8 +19,14 @@ class SetAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapto
         case s: SetKeyContext =>
           key = s.getText
         case s: SetValueContext =>
+          original_command = s.getText
           if (s.quotedIdentifier() != null && s.quotedIdentifier().BACKQUOTED_IDENTIFIER() != null) {
             command = cleanStr(s.getText)
+          } else if (s.qualifiedName() != null && s.qualifiedName().identifier() != null) {
+            command = cleanStr(s.getText)
+          }
+          else {
+            command = original_command
           }
         case s: ExpressionContext =>
           option += (cleanStr(s.identifier().getText) -> cleanStr(s.STRING().getText))
@@ -37,8 +44,10 @@ class SetAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapto
         }
       case Some("shell") =>
         value = ShellCommand.execSimpleCommand(command).trim
+      case Some("conf") =>
+        scriptSQLExecListener.sparkSession.sql(s""" set ${key} = ${original_command} """)
       case _ =>
-        value = ShellCommand.execSimpleCommand(command).trim
+        value = cleanStr(command)
     }
 
     scriptSQLExecListener.addEnv(key, value)
