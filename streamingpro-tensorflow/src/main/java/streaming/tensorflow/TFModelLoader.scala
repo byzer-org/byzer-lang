@@ -82,7 +82,7 @@ object TFModelLoader {
         val fs = FileSystem.get(new Configuration())
         fs.copyToLocalFile(new Path(modelPath),
           new Path(localPath))
-
+        println(s"tensorflow model local path: ${localPath}")
         val smb = SavedModelBundle.load(localPath, "serve")
         return (smb, fs.getFileStatus(new Path(modelPath)).getModificationTime)
       } finally {

@@ -30,6 +30,10 @@
 
 1. [网页抓取](https://github.com/allwefantasy/streamingpro/blob/master/docs/crawler.md)
 
+## SQL技巧
+
+1. [MySQL upsert](https://github.com/allwefantasy/streamingpro/blob/master/docs/xql-mysql.md)
+
 ## CarbonData 整合
 
 1. [如何使用CarbonData作为存储](https://github.com/allwefantasy/streamingpro/blob/master/docs/carbondata.md)

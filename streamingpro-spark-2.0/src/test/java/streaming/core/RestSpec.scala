@@ -1,14 +1,10 @@
 package streaming.core
 
 import net.sf.json.JSONArray
-import net.sf.json.test.JSONAssert
-import org.antlr.stringtemplate.language.ActionEvaluator.NameValuePair
 import org.apache.http.HttpVersion
 import org.apache.http.client.fluent.{Form, Request}
-import org.apache.http.entity.ContentType
 import org.apache.http.util.EntityUtils
 import org.scalatest.{FlatSpec, Matchers}
-import streaming.crawler.HttpClientCrawler
 
 /**
   * Created by allwefantasy on 25/4/2018.
@@ -51,6 +47,7 @@ class RestSpec extends FlatSpec with Matchers {
     scala.io.Source.fromInputStream(RestSpec.this.getClass.getResourceAsStream(s"/test/sql/${name}")).getLines().mkString("\n")
   }
 
+  //make sure -Djava.library.path=[your-path]/jni was set
   "tensorflow training and predict" should "work" in {
     var res = request(script_url, Map("sql" -> scriptStr("tensorflow")))
     assume(res == "{}")
