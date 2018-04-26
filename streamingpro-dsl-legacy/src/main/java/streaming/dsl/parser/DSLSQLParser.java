@@ -1,4 +1,4 @@
-// Generated from DSLSQL.g4 by ANTLR 4.5.3
+// Generated from /Users/allwefantasy/CSDNWorkSpace/streamingpro/streamingpro-dsl/src/main/resources/DSLSQL.g4 by ANTLR 4.5.3
 
 package streaming.dsl.parser;
 
@@ -1078,6 +1078,9 @@ public class DSLSQLParser extends Parser {
 	}
 
 	public static class SetValueContext extends ParserRuleContext {
+		public QualifiedNameContext qualifiedName() {
+			return getRuleContext(QualifiedNameContext.class,0);
+		}
 		public QuotedIdentifierContext quotedIdentifier() {
 			return getRuleContext(QuotedIdentifierContext.class,0);
 		}
@@ -1100,24 +1103,30 @@ public class DSLSQLParser extends Parser {
 		SetValueContext _localctx = new SetValueContext(_ctx, getState());
 		enterRule(_localctx, 22, RULE_setValue);
 		try {
-			setState(210);
-			switch (_input.LA(1)) {
-			case BACKQUOTED_IDENTIFIER:
+			setState(211);
+			_errHandler.sync(this);
+			switch ( getInterpreter().adaptivePredict(_input,25,_ctx) ) {
+			case 1:
 				enterOuterAlt(_localctx, 1);
 				{
 				setState(208);
-				quotedIdentifier();
+				qualifiedName();
 				}
 				break;
-			case STRING:
+			case 2:
 				enterOuterAlt(_localctx, 2);
 				{
 				setState(209);
+				quotedIdentifier();
+				}
+				break;
+			case 3:
+				enterOuterAlt(_localctx, 3);
+				{
+				setState(210);
 				match(STRING);
 				}
 				break;
-			default:
-				throw new NoViableAltException(this);
 			}
 		}
 		catch (RecognitionException re) {
@@ -1132,8 +1141,8 @@ public class DSLSQLParser extends Parser {
 	}
 
 	public static class SetKeyContext extends ParserRuleContext {
-		public IdentifierContext identifier() {
-			return getRuleContext(IdentifierContext.class,0);
+		public QualifiedNameContext qualifiedName() {
+			return getRuleContext(QualifiedNameContext.class,0);
 		}
 		public SetKeyContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
@@ -1155,8 +1164,8 @@ public class DSLSQLParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(212);
-			identifier();
+			setState(213);
+			qualifiedName();
 			}
 		}
 		catch (RecognitionException re) {
@@ -1195,20 +1204,20 @@ public class DSLSQLParser extends Parser {
 		DbContext _localctx = new DbContext(_ctx, getState());
 		enterRule(_localctx, 26, RULE_db);
 		try {
-			setState(216);
+			setState(217);
 			_errHandler.sync(this);
 			switch ( getInterpreter().adaptivePredict(_input,26,_ctx) ) {
 			case 1:
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(214);
+				setState(215);
 				qualifiedName();
 				}
 				break;
 			case 2:
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(215);
+				setState(216);
 				identifier();
 				}
 				break;
@@ -1249,7 +1258,7 @@ public class DSLSQLParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(218);
+			setState(219);
 			identifier();
 			}
 		}
@@ -1288,7 +1297,7 @@ public class DSLSQLParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(220);
+			setState(221);
 			identifier();
 			}
 		}
@@ -1327,7 +1336,7 @@ public class DSLSQLParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(222);
+			setState(223);
 			identifier();
 			}
 		}
@@ -1370,21 +1379,21 @@ public class DSLSQLParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(224);
+			setState(225);
 			identifier();
-			setState(229);
+			setState(230);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
 			while (_la==T__2) {
 				{
 				{
-				setState(225);
-				match(T__2);
 				setState(226);
+				match(T__2);
+				setState(227);
 				identifier();
 				}
 				}
-				setState(231);
+				setState(232);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
 			}
@@ -1425,7 +1434,7 @@ public class DSLSQLParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(232);
+			setState(233);
 			strictIdentifier();
 			}
 		}
@@ -1463,19 +1472,19 @@ public class DSLSQLParser extends Parser {
 		StrictIdentifierContext _localctx = new StrictIdentifierContext(_ctx, getState());
 		enterRule(_localctx, 38, RULE_strictIdentifier);
 		try {
-			setState(236);
+			setState(237);
 			switch (_input.LA(1)) {
 			case IDENTIFIER:
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(234);
+				setState(235);
 				match(IDENTIFIER);
 				}
 				break;
 			case BACKQUOTED_IDENTIFIER:
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(235);
+				setState(236);
 				quotedIdentifier();
 				}
 				break;
@@ -1516,7 +1525,7 @@ public class DSLSQLParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(238);
+			setState(239);
 			match(BACKQUOTED_IDENTIFIER);
 			}
 		}
@@ -1532,7 +1541,7 @@ public class DSLSQLParser extends Parser {
 	}
 
 	public static final String _serializedATN =
-		"\3\u0430\ud6d1\u8206\uad2d\u4417\uaef1\u8d80\uaadd\3(\u00f3\4\2\t\2\4"+
+		"\3\u0430\ud6d1\u8206\uad2d\u4417\uaef1\u8d80\uaadd\3(\u00f4\4\2\t\2\4"+
 		"\3\t\3\4\4\t\4\4\5\t\5\4\6\t\6\4\7\t\7\4\b\t\b\4\t\t\t\4\n\t\n\4\13\t"+
 		"\13\4\f\t\f\4\r\t\r\4\16\t\16\4\17\t\17\4\20\t\20\4\21\t\21\4\22\t\22"+
 		"\4\23\t\23\4\24\t\24\4\25\t\25\4\26\t\26\3\2\3\2\3\2\7\2\60\n\2\f\2\16"+
@@ -1547,16 +1556,16 @@ public class DSLSQLParser extends Parser {
 		"\3\u00a7\n\3\3\3\5\3\u00aa\n\3\3\3\7\3\u00ad\n\3\f\3\16\3\u00b0\13\3\3"+
 		"\3\3\3\3\3\3\3\3\3\3\3\3\3\3\3\5\3\u00ba\n\3\3\4\3\4\3\5\3\5\3\6\3\6\3"+
 		"\7\3\7\3\b\3\b\3\b\3\t\3\t\3\t\3\t\3\n\3\n\3\13\3\13\3\f\3\f\5\f\u00d1"+
-		"\n\f\3\r\3\r\5\r\u00d5\n\r\3\16\3\16\3\17\3\17\5\17\u00db\n\17\3\20\3"+
-		"\20\3\21\3\21\3\22\3\22\3\23\3\23\3\23\7\23\u00e6\n\23\f\23\16\23\u00e9"+
-		"\13\23\3\24\3\24\3\25\3\25\5\25\u00ef\n\25\3\26\3\26\3\26\2\2\27\2\4\6"+
+		"\n\f\3\r\3\r\3\r\5\r\u00d6\n\r\3\16\3\16\3\17\3\17\5\17\u00dc\n\17\3\20"+
+		"\3\20\3\21\3\21\3\22\3\22\3\23\3\23\3\23\7\23\u00e7\n\23\f\23\16\23\u00ea"+
+		"\13\23\3\24\3\24\3\25\3\25\5\25\u00f0\n\25\3\26\3\26\3\26\2\2\27\2\4\6"+
 		"\b\n\f\16\20\22\24\26\30\32\34\36 \"$&(*\2\f\3\2\3\4\3\2\b\t\3\2\13\f"+
-		"\3\2\r\r\3\2\16\17\3\2\20\21\3\2\22\23\3\2\25\26\3\2\30\31\3\2\32\33\u0104"+
+		"\3\2\r\r\3\2\16\17\3\2\20\21\3\2\22\23\3\2\25\26\3\2\30\31\3\2\32\33\u0106"+
 		"\2\61\3\2\2\2\4\u00b9\3\2\2\2\6\u00bb\3\2\2\2\b\u00bd\3\2\2\2\n\u00bf"+
 		"\3\2\2\2\f\u00c1\3\2\2\2\16\u00c3\3\2\2\2\20\u00c6\3\2\2\2\22\u00ca\3"+
-		"\2\2\2\24\u00cc\3\2\2\2\26\u00d0\3\2\2\2\30\u00d4\3\2\2\2\32\u00d6\3\2"+
-		"\2\2\34\u00da\3\2\2\2\36\u00dc\3\2\2\2 \u00de\3\2\2\2\"\u00e0\3\2\2\2"+
-		"$\u00e2\3\2\2\2&\u00ea\3\2\2\2(\u00ee\3\2\2\2*\u00f0\3\2\2\2,-\5\4\3\2"+
+		"\2\2\2\24\u00cc\3\2\2\2\26\u00d0\3\2\2\2\30\u00d5\3\2\2\2\32\u00d7\3\2"+
+		"\2\2\34\u00db\3\2\2\2\36\u00dd\3\2\2\2 \u00df\3\2\2\2\"\u00e1\3\2\2\2"+
+		"$\u00e3\3\2\2\2&\u00eb\3\2\2\2(\u00ef\3\2\2\2*\u00f1\3\2\2\2,-\5\4\3\2"+
 		"-.\5\22\n\2.\60\3\2\2\2/,\3\2\2\2\60\63\3\2\2\2\61/\3\2\2\2\61\62\3\2"+
 		"\2\2\62\3\3\2\2\2\63\61\3\2\2\2\64\65\t\2\2\2\65\66\5\24\13\2\66\67\7"+
 		"\5\2\2\679\5\26\f\28:\7\6\2\298\3\2\2\29:\3\2\2\2:<\3\2\2\2;=\5\20\t\2"+
@@ -1600,18 +1609,19 @@ public class DSLSQLParser extends Parser {
 		"\2\u00c5\17\3\2\2\2\u00c6\u00c7\5&\24\2\u00c7\u00c8\7\24\2\2\u00c8\u00c9"+
 		"\7!\2\2\u00c9\21\3\2\2\2\u00ca\u00cb\7\r\2\2\u00cb\23\3\2\2\2\u00cc\u00cd"+
 		"\5&\24\2\u00cd\25\3\2\2\2\u00ce\u00d1\5*\26\2\u00cf\u00d1\5&\24\2\u00d0"+
-		"\u00ce\3\2\2\2\u00d0\u00cf\3\2\2\2\u00d1\27\3\2\2\2\u00d2\u00d5\5*\26"+
-		"\2\u00d3\u00d5\7!\2\2\u00d4\u00d2\3\2\2\2\u00d4\u00d3\3\2\2\2\u00d5\31"+
-		"\3\2\2\2\u00d6\u00d7\5&\24\2\u00d7\33\3\2\2\2\u00d8\u00db\5$\23\2\u00d9"+
-		"\u00db\5&\24\2\u00da\u00d8\3\2\2\2\u00da\u00d9\3\2\2\2\u00db\35\3\2\2"+
-		"\2\u00dc\u00dd\5&\24\2\u00dd\37\3\2\2\2\u00de\u00df\5&\24\2\u00df!\3\2"+
-		"\2\2\u00e0\u00e1\5&\24\2\u00e1#\3\2\2\2\u00e2\u00e7\5&\24\2\u00e3\u00e4"+
-		"\7\5\2\2\u00e4\u00e6\5&\24\2\u00e5\u00e3\3\2\2\2\u00e6\u00e9\3\2\2\2\u00e7"+
-		"\u00e5\3\2\2\2\u00e7\u00e8\3\2\2\2\u00e8%\3\2\2\2\u00e9\u00e7\3\2\2\2"+
-		"\u00ea\u00eb\5(\25\2\u00eb\'\3\2\2\2\u00ec\u00ef\7\"\2\2\u00ed\u00ef\5"+
-		"*\26\2\u00ee\u00ec\3\2\2\2\u00ee\u00ed\3\2\2\2\u00ef)\3\2\2\2\u00f0\u00f1"+
-		"\7#\2\2\u00f1+\3\2\2\2\37\619<ALNWZ_djsz\u0082\u0085\u008a\u0090\u0093"+
-		"\u0098\u009d\u00a6\u00a9\u00ae\u00b9\u00d0\u00d4\u00da\u00e7\u00ee";
+		"\u00ce\3\2\2\2\u00d0\u00cf\3\2\2\2\u00d1\27\3\2\2\2\u00d2\u00d6\5$\23"+
+		"\2\u00d3\u00d6\5*\26\2\u00d4\u00d6\7!\2\2\u00d5\u00d2\3\2\2\2\u00d5\u00d3"+
+		"\3\2\2\2\u00d5\u00d4\3\2\2\2\u00d6\31\3\2\2\2\u00d7\u00d8\5$\23\2\u00d8"+
+		"\33\3\2\2\2\u00d9\u00dc\5$\23\2\u00da\u00dc\5&\24\2\u00db\u00d9\3\2\2"+
+		"\2\u00db\u00da\3\2\2\2\u00dc\35\3\2\2\2\u00dd\u00de\5&\24\2\u00de\37\3"+
+		"\2\2\2\u00df\u00e0\5&\24\2\u00e0!\3\2\2\2\u00e1\u00e2\5&\24\2\u00e2#\3"+
+		"\2\2\2\u00e3\u00e8\5&\24\2\u00e4\u00e5\7\5\2\2\u00e5\u00e7\5&\24\2\u00e6"+
+		"\u00e4\3\2\2\2\u00e7\u00ea\3\2\2\2\u00e8\u00e6\3\2\2\2\u00e8\u00e9\3\2"+
+		"\2\2\u00e9%\3\2\2\2\u00ea\u00e8\3\2\2\2\u00eb\u00ec\5(\25\2\u00ec\'\3"+
+		"\2\2\2\u00ed\u00f0\7\"\2\2\u00ee\u00f0\5*\26\2\u00ef\u00ed\3\2\2\2\u00ef"+
+		"\u00ee\3\2\2\2\u00f0)\3\2\2\2\u00f1\u00f2\7#\2\2\u00f2+\3\2\2\2\37\61"+
+		"9<ALNWZ_djsz\u0082\u0085\u008a\u0090\u0093\u0098\u009d\u00a6\u00a9\u00ae"+
+		"\u00b9\u00d0\u00d5\u00db\u00e8\u00ef";
 	public static final ATN _ATN =
 		new ATNDeserializer().deserialize(_serializedATN.toCharArray());
 	static {
