@@ -46,18 +46,6 @@ class DslSpec extends BasicSparkOperation {
     }
   }
 
-  "connect grammar" should "work fine" in {
-
-    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
-      //执行sql
-      implicit val spark = runtime.sparkSession
-
-      val sq = createSSEL
-      ScriptSQLExec.parse("connect jdbc where driver=\"com.mysql.jdbc.Driver\"\nand url=\"jdbc:mysql://127.0.0.1:3306/wow?characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&tinyInt1isBit=false\"\nand driver=\"com.mysql.jdbc.Driver\"\nand user=\"root\"\nand password=\"csdn.net\"\nas tableau;\n\nselect \"a\" as a,\"b\" as b\nas tod_boss_dashboard_sheet_1;\n\nsave append tod_boss_dashboard_sheet_1\nas jdbc.`tableau.tod_boss_dashboard_sheet_1`\noptions truncate=\"true\";", sq)
-
-    }
-  }
-
   def jdbc(ddlStr: String) = {
     Class.forName("com.mysql.jdbc.Driver")
     val con = DriverManager.getConnection("jdbc:mysql://127.0.0.1:3306/wow?characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&tinyInt1isBit=false",
