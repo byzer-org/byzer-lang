@@ -47,6 +47,7 @@ class RestSpec extends FlatSpec with Matchers {
     scala.io.Source.fromInputStream(RestSpec.this.getClass.getResourceAsStream(s"/test/sql/${name}")).getLines().mkString("\n")
   }
 
+  //make sure -Djava.library.path=[your-path]/jni was set
   "tensorflow training and predict" should "work" in {
     var res = request(script_url, Map("sql" -> scriptStr("tensorflow")))
     assume(res == "{}")

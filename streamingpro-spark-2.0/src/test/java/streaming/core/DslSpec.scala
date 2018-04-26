@@ -45,7 +45,7 @@ class DslSpec extends BasicSparkOperation {
       //执行sql
       val spark = runtime.sparkSession
 
-      var sq = new ScriptSQLExecListener(spark, "/tmp/william", Map())
+      val sq = new ScriptSQLExecListener(spark, "/tmp/william", Map())
       ScriptSQLExec.parse("connect jdbc where driver=\"com.mysql.jdbc.Driver\"\nand url=\"jdbc:mysql://127.0.0.1:3306/wow?characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&tinyInt1isBit=false\"\nand driver=\"com.mysql.jdbc.Driver\"\nand user=\"root\"\nand password=\"csdn.net\"\nas tableau;\n\nselect \"a\" as a,\"b\" as b\nas tod_boss_dashboard_sheet_1;\n\nsave append tod_boss_dashboard_sheet_1\nas jdbc.`tableau.tod_boss_dashboard_sheet_1`\noptions truncate=\"true\";", sq)
 
     }
