@@ -5,6 +5,7 @@ import java.util.concurrent.TimeUnit
 import org.apache.spark.sql._
 import _root_.streaming.dsl.parser.DSLSQLParser._
 import _root_.streaming.dsl.template.TemplateMerge
+import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
 import org.apache.spark.sql.streaming.{DataStreamWriter, Trigger}
 
 /**
@@ -86,8 +87,12 @@ class BatchSaveAdaptor(val scriptSQLExecListener: ScriptSQLExecListener,
                        var partitionByCol: Array[String]
                       ) {
   def parse = {
-    var writer = oldDF.write
 
+    if (option.contains("fileNum")) {
+      oldDF = oldDF.repartition(option.getOrElse("fileNum", "").toString.toInt)
+    }
+
+    var writer = oldDF.write
     val dbAndTable = final_path.split("\\.")
     var connect_provied = false
     if (dbAndTable.length == 2 && ScriptSQLExec.dbMapping.containsKey(dbAndTable(0))) {
@@ -102,9 +107,7 @@ class BatchSaveAdaptor(val scriptSQLExecListener: ScriptSQLExecListener,
       final_path = dbAndTable(1)
     }
 
-    if (option.contains("fileNum")) {
-      oldDF = oldDF.repartition(option.getOrElse("fileNum", "").toString.toInt)
-    }
+
     writer = writer.format(format).mode(mode).partitionBy(partitionByCol: _*).options(option)
     format match {
       case "es" =>
@@ -121,7 +124,12 @@ class BatchSaveAdaptor(val scriptSQLExecListener: ScriptSQLExecListener,
         writer.option("outputTableName", final_path).format(
           option.getOrElse("implClass", "org.apache.spark.sql.execution.datasources.redis")).save()
       case "jdbc" =>
-        writer.option("dbtable", final_path).save()
+        import org.apache.spark.sql.jdbc.DataFrameWriterExtensions._
+        val extraOptionsField = writer.getClass.getDeclaredField("extraOptions")
+        extraOptionsField.setAccessible(true)
+        val extraOptions = extraOptionsField.get(writer).asInstanceOf[scala.collection.mutable.HashMap[String, String]]
+        val jdbcOptions = new JDBCOptions(extraOptions.toMap + ("dbtable" -> final_path))
+        writer.upsert(option.get("idCol"), jdbcOptions, oldDF)
       case _ =>
         writer.format(option.getOrElse("implClass", format)).save(final_path)
     }
@@ -138,6 +146,10 @@ class StreamSaveAdaptor(val scriptSQLExecListener: ScriptSQLExecListener,
                         var partitionByCol: Array[String]
                        ) {
   def parse = {
+    if (option.contains("fileNum")) {
+      oldDF = oldDF.repartition(option.getOrElse("fileNum", "").toString.toInt)
+    }
+
     var writer: DataStreamWriter[Row] = oldDF.writeStream
     val dbAndTable = final_path.split("\\.")
     var connect_provied = false
@@ -153,9 +165,7 @@ class StreamSaveAdaptor(val scriptSQLExecListener: ScriptSQLExecListener,
       final_path = dbAndTable(1)
     }
 
-    if (option.contains("fileNum")) {
-      oldDF = oldDF.repartition(option.getOrElse("fileNum", "").toString.toInt)
-    }
+
     require(option.contains("checkpointLocation"), "checkpointLocation is required")
     require(option.contains("duration"), "duration is required")
     require(option.contains("mode"), "mode is required")
