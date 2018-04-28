@@ -150,4 +150,23 @@ class DslSpec extends BasicSparkOperation {
     }
   }
 
+//  "insert with variable" should "work fine" in {
+//
+//    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+//      //执行sql
+//      implicit val spark = runtime.sparkSession
+//
+//      var sq = createSSEL
+//      sq = createSSEL
+//      ScriptSQLExec.parse("select \"a\" as a,\"b\" as b\n,\"c\" as c\nas tod_boss_dashboard_sheet_1;", sq)
+//
+//      sq = createSSEL
+//      ScriptSQLExec.parse("set hive.exec.dynamic.partition.mode=nonstric options type = \"conf\" ;" +
+//        "set HADOOP_DATE_YESTERDAY=`2017-01-02` ;" +
+//        "INSERT OVERWRITE TABLE default.abc partition (hp_stat_date = '${HADOOP_DATE_YESTERDAY}') " +
+//        "select * from tod_boss_dashboard_sheet_1;", sq)
+//
+//    }
+//  }
+
 }
