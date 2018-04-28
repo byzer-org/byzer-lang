@@ -1,6 +1,6 @@
 # StreamingPro 中文文档
 
-(快速上手和体验)[https://github.com/allwefantasy/streamingpro/blob/master/docs/quick-tutorial.md]
+[五分钟快速上手和体验](https://github.com/allwefantasy/streamingpro/blob/master/docs/quick-tutorial.md)
 
 ## 编译
 
@@ -11,16 +11,26 @@
 * [运行StreamingPro Server](https://github.com/allwefantasy/streamingpro/blob/master/docs/run-server.md)
 
 ## 基于StreamingPro Server常用功能
-
-* [流式计算](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-stream.md)
+* [MLSQL语法说明](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-grammar.md)
 * [网页抓取](https://github.com/allwefantasy/streamingpro/blob/master/docs/crawler.md)
+* [批处理计算](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-batch.md)
+* [流式计算](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-stream.md)
+
+
+## 基于StreamingPro Server 做机器学习
 * [MLSQL编写Word2Vec示例](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsqlexample.md)
 * [MLSQL-分布式算法 based on spark MMLib](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql.md)
 * [MLSQL-深度学习 based on TensorFlow](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-tensorflow.md)
 * [MLSQL-单机算法 based on SKLearn](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-sklearn.md)
 * [Vector操作函数](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-functions.md)
+
+## 基于StremaingPro Server 部署模型服务API
 * [模型部署](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-model-deploy.md)
+
+## StreamingPro Server 使用Carbondata做存储
 * [如何使用CarbonData作为存储](https://github.com/allwefantasy/streamingpro/blob/master/docs/carbondata.md)
+
+## StreamingPro 对MySQL的扩展支持
 * [MySQL upsert](https://github.com/allwefantasy/streamingpro/blob/master/docs/xql-mysql.md)
 
 

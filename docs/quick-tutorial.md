@@ -47,7 +47,7 @@ as abc;
 select * from abc
 as newabc;
 
-save overwrite abc
+save overwrite newabc
 as jdbc.`tableau.abc`
 options truncate="true"
 and driver="com.mysql.jdbc.Driver"
@@ -85,7 +85,7 @@ save overwrite result as json.`/tmp/result`;
 该接口执行成功会返回"{}" ，如果失败，会有对应错误。
 其中 `/spark-2.2.0-bin-hadoop2.7/data/mllib/sample_libsvm_data.txt` 是Spark安装包里已经有的文件。
 
-完成之后你可以打开 /tmp/result 目录查看结果，当然你可以可以通过`http://127.0.0.1:9003/run/sql=select * from result` 通过http接口
+完成之后你可以打开 /tmp/result 目录查看结果，当然你可以可以通过`http://127.0.0.1:9003/run/sql=select * from result` 
 查看预测结果。
 
 ### 继续玩
