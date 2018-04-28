@@ -1,7 +1,34 @@
 # StreamingPro 中文文档
 
+(快速上手和体验)[https://github.com/allwefantasy/streamingpro/blob/master/docs/quick-tutorial.md]
 
-编译请务必参看[编译文档](https://github.com/allwefantasy/streamingpro/blob/master/docs/compile.md)哦。
+## 编译
+
+* [编译文档](https://github.com/allwefantasy/streamingpro/blob/master/docs/compile.md)
+
+## 作为服务运行
+
+* [运行StreamingPro Server](https://github.com/allwefantasy/streamingpro/blob/master/docs/run-server.md)
+
+## 基于StreamingPro Server常用功能
+
+* [流式计算](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-stream.md)
+* [网页抓取](https://github.com/allwefantasy/streamingpro/blob/master/docs/crawler.md)
+* [MLSQL编写Word2Vec示例](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsqlexample.md)
+* [MLSQL-分布式算法 based on spark MMLib](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql.md)
+* [MLSQL-深度学习 based on TensorFlow](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-tensorflow.md)
+* [MLSQL-单机算法 based on SKLearn](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-sklearn.md)
+* [Vector操作函数](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-functions.md)
+* [模型部署](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-model-deploy.md)
+* [如何使用CarbonData作为存储](https://github.com/allwefantasy/streamingpro/blob/master/docs/carbondata.md)
+* [MySQL upsert](https://github.com/allwefantasy/streamingpro/blob/master/docs/xql-mysql.md)
+
+
+## 使用配置完成Spark编程
+1. [Spark 批处理](https://github.com/allwefantasy/streamingpro/blob/master/docs/batchjson.md)
+1. [Spark Streaming](https://github.com/allwefantasy/streamingpro/blob/master/docs/sparkstreamingjson.md)
+1. [Structured Streaming](https://github.com/allwefantasy/streamingpro/blob/master/docs/structuredstreamingjson.md)
+1. [StreamingPro对机器学习的支持](https://github.com/allwefantasy/streamingpro/blob/master/docs/mljson.md)
 
 ## 概览：
 
@@ -10,39 +37,6 @@
 1. [编译](https://github.com/allwefantasy/streamingpro/blob/master/docs/compile.md)
 1. [相关概念](https://github.com/allwefantasy/streamingpro/blob/master/README.md#相关概念)
 1. [StreamingPro的一些参数](https://github.com/allwefantasy/streamingpro/blob/master/README.md#StreamingPro的一些参数)
-
-## SQL服务 和 机器学习：
-
-1. [SQL服务](https://github.com/allwefantasy/streamingpro/blob/master/docs/sqlservice.md)
-1. [为什么开发MLSQL](https://github.com/allwefantasy/streamingpro/blob/master/docs/why-develop-mlsql.md)
-1. [MLSQL编写Word2Vec示例](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsqlexample.md)
-1. [MLSQL-分布式算法 based on spark MMLib](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql.md)
-1. [MLSQL-深度学习 based on TensorFlow](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-tensorflow.md)
-1. [MLSQL-单机算法 based on SKLearn](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-sklearn.md)
-1. [Vector操作函数](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-functions.md)
-1. [模型部署](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-model-deploy.md)
-
-## SQL流式计算
-
-1. [流式计算](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-stream.md)
-
-## SQL爬虫
-
-1. [网页抓取](https://github.com/allwefantasy/streamingpro/blob/master/docs/crawler.md)
-
-## SQL技巧
-
-1. [MySQL upsert](https://github.com/allwefantasy/streamingpro/blob/master/docs/xql-mysql.md)
-
-## CarbonData 整合
-
-1. [如何使用CarbonData作为存储](https://github.com/allwefantasy/streamingpro/blob/master/docs/carbondata.md)
-
-## 用配置来编程
-1. [Spark Streaming](https://github.com/allwefantasy/streamingpro/blob/master/docs/sparkstreamingjson.md)
-1. [Spark 批处理](https://github.com/allwefantasy/streamingpro/blob/master/docs/batchjson.md)
-1. [Structured Streaming](https://github.com/allwefantasy/streamingpro/blob/master/docs/structuredstreamingjson.md)
-1. [StreamingPro对机器学习的支持](https://github.com/allwefantasy/streamingpro/blob/master/docs/mljson.md)
 
 ## 周边工具
 1. [StreamingPro Manager](https://github.com/allwefantasy/streamingpro/blob/master/docs/manager.md)
@@ -56,6 +50,8 @@
 * [英文文档](https://github.com/allwefantasy/streamingpro/blob/master/README-EN.md)
 * [简书专栏](https://www.jianshu.com/c/759bc22b9e15)
 * [源码阅读-深入浅出StreamingPro](https://github.com/allwefantasy/streamingpro/issues/47)
+* [为什么开发MLSQL](https://github.com/allwefantasy/streamingpro/blob/master/docs/why-develop-mlsql.md)
+* [SQL服务](https://github.com/allwefantasy/streamingpro/blob/master/docs/sqlservice.md)
 
 
 ## 概述
