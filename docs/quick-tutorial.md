@@ -35,7 +35,32 @@ streamingpro-spark-2.0-1.1.0.jar    \
 一旦启动后，就可以通过9003端口进行交互了。你可以提交一些SQL脚本即可完成包括爬虫、ETL、流式计算、算法、模型预测等功能。我们推荐使用Postman这个
 HTTP交互软件来完成交互。
 
-### step3: 玩一把算法/数据处理
+### step3: 玩一个ETL处理
+
+目标是随便造一些数据，然后保存到mysql里去：
+
+```sql
+select "a" as a,"b" as b
+as abc;
+
+-- 这里只是表名你是可以使用上面的表形成一张新表
+select * from abc
+as newabc;
+
+save overwrite abc
+as jdbc.`tableau.abc`
+options truncate="true"
+and driver="com.mysql.jdbc.Driver"
+and url="jdbc:mysql://127.0.0.1:3306/...."
+and driver="com.mysql.jdbc.Driver"
+and user="..."
+and password="...."
+```
+
+当然如果你能连接hive,写hive数据库以及表名就可以了。这里你可以实现非常复杂的逻辑，并且支持类似set语法[PR-181](https://github.com/allwefantasy/streamingpro/pull/181)
+
+
+### step3.1: 玩一把算法
 
 执行脚本的接口是 `http://127.0.0.1:9003/run/script` ，接受的主要参数是sql。 下面是一段sql脚本， 
 
@@ -66,5 +91,3 @@ save overwrite result as json.`/tmp/result`;
 ### 继续玩
 
 玩一把流式计算，参看[流式计算](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-stream.md)
-
-
