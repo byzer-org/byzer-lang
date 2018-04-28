@@ -12,6 +12,7 @@
 
 ## 基于StreamingPro Server常用功能
 * [MLSQL语法说明](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-grammar.md)
+* [各数据源读取和写入](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-datasources.md)
 * [网页抓取](https://github.com/allwefantasy/streamingpro/blob/master/docs/crawler.md)
 * [批处理计算](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-batch.md)
 * [流式计算](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-stream.md)
@@ -29,9 +30,6 @@
 
 ## StreamingPro Server 使用Carbondata做存储
 * [如何使用CarbonData作为存储](https://github.com/allwefantasy/streamingpro/blob/master/docs/carbondata.md)
-
-## StreamingPro 对各数据源读取和写入
-* [使用文档](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-datasources.md)
 
 
 ## 使用配置完成Spark编程
