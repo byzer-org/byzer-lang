@@ -1,5 +1,7 @@
 # StreamingPro 中文文档
 
+(快速上手和体验)[https://github.com/allwefantasy/streamingpro/blob/master/docs/quick-tutorial.md]
+
 ## 编译
 
 * [编译文档](https://github.com/allwefantasy/streamingpro/blob/master/docs/compile.md)
