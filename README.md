@@ -19,6 +19,7 @@
 
 
 ## 基于StreamingPro Server 做机器学习
+* [如何在MLSQL中运用分词抽词工具](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-analysis.md)
 * [MLSQL编写Word2Vec示例](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsqlexample.md)
 * [MLSQL-分布式算法 based on spark MMLib](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql.md)
 * [MLSQL-深度学习 based on TensorFlow](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-tensorflow.md)

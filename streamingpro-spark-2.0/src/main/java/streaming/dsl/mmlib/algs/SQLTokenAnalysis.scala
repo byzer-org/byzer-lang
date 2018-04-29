@@ -21,7 +21,7 @@ class SQLTokenAnalysis extends SQLAlg with Functions {
     require(params.contains("idCol"), "idCol is required")
 
     val ignoreNature = params.getOrElse("ignoreNature", "false").toBoolean
-    val filterNatures = params.getOrElse("filterNatures", "").split(",").filterNot(f=>f.isEmpty).toSet
+    val filterNatures = params.getOrElse("filterNatures", "").split(",").filterNot(f => f.isEmpty).toSet
     val fieldName = params("inputCol")
     val idCol = params("idCol")
     val parserClassName = params.getOrElse("parser", "org.ansj.splitWord.analysis.NlpAnalysis")
@@ -31,6 +31,9 @@ class SQLTokenAnalysis extends SQLAlg with Functions {
       val wordsList = session.sparkContext.textFile(f).collect()
       wordsList
     }.flatMap(f => f)
+
+    val idStructFiled = df.schema.fields.filter(f => f.name == idCol).head
+
     val ber = session.sparkContext.broadcast(result)
     val rdd = df.rdd.mapPartitions { mp =>
 
@@ -44,7 +47,8 @@ class SQLTokenAnalysis extends SQLAlg with Functions {
       AnsjFunctions.configureDic(parser, forest, parserClassName, forestClassName)
       mp.map { f =>
         val content = f.getAs[String](fieldName)
-        val id = f.getAs[String](idCol)
+        val id = f.get(f.schema.fieldNames.indexOf(idCol))
+
 
         val udg = parser.getClass.getMethod("parseStr", classOf[String]).invoke(parser, content)
         def getAllWords(udg: Any) = {
@@ -66,7 +70,7 @@ class SQLTokenAnalysis extends SQLAlg with Functions {
         Row.fromSeq(Seq(id, getAllWords(udg)))
       }
     }
-    session.createDataFrame(rdd, StructType(Seq(StructField("id", StringType), StructField("keywords", ArrayType(StringType))))).
+    session.createDataFrame(rdd, StructType(Seq(StructField("id", idStructFiled.dataType), StructField("keywords", ArrayType(StringType))))).
       write.mode(SaveMode.Overwrite).parquet(path)
   }
 

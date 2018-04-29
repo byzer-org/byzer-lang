@@ -22,6 +22,7 @@ class SQLTokenExtract extends SQLAlg with Functions {
 
     val parserClassName = params.getOrElse("parser", "org.ansj.splitWord.analysis.NlpAnalysis")
     val forestClassName = params.getOrElse("forest", "org.nlpcn.commons.lang.tire.domain.Forest")
+    val idStructFiled = df.schema.fields.filter(f => f.name == idCol).head
 
     result ++= params("dic.paths").split(",").map { f =>
       val wordsList = session.sparkContext.textFile(f).collect()
@@ -37,12 +38,12 @@ class SQLTokenExtract extends SQLAlg with Functions {
       }
       mp.map { f =>
         val content = f.getAs[String](fieldName)
-        val id = f.getAs[String](idCol)
+        val id = f.get(f.schema.fieldNames.indexOf(idCol))
         val tempWords = AnsjFunctions.extractAllWords(forest, content)
         Row.fromSeq(Seq(id, tempWords))
       }
     }
-    session.createDataFrame(rdd, StructType(Seq(StructField("id", StringType), StructField("keywords", ArrayType(StringType))))).
+    session.createDataFrame(rdd, StructType(Seq(StructField("id", idStructFiled.dataType), StructField("keywords", ArrayType(StringType))))).
       write.mode(SaveMode.Overwrite).parquet(path)
   }
 
