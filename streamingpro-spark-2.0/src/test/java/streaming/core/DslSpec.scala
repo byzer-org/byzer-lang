@@ -2,6 +2,7 @@ package streaming.core
 
 import java.sql.{Driver, DriverManager}
 
+import net.sf.json.JSONObject
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.streaming.BasicSparkOperation
 import streaming.core.strategy.platform.SparkRuntime
@@ -10,7 +11,7 @@ import streaming.dsl.{ScriptSQLExec, ScriptSQLExecListener}
 /**
   * Created by allwefantasy on 26/4/2018.
   */
-class DslSpec extends BasicSparkOperation {
+class DslSpec extends BasicSparkOperation with SpecFunctions {
   val batchParams = Array(
     "-streaming.master", "local[2]",
     "-streaming.name", "unit-test",
@@ -21,9 +22,6 @@ class DslSpec extends BasicSparkOperation {
     "-streaming.unittest", "true"
   )
 
-  def createSSEL(implicit spark: SparkSession) = {
-    new ScriptSQLExecListener(spark, "/tmp/william", Map())
-  }
 
   "set grammar" should "work fine" in {
 
@@ -46,16 +44,7 @@ class DslSpec extends BasicSparkOperation {
     }
   }
 
-  def jdbc(ddlStr: String) = {
-    Class.forName("com.mysql.jdbc.Driver")
-    val con = DriverManager.getConnection("jdbc:mysql://127.0.0.1:3306/wow?characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&tinyInt1isBit=false",
-      "root",
-      "csdn.net")
-    val stat = con.createStatement()
-    stat.execute(ddlStr)
-    stat.close()
-    con.close()
-  }
+
 
   "save mysql with update" should "work fine" in {
 
@@ -150,23 +139,76 @@ class DslSpec extends BasicSparkOperation {
     }
   }
 
-//  "insert with variable" should "work fine" in {
-//
-//    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
-//      //执行sql
-//      implicit val spark = runtime.sparkSession
-//
-//      var sq = createSSEL
-//      sq = createSSEL
-//      ScriptSQLExec.parse("select \"a\" as a,\"b\" as b\n,\"c\" as c\nas tod_boss_dashboard_sheet_1;", sq)
-//
-//      sq = createSSEL
-//      ScriptSQLExec.parse("set hive.exec.dynamic.partition.mode=nonstric options type = \"conf\" ;" +
-//        "set HADOOP_DATE_YESTERDAY=`2017-01-02` ;" +
-//        "INSERT OVERWRITE TABLE default.abc partition (hp_stat_date = '${HADOOP_DATE_YESTERDAY}') " +
-//        "select * from tod_boss_dashboard_sheet_1;", sq)
-//
-//    }
-//  }
+  //  "insert with variable" should "work fine" in {
+  //
+  //    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+  //      //执行sql
+  //      implicit val spark = runtime.sparkSession
+  //
+  //      var sq = createSSEL
+  //      sq = createSSEL
+  //      ScriptSQLExec.parse("select \"a\" as a,\"b\" as b\n,\"c\" as c\nas tod_boss_dashboard_sheet_1;", sq)
+  //
+  //      sq = createSSEL
+  //      ScriptSQLExec.parse("set hive.exec.dynamic.partition.mode=nonstric options type = \"conf\" ;" +
+  //        "set HADOOP_DATE_YESTERDAY=`2017-01-02` ;" +
+  //        "INSERT OVERWRITE TABLE default.abc partition (hp_stat_date = '${HADOOP_DATE_YESTERDAY}') " +
+  //        "select * from tod_boss_dashboard_sheet_1;", sq)
+  //
+  //    }
+  //  }
+
+  "analysis with dic" should "work fine" in {
+
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+      //执行sql
+      implicit val spark = runtime.sparkSession
+      //需要有一个/tmp/abc.txt 文件，里面包含"天了噜"
+      var sq = createSSEL
+      ScriptSQLExec.parse(scriptStr("token-analysis"), sq)
+      val res = spark.sql("select * from tb").toJSON.collect().mkString("\n")
+      println(res)
+      import scala.collection.JavaConversions._
+      assume(JSONObject.fromObject(res).getJSONArray("keywords").
+        filter(f => f.asInstanceOf[String]
+          == "天了噜/userDefine").size > 0)
+    }
+  }
+
+  "analysis with dic with n nature include" should "work fine" in {
+
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+      //执行sql
+      implicit val spark = runtime.sparkSession
+      //需要有一个/tmp/abc.txt 文件，里面包含"天了噜"
+      var sq = createSSEL
+      ScriptSQLExec.parse(scriptStr("token-analysis-include-n"), sq)
+      val res = spark.sql("select * from tb").toJSON.collect().mkString("\n")
+      println(res)
+      import scala.collection.JavaConversions._
+      assume(JSONObject.fromObject(res).getJSONArray("keywords").size()==1)
+      assume(JSONObject.fromObject(res).getJSONArray("keywords").
+        filter(f => f.asInstanceOf[String]
+          == "天才/n").size > 0)
+    }
+  }
+
+  "extract with dic" should "work fine" in {
+
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+      //执行sql
+      implicit val spark = runtime.sparkSession
+      //需要有一个/tmp/abc.txt 文件，里面包含"天了噜"
+      var sq = createSSEL
+      sq = createSSEL
+      ScriptSQLExec.parse(scriptStr("token-extract"), sq)
+      val res = spark.sql("select * from tb").toJSON.collect().mkString("\n")
+      println(res)
+      import scala.collection.JavaConversions._
+      assume(JSONObject.fromObject(res).getJSONArray("keywords").
+        filter(f => f.asInstanceOf[String].
+          startsWith("天了噜")).size > 0)
+    }
+  }
 
 }
