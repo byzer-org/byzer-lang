@@ -179,3 +179,12 @@ LDA 有如下函数：
 * predict_doc 参数为一个int数组，返回一个主题分布
 
 对应的`隐含`函数，大家看具体的实现文档。
+
+### create / insert 语法
+
+这两个语法完全兼容Hive,并且这两个语句都支持set语法的里的变量，比如：
+
+```
+set tableName="abc";
+create table ${tableName}.... 
+```
