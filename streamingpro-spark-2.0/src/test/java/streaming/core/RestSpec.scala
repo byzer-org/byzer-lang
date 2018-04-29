@@ -9,7 +9,7 @@ import org.scalatest.{FlatSpec, Matchers}
 /**
   * Created by allwefantasy on 25/4/2018.
   */
-class RestSpec extends FlatSpec with Matchers {
+class RestSpec extends FlatSpec with Matchers with SpecFunctions{
 
   val script_url = "http://127.0.0.1:9003/run/script"
   val sql_url = "http://127.0.0.1:9003/run/sql"
@@ -17,34 +17,12 @@ class RestSpec extends FlatSpec with Matchers {
   val streaming_kill_url = "http://127.0.0.1:9003/stream/jobs/kill"
   val model_predict_url = "http://127.0.0.1:9003/model/predict"
 
-  def request(url: String, params: Map[String, String]) = {
-    val form = Form.form()
-    params.map(f => form.add(f._1, f._2))
-    val res = Request.Post(url)
-      .useExpectContinue()
-      .version(HttpVersion.HTTP_1_1).bodyForm(form.build())
-      .execute().returnResponse()
-    if (res.getStatusLine.getStatusCode != 200) {
-      null
-    } else {
-      new String(EntityUtils.toByteArray(res.getEntity))
-    }
-  }
-
   def sql(sqlStr: String) = {
     request(sql_url, Map("sql" -> sqlStr))
   }
 
   def script(name: String) = {
     request(script_url, Map("sql" -> scriptStr(name)))
-  }
-
-  def scriptStr(name: String) = {
-    scala.io.Source.fromInputStream(RestSpec.this.getClass.getResourceAsStream(s"/test/sql/${name}.sql")).getLines().mkString("\n")
-  }
-
-  def loadStr(name: String) = {
-    scala.io.Source.fromInputStream(RestSpec.this.getClass.getResourceAsStream(s"/test/sql/${name}")).getLines().mkString("\n")
   }
 
   //make sure -Djava.library.path=[your-path]/jni was set

@@ -329,8 +329,9 @@ select predict(features) as k from data;
 
 ### DicOrTableToArray
 
-DicOrTableToArray 是一个很有意思的模型，很多场景我们需要把表或者字典转化为一个数组，然后在任何时候我都希望通过一个函数就获得这个数组，
-那么这个模型可以提供这个功能。
+DicOrTableToArray 是一个很有意思的模型，
+很多场景我们需要把表或者字典转化为一个数组类型的字段，那么这个模型可以提供这样的功能。
+他会把该数组表示成一个UDF函数，之后通过该UDF函数在任何SQL语句里获取对应的数组。
 
 示例：
 
@@ -409,26 +410,6 @@ register DicOrTableToArray.`/tmp/model2` as p2;
 select p2("dic2")  as k
 ```
 
-## TokenExtract
+## TokenExtract / TokenAnalysis
 
-该模型集成了ansj_seg 分词包,主要用于查看文本中哪些词是在词典当中，会比正则快非常多。
-你需要在启动StreamingPro的过程中额外通过--jars 带上ansj_seg all in one jar包。 
-
-
-```sql
--- 待处理文本
-select "你好啊我是天才" as words ,"1" as id
-as newdata;
-
--- 指定词典，然后TokenExtract 会在/tmp/model生成一个parquet文件，包含id和keywords两个字段。
--- id 是你指定的内容的唯一标号，需要是字符串类型。
--- keywords则是你指定的文本列里抽取出来的在字典中的词汇。
-
-train newdata as TokenExtract.`/tmp/model` where 
-`dic.paths`="/tmp/abc.txt"
-and idCol="id"
-and inputCol="words";
-
-load parquet.`/tmp/model` as tb;
-select * from tb;
-```
+[TokenExtract / TokenAnalysis](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-analysis.md)
