@@ -1,8 +1,10 @@
 package streaming.core
 
+import java.io.{File, FileFilter}
 import java.sql.{Driver, DriverManager}
 
 import net.sf.json.JSONObject
+import org.apache.commons.io.FileUtils
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.streaming.BasicSparkOperation
 import streaming.core.strategy.platform.SparkRuntime
@@ -17,7 +19,7 @@ class DslSpec extends BasicSparkOperation with SpecFunctions {
     "-streaming.name", "unit-test",
     "-streaming.rest", "false",
     "-streaming.platform", "spark",
-    "-streaming.enableHiveSupport", "false",
+    "-streaming.enableHiveSupport", "true",
     "-streaming.spark.service", "false",
     "-streaming.unittest", "true"
   )
@@ -186,7 +188,7 @@ class DslSpec extends BasicSparkOperation with SpecFunctions {
       val res = spark.sql("select * from tb").toJSON.collect().mkString("\n")
       println(res)
       import scala.collection.JavaConversions._
-      assume(JSONObject.fromObject(res).getJSONArray("keywords").size()==1)
+      assume(JSONObject.fromObject(res).getJSONArray("keywords").size() == 1)
       assume(JSONObject.fromObject(res).getJSONArray("keywords").
         filter(f => f.asInstanceOf[String]
           == "天才/n").size > 0)
@@ -208,6 +210,17 @@ class DslSpec extends BasicSparkOperation with SpecFunctions {
       assume(JSONObject.fromObject(res).getJSONArray("keywords").
         filter(f => f.asInstanceOf[String].
           startsWith("天了噜")).size > 0)
+    }
+  }
+
+  "save with file num options" should "work fine" in {
+
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+      //执行sql
+      implicit val spark = runtime.sparkSession
+      val sq = createSSEL
+      ScriptSQLExec.parse(scriptStr("save-filenum"), sq)
+      assume(new File("/tmp/william/tmp/abc/").list().filter(f => f.endsWith(".json")).size == 3)
     }
   }
 

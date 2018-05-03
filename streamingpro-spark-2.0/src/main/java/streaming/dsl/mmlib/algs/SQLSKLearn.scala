@@ -33,11 +33,12 @@ class SQLSKLearn extends SQLAlg with Functions {
 
     val stopFlagNum = newRDD.getNumPartitions
 
-    val fitParam = arrayParams("fitParam", params)
+    val fitParam = arrayParams("fitParam", params).zipWithIndex
     val fitParamRDD = df.sparkSession.sparkContext.parallelize(fitParam, fitParam.length)
     val pythonPath = systemParam.getOrElse("pythonPath", "python")
     val pythonVer = systemParam.getOrElse("pythonVer", "2.7")
-    val wowRDD = fitParamRDD.map { f =>
+    val wowRDD = fitParamRDD.map { paramAndIndex =>
+      val f = paramAndIndex._1
       val paramMap = new util.HashMap[String, Object]()
       var item = f.asJava
       if (!f.contains("modelPath")) {
@@ -71,7 +72,8 @@ class SQLSKLearn extends SQLAlg with Functions {
       if (!kafkaParam.contains("userName")) {
         res.foreach(f => f)
       } else {
-        KafkaOperator.writeKafka(kafkaParam, res)
+        val logPrefix = paramAndIndex._2 + "/" + alg + ":  "
+        KafkaOperator.writeKafka(logPrefix, kafkaParam, res)
       }
 
       //读取模型文件，保存到hdfs上，方便下次获取

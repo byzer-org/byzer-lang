@@ -170,7 +170,7 @@ class StreamSaveAdaptor(val scriptSQLExecListener: ScriptSQLExecListener,
     require(option.contains("duration"), "duration is required")
     require(option.contains("mode"), "mode is required")
 
-    writer = writer.format(format).outputMode(option("mode")).
+    writer = writer.format(option.getOrElse("implClass", format)).outputMode(option("mode")).
       partitionBy(partitionByCol: _*).
       options((option - "mode" - "duration"))
 
