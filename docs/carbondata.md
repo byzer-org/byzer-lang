@@ -32,6 +32,9 @@ as newkafkatable1;
 select "abc" as col1,decodeKafka(value) as col2 from newkafkatable1
 as table21;
 
+--如果无法识别carbondata,那么使用 `org.apache.spark.sql.CarbonSource`
+-- 也就是 `org.apache.spark.sql.CarbonSource`.`-`
+
 save append table21  
 as carbondata.`-` 
 options mode="append"
