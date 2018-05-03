@@ -34,6 +34,7 @@ as table21;
 
 --如果无法识别carbondata,那么使用 `org.apache.spark.sql.CarbonSource`
 -- 也就是 `org.apache.spark.sql.CarbonSource`.`-`
+-- 或者options添加 implClass="org.apache.spark.sql.CarbonSource"
 
 save append table21  
 as carbondata.`-` 
@@ -41,6 +42,7 @@ options mode="append"
 and duration="10"
 and dbName="default"
 and tableName="carbon_table2"
+and implClass="org.apache.spark.sql.CarbonSource"
 and `carbon.stream.parser`="org.apache.carbondata.streaming.parser.RowStreamParserImp"
 and checkpointLocation="/data/carbon/store/default/carbon_table2/.streaming/checkpoint";
 ```
