@@ -1,6 +1,9 @@
 package org.apache.spark.streaming
 
+import java.io.File
+
 import net.csdn.common.reflect.ReflectHelper
+import org.apache.commons.io.FileUtils
 import org.scalatest.{FlatSpec, Matchers}
 import serviceframework.dispatcher.{Compositor, StrategyDispatcher}
 import streaming.common.ParamsUtil
@@ -19,6 +22,7 @@ class BasicSparkOperation extends FlatSpec with Matchers {
         StrategyDispatcher.clear
         PlatformManager.clear
         runtime.destroyRuntime(false, true)
+        FileUtils.deleteDirectory(new File("./metastore_db"))
       } catch {
         case e: Exception =>
           e.printStackTrace()
@@ -27,7 +31,7 @@ class BasicSparkOperation extends FlatSpec with Matchers {
   }
 
   def getCompositorParam(item: Compositor[_]) = {
-    ReflectHelper.field(item,"_configParams").
+    ReflectHelper.field(item, "_configParams").
       asInstanceOf[java.util.List[java.util.Map[Any, Any]]]
   }
 

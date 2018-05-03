@@ -45,7 +45,7 @@ class SQLTensorFlow extends SQLAlg with Functions {
 
     val stopFlagNum = newRDD.getNumPartitions
 
-    val fitParam = arrayParams("fitParam", params)
+    val fitParam = arrayParams("fitParam", params).zipWithIndex
     val fitParamRDD = df.sparkSession.sparkContext.parallelize(fitParam, fitParam.length)
 
     var userFileName = ""
@@ -67,7 +67,8 @@ class SQLTensorFlow extends SQLAlg with Functions {
     }
     val rowsBr = df.sparkSession.sparkContext.broadcast(rows)
 
-    fitParamRDD.map { f =>
+    fitParamRDD.map { paramAndIndex =>
+      val f = paramAndIndex._1
       val paramMap = new util.HashMap[String, Object]()
       var item = f.asJava
       if (!f.contains("modelPath")) {
@@ -97,6 +98,8 @@ class SQLTensorFlow extends SQLAlg with Functions {
         require(!tfSource.isEmpty, "pythonDescPath or fitParam.0.alg is required")
       }
 
+      val alg = f("alg")
+
       val res = ExternalCommandRunner.run(Seq(pythonPath, tfName),
         paramMap,
         MapType(StringType, MapType(StringType, StringType)),
@@ -107,7 +110,8 @@ class SQLTensorFlow extends SQLAlg with Functions {
       if (!kafkaParam.contains("userName")) {
         res.foreach(f => f)
       } else {
-        KafkaOperator.writeKafka(kafkaParam, res)
+        val logPrefix = paramAndIndex._2 + "/" + alg + ":  "
+        KafkaOperator.writeKafka(logPrefix, kafkaParam, res)
       }
 
 
