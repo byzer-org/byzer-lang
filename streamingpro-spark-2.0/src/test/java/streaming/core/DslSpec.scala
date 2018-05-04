@@ -177,6 +177,23 @@ class DslSpec extends BasicSparkOperation with SpecFunctions {
     }
   }
 
+  "analysis with dic and deduplicate" should "work fine" in {
+
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+      //执行sql
+      implicit val spark = runtime.sparkSession
+      //需要有一个/tmp/abc.txt 文件，里面包含"天了噜"
+      var sq = createSSEL
+      ScriptSQLExec.parse(scriptStr("token-analysis-deduplicate"), sq)
+      val res = spark.sql("select * from tb").toJSON.collect().mkString("\n")
+      println(res)
+      import scala.collection.JavaConversions._
+      assume(JSONObject.fromObject(res).getJSONArray("keywords").
+        filter(f => f.asInstanceOf[String]
+          == "天了噜/userDefine").size == 1)
+    }
+  }
+
   "analysis with dic with n nature include" should "work fine" in {
 
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>

@@ -1,5 +1,6 @@
 package streaming.dsl.mmlib.algs
 
+import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
 /**
@@ -39,16 +40,16 @@ object AnsjFunctions {
     (name, nature)
   }
 
-  def createForest(forestClassName:String) = {
+  def createForest(forestClassName: String) = {
     Class.forName(forestClassName).newInstance().asInstanceOf[AnyRef]
   }
 
-  def createParser(parserClassName:String) = {
+  def createParser(parserClassName: String) = {
     Class.forName(parserClassName).newInstance().asInstanceOf[AnyRef]
   }
 
 
-  def extractAllWords(forest:AnyRef,content:String) = {
+  def extractAllWords(forest: AnyRef, content: String, deduplicateResult: Boolean) = {
     val udg = forest.getClass.getMethod("getWord", classOf[String]).invoke(forest, content.toLowerCase)
     def getAllWords(udg: Any) = {
       udg.getClass.getMethod("getAllWords").invoke(udg).asInstanceOf[String]
@@ -58,6 +59,11 @@ object AnsjFunctions {
     while (temp != null) {
       tempWords += temp
       temp = getAllWords(udg)
+    }
+
+    if (deduplicateResult) {
+      tempWords.clear()
+      tempWords.toSet[String].foreach(f => tempWords += f)
     }
     tempWords
   }

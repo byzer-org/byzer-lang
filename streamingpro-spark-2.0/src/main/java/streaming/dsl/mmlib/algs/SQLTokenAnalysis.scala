@@ -8,6 +8,7 @@ import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession}
 import streaming.dsl.mmlib.SQLAlg
 
 import scala.collection.JavaConversions._
+import scala.collection.mutable
 
 /**
   * Created by allwefantasy on 24/4/2018.
@@ -16,18 +17,19 @@ class SQLTokenAnalysis extends SQLAlg with Functions {
   override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
     val session = df.sparkSession
     var result = Array[String]()
-    require(params.contains("dic.paths"), "dic.paths is required")
     require(params.contains("inputCol"), "inputCol is required")
     require(params.contains("idCol"), "idCol is required")
 
     val ignoreNature = params.getOrElse("ignoreNature", "false").toBoolean
     val filterNatures = params.getOrElse("filterNatures", "").split(",").filterNot(f => f.isEmpty).toSet
+    val deduplicateResult = params.getOrElse("deduplicateResult", "false").toBoolean
+
     val fieldName = params("inputCol")
     val idCol = params("idCol")
     val parserClassName = params.getOrElse("parser", "org.ansj.splitWord.analysis.NlpAnalysis")
     val forestClassName = params.getOrElse("forest", "org.nlpcn.commons.lang.tire.domain.Forest")
 
-    result ++= params("dic.paths").split(",").map { f =>
+    result ++= params.getOrElse("dic.paths", "").split(",").map { f =>
       val wordsList = session.sparkContext.textFile(f).collect()
       wordsList
     }.flatMap(f => f)
@@ -55,8 +57,20 @@ class SQLTokenAnalysis extends SQLAlg with Functions {
           val result = udg.getClass.getMethod("getTerms").invoke(udg).asInstanceOf[java.util.List[Object]]
           var res = result.map { f =>
             val (name, nature) = AnsjFunctions.getTerm(f)
-            (name, nature)
+            (name.toString, nature.toString)
           }
+
+          if (deduplicateResult) {
+            val tmpSet = new mutable.HashSet[(String, String)]()
+            res.map { f =>
+              if (!tmpSet.contains(f)) {
+                tmpSet.add(f)
+              }
+              tmpSet.contains(f)
+            }
+            res = tmpSet.toBuffer
+          }
+
           if (filterNatures.size > 0) {
             res = res.filter(f => filterNatures.contains(f._2))
           }
