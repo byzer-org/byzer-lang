@@ -1,0 +1,37 @@
+{
+  "alg": {
+    "desc": "测试",
+    "strategy": "spark",
+    "algorithm": [],
+    "ref": [],
+    "compositor": [
+      {
+        "name": "batch.sources",
+        "params": [
+          {
+            "path": "file:///tmp/sample_linear_regression_data.txt",
+            "format": "libsvm",
+            "outputTable": "test"
+          }
+        ]
+      },
+      {
+        "name": "batch.output.alg",
+        "params": [
+          {
+            "algorithm": "lr",
+            "path": "file:///tmp/lr-model",
+            "inputTableName":"test"
+          },
+          {
+            "maxIter": 1,
+            "regParam": 0.3,
+            "elasticNetParam": 0.8
+          }
+        ]
+      }
+    ],
+    "configParams": {
+    }
+  }
+}

@@ -6,6 +6,7 @@ import scala.collection.JavaConversions._
 import scala.collection.mutable
 import org.apache.spark.ml.linalg.{DenseVector, SparseVector, Vector, Vectors}
 import org.apache.spark.mllib.linalg.{Vectors => OldVectors}
+import streaming.common.UnicodeUtils
 
 /**
   * Created by allwefantasy on 3/5/2017.
@@ -190,6 +191,13 @@ object Functions {
   def decodeKafka(uDFRegistration: UDFRegistration) = {
     uDFRegistration.register("decodeKafka", (item: Array[Byte]) => {
       new String(item, "utf-8")
+    })
+  }
+
+
+  def keepChinese(uDFRegistration: UDFRegistration) = {
+    uDFRegistration.register("keepChinese", (item: String, keepPunctuation: Boolean, include: Seq[String]) => {
+      UnicodeUtils.keepChinese(item, keepPunctuation, include.toArray)
     })
   }
 

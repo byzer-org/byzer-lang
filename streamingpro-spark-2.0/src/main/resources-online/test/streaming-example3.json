@@ -7,37 +7,40 @@
     ],
     "compositor": [
       {
-        "name": "ss.sources",
+        "name": "stream.sources",
         "params": [
           {
             "format": "socket",
             "outputTable": "test",
-            "port":"9999",
-            "host":"localhost",
+            "port": "9999",
+            "host": "localhost",
             "path": "-"
-          },
-          {
-            "format": "com.databricks.spark.csv",
-            "outputTable": "sample",
-            "header":"true",
-            "path": "/Users/allwefantasy/streamingpro/sample.csv"
           }
         ]
       },
       {
-        "name": "ss.sql",
+        "name": "stream.script.df",
         "params": [
           {
-            "sql": "select city from test left join sample on test.value == sample.name",
+            "clzz": "streaming.core.compositor.spark.api.example.TestTransform",
+            "source": "-"
+          }
+        ]
+      },
+      {
+        "name": "stream.sql",
+        "params": [
+          {
+            "sql": "select * from test2",
             "outputTableName": "test3"
           }
         ]
       },
       {
-        "name": "ss.outputs",
+        "name": "stream.outputs",
         "params": [
           {
-            "mode": "append",
+            "mode": "Overwrite",
             "format": "console",
             "inputTableName": "test3",
             "path": "-"

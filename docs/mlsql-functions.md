@@ -128,3 +128,16 @@ select array_slice(array("a","b","c","d","e"),3,-1) as k
 ### array_string_to_int
 
 对数组内的元素做类型转换
+
+### keepChinese
+
+对文本字段做处理，只保留中文字符
+
+```
+set query = "你◣◢︼【】┅┇☽☾✚〓▂▃▄▅▆▇█▉▊▋▌▍▎▏↔↕☽☾の·▸◂▴▾┈┊好◣◢︼【】┅┇☽☾✚〓▂▃▄▅▆▇█▉▊▋▌▍▎▏↔↕☽☾の·▸◂▴▾┈┊啊，..。，！?katty"
+select keepChinese("${query}",false,array()) as jack 
+as chitable
+-- 结果: 你好啊   
+```
+
+第二个参数如果为true,则会保留一些常见的标点符号，第三个参数可以指定特定哪些字符需要保留字符。

@@ -1,0 +1,9 @@
+load crawlersql.`https://www.csdn.net/nav/ai`
+options matchXPath="//ul[@id='feedlist_id']//div[@class='title']//a/@href"
+and fetchType="list"
+and tempStore="/tmp/streamingpro_crawler/c61c326a525ce1ddb672147e0096ef26"
+and phantomJSPath="/usr/local/Cellar/phantomjs/2.1.1/bin/phantomjs"
+and `page.type`="scroll"
+and `page.num`="10"
+and `page.flag`="feedlist_id"
+as aritle_url_table_source;

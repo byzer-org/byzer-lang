@@ -10,16 +10,16 @@
         "name": "ss.sources",
         "params": [
           {
-            "format": "socket",
+            "format": "kafka9",
             "outputTable": "test",
-            "port":"9999",
-            "host":"localhost",
+            "kafka.bootstrap.servers": "127.0.0.1:9092",
+            "topics": "test",
             "path": "-"
           },
           {
             "format": "com.databricks.spark.csv",
             "outputTable": "sample",
-            "header":"true",
+            "header": "true",
             "path": "/Users/allwefantasy/streamingpro/sample.csv"
           }
         ]
@@ -28,7 +28,7 @@
         "name": "ss.sql",
         "params": [
           {
-            "sql": "select city from test left join sample on test.value == sample.name",
+            "sql": "select city as value from test left join sample on  CAST(test.value AS String) == sample.name",
             "outputTableName": "test3"
           }
         ]
@@ -38,9 +38,12 @@
         "params": [
           {
             "mode": "append",
-            "format": "console",
+            "format": "kafka8",
+            "metadata.broker.list":"127.0.0.1:9092",
+            "topics":"test2",
             "inputTableName": "test3",
-            "path": "-"
+            "checkpoint":"/tmp/ss-kafka/",
+            "path": "/tmp/ss-kafka-data"
           }
         ]
       }

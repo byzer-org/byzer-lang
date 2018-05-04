@@ -24,6 +24,19 @@ class DslSpec extends BasicSparkOperation with SpecFunctions {
     "-streaming.unittest", "true"
   )
 
+  val batchParamsWithCarbondata = Array(
+    "-streaming.master", "local[2]",
+    "-streaming.name", "unit-test",
+    "-streaming.rest", "false",
+    "-streaming.platform", "spark",
+    "-streaming.enableHiveSupport", "true",
+    "-streaming.spark.service", "false",
+    "-streaming.unittest", "true",
+    "-streaming.enableCarbonDataSupport", "true",
+    "-streaming.carbondata.store", "/tmp/carbondata/store",
+    "-streaming.carbondata.meta", "/tmp/carbondata/meta"
+  )
+
 
   "set grammar" should "work fine" in {
 
@@ -177,6 +190,23 @@ class DslSpec extends BasicSparkOperation with SpecFunctions {
     }
   }
 
+  "analysis with dic and deduplicate" should "work fine" in {
+
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+      //执行sql
+      implicit val spark = runtime.sparkSession
+      //需要有一个/tmp/abc.txt 文件，里面包含"天了噜"
+      var sq = createSSEL
+      ScriptSQLExec.parse(scriptStr("token-analysis-deduplicate"), sq)
+      val res = spark.sql("select * from tb").toJSON.collect().mkString("\n")
+      println(res)
+      import scala.collection.JavaConversions._
+      assume(JSONObject.fromObject(res).getJSONArray("keywords").
+        filter(f => f.asInstanceOf[String]
+          == "天了噜/userDefine").size == 1)
+    }
+  }
+
   "analysis with dic with n nature include" should "work fine" in {
 
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
@@ -223,5 +253,25 @@ class DslSpec extends BasicSparkOperation with SpecFunctions {
       assume(new File("/tmp/william/tmp/abc/").list().filter(f => f.endsWith(".json")).size == 3)
     }
   }
+
+  "carbondata save" should "work fine" in {
+
+    withBatchContext(setupBatchContext(batchParamsWithCarbondata, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+      //执行sql
+      implicit val spark = runtime.sparkSession
+      val sq = createSSEL
+      ScriptSQLExec.parse(scriptStr("mlsql-carbondata"), sq)
+      var res = spark.sql("select * from visit_carbon").toJSON.collect()
+      var keyRes = JSONObject.fromObject(res(0)).getString("a")
+      assume(keyRes == "1")
+
+      ScriptSQLExec.parse(scriptStr("mlsql-carbondata-without-option"), createSSEL)
+      res = spark.sql("select * from visit_carbon2").toJSON.collect()
+      keyRes = JSONObject.fromObject(res(0)).getString("a")
+      assume(keyRes == "1")
+
+    }
+  }
+
 
 }

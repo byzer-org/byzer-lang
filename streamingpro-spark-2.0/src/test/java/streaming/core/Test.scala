@@ -5,6 +5,7 @@ import java.net.URL
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.{SparkConf, SparkContext}
 import org.scalatest.{FlatSpec, Matchers}
+import streaming.common.{PunctuationUtils, UnicodeUtils}
 
 import scala.collection.mutable
 
@@ -71,8 +72,9 @@ object Test {
   }
 
   def main(args: Array[String]): Unit = {
-    parseArgs
-    println(psDriverUrl)
+    val testS = "你◣◢︼【】┅┇☽☾✚〓▂▃▄▅▆▇█▉▊▋▌▍▎▏↔↕☽☾の·▸◂▴▾┈┊好◣◢︼【】┅┇☽☾✚〓▂▃▄▅▆▇█▉▊▋▌▍▎▏↔↕☽☾の·▸◂▴▾┈┊啊，..。，！?katty"
+    val kk = UnicodeUtils.keepChinese(testS, true, null)
+    println(kk)
 
   }
 }

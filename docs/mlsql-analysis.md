@@ -53,6 +53,7 @@ load parquet.`/tmp/model` as tb;
 |inputCol|等待分词的列|org.ansj.splitWord.analysis.NlpAnalysis|
 |filterNatures|指定结果需要过滤出哪些词性|空|
 |ignoreNature|是否忽略词性|false|
+|deduplicateResult|分词结果是否忽略去掉重复|false|
 
 该功能可以很好的使用在NLP算法领域，毕竟大部分NLP算法工作都需要有一个好的灵活的分词工具。
 
