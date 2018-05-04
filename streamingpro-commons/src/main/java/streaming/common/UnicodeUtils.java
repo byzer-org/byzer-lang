@@ -18,11 +18,6 @@ public class UnicodeUtils {
         return s1;
     }
 
-
-//    public static String keepChinese(String chineseStr, String[] include) {
-//        Set<String> includeSet  = new HashSet<>(include);
-//    }
-
     public static String keepChinese(String chineseStr, boolean keepPunctuation, String[] include) {
         if (chineseStr == null) return null;
         Set<Character> includeChars = new HashSet<>();

@@ -7,37 +7,37 @@
     ],
     "compositor": [
       {
-        "name": "ss.sources",
+        "name": "stream.sources",
         "params": [
           {
             "format": "socket",
             "outputTable": "test",
-            "port":"9999",
-            "host":"localhost",
+            "port": "9999",
+            "host": "localhost",
             "path": "-"
           },
           {
             "format": "com.databricks.spark.csv",
             "outputTable": "sample",
-            "header":"true",
+            "header": "true",
             "path": "/Users/allwefantasy/streamingpro/sample.csv"
           }
         ]
       },
       {
-        "name": "ss.sql",
+        "name": "stream.sql",
         "params": [
           {
-            "sql": "select city from test left join sample on test.value == sample.name",
+            "sql": "select city from test left join sample on test.content == sample.name",
             "outputTableName": "test3"
           }
         ]
       },
       {
-        "name": "ss.outputs",
+        "name": "stream.outputs",
         "params": [
           {
-            "mode": "append",
+            "mode": "Overwrite",
             "format": "console",
             "inputTableName": "test3",
             "path": "-"

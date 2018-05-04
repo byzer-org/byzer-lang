@@ -24,6 +24,19 @@ class DslSpec extends BasicSparkOperation with SpecFunctions {
     "-streaming.unittest", "true"
   )
 
+  val batchParamsWithCarbondata = Array(
+    "-streaming.master", "local[2]",
+    "-streaming.name", "unit-test",
+    "-streaming.rest", "false",
+    "-streaming.platform", "spark",
+    "-streaming.enableHiveSupport", "true",
+    "-streaming.spark.service", "false",
+    "-streaming.unittest", "true",
+    "-streaming.enableCarbonDataSupport", "true",
+    "-streaming.carbondata.store", "/tmp/carbondata/store",
+    "-streaming.carbondata.meta", "/tmp/carbondata/meta"
+  )
+
 
   "set grammar" should "work fine" in {
 
@@ -240,5 +253,25 @@ class DslSpec extends BasicSparkOperation with SpecFunctions {
       assume(new File("/tmp/william/tmp/abc/").list().filter(f => f.endsWith(".json")).size == 3)
     }
   }
+
+  "carbondata save" should "work fine" in {
+
+    withBatchContext(setupBatchContext(batchParamsWithCarbondata, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+      //执行sql
+      implicit val spark = runtime.sparkSession
+      val sq = createSSEL
+      ScriptSQLExec.parse(scriptStr("mlsql-carbondata"), sq)
+      var res = spark.sql("select * from visit_carbon").toJSON.collect()
+      var keyRes = JSONObject.fromObject(res(0)).getString("a")
+      assume(keyRes == "1")
+
+      ScriptSQLExec.parse(scriptStr("mlsql-carbondata-without-option"), createSSEL)
+      res = spark.sql("select * from visit_carbon2").toJSON.collect()
+      keyRes = JSONObject.fromObject(res(0)).getString("a")
+      assume(keyRes == "1")
+
+    }
+  }
+
 
 }
