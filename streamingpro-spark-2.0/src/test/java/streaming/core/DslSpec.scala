@@ -259,13 +259,16 @@ class DslSpec extends BasicSparkOperation with SpecFunctions {
     withBatchContext(setupBatchContext(batchParamsWithCarbondata, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
       implicit val spark = runtime.sparkSession
-      val sq = createSSEL
+      var sq = createSSEL
       ScriptSQLExec.parse(scriptStr("mlsql-carbondata"), sq)
+      Thread.sleep(1000)
       var res = spark.sql("select * from visit_carbon").toJSON.collect()
       var keyRes = JSONObject.fromObject(res(0)).getString("a")
       assume(keyRes == "1")
 
-      ScriptSQLExec.parse(scriptStr("mlsql-carbondata-without-option"), createSSEL)
+      sq = createSSEL
+      ScriptSQLExec.parse(scriptStr("mlsql-carbondata-without-option"), sq)
+      Thread.sleep(1000)
       res = spark.sql("select * from visit_carbon2").toJSON.collect()
       keyRes = JSONObject.fromObject(res(0)).getString("a")
       assume(keyRes == "1")
