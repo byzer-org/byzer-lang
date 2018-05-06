@@ -1,41 +1,16 @@
 package streaming.core
 
-import java.io.{File, FileFilter}
-import java.sql.{Driver, DriverManager}
+import java.io.File
 
 import net.sf.json.JSONObject
-import org.apache.commons.io.FileUtils
-import org.apache.spark.sql.SparkSession
 import org.apache.spark.streaming.BasicSparkOperation
 import streaming.core.strategy.platform.SparkRuntime
-import streaming.dsl.{ScriptSQLExec, ScriptSQLExecListener}
+import streaming.dsl.ScriptSQLExec
 
 /**
   * Created by allwefantasy on 26/4/2018.
   */
-class DslSpec extends BasicSparkOperation with SpecFunctions {
-  val batchParams = Array(
-    "-streaming.master", "local[2]",
-    "-streaming.name", "unit-test",
-    "-streaming.rest", "false",
-    "-streaming.platform", "spark",
-    "-streaming.enableHiveSupport", "true",
-    "-streaming.spark.service", "false",
-    "-streaming.unittest", "true"
-  )
-
-  val batchParamsWithCarbondata = Array(
-    "-streaming.master", "local[2]",
-    "-streaming.name", "unit-test",
-    "-streaming.rest", "false",
-    "-streaming.platform", "spark",
-    "-streaming.enableHiveSupport", "true",
-    "-streaming.spark.service", "false",
-    "-streaming.unittest", "true",
-    "-streaming.enableCarbonDataSupport", "true",
-    "-streaming.carbondata.store", "/tmp/carbondata/store",
-    "-streaming.carbondata.meta", "/tmp/carbondata/meta"
-  )
+class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConfig {
 
 
   "set grammar" should "work fine" in {

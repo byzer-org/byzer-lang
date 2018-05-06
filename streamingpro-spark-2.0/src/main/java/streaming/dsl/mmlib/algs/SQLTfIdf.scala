@@ -36,6 +36,11 @@ class SQLTfIdf extends SQLAlg with Functions {
   }
 
   override def predict(sparkSession: SparkSession, _model: Any, name: String): UserDefinedFunction = {
+    val res = internal_predict(sparkSession, _model, name)
+    UserDefinedFunction(res(name), VectorType, Some(Seq(ArrayType(IntegerType))))
+  }
+
+  def internal_predict(sparkSession: SparkSession, _model: Any, name: String) = {
     val model = sparkSession.sparkContext.broadcast(_model.asInstanceOf[IDFModel])
     val intTF = new feature.IntTF(model.value.idf.size).setBinary(true)
     val idf = (words: Seq[Int]) => {
@@ -45,6 +50,6 @@ class SQLTfIdf extends SQLAlg with Functions {
       val vec = intTF.transform(words)
       idfModel.transform(vec).asML
     }
-    UserDefinedFunction(idf, VectorType, Some(Seq(ArrayType(IntegerType))))
+    Map(name -> idf)
   }
 }

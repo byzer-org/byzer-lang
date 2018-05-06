@@ -106,6 +106,11 @@ object HDFSOperator {
     FileUtils.forceDelete(new File(tempModelLocalPath))
   }
 
+  def deleteDir(path: String) = {
+    val fs = FileSystem.get(new Configuration())
+    fs.delete(new Path(path), true)
+  }
+
   def createTempModelLocalPath(path: String, autoCreateParentDir: Boolean = true) = {
     val dir = "/tmp/train/" + Md5.md5Hash(path)
     if (autoCreateParentDir) {
