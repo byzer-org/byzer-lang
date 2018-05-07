@@ -69,6 +69,7 @@ class SQLTensorFlow extends SQLAlg with Functions {
 
     fitParamRDD.map { paramAndIndex =>
       val f = paramAndIndex._1
+      val algIndex = paramAndIndex._2
       val paramMap = new util.HashMap[String, Object]()
       var item = f.asJava
       if (!f.contains("modelPath")) {
@@ -107,12 +108,9 @@ class SQLTensorFlow extends SQLAlg with Functions {
         tfName, modelPath = path, validateData = rowsBr.value
       )
 
-      if (!kafkaParam.contains("userName")) {
-        res.foreach(f => f)
-      } else {
-        val logPrefix = paramAndIndex._2 + "/" + alg + ":  "
-        KafkaOperator.writeKafka(logPrefix, kafkaParam, res)
-      }
+      val logPrefix = algIndex + "/" + alg + ":  "
+      val scores = KafkaOperator.writeKafka(logPrefix, kafkaParam, res)
+      val score = if (scores.size > 0) scores.head else 0d
 
 
       val fs = FileSystem.get(new Configuration())

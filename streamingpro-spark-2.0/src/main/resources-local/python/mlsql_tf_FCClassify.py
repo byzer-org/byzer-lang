@@ -68,9 +68,8 @@ summ = tf.summary.merge_all()
 
 sess.run(tf.global_variables_initializer())
 
-test_items = mlsql.get_validate_data()
-TEST_X = [item[input_col].toArray() for item in test_items]
-TEST_Y = [item[label_col].toArray() for item in test_items]
+TEST_X, TEST_Y = mlsql.get_validate_data()
+TEST_Y = [item.toArray() for item in TEST_Y]
 
 for ep in range(epochs):
     for items in rd(max_records=batch_size):

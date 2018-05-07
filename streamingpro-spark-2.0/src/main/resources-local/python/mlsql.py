@@ -258,7 +258,15 @@ def get_param(p, name, default_value):
 
 
 def get_validate_data():
-    return validate_data
+    X = []
+    y = []
+    fitParams = params()["fitParam"]
+    x_name = fitParams["inputCol"] if "inputCol" in fitParams else "features"
+    y_name = fitParams["label"] if "label" in fitParams else "label"
+    for item in validate_data:
+        X.append(item[x_name].toArray())
+        y.append(item[y_name])
+    return X, y
 
 
 def sklearn_batch_data(fn):

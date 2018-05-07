@@ -59,7 +59,8 @@ object MLMapping {
     "TableToMap" -> "streaming.dsl.mmlib.algs.SQLTableToMap",
     "DL4J" -> "streaming.dsl.mmlib.algs.SQLDL4J",
     "TokenExtract" -> "streaming.dsl.mmlib.algs.SQLTokenExtract",
-    "TokenAnalysis" -> "streaming.dsl.mmlib.algs.SQLTokenAnalysis"
+    "TokenAnalysis" -> "streaming.dsl.mmlib.algs.SQLTokenAnalysis",
+    "TfIdfInPlace" -> "streaming.dsl.mmlib.algs.SQLTfIdfInPlace"
   )
 
   def findAlg(name: String) = {

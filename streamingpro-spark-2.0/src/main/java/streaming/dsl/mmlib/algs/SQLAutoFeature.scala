@@ -5,11 +5,14 @@ import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
 import streaming.dsl.mmlib.SQLAlg
 import org.apache.spark.sql.{functions => F}
+import org.apache.spark.ml.linalg.Vector
+
 
 /**
   * Created by allwefantasy on 2/5/2018.
   */
 class SQLAutoFeature extends SQLAlg with Functions {
+  //val path = "/tmp/" + UUID.randomUUID().toString
   override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
 
   }
@@ -29,20 +32,6 @@ object StringFeature {
     newDF.withColumn(inputCol + "_tmp", udf(F.col(inputCol))).drop(inputCol).withColumnRenamed(inputCol + "_tmp", inputCol)
   }
 
-  //  private def fetchPredictFun(newDF: DataFrame,
-  //                              mappingPath: String,
-  //                              inputCol: String,
-  //                              funcName: String
-  //                             ): UserDefinedFunction = {
-  //    val wordIndexPath = mappingPath.stripSuffix("/") + s"/wordIndex/$inputCol"
-  //    val si = new SQLStringIndex()
-  //    si.train(newDF, wordIndexPath, Map("inputCol" -> "words"))
-  //    val siModel = si.load(newDF.sparkSession, wordIndexPath)
-  //    val predictFunc = si.internal_predict(newDF.sparkSession, siModel, "wow")(funcName).asInstanceOf[(Seq[String]) => Array[Int]]
-  //    F.udf(predictFunc)
-  //  }
-
-  //val path = "/tmp/" + UUID.randomUUID().toString
   def tfidf(df: DataFrame, mappingPath: String, dicPaths: String, inputCol: String) = {
     //analysis
     var newDF = new SQLTokenAnalysis().internal_train(df, Map("dic.paths" -> dicPaths, "inputCol" -> inputCol))
@@ -54,7 +43,6 @@ object StringFeature {
     )
 
     //create uniq int for analysed token
-    println(newRdd.collect())
     val tmpWords = df.sparkSession.createDataFrame(newRdd, StructType(Seq(StructField("words", StringType))))
     val wordCount = tmpWords.count()
 
@@ -79,7 +67,15 @@ object StringFeature {
     newDF
   }
 
-  def word2vec(str: String) = {
-
+  def word2vec(df: DataFrame, mappingPath: String, dicPaths: String, inputCol: String) = {
+    var newDF = new SQLTokenAnalysis().internal_train(df, Map("dic.paths" -> dicPaths, "inputCol" -> inputCol))
+    val word2vec = new SQLWord2Vec()
+    val word2vecPath = mappingPath.stripSuffix("/") + s"/word2vec/$inputCol"
+    word2vec.train(newDF, word2vecPath, Map("inputCol" -> inputCol, "minCount" -> "0"))
+    val model = word2vec.load(df.sparkSession, word2vecPath)
+    val predictFunc = word2vec.internal_predict(df.sparkSession, model, "wow")("wow_array").asInstanceOf[(Seq[String]) => Seq[Seq[Double]]]
+    val udfPredictFunc = F.udf(predictFunc)
+    newDF = replaceColumn(newDF, inputCol, udfPredictFunc)
+    newDF
   }
 }

@@ -3,19 +3,18 @@ package streaming.dsl.mmlib.algs
 import java.io.File
 import java.nio.file.{Files, Paths}
 import java.util
+import java.util.UUID
 
 import com.hortonworks.spark.sql.kafka08.KafkaOperator
 import org.apache.commons.io.FileUtils
 import org.apache.spark.TaskContext
 import org.apache.spark.api.python.WowPythonRunner
 import org.apache.spark.ml.linalg.SQLDataTypes._
-import org.apache.spark.ml.linalg.{DenseVector, SparseVector, VectorUDT, Vectors}
 import org.apache.spark.sql.catalyst.InternalRow
-import org.apache.spark.sql.catalyst.expressions.GenericInternalRow
 import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession}
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.types._
-import org.apache.spark.util.{ExternalCommandRunner, VectorSerDer}
+import org.apache.spark.util.{ExternalCommandRunner, ObjPickle, VectorSerDer}
 import streaming.dsl.mmlib.SQLAlg
 import org.apache.spark.util.ObjPickle._
 import org.apache.spark.util.VectorSerDer._
@@ -37,8 +36,22 @@ class SQLSKLearn extends SQLAlg with Functions {
     val fitParamRDD = df.sparkSession.sparkContext.parallelize(fitParam, fitParam.length)
     val pythonPath = systemParam.getOrElse("pythonPath", "python")
     val pythonVer = systemParam.getOrElse("pythonVer", "2.7")
+
+    val schema = df.schema
+    var rows = Array[Array[Byte]]()
+    //目前我们只支持同一个测试集
+    if (params.contains("validateTable")) {
+      val validateTable = params("validateTable")
+      rows = df.sparkSession.table(validateTable).rdd.mapPartitions { iter =>
+        ObjPickle.pickle(iter, schema)
+      }.collect()
+    }
+    val rowsBr = df.sparkSession.sparkContext.broadcast(rows)
+
+
     val wowRDD = fitParamRDD.map { paramAndIndex =>
       val f = paramAndIndex._1
+      val algIndex = paramAndIndex._2
       val paramMap = new util.HashMap[String, Object]()
       var item = f.asJava
       if (!f.contains("modelPath")) {
@@ -50,10 +63,13 @@ class SQLSKLearn extends SQLAlg with Functions {
         getLines().mkString("\n")
       val userFileName = s"mlsql_sk_${alg}.py"
 
-      val tempModelLocalPath = "/tmp/" + System.currentTimeMillis()
+      val tempModelLocalPath = s"/tmp/${UUID.randomUUID().toString}/${algIndex}"
 
       paramMap.put("fitParam", item)
-      paramMap.put("kafkaParam", kafkaParam.asJava)
+
+      val kafkaP = kafkaParam + ("group_id" -> (kafkaParam("group_id") + "_" + algIndex))
+      paramMap.put("kafkaParam", kafkaP.asJava)
+
       paramMap.put("internalSystemParam", Map(
         "stopFlagNum" -> stopFlagNum,
         "tempModelLocalPath" -> tempModelLocalPath
@@ -66,23 +82,25 @@ class SQLSKLearn extends SQLAlg with Functions {
         paramMap,
         MapType(StringType, MapType(StringType, StringType)),
         sk_bayes,
-        userFileName, modelPath = path
+        userFileName, modelPath = path, validateData = rowsBr.value
       )
 
-      if (!kafkaParam.contains("userName")) {
-        res.foreach(f => f)
-      } else {
-        val logPrefix = paramAndIndex._2 + "/" + alg + ":  "
-        KafkaOperator.writeKafka(logPrefix, kafkaParam, res)
-      }
 
+      val logPrefix = algIndex + "/" + alg + ":  "
+      val scores = KafkaOperator.writeKafka(logPrefix, kafkaParam, res)
+      val score = if (scores.size > 0) scores.head else 0d
       //读取模型文件，保存到hdfs上，方便下次获取
       val file = new File(new File(tempModelLocalPath), "model.pickle")
       val byteArray = Files.readAllBytes(Paths.get(file.getPath))
       FileUtils.deleteDirectory(new File(tempModelLocalPath))
-      Row.fromSeq(Seq(byteArray))
+      Row.fromSeq(Seq(byteArray, algIndex, alg, score))
     }
-    df.sparkSession.createDataFrame(wowRDD, StructType(Seq(StructField("bytes", BinaryType)))).
+    df.sparkSession.createDataFrame(wowRDD, StructType(Seq(
+      StructField("bytes", BinaryType),
+      StructField("algIndex", IntegerType),
+      StructField("alg", StringType),
+      StructField("score", DoubleType)
+    ))).
       write.
       mode(SaveMode.Overwrite).
       parquet(new File(path, "0").getPath)
@@ -98,7 +116,7 @@ class SQLSKLearn extends SQLAlg with Functions {
   }
 
   override def load(sparkSession: SparkSession, path: String): Any = {
-    val models = sparkSession.read.parquet(new File(path, "0").getPath).collect().map(f => f.get(0).asInstanceOf[Array[Byte]]).toSeq
+    val models = sparkSession.read.parquet(new File(path, "0").getPath).collect().map(f => f(0).asInstanceOf[Array[Byte]]).toSeq
     val metas = sparkSession.read.parquet(new File(path, "__meta__").getPath).collect().map(f => f.get(0).asInstanceOf[Map[String, String]]).toSeq
     (models, metas)
   }

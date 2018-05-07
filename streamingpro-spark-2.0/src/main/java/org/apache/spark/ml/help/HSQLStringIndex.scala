@@ -15,9 +15,9 @@ object HSQLStringIndex {
 
     val res = internal_predict(sparkSession, _model, name)
 
-    res.filter(f => f._1 != name).foreach { f =>
-      sparkSession.udf.register(f._1, f._2)
-    }
+    sparkSession.udf.register(name + "_array", res(name + "_array").asInstanceOf[Seq[String] => Seq[Int]])
+    sparkSession.udf.register(name + "_r", res(name + "_r").asInstanceOf[Double => String])
+    sparkSession.udf.register(name + "_rarray", res(name + "_rarray").asInstanceOf[Seq[Int] => Seq[String]])
 
     UserDefinedFunction(res(name), IntegerType, Some(Seq(StringType)))
   }
