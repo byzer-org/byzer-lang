@@ -70,4 +70,18 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
 
     }
   }
+
+  "SQLSampler" should "work fine" in {
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+      //执行sql
+      implicit val spark = runtime.sparkSession
+      val sq = createSSEL
+      ScriptSQLExec.parse(scriptStr("sql-sampler"), sq)
+      var df = spark.sql("select count(*) as num,__split__ as rate from sample_data group by __split__ ")
+      assume(df.count() == 3)
+      df = spark.sql("select label,__split__,count(__split__) as rate from sample_data  group by label,__split__ order by label,__split__,rate")
+      df.show(10000)
+
+    }
+  }
 }
