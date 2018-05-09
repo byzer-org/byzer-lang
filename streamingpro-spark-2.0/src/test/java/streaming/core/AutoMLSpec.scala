@@ -57,7 +57,6 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
       val sq = createSSEL
       ScriptSQLExec.parse(scriptStr("sklearn-multi-model-trainning"), sq)
       spark.read.parquet("/tmp/william/tmp/model/0").show()
-
     }
   }
 

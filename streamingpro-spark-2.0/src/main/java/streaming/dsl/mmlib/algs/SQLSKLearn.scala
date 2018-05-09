@@ -18,6 +18,7 @@ import org.apache.spark.util.{ExternalCommandRunner, ObjPickle, VectorSerDer}
 import streaming.dsl.mmlib.SQLAlg
 import org.apache.spark.util.ObjPickle._
 import org.apache.spark.util.VectorSerDer._
+import org.apache.spark.sql.{functions => F}
 
 import scala.collection.JavaConverters._
 import scala.io.Source
@@ -116,7 +117,11 @@ class SQLSKLearn extends SQLAlg with Functions {
   }
 
   override def load(sparkSession: SparkSession, path: String): Any = {
-    val models = sparkSession.read.parquet(new File(path, "0").getPath).collect().map(f => f(0).asInstanceOf[Array[Byte]]).toSeq
+    val models = sparkSession.read.parquet(new File(path, "0").getPath)
+      .collect()
+      .map(f => (f(3).asInstanceOf[Double], f(0).asInstanceOf[Array[Byte]]))
+      .toSeq.sortBy(f => f._1)(Ordering[Double].reverse).take(1).map(f => f._2)
+
     val metas = sparkSession.read.parquet(new File(path, "__meta__").getPath).collect().map(f => f.get(0).asInstanceOf[Map[String, String]]).toSeq
     (models, metas)
   }
