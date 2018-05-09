@@ -5,7 +5,7 @@ import java.util.concurrent.atomic.AtomicReference
 
 import net.csdn.common.logging.Loggers
 import org.apache.spark.sql.types._
-import org.apache.spark.SparkEnv
+import org.apache.spark.{SparkEnv, TaskContext}
 
 import scala.collection.JavaConverters._
 import scala.collection.Map
@@ -30,7 +30,6 @@ object ExternalCommandRunner {
           separateWorkingDir: Boolean = true,
           bufferSize: Int = 1024,
           encoding: String = "utf-8") = {
-
     val pb = new ProcessBuilder(command.asJava)
     // Add the environmental variables to the process.
     val currentEnvVars = pb.environment()
@@ -105,6 +104,16 @@ object ExternalCommandRunner {
     val proc = pb.start()
     val env = SparkEnv.get
     val childThreadException = new AtomicReference[Throwable](null)
+
+    TaskContext.get().addTaskFailureListener { (tc, exec) =>
+      logger.info("task fail, destroy python worker")
+      proc.destroy()
+      childThreadException.set(exec)
+    }
+
+    TaskContext.get().addTaskCompletionListener { tc =>
+      //proc.destroyForcibly()
+    }
 
     // Start a thread to print the process's stderr to ours
     new Thread(s"stderr reader for $command") {

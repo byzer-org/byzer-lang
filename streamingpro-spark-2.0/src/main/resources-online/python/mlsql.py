@@ -33,14 +33,17 @@ def dump(value, f):
 
 
 def load(path):
-    with open(path, 'rb', 1 << 20) as f:
-        # pickle.load() may create lots of objects, disable GC
-        # temporary for better performance
-        gc.disable()
-        try:
-            return pickle.load(f)
-        finally:
-            gc.enable()
+    try:
+        with open(path, 'rb', 1 << 20) as f:
+            # pickle.load() may create lots of objects, disable GC
+            # temporary for better performance
+            gc.disable()
+            try:
+                return pickle.load(f)
+            finally:
+                gc.enable()
+    except Exception:
+        return []
 
 
 filename = os.path.join(os.getcwd(), "python_temp.pickle")
@@ -71,6 +74,10 @@ for item in raw_validate_data:
 def read_data():
     # Update params
     # os.environ.get('pickleFile')
+    if "debug" in kafka_param and kafka_param["debug"]:
+        import logging
+        logging.basicConfig(level=logging.DEBUG)
+
     authkey = uuid.uuid4().bytes
     mgr = msg_queue.start(authkey=authkey, queue_max_size=10, queues=['input'])
 
@@ -157,6 +164,7 @@ def read_data():
             return int(round(time.time() * 1000))
 
         leave_msg_group = []
+        total_wait_count = 0
         while True:
             msg_group = []
             count = 0
@@ -168,6 +176,7 @@ def read_data():
             while count < max_records:
                 if queue.empty():
                     wait_count += 1
+                    total_wait_count += 1
                 items = queue.get(block=True)
                 if items[-1] == "_stop_":
                     should_break = True
@@ -190,10 +199,13 @@ def read_data():
             if len(leave_msg_group) > 0:
                 msg_group = leave_msg_group
 
-            if wait_count > 1:
+            if wait_count > 1 and total_wait_count < 11:
                 print("queue get blocked count:{} when batch size is:{} actually size is {}".format(wait_count,
                                                                                                     max_records,
                                                                                                     len(msg_group)))
+                if total_wait_count == 10:
+                    print("already print too many blocked count(maybe kafka is busy)")
+
             if print_consume_time:
                 ms = now_time() - start_time
                 print("queue fetch {} consume:{}".format(max_records, ms))
@@ -241,8 +253,14 @@ def sklearn_all_data():
     y = []
     x_name = fitParams["inputCol"] if "inputCol" in fitParams else "features"
     y_name = fitParams["label"] if "label" in fitParams else "label"
+    debug = "debug" in fitParams and bool(fitParams["debug"])
+    counter = 0
     for items in rd(max_records=1000):
-        if len(items) == 0:
+        item_size = len(items)
+        if debug:
+            counter += item_size
+            print("{} collect data from kafka:{}".format(fitParams["alg"], counter))
+        if item_size == 0:
             continue
         X = X + [item[x_name].toArray() for item in items]
         y = y + [item[y_name] for item in items]

@@ -253,8 +253,14 @@ def sklearn_all_data():
     y = []
     x_name = fitParams["inputCol"] if "inputCol" in fitParams else "features"
     y_name = fitParams["label"] if "label" in fitParams else "label"
+    debug = "debug" in fitParams and bool(fitParams["debug"])
+    counter = 0
     for items in rd(max_records=1000):
-        if len(items) == 0:
+        item_size = len(items)
+        if debug:
+            counter += item_size
+            print("{} collect data from kafka:{}".format(fitParams["alg"], counter))
+        if item_size == 0:
             continue
         X = X + [item[x_name].toArray() for item in items]
         y = y + [item[y_name] for item in items]

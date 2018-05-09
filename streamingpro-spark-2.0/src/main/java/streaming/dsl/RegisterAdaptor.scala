@@ -1,6 +1,7 @@
 package streaming.dsl
 
 import streaming.dsl.parser.DSLSQLParser._
+import streaming.dsl.template.TemplateMerge
 
 /**
   * Created by allwefantasy on 12/1/2018.
@@ -10,7 +11,7 @@ class RegisterAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslA
     var functionName = ""
     var format = ""
     var path = ""
-//    val owner = option.get("owner")
+    //    val owner = option.get("owner")
     (0 to ctx.getChildCount() - 1).foreach { tokenIndex =>
 
       ctx.getChild(tokenIndex) match {
@@ -19,7 +20,8 @@ class RegisterAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslA
         case s: FormatContext =>
           format = s.getText
         case s: PathContext =>
-          path = withPathPrefix(scriptSQLExecListener.pathPrefix(None), cleanStr(s.getText))
+          path = TemplateMerge.merge(cleanStr(s.getText), scriptSQLExecListener.env().toMap)
+          path = withPathPrefix(scriptSQLExecListener.pathPrefix(None), path)
         case _ =>
       }
     }

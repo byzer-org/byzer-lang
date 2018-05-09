@@ -60,6 +60,16 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
     }
   }
 
+  "sklearn-multi-model-with-sample" should "work fine" in {
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+      //执行sql
+      implicit val spark = runtime.sparkSession
+      val sq = createSSEL
+      ScriptSQLExec.parse(scriptStr("sklearn-multi-model-trainning-with-sample"), sq)
+      spark.read.parquet("/tmp/william/tmp/model/0").show()
+    }
+  }
+
   "tensorflow-cnn-model" should "work fine" in {
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
