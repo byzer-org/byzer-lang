@@ -2,7 +2,7 @@ import mlsql_model
 import mlsql
 from sklearn.ensemble import RandomForestClassifier
 
-clf = RandomForestClassifier()
+clf = RandomForestClassifier(verbose=2)
 
 mlsql.sklearn_configure_params(clf)
 

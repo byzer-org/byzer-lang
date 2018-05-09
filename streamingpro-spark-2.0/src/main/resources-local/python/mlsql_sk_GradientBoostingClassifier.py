@@ -2,7 +2,7 @@ import mlsql_model
 import mlsql
 from sklearn.ensemble import GradientBoostingClassifier
 
-clf = GradientBoostingClassifier()
+clf = GradientBoostingClassifier(verbose=2)
 
 mlsql.sklearn_configure_params(clf)
 

@@ -2,7 +2,7 @@ import mlsql_model
 import mlsql
 from sklearn.svm import SVC
 
-clf = SVC()
+clf = SVC(verbose=2)
 
 mlsql.sklearn_configure_params(clf)
 

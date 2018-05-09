@@ -13,6 +13,20 @@ class SQLRateSampler extends SQLAlg with Functions {
 
 
   def internal_train(df: DataFrame, params: Map[String, String]) = {
+
+    val getIntFromRow = (row: Row, i: Int) => {
+      row.get(i) match {
+        case a: Int => a.asInstanceOf[Int]
+        case a: Double => a.asInstanceOf[Double].toInt
+        case a: Float => a.asInstanceOf[Float].toInt
+        case a: Long => a.asInstanceOf[Long].toInt
+      }
+    }
+
+    val getIntFromRowByName = (row: Row, name: String)  => {
+      getIntFromRow(row, row.fieldIndex(name))
+    }
+
     val labelCol = params.getOrElse("labelCol", "label")
 
     // 0.8 0.1 0.1
@@ -29,7 +43,7 @@ class SQLRateSampler extends SQLAlg with Functions {
 
     val labelToCountSeq = df.groupBy(labelCol).agg(F.count(labelCol).as("subLabelCount")).orderBy(F.asc("subLabelCount")).
       select(labelCol, "subLabelCount").collect().map { f =>
-      (f.getDouble(0), f.getLong(1))
+      (getIntFromRow(f, 0), f.getLong(1))
     }
     val forLog = labelToCountSeq.map(f => s"${f._1}:${f._2}").mkString(",")
     logger.info(s"computing data stat:${forLog}")
@@ -37,7 +51,7 @@ class SQLRateSampler extends SQLAlg with Functions {
     val labelCount = labelToCountSeq.size
 
     val dfWithLabelPartition = df.rdd.map { f =>
-      (f.getAs[Double](labelCol).toInt, f)
+      (getIntFromRowByName(f, labelCol), f)
     }.partitionBy(new Partitioner {
       override def numPartitions: Int = labelCount
 
@@ -48,7 +62,6 @@ class SQLRateSampler extends SQLAlg with Functions {
       val r = scala.util.Random
       iter.map { wow =>
         val item = r.nextFloat()
-        println(newSampleRates.mkString(","))
         val index = newSampleRates.filter { sr =>
           if (sr._2 > 0) {
             val newRate = sr._1
