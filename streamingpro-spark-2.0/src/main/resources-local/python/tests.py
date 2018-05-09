@@ -1,6 +1,8 @@
+from __future__ import absolute_import, division, print_function
 import sys
 import os
-import shutil
+import time
+from kafka import KafkaProducer
 
 if sys.version_info[:2] <= (2, 6):
     try:
@@ -18,18 +20,36 @@ else:
 
     unicode = str
 
+try:
+    xrange
+except:
+    xrange = range
+
 
 class StreamingProPythonTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.filename = os.path.join(os.getcwd(), "python_temp.pickle")
+        cls.kafka_host = "localhost:9092"
+        millis = int(round(time.time() * 1000))
+        cls.topic = "test_{}".format(millis)
         kafka_params = {
-            "kafkaParam": {"topic": "test_1525765646689", "bootstrap.servers": "127.0.0.1:9092", "group_id": "group1"}}
+            "kafkaParam": {"topic": cls.topic, "bootstrap.servers": cls.kafka_host,
+                           "group_id": "group-jj",
+                           "debug": False},
+            "systemParam": {},
+            "internalSystemParam": {"stopFlagNum": 3}
+        }
         pickle.dump(kafka_params, open(cls.filename, "wb"), 2)
+
+        producer = KafkaProducer(bootstrap_servers=cls.kafka_host)
+        for i in xrange(10):
+            producer.send(cls.topic, pickle.dumps("{}", 2))
+        producer.close()
 
     @classmethod
     def tearDownClass(cls):
-        shutil.rmtree(cls.filename)
+        os.remove(cls.filename)
 
 
 class KafkaReadTest(StreamingProPythonTestCase):
@@ -37,5 +57,12 @@ class KafkaReadTest(StreamingProPythonTestCase):
         import mlsql
         print(self.filename)
         rd = mlsql.read_data()
+        count = 0
         for items in rd(max_records=100):
+
             print(str(len(items)))
+            if count == 0:
+                assert len(items) == 10
+            else:
+                assert len(items) == 0
+            count += 1

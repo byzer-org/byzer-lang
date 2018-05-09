@@ -33,14 +33,17 @@ def dump(value, f):
 
 
 def load(path):
-    with open(path, 'rb', 1 << 20) as f:
-        # pickle.load() may create lots of objects, disable GC
-        # temporary for better performance
-        gc.disable()
-        try:
-            return pickle.load(f)
-        finally:
-            gc.enable()
+    try:
+        with open(path, 'rb', 1 << 20) as f:
+            # pickle.load() may create lots of objects, disable GC
+            # temporary for better performance
+            gc.disable()
+            try:
+                return pickle.load(f)
+            finally:
+                gc.enable()
+    except Exception:
+        return []
 
 
 filename = os.path.join(os.getcwd(), "python_temp.pickle")
@@ -71,6 +74,10 @@ for item in raw_validate_data:
 def read_data():
     # Update params
     # os.environ.get('pickleFile')
+    if "debug" in kafka_param and kafka_param["debug"]:
+        import logging
+        logging.basicConfig(level=logging.DEBUG)
+
     authkey = uuid.uuid4().bytes
     mgr = msg_queue.start(authkey=authkey, queue_max_size=10, queues=['input'])
 
