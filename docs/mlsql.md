@@ -163,6 +163,26 @@ as lda_data;
 
 通过tf/idf模型预测得到的就是向量，可以直接被其他算法使用。和libsvm 格式数据一致。
 
+### TfIdfInPlace
+
+内部使用了分词，tfidf,StringIndex等模型，可以直接将文本转化为tfidf向量。你需要开启ansj分词支持。
+细节参看[如何在MLSQL中运用分词抽词工具](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-analysis.md)
+
+具体用法：
+
+```
+train orginal_text_corpus as TfIdfInPlace.`${traning_dir}/tfidf` 
+where inputCol="features" 
+and `dic.paths`=".....";
+
+load parquet.`${traning_dir}/tfidf` 
+as lwys_corpus_with_featurize;
+```
+
+lwys_corpus_with_featurize 中的features就由原来的文本字段编程vector了。
+
+
+
 ### NaiveBayes
 
 示例：
@@ -413,3 +433,4 @@ select p2("dic2")  as k
 ## TokenExtract / TokenAnalysis
 
 [TokenExtract / TokenAnalysis](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-analysis.md)
+
