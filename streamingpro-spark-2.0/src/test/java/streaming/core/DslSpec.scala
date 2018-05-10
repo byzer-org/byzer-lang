@@ -3,9 +3,11 @@ package streaming.core
 import java.io.File
 
 import net.sf.json.JSONObject
+import org.apache.commons.io.FileUtils
 import org.apache.spark.streaming.BasicSparkOperation
 import streaming.core.strategy.platform.SparkRuntime
 import streaming.dsl.ScriptSQLExec
+import streaming.dsl.template.TemplateMerge
 
 /**
   * Created by allwefantasy on 26/4/2018.
@@ -148,12 +150,25 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
   //    }
   //  }
 
+  def createFile(path: String, content: String) = {
+    val f = new File("/tmp/abc.txt")
+    if (!f.exists()) {
+      FileUtils.write(f, "天了噜", "utf-8")
+    }
+  }
+
   "analysis with dic" should "work fine" in {
 
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
       implicit val spark = runtime.sparkSession
       //需要有一个/tmp/abc.txt 文件，里面包含"天了噜"
+
+      val f = new File("/tmp/abc.txt")
+      if (!f.exists()) {
+        FileUtils.write(f, "天了噜", "utf-8")
+      }
+
       var sq = createSSEL
       ScriptSQLExec.parse(scriptStr("token-analysis"), sq)
       val res = spark.sql("select * from tb").toJSON.collect().mkString("\n")
@@ -235,16 +250,18 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
       //执行sql
       implicit val spark = runtime.sparkSession
       var sq = createSSEL
-      ScriptSQLExec.parse(scriptStr("mlsql-carbondata"), sq)
+      var tableName = "visit_carbon3"
+      ScriptSQLExec.parse(TemplateMerge.merge(scriptStr("mlsql-carbondata"), Map("tableName" -> tableName)), sq)
       Thread.sleep(1000)
-      var res = spark.sql("select * from visit_carbon").toJSON.collect()
+      var res = spark.sql("select * from " + tableName).toJSON.collect()
       var keyRes = JSONObject.fromObject(res(0)).getString("a")
       assume(keyRes == "1")
 
       sq = createSSEL
-      ScriptSQLExec.parse(scriptStr("mlsql-carbondata-without-option"), sq)
+      tableName = "visit_carbon4"
+      ScriptSQLExec.parse(TemplateMerge.merge(scriptStr("mlsql-carbondata-without-option"), Map("tableName" -> tableName)), sq)
       Thread.sleep(1000)
-      res = spark.sql("select * from visit_carbon2").toJSON.collect()
+      res = spark.sql("select * from " + tableName).toJSON.collect()
       keyRes = JSONObject.fromObject(res(0)).getString("a")
       assume(keyRes == "1")
 
