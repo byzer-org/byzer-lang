@@ -3,6 +3,7 @@ package streaming.core.compositor.spark.transformation
 import java.util
 
 import org.apache.log4j.Logger
+import org.apache.spark.sql.DataFrame
 import serviceframework.dispatcher.{Compositor, Processor, Strategy}
 import streaming.core.CompositorHelper
 
@@ -51,6 +52,20 @@ class SQLCompositor[T] extends Compositor[T] with CompositorHelper {
     _outputTableName match {
       case Some(name) if !name.isEmpty && name != "-" => df.createOrReplaceTempView(name)
       case None =>
+    }
+
+    val cacheKey = "__caches__"
+
+    config[Boolean]("cache", _configParams) match {
+      case Some(cache) => if (cache) {
+        df.cache()
+        if (!params.containsKey(cacheKey)) {
+          params.put(cacheKey, new util.ArrayList[DataFrame]())
+        }
+        params.get(cacheKey).asInstanceOf[util.List[DataFrame]].add(df)
+
+      }
+      case _ =>
     }
 
     if (middleResult == null) List() else middleResult

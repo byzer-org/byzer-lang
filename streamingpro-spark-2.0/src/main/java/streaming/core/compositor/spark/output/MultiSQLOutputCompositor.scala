@@ -42,11 +42,17 @@ class MultiSQLOutputCompositor[T] extends Compositor[T] with CompositorHelper wi
             newInstance().asInstanceOf[OutputWriter].write(sparkSession(params).sqlContext, params.toMap, _cfg)
 
         case None =>
-          
+
           MultiSQLOutputHelper.output(_cfg, sparkSession(params))
       }
 
 
+    }
+    val cacheKey = "__caches__"
+    if (params.containsKey(cacheKey)) {
+      params.get(cacheKey).asInstanceOf[util.List[DataFrame]].foreach { df =>
+        df.unpersist()
+      }
     }
 
     new util.ArrayList[T]()
