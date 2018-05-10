@@ -1,5 +1,8 @@
 ## MLSQL-SKLearn
 
+前提条件：
+拥有一个可以访问的Kafka(1.0 版本以上),并且允许自动创建topic。
+
 MLSQL 支持SKlearn算法。具体使用方法如下：
 
 ```sql

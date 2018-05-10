@@ -30,7 +30,7 @@ TF_TYPE="cpu" # Default processor is CPU. If you want GPU, set to "gpu"
 ```
 
 
-第四步： 拥有一个可以访问的Kafka,并且允许自动创建topic。
+第四步： 拥有一个可以访问的Kafka(1.0 版本以上),并且允许自动创建topic。
 
 MLSQL对Tensorflow的支持分成两种。第一种为用户自己编写模型代码，第二种是和传统的机器学习算法一样，只要选择算法类型即可。
 

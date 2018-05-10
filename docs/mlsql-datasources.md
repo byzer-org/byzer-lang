@@ -171,6 +171,25 @@ load jdbc.`tableau.abc` as tbs;
 select * from tbs;
 ```
 
+## Carbondata
+
+```sql
+select "1" as a
+as mtf1;
+
+-- 如果需要指定db名称，则使用类似 adb.visit_carbon 这种
+save overwrite mtf1
+as carbondata.`visit_carbon`
+```
+
+如果是流式写入Carbondata,参看：[Carbondata流式写入](https://github.com/allwefantasy/streamingpro/blob/master/docs/carbondata.md)
+
+## Hive
+
+使用方式和形态和Carbondata一样。
+
+
+
 ### 普通文件
 
 ```sql
@@ -262,6 +281,8 @@ and dbNum="0"
 and sentinelRedisEnable="True" 
 and "master_name"="wow"
 ```
+
+
 
 
 

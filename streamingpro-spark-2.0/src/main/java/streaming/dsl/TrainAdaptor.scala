@@ -3,6 +3,7 @@ package streaming.dsl
 import org.apache.spark.sql.SparkSession
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.parser.DSLSQLParser._
+import streaming.dsl.template.TemplateMerge
 
 /**
   * Created by allwefantasy on 12/1/2018.
@@ -21,7 +22,9 @@ class TrainAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdap
         case s: FormatContext =>
           format = s.getText
         case s: PathContext =>
-          path = withPathPrefix(scriptSQLExecListener.pathPrefix(owner), cleanStr(s.getText))
+          path = cleanStr(s.getText)
+          path = TemplateMerge.merge(path, scriptSQLExecListener.env().toMap)
+          path = withPathPrefix(scriptSQLExecListener.pathPrefix(owner), path)
         case s: ExpressionContext =>
           options += (cleanStr(s.identifier().getText) -> cleanStr(s.STRING().getText))
         case s: BooleanExpressionContext =>
@@ -59,7 +62,9 @@ object MLMapping {
     "TableToMap" -> "streaming.dsl.mmlib.algs.SQLTableToMap",
     "DL4J" -> "streaming.dsl.mmlib.algs.SQLDL4J",
     "TokenExtract" -> "streaming.dsl.mmlib.algs.SQLTokenExtract",
-    "TokenAnalysis" -> "streaming.dsl.mmlib.algs.SQLTokenAnalysis"
+    "TokenAnalysis" -> "streaming.dsl.mmlib.algs.SQLTokenAnalysis",
+    "TfIdfInPlace" -> "streaming.dsl.mmlib.algs.SQLTfIdfInPlace",
+    "RateSampler" -> "streaming.dsl.mmlib.algs.SQLRateSampler"
   )
 
   def findAlg(name: String) = {

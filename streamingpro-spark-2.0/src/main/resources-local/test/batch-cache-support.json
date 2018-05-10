@@ -1,0 +1,43 @@
+{
+  "mysql-table-export-to-parquet": {
+    "desc": "转化数据为carbondata",
+    "strategy": "spark",
+    "algorithm": [],
+    "ref": [],
+    "compositor": [
+      {
+        "name": "batch.sql",
+        "params": [
+          {
+            "sql": "select 'a' as a",
+            "outputTableName": "baby",
+            "cache": true
+          }
+        ]
+      },
+      {
+        "name": "batch.outputs",
+        "params": [
+          {
+            "name": "rcr",
+            "format": "org.apache.spark.sql.CarbonSource",
+            "path": "-",
+            "inputTableName": "baby",
+            "tableName": "download_carbon",
+            "mode": "Overwrite"
+          },
+          {
+            "name": "rcr2",
+            "format": "org.apache.spark.sql.CarbonSource",
+            "path": "-",
+            "inputTableName": "baby",
+            "tableName": "download_carbon2",
+            "mode": "Overwrite"
+          }
+        ]
+      }
+    ],
+    "configParams": {
+    }
+  }
+}

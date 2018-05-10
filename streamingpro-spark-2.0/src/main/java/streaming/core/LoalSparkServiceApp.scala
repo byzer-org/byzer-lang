@@ -6,7 +6,7 @@ package streaming.core
 object LocalSparkServiceApp {
   def main(args: Array[String]): Unit = {
     StreamingApp.main(Array(
-      "-streaming.master", "local[2]",
+      "-streaming.master", "local[*]",
       "-streaming.name", "god",
       "-streaming.rest", "true",
       "-streaming.thrift", "false",
@@ -16,7 +16,7 @@ object LocalSparkServiceApp {
       "-streaming.spark.service", "true",
       "-streaming.job.cancel", "true",
       "-streaming.ps.enable", "true",
-      "-streaming.enableCarbonDataSupport", "true",
+      "-streaming.enableCarbonDataSupport", "false",
       "-streaming.carbondata.store", "/data/carbon/store",
       "-streaming.carbondata.meta", "/data/carbon/meta",
       "-spark.sql.hive.thriftServer.singleSession", "true",

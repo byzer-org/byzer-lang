@@ -28,7 +28,7 @@ class SQLWord2Vec extends SQLAlg with Functions {
       toMap
   }
 
-  def predict(sparkSession: SparkSession, _model: Any, name: String): UserDefinedFunction = {
+  def internal_predict(sparkSession: SparkSession, _model: Any, name: String) = {
     val model = sparkSession.sparkContext.broadcast(_model.asInstanceOf[Map[String, Array[Double]]])
 
     val f = (co: String) => {
@@ -43,8 +43,12 @@ class SQLWord2Vec extends SQLAlg with Functions {
       co.map(f(_))
     }
 
-    sparkSession.udf.register(name+"_array",f2)
+    Map((name + "_array") -> f2, name -> f)
+  }
 
-    UserDefinedFunction(f, ArrayType(DoubleType), Some(Seq(StringType)))
+  def predict(sparkSession: SparkSession, _model: Any, name: String): UserDefinedFunction = {
+    val res = internal_predict(sparkSession, _model, name)
+    sparkSession.udf.register(name + "_array", res(name + "_array"))
+    UserDefinedFunction(res(name), ArrayType(DoubleType), Some(Seq(StringType)))
   }
 }

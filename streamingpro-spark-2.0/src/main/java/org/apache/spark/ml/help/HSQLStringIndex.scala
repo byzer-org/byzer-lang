@@ -11,7 +11,18 @@ import org.apache.spark.util.collection.OpenHashMap
   * Created by allwefantasy on 15/1/2018.
   */
 object HSQLStringIndex {
-  def predict(sparkSession: SparkSession, _model: Any, name: String): UserDefinedFunction = {
+  def predict(sparkSession: SparkSession, _model: Any, name: String) = {
+
+    val res = internal_predict(sparkSession, _model, name)
+
+    sparkSession.udf.register(name + "_array", res(name + "_array").asInstanceOf[Seq[String] => Seq[Int]])
+    sparkSession.udf.register(name + "_r", res(name + "_r").asInstanceOf[Double => String])
+    sparkSession.udf.register(name + "_rarray", res(name + "_rarray").asInstanceOf[Seq[Int] => Seq[String]])
+
+    UserDefinedFunction(res(name), IntegerType, Some(Seq(StringType)))
+  }
+
+  def internal_predict(sparkSession: SparkSession, _model: Any, name: String) = {
 
     val model = sparkSession.sparkContext.broadcast(_model.asInstanceOf[StringIndexerModel])
 
@@ -57,11 +68,13 @@ object HSQLStringIndex {
         model.value.labels(index.toInt)
     }
 
-    sparkSession.udf.register(name + "_array", f2)
-    sparkSession.udf.register(name + "_r", f_r)
-    sparkSession.udf.register(name + "_rarray", (indexs: Seq[Double]) => {
+    val f_rarray = (indexs: Seq[Double]) => {
       indexs.map(index => f_r(index)).filterNot(f => f == "__unknow__").toArray
-    })
-    UserDefinedFunction(f, IntegerType, Some(Seq(StringType)))
+    }
+    Map((name + "_array") -> f2,
+      (name + "_r") -> f_r,
+      (name + "_rarray") -> f_rarray,
+      name -> f
+    )
   }
 }

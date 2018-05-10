@@ -1,11 +1,11 @@
 package streaming.dsl.mmlib.algs
 
-import java.util
-
 import org.apache.spark.sql.expressions.UserDefinedFunction
+import org.apache.spark.sql.{functions => F}
 import org.apache.spark.sql.types.{ArrayType, StringType, StructField, StructType}
 import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession}
 import streaming.dsl.mmlib.SQLAlg
+
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable
@@ -14,27 +14,24 @@ import scala.collection.mutable
   * Created by allwefantasy on 24/4/2018.
   */
 class SQLTokenAnalysis extends SQLAlg with Functions {
-  override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
+
+  def internal_train(df: DataFrame, params: Map[String, String]) = {
     val session = df.sparkSession
     var result = Array[String]()
     require(params.contains("inputCol"), "inputCol is required")
-    require(params.contains("idCol"), "idCol is required")
 
     val ignoreNature = params.getOrElse("ignoreNature", "false").toBoolean
     val filterNatures = params.getOrElse("filterNatures", "").split(",").filterNot(f => f.isEmpty).toSet
     val deduplicateResult = params.getOrElse("deduplicateResult", "false").toBoolean
 
     val fieldName = params("inputCol")
-    val idCol = params("idCol")
     val parserClassName = params.getOrElse("parser", "org.ansj.splitWord.analysis.NlpAnalysis")
     val forestClassName = params.getOrElse("forest", "org.nlpcn.commons.lang.tire.domain.Forest")
 
-    result ++= params.getOrElse("dic.paths", "").split(",").map { f =>
+    result ++= params.getOrElse("dic.paths", "").split(",").filter(f => !f.isEmpty).map { f =>
       val wordsList = session.sparkContext.textFile(f).collect()
       wordsList
     }.flatMap(f => f)
-
-    val idStructFiled = df.schema.fields.filter(f => f.name == idCol).head
 
     val ber = session.sparkContext.broadcast(result)
     val rdd = df.rdd.mapPartitions { mp =>
@@ -49,8 +46,6 @@ class SQLTokenAnalysis extends SQLAlg with Functions {
       AnsjFunctions.configureDic(parser, forest, parserClassName, forestClassName)
       mp.map { f =>
         val content = f.getAs[String](fieldName)
-        val id = f.get(f.schema.fieldNames.indexOf(idCol))
-
 
         val udg = parser.getClass.getMethod("parseStr", classOf[String]).invoke(parser, content)
         def getAllWords(udg: Any) = {
@@ -81,11 +76,23 @@ class SQLTokenAnalysis extends SQLAlg with Functions {
             res.map(f => s"${f._1}/${f._2}")
           }
         }
-        Row.fromSeq(Seq(id, getAllWords(udg)))
+
+        val index = f.fieldIndex(fieldName)
+        val newValue = f.toSeq.zipWithIndex.filterNot(f => f._2 == index).map(f => f._1) ++ Seq(getAllWords(udg).toArray)
+        Row.fromSeq(newValue)
       }
     }
-    session.createDataFrame(rdd, StructType(Seq(StructField("id", idStructFiled.dataType), StructField("keywords", ArrayType(StringType))))).
-      write.mode(SaveMode.Overwrite).parquet(path)
+
+    session.createDataFrame(rdd,
+      StructType(df.schema.filterNot(f => f.name == fieldName) ++ Seq(StructField(fieldName, ArrayType(StringType)))))
+
+  }
+
+  override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
+    val newDf = internal_train(df, params)
+    val fieldName = params("inputCol")
+    val id = params("idCol")
+    newDf.select(F.col(fieldName).alias("keywords"), F.col(id)).write.mode(SaveMode.Overwrite).parquet(path)
   }
 
   override def load(sparkSession: SparkSession, path: String): Any = {

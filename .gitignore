@@ -125,3 +125,4 @@ project/plugins/project/
 /tasks
 
 /jni
+/streamingpro-spark-2.0/src/main/resources-local/python/python_temp.pickle

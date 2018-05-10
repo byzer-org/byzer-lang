@@ -3,10 +3,10 @@ package streaming.core.compositor.spark.source
 import java.util
 
 import org.apache.log4j.Logger
-import org.apache.spark.sql.SaveMode
+import org.apache.spark.sql._
 import serviceframework.dispatcher.{Compositor, Processor, Strategy}
-import streaming.core.CompositorHelper
-import streaming.core.strategy.ParamsValidator
+import _root_.streaming.core.CompositorHelper
+import _root_.streaming.core.strategy.ParamsValidator
 
 import scala.collection.JavaConversions._
 
@@ -35,6 +35,23 @@ class MultiSQLSourceCompositor[T] extends Compositor[T] with CompositorHelper {
       val df = sparkSession(params).read.format(sourceConfig("format").toString).options(
         (_cfg - "format" - "path" - "outputTable").map(f => (f._1.toString, f._2.toString))).load(sourcePath)
       df.createOrReplaceTempView(_cfg.getOrElse("outputTable", _cfg.getOrElse("outputTableName", "")))
+
+      val cacheKey = "__caches__"
+
+      _cfg.get("cache") match {
+        case Some(_cache) =>
+          val cache = _cache.toBoolean
+          if (cache) {
+            df.cache()
+            if (!params.containsKey(cacheKey)) {
+              params.put(cacheKey, new util.ArrayList[DataFrame]())
+            }
+            params.get(cacheKey).asInstanceOf[util.List[DataFrame]].add(df)
+
+          }
+        case _ =>
+      }
+
     }
     List()
   }

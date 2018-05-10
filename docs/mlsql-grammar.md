@@ -11,6 +11,7 @@ as table;
 ```
 
 load 语法主要是为了能够把一些外部存储，比如es,mysql等映射成StreamingPro里的表。load过程中可能需要有一些配置信息，可以通过options参数解决
+注意： 路径名称需要用"``"括起来来。
 
 比如：
 
@@ -45,6 +46,7 @@ save overwrite table as parquet.`/tmp/table`;
 ```
 
 如果需要配置参数去控制保存的方式，则可以通过如下指令完成：
+注意： 路径名称需要用"``"括起来来。
 
 
 ```sql

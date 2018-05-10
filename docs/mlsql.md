@@ -163,6 +163,26 @@ as lda_data;
 
 通过tf/idf模型预测得到的就是向量，可以直接被其他算法使用。和libsvm 格式数据一致。
 
+### TfIdfInPlace
+
+内部使用了分词，tfidf,StringIndex等模型，可以直接将文本转化为tfidf向量。你需要开启ansj分词支持。
+细节参看[如何在MLSQL中运用分词抽词工具](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-analysis.md)
+
+具体用法：
+
+```
+train orginal_text_corpus as TfIdfInPlace.`${traning_dir}/tfidf` 
+where inputCol="features" 
+and `dic.paths`=".....";
+
+load parquet.`${traning_dir}/tfidf` 
+as lwys_corpus_with_featurize;
+```
+
+lwys_corpus_with_featurize 中的features就由原来的文本字段编程vector了。
+
+
+
 ### NaiveBayes
 
 示例：
@@ -413,3 +433,24 @@ select p2("dic2")  as k
 ## TokenExtract / TokenAnalysis
 
 [TokenExtract / TokenAnalysis](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-analysis.md)
+
+
+## RateSampler
+ 
+ 对样本里的每个分类按比例进行切分。之后会对数据生成一个新的字段__split__, 该字段为int类型。比如下面的例子中，
+ 0.9对应的数据集为0,0.1对应的数据集为1。
+
+```sql
+-- 切分训练集、验证集，该算法会保证每个分类都是按比例切分。
+train lwys_corpus_final_format as RateSampler.`${traning_dir}/ratesampler` 
+where labelCol="label"
+and sampleRate="0.9,0.1";
+
+load parquet.`${traning_dir}/ratesampler` as data2;
+
+select * from data2 where __split__=1
+as validateTable;
+
+select * from data2 where __split__=0
+as trainingTable;
+```
