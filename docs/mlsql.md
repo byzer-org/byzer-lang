@@ -434,3 +434,23 @@ select p2("dic2")  as k
 
 [TokenExtract / TokenAnalysis](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-analysis.md)
 
+
+## RateSampler
+ 
+ 对样本里的每个分类按比例进行切分。之后会对数据生成一个新的字段__split__, 该字段为int类型。比如下面的例子中，
+ 0.9对应的数据集为0,0.1对应的数据集为1。
+
+```sql
+-- 切分训练集、验证集，该算法会保证每个分类都是按比例切分。
+train lwys_corpus_final_format as RateSampler.`${traning_dir}/ratesampler` 
+where labelCol="label"
+and sampleRate="0.9,0.1";
+
+load parquet.`${traning_dir}/ratesampler` as data2;
+
+select * from data2 where __split__=1
+as validateTable;
+
+select * from data2 where __split__=0
+as trainingTable;
+```
