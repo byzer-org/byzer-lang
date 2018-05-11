@@ -32,7 +32,17 @@ object StringFeature {
     newDF.withColumn(inputCol + "_tmp", udf(F.col(inputCol))).drop(inputCol).withColumnRenamed(inputCol + "_tmp", inputCol)
   }
 
-  def tfidf(df: DataFrame, mappingPath: String, dicPaths: String, inputCol: String) = {
+  def tfidf(df: DataFrame,
+            mappingPath: String,
+            dicPaths: String,
+            inputCol: String,
+            stopWordsPaths: String,
+            priorityDicPaths: String
+           ) = {
+
+    //check stopwords dic is whether configured
+    //val dtt = new SQLDicOrTableToArray()
+
     //analysis
     var newDF = new SQLTokenAnalysis().internal_train(df, Map("dic.paths" -> dicPaths, "inputCol" -> inputCol))
     val inputColIndex = newDF.schema.fieldIndex(inputCol)
@@ -64,6 +74,9 @@ object StringFeature {
     val tfidfFunc = tfidf.internal_predict(df.sparkSession, tfidfModel, "wow")("wow")
     val tfidfUDFFunc = F.udf(tfidfFunc)
     newDF = replaceColumn(newDF, inputCol, tfidfUDFFunc)
+
+    //
+
     newDF
   }
 

@@ -62,6 +62,7 @@ class BatchSpec extends BasicSparkOperation with SpecFunctions {
       implicit val spark = runtime.sparkSession
       dropTables(Seq("download_carbon", "download_carbon2"))
       val sd = Dispatcher.dispatcher(null)
+
       //      val result = runtime.sparkSession.sql("select * from download_carbon").toJSON.collect()
       //      assume(result.size == 1)
       //      assume(JSONObject.fromObject(result(0)).getString("a") == "a")

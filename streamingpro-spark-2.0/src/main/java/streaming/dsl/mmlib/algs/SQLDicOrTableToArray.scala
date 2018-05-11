@@ -9,7 +9,8 @@ import streaming.dsl.mmlib.SQLAlg
   * Created by allwefantasy on 8/2/2018.
   */
 class SQLDicOrTableToArray extends SQLAlg with Functions {
-  override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
+
+  def internal_train(df: DataFrame, params: Map[String, String]) = {
     val session = df.sparkSession
     var result = Array[Row]()
     if (params.contains("dic.paths")) {
@@ -31,6 +32,11 @@ class SQLDicOrTableToArray extends SQLAlg with Functions {
       session.sparkContext.parallelize(result),
       StructType(Seq(StructField("name", StringType), StructField("tokens", ArrayType(StringType)))))
     //model is also is a table
+    model
+  }
+
+  override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
+    val model = internal_train(df, params)
     model.write.mode(SaveMode.Overwrite).parquet(path)
 
   }
@@ -39,11 +45,16 @@ class SQLDicOrTableToArray extends SQLAlg with Functions {
     sparkSession.read.parquet(path).collect().map(f => (f.getString(0), f.getSeq(1))).toMap
   }
 
-  override def predict(sparkSession: SparkSession, _model: Any, name: String): UserDefinedFunction = {
+  def internal_predict(sparkSession: SparkSession, _model: Any, name: String) = {
     val model = sparkSession.sparkContext.broadcast(_model.asInstanceOf[Map[String, Seq[String]]])
     val f = (name: String) => {
       model.value(name)
     }
-    UserDefinedFunction(f, ArrayType(StringType), Some(Seq(StringType)))
+    Map(name -> f)
+  }
+
+  override def predict(sparkSession: SparkSession, _model: Any, name: String): UserDefinedFunction = {
+    val ip = internal_predict(sparkSession, _model, name)
+    UserDefinedFunction(ip(name), ArrayType(StringType), Some(Seq(StringType)))
   }
 }

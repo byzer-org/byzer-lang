@@ -16,7 +16,7 @@ class SQLTfIdfInPlace extends SQLAlg with Functions {
     require(!inputCol.isEmpty, "inputCol is required when use SQLTfIdfInPlace")
 
     val mappingPath = "/tmp/" + UUID.randomUUID().toString
-    val newDF = StringFeature.tfidf(df, mappingPath, dicPaths, inputCol)
+    val newDF = StringFeature.tfidf(df, mappingPath, dicPaths, inputCol, null, null)
     newDF.write.mode(SaveMode.Overwrite).parquet(path)
   }
 
