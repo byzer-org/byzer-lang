@@ -249,8 +249,12 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
     withBatchContext(setupBatchContext(batchParamsWithCarbondata, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
       implicit val spark = runtime.sparkSession
+
+      dropTables(Seq("visit_carbon3", "visit_carbon4"))
+
       var sq = createSSEL
       var tableName = "visit_carbon3"
+
       ScriptSQLExec.parse(TemplateMerge.merge(scriptStr("mlsql-carbondata"), Map("tableName" -> tableName)), sq)
       Thread.sleep(1000)
       var res = spark.sql("select * from " + tableName).toJSON.collect()

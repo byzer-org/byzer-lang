@@ -30,6 +30,12 @@ trait SpecFunctions {
     new ScriptSQLExecListener(spark, "/tmp/william", Map())
   }
 
+  def dropTables(tables: Seq[String])(implicit spark: SparkSession) = {
+    tables.foreach { table =>
+      spark.sql("drop table " + table).count()
+    }
+  }
+
   def jdbc(ddlStr: String) = {
     Class.forName("com.mysql.jdbc.Driver")
     val con = DriverManager.getConnection("jdbc:mysql://127.0.0.1:3306/wow?characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&tinyInt1isBit=false",
