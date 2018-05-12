@@ -17,11 +17,11 @@ class SQLAutoFeature extends SQLAlg with Functions {
 
   }
 
-  override def load(sparkSession: SparkSession, path: String): Any = {
+  override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = {
     null
   }
 
-  override def predict(sparkSession: SparkSession, _model: Any, name: String): UserDefinedFunction = {
+  override def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = {
     null
   }
 }
@@ -60,7 +60,7 @@ object StringFeature {
     val wordIndexPath = mappingPath.stripSuffix("/") + s"/wordIndex/$inputCol"
     val si = new SQLStringIndex()
     si.train(tmpWords, wordIndexPath, Map("inputCol" -> "words"))
-    val siModel = si.load(df.sparkSession, wordIndexPath)
+    val siModel = si.load(df.sparkSession, wordIndexPath, Map())
 
     val predictFunc = si.internal_predict(df.sparkSession, siModel, "wow")("wow_array").asInstanceOf[(Seq[String]) => Array[Int]]
     val udfPredictFunc = F.udf(predictFunc)
@@ -70,7 +70,7 @@ object StringFeature {
     val tfidfPath = mappingPath.stripSuffix("/") + s"/tfidf/$inputCol"
     val tfidf = new SQLTfIdf()
     tfidf.train(newDF, tfidfPath, Map("inputCol" -> inputCol, "numFeatures" -> wordCount.toString, "binary" -> "true"))
-    val tfidfModel = tfidf.load(df.sparkSession, tfidfPath)
+    val tfidfModel = tfidf.load(df.sparkSession, tfidfPath, Map())
     val tfidfFunc = tfidf.internal_predict(df.sparkSession, tfidfModel, "wow")("wow")
     val tfidfUDFFunc = F.udf(tfidfFunc)
     newDF = replaceColumn(newDF, inputCol, tfidfUDFFunc)
@@ -85,7 +85,7 @@ object StringFeature {
     val word2vec = new SQLWord2Vec()
     val word2vecPath = mappingPath.stripSuffix("/") + s"/word2vec/$inputCol"
     word2vec.train(newDF, word2vecPath, Map("inputCol" -> inputCol, "minCount" -> "0"))
-    val model = word2vec.load(df.sparkSession, word2vecPath)
+    val model = word2vec.load(df.sparkSession, word2vecPath, Map())
     val predictFunc = word2vec.internal_predict(df.sparkSession, model, "wow")("wow_array").asInstanceOf[(Seq[String]) => Seq[Seq[Double]]]
     val udfPredictFunc = F.udf(predictFunc)
     newDF = replaceColumn(newDF, inputCol, udfPredictFunc)

@@ -31,8 +31,12 @@ trait SpecFunctions {
   }
 
   def dropTables(tables: Seq[String])(implicit spark: SparkSession) = {
-    tables.foreach { table =>
-      spark.sql("drop table " + table).count()
+    try {
+      tables.foreach { table =>
+        spark.sql("drop table " + table).count()
+      }
+    } catch {
+      case e: Exception =>
     }
   }
 

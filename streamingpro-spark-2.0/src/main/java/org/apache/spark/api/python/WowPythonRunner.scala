@@ -32,6 +32,7 @@ object WowPythonRunner extends Logging {
       envVars.put("SPARK_REUSE_WORKER", "1")
     }
     val worker: Socket = env.createPythonWorker(pythonPath, envVars.asScala.toMap)
+
     // Whether is the worker released into idle pool
     @volatile var released = false
     val context = TaskContext.get()

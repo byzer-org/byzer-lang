@@ -40,7 +40,7 @@ class SQLTokenExtract extends SQLAlg with Functions {
       mp.map { f =>
         val content = f.getAs[String](fieldName)
         val id = f.get(f.schema.fieldNames.indexOf(idCol))
-        val tempWords = AnsjFunctions.extractAllWords(forest, content,deduplicateResult)
+        val tempWords = AnsjFunctions.extractAllWords(forest, content, deduplicateResult)
         Row.fromSeq(Seq(id, tempWords))
       }
     }
@@ -48,11 +48,11 @@ class SQLTokenExtract extends SQLAlg with Functions {
       write.mode(SaveMode.Overwrite).parquet(path)
   }
 
-  override def load(sparkSession: SparkSession, path: String): Any = {
+  override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = {
     null
   }
 
-  override def predict(sparkSession: SparkSession, _model: Any, name: String): UserDefinedFunction = {
+  override def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = {
     null
   }
 }

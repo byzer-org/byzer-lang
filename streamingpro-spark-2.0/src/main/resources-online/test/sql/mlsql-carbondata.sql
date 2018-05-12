@@ -2,7 +2,7 @@ select "1" as a
 as mtf1;
 
 save overwrite mtf1
-as carbondata.`visit_carbon`
+as carbondata.`-`
 options mode="overwrite"
-and tableName="visit_carbon"
+and tableName="${tableName}"
 and implClass="org.apache.spark.sql.CarbonSource";

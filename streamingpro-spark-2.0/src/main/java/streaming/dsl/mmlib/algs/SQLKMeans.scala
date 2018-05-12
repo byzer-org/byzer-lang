@@ -20,12 +20,12 @@ class SQLKMeans extends SQLAlg with Functions {
     model.write.overwrite().save(path)
   }
 
-  override def load(sparkSession: SparkSession, path: String): Any = {
+  override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = {
     val model = BisectingKMeansModel.load(path)
     model
   }
 
-  override def predict(sparkSession: SparkSession, _model: Any, name: String): UserDefinedFunction = {
+  override def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = {
     val model = sparkSession.sparkContext.broadcast(_model.asInstanceOf[BisectingKMeansModel])
     val f = (v: Vector) => {
       model.value.getClass.getDeclaredMethod("predict", classOf[Vector]).invoke(model.value, v).asInstanceOf[Int]

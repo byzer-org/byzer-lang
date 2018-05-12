@@ -105,16 +105,6 @@ object ExternalCommandRunner {
     val env = SparkEnv.get
     val childThreadException = new AtomicReference[Throwable](null)
 
-    TaskContext.get().addTaskFailureListener { (tc, exec) =>
-      logger.info("task fail, destroy python worker")
-      proc.destroy()
-      childThreadException.set(exec)
-    }
-
-    TaskContext.get().addTaskCompletionListener { tc =>
-      //proc.destroyForcibly()
-    }
-
     // Start a thread to print the process's stderr to ours
     new Thread(s"stderr reader for $command") {
       override def run(): Unit = {

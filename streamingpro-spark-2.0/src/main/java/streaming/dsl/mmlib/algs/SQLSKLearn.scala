@@ -6,7 +6,7 @@ import java.util
 import java.util.UUID
 
 import com.hortonworks.spark.sql.kafka08.KafkaOperator
-import org.apache.commons.io.FileUtils
+import org.apache.commons.io.{FileUtils, IOUtils}
 import org.apache.spark.TaskContext
 import org.apache.spark.api.python.WowPythonRunner
 import org.apache.spark.ml.linalg.SQLDataTypes._
@@ -19,6 +19,7 @@ import streaming.dsl.mmlib.SQLAlg
 import org.apache.spark.util.ObjPickle._
 import org.apache.spark.util.VectorSerDer._
 import org.apache.spark.sql.{functions => F}
+import streaming.common.HDFSOperator
 
 import scala.collection.JavaConverters._
 import scala.io.Source
@@ -116,17 +117,26 @@ class SQLSKLearn extends SQLAlg with Functions {
 
   }
 
-  override def load(sparkSession: SparkSession, path: String): Any = {
-    val models = sparkSession.read.parquet(new File(path, "0").getPath)
-      .collect()
-      .map(f => (f(3).asInstanceOf[Double], f(0).asInstanceOf[Array[Byte]]))
-      .toSeq.sortBy(f => f._1)(Ordering[Double].reverse).take(1).map(f => f._2)
+  override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = {
+    val nonMLSQLModel = params.getOrElse("nonMLSQLModel", "false").toBoolean
+    if (nonMLSQLModel) {
+      val inputStream = sparkSession.sparkContext.binaryFiles(path, 1).take(1).head._2.open()
+      val modelBytesArray = IOUtils.toByteArray(inputStream)
+      (Seq(modelBytesArray), Seq(Map("pythonPath" -> params.getOrElse("pythonPath", "python"), "pythonVer" -> params.getOrElse("pythonVer", "3.6"))))
 
-    val metas = sparkSession.read.parquet(new File(path, "__meta__").getPath).collect().map(f => f.get(0).asInstanceOf[Map[String, String]]).toSeq
-    (models, metas)
+    } else {
+      val models = sparkSession.read.parquet(new File(path, "0").getPath)
+        .collect()
+        .map(f => (f(3).asInstanceOf[Double], f(0).asInstanceOf[Array[Byte]]))
+        .toSeq.sortBy(f => f._1)(Ordering[Double].reverse).take(1).map(f => f._2)
+
+      val metas = sparkSession.read.parquet(new File(path, "__meta__").getPath).collect().map(f => f.get(0).asInstanceOf[Map[String, String]]).toSeq
+      (models, metas)
+    }
+
   }
 
-  override def predict(sparkSession: SparkSession, _model: Any, name: String): UserDefinedFunction = {
+  override def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = {
     val (modelsTemp, metasTemp) = _model.asInstanceOf[(Seq[Array[Byte]], Seq[Map[String, String]])]
     val models = sparkSession.sparkContext.broadcast(modelsTemp)
 

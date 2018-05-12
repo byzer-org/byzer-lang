@@ -41,7 +41,7 @@ class SQLDicOrTableToArray extends SQLAlg with Functions {
 
   }
 
-  override def load(sparkSession: SparkSession, path: String): Any = {
+  override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = {
     sparkSession.read.parquet(path).collect().map(f => (f.getString(0), f.getSeq(1))).toMap
   }
 
@@ -53,7 +53,7 @@ class SQLDicOrTableToArray extends SQLAlg with Functions {
     Map(name -> f)
   }
 
-  override def predict(sparkSession: SparkSession, _model: Any, name: String): UserDefinedFunction = {
+  override def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = {
     val ip = internal_predict(sparkSession, _model, name)
     UserDefinedFunction(ip(name), ArrayType(StringType), Some(Seq(StringType)))
   }

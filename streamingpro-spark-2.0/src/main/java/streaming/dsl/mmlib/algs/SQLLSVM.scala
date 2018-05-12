@@ -19,12 +19,12 @@ class SQLLSVM extends SQLAlg with Functions {
     model.write.overwrite().save(path)
   }
 
-  override def load(sparkSession: SparkSession, path: String): Any = {
+  override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = {
     val model = LinearSVCModel.load(path)
     model
   }
 
-  override def predict(sparkSession: SparkSession, _model: Any, name: String): UserDefinedFunction = {
+  override def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = {
     val model = sparkSession.sparkContext.broadcast(_model.asInstanceOf[LinearSVCModel])
 
     val f = (vec: Vector) => {

@@ -11,6 +11,7 @@ class RegisterAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslA
     var functionName = ""
     var format = ""
     var path = ""
+    var option = Map[String, String]()
     //    val owner = option.get("owner")
     (0 to ctx.getChildCount() - 1).foreach { tokenIndex =>
 
@@ -22,13 +23,17 @@ class RegisterAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslA
         case s: PathContext =>
           path = TemplateMerge.merge(cleanStr(s.getText), scriptSQLExecListener.env().toMap)
           path = withPathPrefix(scriptSQLExecListener.pathPrefix(None), path)
+        case s: ExpressionContext =>
+          option += (cleanStr(s.identifier().getText) -> cleanStr(s.STRING().getText))
+        case s: BooleanExpressionContext =>
+          option += (cleanStr(s.expression().identifier().getText) -> cleanStr(s.expression().STRING().getText))
         case _ =>
       }
     }
     val alg = MLMapping.findAlg(format)
     val sparkSession = scriptSQLExecListener.sparkSession
-    val model = alg.load(sparkSession, path)
-    val udf = alg.predict(sparkSession, model, functionName)
+    val model = alg.load(sparkSession, path, option)
+    val udf = alg.predict(sparkSession, model, functionName, option)
     scriptSQLExecListener.sparkSession.udf.register(functionName, udf)
   }
 }

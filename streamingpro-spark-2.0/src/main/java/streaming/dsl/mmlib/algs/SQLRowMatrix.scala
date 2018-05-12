@@ -31,14 +31,14 @@ class SQLRowMatrix extends SQLAlg with Functions {
     newdf.write.mode(SaveMode.Overwrite).parquet(path)
   }
 
-  override def load(sparkSession: SparkSession, path: String): Any = {
+  override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = {
     val entries = sparkSession.read.parquet(path)
     entries.rdd.map { f =>
       (f.getLong(0), (f.getLong(1), f.getDouble(2)))
     }.groupByKey().map(f => (f._1, f._2.toMap)).collect().toMap
   }
 
-  override def predict(sparkSession: SparkSession, _model: Any, name: String): UserDefinedFunction = {
+  override def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = {
     val model = sparkSession.sparkContext.broadcast(_model.asInstanceOf[Map[Long, Map[Long, Double]]])
 
     val f = (i: Long, threshhold: Double) => {

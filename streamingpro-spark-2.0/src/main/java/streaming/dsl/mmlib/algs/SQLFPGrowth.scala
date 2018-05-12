@@ -18,12 +18,12 @@ class SQLFPGrowth extends SQLAlg with Functions {
     model.write.overwrite().save(path)
   }
 
-  override def load(sparkSession: SparkSession, path: String): Any = {
+  override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = {
     val model = FPGrowthModel.load(path)
     model
   }
 
-  override def predict(sparkSession: SparkSession, _model: Any, name: String): UserDefinedFunction = {
+  override def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = {
     val model = _model.asInstanceOf[FPGrowthModel]
     val rules: Array[(Seq[String], Seq[String])] = model.associationRules.select("antecedent", "consequent")
       .rdd.map(r => (r.getSeq(0), r.getSeq(1)))

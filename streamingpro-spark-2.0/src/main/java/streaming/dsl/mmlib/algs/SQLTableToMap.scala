@@ -19,11 +19,11 @@ class SQLTableToMap extends SQLAlg with Functions {
 
   }
 
-  override def load(sparkSession: SparkSession, path: String): Any = {
+  override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = {
     sparkSession.read.parquet(path).collect().map(f => (f.get(0).toString, f.get(1).toString)).toMap
   }
 
-  override def predict(sparkSession: SparkSession, _model: Any, name: String): UserDefinedFunction = {
+  override def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = {
     val model = sparkSession.sparkContext.broadcast(_model.asInstanceOf[Map[String, String]])
     val f = (name: String) => {
       model.value(name)

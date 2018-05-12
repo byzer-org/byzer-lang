@@ -3,7 +3,7 @@ package streaming.core
 import java.io.File
 
 import net.sf.json.JSONObject
-import org.apache.commons.io.FileUtils
+import org.apache.commons.io.{FileUtils, IOUtils}
 import org.apache.spark.streaming.BasicSparkOperation
 import streaming.core.strategy.platform.SparkRuntime
 import streaming.dsl.ScriptSQLExec
@@ -272,5 +272,48 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
     }
   }
 
+  "script-support-drop" should "work fine" in {
+
+    withBatchContext(setupBatchContext(batchParamsWithCarbondata, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+      //执行sql
+      implicit val spark = runtime.sparkSession
+
+      val tableName = "visit_carbon5"
+      //dropTables(Seq(tableName))
+
+      var sq = createSSEL
+
+      ScriptSQLExec.parse(TemplateMerge.merge(scriptStr("mlsql-carbondata"), Map("tableName" -> tableName)), sq)
+      Thread.sleep(1000)
+      val res = spark.sql("select * from " + tableName).toJSON.collect()
+      val keyRes = JSONObject.fromObject(res(0)).getString("a")
+      assume(keyRes == "1")
+
+      sq = createSSEL
+      ScriptSQLExec.parse(TemplateMerge.merge(scriptStr("script-support-drop"), Map("tableName" -> tableName)), sq)
+      try {
+        spark.sql("select * from " + tableName).toJSON.collect()
+        assume(0 == 1)
+      } catch {
+        case e: Exception =>
+      }
+
+    }
+  }
+
+  "load-non-mlsql-sklearn-model" should "work fine" in {
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+      //执行sql
+      implicit val spark = runtime.sparkSession
+      var sq = createSSEL
+      val item = "/tmp/william/tmp/models/sklearn_model_iris.pickle"
+      FileUtils.forceMkdir(new File("/tmp/william/tmp/models/"))
+      val bytes = IOUtils.toByteArray(getClass.getResourceAsStream("/models/sklearn_model_iris.pickle"))
+      FileUtils.writeByteArrayToFile(new File(item), bytes)
+      ScriptSQLExec.parse(scriptStr("load-non-mlsql-sklearn-model"), sq)
+
+
+    }
+  }
 
 }

@@ -19,10 +19,11 @@ sql
     | ('insert'|'INSERT') ~(';')*
     | ('create'|'CREATE') ~(';')*
     | ('drop'|'DROP') ~(';')*
+    | ('refresh'|'REFRESH') ~(';')*
     | ('set'|'SET') setKey '=' setValue 'options'? expression? booleanExpression*
     | ('connect'|'CONNECT') format 'where'? expression? booleanExpression* ('as' db)?
     | ('train'|'TRAIN') tableName 'as' format '.' path 'where'? expression? booleanExpression*
-    | ('register'|'REGISTER') format '.' path 'as' functionName
+    | ('register'|'REGISTER') format '.' path 'as' functionName 'options'? expression? booleanExpression*
     |  SIMPLE_COMMENT
     ;
 

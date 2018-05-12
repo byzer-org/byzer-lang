@@ -25,7 +25,7 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
       }
       val df = spark.createDataFrame(dataRDD,
         StructType(Seq(StructField("content", StringType))))
-      val newDF = StringFeature.tfidf(df, "/tmp/tfidf/mapping", "", "content")
+      val newDF = StringFeature.tfidf(df, "/tmp/tfidf/mapping", "", "content", null, null)
       val res = newDF.collect()
       assume(res.size == 3)
       assume(res(0).getAs[Vector]("content").size == 10)

@@ -21,7 +21,7 @@ class SQLWord2Vec extends SQLAlg with Functions {
     model.write.overwrite().save(path)
   }
 
-  def load(sparkSession: SparkSession, path: String) = {
+  def load(sparkSession: SparkSession, path: String, params: Map[String, String]) = {
     val model = Word2VecModel.load(path)
     model.getVectors.collect().
       map(f => (f.getAs[String]("word"), f.getAs[DenseVector]("vector").toArray)).
@@ -46,7 +46,7 @@ class SQLWord2Vec extends SQLAlg with Functions {
     Map((name + "_array") -> f2, name -> f)
   }
 
-  def predict(sparkSession: SparkSession, _model: Any, name: String): UserDefinedFunction = {
+  def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = {
     val res = internal_predict(sparkSession, _model, name)
     sparkSession.udf.register(name + "_array", res(name + "_array"))
     UserDefinedFunction(res(name), ArrayType(DoubleType), Some(Seq(StringType)))

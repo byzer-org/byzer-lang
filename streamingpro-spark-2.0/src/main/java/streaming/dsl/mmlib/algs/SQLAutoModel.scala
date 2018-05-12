@@ -13,7 +13,7 @@ class SQLAutoModel extends SQLAlg with Functions {
 
   }
 
-  override def load(sparkSession: SparkSession, path: String): Any = ???
+  override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = ???
 
-  override def predict(sparkSession: SparkSession, _model: Any, name: String): UserDefinedFunction = ???
+  override def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = ???
 }
