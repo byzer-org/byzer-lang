@@ -311,8 +311,6 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
       val bytes = IOUtils.toByteArray(getClass.getResourceAsStream("/models/sklearn_model_iris.pickle"))
       FileUtils.writeByteArrayToFile(new File(item), bytes)
       ScriptSQLExec.parse(scriptStr("load-non-mlsql-sklearn-model"), sq)
-
-
     }
   }
 
