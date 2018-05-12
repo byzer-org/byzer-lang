@@ -36,10 +36,8 @@ select vec_array(nb_predict(features))  as k from data
 fitParam.0.labelSize 告诉分类数目
 systemParam.pythonPath 和 systemParam.pythonVer 分别设置executor节点python的路径和版本。kafkaParam 则是配置一个kafka实例。
 
-MLSQL训练时会fork一个python进行进行训练，预测时会fork一个python demon进程，然后python deamon进行启动python worker 去处理预测逻辑。
 
-
-### 加载非MLSQL训练得到的SKLearn模型
+### 加载非MLSQL训练得到的SKearn模型
 
 如果你希望注册一个不是通过MLSQL训练的模型，那么可以使用Pickle保存模型：
 
