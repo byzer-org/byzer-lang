@@ -53,6 +53,17 @@ class StreamingProPythonTestCase(unittest.TestCase):
         os.remove(cls.filename)
 
 
+class GenerateSKlearnModel(StreamingProPythonTestCase):
+    def test_generateSkLearnModel(self):
+        from sklearn import datasets
+        iris = datasets.load_iris()
+        from sklearn.naive_bayes import GaussianNB
+        gnb = GaussianNB()
+        gnb.fit(iris.data, iris.target)
+        with open(os.path.join("./", "sklearn_model_iris.pickle"), "wb") as f:
+            pickle.dump(gnb, f, protocol=2)
+
+
 class KafkaReadTest(StreamingProPythonTestCase):
     def test_consume(self):
         import mlsql

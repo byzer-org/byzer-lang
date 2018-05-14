@@ -24,7 +24,7 @@
 
 
 ## 使用MLSQL做机器学习模型训练
-* [MLSQL编写Word2Vec示例](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsqlexample.md)
+* [MLSQL使用SKLearn做文本分类实例](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-nlp-example.md)
 * [MLSQL-分布式算法 based on spark MMLib](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-mmlib.md)
 * [MLSQL-深度学习 based on TensorFlow](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-tensorflow.md)
 * [MLSQL-单机算法 based on SKLearn](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-sklearn.md)
