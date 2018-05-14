@@ -22,19 +22,19 @@ class RestSpec extends FlatSpec with Matchers with SpecFunctions{
   }
 
   def script(name: String) = {
-    request(script_url, Map("sql" -> scriptStr(name)))
+    request(script_url, Map("sql" -> loadSQLScriptStr(name)))
   }
 
   //make sure -Djava.library.path=[your-path]/jni was set
   "tensorflow training and predict" should "work" in {
-    var res = request(script_url, Map("sql" -> scriptStr("tensorflow")))
+    var res = request(script_url, Map("sql" -> loadSQLScriptStr("tensorflow")))
     assume(res == "{}")
     res = request(sql_url, Map("sql" -> "select vec_argmax(tf_predict(features,\"features\",\"label\",2)) as predict_label,\nlabel from newdata limit 1"))
     assume(res == s"""[{"predict_label":0,"label":{"type":0,"size":2,"indices":[0],"values":[1.0]}}]""")
   }
 
   "mysql connect" should "work" in {
-    val res = request(script_url, Map("sql" -> scriptStr("jdbc")))
+    val res = request(script_url, Map("sql" -> loadSQLScriptStr("jdbc")))
     assume(res == "{}")
   }
 
@@ -78,7 +78,7 @@ class RestSpec extends FlatSpec with Matchers with SpecFunctions{
   }
 
   "sklearn model predict" should "work" in {
-    val data = loadStr("data.txt")
+    val data = loadSQLStr("data.txt")
     var res = script("sk-bayes")
     assume(res == "{}")
     res = request(model_predict_url, Map("data" -> data, "sql" -> "select nb_predict(feature) as p"))

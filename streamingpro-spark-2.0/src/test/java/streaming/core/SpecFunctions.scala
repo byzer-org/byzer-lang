@@ -53,15 +53,19 @@ trait SpecFunctions {
     con.close()
   }
 
-  def scriptStr(name: String) = {
+  def loadSQLScriptStr(name: String) = {
     val file = s"/test/sql/${name}.sql"
     val stream = SpecFunctions.this.getClass.getResourceAsStream(file)
     if (stream == null) throw new RuntimeException(s"load file: ${file} failed,please chech the path")
     scala.io.Source.fromInputStream(stream).getLines().mkString("\n")
   }
 
-  def loadStr(name: String) = {
+  def loadSQLStr(name: String) = {
     scala.io.Source.fromInputStream(SpecFunctions.this.getClass.getResourceAsStream(s"/test/sql/${name}")).getLines().mkString("\n")
+  }
+
+  def loadDataStr(name: String) = {
+    scala.io.Source.fromInputStream(SpecFunctions.this.getClass.getResourceAsStream(s"/data/mllib/${name}")).getLines().mkString("\n")
   }
 
   def getDirFromPath(filePath: String) = {

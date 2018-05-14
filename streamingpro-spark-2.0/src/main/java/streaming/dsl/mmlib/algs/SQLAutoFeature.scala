@@ -1,6 +1,5 @@
 package streaming.dsl.mmlib.algs
 
-import org.apache.spark.internal.Logging
 import org.apache.spark.ml.help.HSQLStringIndex
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import org.apache.spark.sql.expressions.UserDefinedFunction
@@ -36,6 +35,37 @@ object StringFeature {
     newDF.withColumn(inputCol + "_tmp", udf(F.col(inputCol))).drop(inputCol).withColumnRenamed(inputCol + "_tmp", inputCol)
   }
 
+  private def loadStopwords(df: DataFrame, stopWordsPaths: String) = {
+    val stopwords = if (stopWordsPaths == null || stopWordsPaths.isEmpty) {
+      Set[String]()
+    } else {
+      val dtt = new SQLDicOrTableToArray()
+      val stopwordsMapping = dtt.internal_train(df,
+        Map(
+          "dic.paths" -> stopWordsPaths,
+          "dic.names" -> "stopwords"
+        )).collect().map(f => (f.getString(0), f.getSeq(1))).toMap
+      stopwordsMapping("stopwords").toSet[String]
+    }
+    stopwords
+  }
+
+  private def loadPriorityWords(df: DataFrame, priorityDicPaths: String, predictSingleWordFunc: String => Int) = {
+    val priorityWords = (if (priorityDicPaths == null || priorityDicPaths.isEmpty) {
+      Set[String]()
+
+    } else {
+      val dtt = new SQLDicOrTableToArray()
+      val prioritywordsMapping = dtt.internal_train(df,
+        Map(
+          "dic.paths" -> priorityDicPaths,
+          "dic.names" -> "prioritywords"
+        )).collect().map(f => (f.getString(0), f.getSeq(1))).toMap
+      prioritywordsMapping("prioritywords").toSet[String]
+    }).map(f => predictSingleWordFunc(f)).filter(f => f != -1)
+    priorityWords
+  }
+
   def tfidf(df: DataFrame,
             mappingPath: String,
             dicPaths: String,
@@ -48,19 +78,7 @@ object StringFeature {
 
     //check stopwords dic is whether configured
 
-    val stopwords = if (stopWordsPaths == null || stopWordsPaths.isEmpty) {
-      Set[String]()
-    } else {
-      val dtt = new SQLDicOrTableToArray()
-      val stopwordsMapping = dtt.internal_train(df,
-        Map(
-          "dic.paths" -> stopWordsPaths,
-          "dic.names" -> "stopwords"
-        )).collect().map(f => (f.getString(0), f.getSeq(1))).toMap
-      stopwordsMapping("stopwords").toSet[String]
-
-    }
-
+    val stopwords = loadStopwords(df, stopWordsPaths)
     val stopwordsBr = df.sparkSession.sparkContext.broadcast(stopwords)
 
     //analysis
@@ -98,18 +116,7 @@ object StringFeature {
 
 
     val predictSingleWordFunc = funcMap("wow").asInstanceOf[(String) => Int]
-    val priorityWords = (if (priorityDicPaths == null || priorityDicPaths.isEmpty) {
-      Set[String]()
-
-    } else {
-      val dtt = new SQLDicOrTableToArray()
-      val prioritywordsMapping = dtt.internal_train(df,
-        Map(
-          "dic.paths" -> priorityDicPaths,
-          "dic.names" -> "prioritywords"
-        )).collect().map(f => (f.getString(0), f.getSeq(1))).toMap
-      prioritywordsMapping("prioritywords").toSet[String]
-    }).map(f => predictSingleWordFunc(f)).filter(f => f != -1)
+    val priorityWords = loadPriorityWords(newDF,priorityDicPaths,predictSingleWordFunc)
     val prioritywordsBr = df.sparkSession.sparkContext.broadcast[Set[Int]](priorityWords)
 
 

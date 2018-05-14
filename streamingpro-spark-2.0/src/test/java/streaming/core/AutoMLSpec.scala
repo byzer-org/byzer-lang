@@ -1,5 +1,7 @@
 package streaming.core
 
+import java.io.File
+
 import net.sf.json.JSONObject
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
@@ -15,6 +17,9 @@ import streaming.dsl.ScriptSQLExec
   * Created by allwefantasy on 6/5/2018.
   */
 class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConfig {
+
+  copySampleLibsvmData
+
   "tfidf featurize" should "work fine" in {
 
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
@@ -84,12 +89,16 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
     }
   }
 
+  def copySampleLibsvmData = {
+    writeStringToFile("/tmp/william/sample_libsvm_data.txt", loadDataStr("sample_libsvm_data.txt"))
+  }
+
   "sklearn-multi-model" should "work fine" in {
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
       implicit val spark = runtime.sparkSession
       val sq = createSSEL
-      ScriptSQLExec.parse(scriptStr("sklearn-multi-model-trainning"), sq)
+      ScriptSQLExec.parse(loadSQLScriptStr("sklearn-multi-model-trainning"), sq)
       spark.read.parquet("/tmp/william/tmp/model/0").show()
     }
   }
@@ -99,7 +108,7 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
       //执行sql
       implicit val spark = runtime.sparkSession
       val sq = createSSEL
-      ScriptSQLExec.parse(scriptStr("sklearn-multi-model-trainning-with-sample"), sq)
+      ScriptSQLExec.parse(loadSQLScriptStr("sklearn-multi-model-trainning-with-sample"), sq)
       spark.read.parquet("/tmp/william/tmp/model/0").show()
     }
   }
@@ -109,7 +118,7 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
       //执行sql
       implicit val spark = runtime.sparkSession
       val sq = createSSEL
-      ScriptSQLExec.parse(scriptStr("tensorflow-cnn"), sq)
+      ScriptSQLExec.parse(loadSQLScriptStr("tensorflow-cnn"), sq)
 
     }
   }
@@ -119,7 +128,7 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
       //执行sql
       implicit val spark = runtime.sparkSession
       val sq = createSSEL
-      ScriptSQLExec.parse(scriptStr("sql-sampler"), sq)
+      ScriptSQLExec.parse(loadSQLScriptStr("sql-sampler"), sq)
       var df = spark.sql("select count(*) as num,__split__ as rate from sample_data group by __split__ ")
       assume(df.count() == 3)
       df = spark.sql("select label,__split__,count(__split__) as rate from sample_data  group by label,__split__ order by label,__split__,rate")
