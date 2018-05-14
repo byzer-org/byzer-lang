@@ -48,6 +48,7 @@ class MultiSQLOutputCompositor[T] extends Compositor[T] with CompositorHelper wi
 
 
     }
+
     val cacheKey = "__caches__"
     if (params.containsKey(cacheKey)) {
       params.get(cacheKey).asInstanceOf[util.List[DataFrame]].foreach { df =>

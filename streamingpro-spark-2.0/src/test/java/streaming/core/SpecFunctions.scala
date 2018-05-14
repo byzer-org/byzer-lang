@@ -1,7 +1,9 @@
 package streaming.core
 
+import java.io.File
 import java.sql.DriverManager
 
+import org.apache.commons.io.{FileUtils, IOUtils}
 import org.apache.http.HttpVersion
 import org.apache.http.client.fluent.{Form, Request}
 import org.apache.http.util.EntityUtils
@@ -30,6 +32,16 @@ trait SpecFunctions {
     new ScriptSQLExecListener(spark, "/tmp/william", Map())
   }
 
+  def dropTables(tables: Seq[String])(implicit spark: SparkSession) = {
+    try {
+      tables.foreach { table =>
+        spark.sql("drop table " + table).count()
+      }
+    } catch {
+      case e: Exception =>
+    }
+  }
+
   def jdbc(ddlStr: String) = {
     Class.forName("com.mysql.jdbc.Driver")
     val con = DriverManager.getConnection("jdbc:mysql://127.0.0.1:3306/wow?characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&tinyInt1isBit=false",
@@ -50,5 +62,24 @@ trait SpecFunctions {
 
   def loadStr(name: String) = {
     scala.io.Source.fromInputStream(SpecFunctions.this.getClass.getResourceAsStream(s"/test/sql/${name}")).getLines().mkString("\n")
+  }
+
+  def getDirFromPath(filePath: String) = {
+    filePath.stripSuffix("/").split("/").dropRight(1).mkString("/")
+  }
+
+  def delDir(file: String) = {
+    require(file.stripSuffix("/").split("/").size < 2, s"delete $file  maybe too dangerous")
+    FileUtils.forceDelete(new File(file))
+  }
+
+  def writeStringToFile(file: String, content: String) = {
+    FileUtils.forceMkdir(new File(getDirFromPath(file)))
+    FileUtils.writeStringToFile(new File(file), content)
+  }
+
+  def writeByteArrayToFile(file: String, content: Array[Byte]) = {
+    FileUtils.forceMkdir(new File(getDirFromPath(file)))
+    FileUtils.writeByteArrayToFile(new File(file), content)
   }
 }

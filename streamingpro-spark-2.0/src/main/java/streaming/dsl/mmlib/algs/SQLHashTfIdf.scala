@@ -30,12 +30,12 @@ class SQLHashTfIdf extends SQLAlg with Functions {
     idfModel.write.overwrite().save(path)
   }
 
-  override def load(sparkSession: SparkSession, path: String): Any = {
+  override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = {
     val model = IDFModel.load(path)
     model
   }
 
-  override def predict(sparkSession: SparkSession, _model: Any, name: String): UserDefinedFunction = {
+  override def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = {
     val model = sparkSession.sparkContext.broadcast(_model.asInstanceOf[IDFModel])
     val hashingTF = new feature.HashingTF(model.value.idf.size).setBinary(true)
     val idf = (words: Seq[String]) => {

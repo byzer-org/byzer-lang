@@ -77,7 +77,7 @@ class ScriptSQLExecListener(_sparkSession: SparkSession, _defaultPathPrefix: Str
       } else {
         return pathPrefix.get + "/"
       }
-    } else if(_defaultPathPrefix != null && _defaultPathPrefix.nonEmpty ) {
+    } else if (_defaultPathPrefix != null && _defaultPathPrefix.nonEmpty) {
       if (_defaultPathPrefix.endsWith("/")) {
         return _defaultPathPrefix
       } else {
@@ -106,6 +106,10 @@ class ScriptSQLExecListener(_sparkSession: SparkSession, _defaultPathPrefix: Str
         new CreateAdaptor(this).parse(ctx)
       case "insert" =>
         new InsertAdaptor(this).parse(ctx)
+      case "drop" =>
+        new DropAdaptor(this).parse(ctx)
+      case "refresh" =>
+        new RefreshAdaptor(this).parse(ctx)
       case "set" =>
         new SetAdaptor(this).parse(ctx)
       case "train" =>

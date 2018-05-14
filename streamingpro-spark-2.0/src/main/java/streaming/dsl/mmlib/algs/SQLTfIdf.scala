@@ -30,12 +30,12 @@ class SQLTfIdf extends SQLAlg with Functions {
     idfModel.write.overwrite().save(path)
   }
 
-  override def load(sparkSession: SparkSession, path: String): Any = {
+  override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = {
     val model = IDFModel.load(path)
     model
   }
 
-  override def predict(sparkSession: SparkSession, _model: Any, name: String): UserDefinedFunction = {
+  override def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = {
     val res = internal_predict(sparkSession, _model, name)
     UserDefinedFunction(res(name), VectorType, Some(Seq(ArrayType(IntegerType))))
   }

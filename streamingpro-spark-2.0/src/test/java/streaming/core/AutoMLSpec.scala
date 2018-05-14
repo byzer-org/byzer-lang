@@ -25,11 +25,45 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
       }
       val df = spark.createDataFrame(dataRDD,
         StructType(Seq(StructField("content", StringType))))
-      val newDF = StringFeature.tfidf(df, "/tmp/tfidf/mapping", "", "content")
-      val res = newDF.collect()
+
+      writeStringToFile("/tmp/tfidf/stopwords", List("你").mkString("\n"))
+      writeStringToFile("/tmp/tfidf/prioritywords", List("天才").mkString("\n"))
+
+      /*
+          真的:0.0
+          ，:1.0
+          棒:2.0
+          天才:3.0
+          是:4.0
+          我:5.0
+          很:6.0
+          你好:7.0
+          呢:8.0
+       */
+      var newDF = StringFeature.tfidf(df, "/tmp/tfidf/mapping", "", "content", "/tmp/tfidf/stopwords", "/tmp/tfidf/prioritywords", 100000.0, true)
+      var res = newDF.collect()
       assume(res.size == 3)
-      assume(res(0).getAs[Vector]("content").size == 10)
+      assume(res(0).getAs[Vector]("content").size == 9)
+      var res2 = newDF.collect().filter { f =>
+        val v = f.getAs[Vector](f.fieldIndex("content"))
+        if (v(3) != 0) {
+          assume(v.argmax == 3)
+        }
+        v(3) != 0
+      }
+      assume(res2.size == 2)
       println(newDF.toJSON.collect().mkString("\n"))
+
+      newDF = StringFeature.tfidf(df, "/tmp/tfidf/mapping", "", "content", "", null, 100000.0, true)
+      res = newDF.collect()
+      assume(res(0).getAs[Vector]("content").size == 10)
+
+      res2 = newDF.collect().filter { f =>
+        val v = f.getAs[Vector](f.fieldIndex("content"))
+        v(v.argmax) < 1
+      }
+      assume(res2.size == 3)
+
 
     }
   }

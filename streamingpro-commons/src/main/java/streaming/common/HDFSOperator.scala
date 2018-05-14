@@ -33,7 +33,6 @@ object HDFSOperator {
 
   }
 
-
   def listModelDirectory(path: String): Seq[FileStatus] = {
     val fs = FileSystem.get(new Configuration())
     fs.listStatus(new Path(path)).filter(f => f.isDirectory)
