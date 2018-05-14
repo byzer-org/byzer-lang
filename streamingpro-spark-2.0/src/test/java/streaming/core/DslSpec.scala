@@ -249,9 +249,6 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
     withBatchContext(setupBatchContext(batchParamsWithCarbondata, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
       implicit val spark = runtime.sparkSession
-
-      dropTables(Seq("visit_carbon3", "visit_carbon4"))
-
       var sq = createSSEL
       var tableName = "visit_carbon3"
 
@@ -261,6 +258,8 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
       var keyRes = JSONObject.fromObject(res(0)).getString("a")
       assume(keyRes == "1")
 
+      dropTables(Seq(tableName))
+
       sq = createSSEL
       tableName = "visit_carbon4"
       ScriptSQLExec.parse(TemplateMerge.merge(scriptStr("mlsql-carbondata-without-option"), Map("tableName" -> tableName)), sq)
@@ -268,6 +267,7 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
       res = spark.sql("select * from " + tableName).toJSON.collect()
       keyRes = JSONObject.fromObject(res(0)).getString("a")
       assume(keyRes == "1")
+      dropTables(Seq(tableName))
 
     }
   }
@@ -279,7 +279,6 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
       implicit val spark = runtime.sparkSession
 
       val tableName = "visit_carbon5"
-      //dropTables(Seq(tableName))
 
       var sq = createSSEL
 
