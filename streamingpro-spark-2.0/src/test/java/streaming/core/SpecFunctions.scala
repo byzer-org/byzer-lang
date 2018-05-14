@@ -1,7 +1,9 @@
 package streaming.core
 
+import java.io.File
 import java.sql.DriverManager
 
+import org.apache.commons.io.{FileUtils, IOUtils}
 import org.apache.http.HttpVersion
 import org.apache.http.client.fluent.{Form, Request}
 import org.apache.http.util.EntityUtils
@@ -60,5 +62,24 @@ trait SpecFunctions {
 
   def loadStr(name: String) = {
     scala.io.Source.fromInputStream(SpecFunctions.this.getClass.getResourceAsStream(s"/test/sql/${name}")).getLines().mkString("\n")
+  }
+
+  def getDirFromPath(filePath: String) = {
+    filePath.stripSuffix("/").split("/").dropRight(1).mkString("/")
+  }
+
+  def delDir(file: String) = {
+    require(file.stripSuffix("/").split("/").size < 2, s"delete $file  maybe too dangerous")
+    FileUtils.forceDelete(new File(file))
+  }
+
+  def writeStringToFile(file: String, content: String) = {
+    FileUtils.forceMkdir(new File(getDirFromPath(file)))
+    FileUtils.writeStringToFile(new File(file), content)
+  }
+
+  def writeByteArrayToFile(file: String, content: Array[Byte]) = {
+    FileUtils.forceMkdir(new File(getDirFromPath(file)))
+    FileUtils.writeByteArrayToFile(new File(file), content)
   }
 }

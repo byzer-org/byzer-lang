@@ -22,6 +22,13 @@ object HSQLStringIndex {
     UserDefinedFunction(res(name), IntegerType, Some(Seq(StringType)))
   }
 
+  def wordToIndex(sparkSession: SparkSession, _model: Any) = {
+    val model = _model.asInstanceOf[StringIndexerModel]
+    val labelToIndexField = model.getClass.getDeclaredField("org$apache$spark$ml$feature$StringIndexerModel$$labelToIndex")
+    labelToIndexField.setAccessible(true)
+    labelToIndexField.get(model).asInstanceOf[OpenHashMap[String, Double]]
+  }
+
   def internal_predict(sparkSession: SparkSession, _model: Any, name: String) = {
 
     val model = sparkSession.sparkContext.broadcast(_model.asInstanceOf[StringIndexerModel])
@@ -42,12 +49,15 @@ object HSQLStringIndex {
       } else {
         if (labelToIndex.contains(label)) {
           labelToIndex(label).toInt
-        } else if (model.value.getHandleInvalid == "keep" || model.value.getHandleInvalid == "skip") {
-          -1
         } else {
-          throw new SparkException(s"Unseen label: $label.  To handle unseen labels, " +
-            s"set Param handleInvalid to keep.")
+          -1
         }
+        //        } else if (model.value.getHandleInvalid == "keep" || model.value.getHandleInvalid == "skip") {
+        //          -1
+        //        } else {
+        //          throw new SparkException(s"Unseen label: $label.  To handle unseen labels, " +
+        //            s"set Param handleInvalid to keep.")
+        //        }
       }
     }
 
@@ -59,10 +69,7 @@ object HSQLStringIndex {
 
     val f_r = (index: Double) => {
       if (model.value.labels.length <= index.toInt || index.toInt < 0) {
-        if (model.value.getHandleInvalid == "keep")
-          "__unknow__"
-        else throw new SparkException(s"Unseen index: $index.  To handle unseen labels, " +
-          s"set Param handleInvalid to keep.")
+        "__unknow__"
       }
       else
         model.value.labels(index.toInt)
