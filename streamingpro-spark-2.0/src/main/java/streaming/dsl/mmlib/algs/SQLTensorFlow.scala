@@ -4,6 +4,8 @@ import streaming.tensorflow.TFModelLoader
 import streaming.tensorflow.TFModelPredictor
 import java.io.{ByteArrayOutputStream, File}
 import java.util
+import java.util.UUID
+
 import com.hortonworks.spark.sql.kafka08.KafkaOperator
 import org.apache.commons.io.FileUtils
 import org.apache.hadoop.conf.Configuration
@@ -26,19 +28,6 @@ import scala.io.Source
   *
   */
 class SQLTensorFlow extends SQLAlg with Functions {
-  /*
-       train data as TensorFlow.`/tmp/model`
-        where pythonDescPath="/tmp/wow.py"
-        and `kafkaParam.bootstrap.servers`="127.0.0.1:9092"
-        and `kafkaParam.topic`="test-9_1517059642136"
-        and `kafkaParam.group_id`="g_test-1"
-        and `kafkaParam.reuse`="true"
-        and `fitParam.0.epochs`="10"
-        and  `fitParam.0.max_records`="10"
-        and `fitParam.1.epochs`="21"
-        and  `fitParam.1.max_records`="11"
-        and `systemParam.pythonPath`="python";
-   */
   override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
     val (kafkaParam, newRDD) = writeKafka(df, path, params)
     val systemParam = mapParams("systemParam", params)
@@ -76,8 +65,11 @@ class SQLTensorFlow extends SQLAlg with Functions {
         item = (f + ("modelPath" -> path)).asJava
       }
       paramMap.put("fitParam", item)
-      paramMap.put("kafkaParam", kafkaParam.asJava)
-      val tempModelLocalPath = "/tmp/train/" + WowMD5.md5Hash(path)
+
+      val kafkaP = kafkaParam + ("group_id" -> (kafkaParam("group_id") + "_" + algIndex))
+      paramMap.put("kafkaParam", kafkaP.asJava)
+
+      val tempModelLocalPath = s"/tmp/${UUID.randomUUID().toString}/${algIndex}"
 
       paramMap.put("internalSystemParam", Map(
         "stopFlagNum" -> stopFlagNum,

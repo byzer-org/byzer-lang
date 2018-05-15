@@ -4,13 +4,14 @@ import java.io.File
 
 import net.sf.json.JSONObject
 import org.apache.spark.sql.Row
-import org.apache.spark.sql.types.{StringType, StructField, StructType}
+import org.apache.spark.sql.types._
 import org.apache.spark.streaming.BasicSparkOperation
 import org.apache.spark.sql.{functions => F}
 import streaming.core.strategy.platform.SparkRuntime
-import org.apache.spark.ml.linalg.Vector
+import org.apache.spark.ml.linalg.{Vector, Vectors}
 import streaming.dsl.ScriptSQLExec
-import streaming.dsl.mmlib.algs.feature.StringFeature
+import streaming.dsl.mmlib.algs.SQLAutoFeature
+import streaming.dsl.mmlib.algs.feature.{DiscretizerIntFeature, HighOrdinalDoubleFeature, StringFeature}
 
 
 /**
@@ -122,6 +123,96 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
     }
   }
 
+  "DiscretizerIntFeature" should "work fine" in {
+
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+      //执行sql
+      implicit val spark = runtime.sparkSession
+
+      val dataRDD = spark.sparkContext.parallelize(Seq(
+        Seq(1, 2, 3),
+        Seq(1, 4, 3),
+        Seq(1, 7, 3))).map { f =>
+        Row.fromSeq(f)
+      }
+      val df = spark.createDataFrame(dataRDD,
+        StructType(Seq(
+          StructField("a", IntegerType),
+          StructField("b", IntegerType),
+          StructField("c", IntegerType)
+        )))
+
+      val newDF = DiscretizerIntFeature.vectorize(df, "/tmp/tfidf/mapping", Seq("a", "b", "c"))
+      newDF.show(false)
+    }
+  }
+
+  "HighOrdinalDoubleFeature" should "work fine" in {
+
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+      //执行sql
+      implicit val spark = runtime.sparkSession
+
+      val dataRDD = spark.sparkContext.parallelize(Seq(
+        Seq(1.0, 2.0, 3.0),
+        Seq(1.0, 4.0, 3.0),
+        Seq(1.0, 7.0, 3.0))).map { f =>
+        Row.fromSeq(f)
+      }
+      val df = spark.createDataFrame(dataRDD,
+        StructType(Seq(
+          StructField("a", DoubleType),
+          StructField("b", DoubleType),
+          StructField("c", DoubleType)
+        )))
+
+      val newDF = HighOrdinalDoubleFeature.vectorize(df, "/tmp/tfidf/mapping", Seq("a", "b", "c"))
+      newDF.show(false)
+    }
+  }
+
+  "AutoFeature" should "work fine" in {
+
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+      //执行sql
+      implicit val spark = runtime.sparkSession
+
+      writeStringToFile("/tmp/tfidf/stopwords", List("你").mkString("\n"))
+      writeStringToFile("/tmp/tfidf/prioritywords", List("天才").mkString("\n"))
+
+      val dataRDD = spark.sparkContext.parallelize(Seq(
+        Seq("我是天才，你呢", 1.0, 2.0, 3.0, 1, 2, 3),
+        Seq("你真的很棒", 1.0, 4.0, 3.0, 1, 4, 3),
+        Seq("天才你好", 1.0, 7.0, 3.0, 1, 7, 3)
+      )).map { f =>
+        Row.fromSeq(f)
+      }
+      val df = spark.createDataFrame(dataRDD,
+        StructType(Seq(
+          StructField("content", StringType),
+          StructField("a", DoubleType),
+          StructField("b", DoubleType),
+          StructField("c", DoubleType),
+          StructField("a1", IntegerType),
+          StructField("b1", IntegerType),
+          StructField("c1", IntegerType)
+
+        )))
+      val af = new SQLAutoFeature()
+      af.train(df, "/tmp/automl", Map(
+        "mappingPath" -> "/tmp/tfidf/mapping",
+        "textFileds" -> "content",
+        "priorityDicPath" -> "/tmp/tfidf/stopwords",
+        "stopWordPath" -> "/tmp/tfidf/prioritywords",
+        "priority" -> "3",
+        "nGrams" -> "2,3"
+      ))
+      val ml = spark.read.parquet("/tmp/automl")
+      ml.show(false)
+
+    }
+  }
+
   "test" should "work fine" in {
 
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
@@ -129,16 +220,24 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
       implicit val spark = runtime.sparkSession
       import org.apache.spark.ml.feature.NGram
 
-      val wordDataFrame = spark.createDataFrame(Seq(
-        (0, Array("Hi", "I", "heard", "about", "Spark")),
-        (1, Array("I", "wish", "Java", "could", "use", "case", "classes")),
-        (2, Array("Logistic", "regression", "models", "are", "neat"))
-      )).toDF("id", "words")
+      import org.apache.spark.ml.feature.PCA
+      import org.apache.spark.ml.linalg.Vectors
 
-      val ngram = new NGram().setN(2).setInputCol("words").setOutputCol("ngrams")
+      val data = Array(
+        Vectors.sparse(5, Seq((1, 1.0), (3, 7.0))),
+        Vectors.dense(2.0, 0.0, 3.0, 4.0, 5.0),
+        Vectors.dense(4.0, 0.0, 0.0, 6.0, 7.0)
+      )
+      val df = spark.createDataFrame(data.map(Tuple1.apply)).toDF("features")
 
-      val ngramDataFrame = ngram.transform(wordDataFrame)
-      ngramDataFrame.select("ngrams").show(false)
+      val pca = new PCA()
+        .setInputCol("features")
+        .setOutputCol("pcaFeatures")
+        .setK(3)
+        .fit(df)
+
+      val result = pca.transform(df).select("pcaFeatures")
+      result.show(false)
 
     }
   }

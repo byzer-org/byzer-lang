@@ -64,6 +64,8 @@ object MLMapping {
     "TokenExtract" -> "streaming.dsl.mmlib.algs.SQLTokenExtract",
     "TokenAnalysis" -> "streaming.dsl.mmlib.algs.SQLTokenAnalysis",
     "TfIdfInPlace" -> "streaming.dsl.mmlib.algs.SQLTfIdfInPlace",
+    "Word2VecInPlace" -> "streaming.dsl.mmlib.algs.SQLWord2VecInPlace",
+    "AutoFeature" -> "streaming.dsl.mmlib.algs.SQLAutoFeature",
     "RateSampler" -> "streaming.dsl.mmlib.algs.SQLRateSampler"
   )
 

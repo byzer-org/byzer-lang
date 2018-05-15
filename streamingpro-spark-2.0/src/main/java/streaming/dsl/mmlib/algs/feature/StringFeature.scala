@@ -165,7 +165,7 @@ object StringFeature {
     newDF
   }
 
-  def word2vec(df: DataFrame, mappingPath: String, dicPaths: String, inputCol: String, stopWordsPaths: String) = {
+  def word2vec(df: DataFrame, mappingPath: String, dicPaths: String, inputCol: String, stopWordsPaths: String, vectorSize:Int = 100) = {
 
     val stopwords = loadStopwords(df, stopWordsPaths)
     val stopwordsBr = df.sparkSession.sparkContext.broadcast(stopwords)
@@ -178,7 +178,7 @@ object StringFeature {
 
     val word2vec = new SQLWord2Vec()
     val word2vecPath = mappingPath.stripSuffix("/") + s"/word2vec/$inputCol"
-    word2vec.train(newDF, word2vecPath, Map("inputCol" -> inputCol, "minCount" -> "0"))
+    word2vec.train(newDF, word2vecPath, Map("inputCol" -> inputCol, "minCount" -> "0", "vectorSize" -> (vectorSize + "")))
     val model = word2vec.load(df.sparkSession, word2vecPath, Map())
     val predictFunc = word2vec.internal_predict(df.sparkSession, model, "wow")("wow_array").asInstanceOf[(Seq[String]) => Seq[Seq[Double]]]
     val udfPredictFunc = F.udf(predictFunc)
