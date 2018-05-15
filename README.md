@@ -28,6 +28,7 @@
 * [MLSQL-分布式算法 based on spark MMLib](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-mmlib.md)
 * [MLSQL-深度学习 based on TensorFlow](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-tensorflow.md)
 * [MLSQL-单机算法 based on SKLearn](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-sklearn.md)
+* [MLSQL日志回显](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-log-monitor.md)
 
 
 ## 部署MLSQL模型API
