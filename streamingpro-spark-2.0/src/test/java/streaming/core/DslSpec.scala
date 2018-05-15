@@ -170,7 +170,7 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
       }
 
       var sq = createSSEL
-      ScriptSQLExec.parse(scriptStr("token-analysis"), sq)
+      ScriptSQLExec.parse(loadSQLScriptStr("token-analysis"), sq)
       val res = spark.sql("select * from tb").toJSON.collect().mkString("\n")
       println(res)
       import scala.collection.JavaConversions._
@@ -187,7 +187,7 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
       implicit val spark = runtime.sparkSession
       //需要有一个/tmp/abc.txt 文件，里面包含"天了噜"
       var sq = createSSEL
-      ScriptSQLExec.parse(scriptStr("token-analysis-deduplicate"), sq)
+      ScriptSQLExec.parse(loadSQLScriptStr("token-analysis-deduplicate"), sq)
       val res = spark.sql("select * from tb").toJSON.collect().mkString("\n")
       println(res)
       import scala.collection.JavaConversions._
@@ -204,7 +204,7 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
       implicit val spark = runtime.sparkSession
       //需要有一个/tmp/abc.txt 文件，里面包含"天了噜"
       var sq = createSSEL
-      ScriptSQLExec.parse(scriptStr("token-analysis-include-n"), sq)
+      ScriptSQLExec.parse(loadSQLScriptStr("token-analysis-include-n"), sq)
       val res = spark.sql("select * from tb").toJSON.collect().mkString("\n")
       println(res)
       import scala.collection.JavaConversions._
@@ -223,7 +223,7 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
       //需要有一个/tmp/abc.txt 文件，里面包含"天了噜"
       var sq = createSSEL
       sq = createSSEL
-      ScriptSQLExec.parse(scriptStr("token-extract"), sq)
+      ScriptSQLExec.parse(loadSQLScriptStr("token-extract"), sq)
       val res = spark.sql("select * from tb").toJSON.collect().mkString("\n")
       println(res)
       import scala.collection.JavaConversions._
@@ -239,7 +239,7 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
       //执行sql
       implicit val spark = runtime.sparkSession
       val sq = createSSEL
-      ScriptSQLExec.parse(scriptStr("save-filenum"), sq)
+      ScriptSQLExec.parse(loadSQLScriptStr("save-filenum"), sq)
       assume(new File("/tmp/william/tmp/abc/").list().filter(f => f.endsWith(".json")).size == 3)
     }
   }
@@ -252,7 +252,7 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
       var sq = createSSEL
       var tableName = "visit_carbon3"
 
-      ScriptSQLExec.parse(TemplateMerge.merge(scriptStr("mlsql-carbondata"), Map("tableName" -> tableName)), sq)
+      ScriptSQLExec.parse(TemplateMerge.merge(loadSQLScriptStr("mlsql-carbondata"), Map("tableName" -> tableName)), sq)
       Thread.sleep(1000)
       var res = spark.sql("select * from " + tableName).toJSON.collect()
       var keyRes = JSONObject.fromObject(res(0)).getString("a")
@@ -262,7 +262,7 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
 
       sq = createSSEL
       tableName = "visit_carbon4"
-      ScriptSQLExec.parse(TemplateMerge.merge(scriptStr("mlsql-carbondata-without-option"), Map("tableName" -> tableName)), sq)
+      ScriptSQLExec.parse(TemplateMerge.merge(loadSQLScriptStr("mlsql-carbondata-without-option"), Map("tableName" -> tableName)), sq)
       Thread.sleep(1000)
       res = spark.sql("select * from " + tableName).toJSON.collect()
       keyRes = JSONObject.fromObject(res(0)).getString("a")
@@ -282,14 +282,14 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
 
       var sq = createSSEL
 
-      ScriptSQLExec.parse(TemplateMerge.merge(scriptStr("mlsql-carbondata"), Map("tableName" -> tableName)), sq)
+      ScriptSQLExec.parse(TemplateMerge.merge(loadSQLScriptStr("mlsql-carbondata"), Map("tableName" -> tableName)), sq)
       Thread.sleep(1000)
       val res = spark.sql("select * from " + tableName).toJSON.collect()
       val keyRes = JSONObject.fromObject(res(0)).getString("a")
       assume(keyRes == "1")
 
       sq = createSSEL
-      ScriptSQLExec.parse(TemplateMerge.merge(scriptStr("script-support-drop"), Map("tableName" -> tableName)), sq)
+      ScriptSQLExec.parse(TemplateMerge.merge(loadSQLScriptStr("script-support-drop"), Map("tableName" -> tableName)), sq)
       try {
         spark.sql("select * from " + tableName).toJSON.collect()
         assume(0 == 1)
@@ -309,7 +309,7 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
       FileUtils.forceMkdir(new File("/tmp/william/tmp/models/"))
       val bytes = IOUtils.toByteArray(getClass.getResourceAsStream("/models/sklearn_model_iris.pickle"))
       FileUtils.writeByteArrayToFile(new File(item), bytes)
-      ScriptSQLExec.parse(scriptStr("load-non-mlsql-sklearn-model"), sq)
+      ScriptSQLExec.parse(loadSQLScriptStr("load-non-mlsql-sklearn-model"), sq)
     }
   }
 

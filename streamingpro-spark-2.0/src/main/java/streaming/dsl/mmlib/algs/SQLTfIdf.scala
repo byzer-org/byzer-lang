@@ -2,7 +2,6 @@ package streaming.dsl.mmlib.algs
 
 import org.apache.spark.ml.feature.{HashingTF, IDF, IDFModel, IntTF}
 import org.apache.spark.ml.linalg.SQLDataTypes._
-import org.apache.spark.mllib.feature
 import org.apache.spark.mllib.linalg.{Vectors => OldVectors}
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.types.{ArrayType, IntegerType, StringType}
@@ -42,11 +41,11 @@ class SQLTfIdf extends SQLAlg with Functions {
 
   def internal_predict(sparkSession: SparkSession, _model: Any, name: String) = {
     val model = sparkSession.sparkContext.broadcast(_model.asInstanceOf[IDFModel])
-    val intTF = new feature.IntTF(model.value.idf.size).setBinary(true)
+    val intTF = new org.apache.spark.mllib.feature.IntTF(model.value.idf.size).setBinary(true)
     val idf = (words: Seq[Int]) => {
       val idfModelField = model.value.getClass.getField("org$apache$spark$ml$feature$IDFModel$$idfModel")
       idfModelField.setAccessible(true)
-      val idfModel = idfModelField.get(model.value).asInstanceOf[feature.IDFModel]
+      val idfModel = idfModelField.get(model.value).asInstanceOf[org.apache.spark.mllib.feature.IDFModel]
       val vec = intTF.transform(words)
       idfModel.transform(vec).asML
     }
