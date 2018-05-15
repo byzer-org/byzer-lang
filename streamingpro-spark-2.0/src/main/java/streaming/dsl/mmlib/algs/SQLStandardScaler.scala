@@ -34,7 +34,7 @@ class SQLStandardScaler extends SQLAlg with Functions {
     val mean = getModelField(model.value, "mean").asInstanceOf[Vector]
     val withStd = model.value.getWithStd
     val withMean = model.value.getWithMean
-    val scaler = new feature.StandardScalerModel(OldVectors.fromML(std), OldVectors.fromML(mean), withStd, withMean)
+    val scaler = new org.apache.spark.mllib.feature.StandardScalerModel(OldVectors.fromML(std), OldVectors.fromML(mean), withStd, withMean)
     val f: Vector => Vector = v => scaler.transform(OldVectors.fromML(v)).asML
     UserDefinedFunction(f, VectorType, Some(Seq(VectorType)))
   }
