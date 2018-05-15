@@ -1,3 +1,84 @@
+### 高阶（开箱即用）数据预处理模型
+
+### TfIdfInPlace
+
+内部使用了分词，tfidf,StringIndex等模型，可以直接将文本转化为tfidf向量。你需要开启ansj分词支持。
+细节参看[如何在MLSQL中运用分词抽词工具](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-analysis.md)
+
+具体用法：
+
+```
+train orginal_text_corpus as TfIdfInPlace.`${traning_dir}/tfidf` 
+where inputCol="features" 
+and `dic.paths`=".....";
+
+load parquet.`${traning_dir}/tfidf` 
+as lwys_corpus_with_featurize;
+```
+
+lwys_corpus_with_featurize 中的features就由原来的文本字段编程vector了。
+
+
+停用词：
+
+如果你需要接入停用词，可以添加配置参数：
+
+```
+stopWordPath="..."
+```
+
+
+特征加权：
+
+如果你想提高某些词的权重（重要词），那么可以配置
+
+```
+priorityDicPath="...."
+priority="3.0"
+```
+
+系统会自动把向量中符合要求的词的权重乘以你配置的priority权重。
+
+目前只支持一个路径。
+
+ngram:
+
+如果我希望能够自动组合词汇特征，那么可以配置ngram参数
+
+```
+nGrams="2,3"
+```
+
+最终用户可以得到1Gram,2Gram,3Gram的组合，配置的越多，特征膨胀的越大。
+
+
+## TokenExtract / TokenAnalysis
+
+[TokenExtract / TokenAnalysis](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-analysis.md)
+
+
+## RateSampler
+ 
+ 对样本里的每个分类按比例进行切分。之后会对数据生成一个新的字段__split__, 该字段为int类型。比如下面的例子中，
+ 0.9对应的数据集为0,0.1对应的数据集为1。
+
+```sql
+-- 切分训练集、验证集，该算法会保证每个分类都是按比例切分。
+train lwys_corpus_final_format as RateSampler.`${traning_dir}/ratesampler` 
+where labelCol="label"
+and sampleRate="0.9,0.1";
+
+load parquet.`${traning_dir}/ratesampler` as data2;
+
+select * from data2 where __split__=1
+as validateTable;
+
+select * from data2 where __split__=0
+as trainingTable;
+```
+
+## 低阶（特定小功能点）数据预处理模型
+
 ### Word2vec
 
 假设"/tmp/test.csv"内容为：
@@ -88,40 +169,7 @@ as lda_data;
 
 通过tf/idf模型预测得到的就是向量，可以直接被其他算法使用。和libsvm 格式数据一致。
 
-### TfIdfInPlace
 
-内部使用了分词，tfidf,StringIndex等模型，可以直接将文本转化为tfidf向量。你需要开启ansj分词支持。
-细节参看[如何在MLSQL中运用分词抽词工具](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-analysis.md)
-
-具体用法：
-
-```
-train orginal_text_corpus as TfIdfInPlace.`${traning_dir}/tfidf` 
-where inputCol="features" 
-and `dic.paths`=".....";
-
-load parquet.`${traning_dir}/tfidf` 
-as lwys_corpus_with_featurize;
-```
-
-lwys_corpus_with_featurize 中的features就由原来的文本字段编程vector了。
-
-如果你需要接入停用词，可以添加配置参数：
-
-```
-stopWordPath="..."
-```
-
-如果你想提高某些词的权重（重要词），那么可以配置
-
-```
-priorityDicPath="...."
-priority="3.0"
-```
-
-系统会自动把向量中符合要求的词的权重乘以你配置的priority权重。
-
-目前只支持一个路径。
 
 ### StandardScaler
 
@@ -216,30 +264,7 @@ register DicOrTableToArray.`/tmp/model2` as p2;
 select p2("dic2")  as k
 ```
 
-## TokenExtract / TokenAnalysis
 
-[TokenExtract / TokenAnalysis](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-analysis.md)
-
-
-## RateSampler
- 
- 对样本里的每个分类按比例进行切分。之后会对数据生成一个新的字段__split__, 该字段为int类型。比如下面的例子中，
- 0.9对应的数据集为0,0.1对应的数据集为1。
-
-```sql
--- 切分训练集、验证集，该算法会保证每个分类都是按比例切分。
-train lwys_corpus_final_format as RateSampler.`${traning_dir}/ratesampler` 
-where labelCol="label"
-and sampleRate="0.9,0.1";
-
-load parquet.`${traning_dir}/ratesampler` as data2;
-
-select * from data2 where __split__=1
-as validateTable;
-
-select * from data2 where __split__=0
-as trainingTable;
-```
 
 
 
