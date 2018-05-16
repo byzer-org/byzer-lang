@@ -1,6 +1,27 @@
 ## 对Flink的支持
 
-进入flink安装目录运行如下命令：
+### 编译
+
+步骤一： 下载编译ServiceFramework项目
+
+```
+git clone https://github.com/allwefantasy/ServiceFramework.git
+cd ServiceFramework
+mvn install -Pscala-2.11 -Pjetty-9 -Pweb-include-jetty-9
+```
+
+步骤2： 下载编译StreamingPro项目
+
+```
+git clone https://github.com/allwefantasy/streamingpro.git
+cd streamingpro
+mvn -DskipTests clean package  -pl streamingpro-flink -am  -Ponline -Pscala-2.11 -Pflink-1.4.2
+```
+
+### 
+
+
+下载flink-1.4.2,进入安装目录运行如下命令：
 
 ```
 ./bin/start-local.sh
