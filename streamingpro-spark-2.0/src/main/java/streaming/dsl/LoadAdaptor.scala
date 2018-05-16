@@ -90,6 +90,15 @@ class StreamLoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener,
                         format: String
                        ) extends DslTool {
 
+  def withWaterMark(table: DataFrame, option: Map[String, String]) = {
+    if (option.contains("eventTimeCol")) {
+      table.withWatermark(option("eventTimeCol"), option("delayThreshold"))
+    } else {
+      table
+    }
+
+  }
+
   def parse = {
     var table: DataFrame = null
     val reader = scriptSQLExecListener.sparkSession.readStream
@@ -107,7 +116,7 @@ class StreamLoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener,
         table = reader.format(format).options(option).load()
       case _ =>
     }
-
+    table = withWaterMark(table, option)
     path = TemplateMerge.merge(path, scriptSQLExecListener.env().toMap)
     table.createOrReplaceTempView(tableName)
   }

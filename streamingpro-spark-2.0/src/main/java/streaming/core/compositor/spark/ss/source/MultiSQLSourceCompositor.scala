@@ -7,6 +7,7 @@ import org.apache.log4j.Logger
 import org.apache.spark.sql.execution.streaming.MemoryStream
 import serviceframework.dispatcher.{Compositor, Processor, Strategy}
 import streaming.core.CompositorHelper
+import org.apache.spark.sql._
 
 import scala.collection.JavaConversions._
 
@@ -34,10 +35,20 @@ class MultiSQLSourceCompositor[T] extends Compositor[T] with CompositorHelper {
 
       val sourcePath = _cfg("path")
 
+      def withWaterMark(table: DataFrame, option: Map[String, String]) = {
+        if (option.contains("eventTimeCol")) {
+          table.withWatermark(option("eventTimeCol"), option("delayThreshold"))
+        } else {
+          table
+        }
+
+      }
+
       _cfg("format") match {
         case "kafka" | "socket" =>
-          val df = spark.readStream.format(_cfg("format")).options(
+          var df = spark.readStream.format(_cfg("format")).options(
             (_cfg - "format" - "path" - "outputTable")).load()
+          df = withWaterMark(df, _cfg)
           df.createOrReplaceTempView(_cfg("outputTable"))
         case "kafka8" | "kafka9" =>
           val format = "com.hortonworks.spark.sql.kafka08"
@@ -46,8 +57,9 @@ class MultiSQLSourceCompositor[T] extends Compositor[T] with CompositorHelper {
              kafka.metadata.broker
              startingoffset smallest
            */
-          val df = spark.readStream.format(format).options(
+          var df = spark.readStream.format(format).options(
             (_cfg - "format" - "path" - "outputTable").map(f => (f._1.toString, f._2.toString))).load()
+          df = withWaterMark(df, _cfg)
           df.createOrReplaceTempView(_cfg("outputTable"))
 
         case "mock" =>
