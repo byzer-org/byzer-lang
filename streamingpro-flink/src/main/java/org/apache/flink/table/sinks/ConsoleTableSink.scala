@@ -8,7 +8,7 @@ import org.apache.flink.types.Row
 /**
   * Created by allwefantasy on 20/3/2017.
   */
-class ConsoleTableSink(_num: Int = 10) extends TableSinkBase[Row] with StreamTableSink[Row] {
+class ConsoleTableSink(_num: Int = 10) extends TableSinkBase[Row] with AppendStreamTableSink[Row] {
 
 
   override def emitDataStream(dataStream: DataStream[Row]): Unit = {

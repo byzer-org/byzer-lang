@@ -47,9 +47,9 @@ class MultiSQLOutputCompositor[T] extends Compositor[T] with CompositorHelper wi
       format match {
         case "csv" | "com.databricks.spark.csv" =>
           val csvTableSink = new CsvTableSink(_resource)
-          ste.ingest(tableName).writeToSink(csvTableSink)
+          ste.scan(tableName).writeToSink(csvTableSink)
         case "console" | "print" =>
-          ste.ingest(tableName).writeToSink(new ConsoleTableSink(showNum))
+          ste.scan(tableName).writeToSink(new ConsoleTableSink(showNum))
         case _ =>
       }
     }

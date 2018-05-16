@@ -28,7 +28,7 @@
         <spark.sql.kafka.artifactId>spark-sql-kafka-0-10_${scala.binary.version}</spark.sql.kafka.artifactId>
         <spark.version>2.1.1</spark.version>
 
-        <flink.version>1.2.0</flink.version>
+        <flink.version>1.4.2</flink.version>
         <guava.version>16.0</guava.version>
         <httpclient.version>4.5.3</httpclient.version>
 
@@ -69,6 +69,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-enforcer-plugin</artifactId>
+                        <version>3.0.0-M1</version>
                         <executions>
                             <execution>
                                 <id>enforce-versions</id>
@@ -299,7 +300,7 @@
         </profile>
 
         <profile>
-            <id>flink-1.2.0</id>
+            <id>flink-1.4.2</id>
             <modules>
                 <module>streamingpro-flink</module>
             </modules>

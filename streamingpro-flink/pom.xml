@@ -9,18 +9,19 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>streamingpro.flink</artifactId>
-    <version>0.4.15-SNAPSHOT-${flink.version}</version>
+    <artifactId>streamingpro-flink</artifactId>
+    <version>1.1.0-${flink.version}</version>
 
 <dependencies>
     <dependency>
         <groupId>streaming.king</groupId>
         <artifactId>streamingpro-common</artifactId>
+        <version>1.1.0</version>
     </dependency>
     <dependency>
         <groupId>org.apache.flink</groupId>
-        <artifactId>flink-streaming-scala_2.10</artifactId>
-        <version>1.2.0</version>
+        <artifactId>flink-streaming-scala_${scala.binary.version}</artifactId>
+        <version>${flink.version}</version>
         <scope>${scope}</scope>
         <exclusions>
             <exclusion>
@@ -40,14 +41,14 @@
 
     <dependency>
         <groupId>org.apache.flink</groupId>
-        <artifactId>flink-connector-kafka-0.8_2.10</artifactId>
-        <version>1.2.0</version>
+        <artifactId>flink-connector-kafka-0.8_${scala.binary.version}</artifactId>
+        <version>${flink.version}</version>
     </dependency>
 
     <dependency>
         <groupId>org.apache.flink</groupId>
-        <artifactId>flink-table_2.10</artifactId>
-        <version>1.2.0</version>
+        <artifactId>flink-table_${scala.binary.version}</artifactId>
+        <version>${flink.version}</version>
     </dependency>
     <dependency>
         <groupId>org.scalactic</groupId>
