@@ -13,9 +13,12 @@ object LocalSparkApp {
       "-streaming.name", "god",
       "-streaming.rest", "false",
       "-streaming.platform", "spark",
-      "-streaming.enableHiveSupport", "false",
+      "-streaming.enableHiveSupport", "true",
       "-streaming.spark.service", "false",
-      "-streaming.job.file.path","classpath:///test/batch-script-df.json"
+      "-streaming.enableCarbonDataSupport", "true",
+      "-streaming.carbondata.store", "/data/carbon/store",
+      "-streaming.carbondata.meta", "/data/carbon/meta",
+      "-streaming.job.file.path", "classpath:///test/batch-carbondata.json"
     ))
   }
 }
