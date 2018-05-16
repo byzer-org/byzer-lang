@@ -125,10 +125,10 @@ class PlatformManager {
         jobCounter.incrementAndGet()
     }
 
-    if (params.getBooleanParam("streaming.unitest.startRuntime", false)) {
+    if (params.getBooleanParam("streaming.unitest.startRuntime", true)) {
       runtime.startRuntime
     }
-    if (params.getBooleanParam("streaming.unitest.awaitTermination", false)) {
+    if (params.getBooleanParam("streaming.unitest.awaitTermination", true)) {
       runtime.awaitTermination
     }
 
