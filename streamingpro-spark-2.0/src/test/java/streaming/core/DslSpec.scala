@@ -3,7 +3,7 @@ package streaming.core
 import java.io.File
 
 import net.sf.json.JSONObject
-import org.apache.commons.io.{FileUtils, IOUtils}
+import org.apache.commons.io.{FileUtils}
 import org.apache.spark.streaming.BasicSparkOperation
 import streaming.core.strategy.platform.SparkRuntime
 import streaming.dsl.ScriptSQLExec
@@ -252,6 +252,8 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
       var sq = createSSEL
       var tableName = "visit_carbon3"
 
+      dropTables(Seq(tableName))
+
       ScriptSQLExec.parse(TemplateMerge.merge(loadSQLScriptStr("mlsql-carbondata"), Map("tableName" -> tableName)), sq)
       Thread.sleep(1000)
       var res = spark.sql("select * from " + tableName).toJSON.collect()
@@ -262,6 +264,9 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
 
       sq = createSSEL
       tableName = "visit_carbon4"
+
+      dropTables(Seq(tableName))
+
       ScriptSQLExec.parse(TemplateMerge.merge(loadSQLScriptStr("mlsql-carbondata-without-option"), Map("tableName" -> tableName)), sq)
       Thread.sleep(1000)
       res = spark.sql("select * from " + tableName).toJSON.collect()
@@ -300,17 +305,9 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
     }
   }
 
-  "load-non-mlsql-sklearn-model" should "work fine" in {
-    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
-      //执行sql
-      implicit val spark = runtime.sparkSession
-      var sq = createSSEL
-      val item = "/tmp/william/tmp/models/sklearn_model_iris.pickle"
-      FileUtils.forceMkdir(new File("/tmp/william/tmp/models/"))
-      val bytes = IOUtils.toByteArray(getClass.getResourceAsStream("/models/sklearn_model_iris.pickle"))
-      FileUtils.writeByteArrayToFile(new File(item), bytes)
-      ScriptSQLExec.parse(loadSQLScriptStr("load-non-mlsql-sklearn-model"), sq)
-    }
-  }
-
 }
+
+
+
+
+

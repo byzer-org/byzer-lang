@@ -8,6 +8,11 @@ import template.TemplateMerge
   * Created by allwefantasy on 27/8/2017.
   */
 class LoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdaptor {
+
+  def evaluate(value: String) = {
+    TemplateMerge.merge(value, scriptSQLExecListener.env().toMap)
+  }
+
   override def parse(ctx: SqlContext): Unit = {
 
     var table: DataFrame = null
@@ -20,9 +25,9 @@ class LoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
         case s: FormatContext =>
           format = s.getText
         case s: ExpressionContext =>
-          option += (cleanStr(s.identifier().getText) -> cleanStr(s.STRING().getText))
+          option += (cleanStr(s.identifier().getText) -> evaluate(cleanStr(s.STRING().getText)))
         case s: BooleanExpressionContext =>
-          option += (cleanStr(s.expression().identifier().getText) -> cleanStr(s.expression().STRING().getText))
+          option += (cleanStr(s.expression().identifier().getText) -> evaluate(cleanStr(s.expression().STRING().getText)))
         case s: PathContext =>
           path = s.getText
 
@@ -90,6 +95,15 @@ class StreamLoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener,
                         format: String
                        ) extends DslTool {
 
+  def withWaterMark(table: DataFrame, option: Map[String, String]) = {
+    if (option.contains("eventTimeCol")) {
+      table.withWatermark(option("eventTimeCol"), option("delayThreshold"))
+    } else {
+      table
+    }
+
+  }
+
   def parse = {
     var table: DataFrame = null
     val reader = scriptSQLExecListener.sparkSession.readStream
@@ -107,7 +121,7 @@ class StreamLoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener,
         table = reader.format(format).options(option).load()
       case _ =>
     }
-
+    table = withWaterMark(table, option)
     path = TemplateMerge.merge(path, scriptSQLExecListener.env().toMap)
     table.createOrReplaceTempView(tableName)
   }
