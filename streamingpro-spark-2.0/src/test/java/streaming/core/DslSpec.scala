@@ -1,13 +1,19 @@
 package streaming.core
 
 import java.io.File
+import java.sql.Timestamp
 
 import net.sf.json.JSONObject
 import org.apache.commons.io.{FileUtils, IOUtils}
+import org.apache.spark.sql.{AnalysisException, ForeachWriter, Row}
+import org.apache.spark.sql.execution.streaming.MemoryStream
+import org.apache.spark.sql.streaming.StreamingQuery
 import org.apache.spark.streaming.BasicSparkOperation
+import streaming.core.ss.NoopForeachWriter
 import streaming.core.strategy.platform.SparkRuntime
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.template.TemplateMerge
+import streaming.log.Logging
 
 /**
   * Created by allwefantasy on 26/4/2018.
@@ -300,17 +306,9 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
     }
   }
 
-  "load-non-mlsql-sklearn-model" should "work fine" in {
-    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
-      //执行sql
-      implicit val spark = runtime.sparkSession
-      var sq = createSSEL
-      val item = "/tmp/william/tmp/models/sklearn_model_iris.pickle"
-      FileUtils.forceMkdir(new File("/tmp/william/tmp/models/"))
-      val bytes = IOUtils.toByteArray(getClass.getResourceAsStream("/models/sklearn_model_iris.pickle"))
-      FileUtils.writeByteArrayToFile(new File(item), bytes)
-      ScriptSQLExec.parse(loadSQLScriptStr("load-non-mlsql-sklearn-model"), sq)
-    }
-  }
-
 }
+
+
+
+
+

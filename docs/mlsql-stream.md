@@ -21,6 +21,8 @@ set streamName="streamExample"
 
 load kafka9.`` options `kafka.bootstrap.servers`="127.0.0.1:9092"
 and `topics`="testM"
+-- watermark的设置
+-- and eventTimeCol="" and delayThreshold=""
 as newkafkatable1;
 
 
