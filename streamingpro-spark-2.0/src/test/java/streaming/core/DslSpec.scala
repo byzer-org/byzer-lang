@@ -1,19 +1,13 @@
 package streaming.core
 
 import java.io.File
-import java.sql.Timestamp
 
 import net.sf.json.JSONObject
-import org.apache.commons.io.{FileUtils, IOUtils}
-import org.apache.spark.sql.{AnalysisException, ForeachWriter, Row}
-import org.apache.spark.sql.execution.streaming.MemoryStream
-import org.apache.spark.sql.streaming.StreamingQuery
+import org.apache.commons.io.{FileUtils}
 import org.apache.spark.streaming.BasicSparkOperation
-import streaming.core.ss.NoopForeachWriter
 import streaming.core.strategy.platform.SparkRuntime
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.template.TemplateMerge
-import streaming.log.Logging
 
 /**
   * Created by allwefantasy on 26/4/2018.
@@ -258,6 +252,8 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
       var sq = createSSEL
       var tableName = "visit_carbon3"
 
+      dropTables(Seq(tableName))
+
       ScriptSQLExec.parse(TemplateMerge.merge(loadSQLScriptStr("mlsql-carbondata"), Map("tableName" -> tableName)), sq)
       Thread.sleep(1000)
       var res = spark.sql("select * from " + tableName).toJSON.collect()
@@ -268,6 +264,9 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
 
       sq = createSSEL
       tableName = "visit_carbon4"
+
+      dropTables(Seq(tableName))
+
       ScriptSQLExec.parse(TemplateMerge.merge(loadSQLScriptStr("mlsql-carbondata-without-option"), Map("tableName" -> tableName)), sq)
       Thread.sleep(1000)
       res = spark.sql("select * from " + tableName).toJSON.collect()

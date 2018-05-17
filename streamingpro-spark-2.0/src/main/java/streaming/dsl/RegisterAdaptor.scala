@@ -7,6 +7,11 @@ import streaming.dsl.template.TemplateMerge
   * Created by allwefantasy on 12/1/2018.
   */
 class RegisterAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdaptor {
+
+  def evaluate(value: String) = {
+    TemplateMerge.merge(value, scriptSQLExecListener.env().toMap)
+  }
+
   override def parse(ctx: SqlContext): Unit = {
     var functionName = ""
     var format = ""
@@ -24,9 +29,9 @@ class RegisterAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslA
           path = TemplateMerge.merge(cleanStr(s.getText), scriptSQLExecListener.env().toMap)
           path = withPathPrefix(scriptSQLExecListener.pathPrefix(None), path)
         case s: ExpressionContext =>
-          option += (cleanStr(s.identifier().getText) -> cleanStr(s.STRING().getText))
+          option += (cleanStr(s.identifier().getText) -> evaluate(cleanStr(s.STRING().getText)))
         case s: BooleanExpressionContext =>
-          option += (cleanStr(s.expression().identifier().getText) -> cleanStr(s.expression().STRING().getText))
+          option += (cleanStr(s.expression().identifier().getText) -> evaluate(cleanStr(s.expression().STRING().getText)))
         case _ =>
       }
     }
