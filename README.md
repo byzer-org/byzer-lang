@@ -10,10 +10,27 @@
 
 * [运行StreamingPro Server](https://github.com/allwefantasy/streamingpro/blob/master/docs/run-server.md)
 
+## 使用MLSQL做机器学习
+* [MLSQL使用SKLearn做文本分类实例](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-nlp-example.md)
+* [MLSQL-分布式算法 based on spark MMLib](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-mmlib.md)
+* [MLSQL-深度学习 based on TensorFlow](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-tensorflow.md)
+* [MLSQL-单机算法 based on SKLearn](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-sklearn.md)
+* [MLSQL日志回显](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-log-monitor.md)
+
+
+## 部署模型API服务
+* [如何把模型部署成API服务](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-model-deploy.md)
+
+
+
+
 ## MLSQL常用功能
 
 * [MLSQL语法说明](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-grammar.md)
+
 * [各数据源读取和写入](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-datasources.md)
+* [如何使用CarbonData作为存储](https://github.com/allwefantasy/streamingpro/blob/master/docs/carbondata.md)
+
 * [常见特征处理模型说明](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-data-processing-model.md)
 * [常见向量操作Vector操作函数](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-functions.md)
 * [如何在MLSQL中运用分词抽词工具](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-analysis.md)
@@ -22,20 +39,6 @@
 * [批处理计算](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-batch.md)
 * [流式计算](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-stream.md)
 
-
-## 使用MLSQL做机器学习模型训练
-* [MLSQL使用SKLearn做文本分类实例](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-nlp-example.md)
-* [MLSQL-分布式算法 based on spark MMLib](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-mmlib.md)
-* [MLSQL-深度学习 based on TensorFlow](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-tensorflow.md)
-* [MLSQL-单机算法 based on SKLearn](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-sklearn.md)
-* [MLSQL日志回显](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-log-monitor.md)
-
-
-## 部署MLSQL模型API
-* [模型部署](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-model-deploy.md)
-
-## StreamingPro Server 使用Carbondata做存储
-* [如何使用CarbonData作为存储](https://github.com/allwefantasy/streamingpro/blob/master/docs/carbondata.md)
 
 
 ## 使用配置完成Spark编程
