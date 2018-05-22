@@ -46,6 +46,7 @@ class SQLTfIdfInPlace extends SQLAlg with Functions {
   }
 
   override def load(spark: SparkSession, path: String, params: Map[String, String]): Any = {
+    import spark.implicits._
     //load train params
     val df = spark.read.parquet(PARAMS_PATH(path, "params")).map(f => (f.getString(0), f.getString(1)))
     val trainParams = df.collect().toMap

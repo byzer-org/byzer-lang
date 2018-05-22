@@ -13,7 +13,6 @@ class SharedObjManager {
 
 object SharedObjManager {
   val analyserPool = new AnalyserPool[Any]()
-  val dicPool = new DicPool[Set[String]]()
 
   def getOrCreate[T](name: String, bigObjPool: BigObjPool[T], func: () => T) = {
     synchronized {
