@@ -17,68 +17,24 @@ class SQLTokenAnalysis extends SQLAlg with Functions {
 
   def internal_train(df: DataFrame, params: Map[String, String]) = {
     val session = df.sparkSession
-    var result = Array[String]()
+
     require(params.contains("inputCol"), "inputCol is required")
-
-    val ignoreNature = params.getOrElse("ignoreNature", "false").toBoolean
-    val filterNatures = params.getOrElse("filterNatures", "").split(",").filterNot(f => f.isEmpty).toSet
-    val deduplicateResult = params.getOrElse("deduplicateResult", "false").toBoolean
-
     val fieldName = params("inputCol")
     val parserClassName = params.getOrElse("parser", "org.ansj.splitWord.analysis.NlpAnalysis")
     val forestClassName = params.getOrElse("forest", "org.nlpcn.commons.lang.tire.domain.Forest")
 
-    result ++= params.getOrElse("dic.paths", "").split(",").filter(f => !f.isEmpty).map { f =>
-      val wordsList = session.sparkContext.textFile(f).collect()
-      wordsList
-    }.flatMap(f => f)
+    val words = SQLTokenAnalysis.loadDics(session, params)
 
-    val ber = session.sparkContext.broadcast(result)
+
+    val ber = session.sparkContext.broadcast(words)
     val rdd = df.rdd.mapPartitions { mp =>
 
-      val forest = Class.forName(forestClassName).newInstance().asInstanceOf[AnyRef]
-      val parser = Class.forName(parserClassName).newInstance().asInstanceOf[AnyRef]
-
-      ber.value.foreach { f =>
-        AnsjFunctions.addWord(f, forest)
-      }
-
-      AnsjFunctions.configureDic(parser, forest, parserClassName, forestClassName)
+      val parser = SQLTokenAnalysis.createAnalyzer(words, params)
       mp.map { f =>
         val content = f.getAs[String](fieldName)
-
-        val udg = parser.getClass.getMethod("parseStr", classOf[String]).invoke(parser, content)
-        def getAllWords(udg: Any) = {
-          val result = udg.getClass.getMethod("getTerms").invoke(udg).asInstanceOf[java.util.List[Object]]
-          var res = result.map { f =>
-            val (name, nature) = AnsjFunctions.getTerm(f)
-            (name.toString, nature.toString)
-          }
-
-          if (deduplicateResult) {
-            val tmpSet = new mutable.HashSet[(String, String)]()
-            res.map { f =>
-              if (!tmpSet.contains(f)) {
-                tmpSet.add(f)
-              }
-              tmpSet.contains(f)
-            }
-            res = tmpSet.toBuffer
-          }
-
-          if (filterNatures.size > 0) {
-            res = res.filter(f => filterNatures.contains(f._2))
-          }
-
-          if (ignoreNature) {
-            res.map(f => s"${f._1}")
-          } else {
-            res.map(f => s"${f._1}/${f._2}")
-          }
-        }
-
+        val res = SQLTokenAnalysis.parseStr(parser, content, params)
         val index = f.fieldIndex(fieldName)
-        val newValue = f.toSeq.zipWithIndex.filterNot(f => f._2 == index).map(f => f._1) ++ Seq(getAllWords(udg).toArray)
+        val newValue = f.toSeq.zipWithIndex.filterNot(f => f._2 == index).map(f => f._1) ++ Seq(res)
         Row.fromSeq(newValue)
       }
     }
@@ -103,3 +59,70 @@ class SQLTokenAnalysis extends SQLAlg with Functions {
     null
   }
 }
+
+object SQLTokenAnalysis {
+  def parseStr(parser: Any, content: String, params: Map[String, String]) = {
+
+    val ignoreNature = params.getOrElse("ignoreNature", "false").toBoolean
+    val filterNatures = params.getOrElse("filterNatures", "").split(",").filterNot(f => f.isEmpty).toSet
+    val deduplicateResult = params.getOrElse("deduplicateResult", "false").toBoolean
+
+    val udg = parser.getClass.getMethod("parseStr", classOf[String]).invoke(parser, content)
+    def getAllWords(udg: Any) = {
+      val result = udg.getClass.getMethod("getTerms").invoke(udg).asInstanceOf[java.util.List[Object]]
+      var res = result.map { f =>
+        val (name, nature) = AnsjFunctions.getTerm(f)
+        (name.toString, nature.toString)
+      }
+
+      if (deduplicateResult) {
+        val tmpSet = new mutable.HashSet[(String, String)]()
+        res.map { f =>
+          if (!tmpSet.contains(f)) {
+            tmpSet.add(f)
+          }
+          tmpSet.contains(f)
+        }
+        res = tmpSet.toBuffer
+      }
+
+      if (filterNatures.size > 0) {
+        res = res.filter(f => filterNatures.contains(f._2))
+      }
+
+      if (ignoreNature) {
+        res.map(f => s"${f._1}")
+      } else {
+        res.map(f => s"${f._1}/${f._2}")
+      }
+    }
+    getAllWords(udg).toArray
+  }
+
+  def loadDics(spark: SparkSession, params: Map[String, String]) = {
+    var result = Array[String]()
+    result ++= params.getOrElse("dic.paths", "").split(",").filter(f => !f.isEmpty).map { f =>
+      val wordsList = spark.sparkContext.textFile(f).collect()
+      wordsList
+    }.flatMap(f => f)
+    result
+  }
+
+  def createAnalyzer(words: Array[String], params: Map[String, String]) = {
+
+    val parserClassName = params.getOrElse("parser", "org.ansj.splitWord.analysis.NlpAnalysis")
+    val forestClassName = params.getOrElse("forest", "org.nlpcn.commons.lang.tire.domain.Forest")
+
+    val forest = Class.forName(forestClassName).newInstance().asInstanceOf[AnyRef]
+    val parser = Class.forName(parserClassName).newInstance().asInstanceOf[AnyRef]
+
+    words.foreach { f =>
+      AnsjFunctions.addWord(f, forest)
+    }
+
+    AnsjFunctions.configureDic(parser, forest, parserClassName, forestClassName)
+    parser
+  }
+}
+
+

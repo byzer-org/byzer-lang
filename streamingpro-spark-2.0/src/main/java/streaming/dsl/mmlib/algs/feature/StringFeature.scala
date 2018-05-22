@@ -1,6 +1,6 @@
 package streaming.dsl.mmlib.algs.feature
 
-import _root_.streaming.dsl.mmlib.algs.{SQLDicOrTableToArray, SQLStringIndex, SQLTfIdf, SQLTokenAnalysis, SQLWord2Vec}
+import _root_.streaming.dsl.mmlib.algs._
 import org.apache.spark.sql.{functions => F}
 
 import scala.collection.mutable.ArrayBuffer
@@ -9,14 +9,16 @@ import org.apache.spark.ml.feature.NGram
 import org.apache.spark.ml.help.HSQLStringIndex
 import org.apache.spark.ml.linalg.{Vector, Vectors}
 import org.apache.spark.sql.expressions.UserDefinedFunction
-import org.apache.spark.sql.types.{StringType, StructField, StructType}
+import org.apache.spark.sql.types._
 import org.apache.spark.sql.{Row, _}
+import MetaConst._
 
 
 /**
   * Created by allwefantasy on 14/5/2018.
   */
 object StringFeature {
+
 
   private def replaceColumn(newDF: DataFrame, inputCol: String, udf: UserDefinedFunction) = {
     //newDF.withColumn(inputCol + "_tmp", udf(F.col(inputCol))).drop(inputCol).withColumnRenamed(inputCol + "_tmp", inputCol)
@@ -38,9 +40,9 @@ object StringFeature {
     stopwords
   }
 
-  private def loadPriorityWords(df: DataFrame, priorityDicPaths: String,
-                                priority: Double,
-                                predictSingleWordFunc: String => Int) = {
+  def loadPriorityWords(df: DataFrame, priorityDicPaths: String,
+                        priority: Double,
+                        predictSingleWordFunc: String => Int) = {
     val priorityWords = (if (priorityDicPaths == null || priorityDicPaths.isEmpty) {
       Set[String]()
 
@@ -56,7 +58,7 @@ object StringFeature {
 
     val prioritywordsBr = df.sparkSession.sparkContext.broadcast(priorityWords)
 
-    val priorityFunc = F.udf((vec: Vector) => {
+    val priorityFunc = (vec: Vector) => {
       val indices = ArrayBuffer[Int]()
       val values = ArrayBuffer[Double]()
       vec.foreachActive { (index, value) =>
@@ -67,17 +69,18 @@ object StringFeature {
         values += newValue
       }
       Vectors.sparse(vec.size, indices.toArray, values.toArray)
-    })
+    }
 
     (priorityWords, priorityFunc)
   }
 
-  def analysisWords(df: DataFrame, mappingPath: String, dicPaths: String, inputCol: String,
+  def analysisWords(df: DataFrame, metaPath: String, dicPaths: String, inputCol: String,
                     stopwordsBr: Broadcast[Set[String]],
                     nGrams: Seq[Int],
                     outputWordAndIndex: Boolean
                    ) = {
     var newDF = new SQLTokenAnalysis().internal_train(df, Map("dic.paths" -> dicPaths, "inputCol" -> inputCol, "ignoreNature" -> "true"))
+
     val filterStopWordFunc = F.udf((a: Seq[String]) => {
       a.filterNot(stopwordsBr.value.contains(_))
     })
@@ -108,19 +111,29 @@ object StringFeature {
     val wordCount = tmpWords.count()
 
     //represent content with sequence of number
-    val wordIndexPath = mappingPath.stripSuffix("/") + s"/wordIndex/$inputCol"
     val si = new SQLStringIndex()
-    si.train(tmpWords, wordIndexPath, Map("inputCol" -> "words"))
+    si.train(tmpWords, WORD_INDEX_PATH(metaPath, inputCol), Map("inputCol" -> "words"))
 
 
-    val siModel = si.load(df.sparkSession, wordIndexPath, Map())
+    val siModel = si.load(df.sparkSession, WORD_INDEX_PATH(metaPath, inputCol), Map())
+
+    // keep word and index
+    val wordToIndex = HSQLStringIndex.wordToIndex(df.sparkSession, siModel)
+
+    val spark = df.sparkSession
+    spark.createDataFrame(
+      spark.sparkContext.parallelize(wordToIndex.toSeq).map(f => Row.fromSeq(Seq(f._1, f._2))),
+      StructType(Seq(
+        StructField("word", StringType),
+        StructField("index", DoubleType)
+      ))).write.
+      mode(SaveMode.Overwrite).
+      parquet(WORD_INDEX_PATH(metaPath, inputCol))
 
     if (outputWordAndIndex) {
-      val wordToIndex = HSQLStringIndex.wordToIndex(df.sparkSession, siModel)
       val res = wordToIndex.toSeq.sortBy(f => f._2).map(f => s"${f._1}:${f._2}").mkString("\n")
       println(res)
     }
-
 
     val funcMap = si.internal_predict(df.sparkSession, siModel, "wow")
     val predictFunc = funcMap("wow_array").asInstanceOf[(Seq[String]) => Array[Int]]
@@ -130,7 +143,7 @@ object StringFeature {
   }
 
   def tfidf(df: DataFrame,
-            mappingPath: String,
+            metaPath: String,
             dicPaths: String,
             inputCol: String,
             stopWordsPaths: String,
@@ -146,13 +159,13 @@ object StringFeature {
     val stopwordsBr = df.sparkSession.sparkContext.broadcast(stopwords)
 
     //analysis
-    var (newDF, funcMap, wordCount) = analysisWords(df, mappingPath, dicPaths, inputCol, stopwordsBr, nGrams, outputWordAndIndex)
+    var (newDF, funcMap, wordCount) = analysisWords(df, metaPath, dicPaths, inputCol, stopwordsBr, nGrams, outputWordAndIndex)
+    val spark = df.sparkSession
 
     //tfidf feature
-    val tfidfPath = mappingPath.stripSuffix("/") + s"/tfidf/$inputCol"
     val tfidf = new SQLTfIdf()
-    tfidf.train(newDF, tfidfPath, Map("inputCol" -> inputCol, "numFeatures" -> wordCount.toString, "binary" -> "true"))
-    val tfidfModel = tfidf.load(df.sparkSession, tfidfPath, Map())
+    tfidf.train(newDF, TF_IDF_PATH(metaPath, inputCol), Map("inputCol" -> inputCol, "numFeatures" -> wordCount.toString, "binary" -> "true"))
+    val tfidfModel = tfidf.load(df.sparkSession, TF_IDF_PATH(metaPath, inputCol), Map())
     val tfidfFunc = tfidf.internal_predict(df.sparkSession, tfidfModel, "wow")("wow")
     val tfidfUDFFunc = F.udf(tfidfFunc)
     newDF = replaceColumn(newDF, inputCol, tfidfUDFFunc)
@@ -160,12 +173,12 @@ object StringFeature {
     //enhance
     val predictSingleWordFunc = funcMap("wow").asInstanceOf[(String) => Int]
     val (priorityWords, priorityFunc) = loadPriorityWords(newDF, priorityDicPaths, priority, predictSingleWordFunc)
-    newDF = replaceColumn(newDF, inputCol, priorityFunc)
+    newDF = replaceColumn(newDF, inputCol, F.udf(priorityFunc))
 
     newDF
   }
 
-  def word2vec(df: DataFrame, mappingPath: String, dicPaths: String, inputCol: String, stopWordsPaths: String, vectorSize:Int = 100) = {
+  def word2vec(df: DataFrame, mappingPath: String, dicPaths: String, inputCol: String, stopWordsPaths: String, vectorSize: Int = 100) = {
 
     val stopwords = loadStopwords(df, stopWordsPaths)
     val stopwordsBr = df.sparkSession.sparkContext.broadcast(stopwords)
