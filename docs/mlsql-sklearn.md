@@ -57,7 +57,7 @@ from sklearn import datasets
 register SKLearn.`/tmp/models/sklearn_model_iris.pickle` as predict
 options nonMLSQLModel="true"
 and pythonPath="python"
-and pythonVersion="3.6"
+and pythonVer="3.6"
 ```
 
 nonMLSQLModel告诉系统，模型是用户自己通过pickle生成的，另外我们还需要告诉系统对应的python路径和版本,以便系统能够采用合适的
