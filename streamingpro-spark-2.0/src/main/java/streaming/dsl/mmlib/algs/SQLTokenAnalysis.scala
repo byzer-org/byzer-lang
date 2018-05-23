@@ -20,8 +20,6 @@ class SQLTokenAnalysis extends SQLAlg with Functions {
 
     require(params.contains("inputCol"), "inputCol is required")
     val fieldName = params("inputCol")
-    val parserClassName = params.getOrElse("parser", "org.ansj.splitWord.analysis.NlpAnalysis")
-    val forestClassName = params.getOrElse("forest", "org.nlpcn.commons.lang.tire.domain.Forest")
 
     val words = SQLTokenAnalysis.loadDics(session, params)
 
@@ -67,7 +65,13 @@ object SQLTokenAnalysis {
     val filterNatures = params.getOrElse("filterNatures", "").split(",").filterNot(f => f.isEmpty).toSet
     val deduplicateResult = params.getOrElse("deduplicateResult", "false").toBoolean
 
-    val udg = parser.getClass.getMethod("parseStr", classOf[String]).invoke(parser, content)
+    val udg = try {
+      parser.getClass.getMethod("parseStr", classOf[String]).invoke(parser, content)
+    } catch {
+      case e: Exception =>
+        println(s"parser invoke error:${content}")
+        throw e
+    }
     def getAllWords(udg: Any) = {
       val result = udg.getClass.getMethod("getTerms").invoke(udg).asInstanceOf[java.util.List[Object]]
       var res = result.map { f =>
@@ -106,6 +110,25 @@ object SQLTokenAnalysis {
       wordsList
     }.flatMap(f => f)
     result
+  }
+
+
+  def createForest(words: Array[String], params: Map[String, String]) = {
+
+    val forestClassName = params.getOrElse("forest", "org.nlpcn.commons.lang.tire.domain.Forest")
+    val forest = Class.forName(forestClassName).newInstance().asInstanceOf[AnyRef]
+    words.foreach { f =>
+      AnsjFunctions.addWord(f, forest)
+    }
+    forest
+  }
+
+  def createAnalyzerFromForest(forest: AnyRef, params: Map[String, String]) = {
+    val parserClassName = params.getOrElse("parser", "org.ansj.splitWord.analysis.NlpAnalysis")
+    val forestClassName = params.getOrElse("forest", "org.nlpcn.commons.lang.tire.domain.Forest")
+    val parser = Class.forName(parserClassName).newInstance().asInstanceOf[AnyRef]
+    AnsjFunctions.configureDic(parser, forest, parserClassName, forestClassName)
+    parser
   }
 
   def createAnalyzer(words: Array[String], params: Map[String, String]) = {

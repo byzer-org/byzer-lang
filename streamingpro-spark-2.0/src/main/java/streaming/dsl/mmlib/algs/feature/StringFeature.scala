@@ -25,7 +25,7 @@ object StringFeature {
     newDF.withColumn(inputCol, udf(F.col(inputCol)))
   }
 
-  private def loadStopwords(df: DataFrame, stopWordsPaths: String) = {
+  def loadStopwords(df: DataFrame, stopWordsPaths: String) = {
     val stopwords = if (stopWordsPaths == null || stopWordsPaths.isEmpty) {
       Set[String]()
     } else {

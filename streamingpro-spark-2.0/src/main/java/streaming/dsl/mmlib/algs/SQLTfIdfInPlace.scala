@@ -10,6 +10,8 @@ import org.apache.spark.ml.linalg.SQLDataTypes._
 import streaming.core.shared.SharedObjManager
 import streaming.dsl.mmlib.algs.meta.TFIDFMeta
 
+import scala.collection.mutable.ArrayBuffer
+
 /**
   * Created by allwefantasy on 7/5/2018.
   */
@@ -33,7 +35,7 @@ class SQLTfIdfInPlace extends SQLAlg with Functions {
     // keep params
     val spark = df.sparkSession
     spark.createDataFrame(
-      spark.sparkContext.parallelize(Seq(params.toSeq)).map(f => Row.fromSeq(Seq(f))),
+      spark.sparkContext.parallelize(params.toSeq).map(f => Row.fromSeq(Seq(f._1, f._2))),
       StructType(Seq(
         StructField("key", StringType),
         StructField("value", StringType)
@@ -45,9 +47,10 @@ class SQLTfIdfInPlace extends SQLAlg with Functions {
     newDF
   }
 
-  override def load(spark: SparkSession, path: String, params: Map[String, String]): Any = {
+  override def load(spark: SparkSession, _path: String, params: Map[String, String]): Any = {
     import spark.implicits._
     //load train params
+    val path = getMetaPath(_path)
     val df = spark.read.parquet(PARAMS_PATH(path, "params")).map(f => (f.getString(0), f.getString(1)))
     val trainParams = df.collect().toMap
     val inputCol = trainParams.getOrElse("inputCol", "")
@@ -62,7 +65,7 @@ class SQLTfIdfInPlace extends SQLAlg with Functions {
 
   override def predict(spark: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = {
     val func = internal_predict(spark, _model, name, params)
-    UserDefinedFunction(func, StringType, Some(Seq(VectorType)))
+    UserDefinedFunction(func, VectorType, Some(Seq(StringType)))
   }
 
   def internal_predict(spark: SparkSession, _model: Any, name: String, params: Map[String, String]) = {
@@ -74,22 +77,48 @@ class SQLTfIdfInPlace extends SQLAlg with Functions {
     val dicPaths = trainParams.getOrElse("dicPaths", "")
     val priorityDicPath = trainParams.getOrElse("priorityDicPath", "")
     val priority = trainParams.getOrElse("priority", "1").toDouble
+    val stopWordPath = trainParams.getOrElse("stopWordPath", "")
+    val nGrams = trainParams.getOrElse("nGrams", "").split(",").filterNot(f => f.isEmpty).map(f => f.toInt).toSeq
 
-    val df = spark.createDataFrame(Seq())
+    val df = spark.createDataFrame(spark.sparkContext.emptyRDD[Row], StructType(Seq()))
+    val stopwords = StringFeature.loadStopwords(df, stopWordPath)
+    val stopwordsBr = spark.sparkContext.broadcast(stopwords)
 
 
     val (priorityWords, priorityFunc) = StringFeature.loadPriorityWords(df, priorityDicPath, priority, (str: String) => {
       wordIndexBr.value.getOrElse(str, -1d).toInt
     })
 
+    val ngram = (words: Seq[String], n: Int) => {
+      words.iterator.sliding(n).withPartial(false).map(_.mkString(" ")).toSeq
+    }
+
     val func = (content: String) => {
-      val parser = SharedObjManager.getOrCreate[Any](dicPaths, SharedObjManager.analyserPool, () => {
+
+      // create analyser
+      val forest = SharedObjManager.getOrCreate[Any](dicPaths, SharedObjManager.forestPool, () => {
         val words = SQLTokenAnalysis.loadDics(spark, trainParams)
-        SQLTokenAnalysis.createAnalyzer(words, trainParams)
+        SQLTokenAnalysis.createForest(words, trainParams)
       })
-      val wordArray = SQLTokenAnalysis.parseStr(parser, content, trainParams)
-      val wordIntArray = wordArray.filter(f => wordIndexBr.value.contains(f)).map(f => wordIndexBr.value(f).toInt).toSeq
+      val parser = SQLTokenAnalysis.createAnalyzerFromForest(forest.asInstanceOf[AnyRef], trainParams)
+      // analyser content
+      val wordArray = SQLTokenAnalysis.parseStr(parser, content, trainParams).
+        filter(f => !stopwordsBr.value.contains(f))
+
+      //ngram
+      val finalWordArray = new ArrayBuffer[String]()
+      finalWordArray ++= wordArray
+      nGrams.foreach { ng =>
+        finalWordArray ++= ngram(wordArray, ng)
+      }
+
+      // number sequence
+      val wordIntArray = finalWordArray.filter(f => wordIndexBr.value.contains(f)).map(f => wordIndexBr.value(f).toInt)
+
+      //tfidf
       val vector = tfidfFunc(wordIntArray)
+
+      // enhance some feature
       priorityFunc(vector)
     }
     func
