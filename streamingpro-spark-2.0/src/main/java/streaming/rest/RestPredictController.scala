@@ -17,6 +17,14 @@ class RestPredictController extends ApplicationController {
 
   @At(path = Array("/model/predict"), types = Array(GET, POST))
   def modelPredict = {
+    val res = param("dataType", "vector") match {
+      case "vector" => vec2vecPredict
+      case "string" => string2vecPredict
+    }
+    render(200, res)
+  }
+
+  def vec2vecPredict = {
     //dense or sparse
     val vectorType = param("vecType", "dense")
     val sparkSession = runtime.asInstanceOf[SparkRuntime].sparkSession
@@ -37,7 +45,18 @@ class RestPredictController extends ApplicationController {
     //select vec_argmax(tf_predict(features,"features","label",2)) as predict_label
     val sql = param("sql", "").split("select").mkString("")
     val res = sparkSession.createDataset(sparkSession.sparkContext.parallelize(vectors)).selectExpr(sql).toJSON.collect().mkString(",")
-    render(200, res)
+    res
+
+  }
+
+  def string2vecPredict = {
+    val sparkSession = runtime.asInstanceOf[SparkRuntime].sparkSession
+    val strList = JSONArray.fromObject(param("data", "[]")).map(f => StringFeature(f.toString))
+    val sql = param("sql", "").split("select").mkString("")
+    import sparkSession.implicits._
+    val res = sparkSession.createDataset(sparkSession.sparkContext.parallelize(strList)).selectExpr(sql).toJSON.collect().mkString(",")
+    res
+
   }
 
   def runtime = PlatformManager.getRuntime
