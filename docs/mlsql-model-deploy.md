@@ -17,7 +17,7 @@
 
 ### 部署方式
 
-只要以local模式启动StreamingPro后，通常你可以认为这是一个标准的Java应用：
+1. 只要以local模式启动StreamingPro后，通常你可以认为这是一个标准的Java应用：
 
 ```
 ./bin/spark-submit   --class streaming.core.StreamingApp \
@@ -34,25 +34,27 @@ streamingpro-spark-2.0-1.0.0.jar    \
 -streaming.enableHiveSupport true
 ```
 
-StreamingPro提供了 `http://127.0.0.1:9003/run/script` 接口动态注册已经生成的模型：
+2. StreamingPro提供了 `http://127.0.0.1:9003/run/script` 接口动态注册已经生成的模型：
 
 ```sql
 register NaiveBayes.`/tmp/bayes_model` as bayes_predict;
 ```
 
-同事也提供了一个标准的http接口进行预测：`http://127.0.0.1:9003/model/predict`。 
+
+3. StreamingPro提供了一个标准的http接口进行预测：`http://127.0.0.1:9003/model/predict`。 
 
 请求参数为：
 
 ```sql
-
+dataType=vector
 data=[[1,2,3...]]
 sql=select bayes_predict(feature) as p
 ```
 
 data 为一个二维json数组，每条内层json数组代表一条待预测的记录。 
 sql 则是允许用户使用前面注册的函数，这个函数表示了一个模型。其中feature字段名字是固定的。
-不同的模型，可能函数的参数不同，具体需要查看MLSQL文档。
+
+如果传输的是文本类型，请将dataType设置为string。 典型的比如TfIdfInPlace模型接受的参数就是字符串。
 
 ### 完整例子
 

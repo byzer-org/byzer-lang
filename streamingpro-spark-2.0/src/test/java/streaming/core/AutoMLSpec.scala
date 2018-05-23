@@ -3,10 +3,9 @@ package streaming.core
 import java.io.File
 
 import net.sf.json.JSONObject
-import org.apache.spark.sql.Row
+import org.apache.spark.sql.{Row, SaveMode, functions => F}
 import org.apache.spark.sql.types._
 import org.apache.spark.streaming.BasicSparkOperation
-import org.apache.spark.sql.{functions => F}
 import streaming.core.strategy.platform.SparkRuntime
 import org.apache.spark.ml.linalg.{Vector, Vectors}
 import streaming.dsl.ScriptSQLExec
@@ -302,6 +301,34 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
       assume(df.count() == 3)
       df = spark.sql("select label,__split__,count(__split__) as rate from sample_data  group by label,__split__ order by label,__split__,rate")
       df.show(10000)
+
+    }
+  }
+
+  "SQLTfIdfInPlace" should "work fine" in {
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+      //执行sql
+      implicit val spark = runtime.sparkSession
+      val dataRDD = spark.sparkContext.parallelize(Seq("我是天才，你呢", "你真的很棒", "天才你好")).map { f =>
+        Row.fromSeq(Seq(f))
+      }
+      val df = spark.createDataFrame(dataRDD,
+        StructType(Seq(StructField("content", StringType))))
+
+      df.write.mode(SaveMode.Overwrite).parquet("/tmp/william/tmp/tfidf/df")
+
+      writeStringToFile("/tmp/tfidf/stopwords", List("你").mkString("\n"))
+      writeStringToFile("/tmp/tfidf/prioritywords", List("天才").mkString("\n"))
+
+      val sq = createSSEL
+      ScriptSQLExec.parse(loadSQLScriptStr("tfidfplace"), sq)
+      // we should make sure train vector and predict vector the same
+      val trainVector = spark.sql("select * from parquet.`/tmp/william/tmp/tfidfinplace/data`").toJSON.collect()
+      val predictVector = spark.sql("select jack(content) as content from orginal_text_corpus").toJSON.collect()
+      predictVector.foreach { f =>
+        println(f)
+        assume(trainVector.contains(f))
+      }
 
     }
   }

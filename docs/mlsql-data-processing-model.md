@@ -2,54 +2,59 @@
 
 ### TfIdfInPlace
 
-内部使用了分词，tfidf,StringIndex等模型，可以直接将文本转化为tfidf向量。你需要开启ansj分词支持。
-细节参看[如何在MLSQL中运用分词抽词工具](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-analysis.md)
+TfIdfInPlace是一个较为复杂的预处理模型。首先你需要开启[ansj分词支持](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-analysis.md)。
+TfIdfInPlace能够把一个raw文本转化为一个向量。具体流程如下：
+
+1. 分词（可以指定自定义词典）
+2. 过滤停用词
+3. ngram特征组合
+4. 字符转化为数字
+5. 计算idf/tf值
+6. 记在权重高的词汇，并且给对应特征加权。
+
 
 具体用法：
 
-```
-train orginal_text_corpus as TfIdfInPlace.`${traning_dir}/tfidf` 
-where inputCol="features" 
-and `dic.paths`=".....";
+```sql
+-- 把文本字段转化为tf/idf向量,可以自定义词典
+train orginal_text_corpus as TfIdfInPlace.`/tmp/tfidfinplace`
+where inputCol="content"
+-- 分词相关配置
+and ignoreNature="true"
+and dicPaths="...."
+-- 停用词路径
+and stopWordPath="/tmp/tfidf/stopwords"
+-- 高权重词路径
+and priorityDicPath="/tmp/tfidf/prioritywords"
+-- 高权重词加权倍数
+and priority="5.0"
+-- ngram 配置
+and nGram="2,3"
+;
 
-load parquet.`${traning_dir}/tfidf` 
+load parquet.`/tmp/tfidf/data` 
 as lwys_corpus_with_featurize;
 ```
 
-lwys_corpus_with_featurize 中的features就由原来的文本字段编程vector了。
+lwys_corpus_with_featurize 中的content字段已经是向量化的了，可以直接进行后续的算法训练。
 
+对于陌生数据，我们可以注册该模型从而能够将陌生数据也转化为向量：
 
-停用词：
-
-如果你需要接入停用词，可以添加配置参数：
-
-```
-stopWordPath="..."
+```sql
+register TfIdfInPlace.`/tmp/tfidf/` as tfidf;
 ```
 
+tfidf函数接受一个字符串，返回一个向量。使用如下：
 
-特征加权：
-
-如果你想提高某些词的权重（重要词），那么可以配置
-
-```
-priorityDicPath="...."
-priority="3.0"
+```sql
+select tfidf(content) from sometable
 ```
 
-系统会自动把向量中符合要求的词的权重乘以你配置的priority权重。
+这意味着你注册后就可以在流式计算或者批处理里直接使用这个函数。
 
-目前只支持一个路径。
+当然，我们还可能希望将TfIdfInPlace模型部署在一个API服务里，
+可参考[MLSQL 模型部署](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-model-deploy.md)
 
-ngram:
-
-如果我希望能够自动组合词汇特征，那么可以配置ngram参数
-
-```
-nGrams="2,3"
-```
-
-最终用户可以得到1Gram,2Gram,3Gram的组合，配置的越多，特征膨胀的越大。
 
 
 ## TokenExtract / TokenAnalysis

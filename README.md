@@ -22,8 +22,6 @@
 * [如何把模型部署成API服务](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-model-deploy.md)
 
 
-
-
 ## MLSQL常用功能
 
 * [MLSQL语法说明](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-grammar.md)
