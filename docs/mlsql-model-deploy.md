@@ -34,14 +34,14 @@ streamingpro-spark-2.0-1.0.0.jar    \
 -streaming.enableHiveSupport true
 ```
 
-2. StreamingPro提供了 `http://127.0.0.1:9003/run/script` 接口动态注册已经生成的模型：
+2. 访问 `http://127.0.0.1:9003/run/script` 接口动态注册已经生成的模型：
 
 ```sql
 register NaiveBayes.`/tmp/bayes_model` as bayes_predict;
 ```
 
 
-3. StreamingPro提供了一个标准的http接口进行预测：`http://127.0.0.1:9003/model/predict`。 
+3. 访问：`http://127.0.0.1:9003/model/predict`进行预测请求： 
 
 请求参数为：
 
@@ -51,10 +51,30 @@ data=[[1,2,3...]]
 sql=select bayes_predict(feature) as p
 ```
 
-data 为一个二维json数组，每条内层json数组代表一条待预测的记录。 
-sql 则是允许用户使用前面注册的函数，这个函数表示了一个模型。其中feature字段名字是固定的。
+| Property Name	 | Default  |Meaning |
+|:-----------|:------------|:------------|
+|dataType|vector|data字段的数据类型，目前只支持vector/string|
+|data|[]|你可以传递一个或者多个vector/string,必须符合json规范|
+|sql|None|用sql的方式调用模型，其中模型的参数feature是固定的字符串|
+|pipeline|None|用pipeline的方式调用模型，写模型名，然后逗号分隔|
 
-如果传输的是文本类型，请将dataType设置为string。 典型的比如TfIdfInPlace模型接受的参数就是字符串。
+
+典型的比如TfIdfInPlace模型接受的参数就是字符串，这个时候dataType就要设置成string。
+
+如果你不愿意使用类似sql的语法做预测，也可以将sql参数替换为pipeline参数，如下：
+
+```sql
+dataType=string
+data=["你好"，"大家好"]
+pipeline=tfidf,bayes_predict
+```
+
+这里会使用tfidf模型先对数据进行处理，然后接着把tfidf处理的结果给bayes_predict。
+本质上是一个嵌套调用，如下：
+
+```
+bayes_predict(tfidf(feature))
+```
 
 ### 完整例子
 

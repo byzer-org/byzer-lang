@@ -24,6 +24,16 @@ class RestPredictController extends ApplicationController {
     render(200, res)
   }
 
+  def getSQL = {
+    if (hasParam("sql")) {
+      param("sql", "").split("select").mkString("")
+    } else if (hasParam("pipeline")) {
+      param("pipeline", "").split(",").reverse.foldRight("feature") { (acc, o) =>
+        s"${acc}(${o})"
+      } + " as feature"
+    } else throw new IllegalArgumentException("parameter sql or pipline is required")
+  }
+
   def vec2vecPredict = {
     //dense or sparse
     val vectorType = param("vecType", "dense")
@@ -42,8 +52,8 @@ class RestPredictController extends ApplicationController {
       Feature(feature = vec)
     }
     import sparkSession.implicits._
-    //select vec_argmax(tf_predict(features,"features","label",2)) as predict_label
-    val sql = param("sql", "").split("select").mkString("")
+    //select vec_argmax(tf_predict(feature,"feature","label",2)) as predict_label
+    val sql = getSQL
     val res = sparkSession.createDataset(sparkSession.sparkContext.parallelize(vectors)).selectExpr(sql).toJSON.collect().mkString(",")
     res
 
@@ -52,7 +62,7 @@ class RestPredictController extends ApplicationController {
   def string2vecPredict = {
     val sparkSession = runtime.asInstanceOf[SparkRuntime].sparkSession
     val strList = JSONArray.fromObject(param("data", "[]")).map(f => StringFeature(f.toString))
-    val sql = param("sql", "").split("select").mkString("")
+    val sql = getSQL
     import sparkSession.implicits._
     val res = sparkSession.createDataset(sparkSession.sparkContext.parallelize(strList)).selectExpr(sql).toJSON.collect().mkString(",")
     res
