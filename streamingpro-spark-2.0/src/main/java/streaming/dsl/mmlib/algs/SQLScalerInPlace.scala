@@ -15,7 +15,7 @@ import org.apache.spark.sql.types.{ArrayType, DoubleType}
   */
 class SQLScalerInPlace extends SQLAlg with Functions {
 
-  def internal_train(df: DataFrame, path: String, params: Map[String, String]) = {
+  def internal_train(df: DataFrame, params: Map[String, String]) = {
     val path = params("path")
     val metaPath = getMetaPath(path)
     saveTraningParams(df.sparkSession, params, metaPath)
@@ -32,7 +32,7 @@ class SQLScalerInPlace extends SQLAlg with Functions {
   }
 
   override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
-    val newDF = internal_train(df, path, params)
+    val newDF = internal_train(df, params + ("path" -> path))
     newDF.write.mode(SaveMode.Overwrite).parquet(getDataPath(path))
   }
 
@@ -40,9 +40,9 @@ class SQLScalerInPlace extends SQLAlg with Functions {
     //load train params
     val path = getMetaPath(_path)
     val (trainParams, df) = getTranningParams(spark, path)
-    val inputCols = params.getOrElse("inputCols", "").split(",").toSeq
-    val scaleMethod = params.getOrElse("scaleMethod", "log2")
-    val removeOutlierValue = params.getOrElse("removeOutlierValue", "false").toBoolean
+    val inputCols = trainParams.getOrElse("inputCols", "").split(",").toSeq
+    val scaleMethod = trainParams.getOrElse("scaleMethod", "log2")
+    val removeOutlierValue = trainParams.getOrElse("removeOutlierValue", "false").toBoolean
 
     val scaleFunc = scaleMethod match {
       case "min-max" =>
@@ -75,16 +75,16 @@ class SQLScalerInPlace extends SQLAlg with Functions {
 
   override def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = {
     val meta = _model.asInstanceOf[ScaleMeta]
-    val removeOutlierValue = params.getOrElse("removeOutlierValue", "false").toBoolean
-    val inputCols = params.getOrElse("inputCols", "").split(",").toSeq
+    val removeOutlierValue = meta.trainParams.getOrElse("removeOutlierValue", "false").toBoolean
+    val inputCols = meta.trainParams.getOrElse("inputCols", "").split(",").toSeq
     val f = (values: Seq[Double]) => {
       val newValues = if (removeOutlierValue) {
         values.zipWithIndex.map { v =>
           meta.removeOutlierValueFunc(v._1, inputCols(v._2))
         }
       } else values
-      meta.scaleFunc(Vectors.dense(newValues.toArray))
+      meta.scaleFunc(Vectors.dense(newValues.toArray)).toArray
     }
-    UserDefinedFunction(f, VectorType, Some(Seq(ArrayType(DoubleType))))
+    UserDefinedFunction(f, ArrayType(DoubleType), Some(Seq(ArrayType(DoubleType))))
   }
 }

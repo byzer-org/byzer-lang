@@ -78,7 +78,7 @@ object DoubleFeature extends BaseFeatureFunctions {
     val min = trainParams.getOrElse("min", "0").toDouble
     val max = trainParams.getOrElse("max", "1").toDouble
     val scaleRange = max - min
-
+    println(s"predict: ${originalRange.mkString(",")} ${minArray.mkString(",")} ${scaleRange} $min")
     minMaxFunc(originalRange, minArray, scaleRange, min)
 
   }
@@ -138,7 +138,7 @@ object DoubleFeature extends BaseFeatureFunctions {
     val reScale = method match {
       case "min-max" =>
 
-        val input: RDD[OldVector] = df.select(F.col(tempColName)).rdd.map {
+        val input: RDD[OldVector] = newDF.select(F.col(tempColName)).rdd.map {
           case Row(v: Vector) => OldVectors.fromML(v)
         }
         val summary = Statistics.colStats(input)
@@ -161,6 +161,7 @@ object DoubleFeature extends BaseFeatureFunctions {
         val max = params.getOrElse("max", "1").toDouble
         val scaleRange = max - min
 
+        println(s"train: ${originalRange.mkString(",")} ${minArray.mkString(",")} ${scaleRange} $min")
         minMaxFunc(originalRange, minArray, scaleRange, min)
 
       case "log2" =>
@@ -200,6 +201,7 @@ object DoubleFeature extends BaseFeatureFunctions {
   def getModelNormalizeForPredict(spark: SparkSession, metaPath: String, fields: Seq[String], method: String, trainParams: Map[String, String]) = {
     method match {
       case "standard" =>
+        import spark.implicits._
         val metas = spark.read.parquet(STANDARD_SCALER_PATH(metaPath, getFieldGroupName(fields)))
           .as[StandardScalerValueMeta].collect().
           map(f => (f.fieldName, f)).toMap

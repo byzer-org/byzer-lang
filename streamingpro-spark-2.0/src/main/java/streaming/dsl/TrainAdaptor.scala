@@ -71,7 +71,8 @@ object MLMapping {
     "TfIdfInPlace" -> "streaming.dsl.mmlib.algs.SQLTfIdfInPlace",
     "Word2VecInPlace" -> "streaming.dsl.mmlib.algs.SQLWord2VecInPlace",
     "AutoFeature" -> "streaming.dsl.mmlib.algs.SQLAutoFeature",
-    "RateSampler" -> "streaming.dsl.mmlib.algs.SQLRateSampler"
+    "RateSampler" -> "streaming.dsl.mmlib.algs.SQLRateSampler",
+    "ScalerInPlace" -> "streaming.dsl.mmlib.algs.SQLScalerInPlace"
   )
 
   def findAlg(name: String) = {

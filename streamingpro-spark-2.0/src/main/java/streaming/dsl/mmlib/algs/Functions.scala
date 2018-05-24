@@ -237,6 +237,7 @@ trait Functions {
   }
 
   def getTranningParams(spark: SparkSession, metaPath: String) = {
+    import spark.implicits._
     val df = spark.read.parquet(PARAMS_PATH(metaPath, "params")).map(f => (f.getString(0), f.getString(1)))
     val trainParams = df.collect().toMap
     (trainParams, df)
