@@ -332,4 +332,32 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
 
     }
   }
+
+  "SQLWord2VecInPlace" should "work fine" in {
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+      //执行sql
+      implicit val spark = runtime.sparkSession
+      val dataRDD = spark.sparkContext.parallelize(Seq("我是天才，你呢", "你真的很棒", "天才你好")).map { f =>
+        Row.fromSeq(Seq(f))
+      }
+      val df = spark.createDataFrame(dataRDD,
+        StructType(Seq(StructField("content", StringType))))
+
+      df.write.mode(SaveMode.Overwrite).parquet("/tmp/william/tmp/tfidf/df")
+
+      writeStringToFile("/tmp/tfidf/stopwords", List("你").mkString("\n"))
+      writeStringToFile("/tmp/tfidf/prioritywords", List("天才").mkString("\n"))
+
+      val sq = createSSEL
+      ScriptSQLExec.parse(loadSQLScriptStr("word2vecplace"), sq)
+      // we should make sure train vector and predict vector the same
+      val trainVector = spark.sql("select * from parquet.`/tmp/william/tmp/word2vecinplace/data`").toJSON.collect()
+      val predictVector = spark.sql("select jack(content) as content from orginal_text_corpus").toJSON.collect()
+      predictVector.foreach { f =>
+        println(f)
+        assume(trainVector.contains(f))
+      }
+
+    }
+  }
 }

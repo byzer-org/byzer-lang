@@ -33,7 +33,7 @@ class SQLWord2Vec extends SQLAlg with Functions {
 
     val f = (co: String) => {
       model.value.get(co) match {
-        case Some(vec) => vec
+        case Some(vec) => vec.toSeq
         case None => null
       }
 

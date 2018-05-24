@@ -4,7 +4,6 @@ import java.io.{ByteArrayOutputStream, File}
 import java.util.Properties
 
 import net.csdn.common.logging.Loggers
-import org.apache.commons.io.FileUtils
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
 import org.apache.spark.Partitioner
 import org.apache.spark.ml.linalg.SQLDataTypes._
@@ -14,7 +13,7 @@ import org.apache.spark.ml.param.Params
 import org.apache.spark.ml.util.{MLReadable, MLWritable}
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.types.{MapType, StringType, StructField, StructType}
-import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession, functions => F}
+import org.apache.spark.sql.{DataFrame, Dataset, Row, SaveMode, SparkSession, functions => F}
 import org.apache.spark.util.{ExternalCommandRunner, ObjPickle, WowMD5, WowXORShiftRandom}
 import streaming.common.HDFSOperator
 
@@ -222,6 +221,18 @@ trait Functions {
 
   def createTempModelLocalPath(path: String, autoCreateParentDir: Boolean = true) = {
     HDFSOperator.createTempModelLocalPath(path, autoCreateParentDir)
+  }
+
+  def saveTraningParams(spark: SparkSession, params: Map[String, String], metaPath: String) = {
+    // keep params
+    spark.createDataFrame(
+      spark.sparkContext.parallelize(params.toSeq).map(f => Row.fromSeq(Seq(f._1, f._2))),
+      StructType(Seq(
+        StructField("key", StringType),
+        StructField("value", StringType)
+      ))).write.
+      mode(SaveMode.Overwrite).
+      parquet(MetaConst.PARAMS_PATH(metaPath, "params"))
   }
 
 }

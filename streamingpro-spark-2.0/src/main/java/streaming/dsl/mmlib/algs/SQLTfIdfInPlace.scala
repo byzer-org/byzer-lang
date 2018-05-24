@@ -33,16 +33,7 @@ class SQLTfIdfInPlace extends SQLAlg with Functions {
     val metaPath = getMetaPath(path)
 
     // keep params
-    val spark = df.sparkSession
-    spark.createDataFrame(
-      spark.sparkContext.parallelize(params.toSeq).map(f => Row.fromSeq(Seq(f._1, f._2))),
-      StructType(Seq(
-        StructField("key", StringType),
-        StructField("value", StringType)
-      ))).write.
-      mode(SaveMode.Overwrite).
-      parquet(PARAMS_PATH(metaPath, "params"))
-
+    saveTraningParams(df.sparkSession,params,metaPath)
     val newDF = StringFeature.tfidf(df, metaPath, dicPaths, inputCol, stopWordPath, priorityDicPath, priority, nGrams)
     newDF
   }

@@ -55,7 +55,57 @@ select tfidf(content) from sometable
 当然，我们还可能希望将TfIdfInPlace模型部署在一个API服务里，
 可参考[MLSQL 模型部署](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-model-deploy.md)
 
+### Word2VecInPlace
 
+Word2VecInPlace是一个较为复杂的预处理模型。首先你需要开启[ansj分词支持](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-analysis.md)。
+Word2VecInPlace能够把一个raw文本转化为一个向量。具体流程如下：
+
+1. 分词（可以指定自定义词典）
+2. 过滤停用词
+3. 字符转化为数字
+4. 把数字转化为向量
+5. 返回一维或者二维数组
+
+目前主要给深度学习做NLP使用，譬如卷积网络等。
+
+具体用法：
+
+```sql
+load parquet.`/tmp/tfidf/df`
+as orginal_text_corpus;
+
+-- 把文本字段转化为词向量数组,可以自定义词典
+train orginal_text_corpus as Word2VecInPlace.`/tmp/word2vecinplace`
+where inputCol="content"
+-- 分词相关配置
+and ignoreNature="true"
+-- 停用词路径
+and stopWordPath="/tmp/tfidf/stopwords"
+-- 把结果展开为一维向量
+and flatFeature="true"
+;
+load parquet.`/tmp/word2vecinplace/data` 
+as lwys_corpus_with_featurize;
+```
+
+lwys_corpus_with_featurize 中的content字段已经是向量化的了，可以直接进行后续的算法训练。
+
+对于陌生数据，我们可以注册该模型从而能够将陌生数据也转化为向量：
+
+```sql
+register Word2VecInPlace.`/tmp/word2vecinplace` as word2vec;
+```
+
+word2vec函数接受一个字符串，返回一个向量。使用如下：
+
+```sql
+select word2vec(content) from sometable
+```
+
+这意味着你注册后就可以在流式计算或者批处理里直接使用这个函数。
+
+当然，我们还可能希望将Word2VecInPlace模型部署在一个API服务里，
+可参考[MLSQL 模型部署](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-model-deploy.md)
 
 ## TokenExtract / TokenAnalysis
 
