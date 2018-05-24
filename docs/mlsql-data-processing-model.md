@@ -107,6 +107,52 @@ select word2vec(content) from sometable
 当然，我们还可能希望将Word2VecInPlace模型部署在一个API服务里，
 可参考[MLSQL 模型部署](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-model-deploy.md)
 
+
+### ScalerInPlace
+
+这是对double类型字段做特征工程的一个算法。使用方法如下：
+
+```sql
+-- 把文本字段转化为tf/idf向量,可以自定义词典
+train orginal_text_corpus as ScalerInPlace.`/tmp/scaler`
+where inputCols="a,b"
+-- 使用是什么缩放方法
+and scaleMethod="min-max"
+-- 是否自动修正异常值
+and removeOutlierValue="false"
+;
+
+--得到特征化的数据
+load parquet.`/tmp/scaler/data` 
+as featurize_table;
+
+```
+
+参数使用说明：
+
+|参数|默认值|说明|
+|:----|:----|:----|
+|inputCols|None|double类型字段列表，用逗号分隔|
+|scaleMethod|log2|目前支持的有：minx-max,log2,logn,log10,sqrt,abs等|
+|removeOutlierValue|false|是否自动去掉异常点，使用中位数替换|
+
+
+对于新数据，你首先需要注册下之前训练产生的模型：
+
+```sql
+register ScalerInPlace.`/tmp/scaler` as jack;
+```
+
+接着你便可以使用该模型对新数据做处理了：
+
+```sql
+select jack(array(a,b))[0] a,jack(array(a,b))[1] b, c from orginal_text_corpus
+```
+
+## NormalizeInPlace
+
+
+
 ## TokenExtract / TokenAnalysis
 
 [TokenExtract / TokenAnalysis](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-analysis.md)

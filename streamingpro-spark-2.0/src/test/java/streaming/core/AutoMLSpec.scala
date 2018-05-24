@@ -10,7 +10,7 @@ import streaming.core.strategy.platform.SparkRuntime
 import org.apache.spark.ml.linalg.{Vector, Vectors}
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib.algs.SQLAutoFeature
-import streaming.dsl.mmlib.algs.feature.{DiscretizerIntFeature, HighOrdinalDoubleFeature, StringFeature}
+import streaming.dsl.mmlib.algs.feature.{DiscretizerIntFeature, DoubleFeature, StringFeature}
 
 
 /**
@@ -165,7 +165,7 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
           StructField("c", DoubleType)
         )))
 
-      val newDF = HighOrdinalDoubleFeature.vectorize(df, "/tmp/tfidf/mapping", Seq("a", "b", "c"))
+      val newDF = DoubleFeature.vectorize(df, "/tmp/tfidf/mapping", Seq("a", "b", "c"))
       newDF.show(false)
     }
   }
@@ -355,6 +355,40 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
       val predictVector = spark.sql("select jack(content) as content from orginal_text_corpus").toJSON.collect()
       predictVector.foreach { f =>
         println(f)
+        assume(trainVector.contains(f))
+      }
+
+    }
+  }
+
+
+  "SQLScalerInPlace" should "work fine" in {
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+      //执行sql
+      implicit val spark = runtime.sparkSession
+      val dataRDD = spark.sparkContext.parallelize(Seq(
+        Seq(1.0, 2.0, 3.0),
+        Seq(1.0, 4.0, 3.0),
+        Seq(1.0, 7.0, 3.0))).map { f =>
+        Row.fromSeq(f)
+      }
+
+      val df = spark.createDataFrame(dataRDD,
+        StructType(Seq(
+          StructField("a", DoubleType),
+          StructField("b", DoubleType),
+          StructField("c", DoubleType)
+        )))
+      df.createOrReplaceTempView("orginal_text_corpus")
+
+      val sq = createSSEL
+      ScriptSQLExec.parse(loadSQLScriptStr("scaleplace"), sq)
+      // we should make sure train vector and predict vector the same
+      val trainVector = spark.sql("select * from parquet.`/tmp/william/tmp/scaler/data`").toJSON.collect()
+      val predictVector = spark.sql("select jack(array(a,b))[0] a,jack(array(a,b))[1] b, c from orginal_text_corpus").toJSON.collect()
+      predictVector.foreach(println(_))
+      trainVector.foreach(println(_))
+      predictVector.foreach { f =>
         assume(trainVector.contains(f))
       }
 

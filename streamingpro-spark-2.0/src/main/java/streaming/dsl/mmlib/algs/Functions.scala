@@ -16,6 +16,7 @@ import org.apache.spark.sql.types.{MapType, StringType, StructField, StructType}
 import org.apache.spark.sql.{DataFrame, Dataset, Row, SaveMode, SparkSession, functions => F}
 import org.apache.spark.util.{ExternalCommandRunner, ObjPickle, WowMD5, WowXORShiftRandom}
 import streaming.common.HDFSOperator
+import MetaConst._
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -233,6 +234,13 @@ trait Functions {
       ))).write.
       mode(SaveMode.Overwrite).
       parquet(MetaConst.PARAMS_PATH(metaPath, "params"))
+  }
+
+  def getTranningParams(spark: SparkSession, metaPath: String) = {
+    import spark.implicits._
+    val df = spark.read.parquet(PARAMS_PATH(metaPath, "params")).map(f => (f.getString(0), f.getString(1)))
+    val trainParams = df.collect().toMap
+    (trainParams, df)
   }
 
 }

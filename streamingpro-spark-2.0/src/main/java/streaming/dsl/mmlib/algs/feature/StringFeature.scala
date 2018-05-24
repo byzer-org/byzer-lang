@@ -17,13 +17,8 @@ import MetaConst._
 /**
   * Created by allwefantasy on 14/5/2018.
   */
-object StringFeature {
+object StringFeature extends BaseFeatureFunctions {
 
-
-  private def replaceColumn(newDF: DataFrame, inputCol: String, udf: UserDefinedFunction) = {
-    //newDF.withColumn(inputCol + "_tmp", udf(F.col(inputCol))).drop(inputCol).withColumnRenamed(inputCol + "_tmp", inputCol)
-    newDF.withColumn(inputCol, udf(F.col(inputCol)))
-  }
 
   def loadStopwords(df: DataFrame, stopWordsPaths: String) = {
     val stopwords = if (stopWordsPaths == null || stopWordsPaths.isEmpty) {

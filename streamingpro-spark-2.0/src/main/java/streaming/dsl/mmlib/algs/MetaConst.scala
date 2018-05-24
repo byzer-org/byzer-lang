@@ -10,6 +10,12 @@ object MetaConst {
 
   def WORD_INDEX_PATH(path: String, col: String) = s"$path/columns/$col/wordIndex"
 
+  def OUTLIER_VALUE_PATH(path: String, col: String) = s"$path/columns/$col/outlierValues"
+
+  def MIN_MAX_PATH(path: String, col: String) = s"$path/columns/$col/minMax"
+
+  def STANDARD_SCALER_PATH(path: String, col: String) = s"$path/columns/$col/standardScaler"
+
   def PARAMS_PATH(path: String, col: String) = s"$path/params"
 
   def getDataPath(path: String) = {
