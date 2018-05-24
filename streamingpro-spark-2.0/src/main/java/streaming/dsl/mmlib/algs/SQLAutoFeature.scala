@@ -8,7 +8,7 @@ import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession}
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.types._
 import streaming.dsl.mmlib.SQLAlg
-import streaming.dsl.mmlib.algs.feature.{DiscretizerIntFeature, HighOrdinalDoubleFeature}
+import streaming.dsl.mmlib.algs.feature.{DiscretizerIntFeature, DoubleFeature}
 
 
 /**
@@ -30,7 +30,7 @@ class SQLAutoFeature extends SQLAlg with Functions {
       newDF = tfidf.interval_train(df, params + ("inputCol" -> f.name, "mappingPath" -> mappingPath))
     }
 
-    newDF = HighOrdinalDoubleFeature.vectorize(newDF, mappingPath, doubleFields.map(f => f.name))
+    newDF = DoubleFeature.vectorize(newDF, mappingPath, doubleFields.map(f => f.name))
     newDF = DiscretizerIntFeature.vectorize(newDF, mappingPath, intFields.map(f => f.name))
 
     val vectorCols = Array("__highOrdinalDoubleFeature__", "_discretizerIntFeature_") ++ analyseFields.map(f => f.name)

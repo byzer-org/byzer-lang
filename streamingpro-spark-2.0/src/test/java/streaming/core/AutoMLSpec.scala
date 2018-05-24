@@ -10,7 +10,7 @@ import streaming.core.strategy.platform.SparkRuntime
 import org.apache.spark.ml.linalg.{Vector, Vectors}
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib.algs.SQLAutoFeature
-import streaming.dsl.mmlib.algs.feature.{DiscretizerIntFeature, HighOrdinalDoubleFeature, StringFeature}
+import streaming.dsl.mmlib.algs.feature.{DiscretizerIntFeature, DoubleFeature, StringFeature}
 
 
 /**
@@ -165,7 +165,7 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
           StructField("c", DoubleType)
         )))
 
-      val newDF = HighOrdinalDoubleFeature.vectorize(df, "/tmp/tfidf/mapping", Seq("a", "b", "c"))
+      val newDF = DoubleFeature.vectorize(df, "/tmp/tfidf/mapping", Seq("a", "b", "c"))
       newDF.show(false)
     }
   }
