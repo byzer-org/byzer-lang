@@ -110,7 +110,7 @@ select word2vec(content) from sometable
 
 ### ScalerInPlace
 
-这是对double类型字段做特征工程的一个算法。使用方法如下：
+特征尺度变换，这是对double类型字段做特征工程的一个算法。使用方法如下：
 
 ```sql
 -- 把文本字段转化为tf/idf向量,可以自定义词典
@@ -151,7 +151,41 @@ select jack(array(a,b))[0] a,jack(array(a,b))[1] b, c from orginal_text_corpus
 
 ## NormalizeInPlace
 
+对double类型特征进行标准化/规范化。
 
+
+```
+-- 把文本字段转化为tf/idf向量,可以自定义词典
+train orginal_text_corpus as NormalizeInPlace.`/tmp/scaler2`
+where inputCols="a,b"
+-- 使用是什么缩放方法
+and method="standard"
+-- 是否自动修正异常值
+and removeOutlierValue="false"
+;
+
+register NormalizeInPlace.`/tmp/scaler2` as jack;
+```
+
+参数使用说明：
+
+|参数|默认值|说明|
+|:----|:----|:----|
+|inputCols|None|double类型字段列表，用逗号分隔|
+|method|standard|目前支持的有：standard,p-norm等|
+|removeOutlierValue|false|是否自动去掉异常点，使用中位数替换|
+
+对于新数据，你首先需要注册下之前训练产生的模型：
+
+```sql
+register NormalizeInPlace.`/tmp/scaler2` as jack;
+```
+
+接着你便可以使用该模型对新数据做处理了：
+
+```sql
+select jack(array(a,b))[0] a,jack(array(a,b))[1] b, c from orginal_text_corpus
+```
 
 ## TokenExtract / TokenAnalysis
 

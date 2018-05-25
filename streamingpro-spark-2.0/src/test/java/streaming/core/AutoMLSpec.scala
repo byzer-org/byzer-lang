@@ -11,6 +11,7 @@ import org.apache.spark.ml.linalg.{Vector, Vectors}
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib.algs.SQLAutoFeature
 import streaming.dsl.mmlib.algs.feature.{DiscretizerIntFeature, DoubleFeature, StringFeature}
+import streaming.dsl.template.TemplateMerge
 
 
 /**
@@ -392,6 +393,47 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
         assume(trainVector.contains(f))
       }
 
+    }
+  }
+
+  "SQLNormalizeInPlace" should "work fine" in {
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+      //执行sql
+      implicit val spark = runtime.sparkSession
+      val dataRDD = spark.sparkContext.parallelize(Seq(
+        Seq(1.0, 2.0, 3.0),
+        Seq(1.0, 4.0, 3.0),
+        Seq(1.0, 7.0, 3.0))).map { f =>
+        Row.fromSeq(f)
+      }
+
+      val df = spark.createDataFrame(dataRDD,
+        StructType(Seq(
+          StructField("a", DoubleType),
+          StructField("b", DoubleType),
+          StructField("c", DoubleType)
+        )))
+      df.createOrReplaceTempView("orginal_text_corpus")
+
+
+      def validate = {
+        val trainVector = spark.sql("select * from parquet.`/tmp/william/tmp/scaler2/data`").toJSON.collect()
+        val predictVector = spark.sql("select jack(array(a,b))[0] a,jack(array(a,b))[1] b, c from orginal_text_corpus").toJSON.collect()
+        predictVector.foreach(println(_))
+        trainVector.foreach(println(_))
+        predictVector.foreach { f =>
+          assume(trainVector.contains(f))
+        }
+      }
+
+      var sq = createSSEL
+      ScriptSQLExec.parse(TemplateMerge.merge(loadSQLScriptStr("normalizeplace"), Map("method" -> "standard")), sq)
+      // we should make sure train vector and predict vector the same
+      validate
+
+      sq = createSSEL
+      ScriptSQLExec.parse(TemplateMerge.merge(loadSQLScriptStr("normalizeplace"), Map("method" -> "p-norm")), sq)
+      validate
     }
   }
 }
