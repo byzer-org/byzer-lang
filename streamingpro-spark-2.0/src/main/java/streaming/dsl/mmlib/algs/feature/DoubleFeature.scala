@@ -1,10 +1,11 @@
 package streaming.dsl.mmlib.algs.feature
 
-import org.apache.spark.ml.feature.{StandardScaler, VectorAssembler}
-import org.apache.spark.mllib.linalg.{Vector => OldVector, Vectors => OldVectors, DenseVector => OldDenseVector, SparseVector => OldSparseVector}
+import org.apache.spark.ml.feature.{Normalizer, StandardScaler, VectorAssembler}
+import org.apache.spark.mllib.linalg.{DenseVector => OldDenseVector, SparseVector => OldSparseVector, Vector => OldVector, Vectors => OldVectors}
 import org.apache.spark.ml.linalg.{DenseVector, Vector, Vectors}
 import breeze.linalg.{DenseVector => BDV, SparseVector => BSV, Vector => BV}
 import org.apache.spark.ml.linalg.SQLDataTypes._
+import org.apache.spark.mllib.feature
 import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession, functions => F}
 import org.apache.spark.mllib.stat.Statistics
 import org.apache.spark.rdd.RDD
@@ -271,8 +272,8 @@ object DoubleFeature extends BaseFeatureFunctions {
         val transformer: Vector => Vector = v => transform(OldVectors.fromML(v)).asML
 
         transformer
-
-      case _ =>
+      case "p-norm" =>
+        getPNormFunc
     }
 
   }
@@ -304,13 +305,23 @@ object DoubleFeature extends BaseFeatureFunctions {
         spark.createDataset(metas).write.mode(SaveMode.Overwrite).
           parquet(STANDARD_SCALER_PATH(metaPath, getFieldGroupName(fields)))
 
-        newDF = scalerModel.transform(newDF)
+        newDF = scalerModel.transform(newDF).drop(tempColName)
         newDF = expandColumnsFromVector(newDF, fields, outputTempColName)
         newDF
 
       case "p-norm" =>
-
+        val funcUdf = F.udf(getPNormFunc)
+        newDF = newDF.withColumn(outputTempColName, funcUdf(F.col(tempColName))).drop(tempColName)
+        newDF = expandColumnsFromVector(newDF, fields, outputTempColName)
+        newDF
     }
 
   }
+
+  def getPNormFunc = {
+    val normalizer = new org.apache.spark.mllib.feature.Normalizer(1.0)
+    val func = (vector: Vector) => normalizer.transform(OldVectors.fromML(vector)).asML
+    func
+  }
+
 }
