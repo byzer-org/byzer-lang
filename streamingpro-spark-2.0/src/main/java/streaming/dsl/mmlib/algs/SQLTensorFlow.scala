@@ -6,7 +6,7 @@ import java.io.{ByteArrayOutputStream, File}
 import java.util
 import java.util.UUID
 
-import com.hortonworks.spark.sql.kafka08.KafkaOperator
+
 import org.apache.commons.io.FileUtils
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
@@ -20,7 +20,7 @@ import org.apache.spark.util.{ExternalCommandRunner, ObjPickle, WowMD5}
 import org.apache.spark.ml.linalg.SQLDataTypes._
 
 import scala.collection.JavaConverters._
-import scala.io.Source
+import SQLPython._
 
 
 /**
@@ -37,14 +37,8 @@ class SQLTensorFlow extends SQLAlg with Functions {
     val fitParam = arrayParams("fitParam", params).zipWithIndex
     val fitParamRDD = df.sparkSession.sparkContext.parallelize(fitParam, fitParam.length)
 
-    var userFileName = ""
-    var userPythonScriptList = ""
+    val userPythonScript = loadUserDefinePythonScript(params, df.sparkSession)
 
-    if (params.contains("pythonDescPath")) {
-      val pathChunk = params("pythonDescPath").split("/")
-      userFileName = pathChunk(pathChunk.length - 1)
-      userPythonScriptList = df.sparkSession.sparkContext.textFile(params("pythonDescPath")).collect().mkString("\n")
-    }
     val schema = df.schema
     var rows = Array[Array[Byte]]()
     //目前我们只支持同一个测试集
@@ -80,29 +74,17 @@ class SQLTensorFlow extends SQLAlg with Functions {
 
       val pythonPath = systemParam.getOrElse("pythonPath", "python")
 
-      var tfSource = userPythonScriptList
-      var tfName = userFileName
-      if (f.contains("alg")) {
-        val alg = f("alg")
-        tfSource = Source.fromInputStream(ExternalCommandRunner.getClass.getResourceAsStream(s"/python/mlsql_tf_${alg}.py")).
-          getLines().mkString("\n")
-        tfName = s"mlsql_tf_${alg}.py"
-      } else {
-        require(!tfSource.isEmpty, "pythonDescPath or fitParam.0.alg is required")
-      }
 
-      val alg = f("alg")
+      val pythonScript = findPythonScript(userPythonScript, f, "tf")
 
-      val res = ExternalCommandRunner.run(Seq(pythonPath, tfName),
+      val res = ExternalCommandRunner.run(Seq(pythonPath, pythonScript.fileName),
         paramMap,
         MapType(StringType, MapType(StringType, StringType)),
-        tfSource,
-        tfName, modelPath = path, validateData = rowsBr.value
+        pythonScript.fileContent,
+        pythonScript.fileName, modelPath = path, validateData = rowsBr.value
       )
 
-      val logPrefix = algIndex + "/" + alg + ":  "
-      val scores = KafkaOperator.writeKafka(logPrefix, kafkaParam, res)
-      val score = if (scores.size > 0) scores.head else 0d
+      val score = recordUserLog(algIndex, pythonScript, kafkaParam, res)
 
 
       val fs = FileSystem.get(new Configuration())

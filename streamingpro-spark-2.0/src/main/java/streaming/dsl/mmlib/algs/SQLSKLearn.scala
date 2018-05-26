@@ -5,7 +5,7 @@ import java.nio.file.{Files, Paths}
 import java.util
 import java.util.UUID
 
-import com.hortonworks.spark.sql.kafka08.KafkaOperator
+
 import org.apache.commons.io.{FileUtils, IOUtils}
 import org.apache.spark.TaskContext
 import org.apache.spark.api.python.WowPythonRunner
@@ -19,7 +19,7 @@ import streaming.dsl.mmlib.SQLAlg
 import org.apache.spark.util.ObjPickle._
 import org.apache.spark.util.VectorSerDer._
 import org.apache.spark.sql.{functions => F}
-import streaming.common.HDFSOperator
+import SQLPython._
 
 import scala.collection.JavaConverters._
 import scala.io.Source
@@ -38,6 +38,8 @@ class SQLSKLearn extends SQLAlg with Functions {
     val fitParamRDD = df.sparkSession.sparkContext.parallelize(fitParam, fitParam.length)
     val pythonPath = systemParam.getOrElse("pythonPath", "python")
     val pythonVer = systemParam.getOrElse("pythonVer", "2.7")
+
+    val userPythonScript = loadUserDefinePythonScript(params, df.sparkSession)
 
     val schema = df.schema
     var rows = Array[Array[Byte]]()
@@ -60,10 +62,9 @@ class SQLSKLearn extends SQLAlg with Functions {
         item = (f + ("modelPath" -> path)).asJava
       }
 
-      val alg = f("alg")
-      val sk_bayes = Source.fromInputStream(ExternalCommandRunner.getClass.getResourceAsStream(s"/python/mlsql_sk_${alg}.py")).
-        getLines().mkString("\n")
-      val userFileName = s"mlsql_sk_${alg}.py"
+      val pythonScript = findPythonScript(userPythonScript, f, "sk")
+
+
 
       val tempModelLocalPath = s"/tmp/${UUID.randomUUID().toString}/${algIndex}"
 
@@ -80,22 +81,19 @@ class SQLSKLearn extends SQLAlg with Functions {
 
 
 
-      val res = ExternalCommandRunner.run(Seq(pythonPath, userFileName),
+      val res = ExternalCommandRunner.run(Seq(pythonPath, pythonScript.fileName),
         paramMap,
         MapType(StringType, MapType(StringType, StringType)),
-        sk_bayes,
-        userFileName, modelPath = path, validateData = rowsBr.value
+        pythonScript.fileContent,
+        pythonScript.fileName, modelPath = path, validateData = rowsBr.value
       )
 
-
-      val logPrefix = algIndex + "/" + alg + ":  "
-      val scores = KafkaOperator.writeKafka(logPrefix, kafkaParam, res)
-      val score = if (scores.size > 0) scores.head else 0d
+      val score = recordUserLog(algIndex, pythonScript, kafkaParam, res)
       //读取模型文件，保存到hdfs上，方便下次获取
       val file = new File(new File(tempModelLocalPath), "model.pickle")
       val byteArray = Files.readAllBytes(Paths.get(file.getPath))
       FileUtils.deleteDirectory(new File(tempModelLocalPath))
-      Row.fromSeq(Seq(byteArray, algIndex, alg, score))
+      Row.fromSeq(Seq(byteArray, algIndex, pythonScript.fileName, score))
     }
     df.sparkSession.createDataFrame(wowRDD, StructType(Seq(
       StructField("bytes", BinaryType),
@@ -143,21 +141,18 @@ class SQLSKLearn extends SQLAlg with Functions {
     val pythonPath = metasTemp(0)("pythonPath")
     val pythonVer = metasTemp(0)("pythonVer")
 
-    val sk_bayes = Source.fromInputStream(ExternalCommandRunner.getClass.getResourceAsStream("/python/sk_predict.py")).
-      getLines().mkString("\n")
-
-    val userFileName = "sk_predict.py"
+    val userPythonScript = findPythonPredictScript(sparkSession, params, "sk_predict.py")
 
     val maps = new util.HashMap[String, java.util.Map[String, String]]()
     val item = new util.HashMap[String, String]()
     item.put("funcPath", "/tmp/" + System.currentTimeMillis())
     maps.put("systemParam", item)
     //driver 节点执行
-    val res = ExternalCommandRunner.run(Seq(pythonPath, userFileName),
+    val res = ExternalCommandRunner.run(Seq(pythonPath, userPythonScript.fileName),
       maps,
       MapType(StringType, MapType(StringType, StringType)),
-      sk_bayes,
-      userFileName, modelPath = null
+      userPythonScript.fileContent,
+      userPythonScript.fileName, modelPath = null
     )
     res.foreach(f => f)
     val command = Files.readAllBytes(Paths.get(item.get("funcPath")))
