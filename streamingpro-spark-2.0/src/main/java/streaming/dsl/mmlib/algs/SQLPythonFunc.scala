@@ -76,6 +76,14 @@ object SQLPythonFunc {
   def getLocalTempModelPath(hdfsPath: String) = {
     s"/tmp/__mlsql__/models/${WowMD5.md5Hash(hdfsPath)}"
   }
+
+  def getAlgModelPath(hdfsPath: String) = {
+    s"${hdfsPath}/model"
+  }
+
+  def getAlgMetalPath(hdfsPath: String) = {
+    s"${hdfsPath}/meta"
+  }
 }
 
 case class PythonScript(fileName: String, fileContent: String, filePath: String)

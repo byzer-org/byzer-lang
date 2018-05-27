@@ -73,7 +73,8 @@ object MLMapping {
     "AutoFeature" -> "streaming.dsl.mmlib.algs.SQLAutoFeature",
     "RateSampler" -> "streaming.dsl.mmlib.algs.SQLRateSampler",
     "ScalerInPlace" -> "streaming.dsl.mmlib.algs.SQLScalerInPlace",
-    "NormalizeInPlace" -> "streaming.dsl.mmlib.algs.SQLNormalizeInPlace"
+    "NormalizeInPlace" -> "streaming.dsl.mmlib.algs.SQLNormalizeInPlace",
+    "PythonAlg" -> "streaming.dsl.mmlib.algs.SQLPythonAlg"
   )
 
   def findAlg(name: String) = {

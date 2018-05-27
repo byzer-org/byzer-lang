@@ -93,14 +93,9 @@ class SQLPythonAlg extends SQLAlg with Functions {
 
       //模型保存到hdfs上
       val fs = FileSystem.get(new Configuration())
-      //delete model path
-      //      if (fs.exists(new Path(path))) {
-      //        throw new RuntimeException(s"please delete ${path} manually")
-      //      }
-      fs.delete(new Path(path), true)
-      //copy
+      fs.delete(new Path(SQLPythonFunc.getAlgModelPath(path)), true)
       fs.copyFromLocalFile(new Path(tempModelLocalPath),
-        new Path(path))
+        new Path(SQLPythonFunc.getAlgModelPath(path)))
 
       // delete local model
       FileUtils.deleteDirectory(new File(tempModelLocalPath))
@@ -115,7 +110,7 @@ class SQLPythonAlg extends SQLAlg with Functions {
     ))).
       write.
       mode(SaveMode.Overwrite).
-      parquet(new File(path, "0").getPath)
+      parquet(SQLPythonFunc.getAlgMetalPath(path) + "/0")
 
     val tempRDD = df.sparkSession.sparkContext.parallelize(Seq(Map("pythonPath" -> pythonPath, "pythonVer" -> pythonVer)), 1).map { f =>
       Row.fromSeq(Seq(f))
@@ -123,23 +118,29 @@ class SQLPythonAlg extends SQLAlg with Functions {
     df.sparkSession.createDataFrame(tempRDD, StructType(Seq(StructField("systemParam", MapType(StringType, StringType))))).
       write.
       mode(SaveMode.Overwrite).
-      parquet(new File(path, "__meta__").getPath)
+      parquet(SQLPythonFunc.getAlgMetalPath(path) + "/1")
 
   }
 
   override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = {
-    val models = sparkSession.read.parquet(new File(path, "0").getPath)
+    val models = sparkSession.read.parquet(SQLPythonFunc.getAlgMetalPath(path) + "/0")
       .collect()
       .map(f => (f(3).asInstanceOf[Double], f(0).asInstanceOf[String]))
       .toSeq.sortBy(f => f._1)(Ordering[Double].reverse).take(1).map(f => f._2)
 
-    val metas = sparkSession.read.parquet(new File(path, "__meta__").getPath).collect().map(f => f.get(0).asInstanceOf[Map[String, String]]).toSeq
+    val metas = sparkSession.read.parquet(SQLPythonFunc.getAlgMetalPath(path) + "/1").collect().map(f => f.get(0).asInstanceOf[Map[String, String]]).toSeq
     // make sure every executor have the model in local directory.
     // we should unregister manually
     models.foreach { modelPath =>
-      val psDriverBackend = PlatformManager.getRuntime.asInstanceOf[SparkRuntime].psDriverBackend
-      val tempModelLocalPath = SQLPythonFunc.getLocalTempModelPath(modelPath)
-      psDriverBackend.psDriverRpcEndpointRef.send(Message.CopyModelToLocal(modelPath, tempModelLocalPath))
+      if (sparkSession.sparkContext.isLocal) {
+        val psDriverBackend = PlatformManager.getRuntime.asInstanceOf[SparkRuntime].localSchedulerBackend
+        val tempModelLocalPath = SQLPythonFunc.getLocalTempModelPath(modelPath)
+        psDriverBackend.localEndpoint.askSync[Boolean](Message.CopyModelToLocal(modelPath, tempModelLocalPath))
+      } else {
+        val psDriverBackend = PlatformManager.getRuntime.asInstanceOf[SparkRuntime].psDriverBackend
+        val tempModelLocalPath = SQLPythonFunc.getLocalTempModelPath(modelPath)
+        psDriverBackend.psDriverRpcEndpointRef.askSync[Boolean](Message.CopyModelToLocal(modelPath, tempModelLocalPath))
+      }
     }
     (models, metas)
   }
@@ -168,7 +169,7 @@ class SQLPythonAlg extends SQLAlg with Functions {
     val command = Files.readAllBytes(Paths.get(item.get("funcPath")))
 
     val f = (v: org.apache.spark.ml.linalg.Vector, modelPath: String) => {
-      val modelRow = InternalRow.fromSeq(Seq(modelPath))
+      val modelRow = InternalRow.fromSeq(Seq(SQLPythonFunc.getLocalTempModelPath(modelPath)))
       val v_ser = pickleInternalRow(Seq(ser_vector(v)).toIterator, vector_schema())
       val v_ser2 = pickleInternalRow(Seq(modelRow).toIterator, StructType(Seq(StructField("modelPath", StringType))))
       val v_ser3 = v_ser ++ v_ser2

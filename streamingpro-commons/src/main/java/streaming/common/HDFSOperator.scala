@@ -107,7 +107,10 @@ object HDFSOperator {
 
   def copyToLocalFile(tempModelLocalPath: String, path: String, clean: Boolean) = {
     val fs = FileSystem.get(new Configuration())
-    FileUtils.forceDelete(new File(tempModelLocalPath))
+    val tmpFile = new File(tempModelLocalPath)
+    if (tmpFile.exists()) {
+      FileUtils.forceDelete(tmpFile)
+    }
     fs.copyToLocalFile(new Path(path), new Path(tempModelLocalPath))
   }
 

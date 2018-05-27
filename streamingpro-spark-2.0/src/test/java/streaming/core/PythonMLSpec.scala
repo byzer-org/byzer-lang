@@ -60,6 +60,66 @@ class PythonMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQ
     }
   }
 
+  "python-alg-script" should "work fine" in {
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+      //执行sql
+      implicit val spark = runtime.sparkSession
+      val sq = createSSEL
+      val pythonCode =
+        """
+          |import mlsql_model
+          |import mlsql
+          |from sklearn.naive_bayes import MultinomialNB
+          |
+          |clf = MultinomialNB()
+          |
+          |mlsql.sklearn_configure_params(clf)
+          |
+          |
+          |def train(X, y, label_size):
+          |    clf.partial_fit(X, y, classes=range(label_size))
+          |
+          |
+          |mlsql.sklearn_batch_data(train)
+          |
+          |X_test, y_test = mlsql.get_validate_data()
+          |print("cool------")
+          |if len(X_test) > 0:
+          |    testset_score = clf.score(X_test, y_test)
+          |    print("mlsql_validation_score:%f" % testset_score)
+          |
+          |mlsql_model.sk_save_model(clf)
+          |
+        """.stripMargin
+
+      val pythonPridcitCode =
+        """
+          |from pyspark.ml.linalg import VectorUDT, Vectors
+          |import pickle
+          |import python_fun
+          |
+          |
+          |def predict(index, s):
+          |    items = [i for i in s]
+          |    feature = VectorUDT().deserialize(pickle.loads(items[0]))
+          |    print(pickle.loads(items[1])[0])
+          |    model = pickle.load(open(pickle.loads(items[1])[0]+"/model.pickle"))
+          |    y = model.predict([feature.toArray()])
+          |    return [VectorUDT().serialize(Vectors.dense(y))]
+          |
+          |
+          |python_fun.udf(predict)""".stripMargin
+
+      writeStringToFile("/tmp/sklearn-user-script.py", pythonCode)
+      writeStringToFile("/tmp/sklearn-user-predict-script.py", pythonPridcitCode)
+      ScriptSQLExec.parse(TemplateMerge.merge(loadSQLScriptStr("python-alg-script"), Map(
+        "pythonScriptPath" -> "/tmp/sklearn-user-script.py",
+        "pythonPredictScriptPath" -> "/tmp/sklearn-user-predict-script.py"
+      )), sq)
+      spark.sql("select * from newdata").show();
+    }
+  }
+
   "sklearn-multi-model-with-sample" should "work fine" in {
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
