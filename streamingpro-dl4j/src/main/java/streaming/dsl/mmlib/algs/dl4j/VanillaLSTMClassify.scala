@@ -2,17 +2,21 @@ package streaming.dsl.mmlib.algs.dl4j
 
 import java.util.Random
 
+import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.deeplearning4j.nn.api.OptimizationAlgorithm
 import org.deeplearning4j.nn.conf.layers.{GravesLSTM, OutputLayer}
 import org.deeplearning4j.nn.conf.{NeuralNetConfiguration, Updater}
 import org.deeplearning4j.nn.weights.WeightInit
 import org.nd4j.linalg.activations.Activation
 import org.nd4j.linalg.lossfunctions.LossFunctions
+import streaming.dl4j.Dl4jFunctions
+import streaming.dsl.mmlib.SQLAlg
 
 /**
   * Created by allwefantasy on 26/2/2018.
   */
-class VanillaLSTMClassify extends SQLAlg with Functions {
+class VanillaLSTMClassify extends SQLAlg with Dl4jFunctions {
   override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
     def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
       dl4jClassificationTrain(df, path, params, () => {
@@ -58,7 +62,7 @@ class VanillaLSTMClassify extends SQLAlg with Functions {
 
   }
 
-  override def load(sparkSession: SparkSession, path: String): Any = null
+  override def load(sparkSession: SparkSession, path: String,params: Map[String, String]): Any = null
 
-  override def predict(sparkSession: SparkSession, _model: Any, name: String): UserDefinedFunction = null
+  override def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = null
 }

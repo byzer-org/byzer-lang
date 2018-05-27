@@ -2,16 +2,20 @@ package streaming.dsl.mmlib.algs.dl4j
 
 import java.util.Random
 
+import org.apache.spark.sql.expressions.UserDefinedFunction
+import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.deeplearning4j.nn.api.OptimizationAlgorithm
 import org.deeplearning4j.nn.conf.layers.variational.{BernoulliReconstructionDistribution, VariationalAutoencoder}
 import org.deeplearning4j.nn.conf.{NeuralNetConfiguration, Updater}
 import org.deeplearning4j.nn.weights.WeightInit
 import org.nd4j.linalg.activations.Activation
+import streaming.dl4j.Dl4jFunctions
+import streaming.dsl.mmlib.SQLAlg
 
 /**
   * Created by allwefantasy on 24/2/2018.
   */
-class SDAutoencoder extends SQLAlg with Functions {
+class SDAutoencoder extends SQLAlg with Dl4jFunctions {
 
   override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
     dl4jClassificationTrain(df, path, params, () => {
@@ -37,8 +41,8 @@ class SDAutoencoder extends SQLAlg with Functions {
 
       finalLayers = finalLayers.layer(0, new VariationalAutoencoder.Builder()
         .activation(Activation.LEAKYRELU)
-        .encoderLayerSizes(encoderGroup:_*) //2 encoder layers, each of size 256
-        .decoderLayerSizes(encoderGroup:_*) //2 decoder layers, each of size 256
+        .encoderLayerSizes(encoderGroup: _*) //2 encoder layers, each of size 256
+        .decoderLayerSizes(encoderGroup: _*) //2 decoder layers, each of size 256
         .pzxActivationFunction(Activation.IDENTITY) //p(z|data) activation function
         .reconstructionDistribution(new BernoulliReconstructionDistribution(Activation.RELU.getActivationFunction())) //Bernoulli distribution for p(data|z) (binary or 0 to 1 data only)
         .nIn(featureSize) //Input size: 28x28
@@ -55,9 +59,9 @@ class SDAutoencoder extends SQLAlg with Functions {
     })
   }
 
-  override def load(sparkSession: SparkSession, path: String): Any = null
+  override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = null
 
-  override def predict(sparkSession: SparkSession, _model: Any, name: String): UserDefinedFunction = {
+  override def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = {
     null
   }
 }

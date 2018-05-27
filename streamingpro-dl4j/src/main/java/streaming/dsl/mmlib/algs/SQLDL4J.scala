@@ -37,11 +37,11 @@ class SQLDL4J extends SQLAlg with Dl4jFunctions {
     Class.forName("streaming.dsl.mmlib.algs.dl4j." + params("alg")).newInstance().asInstanceOf[SQLAlg].train(df, path, params)
   }
 
-  override def load(sparkSession: SparkSession, path: String): Any = {
+  override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = {
     path
   }
 
-  override def predict(sparkSession: SparkSession, _model: Any, name: String): UserDefinedFunction = {
+  override def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = {
     val f = (v: org.apache.spark.ml.linalg.Vector, runType: String) => {
       val modelBundle = DL4JModelLoader.load(_model.asInstanceOf[String])
       val res = runType match {
