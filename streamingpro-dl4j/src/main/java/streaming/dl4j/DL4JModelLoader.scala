@@ -13,7 +13,6 @@ import org.deeplearning4j.nn.api.Model
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
 import org.deeplearning4j.util.ModelSerializer
 import org.nd4j.linalg.factory.Nd4j
-import streaming.tensorflow.TFModelLoader
 
 import scala.collection.JavaConversions._
 

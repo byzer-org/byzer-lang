@@ -134,6 +134,19 @@
                 </dependency>
             </dependencies>
         </profile>
+
+        <profile>
+            <id>opencv-support</id>
+            <dependencies>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>javacv-platform</artifactId>
+                    <version>1.4</version>
+                </dependency>
+            </dependencies>
+        </profile>
+
+
         <profile>
             <id>online</id>
             <properties>
