@@ -9,7 +9,7 @@ import scala.io.Source
 /**
   * Created by allwefantasy on 1/2/2018.
   */
-object SQLPython {
+object SQLPythonFunc {
 
   def getPath(params: Map[String, String]) = {
     if (params.contains("pythonDescPath") || params.contains("pythonScriptPath")) {
@@ -72,5 +72,6 @@ object SQLPython {
     }
 
   }
+}
 
-  case class PythonScript(fileName: String, fileContent: String, filePath: String)
+case class PythonScript(fileName: String, fileContent: String, filePath: String)

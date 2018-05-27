@@ -19,7 +19,7 @@ import streaming.dsl.mmlib.SQLAlg
 import org.apache.spark.util.ObjPickle._
 import org.apache.spark.util.VectorSerDer._
 import org.apache.spark.sql.{functions => F}
-import SQLPython._
+import SQLPythonFunc._
 
 import scala.collection.JavaConverters._
 import scala.io.Source

@@ -20,7 +20,7 @@ import org.apache.spark.util.{ExternalCommandRunner, ObjPickle, WowMD5}
 import org.apache.spark.ml.linalg.SQLDataTypes._
 
 import scala.collection.JavaConverters._
-import SQLPython._
+import SQLPythonFunc._
 
 
 /**
