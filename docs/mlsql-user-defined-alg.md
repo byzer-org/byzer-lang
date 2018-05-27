@@ -173,3 +173,37 @@ pythonScriptPath="${pythonPredictScriptPath}"
 ;
 ```
 
+###模型目录结构
+
+```
+/tmp/william/tmp/pa_model
+├── meta
+│   ├── 0
+│   │   ├── _SUCCESS
+│   │   └── part-00000-4bfa8d3e-cb51-41a1-a996-54d8f5ffc672-c000.snappy.parquet
+│   ├── 1
+│   │   ├── _SUCCESS
+│   │   └── part-00000-764afc64-33be-4029-a5ea-b56b9d7cbbc4-c000.snappy.parquet
+│   └── params
+│       ├── _SUCCESS
+│       ├── part-00000-14c18428-823a-4041-a9c6-0e0587485e10-c000.snappy.parquet
+│       └── part-00001-14c18428-823a-4041-a9c6-0e0587485e10-c000.snappy.parquet
+├── model
+│   └── 0
+│       └── model.pickle
+└── tmp
+    └── data
+        ├── _SUCCESS
+        └── part-00000-ddffe5a3-70b9-4886-b5a0-c824ba1e6784-c000.json
+```
+
+目录结构。 
+
+1. meta 下有三个目录，0,1 0存储模型元数据，比如path路径等，1存储一些环境信息，比如python版本等。params则存储所有训练参数。
+2. model目录下以0为序号，存储模型的二进制表达。如果是多个模型，则以1递增。
+3. tmp/data 则是开了本地数据后，训练数据会存储在该目录。
+
+这些数据存储在HDFS上，根据需要会分发到各个executor节点的/tmp/\_\_mlsql\_\_ 目录。
+
+
+
