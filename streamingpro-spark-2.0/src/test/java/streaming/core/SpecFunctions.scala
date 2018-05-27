@@ -86,4 +86,8 @@ trait SpecFunctions {
     FileUtils.forceMkdir(new File(getDirFromPath(file)))
     FileUtils.writeByteArrayToFile(new File(file), content)
   }
+
+  def copySampleLibsvmData = {
+    writeStringToFile("/tmp/william/sample_libsvm_data.txt", loadDataStr("sample_libsvm_data.txt"))
+  }
 }

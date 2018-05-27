@@ -1,11 +1,14 @@
 package org.apache.spark.ps.cluster
 
 import streaming.tensorflow.TFModelLoader
-import java.util.{Locale}
+import java.util.Locale
+
 import org.apache.spark.internal.Logging
-import org.apache.spark.{SparkEnv}
+import org.apache.spark.SparkEnv
 import org.apache.spark.rpc.{RpcCallContext, RpcEnv, ThreadSafeRpcEndpoint}
 import org.apache.spark.util.ThreadUtils
+import streaming.common.HDFSOperator
+
 import scala.util.{Failure, Success}
 
 
@@ -46,8 +49,13 @@ class PSExecutorBackend(env: SparkEnv, override val rpcEnv: RpcEnv, psDriverUrl:
 
   override def receiveAndReply(context: RpcCallContext): PartialFunction[Any, Unit] = {
     case Message.TensorFlowModelClean(modelPath) => {
-      logInfo("ps executor get message: Message.TensorFlowModelClean")
+      logInfo("clean tensorflow model")
       TFModelLoader.close(modelPath)
+      context.reply(true)
+    }
+    case Message.CopyModelToLocal(modelPath, destPath) => {
+      logInfo(s"copying model: ${modelPath} -> ${destPath}")
+      HDFSOperator.copyToLocalFile(destPath, modelPath, true)
       context.reply(true)
     }
   }

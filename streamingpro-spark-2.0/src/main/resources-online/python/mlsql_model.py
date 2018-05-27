@@ -20,6 +20,13 @@ def save_model(path, session, input_tensor, output_tensor, overwrite=False):
     builder.save()
 
 
+# def keras_save_model(path, model, overwrite=False):
+#     newpath = os.path.join(path, "saved_model.h5")
+#     if overwrite and os.path.exists():
+#         shutil.rmtree(path)
+#     model.save(newpath)
+
+
 def sk_save_model(model):
     isp = mlsql.params()["internalSystemParam"]
     tempModelLocalPath = isp["tempModelLocalPath"] if "tempModelLocalPath" in isp else "/tmp/"

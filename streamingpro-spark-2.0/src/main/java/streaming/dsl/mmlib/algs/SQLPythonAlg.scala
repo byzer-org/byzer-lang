@@ -5,39 +5,66 @@ import java.nio.file.{Files, Paths}
 import java.util
 import java.util.UUID
 
-
 import org.apache.commons.io.{FileUtils, IOUtils}
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.spark.TaskContext
 import org.apache.spark.api.python.WowPythonRunner
 import org.apache.spark.ml.linalg.SQLDataTypes._
+import org.apache.spark.ps.cluster.Message
 import org.apache.spark.sql.catalyst.InternalRow
-import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession}
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.types._
-import org.apache.spark.util.{ExternalCommandRunner, ObjPickle, VectorSerDer}
-import streaming.dsl.mmlib.SQLAlg
+import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession, functions => F}
 import org.apache.spark.util.ObjPickle._
 import org.apache.spark.util.VectorSerDer._
-import org.apache.spark.sql.{functions => F}
-import SQLPythonFunc._
+import org.apache.spark.util.{ExternalCommandRunner, ObjPickle, VectorSerDer, WowMD5}
+import streaming.core.strategy.platform.{PlatformManager, SparkRuntime}
+import streaming.dsl.mmlib.SQLAlg
+import streaming.dsl.mmlib.algs.SQLPythonFunc._
 
 import scala.collection.JavaConverters._
-import scala.io.Source
 
 /**
   * Created by allwefantasy on 5/2/2018.
   */
-class SQLSKLearn extends SQLAlg with Functions {
+class SQLPythonAlg extends SQLAlg with Functions {
   override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
-    val (kafkaParam, newRDD) = writeKafka(df, path, params)
+
+    saveTraningParams(df.sparkSession, params, MetaConst.getMetaPath(path))
+    val enableDataLocal = params.getOrElse("enableDataLocal", "false").toBoolean
+
+    var kafkaParam = mapParams("kafkaParam", params)
+    var stopFlagNum = -1
+    if (enableDataLocal) {
+      val (_kafkaParam, _newRDD) = writeKafka(df, path, params)
+      stopFlagNum = _newRDD.getNumPartitions
+      kafkaParam = _kafkaParam
+    }
+
     val systemParam = mapParams("systemParam", params)
-
-    val stopFlagNum = newRDD.getNumPartitions
-
     val fitParam = arrayParams("fitParam", params).zipWithIndex
     val fitParamRDD = df.sparkSession.sparkContext.parallelize(fitParam, fitParam.length)
     val pythonPath = systemParam.getOrElse("pythonPath", "python")
     val pythonVer = systemParam.getOrElse("pythonVer", "2.7")
+    var tempDataLocalPath = ""
+
+    if (enableDataLocal) {
+      val dataLocalFormat = params.getOrElse("dataLocalFormat", "json")
+      val dataLocalFileNum = params.getOrElse("dataLocalFileNum", "-1").toInt
+
+      val dataHDFSPath = SQLPythonFunc.getAlgTmpPath(path) + "/data"
+      tempDataLocalPath = SQLPythonFunc.getLocalTempDataPath(path)
+
+      val newDF = if (dataLocalFileNum > -1) {
+        df.repartition(dataLocalFileNum)
+      } else df
+      newDF.write.format(dataLocalFormat).mode(SaveMode.Overwrite).save(dataHDFSPath)
+
+      recordUserLog(kafkaParam, s"dataLocalFormat enabled ,system will generate data in ${tempDataLocalPath}  in every executor")
+      distributeResource(df.sparkSession, dataHDFSPath, tempDataLocalPath)
+      recordUserLog(kafkaParam, s"dataLocalFormat is finished")
+    }
 
     val userPythonScript = loadUserDefinePythonScript(params, df.sparkSession)
 
@@ -66,7 +93,7 @@ class SQLSKLearn extends SQLAlg with Functions {
 
 
 
-      val tempModelLocalPath = s"/tmp/${UUID.randomUUID().toString}/${algIndex}"
+      val tempModelLocalPath = s"${SQLPythonFunc.getLocalBasePath}/${UUID.randomUUID().toString}/${algIndex}"
 
       paramMap.put("fitParam", item)
 
@@ -75,7 +102,8 @@ class SQLSKLearn extends SQLAlg with Functions {
 
       paramMap.put("internalSystemParam", Map(
         "stopFlagNum" -> stopFlagNum,
-        "tempModelLocalPath" -> tempModelLocalPath
+        "tempModelLocalPath" -> tempModelLocalPath,
+        "tempDataLocalPath" -> tempDataLocalPath
       ).asJava)
       paramMap.put("systemParam", systemParam.asJava)
 
@@ -89,21 +117,27 @@ class SQLSKLearn extends SQLAlg with Functions {
       )
 
       val score = recordUserLog(algIndex, pythonScript, kafkaParam, res)
-      //读取模型文件，保存到hdfs上，方便下次获取
-      val file = new File(new File(tempModelLocalPath), "model.pickle")
-      val byteArray = Files.readAllBytes(Paths.get(file.getPath))
+
+      //模型保存到hdfs上
+      val fs = FileSystem.get(new Configuration())
+      fs.delete(new Path(SQLPythonFunc.getAlgModelPath(path)), true)
+      fs.copyFromLocalFile(new Path(tempModelLocalPath),
+        new Path(SQLPythonFunc.getAlgModelPath(path)))
+
+      // delete local model
       FileUtils.deleteDirectory(new File(tempModelLocalPath))
-      Row.fromSeq(Seq(byteArray, algIndex, pythonScript.fileName, score))
+
+      Row.fromSeq(Seq(path, algIndex, pythonScript.fileName, score))
     }
     df.sparkSession.createDataFrame(wowRDD, StructType(Seq(
-      StructField("bytes", BinaryType),
+      StructField("modelPath", StringType),
       StructField("algIndex", IntegerType),
       StructField("alg", StringType),
       StructField("score", DoubleType)
     ))).
       write.
       mode(SaveMode.Overwrite).
-      parquet(new File(path, "0").getPath)
+      parquet(SQLPythonFunc.getAlgMetalPath(path) + "/0")
 
     val tempRDD = df.sparkSession.sparkContext.parallelize(Seq(Map("pythonPath" -> pythonPath, "pythonVer" -> pythonVer)), 1).map { f =>
       Row.fromSeq(Seq(f))
@@ -111,31 +145,28 @@ class SQLSKLearn extends SQLAlg with Functions {
     df.sparkSession.createDataFrame(tempRDD, StructType(Seq(StructField("systemParam", MapType(StringType, StringType))))).
       write.
       mode(SaveMode.Overwrite).
-      parquet(new File(path, "__meta__").getPath)
+      parquet(SQLPythonFunc.getAlgMetalPath(path) + "/1")
 
   }
 
   override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = {
-    val nonMLSQLModel = params.getOrElse("nonMLSQLModel", "false").toBoolean
-    if (nonMLSQLModel) {
-      val inputStream = sparkSession.sparkContext.binaryFiles(path, 1).take(1).head._2.open()
-      val modelBytesArray = IOUtils.toByteArray(inputStream)
-      (Seq(modelBytesArray), Seq(Map("pythonPath" -> params.getOrElse("pythonPath", "python"), "pythonVer" -> params.getOrElse("pythonVer", "3.6"))))
+    val models = sparkSession.read.parquet(SQLPythonFunc.getAlgMetalPath(path) + "/0")
+      .collect()
+      .map(f => (f(3).asInstanceOf[Double], f(0).asInstanceOf[String]))
+      .toSeq.sortBy(f => f._1)(Ordering[Double].reverse).take(1).map(f => f._2)
 
-    } else {
-      val models = sparkSession.read.parquet(new File(path, "0").getPath)
-        .collect()
-        .map(f => (f(3).asInstanceOf[Double], f(0).asInstanceOf[Array[Byte]]))
-        .toSeq.sortBy(f => f._1)(Ordering[Double].reverse).take(1).map(f => f._2)
-
-      val metas = sparkSession.read.parquet(new File(path, "__meta__").getPath).collect().map(f => f.get(0).asInstanceOf[Map[String, String]]).toSeq
-      (models, metas)
+    val metas = sparkSession.read.parquet(SQLPythonFunc.getAlgMetalPath(path) + "/1").collect().map(f => f.get(0).asInstanceOf[Map[String, String]]).toSeq
+    // make sure every executor have the model in local directory.
+    // we should unregister manually
+    models.foreach { modelPath =>
+      val tempModelLocalPath = SQLPythonFunc.getLocalTempModelPath(modelPath)
+      distributeResource(sparkSession, modelPath, tempModelLocalPath)
     }
-
+    (models, metas)
   }
 
   override def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = {
-    val (modelsTemp, metasTemp) = _model.asInstanceOf[(Seq[Array[Byte]], Seq[Map[String, String]])]
+    val (modelsTemp, metasTemp) = _model.asInstanceOf[(Seq[String], Seq[Map[String, String]])]
     val models = sparkSession.sparkContext.broadcast(modelsTemp)
 
     val pythonPath = metasTemp(0)("pythonPath")
@@ -157,19 +188,19 @@ class SQLSKLearn extends SQLAlg with Functions {
     res.foreach(f => f)
     val command = Files.readAllBytes(Paths.get(item.get("funcPath")))
 
-    val f = (v: org.apache.spark.ml.linalg.Vector, model: Array[Byte]) => {
-      val modelRow = InternalRow.fromSeq(Seq(model))
+    val f = (v: org.apache.spark.ml.linalg.Vector, modelPath: String) => {
+      val modelRow = InternalRow.fromSeq(Seq(SQLPythonFunc.getLocalTempModelPath(modelPath)))
       val v_ser = pickleInternalRow(Seq(ser_vector(v)).toIterator, vector_schema())
-      val v_ser2 = pickleInternalRow(Seq(modelRow).toIterator, StructType(Seq(StructField("model", BinaryType))))
+      val v_ser2 = pickleInternalRow(Seq(modelRow).toIterator, StructType(Seq(StructField("modelPath", StringType))))
       val v_ser3 = v_ser ++ v_ser2
-      val iter = WowPythonRunner.run(pythonPath, pythonVer, command, v_ser3, TaskContext.get().partitionId(), model)
+      val iter = WowPythonRunner.run(pythonPath, pythonVer, command, v_ser3, TaskContext.get().partitionId(), Array())
       val a = iter.next()
       VectorSerDer.deser_vector(unpickle(a).asInstanceOf[java.util.ArrayList[Object]].get(0))
     }
 
     val f2 = (v: org.apache.spark.ml.linalg.Vector) => {
-      models.value.map { model =>
-        val resV = f(v, model)
+      models.value.map { modelPath =>
+        val resV = f(v, modelPath)
         (resV(resV.argmax), resV)
       }.sortBy(f => f._1).reverse.head._2
     }

@@ -17,6 +17,8 @@
 * [MLSQL-单机算法 based on SKLearn](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-sklearn.md)
 * [MLSQL日志回显](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-log-monitor.md)
 
+## 高级编程
+* [自定义基于Python的算法模型](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-user-defined-alg.md)
 
 ## 部署模型API服务
 * [如何把模型部署成API服务](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-model-deploy.md)

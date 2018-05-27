@@ -3,12 +3,16 @@ package org.apache.spark.ps.local
 import streaming.tensorflow.TFModelLoader
 import java.io.File
 import java.net.URL
+
 import org.apache.spark.{SparkConf, SparkContext, SparkEnv}
 import org.apache.spark.internal.Logging
 import org.apache.spark.launcher.{LauncherBackend, SparkAppHandle}
+import org.apache.spark.ps.cluster.Message
+import org.apache.spark.ps.cluster.Message.CopyModelToLocal
 import org.apache.spark.rpc.{RpcCallContext, RpcEndpointRef, RpcEnv, ThreadSafeRpcEndpoint}
 import org.apache.spark.scheduler._
 import org.apache.spark.scheduler.cluster.CoarseGrainedClusterMessages.StopExecutor
+import streaming.common.HDFSOperator
 
 
 private case class TensorFlowModelClean(modelPath: String)
@@ -38,6 +42,11 @@ class LocalPSEndpoint(override val rpcEnv: RpcEnv,
       logInfo("close tensorflow model: " + modelPath)
       TFModelLoader.close(modelPath)
       context.reply(true)
+    case Message.CopyModelToLocal(modelPath, destPath) => {
+      logInfo(s"copying model: ${modelPath} -> ${destPath}")
+      HDFSOperator.copyToLocalFile(destPath, modelPath, true)
+      context.reply(true)
+    }
   }
 }
 
@@ -46,7 +55,7 @@ class LocalPSSchedulerBackend(sparkContext: SparkContext)
   extends Logging {
 
   private val appId = "local-ps-" + System.currentTimeMillis
-  private var localEndpoint: RpcEndpointRef = null
+  var localEndpoint: RpcEndpointRef = null
   private val userClassPath = getUserClasspath(sparkContext.getConf)
   private val launcherBackend = new LauncherBackend() {
     override def onStopRequest(): Unit = stop(SparkAppHandle.State.KILLED)
