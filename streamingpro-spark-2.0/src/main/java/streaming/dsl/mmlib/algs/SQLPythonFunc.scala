@@ -35,6 +35,10 @@ object SQLPythonFunc {
     score
   }
 
+  def recordUserLog(kafkaParam: Map[String, String], line: String) = {
+    KafkaOperator.writeKafka("", kafkaParam, Seq(line).toIterator)
+  }
+
   def findPythonScript(userPythonScript: Option[PythonScript],
                        fitParams: Map[String, String],
                        defaultScriptName: String
@@ -73,8 +77,18 @@ object SQLPythonFunc {
 
   }
 
+  // --  path related (local/hdfs)
+
   def getLocalTempModelPath(hdfsPath: String) = {
-    s"/tmp/__mlsql__/models/${WowMD5.md5Hash(hdfsPath)}"
+    s"${getLocalBasePath}/models/${WowMD5.md5Hash(hdfsPath)}"
+  }
+
+  def getLocalTempDataPath(hdfsPath: String) = {
+    s"${getLocalBasePath}/data/${WowMD5.md5Hash(hdfsPath)}"
+  }
+
+  def getLocalBasePath = {
+    s"/tmp/__mlsql__"
   }
 
   def getAlgModelPath(hdfsPath: String) = {
@@ -84,6 +98,12 @@ object SQLPythonFunc {
   def getAlgMetalPath(hdfsPath: String) = {
     s"${hdfsPath}/meta"
   }
+
+  def getAlgTmpPath(hdfsPath: String) = {
+    s"${hdfsPath}/tmp"
+  }
+
+  // -- path related
 }
 
 case class PythonScript(fileName: String, fileContent: String, filePath: String)

@@ -30,15 +30,41 @@ import scala.collection.JavaConverters._
   */
 class SQLPythonAlg extends SQLAlg with Functions {
   override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
-    val (kafkaParam, newRDD) = writeKafka(df, path, params)
+
+    saveTraningParams(df.sparkSession, params, MetaConst.getMetaPath(path))
+    val enableDataLocal = params.getOrElse("enableDataLocal", "false").toBoolean
+
+    var kafkaParam = mapParams("kafkaParam", params)
+    var stopFlagNum = -1
+    if (enableDataLocal) {
+      val (_kafkaParam, _newRDD) = writeKafka(df, path, params)
+      stopFlagNum = _newRDD.getNumPartitions
+      kafkaParam = _kafkaParam
+    }
+
     val systemParam = mapParams("systemParam", params)
-
-    val stopFlagNum = newRDD.getNumPartitions
-
     val fitParam = arrayParams("fitParam", params).zipWithIndex
     val fitParamRDD = df.sparkSession.sparkContext.parallelize(fitParam, fitParam.length)
     val pythonPath = systemParam.getOrElse("pythonPath", "python")
     val pythonVer = systemParam.getOrElse("pythonVer", "2.7")
+    var tempDataLocalPath = ""
+
+    if (enableDataLocal) {
+      val dataLocalFormat = params.getOrElse("dataLocalFormat", "json")
+      val dataLocalFileNum = params.getOrElse("dataLocalFileNum", "-1").toInt
+
+      val dataHDFSPath = SQLPythonFunc.getAlgTmpPath(path) + "/data"
+      tempDataLocalPath = SQLPythonFunc.getLocalTempDataPath(path)
+
+      val newDF = if (dataLocalFileNum > -1) {
+        df.repartition(dataLocalFileNum)
+      } else df
+      newDF.write.format(dataLocalFormat).mode(SaveMode.Overwrite).save(dataHDFSPath)
+
+      recordUserLog(kafkaParam, s"dataLocalFormat enabled ,system will generate data in ${tempDataLocalPath}  in every executor")
+      distributeResource(df.sparkSession, dataHDFSPath, tempDataLocalPath)
+      recordUserLog(kafkaParam, s"dataLocalFormat is finished")
+    }
 
     val userPythonScript = loadUserDefinePythonScript(params, df.sparkSession)
 
@@ -67,7 +93,7 @@ class SQLPythonAlg extends SQLAlg with Functions {
 
 
 
-      val tempModelLocalPath = s"/tmp/${UUID.randomUUID().toString}/${algIndex}"
+      val tempModelLocalPath = s"${SQLPythonFunc.getLocalBasePath}/${UUID.randomUUID().toString}/${algIndex}"
 
       paramMap.put("fitParam", item)
 
@@ -76,7 +102,8 @@ class SQLPythonAlg extends SQLAlg with Functions {
 
       paramMap.put("internalSystemParam", Map(
         "stopFlagNum" -> stopFlagNum,
-        "tempModelLocalPath" -> tempModelLocalPath
+        "tempModelLocalPath" -> tempModelLocalPath,
+        "tempDataLocalPath" -> tempDataLocalPath
       ).asJava)
       paramMap.put("systemParam", systemParam.asJava)
 
@@ -132,15 +159,8 @@ class SQLPythonAlg extends SQLAlg with Functions {
     // make sure every executor have the model in local directory.
     // we should unregister manually
     models.foreach { modelPath =>
-      if (sparkSession.sparkContext.isLocal) {
-        val psDriverBackend = PlatformManager.getRuntime.asInstanceOf[SparkRuntime].localSchedulerBackend
-        val tempModelLocalPath = SQLPythonFunc.getLocalTempModelPath(modelPath)
-        psDriverBackend.localEndpoint.askSync[Boolean](Message.CopyModelToLocal(modelPath, tempModelLocalPath))
-      } else {
-        val psDriverBackend = PlatformManager.getRuntime.asInstanceOf[SparkRuntime].psDriverBackend
-        val tempModelLocalPath = SQLPythonFunc.getLocalTempModelPath(modelPath)
-        psDriverBackend.psDriverRpcEndpointRef.askSync[Boolean](Message.CopyModelToLocal(modelPath, tempModelLocalPath))
-      }
+      val tempModelLocalPath = SQLPythonFunc.getLocalTempModelPath(modelPath)
+      distributeResource(sparkSession, modelPath, tempModelLocalPath)
     }
     (models, metas)
   }

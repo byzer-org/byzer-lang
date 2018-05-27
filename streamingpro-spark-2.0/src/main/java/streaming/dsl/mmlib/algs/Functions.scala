@@ -17,6 +17,8 @@ import org.apache.spark.sql.{DataFrame, Dataset, Row, SaveMode, SparkSession, fu
 import org.apache.spark.util.{ExternalCommandRunner, ObjPickle, WowMD5, WowXORShiftRandom}
 import streaming.common.HDFSOperator
 import MetaConst._
+import org.apache.spark.ps.cluster.Message
+import streaming.core.strategy.platform.{PlatformManager, SparkRuntime}
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -241,6 +243,16 @@ trait Functions {
     val df = spark.read.parquet(PARAMS_PATH(metaPath, "params")).map(f => (f.getString(0), f.getString(1)))
     val trainParams = df.collect().toMap
     (trainParams, df)
+  }
+
+  def distributeResource(spark: SparkSession, path: String, tempLocalPath: String) = {
+    if (spark.sparkContext.isLocal) {
+      val psDriverBackend = PlatformManager.getRuntime.asInstanceOf[SparkRuntime].localSchedulerBackend
+      psDriverBackend.localEndpoint.askSync[Boolean](Message.CopyModelToLocal(path, tempLocalPath))
+    } else {
+      val psDriverBackend = PlatformManager.getRuntime.asInstanceOf[SparkRuntime].psDriverBackend
+      psDriverBackend.psDriverRpcEndpointRef.askSync[Boolean](Message.CopyModelToLocal(path, tempLocalPath))
+    }
   }
 
 }
