@@ -173,7 +173,7 @@ pythonScriptPath="${pythonPredictScriptPath}"
 ;
 ```
 
-###模型目录结构
+## 模型目录结构
 
 ```
 /tmp/william/tmp/pa_model
@@ -199,7 +199,7 @@ pythonScriptPath="${pythonPredictScriptPath}"
 
 目录结构。 
 
-1. meta 下有三个目录，0,1 0存储模型元数据，比如path路径等，1存储一些环境信息，比如python版本等。params则存储所有训练参数。
+1. meta 下有三个目录， 0存储模型元数据，比如path路径等，1存储一些环境信息，比如python版本等。params则存储所有训练参数。
 2. model目录下以0为序号，存储模型的二进制表达。如果是多个模型，则以1递增。
 3. tmp/data 则是开了本地数据后，训练数据会存储在该目录。
 
