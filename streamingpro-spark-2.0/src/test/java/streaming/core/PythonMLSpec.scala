@@ -186,7 +186,8 @@ class PythonMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQ
           |    return [VectorUDT().serialize(Vectors.dense(y))]
           |
           |
-          |python_fun.udf(predict)""".stripMargin
+          |python_fun.udf(predict)
+          |""".stripMargin
 
       writeStringToFile("/tmp/sklearn-user-script.py", pythonCode)
       writeStringToFile("/tmp/sklearn-user-predict-script.py", pythonPridcitCode)
