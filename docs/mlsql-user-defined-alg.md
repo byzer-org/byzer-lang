@@ -5,7 +5,7 @@ MLSQL 提供了一个叫PythonAlg的模块，允许用户使用Python算法框�
 前置条件：
 
 1. 需要一个没有权限校验，并且可以自动创建主题的Kafka
-2. MLSQL需要对/tmp/__mlsql__ 目录有完全的权限。
+2. MLSQL需要对/tmp/\_\_mlsql\_\_ 目录有完全的权限。
 3. 每个服务器都需要拥有python相关的环境，比如pyspark以及常见标准库。如果你需要sklearn,则需要在每台服务器上都安装Sklearn。
 
 ### 使用范例
