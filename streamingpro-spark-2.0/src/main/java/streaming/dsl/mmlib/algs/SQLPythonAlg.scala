@@ -120,14 +120,15 @@ class SQLPythonAlg extends SQLAlg with Functions {
 
       //模型保存到hdfs上
       val fs = FileSystem.get(new Configuration())
-      fs.delete(new Path(SQLPythonFunc.getAlgModelPath(path)), true)
+      val modelHDFSPath = SQLPythonFunc.getAlgModelPath(path) + "/" + algIndex
+      fs.delete(new Path(modelHDFSPath), true)
       fs.copyFromLocalFile(new Path(tempModelLocalPath),
-        new Path(SQLPythonFunc.getAlgModelPath(path)))
+        new Path(modelHDFSPath))
 
       // delete local model
       FileUtils.deleteDirectory(new File(tempModelLocalPath))
 
-      Row.fromSeq(Seq(path, algIndex, pythonScript.fileName, score))
+      Row.fromSeq(Seq(modelHDFSPath, algIndex, pythonScript.fileName, score))
     }
     df.sparkSession.createDataFrame(wowRDD, StructType(Seq(
       StructField("modelPath", StringType),
