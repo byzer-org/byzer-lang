@@ -9,8 +9,10 @@ import org.apache.spark.scheduler.cluster.CoarseGrainedClusterMessages.Registere
 object Message {
 
   case class RefreshPSExecutors()
+
   case class RegisteredExecutor()
-  case class RegisterExecutorFailed(msg:String)
+
+  case class RegisterExecutorFailed(msg: String)
 
   case class RegisterPSExecutor(
                                  executorId: String,
@@ -20,5 +22,7 @@ object Message {
                                  logUrls: Map[String, String])
 
   case class TensorFlowModelClean(modelPath: String)
+
+  case class CopyModelToLocal(modelPath: String, destPath: String)
 
 }

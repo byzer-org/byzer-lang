@@ -2,7 +2,7 @@ package streaming.dsl.mmlib.algs
 
 import com.hortonworks.spark.sql.kafka08.KafkaOperator
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.util.ExternalCommandRunner
+import org.apache.spark.util.{ExternalCommandRunner, WowMD5}
 
 import scala.io.Source
 
@@ -71,6 +71,10 @@ object SQLPythonFunc {
         PythonScript(userFileName, sk_bayes, path)
     }
 
+  }
+
+  def getLocalTempModelPath(hdfsPath: String) = {
+    s"/tmp/__mlsql__/models/${WowMD5.md5Hash(hdfsPath)}"
   }
 }
 
