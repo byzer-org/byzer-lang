@@ -5,6 +5,7 @@
 ## 编译
 
 * [编译文档](https://github.com/allwefantasy/streamingpro/blob/master/docs/compile.md)
+* [编译DSL文档](./docs/generate-dsl-java-source.md)
 
 ## 作为服务运行
 
