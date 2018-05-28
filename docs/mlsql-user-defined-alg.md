@@ -53,16 +53,34 @@ as newdata;
 
 从示例代码可以看到，用户需要提供两个脚本，一个是训练脚本，一个是预测脚本。我这里会以sklearn为例子。
 
-首先是训练脚本：
+
+首先是训练脚本,你需要把streamingpro-spark-2.0里resource/python 目录下的mlsql.py,mlsql_model.py,python_fun.py,msg_queue.py 
+四个文件拷贝到你的项目里。
 
 ```python
 
-import mlsql_model
-import mlsql
 import os
 import json
 from pyspark.ml.linalg import Vectors
 from sklearn.naive_bayes import MultinomialNB
+import pickle
+
+# 如果想脱离MLSQL测试和使用，那么可以直接拼凑参数。
+# 正式使用时记得要把这些代码给删除，否则会导致在mlsql里配置不生效。
+PARAM_FILE = "python_temp.pickle"
+# if True and not os.path.exists(PARAM_FILE):
+with open(PARAM_FILE, "wb") as f:
+    pickle.dump({"fitParam": {},
+                 "internalSystemParam": {
+                     "tempDataLocalPath": "/tmp/william/tmp/pa_model/tmp/data/",
+                     "tempModelLocalPath": "/tmp/william/tmp/pa_model2"
+                 },
+                 "systemParam": {}
+                 }, f)
+
+import mlsql_model
+import mlsql
+
 
 # 使用SKlearn贝叶斯模型
 clf = MultinomialNB()
@@ -80,7 +98,7 @@ tempDataLocalPath = mlsql.internal_system_param["tempDataLocalPath"]
 
 print(tempDataLocalPath)
 
-## 解析json格式数据
+## 解析json格式数据，要求输入的都是向量，但是可以存储成不同的格式，比如json,csv
 files = [file for file in os.listdir(tempDataLocalPath) if file.endswith(".json")]
 res = []
 res_label = []
@@ -144,6 +162,7 @@ from pyspark.ml.linalg import VectorUDT, Vectors
 import pickle
 import python_fun
 
+
 # 定义一个预测函数，签名是固定的，index表示分区，s表示数据。
 # s 表示一条预测数据，是一个数组，长度为2。
 # 第一个元素是一个vector,你需要通过pickle反序列化后再转化为vector表示。
@@ -152,13 +171,19 @@ import python_fun
 # 应该保持模型加载的单例。
 def predict(index, s):
     items = [i for i in s]
-    feature = VectorUDT().deserialize(pickle.loads(items[0]))    
-    model = pickle.load(open(pickle.loads(items[1])[0]+"/model.pickle"))
+    # items[0] 就是一个向量，需要通过VectorUDT进行反序列化
+    modelPath = pickle.loads(items[1])[0]
+    vector = pickle.loads(items[0])
+    feature = VectorUDT().deserialize(vector)
+    # pickle.loads(items[1])[0]  表示的是modelPath,也就是前面配置的/tmp/william/tmp/pa_model2
+    model = pickle.load(open(modelPath + "/model.pickle"))
     y = model.predict([feature.toArray()])
     return [VectorUDT().serialize(Vectors.dense(y))]
 
+
 # 对该函数进行序列化
 python_fun.udf(predict)
+
 ```
 
 这里的python_fun也是MLSQL提供的一个工具类。
