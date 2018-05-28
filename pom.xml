@@ -314,6 +314,9 @@
         </profile>
         <profile>
             <id>antlr4.7.1-maven</id>
+            <modules>
+                <module>streamingpro-dsl</module>
+            </modules>
             <build>
                 <plugins>
                     <plugin>
@@ -340,6 +343,9 @@
         </profile>
         <profile>
             <id>antlr4.5.3-maven</id>
+            <modules>
+                <module>streamingpro-dsl-legacy</module>
+            </modules>
             <build>
                 <plugins>
                     <plugin>
