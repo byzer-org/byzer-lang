@@ -33,7 +33,7 @@ class SQLOpenCVImage extends SQLAlg with SQlBaseFunc {
       var data: Array[Byte] = Array()
       try {
         cvImage = ImageOp.create(image)
-        targetImage = ImageOp.createHeader(width, height, ImageSchema.getDepth(image), channel)
+        targetImage = ImageOp.createHeader(width, height, ImageSchema.getDepth(image), ImageSchema.getNChannels(image))
         cvResize(cvImage, targetImage)
         data = ImageOp.getData(targetImage)
       }
