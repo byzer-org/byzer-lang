@@ -77,6 +77,30 @@ object HttpClientCrawler {
     }
   }
 
+  def requestImage(url: String, useProxy: Boolean = false): Array[Byte] = {
+
+    var response: CloseableHttpResponse = null
+    val hc = if (useProxy) httpclientWithpProxy else httpclient
+    try {
+      val httpget = new HttpGet(url)
+
+      response = hc.execute(httpget)
+      val entity = response.getEntity
+      if (entity != null) {
+        EntityUtils.toByteArray(entity)
+      } else null
+    } catch {
+      case e: Exception =>
+        e.printStackTrace()
+        null
+    } finally {
+      if (response != null) {
+        response.close()
+      }
+
+    }
+  }
+
 
   def main(args: Array[String]): Unit = {
     //println(request("https://www.baidu.com"))

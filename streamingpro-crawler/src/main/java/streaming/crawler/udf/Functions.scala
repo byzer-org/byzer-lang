@@ -37,6 +37,14 @@ object Functions {
     })
   }
 
+
+  def crawler_request_image(uDFRegistration: UDFRegistration) = {
+    uDFRegistration.register("crawler_request_image", (co: String) => {
+      val image = HttpClientCrawler.requestImage(co)
+      image
+    })
+  }
+
   def crawler_browser_request(uDFRegistration: UDFRegistration) = {
     uDFRegistration.register("crawler_browser_request", (co: String, ptPath: String, c_flag: String) => {
       val doc = BrowserCrawler.request(co, ptPath, c_flag)

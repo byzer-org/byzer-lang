@@ -11,6 +11,7 @@ trait BasicMLSQLConfig {
     "-streaming.platform", "spark",
     "-streaming.enableHiveSupport", "true",
     "-streaming.spark.service", "false",
+    "-streaming.udf.clzznames", "streaming.crawler.udf.Functions",
     "-streaming.unittest", "true"
   )
 
@@ -23,6 +24,7 @@ trait BasicMLSQLConfig {
     "-streaming.spark.service", "false",
     "-streaming.unittest", "true",
     "-streaming.enableCarbonDataSupport", "true",
+    "-streaming.udf.clzznames", "streaming.crawler.udf.Functions",
     "-streaming.carbondata.store", "/tmp/carbondata/store",
     "-streaming.carbondata.meta", "/tmp/carbondata/meta"
   )

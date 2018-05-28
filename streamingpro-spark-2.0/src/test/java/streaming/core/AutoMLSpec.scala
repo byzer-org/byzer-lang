@@ -11,6 +11,8 @@ import org.apache.spark.ml.linalg.{Vector, Vectors}
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib.algs.SQLAutoFeature
 import streaming.dsl.mmlib.algs.feature.{DiscretizerIntFeature, DoubleFeature, StringFeature}
+import streaming.dsl.mmlib.algs.processing.SQLOpenCVImage
+import streaming.dsl.mmlib.algs.processing.image.ImageOp
 import streaming.dsl.template.TemplateMerge
 
 
@@ -402,6 +404,42 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
       sq = createSSEL
       ScriptSQLExec.parse(TemplateMerge.merge(loadSQLScriptStr("normalizeplace"), Map("method" -> "p-norm")), sq)
       validate
+    }
+  }
+  "image-process" should "work fine" in {
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+      //执行sql
+      implicit val spark = runtime.sparkSession
+      //
+      val dataRDD = spark.sparkContext.parallelize(Seq(
+        Seq("https://tpc.googlesyndication.com/simgad/10310202961328364833"))).map { f =>
+        Row.fromSeq(f)
+      }
+
+      val df = spark.createDataFrame(dataRDD,
+        StructType(Seq(
+          StructField("imagePath", StringType)
+        )))
+      df.createOrReplaceTempView("orginal_text_corpus")
+      var newDF = spark.sql("select crawler_request_image(imagePath) as image from orginal_text_corpus")
+      newDF = new SQLOpenCVImage().interval_train(newDF, "/tmp/image", Map("inputCol" -> "image", "shape" -> "100,100,4"))
+      newDF.createOrReplaceTempView("wow")
+      newDF.collect().foreach { r =>
+        val item = r.getStruct(0)
+        val iplImage = ImageOp.create(item)
+        import org.bytedeco.javacpp.opencv_imgcodecs._
+        cvSaveImage("/tmp/abc.png", iplImage)
+        iplImage.close()
+      }
+      val cv = new SQLOpenCVImage()
+      val model = cv.load(spark, "/tmp/image", Map())
+      val jack = cv.predict(spark, model, "jack", Map())
+      spark.udf.register("jack", jack)
+      val a = spark.sql("select * from wow").toJSON.collect()
+      val b = spark.sql("select jack(crawler_request_image(imagePath)) as image from orginal_text_corpus").toJSON.collect()
+      assume(a.head == b.head)
+
+      spark.sql("select vec_image(jack(crawler_request_image(imagePath))) as image from orginal_text_corpus").show(false)
     }
   }
 }
