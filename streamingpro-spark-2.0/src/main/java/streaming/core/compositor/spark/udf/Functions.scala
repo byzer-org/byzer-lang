@@ -7,7 +7,6 @@ import scala.collection.mutable
 import org.apache.spark.ml.linalg.{DenseVector, SparseVector, Vector, Vectors}
 import org.apache.spark.mllib.linalg.{Vectors => OldVectors}
 import streaming.common.UnicodeUtils
-import streaming.dsl.mmlib.algs.processing.image.ImageSchema
 
 /**
   * Created by allwefantasy on 3/5/2017.
@@ -104,12 +103,6 @@ object Functions {
       }
       dot.foreachActive(value_add)
       value / (Vectors.norm(vec1, 2) * Vectors.norm(vec2, 2))
-    })
-  }
-
-  def imageVec(uDFRegistration: UDFRegistration) = {
-    uDFRegistration.register("vec_image", (a: Row) => {
-      ImageSchema.toSeq(a)
     })
   }
 

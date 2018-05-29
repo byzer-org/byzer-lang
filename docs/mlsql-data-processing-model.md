@@ -220,7 +220,7 @@ as images;
 train images as OpenCVImage.`/tmp/word2vecinplace`
 where inputCol="imagePath"
 -- 宽度和高度重新设置为100
-and shape="100,100"
+and shape="100,100,-1"
 ;
 load parquet.`/tmp/word2vecinplace/data` 
 as imagesWithResize;
