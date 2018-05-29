@@ -90,7 +90,7 @@ class SQLOpenCVImage extends SQLAlg with SQlBaseFunc {
       var data: Array[Byte] = Array()
       try {
         cvImage = ImageOp.create(image)
-        targetImage = ImageOp.createHeader(width, height, ImageSchema.getDepth(image), channel)
+        targetImage = ImageOp.createHeader(width, height, ImageSchema.getDepth(image), ImageSchema.getNChannels(image))
         cvResize(cvImage, targetImage)
         data = ImageOp.getData(targetImage)
       }
@@ -102,7 +102,7 @@ class SQLOpenCVImage extends SQLAlg with SQlBaseFunc {
           targetImage.close()
       }
       Row(ImageSchema.getOrigin(image), height.toInt, width.toInt,
-        channel.toInt,
+        ImageSchema.getNChannels(image),
         ImageSchema.getMode(image),
         data
       )
