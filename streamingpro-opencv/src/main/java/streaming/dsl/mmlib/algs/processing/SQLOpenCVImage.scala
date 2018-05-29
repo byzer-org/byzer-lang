@@ -27,7 +27,13 @@ class SQLOpenCVImage extends SQLAlg with SQlBaseFunc {
       ImageSchema.decode("", a).getOrElse(ImageSchema.invalidImageRow(""))
     }
     val imageRdd = df.rdd.map { f =>
-      val image = decodeImage(f.getAs[Array[Byte]](inputCol)).getStruct(0)
+      val index = f.schema.fieldNames.indexOf(inputCol)
+      val image = if (f.schema(index).dataType.getClass.getSimpleName == "StructType") {
+        f.getStruct(index)
+      } else {
+        decodeImage(f.getAs[Array[Byte]](inputCol)).getStruct(0)
+      }
+
       var cvImage: IplImage = null
       var targetImage: IplImage = null
       var data: Array[Byte] = Array()

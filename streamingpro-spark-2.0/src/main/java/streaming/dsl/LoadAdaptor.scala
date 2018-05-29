@@ -80,6 +80,8 @@ class BatchLoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener,
         table = reader.format("org.apache.spark.sql.execution.datasources.hbase").load()
       case "crawlersql" =>
         table = reader.option("path", cleanStr(path)).format("org.apache.spark.sql.execution.datasources.crawlersql").load()
+      case "image" =>
+        table = reader.option("path", cleanStr(path)).format("streaming.dsl.mmlib.algs.processing.image").load()
       case _ =>
         val owner = option.get("owner")
         table = reader.format(format).load(withPathPrefix(scriptSQLExecListener.pathPrefix(owner), cleanStr(path)))

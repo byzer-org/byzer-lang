@@ -201,7 +201,17 @@ OpenCVImage模块主要是对图像做处理。第一版仅仅能够做resize动
 select crawler_request_image("https://tpc.googlesyndication.com/simgad/10310202961328364833") as imagePath
 as  images;
 
--- 
+-- 或者你可能因为训练的原因，需要加载一个图片数据集 该表只有一个字段image,但是image是一个复杂字段，其中origin 带有路径信息。
+load image.`/Users/allwefantasy/CSDNWorkSpace/streamingpro/images`
+options
+-- 是不是需要递归查找图片
+recursive="false"
+-- 是不是丢弃掉解析失败的图片
+and dropImageFailures="false"
+-- 采样比例
+and sampleRatio="1.0"
+as images; 
+ 
 train images as OpenCVImage.`/tmp/word2vecinplace`
 where inputCol="imagePath"
 -- 宽度和高度重新设置为100
