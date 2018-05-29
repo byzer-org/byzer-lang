@@ -132,3 +132,34 @@ mvn -DskipTests clean package  -pl streamingpro-spark -am  -Ponline -Pscala-2.10
 ```
 
 值得注意的是，StreamingPro已经对spark 1.6.x 版本已经停止维护了。
+
+
+## 获取全功能StreamingPro的方式
+
+step1: 编译时将各种依赖都带上：
+
+```
+mvn -DskipTests clean package   \
+-pl streamingpro-spark-2.0 -am \  
+-Ponline -Pscala-2.11  \
+-Phive-thrift-server \
+-Pspark-2.2.0 \
+-Pdsl-legacy  \
+-Pshade \
+-Pcarbondata \ 
+-Pcrawler \
+-Popencv-support
+```
+
+step2: 到 https://github.com/allwefantasy/streamingpro/releases 页面下载分词jar包：
+ansj_seg-5.1.6.jar，nlp-lang-1.7.8.jar
+启动时用--jars带上 
+
+
+step3: 
+
+启动时将一些udf函数都启用
+
+```
+-streaming.udf.clzznames "streaming.crawler.udf.Functions,streaming.dsl.mmlib.algs.processing.UDFFunctions"
+```
