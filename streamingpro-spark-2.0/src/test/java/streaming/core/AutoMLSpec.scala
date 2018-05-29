@@ -442,4 +442,17 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
       spark.sql("select vec_image(jack(crawler_request_image(imagePath))) as image from orginal_text_corpus").show(false)
     }
   }
+
+  "image-read-path" should "work fine" in {
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+      //执行sql
+      implicit val spark = runtime.sparkSession
+      val sq = createSSEL
+      ScriptSQLExec.parse("load image.`/Users/allwefantasy/CSDNWorkSpace/streamingpro/images` as images;", sq)
+      val df = spark.sql("select * from images");
+      val newDF = new SQLOpenCVImage().interval_train(df, "/tmp/image", Map("inputCol" -> "image", "shape" -> "100,100,4"))
+      newDF.show()
+
+    }
+  }
 }
