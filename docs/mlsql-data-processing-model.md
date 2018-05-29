@@ -211,6 +211,11 @@ and dropImageFailures="false"
 -- 采样比例
 and sampleRatio="1.0"
 as images; 
+
+
+-- 比如 选择origin,width字段
+-- select image.origin,image.width from images 
+-- as newimages;
  
 train images as OpenCVImage.`/tmp/word2vecinplace`
 where inputCol="imagePath"

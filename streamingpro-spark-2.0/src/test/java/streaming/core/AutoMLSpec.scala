@@ -451,7 +451,8 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
       ScriptSQLExec.parse("load image.`/Users/allwefantasy/CSDNWorkSpace/streamingpro/images` as images;", sq)
       val df = spark.sql("select * from images");
       val newDF = new SQLOpenCVImage().interval_train(df, "/tmp/image", Map("inputCol" -> "image", "shape" -> "100,100,4"))
-      newDF.show()
+      newDF.createOrReplaceTempView("wow")
+      spark.sql("select image.origin from wow").show(false)
 
     }
   }
