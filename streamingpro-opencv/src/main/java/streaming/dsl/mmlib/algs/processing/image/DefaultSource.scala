@@ -35,6 +35,7 @@ case class ImageRelation(
     val sampleRatio = parameters.getOrElse("sampleRatio", "1.0").toDouble
     val numPartitions = parameters.getOrElse("numPartitions", "8").toInt
     val repartitionNum = parameters.getOrElse("repartitionNum", "0").toInt
+    val filterByteSize = parameters.getOrElse("filterByteSize", "0").toInt
     val spark = sqlContext.sparkSession
     ImageSchema.readImages(path = path,
       sparkSession = spark,
@@ -42,7 +43,8 @@ case class ImageRelation(
       sampleRatio = sampleRatio,
       dropImageFailures = dropImageFailures,
       repartitionNum = repartitionNum,
-      numPartitions = numPartitions
+      numPartitions = numPartitions,
+      filterByteSize = filterByteSize
     ).rdd
   }
 }
