@@ -15,6 +15,7 @@
         <module>streamingpro-redis</module>
         <module>streamingpro-dl4j</module>
         <module>streamingpro-tensorflow</module>
+        <module>streamingpro-opencv</module>
     </modules>
 
     <properties>

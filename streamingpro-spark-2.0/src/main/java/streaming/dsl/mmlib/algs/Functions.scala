@@ -25,7 +25,7 @@ import scala.collection.mutable.ArrayBuffer
 /**
   * Created by allwefantasy on 13/1/2018.
   */
-trait Functions {
+trait Functions extends SQlBaseFunc{
   val logger = Loggers.getLogger(getClass)
 
   def sampleUnbalanceWithMultiModel(df: DataFrame, path: String, params: Map[String, String], train: (DataFrame, Int) => Unit) = {
@@ -226,24 +226,7 @@ trait Functions {
     HDFSOperator.createTempModelLocalPath(path, autoCreateParentDir)
   }
 
-  def saveTraningParams(spark: SparkSession, params: Map[String, String], metaPath: String) = {
-    // keep params
-    spark.createDataFrame(
-      spark.sparkContext.parallelize(params.toSeq).map(f => Row.fromSeq(Seq(f._1, f._2))),
-      StructType(Seq(
-        StructField("key", StringType),
-        StructField("value", StringType)
-      ))).write.
-      mode(SaveMode.Overwrite).
-      parquet(MetaConst.PARAMS_PATH(metaPath, "params"))
-  }
 
-  def getTranningParams(spark: SparkSession, metaPath: String) = {
-    import spark.implicits._
-    val df = spark.read.parquet(PARAMS_PATH(metaPath, "params")).map(f => (f.getString(0), f.getString(1)))
-    val trainParams = df.collect().toMap
-    (trainParams, df)
-  }
 
   def distributeResource(spark: SparkSession, path: String, tempLocalPath: String) = {
     if (spark.sparkContext.isLocal) {

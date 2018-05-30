@@ -187,6 +187,75 @@ register NormalizeInPlace.`/tmp/scaler2` as jack;
 select jack(array(a,b))[0] a,jack(array(a,b))[1] b, c from orginal_text_corpus
 ```
 
+
+### OpenCVImage
+
+OpenCVImage模块主要是对图像做处理。第一版仅仅能够做resize动作。后面会持续扩充功能。
+
+因为引入OpenCV模块jar包体积会很大，所以编译项目时，需要加上 -Popencv-support 才能使得该功能生效。
+
+具体用法：
+
+```sql
+-- 抓取一张图片
+select crawler_request_image("https://tpc.googlesyndication.com/simgad/10310202961328364833") as imagePath
+as  images;
+
+-- 或者你可能因为训练的原因，需要加载一个图片数据集 该表只有一个字段image,但是image是一个复杂字段，其中origin 带有路径信息。
+load image.`/Users/allwefantasy/CSDNWorkSpace/streamingpro/images`
+options
+-- 是不是需要递归查找图片
+recursive="false"
+-- 是不是丢弃掉解析失败的图片
+and dropImageFailures="false"
+-- 采样比例
+and sampleRatio="1.0"
+as images; 
+
+
+-- 比如 选择origin,width字段
+-- select image.origin,image.width from images 
+-- as newimages;
+ 
+train images as OpenCVImage.`/tmp/word2vecinplace`
+where inputCol="imagePath"
+-- 宽度和高度重新设置为100
+and shape="100,100,-1"
+;
+load parquet.`/tmp/word2vecinplace/data` 
+as imagesWithResize;
+
+-- 通过vec_image 可以将图片转化为一个一维数组,结构为[height * width * nChannels]
+select vec_image(imagePath) as feature from imagesWithResize
+as newTable;
+```
+
+图片字段有一个单独的数据格式：
+
+```scala
+StructType(
+    StructField("origin", StringType, true) ::
+      StructField("height", IntegerType, false) ::
+      StructField("width", IntegerType, false) ::
+      StructField("nChannels", IntegerType, false) ::
+      StructField("mode", StringType, false) :: //OpenCV-compatible type: CV_8UC3 in most cases
+      StructField("data", BinaryType, false) :: Nil) //bytes in OpenCV-compatible order: row-wise BGR in most cases
+```
+
+
+对于新图片，你首先需要注册下之前训练产生的模型：
+
+```sql
+register OpenCVImage.`/tmp/word2vecinplace/` as jack;
+```
+
+接着你便可以使用该模型对新数据做处理了：
+
+```sql
+select jack(crawler_request_image(imagePath)) as image from orginal_text_corpus
+```
+
+
 ## TokenExtract / TokenAnalysis
 
 [TokenExtract / TokenAnalysis](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-analysis.md)
