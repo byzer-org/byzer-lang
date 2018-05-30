@@ -30,8 +30,8 @@ object DiscretizerFeature {
 
   def getDiscretizerModel(spark: SparkSession, method: String, metaPath: String, trainParams: Map[String, String]): DiscretizerMeta = {
     method match {
-      case bucketizer => getBucketizerModel(spark, metaPath, trainParams)
-      case quantile => getQuantileModel(spark, metaPath, trainParams)
+      case "bucketizer" => getBucketizerModel(spark, metaPath, trainParams)
+      case "quantile" => getQuantileModel(spark, metaPath, trainParams)
       case _ => DiscretizerMeta(trainParams, null)
     }
   }
@@ -47,7 +47,7 @@ object DiscretizerFeature {
   def getQuantileModel(spark: SparkSession, metaPath: String, trainParams: Map[String, String]): DiscretizerMeta = {
     import spark.implicits._
     val splits = spark.read.parquet(QUANTILE_DISCRETIZAR_PATH(metaPath, trainParams.getOrElse("inputCol", "")))
-      .as[Double].collect()
+      .as[Double].collect().sorted
     val handleInvalid = trainParams.getOrElse("handleInvalid", "keep")
     val keepInvalid = (handleInvalid == KEEP_INVALID)
     val transformer: Double => Double = features => binarySearchForBuckets(splits, features, keepInvalid)
