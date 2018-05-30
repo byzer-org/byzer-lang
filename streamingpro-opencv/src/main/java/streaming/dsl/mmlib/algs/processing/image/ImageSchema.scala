@@ -159,8 +159,10 @@ object ImageSchema {
                  sparkSession: SparkSession = null, // do not use Option; it complicates Python call
                  recursive: Boolean = false,
                  numPartitions: Int = 0,
+                 repartitionNum: Int = 0,
                  dropImageFailures: Boolean = false,
-                 sampleRatio: Double = 1.0): DataFrame = {
+                 sampleRatio: Double = 1.0
+                ): DataFrame = {
     require(sampleRatio <= 1.0 && sampleRatio >= 0, "sampleRatio should be between 0 and 1")
 
     val session = sparkSession
@@ -175,8 +177,10 @@ object ImageSchema {
 
     var result: DataFrame = null
     try {
-      val streams = session.sparkContext.binaryFiles(path, partitions)
-        .repartition(partitions)
+      var streams = session.sparkContext.binaryFiles(path, partitions)
+      if (repartitionNum > 0) {
+        streams = streams.repartition(partitions)
+      }
 
       val images = if (dropImageFailures) {
         streams.flatMap {
