@@ -34,12 +34,15 @@ case class ImageRelation(
     val dropImageFailures = parameters.getOrElse("dropImageFailures", "false").toBoolean
     val sampleRatio = parameters.getOrElse("sampleRatio", "1.0").toDouble
     val numPartitions = parameters.getOrElse("numPartitions", "8").toInt
+    val repartitionNum = parameters.getOrElse("repartitionNum", "0").toInt
     val spark = sqlContext.sparkSession
     ImageSchema.readImages(path = path,
       sparkSession = spark,
       recursive = recursive,
       sampleRatio = sampleRatio,
       dropImageFailures = dropImageFailures,
-      numPartitions = numPartitions).rdd
+      repartitionNum = repartitionNum,
+      numPartitions = numPartitions
+    ).rdd
   }
 }
