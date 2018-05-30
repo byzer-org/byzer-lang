@@ -163,8 +163,8 @@ object ImageSchema {
                  sampleRatio: Double = 1.0): DataFrame = {
     require(sampleRatio <= 1.0 && sampleRatio >= 0, "sampleRatio should be between 0 and 1")
 
-    val session = if (sparkSession != null) sparkSession else SparkSession.builder().getOrCreate
-    val partitions = if (numPartitions > 0) numPartitions else session.sparkContext.defaultParallelism
+    val session = sparkSession
+    val partitions = numPartitions
 
     val oldRecursiveFlag = RecursiveFlag.setRecursiveFlag(Some(recursive.toString), session)
     val oldPathFilter: Option[Class[_]] =
