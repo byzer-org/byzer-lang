@@ -110,6 +110,16 @@ trait Functions extends SQlBaseFunc{
     }.toArray
   }
 
+  def arrayParamsWithIndex(name: String, params: Map[String, String]): Array[(Int, Map[String, String])] = {
+    params.filter(f => f._1.startsWith(name + ".")).map { f =>
+      val Array(name, group, key) = f._1.split("\\.")
+      (group, key, f._2)
+    }.groupBy(f => f._1).map( f => {
+      val params = f._2.map(k => (k._2, k._3)).toMap
+      (f._1.toInt, params)
+    }).toArray
+  }
+
   def getModelConstructField(model: Any, modelName: String, fieldName: String) = {
     val modelField = model.getClass.getDeclaredField("org$apache$spark$ml$feature$" + modelName + "$$" + fieldName)
     modelField.setAccessible(true)
