@@ -16,3 +16,5 @@ case class OutlierValueMeta(fieldName: String, lowerRange: Double, upperRange: D
 case class MinMaxValueMeta(fieldName: String, min: Double, max: Double)
 
 case class StandardScalerValueMeta(fieldName: String, mean: Double, std: Double)
+
+case class DiscretizerMeta(trainParams: Map[String, String], discretizerFunc: Double => Double)
