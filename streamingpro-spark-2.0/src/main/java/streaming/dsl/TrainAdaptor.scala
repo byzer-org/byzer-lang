@@ -74,7 +74,8 @@ object MLMapping {
     "RateSampler" -> "streaming.dsl.mmlib.algs.SQLRateSampler",
     "ScalerInPlace" -> "streaming.dsl.mmlib.algs.SQLScalerInPlace",
     "NormalizeInPlace" -> "streaming.dsl.mmlib.algs.SQLNormalizeInPlace",
-    "PythonAlg" -> "streaming.dsl.mmlib.algs.SQLPythonAlg"
+    "PythonAlg" -> "streaming.dsl.mmlib.algs.SQLPythonAlg",
+    "Discretizer" -> "streaming.dsl.mmlib.algs.SQLDiscretizer"
   )
 
   def findAlg(name: String) = {
