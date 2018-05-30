@@ -161,7 +161,8 @@ object ImageSchema {
                  numPartitions: Int = 0,
                  repartitionNum: Int = 0,
                  dropImageFailures: Boolean = false,
-                 sampleRatio: Double = 1.0
+                 sampleRatio: Double = 1.0,
+                 filterByteSize: Int
                 ): DataFrame = {
     require(sampleRatio <= 1.0 && sampleRatio >= 0, "sampleRatio should be between 0 and 1")
 
@@ -184,12 +185,26 @@ object ImageSchema {
 
       val images = if (dropImageFailures) {
         streams.flatMap {
-          case (origin, stream) => decode(origin, stream.toArray)
+          case (origin, stream) =>
+            val bytes = stream.toArray
+            if (filterByteSize > 0 && bytes.length > filterByteSize) {
+              None
+            } else {
+              decode(origin, bytes)
+            }
+
         }
       }
       else {
         streams.map {
-          case (origin, stream) => decode(origin, stream.toArray).getOrElse(invalidImageRow(origin))
+          case (origin, stream) =>
+            val bytes = stream.toArray
+            if (filterByteSize > 0 && bytes.length > filterByteSize) {
+              invalidImageRow(origin)
+            } else {
+              decode(origin, stream.toArray).getOrElse(invalidImageRow(origin))
+            }
+
         }
       }
 
