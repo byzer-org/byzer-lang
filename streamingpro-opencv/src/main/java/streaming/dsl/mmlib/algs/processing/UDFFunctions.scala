@@ -1,5 +1,6 @@
 package streaming.dsl.mmlib.algs.processing
 
+import org.apache.spark.ml.linalg.Vectors
 import org.apache.spark.sql.{Row, UDFRegistration}
 import streaming.dsl.mmlib.algs.processing.image.ImageSchema
 
@@ -9,7 +10,7 @@ import streaming.dsl.mmlib.algs.processing.image.ImageSchema
 object UDFFunctions {
   def imageVec(uDFRegistration: UDFRegistration) = {
     uDFRegistration.register("vec_image", (a: Row) => {
-      ImageSchema.toSeq(a)
+      Vectors.dense(ImageSchema.toArray(a))
     })
   }
 }

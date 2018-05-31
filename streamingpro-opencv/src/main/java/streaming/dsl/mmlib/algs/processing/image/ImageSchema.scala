@@ -80,7 +80,12 @@ object ImageSchema {
     */
   def decode(origin: String, bytes: Array[Byte]): Option[Row] = {
 
-    val img = ImageIO.read(new ByteArrayInputStream(bytes))
+    val img = try {
+      ImageIO.read(new ByteArrayInputStream(bytes))
+    } catch {
+      case e: Exception => e.printStackTrace()
+        null
+    }
 
     if (img == null) {
       None
@@ -180,7 +185,7 @@ object ImageSchema {
     try {
       var streams = session.sparkContext.binaryFiles(path, partitions)
       if (repartitionNum > 0) {
-        streams = streams.repartition(partitions)
+        streams = streams.repartition(repartitionNum)
       }
 
       val images = if (dropImageFailures) {
@@ -202,7 +207,7 @@ object ImageSchema {
             if (filterByteSize > 0 && bytes.length > filterByteSize) {
               invalidImageRow(origin)
             } else {
-              decode(origin, stream.toArray).getOrElse(invalidImageRow(origin))
+              decode(origin, bytes).getOrElse(invalidImageRow(origin))
             }
 
         }
