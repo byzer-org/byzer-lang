@@ -183,11 +183,12 @@ class PythonMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQ
           |    print(pickle.loads(items[1])[0])
           |    model = pickle.load(open(pickle.loads(items[1])[0]+"/model.pickle"))
           |    y = model.predict([feature.toArray()])
+          |    print("------".format)
           |    return [VectorUDT().serialize(Vectors.dense(y))]
           |
           |
           |python_fun.udf(predict)
-          |""".stripMargin
+          | """.stripMargin
 
       writeStringToFile("/tmp/sklearn-user-script.py", pythonCode)
       writeStringToFile("/tmp/sklearn-user-predict-script.py", pythonPridcitCode)
