@@ -20,7 +20,7 @@ object KafkaOperator {
     if (!kafkaParam.contains("userName")) {
       lines.map(f => filterScore(f)).filter(f => f > 0d).toSeq
     } else {
-      val topic = kafkaParam("userName") + "_training_msg"
+      val topic = "training_msg_" + kafkaParam("userName")
 
       val props = new Properties()
       kafkaParam.foreach(f => props.put(f._1, f._2))
