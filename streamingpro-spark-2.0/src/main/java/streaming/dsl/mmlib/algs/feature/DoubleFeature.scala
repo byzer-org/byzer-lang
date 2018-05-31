@@ -1,19 +1,19 @@
 package streaming.dsl.mmlib.algs.feature
 
-import org.apache.spark.ml.feature.{Normalizer, StandardScaler, VectorAssembler}
-import org.apache.spark.mllib.linalg.{DenseVector => OldDenseVector, SparseVector => OldSparseVector, Vector => OldVector, Vectors => OldVectors}
-import org.apache.spark.ml.linalg.{DenseVector, Vector, Vectors}
+import scala.collection.mutable.ArrayBuffer
+
 import breeze.linalg.{DenseVector => BDV, SparseVector => BSV, Vector => BV}
+import org.apache.spark.ml.feature.{StandardScaler, VectorAssembler}
+import org.apache.spark.ml.linalg.{Vector, Vectors}
 import org.apache.spark.ml.linalg.SQLDataTypes._
-import org.apache.spark.mllib.feature
-import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession, functions => F}
+import org.apache.spark.mllib.feature.StandardScalerModel
+import org.apache.spark.mllib.linalg.{DenseVector => OldDenseVector, SparseVector => OldSparseVector, Vector => OldVector, Vectors => OldVectors}
 import org.apache.spark.mllib.stat.Statistics
 import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession, functions => F}
 import org.apache.spark.sql.expressions.UserDefinedFunction
-import streaming.dsl.mmlib.algs.meta.{MinMaxValueMeta, OutlierValueMeta, StandardScalerValueMeta}
-
-import scala.collection.mutable.ArrayBuffer
 import streaming.dsl.mmlib.algs.MetaConst._
+import streaming.dsl.mmlib.algs.meta.{MinMaxValueMeta, OutlierValueMeta, StandardScalerValueMeta}
 
 /**
   * Created by allwefantasy on 15/5/2018.
@@ -200,82 +200,28 @@ object DoubleFeature extends BaseFeatureFunctions {
   }
 
   def getModelNormalizeForPredict(spark: SparkSession, metaPath: String, fields: Seq[String], method: String, trainParams: Map[String, String]) = {
-    method match {
-      case "standard" =>
-        import spark.implicits._
-        val metas = spark.read.parquet(STANDARD_SCALER_PATH(metaPath, getFieldGroupName(fields)))
-          .as[StandardScalerValueMeta].collect().
-          map(f => (f.fieldName, f)).toMap
-        val mean = Vectors.dense(fields.map(f => metas(f).mean).toArray)
-        val std = Vectors.dense(fields.map(f => metas(f).std).toArray)
-        lazy val shift: Array[Double] = mean.toArray
-        val withStd = true
-        val withMean = true
-        val transform = (vector: OldVector) => {
-          require(mean.size == vector.size)
-          if (withMean) {
-            // By default, Scala generates Java methods for member variables. So every time when
-            // the member variables are accessed, `invokespecial` will be called which is expensive.
-            // This can be avoid by having a local reference of `shift`.
-            val localShift = shift
-            // Must have a copy of the values since it will be modified in place
-            val values = vector match {
-              // specially handle DenseVector because its toArray does not clone already
-              case d: OldDenseVector => d.values.clone()
-              case v: Vector => v.toArray
-            }
-            val size = values.length
-            if (withStd) {
-              var i = 0
-              while (i < size) {
-                values(i) = if (std(i) != 0.0) (values(i) - localShift(i)) * (1.0 / std(i)) else 0.0
-                i += 1
-              }
-            } else {
-              var i = 0
-              while (i < size) {
-                values(i) -= localShift(i)
-                i += 1
-              }
-            }
-            OldVectors.dense(values)
-          } else if (withStd) {
-            vector match {
-              case OldDenseVector(vs) =>
-                val values = vs.clone()
-                val size = values.length
-                var i = 0
-                while (i < size) {
-                  values(i) *= (if (std(i) != 0.0) 1.0 / std(i) else 0.0)
-                  i += 1
-                }
-                OldVectors.dense(values)
-              case OldSparseVector(size, indices, vs) =>
-                // For sparse vector, the `index` array inside sparse vector object will not be changed,
-                // so we can re-use it to save memory.
-                val values = vs.clone()
-                val nnz = values.length
-                var i = 0
-                while (i < nnz) {
-                  values(i) *= (if (std(indices(i)) != 0.0) 1.0 / std(indices(i)) else 0.0)
-                  i += 1
-                }
-                OldVectors.sparse(size, indices, values)
-              case v => throw new IllegalArgumentException("Do not support vector type " + v.getClass)
-            }
-          } else {
-            // Note that it's safe since we always assume that the data in RDD should be immutable.
-            vector
+      method match {
+        case "standard" =>
+
+          import spark.implicits._
+
+          val metas = spark.read.parquet(STANDARD_SCALER_PATH(metaPath, getFieldGroupName(fields)))
+            .as[StandardScalerValueMeta].collect().
+            map(f => (f.fieldName, f)).toMap
+
+          val mean = OldVectors.dense(fields.map(f => metas(f).mean).toArray)
+          val std = OldVectors.dense(fields.map(f => metas(f).std).toArray)
+
+          val model = new StandardScalerModel(std, mean, true, true)
+
+          val modelBroadcast = spark.sparkContext.broadcast(model)
+          val transformer: Vector => Vector = {
+            v => modelBroadcast.value.transform(OldVectors.fromML(v)).asML
           }
-        }
-
-        val transformer: Vector => Vector = v => transform(OldVectors.fromML(v)).asML
-
-        transformer
-      case "p-norm" =>
-        getPNormFunc
-    }
-
+          transformer
+        case "p-norm" =>
+          getPNormFunc
+      }
   }
 
 
