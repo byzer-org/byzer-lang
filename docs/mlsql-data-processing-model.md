@@ -227,8 +227,9 @@ as images;
  
 train images as OpenCVImage.`/tmp/word2vecinplace`
 where inputCol="imagePath"
+and filterByteSize="2048576"
 -- 宽度和高度重新设置为100
-and shape="100,100,-1"
+and shape="100,100,4"
 ;
 load parquet.`/tmp/word2vecinplace/data` 
 as imagesWithResize;
