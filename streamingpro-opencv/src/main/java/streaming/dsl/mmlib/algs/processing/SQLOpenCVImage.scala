@@ -9,7 +9,6 @@ import org.bytedeco.javacpp.opencv_imgproc._
 import org.bytedeco.javacpp.opencv_imgcodecs._
 import streaming.dsl.mmlib.algs.{MetaConst, SQlBaseFunc, SeqResource}
 import streaming.dsl.mmlib.algs.processing.image.{ImageOp, ImageSchema}
-import org.apache.spark.ml.linalg.SQLDataTypes._
 import streaming.dsl.mmlib.algs.MetaConst._
 
 /**
@@ -19,43 +18,55 @@ class SQLOpenCVImage extends SQLAlg with SQlBaseFunc {
 
   def interval_train(df: DataFrame, path: String, params: Map[String, String]) = {
     val inputCol = params.getOrElse("inputCol", "")
+    val filterByteSize = params.getOrElse("filterByteSize", "0").toInt
     val metaPath = MetaConst.getMetaPath(path)
     val Array(width, height, channel) = params("shape").split(",").map(f => f.toInt)
     saveTraningParams(df.sparkSession, params, metaPath)
     val spark = df.sparkSession
-    val decodeImage = (a: Array[Byte]) => {
-      ImageSchema.decode("", a).getOrElse(ImageSchema.invalidImageRow(""))
+    val decodeImage = (origin: String, a: Array[Byte]) => {
+      ImageSchema.decode(origin, a, filterByteSize).getOrElse(ImageSchema.invalidImageRow(origin))
     }
     val imageRdd = df.rdd.map { f =>
       val index = f.schema.fieldNames.indexOf(inputCol)
       val image = if (f.schema(index).dataType.getClass.getSimpleName == "StructType") {
-        f.getStruct(index)
+        val temp = f.getStruct(index)
+
+        ImageSchema.getMode(temp) match {
+          case ImageSchema.undecodedImageType => decodeImage(ImageSchema.getOrigin(temp), ImageSchema.getData(temp)).getStruct(0)
+          case _ => temp
+        }
+
       } else {
-        decodeImage(f.getAs[Array[Byte]](inputCol)).getStruct(0)
+        decodeImage("", f.getAs[Array[Byte]](inputCol)).getStruct(0)
       }
 
-      var cvImage: IplImage = null
-      var targetImage: IplImage = null
-      var data: Array[Byte] = Array()
-      try {
-        cvImage = ImageOp.create(image)
-        targetImage = ImageOp.createHeader(width, height, ImageSchema.getDepth(image), ImageSchema.getNChannels(image))
-        cvResize(cvImage, targetImage)
-        data = ImageOp.getData(targetImage)
-      }
-      finally {
-        // release resource
-        if (cvImage != null)
-          cvImage.close()
-        if (targetImage != null)
-          targetImage.close()
+      ImageSchema.getMode(image) match {
+        case ImageSchema.undefinedImageType => ImageSchema.invalidImageRow(ImageSchema.getOrigin(image))
+        case _ =>
+          var cvImage: IplImage = null
+          var targetImage: IplImage = null
+          var data: Array[Byte] = Array()
+          try {
+            cvImage = ImageOp.create(image)
+            targetImage = ImageOp.createHeader(width, height, ImageSchema.getDepth(image), ImageSchema.getNChannels(image))
+            cvResize(cvImage, targetImage)
+            data = ImageOp.getData(targetImage)
+          }
+          finally {
+            // release resource
+            if (cvImage != null)
+              cvImage.close()
+            if (targetImage != null)
+              targetImage.close()
+          }
+
+          Row(Row(ImageSchema.getOrigin(image), height.toInt, width.toInt,
+            channel.toInt,
+            ImageSchema.getMode(image),
+            data
+          ))
       }
 
-      Row(Row(ImageSchema.getOrigin(image), height.toInt, width.toInt,
-        channel.toInt,
-        ImageSchema.getMode(image),
-        data
-      ))
     }.filter(f => ImageSchema.getData(f.getStruct(0)).length > 0)
 
     val newDF = spark.createDataFrame(imageRdd, StructType(df.schema.filter(f => f.name != inputCol) ++ Seq(StructField(name = inputCol, ImageSchema.columnSchema))))

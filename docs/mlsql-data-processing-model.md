@@ -216,6 +216,8 @@ and numPartitions="8"
 and repartitionNum="4"
 -- 单张图片最大限制
 and filterByteSize="2048576"
+-- 可以禁止对图片进行解析，避免占用过大资源，让后续的OpenCVImage来解析
+and enableDecode = "true"
 as images;  
 
 
