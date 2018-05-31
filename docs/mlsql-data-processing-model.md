@@ -202,15 +202,21 @@ select crawler_request_image("https://tpc.googlesyndication.com/simgad/103102029
 as  images;
 
 -- 或者你可能因为训练的原因，需要加载一个图片数据集 该表只有一个字段image,但是image是一个复杂字段，其中origin 带有路径信息。
-load image.`/Users/allwefantasy/CSDNWorkSpace/streamingpro/images`
-options
--- 是不是需要递归查找图片
-recursive="false"
--- 是不是丢弃掉解析失败的图片
-and dropImageFailures="false"
--- 采样比例
+load image.`/training_set`
+options 
+-- 递归目录查找图片
+recursive="true"
+-- 丢弃解析失败的图片
+and dropImageFailures="true"
+-- 采样率
 and sampleRatio="1.0"
-as images; 
+-- 读取图片线程数
+and numPartitions="8"
+-- 处理图片线程数
+and repartitionNum="4"
+-- 单张图片最大限制
+and filterByteSize="2048576"
+as images;  
 
 
 -- 比如 选择origin,width字段
