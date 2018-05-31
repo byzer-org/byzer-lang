@@ -35,6 +35,9 @@ class SQLPythonAlg extends SQLAlg with Functions {
     val enableDataLocal = params.getOrElse("enableDataLocal", "false").toBoolean
 
     var kafkaParam = mapParams("kafkaParam", params)
+
+    require(kafkaParam.size > 0, "kafkaParam should be configured")
+
     var stopFlagNum = -1
     if (enableDataLocal) {
       val (_kafkaParam, _newRDD) = writeKafka(df, path, params)
@@ -44,6 +47,9 @@ class SQLPythonAlg extends SQLAlg with Functions {
 
     val systemParam = mapParams("systemParam", params)
     val fitParam = arrayParams("fitParam", params).zipWithIndex
+
+    require(fitParam.size > 0, "fitParam should be configured")
+
     val fitParamRDD = df.sparkSession.sparkContext.parallelize(fitParam, fitParam.length)
     val pythonPath = systemParam.getOrElse("pythonPath", "python")
     val pythonVer = systemParam.getOrElse("pythonVer", "2.7")
