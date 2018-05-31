@@ -113,6 +113,7 @@ object ExternalCommandRunner {
           for (line <- Source.fromInputStream(err)(encoding).getLines) {
             // scalastyle:off println
             System.err.println(line)
+            logger.error(line)
             // scalastyle:on println
           }
         } catch {
@@ -149,6 +150,7 @@ object ExternalCommandRunner {
         }
         val line = lines.next()
         println(line)
+        logger.info(line)
         line
       }
 
