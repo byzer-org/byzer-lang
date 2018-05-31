@@ -100,6 +100,7 @@ class SQLPythonAlg extends SQLAlg with Functions {
 
 
       val tempModelLocalPath = s"${SQLPythonFunc.getLocalBasePath}/${UUID.randomUUID().toString}/${algIndex}"
+      //FileUtils.forceMkdir(tempModelLocalPath)
 
       paramMap.put("fitParam", item)
 

@@ -216,6 +216,8 @@ and numPartitions="8"
 and repartitionNum="4"
 -- 单张图片最大限制
 and filterByteSize="2048576"
+-- 可以禁止对图片进行解析，避免占用过大资源，让后续的OpenCVImage来解析
+and enableDecode = "true"
 as images;  
 
 
@@ -225,8 +227,9 @@ as images;
  
 train images as OpenCVImage.`/tmp/word2vecinplace`
 where inputCol="imagePath"
+and filterByteSize="2048576"
 -- 宽度和高度重新设置为100
-and shape="100,100,-1"
+and shape="100,100,4"
 ;
 load parquet.`/tmp/word2vecinplace/data` 
 as imagesWithResize;

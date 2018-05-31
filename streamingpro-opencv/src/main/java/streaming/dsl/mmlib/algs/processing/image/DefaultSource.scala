@@ -36,6 +36,7 @@ case class ImageRelation(
     val numPartitions = parameters.getOrElse("numPartitions", "8").toInt
     val repartitionNum = parameters.getOrElse("repartitionNum", "0").toInt
     val filterByteSize = parameters.getOrElse("filterByteSize", "0").toInt
+    val enableDecode = parameters.getOrElse("enableDecode", "true").toBoolean
     val spark = sqlContext.sparkSession
     ImageSchema.readImages(path = path,
       sparkSession = spark,
@@ -44,7 +45,8 @@ case class ImageRelation(
       dropImageFailures = dropImageFailures,
       repartitionNum = repartitionNum,
       numPartitions = numPartitions,
-      filterByteSize = filterByteSize
+      filterByteSize = filterByteSize,
+      enableDecode = enableDecode
     ).rdd
   }
 }

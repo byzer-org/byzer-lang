@@ -15,6 +15,7 @@ import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 object ImageSchema {
 
   val undefinedImageType = "Undefined"
+  val undecodedImageType = "Undecoded"
 
   val ocvTypes = Map(
     undefinedImageType -> -1,
@@ -72,13 +73,15 @@ object ImageSchema {
     */
   def invalidImageRow(origin: String): Row = Row(Row(origin, -1, -1, -1, undefinedImageType, Array.ofDim[Byte](0)))
 
+  def undecodeImageRow(origin: String, bytes: Array[Byte]): Row = Row(Row(origin, -1, -1, -1, undecodedImageType, bytes))
+
   /** Convert the compressed image (jpeg, png, etc.) into OpenCV representation and store it in dataframe Row
     *
     * @param origin Arbitrary string that identifies the image
     * @param bytes  Image bytes (for example, jpeg)
     * @return Dataframe Row or None (if the decompression fails)
     */
-  def decode(origin: String, bytes: Array[Byte]): Option[Row] = {
+  def decode(origin: String, bytes: Array[Byte], filterSize: Long = 1024 * 1024 * 1024): Option[Row] = {
 
     val img = try {
       ImageIO.read(new ByteArrayInputStream(bytes))
@@ -100,38 +103,42 @@ object ImageSchema {
       else if (has_alpha) (4, "CV_8UC4")
       else (3, "CV_8UC3")
 
-      assert(height * width * nChannels < 1e9, "image is too large")
-      val decoded = Array.ofDim[Byte](height * width * nChannels)
+      if (filterSize > 0 && height * width * nChannels > filterSize) {
+        None
+      } else {
+        val decoded = Array.ofDim[Byte](height * width * nChannels)
 
-      // grayscale images in Java require special handling to get the correct intensity
-      if (is_gray) {
-        var offset = 0
-        val raster = img.getRaster
-        for (h <- 0 until height) {
-          for (w <- 0 until width) {
-            decoded(offset) = raster.getSample(w, h, 0).toByte
-            offset += 1
-          }
-        }
-      }
-      else {
-        var offset = 0
-        for (h <- 0 until height) {
-          for (w <- 0 until width) {
-            val color = new Color(img.getRGB(w, h))
-            decoded(offset) = color.getBlue.toByte
-            decoded(offset + 1) = color.getGreen.toByte
-            decoded(offset + 2) = color.getRed.toByte
-            if (nChannels == 4) {
-              decoded(offset + 3) = color.getAlpha.toByte
+        // grayscale images in Java require special handling to get the correct intensity
+        if (is_gray) {
+          var offset = 0
+          val raster = img.getRaster
+          for (h <- 0 until height) {
+            for (w <- 0 until width) {
+              decoded(offset) = raster.getSample(w, h, 0).toByte
+              offset += 1
             }
-            offset += nChannels
           }
         }
+        else {
+          var offset = 0
+          for (h <- 0 until height) {
+            for (w <- 0 until width) {
+              val color = new Color(img.getRGB(w, h))
+              decoded(offset) = color.getBlue.toByte
+              decoded(offset + 1) = color.getGreen.toByte
+              decoded(offset + 2) = color.getRed.toByte
+              if (nChannels == 4) {
+                decoded(offset + 3) = color.getAlpha.toByte
+              }
+              offset += nChannels
+            }
+          }
+        }
+
+        // the internal "Row" is needed, because the image is a single dataframe column
+        Some(Row(Row(origin, height, width, nChannels, mode, decoded)))
       }
 
-      // the internal "Row" is needed, because the image is a single dataframe column
-      Some(Row(Row(origin, height, width, nChannels, mode, decoded)))
     }
   }
 
@@ -167,7 +174,8 @@ object ImageSchema {
                  repartitionNum: Int = 0,
                  dropImageFailures: Boolean = false,
                  sampleRatio: Double = 1.0,
-                 filterByteSize: Int
+                 filterByteSize: Int,
+                 enableDecode: Boolean
                 ): DataFrame = {
     require(sampleRatio <= 1.0 && sampleRatio >= 0, "sampleRatio should be between 0 and 1")
 
@@ -192,11 +200,16 @@ object ImageSchema {
         streams.flatMap {
           case (origin, stream) =>
             val bytes = stream.toArray
-            if (filterByteSize > 0 && bytes.length > filterByteSize) {
-              None
+            if (enableDecode) {
+              if (filterByteSize > 0 && bytes.length > filterByteSize) {
+                None
+              } else {
+                decode(origin, bytes)
+              }
             } else {
-              decode(origin, bytes)
+              Some(undecodeImageRow(origin, bytes))
             }
+
 
         }
       }
@@ -204,11 +217,16 @@ object ImageSchema {
         streams.map {
           case (origin, stream) =>
             val bytes = stream.toArray
-            if (filterByteSize > 0 && bytes.length > filterByteSize) {
-              invalidImageRow(origin)
+            if (enableDecode) {
+              if (filterByteSize > 0 && bytes.length > filterByteSize) {
+                invalidImageRow(origin)
+              } else {
+                decode(origin, bytes).getOrElse(invalidImageRow(origin))
+              }
             } else {
-              decode(origin, bytes).getOrElse(invalidImageRow(origin))
+              undecodeImageRow(origin, bytes)
             }
+
 
         }
       }
