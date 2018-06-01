@@ -1,12 +1,11 @@
 package streaming.dsl.mmlib.algs
 
-import org.apache.spark.ml.feature.{Bucketizer, QuantileDiscretizer}
+import org.apache.spark.ml.feature.{Bucketizer, DiscretizerFeature, QuantileDiscretizer}
 import org.apache.spark.sql.expressions.UserDefinedFunction
-import org.apache.spark.sql.types.DoubleType
+import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.MetaConst._
-import streaming.dsl.mmlib.algs.feature.DiscretizerFeature
 import streaming.dsl.mmlib.algs.meta.DiscretizerMeta
 
 /**
@@ -16,47 +15,83 @@ class SQLDiscretizer extends SQLAlg with Functions {
 
   def internal_train(df: DataFrame, params: Map[String, String]) = {
     val spark = df.sparkSession
+    import spark.implicits._
     val path = params("path")
     val metaPath = getMetaPath(path)
+    val method = params.getOrElse(DiscretizerParamsConstrant.METHOD, DiscretizerFeature.BUCKETIZER_METHOD)
     saveTraningParams(df.sparkSession, params, metaPath)
-    val method = params.getOrElse("method", DiscretizerFeature.bucketizer)
-    method match {
-      case DiscretizerFeature.bucketizer =>
-        val splits = DiscretizerFeature.getSplits(params)
-        val bucketizer = new Bucketizer()
-        bucketizer.setSplits(splits)
-        configureModel(bucketizer, params)
-        bucketizer.transform(df)
 
-      case DiscretizerFeature.quantile =>
-        val discretizer = new QuantileDiscretizer()
-        configureModel(discretizer, params)
-        val discretizerModel = discretizer.fit(df)
-        val splits = discretizerModel.getSplits
-        import spark.implicits._
-        spark.createDataset(splits).write.mode(SaveMode.Overwrite).
-          parquet(QUANTILE_DISCRETIZAR_PATH(metaPath, params.getOrElse("inputCol", "")))
-        discretizerModel.transform(df)
+    val fitParams = arrayParams(DiscretizerParamsConstrant.PARAMS_PREFIX, params)
+    require(fitParams.size > 0, "fitParams should be configured")
+
+    val metas: Array[DiscretizerTrainData] =
+      method match {
+        case DiscretizerFeature.BUCKETIZER_METHOD =>
+          fitParams.map(map => {
+            val splitArray = DiscretizerFeature.getSplits(
+              map.getOrElse(DiscretizerParamsConstrant.SPLIT_ARRAY, "")
+            )
+            DiscretizerFeature.parseParams(map, splitArray)
+          })
+
+        case DiscretizerFeature.QUANTILE_METHOD =>
+          val discretizer = new QuantileDiscretizer()
+          val discretizerModel = discretizer.fit(df)
+          val splits = discretizerModel.getSplits
+          spark.createDataset(splits).write.mode(SaveMode.Overwrite).
+            parquet(QUANTILE_DISCRETIZAR_PATH(metaPath, params.getOrElse("inputCol", "")))
+          null
     }
+    val cols = metas.map(_.inputCol).mkString("_")
+    spark.createDataset(metas).write.mode(SaveMode.Overwrite).
+      parquet(DISCRETIZER_PATH(metaPath))
   }
 
   override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
-    val newDF = internal_train(df, params + ("path" -> path))
-    newDF.write.mode(SaveMode.Overwrite).parquet(getDataPath(path))
+    internal_train(df, params + ("path" -> path))
   }
 
   override def load(spark: SparkSession, _path: String, params: Map[String, String]): Any = {
+    import spark.implicits._
     val path = getMetaPath(_path)
-    val (trainParams, df) = getTranningParams(spark, path)
-    val method = trainParams.getOrElse("method", DiscretizerFeature.bucketizer)
-    DiscretizerFeature.getDiscretizerModel(df.sparkSession, method, path, trainParams)
+
+    val metas = spark.read.parquet(DISCRETIZER_PATH(path)).as[DiscretizerTrainData].collect()
+
+    val func = DiscretizerFeature.getDiscretizerPredictFun(spark, metas)
+    DiscretizerMeta(metas, func)
   }
 
   override def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = {
     val meta = _model.asInstanceOf[DiscretizerMeta]
-    val f = (value: Double) => {
-      meta.discretizerFunc(value)
-    }
-    UserDefinedFunction(f, DoubleType, Some(Seq(DoubleType)))
+    UserDefinedFunction(meta.discretizerFunc, ArrayType(DoubleType), Some(Seq(ArrayType(DoubleType))))
   }
+}
+
+case class DiscretizerTrainData(
+    inputCol: String,
+    splits: Array[Double],
+    handleInvalid: Boolean,
+    params: Map[String, String])
+
+object DiscretizerParamsConstrant {
+  /**
+   * 参数数组前缀
+   */
+  val PARAMS_PREFIX = "fitParam"
+  /**
+   * 输入列名
+   */
+  val INPUT_COLUMN = "inputCol"
+  /**
+   * split参数数组
+   */
+  val SPLIT_ARRAY = "splitArray"
+  /**
+   * 散列化的方法，支持：bucketizer,quantile
+   */
+  val METHOD = "method"
+  /**
+   *
+   */
+  val HANDLE_INVALID = "handleInvalid"
 }
