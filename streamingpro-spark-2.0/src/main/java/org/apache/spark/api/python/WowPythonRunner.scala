@@ -12,6 +12,7 @@ import org.apache.spark.util.Utils
 
 import scala.collection.JavaConverters._
 import scala.collection.JavaConversions._
+import _root_.streaming.dsl.mmlib.algs.SQLPythonFunc
 
 /**
   * Created by allwefantasy on 5/2/2018.
@@ -21,7 +22,7 @@ object WowPythonRunner extends Logging {
   val reuse_worker = true
 
   def run(pythonPath: String, pythonVer: String, command: Array[Byte], inputIterator: Iterator[_],
-          partitionIndex: Int, model: Array[Byte]) = {
+          partitionIndex: Int, model: Array[Byte], kafkaParam: Map[String, String]) = {
     val envVars: JMap[String, String] = new util.HashMap[String, String]()
     val pythonIncludes = new util.ArrayList[String]()
     val startTime = System.currentTimeMillis
@@ -78,6 +79,7 @@ object WowPythonRunner extends Logging {
           // We must avoid throwing exceptions here, because the thread uncaught exception handler
           // will kill the whole executor (see org.apache.spark.executor.Executor).
           logError("", e)
+          SQLPythonFunc.recordUserException(kafkaParam, e)
           if (!worker.isClosed) {
             Utils.tryLog(worker.shutdownOutput())
           }
@@ -125,7 +127,9 @@ object WowPythonRunner extends Logging {
               val exLength = stream.readInt()
               val obj = new Array[Byte](exLength)
               stream.readFully(obj)
-              throw new PythonException(new String(obj, StandardCharsets.UTF_8),
+              val msg = new String(obj, StandardCharsets.UTF_8)
+              SQLPythonFunc.recordUserLog(kafkaParam, msg)
+              throw new PythonException(msg,
                 null)
             case SpecialLengths.END_OF_DATA_SECTION =>
               // We've finished the data section of the output, but we can still
@@ -149,6 +153,7 @@ object WowPythonRunner extends Logging {
 
           case e: Exception if context.isInterrupted =>
             logDebug("Exception thrown after task interruption", e)
+            SQLPythonFunc.recordUserException(kafkaParam, e)
             throw new TaskKilledException(context.getKillReason().getOrElse("unknown reason"))
 
           case e: Exception if env.isStopped =>
@@ -156,6 +161,7 @@ object WowPythonRunner extends Logging {
             null // exit silently
 
           case eof: EOFException =>
+            SQLPythonFunc.recordUserException(kafkaParam, eof)
             throw new SparkException("Python worker exited unexpectedly (crashed)", eof)
         }
       }

@@ -10,7 +10,7 @@ import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
 object KafkaOperator {
 
   def filterScore(str: String) = {
-    if (str.startsWith("mlsql_validation_score:")) {
+    if (str != null && str.startsWith("mlsql_validation_score:")) {
       str.split(":").last.toDouble
     } else 0d
   }

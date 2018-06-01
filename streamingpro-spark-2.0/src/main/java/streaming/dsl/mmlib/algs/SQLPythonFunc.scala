@@ -39,6 +39,14 @@ object SQLPythonFunc {
     KafkaOperator.writeKafka("", kafkaParam, Seq(line).toIterator)
   }
 
+  def recordUserLog(kafkaParam: Map[String, String], res: Iterator[String]) = {
+    KafkaOperator.writeKafka("", kafkaParam, res)
+  }
+
+  def recordUserException(kafkaParam: Map[String, String], e: Exception) = {
+    KafkaOperator.writeKafka("", kafkaParam, Seq(e.getStackTrace.map(f => f.toString).mkString("\n")).toIterator)
+  }
+
   def findPythonScript(userPythonScript: Option[PythonScript],
                        fitParams: Map[String, String],
                        defaultScriptName: String
