@@ -186,7 +186,7 @@ class SQLPythonAlg extends SQLAlg with Functions {
     val (modelsTemp, metasTemp, trainParams) = _model.asInstanceOf[(Seq[String], Seq[Map[String, String]], Map[String, String])]
     val models = sparkSession.sparkContext.broadcast(modelsTemp)
 
-    val kafkaParam = mapParams("kafkaParam", trainParams)
+
 
     val pythonPath = metasTemp(0)("pythonPath")
     val pythonVer = metasTemp(0)("pythonVer")
@@ -197,6 +197,9 @@ class SQLPythonAlg extends SQLAlg with Functions {
     val item = new util.HashMap[String, String]()
     item.put("funcPath", "/tmp/" + System.currentTimeMillis())
     maps.put("systemParam", item)
+
+    val kafkaParam = mapParams("kafkaParam", trainParams)
+
     //driver 节点执行
     val res = ExternalCommandRunner.run(Seq(pythonPath, userPythonScript.fileName),
       maps,
@@ -207,13 +210,17 @@ class SQLPythonAlg extends SQLAlg with Functions {
     res.foreach(f => f)
     val command = Files.readAllBytes(Paths.get(item.get("funcPath")))
 
+    val enableErrorMsgToKafka = params.getOrElse("enableErrorMsgToKafka", "false").toBoolean
+    val kafkaParam2 = if (enableErrorMsgToKafka) kafkaParam else Map[String, String]()
+
+
     val f = (v: org.apache.spark.ml.linalg.Vector, modelPath: String) => {
       val modelRow = InternalRow.fromSeq(Seq(SQLPythonFunc.getLocalTempModelPath(modelPath)))
       val v_ser = pickleInternalRow(Seq(ser_vector(v)).toIterator, vector_schema())
       val v_ser2 = pickleInternalRow(Seq(modelRow).toIterator, StructType(Seq(StructField("modelPath", StringType))))
       val v_ser3 = v_ser ++ v_ser2
       val iter = WowPythonRunner.run(
-        pythonPath, pythonVer, command, v_ser3, TaskContext.get().partitionId(), Array(), kafkaParam = kafkaParam
+        pythonPath, pythonVer, command, v_ser3, TaskContext.get().partitionId(), Array(), kafkaParam = kafkaParam2
       )
       val a = iter.next()
       VectorSerDer.deser_vector(unpickle(a).asInstanceOf[java.util.ArrayList[Object]].get(0))
