@@ -208,7 +208,7 @@ class PythonMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQ
       ScriptSQLExec.parse(
         s"""
            |load libsvm.`sample_libsvm_data.txt` as data;
-           |save data as json.`/tmp/kk`;
+           |save overwrite data as json.`/tmp/kk`;
          """.stripMargin, sq)
     }
   }

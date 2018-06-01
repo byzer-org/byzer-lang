@@ -39,7 +39,7 @@ class SQLPythonAlg extends SQLAlg with Functions {
     require(kafkaParam.size > 0, "kafkaParam should be configured")
 
     var stopFlagNum = -1
-    if (enableDataLocal) {
+    if (!enableDataLocal) {
       val (_kafkaParam, _newRDD) = writeKafka(df, path, params)
       stopFlagNum = _newRDD.getNumPartitions
       kafkaParam = _kafkaParam
@@ -116,11 +116,14 @@ class SQLPythonAlg extends SQLAlg with Functions {
 
 
 
-      val res = ExternalCommandRunner.run(Seq(pythonPath, pythonScript.fileName),
-        paramMap,
-        MapType(StringType, MapType(StringType, StringType)),
-        pythonScript.fileContent,
-        pythonScript.fileName, modelPath = path, validateData = rowsBr.value
+      val res = ExternalCommandRunner.run(
+        command = Seq(pythonPath, pythonScript.fileName),
+        iter = paramMap,
+        schema = MapType(StringType, MapType(StringType, StringType)),
+        scriptContent = pythonScript.fileContent,
+        scriptName = pythonScript.fileName,
+        kafkaParam = kafkaParam,
+        modelPath = path, validateData = rowsBr.value
       )
 
       val score = recordUserLog(algIndex, pythonScript, kafkaParam, res)
@@ -157,25 +160,33 @@ class SQLPythonAlg extends SQLAlg with Functions {
 
   }
 
-  override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = {
-    val models = sparkSession.read.parquet(SQLPythonFunc.getAlgMetalPath(path) + "/0")
+  override def load(sparkSession: SparkSession, _path: String, params: Map[String, String]): Any = {
+    val path = SQLPythonFunc.getAlgMetalPath(_path)
+    val models = sparkSession.read.parquet(path + "/0")
       .collect()
       .map(f => (f(3).asInstanceOf[Double], f(0).asInstanceOf[String]))
       .toSeq.sortBy(f => f._1)(Ordering[Double].reverse).take(1).map(f => f._2)
 
-    val metas = sparkSession.read.parquet(SQLPythonFunc.getAlgMetalPath(path) + "/1").collect().map(f => f.get(0).asInstanceOf[Map[String, String]]).toSeq
+    val metas = sparkSession.read.parquet(path + "/1").collect().map(f => f.get(0).asInstanceOf[Map[String, String]]).toSeq
     // make sure every executor have the model in local directory.
     // we should unregister manually
     models.foreach { modelPath =>
       val tempModelLocalPath = SQLPythonFunc.getLocalTempModelPath(modelPath)
       distributeResource(sparkSession, modelPath, tempModelLocalPath)
     }
-    (models, metas)
+
+    import sparkSession.implicits._
+    val df = sparkSession.read.parquet(MetaConst.PARAMS_PATH(path, "params")).map(f => (f.getString(0), f.getString(1)))
+    val trainParams = df.collect().toMap
+
+    (models, metas, trainParams)
   }
 
   override def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = {
-    val (modelsTemp, metasTemp) = _model.asInstanceOf[(Seq[String], Seq[Map[String, String]])]
+    val (modelsTemp, metasTemp, trainParams) = _model.asInstanceOf[(Seq[String], Seq[Map[String, String]], Map[String, String])]
     val models = sparkSession.sparkContext.broadcast(modelsTemp)
+
+    val kafkaParam = mapParams("kafkaParam", trainParams)
 
     val pythonPath = metasTemp(0)("pythonPath")
     val pythonVer = metasTemp(0)("pythonVer")
@@ -191,7 +202,7 @@ class SQLPythonAlg extends SQLAlg with Functions {
       maps,
       MapType(StringType, MapType(StringType, StringType)),
       userPythonScript.fileContent,
-      userPythonScript.fileName, modelPath = null
+      userPythonScript.fileName, modelPath = null, kafkaParam = kafkaParam
     )
     res.foreach(f => f)
     val command = Files.readAllBytes(Paths.get(item.get("funcPath")))
@@ -201,7 +212,9 @@ class SQLPythonAlg extends SQLAlg with Functions {
       val v_ser = pickleInternalRow(Seq(ser_vector(v)).toIterator, vector_schema())
       val v_ser2 = pickleInternalRow(Seq(modelRow).toIterator, StructType(Seq(StructField("modelPath", StringType))))
       val v_ser3 = v_ser ++ v_ser2
-      val iter = WowPythonRunner.run(pythonPath, pythonVer, command, v_ser3, TaskContext.get().partitionId(), Array())
+      val iter = WowPythonRunner.run(
+        pythonPath, pythonVer, command, v_ser3, TaskContext.get().partitionId(), Array(), kafkaParam = kafkaParam
+      )
       val a = iter.next()
       VectorSerDer.deser_vector(unpickle(a).asInstanceOf[java.util.ArrayList[Object]].get(0))
     }

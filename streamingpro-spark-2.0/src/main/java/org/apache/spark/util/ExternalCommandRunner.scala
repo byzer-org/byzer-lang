@@ -8,10 +8,11 @@ import org.apache.spark.sql.types._
 import org.apache.spark.{SparkEnv, TaskContext}
 
 import scala.collection.JavaConverters._
-import scala.collection.Map
 import scala.io.Source
 import ObjPickle._
-import org.apache.spark.sql.Row
+import streaming.dsl.mmlib.algs.SQLPythonFunc
+
+import scala.collection.mutable.ArrayBuffer
 
 /**
   * Created by allwefantasy on 24/1/2018.
@@ -25,11 +26,13 @@ object ExternalCommandRunner {
           scriptContent: String,
           scriptName: String,
           modelPath: String,
+          kafkaParam: Map[String, String],
           validateData: Array[Array[Byte]] = Array(),
           envVars: Map[String, String] = Map(),
           separateWorkingDir: Boolean = true,
           bufferSize: Int = 1024,
           encoding: String = "utf-8") = {
+    val errorBuffer = ArrayBuffer[String]()
     val pb = new ProcessBuilder(command.asJava)
     // Add the environmental variables to the process.
     val currentEnvVars = pb.environment()
@@ -104,20 +107,22 @@ object ExternalCommandRunner {
     val proc = pb.start()
     val env = SparkEnv.get
     val childThreadException = new AtomicReference[Throwable](null)
-
     // Start a thread to print the process's stderr to ours
     new Thread(s"stderr reader for $command") {
       override def run(): Unit = {
         val err = proc.getErrorStream
+
         try {
           for (line <- Source.fromInputStream(err)(encoding).getLines) {
             // scalastyle:off println
             System.err.println(line)
             logger.error("__python__:" + line)
+            errorBuffer += line
             // scalastyle:on println
           }
         } catch {
-          case t: Throwable => childThreadException.set(t)
+          case t: Throwable =>
+            childThreadException.set(t)
         } finally {
           err.close()
         }
@@ -161,8 +166,11 @@ object ExternalCommandRunner {
           val exitStatus = proc.waitFor()
           cleanup()
           if (exitStatus != 0) {
-            throw new IllegalStateException(s"Subprocess exited with status $exitStatus. " +
-              s"Command ran: " + command.mkString(" "))
+            val msg = s"Subprocess exited with status $exitStatus. " +
+              s"Command ran: " + command.mkString(" ")
+            errorBuffer += msg
+            SQLPythonFunc.recordUserLog(kafkaParam, errorBuffer.toIterator)
+            throw new IllegalStateException(msg)
           }
           false
         }
@@ -184,10 +192,13 @@ object ExternalCommandRunner {
         val t = childThreadException.get()
         if (t != null) {
           val commandRan = command.mkString(" ")
-          logger.error(s"Caught exception while running pipe() operator. Command ran: $commandRan. " +
-            s"Exception: ${t.getMessage}")
+          val msg = s"Caught exception while running pipe() operator. Command ran: $commandRan. " +
+            s"Exception: ${t.getMessage}"
+          logger.error(msg)
+          errorBuffer += msg
           proc.destroy()
           cleanup()
+          SQLPythonFunc.recordUserLog(kafkaParam, errorBuffer.toIterator)
           throw t
         }
       }
