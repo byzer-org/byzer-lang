@@ -187,6 +187,56 @@ register NormalizeInPlace.`/tmp/scaler2` as jack;
 select jack(array(a,b))[0] a,jack(array(a,b))[1] b, c from orginal_text_corpus
 ```
 
+## Discretizer
+
+对double类型特征进行连续值离散化。
+
+
+```
+train traning_data as Discretizer.`/tmp/quantile`
+where inputCol="a"
+and method="quantile"
+and numBuckets="7"
+;
+
+register Discretizer.`/tmp/quantile` as quantile_predict;
+```
+
+```
+train traning_data as Discretizer.`/tmp/bucketizer`
+where inputCol="a"
+and method="bucketizer"
+//默认值为-inf,0.0,1.0,inf；其中-inf表示 Double.NegativeInfinity
+//inf表示Double.PositiveInfinity
+and bucketSplits="-inf,0.0,1.0,inf"
+;
+
+register Discretizer.`/tmp/bucketizer` as bucketizer_predict;
+```
+
+参数使用说明：
+
+|参数|默认值|说明|
+|:----|:----|:----|
+|inputCol|None|double类型字段列表，用逗号分隔|
+|method|bucketizer|目前支持的有：bucketizer,quantile等|
+
+对于新数据，你首先需要注册下之前训练产生的模型：
+
+```sql
+register Discretizer.`/tmp/quantile` as quantile_predict;
+或者
+register Discretizer.`/tmp/bucketizer` as bucketizer_predict;
+```
+
+接着你便可以使用该模型对新数据做处理了：
+
+```sql
+select quantile_predict(111.0)
+或者
+select bucketizer_predict(111.0)
+```
+
 
 ### OpenCVImage
 
