@@ -16,6 +16,10 @@ object MetaConst {
 
   def STANDARD_SCALER_PATH(path: String, col: String) = s"$path/columns/$col/standardScaler"
 
+  def DISCRETIZER_PATH(path: String) = s"$path/columns/discretizer"
+
+  def QUANTILE_DISCRETIZAR_PATH(path: String, col: String) = s"$path/columns/$col/quantileDiscretizer"
+
   def PARAMS_PATH(path: String, col: String) = s"$path/params"
 
   def getDataPath(path: String) = {
