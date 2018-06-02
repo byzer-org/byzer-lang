@@ -21,28 +21,31 @@ class SQLDiscretizer extends SQLAlg with Functions {
     val method = params.getOrElse(DiscretizerParamsConstrant.METHOD, DiscretizerFeature.BUCKETIZER_METHOD)
     saveTraningParams(df.sparkSession, params, metaPath)
 
-    val fitParams = arrayParams(DiscretizerParamsConstrant.PARAMS_PREFIX, params)
-    require(fitParams.size > 0, "fitParams should be configured")
+    val fitParamsWithIndex = arrayParamsWithIndex(DiscretizerParamsConstrant.PARAMS_PREFIX, params)
+    require(fitParamsWithIndex.size > 0, "fitParams should be configured")
 
-    val metas: Array[DiscretizerTrainData] =
+    // we need save metadatas with index, because we need index
+    val metas: Array[(Int, DiscretizerTrainData)] =
       method match {
         case DiscretizerFeature.BUCKETIZER_METHOD =>
-          fitParams.map(map => {
-            val splitArray = DiscretizerFeature.getSplits(
-              map.getOrElse(DiscretizerParamsConstrant.SPLIT_ARRAY, "")
-            )
-            DiscretizerFeature.parseParams(map, splitArray)
-          })
+          fitParamsWithIndex.map {
+            case (index, map) =>
+              val splitArray = DiscretizerFeature.getSplits(
+                map.getOrElse(DiscretizerParamsConstrant.SPLIT_ARRAY, "")
+              )
+              (index, DiscretizerFeature.parseParams(map, splitArray))
+          }
 
         case DiscretizerFeature.QUANTILE_METHOD =>
-          val discretizer = new QuantileDiscretizer()
-          val discretizerModel = discretizer.fit(df)
-          val splits = discretizerModel.getSplits
-          spark.createDataset(splits).write.mode(SaveMode.Overwrite).
-            parquet(QUANTILE_DISCRETIZAR_PATH(metaPath, params.getOrElse("inputCol", "")))
-          null
+          fitParamsWithIndex.map {
+            case (index, map) =>
+              val discretizer = new QuantileDiscretizer()
+              configureModel(discretizer, map)
+              val discretizerModel = discretizer.fit(df)
+              val splits = discretizerModel.getSplits
+              (index, DiscretizerFeature.parseParams(map, splits))
+          }
     }
-    val cols = metas.map(_.inputCol).mkString("_")
     spark.createDataset(metas).write.mode(SaveMode.Overwrite).
       parquet(DISCRETIZER_PATH(metaPath))
   }
@@ -55,7 +58,12 @@ class SQLDiscretizer extends SQLAlg with Functions {
     import spark.implicits._
     val path = getMetaPath(_path)
 
-    val metas = spark.read.parquet(DISCRETIZER_PATH(path)).as[DiscretizerTrainData].collect()
+    val metas = spark.read
+      .parquet(DISCRETIZER_PATH(path))
+      .as[(Int, DiscretizerTrainData)]
+      .collect()
+      .sortBy(_._1)
+      .map(_._2)
 
     val func = DiscretizerFeature.getDiscretizerPredictFun(spark, metas)
     DiscretizerMeta(metas, func)

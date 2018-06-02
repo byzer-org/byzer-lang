@@ -1,9 +1,7 @@
 package org.apache.spark.ml.feature
 
 import org.apache.commons.lang3.math.NumberUtils
-import org.apache.spark.sql.{Row, SparkSession}
-import org.apache.spark.sql.catalyst.expressions.GenericRowWithSchema
-import org.apache.spark.sql.types._
+import org.apache.spark.sql.SparkSession
 import streaming.dsl.mmlib.algs.{DiscretizerParamsConstrant, DiscretizerTrainData}
 
 /**
@@ -12,9 +10,6 @@ import streaming.dsl.mmlib.algs.{DiscretizerParamsConstrant, DiscretizerTrainDat
 object DiscretizerFeature {
   val BUCKETIZER_METHOD = "bucketizer"
   val QUANTILE_METHOD = "quantile"
-  private[feature] val SKIP_INVALID: String = "skip"
-  private[feature] val ERROR_INVALID: String = "error"
-  private[feature] val KEEP_INVALID: String = "keep"
 
   def parseParams(params: Map[String, String], splits: Array[Double]): DiscretizerTrainData = {
     val handleInvalid = params.getOrElse(DiscretizerParamsConstrant.HANDLE_INVALID, "keep") == Bucketizer.KEEP_INVALID
