@@ -1,3 +1,24 @@
+
+- [**高阶数据预处理模型**](#高阶开箱即用数据预处理模型)
+  - [TfIdfInPlace](#tfidfinplace)
+  - [Word2VecInPlace](#word2vecinplace)
+  - [ScalerInPlace](#scalerinplace)
+  - [NormalizeInPlace](#normalizeinplace)
+  - [Discretizer](#discretizer)
+    - [bucketizer](#bucketizer方式)
+    - [quantile](#quantile方式)
+  - [OpenCVImage](#opencvimage)
+  - [TokenExtract / TokenAnalysis](#tokenextract--tokenanalysis)
+  - [RateSampler](#ratesampler)
+- [**低阶数据预处理模型**](#低阶特定小功能点数据预处理模型)
+  - [Word2vec](#word2vec)
+  - [StringIndex](#stringindex)
+  - [TfIdf](#tfidf)
+  - [StandardScaler](#standardscaler)
+  - [DicOrTableToArray](#dicortabletoarray)
+
+---
+
 ### 高阶（开箱即用）数据预处理模型
 
 ### TfIdfInPlace
