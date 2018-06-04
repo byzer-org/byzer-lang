@@ -1,3 +1,24 @@
+
+- [**高阶数据预处理模型**](#高阶开箱即用数据预处理模型)
+  - [TfIdfInPlace](#tfidfinplace)
+  - [Word2VecInPlace](#word2vecinplace)
+  - [ScalerInPlace](#scalerinplace)
+  - [NormalizeInPlace](#normalizeinplace)
+  - [Discretizer](#discretizer)
+    - [bucketizer](#bucketizer方式)
+    - [quantile](#quantile方式)
+  - [OpenCVImage](#opencvimage)
+  - [TokenExtract / TokenAnalysis](#tokenextract--tokenanalysis)
+  - [RateSampler](#ratesampler)
+- [**低阶数据预处理模型**](#低阶特定小功能点数据预处理模型)
+  - [Word2vec](#word2vec)
+  - [StringIndex](#stringindex)
+  - [TfIdf](#tfidf)
+  - [StandardScaler](#standardscaler)
+  - [DicOrTableToArray](#dicortabletoarray)
+
+---
+
 ### 高阶（开箱即用）数据预处理模型
 
 ### TfIdfInPlace
@@ -185,6 +206,110 @@ register NormalizeInPlace.`/tmp/scaler2` as jack;
 
 ```sql
 select jack(array(a,b))[0] a,jack(array(a,b))[1] b, c from orginal_text_corpus
+```
+
+### Discretizer
+
+对double类型的连续值特征进行离散化。
+
+#### bucketizer方式
+
+```sql
+-- 加载训练数据
+load libsvm.`/path/to/data/spark/data/mllib/sample_kmeans_data.txt` as data;
+-- 类型转换
+select vec_array(features)[0] as a, vec_array(features)[1] as b from data as table2;
+save overwrite table2 as json.`/tmp/table2`;
+train table2 as Discretizer.`/tmp/discretizer`
+-- 定义采用哪种散列化方式
+where method="bucketizer"
+-- 输入列
+and `fitParam.0.inputCol`="a"
+-- 分裂数组
+and `fitParam.0.splitArray`="-inf,0.0,1.0,inf"
+and `fitParam.1.inputCol`="b"
+and `fitParam.1.splitArray`="-inf,0.0,1.0,inf";
+```
+
+参数使用说明：
+
+|参数|默认值|说明|
+|:----|:----|:----|
+|method|bucketizer|散列化方式，支持bucketizer, quantile|
+|fitParam.${index}.inputCols|None|double类型字段|
+|fitParam.${index}.splitArray|None|分裂数组，-inf表示负无穷大，inf表示正无穷大，分裂区间不能小于3，每个区间的范围是左闭右开，即[x, y)|
+
+对于新数据，你首先需要注册下之前训练产生的模型：
+
+```sql
+register Discretizer.`/tmp/discretizer` as jack;
+```
+
+接着你便可以使用该模型对新数据做处理了：
+
+```sql
+select jack(array(a,b))[0] a,jack(array(a,b))[1] b, c from table2;
+```
+
+#### quantile方式
+
+假设/tmp/discretizer3.data数据如下：
+
+```csv
+id hour minute
+0  18.0 1.0
+1  19.0 20.0
+2  8.0  33.0
+3  5.0  23.4
+4  2.2  44.5
+```
+
+示例
+
+```sql
+-- 加载训练集
+load csv.`/tmp/discretizer3.data` options header="True" as data;
+-- 类型转换
+select CAST(hour AS DOUBLE), CAST(minute AS DOUBLE) from data as table2;
+train table2 as Discretizer.`/tmp/quantile`
+-- 散列化方式
+where method="quantile"
+-- 输入列
+and `fitParam.0.inputCol`="hour"
+-- number of buckets
+and `fitParam.0.numBuckets`="3"
+and `fitParam.1.inputCol`="minute"
+and `fitParam.1.numBuckets`="3";
+```
+
+参数使用说明：
+
+|参数|默认值|说明|
+|:----|:----|:----|
+|method|bucketizer|散列化方式，支持bucketizer, quantile|
+|fitParam.${index}.inputCols|None|double类型字段|
+|fitParam.${index}.numBuckets|None|number of buckets|
+
+对于新数据，你首先需要注册下之前训练产生的模型：
+
+```sql
+register Discretizer.`/tmp/quantile` as jack;
+```
+
+接着你便可以使用该模型对新数据做处理了：
+
+```sql
+select hour, jack(array(hour, minute))[0] x, minute, jack(array(hour, minute))[1] y from table2 as result;
+save overwrite result as json.`/tmp/result`;
+```
+
+散列化结果:
+```json
+{"hour":18.0,"x":2.0,"minute":1.0,"y":0.0}
+{"hour":19.0,"x":2.0,"minute":20.0,"y":1.0}
+{"hour":8.0,"x":1.0,"minute":33.0,"y":2.0}
+{"hour":5.0,"x":1.0,"minute":23.4,"y":1.0}
+{"hour":2.2,"x":0.0,"minute":44.5,"y":2.0}
 ```
 
 

@@ -54,10 +54,8 @@ class SQLOpenCVImage extends SQLAlg with SQlBaseFunc {
           }
           finally {
             // release resource
-            if (cvImage != null)
-              cvImage.close()
-            if (targetImage != null)
-              targetImage.close()
+            ImageOp.release(cvImage);
+            ImageOp.release(targetImage);
           }
 
           Row(Row(ImageSchema.getOrigin(image), height.toInt, width.toInt,
@@ -107,10 +105,8 @@ class SQLOpenCVImage extends SQLAlg with SQlBaseFunc {
       }
       finally {
         // release resource
-        if (cvImage != null)
-          cvImage.close()
-        if (targetImage != null)
-          targetImage.close()
+        ImageOp.release(cvImage);
+        ImageOp.release(targetImage);
       }
       Row(ImageSchema.getOrigin(image), height.toInt, width.toInt,
         ImageSchema.getNChannels(image),

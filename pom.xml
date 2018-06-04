@@ -16,6 +16,8 @@
         <module>streamingpro-dl4j</module>
         <module>streamingpro-tensorflow</module>
         <module>streamingpro-opencv</module>
+        <module>streamingpro-spark-2.2.0-adaptor</module>
+        <module>streamingpro-spark-2.3.0-adaptor</module>
     </modules>
 
     <properties>

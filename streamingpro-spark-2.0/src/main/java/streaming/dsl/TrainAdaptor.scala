@@ -75,7 +75,8 @@ object MLMapping {
     "ScalerInPlace" -> "streaming.dsl.mmlib.algs.SQLScalerInPlace",
     "NormalizeInPlace" -> "streaming.dsl.mmlib.algs.SQLNormalizeInPlace",
     "PythonAlg" -> "streaming.dsl.mmlib.algs.SQLPythonAlg",
-    "OpenCVImage" -> "streaming.dsl.mmlib.algs.processing.SQLOpenCVImage"
+    "OpenCVImage" -> "streaming.dsl.mmlib.algs.processing.SQLOpenCVImage",
+    "Discretizer" -> "streaming.dsl.mmlib.algs.SQLDiscretizer"
   )
 
   def findAlg(name: String) = {
