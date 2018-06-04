@@ -16,12 +16,18 @@ public class ImageOp {
 
     public static IplImage createHeader(int width, int height, int depth, int channel) {
         IplImage iplImage = cvCreateImage(
-                cvSize(width, height
-                ), depth
+                cvSize(width, height), depth
                 , channel
 
         );
         return iplImage;
+    }
+
+    public static void release(IplImage cvImage) {
+        if (cvImage != null) {
+            cvImage.cvSize().close();
+            cvReleaseImage(cvImage);
+        }
     }
 
     public static byte[] getData(IplImage image) {
