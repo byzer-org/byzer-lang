@@ -17,5 +17,6 @@ class DropAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
     val originalText = input.getText(interval)
     val sql = TemplateMerge.merge(originalText, scriptSQLExecListener.env().toMap)
     scriptSQLExecListener.sparkSession.sql(sql).count()
+    scriptSQLExecListener.setLastSelectTable(null)
   }
 }

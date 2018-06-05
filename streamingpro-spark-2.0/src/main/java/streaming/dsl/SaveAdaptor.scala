@@ -78,6 +78,7 @@ class SaveAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
     } else {
       new BatchSaveAdaptor(scriptSQLExecListener, option, oldDF, final_path, tableName, format, mode, partitionByCol).parse
     }
+    scriptSQLExecListener.setLastSelectTable(null)
 
   }
 }

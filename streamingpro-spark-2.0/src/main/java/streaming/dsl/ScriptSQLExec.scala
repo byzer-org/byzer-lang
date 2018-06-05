@@ -1,6 +1,7 @@
 package streaming.dsl
 
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicReference
 
 import org.antlr.v4.runtime.tree.{ErrorNode, ParseTreeWalker, TerminalNode}
 import org.antlr.v4.runtime.{ANTLRInputStream, CommonTokenStream, ParserRuleContext}
@@ -58,6 +59,15 @@ object ScriptSQLExec {
 class ScriptSQLExecListener(_sparkSession: SparkSession, _defaultPathPrefix: String, _allPathPrefix: Map[String, String]) extends DSLSQLListener {
 
   private val _env = new scala.collection.mutable.HashMap[String, String]
+  private val lastSelectTable = new AtomicReference[String]()
+
+  def setLastSelectTable(table: String) = {
+    lastSelectTable.set(table)
+  }
+
+  def getLastSelectTable() = {
+    if (lastSelectTable.get() == null) None else Some(lastSelectTable.get())
+  }
 
   def addEnv(k: String, v: String) = {
     _env(k) = v

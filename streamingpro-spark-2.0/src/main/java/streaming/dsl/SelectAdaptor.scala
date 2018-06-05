@@ -22,5 +22,6 @@ class SelectAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAda
     var sql = originalText.replaceAll(s"as[\\s|\\n]+${tableName}", "")
     sql = TemplateMerge.merge(sql, scriptSQLExecListener.env().toMap)
     scriptSQLExecListener.sparkSession.sql(sql).createOrReplaceTempView(tableName)
+    scriptSQLExecListener.setLastSelectTable(tableName)
   }
 }

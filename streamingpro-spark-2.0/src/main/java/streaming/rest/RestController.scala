@@ -67,11 +67,13 @@ class RestController extends ApplicationController {
 
   @At(path = Array("/run/script"), types = Array(GET, POST))
   def script = {
+    val silence = paramAsBoolean("silence", false)
     val sparkSession = runtime.asInstanceOf[SparkRuntime].sparkSession
     val htp = findService(classOf[HttpTransportService])
     if (paramAsBoolean("async", false) && !params().containsKey("callback")) {
       render(400, "when async is set true ,then you should set callback url")
     }
+    var outputResult: String = "[]"
     try {
       val jobInfo = StreamingproJobManager.getStreamingproJobInfo(
         param("owner"), param("jobType", StreamingproJobType.SCRIPT), param("jobName"), param("sql"),
@@ -94,7 +96,14 @@ class RestController extends ApplicationController {
         StreamingproJobManager.run(sparkSession, jobInfo, () => {
           val allPathPrefix = fromJson(param("allPathPrefix", "{}"), classOf[Map[String, String]])
           val defaultPathPrefix = param("defaultPathPrefix", "")
-          ScriptSQLExec.parse(param("sql"), new ScriptSQLExecListener(sparkSession, defaultPathPrefix, allPathPrefix))
+          val context = new ScriptSQLExecListener(sparkSession, defaultPathPrefix, allPathPrefix)
+          ScriptSQLExec.parse(param("sql"), context)
+          if (!silence) {
+            outputResult = context.getLastSelectTable() match {
+              case Some(table) => "[" + sparkSession.sql(s"select * from $table limit 100").toJSON.collect().mkString(",") + "]"
+              case None => "[]"
+            }
+          }
         })
       }
 
@@ -104,7 +113,7 @@ class RestController extends ApplicationController {
         val msg = if (paramAsBoolean("show_stack", false)) e.getStackTrace.map(f => f.toString).mkString("\n") else ""
         render(500, e.getMessage + "\n" + msg)
     }
-    render(200, WowCollections.map())
+    render(outputResult)
   }
 
   @At(path = Array("/run/sql"), types = Array(GET, POST))

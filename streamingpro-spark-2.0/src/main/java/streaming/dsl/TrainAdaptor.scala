@@ -40,6 +40,7 @@ class TrainAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdap
     val df = scriptSQLExecListener.sparkSession.table(tableName)
     val sqlAlg = MLMapping.findAlg(format)
     sqlAlg.train(df, path, options)
+    scriptSQLExecListener.setLastSelectTable(null)
   }
 }
 
