@@ -1,17 +1,18 @@
 package streaming.session
 
 import java.io.IOException
-import java.util.concurrent.atomic.AtomicInteger
+import java.security.PrivilegedExceptionAction
 
 import org.apache.hadoop.fs.FileSystem
 import org.apache.hadoop.security.UserGroupInformation
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import org.apache.spark.{MLSQLSparkConst, SparkConf}
 
 import scala.collection.mutable.{HashSet => MHSet}
 import streaming.log.Logging
 
-import scala.collection.mutable.HashSet
+import scala.concurrent.Await
+
 
 /**
   * Created by allwefantasy on 1/6/2018.
@@ -21,14 +22,17 @@ class MLSQLSession(username: String,
                    conf: SparkConf,
                    ipAddress: String,
                    withImpersonation: Boolean,
-                   sessionManager: SessionManager) extends Logging {
+                   sessionManager: SessionManager,
+                   opManager: MLSQLOperationManager
+                  ) extends Logging {
+
 
   @volatile private[this] var lastAccessTime: Long = System.currentTimeMillis()
   private[this] var lastIdleTime = 0L
 
-  private[this] val sessionHandle: SessionIdentifier = new SessionIdentifier()
+  private[this] val activeOperationSet = new MHSet[String]()
 
-  private[this] val activeOperationSet = new MHSet[MLSQLOperation]()
+  private[this] val sessionIdentifier: SessionIdentifier = new SessionIdentifier()
 
   private[this] val sessionUGI: UserGroupInformation = {
     val currentUser = UserGroupInformation.getCurrentUser
@@ -70,8 +74,8 @@ class MLSQLSession(username: String,
 
   def ugi: UserGroupInformation = this.sessionUGI
 
-  def open(sessionConf: Map[String, String]): Unit = {
-    sparkSessionWithUGI.init(sessionConf)
+  def open(sessionConf: Map[String, String], params: Map[Any, Any]): Unit = {
+    sparkSessionWithUGI.init(sessionConf,params)
     lastAccessTime = System.currentTimeMillis
     lastIdleTime = lastAccessTime
   }
@@ -80,7 +84,7 @@ class MLSQLSession(username: String,
     acquire(true)
     try {
       // Iterate through the opHandles and close their operations
-      activeOperationSet.foreach { op => op.close() }
+      activeOperationSet.foreach { op => opManager.closeOp(op) }
       activeOperationSet.clear()
     } finally {
       release(true)
@@ -94,22 +98,22 @@ class MLSQLSession(username: String,
     }
   }
 
-  def cancelOp(op: MLSQLOperation): Unit = {
+  def cancelOp(opName: String): Unit = {
     acquire(true)
     try {
-      op.close()
-      activeOperationSet.remove(op)
+      opManager.cancelOp(opName)
+      activeOperationSet.remove(opName)
     } finally {
       release(true)
     }
   }
 
-  def execute(f: () => Unit, desc: String, operationTimeout: Int) = {
+  def execute(f: () => Unit, opId: String, desc: String, operationTimeout: Int): MLSQLOperation = {
     acquire(true)
-    val operation = new MLSQLOperation(this, f, desc, operationTimeout)
+    val operation = opManager.createOp(this, f, opId, desc, operationTimeout)
     try {
       operation.run()
-      activeOperationSet.add(operation)
+      activeOperationSet.add(operation.getOpId)
     } catch {
       case e: MLSQLException =>
         operation.close()
@@ -117,16 +121,23 @@ class MLSQLSession(username: String,
     } finally {
       release(true)
     }
+    operation
   }
 
-  def sql(sql: String, desc: String, operationTimeout: Int) = {
+  def sql(sql: String, opId: String, desc: String, operationTimeout: Int) = {
     var result: DataFrame = null
-    execute(() => {
+    val operation = execute(() => {
       result = sparkSession.sql(sql)
-    }, desc, operationTimeout)
+    }, opId, desc, operationTimeout)
+    operation.getResult.get()
     result
   }
 
+
   def getUserName = username
+
+  def getSessionIdentifier = sessionIdentifier
+
+  def getOpManager = opManager
 
 }

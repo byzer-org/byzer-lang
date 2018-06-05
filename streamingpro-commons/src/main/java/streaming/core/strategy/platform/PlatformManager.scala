@@ -205,6 +205,8 @@ object PlatformManager {
 
   def SPARK = "spark"
 
+  def MLSQL = "mlsql"
+
   def FLINK_STREAMING = "flink_streaming"
 
   def platformNameMapping = Map[String, String](
@@ -212,7 +214,8 @@ object PlatformManager {
     SPAKR_STRUCTURED_STREAMING -> "streaming.core.strategy.platform.SparkStructuredStreamingRuntime",
     FLINK_STREAMING -> "streaming.core.strategy.platform.FlinkStreamingRuntime",
     SPAKR_STREAMING -> "streaming.core.strategy.platform.SparkStreamingRuntime",
-    SPARK -> "streaming.core.strategy.platform.SparkRuntime"
+    SPARK -> "streaming.core.strategy.platform.SparkRuntime",
+    MLSQL -> "streaming.core.strategy.platform.MLSQLRuntime"
   )
 
 }

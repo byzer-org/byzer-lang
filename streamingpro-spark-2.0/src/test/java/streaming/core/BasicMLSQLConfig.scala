@@ -28,4 +28,15 @@ trait BasicMLSQLConfig {
     "-streaming.carbondata.store", "/tmp/carbondata/store",
     "-streaming.carbondata.meta", "/tmp/carbondata/meta"
   )
+
+  val mlsqlParams = Array(
+    "-streaming.master", "local[2]",
+    "-streaming.name", "unit-test",
+    "-streaming.rest", "false",
+    "-streaming.platform", "mlsql",
+    "-streaming.enableHiveSupport", "true",
+    "-streaming.spark.service", "false",
+    "-streaming.unittest", "true"
+
+  )
 }

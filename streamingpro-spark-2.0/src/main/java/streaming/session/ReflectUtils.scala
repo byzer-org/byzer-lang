@@ -57,7 +57,7 @@ object ReflectUtils extends Logging {
         if (!silence) {
           throw e
         } else {
-          error(e.getMessage, e)
+          log.error(e.getMessage, e)
           null
         }
     }

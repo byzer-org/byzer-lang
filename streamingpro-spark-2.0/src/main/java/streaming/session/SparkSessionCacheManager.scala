@@ -26,7 +26,7 @@ class SparkSessionCacheManager(conf: SparkConf) extends Logging {
 
   private[this] val userLatestLogout = new ConcurrentHashMap[String, Long]
   private[this] val idleTimeout =
-    math.max(conf.getTimeAsMs(BACKEND_SESSION_IDLE_TIMEOUT.key), 60 * 1000)
+    math.max(conf.getTimeAsMs(SESSION_IDLE_TIMEOUT.key), 60 * 1000)
 
   def set(user: String, sparkSession: SparkSession): Unit = {
     userToSparkSession.put(user, (sparkSession, new AtomicInteger(1)))
@@ -61,7 +61,7 @@ class SparkSessionCacheManager(conf: SparkConf) extends Logging {
     override def run(): Unit = {
       userToSparkSession.asScala.foreach {
         case (user, (session, _)) if session.sparkContext.isStopped =>
-          log.warn(s"SparkSession for $user might already be stopped by forces outside Kyuubi," +
+          log.warn(s"SparkSession for $user might already be stopped by forces outside ," +
             s" cleaning it..")
           removeSparkSession(user)
         case (user, (_, times)) if times.get() > 0 =>
@@ -86,7 +86,7 @@ class SparkSessionCacheManager(conf: SparkConf) extends Logging {
     */
   def start(): Unit = {
     // at least 1 minutes
-    val interval = math.max(conf.getTimeAsSeconds(BACKEND_SESSION_CHECK_INTERVAL.key), 60)
+    val interval = math.max(conf.getTimeAsSeconds(SESSION_CHECK_INTERVAL.key), 60)
     log.info(s"Scheduling SparkSession cache cleaning every $interval seconds")
     cacheManager.scheduleAtFixedRate(sessionCleaner, interval, interval, TimeUnit.SECONDS)
   }

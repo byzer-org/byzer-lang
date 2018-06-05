@@ -1,22 +1,32 @@
 package streaming.session
 
+import java.security.PrivilegedExceptionAction
 import java.util.UUID
+import java.util.concurrent.{Future, RejectedExecutionException}
 
 import org.apache.hadoop.hive.ql.security.authorization.plugin.HiveAccessControlException
 import streaming.log.Logging
 import streaming.session.operation._
-import org.apache.spark.MLSQLConf._
 import org.apache.spark.MLSQLSparkConst._
-import org.apache.spark.sql.AnalysisException
+import org.apache.spark.sql.{Row, _}
 import org.apache.spark.sql.catalyst.parser.ParseException
+
+import scala.util.control.NonFatal
 
 /**
   * Created by allwefantasy on 4/6/2018.
   */
-class MLSQLOperation(session: MLSQLSession, f: () => Unit, desc: String, operationTimeout: Int) extends Logging {
+class MLSQLOperation(session: MLSQLSession, f: () => Unit, opId: String, desc: String, operationTimeout: Int) extends Logging {
   private[this] var state: OperationState = INITIALIZED
   private[this] var lastAccessTime = System.currentTimeMillis()
-  private[this] var statementId: String = _
+  private[this] val statementId: String = if (opId == null) UUID.randomUUID().toString else opId
+  private[this] var operationException: MLSQLException = _
+
+  private[this] var backgroundHandle: Future[_] = _
+
+  private[this] var result: Any = _
+
+  def getResult = backgroundHandle
 
   private[this] def setState(newState: OperationState): Unit = {
     state.validateTransition(newState)
@@ -39,16 +49,55 @@ class MLSQLOperation(session: MLSQLSession, f: () => Unit, desc: String, operati
     this.lastAccessTime = System.currentTimeMillis()
   }
 
+  private[this] def setOperationException(opEx: MLSQLException): Unit = {
+    this.operationException = opEx
+  }
+
   def run(): Unit = {
-    execute()
+    setState(RUNNING)
+    val backgroundOperation = new Runnable() {
+      override def run(): Unit = {
+        try {
+          session.ugi.doAs(new PrivilegedExceptionAction[Unit]() {
+
+            override def run(): Unit = {
+              try {
+                execute()
+              } catch {
+                case e: MLSQLException => setOperationException(e)
+              }
+            }
+          })
+        } catch {
+          case e: Exception => setOperationException(new MLSQLException(e))
+        }
+      }
+    }
+    try {
+      // This submit blocks if no background threads are available to run this operation
+      val backgroundHandle =
+        session.getOpManager.asyncRun(backgroundOperation)
+      setBackgroundHandle(backgroundHandle)
+    } catch {
+      case rejected: RejectedExecutionException =>
+        setState(ERROR)
+        throw new MLSQLException("The background threadpool cannot accept" +
+          " new task for execution, please retry the operation", rejected)
+      case NonFatal(e) =>
+        log.error(s"Error executing query in background", e)
+        setState(ERROR)
+        throw e
+    }
+
   }
 
 
+  def setBackgroundHandle(handle: Future[_]) = this.backgroundHandle = handle
+
   private[this] def execute(): Unit = {
     try {
-      statementId = UUID.randomUUID().toString
-      log.info(s"Running query '$statement' with $statementId")
-      setState(RUNNING)
+      log.info(s"Running query '$desc' with $statementId")
+      //setState(PENDING)
       session.sparkSession.sparkContext.setJobGroup(statementId, desc)
       f()
       setState(FINISHED)
@@ -127,5 +176,11 @@ class MLSQLOperation(session: MLSQLSession, f: () => Unit, desc: String, operati
       state.isTerminal && lastAccessTime + operationTimeout <= System.currentTimeMillis()
     }
   }
+
+  def getOpId = statementId
+
+  def getDesc = desc
+
+  def getOperationTimeout = operationTimeout
 
 }

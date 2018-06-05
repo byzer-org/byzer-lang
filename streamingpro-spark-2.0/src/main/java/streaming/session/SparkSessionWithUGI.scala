@@ -1,11 +1,12 @@
 package streaming.session
 
-import java.lang.reflect.UndeclaredThrowableException
+import java.lang.reflect.{Modifier, UndeclaredThrowableException}
 import java.security.PrivilegedExceptionAction
+import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.{TimeUnit, TimeoutException}
 
 import org.apache.hadoop.security.UserGroupInformation
-import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.{MLSQLSparkConst, SparkConf, SparkContext}
 import org.apache.spark.sql.SparkSession
 import streaming.log.Logging
 
@@ -14,7 +15,9 @@ import scala.concurrent.{Await, Promise}
 import scala.util.control.NonFatal
 import org.apache.spark.MLSQLConf._
 import org.apache.spark.MLSQLSparkConst._
+import streaming.core.strategy.platform.MLSQLRuntime
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 
 /**
@@ -28,13 +31,16 @@ class SparkSessionWithUGI(user: UserGroupInformation, conf: SparkConf) extends L
   private[this] val promisedSparkContext = Promise[SparkContext]()
   private[this] var initialDatabase: Option[String] = None
 
+  private[this] val sparkContext: AtomicReference[SparkContext] = new AtomicReference[SparkContext]()
+
   private[this] def newContext(): Thread = {
     new Thread(s"Start-SparkContext-$userName") {
       override def run(): Unit = {
         try {
           promisedSparkContext.trySuccess(new SparkContext(conf))
         } catch {
-          case NonFatal(e) => throw e
+          case NonFatal(e) =>
+            throw e
         }
       }
     }
@@ -80,9 +86,9 @@ class SparkSessionWithUGI(user: UserGroupInformation, conf: SparkConf) extends L
     conf.remove(PRINCIPAL)
   }
 
-  private[this] def getOrCreate(sessionConf: Map[String, String]): Unit = synchronized {
-    var checkRound = math.max(conf.get(BACKEND_SESSION_WAIT_OTHER_TIMES.key).toInt, 15)
-    val interval = conf.getTimeAsMs(BACKEND_SESSION_WAIT_OTHER_INTERVAL.key)
+  private[this] def getOrCreate(sessionConf: Map[String, String], params: Map[Any, Any]): Unit = synchronized {
+    var checkRound = math.max(conf.get(SESSION_WAIT_OTHER_TIMES.key).toInt, 15)
+    val interval = conf.getTimeAsMs(SESSION_WAIT_OTHER_INTERVAL.key)
     // if user's sc is being constructed by another
     while (SparkSessionWithUGI.isPartiallyConstructed(userName)) {
       wait(interval)
@@ -101,26 +107,68 @@ class SparkSessionWithUGI(user: UserGroupInformation, conf: SparkConf) extends L
       case _ =>
         SparkSessionWithUGI.setPartiallyConstructed(userName)
         notifyAll()
-        create(sessionConf)
+        create(sessionConf, params)
     }
   }
 
-  private[this] def create(sessionConf: Map[String, String]): Unit = {
+  private[this] def configureUDF = {
+    def registerUDF(clzz: String) = {
+      log.info("register functions.....")
+      Class.forName(clzz).getMethods.foreach { f =>
+        try {
+          if (Modifier.isStatic(f.getModifiers)) {
+            log.info(f.getName)
+            f.invoke(null, sparkSession.udf)
+          }
+        } catch {
+          case e: Exception =>
+            e.printStackTrace()
+        }
+      }
+
+    }
+    List(
+      "streaming.core.compositor.spark.udf.Functions",
+      "streaming.crawler.udf.Functions",
+      "streaming.dsl.mmlib.algs.processing.UDFFunctions").foreach { clzz =>
+      registerUDF(clzz)
+    }
+
+
+  }
+
+  private[this] def create(sessionConf: Map[String, String], params: Map[Any, Any]): Unit = {
     log.info(s"--------- Create new SparkSession for $userName ----------")
-    val appName = s"MLSQLSession[$userName]@" + conf.get(FRONTEND_BIND_HOST.key)
+    val appName = s"MLSQLSession[$userName]@" + conf.get(BIND_HOST.key)
     conf.setAppName(appName)
     configureSparkConf(sessionConf)
-    val totalWaitTime: Long = conf.getTimeAsSeconds(BACKEND_SESSTION_INIT_TIMEOUT.key)
+
+    val allowMultipleContexts: Boolean =
+      conf.getBoolean("spark.driver.allowMultipleContexts", false)
+    val totalWaitTime: Long = conf.getTimeAsSeconds(SESSTION_INIT_TIMEOUT.key)
+
+    synchronized {
+      if (!allowMultipleContexts) {
+        sparkContext.set(params("__sc__").asInstanceOf[SparkContext])
+      }
+    }
+
     try {
       user.doAs(new PrivilegedExceptionAction[Unit] {
         override def run(): Unit = {
-          newContext().start()
-          val context =
-            Await.result(promisedSparkContext.future, Duration(totalWaitTime, TimeUnit.SECONDS))
+          if (allowMultipleContexts) {
+            newContext().start()
+            val context =
+              Await.result(promisedSparkContext.future, Duration(totalWaitTime, TimeUnit.SECONDS))
+            sparkContext.set(context)
+          }
+          val context = sparkContext.get()
+
           _sparkSession = ReflectUtils.newInstance(
             classOf[SparkSession].getName,
             Seq(classOf[SparkContext]),
             Seq(context)).asInstanceOf[SparkSession]
+          configureUDF
         }
       })
       SparkSessionCacheManager.get.set(userName, _sparkSession)
@@ -145,6 +193,11 @@ class SparkSessionWithUGI(user: UserGroupInformation, conf: SparkConf) extends L
     }
   }
 
+  def isLocalMaster(conf: SparkConf): Boolean = {
+    val master = conf.get("spark.master", "")
+    master == "local" || master.startsWith("local[")
+  }
+
   /**
     * Invoke SparkContext.stop() if not succeed initializing it
     */
@@ -158,9 +211,9 @@ class SparkSessionWithUGI(user: UserGroupInformation, conf: SparkConf) extends L
 
   def userName: String = user.getShortUserName
 
-  def init(sessionConf: Map[String, String]): Unit = {
+  def init(sessionConf: Map[String, String], params: Map[Any, Any]): Unit = {
     try {
-      getOrCreate(sessionConf)
+      getOrCreate(sessionConf, params)
       initialDatabase.foreach { db =>
         user.doAs(new PrivilegedExceptionAction[Unit] {
           override def run(): Unit = _sparkSession.sql(db)
@@ -187,4 +240,5 @@ object SparkSessionWithUGI extends Logging {
   def setFullyConstructed(user: String): Unit = {
     userSparkContextBeingConstruct.remove(user)
   }
+
 }
