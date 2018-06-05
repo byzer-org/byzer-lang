@@ -25,5 +25,6 @@ class ConnectAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAd
 
       }
     }
+    scriptSQLExecListener.setLastSelectTable(null)
   }
 }

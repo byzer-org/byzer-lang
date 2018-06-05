@@ -44,6 +44,7 @@ class LoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
     } else {
       new BatchLoadAdaptor(scriptSQLExecListener, option, path, tableName, format).parse
     }
+    scriptSQLExecListener.setLastSelectTable(tableName)
 
   }
 }
