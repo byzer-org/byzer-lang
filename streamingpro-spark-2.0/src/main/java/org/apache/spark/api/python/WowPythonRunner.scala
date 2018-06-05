@@ -37,7 +37,8 @@ object WowPythonRunner extends Logging {
     // Whether is the worker released into idle pool
     @volatile var released = false
     val context = TaskContext.get()
-    def run(): Unit = Utils.logUncaughtExceptions {
+
+    def _run(): Unit = Utils.logUncaughtExceptions {
       try {
         val stream = new BufferedOutputStream(worker.getOutputStream, bufferSize)
         val dataOut = new DataOutputStream(stream)
@@ -85,7 +86,8 @@ object WowPythonRunner extends Logging {
           }
       }
     }
-    run()
+    _run()
+
     // Return an iterator that read lines from the process's stdout
     val stream = new DataInputStream(new BufferedInputStream(worker.getInputStream, bufferSize))
     val stdoutIterator = new Iterator[Array[Byte]] {
@@ -172,6 +174,7 @@ object WowPythonRunner extends Logging {
     }
     new InterruptibleIterator(context, stdoutIterator)
   }
+
 }
 
 

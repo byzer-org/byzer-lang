@@ -160,6 +160,7 @@ for items in rd(max_records=batch_size):
 
 from pyspark.ml.linalg import VectorUDT, Vectors
 import pickle
+import os
 import python_fun
 
 
@@ -171,12 +172,25 @@ import python_fun
 # 应该保持模型加载的单例。
 def predict(index, s):
     items = [i for i in s]
+    
+    # pickle.loads(items[1])[0]  表示的是modelPath,也就是前面配置的/tmp/william/tmp/pa_model2
+    modelPath = pickle.loads(items[1])[0]+"/model.pickle"
+    print("predict.....")
+    
+    ## 用一个比较trick的方法解决模型只加载一次的问题
+    if not hasattr(os,"models"):
+         setattr(os,"models",{})
+       if modelPath not in os.models:
+           print("load model.....")
+           os.models[modelPath] = pickle.load(open(modelPath))
+    
+    model = os.models[modelPath]
+    
     # items[0] 就是一个向量，需要通过VectorUDT进行反序列化
-    modelPath = pickle.loads(items[1])[0]
     vector = pickle.loads(items[0])
     feature = VectorUDT().deserialize(vector)
-    # pickle.loads(items[1])[0]  表示的是modelPath,也就是前面配置的/tmp/william/tmp/pa_model2
-    model = pickle.load(open(modelPath + "/model.pickle"))
+    
+        
     y = model.predict([feature.toArray()])
     return [VectorUDT().serialize(Vectors.dense(y))]
 
@@ -196,6 +210,26 @@ python_fun.udf(predict)
 register PythonAlg.`/tmp/pa_model` as jack options
 pythonScriptPath="${pythonPredictScriptPath}"
 ;
+```
+
+预测代码可以完全在本地进行测试，核心就是构造predict 里的`s`变量。
+ 
+```python
+if __name__ == '__main__':
+    # 把模型和数据下载到本地，假设数据是json格式的
+    model_path = '/tmp/model'
+    data_path = 'tmp/part-00000-94b58e22-3671-460e-a7d2-120469c94057-c000.json'
+
+    with open(file=data_path) as f:
+        for line in f.readlines():
+            s = []
+            feature = json.loads(line)['feature']['values'] 
+            # 对特征字段要先进行VectorUDT序列化，然后再用picle进行序列化
+            s.insert(0, pickle.dumps(VectorUDT().serialize(Vectors.dense(feature))))
+            # modelPath 直接用pickle序列化就好
+            s.insert(1, pickle.dumps([model_path]))
+            # 调用前面的方法进行预测
+            predict(1, s)
 ```
 
 ## 模型目录结构

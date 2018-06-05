@@ -34,7 +34,6 @@ trait BasicMLSQLConfig {
     "-streaming.name", "unit-test",
     "-streaming.rest", "false",
     "-streaming.platform", "mlsql",
-    "-streaming.enableHiveSupport", "true",
     "-streaming.spark.service", "false",
     "-streaming.unittest", "true"
 
