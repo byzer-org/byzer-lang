@@ -19,7 +19,7 @@ import scala.collection.JavaConversions._
 class MLSQLRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with PlatformManagerListener {
   val logger = Logger.getLogger(getClass.getName)
 
-  def name = "SPARK"
+  def name = "MLSQL"
 
   var localSchedulerBackend: LocalPSSchedulerBackend = null
   var psDriverBackend: PSDriverBackend = null

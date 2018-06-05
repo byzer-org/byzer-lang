@@ -1,7 +1,6 @@
 package streaming.session
 
 import java.io.IOException
-import java.security.PrivilegedExceptionAction
 
 import org.apache.hadoop.fs.FileSystem
 import org.apache.hadoop.security.UserGroupInformation
@@ -10,8 +9,6 @@ import org.apache.spark.{MLSQLSparkConst, SparkConf}
 
 import scala.collection.mutable.{HashSet => MHSet}
 import streaming.log.Logging
-
-import scala.concurrent.Await
 
 
 /**
@@ -75,7 +72,7 @@ class MLSQLSession(username: String,
   def ugi: UserGroupInformation = this.sessionUGI
 
   def open(sessionConf: Map[String, String], params: Map[Any, Any]): Unit = {
-    sparkSessionWithUGI.init(sessionConf,params)
+    sparkSessionWithUGI.init(sessionConf, params)
     lastAccessTime = System.currentTimeMillis
     lastIdleTime = lastAccessTime
   }
