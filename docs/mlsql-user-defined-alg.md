@@ -160,17 +160,9 @@ for items in rd(max_records=batch_size):
 
 from pyspark.ml.linalg import VectorUDT, Vectors
 import pickle
+import os
 import python_fun
 
-## 保证模型只加载一次
-class ModelLoader(object):
-    model = None
-
-    def load(self, path):
-        if ModelLoader.model is None:
-            print("load model %s" % path)            
-            ModelLoader.model = pickle.load(path)
-        return ModelLoader.model
 
 # 定义一个预测函数，签名是固定的，index表示分区，s表示数据。
 # s 表示一条预测数据，是一个数组，长度为2。
@@ -180,12 +172,25 @@ class ModelLoader(object):
 # 应该保持模型加载的单例。
 def predict(index, s):
     items = [i for i in s]
+    
+    # pickle.loads(items[1])[0]  表示的是modelPath,也就是前面配置的/tmp/william/tmp/pa_model2
+    modelPath = pickle.loads(items[1])[0]+"/model.pickle"
+    print("predict.....")
+    
+    ## 用一个比较trick的方法解决模型只加载一次的问题
+    if not hasattr(os,"models"):
+         setattr(os,"models",{})
+       if modelPath not in os.models:
+           print("load model.....")
+           os.models[modelPath] = pickle.load(open(modelPath))
+    
+    model = os.models[modelPath]
+    
     # items[0] 就是一个向量，需要通过VectorUDT进行反序列化
-    modelPath = pickle.loads(items[1])[0]
     vector = pickle.loads(items[0])
     feature = VectorUDT().deserialize(vector)
-    # pickle.loads(items[1])[0]  表示的是modelPath,也就是前面配置的/tmp/william/tmp/pa_model2
-    model = ModelLoader().load(modelPath + '/model.h5')    
+    
+        
     y = model.predict([feature.toArray()])
     return [VectorUDT().serialize(Vectors.dense(y))]
 

@@ -97,13 +97,20 @@ class PythonMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQ
           |from pyspark.ml.linalg import VectorUDT, Vectors
           |import pickle
           |import python_fun
-          |
+          |import os
           |
           |def predict(index, s):
           |    items = [i for i in s]
           |    feature = VectorUDT().deserialize(pickle.loads(items[0]))
-          |    print(pickle.loads(items[1])[0])
-          |    model = pickle.load(open(pickle.loads(items[1])[0]+"/model.pickle"))
+          |    modelPath = pickle.loads(items[1])[0]+"/model.pickle"
+          |    print("predict.....")
+          |    if not hasattr(os,"models"):
+          |       setattr(os,"models",{})
+          |    if modelPath not in os.models:
+          |       print("load model.....")
+          |       os.models[modelPath] = pickle.load(open(modelPath))
+          |
+          |    model = os.models[modelPath]
           |    y = model.predict([feature.toArray()])
           |    return [VectorUDT().serialize(Vectors.dense(y))]
           |
