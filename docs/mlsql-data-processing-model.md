@@ -439,6 +439,13 @@ and method="SPEED"
 and mode="AUTOMATIC"
 ;
 
+load parquet.`/tmp/word2vecinplace/data`
+as imagesWithResize;
+
+-- 通过vec_image 可以将图片转化为一个一维数组,结构为[height * width * nChannels]
+select vec_image(imagePath) as feature from imagesWithResize
+as newTable;
+```
 参数使用说明：
 
 |参数|默认值|说明|
@@ -466,14 +473,6 @@ mode说明：
 |FIT_EXACT|精准模式,用适合的图像给不顾形象的比例精确的尺寸|
 |FIT_TO_HEIGHT|用于表明缩放的实现应该计算尺寸的图像，最适合在给定的高度，无论图像的方向|
 |FIT_TO_WIDTH|用于表明缩放的实现应该计算尺寸的图像，最适合在给定的宽度，无论图像的方向|
-
-load parquet.`/tmp/word2vecinplace/data`
-as imagesWithResize;
-
--- 通过vec_image 可以将图片转化为一个一维数组,结构为[height * width * nChannels]
-select vec_image(imagePath) as feature from imagesWithResize
-as newTable;
-```
 
 图片字段有一个单独的数据格式：
 
