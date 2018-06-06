@@ -239,4 +239,14 @@ class PythonMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQ
 
     }
   }
+
+//  "python-alg-tensorflow-cnn-model" should "work fine" in {
+//    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+//      //执行sql
+//      implicit val spark = runtime.sparkSession
+//      val sq = createSSEL
+//      ScriptSQLExec.parse(loadSQLScriptStr("python-alg-tensorflow-cnn"), sq)
+//
+//    }
+//  }
 }

@@ -3,6 +3,8 @@ package streaming.dsl.mmlib.algs.processing.image;
 import org.apache.spark.sql.Row;
 
 import static org.bytedeco.javacpp.opencv_core.*;
+import static org.bytedeco.javacpp.opencv_imgcodecs.*;
+import static org.bytedeco.javacpp.opencv_imgproc.*;
 
 /**
  * Created by allwefantasy on 28/5/2018.
@@ -23,11 +25,27 @@ public class ImageOp {
         return iplImage;
     }
 
+    public static void resize(IplImage cvImage, IplImage targetImage) {
+        cvResize(cvImage, targetImage);
+    }
+
     public static void release(IplImage cvImage) {
         if (cvImage != null) {
             cvImage.cvSize().close();
             cvReleaseImage(cvImage);
         }
+    }
+
+    public static void saveImage(String path, IplImage cvImage) {
+        cvSaveImage(path, cvImage);
+        release(cvImage);
+    }
+
+    public static byte[] readImage(String path) {
+        IplImage image = cvLoadImage(path, CV_LOAD_IMAGE_UNCHANGED);
+        byte[] sz = getData(image);
+        release(image);
+        return sz;
     }
 
     public static byte[] getData(IplImage image) {
