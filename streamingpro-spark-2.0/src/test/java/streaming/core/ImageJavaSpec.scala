@@ -37,7 +37,7 @@ class ImageJavaSpec extends BasicSparkOperation with SpecFunctions with BasicMLS
       newDF.createOrReplaceTempView("wow")
       newDF.collect().foreach { r =>
         val image = ImageOp.byte2image(r.getStruct(0)(5).asInstanceOf[Array[Byte]])
-        ImageIO.write(image, "png", new File("/Users/zml/Desktop/image.png"))
+        ImageIO.write(image, ImageOp.imageFormat(r.getStruct(0)(5).asInstanceOf[Array[Byte]]), new File("/tmp/image.png"))
       }
       val cv = new SQLJavaImage()
       val model = cv.load(spark, "/tmp/image", Map())

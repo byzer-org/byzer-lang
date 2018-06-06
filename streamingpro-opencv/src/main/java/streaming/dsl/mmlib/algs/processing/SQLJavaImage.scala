@@ -85,12 +85,6 @@ class SQLJavaImage extends SQLAlg with SQlBaseFunc {
     }
     val func = (a: Array[Byte]) => {
       val image = decodeImage(a).getStruct(0)
-      val data: Array[Byte] = ImageOp.resize(ImageSchema.getData(image), Scalr.Method.valueOf(method), Scalr.Mode.valueOf(mode), width, height)
-      Row(ImageSchema.getOrigin(image), height.toInt, width.toInt,
-        ImageSchema.getNChannels(image),
-        ImageSchema.getMode(image),
-        data
-      )
       try {
         val data: Array[Byte] = ImageOp.resize(ImageSchema.getData(image), Scalr.Method.valueOf(method), Scalr.Mode.valueOf(mode), width, height)
 
