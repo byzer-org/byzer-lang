@@ -8,6 +8,7 @@
     - [bucketizer](#bucketizer方式)
     - [quantile](#quantile方式)
   - [OpenCVImage](#opencvimage)
+  - [JavaImage](#javaimage)
   - [TokenExtract / TokenAnalysis](#tokenextract--tokenanalysis)
   - [RateSampler](#ratesampler)
 - [**低阶数据预处理模型**](#低阶特定小功能点数据预处理模型)
@@ -328,7 +329,7 @@ as  images;
 
 -- 或者你可能因为训练的原因，需要加载一个图片数据集 该表只有一个字段image,但是image是一个复杂字段，其中origin 带有路径信息。
 load image.`/training_set`
-options 
+options
 -- 递归目录查找图片
 recursive="true"
 -- 丢弃解析失败的图片
@@ -343,20 +344,20 @@ and repartitionNum="4"
 and filterByteSize="2048576"
 -- 可以禁止对图片进行解析，避免占用过大资源，让后续的OpenCVImage来解析
 and enableDecode = "true"
-as images;  
+as images;
 
 
 -- 比如 选择origin,width字段
--- select image.origin,image.width from images 
+-- select image.origin,image.width from images
 -- as newimages;
- 
+
 train images as OpenCVImage.`/tmp/word2vecinplace`
 where inputCol="imagePath"
 and filterByteSize="2048576"
 -- 宽度和高度重新设置为100
 and shape="100,100,4"
 ;
-load parquet.`/tmp/word2vecinplace/data` 
+load parquet.`/tmp/word2vecinplace/data`
 as imagesWithResize;
 
 -- 通过vec_image 可以将图片转化为一个一维数组,结构为[height * width * nChannels]
@@ -388,6 +389,116 @@ register OpenCVImage.`/tmp/word2vecinplace/` as jack;
 ```sql
 select jack(crawler_request_image(imagePath)) as image from orginal_text_corpus
 ```
+
+
+### JavaImage
+
+JavaImage模块主要是对图像做处理。第一版仅仅能够做resize动作。后面会持续扩充功能。
+
+因为目前和OpenCV集成在一起，引入OpenCV模块jar包体积会很大，所以编译项目时，需要加上 -Popencv-support 才能使得该功能生效。
+
+具体用法：
+
+```sql
+-- 抓取一张图片
+select crawler_request_image("https://tpc.googlesyndication.com/simgad/10310202961328364833") as imagePath
+as  images;
+
+-- 或者你可能因为训练的原因，需要加载一个图片数据集 该表只有一个字段image,但是image是一个复杂字段，其中origin 带有路径信息。
+load image.`/training_set`
+options
+-- 递归目录查找图片
+recursive="true"
+-- 丢弃解析失败的图片
+and dropImageFailures="true"
+-- 采样率
+and sampleRatio="1.0"
+-- 读取图片线程数
+and numPartitions="8"
+-- 处理图片线程数
+and repartitionNum="4"
+-- 单张图片最大限制
+and filterByteSize="2048576"
+-- 禁止对图片进行解析，用openCV算法可以设置为true
+and enableDecode = "false"
+as images;
+
+
+-- 比如 选择origin,width字段
+-- select image.origin,image.width from images
+-- as newimages;
+
+train images as JavaImage.`/tmp/word2vecinplace`
+where inputCol="imagePath"
+and filterByteSize="2048576"
+-- 宽度和高度重新设置为100,第三个数字4在此算法不生效
+and shape="100,100,4"
+-- 缩放方法，默认：AUTOMATIC
+and method="SPEED"
+-- 缩放模式，默认：FIT_EXACT
+and mode="AUTOMATIC"
+;
+
+load parquet.`/tmp/word2vecinplace/data`
+as imagesWithResize;
+
+-- 通过vec_image 可以将图片转化为一个一维数组,结构为[height * width * nChannels]
+select vec_image(imagePath) as feature from imagesWithResize
+as newTable;
+```
+参数使用说明：
+
+|参数|默认值|说明|
+|:----|:----|:----|
+|method|AUTOMATIC|缩放方法|
+|mode|FIT_EXACT|缩放模式|
+|shape|none|width,height,channel，例如：100,100,3。channel不生效|
+
+method说明：
+
+|值|说明|
+|:----|:----|
+|AUTOMATIC|自动,用于表明缩放的实现应该决定使用以获得最佳的期待在最少的时间缩放图像的|
+|BALANCED|平衡,用于表明缩放的实现应该使用缩放操作的速度和质量之间的平衡|
+|QUALITY|质量,用于表明缩放的实现应该尽其所能创造很好的效果越好|
+|SPEED|用于表明缩放的实现的规模应该尽可能快并返回结果|
+|ULTRA_QUALITY|用于表明缩放的实现应该超越的质量所做的工作，使图像看起来特别好的更多的处理时间成本|
+
+mode说明：
+
+|值|说明|
+|:----|:----|
+|AUTOMATIC|自动,用于表明缩放的实现应该计算所得的图像尺寸，通过查看图像的方向和发电比例尺寸，最佳为目标的宽度和高度，看到“给出更详细的scalr类描述图像的比例”|
+|BEST_FIT_BOTH|最佳模式,用于表明缩放的实现应该计算，适合在包围盒的最大尺寸的图片，没有种植或失真，保持原来的比例|
+|FIT_EXACT|精准模式,用适合的图像给不顾形象的比例精确的尺寸|
+|FIT_TO_HEIGHT|用于表明缩放的实现应该计算尺寸的图像，最适合在给定的高度，无论图像的方向|
+|FIT_TO_WIDTH|用于表明缩放的实现应该计算尺寸的图像，最适合在给定的宽度，无论图像的方向|
+
+图片字段有一个单独的数据格式：
+
+```scala
+StructType(
+    StructField("origin", StringType, true) ::
+      StructField("height", IntegerType, false) ::
+      StructField("width", IntegerType, false) ::
+      StructField("nChannels", IntegerType, false) ::
+      StructField("mode", StringType, false) ::
+      StructField("data", BinaryType, false) :: Nil)
+```
+
+
+对于新图片，你首先需要注册下之前训练产生的模型：
+
+```sql
+register JavaImage.`/tmp/word2vecinplace/` as jack;
+```
+
+接着你便可以使用该模型对新数据做处理了：
+
+```sql
+select jack(crawler_request_image(imagePath)) as image from orginal_text_corpus
+```
+
 
 
 ## TokenExtract / TokenAnalysis

@@ -77,6 +77,7 @@ object MLMapping {
     "NormalizeInPlace" -> "streaming.dsl.mmlib.algs.SQLNormalizeInPlace",
     "PythonAlg" -> "streaming.dsl.mmlib.algs.SQLPythonAlg",
     "OpenCVImage" -> "streaming.dsl.mmlib.algs.processing.SQLOpenCVImage",
+    "JavaImage" -> "streaming.dsl.mmlib.algs.processing.SQLJavaImage",
     "Discretizer" -> "streaming.dsl.mmlib.algs.SQLDiscretizer"
   )
 

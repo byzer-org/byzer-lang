@@ -242,4 +242,30 @@ object ImageSchema {
 
     result
   }
+  def decode(origin: String, bytes: Array[Byte]): Option[Row] = {
+
+    val img = try {
+      ImageIO.read(new ByteArrayInputStream(bytes))
+    } catch {
+      case e: Exception => e.printStackTrace()
+        null
+    }
+
+    if (img == null) {
+      None
+    } else {
+
+      val is_gray = img.getColorModel.getColorSpace.getType == ColorSpace.TYPE_GRAY
+      val has_alpha = img.getColorModel.hasAlpha
+
+      val height = img.getHeight
+      val width = img.getWidth
+      val (nChannels, mode) = if (is_gray) (1, "CV_8UC1")
+      else if (has_alpha) (4, "CV_8UC4")
+      else (3, "CV_8UC3")
+
+      // the internal "Row" is needed, because the image is a single dataframe column
+      Some(Row(Row(origin, height, width, nChannels, mode, bytes)))
+    }
+  }
 }
