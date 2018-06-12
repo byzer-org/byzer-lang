@@ -3,7 +3,6 @@ package org.apache.spark.util
 import java.io._
 import java.util.concurrent.atomic.AtomicReference
 
-import net.csdn.common.logging.Loggers
 import org.apache.spark.sql.types._
 import org.apache.spark.{SparkEnv, TaskContext}
 
@@ -11,14 +10,14 @@ import scala.collection.JavaConverters._
 import scala.io.Source
 import ObjPickle._
 import streaming.dsl.mmlib.algs.SQLPythonFunc
+import streaming.log.Logging
 
 import scala.collection.mutable.ArrayBuffer
 
 /**
   * Created by allwefantasy on 24/1/2018.
   */
-object ExternalCommandRunner {
-  val logger = Loggers.getLogger(classOf[ExternalCommandRunner])
+object ExternalCommandRunner extends Logging {
 
   def run(command: Seq[String],
           iter: Any,
@@ -43,10 +42,10 @@ object ExternalCommandRunner {
     // access conflict issue
     val taskDirectory = "tasks" + File.separator + java.util.UUID.randomUUID.toString
     var workInTaskDirectory = false
-    logger.debug("taskDirectory = " + taskDirectory)
+    log.debug("taskDirectory = " + taskDirectory)
     if (separateWorkingDir) {
       val currentDir = new File(".")
-      logger.debug("currentDir = " + currentDir.getAbsolutePath())
+      log.debug("currentDir = " + currentDir.getAbsolutePath())
       val taskDirFile = new File(taskDirectory)
       taskDirFile.mkdirs()
 
@@ -65,7 +64,7 @@ object ExternalCommandRunner {
         pb.directory(taskDirFile)
         workInTaskDirectory = true
       } catch {
-        case e: Exception => logger.error("Unable to setup task working directory: " + e.getMessage +
+        case e: Exception => log.error("Unable to setup task working directory: " + e.getMessage +
           " (" + taskDirectory + ")", e)
       }
     }
@@ -104,8 +103,11 @@ object ExternalCommandRunner {
     savePythonFile("mlsql_tf.py")
     savePythonFile("python_fun.py")
 
-    val proc = pb.start()
     val env = SparkEnv.get
+    val proc = pb.start()
+
+    new MonitorThread(env, proc, TaskContext.get(), taskDirectory, command.mkString(" ")).start()
+
     val childThreadException = new AtomicReference[Throwable](null)
     // Start a thread to print the process's stderr to ours
     new Thread(s"stderr reader for $command") {
@@ -116,7 +118,7 @@ object ExternalCommandRunner {
           for (line <- Source.fromInputStream(err)(encoding).getLines) {
             // scalastyle:off println
             System.err.println(line)
-            logger.error("__python__:" + line)
+            log.error("__python__:" + line)
             errorBuffer += line
             // scalastyle:on println
           }
@@ -155,7 +157,7 @@ object ExternalCommandRunner {
         }
         val line = lines.next()
         println(line)
-        logger.info("__python__:" + line)
+        log.info("__python__:" + line)
         line
       }
 
@@ -184,7 +186,7 @@ object ExternalCommandRunner {
           scala.util.control.Exception.ignoring(classOf[IOException]) {
             Utils.deleteRecursively(new File(taskDirectory))
           }
-          logger.debug(s"Removed task working directory $taskDirectory")
+          log.debug(s"Removed task working directory $taskDirectory")
         }
       }
 
@@ -194,7 +196,7 @@ object ExternalCommandRunner {
           val commandRan = command.mkString(" ")
           val msg = s"Caught exception while running pipe() operator. Command ran: $commandRan. " +
             s"Exception: ${t.getMessage}"
-          logger.error(msg)
+          log.error(msg)
           errorBuffer += msg
           proc.destroy()
           cleanup()
@@ -204,6 +206,37 @@ object ExternalCommandRunner {
       }
     }
 
+  }
+
+  class MonitorThread(env: SparkEnv, worker: Process, context: TaskContext, taskDirFile: String, pythonExec: String)
+    extends Thread(s"Worker Monitor for $pythonExec") {
+
+    setDaemon(true)
+
+    private def cleanup(): Unit = {
+      // cleanup task working directory if used
+      scala.util.control.Exception.ignoring(classOf[IOException]) {
+        Utils.deleteRecursively(new File(taskDirFile))
+      }
+    }
+
+    override def run() {
+      // Kill the worker if it is interrupted, checking until task completion.
+      // TODO: This has a race condition if interruption occurs, as completed may still become true.
+      while (!context.isInterrupted && !context.isCompleted) {
+        Thread.sleep(2000)
+      }
+      if (!context.isCompleted) {
+        try {
+          logWarning("Incomplete task interrupted: Attempting to kill Python Worker")
+          worker.destroy()
+          cleanup()
+        } catch {
+          case e: Exception =>
+            logError("Exception when trying to kill worker", e)
+        }
+      }
+    }
   }
 
 }
