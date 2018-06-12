@@ -60,7 +60,14 @@ class PSDriverEndpoint(sc: SparkContext, override val rpcEnv: RpcEnv)
         // Note: some tests expect the reply to come after we put the executor in the map
         context.reply(true)
       }
-
+    case Message.CopyModelToLocal(modelPath, destPath) =>
+      val ks = sc.getExecutorIds().toSet
+      executorDataMap.foreach { ed =>
+        if (ks.contains(ed._1)) {
+          ed._2.executorEndpoint.askSync[Boolean](Message.CopyModelToLocal(modelPath, destPath))
+        }
+      }
+      context.reply(true)
 
   }
 
