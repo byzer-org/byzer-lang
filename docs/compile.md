@@ -15,7 +15,7 @@ mvn install -Pscala-2.11 -Pjetty-9 -Pweb-include-jetty-9
 git clone https://github.com/allwefantasy/streamingpro.git
 cd streamingpro
 mvn -DskipTests clean package  \
--pl streamingpro-spark-2.0 -am  \
+-pl streamingpro-mlsql -am  \
 -Ponline -Pscala-2.11  \
 -Phive-thrift-server \
 -Pspark-2.2.0 \
@@ -96,7 +96,7 @@ mvn install -Pscala-2.10 -Pjetty-9 -Pweb-include-jetty-9
 git clone https://github.com/allwefantasy/streamingpro.git
 cd streamingpro
 mvn -DskipTests clean package  \
--pl streamingpro-spark-2.0 -am  \
+-pl streamingpro-mlsql -am  \
 -Ponline -Pscala-2.11  \
 -Phive-thrift-server \
 -Pspark-2.3.0 \
@@ -112,7 +112,7 @@ mvn -DskipTests clean package  \
 git clone https://github.com/allwefantasy/streamingpro.git
 cd streamingpro
 mvn -DskipTests clean package  \
--pl streamingpro-spark-2.0 \
+-pl streamingpro-mlsql \
 -am  \
 -Ponline \
 -Pscala-2.11  \
@@ -140,7 +140,7 @@ step1: 编译时将各种依赖都带上：
 
 ```
 mvn -DskipTests clean package   \
--pl streamingpro-spark-2.0 -am \  
+-pl streamingpro-mlsql -am \  
 -Ponline -Pscala-2.11  \
 -Phive-thrift-server \
 -Pspark-2.2.0 \
