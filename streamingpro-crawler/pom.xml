@@ -13,23 +13,25 @@
 
     <dependencies>
         <dependency>
-            <groupId>streaming.king</groupId>
-            <artifactId>streamingpro-spark-common</artifactId>
-            <version>${parent.version}</version>
-            <scope>compile</scope>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-sql_${scala.binary.version}</artifactId>
+            <version>${spark.version}</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
-            <artifactId>spark-core_2.11</artifactId>
+            <artifactId>spark-core_${scala.binary.version}</artifactId>
             <version>${spark.version}</version>
-            <scope>compile</scope>
+            <scope>provided</scope>
         </dependency>
+
         <dependency>
             <groupId>org.apache.spark</groupId>
-            <artifactId>spark-sql_2.11</artifactId>
+            <artifactId>spark-mllib_${scala.binary.version}</artifactId>
             <version>${spark.version}</version>
-            <scope>compile</scope>
+            <scope>provided</scope>
         </dependency>
+
         <dependency>
             <groupId>net.bytebuddy</groupId>
             <artifactId>byte-buddy</artifactId>
@@ -84,6 +86,7 @@
                 </exclusion>
             </exclusions>
         </dependency>
+
 
     </dependencies>
 

@@ -54,12 +54,13 @@ class SQLPythonAlg extends SQLAlg with Functions {
     val pythonPath = systemParam.getOrElse("pythonPath", "python")
     val pythonVer = systemParam.getOrElse("pythonVer", "2.7")
     var tempDataLocalPath = ""
+    var dataHDFSPath = ""
 
     if (enableDataLocal) {
       val dataLocalFormat = params.getOrElse("dataLocalFormat", "json")
       val dataLocalFileNum = params.getOrElse("dataLocalFileNum", "-1").toInt
 
-      val dataHDFSPath = SQLPythonFunc.getAlgTmpPath(path) + "/data"
+      dataHDFSPath = SQLPythonFunc.getAlgTmpPath(path) + "/data"
       tempDataLocalPath = SQLPythonFunc.getLocalTempDataPath(path)
 
       val newDF = if (dataLocalFileNum > -1) {

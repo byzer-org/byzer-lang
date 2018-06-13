@@ -16,8 +16,6 @@
         <module>streamingpro-dl4j</module>
         <module>streamingpro-tensorflow</module>
         <module>streamingpro-opencv</module>
-        <module>streamingpro-spark-2.2.0-adaptor</module>
-        <module>streamingpro-spark-2.3.0-adaptor</module>
     </modules>
 
     <properties>
@@ -94,6 +92,7 @@
                 </plugins>
             </build>
         </profile>
+
         <profile>
             <id>scala-2.10</id>
             <properties>
@@ -180,6 +179,7 @@
                 <spark.version>2.2.0</spark.version>
             </properties>
             <modules>
+                <module>streamingpro-spark-2.2.0-adaptor</module>
                 <module>streamingpro-dsl-legacy</module>
                 <module>streamingpro-spark-2.0</module>
                 <module>streamingpro-crawler</module>
@@ -246,6 +246,7 @@
                 <spark.version>2.3.0</spark.version>
             </properties>
             <modules>
+                <module>streamingpro-spark-2.3.0-adaptor</module>
                 <module>streamingpro-dsl</module>
                 <module>streamingpro-spark-2.0</module>
                 <module>streamingpro-crawler</module>
@@ -382,14 +383,6 @@
             <scope>${scope}</scope>
         </dependency>
 
-        <!--<dependency>-->
-        <!--<groupId>org.ansj</groupId>-->
-        <!--<artifactId>ansj_seg</artifactId>-->
-        <!--<version>5.0</version>-->
-        <!--<scope>system</scope>-->
-        <!--<systemPath>${project.basedir}/lib/ansj_seg-5.0.0-all-in-one.jar</systemPath>-->
-        <!--</dependency>-->
-
 
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
@@ -441,11 +434,6 @@
             <artifactId>lift-json_${scala.binary.version}</artifactId>
             <version>2.6.2</version>
         </dependency>
-
-        <!--<dependency>-->
-        <!--<groupId></groupId>-->
-        <!--<artifactId></artifactId>-->
-        <!--</dependency>-->
 
         <dependency>
             <groupId>net.csdn</groupId>

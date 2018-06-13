@@ -11,6 +11,7 @@
 
     <artifactId>streamingpro-spark-2.0</artifactId>
     <profiles>
+
         <profile>
             <id>shade</id>
             <build>
@@ -97,7 +98,7 @@
                 <dependency>
                     <groupId>streaming.king</groupId>
                     <artifactId>streamingpro-dsl</artifactId>
-                    <version>${parent.version}</version>
+                    <version>${project.parent.version}</version>
                 </dependency>
             </dependencies>
         </profile>
@@ -108,10 +109,11 @@
                 <dependency>
                     <groupId>streaming.king</groupId>
                     <artifactId>streamingpro-dsl-legacy</artifactId>
-                    <version>${parent.version}</version>
+                    <version>${project.parent.version}</version>
                 </dependency>
             </dependencies>
         </profile>
+
 
         <profile>
             <id>crawler</id>
@@ -119,7 +121,7 @@
                 <dependency>
                     <groupId>streaming.king</groupId>
                     <artifactId>streamigpro-crawler</artifactId>
-                    <version>${parent.version}</version>
+                    <version>${project.parent.version}</version>
                 </dependency>
             </dependencies>
         </profile>
@@ -130,7 +132,7 @@
                 <dependency>
                     <groupId>streaming.king</groupId>
                     <artifactId>streamingpro-dl4j</artifactId>
-                    <version>${parent.version}</version>
+                    <version>${project.parent.version}</version>
                 </dependency>
             </dependencies>
         </profile>
@@ -141,36 +143,11 @@
                 <dependency>
                     <groupId>streaming.king</groupId>
                     <artifactId>streamingpro-opencv</artifactId>
-                    <version>${parent.version}</version>
+                    <version>${project.parent.version}</version>
                 </dependency>
             </dependencies>
         </profile>
 
-
-        <profile>
-            <id>online</id>
-            <properties>
-                <mode>online</mode>
-                <scope>provided</scope>
-            </properties>
-        </profile>
-        <profile>
-            <id>local</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
-            <properties>
-                <mode>local</mode>
-                <scope>compile</scope>
-            </properties>
-            <dependencies>
-                <dependency>
-                    <groupId>org.elasticsearch</groupId>
-                    <artifactId>elasticsearch-spark-20_2.11</artifactId>
-                    <version>5.5.2</version>
-                </dependency>
-            </dependencies>
-        </profile>
         <profile>
             <id>hive-thrift-server</id>
             <dependencies>
@@ -188,44 +165,79 @@
 
             </dependencies>
         </profile>
+        <profile>
+            <id>online</id>
+            <properties>
+                <mode>online</mode>
+                <scope>provided</scope>
+            </properties>
+            <dependencies>
+                <dependency>
+                    <groupId>streaming.king</groupId>
+                    <artifactId>streamingpro-spark-common</artifactId>
+                    <version>${project.parent.version}</version>
+                    <exclusions>
+                        <exclusion>
+                            <groupId>streaming.king</groupId>
+                            <artifactId>streamingpro-dependency</artifactId>
+                        </exclusion>
+                    </exclusions>
+                </dependency>
+            </dependencies>
+        </profile>
+
+        <profile>
+            <id>local</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <mode>local</mode>
+                <scope>compile</scope>
+            </properties>
+            <dependencies>
+                <dependency>
+                    <groupId>org.elasticsearch</groupId>
+                    <artifactId>elasticsearch-spark-20_2.11</artifactId>
+                    <version>5.5.2</version>
+                </dependency>
+                <dependency>
+                    <groupId>streaming.king</groupId>
+                    <artifactId>streamingpro-spark-common</artifactId>
+                    <version>${project.parent.version}</version>
+                </dependency>
+            </dependencies>
+        </profile>
     </profiles>
     <dependencies>
         <dependency>
             <groupId>streaming.king</groupId>
             <artifactId>streamingpro-spark-common</artifactId>
-            <version>${parent.version}</version>
+            <version>${project.parent.version}</version>
         </dependency>
-
-
-        <!--<dependency>-->
-        <!--<groupId>streaming.king</groupId>-->
-        <!--<artifactId>streamingpro-hbase</artifactId>-->
-        <!--<version>${parent.version}</version>-->
-        <!--<exclusions>-->
-        <!--<exclusion>-->
-        <!--<groupId>org.eclipse.jetty</groupId>-->
-        <!--<artifactId>jetty-server</artifactId>-->
-        <!--</exclusion>-->
-        <!--</exclusions>-->
-        <!--<scope>compile</scope>-->
-        <!--</dependency>-->
-        <!--<dependency>-->
-        <!--<groupId>streaming.king</groupId>-->
-        <!--<artifactId>streamingpro-redis</artifactId>-->
-        <!--<version>${parent.version}</version>-->
-        <!--<scope>compile</scope>-->
-        <!--</dependency>-->
-
         <dependency>
             <groupId>streaming.king</groupId>
             <artifactId>streamingpro-tensorflow</artifactId>
-            <version>${parent.version}</version>
+            <version>${project.parent.version}</version>
         </dependency>
 
         <dependency>
             <groupId>streaming.king</groupId>
             <artifactId>streamingpro-api</artifactId>
-            <version>${parent.version}</version>
+            <version>${project.parent.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.scalactic</groupId>
+            <artifactId>scalactic_${scala.binary.version}</artifactId>
+            <version>3.0.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.scalatest</groupId>
+            <artifactId>scalatest_${scala.binary.version}</artifactId>
+            <version>3.0.0</version>
+            <scope>test</scope>
         </dependency>
 
         <dependency>
@@ -266,19 +278,6 @@
             <artifactId>spark-graphx_${scala.binary.version}</artifactId>
             <version>${spark.version}</version>
             <scope>${scope}</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.scalactic</groupId>
-            <artifactId>scalactic_${scala.binary.version}</artifactId>
-            <version>3.0.0</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.scalatest</groupId>
-            <artifactId>scalatest_${scala.binary.version}</artifactId>
-            <version>3.0.0</version>
-            <scope>test</scope>
         </dependency>
 
         <dependency>

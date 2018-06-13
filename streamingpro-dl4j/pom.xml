@@ -13,6 +13,25 @@
 
     <dependencies>
         <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-sql_${scala.binary.version}</artifactId>
+            <version>${spark.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-core_${scala.binary.version}</artifactId>
+            <version>${spark.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-mllib_${scala.binary.version}</artifactId>
+            <version>${spark.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
             <groupId>streaming.king</groupId>
             <artifactId>streamingpro-api</artifactId>
             <version>${parent.version}</version>
@@ -30,6 +49,14 @@
                 <exclusion>
                     <groupId>org.apache.spark</groupId>
                     <artifactId>spark-sql_${scala.binary.version}</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.spark</groupId>
+                    <artifactId>spark-mllib_${scala.binary.version}</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.spark</groupId>
+                    <artifactId>spark-core_${scala.binary.version}</artifactId>
                 </exclusion>
                 <exclusion>
                     <groupId>com.google.guava</groupId>
@@ -89,11 +116,6 @@
             <version>0.9.1</version>
 
         </dependency>
-        <dependency>
-            <groupId>org.apache.spark</groupId>
-            <artifactId>spark-sql_${scala.binary.version}</artifactId>
-            <version>${spark.version}</version>
-            <scope>${scope}</scope>
-        </dependency>
+
     </dependencies>
 </project>

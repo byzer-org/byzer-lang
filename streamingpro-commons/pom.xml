@@ -11,8 +11,6 @@
 
     <artifactId>streamingpro-common</artifactId>
     <dependencies>
-
-
         <dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-client</artifactId>
