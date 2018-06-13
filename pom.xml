@@ -159,7 +159,7 @@
             </properties>
             <modules>
                 <module>streamingpro-dsl-legacy</module>
-                <module>streamingpro-spark-2.0</module>
+                <module>streamingpro-mlsql</module>
             </modules>
             <dependencies>
                 <dependency>
@@ -181,7 +181,7 @@
             <modules>
                 <module>streamingpro-spark-2.2.0-adaptor</module>
                 <module>streamingpro-dsl-legacy</module>
-                <module>streamingpro-spark-2.0</module>
+                <module>streamingpro-mlsql</module>
                 <module>streamingpro-crawler</module>
             </modules>
             <dependencies>
@@ -248,7 +248,7 @@
             <modules>
                 <module>streamingpro-spark-2.3.0-adaptor</module>
                 <module>streamingpro-dsl</module>
-                <module>streamingpro-spark-2.0</module>
+                <module>streamingpro-mlsql</module>
                 <module>streamingpro-crawler</module>
             </modules>
             <dependencies>
