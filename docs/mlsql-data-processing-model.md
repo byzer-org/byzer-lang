@@ -193,7 +193,7 @@ register NormalizeInPlace.`/tmp/scaler2` as jack;
 
 |参数|默认值|说明|
 |:----|:----|:----|
-|inputCols|None|double类型字段列表，用逗号分隔|
+|inputCols|None|double类型字段列表，用逗号分隔，或者单独的array&lt;double&gt;列|
 |method|standard|目前支持的有：standard,p-norm等|
 |removeOutlierValue|false|是否自动去掉异常点，使用中位数替换|
 
