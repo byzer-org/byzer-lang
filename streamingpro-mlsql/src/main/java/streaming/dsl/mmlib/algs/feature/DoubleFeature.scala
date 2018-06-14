@@ -1,6 +1,6 @@
 package streaming.dsl.mmlib.algs.feature
 
-import scala.collection.mutable.ArrayBuffer
+import scala.collection.mutable.{ArrayBuffer, WrappedArray}
 
 import breeze.linalg.{DenseVector => BDV, SparseVector => BSV, Vector => BV}
 import org.apache.spark.ml.feature.{StandardScaler, VectorAssembler}
@@ -12,6 +12,7 @@ import org.apache.spark.mllib.stat.Statistics
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession, functions => F}
 import org.apache.spark.sql.expressions.UserDefinedFunction
+import org.apache.spark.sql.types.{ArrayType, DoubleType}
 import streaming.dsl.mmlib.algs.MetaConst._
 import streaming.dsl.mmlib.algs.meta.{MinMaxValueMeta, OutlierValueMeta, StandardScalerValueMeta}
 
@@ -229,7 +230,19 @@ object DoubleFeature extends BaseFeatureFunctions {
   def normalize(df: DataFrame, metaPath: String, fields: Seq[String], method: String, params: Map[String, String]) = {
     val tempColName = getTempCol
     val spark = df.sparkSession
-    var newDF = vectorize(df, metaPath, fields, outputCol = tempColName)
+    // TODO:(如果用户输入的是带有array<double> 和 double类型的处理
+    var newDF = if (fields.size > 1) {
+      vectorize(df, metaPath, fields, outputCol = tempColName)
+    } else {
+      val schema = df.schema(fields.head)
+      schema.dataType match {
+        case ArrayType(DoubleType, _) =>
+          val func = F.udf((arr: WrappedArray[Double]) => {
+            Vectors.dense(arr.toArray)
+          })
+          df.withColumn(tempColName, func(F.col(fields.head)))
+      }
+    }
 
     val outputTempColName = getTempCol
 
