@@ -1,11 +1,12 @@
 package streaming.core.compositor.spark.udf
 
-import org.apache.spark.sql.{Row, UDFRegistration}
-
-import scala.collection.JavaConversions._
 import scala.collection.mutable
+import scala.collection.JavaConversions._
+
+import breeze.linalg.{DenseVector => BDV, SparseVector => BSV, Vector => BV}
 import org.apache.spark.ml.linalg.{DenseVector, SparseVector, Vector, Vectors}
 import org.apache.spark.mllib.linalg.{Vectors => OldVectors}
+import org.apache.spark.sql.UDFRegistration
 import streaming.common.UnicodeUtils
 
 /**
@@ -106,6 +107,71 @@ object Functions {
     })
   }
 
+  def vecWiseProduct(uDFRegistration: UDFRegistration): Unit = {
+    import BreezeImplicit._
+    uDFRegistration.register("vec_wise_mul", (vec1: Vector, vec2: Vector) => {
+      (vec1.asBreeze *:* vec2.asBreeze).fromBreeze
+    })
+  }
+
+  def vecWiseAdd(uDFRegistration: UDFRegistration): Unit = {
+    import BreezeImplicit._
+    uDFRegistration.register("vec_wise_add", (vec1: Vector, vec2: Vector) => {
+      (vec1.asBreeze +:+ vec2.asBreeze).fromBreeze
+    })
+  }
+
+  def vecWiseDifference(uDFRegistration: UDFRegistration): Unit = {
+    import BreezeImplicit._
+    uDFRegistration.register("vec_wise_dif", (vec1: Vector, vec2: Vector) => {
+      (vec1.asBreeze -:- vec2.asBreeze).fromBreeze
+    })
+  }
+
+  def vecWiseModulo(uDFRegistration: UDFRegistration): Unit = {
+    import BreezeImplicit._
+    uDFRegistration.register("vec_wise_mod", (vec1: Vector, vec2: Vector) => {
+      (vec1.asBreeze %:% vec2.asBreeze).fromBreeze
+    })
+  }
+
+  def vecWiseComparsion(uDFRegistration: UDFRegistration): Unit = {
+//    import BreezeImplicit._
+//    uDFRegistration.register("vec_wise_com", (vec1: Vector, vec2: Vector) => {
+//      (vec1.asBreeze <:< vec2.asBreeze)
+//    })
+  }
+
+  def vecInplaceAddition(uDFRegistration: UDFRegistration): Unit = {
+    import BreezeImplicit._
+    uDFRegistration.register("vec_inplace_add", (vec1: Vector, b: Double) => {
+      (vec1.asBreeze :+= b).fromBreeze
+    })
+  }
+
+  def vecInplaceElemWiseMul(uDFRegistration: UDFRegistration): Unit = {
+    import BreezeImplicit._
+    uDFRegistration.register("vec_inplace_ew_mul", (vec1: Vector, b: Double) => {
+      (vec1.asBreeze :*= b).fromBreeze
+    })
+  }
+
+  def vecCeil(uDFRegistration: UDFRegistration): Unit = {
+    import BreezeImplicit._
+    import breeze.numerics.ceil
+    uDFRegistration.register("vec_ceil", (vec1: Vector) => {
+      ceil(vec1.asBreeze).fromBreeze
+    })
+  }
+
+  def vecFloor(uDFRegistration: UDFRegistration): Unit = {
+    import BreezeImplicit._
+    import breeze.numerics.floor
+    uDFRegistration.register("vec_floor", (vec1: Vector) => {
+      floor(vec1.asBreeze).fromBreeze
+    })
+  }
+
   def onehot(uDFRegistration: UDFRegistration) = {
     uDFRegistration.register("onehot", (a: Int, size: Int) => {
       val oneValue = Array(1.0)
@@ -199,6 +265,45 @@ object Functions {
     uDFRegistration.register("keepChinese", (item: String, keepPunctuation: Boolean, include: Seq[String]) => {
       UnicodeUtils.keepChinese(item, keepPunctuation, include.toArray)
     })
+  }
+
+  // for spark 2.2.x
+  object BreezeImplicit {
+
+    implicit class AsBreeze(vector: Vector) {
+      def asBreeze: BV[Double] = {
+        vector match {
+          case sv: SparseVector =>
+            new BSV[Double](sv.indices, sv.values, sv.size)
+          case dv: DenseVector =>
+            new BDV[Double](dv.values)
+          case v =>
+            sys.error("unknow vector type.")
+        }
+      }
+    }
+
+    implicit class FromBreeze(breezeVector: BV[Double]) {
+      def fromBreeze: Vector = {
+        breezeVector match {
+          case v: BDV[Double] =>
+            if (v.offset == 0 && v.stride == 1 && v.length == v.data.length) {
+              new DenseVector(v.data)
+            } else {
+              new DenseVector(v.toArray) // Can't use underlying array directly, so make a new one
+            }
+          case v: BSV[Double] =>
+            if (v.index.length == v.used) {
+              new SparseVector(v.length, v.index, v.data)
+            } else {
+              new SparseVector(v.length, v.index.slice(0, v.used), v.data.slice(0, v.used))
+            }
+          case v: BV[_] =>
+            sys.error("Unsupported Breeze vector type: " + v.getClass.getName)
+        }
+      }
+    }
+
   }
 
 }

@@ -81,6 +81,182 @@ select vec_array(vec_dense(array(1.0,2.0)))
 select vec_mk_string(vec_dense(array(1.0,2.0))) 
 ```
 
+### vec_wise_mul
+
+```sql
+select vec_dense(cast(array(2.5, 2.0, 1.0) as array<double>)) as f as data;
+select vec_wise_mul(f, f) as nf from data;
+```
+
+```json
+[
+    {
+        "nf": {
+            "type": 1,
+            "values": [
+                6.25,
+                4.0,
+                1.0
+            ]
+        }
+    }
+]
+```
+
+### vec_wise_add
+
+```sql
+select vec_dense(cast(array(2.5, 2.0, 1.0) as array<double>)) as f as data;
+select vec_wise_add(f, f) as nf from data;
+```
+
+```json
+[
+    {
+        "nf": {
+            "type": 1,
+            "values": [
+                5.0,
+                4.0,
+                2.0
+            ]
+        }
+    }
+]
+```
+
+### vec_wise_dif
+
+```sql
+select vec_dense(cast(array(2.5, 2.0, 1.0) as array<double>)) as f1, vec_dense(cast(array(2.5, 22.2, 1.6) as array<double>)) as f2 as data;
+select vec_wise_dif(f1, f2) as nf from data;
+```
+
+```json
+[
+    {
+        "nf": {
+            "type": 1,
+            "values": [
+                0.0,
+                -20.2,
+                -0.6000000000000001
+            ]
+        }
+    }
+]
+```
+
+### vec_wise_mod
+
+```sql
+select vec_dense(cast(array(2.5, 2.0, 1.0) as array<double>)) as f1, vec_dense(cast(array(2.5, 4.0, 3.0) as array<double>)) as f2 as data;
+select vec_wise_mod(f1, f2) as nf from data;
+```
+
+```json
+[
+    {
+        "nf": {
+            "type": 1,
+            "values": [
+                0.0,
+                2.0,
+                1.0
+            ]
+        }
+    }
+]
+```
+
+### vec_inplace_add
+
+```sql
+select vec_dense(cast(array(2.5, 2.0, 1.0) as array<double>)) as f as data;
+select vec_inplace_add(f, 4.4) as nf from data;
+```
+
+```json
+[
+    {
+        "nf": {
+            "type": 1,
+            "values": [
+                6.9,
+                6.4,
+                5.4
+            ]
+        }
+    }
+]
+```
+
+### vec_inplace_ew_mul
+
+```sql
+select vec_dense(cast(array(2.5, 2.0, 1.0) as array<double>)) as f as data;
+select vec_inplace_ew_mul(f, 4.4) as nf from data;
+```
+
+```json
+[
+    {
+        "nf": {
+            "type": 1,
+            "values": [
+                11.0,
+                8.8,
+                4.4
+            ]
+        }
+    }
+]
+```
+
+### vec_ceil
+
+```sql
+select vec_dense(cast(array(2.5, 2.4, 1.6) as array<double>)) as f as data;
+select vec_ceil(f) as nf from data;
+
+```
+```json
+[
+    {
+        "nf": {
+            "type": 1,
+            "values": [
+                3.0,
+                3.0,
+                2.0
+            ]
+        }
+    }
+]
+```
+
+### vec_floor
+
+```sql
+select vec_dense(cast(array(2.5, 2.4, 1.6) as array<double>)) as f as data;
+select vec_floor(f) as nf from data;
+
+```
+```json
+[
+    {
+        "nf": {
+            "type": 1,
+            "values": [
+                2.0,
+                2.0,
+                1.0
+            ]
+        }
+    }
+]
+```
+
 ### ngram
 
 ```sql
