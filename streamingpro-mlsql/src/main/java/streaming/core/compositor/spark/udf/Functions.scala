@@ -1,10 +1,11 @@
 package streaming.core.compositor.spark.udf
 
-import scala.collection.mutable
+import scala.collection.mutable.WrappedArray
 import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 
 import breeze.linalg.{DenseVector => BDV, SparseVector => BSV, Vector => BV}
-import org.apache.spark.ml.linalg.{DenseVector, SparseVector, Vector, Vectors}
+import org.apache.spark.ml.linalg.{DenseVector, Matrices, SparseVector, Vector, Vectors}
 import org.apache.spark.mllib.linalg.{Vectors => OldVectors}
 import org.apache.spark.sql.UDFRegistration
 import streaming.common.UnicodeUtils
@@ -23,7 +24,7 @@ object Functions {
   }
 
   def mkString(uDFRegistration: UDFRegistration) = {
-    uDFRegistration.register("mkString", (sep: String, co: mutable.WrappedArray[String]) => {
+    uDFRegistration.register("mkString", (sep: String, co: WrappedArray[String]) => {
       co.mkString(sep)
     })
   }
@@ -246,6 +247,31 @@ object Functions {
       a.map(f => f.toInt)
     })
   }
+
+  def arrayOneHot(uDFRegistration: UDFRegistration) = {
+    // TODO:(fchen)修改成稀疏矩阵的实现
+    uDFRegistration.register("array_onehot", (a: WrappedArray[Int], size: Int) => {
+      val vectors = a.map(toEncode => {
+        val oneValue = Array(1.0)
+        val emptyValues = Array.empty[Double]
+        val emptyIndices = Array.empty[Int]
+        if (toEncode < size) {
+          Vectors.sparse(size, Array(toEncode), oneValue)
+        } else {
+          Vectors.sparse(size, emptyIndices, emptyValues)
+        }
+      })
+
+      val values = (0 until vectors.head.size).asJava.map(colIndex => {
+        (0 until a.size).map(rowIndex => {
+          vectors(rowIndex).toArray(colIndex)
+        })
+      }).flatMap(x => x).toArray
+
+      Matrices.dense(a.size, vectors.head.size, values)
+    })
+  }
+
 
 
   def ngram(uDFRegistration: UDFRegistration) = {
