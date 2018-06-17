@@ -3,6 +3,7 @@
   - [TfIdfInPlace](#tfidfinplace)
   - [Word2VecInPlace](#word2vecinplace)
   - [ScalerInPlace](#scalerinplace)
+  - [ConfusionMatrix](#confusionMatrix)
   - [NormalizeInPlace](#normalizeinplace)
   - [Discretizer](#discretizer)
     - [bucketizer](#bucketizer方式)
@@ -170,6 +171,53 @@ register ScalerInPlace.`/tmp/scaler` as jack;
 ```sql
 select jack(array(a,b))[0] a,jack(array(a,b))[1] b, c from orginal_text_corpus
 ```
+
+## ConfusionMatrix
+根据真实标签列和预测列计算混淆矩阵
+
+假设/Users/dxy_why/confusionMatrixTestData.csv数据如下：
+
+```csv
+ cat,dog
+ cat,cat
+ dog,dog
+ cat,rabbit
+ rabbit,rabbit
+ cat,cat
+ dog,dog
+ dog,rabbit
+ rabbit,rabbit
+```
+
+```
+select _c0 as actual, _c1 as predict 
+from csv.`/Users/dxy_why/confusionMatrixTestData.csv`
+as csvdf;
+train csvdf as ConfusionMatrix.`/Users/dxy_why/tmp/confusionMatrix/` 
+-- 真实标签列，string类型
+where actualCol="actual" 
+-- 预测列，string类型
+and predictCol="predict";
+```
+混淆矩阵保存在/Users/dxy_why/tmp/confusionMatrix/data
+```
+select  * from parquet.`/Users/dxy_why/tmp/confusionMatrix/data` 
+```
+
+混淆矩阵的统计信息保存在/Users/dxy_why/tmp/confusionMatrix/detail
+```
+select  * from parquet.`/Users/dxy_why/tmp/confusionMatrix/detail` 
+```
+
+
+
+参数使用说明：
+
+|参数|默认值|说明|
+|:----|:----|:----|
+|actualCol|""|真实标签列，该列的值为string类型|
+|predictCol|""|预测列，该列的值为string类型|
+
 
 ## NormalizeInPlace
 
