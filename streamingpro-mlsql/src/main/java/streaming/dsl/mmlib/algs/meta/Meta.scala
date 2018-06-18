@@ -11,6 +11,8 @@ case class TFIDFMeta(trainParams: Map[String, String], wordIndex: Map[String, Do
 
 case class Word2VecMeta(trainParams: Map[String, String], wordIndex: Map[String, Double], predictFunc: ((Seq[String]) => Seq[Seq[Double]]))
 
+case class Word2IndexMeta(trainParams: Map[String, String], wordIndex: Map[String, Double])
+
 case class ScaleMeta(trainParams: Map[String, String], removeOutlierValueFunc: (Double, String) => Double, scaleFunc: Vector => Vector)
 
 case class OutlierValueMeta(fieldName: String, lowerRange: Double, upperRange: Double, quantile: Double)

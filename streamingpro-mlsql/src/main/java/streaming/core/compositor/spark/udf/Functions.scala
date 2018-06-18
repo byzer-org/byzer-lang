@@ -137,10 +137,10 @@ object Functions {
   }
 
   def vecWiseComparsion(uDFRegistration: UDFRegistration): Unit = {
-//    import BreezeImplicit._
-//    uDFRegistration.register("vec_wise_com", (vec1: Vector, vec2: Vector) => {
-//      (vec1.asBreeze <:< vec2.asBreeze)
-//    })
+    //    import BreezeImplicit._
+    //    uDFRegistration.register("vec_wise_com", (vec1: Vector, vec2: Vector) => {
+    //      (vec1.asBreeze <:< vec2.asBreeze)
+    //    })
   }
 
   def vecInplaceAddition(uDFRegistration: UDFRegistration): Unit = {
@@ -236,6 +236,12 @@ object Functions {
     })
   }
 
+  def map_value_int_to_double(uDFRegistration: UDFRegistration) = {
+    uDFRegistration.register("map_value_int_to_double", (a: Map[String, Int]) => {
+      a.map(f => (f._1, f._2.toDouble))
+    })
+  }
+
   def array_string_to_float(uDFRegistration: UDFRegistration) = {
     uDFRegistration.register("array_string_to_float", (a: Seq[String]) => {
       a.map(f => f.toFloat)
@@ -271,7 +277,6 @@ object Functions {
       Matrices.dense(a.size, vectors.head.size, values)
     })
   }
-
 
 
   def ngram(uDFRegistration: UDFRegistration) = {

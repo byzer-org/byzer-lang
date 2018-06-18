@@ -79,7 +79,8 @@ object MLMapping {
     "ConfusionMatrix" -> "streaming.dsl.mmlib.algs.SQLConfusionMatrix",
     "OpenCVImage" -> "streaming.dsl.mmlib.algs.processing.SQLOpenCVImage",
     "JavaImage" -> "streaming.dsl.mmlib.algs.processing.SQLJavaImage",
-    "Discretizer" -> "streaming.dsl.mmlib.algs.SQLDiscretizer"
+    "Discretizer" -> "streaming.dsl.mmlib.algs.SQLDiscretizer",
+    "VecMapInPlace" -> "streaming.dsl.mmlib.algs.SQLVecMapInPlace"
   )
 
   def findAlg(name: String) = {
