@@ -13,6 +13,7 @@ import org.apache.spark.api.python.WowPythonRunner
 import org.apache.spark.ml.linalg.SQLDataTypes._
 import org.apache.spark.ps.cluster.Message
 import org.apache.spark.sql.catalyst.InternalRow
+import org.apache.spark.sql.catalyst.util.ArrayBasedMapData
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession, functions => F}
@@ -201,6 +202,7 @@ class SQLPythonAlg extends SQLAlg with Functions {
 
     val kafkaParam = mapParams("kafkaParam", trainParams)
 
+    val enableCopyTrainParamsToPython = params.getOrElse("enableCopyTrainParamsToPython", "true").toBoolean
     //driver 节点执行
     val res = ExternalCommandRunner.run(Seq(pythonPath, userPythonScript.fileName),
       maps,
@@ -217,9 +219,15 @@ class SQLPythonAlg extends SQLAlg with Functions {
 
     val f = (v: org.apache.spark.ml.linalg.Vector, modelPath: String) => {
       val modelRow = InternalRow.fromSeq(Seq(SQLPythonFunc.getLocalTempModelPath(modelPath)))
+      val trainParamsRow = InternalRow.fromSeq(Seq(ArrayBasedMapData(trainParams)))
       val v_ser = pickleInternalRow(Seq(ser_vector(v)).toIterator, vector_schema())
       val v_ser2 = pickleInternalRow(Seq(modelRow).toIterator, StructType(Seq(StructField("modelPath", StringType))))
-      val v_ser3 = v_ser ++ v_ser2
+      var v_ser3 = v_ser ++ v_ser2
+      if (enableCopyTrainParamsToPython) {
+        val v_ser4 = pickleInternalRow(Seq(trainParamsRow).toIterator, StructType(Seq(StructField("trainParams", MapType(StringType, StringType)))))
+        v_ser3 = v_ser3 ++ v_ser4
+      }
+
       val iter = WowPythonRunner.run(
         pythonPath, pythonVer, command, v_ser3, TaskContext.get().partitionId(), Array(), kafkaParam = kafkaParam2
       )
