@@ -4,7 +4,9 @@ import org.apache.spark.ml.feature.{StringIndexer, StringIndexerModel}
 import org.apache.spark.ml.help.HSQLStringIndex
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.expressions.UserDefinedFunction
+import org.apache.spark.sql.types.{ArrayType, StringType}
 import streaming.dsl.mmlib.SQLAlg
+import org.apache.spark.sql.{functions => F}
 
 /**
   * Created by allwefantasy on 15/1/2018.
@@ -12,9 +14,18 @@ import streaming.dsl.mmlib.SQLAlg
 class SQLStringIndex extends SQLAlg with Functions {
 
   override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
+    require(params.contains("inputCol"), "inputCol is required")
+    val inputCol = params("inputCol")
+    var newDf = df
+    df.schema.filter(f => f.name == inputCol).head.dataType match {
+      case ArrayType(StringType, _) =>
+        newDf = df.select(F.explode(F.col(inputCol)).as(inputCol))
+      case StringType => // do nothing
+      case _ => throw new IllegalArgumentException(s"${params("inputCol")} should be arraytype or stringtype")
+    }
     val rfc = new StringIndexer()
     configureModel(rfc, params)
-    val model = rfc.fit(df)
+    val model = rfc.fit(newDf)
     model.write.overwrite().save(path)
   }
 

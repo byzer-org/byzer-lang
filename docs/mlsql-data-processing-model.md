@@ -9,6 +9,7 @@
     - [bucketizer](#bucketizer方式)
     - [quantile](#quantile方式)
   - [OpenCVImage](#opencvimage)
+  - [VecMapInPlace](#vecmapinplace)
   - [JavaImage](#javaimage)
   - [TokenExtract / TokenAnalysis](#tokenextract--tokenanalysis)
   - [RateSampler](#ratesampler)
@@ -436,6 +437,35 @@ register OpenCVImage.`/tmp/word2vecinplace/` as jack;
 
 ```sql
 select jack(crawler_request_image(imagePath)) as image from orginal_text_corpus
+```
+
+## VecMapInPlace
+
+VecMapInPlace 可以把一个类型为Map[String,Double]的对象转化为一个Vector。
+具体逻辑为：
+
+1. 把所有Map的key对应的String收集到。
+2. 使用StringIndex将每个String映射到一个数字
+3. 所有String(去重后)映射为一个向量空间
+4. 把Map里的value根据key对应投影到向量空间
+
+之后可以使用专门的归一化组件完成归一化。
+
+
+
+示例
+
+```sql
+
+train data as VecMapInPlace.`/tmp/jack`
+where inputCol="a"
+
+//newdata里的map字段已经变成向量了。
+load parquet.`/tmp/jack/data` as newdata;
+
+//用于predict,这里提供了一个函数map_value_int_to_double 可以把map里value为int的数字转化为double
+register VecMapInPlace.`/tmp/quantile` as jack;
+select jack(map_value_int_to_double(map("wow",9)))
 ```
 
 

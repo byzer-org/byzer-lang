@@ -9,8 +9,8 @@ import Array._
 
 
 /**
- * Created by dxy_why on 2018/6/16.
- */
+  * Created by dxy_why on 2018/6/16.
+  */
 class SQLConfusionMatrix extends SQLAlg with Functions {
 
   def detail(lable: String, trainLableMap: Map[Int, String], confusionMatrixArray: Array[Array[Int]]):
@@ -118,11 +118,11 @@ case class ConfusionMatrixTrainData(actualCol: String, predictCol: String)
 
 object ConfusionMatrixParamsConstrant {
   /**
-   * 真实标签列
-   */
+    * 真实标签列
+    */
   val ACTUAL_COLUMN = "actualCol"
   /**
-   * 预测标签列
-   */
+    * 预测标签列
+    */
   val PREDICT_COLUMN = "predictCol"
 }

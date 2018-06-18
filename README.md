@@ -100,7 +100,7 @@ StreamingPro 支持以Spark,Flink等作为底层分布式计算引擎，通过�
 |streamingpro-spark-common | Spark有多个版本，所以可以共享一些基础的东西||
 |streamingpro-flink |  streamingpro对flink的支持||
 |streamingpro-spark  | streamingpro对spark 1.6.x的支持||
-|streamingpro-spark-2.0 | streamingpro对spark 2.x的支持||
+|streamingpro-mlsql | streamingpro对spark 2.x的支持(主项目)||
 |streamingpro-api | streamingpro把底层的spark API暴露出来，方便用户灵活处理问题||
 |streamingpro-manager | 通过该模块，可以很方便的通过web界面启动，管理，监控 spark相关的应用||
 |streamingpro-dls | 自定义connect,load,select,save,train,register等语法，便于用类似sql的方式做批处理任务,机器学习等||

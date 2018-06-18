@@ -9,7 +9,7 @@ import org.apache.spark.streaming.BasicSparkOperation
 import streaming.core.strategy.platform.SparkRuntime
 import org.apache.spark.ml.linalg.{Vector, Vectors}
 import streaming.dsl.ScriptSQLExec
-import streaming.dsl.mmlib.algs.SQLAutoFeature
+import streaming.dsl.mmlib.algs.{SQLAutoFeature, SQLVecMapInPlace}
 import streaming.dsl.mmlib.algs.feature.{DiscretizerIntFeature, DoubleFeature, StringFeature}
 import streaming.dsl.template.TemplateMerge
 
@@ -436,4 +436,39 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
       validate
     }
   }
+
+  "SQLVecMapInPlace" should "work fine" in {
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+      implicit val spark = runtime.sparkSession
+      val dataRDD = spark.sparkContext.parallelize(Seq(
+        Seq(Map("wow" -> 1, "wow2" -> 7)),
+        Seq(Map("wow2" -> 1)),
+        Seq(Map("wow3" -> 5)))).map { f =>
+        Row.fromSeq(f)
+      }
+
+      val df = spark.createDataFrame(dataRDD,
+        StructType(Seq(
+          StructField("a", MapType(StringType, IntegerType))
+        )))
+
+      val path = "/tmp/wow"
+      val params = Map("inputCol" -> "a")
+      val vecMap = new SQLVecMapInPlace()
+      vecMap.train(df, path, params)
+      spark.sql("select * from parquet.`/tmp/wow/data`").show()
+      val model = vecMap.load(spark, path, params)
+      val jack = vecMap.predict(spark, model, "jack", params)
+      spark.udf.register("vecToMap", jack)
+      val res = spark.sql(
+        s"""
+           |select vecToMap(map_value_int_to_double(map("wow",9)))
+         """.stripMargin).collect().head
+
+      val vec = res.getAs[Vector](0)
+      assume(vec.toDense.toArray.mkString(",") == "0.0,0.0,9.0")
+
+    }
+  }
+
 }
