@@ -71,10 +71,10 @@ class SQLVecMapInPlace extends SQLAlg with Functions {
 
   override def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = {
     val word2IndexMeta = _model.asInstanceOf[Word2IndexMeta]
-    val word2IndexMapping = word2IndexMeta.wordIndex
-    val featureSize = word2IndexMapping.size
+    val word2IndexMappingBr = sparkSession.sparkContext.broadcast(word2IndexMeta.wordIndex)
+    val featureSize = word2IndexMappingBr.value.size
     val f = (item: Map[String, Double]) => {
-      val elements = item.map(f => (word2IndexMapping(f._1).toInt, f._2)).toSeq
+      val elements = item.map(f => (word2IndexMappingBr.value(f._1).toInt, f._2)).toSeq
       Vectors.sparse(featureSize, elements)
     }
     UserDefinedFunction(f, VectorType, Some(Seq(MapType(StringType, DoubleType))))
