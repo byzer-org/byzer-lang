@@ -103,6 +103,8 @@ class PythonMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQ
           |    items = [i for i in s]
           |    feature = VectorUDT().deserialize(pickle.loads(items[0]))
           |    modelPath = pickle.loads(items[1])[0]+"/model.pickle"
+          |    trainParams = pickle.loads(items[2])[0]
+          |    print(trainParams)
           |    print("predict.....")
           |    if not hasattr(os,"models"):
           |       setattr(os,"models",{})
@@ -240,13 +242,13 @@ class PythonMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQ
     }
   }
 
-//  "python-alg-tensorflow-cnn-model" should "work fine" in {
-//    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
-//      //执行sql
-//      implicit val spark = runtime.sparkSession
-//      val sq = createSSEL
-//      ScriptSQLExec.parse(loadSQLScriptStr("python-alg-tensorflow-cnn"), sq)
-//
-//    }
-//  }
+  //  "python-alg-tensorflow-cnn-model" should "work fine" in {
+  //    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+  //      //执行sql
+  //      implicit val spark = runtime.sparkSession
+  //      val sq = createSSEL
+  //      ScriptSQLExec.parse(loadSQLScriptStr("python-alg-tensorflow-cnn"), sq)
+  //
+  //    }
+  //  }
 }
