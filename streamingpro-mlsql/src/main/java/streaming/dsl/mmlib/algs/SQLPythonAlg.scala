@@ -165,10 +165,15 @@ class SQLPythonAlg extends SQLAlg with Functions {
 
   override def load(sparkSession: SparkSession, _path: String, params: Map[String, String]): Any = {
     val path = SQLPythonFunc.getAlgMetalPath(_path)
-    val models = sparkSession.read.parquet(path + "/0")
-      .collect()
-      .map(f => (f(3).asInstanceOf[Double], f(0).asInstanceOf[String]))
-      .toSeq.sortBy(f => f._1)(Ordering[Double].reverse).take(1).map(f => f._2)
+    val algIndex = params.getOrElse("algIndex", "-1").toInt
+    val modelList = sparkSession.read.parquet(path + "/0").collect()
+    val models = if (algIndex != -1) {
+      modelList.filter(f => f.getInt(1) == algIndex).map(f => f.getString(0)).toSeq
+    } else {
+      modelList.map(f => (f(3).asInstanceOf[Double], f(0).asInstanceOf[String]))
+        .toSeq.sortBy(f => f._1)(Ordering[Double].reverse).take(1).map(f => f._2)
+    }
+
 
     val metas = sparkSession.read.parquet(path + "/1").collect().map(f => f.get(0).asInstanceOf[Map[String, String]]).toSeq
     // make sure every executor have the model in local directory.
