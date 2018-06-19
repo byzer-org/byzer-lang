@@ -86,7 +86,12 @@ object MLMapping {
   def findAlg(name: String) = {
     mapping.get(name.capitalize) match {
       case Some(clzz) =>
-        Class.forName(clzz).newInstance().asInstanceOf[SQLAlg]
+        if (!clzz.contains(".") && clzz.endsWith("InPlace")) {
+          Class.forName(s"streaming.dsl.mmlib.algs.SQL${clzz}").newInstance().asInstanceOf[SQLAlg]
+        } else {
+          Class.forName(clzz).newInstance().asInstanceOf[SQLAlg]
+        }
+
       case None =>
         throw new RuntimeException(s"${name} is not found")
     }
