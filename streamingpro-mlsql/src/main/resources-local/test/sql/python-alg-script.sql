@@ -11,6 +11,7 @@ and  `fitParam.0.batchSize`="1000"
 and  `fitParam.0.labelSize`="2"
 and validateTable="data"
 and `systemParam.pythonPath`="python"
+and `systemParam.pythonParam`="-u"
 and `systemParam.pythonVer`="2.7"
 ;
 

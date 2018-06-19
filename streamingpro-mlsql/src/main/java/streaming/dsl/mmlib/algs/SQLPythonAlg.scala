@@ -54,6 +54,7 @@ class SQLPythonAlg extends SQLAlg with Functions {
     val fitParamRDD = df.sparkSession.sparkContext.parallelize(fitParam, fitParam.length)
     val pythonPath = systemParam.getOrElse("pythonPath", "python")
     val pythonVer = systemParam.getOrElse("pythonVer", "2.7")
+    val pythonParam = systemParam.getOrElse("pythonParam", "").split(",").filterNot(f => f.isEmpty)
     var tempDataLocalPath = ""
     var dataHDFSPath = ""
 
@@ -117,9 +118,9 @@ class SQLPythonAlg extends SQLAlg with Functions {
       paramMap.put("systemParam", systemParam.asJava)
 
 
-
+      val command = Seq(pythonPath) ++ pythonParam ++ Seq(pythonScript.fileName)
       val res = ExternalCommandRunner.run(
-        command = Seq(pythonPath, pythonScript.fileName),
+        command = command,
         iter = paramMap,
         schema = MapType(StringType, MapType(StringType, StringType)),
         scriptContent = pythonScript.fileContent,
