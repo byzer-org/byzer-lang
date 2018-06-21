@@ -305,6 +305,60 @@ select array_slice(array("a","b","c","d","e"),3,-1) as k
 
 对数组内的元素做类型转换
 
+---
+
+### matrix_dense
+
+生成一个紧凑矩阵
+
+```sql
+select matrix_dense(array(array(1.0, 2.0, 3.0), array(2.0, 3.0, 4.0)))
+```
+
+```json
+[
+    {
+        "UDF:matrix_dense(cast(array(array(1.0, 2.0, 3.0), array(2.0, 3.0, 4.0)) as array<array<double>>))": {
+            "isTransposed": false,
+            "numCols": 3,
+            "numRows": 2,
+            "type": 1,
+            "values": [
+                1.0,
+                2.0,
+                2.0,
+                3.0,
+                3.0,
+                4.0
+            ]
+        }
+    }
+]
+```
+
+### matrix_sum
+
+```sql
+select matrix_sum(matrix_dense(array(array(1.0, 2.0, 3.0), array(2.0, 3.0, 4.0))), 0)
+```
+
+```json
+[
+    {
+        "UDF:matrix_sum(UDF:matrix_dense(cast(array(array(1.0, 2.0, 3.0), array(2.0, 3.0, 4.0)) as array<array<double>>)), 0)": {
+            "type": 1,
+            "values": [
+                3.0,
+                5.0,
+                7.0
+            ]
+        }
+    }
+]
+```
+
+---
+
 ### keepChinese
 
 对文本字段做处理，只保留中文字符

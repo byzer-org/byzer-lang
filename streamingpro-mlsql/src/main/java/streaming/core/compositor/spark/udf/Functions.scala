@@ -5,7 +5,7 @@ import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
 
 import breeze.linalg.{DenseVector => BDV, SparseVector => BSV, Vector => BV}
-import org.apache.spark.ml.linalg.{DenseVector, Matrices, SparseVector, Vector, Vectors}
+import org.apache.spark.ml.linalg.{DenseVector, Matrices, Matrix, SparseVector, Vector, Vectors}
 import org.apache.spark.mllib.linalg.{Vectors => OldVectors}
 import org.apache.spark.sql.UDFRegistration
 import streaming.common.UnicodeUtils
@@ -162,6 +162,52 @@ object Functions {
     import breeze.numerics.ceil
     uDFRegistration.register("vec_ceil", (vec1: Vector) => {
       ceil(vec1.asBreeze).fromBreeze
+    })
+  }
+
+  // =================
+  // matrix operation
+  // =================
+
+  def matrix(uDFRegistration: UDFRegistration): Unit = {
+    uDFRegistration.register("matrix_dense", (vectors: WrappedArray[WrappedArray[Double]]) => {
+      require(vectors.size >= 1, "vectors length should >= 1.")
+      require(vectors.map(_.length).toSet.size == 1, "require all array hash the same length.")
+      val numRow = vectors.length
+      val numCol = vectors.head.length
+      var values = Array.empty[Double]
+
+      for(i <- (0 until numCol)) {
+        for(j <- (0 until numRow)) {
+          values = values :+ vectors(j)(i)
+        }
+      }
+      Matrices.dense(numRow, numCol, values)
+    })
+  }
+
+  def matrixSum(uDFRegistration: UDFRegistration): Unit = {
+    uDFRegistration.register("matrix_sum", (matrix: Matrix, axis: Int) => {
+      require(axis == 1 || axis == 0, s"axis $axis is out of bounds for matrix of dimension 2")
+      import BreezeImplicit._
+      var result: Vector = null
+      if (axis == 0) {
+        var vec: BV[Double] = null
+        matrix.rowIter.foreach(v => {
+          if (vec == null) {
+            vec = v.asBreeze
+          } else {
+            vec = v.asBreeze + vec
+          }
+        })
+        result = vec.fromBreeze
+      } else {
+        val values = matrix.rowIter.map(v => {
+          v.toArray.sum
+        })
+        result = Vectors.dense(values.toArray)
+      }
+      result
     })
   }
 

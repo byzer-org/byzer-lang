@@ -36,7 +36,7 @@ class SQLConfusionMatrix extends SQLAlg with Functions {
     val fpr = fp.toDouble / (fp + tn)
     val fdr = 1 - ppv
     val fnr = fn.toDouble / (fn + tp)
-    val acc = (fp.toDouble + tn.toDouble) / total
+    val acc = (tp.toDouble + tn.toDouble) / total
     Array[ConfusionMatrix](
       ConfusionMatrix(lable, "TP", tp.toString, "True positive [eqv with hit]"),
       ConfusionMatrix(lable, "TN", tn.toString, "True negative [eqv with correct rejection]"),
@@ -68,7 +68,7 @@ class SQLConfusionMatrix extends SQLAlg with Functions {
       s1 + s2
     }).collect().toMap
 
-    val trainLable = trainDataMap.map(_._1._1).toSet union trainDataMap.map(_._1._2).toSet
+    val trainLable = (trainDataMap.map(_._1._1).toSet union trainDataMap.map(_._1._2).toSet).toArray
     val trainLableCount = trainLable.size
     val trainLableMap = trainLable.zipWithIndex.map(f => {
       (f._2, f._1)
@@ -81,17 +81,17 @@ class SQLConfusionMatrix extends SQLAlg with Functions {
         confusionMatrixArray(actualIdx)(predictIdx) = trainDataMap.getOrElse((actualLabel, predictLabel), 0)
       }
     }
-    val confusionMatrixSeq = confusionMatrixArray.map(f => {
-      Row.fromSeq(f.toSeq)
+    val confusionMatrixSeq = trainLable.zip(confusionMatrixArray).map(f => {
+      Row.fromSeq((f._1 +: f._2.map(_.toString)).toSeq)
     }).toSeq
     val schema = StructType(
-      trainLable.map(lable => {
-        StructField(lable, IntegerType, true)
+      ("category" +: trainLable).map(lable => {
+        StructField(lable, StringType, true)
       }).toList)
     val rdd = spark.sparkContext.parallelize(confusionMatrixSeq)
     val resultDataframe = spark.createDataFrame(rdd, schema)
     resultDataframe.write.mode(SaveMode.Overwrite).parquet(getDataPath(path))
-    val confusionMatrix = trainLable.toArray.flatMap(lable => {
+    val confusionMatrix = trainLable.flatMap(lable => {
       detail(lable, trainLableMap, confusionMatrixArray)
     })
     spark.createDataset(confusionMatrix).write.mode(SaveMode.Overwrite).

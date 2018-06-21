@@ -2,6 +2,7 @@ package streaming.dsl
 
 import _root_.streaming.dsl.parser.DSLSQLParser._
 import streaming.common.ShellCommand
+import streaming.dsl.template.TemplateMerge
 
 /**
   * Created by allwefantasy on 27/8/2017.
@@ -51,6 +52,15 @@ class SetAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapto
     }
 
     scriptSQLExecListener.addEnv(key, value)
+
+    scriptSQLExecListener.env().view.foreach {
+      case (k, v) =>
+        val mergedValue = TemplateMerge.merge(v, scriptSQLExecListener.env().toMap)
+        if (mergedValue != v) {
+          scriptSQLExecListener.addEnv(k, mergedValue)
+        }
+    }
+
     scriptSQLExecListener.setLastSelectTable(null)
     //scriptSQLExecListener.sparkSession.sql(ctx.)
   }
