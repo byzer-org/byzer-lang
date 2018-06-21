@@ -92,15 +92,6 @@ class BatchSaveAdaptor(val scriptSQLExecListener: ScriptSQLExecListener,
                        var mode: SaveMode,
                        var partitionByCol: Array[String]
                       ) {
-
-  def withOptions: (DataFrameWriter[Row], Map[String, String]) => DataFrameWriter[Row] = (writer, options) => {
-    options.foreach {
-      case (k, v) =>
-        writer.option(k, v)
-    }
-    writer
-  }
-
   def parse = {
 
     if (option.contains("fileNum")) {
@@ -155,9 +146,9 @@ class BatchSaveAdaptor(val scriptSQLExecListener: ScriptSQLExecListener,
         writer.format(option.getOrElse("implClass", "org.apache.spark.sql.CarbonSource")).save()
       case _ =>
         if (final_path == "-" || final_path.isEmpty) {
-          withOptions(writer, option).format(option.getOrElse("implClass", format)).save()
+          writer.format(option.getOrElse("implClass", format)).save()
         } else {
-          withOptions(writer, option).format(option.getOrElse("implClass", format)).save(final_path)
+          writer.format(option.getOrElse("implClass", format)).save(final_path)
         }
 
     }
