@@ -199,7 +199,7 @@ as table1;
 load csv.`path` options header="true"  
 as table2;
 
-save append tableName as csv.`path` optioins header="true";
+save append tableName as csv.`path` options header="true";
 ```
 
 ### HBase 
