@@ -9,7 +9,7 @@ import scala.collection.JavaConversions._
   * Created by allwefantasy on 4/6/2018.
   */
 class SessionSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConfig {
-  "session-test" should "work fine" in {
+  "session-test" should "work fine" taggedAs (NotToRunTag) in {
     withMLSQLContext(setupMLSQLContext(mlsqlParams, "classpath:///test/empty.json")) { runtime: MLSQLRuntime =>
       val sessionManager = runtime.getSessionManager
       val identify = sessionManager.openSession("jack", "", "", sessionManager.conf.getAll.toMap, runtime.params.toMap, true)

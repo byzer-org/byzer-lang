@@ -19,9 +19,8 @@ import streaming.dsl.template.TemplateMerge
   */
 class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConfig {
 
-  copySampleLibsvmData
 
-  "tfidf featurize" should "work fine" in {
+  "tfidf featurize" should "work fine" taggedAs (NotToRunTag) in {
 
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
@@ -74,7 +73,7 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
     }
   }
 
-  "tfidf featurize with ngram" should "work fine" in {
+  "tfidf featurize with ngram" should "work fine" taggedAs (NotToRunTag) in {
 
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
@@ -123,7 +122,7 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
     }
   }
 
-  "DiscretizerIntFeature" should "work fine" in {
+  "DiscretizerIntFeature" should "work fine" taggedAs (NotToRunTag) in {
 
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
@@ -147,7 +146,7 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
     }
   }
 
-  "HighOrdinalDoubleFeature" should "work fine" in {
+  "HighOrdinalDoubleFeature" should "work fine" taggedAs (NotToRunTag) in {
 
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
@@ -171,7 +170,7 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
     }
   }
 
-  "AutoFeature" should "work fine" in {
+  "AutoFeature" should "work fine" taggedAs (NotToRunTag) in {
 
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
@@ -213,7 +212,7 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
     }
   }
 
-  "test" should "work fine" in {
+  "test" should "work fine" taggedAs (NotToRunTag) in {
 
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
@@ -242,7 +241,7 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
     }
   }
 
-  "word2vec featurize" should "work fine" in {
+  "word2vec featurize" should "work fine" taggedAs (NotToRunTag) in {
 
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
@@ -260,7 +259,7 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
 
 
 
-  "SQLSampler" should "work fine" in {
+  "SQLSampler" should "work fine" taggedAs (NotToRunTag) in {
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
       implicit val spark = runtime.sparkSession
@@ -274,7 +273,7 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
     }
   }
 
-  "SQLTfIdfInPlace" should "work fine" in {
+  "SQLTfIdfInPlace" should "work fine" taggedAs (NotToRunTag) in {
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
       implicit val spark = runtime.sparkSession
@@ -302,7 +301,7 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
     }
   }
 
-  "SQLWord2VecInPlace" should "work fine" in {
+  "SQLWord2VecInPlace" should "work fine" taggedAs (NotToRunTag) in {
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
       implicit val spark = runtime.sparkSession
@@ -330,7 +329,7 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
     }
   }
 
-  "SQLConfusionMatrix" should "work fine" in {
+  "SQLConfusionMatrix" should "work fine" taggedAs (NotToRunTag) in {
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
       implicit val spark = runtime.sparkSession
@@ -363,7 +362,7 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
   }
 
 
-  "SQLScalerInPlace" should "work fine" in {
+  "SQLScalerInPlace" should "work fine" taggedAs (NotToRunTag) in {
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
       implicit val spark = runtime.sparkSession
@@ -396,7 +395,7 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
     }
   }
 
-  "SQLNormalizeInPlace" should "work fine" in {
+  "SQLNormalizeInPlace" should "work fine" taggedAs (NotToRunTag) in {
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
       implicit val spark = runtime.sparkSession

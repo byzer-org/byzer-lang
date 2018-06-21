@@ -35,7 +35,7 @@ class AlgSpec extends BasicSparkOperation {
     else path
   }
 
-  "lr training" should "create model file" in {
+  "lr training" should "create model file" taggedAs (NotToRunTag) in {
 
     val contextParams: java.util.Map[Any, Any] = new util.HashMap[Any, Any]()
     contextParams.put("streaming.job.file.path", "classpath:///test/alg-lr.json")
@@ -60,7 +60,7 @@ class AlgSpec extends BasicSparkOperation {
 
   }
 
-  "generate article vector" should "success" in {
+  "generate article vector" should "success" taggedAs (NotToRunTag) in {
 
     val contextParams: java.util.Map[Any, Any] = new util.HashMap[Any, Any]()
     contextParams.put("streaming.job.file.path", "classpath:///test/alg-lr2.json")

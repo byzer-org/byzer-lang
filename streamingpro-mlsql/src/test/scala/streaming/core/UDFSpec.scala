@@ -22,7 +22,7 @@ class UDFSpec extends BasicSparkOperation with SpecFunctions {
   )
 
 
-  "keepChinese" should "work fine" in {
+  "keepChinese" should "work fine" taggedAs (NotToRunTag) in {
 
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
