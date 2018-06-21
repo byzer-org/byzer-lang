@@ -8,6 +8,8 @@ MLSQL 提供了一个叫PythonAlg的模块，允许用户使用Python算法框�
 2. MLSQL需要对/tmp/\_\_mlsql\_\_ 目录有完全的权限。
 3. 每个服务器都需要拥有python相关的环境，比如pyspark以及常见标准库。如果你需要sklearn,则需要在每台服务器上都安装Sklearn。
 
+更多示例可查看项目：[mlsql](https://github.com/allwefantasy/mlsql/tree/master/examples)
+
 ### 使用范例
 
 ```sql

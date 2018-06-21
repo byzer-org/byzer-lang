@@ -72,6 +72,8 @@ save append newtable as kafka.`-` options
 topic="topic1"
 ```
 
+
+
 ### ElasticSearch
 
 读取：
@@ -201,6 +203,22 @@ as table2;
 
 save append tableName as csv.`path` options header="true";
 ```
+
+### 图片数据
+
+```sql
+-- 加载图片
+load image.`${rawBasePath}` options
+and recursive="true"
+and dropImageFailures="true"
+and sampleRatio="1.0"
+and enableDecode="false"
+-- and numPartitions="2"
+-- and repartitionNum="2"
+-- and filterByteSize="1048576"
+as raw_images;
+```
+
 
 ### HBase 
 
