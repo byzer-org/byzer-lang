@@ -40,7 +40,7 @@ class BatchSpec extends BasicSparkOperation with SpecFunctions {
   )
 
 
-  "batch-console" should "work fine" in {
+  "batch-console" should "work fine" taggedAs (NotToRunTag) in {
     val file = new java.io.File("/tmp/hdfsfile/abc.txt")
     Files.createParentDirs(file)
     Files.write(s""" {"abc":"123","bbc":"adkfj"} """, file, Charset.forName("utf-8"))
@@ -56,7 +56,7 @@ class BatchSpec extends BasicSparkOperation with SpecFunctions {
     }
   }
 
-  "batch-carbondata" should "work fine" in {
+  "batch-carbondata" should "work fine" taggedAs (NotToRunTag) in {
 
     withBatchContext(setupBatchContext(batchParamsWithCarbondata, "classpath:///test/batch-cache-support.json")) { runtime: SparkRuntime =>
       implicit val spark = runtime.sparkSession

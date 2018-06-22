@@ -23,22 +23,38 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
 
       var sq = createSSEL
       ScriptSQLExec.parse(s""" set hive.exec.dynamic.partition.mode=nonstric options type = "conf" and jack = "" ; """, sq)
-      assume(sq.env().contains("hive.exec.dynamic.partition.mode"))
+      assert(sq.env().contains("hive.exec.dynamic.partition.mode"))
 
       sq = createSSEL
       ScriptSQLExec.parse(s""" set  xx = `select unix_timestamp()` options type = "sql" ; """, sq)
-      assume(sq.env()("xx").toInt > 0)
+      assert(sq.env()("xx").toInt > 0)
 
       sq = createSSEL
       ScriptSQLExec.parse(s""" set  xx = "select unix_timestamp()"; """, sq)
-      assume(sq.env()("xx") == "select unix_timestamp()")
+      assert(sq.env()("xx") == "select unix_timestamp()")
+
+    }
+  }
+
+  "set grammar case 2" should "work fine" in {
+
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+      implicit val spark = runtime.sparkSession
+
+      var sq = createSSEL
+      ScriptSQLExec.parse(""" set a = "valuea"; set b = "${a}/b"; """, sq)
+      assert(sq.env()("b") == "valuea/b")
+
+      sq = createSSEL
+      ScriptSQLExec.parse(""" set b = "${a}/b"; set a = "valuea";  """, sq)
+      assert(sq.env()("b") == "valuea/b")
 
     }
   }
 
 
 
-  "save mysql with update" should "work fine" in {
+  "save mysql with update" should "work fine" taggedAs (NotToRunTag) in {
 
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
@@ -93,7 +109,7 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
     }
   }
 
-  "save mysql with default" should "work fine" in {
+  "save mysql with default" should "work fine" taggedAs (NotToRunTag) in {
 
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
@@ -157,7 +173,7 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
     }
   }
 
-  "analysis with dic" should "work fine" in {
+  "analysis with dic" should "work fine" taggedAs (NotToRunTag) in {
 
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
@@ -180,7 +196,7 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
     }
   }
 
-  "analysis with dic and deduplicate" should "work fine" in {
+  "analysis with dic and deduplicate" should "work fine" taggedAs (NotToRunTag) in {
 
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
@@ -197,7 +213,7 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
     }
   }
 
-  "analysis with dic with n nature include" should "work fine" in {
+  "analysis with dic with n nature include" should "work fine" taggedAs (NotToRunTag) in {
 
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
@@ -215,7 +231,7 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
     }
   }
 
-  "extract with dic" should "work fine" in {
+  "extract with dic" should "work fine" taggedAs (NotToRunTag) in {
 
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
@@ -233,7 +249,7 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
     }
   }
 
-  "save with file num options" should "work fine" in {
+  "save with file num options" should "work fine" taggedAs (NotToRunTag) in {
 
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
@@ -244,7 +260,7 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
     }
   }
 
-  "carbondata save" should "work fine" in {
+  "carbondata save" should "work fine" taggedAs (NotToRunTag) in {
 
     withBatchContext(setupBatchContext(batchParamsWithCarbondata, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
@@ -277,7 +293,7 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
     }
   }
 
-  "script-support-drop" should "work fine" in {
+  "script-support-drop" should "work fine" taggedAs (NotToRunTag) in {
 
     withBatchContext(setupBatchContext(batchParamsWithCarbondata, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql

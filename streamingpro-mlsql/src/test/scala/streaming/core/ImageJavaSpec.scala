@@ -17,7 +17,7 @@ class ImageJavaSpec extends BasicSparkOperation with SpecFunctions with BasicMLS
   import streaming.dsl.mmlib.algs.processing.SQLJavaImage
   import streaming.dsl.mmlib.algs.processing.image.ImageOp
 
-  "image-process" should "work fine" in {
+  "image-process" should "work fine" taggedAs (NotToRunTag) in {
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
       implicit val spark = runtime.sparkSession
@@ -51,7 +51,7 @@ class ImageJavaSpec extends BasicSparkOperation with SpecFunctions with BasicMLS
     }
   }
 
-  "image-without-decode-read-path" should "work fine" in {
+  "image-without-decode-read-path" should "work fine" taggedAs (NotToRunTag) in {
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
       implicit val spark = runtime.sparkSession

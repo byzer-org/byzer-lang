@@ -9,9 +9,8 @@ import streaming.dsl.template.TemplateMerge
   * Created by allwefantasy on 26/5/2018.
   */
 class PythonMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConfig {
-  copySampleLibsvmData
 
-  "sklearn-multi-model" should "work fine" in {
+  "sklearn-multi-model" should "work fine" taggedAs (NotToRunTag) in {
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
       implicit val spark = runtime.sparkSession
@@ -21,7 +20,7 @@ class PythonMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQ
     }
   }
 
-  "sklearn-user-script" should "work fine" in {
+  "sklearn-user-script" should "work fine" taggedAs (NotToRunTag) in {
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
       implicit val spark = runtime.sparkSession
@@ -60,7 +59,7 @@ class PythonMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQ
     }
   }
 
-  "python-alg-script" should "work fine" in {
+  "python-alg-script" should "work fine" taggedAs (NotToRunTag) in {
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
       implicit val spark = runtime.sparkSession
@@ -129,7 +128,7 @@ class PythonMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQ
     }
   }
 
-  "python-alg-script-enable-data-local" should "work fine" in {
+  "python-alg-script-enable-data-local" should "work fine" taggedAs (NotToRunTag) in {
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
       implicit val spark = runtime.sparkSession
@@ -209,7 +208,7 @@ class PythonMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQ
     }
   }
 
-  "tt" should "work fine" in {
+  "tt" should "work fine" taggedAs (NotToRunTag) in {
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
       implicit val spark = runtime.sparkSession
@@ -222,7 +221,7 @@ class PythonMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQ
     }
   }
 
-  "sklearn-multi-model-with-sample" should "work fine" in {
+  "sklearn-multi-model-with-sample" should "work fine" taggedAs (NotToRunTag) in {
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
       implicit val spark = runtime.sparkSession
@@ -232,13 +231,12 @@ class PythonMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQ
     }
   }
 
-  "tensorflow-cnn-model" should "work fine" in {
+  "tensorflow-cnn-model" should "work fine" taggedAs (NotToRunTag) in {
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
       implicit val spark = runtime.sparkSession
       val sq = createSSEL
       ScriptSQLExec.parse(loadSQLScriptStr("tensorflow-cnn"), sq)
-
     }
   }
 

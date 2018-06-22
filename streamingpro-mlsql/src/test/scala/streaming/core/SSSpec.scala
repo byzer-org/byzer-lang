@@ -19,7 +19,7 @@ import streaming.dsl.template.TemplateMerge
 class SSSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConfig {
 
 
-  "ss-append-test" should "work fine" in {
+  "ss-append-test" should "work fine" taggedAs (NotToRunTag) in {
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
       implicit val spark = runtime.sparkSession

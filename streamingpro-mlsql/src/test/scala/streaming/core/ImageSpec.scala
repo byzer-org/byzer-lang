@@ -22,7 +22,7 @@ class ImageSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLCo
   import streaming.dsl.mmlib.algs.processing.SQLOpenCVImage
   import streaming.dsl.mmlib.algs.processing.image.ImageOp
 
-  "image-process" should "work fine" in {
+  "image-process" should "work fine" taggedAs (NotToRunTag) in {
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
       implicit val spark = runtime.sparkSession
@@ -59,7 +59,7 @@ class ImageSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLCo
     }
   }
 
-  "image-read-path" should "work fine" in {
+  "image-read-path" should "work fine" taggedAs (NotToRunTag) in {
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
       implicit val spark = runtime.sparkSession
@@ -73,7 +73,7 @@ class ImageSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLCo
     }
   }
 
-  "image-read-path-without-resize" should "work fine" in {
+  "image-read-path-without-resize" should "work fine" taggedAs (NotToRunTag) in {
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
       implicit val spark = runtime.sparkSession
@@ -121,7 +121,7 @@ class ImageSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLCo
     }
   }
 
-  "image-without-decode-read-path" should "work fine" in {
+  "image-without-decode-read-path" should "work fine" taggedAs (NotToRunTag) in {
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
       implicit val spark = runtime.sparkSession
