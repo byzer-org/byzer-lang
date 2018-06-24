@@ -80,6 +80,7 @@ object MLMapping {
     "OpenCVImage" -> "streaming.dsl.mmlib.algs.processing.SQLOpenCVImage",
     "JavaImage" -> "streaming.dsl.mmlib.algs.processing.SQLJavaImage",
     "Discretizer" -> "streaming.dsl.mmlib.algs.SQLDiscretizer",
+    "ModelExplainInPlace" -> "streaming.dsl.mmlib.algs.SQLModelExplainInPlace",
     "VecMapInPlace" -> "streaming.dsl.mmlib.algs.SQLVecMapInPlace"
   )
 
