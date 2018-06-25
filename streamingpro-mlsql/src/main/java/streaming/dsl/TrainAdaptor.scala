@@ -80,21 +80,19 @@ object MLMapping {
     "OpenCVImage" -> "streaming.dsl.mmlib.algs.processing.SQLOpenCVImage",
     "JavaImage" -> "streaming.dsl.mmlib.algs.processing.SQLJavaImage",
     "Discretizer" -> "streaming.dsl.mmlib.algs.SQLDiscretizer",
-    "ModelExplainInPlace" -> "streaming.dsl.mmlib.algs.SQLModelExplainInPlace",
     "VecMapInPlace" -> "streaming.dsl.mmlib.algs.SQLVecMapInPlace"
   )
 
   def findAlg(name: String) = {
     mapping.get(name.capitalize) match {
       case Some(clzz) =>
-        if (!clzz.contains(".") && clzz.endsWith("InPlace")) {
-          Class.forName(s"streaming.dsl.mmlib.algs.SQL${clzz}").newInstance().asInstanceOf[SQLAlg]
-        } else {
-          Class.forName(clzz).newInstance().asInstanceOf[SQLAlg]
-        }
-
+        Class.forName(clzz).newInstance().asInstanceOf[SQLAlg]
       case None =>
-        throw new RuntimeException(s"${name} is not found")
+        if (!name.contains(".") && name.endsWith("InPlace")) {
+          Class.forName(s"streaming.dsl.mmlib.algs.SQL${name}").newInstance().asInstanceOf[SQLAlg]
+        } else {
+          throw new RuntimeException(s"${name} is not found")
+        }
     }
   }
 }
