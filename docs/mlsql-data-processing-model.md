@@ -106,8 +106,8 @@ where inputCol="content"
 and ignoreNature="true"
 -- 停用词路径
 and stopWordPath="/tmp/tfidf/stopwords"
--- 把结果展开为一维向量
-and flatFeature="true"
+-- flatFeature="flat"把结果展开为一维向量，flatFeature="merge"把结果merge相加
+and flatFeature="flat"
 ;
 load parquet.`/tmp/word2vecinplace/data` 
 as lwys_corpus_with_featurize;
