@@ -3,9 +3,9 @@
   - [TfIdfInPlace](#tfidfinplace)
   - [Word2VecInPlace](#word2vecinplace)
   - [ScalerInPlace](#scalerinplace)
-  - [ConfusionMatrix](#confusionMatrix)
+  - [ConfusionMatrix](#confusionmatrix)
   - [NormalizeInPlace](#normalizeinplace)
-  - [ModelExplainInPlace](#modelExplainInPlace)
+  - [ModelExplainInPlace](#modelexplaininplace)
   - [Discretizer](#discretizer)
     - [bucketizer](#bucketizer方式)
     - [quantile](#quantile方式)
@@ -176,7 +176,8 @@ select jack(array(a,b))[0] a,jack(array(a,b))[1] b, c from orginal_text_corpus
 ```
 
 
-## ConfusionMatrix
+### ConfusionMatrix
+
 根据真实标签列和预测列计算混淆矩阵
 
 假设/Users/dxy_why/confusionMatrixTestData.csv数据如下：
@@ -607,6 +608,31 @@ select * from data2 where __split__=0
 as trainingTable;
 ```
 
+## ModelExplainInPlace
+
+加载sklearn模型，显示训练后的模型参数
+
+```
+train traindataframe as ModelExplainInPlace.`tmp/modelExplainInPlace/` 
+where `systemParam.pythonPath`="python"
+and `systemParam.pythonVer`="2.7"
+// 模型路径
+and `modelPath`="/tmp/svm.pickle"
+```
+模型参数保存在/tmp/modelExplainInPlace/data，
+该参数在ModelExplainInPlace.`tmp/modelExplainInPlace/` 处设置
+```
+select  * from parquet.`/tmp/modelExplainInPlace/data` 
+```
+
+参数使用说明：
+
+|参数|默认值|说明|
+|:----|:----|:----|
+|modelPath|""|模型路径|
+
+
+
 ## 低阶（特定小功能点）数据预处理模型
 
 ### Word2vec
@@ -793,28 +819,6 @@ register DicOrTableToArray.`/tmp/model2` as p2;
 ```
 select p2("dic2")  as k
 ```
-
-### ModelExplainInPlace
-加载sklearn模型，显示训练后的模型参数
-
-train traindataframe as ModelExplainInPlace.`tmp/modelExplainInPlace/` 
-where `systemParam.pythonPath`="python"
-and `systemParam.pythonVer`="2.7"
-// 模型路径
-and `modelPath`="/tmp/svm.pickle"
-```
-模型参数保存在/tmp/modelExplainInPlace/data，
-该参数在ModelExplainInPlace.`tmp/modelExplainInPlace/` 处设置
-```
-select  * from parquet.`/tmp/modelExplainInPlace/data` 
-```
-
-
-参数使用说明：
-
-|参数|默认值|说明|
-|:----|:----|:----|
-|modelPath|""|模型路径|
 
 
 

@@ -58,7 +58,6 @@ class SQLModelExplainInPlace extends SQLAlg with Functions {
       fs.delete(new Path(modelHDFSPath), true)
       fs.copyFromLocalFile(new Path(tempModelLocalPath),
         new Path(modelHDFSPath))
-      println(modelHDFSPath)
       // delete local model
       FileUtils.deleteDirectory(new File(tempModelLocalPath))
       f

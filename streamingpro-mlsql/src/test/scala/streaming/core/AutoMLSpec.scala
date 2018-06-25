@@ -354,7 +354,7 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
       val sq = createSSEL
       ScriptSQLExec.parse(loadSQLScriptStr("model-explain"), sq)
 
-      spark.sql("select * from parquet.`/tmp/william/tmp/modelExplainInPlace/data`").show(100, false)
+      assert(spark.sql("select * from parquet.`/tmp/william/tmp/modelExplainInPlace/data`").collect().length == 1)
     }
   }
 
