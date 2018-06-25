@@ -27,7 +27,7 @@ class SQLModelExplainInPlace extends SQLAlg with Functions {
     val pythonPath = systemParam.getOrElse("pythonPath", "python")
 
     import df.sparkSession.sqlContext.implicits._
-    val ExternalCommandRunnerDataframe = Seq("aaa").toDF("test")
+    val ExternalCommandRunnerDataframe = Seq("").toDF("test")
     ExternalCommandRunnerDataframe.rdd.map(f => {
       val paramMap = new util.HashMap[String, Object]()
       paramMap.put("systemParam", systemParam.asJava)
@@ -51,23 +51,25 @@ class SQLModelExplainInPlace extends SQLAlg with Functions {
         pythonScript.fileName, modelPath = null, kafkaParam = null,
         validateData = null
       )
+      res.foreach(f => f)
       //模型保存到hdfs上
       val fs = FileSystem.get(new Configuration())
       val modelHDFSPath = SQLPythonFunc.getAlgModelPath(path) + "/0"
       fs.delete(new Path(modelHDFSPath), true)
       fs.copyFromLocalFile(new Path(tempModelLocalPath),
         new Path(modelHDFSPath))
+      println(modelHDFSPath)
       // delete local model
       FileUtils.deleteDirectory(new File(tempModelLocalPath))
       f
-    })
+    }).count()
     val modelHDFSPath = SQLPythonFunc.getAlgModelPath(path) + "/0"
     df.sparkSession.read.json(modelHDFSPath + "/attributes.json")
       .write.mode(SaveMode.Overwrite).parquet(getDataPath(path))
   }
 
   override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = {
-    throw new RuntimeException("predict method is not supported!")
+    throw new RuntimeException("register is not supported by this module now")
   }
 
   override def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = {
