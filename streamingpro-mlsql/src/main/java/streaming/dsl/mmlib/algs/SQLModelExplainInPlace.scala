@@ -27,7 +27,7 @@ class SQLModelExplainInPlace extends SQLAlg with Functions {
     val pythonPath = systemParam.getOrElse("pythonPath", "python")
 
     import df.sparkSession.sqlContext.implicits._
-    val ExternalCommandRunnerDataframe = Seq("").toDF("test")
+    val ExternalCommandRunnerDataframe = Seq("").toDF("model_expalin_inplace_field")
     ExternalCommandRunnerDataframe.rdd.map(f => {
       val paramMap = new util.HashMap[String, Object]()
       paramMap.put("systemParam", systemParam.asJava)
