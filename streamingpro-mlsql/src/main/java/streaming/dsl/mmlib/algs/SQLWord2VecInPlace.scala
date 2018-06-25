@@ -10,8 +10,8 @@ import streaming.dsl.mmlib.algs.feature.StringFeature
 import streaming.dsl.mmlib.algs.meta.Word2VecMeta
 
 /**
-  * Created by allwefantasy on 7/5/2018.
-  */
+ * Created by allwefantasy on 7/5/2018.
+ */
 class SQLWord2VecInPlace extends SQLAlg with Functions {
   override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
     interval_train(df, params + ("path" -> path)).write.mode(SaveMode.Overwrite).parquet(getDataPath(path))
@@ -20,17 +20,31 @@ class SQLWord2VecInPlace extends SQLAlg with Functions {
   def interval_train(df: DataFrame, params: Map[String, String]) = {
     val dicPaths = params.getOrElse("dicPaths", "")
     val inputCol = params.getOrElse("inputCol", "")
+    val vectorSize = params.getOrElse("vectorSize", "100").toInt
     val stopWordPath = params.getOrElse("stopWordPath", "")
-    val flat = params.getOrElse("flatFeature", "true").toBoolean
+    val flat = params.getOrElse("flatFeature", "") //flat,merge
     require(!inputCol.isEmpty, "inputCol is required when use SQLWord2VecInPlace")
     val metaPath = getMetaPath(params("path"))
     // keep params
     saveTraningParams(df.sparkSession, params, metaPath)
 
-    var newDF = StringFeature.word2vec(df, metaPath, dicPaths, inputCol, stopWordPath)
-    if (flat) {
+    var newDF = StringFeature.word2vec(df, metaPath, dicPaths, inputCol, stopWordPath, vectorSize)
+    if (flat.equals("flat")) {
       val flatFeatureUdf = F.udf((a: Seq[Seq[Double]]) => {
-        a.flatMap(f => f)
+        a.flatten
+      })
+      newDF = newDF.withColumn(inputCol, flatFeatureUdf(F.col(inputCol)))
+    }
+    if (flat.equals("merge")) {
+      val flatFeatureUdf = F.udf((a: Seq[Seq[Double]]) => {
+        val r = new Array[Double](vectorSize)
+        for (a1 <- a) {
+          val b = a1.toList
+          for (i <- 0 until b.size) {
+            r(i) = b(i) + r(i)
+          }
+        }
+        r.toSeq
       })
       newDF = newDF.withColumn(inputCol, flatFeatureUdf(F.col(inputCol)))
     }

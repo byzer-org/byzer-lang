@@ -12,7 +12,7 @@ and stopWordPath="/tmp/tfidf/stopwords"
 and priorityDicPath="/tmp/tfidf/prioritywords"
 -- 高权重词加权倍数
 and priority="5.0"
-and nGram="2,3"
+and nGrams="2"
 ;
 
 register TfIdfInPlace.`/tmp/tfidfinplace` as jack;
