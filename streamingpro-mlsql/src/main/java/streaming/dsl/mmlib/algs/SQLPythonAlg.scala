@@ -199,7 +199,7 @@ class SQLPythonAlg extends SQLAlg with Functions {
     val pythonPath = metasTemp(0)("pythonPath")
     val pythonVer = metasTemp(0)("pythonVer")
 
-    val userPythonScript = findPythonPredictScript(sparkSession, params, "sk_predict.py")
+    val userPythonScript = findPythonPredictScript(sparkSession, params, "")
 
     val maps = new util.HashMap[String, java.util.Map[String, String]]()
     val item = new util.HashMap[String, String]()

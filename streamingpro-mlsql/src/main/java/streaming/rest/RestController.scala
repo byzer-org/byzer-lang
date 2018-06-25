@@ -67,6 +67,7 @@ class RestController extends ApplicationController {
 
   @At(path = Array("/run/script"), types = Array(GET, POST))
   def script = {
+    restResponse.httpServletResponse().setHeader("Access-Control-Allow-Origin", "*")
     val silence = paramAsBoolean("silence", false)
     val sparkSession = runtime.asInstanceOf[SparkRuntime].sparkSession
     val htp = findService(classOf[HttpTransportService])

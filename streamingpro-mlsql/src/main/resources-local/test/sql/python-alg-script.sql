@@ -16,7 +16,7 @@ and `systemParam.pythonVer`="2.7"
 ;
 
 register PythonAlg.`/tmp/pa_model` as jack options
-pythonScriptPPath="${pythonPredictScriptPath}"
+pythonScriptPath="${pythonPredictScriptPath}"
 and algIndex="0"
 ;
 
