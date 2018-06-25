@@ -329,6 +329,35 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
     }
   }
 
+  "SQLModelExplainInPlace" should "work fine" taggedAs (NotToRunTag) in {
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+      //执行sql
+      implicit val spark = runtime.sparkSession
+      val dataRDD = spark.sparkContext.parallelize(Seq(
+        Seq("cat", "dog"),
+        Seq("cat", "cat"),
+        Seq("rabbit", "cat"),
+        Seq("rabbit", "rabbit"),
+        Seq("dog", "cat"),
+        Seq("cat", "cat"),
+        Seq("dog", "dog"))).map { f =>
+        Row.fromSeq(f)
+      }
+
+      val df = spark.createDataFrame(dataRDD,
+        StructType(Seq(
+          StructField("actual", StringType),
+          StructField("predict", StringType)
+        )))
+      df.createOrReplaceTempView("ModelExplainInPlaceData")
+
+      val sq = createSSEL
+      ScriptSQLExec.parse(loadSQLScriptStr("model-explain"), sq)
+
+      spark.sql("select * from parquet.`/tmp/william/tmp/modelExplainInPlace/data`").show(100, false)
+    }
+  }
+
   "SQLConfusionMatrix" should "work fine" taggedAs (NotToRunTag) in {
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql

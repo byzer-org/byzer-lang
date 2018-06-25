@@ -5,6 +5,7 @@
   - [ScalerInPlace](#scalerinplace)
   - [ConfusionMatrix](#confusionMatrix)
   - [NormalizeInPlace](#normalizeinplace)
+  - [ModelExplainInPlace](#modelExplainInPlace)
   - [Discretizer](#discretizer)
     - [bucketizer](#bucketizer方式)
     - [quantile](#quantile方式)
@@ -132,6 +133,7 @@ select word2vec(content) from sometable
 可参考[MLSQL 模型部署](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-model-deploy.md)
 
 
+
 ### ScalerInPlace
 
 特征尺度变换，这是对double类型字段做特征工程的一个算法。使用方法如下：
@@ -172,6 +174,7 @@ register ScalerInPlace.`/tmp/scaler` as jack;
 ```sql
 select jack(array(a,b))[0] a,jack(array(a,b))[1] b, c from orginal_text_corpus
 ```
+
 
 ## ConfusionMatrix
 根据真实标签列和预测列计算混淆矩阵
@@ -791,7 +794,27 @@ register DicOrTableToArray.`/tmp/model2` as p2;
 select p2("dic2")  as k
 ```
 
+### ModelExplainInPlace
+加载sklearn模型，显示训练后的模型参数
 
+train traindataframe as ModelExplainInPlace.`tmp/modelExplainInPlace/` 
+where `systemParam.pythonPath`="python"
+and `systemParam.pythonVer`="2.7"
+// 模型路径
+and `modelPath`="/tmp/svm.pickle"
+```
+模型参数保存在/tmp/modelExplainInPlace/data，
+该参数在ModelExplainInPlace.`tmp/modelExplainInPlace/` 处设置
+```
+select  * from parquet.`/tmp/modelExplainInPlace/data` 
+```
+
+
+参数使用说明：
+
+|参数|默认值|说明|
+|:----|:----|:----|
+|modelPath|""|模型路径|
 
 
 
