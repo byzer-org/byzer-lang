@@ -578,6 +578,31 @@ select jack(crawler_request_image(imagePath)) as image from orginal_text_corpus
 ```
 
 
+## SQLCorpusExplainInPlace
+
+可以实现对训练集做一些统计
+
+```sql
+train corpus as CorpusExplainInPlace.`/tmp/wow` where 
+labelCol="label";
+
+load parquet.`/tmp/wow/data` as result;
+select * from result;
+```
+
+最后结果如下
+
+```
++-----+----------+------------------+-------+-----+
+|label|labelCount|            weight|percent|total|
++-----+----------+------------------+-------+-----+
+|    1|         3|1.3333333333333333|   0.75|    4|
+|    0|         1|               4.0|   0.25|    4|
++-----+----------+------------------+-------+-----+
+```
+
+
+表示训练集有两个分类标签，labelCount表示对应分类的样本数目，total表示总样本数，weight表示权重，percent表示该分类占总样本的比例。
 
 ## TokenExtract / TokenAnalysis
 
