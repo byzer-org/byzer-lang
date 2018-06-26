@@ -9,7 +9,7 @@ import org.apache.spark.streaming.BasicSparkOperation
 import streaming.core.strategy.platform.SparkRuntime
 import org.apache.spark.ml.linalg.{Vector, Vectors}
 import streaming.dsl.ScriptSQLExec
-import streaming.dsl.mmlib.algs.{SQLAutoFeature, SQLVecMapInPlace}
+import streaming.dsl.mmlib.algs.{SQLAutoFeature, SQLCorpusExplainInPlace, SQLVecMapInPlace}
 import streaming.dsl.mmlib.algs.feature.{DiscretizerIntFeature, DoubleFeature, StringFeature}
 import streaming.dsl.template.TemplateMerge
 
@@ -495,6 +495,31 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
 
       val vec = res.getAs[Vector](0)
       assume(vec.toDense.toArray.mkString(",") == "0.0,0.0,9.0")
+
+    }
+  }
+
+  "SQLCorpusExplainInPlace" should "work fine" in {
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+      implicit val spark = runtime.sparkSession
+      val dataRDD = spark.sparkContext.parallelize(Seq(
+        Seq(1),
+        Seq(1),
+        Seq(0), Seq(1)
+      )).map { f =>
+        Row.fromSeq(f)
+      }
+
+      val df = spark.createDataFrame(dataRDD,
+        StructType(Seq(
+          StructField("label", IntegerType)
+        )))
+
+      val path = "/tmp/wow"
+      val params = Map("labelCol" -> "label")
+      val corpusExplain = new SQLCorpusExplainInPlace()
+      corpusExplain.train(df, path, params)
+      spark.sql("select * from parquet.`/tmp/wow/data`").collect().foreach(f => assume(f.size == 5))
 
     }
   }
