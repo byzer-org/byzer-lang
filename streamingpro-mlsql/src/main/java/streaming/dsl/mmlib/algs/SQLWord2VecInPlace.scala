@@ -136,23 +136,30 @@ class SQLWord2VecInPlace extends SQLAlg with Functions {
         filter(f => !stopwordsBr.value.contains(f))
       wordArray.filter(f => wordIndexBr.value.contains(f)).map(f => wordIndexBr.value(f).toInt)
     }
+
+    def resultFeaturematch(x: Int): String = x match {
+      case 1 => "one"
+      case 2 => "two"
+      case _ => "many"
+    }
+
     if (wordVecsBr.value.size > 0) {
       UserDefinedFunction(func2, ArrayType(ArrayType(DoubleType)), Some(Seq(StringType)))
     } else {
-      if (resultFeature.equals("index")) {
-        UserDefinedFunction(func3, ArrayType(IntegerType), Some(Seq(StringType)))
-      }
-      else if (resultFeature.equals("flag")) {
-        val f2 = (a: String) => {
-          word2vecMeta.predictFunc(func(a)).flatten
+      resultFeature match {
+        case "index" => UserDefinedFunction(func3, ArrayType(IntegerType), Some(Seq(StringType)))
+        case "flag" => {
+          val f2 = (a: String) => {
+            word2vecMeta.predictFunc(func(a)).flatten
+          }
+          UserDefinedFunction(f2, ArrayType(DoubleType), Some(Seq(StringType)))
         }
-        UserDefinedFunction(f2, ArrayType(DoubleType), Some(Seq(StringType)))
-      }
-      else {
-        val f2 = (a: String) => {
-          word2vecMeta.predictFunc(func(a))
+        case _ => {
+          val f2 = (a: String) => {
+            word2vecMeta.predictFunc(func(a))
+          }
+          UserDefinedFunction(f2, ArrayType(ArrayType(DoubleType)), Some(Seq(StringType)))
         }
-        UserDefinedFunction(f2, ArrayType(ArrayType(DoubleType)), Some(Seq(StringType)))
       }
     }
 
