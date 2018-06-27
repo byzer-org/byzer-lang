@@ -1,22 +1,20 @@
 package streaming.dsl.mmlib.algs.feature
 
 import _root_.streaming.dsl.mmlib.algs._
-import org.apache.spark.sql.{functions => F}
-
-import scala.collection.mutable.ArrayBuffer
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.ml.feature.NGram
 import org.apache.spark.ml.help.HSQLStringIndex
 import org.apache.spark.ml.linalg.{Vector, Vectors}
-import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.types._
-import org.apache.spark.sql.{Row, _}
-import MetaConst._
+import org.apache.spark.sql.{Row, functions => F, _}
+import _root_.streaming.dsl.mmlib.algs.MetaConst._
+
+import scala.collection.mutable.ArrayBuffer
 
 
 /**
-  * Created by allwefantasy on 14/5/2018.
-  */
+ * Created by allwefantasy on 14/5/2018.
+ */
 object StringFeature extends BaseFeatureFunctions {
 
 
@@ -72,10 +70,10 @@ object StringFeature extends BaseFeatureFunctions {
   def analysisWords(df: DataFrame, metaPath: String, dicPaths: String, inputCol: String,
                     stopwordsBr: Broadcast[Set[String]],
                     nGrams: Seq[Int],
-                    outputWordAndIndex: Boolean
+                    outputWordAndIndex: Boolean,
+                    wordsArray: Array[String] = Array[String]()
                    ) = {
-    var newDF = new SQLTokenAnalysis().internal_train(df, Map("dic.paths" -> dicPaths, "inputCol" -> inputCol, "ignoreNature" -> "true"))
-
+    var newDF = new SQLTokenAnalysis().internal_train(df, Map("dic.paths" -> dicPaths, "inputCol" -> inputCol, "ignoreNature" -> "true", "wordsArray" -> wordsArray.mkString(",")))
     val filterStopWordFunc = F.udf((a: Seq[String]) => {
       a.filterNot(stopwordsBr.value.contains(_))
     })
@@ -173,6 +171,7 @@ object StringFeature extends BaseFeatureFunctions {
     newDF
   }
 
+
   def word2vec(df: DataFrame, metaPath: String, dicPaths: String, inputCol: String, stopWordsPaths: String, vectorSize: Int = 100) = {
 
     val stopwords = loadStopwords(df, stopWordsPaths)
@@ -190,6 +189,118 @@ object StringFeature extends BaseFeatureFunctions {
     val predictFunc = word2vec.internal_predict(df.sparkSession, model, "wow")("wow_array").asInstanceOf[(Seq[String]) => Seq[Seq[Double]]]
     val udfPredictFunc = F.udf(predictFunc)
     newDF = replaceColumn(newDF, inputCol, udfPredictFunc)
+    newDF
+  }
+
+  def word2vecs(df: DataFrame, metaPath: String, dicPaths: String, wordvecPaths: String, inputCol: String, stopWordsPaths: String, resultFeature: String, vectorSize: Int = 100, length: Int = 100) = {
+    val stopwords = loadStopwords(df, stopWordsPaths)
+    val stopwordsBr = df.sparkSession.sparkContext.broadcast(stopwords)
+    val spark = df.sparkSession
+    val wordsArray = loadDicsFromWordvec(spark, wordvecPaths)
+    val wordvecsMap = loadWordvecs(spark, wordvecPaths)
+    if (wordvecsMap.size > 0) {
+      var newDF = new SQLTokenAnalysis().internal_train(df, Map("dic.paths" -> dicPaths, "inputCol" -> inputCol, "ignoreNature" -> "true", "wordsArray" -> wordsArray.mkString(",")))
+      val filterStopWordFunc = F.udf((a: Seq[String]) => {
+        a.filterNot(stopwordsBr.value.contains(_))
+      })
+      newDF = replaceColumn(newDF, inputCol, filterStopWordFunc)
+      val toVecFunc = F.udf((wordArray: Seq[String]) => {
+        val r = new Array[Seq[Double]](length)
+        val wSize = wordArray.size
+        for (i <- 0 until length) {
+          if (i < wSize && wordvecsMap.contains(wordArray(i))) {
+            r(i) = wordvecsMap(wordArray(i)).toSeq
+          } else
+            r(i) = new Array[Double](vectorSize).toSeq
+        }
+        r.toSeq
+      })
+      replaceColumn(newDF, inputCol, toVecFunc)
+    } else {
+      var (newDF, funcMap, wordCount) = analysisWords(df, metaPath, dicPaths, inputCol, stopwordsBr, Seq(), false, wordsArray)
+      // word2vec only accept String sequence, so we should convert int to str
+      val word2vec = new SQLWord2Vec()
+      word2vec.train(replaceColumn(newDF, inputCol, F.udf((a: Seq[Int]) => {
+        a.map(f => f.toString)
+      })), WORD2VEC_PATH(metaPath, inputCol), Map("inputCol" -> inputCol, "minCount" -> "0", "vectorSize" -> (vectorSize + "")))
+      val model = word2vec.load(df.sparkSession, WORD2VEC_PATH(metaPath, inputCol), Map())
+      if (!resultFeature.equals("index")) {
+        val predictFunc = word2vec.internal_predict(df.sparkSession, model, "wow")("wow_array").asInstanceOf[(Seq[String]) => Seq[Seq[Double]]]
+        val udfPredictFunc = F.udf(predictFunc)
+        newDF = replaceColumn(newDF, inputCol, udfPredictFunc)
+      }
+      newDF
+    }
+  }
+
+  def loadDicsFromWordvec(spark: SparkSession, wordvecPaths: String) = {
+    var result = Array[String]()
+    result ++= wordvecPaths.split(",").filter(f => !f.isEmpty).flatMap { f =>
+      spark.sparkContext.textFile(f).map(line =>
+        line.split(" ")(0)
+      ).collect()
+    }
+    result
+  }
+
+  def loadWordvecs(spark: SparkSession, wordvecPaths: String) = {
+    var wordVecMap = Map[String, Array[Double]]()
+    var wordVec = Array[(String, Array[Double])]()
+    wordVec ++= wordvecPaths.split(",").filter(f => !f.isEmpty).flatMap { f =>
+      spark.sparkContext.textFile(f).map(line =>
+        (line.split(" ")(0), line.split(" ")(1).split(",").map(a => a.toDouble))
+      ).collect()
+    }
+    for (a <- wordVec) {
+      wordVecMap += a
+    }
+    wordVecMap
+  }
+
+  def wordvec(df: DataFrame, dicPaths: String, inputCol: String, stopWordsPaths: String, vectorSize: Int, length: Int) = {
+    val spark = df.sparkSession
+    val stopwords = loadStopwords(df, stopWordsPaths)
+    val stopwordsBr = df.sparkSession.sparkContext.broadcast(stopwords)
+    var wordVecMap = Map[String, Array[Double]]()
+    val wordVec = dicPaths.split(",").filter(f => !f.isEmpty).flatMap { f =>
+      spark.sparkContext.textFile(f).map(line =>
+        (line.split(" ")(0), line.split(" ")(1).split(",").map(a => a.toDouble))
+      ).collect()
+    }
+    val dic = wordVec.map(_._1)
+    for (a <- wordVec) {
+      wordVecMap += a
+    }
+    val rdd = df.rdd.mapPartitions { mp =>
+      val parser = SQLTokenAnalysis.createAnalyzer(dic, Map())
+      mp.map { f =>
+        val content = f.getAs[String](inputCol)
+        val res = SQLTokenAnalysis.parseStr(parser, content, Map())
+        val index = f.fieldIndex(inputCol)
+        val newValue = f.toSeq.zipWithIndex.filterNot(f => f._2 == index).map(f => f._1) ++ Seq(res)
+        Row.fromSeq(newValue)
+      }
+    }
+    var newDF = spark.createDataFrame(rdd,
+      StructType(df.schema.filterNot(f => f.name == inputCol) ++ Seq(StructField(inputCol, ArrayType(StringType)))))
+    val filterStopWordFunc = F.udf((a: Seq[String]) => {
+      a.filterNot(stopwordsBr.value.contains(_))
+    })
+    newDF = replaceColumn(newDF, inputCol, filterStopWordFunc)
+
+    //toVec
+    val toVecFunc = F.udf((wordArray: Seq[String]) => {
+      val r = new Array[Seq[Double]](length)
+      val wSize = wordArray.size
+      for (i <- 0 until length) {
+        if (i < wSize && wordVecMap.contains(wordArray(i))) {
+          r(i) = wordVecMap(wordArray(i)).toSeq
+        } else
+          r(i) = new Array[Double](vectorSize).toSeq
+      }
+      r.toSeq
+    })
+    newDF = replaceColumn(newDF, inputCol, toVecFunc)
     newDF
   }
 

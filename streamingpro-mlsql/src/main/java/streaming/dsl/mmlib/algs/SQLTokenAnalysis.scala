@@ -21,10 +21,16 @@ class SQLTokenAnalysis extends SQLAlg with Functions {
     require(params.contains("inputCol"), "inputCol is required")
     val fieldName = params("inputCol")
 
-    val words = SQLTokenAnalysis.loadDics(session, params)
+    val arrayWords = {
+      if(params.contains("wordsArray")) {
+        params("wordsArray").split(",")
+      }
+      Array[String]()
+    }
+
+    val words = SQLTokenAnalysis.loadDics(session, params) ++ arrayWords
 
 
-    val ber = session.sparkContext.broadcast(words)
     val rdd = df.rdd.mapPartitions { mp =>
 
       val parser = SQLTokenAnalysis.createAnalyzer(words, params)
@@ -36,7 +42,6 @@ class SQLTokenAnalysis extends SQLAlg with Functions {
         Row.fromSeq(newValue)
       }
     }
-
     session.createDataFrame(rdd,
       StructType(df.schema.filterNot(f => f.name == fieldName) ++ Seq(StructField(fieldName, ArrayType(StringType)))))
 

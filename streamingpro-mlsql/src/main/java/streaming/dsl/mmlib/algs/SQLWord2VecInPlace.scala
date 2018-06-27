@@ -2,7 +2,7 @@ package streaming.dsl.mmlib.algs
 
 import MetaConst._
 import org.apache.spark.sql.expressions.UserDefinedFunction
-import org.apache.spark.sql.types.{ArrayType, DoubleType, StringType, StructType}
+import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession, functions => F}
 import streaming.core.shared.SharedObjManager
 import streaming.dsl.mmlib.SQLAlg
@@ -19,23 +19,25 @@ class SQLWord2VecInPlace extends SQLAlg with Functions {
 
   def interval_train(df: DataFrame, params: Map[String, String]) = {
     val dicPaths = params.getOrElse("dicPaths", "")
+    val wordvecPaths = params.getOrElse("wordvecPaths", "")
     val inputCol = params.getOrElse("inputCol", "")
     val vectorSize = params.getOrElse("vectorSize", "100").toInt
+    val length = params.getOrElse("length", "100").toInt
     val stopWordPath = params.getOrElse("stopWordPath", "")
-    val flat = params.getOrElse("flatFeature", "") //flat,merge
+    val resultFeature = params.getOrElse("resultFeature", "") //flat,merge,index
     require(!inputCol.isEmpty, "inputCol is required when use SQLWord2VecInPlace")
     val metaPath = getMetaPath(params("path"))
     // keep params
     saveTraningParams(df.sparkSession, params, metaPath)
 
-    var newDF = StringFeature.word2vec(df, metaPath, dicPaths, inputCol, stopWordPath, vectorSize)
-    if (flat.equals("flat")) {
+    var newDF = StringFeature.word2vecs(df, metaPath, dicPaths, wordvecPaths, inputCol, stopWordPath, resultFeature, vectorSize, length)
+    if (resultFeature.equals("flat")) {
       val flatFeatureUdf = F.udf((a: Seq[Seq[Double]]) => {
         a.flatten
       })
       newDF = newDF.withColumn(inputCol, flatFeatureUdf(F.col(inputCol)))
     }
-    if (flat.equals("merge")) {
+    if (resultFeature.equals("merge")) {
       val flatFeatureUdf = F.udf((a: Seq[Seq[Double]]) => {
         val r = new Array[Double](vectorSize)
         for (a1 <- a) {
@@ -72,19 +74,24 @@ class SQLWord2VecInPlace extends SQLAlg with Functions {
     val trainParams = word2vecMeta.trainParams
     val dicPaths = trainParams.getOrElse("dicPaths", "")
     val stopWordPath = trainParams.getOrElse("stopWordPath", "")
-
+    val wordvecPaths = trainParams.getOrElse("wordvecPaths", "")
+    val resultFeature = trainParams.getOrElse("resultFeature", "")
+    val vectorSize = trainParams.getOrElse("vectorSize", "100").toInt
+    val length = trainParams.getOrElse("length", "100").toInt
     val wordIndexBr = spark.sparkContext.broadcast(word2vecMeta.wordIndex)
 
 
     val df = spark.createDataFrame(spark.sparkContext.emptyRDD[Row], StructType(Seq()))
     val stopwords = StringFeature.loadStopwords(df, stopWordPath)
     val stopwordsBr = spark.sparkContext.broadcast(stopwords)
+    val wordVecsBr = spark.sparkContext.broadcast(StringFeature.loadWordvecs(spark, wordvecPaths))
+    val wordsArrayBr = spark.sparkContext.broadcast(StringFeature.loadDicsFromWordvec(spark, wordvecPaths))
 
     val func = (content: String) => {
 
       // create analyser
       val forest = SharedObjManager.getOrCreate[Any](dicPaths, SharedObjManager.forestPool, () => {
-        val words = SQLTokenAnalysis.loadDics(spark, trainParams)
+        val words = SQLTokenAnalysis.loadDics(spark, trainParams) ++ wordsArrayBr.value
         SQLTokenAnalysis.createForest(words, trainParams)
       })
       val parser = SQLTokenAnalysis.createAnalyzerFromForest(forest.asInstanceOf[AnyRef], trainParams)
@@ -95,17 +102,58 @@ class SQLWord2VecInPlace extends SQLAlg with Functions {
       val wordIntArray = wordArray.filter(f => wordIndexBr.value.contains(f)).map(f => wordIndexBr.value(f).toInt)
       wordIntArray.map(f => f.toString).toSeq
     }
+    val func2 = (content: String) => {
+      // create analyser
+      val forest = SharedObjManager.getOrCreate[Any](dicPaths, SharedObjManager.forestPool, () => {
+        val words = SQLTokenAnalysis.loadDics(spark, trainParams) ++ wordsArrayBr.value
+        SQLTokenAnalysis.createForest(words, trainParams)
+      })
+      val parser = SQLTokenAnalysis.createAnalyzerFromForest(forest.asInstanceOf[AnyRef], trainParams)
+      // analyser content
+      val wordArray = SQLTokenAnalysis.parseStr(parser, content, trainParams).
+        filter(f => !stopwordsBr.value.contains(f))
+      val r = new Array[Array[Double]](length)
+      val wordvecsMap = wordVecsBr.value
+      val wSize = wordArray.size
+      for (i <- 0 until length) {
+        if (i < wSize && wordvecsMap.contains(wordArray(i))) {
+          r(i) = wordvecsMap(wordArray(i))
+        } else
+          r(i) = new Array[Double](vectorSize)
+      }
+      r
+    }
 
-    if (trainParams.getOrElse("flatFeature", "false").toBoolean) {
-      val f2 = (a: String) => {
-        word2vecMeta.predictFunc(func(a)).flatMap(f => f)
-      }
-      UserDefinedFunction(f2, ArrayType(DoubleType), Some(Seq(StringType)))
+    val func3 = (content: String) => {
+      // create analyser
+      val forest = SharedObjManager.getOrCreate[Any](dicPaths, SharedObjManager.forestPool, () => {
+        val words = SQLTokenAnalysis.loadDics(spark, trainParams) ++ wordsArrayBr.value
+        SQLTokenAnalysis.createForest(words, trainParams)
+      })
+      val parser = SQLTokenAnalysis.createAnalyzerFromForest(forest.asInstanceOf[AnyRef], trainParams)
+      // analyser content
+      val wordArray = SQLTokenAnalysis.parseStr(parser, content, trainParams).
+        filter(f => !stopwordsBr.value.contains(f))
+      wordArray.filter(f => wordIndexBr.value.contains(f)).map(f => wordIndexBr.value(f).toInt)
+    }
+    if (wordVecsBr.value.size > 0) {
+      UserDefinedFunction(func2, ArrayType(ArrayType(DoubleType)), Some(Seq(StringType)))
     } else {
-      val f2 = (a: String) => {
-        word2vecMeta.predictFunc(func(a))
+      if (resultFeature.equals("index")) {
+        UserDefinedFunction(func3, ArrayType(IntegerType), Some(Seq(StringType)))
       }
-      UserDefinedFunction(f2, ArrayType(ArrayType(DoubleType)), Some(Seq(StringType)))
+      else if (resultFeature.equals("flag")) {
+        val f2 = (a: String) => {
+          word2vecMeta.predictFunc(func(a)).flatten
+        }
+        UserDefinedFunction(f2, ArrayType(DoubleType), Some(Seq(StringType)))
+      }
+      else {
+        val f2 = (a: String) => {
+          word2vecMeta.predictFunc(func(a))
+        }
+        UserDefinedFunction(f2, ArrayType(ArrayType(DoubleType)), Some(Seq(StringType)))
+      }
     }
 
   }
