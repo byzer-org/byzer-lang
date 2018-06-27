@@ -11,8 +11,8 @@ import scala.collection.JavaConversions._
 import scala.collection.mutable
 
 /**
-  * Created by allwefantasy on 24/4/2018.
-  */
+ * Created by allwefantasy on 24/4/2018.
+ */
 class SQLTokenAnalysis extends SQLAlg with Functions {
 
   def internal_train(df: DataFrame, params: Map[String, String]) = {
@@ -21,10 +21,16 @@ class SQLTokenAnalysis extends SQLAlg with Functions {
     require(params.contains("inputCol"), "inputCol is required")
     val fieldName = params("inputCol")
 
-    val words = SQLTokenAnalysis.loadDics(session, params)
+    val arrayWords = {
+      if (params.contains("wordsArray")) {
+        params("wordsArray").split(",")
+      } else
+        Array[String]()
+    }
+
+    val words = SQLTokenAnalysis.loadDics(session, params) ++ arrayWords
 
 
-    val ber = session.sparkContext.broadcast(words)
     val rdd = df.rdd.mapPartitions { mp =>
 
       val parser = SQLTokenAnalysis.createAnalyzer(words, params)
@@ -36,7 +42,6 @@ class SQLTokenAnalysis extends SQLAlg with Functions {
         Row.fromSeq(newValue)
       }
     }
-
     session.createDataFrame(rdd,
       StructType(df.schema.filterNot(f => f.name == fieldName) ++ Seq(StructField(fieldName, ArrayType(StringType)))))
 
@@ -72,6 +77,7 @@ object SQLTokenAnalysis {
         println(s"parser invoke error:${content}")
         throw e
     }
+
     def getAllWords(udg: Any) = {
       val result = udg.getClass.getMethod("getTerms").invoke(udg).asInstanceOf[java.util.List[Object]]
       var res = result.map { f =>
@@ -100,6 +106,7 @@ object SQLTokenAnalysis {
         res.map(f => s"${f._1}/${f._2}")
       }
     }
+
     getAllWords(udg).toArray
   }
 

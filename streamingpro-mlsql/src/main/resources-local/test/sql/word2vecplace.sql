@@ -9,6 +9,8 @@ and ignoreNature="true"
 -- 停用词路径
 and stopWordPath="/tmp/tfidf/stopwords"
 and flatFeature="true"
+and resultFeature="${resultFeature}"
+and wordvecPaths="${wordvecPaths}"
 ;
 
 register Word2VecInPlace.`/tmp/word2vecinplace` as jack;
