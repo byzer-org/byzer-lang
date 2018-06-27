@@ -171,28 +171,7 @@ object StringFeature extends BaseFeatureFunctions {
     newDF
   }
 
-
-  def word2vec(df: DataFrame, metaPath: String, dicPaths: String, inputCol: String, stopWordsPaths: String, vectorSize: Int = 100) = {
-
-    val stopwords = loadStopwords(df, stopWordsPaths)
-    val stopwordsBr = df.sparkSession.sparkContext.broadcast(stopwords)
-    var (newDF, funcMap, wordCount) = analysisWords(df, metaPath, dicPaths, inputCol, stopwordsBr, Seq(), false)
-    val spark = df.sparkSession
-    // word2vec only accept String sequence, so we should convert int to str
-    newDF = replaceColumn(newDF, inputCol, F.udf((a: Seq[Int]) => {
-      a.map(f => f.toString)
-    }))
-
-    val word2vec = new SQLWord2Vec()
-    word2vec.train(newDF, WORD2VEC_PATH(metaPath, inputCol), Map("inputCol" -> inputCol, "minCount" -> "0", "vectorSize" -> (vectorSize + "")))
-    val model = word2vec.load(df.sparkSession, WORD2VEC_PATH(metaPath, inputCol), Map())
-    val predictFunc = word2vec.internal_predict(df.sparkSession, model, "wow")("wow_array").asInstanceOf[(Seq[String]) => Seq[Seq[Double]]]
-    val udfPredictFunc = F.udf(predictFunc)
-    newDF = replaceColumn(newDF, inputCol, udfPredictFunc)
-    newDF
-  }
-
-  def word2vecs(df: DataFrame, metaPath: String, dicPaths: String, wordvecPaths: String, inputCol: String, stopWordsPaths: String, resultFeature: String, vectorSize: Int = 100, length: Int = 100) = {
+  def word2vec(df: DataFrame, metaPath: String, dicPaths: String, wordvecPaths: String, inputCol: String, stopWordsPaths: String, resultFeature: String, vectorSize: Int = 100, length: Int = 100) = {
     val stopwords = loadStopwords(df, stopWordsPaths)
     val stopwordsBr = df.sparkSession.sparkContext.broadcast(stopwords)
     val spark = df.sparkSession

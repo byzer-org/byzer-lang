@@ -11,8 +11,8 @@ import scala.collection.JavaConversions._
 import scala.collection.mutable
 
 /**
-  * Created by allwefantasy on 24/4/2018.
-  */
+ * Created by allwefantasy on 24/4/2018.
+ */
 class SQLTokenAnalysis extends SQLAlg with Functions {
 
   def internal_train(df: DataFrame, params: Map[String, String]) = {
@@ -22,10 +22,10 @@ class SQLTokenAnalysis extends SQLAlg with Functions {
     val fieldName = params("inputCol")
 
     val arrayWords = {
-      if(params.contains("wordsArray")) {
+      if (params.contains("wordsArray")) {
         params("wordsArray").split(",")
-      }
-      Array[String]()
+      } else
+        Array[String]()
     }
 
     val words = SQLTokenAnalysis.loadDics(session, params) ++ arrayWords
@@ -77,6 +77,7 @@ object SQLTokenAnalysis {
         println(s"parser invoke error:${content}")
         throw e
     }
+
     def getAllWords(udg: Any) = {
       val result = udg.getClass.getMethod("getTerms").invoke(udg).asInstanceOf[java.util.List[Object]]
       var res = result.map { f =>
@@ -105,6 +106,7 @@ object SQLTokenAnalysis {
         res.map(f => s"${f._1}/${f._2}")
       }
     }
+
     getAllWords(udg).toArray
   }
 

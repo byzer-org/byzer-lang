@@ -83,13 +83,20 @@ select tfidf(content) from sometable
 ### Word2VecInPlace
 
 Word2VecInPlace是一个较为复杂的预处理模型。首先你需要开启[ansj分词支持](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-analysis.md)。
-Word2VecInPlace能够把一个raw文本转化为一个向量。具体流程如下：
+Word2VecInPlace能够把一个raw文本转化为一个向量或者序列。具体流程如下：
 
 1. 分词（可以指定自定义词典）
 2. 过滤停用词
 3. 字符转化为数字
 4. 把数字转化为向量
 5. 返回一维或者二维数组
+
+Word2VecInPlace还可以读已有词向量把一个raw文本转化为一个向量。具体流程如下：
+
+1.可以指定已有词表以及词向量目录
+2.根据指定的词表进行分词
+3.将文本转化为向量
+4.根据需要输出不同的向量表示形态。
 
 目前主要给深度学习做NLP使用，譬如卷积网络等。
 
@@ -106,12 +113,23 @@ where inputCol="content"
 and ignoreNature="true"
 -- 停用词路径
 and stopWordPath="/tmp/tfidf/stopwords"
--- flatFeature="flat"把结果展开为一维向量，flatFeature="merge"把结果merge相加
-and flatFeature="flat"
+-- resultFeature="flat"把结果展开为一维向量
+and resultFeature="flat"
 ;
 load parquet.`/tmp/word2vecinplace/data` 
 as lwys_corpus_with_featurize;
 ```
+参数使用说明：
+
+|参数|默认值|说明|
+|:----|:----|:----|
+|inputCols|None|double类型字段列表，用逗号分隔|
+|resultFeature|None|flag:把结果展开为一维向量;merge:把结果merge相加；index:输出序列数组|
+|dicPaths|None|分词词典目录路径|
+|wordvecPaths|None|词向量目录路径|
+|vectorSize|None|向量长度|
+|length|None|数组长度|
+|stopWordPath|None|停用词目录路径|
 
 lwys_corpus_with_featurize 中的content字段已经是向量化的了，可以直接进行后续的算法训练。
 

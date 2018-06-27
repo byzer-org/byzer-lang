@@ -30,7 +30,7 @@ class SQLWord2VecInPlace extends SQLAlg with Functions {
     // keep params
     saveTraningParams(df.sparkSession, params, metaPath)
 
-    var newDF = StringFeature.word2vecs(df, metaPath, dicPaths, wordvecPaths, inputCol, stopWordPath, resultFeature, vectorSize, length)
+    var newDF = StringFeature.word2vec(df, metaPath, dicPaths, wordvecPaths, inputCol, stopWordPath, resultFeature, vectorSize, length)
     if (resultFeature.equals("flat")) {
       val flatFeatureUdf = F.udf((a: Seq[Seq[Double]]) => {
         a.flatten

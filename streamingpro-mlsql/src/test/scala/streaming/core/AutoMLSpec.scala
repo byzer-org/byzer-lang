@@ -251,7 +251,7 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
       }
       val df = spark.createDataFrame(dataRDD,
         StructType(Seq(StructField("content", StringType))))
-      val newDF = StringFeature.word2vec(df, "/tmp/word2vec/mapping", "", "content", null)
+      val newDF = StringFeature.word2vec(df, "/tmp/word2vec/mapping","","","content",null,"" )
       println(newDF.toJSON.collect().mkString("\n"))
 
     }
@@ -329,7 +329,19 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
         println(f)
         //assume(trainVector.contains(f))
       }
-
+      val sq1 = createSSEL
+      ScriptSQLExec.parse(TemplateMerge.merge(loadSQLScriptStr("word2vecplace"),
+        Map("wordvecPaths" -> "/Users/zml/mlsql/word2vec")), sq1)
+      // we should make sure train vector and predict vector the same
+      val trainVector1 = spark.sql("select * from parquet.`/tmp/william/tmp/word2vecinplace/data`").toJSON.collect()
+      trainVector1.foreach { f =>
+        println(f)
+      }
+      val predictVector1 = spark.sql("select jack(content) as content from orginal_text_corpus").toJSON.collect()
+      predictVector1.foreach { f =>
+        println(f)
+        //assume(trainVector.contains(f))
+      }
     }
   }
 
