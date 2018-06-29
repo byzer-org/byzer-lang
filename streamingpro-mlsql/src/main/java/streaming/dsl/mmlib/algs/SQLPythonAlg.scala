@@ -11,7 +11,7 @@ import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.spark.TaskContext
 import org.apache.spark.api.python.WowPythonRunner
 import org.apache.spark.ml.linalg.SQLDataTypes._
-import org.apache.spark.ps.cluster.Message
+import org.apache.spark.ps.cluster.{Message, PSServiceSink}
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.util.ArrayBasedMapData
 import org.apache.spark.sql.expressions.UserDefinedFunction
@@ -23,8 +23,9 @@ import org.apache.spark.util.{ExternalCommandRunner, ObjPickle, VectorSerDer, Wo
 import streaming.core.strategy.platform.{PlatformManager, SparkRuntime}
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.SQLPythonFunc._
-
 import scala.collection.JavaConverters._
+
+import streaming.common.HDFSOperator
 
 /**
   * Created by allwefantasy on 5/2/2018.
@@ -98,6 +99,21 @@ class SQLPythonAlg extends SQLAlg with Functions {
         item = (f + ("modelPath" -> path)).asJava
       }
 
+      // load resource
+      var resourceParams = Map.empty[String, String]
+      if (f.keys.map(_.split("\\.")(0)).toSet.contains("resource")) {
+        val resources = Functions.mapParams(s"resource", f)
+        resources.foreach {
+          case (resourceName, resourcePath) =>
+            val tempResourceLocalPath = SQLPythonFunc.getLocalTempResourcePath(resourcePath, resourceName)
+            recordUserLog(kafkaParam, s"resource paramter found,system will load resource ${resourcePath} in ${tempResourceLocalPath} in executor.")
+            HDFSOperator.copyToLocalFile(tempResourceLocalPath, resourcePath, true)
+            resourceParams += (resourceName -> tempResourceLocalPath)
+            recordUserLog(kafkaParam, s"resource loaded.")
+        }
+      }
+
+
       val pythonScript = findPythonScript(userPythonScript, f, "sk")
 
 
@@ -110,11 +126,14 @@ class SQLPythonAlg extends SQLAlg with Functions {
       val kafkaP = kafkaParam + ("group_id" -> (kafkaParam("group_id") + "_" + algIndex))
       paramMap.put("kafkaParam", kafkaP.asJava)
 
-      paramMap.put("internalSystemParam", Map(
+      val internalSystemParam = Map(
         "stopFlagNum" -> stopFlagNum,
         "tempModelLocalPath" -> tempModelLocalPath,
-        "tempDataLocalPath" -> tempDataLocalPath
-      ).asJava)
+        "tempDataLocalPath" -> tempDataLocalPath,
+        "resource" -> resourceParams.asJava
+      )
+
+      paramMap.put("internalSystemParam", internalSystemParam.asJava)
       paramMap.put("systemParam", systemParam.asJava)
 
 
@@ -165,15 +184,30 @@ class SQLPythonAlg extends SQLAlg with Functions {
 
   override def load(sparkSession: SparkSession, _path: String, params: Map[String, String]): Any = {
     val path = SQLPythonFunc.getAlgMetalPath(_path)
-    val algIndex = params.getOrElse("algIndex", "-1").toInt
+    var algIndex = params.getOrElse("algIndex", "-1").toInt
     val modelList = sparkSession.read.parquet(path + "/0").collect()
     val models = if (algIndex != -1) {
       modelList.filter(f => f.getInt(1) == algIndex).map(f => f.getString(0)).toSeq
     } else {
-      modelList.map(f => (f(3).asInstanceOf[Double], f(0).asInstanceOf[String]))
-        .toSeq.sortBy(f => f._1)(Ordering[Double].reverse).take(1).map(f => f._2)
+      modelList.map(f => (f(3).asInstanceOf[Double], f(0).asInstanceOf[String], f(1).asInstanceOf[Int]))
+        .toSeq
+        .sortBy(f => f._1)(Ordering[Double].reverse)
+        .take(1)
+        .map(f => {
+          algIndex = f._3
+          f._2
+      })
     }
 
+    import sparkSession.implicits._
+    val df = sparkSession.read.parquet(MetaConst.PARAMS_PATH(path, "params")).map(f => (f.getString(0), f.getString(1)))
+    val trainParams = df.collect().toMap
+
+    // load resource
+    val fitParam = arrayParamsWithIndex("fitParam", trainParams)
+    val selectedFitParam = fitParam(algIndex)._2
+    val loadResource = selectedFitParam.keys.map(_.split("\\.")(0)).toSet.contains("resource")
+    var resourceParams = Map.empty[String, String]
 
     val metas = sparkSession.read.parquet(path + "/1").collect().map(f => f.get(0).asInstanceOf[Map[String, String]]).toSeq
     // make sure every executor have the model in local directory.
@@ -181,17 +215,24 @@ class SQLPythonAlg extends SQLAlg with Functions {
     models.foreach { modelPath =>
       val tempModelLocalPath = SQLPythonFunc.getLocalTempModelPath(modelPath)
       distributeResource(sparkSession, modelPath, tempModelLocalPath)
+
+      if (loadResource) {
+        val resources = Functions.mapParams(s"resource", selectedFitParam)
+        resources.foreach {
+          case (resourceName, resourcePath) =>
+            val tempResourceLocalPath = SQLPythonFunc.getLocalTempResourcePath(resourcePath, resourceName)
+            resourceParams += (resourceName -> tempResourceLocalPath)
+            distributeResource(sparkSession, resourcePath, tempResourceLocalPath)
+        }
+      }
     }
 
-    import sparkSession.implicits._
-    val df = sparkSession.read.parquet(MetaConst.PARAMS_PATH(path, "params")).map(f => (f.getString(0), f.getString(1)))
-    val trainParams = df.collect().toMap
-
-    (models, metas, trainParams)
+    (models, metas, trainParams, selectedFitParam + ("resource" -> resourceParams.asJava))
   }
 
   override def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = {
-    val (modelsTemp, metasTemp, trainParams) = _model.asInstanceOf[(Seq[String], Seq[Map[String, String]], Map[String, String])]
+    val (modelsTemp, metasTemp, trainParams, selectedFitParam) =
+      _model.asInstanceOf[(Seq[String], Seq[Map[String, String]], Map[String, String], Map[String, Any])]
     val models = sparkSession.sparkContext.broadcast(modelsTemp)
 
 
@@ -201,10 +242,11 @@ class SQLPythonAlg extends SQLAlg with Functions {
 
     val userPythonScript = findPythonPredictScript(sparkSession, params, "")
 
-    val maps = new util.HashMap[String, java.util.Map[String, String]]()
+    val maps = new util.HashMap[String, java.util.Map[String, _]]()
     val item = new util.HashMap[String, String]()
     item.put("funcPath", "/tmp/" + System.currentTimeMillis())
     maps.put("systemParam", item)
+    maps.put("internalSystemParam", selectedFitParam.asJava)
 
     val kafkaParam = mapParams("kafkaParam", trainParams)
 

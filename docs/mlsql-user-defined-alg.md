@@ -267,4 +267,27 @@ if __name__ == '__main__':
 这些数据存储在HDFS上，根据需要会分发到各个executor节点的/tmp/\_\_mlsql\_\_ 目录。
 
 
+## 参数说明
 
+### fitParam.[number].resource.[resourceName]
+
+`PythonAlg`模块指定特殊的数据源，比如我们可能在算法中需要到一个字典文件。我们可以通过`resource`配置来指定相应的资源文件，系统会将自动分发到运行的节点上。
+
+```sql
+-- 一些配置参数
+and  `fitParam.0.batchSize`="1000"
+and  `fitParam.0.labelSize`="2"
+and `fitParam.0.resource.a`="/path/to/resource/a"
+and `fitParam.0.resource.b`="/path/to/resource/b"
+```
+
+> NOTE: `resource`配置支持多个资源文件路径
+
+配置完成之后，我们可以在python脚本中这样使用：
+
+```python
+print(mlsql.internal_system_param['resource']['a'])
+print(mlsql.internal_system_param['resource']['b'])
+```
+
+如果在训练参数重配置了资源文件，那么系统将自动在预测时候加载该资源文件，使用方式同训练方法。
