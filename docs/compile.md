@@ -141,13 +141,13 @@ step1: 编译时将各种依赖都带上：
 
 ```
 mvn -DskipTests clean package   \
--pl streamingpro-mlsql -am \  
+-pl streamingpro-mlsql -am \
 -Ponline -Pscala-2.11  \
 -Phive-thrift-server \
 -Pspark-2.2.0 \
 -Pdsl-legacy  \
 -Pshade \
--Pcarbondata \ 
+-Pcarbondata \
 -Pcrawler \
 -Popencv-support
 ```
