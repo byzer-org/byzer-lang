@@ -25,7 +25,7 @@ import scala.collection.mutable.ArrayBuffer
 /**
   * Created by allwefantasy on 13/1/2018.
   */
-trait Functions extends SQlBaseFunc{
+trait Functions extends SQlBaseFunc {
   val logger = Loggers.getLogger(getClass)
 
   def sampleUnbalanceWithMultiModel(df: DataFrame, path: String, params: Map[String, String], train: (DataFrame, Int) => Unit) = {
@@ -98,13 +98,13 @@ trait Functions extends SQlBaseFunc{
   }
 
   def mapParams(name: String, params: Map[String, String]) = {
-    params.filter(f => f._1.startsWith(name + ".")).map(f => (f._1.split("\\.").drop(1).mkString("."), f._2))
+    Functions.mapParams(name, params)
   }
 
   def arrayParams(name: String, params: Map[String, String]) = {
     params.filter(f => f._1.startsWith(name + ".")).map { f =>
-      val Array(name, group, key) = f._1.split("\\.")
-      (group, key, f._2)
+      val Array(name, group, keys @ _*) = f._1.split("\\.")
+      (group, keys.mkString("."), f._2)
     }.groupBy(f => f._1).map { f => f._2.map(k =>
       (k._2, k._3)).toMap
     }.toArray
@@ -112,8 +112,8 @@ trait Functions extends SQlBaseFunc{
 
   def arrayParamsWithIndex(name: String, params: Map[String, String]): Array[(Int, Map[String, String])] = {
     params.filter(f => f._1.startsWith(name + ".")).map { f =>
-      val Array(name, group, key) = f._1.split("\\.")
-      (group, key, f._2)
+      val Array(name, group, keys @ _*) = f._1.split("\\.")
+      (group, keys.mkString("."), f._2)
     }.groupBy(f => f._1).map( f => {
       val params = f._2.map(k => (k._2, k._3)).toMap
       (f._1.toInt, params)
@@ -247,5 +247,10 @@ trait Functions extends SQlBaseFunc{
       psDriverBackend.psDriverRpcEndpointRef.askSync[Boolean](Message.CopyModelToLocal(path, tempLocalPath))
     }
   }
-
+}
+object Functions {
+  def mapParams(name: String, params: Map[String, String]) = {
+    //    params.filter(f => f._1.startsWith(name + ".")).map(f => (f._1.split("\\.").drop(1).mkString("."), f._2))
+    params.filter(f => f._1.startsWith(name + ".")).map(f => (f._1.substring(name.length + 1, f._1.length), f._2))
+  }
 }
