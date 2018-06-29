@@ -25,7 +25,8 @@ mvn -DskipTests clean package  \
 
 ```
 
-如果要开启Carbondata支持，加上 `-Pcarbondata` 即可。
+如果要开启Carbondata支持，加上 `-Pcarbondata` 即可。有个单元测试类编译也需要-Popencv-support 的支持，如果编译不通过可以加上这个选项或者
+删除掉对应的文件。
 
 如果提示streamingpro-dsl 依赖包无法找到，那么分别进入 streamingpro-dsl/streamingpro-dsl-legacy执行如下指令：
 
