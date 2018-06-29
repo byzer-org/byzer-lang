@@ -50,7 +50,7 @@ class RestController extends ApplicationController {
     val sql = if (param("sql").contains(" limit ")) param("sql") else param("sql") + " limit 1000"
     val result = sparkRuntime.operator.runSQL(sql).mkString(",")
 
-    param("resultType", "html") match {
+    param("resultType", "json") match {
       case "json" => render(200, "[" + result + "]", ViewType.json)
       case _ => renderHtml(200, "/rest/sqlui-result.vm", WowCollections.map("feeds", result))
     }
@@ -255,6 +255,7 @@ class RestController extends ApplicationController {
 
   @At(path = Array("/stream/jobs/running"), types = Array(GET, POST))
   def streamRunningJobs = {
+    restResponse.httpServletResponse().setHeader("Access-Control-Allow-Origin", "*")
     val infoMap = runtime.asInstanceOf[SparkRuntime].sparkSession.streams.active.map { f =>
       StreamingproJobInfo(null, StreamingproJobType.STREAM, f.name, f.lastProgress.json, f.id + "", -1l, -1l)
     }
@@ -263,6 +264,7 @@ class RestController extends ApplicationController {
 
   @At(path = Array("/stream/jobs/kill"), types = Array(GET, POST))
   def killStreamJob = {
+    restResponse.httpServletResponse().setHeader("Access-Control-Allow-Origin", "*")
     val groupId = param("groupId")
     runtime.asInstanceOf[SparkRuntime].sparkSession.streams.get(groupId).stop()
     render(200, "{}")
@@ -270,8 +272,19 @@ class RestController extends ApplicationController {
 
   @At(path = Array("/killjob"), types = Array(GET, POST))
   def killJob = {
+    restResponse.httpServletResponse().setHeader("Access-Control-Allow-Origin", "*")
     val groupId = param("groupId")
-    StreamingproJobManager.killJob(groupId)
+    if (groupId == null) {
+      val jobName = param("jobName")
+      val groupIds = StreamingproJobManager.getJobInfo.filter(f => f._2.jobName == jobName).map(f => f._1)
+      groupIds.headOption match {
+        case Some(groupId) => StreamingproJobManager.killJob(groupId)
+        case None =>
+      }
+    } else {
+      StreamingproJobManager.killJob(groupId)
+    }
+
     render(200, "{}")
   }
 
