@@ -10,6 +10,8 @@ import streaming.dsl.template.TemplateMerge
   */
 class PythonMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConfig {
 
+  copySampleLibsvmData
+
   "sklearn-multi-model" should "work fine" taggedAs (NotToRunTag) in {
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
