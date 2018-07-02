@@ -6,9 +6,17 @@ scala:
 jdk:
   - oraclejdk8
 
+cache:
+  directories:
+  - $HOME/.sbt
+  - $HOME/.m2
+
+notifications:
+  email: false
 
 script:
   - export TRAVIS_SCALA_VERSION=2.11.8
+  - export MAVEN_SKIP_RC=1
   - ulimit -a
   - mvn test -pl streamingpro-mlsql -am -Ponline -Pscala-2.11 -Phive-thrift-server -Pspark-2.2.0 -Pdsl-legacy -Pcrawler -Popencv-support
 
@@ -24,3 +32,4 @@ before_install: [
     "mvn install -Pscala-2.11 -Pjetty-9 -Pweb-include-jetty-9",
     "cd ../.."
   ]
+
