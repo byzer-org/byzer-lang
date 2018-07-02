@@ -6,9 +6,9 @@ def save_attributes(model_file, attributes_file):
     with open(model_file, 'rb') as fr:
         model = pickle.load(fr)
         attribute_dict_numpy = {k: repr(v.tolist()).replace("\n", "").replace(" ", "") for (k, v) in model.__dict__.items() if (type(v) == np.ndarray)}
-        attribute_dict_normal = {k: repr(v) for (k, v) in model.__dict__.items() if (type(v) != np.ndarray)}
+        attribute_dict_normal = {k: repr(v).replace("\n", "").replace(" ", "") for (k, v) in model.__dict__.items() if (type(v) != np.ndarray)}
         attribute_dict = dict(attribute_dict_numpy, **attribute_dict_normal)
-        attribute_json = json.dumps(attribute_dict)
+        attribute_json = json.dumps(attribute_dict).replace("\n", "").replace(" ", "")
         with open(attributes_file, 'w') as f:
             f.write(attribute_json)
 params_file = os.path.join(os.getcwd(), "python_temp.pickle")
