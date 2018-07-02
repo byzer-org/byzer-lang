@@ -10,7 +10,7 @@ jdk:
 script:
   - export TRAVIS_SCALA_VERSION=2.11.8
   - ulimit -a
-  - mvn test -pl streamingpro-mlsql -am -Ponline -Pscala-2.11 -Phive-thrift-server -Pspark-2.2.0 -Pdsl-legacy -Pcrawler -Pshade -Popencv-support
+  - mvn test -pl streamingpro-mlsql -am -Ponline -Pscala-2.11 -Phive-thrift-server -Pspark-2.2.0 -Pdsl-legacy -Pcrawler -Popencv-support
 
 before_install: [
     "git clone https://github.com/allwefantasy/ServiceFramework.git allwefantasy/ServiceFramework",
