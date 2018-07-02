@@ -29,9 +29,13 @@ class SQLModelExplainInPlace extends SQLAlg with Functions {
     import df.sparkSession.sqlContext.implicits._
     val ExternalCommandRunnerDataframe = Seq("").toDF("model_expalin_inplace_field")
     ExternalCommandRunnerDataframe.rdd.map(f => {
+      val fs = FileSystem.get(new Configuration())
       val paramMap = new util.HashMap[String, Object]()
       paramMap.put("systemParam", systemParam.asJava)
-      paramMap.put("modelPath", params.getOrElse("modelPath", ""))
+      val modelPath = params.getOrElse("modelPath", "")
+      val tempModelPath = s"/tmp/${UUID.randomUUID().toString}.pkl"
+      fs.copyToLocalFile(new Path(modelPath), new Path(tempModelPath))
+      paramMap.put("modelPath", tempModelPath)
       val tempModelLocalPath = s"${SQLPythonFunc.getLocalBasePath}/${UUID.randomUUID().toString}/0"
       FileUtils.forceMkdir(new File(tempModelLocalPath))
 
@@ -48,12 +52,11 @@ class SQLModelExplainInPlace extends SQLAlg with Functions {
         paramMap,
         MapType(StringType, MapType(StringType, StringType)),
         pythonScript.fileContent,
-        pythonScript.fileName, modelPath = null, kafkaParam = null,
+        pythonScript.fileName, modelPath = null, kafkaParam = Map[String, String](),
         validateData = null
       )
       res.foreach(f => f)
       //模型保存到hdfs上
-      val fs = FileSystem.get(new Configuration())
       val modelHDFSPath = SQLPythonFunc.getAlgModelPath(path) + "/0"
       fs.delete(new Path(modelHDFSPath), true)
       fs.copyFromLocalFile(new Path(tempModelLocalPath),
