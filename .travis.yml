@@ -1,7 +1,7 @@
 language: scala
 
 scala:
-  - 2.10.3
+  - 2.11.8
 
 jdk:
   - oraclejdk8
@@ -9,6 +9,12 @@ jdk:
 
 
 script:
-  - export TRAVIS_SCALA_VERSION=2.10.3
+  - export TRAVIS_SCALA_VERSION=2.11.8
   - ulimit -a
-  - mvn test
+  - mvn test -pl streamingpro-mlsql -am -Ponline -Pscala-2.11 -Phive-thrift-server -Pspark-2.2.0 -Pdsl-legacy -Pcrawler -Pshade -Popencv-support
+
+before_install: [
+    "git clone https://github.com/allwefantasy/ServiceFramework.git",
+    "cd ServiceFramework",
+    "mvn install -Pscala-2.11 -Pjetty-9 -Pweb-include-jetty-9"
+  ]
