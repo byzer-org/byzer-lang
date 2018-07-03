@@ -8,6 +8,9 @@ def save_attributes(model_file, attributes_file):
         attribute_dict_numpy = {k: repr(v.tolist()).replace("\n", "").replace(" ", "") for (k, v) in model.__dict__.items() if (type(v) == np.ndarray)}
         attribute_dict_normal = {k: repr(v) for (k, v) in model.__dict__.items() if (type(v) != np.ndarray)}
         attribute_dict = dict(attribute_dict_numpy, **attribute_dict_normal)
+        if (hasattr(model, "feature_importances_")):
+            func = getattr(model, "feature_importances_")
+            attribute_dict["feature_importances_"] = repr(func).replace("\n", "").replace(" ", "")
         attribute_json = json.dumps(attribute_dict)
         with open(attributes_file, 'w') as f:
             f.write(attribute_json)
