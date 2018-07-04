@@ -12,6 +12,11 @@ class PythonMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQ
 
   copySampleLibsvmData
 
+  "do nothing" should "work fine" in {
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+    }
+  }
+
   "sklearn-multi-model" should "work fine" taggedAs (NotToRunTag) in {
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
