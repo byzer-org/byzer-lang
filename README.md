@@ -8,6 +8,7 @@ Note：StreamingPro有两种模式
 2. 服务化，启动一个StreamingPro Server作为常驻程序,然后通过http接口发送MLSQL脚本进行交互。
 
 我们强烈推荐使用第二种模式，第一种模式现在已经不太更新了，现在迅速迭代的是第二种模式，并且第二种模式可以构建AI平台。
+为了避免编译的麻烦，你可以直接使用[release版本](https://github.com/allwefantasy/streamingpro/releases)
 
 ## 编译
 
