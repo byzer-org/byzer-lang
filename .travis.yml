@@ -18,7 +18,7 @@ script:
   - export TRAVIS_SCALA_VERSION=2.11.8
   - export MAVEN_SKIP_RC=1
   - ulimit -a
-  - mvn test -pl streamingpro-mlsql -am -Plocal -Pscala-2.11 -Phive-thrift-server -Pspark-2.2.0 -Pdsl-legacy -Pcrawler -Popencv-support
+  - mvn test -pl streamingpro-mlsql -am -Ponline -Pscala-2.11 -Phive-thrift-server -Pspark-2.2.0 -Pdsl-legacy -Pcrawler -Popencv-support
 
 #install: [
 #    "mvn install -pl streamingpro-mlsql -am -Ponline -Pscala-2.11 -Phive-thrift-server -Pspark-2.2.0 -Pdsl-legacy -Pcrawler -Popencv-support -DskipTests=true -Dmaven.javadoc.skip=true -Dgpg.skip=true"
