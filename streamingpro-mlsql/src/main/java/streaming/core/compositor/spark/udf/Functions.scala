@@ -165,6 +165,22 @@ object Functions {
     })
   }
 
+  def vecMean(uDFRegistration: UDFRegistration): Unit = {
+    import BreezeImplicit._
+    import breeze.stats.mean
+    uDFRegistration.register("vec_mean", (vec1: Vector) => {
+      mean(vec1.asBreeze)
+    })
+  }
+
+  def vecStd(uDFRegistration: UDFRegistration): Unit = {
+    import BreezeImplicit._
+    import breeze.stats.stddev
+    uDFRegistration.register("vec_stddev", (vec1: Vector) => {
+      stddev(vec1.asBreeze)
+    })
+  }
+
   // =================
   // matrix operation
   // =================
