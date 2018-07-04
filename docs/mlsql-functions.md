@@ -257,6 +257,38 @@ select vec_floor(f) as nf from data;
 ]
 ```
 
+### vec_mean
+
+向量平均值
+
+```sql
+select vec_mean(vec_dense(array(1.0,2.0,7.0, 2.0)))
+```
+
+```json
+[
+    {
+        "UDF:vec_mean(UDF:vec_dense(cast(array(1.0, 2.0, 7.0, 2.0) as array<double>)))": 3.0
+    }
+]
+```
+
+### vec_stddev
+
+向量标准差
+
+```sql
+select vec_stddev(vec_dense(array(3.0, 4.0, 5.0)))
+```
+
+```json
+[
+    {
+        "UDF:vec_stddev(UDF:vec_dense(cast(array(3.0, 4.0, 5.0) as array<double>)))": 1.0
+    }
+]
+```
+
 ### ngram
 
 ```sql
