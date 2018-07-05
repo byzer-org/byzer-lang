@@ -10,6 +10,34 @@ Note：StreamingPro有两种模式
 我们强烈推荐使用第二种模式，第一种模式现在已经不太更新了，现在迅速迭代的是第二种模式，并且第二种模式可以构建AI平台。
 为了避免编译的麻烦，你可以直接使用[release版本](https://github.com/allwefantasy/streamingpro/releases)
 
+对于确实需要使用json配置文件的，我们也提供了batch.mlsql脚本，可以让你使用mlsql语法，例如（v1.1.1 之后版本才有）：
+
+```json
+{
+  "mlsql": {
+    "desc": "测试",
+    "strategy": "spark",
+    "algorithm": [],
+    "ref": [],
+    "compositor": [
+      {
+        "name": "batch.mlsql",
+        "params": [
+          {
+            "sql": [
+              "select 'a' as a as table1;",
+              "save overwrite table1 as parquet.`/tmp/kk`;"
+            ]
+          }
+        ]
+      }
+    ],
+    "configParams": {
+    }
+  }
+}
+```
+
 ## 编译
 
 * [编译文档](https://github.com/allwefantasy/streamingpro/blob/master/docs/compile.md)
