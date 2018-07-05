@@ -10,6 +10,7 @@ and ignoreNature="true"
 and stopWordPath="/tmp/tfidf/stopwords"
 -- 高权重词路径
 and priorityDicPath="/tmp/tfidf/prioritywords"
+and dicPaths="/tmp/tfidf/dics"
 -- 高权重词加权倍数
 and priority="5.0"
 and nGrams="2"

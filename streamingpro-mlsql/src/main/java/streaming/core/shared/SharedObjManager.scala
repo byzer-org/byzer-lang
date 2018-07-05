@@ -22,4 +22,8 @@ object SharedObjManager {
       bigObjPool.get(name)
     }
   }
+
+  def clear = {
+    forestPool.clear
+  }
 }

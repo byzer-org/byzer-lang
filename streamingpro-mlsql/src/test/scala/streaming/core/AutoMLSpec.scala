@@ -8,6 +8,7 @@ import org.apache.spark.sql.types._
 import org.apache.spark.streaming.BasicSparkOperation
 import streaming.core.strategy.platform.SparkRuntime
 import org.apache.spark.ml.linalg.{Vector, Vectors}
+import streaming.core.shared.SharedObjManager
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib.algs.{SQLAutoFeature, SQLCorpusExplainInPlace, SQLVecMapInPlace}
 import streaming.dsl.mmlib.algs.feature.{DiscretizerIntFeature, DoubleFeature, StringFeature}
@@ -251,7 +252,7 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
       }
       val df = spark.createDataFrame(dataRDD,
         StructType(Seq(StructField("content", StringType))))
-      val newDF = StringFeature.word2vec(df, "/tmp/word2vec/mapping","","","content",null,"" )
+      val newDF = StringFeature.word2vec(df, "/tmp/word2vec/mapping", "", "", "content", null, "")
       println(newDF.toJSON.collect().mkString("\n"))
 
     }
@@ -259,7 +260,7 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
 
 
 
-  "SQLSampler" should "work fine" taggedAs (NotToRunTag) in {
+  "SQLSampler" should "work fine" in {
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
       implicit val spark = runtime.sparkSession
@@ -273,7 +274,7 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
     }
   }
 
-  "SQLTfIdfInPlace" should "work fine" taggedAs (NotToRunTag) in {
+  "SQLTfIdfInPlace" should "work fine" in {
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
       implicit val spark = runtime.sparkSession
@@ -286,10 +287,12 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
       df.write.mode(SaveMode.Overwrite).parquet("/tmp/william/tmp/tfidf/df")
 
       writeStringToFile("/tmp/tfidf/stopwords", List("你").mkString("\n"))
+      writeStringToFile("/tmp/tfidf/dics", List("天才").mkString("\n"))
       writeStringToFile("/tmp/tfidf/prioritywords", List("天才").mkString("\n"))
 
       val sq = createSSEL
       ScriptSQLExec.parse(loadSQLScriptStr("tfidfplace"), sq)
+      SharedObjManager.clear
       // we should make sure train vector and predict vector the same
       val trainVector = spark.sql("select * from parquet.`/tmp/william/tmp/tfidfinplace/data`").toJSON.collect()
       val predictVector = spark.sql("select jack(content) as content from orginal_text_corpus").toJSON.collect()
@@ -318,7 +321,7 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
 
       val sq = createSSEL
       ScriptSQLExec.parse(TemplateMerge.merge(loadSQLScriptStr("word2vecplace"),
-        Map("wordvecPaths" -> "","resultFeature" -> "index")), sq)
+        Map("wordvecPaths" -> "", "resultFeature" -> "index")), sq)
       // we should make sure train vector and predict vector the same
       val trainVector = spark.sql("select * from parquet.`/tmp/william/tmp/word2vecinplace/data`").toJSON.collect()
       trainVector.foreach { f =>
