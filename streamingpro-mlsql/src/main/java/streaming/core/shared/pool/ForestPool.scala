@@ -19,4 +19,8 @@ class ForestPool[Any] extends BigObjPool[Any] {
     map.remove(name)
     this
   }
+
+  def clear = {
+    map.clear()
+  }
 }
