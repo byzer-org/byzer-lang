@@ -68,4 +68,15 @@ class BatchSpec extends BasicSparkOperation with SpecFunctions {
       //      assume(JSONObject.fromObject(result(0)).getString("a") == "a")
     }
   }
+
+
+  "batch-mlsql" should "work fine" in {
+
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/batch-mlsql.json")) { runtime: SparkRuntime =>
+      implicit val spark = runtime.sparkSession
+      val sd = Dispatcher.dispatcher(null)
+      val result = runtime.sparkSession.sql("select * from parquet.`/tmp/kk`").count()
+      assume(result == 1)
+    }
+  }
 }
