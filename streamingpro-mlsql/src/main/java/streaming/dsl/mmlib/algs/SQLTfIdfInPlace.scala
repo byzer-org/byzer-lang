@@ -72,8 +72,10 @@ class SQLTfIdfInPlace extends SQLAlg with Functions {
     val nGrams = trainParams.getOrElse("nGrams", "").split(",").filterNot(f => f.isEmpty).map(f => f.toInt).toSeq
 
     val df = spark.createDataFrame(spark.sparkContext.emptyRDD[Row], StructType(Seq()))
+
     val stopwords = StringFeature.loadStopwords(df, stopWordPath)
     val stopwordsBr = spark.sparkContext.broadcast(stopwords)
+    val words = spark.sparkContext.broadcast(SQLTokenAnalysis.loadDics(spark, trainParams))
 
 
     val (priorityWords, priorityFunc) = StringFeature.loadPriorityWords(df, priorityDicPath, priority, (str: String) => {
@@ -88,8 +90,7 @@ class SQLTfIdfInPlace extends SQLAlg with Functions {
 
       // create analyser
       val forest = SharedObjManager.getOrCreate[Any](dicPaths, SharedObjManager.forestPool, () => {
-        val words = SQLTokenAnalysis.loadDics(spark, trainParams)
-        SQLTokenAnalysis.createForest(words, trainParams)
+        SQLTokenAnalysis.createForest(words.value, trainParams)
       })
       val parser = SQLTokenAnalysis.createAnalyzerFromForest(forest.asInstanceOf[AnyRef], trainParams)
       // analyser content
