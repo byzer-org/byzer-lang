@@ -14,10 +14,3 @@ and validateTable="data"
 and `systemParam.pythonPath`="python"
 and `systemParam.pythonVer`="2.7"
 ;
-
-register PythonAlg.`/tmp/pa_model` as jack options
-pythonScriptPath="${pythonPredictScriptPath}"
-;
-
-select jack(features) from data
-as newdata;
