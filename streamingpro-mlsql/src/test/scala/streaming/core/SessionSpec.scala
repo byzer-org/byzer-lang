@@ -11,12 +11,12 @@ import scala.collection.JavaConversions._
 class SessionSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConfig {
   "session-test" should "work fine" taggedAs (NotToRunTag) in {
     withMLSQLContext(setupMLSQLContext(mlsqlParams, "classpath:///test/empty.json")) { runtime: MLSQLRuntime =>
-      val sessionManager = runtime.getSessionManager
-      val identify = sessionManager.openSession("jack", "", "", sessionManager.conf.getAll.toMap, runtime.params.toMap, true)
-      val session = sessionManager.getSession(identify)
-      println(session.sql("select 1", null, "", 30))
-      assume(UserGroupInformation.getCurrentUser.getShortUserName == "jack")
-      sessionManager.closeSession(identify)
+//      val sessionManager = runtime.getSessionManager
+//      val identify = sessionManager.openSession("jack", "", "", sessionManager.conf.getAll.toMap, runtime.params.toMap, true)
+//      val session = sessionManager.getSession(identify)
+//      println(session.sql("select 1", null, "", 30))
+//      assume(UserGroupInformation.getCurrentUser.getShortUserName == "jack")
+//      sessionManager.closeSession(identify)
     }
   }
 }
