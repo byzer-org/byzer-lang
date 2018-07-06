@@ -1,6 +1,7 @@
 package streaming.core
 
 import org.apache.spark.streaming.BasicSparkOperation
+import streaming.common.shell.ShellCommand
 import streaming.core.strategy.platform.SparkRuntime
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.template.TemplateMerge
@@ -208,9 +209,19 @@ class PythonMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQ
       writeStringToFile("/tmp/sklearn-user-script.py", pythonCode)
       writeStringToFile("/tmp/sklearn-user-predict-script.py", pythonPridcitCode)
       ScriptSQLExec.parse(TemplateMerge.merge(loadSQLScriptStr("python-alg-script-enable-data-local"), Map(
-        "pythonScriptPath" -> "/tmp/sklearn-user-script.py",
-        "pythonPredictScriptPath" -> "/tmp/sklearn-user-predict-script.py"
+        "pythonScriptPath" -> "/tmp/sklearn-user-script.py"
+
       )), sq)
+
+      //we can change model path
+      ShellCommand.exec("mv /tmp/william/tmp/pa_model /tmp/william/pa_model2")
+
+      ScriptSQLExec.parse(TemplateMerge.merge(
+        "register PythonAlg.`/pa_model2` as jack options\npythonScriptPath=\"${pythonPredictScriptPath}\"\n;select jack(features) from data\nas newdata;",
+        Map(
+          "pythonPredictScriptPath" -> "/tmp/sklearn-user-predict-script.py"
+        )), sq)
+
       spark.sql("select * from newdata").show()
     }
   }
