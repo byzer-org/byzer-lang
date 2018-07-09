@@ -20,6 +20,7 @@ class RestPredictController extends ApplicationController {
     val res = param("dataType", "vector") match {
       case "vector" => vec2vecPredict
       case "string" => string2vecPredict
+      case "row" => row2vecPredict
     }
     render(200, res)
   }
@@ -57,6 +58,17 @@ class RestPredictController extends ApplicationController {
     val res = sparkSession.createDataset(sparkSession.sparkContext.parallelize(vectors)).selectExpr(sql).toJSON.collect().mkString(",")
     "[" + res + "]"
 
+
+  }
+
+  def row2vecPredict = {
+    val sparkSession = runtime.asInstanceOf[SparkRuntime].sparkSession
+    val strList = JSONArray.fromObject(param("data", "[]")).map(f => f.toString)
+    val sql = getSQL
+    import sparkSession.implicits._
+    val rdd = sparkSession.sparkContext.parallelize(strList)
+    val res = sparkSession.read.json(rdd).selectExpr(sql).toJSON.collect().mkString(",")
+    "[" + res + "]"
 
   }
 
