@@ -71,7 +71,7 @@ class SQLTfIdfInPlace extends SQLAlg with Functions {
     val priority = trainParams.getOrElse("priority", "1").toDouble
     val stopWordPath = trainParams.getOrElse("stopWordPath", "")
     val nGrams = trainParams.getOrElse("nGrams", "").split(",").filterNot(f => f.isEmpty).map(f => f.toInt).toSeq
-    val split = params.getOrElse("split", null)
+    val split = trainParams.getOrElse("split", null)
 
     val df = spark.createDataFrame(spark.sparkContext.emptyRDD[Row], StructType(Seq()))
 
