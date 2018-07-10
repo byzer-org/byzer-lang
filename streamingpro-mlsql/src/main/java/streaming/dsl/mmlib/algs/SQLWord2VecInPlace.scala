@@ -63,18 +63,17 @@ class SQLWord2VecInPlace extends SQLAlg with Functions {
     val inputCol = trainParams.getOrElse("inputCol", "")
     val wordvecPaths = trainParams.getOrElse("wordvecPaths", "")
     val wordvecsMap = loadWordvecs(spark, wordvecPaths)
-    val wordIndex = {
-      if (wordvecsMap.size > 0) {
-        Map[String, Double]()
-      } else
+    if (wordvecsMap.size > 0) {
+      Word2VecMeta(trainParams, Map[String, Double](), null)
+    } else {
       //load wordindex
-        spark.read.parquet(WORD_INDEX_PATH(path, inputCol)).map(f => ((f.getString(0), f.getDouble(1)))).collect().toMap
+      val wordIndex = spark.read.parquet(WORD_INDEX_PATH(path, inputCol)).map(f => ((f.getString(0), f.getDouble(1)))).collect().toMap
+      //load word2vec model
+      val word2vec = new SQLWord2Vec()
+      val model = word2vec.load(spark, WORD2VEC_PATH(path, inputCol), Map())
+      val predictFunc = word2vec.internal_predict(df.sparkSession, model, "wow")("wow_array").asInstanceOf[(Seq[String]) => Seq[Seq[Double]]]
+      Word2VecMeta(trainParams, wordIndex, predictFunc)
     }
-    //load word2vec model
-    val word2vec = new SQLWord2Vec()
-    val model = word2vec.load(spark, WORD2VEC_PATH(path, inputCol), Map())
-    val predictFunc = word2vec.internal_predict(df.sparkSession, model, "wow")("wow_array").asInstanceOf[(Seq[String]) => Seq[Seq[Double]]]
-    Word2VecMeta(trainParams, wordIndex, predictFunc)
   }
 
   override def predict(spark: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = {
