@@ -34,7 +34,7 @@ class SQLSKLearn extends SQLAlg with Functions {
 
     val stopFlagNum = newRDD.getNumPartitions
 
-    val fitParam = arrayParams("fitParam", params).zipWithIndex
+    val fitParam = arrayParamsWithIndex("fitParam", params)
     val fitParamRDD = df.sparkSession.sparkContext.parallelize(fitParam, fitParam.length)
     val pythonPath = systemParam.getOrElse("pythonPath", "python")
     val pythonVer = systemParam.getOrElse("pythonVer", "2.7")
@@ -54,8 +54,8 @@ class SQLSKLearn extends SQLAlg with Functions {
 
 
     val wowRDD = fitParamRDD.map { paramAndIndex =>
-      val f = paramAndIndex._1
-      val algIndex = paramAndIndex._2
+      val f = paramAndIndex._2
+      val algIndex = paramAndIndex._1
       val paramMap = new util.HashMap[String, Object]()
       var item = f.asJava
       if (!f.contains("modelPath")) {

@@ -24,7 +24,9 @@ class PythonMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQ
       implicit val spark = runtime.sparkSession
       val sq = createSSEL
       ScriptSQLExec.parse(loadSQLScriptStr("sklearn-multi-model-trainning"), sq)
-      spark.read.parquet("/tmp/william/tmp/model/0").show()
+      val res = spark.read.parquet("/tmp/william/tmp/model/0").collect()
+      assume(res.filter(f => f.getAs[String]("alg").contains("SVC")).head.getAs[Int]("algIndex") == 1)
+      assume(res.filter(f => f.getAs[String]("alg").contains("Multinom")).head.getAs[Int]("algIndex") == 0)
     }
   }
 

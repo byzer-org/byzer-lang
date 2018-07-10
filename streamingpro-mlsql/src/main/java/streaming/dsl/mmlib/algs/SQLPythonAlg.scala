@@ -48,7 +48,7 @@ class SQLPythonAlg extends SQLAlg with Functions {
     }
 
     val systemParam = mapParams("systemParam", params)
-    val fitParam = arrayParams("fitParam", params).zipWithIndex
+    val fitParam = arrayParamsWithIndex("fitParam", params)
 
     require(fitParam.size > 0, "fitParam should be configured")
 
@@ -91,8 +91,8 @@ class SQLPythonAlg extends SQLAlg with Functions {
 
 
     val wowRDD = fitParamRDD.map { paramAndIndex =>
-      val f = paramAndIndex._1
-      val algIndex = paramAndIndex._2
+      val f = paramAndIndex._2
+      val algIndex = paramAndIndex._1
       val paramMap = new util.HashMap[String, Object]()
       var item = f.asJava
       if (!f.contains("modelPath")) {
