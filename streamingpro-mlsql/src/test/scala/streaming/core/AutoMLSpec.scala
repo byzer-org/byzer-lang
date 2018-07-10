@@ -16,8 +16,8 @@ import streaming.dsl.template.TemplateMerge
 
 
 /**
-  * Created by allwefantasy on 6/5/2018.
-  */
+ * Created by allwefantasy on 6/5/2018.
+ */
 class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConfig {
 
 
@@ -46,7 +46,7 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
           你好:7.0
           呢:8.0
        */
-      var newDF = StringFeature.tfidf(df, "/tmp/tfidf/mapping", "", "content", "/tmp/tfidf/stopwords", "/tmp/tfidf/prioritywords", 100000.0, Seq(), true)
+      var newDF = StringFeature.tfidf(df, "/tmp/tfidf/mapping", "", "content", "/tmp/tfidf/stopwords", "/tmp/tfidf/prioritywords", 100000.0, Seq(), null, true)
       var res = newDF.collect()
       assume(res.size == 3)
       assume(res(0).getAs[Vector]("content").size == 9)
@@ -60,7 +60,7 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
       assume(res2.size == 2)
       println(newDF.toJSON.collect().mkString("\n"))
 
-      newDF = StringFeature.tfidf(df, "/tmp/tfidf/mapping", "", "content", "", null, 100000.0, Seq(), true)
+      newDF = StringFeature.tfidf(df, "/tmp/tfidf/mapping", "", "content", "", null, 100000.0, Seq(), null, true)
       res = newDF.collect()
       assume(res(0).getAs[Vector]("content").size == 10)
 
@@ -116,7 +116,7 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
           呢:24.0
        */
 
-      val newDF = StringFeature.tfidf(df, "/tmp/tfidf/mapping", "", "content", "", null, 100000.0, Seq(2, 3), true)
+      val newDF = StringFeature.tfidf(df, "/tmp/tfidf/mapping", "", "content", "", null, 100000.0, Seq(2, 3), null, true)
       val res = newDF.collect()
       assume(res(0).getAs[Vector]("content").size == 25)
       newDF.show(false)
@@ -252,12 +252,11 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
       }
       val df = spark.createDataFrame(dataRDD,
         StructType(Seq(StructField("content", StringType))))
-      val newDF = StringFeature.word2vec(df, "/tmp/word2vec/mapping", "", "", "content", null, "")
+      val newDF = StringFeature.word2vec(df, "/tmp/word2vec/mapping", "", "", "content", null, "",null)
       println(newDF.toJSON.collect().mkString("\n"))
 
     }
   }
-
 
 
   "SQLSampler" should "work fine" in {
@@ -318,11 +317,11 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
 
       df.write.mode(SaveMode.Overwrite).parquet("/tmp/william/tmp/tfidf/df")
 
-      writeStringToFile("/tmp/tfidf/stopwords", List("你").mkString("\n"))
-      writeStringToFile("/tmp/tfidf/prioritywords", List("天才").mkString("\n"))
+      //writeStringToFile("/tmp/tfidf/stopwords", List("你").mkString("\n"))
+      //writeStringToFile("/tmp/tfidf/prioritywords", List("天才").mkString("\n"))
       val sq = createSSEL
       ScriptSQLExec.parse(TemplateMerge.merge(loadSQLScriptStr("word2vecplace"),
-        Map("wordvecPaths" -> "", "resultFeature" -> "index")), sq)
+        Map("wordvecPaths" -> "", "resultFeature" -> "", "split" -> "")), sq)
       // we should make sure train vector and predict vector the same
       val trainVector = spark.sql("select * from parquet.`/tmp/william/tmp/word2vecinplace/data`").toJSON.collect()
       trainVector.foreach { f =>
@@ -333,7 +332,7 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
         println(f)
         //assume(trainVector.contains(f))
       }
-      delDir("/tmp/william/tmp/word2vecinplace")
+      /*delDir("/tmp/william/tmp/word2vecinplace")
       val sq1 = createSSEL
       ScriptSQLExec.parse(TemplateMerge.merge(loadSQLScriptStr("word2vecplace"),
         Map("wordvecPaths" -> "/Users/zml/mlsql/word2vec")), sq1)
@@ -346,7 +345,7 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
       predictVector1.foreach { f =>
         println(f)
         //assume(trainVector.contains(f))
-      }
+      }*/
     }
   }
 

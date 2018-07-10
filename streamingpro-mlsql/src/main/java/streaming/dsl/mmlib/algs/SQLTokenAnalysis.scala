@@ -20,7 +20,7 @@ class SQLTokenAnalysis extends SQLAlg with Functions {
 
     require(params.contains("inputCol"), "inputCol is required")
     val fieldName = params("inputCol")
-
+    val split = params.getOrElse("split", null)
     val arrayWords = {
       if (params.contains("wordsArray")) {
         params("wordsArray").split(",")
@@ -36,7 +36,12 @@ class SQLTokenAnalysis extends SQLAlg with Functions {
       val parser = SQLTokenAnalysis.createAnalyzer(words, params)
       mp.map { f =>
         val content = f.getAs[String](fieldName)
-        val res = SQLTokenAnalysis.parseStr(parser, content, params)
+        val res = {
+          if (split != null) {
+            content.split(split)
+          }
+          else SQLTokenAnalysis.parseStr(parser, content, params)
+        }
         val index = f.fieldIndex(fieldName)
         val newValue = f.toSeq.zipWithIndex.filterNot(f => f._2 == index).map(f => f._1) ++ Seq(res)
         Row.fromSeq(newValue)
