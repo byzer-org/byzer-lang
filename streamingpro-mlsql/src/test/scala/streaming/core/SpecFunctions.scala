@@ -73,7 +73,7 @@ trait SpecFunctions {
   }
 
   def delDir(file: String) = {
-    require(file.stripSuffix("/").split("/").size < 2, s"delete $file  maybe too dangerous")
+    require(file.stripSuffix("/").split("/").size > 1, s"delete $file  maybe too dangerous")
     FileUtils.forceDelete(new File(file))
   }
 

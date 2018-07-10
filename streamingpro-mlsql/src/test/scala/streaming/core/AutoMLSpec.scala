@@ -308,6 +308,8 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
       implicit val spark = runtime.sparkSession
+      delDir("/tmp/william/tmp/word2vecinplace")
+      delDir("/tmp/william/tmp/tfidf")
       val dataRDD = spark.sparkContext.parallelize(Seq("我是天才，你呢", "你真的很棒", "天才你好")).map { f =>
         Row.fromSeq(Seq(f))
       }
@@ -318,7 +320,6 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
 
       writeStringToFile("/tmp/tfidf/stopwords", List("你").mkString("\n"))
       writeStringToFile("/tmp/tfidf/prioritywords", List("天才").mkString("\n"))
-
       val sq = createSSEL
       ScriptSQLExec.parse(TemplateMerge.merge(loadSQLScriptStr("word2vecplace"),
         Map("wordvecPaths" -> "", "resultFeature" -> "index")), sq)
@@ -332,6 +333,7 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
         println(f)
         //assume(trainVector.contains(f))
       }
+      delDir("/tmp/william/tmp/word2vecinplace")
       val sq1 = createSSEL
       ScriptSQLExec.parse(TemplateMerge.merge(loadSQLScriptStr("word2vecplace"),
         Map("wordvecPaths" -> "/Users/zml/mlsql/word2vec")), sq1)
