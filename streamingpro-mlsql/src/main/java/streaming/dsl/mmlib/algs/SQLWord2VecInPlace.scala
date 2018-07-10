@@ -7,6 +7,7 @@ import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession, functions =
 import streaming.core.shared.SharedObjManager
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.feature.StringFeature
+import streaming.dsl.mmlib.algs.feature.StringFeature.loadWordvecs
 import streaming.dsl.mmlib.algs.meta.Word2VecMeta
 
 /**
@@ -60,8 +61,15 @@ class SQLWord2VecInPlace extends SQLAlg with Functions {
     val df = spark.read.parquet(PARAMS_PATH(path, "params")).map(f => (f.getString(0), f.getString(1)))
     val trainParams = df.collect().toMap
     val inputCol = trainParams.getOrElse("inputCol", "")
-    //load wordindex
-    val wordIndex = spark.read.parquet(WORD_INDEX_PATH(path, inputCol)).map(f => ((f.getString(0), f.getDouble(1)))).collect().toMap
+    val wordvecPaths = trainParams.getOrElse("wordvecPaths", "")
+    val wordvecsMap = loadWordvecs(spark, wordvecPaths)
+    val wordIndex = {
+      if (wordvecsMap.size > 0) {
+        Map[String, Double]()
+      } else
+      //load wordindex
+        spark.read.parquet(WORD_INDEX_PATH(path, inputCol)).map(f => ((f.getString(0), f.getDouble(1)))).collect().toMap
+    }
     //load word2vec model
     val word2vec = new SQLWord2Vec()
     val model = word2vec.load(spark, WORD2VEC_PATH(path, inputCol), Map())
