@@ -36,6 +36,10 @@ class SQLPythonAlg extends SQLAlg with Functions {
   override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
 
     val keepVersion = params.getOrElse("keepVersion", "false").toBoolean
+    if (!keepVersion) {
+      saveTraningParams(df.sparkSession, params, MetaConst.getMetaPath(path))
+    }
+
     val enableDataLocal = params.getOrElse("enableDataLocal", "false").toBoolean
 
     var kafkaParam = mapParams("kafkaParam", params)
@@ -225,7 +229,13 @@ class SQLPythonAlg extends SQLAlg with Functions {
 
     import sparkSession.implicits._
     val wowMetas = sparkSession.read.parquet(path + "/1").collect()
-    val trainParams = wowMetas.map(f => f.getMap[String, String](1)).head.toMap
+    val trainParams = if (versionEnabled) {
+      wowMetas.map(f => f.getMap[String, String](1)).head.toMap
+    }
+    else {
+      val df = sparkSession.read.parquet(MetaConst.PARAMS_PATH(path, "params")).map(f => (f.getString(0), f.getString(1)))
+      df.collect().toMap
+    }
 
     // load resource
     val fitParam = arrayParamsWithIndex("fitParam", trainParams)
