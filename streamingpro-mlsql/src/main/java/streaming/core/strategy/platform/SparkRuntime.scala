@@ -65,7 +65,7 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
     val sparkSession = SparkSession.builder().config(conf)
     if (params.containsKey("streaming.enableHiveSupport") &&
       params.get("streaming.enableHiveSupport").toString.toBoolean) {
-//      sparkSession.enableHiveSupport()
+      sparkSession.enableHiveSupport()
     }
 
 
