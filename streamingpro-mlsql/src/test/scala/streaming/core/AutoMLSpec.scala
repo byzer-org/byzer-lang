@@ -256,7 +256,7 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
 
   "SQLSampler" should "work fine" in {
 
-    val queryNameSeq = Seq("sql-sample", "sql-sampler_splitWithSubLabel")
+    val queryNameSeq = Seq("sql-sampler", "sql-sampler_splitWithSubLabel")
     queryNameSeq.foreach(name => {
       withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
         //执行sql
@@ -267,9 +267,8 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
         assume(df.count() == 3)
         df = spark.sql("select label,__split__,count(__split__) as rate from sample_data  group by label,__split__ order by label,__split__,rate")
         df.show(10000)
-    })
+    }})
 
-    }
   }
 
   "SQLTfIdfInPlace" should "work fine" in {
