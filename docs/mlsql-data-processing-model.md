@@ -645,8 +645,6 @@ select * from result;
 -- 切分训练集、验证集，该算法会保证每个分类都是按比例切分。
 train lwys_corpus_final_format as RateSampler.`${traning_dir}/ratesampler` 
 where labelCol="label"
--- isSplitWithSubLabel 设置为 true 时, 将按 labelCol 数量同比例在相应切分块中进行中进行切分; 数据量比较大的情况下不建议使用
-and isSplitWithSubLabel="true"
 and sampleRate="0.9,0.1";
 
 load parquet.`${traning_dir}/ratesampler` as data2;
@@ -657,6 +655,12 @@ as validateTable;
 select * from data2 where __split__=0
 as trainingTable;
 ```
+说明：数据量比较小的情况下， 如果希望按 labelCol 数量同比例在相应切分块中进行中进行切分 可以添加 
+```
+// 数据量比较大的情况下不建议使用
+and isSplitWithSubLabel="true"
+```
+ 
 
 ## ModelExplainInPlace
 
