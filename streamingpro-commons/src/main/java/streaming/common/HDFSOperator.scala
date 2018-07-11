@@ -119,6 +119,11 @@ object HDFSOperator {
     fs.delete(new Path(path), true)
   }
 
+  def createDir(path: String) = {
+    val fs = FileSystem.get(new Configuration())
+    fs.mkdirs(new Path(path))
+  }
+
   def createTempModelLocalPath(path: String, autoCreateParentDir: Boolean = true) = {
     val dir = "/tmp/train/" + Md5.md5Hash(path)
     if (autoCreateParentDir) {
