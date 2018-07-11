@@ -12,19 +12,21 @@ import org.apache.spark.TaskContext
 import org.apache.spark.api.python.WowPythonRunner
 import org.apache.spark.ml.linalg.SQLDataTypes._
 import org.apache.spark.ps.cluster.{Message, PSServiceSink}
+import org.apache.spark.scheduler.SparkListener
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.util.ArrayBasedMapData
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession, functions => F}
+import org.apache.spark.ui.jobs.JobProgressListener
 import org.apache.spark.util.ObjPickle._
 import org.apache.spark.util.VectorSerDer._
 import org.apache.spark.util.{ExternalCommandRunner, ObjPickle, VectorSerDer, WowMD5}
 import streaming.core.strategy.platform.{PlatformManager, SparkRuntime}
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.SQLPythonFunc._
-import scala.collection.JavaConverters._
 
+import scala.collection.JavaConverters._
 import streaming.common.HDFSOperator
 
 /**
@@ -33,7 +35,7 @@ import streaming.common.HDFSOperator
 class SQLPythonAlg extends SQLAlg with Functions {
   override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
 
-    saveTraningParams(df.sparkSession, params, MetaConst.getMetaPath(path))
+    val keepVersion = params.getOrElse("keepVersion", "false").toBoolean
     val enableDataLocal = params.getOrElse("enableDataLocal", "false").toBoolean
 
     var kafkaParam = mapParams("kafkaParam", params)
@@ -89,6 +91,7 @@ class SQLPythonAlg extends SQLAlg with Functions {
     }
     val rowsBr = df.sparkSession.sparkContext.broadcast(rows)
 
+    incrementVersion(path, keepVersion)
 
     val wowRDD = fitParamRDD.map { paramAndIndex =>
       val f = paramAndIndex._2
@@ -152,8 +155,12 @@ class SQLPythonAlg extends SQLAlg with Functions {
 
       //模型保存到hdfs上
       val fs = FileSystem.get(new Configuration())
-      val modelHDFSPath = SQLPythonFunc.getAlgModelPath(path) + "/" + algIndex
-      fs.delete(new Path(modelHDFSPath), true)
+      val modelHDFSPath = SQLPythonFunc.getAlgModelPath(path, keepVersion) + "/" + algIndex
+
+      if (!keepVersion) {
+        fs.delete(new Path(modelHDFSPath), true)
+      }
+
       fs.copyFromLocalFile(new Path(tempModelLocalPath),
         new Path(modelHDFSPath))
 
@@ -170,22 +177,38 @@ class SQLPythonAlg extends SQLAlg with Functions {
     ))).
       write.
       mode(SaveMode.Overwrite).
-      parquet(SQLPythonFunc.getAlgMetalPath(path) + "/0")
+      parquet(SQLPythonFunc.getAlgMetalPath(path, keepVersion) + "/0")
 
-    val tempRDD = df.sparkSession.sparkContext.parallelize(Seq(Map("pythonPath" -> pythonPath, "pythonVer" -> pythonVer)), 1).map { f =>
-      Row.fromSeq(Seq(f))
+    val tempRDD = df.sparkSession.sparkContext.parallelize(Seq(Seq(Map("pythonPath" -> pythonPath, "pythonVer" -> pythonVer), params)), 1).map { f =>
+      Row.fromSeq(f)
     }
-    df.sparkSession.createDataFrame(tempRDD, StructType(Seq(StructField("systemParam", MapType(StringType, StringType))))).
+    df.sparkSession.createDataFrame(tempRDD, StructType(Seq(
+      StructField("systemParam", MapType(StringType, StringType)),
+      StructField("trainParams", MapType(StringType, StringType))))).
       write.
       mode(SaveMode.Overwrite).
-      parquet(SQLPythonFunc.getAlgMetalPath(path) + "/1")
+      parquet(SQLPythonFunc.getAlgMetalPath(path, keepVersion) + "/1")
 
   }
 
   override def load(sparkSession: SparkSession, _path: String, params: Map[String, String]): Any = {
-    val path = SQLPythonFunc.getAlgMetalPath(_path)
-    val modelPath = SQLPythonFunc.getAlgModelPath(_path)
+    val maxVersion = getModelVersion(_path)
+    val versionEnabled = maxVersion match {
+      case Some(v) => true
+      case None => false
+    }
+
+    val modelVersion = params.getOrElse("modelVersion", maxVersion.getOrElse(-1).toString).toInt
+
+    // you can specify model version
+    val path = if (modelVersion == -1) getAlgMetalPath(_path, versionEnabled)
+    else getAlgMetalPathWithVersion(_path, modelVersion)
+
+    val modelPath = if (modelVersion == -1) getAlgModelPath(_path, versionEnabled)
+    else getAlgModelPathWithVersion(_path, modelVersion)
+
     var algIndex = params.getOrElse("algIndex", "-1").toInt
+
     val modelList = sparkSession.read.parquet(path + "/0").collect()
     val models = if (algIndex != -1) {
       Seq(modelPath + "/" + algIndex)
@@ -201,8 +224,8 @@ class SQLPythonAlg extends SQLAlg with Functions {
     }
 
     import sparkSession.implicits._
-    val df = sparkSession.read.parquet(MetaConst.PARAMS_PATH(path, "params")).map(f => (f.getString(0), f.getString(1)))
-    val trainParams = df.collect().toMap
+    val wowMetas = sparkSession.read.parquet(path + "/1").collect()
+    val trainParams = wowMetas.map(f => f.getMap[String, String](1)).head.toMap
 
     // load resource
     val fitParam = arrayParamsWithIndex("fitParam", trainParams)
@@ -210,7 +233,7 @@ class SQLPythonAlg extends SQLAlg with Functions {
     val loadResource = selectedFitParam.keys.map(_.split("\\.")(0)).toSet.contains("resource")
     var resourceParams = Map.empty[String, String]
 
-    val metas = sparkSession.read.parquet(path + "/1").collect().map(f => f.get(0).asInstanceOf[Map[String, String]]).toSeq
+    val metas = wowMetas.map(f => f.getMap[String, String](0)).toSeq
     // make sure every executor have the model in local directory.
     // we should unregister manually
     models.foreach { modelPath =>
@@ -251,7 +274,7 @@ class SQLPythonAlg extends SQLAlg with Functions {
 
     val kafkaParam = mapParams("kafkaParam", trainParams)
 
-    val enableCopyTrainParamsToPython = params.getOrElse("enableCopyTrainParamsToPython", "true").toBoolean
+    val enableCopyTrainParamsToPython = params.getOrElse("enableCopyTrainParamsToPython", "false").toBoolean
     //driver 节点执行
     val res = ExternalCommandRunner.run(Seq(pythonPath, userPythonScript.fileName),
       maps,

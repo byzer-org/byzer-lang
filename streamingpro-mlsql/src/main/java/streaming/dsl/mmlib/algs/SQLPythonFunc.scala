@@ -3,6 +3,7 @@ package streaming.dsl.mmlib.algs
 import com.hortonworks.spark.sql.kafka08.KafkaOperator
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.util.{ExternalCommandRunner, WowMD5}
+import streaming.common.HDFSOperator
 
 import scala.io.Source
 
@@ -103,14 +104,60 @@ object SQLPythonFunc {
     s"/tmp/__mlsql__"
   }
 
-  def getAlgModelPath(hdfsPath: String) = {
-    s"${hdfsPath}/model"
+
+  def getAlgModelPath(hdfsPath: String, versionEnabled: Boolean = false) = {
+    s"${getAlgBasePath(hdfsPath, versionEnabled)}/model"
   }
 
-  def getAlgMetalPath(hdfsPath: String) = {
-    s"${hdfsPath}/meta"
+
+  def getAlgModelPathWithVersion(hdfsPath: String, version: Int) = {
+    s"${getAlgBasePathWithVersion(hdfsPath, version)}/model"
   }
 
+  def incrementVersion(basePath: String, versionEnabled: Boolean) = {
+    if (versionEnabled) {
+      val maxVersion = getModelVersion(basePath)
+      val path = maxVersion match {
+        case Some(v) => s"${basePath}/_model_${v + 1}"
+        case None => s"${basePath}/_model_0"
+      }
+      HDFSOperator.createDir(path)
+    }
+  }
+
+  def getAlgBasePath(hdfsPath: String, versionEnabled: Boolean = false) = {
+
+    val basePath = hdfsPath
+    if (versionEnabled) {
+      val maxVersion = getModelVersion(basePath)
+      maxVersion match {
+        case Some(v) => s"${basePath}/_model_${v}"
+        case None => s"${basePath}/_model_0"
+      }
+    }
+    else {
+      basePath
+    }
+  }
+
+  def getAlgBasePathWithVersion(hdfsPath: String, version: Int) = {
+    s"${hdfsPath}/_model_${version}"
+  }
+
+  def getModelVersion(basePath: String) = {
+    HDFSOperator.listModelDirectory(basePath).filter(f => f.getPath.getName.startsWith("_model_")).
+      map(f => f.getPath.getName.split("_").last.toInt).sorted.reverse.headOption
+  }
+
+  def getAlgMetalPath(hdfsPath: String, versionEnabled: Boolean = false) = {
+    s"${getAlgBasePath(hdfsPath, versionEnabled)}/meta"
+  }
+
+  def getAlgMetalPathWithVersion(hdfsPath: String, version: Int) = {
+    s"${getAlgBasePathWithVersion(hdfsPath, version)}/meta"
+  }
+
+  // tmp no need to keep version
   def getAlgTmpPath(hdfsPath: String) = {
     s"${hdfsPath}/tmp"
   }

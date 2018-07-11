@@ -18,6 +18,7 @@ and `systemParam.pythonVer`="2.7"
 register PythonAlg.`/tmp/pa_model` as jack options
 pythonScriptPath="${pythonPredictScriptPath}"
 and algIndex="0"
+and enableCopyTrainParamsToPython="true"
 ;
 
 select jack(features) from data
