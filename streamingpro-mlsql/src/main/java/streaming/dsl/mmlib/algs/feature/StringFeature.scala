@@ -71,9 +71,10 @@ object StringFeature extends BaseFeatureFunctions {
                     stopwordsBr: Broadcast[Set[String]],
                     nGrams: Seq[Int],
                     outputWordAndIndex: Boolean,
+                    split: String,
                     wordsArray: Array[String] = Array[String]()
                    ) = {
-    var newDF = new SQLTokenAnalysis().internal_train(df, Map("dic.paths" -> dicPaths, "inputCol" -> inputCol, "ignoreNature" -> "true", "wordsArray" -> wordsArray.mkString(",")))
+    var newDF = new SQLTokenAnalysis().internal_train(df, Map("dic.paths" -> dicPaths, "inputCol" -> inputCol, "ignoreNature" -> "true", "wordsArray" -> wordsArray.mkString(","), "split" -> split))
     val filterStopWordFunc = F.udf((a: Seq[String]) => {
       a.filterNot(stopwordsBr.value.contains(_))
     })
@@ -143,6 +144,7 @@ object StringFeature extends BaseFeatureFunctions {
             priorityDicPaths: String,
             priority: Double,
             nGrams: Seq[Int],
+            split: String,
             outputWordAndIndex: Boolean = false
            ) = {
 
@@ -152,7 +154,7 @@ object StringFeature extends BaseFeatureFunctions {
     val stopwordsBr = df.sparkSession.sparkContext.broadcast(stopwords)
 
     //analysis
-    var (newDF, funcMap, wordCount) = analysisWords(df, metaPath, dicPaths, inputCol, stopwordsBr, nGrams, outputWordAndIndex)
+    var (newDF, funcMap, wordCount) = analysisWords(df, metaPath, dicPaths, inputCol, stopwordsBr, nGrams, outputWordAndIndex, split)
     val spark = df.sparkSession
 
     //tfidf feature
@@ -171,7 +173,7 @@ object StringFeature extends BaseFeatureFunctions {
     newDF
   }
 
-  def word2vec(df: DataFrame, metaPath: String, dicPaths: String, wordvecPaths: String, inputCol: String, stopWordsPaths: String, resultFeature: String, vectorSize: Int = 100, length: Int = 100) = {
+  def word2vec(df: DataFrame, metaPath: String, dicPaths: String, wordvecPaths: String, inputCol: String, stopWordsPaths: String, resultFeature: String, split: String, vectorSize: Int = 100, length: Int = 100) = {
     val stopwords = loadStopwords(df, stopWordsPaths)
     val stopwordsBr = df.sparkSession.sparkContext.broadcast(stopwords)
     val spark = df.sparkSession
@@ -196,7 +198,7 @@ object StringFeature extends BaseFeatureFunctions {
       })
       replaceColumn(newDF, inputCol, toVecFunc)
     } else {
-      var (newDF, funcMap, wordCount) = analysisWords(df, metaPath, dicPaths, inputCol, stopwordsBr, Seq(), false, wordsArray)
+      var (newDF, funcMap, wordCount) = analysisWords(df, metaPath, dicPaths, inputCol, stopwordsBr, Seq(), false, split, wordsArray)
       // word2vec only accept String sequence, so we should convert int to str
       val word2vec = new SQLWord2Vec()
       word2vec.train(replaceColumn(newDF, inputCol, F.udf((a: Seq[Int]) => {

@@ -1,6 +1,7 @@
 package streaming.dsl.mmlib.algs
 
 import MetaConst._
+import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession, functions => F}
@@ -26,12 +27,13 @@ class SQLWord2VecInPlace extends SQLAlg with Functions {
     val length = params.getOrElse("length", "100").toInt
     val stopWordPath = params.getOrElse("stopWordPath", "")
     val resultFeature = params.getOrElse("resultFeature", "") //flat,merge,index
+    val split = params.getOrElse("split", null)
     require(!inputCol.isEmpty, "inputCol is required when use SQLWord2VecInPlace")
     val metaPath = getMetaPath(params("path"))
     // keep params
     saveTraningParams(df.sparkSession, params, metaPath)
 
-    var newDF = StringFeature.word2vec(df, metaPath, dicPaths, wordvecPaths, inputCol, stopWordPath, resultFeature, vectorSize, length)
+    var newDF = StringFeature.word2vec(df, metaPath, dicPaths, wordvecPaths, inputCol, stopWordPath, resultFeature, split, vectorSize, length)
     if (resultFeature.equals("flat")) {
       val flatFeatureUdf = F.udf((a: Seq[Seq[Double]]) => {
         a.flatten
@@ -86,39 +88,36 @@ class SQLWord2VecInPlace extends SQLAlg with Functions {
     val vectorSize = trainParams.getOrElse("vectorSize", "100").toInt
     val length = trainParams.getOrElse("length", "100").toInt
     val wordIndexBr = spark.sparkContext.broadcast(word2vecMeta.wordIndex)
-
+    val split = trainParams.getOrElse("split", null)
 
     val df = spark.createDataFrame(spark.sparkContext.emptyRDD[Row], StructType(Seq()))
     val stopwords = StringFeature.loadStopwords(df, stopWordPath)
     val stopwordsBr = spark.sparkContext.broadcast(stopwords)
     val wordVecsBr = spark.sparkContext.broadcast(StringFeature.loadWordvecs(spark, wordvecPaths))
     val wordsArrayBr = spark.sparkContext.broadcast(StringFeature.loadDicsFromWordvec(spark, wordvecPaths))
-
+    val wordArrayFunc = (content: String) => {
+      if (split != null) {
+        content.split(split)
+      } else {
+        // create analyser
+        val forest = SharedObjManager.getOrCreate[Any](dicPaths, SharedObjManager.forestPool, () => {
+          val words = SQLTokenAnalysis.loadDics(spark, trainParams) ++ wordsArrayBr.value
+          SQLTokenAnalysis.createForest(words, trainParams)
+        })
+        val parser = SQLTokenAnalysis.createAnalyzerFromForest(forest.asInstanceOf[AnyRef], trainParams)
+        // analyser content
+        SQLTokenAnalysis.parseStr(parser, content, trainParams).
+          filter(f => !stopwordsBr.value.contains(f))
+      }
+    }
     val func = (content: String) => {
-
-      // create analyser
-      val forest = SharedObjManager.getOrCreate[Any](dicPaths, SharedObjManager.forestPool, () => {
-        val words = SQLTokenAnalysis.loadDics(spark, trainParams) ++ wordsArrayBr.value
-        SQLTokenAnalysis.createForest(words, trainParams)
-      })
-      val parser = SQLTokenAnalysis.createAnalyzerFromForest(forest.asInstanceOf[AnyRef], trainParams)
-      // analyser content
-      val wordArray = SQLTokenAnalysis.parseStr(parser, content, trainParams).
-        filter(f => !stopwordsBr.value.contains(f))
-
+      val wordArray = wordArrayFunc(content)
       val wordIntArray = wordArray.filter(f => wordIndexBr.value.contains(f)).map(f => wordIndexBr.value(f).toInt)
       wordIntArray.map(f => f.toString).toSeq
     }
+
     val func2 = (content: String) => {
-      // create analyser
-      val forest = SharedObjManager.getOrCreate[Any](dicPaths, SharedObjManager.forestPool, () => {
-        val words = SQLTokenAnalysis.loadDics(spark, trainParams) ++ wordsArrayBr.value
-        SQLTokenAnalysis.createForest(words, trainParams)
-      })
-      val parser = SQLTokenAnalysis.createAnalyzerFromForest(forest.asInstanceOf[AnyRef], trainParams)
-      // analyser content
-      val wordArray = SQLTokenAnalysis.parseStr(parser, content, trainParams).
-        filter(f => !stopwordsBr.value.contains(f))
+      val wordArray = wordArrayFunc(content)
       val r = new Array[Array[Double]](length)
       val wordvecsMap = wordVecsBr.value
       val wSize = wordArray.size
@@ -132,15 +131,7 @@ class SQLWord2VecInPlace extends SQLAlg with Functions {
     }
 
     val func3 = (content: String) => {
-      // create analyser
-      val forest = SharedObjManager.getOrCreate[Any](dicPaths, SharedObjManager.forestPool, () => {
-        val words = SQLTokenAnalysis.loadDics(spark, trainParams) ++ wordsArrayBr.value
-        SQLTokenAnalysis.createForest(words, trainParams)
-      })
-      val parser = SQLTokenAnalysis.createAnalyzerFromForest(forest.asInstanceOf[AnyRef], trainParams)
-      // analyser content
-      val wordArray = SQLTokenAnalysis.parseStr(parser, content, trainParams).
-        filter(f => !stopwordsBr.value.contains(f))
+      val wordArray = wordArrayFunc(content)
       wordArray.filter(f => wordIndexBr.value.contains(f)).map(f => wordIndexBr.value(f).toInt)
     }
 
@@ -169,7 +160,5 @@ class SQLWord2VecInPlace extends SQLAlg with Functions {
         }
       }
     }
-
   }
-
 }

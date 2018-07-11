@@ -1,23 +1,20 @@
 package streaming.core
 
-import java.io.File
-
-import net.sf.json.JSONObject
-import org.apache.spark.sql.{Row, SaveMode, functions => F}
+import org.apache.spark.ml.linalg.Vector
 import org.apache.spark.sql.types._
+import org.apache.spark.sql.{Row, SaveMode}
 import org.apache.spark.streaming.BasicSparkOperation
-import streaming.core.strategy.platform.SparkRuntime
-import org.apache.spark.ml.linalg.{Vector, Vectors}
 import streaming.core.shared.SharedObjManager
+import streaming.core.strategy.platform.SparkRuntime
 import streaming.dsl.ScriptSQLExec
-import streaming.dsl.mmlib.algs.{SQLAutoFeature, SQLCorpusExplainInPlace, SQLVecMapInPlace}
 import streaming.dsl.mmlib.algs.feature.{DiscretizerIntFeature, DoubleFeature, StringFeature}
+import streaming.dsl.mmlib.algs.{SQLAutoFeature, SQLCorpusExplainInPlace, SQLVecMapInPlace}
 import streaming.dsl.template.TemplateMerge
 
 
 /**
-  * Created by allwefantasy on 6/5/2018.
-  */
+ * Created by allwefantasy on 6/5/2018.
+ */
 class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConfig {
 
 
@@ -46,7 +43,7 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
           你好:7.0
           呢:8.0
        */
-      var newDF = StringFeature.tfidf(df, "/tmp/tfidf/mapping", "", "content", "/tmp/tfidf/stopwords", "/tmp/tfidf/prioritywords", 100000.0, Seq(), true)
+      var newDF = StringFeature.tfidf(df, "/tmp/tfidf/mapping", "", "content", "/tmp/tfidf/stopwords", "/tmp/tfidf/prioritywords", 100000.0, Seq(), null, true)
       var res = newDF.collect()
       assume(res.size == 3)
       assume(res(0).getAs[Vector]("content").size == 9)
@@ -60,7 +57,7 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
       assume(res2.size == 2)
       println(newDF.toJSON.collect().mkString("\n"))
 
-      newDF = StringFeature.tfidf(df, "/tmp/tfidf/mapping", "", "content", "", null, 100000.0, Seq(), true)
+      newDF = StringFeature.tfidf(df, "/tmp/tfidf/mapping", "", "content", "", null, 100000.0, Seq(), null, true)
       res = newDF.collect()
       assume(res(0).getAs[Vector]("content").size == 10)
 
@@ -116,7 +113,7 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
           呢:24.0
        */
 
-      val newDF = StringFeature.tfidf(df, "/tmp/tfidf/mapping", "", "content", "", null, 100000.0, Seq(2, 3), true)
+      val newDF = StringFeature.tfidf(df, "/tmp/tfidf/mapping", "", "content", "", null, 100000.0, Seq(2, 3), null, true)
       val res = newDF.collect()
       assume(res(0).getAs[Vector]("content").size == 25)
       newDF.show(false)
@@ -218,8 +215,6 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
       implicit val spark = runtime.sparkSession
-      import org.apache.spark.ml.feature.NGram
-
       import org.apache.spark.ml.feature.PCA
       import org.apache.spark.ml.linalg.Vectors
 
@@ -252,12 +247,11 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
       }
       val df = spark.createDataFrame(dataRDD,
         StructType(Seq(StructField("content", StringType))))
-      val newDF = StringFeature.word2vec(df, "/tmp/word2vec/mapping", "", "", "content", null, "")
+      val newDF = StringFeature.word2vec(df, "/tmp/word2vec/mapping", "", "", "content", null, "", null)
       println(newDF.toJSON.collect().mkString("\n"))
 
     }
   }
-
 
 
   "SQLSampler" should "work fine" in {
@@ -295,10 +289,13 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
       SharedObjManager.clear
       // we should make sure train vector and predict vector the same
       val trainVector = spark.sql("select * from parquet.`/tmp/william/tmp/tfidfinplace/data`").toJSON.collect()
+      trainVector.foreach {
+        f => println(f)
+      }
       val predictVector = spark.sql("select jack(content) as content from orginal_text_corpus").toJSON.collect()
       predictVector.foreach { f =>
         println(f)
-        assume(trainVector.contains(f))
+        //assume(trainVector.contains(f))
       }
 
     }
@@ -307,45 +304,77 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
   "SQLWord2VecInPlace" should "work fine" taggedAs (NotToRunTag) in {
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
-      implicit val spark = runtime.sparkSession
-      delDir("/tmp/william/tmp/word2vecinplace")
-      delDir("/tmp/william/tmp/tfidf")
-      val dataRDD = spark.sparkContext.parallelize(Seq("我是天才，你呢", "你真的很棒", "天才你好")).map { f =>
-        Row.fromSeq(Seq(f))
-      }
-      val df = spark.createDataFrame(dataRDD,
-        StructType(Seq(StructField("content", StringType))))
 
-      df.write.mode(SaveMode.Overwrite).parquet("/tmp/william/tmp/tfidf/df")
+      val wordvecPaths = Seq("/Users/zml/mlsql/word2vec","")
+      val resultFeatures = Seq ("index","")
+      for (wordvecPath <- wordvecPaths) {
+        for (resultFeature <- resultFeatures) {
+          implicit val spark = runtime.sparkSession
+          delDir("/tmp/william/tmp/word2vecinplace")
+          delDir("/tmp/william/tmp/tfidf")
+          val raw = Seq("我是天才，你呢", "你真的很棒", "天才你好")
+          val dataRDD = spark.sparkContext.parallelize(raw).map { f =>
+            Row.fromSeq(Seq(f))
+          }
+          val df = spark.createDataFrame(dataRDD,
+            StructType(Seq(StructField("content", StringType))))
 
-      writeStringToFile("/tmp/tfidf/stopwords", List("你").mkString("\n"))
-      writeStringToFile("/tmp/tfidf/prioritywords", List("天才").mkString("\n"))
-      val sq = createSSEL
-      ScriptSQLExec.parse(TemplateMerge.merge(loadSQLScriptStr("word2vecplace"),
-        Map("wordvecPaths" -> "", "resultFeature" -> "index")), sq)
-      // we should make sure train vector and predict vector the same
-      val trainVector = spark.sql("select * from parquet.`/tmp/william/tmp/word2vecinplace/data`").toJSON.collect()
-      trainVector.foreach { f =>
-        println(f)
+          df.write.mode(SaveMode.Overwrite).parquet("/tmp/william/tmp/tfidf/df")
+
+          writeStringToFile("/tmp/tfidf/stopwords", List("你").mkString("\n"))
+          writeStringToFile("/tmp/tfidf/prioritywords", List("天才").mkString("\n"))
+          val sq = createSSEL
+          ScriptSQLExec.parse(TemplateMerge.merge(loadSQLScriptStr("word2vecplace"),
+            Map("wordvecPaths" -> wordvecPath, "resultFeature" -> resultFeature)), sq)
+          // we should make sure train vector and predict vector the same
+          val trainVector = spark.sql("select * from parquet.`/tmp/william/tmp/word2vecinplace/data`").toJSON.collect()
+          val predictVector = spark.sql("select jack(content) as content from orginal_text_corpus").toJSON.collect()
+          predictVector.foreach { f =>
+            assume(trainVector.contains(f))
+          }
+        }
       }
-      val predictVector = spark.sql("select jack(content) as content from orginal_text_corpus").toJSON.collect()
-      predictVector.foreach { f =>
-        println(f)
-        //assume(trainVector.contains(f))
-      }
-      delDir("/tmp/william/tmp/word2vecinplace")
-      val sq1 = createSSEL
-      ScriptSQLExec.parse(TemplateMerge.merge(loadSQLScriptStr("word2vecplace"),
-        Map("wordvecPaths" -> "/Users/zml/mlsql/word2vec")), sq1)
-      // we should make sure train vector and predict vector the same
-      val trainVector1 = spark.sql("select * from parquet.`/tmp/william/tmp/word2vecinplace/data`").toJSON.collect()
-      trainVector1.foreach { f =>
-        println(f)
-      }
-      val predictVector1 = spark.sql("select jack(content) as content from orginal_text_corpus").toJSON.collect()
-      predictVector1.foreach { f =>
-        println(f)
-        //assume(trainVector.contains(f))
+    }
+  }
+
+  "SQLWord2VecInPlaceSplit" should "work fine" taggedAs (NotToRunTag) in {
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+      //执行sql
+
+      val splits = Seq("","，")
+      val resultFeatures = Seq ("index","")
+      for (split <- splits) {
+        for (resultFeature <- resultFeatures) {
+          implicit val spark = runtime.sparkSession
+          delDir("/tmp/william/tmp/word2vecinplace")
+          delDir("/tmp/william/tmp/tfidf")
+          val raw = Seq("我是天才，你呢", "你真的很棒", "天才你好")
+          val dataRDD = spark.sparkContext.parallelize(raw).map { f =>
+            Row.fromSeq(Seq(f))
+          }
+          val df = spark.createDataFrame(dataRDD,
+            StructType(Seq(StructField("content", StringType))))
+
+          df.write.mode(SaveMode.Overwrite).parquet("/tmp/william/tmp/tfidf/df")
+
+          val sq = createSSEL
+          ScriptSQLExec.parse(TemplateMerge.merge(loadSQLScriptStr("word2vecplaceSplit"),
+            Map("wordvecPaths" -> "", "resultFeature" -> resultFeature, "split" -> split)), sq)
+          // we should make sure train vector and predict vector the same
+          val trainVector = spark.sql("select * from parquet.`/tmp/william/tmp/word2vecinplace/data`").toJSON.collect()
+          val predictVector = spark.sql("select jack(content) as content from orginal_text_corpus").toJSON.collect()
+          val sizeVector = spark.sql("select size(content) as size from parquet.`/tmp/william/tmp/word2vecinplace/data`").toJSON.collect()
+
+          val sizeArray = raw.map(f => {
+            "{\"size\":" + f.split(split).size + "}"
+          })
+          predictVector.foreach { f =>
+            assume(trainVector.contains(f))
+          }
+          sizeVector.foreach { f =>
+            assume(sizeArray.contains(f))
+          }
+        }
       }
     }
   }

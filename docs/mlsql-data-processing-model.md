@@ -55,6 +55,8 @@ and priorityDicPath="/tmp/tfidf/prioritywords"
 and priority="5.0"
 -- ngram 配置
 and nGram="2,3"
+-- split 配置，以split为分隔符分词，
+and split=""
 ;
 
 load parquet.`/tmp/tfidf/data` 
@@ -115,6 +117,8 @@ and ignoreNature="true"
 and stopWordPath="/tmp/tfidf/stopwords"
 -- resultFeature="flat"把结果展开为一维向量
 and resultFeature="flat"
+-- split 配置，以split为分隔符分词，
+and split=""
 ;
 load parquet.`/tmp/word2vecinplace/data` 
 as lwys_corpus_with_featurize;
@@ -130,6 +134,7 @@ as lwys_corpus_with_featurize;
 |vectorSize|None|向量长度|
 |length|None|数组长度|
 |stopWordPath|None|停用词目录路径|
+|split|None|分词分隔符|
 
 lwys_corpus_with_featurize 中的content字段已经是向量化的了，可以直接进行后续的算法训练。
 

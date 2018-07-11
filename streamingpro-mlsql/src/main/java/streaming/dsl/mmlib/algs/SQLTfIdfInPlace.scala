@@ -13,8 +13,8 @@ import streaming.dsl.mmlib.algs.meta.TFIDFMeta
 import scala.collection.mutable.ArrayBuffer
 
 /**
-  * Created by allwefantasy on 7/5/2018.
-  */
+ * Created by allwefantasy on 7/5/2018.
+ */
 class SQLTfIdfInPlace extends SQLAlg with Functions {
   override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
     interval_train(df, params + ("path" -> path)).write.mode(SaveMode.Overwrite).parquet(getDataPath(path))
@@ -29,12 +29,13 @@ class SQLTfIdfInPlace extends SQLAlg with Functions {
     val nGrams = params.getOrElse("nGrams", "").split(",").filterNot(f => f.isEmpty).map(f => f.toInt).toSeq
     require(!inputCol.isEmpty, "inputCol is required when use SQLTfIdfInPlace")
     val path = params("path")
+    val split = params.getOrElse("split", null)
 
     val metaPath = getMetaPath(path)
 
     // keep params
-    saveTraningParams(df.sparkSession,params,metaPath)
-    val newDF = StringFeature.tfidf(df, metaPath, dicPaths, inputCol, stopWordPath, priorityDicPath, priority, nGrams)
+    saveTraningParams(df.sparkSession, params, metaPath)
+    val newDF = StringFeature.tfidf(df, metaPath, dicPaths, inputCol, stopWordPath, priorityDicPath, priority, nGrams, split)
     newDF
   }
 
@@ -70,6 +71,7 @@ class SQLTfIdfInPlace extends SQLAlg with Functions {
     val priority = trainParams.getOrElse("priority", "1").toDouble
     val stopWordPath = trainParams.getOrElse("stopWordPath", "")
     val nGrams = trainParams.getOrElse("nGrams", "").split(",").filterNot(f => f.isEmpty).map(f => f.toInt).toSeq
+    val split = trainParams.getOrElse("split", null)
 
     val df = spark.createDataFrame(spark.sparkContext.emptyRDD[Row], StructType(Seq()))
 
@@ -87,16 +89,20 @@ class SQLTfIdfInPlace extends SQLAlg with Functions {
     }
 
     val func = (content: String) => {
-
-      // create analyser
-      val forest = SharedObjManager.getOrCreate[Any](dicPaths, SharedObjManager.forestPool, () => {
-        SQLTokenAnalysis.createForest(words.value, trainParams)
-      })
-      val parser = SQLTokenAnalysis.createAnalyzerFromForest(forest.asInstanceOf[AnyRef], trainParams)
-      // analyser content
-      val wordArray = SQLTokenAnalysis.parseStr(parser, content, trainParams).
-        filter(f => !stopwordsBr.value.contains(f))
-
+      val wordArray = {
+        if (split != null) {
+          content.split(split)
+        } else {
+          // create analyser
+          val forest = SharedObjManager.getOrCreate[Any](dicPaths, SharedObjManager.forestPool, () => {
+            SQLTokenAnalysis.createForest(words.value, trainParams)
+          })
+          val parser = SQLTokenAnalysis.createAnalyzerFromForest(forest.asInstanceOf[AnyRef], trainParams)
+          // analyser content
+          SQLTokenAnalysis.parseStr(parser, content, trainParams).
+            filter(f => !stopwordsBr.value.contains(f))
+        }
+      }
       //ngram
       val finalWordArray = new ArrayBuffer[String]()
       finalWordArray ++= wordArray
