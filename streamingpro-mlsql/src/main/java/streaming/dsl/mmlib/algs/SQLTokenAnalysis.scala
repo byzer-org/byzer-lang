@@ -11,8 +11,8 @@ import scala.collection.JavaConversions._
 import scala.collection.mutable
 
 /**
- * Created by allwefantasy on 24/4/2018.
- */
+  * Created by allwefantasy on 24/4/2018.
+  */
 class SQLTokenAnalysis extends SQLAlg with Functions {
 
   def internal_train(df: DataFrame, params: Map[String, String]) = {
@@ -71,7 +71,7 @@ class SQLTokenAnalysis extends SQLAlg with Functions {
 object SQLTokenAnalysis {
   def parseStr(parser: Any, content: String, params: Map[String, String]) = {
 
-    val ignoreNature = params.getOrElse("ignoreNature", "false").toBoolean
+    val ignoreNature = params.getOrElse("ignoreNature", "true").toBoolean
     val filterNatures = params.getOrElse("filterNatures", "").split(",").filterNot(f => f.isEmpty).toSet
     val deduplicateResult = params.getOrElse("deduplicateResult", "false").toBoolean
 
