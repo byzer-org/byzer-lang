@@ -55,6 +55,8 @@ and priorityDicPath="/tmp/tfidf/prioritywords"
 and priority="5.0"
 -- ngram 配置
 and nGram="2,3"
+-- split 配置，以split为分隔符分词，
+and split=""
 ;
 
 load parquet.`/tmp/tfidf/data` 
@@ -115,6 +117,8 @@ and ignoreNature="true"
 and stopWordPath="/tmp/tfidf/stopwords"
 -- resultFeature="flat"把结果展开为一维向量
 and resultFeature="flat"
+-- split 配置，以split为分隔符分词，
+and split=""
 ;
 load parquet.`/tmp/word2vecinplace/data` 
 as lwys_corpus_with_featurize;
