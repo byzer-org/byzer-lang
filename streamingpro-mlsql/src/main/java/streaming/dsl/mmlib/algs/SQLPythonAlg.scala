@@ -11,14 +11,11 @@ import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.spark.TaskContext
 import org.apache.spark.api.python.WowPythonRunner
 import org.apache.spark.ml.linalg.SQLDataTypes._
-import org.apache.spark.ps.cluster.{Message, PSServiceSink}
-import org.apache.spark.scheduler.SparkListener
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.util.ArrayBasedMapData
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession, functions => F}
-import org.apache.spark.ui.jobs.JobProgressListener
 import org.apache.spark.util.ObjPickle._
 import org.apache.spark.util.VectorSerDer._
 import org.apache.spark.util.{ExternalCommandRunner, ObjPickle, VectorSerDer, WowMD5}
@@ -36,9 +33,6 @@ class SQLPythonAlg extends SQLAlg with Functions {
   override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
 
     val keepVersion = params.getOrElse("keepVersion", "false").toBoolean
-    if (!keepVersion) {
-      saveTraningParams(df.sparkSession, params, MetaConst.getMetaPath(path))
-    }
 
     val enableDataLocal = params.getOrElse("enableDataLocal", "false").toBoolean
 
