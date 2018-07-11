@@ -1,5 +1,6 @@
 package streaming.dsl.mmlib.algs
 
+import org.apache.commons.lang3.StringUtils
 import org.apache.spark.Partitioner
 import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession, functions => F}
 import org.apache.spark.sql.expressions.UserDefinedFunction
@@ -7,8 +8,8 @@ import org.apache.spark.sql.types.{IntegerType, StructField, StructType}
 import streaming.dsl.mmlib.SQLAlg
 
 /**
-  * Created by allwefantasy on 7/5/2018.
-  */
+ * Created by allwefantasy on 7/5/2018.
+ */
 class SQLRateSampler extends SQLAlg with Functions {
 
 
@@ -28,6 +29,7 @@ class SQLRateSampler extends SQLAlg with Functions {
     }
 
     val labelCol = params.getOrElse("labelCol", "label")
+    val isSplitWithSubLabel = params.getOrElse("isSplitWithSubLabel", "")
 
     // 0.8 0.1 0.1
     val sampleRates = params.getOrElse("sampleRate", "0.9,0.1").split(",").map(f => f.toDouble)
@@ -50,33 +52,67 @@ class SQLRateSampler extends SQLAlg with Functions {
 
     val labelCount = labelToCountSeq.size
 
-    val dfWithLabelPartition = df.rdd.map { f =>
-      (getIntFromRowByName(f, labelCol), f)
-    }.partitionBy(new Partitioner {
-      override def numPartitions: Int = labelCount
 
-      override def getPartition(key: Any): Int = {
-        key.asInstanceOf[Int]
+
+    if (isSplitWithSubLabel=="true") {
+
+      val dfArray = df.rdd.map { f =>
+        (getIntFromRowByName(f, labelCol), f)
+      }.collect()
+
+      val splitWithSubLabel = dfArray.groupBy(_._1).flatMap(data => {
+
+        val groupCount = data._2.length
+        var splitIndex  = 0
+        var beginIndex = 0
+        sampleRates.flatMap(percent => {
+          val takeCount = (percent * groupCount).toInt
+          val endIndex = beginIndex + takeCount
+          val splitData = data._2.slice(beginIndex,endIndex).map(wow => {
+            Row.fromSeq(wow._2.toSeq ++ Seq(splitIndex))
+          })
+          splitIndex = splitIndex + 1
+          beginIndex = endIndex + 1
+          splitData
+        })
+      }).toSeq
+
+
+      df.sparkSession.createDataFrame(df.sparkSession.sparkContext.parallelize(splitWithSubLabel), StructType(
+        df.schema ++ Seq(StructField("__split__", IntegerType))))
+
+    } else {
+
+      val dfWithLabelPartition = df.rdd.map { f =>
+        (getIntFromRowByName(f, labelCol), f)
+      }.partitionBy(new Partitioner {
+        override def numPartitions: Int = labelCount
+
+        override def getPartition(key: Any): Int = {
+          key.asInstanceOf[Int]
+        }
+      }).mapPartitions { iter =>
+        val r = scala.util.Random
+        iter.map { wow =>
+          val item = r.nextFloat()
+          val index = newSampleRates.filter { sr =>
+            if (sr._2 > 0) {
+              val newRate = sr._1
+              item <= newRate && item > newSampleRates(sr._2 - 1)._1
+            }
+            else {
+              item <= sr._1
+            }
+          }.head._2
+          Row.fromSeq(wow._2.toSeq ++ Seq(index))
+        }
       }
-    }).mapPartitions { iter =>
-      val r = scala.util.Random
-      iter.map { wow =>
-        val item = r.nextFloat()
-        val index = newSampleRates.filter { sr =>
-          if (sr._2 > 0) {
-            val newRate = sr._1
-            item <= newRate && item > newSampleRates(sr._2 - 1)._1
-          }
-          else {
-            item <= sr._1
-          }
-        }.head._2
-        Row.fromSeq(wow._2.toSeq ++ Seq(index))
-      }
+      df.sparkSession.createDataFrame(dfWithLabelPartition, StructType(
+        df.schema ++ Seq(StructField("__split__", IntegerType))
+      ))
+
     }
-    df.sparkSession.createDataFrame(dfWithLabelPartition, StructType(
-      df.schema ++ Seq(StructField("__split__", IntegerType))
-    ))
+
   }
 
   override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
