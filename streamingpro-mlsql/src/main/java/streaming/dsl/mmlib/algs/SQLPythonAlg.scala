@@ -164,6 +164,8 @@ class SQLPythonAlg extends SQLAlg with Functions {
 
       // delete local model
       FileUtils.deleteDirectory(new File(tempModelLocalPath))
+      // delete local data
+      FileUtils.deleteDirectory(new File(tempDataLocalPath))
 
       Row.fromSeq(Seq(modelHDFSPath, algIndex, pythonScript.fileName, score))
     }
@@ -223,13 +225,29 @@ class SQLPythonAlg extends SQLAlg with Functions {
 
     import sparkSession.implicits._
     val wowMetas = sparkSession.read.parquet(path + "/1").collect()
-    val trainParams = if (versionEnabled) {
-      wowMetas.map(f => f.getMap[String, String](1)).head.toMap
+    var trainParams = Map[String, String]()
+
+    def getTrainParams(isNew: Boolean) = {
+      if (isNew)
+        wowMetas.map(f => f.getMap[String, String](1)).head.toMap
+      else {
+        val df = sparkSession.read.parquet(MetaConst.PARAMS_PATH(path, "params")).map(f => (f.getString(0), f.getString(1)))
+        df.collect().toMap
+      }
     }
-    else {
-      val df = sparkSession.read.parquet(MetaConst.PARAMS_PATH(path, "params")).map(f => (f.getString(0), f.getString(1)))
-      df.collect().toMap
+
+    if (versionEnabled) {
+      trainParams = getTrainParams(true)
     }
+
+    try {
+      trainParams = getTrainParams(false)
+    } catch {
+      case e: Exception =>
+        logger.info(s"no directory: ${MetaConst.PARAMS_PATH(path, "params")} ; using ${path + "/1"}")
+        trainParams = getTrainParams(true)
+    }
+
 
     // load resource
     val fitParam = arrayParamsWithIndex("fitParam", trainParams)
