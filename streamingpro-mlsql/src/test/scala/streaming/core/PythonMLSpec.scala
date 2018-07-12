@@ -96,7 +96,8 @@ class PythonMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQ
       ScriptSQLExec.parse(TemplateMerge.merge(loadSQLScriptStr("python-alg-script-enable-data-local"), Map(
         "pythonScriptPath" -> "/tmp/sklearn-user-script.py",
         "keepVersion" -> "false",
-        "path" -> "/tmp/pa_model"
+        "path" -> "/tmp/pa_model",
+        "distributeEveryExecutor" -> "true"
 
       )), sq)
 
@@ -128,7 +129,8 @@ class PythonMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQ
       ScriptSQLExec.parse(TemplateMerge.merge(loadSQLScriptStr("python-alg-script-enable-data-local"), Map(
         "pythonScriptPath" -> "/tmp/sklearn-user-script.py",
         "keepVersion" -> "true",
-        "path" -> "/pa_model_k"
+        "path" -> "/pa_model_k",
+        "distributeEveryExecutor" -> "true"
 
       )), sq)
 
@@ -144,7 +146,49 @@ class PythonMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQ
       ScriptSQLExec.parse(TemplateMerge.merge(loadSQLScriptStr("python-alg-script-enable-data-local"), Map(
         "pythonScriptPath" -> "/tmp/sklearn-user-script.py",
         "keepVersion" -> "true",
-        "path" -> "/pa_model_k"
+        "path" -> "/pa_model_k",
+        "distributeEveryExecutor" -> "true"
+
+      )), sq)
+
+      assume(new File("/tmp/william/pa_model_k/_model_1").exists())
+      spark.sql("select * from newdata").show()
+    }
+  }
+
+  "python-alg-script-enable-data-local-not-distributeEveryExecutor-with-model-version" should "work fine" taggedAs (NotToRunTag) in {
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+      //执行sql
+      implicit val spark = runtime.sparkSession
+      val sq = createSSEL
+
+      writeStringToFile("/tmp/sklearn-user-script.py", PythonCode.pythonCodeEnableLocal)
+      writeStringToFile("/tmp/sklearn-user-predict-script.py", PythonCode.pythonPredictCode)
+
+      ShellCommand.exec("rm -rf /tmp/william/pa_model_k")
+
+      ScriptSQLExec.parse(TemplateMerge.merge(loadSQLScriptStr("python-alg-script-enable-data-local"), Map(
+        "pythonScriptPath" -> "/tmp/sklearn-user-script.py",
+        "keepVersion" -> "true",
+        "path" -> "/pa_model_k",
+        "distributeEveryExecutor" -> "false"
+
+      )), sq)
+
+      //we can change model path
+      ScriptSQLExec.parse(TemplateMerge.merge(
+        "register PythonAlg.`/pa_model_k` as jack options\npythonScriptPath=\"${pythonPredictScriptPath}\"\n;select jack(features) from data\nas newdata;",
+        Map(
+          "pythonPredictScriptPath" -> "/tmp/sklearn-user-predict-script.py"
+        )), sq)
+
+      assume(new File("/tmp/william/pa_model_k/_model_0").exists())
+
+      ScriptSQLExec.parse(TemplateMerge.merge(loadSQLScriptStr("python-alg-script-enable-data-local"), Map(
+        "pythonScriptPath" -> "/tmp/sklearn-user-script.py",
+        "keepVersion" -> "true",
+        "path" -> "/pa_model_k",
+        "distributeEveryExecutor" -> "false"
 
       )), sq)
 

@@ -97,21 +97,21 @@ object HDFSOperator {
 
   }
 
-  def copyToHDFS(tempModelLocalPath: String, path: String, clean: Boolean) = {
+  def copyToHDFS(tempLocalPath: String, path: String, clean: Boolean) = {
     val fs = FileSystem.get(new Configuration())
     fs.delete(new Path(path), true)
-    fs.copyFromLocalFile(new Path(tempModelLocalPath),
+    fs.copyFromLocalFile(new Path(tempLocalPath),
       new Path(path))
-    FileUtils.forceDelete(new File(tempModelLocalPath))
+    FileUtils.forceDelete(new File(tempLocalPath))
   }
 
-  def copyToLocalFile(tempModelLocalPath: String, path: String, clean: Boolean) = {
+  def copyToLocalFile(tempLocalPath: String, path: String, clean: Boolean) = {
     val fs = FileSystem.get(new Configuration())
-    val tmpFile = new File(tempModelLocalPath)
+    val tmpFile = new File(tempLocalPath)
     if (tmpFile.exists()) {
       FileUtils.forceDelete(tmpFile)
     }
-    fs.copyToLocalFile(new Path(path), new Path(tempModelLocalPath))
+    fs.copyToLocalFile(new Path(path), new Path(tempLocalPath))
   }
 
   def deleteDir(path: String) = {
