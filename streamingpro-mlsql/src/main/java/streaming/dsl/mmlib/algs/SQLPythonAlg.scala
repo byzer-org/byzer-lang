@@ -35,6 +35,7 @@ class SQLPythonAlg extends SQLAlg with Functions {
     val keepVersion = params.getOrElse("keepVersion", "false").toBoolean
 
     val enableDataLocal = params.getOrElse("enableDataLocal", "false").toBoolean
+    val distributeEveryExecutor = params.getOrElse("distributeEveryExecutor", "false").toBoolean
 
     var kafkaParam = mapParams("kafkaParam", params)
 
@@ -71,9 +72,11 @@ class SQLPythonAlg extends SQLAlg with Functions {
       } else df
       newDF.write.format(dataLocalFormat).mode(SaveMode.Overwrite).save(dataHDFSPath)
 
-      recordUserLog(kafkaParam, s"dataLocalFormat enabled ,system will generate data in ${tempDataLocalPath}  in every executor")
-      distributeResource(df.sparkSession, dataHDFSPath, tempDataLocalPath)
-      recordUserLog(kafkaParam, s"dataLocalFormat is finished")
+      if (distributeEveryExecutor) {
+        recordUserLog(kafkaParam, s"dataLocalFormat enabled ,system will generate data in ${tempDataLocalPath}  in every executor")
+        distributeResource(df.sparkSession, dataHDFSPath, tempDataLocalPath)
+        recordUserLog(kafkaParam, s"dataLocalFormat is finished")
+      }
     }
 
     val userPythonScript = loadUserDefinePythonScript(params, df.sparkSession)
@@ -94,6 +97,15 @@ class SQLPythonAlg extends SQLAlg with Functions {
     val wowRDD = fitParamRDD.map { paramAndIndex =>
       val f = paramAndIndex._2
       val algIndex = paramAndIndex._1
+
+      var tempDataLocalPathWithAlgSuffix = tempDataLocalPath
+
+      if (enableDataLocal && !distributeEveryExecutor) {
+        tempDataLocalPathWithAlgSuffix = tempDataLocalPathWithAlgSuffix + "/" + algIndex
+        recordUserLog(kafkaParam, s"dataLocalFormat enabled ,system will generate data in ${tempDataLocalPathWithAlgSuffix} ")
+        HDFSOperator.copyToLocalFile(tempLocalPath = tempDataLocalPathWithAlgSuffix, path = dataHDFSPath, true)
+      }
+
       val paramMap = new util.HashMap[String, Object]()
       var item = f.asJava
       if (!f.contains("modelPath")) {
@@ -130,7 +142,7 @@ class SQLPythonAlg extends SQLAlg with Functions {
       val internalSystemParam = Map(
         "stopFlagNum" -> stopFlagNum,
         "tempModelLocalPath" -> tempModelLocalPath,
-        "tempDataLocalPath" -> tempDataLocalPath,
+        "tempDataLocalPath" -> tempDataLocalPathWithAlgSuffix,
         "resource" -> resourceParams.asJava
       )
 
@@ -165,7 +177,7 @@ class SQLPythonAlg extends SQLAlg with Functions {
       // delete local model
       FileUtils.deleteDirectory(new File(tempModelLocalPath))
       // delete local data
-      FileUtils.deleteDirectory(new File(tempDataLocalPath))
+      FileUtils.deleteDirectory(new File(tempDataLocalPathWithAlgSuffix))
 
       Row.fromSeq(Seq(modelHDFSPath, algIndex, pythonScript.fileName, score))
     }
