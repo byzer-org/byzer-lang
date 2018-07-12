@@ -6,10 +6,9 @@ train orginal_text_corpus as Word2VecInPlace.`/tmp/word2vecinplace`
 where inputCol="content"
 -- 分词相关配置
 and ignoreNature="true"
--- 停用词路径
-and stopWordPath="/tmp/tfidf/stopwords"
 and resultFeature="${resultFeature}"
 and wordvecPaths="${wordvecPaths}"
+and split="${split}"
 ;
 
 register Word2VecInPlace.`/tmp/word2vecinplace` as jack;
