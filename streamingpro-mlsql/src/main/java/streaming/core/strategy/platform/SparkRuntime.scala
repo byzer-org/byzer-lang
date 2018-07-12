@@ -93,7 +93,7 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
     }
 
     // parameter server should be enabled by default
-    if (!params.containsKey("streaming.ps.enable") || !params.get("streaming.ps.enable").toString.toBoolean) {
+    if (!params.containsKey("streaming.ps.enable") || params.get("streaming.ps.enable").toString.toBoolean) {
       logger.info("ps enabled...")
       if (ss.sparkContext.isLocal) {
         localSchedulerBackend = new LocalPSSchedulerBackend(ss.sparkContext)
