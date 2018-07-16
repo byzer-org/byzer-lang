@@ -197,6 +197,47 @@ class PythonMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQ
     }
   }
 
+
+  "python-alg-script-train-fail-should-log" should "work fine" taggedAs (NotToRunTag) in {
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+      //执行sql
+      implicit val spark = runtime.sparkSession
+      val sq = createSSEL
+
+      writeStringToFile("/tmp/sklearn-user-script.py", PythonCode.pythonCodeFail)
+
+      ShellCommand.exec("rm -rf /tmp/william/pa_model_k")
+
+      ScriptSQLExec.parse(TemplateMerge.merge(loadSQLScriptStr("python-alg-script-enable-data-local"), Map(
+        "pythonScriptPath" -> "/tmp/sklearn-user-script.py",
+        "keepVersion" -> "true",
+        "path" -> "/pa_model_k",
+        "distributeEveryExecutor" -> "false"
+
+      )), sq)
+
+      var res = spark.sql("select * from parquet.`/tmp/william/pa_model_k/_model_0/meta/0`")
+      assume(res.collect().map(f => f.getAs[String]("status")).head == "fail")
+
+
+      writeStringToFile("/tmp/sklearn-user-script.py", PythonCode.pythonCodeEnableLocal)
+      ShellCommand.exec("rm -rf /tmp/william/pa_model_k")
+
+      ScriptSQLExec.parse(TemplateMerge.merge(loadSQLScriptStr("python-alg-script-enable-data-local"), Map(
+        "pythonScriptPath" -> "/tmp/sklearn-user-script.py",
+        "keepVersion" -> "true",
+        "path" -> "/pa_model_k",
+        "distributeEveryExecutor" -> "false"
+
+      )), sq)
+
+      res = spark.sql("select * from parquet.`/tmp/william/pa_model_k/_model_0/meta/0`")
+      assume(res.collect().map(f => f.getAs[String]("status")).head == "success")
+
+    }
+  }
+
+
   "tt" should "work fine" taggedAs (NotToRunTag) in {
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql

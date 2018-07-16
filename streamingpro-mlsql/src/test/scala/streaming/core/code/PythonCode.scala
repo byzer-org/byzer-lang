@@ -76,6 +76,38 @@ object PythonCode {
       |
     """.stripMargin
 
+  val pythonCodeFail =
+    """
+      |import mlsql_model
+      |import mlsql
+      |import os
+      |import json
+      |from pyspark.ml.linalg import Vectors
+      |from sklearn.naive_bayes import MultinomialNB
+      |
+      |clf = MultinomialNB()
+      |
+      |mlsql.sklearn_configure_params(clf)
+      |tempDataLocalPath = mlsql.internal_system_param["tempDataLocalPath"]
+      |
+      |print(tempDataLocalPath)
+      |files = [file for file in os.listdir(tempDataLocalPath) if file.endswith(".json")]
+      |res = []
+      |res_label = []
+      |for file in files:
+      |    with open(tempDataLocalPath + "/" + file) as f:
+      |        for line in f.readlines():
+      |            obj = json.loads(line)
+      |            f_size = obj["features"]["size"]
+      |            f_indices = obj["features"]["indices"]
+      |            f_values = obj["features"]["values"]
+      |            res.append(Vectors.sparse(f_size, f_indices, f_values).toArray())
+      |            res_label.append(obj["label"])
+      |
+      |assert(1==2)
+      |
+    """.stripMargin
+
   val pythonPredictCode =
     """
       |from pyspark.ml.linalg import VectorUDT, Vectors
