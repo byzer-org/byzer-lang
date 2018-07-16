@@ -1,3 +1,4 @@
+import os
 import tensorflow as tf
 import json
 from tensorflow.contrib.learn.python.learn.datasets.mnist import read_data_sets
@@ -16,6 +17,11 @@ def param(key, value):
 jobName = param("jobName", "worker")
 taskIndex = int(param("taskIndex", "0"))
 clusterSpec = json.loads(mlsql.internal_system_param["clusterSpec"])
+checkpoint_dir = mlsql.internal_system_param["checkpointDir"]
+
+if not os.path.exists(checkpoint_dir):
+    os.makedirs(checkpoint_dir)
+
 
 print(mlsql.internal_system_param["clusterSpec"])
 print(jobName)
@@ -82,7 +88,7 @@ def run():
             # or an error occurs.
             with tf.train.MonitoredTrainingSession(master=server.target,
                                                    is_chief=(taskIndex == 0),
-                                                   checkpoint_dir="./checkpoint_dir",
+                                                   checkpoint_dir=checkpoint_dir,
                                                    hooks=hooks) as mon_sess:
 
                 while not mon_sess.should_stop():

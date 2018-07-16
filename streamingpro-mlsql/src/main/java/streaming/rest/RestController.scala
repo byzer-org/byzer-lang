@@ -18,7 +18,7 @@ import org.apache.spark.sql.{DataFrameWriter, Row, SaveMode}
 import streaming.common.JarUtil
 import streaming.core._
 import streaming.core.strategy.platform.{PlatformManager, SparkRuntime}
-import streaming.dsl.mmlib.algs.tf.cluster.{ClusterSpec, ExecutorInfo}
+import streaming.dsl.mmlib.algs.tf.cluster.{ClusterSpec, ClusterStatus, ExecutorInfo}
 import streaming.dsl.{ScriptSQLExec, ScriptSQLExecListener}
 
 /**
@@ -71,6 +71,25 @@ class RestController extends ApplicationController {
     val taskIndex = param("taskIndex").toInt
     ClusterSpec.addJob(param("cluster"), ExecutorInfo(host, port.toInt, jobName, taskIndex))
     render(200, "{}")
+  }
+
+  // when tensorflow cluster is started ,
+  // once the worker finish, it will report to this api
+  @At(path = Array("/cluster/worker/status"), types = Array(GET, POST))
+  def clusterWorkerStatus = {
+    val Array(host, port) = param("hostAndPort").split(":")
+    val jobName = param("jobName")
+    val taskIndex = param("taskIndex").toInt
+    ClusterStatus.count(param("cluster"), ExecutorInfo(host, port.toInt, jobName, taskIndex))
+    render(200, "{}")
+  }
+
+  // the ps in tensorlfow cluster will check worker status,
+  // once all workers finish, then it will kill ps
+  @At(path = Array("/cluster/worker/finish"), types = Array(GET, POST))
+  def clusterWorkerFinish = {
+    val workerFinish = ClusterStatus.count(param("cluster"))
+    render(200, workerFinish + "")
   }
 
   @At(path = Array("/cluster"), types = Array(GET))

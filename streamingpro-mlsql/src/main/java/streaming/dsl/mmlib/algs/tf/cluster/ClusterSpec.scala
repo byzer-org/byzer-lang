@@ -25,6 +25,31 @@ class ClusterSpec(val worker: List[String], val ps: List[String]) {
 
 case class ExecutorInfo(host: String, port: Int, jobName: String, taskIndex: Int)
 
+
+object ClusterStatus {
+
+  val loader = new CacheLoader[String, mutable.HashSet[ExecutorInfo]]() {
+    override def load(key: String): mutable.HashSet[ExecutorInfo] = {
+      new mutable.HashSet[ExecutorInfo]()
+    }
+  }
+  val tfworkers = CacheBuilder.newBuilder().
+    maximumSize(100).
+    expireAfterAccess(30, TimeUnit.MINUTES).
+    build[String, mutable.HashSet[ExecutorInfo]](loader)
+
+  def count(cluster: String) = {
+    tfworkers.get(cluster).size
+  }
+
+  def count(cluster: String, executorInfo: ExecutorInfo) = {
+    synchronized {
+      val infos = tfworkers.get(cluster)
+      infos.add(executorInfo)
+    }
+  }
+}
+
 object ClusterSpec {
   val MIN_PORT_NUMBER = 2221
   val MAX_PORT_NUMBER = 6666
