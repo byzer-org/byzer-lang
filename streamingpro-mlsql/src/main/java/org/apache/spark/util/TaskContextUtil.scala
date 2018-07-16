@@ -13,4 +13,8 @@ object TaskContextUtil {
   def markTaskCompleted(context: TaskContext, e: Throwable) = {
     context.asInstanceOf[TaskContextImpl].markTaskCompleted(Some(e))
   }
+
+  def setContext(context:TaskContext) = {
+    TaskContext.setTaskContext(context)
+  }
 }

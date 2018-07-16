@@ -244,89 +244,104 @@ class SQLDTFAlg extends SQLAlg with Functions {
       var score = 0.0
       var trainFailFlag = false
 
-      class TFPSMonitorThread(clusterUuid: String, targetSize: Int, driverHost: String, driverPort: Int, context: TaskContext, taskThread: Thread)
-        extends Thread(s"Tensorflow Monitor for $clusterUuid") {
+      if (!isPs) {
+        try {
+          val res = ExternalCommandRunner.run(
+            command = command,
+            iter = paramMap,
+            schema = MapType(StringType, MapType(StringType, StringType)),
+            scriptContent = pythonScript.fileContent,
+            scriptName = pythonScript.fileName,
+            kafkaParam = kafkaParam,
+            modelPath = path, validateData = rowsBr.value
+          )
 
-        setDaemon(true)
+          score = recordUserLog(algIndex, pythonScript, kafkaParam, res)
+        } catch {
+          case e: Exception =>
+            e.printStackTrace()
+            trainFailFlag = true
+        }
+      } else {
+        val context = TaskContext.get()
+        val thread = new Thread(new Runnable {
+          override def run(): Unit = {
+            TaskContextUtil.setContext(context)
+            try {
+              val res = ExternalCommandRunner.run(
+                command = command,
+                iter = paramMap,
+                schema = MapType(StringType, MapType(StringType, StringType)),
+                scriptContent = pythonScript.fileContent,
+                scriptName = pythonScript.fileName,
+                kafkaParam = kafkaParam,
+                modelPath = path, validateData = rowsBr.value
+              )
 
-        private def fetchClusterStatusFromMaster = {
+              score = recordUserLog(algIndex, pythonScript, kafkaParam, res)
+            } catch {
+              case e: Exception =>
+                e.printStackTrace()
+                trainFailFlag = true
+            }
+          }
+        })
+        thread.start()
+
+        var shouldWait = true
+
+        def fetchClusterStatusFromMaster = {
           Request.Get(s"http://${driverHost}:${driverPort}/cluster/worker/finish?cluster=${clusterUuid}")
             .execute().returnContent().asString()
         }
 
-        override def run() {
-
-          var shouldWait = true
-          while (shouldWait) {
-            val response = fetchClusterStatusFromMaster
-            if (response.toInt == targetSize) {
-              shouldWait = false
-            }
-            println(s"check worker finish size. targetSize:${targetSize} vs ${response.toInt}")
-            Thread.sleep(10000)
-          }
-          // this thread just throws InterruptedException to cancel this task,
-          // and there is another monitor thread will kill ps server
-          println("kill ps task")
-          TaskContextUtil.markInterrupted(context, new InterruptedException("cancel ps server........"))
-          taskThread.interrupt()
-        }
-      }
-
-
-      if (isPs) {
         // we should have a monitor thread to make sure
         // when all worker finished then we can kill ps sever
-        val context = TaskContext.get()
-        new TFPSMonitorThread(clusterUuid, clusterSpec.worker.size, driverHost, driverPort, context, Thread.currentThread()).start()
-      }
-
-      try {
-        val res = ExternalCommandRunner.run(
-          command = command,
-          iter = paramMap,
-          schema = MapType(StringType, MapType(StringType, StringType)),
-          scriptContent = pythonScript.fileContent,
-          scriptName = pythonScript.fileName,
-          kafkaParam = kafkaParam,
-          modelPath = path, validateData = rowsBr.value
-        )
-
-        score = recordUserLog(algIndex, pythonScript, kafkaParam, res)
-      } catch {
-        case e: Exception =>
-          e.printStackTrace()
-          trainFailFlag = true
-      }
-
-      if (!trainFailFlag) {
-        reportToMaster("/cluster/worker/status")
-      }
-
-      val modelTrainEndTime = System.currentTimeMillis()
-
-      val modelHDFSPath = SQLPythonFunc.getAlgModelPath(path, keepVersion) + "/" + algIndex
-      try {
-        //模型保存到hdfs上
-        val fs = FileSystem.get(new Configuration())
-        if (!keepVersion) {
-          fs.delete(new Path(modelHDFSPath), true)
+        while (shouldWait) {
+          val response = fetchClusterStatusFromMaster
+          if (response.toInt == clusterSpec.worker.size) {
+            shouldWait = false
+          }
+          println(s"check worker finish size. targetSize:${clusterSpec.worker.size} vs ${response.toInt}")
+          Thread.sleep(10000)
+          thread.interrupt()
         }
-        fs.copyFromLocalFile(new Path(tempModelLocalPath),
-          new Path(modelHDFSPath))
-      } catch {
-        case e: Exception =>
-          e.printStackTrace()
-          trainFailFlag = true
-      } finally {
-        // delete local model
-        FileUtils.deleteDirectory(new File(tempModelLocalPath))
-        // delete local data
-        FileUtils.deleteDirectory(new File(tempDataLocalPathWithAlgSuffix))
-        FileUtils.deleteDirectory(new File(checkpointDir))
+
       }
-      val status = if (trainFailFlag) "fail" else "success"
-      Row.fromSeq(Seq(modelHDFSPath, algIndex, pythonScript.fileName, score, status, modelTrainStartTime, modelTrainEndTime, f))
+
+      if (!isPs) {
+        if (!trainFailFlag) {
+          reportToMaster("/cluster/worker/status")
+        }
+
+        val modelTrainEndTime = System.currentTimeMillis()
+
+        val modelHDFSPath = SQLPythonFunc.getAlgModelPath(path, keepVersion) + "/" + algIndex
+        try {
+          //模型保存到hdfs上
+          val fs = FileSystem.get(new Configuration())
+          if (!keepVersion) {
+            fs.delete(new Path(modelHDFSPath), true)
+          }
+          fs.copyFromLocalFile(new Path(tempModelLocalPath),
+            new Path(modelHDFSPath))
+        } catch {
+          case e: Exception =>
+            e.printStackTrace()
+            trainFailFlag = true
+        } finally {
+          // delete local model
+          FileUtils.deleteDirectory(new File(tempModelLocalPath))
+          // delete local data
+          FileUtils.deleteDirectory(new File(tempDataLocalPathWithAlgSuffix))
+          FileUtils.deleteDirectory(new File(checkpointDir))
+        }
+        val status = if (trainFailFlag) "fail" else "success"
+        Row.fromSeq(Seq(modelHDFSPath, algIndex, pythonScript.fileName, score, status, modelTrainStartTime, modelTrainEndTime, f))
+      } else {
+        val status = if (trainFailFlag) "fail" else "success"
+        Row.fromSeq(Seq("", algIndex, pythonScript.fileName, score, status, -1l, -1l, f))
+      }
     }
     df.sparkSession.createDataFrame(wowRDD, StructType(Seq(
       StructField("modelPath", StringType),
