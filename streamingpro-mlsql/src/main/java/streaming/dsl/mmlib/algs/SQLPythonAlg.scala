@@ -151,41 +151,64 @@ class SQLPythonAlg extends SQLAlg with Functions {
 
 
       val command = Seq(pythonPath) ++ pythonParam ++ Seq(pythonScript.fileName)
-      val res = ExternalCommandRunner.run(
-        command = command,
-        iter = paramMap,
-        schema = MapType(StringType, MapType(StringType, StringType)),
-        scriptContent = pythonScript.fileContent,
-        scriptName = pythonScript.fileName,
-        kafkaParam = kafkaParam,
-        modelPath = path, validateData = rowsBr.value
-      )
 
-      val score = recordUserLog(algIndex, pythonScript, kafkaParam, res)
+      val modelTrainStartTime = System.currentTimeMillis()
 
-      //模型保存到hdfs上
-      val fs = FileSystem.get(new Configuration())
-      val modelHDFSPath = SQLPythonFunc.getAlgModelPath(path, keepVersion) + "/" + algIndex
+      var score = 0.0
+      var trainFailFlag = false
 
-      if (!keepVersion) {
-        fs.delete(new Path(modelHDFSPath), true)
+      try {
+        val res = ExternalCommandRunner.run(
+          command = command,
+          iter = paramMap,
+          schema = MapType(StringType, MapType(StringType, StringType)),
+          scriptContent = pythonScript.fileContent,
+          scriptName = pythonScript.fileName,
+          kafkaParam = kafkaParam,
+          modelPath = path, validateData = rowsBr.value
+        )
+
+        score = recordUserLog(algIndex, pythonScript, kafkaParam, res)
+      } catch {
+        case e: Exception =>
+          e.printStackTrace()
+          trainFailFlag = true
       }
 
-      fs.copyFromLocalFile(new Path(tempModelLocalPath),
-        new Path(modelHDFSPath))
+      val modelTrainEndTime = System.currentTimeMillis()
 
-      // delete local model
-      FileUtils.deleteDirectory(new File(tempModelLocalPath))
-      // delete local data
-      FileUtils.deleteDirectory(new File(tempDataLocalPathWithAlgSuffix))
-
-      Row.fromSeq(Seq(modelHDFSPath, algIndex, pythonScript.fileName, score))
+      val modelHDFSPath = SQLPythonFunc.getAlgModelPath(path, keepVersion) + "/" + algIndex
+      try {
+        //模型保存到hdfs上
+        val fs = FileSystem.get(new Configuration())
+        if (!keepVersion) {
+          fs.delete(new Path(modelHDFSPath), true)
+        }
+        fs.copyFromLocalFile(new Path(tempModelLocalPath),
+          new Path(modelHDFSPath))
+      } catch {
+        case e: Exception =>
+          e.printStackTrace()
+          trainFailFlag = true
+      } finally {
+        // delete local model
+        FileUtils.deleteDirectory(new File(tempModelLocalPath))
+        // delete local data
+        FileUtils.deleteDirectory(new File(tempDataLocalPathWithAlgSuffix))
+      }
+      val status = if (trainFailFlag) "fail" else "success"
+      Row.fromSeq(Seq(modelHDFSPath, algIndex, pythonScript.fileName, score, status, modelTrainStartTime, modelTrainEndTime, f))
     }
     df.sparkSession.createDataFrame(wowRDD, StructType(Seq(
       StructField("modelPath", StringType),
       StructField("algIndex", IntegerType),
       StructField("alg", StringType),
-      StructField("score", DoubleType)
+      StructField("score", DoubleType),
+
+      StructField("status", StringType),
+      StructField("startTime", LongType),
+      StructField("endTime", LongType),
+      StructField("trainParams", MapType(StringType, StringType))
     ))).
       write.
       mode(SaveMode.Overwrite).
