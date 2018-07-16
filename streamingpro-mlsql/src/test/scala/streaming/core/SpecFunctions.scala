@@ -68,6 +68,10 @@ trait SpecFunctions {
     scala.io.Source.fromInputStream(SpecFunctions.this.getClass.getResourceAsStream(s"/data/mllib/${name}")).getLines().mkString("\n")
   }
 
+  def loadPythonStr(name: String) = {
+    scala.io.Source.fromInputStream(SpecFunctions.this.getClass.getResourceAsStream(s"/python/${name}")).getLines().mkString("\n")
+  }
+
   def getDirFromPath(filePath: String) = {
     filePath.stripSuffix("/").split("/").dropRight(1).mkString("/")
   }

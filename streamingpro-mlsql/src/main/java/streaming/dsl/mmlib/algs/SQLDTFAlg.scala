@@ -1,13 +1,17 @@
 package streaming.dsl.mmlib.algs
 
 import java.io.File
+import java.net.ServerSocket
 import java.nio.file.{Files, Paths}
 import java.util
 import java.util.UUID
+import java.util.concurrent.atomic.AtomicReference
 
-import org.apache.commons.io.{FileUtils, IOUtils}
+import net.sf.json.{JSONArray, JSONObject}
+import org.apache.commons.io.FileUtils
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
+import org.apache.http.client.fluent.{Form, Request}
 import org.apache.spark.TaskContext
 import org.apache.spark.api.python.WowPythonRunner
 import org.apache.spark.ml.linalg.SQLDataTypes._
@@ -18,18 +22,19 @@ import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession, functions => F}
 import org.apache.spark.util.ObjPickle._
 import org.apache.spark.util.VectorSerDer._
-import org.apache.spark.util.{ExternalCommandRunner, ObjPickle, VectorSerDer, WowMD5}
+import org.apache.spark.util.{ExternalCommandRunner, ObjPickle, VectorSerDer}
+import streaming.common.{HDFSOperator, NetUtils}
 import streaming.core.strategy.platform.{PlatformManager, SparkRuntime}
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.SQLPythonFunc._
+import streaming.dsl.mmlib.algs.tf.cluster.ClusterSpec
 
 import scala.collection.JavaConverters._
-import streaming.common.HDFSOperator
 
 /**
   * Created by allwefantasy on 5/2/2018.
   */
-class SQLPythonAlg extends SQLAlg with Functions {
+class SQLDTFAlg extends SQLAlg with Functions {
   override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
 
     val keepVersion = params.getOrElse("keepVersion", "false").toBoolean
@@ -94,9 +99,84 @@ class SQLPythonAlg extends SQLAlg with Functions {
 
     incrementVersion(path, keepVersion)
 
+    // create a new cluster name for tensorflow
+    val clusterUuid = UUID.randomUUID().toString
+    val driverHost = NetUtils.getHost
+    val LIMIT = fitParam.length
+    val driverPort = PlatformManager.getRuntime.asInstanceOf[SparkRuntime].params.getOrDefault("streaming.driver.port", "9003").toString.toInt
+
+
     val wowRDD = fitParamRDD.map { paramAndIndex =>
       val f = paramAndIndex._2
       val algIndex = paramAndIndex._1
+
+      val roleSpec = new JSONObject()
+      roleSpec.put("jobName", f("jobName"))
+      roleSpec.put("taskIndex", f("taskIndex").toInt)
+
+
+      val host = NetUtils.getHost
+      val holdPort = NetUtils.availableAndReturn(ClusterSpec.MIN_PORT_NUMBER, ClusterSpec.MAX_PORT_NUMBER)
+
+      if (holdPort == null) {
+        throw new RuntimeException(s"Fail to create tensorflow cluster, maybe executor cannot bind port ")
+      }
+
+      val port = holdPort.getLocalPort
+
+      def reportToMaster = {
+        Request.Post(s"http://${driverHost}:${driverPort}/cluster/register").bodyForm(Form.form().add("cluster", clusterUuid).
+          add("hostAndPort", s"${host}:${port}")
+          .add("jobName", f("jobName"))
+          .add("taskIndex", f("taskIndex"))
+          .build())
+          .execute().returnContent().asString()
+      }
+
+      def fetchClusterFromMaster = {
+        Request.Get(s"http://${driverHost}:${driverPort}/cluster?cluster=${clusterUuid}")
+          .execute().returnContent().asString()
+      }
+
+      def getHostAndPortFromJson(infos: JSONArray, t: String) = {
+        infos.asScala.map(f => f.asInstanceOf[JSONObject]).filter(f => f.getString("jobName") == t).map(f => s"${f.getString("host")}:${f.getInt("port")}")
+      }
+
+      // here we should report to driver
+      reportToMaster
+      // wait until all workers have been registered
+      var waitCount = 0
+      val maxWaitCount = 100
+      var noWait = false
+      val clusterSpecRef = new AtomicReference[ClusterSpec]()
+      while (!noWait && waitCount < maxWaitCount) {
+        val response = fetchClusterFromMaster
+        val infos = JSONArray.fromObject(response)
+        println(s"wait: ${waitCount} times; already registered tf worker/ps: ${infos.size()}")
+        if (infos.size == LIMIT) {
+          val workerList = getHostAndPortFromJson(infos, "worker")
+          val psList = getHostAndPortFromJson(infos, "ps")
+          clusterSpecRef.set(new ClusterSpec(workerList.toList, psList.toList))
+          noWait = true
+        } else {
+          Thread.sleep(5000)
+          waitCount += 1
+        }
+      }
+
+      NetUtils.releasePort(holdPort)
+      if (clusterSpecRef.get() == null) {
+        throw new RuntimeException(s"Fail to create tensorflow cluster, maybe executor cannot connect driver at ${driverHost}:${driverPort}")
+      }
+
+      val clusterSpec = clusterSpecRef.get()
+
+
+      val clusterSpecJson = new JSONObject()
+      clusterSpecJson.put("worker", clusterSpec.worker.asJava)
+      clusterSpecJson.put("ps", clusterSpec.ps.asJava)
+
+      println(clusterSpecJson.toString)
 
       var tempDataLocalPathWithAlgSuffix = tempDataLocalPath
 
@@ -126,10 +206,7 @@ class SQLPythonAlg extends SQLAlg with Functions {
         }
       }
 
-
       val pythonScript = findPythonScript(userPythonScript, f, "sk")
-
-
 
       val tempModelLocalPath = s"${SQLPythonFunc.getLocalBasePath}/${UUID.randomUUID().toString}/${algIndex}"
       //FileUtils.forceMkdir(tempModelLocalPath)
@@ -143,7 +220,9 @@ class SQLPythonAlg extends SQLAlg with Functions {
         "stopFlagNum" -> stopFlagNum,
         "tempModelLocalPath" -> tempModelLocalPath,
         "tempDataLocalPath" -> tempDataLocalPathWithAlgSuffix,
-        "resource" -> resourceParams.asJava
+        "resource" -> resourceParams.asJava,
+        "clusterSpec" -> clusterSpecJson.toString(),
+        "roleSpec" -> roleSpec.toString()
       )
 
       paramMap.put("internalSystemParam", internalSystemParam.asJava)
