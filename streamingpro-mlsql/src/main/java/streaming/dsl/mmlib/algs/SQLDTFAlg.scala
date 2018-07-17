@@ -365,12 +365,13 @@ class SQLDTFAlg extends SQLAlg with Functions {
           if (new File(tempModelLocalPath).exists()) {
             fs.copyFromLocalFile(new Path(tempModelLocalPath),
               new Path(modelHDFSPath))
+          } else {
+            if (new File(checkpointDir).exists()) {
+              fs.copyFromLocalFile(new Path(checkpointDir),
+                new Path(modelHDFSPath))
+            }
           }
 
-          if (new File(checkpointDir).exists()) {
-            fs.copyFromLocalFile(new Path(checkpointDir),
-              new Path(modelHDFSPath))
-          }
         } catch {
           case e: Exception =>
             trainFailFlag = true
