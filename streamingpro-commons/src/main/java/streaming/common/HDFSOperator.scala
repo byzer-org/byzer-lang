@@ -38,6 +38,11 @@ object HDFSOperator {
     fs.listStatus(new Path(path)).filter(f => f.isDirectory)
   }
 
+  def listFiles(path: String): Seq[FileStatus] = {
+    val fs = FileSystem.get(new Configuration())
+    fs.listStatus(new Path(path))
+  }
+
   def saveBytesFile(path: String, fileName: String, bytes: Array[Byte]) = {
 
     var dos: FSDataOutputStream = null

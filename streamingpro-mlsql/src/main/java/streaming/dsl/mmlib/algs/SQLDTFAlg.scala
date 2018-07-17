@@ -19,7 +19,6 @@ import org.apache.spark.sql.catalyst.util.ArrayBasedMapData
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession, functions => F}
-import org.apache.spark.util.ExternalCommandRunner._
 import org.apache.spark.util.ObjPickle._
 import org.apache.spark.util.VectorSerDer._
 import org.apache.spark.util.{ExternalCommandRunner, ObjPickle, TaskContextUtil, VectorSerDer}
@@ -28,6 +27,7 @@ import streaming.core.strategy.platform.{PlatformManager, SparkRuntime}
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.SQLPythonFunc._
 import streaming.dsl.mmlib.algs.tf.cluster.{ClusterSpec, ClusterStatus}
+import scala.collection.mutable
 
 import scala.collection.JavaConverters._
 
@@ -37,10 +37,9 @@ import scala.collection.JavaConverters._
 class SQLDTFAlg extends SQLAlg with Functions {
   override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
 
-    val keepVersion = params.getOrElse("keepVersion", "false").toBoolean
+    val keepVersion = params.getOrElse("keepVersion", "true").toBoolean
 
     val enableDataLocal = params.getOrElse("enableDataLocal", "false").toBoolean
-    val distributeEveryExecutor = params.getOrElse("distributeEveryExecutor", "false").toBoolean
 
     var kafkaParam = mapParams("kafkaParam", params)
 
@@ -64,10 +63,13 @@ class SQLDTFAlg extends SQLAlg with Functions {
     val pythonParam = systemParam.getOrElse("pythonParam", "").split(",").filterNot(f => f.isEmpty)
     var tempDataLocalPath = ""
     var dataHDFSPath = ""
+    val tfDataMap = new mutable.HashMap[Int, String]()
 
     if (enableDataLocal) {
       val dataLocalFormat = params.getOrElse("dataLocalFormat", "json")
-      val dataLocalFileNum = params.getOrElse("dataLocalFileNum", "-1").toInt
+      val dataLocalFileNum = fitParam.filter(f => f._2("jobName") == "worker").length
+
+      println(s"enableDataLocal is enabled. we should  prepare data for $dataLocalFileNum workers")
 
       dataHDFSPath = SQLPythonFunc.getAlgTmpPath(path) + "/data"
       tempDataLocalPath = SQLPythonFunc.getLocalTempDataPath(path)
@@ -77,12 +79,16 @@ class SQLDTFAlg extends SQLAlg with Functions {
       } else df
       newDF.write.format(dataLocalFormat).mode(SaveMode.Overwrite).save(dataHDFSPath)
 
-      if (distributeEveryExecutor) {
-        recordUserLog(kafkaParam, s"dataLocalFormat enabled ,system will generate data in ${tempDataLocalPath}  in every executor")
-        distributeResource(df.sparkSession, dataHDFSPath, tempDataLocalPath)
-        recordUserLog(kafkaParam, s"dataLocalFormat is finished")
+      HDFSOperator.listFiles(dataHDFSPath).filter(f => f.getPath.getName.endsWith(s".${dataLocalFormat}")).zipWithIndex.foreach { f =>
+        val (path, index) = f
+        tfDataMap.put(index, path.getPath.toUri.toString)
       }
+      val printData = tfDataMap.map(f => s"${f._1}=>${f._2}").mkString("\n")
+      println(s"enableDataLocal is enabled.  data partition to tensorflow worker:\n ${printData}")
+
     }
+
+
 
     val userPythonScript = loadUserDefinePythonScript(params, df.sparkSession)
 
@@ -157,7 +163,7 @@ class SQLDTFAlg extends SQLAlg with Functions {
       while (!noWait && waitCount < maxWaitCount) {
         val response = fetchClusterFromMaster
         val infos = JSONArray.fromObject(response)
-        println(s"wait: ${waitCount} times; already registered tf worker/ps: ${infos.size()}")
+        println(s"Waiting all worker/ps started. Wait times: ${waitCount} times. Already registered tf worker/ps: ${infos.size()}")
         if (infos.size == LIMIT) {
           val workerList = getHostAndPortFromJson(infos, "worker")
           val psList = getHostAndPortFromJson(infos, "ps")
@@ -171,7 +177,7 @@ class SQLDTFAlg extends SQLAlg with Functions {
 
       NetUtils.releasePort(holdPort)
       if (clusterSpecRef.get() == null) {
-        throw new RuntimeException(s"Fail to create tensorflow cluster, maybe executor cannot connect driver at ${driverHost}:${driverPort}")
+        throw new RuntimeException(s"Fail to create tensorflow cluster, this maybe caused by  executor cannot connect driver at ${driverHost}:${driverPort}")
       }
 
       val clusterSpec = clusterSpecRef.get()
@@ -187,10 +193,12 @@ class SQLDTFAlg extends SQLAlg with Functions {
 
 
 
-      if (!isPs && enableDataLocal && !distributeEveryExecutor) {
+      if (!isPs && enableDataLocal) {
+        val partitionDataInHDFS = tfDataMap(algIndex)
         tempDataLocalPathWithAlgSuffix = tempDataLocalPathWithAlgSuffix + "/" + algIndex
-        recordUserLog(kafkaParam, s"dataLocalFormat enabled ,system will generate data in ${tempDataLocalPathWithAlgSuffix} ")
-        HDFSOperator.copyToLocalFile(tempLocalPath = tempDataLocalPathWithAlgSuffix, path = dataHDFSPath, true)
+        println(s"Copy HDFS ${partitionDataInHDFS} to local ${tempDataLocalPathWithAlgSuffix} ")
+        recordUserLog(kafkaParam, s"Copy HDFS ${partitionDataInHDFS} to local ${tempDataLocalPathWithAlgSuffix} ")
+        HDFSOperator.copyToLocalFile(tempLocalPath = tempDataLocalPathWithAlgSuffix + "/" + partitionDataInHDFS.split("/").last, path = partitionDataInHDFS, true)
       }
 
       val paramMap = new util.HashMap[String, Object]()
@@ -266,7 +274,11 @@ class SQLDTFAlg extends SQLAlg with Functions {
       } else {
         val pythonWorker = new AtomicReference[Process]()
         val context = TaskContext.get()
-        val thread = new Thread(new Runnable {
+
+        // notice: I still get no way how to destroy the ps python worker
+        // when spark existed unexpectedly.
+        // we have handle the situation eg. task is cancel or
+        val pythonPSThread = new Thread(new Runnable {
           override def run(): Unit = {
             TaskContextUtil.setContext(context)
             try {
@@ -288,8 +300,26 @@ class SQLDTFAlg extends SQLAlg with Functions {
             }
           }
         })
-        thread.setDaemon(true)
-        thread.start()
+        pythonPSThread.setDaemon(true)
+        pythonPSThread.start()
+
+
+        //        val pythonPSMonitorThread = new Thread(new Runnable {
+        //          override def run(): Unit = {
+        //            while (!context.isInterrupted && !context.isCompleted) {
+        //              Thread.sleep(2000)
+        //            }
+        //            if (context.isCompleted || context.isInterrupted()) {
+        //              try {
+        //                pythonWorker.get().destroy()
+        //              } catch {
+        //                case e: Exception =>
+        //              }
+        //            }
+        //          }
+        //        })
+        //        pythonPSMonitorThread.setDaemon(true)
+        //        pythonPSMonitorThread.start()
 
         var shouldWait = true
 
@@ -298,8 +328,9 @@ class SQLDTFAlg extends SQLAlg with Functions {
             .execute().returnContent().asString()
         }
 
-        // we should have a monitor thread to make sure
-        // when all worker finished then we can kill ps sever
+        // PS should wait until
+        // all worker finish their jobs.
+        // PS python worker use thread.join to keep it alive .
         while (shouldWait) {
           val response = fetchClusterStatusFromMaster
           if (response.toInt == clusterSpec.worker.size) {
@@ -314,7 +345,7 @@ class SQLDTFAlg extends SQLAlg with Functions {
           println(s"check worker finish size. targetSize:${clusterSpec.worker.size} vs ${response.toInt}")
         }
         pythonWorker.get().destroy()
-        thread.interrupt()
+        pythonPSThread.interrupt()
 
       }
 
@@ -332,8 +363,15 @@ class SQLDTFAlg extends SQLAlg with Functions {
           if (!keepVersion) {
             fs.delete(new Path(modelHDFSPath), true)
           }
-          fs.copyFromLocalFile(new Path(tempModelLocalPath),
-            new Path(modelHDFSPath))
+          if (new File(tempModelLocalPath).exists()) {
+            fs.copyFromLocalFile(new Path(tempModelLocalPath),
+              new Path(modelHDFSPath))
+          }
+
+          if (new File(checkpointDir).exists()) {
+            fs.copyFromLocalFile(new Path(checkpointDir),
+              new Path(modelHDFSPath))
+          }
         } catch {
           case e: Exception =>
             trainFailFlag = true

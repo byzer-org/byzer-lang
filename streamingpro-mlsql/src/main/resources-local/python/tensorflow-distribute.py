@@ -71,7 +71,7 @@ def run():
             global_step = tf.train.get_or_create_global_step()
             optimizer = tf.train.AdamOptimizer(learning_rate=1e-04)
 
-            if False:
+            if True:
                 # asynchronous training
                 # use tf.train.SyncReplicasOptimizer wrap optimizer
                 # ref: https://www.tensorflow.org/api_docs/python/tf/train/SyncReplicasOptimizer
