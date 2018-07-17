@@ -348,12 +348,11 @@ class SQLDTFAlg extends SQLAlg with Functions {
         pythonPSThread.interrupt()
 
       }
-
+      val modelTrainEndTime = System.currentTimeMillis()
       if (!isPs) {
         if (!trainFailFlag) {
           reportToMaster("/cluster/worker/status")
         }
-
         val modelTrainEndTime = System.currentTimeMillis()
 
         val modelHDFSPath = SQLPythonFunc.getAlgModelPath(path, keepVersion) + "/" + algIndex
@@ -386,7 +385,7 @@ class SQLDTFAlg extends SQLAlg with Functions {
         Row.fromSeq(Seq(modelHDFSPath, algIndex, pythonScript.fileName, score, status, modelTrainStartTime, modelTrainEndTime, f))
       } else {
         val status = if (trainFailFlag) "fail" else "success"
-        Row.fromSeq(Seq("", algIndex, pythonScript.fileName, score, status, -1l, -1l, f))
+        Row.fromSeq(Seq("", algIndex, pythonScript.fileName, score, status, modelTrainStartTime, modelTrainEndTime, f))
       }
     }
     df.sparkSession.createDataFrame(wowRDD, StructType(Seq(

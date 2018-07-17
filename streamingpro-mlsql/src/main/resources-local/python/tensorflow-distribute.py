@@ -99,5 +99,4 @@ def run():
                     if step % 100 == 0:
                         print("Train step %d, loss: %f" % (step, ls))
 
-
 run()

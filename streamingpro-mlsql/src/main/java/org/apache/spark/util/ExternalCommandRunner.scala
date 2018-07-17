@@ -105,7 +105,7 @@ object ExternalCommandRunner extends Logging {
 
     val env = SparkEnv.get
     val proc = pb.start()
-    
+
     new MonitorThread(env, proc, TaskContext.get(), taskDirectory, command.mkString(" ")).start()
 
     val childThreadException = new AtomicReference[Throwable](null)
@@ -117,7 +117,6 @@ object ExternalCommandRunner extends Logging {
         try {
           for (line <- Source.fromInputStream(err)(encoding).getLines) {
             // scalastyle:off println
-            System.err.println(line)
             log.error("__python__:" + line)
             errorBuffer += line
             // scalastyle:on println
@@ -156,7 +155,6 @@ object ExternalCommandRunner extends Logging {
           throw new NoSuchElementException()
         }
         val line = lines.next()
-        println(line)
         log.info("__python__:" + line)
         line
       }
