@@ -19,6 +19,7 @@ import org.apache.spark.sql.catalyst.util.ArrayBasedMapData
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession, functions => F}
+import org.apache.spark.util.ExternalCommandRunner._
 import org.apache.spark.util.ObjPickle._
 import org.apache.spark.util.VectorSerDer._
 import org.apache.spark.util.{ExternalCommandRunner, ObjPickle, TaskContextUtil, VectorSerDer}
@@ -263,6 +264,7 @@ class SQLDTFAlg extends SQLAlg with Functions {
             trainFailFlag = true
         }
       } else {
+        val pythonWorker = new AtomicReference[Process]()
         val context = TaskContext.get()
         val thread = new Thread(new Runnable {
           override def run(): Unit = {
@@ -277,7 +279,7 @@ class SQLDTFAlg extends SQLAlg with Functions {
                 kafkaParam = kafkaParam,
                 modelPath = path, validateData = rowsBr.value
               )
-
+              pythonWorker.set(res.asInstanceOf[ {def getWorker: Process}].getWorker)
               score = recordUserLog(algIndex, pythonScript, kafkaParam, res)
             } catch {
               case e: Exception =>
@@ -286,6 +288,7 @@ class SQLDTFAlg extends SQLAlg with Functions {
             }
           }
         })
+        thread.setDaemon(true)
         thread.start()
 
         var shouldWait = true
@@ -302,10 +305,16 @@ class SQLDTFAlg extends SQLAlg with Functions {
           if (response.toInt == clusterSpec.worker.size) {
             shouldWait = false
           }
+          try {
+            Thread.sleep(10000)
+          } catch {
+            case e: Exception =>
+              shouldWait = false
+          }
           println(s"check worker finish size. targetSize:${clusterSpec.worker.size} vs ${response.toInt}")
-          Thread.sleep(10000)
-          thread.interrupt()
         }
+        pythonWorker.get().destroy()
+        thread.interrupt()
 
       }
 
@@ -327,7 +336,6 @@ class SQLDTFAlg extends SQLAlg with Functions {
             new Path(modelHDFSPath))
         } catch {
           case e: Exception =>
-            e.printStackTrace()
             trainFailFlag = true
         } finally {
           // delete local model

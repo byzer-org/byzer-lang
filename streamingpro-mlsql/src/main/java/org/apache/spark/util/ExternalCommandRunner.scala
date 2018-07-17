@@ -180,6 +180,10 @@ object ExternalCommandRunner extends Logging {
         result
       }
 
+      def getWorker: Process = {
+        proc
+      }
+
       private def cleanup(): Unit = {
         // cleanup task working directory if used
         if (workInTaskDirectory) {
@@ -205,7 +209,6 @@ object ExternalCommandRunner extends Logging {
         }
       }
     }
-
   }
 
   class MonitorThread(env: SparkEnv, worker: Process, context: TaskContext, taskDirFile: String, pythonExec: String)
