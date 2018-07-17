@@ -269,4 +269,27 @@ class PythonMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQ
       ScriptSQLExec.parse(loadSQLScriptStr("tensorflow-cnn"), sq)
     }
   }
+
+//  "distribute-tensorflow" should "work fine" in {
+//    withBatchContext(setupBatchContext(batchParamsWithPort, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+//      //执行sql
+//      implicit val spark = runtime.sparkSession
+//      val sq = createSSEL
+//
+//      writeStringToFile("/tmp/tensorflow-distribute.py", loadPythonStr("tensorflow-distribute.py"))
+//
+//      ShellCommand.exec("rm -rf /tmp/william/pa_model_tf")
+//
+//      ScriptSQLExec.parse(TemplateMerge.merge(loadSQLScriptStr("distribute-tensorflow"), Map(
+//        "pythonScriptPath" -> "/tmp/tensorflow-distribute.py",
+//        "keepVersion" -> "true",
+//        "path" -> "/pa_model_tf",
+//        "distributeEveryExecutor" -> "false"
+//
+//      )), sq)
+//
+//      val res = spark.sql("select * from parquet.`/tmp/william/pa_model_tf/_model_0/meta/0`")
+//      res.show()
+//    }
+//  }
 }
