@@ -316,6 +316,12 @@ object Functions {
     })
   }
 
+  def toArrayDouble(uDFRegistration: UDFRegistration) = {
+    uDFRegistration.register("to_array_double", (seq: Seq[Object]) => {
+      seq.map(a => a.toString.toDouble)
+    })
+  }
+
   def arrayOneHot(uDFRegistration: UDFRegistration) = {
     // TODO:(fchen)修改成稀疏矩阵的实现
     uDFRegistration.register("array_onehot", (a: WrappedArray[Int], size: Int) => {
