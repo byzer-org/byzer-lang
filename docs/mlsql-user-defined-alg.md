@@ -60,6 +60,61 @@ and `systemParam.pythonVer`="2.7";
 首先是训练脚本,你需要把streamingpro-mlsql里resource/python 目录下的mlsql.py,mlsql_model.py,python_fun.py,msg_queue.py 
 四个文件拷贝到你的项目里。
 
+这个训练脚本的大致流程是这样的：
+
+```python
+
+## 导入mlsql模块
+import mlsql
+
+## 定义一个简单的方法获取从 PythonAlg配置的参数
+def param(key, value):
+    if key in mlsql.fit_param:
+        res = mlsql.fit_param[key]
+    else:
+        res = value
+    return res
+
+
+featureCol = param("featureCol", "features")
+labelCol = param("labelCol", "label")
+moduleName = param("moduleName", "sklearn.svm")
+className = param("className", "SVC")
+
+batchSize = int(param("batchSize", "64"))
+labelSize = int(param("labelSize", "-1"))
+## 通过mlsql模块获取数据所在的目录
+tempDataLocalPath = mlsql.internal_system_param["tempDataLocalPath"]
+## 进行训练
+model.fit(tempDataLocalPath)
+
+## 获得模型需要存储的路径
+if "tempModelLocalPath" not in mlsql.internal_system_param:
+    raise Exception("tempModelLocalPath is not configured")
+
+tempModelLocalPath = mlsql.internal_system_param["tempModelLocalPath"]
+
+if not os.path.exists(tempModelLocalPath):
+    os.makedirs(tempModelLocalPath)
+
+model_file_path = tempModelLocalPath + "/model.pkl"
+print("Save model to %s" % model_file_path)
+## 将模型存储在系统告知的路径，当然，比如tensorflow 会有自己的导出方式
+pickle.dump(model, open(model_file_path, "wb"))
+
+```
+
+简单来说，就是
+
+1. 获取参数
+2. 获取数据目录
+3. 训练
+4. 把模型保存到指定目录
+
+完毕。
+
+下面是一个非常完整的Sklearn的例子：
+
 ```python
 
 from __future__ import absolute_import
