@@ -28,6 +28,7 @@ import streaming.common.HDFSOperator
 
 /**
   * Created by allwefantasy on 5/2/2018.
+  * This Module support training or predicting with user-defined python script
   */
 class SQLPythonAlg extends SQLAlg with Functions {
   override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
