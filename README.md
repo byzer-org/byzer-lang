@@ -1,7 +1,7 @@
 # StreamingPro 中文文档
 
-[五分钟快速上手和体验](https://github.com/allwefantasy/streamingpro/blob/master/docs/quick-tutorial.md)
-[Five Minute Quick Tutorial](https://github.com/allwefantasy/streamingpro/blob/master/docs/en/quick-tutorial.md)
+1. [五分钟快速上手和体验](https://github.com/allwefantasy/streamingpro/blob/master/docs/quick-tutorial.md)
+2. [Five Minute Quick Tutorial](https://github.com/allwefantasy/streamingpro/blob/master/docs/en/quick-tutorial.md)
 
 
 ## 应用模式和服务模式
