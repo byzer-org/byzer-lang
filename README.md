@@ -1,16 +1,18 @@
 # StreamingPro 中文文档
 
 [五分钟快速上手和体验](https://github.com/allwefantasy/streamingpro/blob/master/docs/quick-tutorial.md)
+[Five Minute Quick Tutorial](https://github.com/allwefantasy/streamingpro/blob/master/docs/en/quick-tutorial.md)
 
-Note：StreamingPro有两种模式
 
-1. 写json配置文件，StreamingPro启动后执行该文件，可以作为批处理或者流式程序。
-2. 服务化，启动一个StreamingPro Server作为常驻程序,然后通过http接口发送MLSQL脚本进行交互。
+## 应用模式和服务模式
+
+1. 应用模式：写json配置文件，StreamingPro启动后执行该文件，可以作为批处理或者流式程序。
+2. 服务模式：启动一个StreamingPro Server作为常驻程序,然后通过http接口发送MLSQL脚本进行交互。
 
 我们强烈推荐使用第二种模式，第一种模式现在已经不太更新了，现在迅速迭代的是第二种模式，并且第二种模式可以构建AI平台。
 为了避免编译的麻烦，你可以直接使用[release版本](https://github.com/allwefantasy/streamingpro/releases)
 
-对于确实需要使用json配置文件的，我们也提供了batch.mlsql脚本，可以让你使用mlsql语法，例如（v1.1.1 之后版本才有）：
+对于确实需要使用json配置文件的，我们也提供了batch.mlsql脚本，可以让你使用mlsql语法，例如（v1.1.2开始具有这个功能）：
 
 ```json
 {
@@ -43,9 +45,8 @@ Note：StreamingPro有两种模式
 * [编译文档](https://github.com/allwefantasy/streamingpro/blob/master/docs/compile.md)
 * [编译DSL文档](./docs/generate-dsl-java-source.md)
 
-## 作为服务运行
-
-* [运行StreamingPro Server](https://github.com/allwefantasy/streamingpro/blob/master/docs/run-server.md)
+## 高级编程
+* [自定义基于Python的算法模型](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-user-defined-alg.md)
 
 ## 使用MLSQL做机器学习
 * [MLSQL使用SKLearn做文本分类实例](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-nlp-example.md)
@@ -54,8 +55,6 @@ Note：StreamingPro有两种模式
 * [MLSQL-单机算法 based on SKLearn](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-sklearn.md)
 * [MLSQL日志回显](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-log-monitor.md)
 
-## 高级编程
-* [自定义基于Python的算法模型](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-user-defined-alg.md)
 
 ## 部署模型API服务
 * [如何把模型部署成API服务](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-model-deploy.md)

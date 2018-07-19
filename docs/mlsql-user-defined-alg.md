@@ -8,143 +8,288 @@ MLSQL 提供了一个叫PythonAlg的模块，允许用户使用Python算法框�
 2. MLSQL需要对/tmp/\_\_mlsql\_\_ 目录有完全的权限。
 3. 每个服务器都需要拥有python相关的环境，比如pyspark以及常见标准库。如果你需要sklearn,则需要在每台服务器上都安装Sklearn。
 
-更多示例可查看项目：[mlsql](https://github.com/allwefantasy/mlsql/tree/master/examples)
+我们有一个专门的示例项目，里面有包含图片，自然语言处理如何整合到PythonAlg模块：[mlsql-python](https://github.com/allwefantasy/mlsql/tree/master/examples)
+
+
 
 ### 使用范例
 
+假设我们要训练一个模型，是这么用的：
+
 ```sql
--- 加载一个已经向量化好的数据。你也可以使用其他预处理模块
--- data表已经包含了features字段和label字段
-load libsvm.`sample_libsvm_data.txt` as data;
+-- train sklearn model
+train data as PythonAlg.`${modelPath}` 
 
---
-train data as PythonAlg.`/tmp/pa_model`
-where
+-- specify the location of the training script 
+where pythonScriptPath="${sklearnTrainPath}"
 
--- 用户自定义的python训练脚本,需要符合一定的规范。
-pythonScriptPath="${pythonScriptPath}"
--- kafka 配置
-and `kafkaParam.bootstrap.servers`="127.0.0.1:9092"
+-- kafka params for log
+and `kafkaParam.bootstrap.servers`="${kafkaDomain}"
 and `kafkaParam.topic`="test"
-and `kafkaParam.group_id`="g_test-1"
-
--- 如果开启，则不通过kafka进行中转，而是将数据写入到hdfs然后分发到各个executor节点上
+and `kafkaParam.group_id`="g_test-2"
+and `kafkaParam.userName`="pi-algo"
+-- distribute training data, so the python training script can read 
 and  enableDataLocal="true"
 and  dataLocalFormat="json"
 
--- 一些配置参数
-and  `fitParam.0.batchSize`="1000"
-and  `fitParam.0.labelSize`="2"
+-- sklearn params
+-- use SVC
+and `fitParam.0.moduleName`="sklearn.svm"
+and `fitParam.0.className`="SVC"
+and `fitParam.0.featureCol`="features"
+and `fitParam.0.labelCol`="label"
+and `fitParam.0.class_weight`="balanced"
+and `fitParam.0.verbose`="true"
 
--- 验证数据集
-and validateTable="data"
+-- and `fitParam.1.moduleName`="sklearn.naive_bayes"
+-- and `fitParam.1.className`="GaussianNB"
+-- and `fitParam.1.featureCol`="features"
+-- and `fitParam.1.labelCol`="label"
+-- and `fitParam.1.class_weight`="balanced"
+-- 贝叶斯会采用partial_fit,所以需要事先告诉分类数目
+-- and `fitParam.1.labelSize`="26"
 
+-- python env
 and `systemParam.pythonPath`="python"
-and `systemParam.pythonVer`="2.7"
-;
-
--- 把模型注册成一个函数，并且指定具体逻辑。
-register PythonAlg.`/tmp/pa_model` as jack options
-pythonScriptPath="${pythonPredictScriptPath}"
-;
-
--- 使用该函数进行数据预测
-select jack(features) from data
-as newdata;
+and `systemParam.pythonParam`="-u"
+and `systemParam.pythonVer`="2.7";
 ```
 
-从示例代码可以看到，用户需要提供两个脚本，一个是训练脚本，一个是预测脚本。我这里会以sklearn为例子。
+从上面的代码来看，我们需要提供一个python脚本完成训练。
 
-
-首先是训练脚本,你需要把streamingpro-spark-2.0里resource/python 目录下的mlsql.py,mlsql_model.py,python_fun.py,msg_queue.py 
+首先是训练脚本,你需要把streamingpro-mlsql里resource/python 目录下的mlsql.py,mlsql_model.py,python_fun.py,msg_queue.py 
 四个文件拷贝到你的项目里。
 
 ```python
 
+from __future__ import absolute_import
+import numpy as np
 import os
 import json
-from pyspark.ml.linalg import Vectors
-from sklearn.naive_bayes import MultinomialNB
+import sys
 import pickle
+import scipy.sparse as sp
+import importlib
+from pyspark.mllib.linalg import Vectors, SparseVector
 
-# 如果想脱离MLSQL测试和使用，那么可以直接拼凑参数。
-# 正式使用时记得要把这些代码给删除，否则会导致在mlsql里配置不生效。
-PARAM_FILE = "python_temp.pickle"
-# if True and not os.path.exists(PARAM_FILE):
-with open(PARAM_FILE, "wb") as f:
-    pickle.dump({"fitParam": {},
-                 "internalSystemParam": {
-                     "tempDataLocalPath": "/tmp/william/tmp/pa_model/tmp/data/",
-                     "tempModelLocalPath": "/tmp/william/tmp/pa_model2"
-                 },
-                 "systemParam": {}
-                 }, f)
+if sys.version < '3':
+    import cPickle as pickle
 
-import mlsql_model
+else:
+    import pickle
+
+    xrange = range
+
+unicode = str
+
+run_for_test = False
+## 如果脱离MLSQL环境，你需要自己构建一些参数，这个就是为了方便这个脚本本机也能运行
+if run_for_test:
+    from sklearn.naive_bayes import GaussianNB
+
+    # config parameters
+    PARAM_FILE = "python_temp.pickle"
+    pp = {'internalSystemParam': {'tempModelLocalPath': '/tmp/__mlsql__/3242514c-4113-4105-bdc5-9987b28f9764/0',
+                                  'tempDataLocalPath': '/Users/allwefantasy/Downloads/data1', 'stopFlagNum': 9},
+          'systemParam': {'pythonVer': '2.7', 'pythonPath': 'python'},
+          'fitParam': {'labelCol': 'label', 'featureCol': 'features', 'height': '100', 'width': '100',
+                       'modelPath': '/tmp/pa_model', 'labelSize': '2', 'class_weight': '{"1":2}',
+                       'moduleName': 'sklearn.svm',
+                       'className': 'SVC'},
+          'kafkaParam': {'topic': 'zhuhl_1528712229620', 'bootstrap.servers': '127.0.0.1:9092',
+                         'group_id': 'zhuhl_test_0', 'userName': 'zhuhl', 'reuse': 'true'}}
+
+    with open(PARAM_FILE, "wb") as f:
+        pickle.dump(pp, f)
+
+    # test data
+    VALIDATE_FILE = "validate_table.pickle"
+    # 1, 100,100,4
+    with open(VALIDATE_FILE, "wb") as f:
+        data = np.random.random((10, 100, 100, 3))
+        pickle.dump([pickle.dumps({"feature": i, "label": [0, 0, 0, 1]}) for i in data.tolist()], f)
+
+## 导入mlsql模块
 import mlsql
 
-
-# 使用SKlearn贝叶斯模型
-clf = MultinomialNB()
-
-'''
-mlsql.sklearn_configure_params 会把配置参数都设置到clf中。
-除了自动配置，大家也可以通过mlsql.params()拿到所有的配置选项。
-''' 
-
-mlsql.sklearn_configure_params(clf)
-
-# 如果开启了enableDataLocal，则可以通过这个方式拿到tempDataLocalPath，也就是数据目录
-# 因为前面配置的dataLocalFormat是json,所以这里面存储的是json文件格式数据
-tempDataLocalPath = mlsql.internal_system_param["tempDataLocalPath"]
-
-print(tempDataLocalPath)
-
-## 解析json格式数据，要求输入的都是向量，但是可以存储成不同的格式，比如json,csv
-files = [file for file in os.listdir(tempDataLocalPath) if file.endswith(".json")]
-res = []
-res_label = []
-for file in files:
-    with open(tempDataLocalPath + "/" + file) as f:
-        for line in f.readlines():
-            obj = json.loads(line)
-            f_size = obj["features"]["size"]
-            f_indices = obj["features"]["indices"]
-            f_values = obj["features"]["values"]
-            res.append(Vectors.sparse(f_size, f_indices, f_values).toArray())
-            res_label.append(obj["label"])
+## 定义一个简单的方法获取从 PythonAlg配置的参数
+def param(key, value):
+    if key in mlsql.fit_param:
+        res = mlsql.fit_param[key]
+    else:
+        res = value
+    return res
 
 
-def train(X, y, label_size):
-    clf.partial_fit(X, y, classes=range(label_size))
+featureCol = param("featureCol", "features")
+labelCol = param("labelCol", "label")
+moduleName = param("moduleName", "sklearn.svm")
+className = param("className", "SVC")
 
-## 训练
-train(res,res_label,2)
+batchSize = int(param("batchSize", "64"))
+labelSize = int(param("labelSize", "-1"))
 
-## 获取校验集
-X_test, y_test = mlsql.get_validate_data()
+## 加载数据，转化为稀疏矩阵
+def load_sparse_data():
+    import mlsql
+    ## 通过mlsql模块获取数据所在的目录
+    tempDataLocalPath = mlsql.internal_system_param["tempDataLocalPath"]
+    # train the model on the new data for a few epochs
+    datafiles = [file for file in os.listdir(tempDataLocalPath) if file.endswith(".json")]
+    row_n = []
+    col_n = []
+    data_n = []
+    y = []
+    feature_size = 0
+    row_index = 0
+    for file in datafiles:
+        with open(tempDataLocalPath + "/" + file) as f:
+            for line in f.readlines():
+                obj = json.loads(line)
+                fc = obj[featureCol]
+                if "size" not in fc and "type" not in fc:
+                    feature_size = len(fc)
+                    dic = [(i, a) for i, a in enumerate(fc)]
+                    sv = SparseVector(len(fc), dic)
+                elif "size" not in fc and "type" in fc and fc["type"] == 1:
+                    values = fc["values"]
+                    feature_size = len(values)
+                    dic = [(i, a) for i, a in enumerate(values)]
+                    sv = SparseVector(len(values), dic)
 
-if len(X_test) > 0:
-    testset_score = clf.score(X_test, y_test)
-    print("mlsql_validation_score:%f" % testset_score)
+                else:
+                    feature_size = fc["size"]
+                    sv = Vectors.sparse(fc["size"], list(zip(fc["indices"], fc["values"])))
 
-## 保存模型
-'''
-模型保存的地方是需要通过配置获取的，比如这里的sk_save_model方法获取模型地址的方式如下：
- 
-  isp = mlsql.params()["internalSystemParam"]
-  tempModelLocalPath = isp["tempModelLocalPath"] if "tempModelLocalPath" in isp else "/tmp/"
-这样系统才能拿到你训练好的模型并且分发到其他节点。
-'''
-mlsql_model.sk_save_model(clf)
+                for c in sv.indices:
+                    row_n.append(row_index)
+                    col_n.append(c)
+                    data_n.append(sv.values[list(sv.indices).index(c)])
+
+                if type(obj[labelCol]) is list:
+                    y.append(np.array(obj[labelCol]).argmax())
+                else:
+                    y.append(obj[labelCol])
+                row_index += 1
+                if row_index % 10000 == 0:
+                    print("processing lines: %s, values: %s" % (str(row_index), str(len(row_n))))
+                    # sys.stdout.flush()
+    print("X matrix : %s %s  row_n:%s col_n:%s classNum:%s" % (
+        row_index, feature_size, len(row_n), len(col_n), ",".join([str(i) for i in list(set(y))])))
+    sys.stdout.flush()
+    return sp.csc_matrix((data_n, (row_n, col_n)), shape=(row_index, feature_size)), y
+
+## 正常加载数据
+def load_batch_data():
+    import mlsql
+    ## 通过mlsql模块获取数据所在的目录
+    tempDataLocalPath = mlsql.internal_system_param["tempDataLocalPath"]
+    datafiles = [file for file in os.listdir(tempDataLocalPath) if file.endswith(".json")]
+    X = []
+    y = []
+    count = 0
+    for file in datafiles:
+        with open(tempDataLocalPath + "/" + file) as f:
+            for line in f.readlines():
+                obj = json.loads(line)
+                fc = obj[featureCol]
+                if "size" not in fc and "type" not in fc:
+                    dic = [(i, a) for i, a in enumerate(fc)]
+                    sv = SparseVector(len(fc), dic)
+                elif "size" not in fc and "type" in fc and fc["type"] == 1:
+                    values = fc["values"]
+                    dic = [(i, a) for i, a in enumerate(values)]
+                    sv = SparseVector(len(values), dic)
+                else:
+                    sv = Vectors.sparse(fc["size"], list(zip(fc["indices"], fc["values"])))
+                count += 1
+                X.append(sv.toArray())
+                if type(obj[labelCol]) is list:
+                    y.append(np.array(obj[labelCol]).argmax())
+                else:
+                    y.append(obj[labelCol])
+                if count % batchSize == 0:
+                    yield X, y
+                    X = []
+                    y = []
+
+## 动态创建Sklearn算法
+def create_alg(module_name, class_name):
+    module = importlib.import_module(module_name)
+    class_ = getattr(module, class_name)
+    return class_()
+
+## 配置SKlearn参数
+def configure_alg_params(clf):
+    def class_weight(value):
+        if value == "balanced":
+            clf.class_weight = value
+        else:
+            clf.class_weight = dict([(int(k), int(v)) for (k, v) in json.loads(value).items()])
+
+    def max_depth(value):
+        clf.max_depth = int(value)
+
+    options = {
+        "class_weight": class_weight,
+        "max_depth": max_depth
+    }
+
+    def t(v, convert_v):
+        if type(v) == float:
+            return float(convert_v)
+        elif type(v) == int:
+            return int(convert_v)
+        elif type(v) == list:
+            json.loads(convert_v)
+        elif type(v) == dict:
+            json.loads(convert_v)
+        elif type(v) == bool:
+            return bool(convert_v)
+        else:
+            return convert_v
+
+    for name in clf.get_params():
+        if name in mlsql.fit_param:
+            if name in options:
+                options[name](mlsql.fit_param[name])
+            else:
+                dv = clf.get_params()[name]
+                setattr(clf, name, t(dv, mlsql.fit_param[name]))
+
+
+model = create_alg(moduleName, className)
+configure_alg_params(model)
+
+## 如果支持partial_fit 则无需使用稀疏矩阵
+if not hasattr(model, "partial_fit"):
+    X, y = load_sparse_data()
+    model.fit(X, y)
+else:
+    assert labelSize != -1
+    print("using partial_fit to batch_train:")
+    batch_count = 0
+    for X, y in load_batch_data():
+        model.partial_fit(X, y, [i for i in xrange(labelSize)])
+        batch_count += 1
+        print("partial_fit iteration: %s, batch_size:%s" % (str(batch_count), str(batchSize)))
+
+## 获得模型需要存储的路径
+if "tempModelLocalPath" not in mlsql.internal_system_param:
+    raise Exception("tempModelLocalPath is not configured")
+
+tempModelLocalPath = mlsql.internal_system_param["tempModelLocalPath"]
+
+if not os.path.exists(tempModelLocalPath):
+    os.makedirs(tempModelLocalPath)
+
+model_file_path = tempModelLocalPath + "/model.pkl"
+print("Save model to %s" % model_file_path)
+## 将模型存储在系统告知的路径
+pickle.dump(model, open(model_file_path, "wb"))
 
 ```
 
-其中，mlsql_model,mlsql 是MLSQL提供的一些辅助工具。
-为了便于使用，你可以直接从项目里 streamingpro-spark-2.0 的resource 文件夹的python子目录里的所有python文件拷贝到你的项目里，从而
-方便代码提示以及测试。
-
-在上面的示例代码中，我已经提供了注释。
 
 如果我们使用Kafka作为数据传输的话(也就是把enableDataLocal设置为false)，那么获取数据只需要通过一个指令：
 
@@ -158,81 +303,80 @@ for items in rd(max_records=batch_size):
 
 算法训练完成后，我们需要能够进行预测，用户也是可以定义这个预测方式的，下面是一个示例脚本：
 
+
+```sql
+-- specify the location of python predict script 
+register PythonAlg.`${modelPath}` as predict options 
+pythonScriptPath="${sklearnPredictPath}"
+-- we also can specify which model to use
+-- and algIndex="0"
+;
+
+
+select predict(features) as predict_label, label from validate_data 
+as validate_data;
+```
+
+
+
+具体的Python预测脚本如下：
+
 ```python
 
+from __future__ import absolute_import
 from pyspark.ml.linalg import VectorUDT, Vectors
 import pickle
 import os
-import python_fun
+
+run_for_test = False
+if run_for_test:
+    import mlsql.python_fun
+else:
+    import python_fun
 
 
-# 定义一个预测函数，签名是固定的，index表示分区，s表示数据。
-# s 表示一条预测数据，是一个数组，长度为2。
-# 第一个元素是一个vector,你需要通过pickle反序列化后再转化为vector表示。
-# 第二个元素是模型在本地的位置，模型文件名则由你自己决定。
-# 我这里加载的是Sklearn的模型。但是我们需要保证预测的速度，所以不应该每次都加载模型,
-# 应该保持模型加载的单例。
 def predict(index, s):
+    ## 大家照着写就好了
     items = [i for i in s]
-    
-    # pickle.loads(items[1])[0]  表示的是modelPath,也就是前面配置的/tmp/william/tmp/pa_model2
-    modelPath = pickle.loads(items[1])[0]+"/model.pickle"
-    print("predict.....")
-    
-    ## 用一个比较trick的方法解决模型只加载一次的问题
-    if not hasattr(os,"models"):
-         setattr(os,"models",{})
-       if modelPath not in os.models:
-           print("load model.....")
-           os.models[modelPath] = pickle.load(open(modelPath))
-    
-    model = os.models[modelPath]
-    
-    # items[0] 就是一个向量，需要通过VectorUDT进行反序列化
-    vector = pickle.loads(items[0])
-    feature = VectorUDT().deserialize(vector)
-    
-        
+    modelPath = pickle.loads(items[1])[0] + "/model.pkl"
+
+    if not hasattr(os, "mlsql_models"):
+        setattr(os, "mlsql_models", {})
+    if modelPath not in os.mlsql_models:
+        print("Load sklearn model %s" % modelPath)
+        os.mlsql_models[modelPath] = pickle.load(open(modelPath, "rb"))
+
+    model = os.mlsql_models[modelPath]
+    ## 获取到预测的向量
+    rawVector = pickle.loads(items[0])
+    ## 我们需要反序列化
+    feature = VectorUDT().deserialize(rawVector)
+    ## 转化为python数组后进行预测
     y = model.predict([feature.toArray()])
+    ## 把结果转化为vector然后再序列化返回
     return [VectorUDT().serialize(Vectors.dense(y))]
 
+## 方便本地测试
+if run_for_test:
+    import json
 
-# 对该函数进行序列化
-python_fun.udf(predict)
-
-```
-
-这里的python_fun也是MLSQL提供的一个工具类。
-在当前阶段，我们做了一个约定，模型应该是vector in vector out的，所以输入和输出是固定的，内部逻辑则由你决定。
-
-写好这个脚本后，就可以注册模型为函数了：
-
-```
--- 把模型注册成一个函数，并且指定具体逻辑。
-register PythonAlg.`/tmp/pa_model` as jack options
-pythonScriptPath="${pythonPredictScriptPath}"
-;
-```
-
-预测代码可以完全在本地进行测试，核心就是构造predict 里的`s`变量。
- 
-```python
-if __name__ == '__main__':
-    # 把模型和数据下载到本地，假设数据是json格式的
-    model_path = '/tmp/model'
-    data_path = 'tmp/part-00000-94b58e22-3671-460e-a7d2-120469c94057-c000.json'
+    model_path = '/tmp/__mlsql__/3242514c-4113-4105-bdc5-9987b28f9764/0'
+    data_path = '/Users/allwefantasy/Downloads/data1/part-00000-03769d42-1948-499b-8d8f-4914562bcfc8-c000.json'
 
     with open(file=data_path) as f:
         for line in f.readlines():
             s = []
-            feature = json.loads(line)['feature']['values'] 
-            # 对特征字段要先进行VectorUDT序列化，然后再用picle进行序列化
-            s.insert(0, pickle.dumps(VectorUDT().serialize(Vectors.dense(feature))))
-            # modelPath 直接用pickle序列化就好
+            wow = json.loads(line)['features']
+            feature = Vectors.sparse(wow["size"], list(zip(wow["indices"], wow["values"])))
+            s.insert(0, pickle.dumps(VectorUDT().serialize(feature)))
             s.insert(1, pickle.dumps([model_path]))
-            # 调用前面的方法进行预测
-            predict(1, s)
+            print(VectorUDT().deserialize(predict(1, s)[0]))
+
+python_fun.udf(predict)
+
+
 ```
+
 
 ## 模型目录结构
 
