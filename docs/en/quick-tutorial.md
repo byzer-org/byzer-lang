@@ -5,7 +5,7 @@ Step 1:
 Go to release page: [Release页面](https://github.com/allwefantasy/streamingpro/releases). 
 Download jars:
 
-1. streamingpro-mlsql-1.1.1.jar
+1. streamingpro-mlsql-1.1.2.jar
 2. ansj_seg-5.1.6.jar
 3. nlp-lang-1.7.8.jar
 
