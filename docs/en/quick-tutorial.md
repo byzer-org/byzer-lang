@@ -1,9 +1,9 @@
 ## Quick Tutorial
 
 Step 1:
- 
-Go to release page: [Release页面](https://github.com/allwefantasy/streamingpro/releases). 
-Download jars:
+
+
+Download the jars from the release page: [Release页面](https://github.com/allwefantasy/streamingpro/releases):
 
 1. streamingpro-mlsql-1.1.2.jar
 2. ansj_seg-5.1.6.jar
@@ -11,8 +11,7 @@ Download jars:
 
 Step 2:
 
-Go to Spark download page: [Spark](https://spark.apache.org/downloads.html). Choose version 2.2.0.
-Unarvhive it.
+Visit the downloads page: [Spark](https://spark.apache.org/downloads.html), to download Apache Spark 2.2.0 and then unarvhive it.
  
 Step 3:
 
@@ -38,7 +37,7 @@ streamingpro-mlsql-1.1.1.jar    \
 
 Step 4: 
 
-Open your chrome browser, type  url following:
+Open your chrome browser, type the following url:
 
 ```
 http://127.0.0.1:9003
@@ -50,7 +49,7 @@ Enjoy.
 
 
 ---------------------------------------------------
-Practise our first Machine Learning Script in MLSQL.
+Run the first Machine Learning Script in MLSQL.
 
 ```sql
 
@@ -74,14 +73,15 @@ save overwrite result as json.`/tmp/result`;
 select * from result as res;
 ```
 
-Please make sure  this path `/spark-2.2.0-bin-hadoop2.7/data/mllib/sample_libsvm_data.txt`  is right.
-Copy and paste this script to the web page, and click `运行`.
+Please make sure the path `/spark-2.2.0-bin-hadoop2.7/data/mllib/sample_libsvm_data.txt` is correct.
 
-then you will see the label and predict_lable. Congratulations, you have finished your first Machine Learning script.
+Copy and paste the script to the web page, and click `运行`, then you will see the label and predict_lable.
+
+Congratulations, you have completed the first Machine Learning script!
 
 ----------------------------------------------------
 
-Practise our first ETL Script In MLSQL.
+Run the first ETL Script In MLSQL.
 
 
 ```sql
@@ -89,6 +89,10 @@ select "a" as a,"b" as b
 as abc;
 
 -- here we just copy all from table abc and then create a new table newabc.
+
+From Oscar:
+-- we just copy all from table abc and create a new table newabc here.
+
 select * from abc
 as newabc;
 
@@ -103,7 +107,6 @@ and user="..."
 and password="...."
 ```
 
-Copy and paste this script to the web page, and click `运行`.
-Congratulations, you have finished your first ETL script.
+Congratulations, you have completed the first ETL script!
 
 -------------------------------------------------------
