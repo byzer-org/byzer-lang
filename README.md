@@ -96,7 +96,7 @@
 1. [StreamingPro json文件编辑器支持](https://github.com/allwefantasy/streamingpro/blob/master/README.md#StreamingPro-json文件编辑器支持)
 
 ## 实验
-1. [fink支持](https://github.com/allwefantasy/streamingpro/blob/master/docs/flink.md)
+1. [flink支持](https://github.com/allwefantasy/streamingpro/blob/master/docs/flink.md)
 
 ## 其他文档
 

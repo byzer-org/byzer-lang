@@ -2,7 +2,8 @@
 
 Step 1:
 
-Download the jars from the release page: [Release页面](https://github.com/allwefantasy/streamingpro/releases).
+
+Download the jars from the release page: [Release页面](https://github.com/allwefantasy/streamingpro/releases):
 
 1. streamingpro-mlsql-1.1.2.jar
 2. ansj_seg-5.1.6.jar
@@ -10,7 +11,6 @@ Download the jars from the release page: [Release页面](https://github.com/allw
 
 Step 2:
 
-From Oscar:
 Visit the downloads page: [Spark](https://spark.apache.org/downloads.html), to download Apache Spark 2.2.0 and then unarvhive it.
  
 Step 3:
