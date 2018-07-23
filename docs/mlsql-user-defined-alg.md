@@ -1,4 +1,15 @@
-## 用户自定义算法（Python）
+
+
+- [**自定义Python算法**](#用户自定义算法（Python）)
+  - [使用范例](#使用范例)
+  - [如果我训练或者预测需要传递多个脚本文件怎么办？](#如果我训练或者预测需要传递多个脚本文件怎么办？)
+  - [模型版本管理](#模型版本管理)
+  - [模型目录结构](#模型目录结构)
+  - [资源文件配置](#资源文件配置) 
+  
+
+
+### 用户自定义算法（Python）
 
 MLSQL 提供了一个叫PythonAlg的模块，允许用户使用Python算法框架（比如SKlearn,Tensorflow,Keras等等）自定义训练和预测过程。
 
@@ -514,42 +525,85 @@ python_fun.udf(predict)
 ```
 
 
-## 模型目录结构
+### 模型版本管理
 
-```
-/tmp/william/tmp/pa_model
-├── meta
-│   ├── 0
-│   │   ├── _SUCCESS
-│   │   └── part-00000-4bfa8d3e-cb51-41a1-a996-54d8f5ffc672-c000.snappy.parquet
-│   ├── 1
-│   │   ├── _SUCCESS
-│   │   └── part-00000-764afc64-33be-4029-a5ea-b56b9d7cbbc4-c000.snappy.parquet
-│   └── params
-│       ├── _SUCCESS
-│       ├── part-00000-14c18428-823a-4041-a9c6-0e0587485e10-c000.snappy.parquet
-│       └── part-00001-14c18428-823a-4041-a9c6-0e0587485e10-c000.snappy.parquet
-├── model
-│   └── 0
-│       └── model.pickle
-└── tmp
-    └── data
-        ├── _SUCCESS
-        └── part-00000-ddffe5a3-70b9-4886-b5a0-c824ba1e6784-c000.json
+PythonAlg模块支持版本管理。只需在训练时开启
+
+```sql
+keepVersion="true"
 ```
 
-目录结构。 
+开启后，
 
-1. meta 下有三个目录， 0存储模型元数据，比如path路径等，1存储一些环境信息，比如python版本等。params则存储所有训练参数。
-2. model目录下以0为序号，存储模型的二进制表达。如果是多个模型，则以1递增。
-3. tmp/data 则是开了本地数据后，训练数据会存储在该目录。
+1. 每次训练都会新生成一个子目录
+2. 注册的时候会自动使用最新的版本
+3. 可以手动指定版本
+4. 可以查看每个版本的状态
 
-这些数据存储在HDFS上，根据需要会分发到各个executor节点的/tmp/\_\_mlsql\_\_ 目录。
+
+目录接口如下(假设你设置的目录是/tmp/william/pa_model_k):
+
+```
+/tmp/william/pa_model_k/_model_[version_number]
+```
+
+如果想看这个模型成功失败等详细信息：
+
+```
+load parquet.`/tmp/william/pa_model_k/_model_n/meta/0` as modelInfo;
+select * from modelInfo as result;
+```
+
+手动指定版本的方式如下：
+
+```sql
+register PythonAlg.`/tmp/william/pa_model_k` as predict options
+modelVersion="1" ;
+```
+
+对应的会加载
+
+```
+/tmp/william/pa_model_k/_model_1 
+```
+
+这个目录的信息
 
 
-## 参数说明
 
-### fitParam.[number].resource.[resourceName]
+
+### 模型目录结构
+
+```
+/tmp/william/tmp/pa_model_k
+
+|_____model_0
+| |____meta
+| | |____0
+| | |____1
+| |____model
+| | |____0
+|____tmp
+| |____data
+```
+
+_model_0 表示第一个版本的模型，内部包含的目录有：
+
+1. meta 下有2个目录， 0存储模型元数据，比如path路径,失败成功，1存储一些环境信息，比如python版本等，训练参数等
+2. model目录下以0为序号，存储模型的二进制表达。
+
+
+tmp/data 则是开了本地数据后，训练数据会存储在该目录。
+
+这些数据存储在HDFS上，根据需要会分发到各个executor节点的/tmp/\_\_mlsql\_\_ 目录中。
+
+
+### 资源文件配置
+
+
+```
+fitParam.[number].resource.[resourceName]
+```
 
 `PythonAlg`模块指定特殊的数据源，比如我们可能在算法中需要到一个字典文件。我们可以通过`resource`配置来指定相应的资源文件，系统会将自动分发到运行的节点上。
 
