@@ -432,6 +432,87 @@ python_fun.udf(predict)
 
 ```
 
+## 如果我训练或者预测需要传递多个脚本文件怎么办？
+
+很多算法同学会把训练和预测方法都写在一个脚本文件里。那么在预测的时候，又要拷贝一份，这回比较繁琐。
+有的时候，无论训练或者预测，都需要多个python文件。在MLSQL里对此的总体解决思路是，把非入口python script
+作为资源传递，然后通过importlib 动态记在想要的模块。
+
+在MLSQL里，资源文件需要在训练的时候配置，在预测的时候也可以拿到训练时配置的资源文件。
+
+训练的脚本配置：
+
+```sql
+set trainScriptPath="/semantic_match/AttenLSTM_mlsql_train_noEmb.py";
+set resourceAPath="/semantic_match/AttenLSTM_mlsql_resource_noEmb.py";
+
+
+train zhuml_corpus_featurize_training as PythonAlg.`${modelPath}` 
+where pythonScriptPath="${trainScriptPath}"
+-- kafka params for log
+and `kafkaParam.bootstrap.servers`="${kafkaDomain}"
+and `kafkaParam.topic`="test"
+and `kafkaParam.group_id`="g_test-2"
+
+-- distribute data
+and  enableDataLocal="true"
+and  dataLocalFormat="json"
+
+-- here specify AttenLSTM_mlsql_resource_noEmb.py as resource python script
+------------------------------------------------
+and `fitParam.0.resource.b`="${resourceAPath}"
+------------------------------------------------
+
+and `fitParam.0.train_sample_weight`="1.9691380349608198,4.10711591651999,4.0211718365337275"
+and `fitParam.0.labelCol`="label"
+and `fitParam.0.queryCol`="query"
+and `fitParam.0.candidateCol`="candidate"
+and `fitParam.0.epoches`="20"
+and `fitParam.0.batch_size`="100"
+and `fitParam.0.hidden_unit`="100"
+and `fitParam.0.embedding_dim`="100"
+and `fitParam.0.early_stopping_round`="1000"
+and `fitParam.0.max_seq_len`="100"
+and `fitParam.0.num_class`="3"
+and `fitParam.0.optimizer`="RMSprop"
+and `fitParam.0.loss_function`="mean_squared_error"
+
+-- python env
+and `systemParam.pythonPath`="/usr/local/anaconda3/bin/python"
+and `systemParam.pythonVer`="3.6";
+
+```
+
+预测时候可以这样使用
+
+```python
+from __future__ import absolute_import
+from pyspark.ml.linalg import VectorUDT, Vectors
+import pickle
+import os
+import json
+import numpy as np
+import mlsql
+import python_fun
+import importlib
+import importlib.machinery
+import mlsql
+
+## get resource file path
+model_module_path = mlsql.internal_system_param['resource']['b']
+
+
+def predict(index, sample):
+    # use importlib to load resource python script dynamically
+    model_module = importlib.machinery.SourceFileLoader("AttenLSTM_mlsql_resource_noEmb", model_module_path)
+    mm = model_module.load_module()
+    # use module method to predict
+    return mm.predict(1, sample)
+
+python_fun.udf(predict)
+
+```
+
 
 ## 模型目录结构
 

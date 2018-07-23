@@ -1,4 +1,14 @@
-## Data Processing Tutorial
+## MLSQL Grammar
+
+MLSQL support following sentence pattern:
+
+1. connect  (connect to specify external storage engine.)
+2. set      (set some property)
+3. select   (processing data)
+4. train    (processing data or train Algorithm)
+5. register (register algorithm model /data processing model)
+6. save      (save table to HDFS/eternal storage engine)
+
 
 ### Load data as Table
 
