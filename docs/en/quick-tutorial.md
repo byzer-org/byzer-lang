@@ -22,7 +22,7 @@ cd spark-2.2.0-bin-hadoop2.7/
 --master local[*] \
 --name sql-interactive \
 --jars ansj_seg-5.1.6.jar,nlp-lang-1.7.8.jar
-streamingpro-mlsql-1.1.1.jar    \
+streamingpro-mlsql-1.1.2.jar    \
 -streaming.name sql-interactive    \
 -streaming.job.file.path file:///tmp/query.json \
 -streaming.platform spark   \
@@ -75,7 +75,7 @@ select * from result as res;
 
 Please make sure the path `/spark-2.2.0-bin-hadoop2.7/data/mllib/sample_libsvm_data.txt` is correct.
 
-Copy and paste the script to the web page, and click `运行`, then you will see the label and predict_lable.
+Copy and paste the script to the web page, and click `运行`, then you will see the label and predict_label.
 
 Congratulations, you have completed the first Machine Learning script!
 

@@ -130,12 +130,17 @@ class BatchSaveAdaptor(val scriptSQLExecListener: ScriptSQLExecListener,
         writer.option("outputTableName", final_path).format(
           option.getOrElse("implClass", "org.apache.spark.sql.execution.datasources.redis")).save()
       case "jdbc" =>
-        import org.apache.spark.sql.jdbc.DataFrameWriterExtensions._
-        val extraOptionsField = writer.getClass.getDeclaredField("extraOptions")
-        extraOptionsField.setAccessible(true)
-        val extraOptions = extraOptionsField.get(writer).asInstanceOf[scala.collection.mutable.HashMap[String, String]]
-        val jdbcOptions = new JDBCOptions(extraOptions.toMap + ("dbtable" -> final_path))
-        writer.upsert(option.get("idCol"), jdbcOptions, oldDF)
+        if (option.contains("idCol")) {
+          import org.apache.spark.sql.jdbc.DataFrameWriterExtensions._
+          val extraOptionsField = writer.getClass.getDeclaredField("extraOptions")
+          extraOptionsField.setAccessible(true)
+          val extraOptions = extraOptionsField.get(writer).asInstanceOf[scala.collection.mutable.HashMap[String, String]]
+          val jdbcOptions = new JDBCOptions(extraOptions.toMap + ("dbtable" -> final_path))
+          writer.upsert(option.get("idCol"), jdbcOptions, oldDF)
+        } else {
+          writer.option("dbtable", final_path).save()
+        }
+
       case "carbondata" =>
         if (dbAndTable.size == 2) {
           writer.option("tableName", dbAndTable(1)).option("dbName", dbAndTable(0))
