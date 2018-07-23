@@ -144,6 +144,17 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
 
       assume(spark.sql("select * from tbs").toJSON.collect().size == 2)
 
+      sq = createSSEL
+      ScriptSQLExec.parse(
+        s"""
+           |save overwrite tod_boss_dashboard_sheet_1
+           |as jdbc.`tableau.tod_boss_dashboard_sheet_2` options truncate="true"
+           |;
+           |load jdbc.`tableau.tod_boss_dashboard_sheet_2` as tbs;
+         """.stripMargin, sq)
+
+      assume(spark.sql("select * from tbs").toJSON.collect().size == 1)
+
     }
   }
 
