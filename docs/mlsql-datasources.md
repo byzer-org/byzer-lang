@@ -229,9 +229,9 @@ load hbase.`wq_tmp_test1`
 options rowkey="id"
 and zk="---"
 and inputTableName="wq_tmp_test1"
-and field.type.filed1="FloatType"
-and field.type.filed2="TimestampType"
-and field.type.filed3="BinaryType"
+and `field.type.filed1`="FloatType"
+and `field.type.filed2`="TimestampType"
+and `field.type.filed3`="BinaryType"
 as testhbase 
 ;
 ```
