@@ -79,20 +79,21 @@ LDA 有如下函数：
 train data as ALSInPlace.`/tmp/als` where
 -- 第一组参数
     `fitParam.0.maxIter`="5",
-    and `fitParam.0.regParam` -> "0.01",
-    and `fitParam.0.userCol` -> "userId",
-    and `fitParam.0.itemCol` -> "movieId",
-    and `fitParam.0.ratingCol` -> "rating",
-    and "fitParam.0.evaluateTable" -> "test",
+    and `fitParam.0.regParam` = "0.01",
+    and `fitParam.0.userCol` = "userId",
+    and `fitParam.0.itemCol` = "movieId",
+    and `fitParam.0.ratingCol` = "rating",
+    and "fitParam.0.evaluateTable" = "test",
 -- 第二组参数    
     and `fitParam.1.maxIter`="1",
-    and `fitParam.1.regParam` -> "0.1",
-    and `fitParam.1.userCol` -> "userId",
-    and `fitParam.1.itemCol` -> "movieId",
-    and `fitParam.1.ratingCol` -> "rating",
-    and "fitParam.1.evaluateTable" -> "test",
--- 针对用户做推荐，推荐数量为10        
-    and `userRec` -> "10"
+    and `fitParam.1.regParam` = "0.1",
+    and `fitParam.1.userCol` = "userId",
+    and `fitParam.1.itemCol` = "movieId",
+    and `fitParam.1.ratingCol` = "rating",
+    and "fitParam.1.evaluateTable" = "test",
+-- 针对用户做推荐，推荐数量为10       
+    and evaluateTable="test",
+    and `userRec` = "10"
 ```
 
 你可以查看模型最后的详情：
