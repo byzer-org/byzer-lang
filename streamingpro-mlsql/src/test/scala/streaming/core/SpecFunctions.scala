@@ -94,4 +94,8 @@ trait SpecFunctions {
   def copySampleLibsvmData = {
     writeStringToFile("/tmp/william/sample_libsvm_data.txt", loadDataStr("sample_libsvm_data.txt"))
   }
+
+  def copySampleMovielensRratingsData = {
+    writeStringToFile("/tmp/william/sample_movielens_ratings.txt", loadDataStr("als/sample_movielens_ratings.txt"))
+  }
 }
