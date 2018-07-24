@@ -15,10 +15,10 @@ object LocalSparkApp {
       "-streaming.platform", "spark",
       "-streaming.enableHiveSupport", "true",
       "-streaming.spark.service", "false",
-      "-streaming.enableCarbonDataSupport", "true",
+      "-streaming.enableCarbonDataSupport", "false",
       "-streaming.carbondata.store", "/data/carbon/store",
       "-streaming.carbondata.meta", "/data/carbon/meta",
-      "-streaming.job.file.path", "classpath:///test/batch-carbondata.json"
+      "-streaming.job.file.path", "classpath:///test/batch-mlsql.json"
     ))
   }
 }

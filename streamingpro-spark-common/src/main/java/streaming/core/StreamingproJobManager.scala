@@ -18,6 +18,11 @@ object StreamingproJobManager {
   private[this] var _jobManager: StreamingproJobManager = _
   private[this] val _executor = Executors.newFixedThreadPool(100)
 
+  def shutdown = {
+    _executor.shutdownNow()
+    _jobManager.shutdown
+  }
+
   def init(sc: SparkContext, initialDelay: Long = 30, checkTimeInterval: Long = 5) = {
     synchronized {
       if (_jobManager == null) {
@@ -75,6 +80,7 @@ object StreamingproJobManager {
   def killJob(groupId: String): Unit = {
     _jobManager.cancelJobGroup(groupId)
   }
+
   private def handleJobDone(groupId: String): Unit = {
     _jobManager.groupIdToStringproJobInfo.remove(groupId)
 
@@ -105,6 +111,10 @@ class StreamingproJobManager(sc: SparkContext, initialDelay: Long, checkTimeInte
     sc.cancelJobGroup(groupId)
     groupIdToStringproJobInfo.remove(groupId)
   }
+
+  def shutdown = {
+    executor.shutdownNow()
+  }
 }
 
 case object StreamingproJobType {
@@ -114,10 +124,10 @@ case object StreamingproJobType {
 }
 
 case class StreamingproJobInfo(
-    owner: String,
-    jobType: String,
-    jobName: String,
-    jobContent: String,
-    groupId: String,
-    startTime: Long,
-    timeout: Long)
+                                owner: String,
+                                jobType: String,
+                                jobName: String,
+                                jobContent: String,
+                                groupId: String,
+                                startTime: Long,
+                                timeout: Long)

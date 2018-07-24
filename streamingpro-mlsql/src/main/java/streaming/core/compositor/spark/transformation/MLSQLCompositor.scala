@@ -42,7 +42,7 @@ class MLSQLCompositor[T] extends Compositor[T] with CompositorHelper {
       val context = new ScriptSQLExecListener(sparkSession(params), "", Map())
       ScriptSQLExec.parse(_sql, context)
     })
-
+    StreamingproJobManager.shutdown
     if (middleResult == null) List() else middleResult
   }
 }
