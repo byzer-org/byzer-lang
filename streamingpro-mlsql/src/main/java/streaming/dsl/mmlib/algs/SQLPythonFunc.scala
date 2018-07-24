@@ -145,8 +145,13 @@ object SQLPythonFunc {
   }
 
   def getModelVersion(basePath: String) = {
-    HDFSOperator.listModelDirectory(basePath).filter(f => f.getPath.getName.startsWith("_model_")).
-      map(f => f.getPath.getName.split("_").last.toInt).sorted.reverse.headOption
+    try {
+      HDFSOperator.listModelDirectory(basePath).filter(f => f.getPath.getName.startsWith("_model_")).
+        map(f => f.getPath.getName.split("_").last.toInt).sorted.reverse.headOption
+    } catch {
+      case e: Exception =>
+        None
+    }
   }
 
   def getAlgMetalPath(hdfsPath: String, versionEnabled: Boolean = false) = {
