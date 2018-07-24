@@ -9,7 +9,7 @@ import streaming.common.ShellCommand
 import streaming.core.pojo.Rating
 import streaming.core.strategy.platform.SparkRuntime
 import streaming.dsl.ScriptSQLExec
-import streaming.dsl.mmlib.algs.SQLALSInPlace
+import streaming.dsl.mmlib.algs.{SQLALSInPlace, SQLPythonFunc}
 import streaming.dsl.template.TemplateMerge
 
 
@@ -38,30 +38,31 @@ class SparkMLlibSpec extends BasicSparkOperation with SpecFunctions with BasicML
       val als = new SQLALSInPlace()
       val modelPath = "/tmp/als"
       als.train(training, "/tmp/william" + modelPath, Map(
-        "maxIter" -> "5",
-        "regParam" -> "0.01",
-        "userCol" -> "userId",
-        "itemCol" -> "movieId",
-        "ratingCol" -> "rating",
+        "fitParam.0.maxIter" -> "5",
+        "fitParam.0.regParam" -> "0.01",
+        "fitParam.0.userCol" -> "userId",
+        "fitParam.0.itemCol" -> "movieId",
+        "fitParam.0.ratingCol" -> "rating",
+        "fitParam.1.maxIter" -> "1",
+        "fitParam.1.regParam" -> "0.1",
+        "fitParam.1.userCol" -> "userId",
+        "fitParam.1.itemCol" -> "movieId",
+        "fitParam.1.ratingCol" -> "rating",
+        "evaluateTable" -> "test",
         "userRec" -> "10"
       ))
+      val finalModelPath = SQLPythonFunc.getAlgMetalPath("/tmp/william/tmp/als", true) + "/0"
+      spark.sql(s"select * from parquet.`$finalModelPath`").show()
 
-      val sq = createSSEL
-
-      ScriptSQLExec.parse(
-        s"""
-           |register ALSInPlace.`${modelPath}` as rmse options evaluateTable="test";
-         """.stripMargin, sq)
-
-      spark.sql("select rmse()").show()
 
       als.train(training, "/tmp/william" + modelPath, Map(
-        "maxIter" -> "5",
-        "regParam" -> "0.01",
-        "userCol" -> "userId",
-        "itemCol" -> "movieId",
-        "ratingCol" -> "rating",
-        "userRec" -> "10"
+        "fitParam.0.maxIter" -> "1",
+        "fitParam.0.regParam" -> "0.0001",
+        "fitParam.0.userCol" -> "userId",
+        "fitParam.0.itemCol" -> "movieId",
+        "fitParam.0.ratingCol" -> "rating",
+        "fitParam.0.userRec" -> "10",
+        "fitParam.0.evaluateTable" -> "test"
       ))
 
       assume(new File("/tmp/william//tmp/als/_model_1").exists())

@@ -12,7 +12,7 @@ import org.apache.spark.ml.{Estimator, Model}
 import org.apache.spark.ml.param.Params
 import org.apache.spark.ml.util.{MLReadable, MLWritable}
 import org.apache.spark.sql.expressions.UserDefinedFunction
-import org.apache.spark.sql.types.{MapType, StringType, StructField, StructType}
+import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Dataset, Row, SaveMode, SparkSession, functions => F}
 import org.apache.spark.util.{ExternalCommandRunner, ObjPickle, WowMD5, WowXORShiftRandom}
 import streaming.common.HDFSOperator
@@ -103,7 +103,7 @@ trait Functions extends SQlBaseFunc {
 
   def arrayParams(name: String, params: Map[String, String]) = {
     params.filter(f => f._1.startsWith(name + ".")).map { f =>
-      val Array(name, group, keys @ _*) = f._1.split("\\.")
+      val Array(name, group, keys@_*) = f._1.split("\\.")
       (group, keys.mkString("."), f._2)
     }.groupBy(f => f._1).map { f => f._2.map(k =>
       (k._2, k._3)).toMap
@@ -112,9 +112,9 @@ trait Functions extends SQlBaseFunc {
 
   def arrayParamsWithIndex(name: String, params: Map[String, String]): Array[(Int, Map[String, String])] = {
     params.filter(f => f._1.startsWith(name + ".")).map { f =>
-      val Array(name, group, keys @ _*) = f._1.split("\\.")
+      val Array(name, group, keys@_*) = f._1.split("\\.")
       (group, keys.mkString("."), f._2)
-    }.groupBy(f => f._1).map( f => {
+    }.groupBy(f => f._1).map(f => {
       val params = f._2.map(k => (k._2, k._3)).toMap
       (f._1.toInt, params)
     }).toArray
@@ -155,6 +155,58 @@ trait Functions extends SQlBaseFunc {
       case false =>
         f(df, 0)
     }
+  }
+
+  def trainModelsWithMultiParamGroup[T <: Model[T]](df: DataFrame, path: String, params: Map[String, String],
+                                                    modelType: () => Params,
+                                                    evaluate: (Params) => Double
+                                                   ) = {
+    val keepVersion = params.getOrElse("keepVersion", "true").toBoolean
+
+    val mf = (trainData: DataFrame, fitParam: Map[String, String], modelIndex: Int) => {
+      val alg = modelType()
+      configureModel(alg, fitParam)
+      var status = "success"
+      val modelTrainStartTime = System.currentTimeMillis()
+      val modelPath = SQLPythonFunc.getAlgModelPath(path, keepVersion) + "/" + modelIndex
+      var score = 0d
+      try {
+        val model = alg.asInstanceOf[Estimator[T]].fit(trainData)
+        model.asInstanceOf[MLWritable].write.overwrite().save(modelPath)
+        score = evaluate(model)
+      } catch {
+        case e: Exception =>
+          e.printStackTrace()
+          status = "fail"
+      }
+      val modelTrainEndTime = System.currentTimeMillis()
+      if (status == "fail") {
+        throw new RuntimeException(s"Fail to train als model: ${modelIndex}; All will fails")
+      }
+      Row.fromSeq(Seq(modelPath, modelIndex, alg.getClass.getName, score, "success", modelTrainStartTime, modelTrainEndTime, fitParam))
+    }
+    val fitParam = arrayParamsWithIndex("fitParam", params)
+
+    val wowRes = fitParam.map { fp =>
+      mf(df, fp._2, fp._1)
+    }
+
+    val wowRDD = df.sparkSession.sparkContext.parallelize(wowRes, 1)
+
+    df.sparkSession.createDataFrame(wowRDD, StructType(Seq(
+      StructField("modelPath", StringType),
+      StructField("algIndex", IntegerType),
+      StructField("alg", StringType),
+      StructField("score", DoubleType),
+
+      StructField("status", StringType),
+      StructField("startTime", LongType),
+      StructField("endTime", LongType),
+      StructField("trainParams", MapType(StringType, StringType))
+    ))).
+      write.
+      mode(SaveMode.Overwrite).
+      parquet(SQLPythonFunc.getAlgMetalPath(path, keepVersion) + "/0")
   }
 
   def predict_classification(sparkSession: SparkSession, _model: Any, name: String) = {
@@ -237,7 +289,6 @@ trait Functions extends SQlBaseFunc {
   }
 
 
-
   def distributeResource(spark: SparkSession, path: String, tempLocalPath: String) = {
     if (spark.sparkContext.isLocal) {
       val psDriverBackend = PlatformManager.getRuntime.asInstanceOf[SparkRuntime].localSchedulerBackend
@@ -248,6 +299,7 @@ trait Functions extends SQlBaseFunc {
     }
   }
 }
+
 object Functions {
   def mapParams(name: String, params: Map[String, String]) = {
     //    params.filter(f => f._1.startsWith(name + ".")).map(f => (f._1.split("\\.").drop(1).mkString("."), f._2))

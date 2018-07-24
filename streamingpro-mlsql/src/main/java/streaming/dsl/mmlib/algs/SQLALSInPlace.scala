@@ -19,11 +19,61 @@ class SQLALSInPlace extends SQLAlg with Functions {
     val keepVersion = params.getOrElse("keepVersion", "true").toBoolean
     SQLPythonFunc.incrementVersion(path, keepVersion)
 
-    trainModels[ALSModel](df, SQLPythonFunc.getAlgModelPath(path, keepVersion), params, () => {
-      new ALS()
-    })
+    val evaluateTable = params.get("evaluateTable")
+    val sparkSession = df.sparkSession
 
-    val model = ALSModel.load(SQLPythonFunc.getAlgModelPath(path, keepVersion) + "/0")
+    trainModelsWithMultiParamGroup[ALSModel](df, path, params, () => {
+      new ALS()
+    }, (model) => {
+      evaluateTable match {
+        case Some(etable) =>
+          val evaluateTableDF = sparkSession.table(etable)
+          val predictions = model.asInstanceOf[ALSModel].transform(evaluateTableDF)
+          val evaluator = new RegressionEvaluator()
+            .setMetricName("rmse")
+            .setLabelCol(params.getOrElse("ratingCol", "rating"))
+            .setPredictionCol("prediction")
+
+          val rmse = evaluator.evaluate(predictions)
+          //分值越低越好
+          -rmse
+        case None => 0d
+      }
+    }
+    )
+
+
+
+    val maxVersion = SQLPythonFunc.getModelVersion(path)
+    val versionEnabled = maxVersion match {
+      case Some(v) => true
+      case None => false
+    }
+    val modelVersion = params.getOrElse("modelVersion", maxVersion.getOrElse(-1).toString).toInt
+
+    val modelPath = if (modelVersion == -1) SQLPythonFunc.getAlgModelPath(path, versionEnabled)
+    else SQLPythonFunc.getAlgModelPathWithVersion(path, modelVersion)
+
+    val metaPath = if (modelVersion == -1) SQLPythonFunc.getAlgMetalPath(path, versionEnabled)
+    else SQLPythonFunc.getAlgMetalPathWithVersion(path, modelVersion)
+
+    var algIndex = params.getOrElse("algIndex", "-1").toInt
+
+    val modelList = sparkSession.read.parquet(metaPath + "/0").collect()
+    val models = if (algIndex != -1) {
+      Seq(modelPath + "/" + algIndex)
+    } else {
+      modelList.map(f => (f(3).asInstanceOf[Double], f(0).asInstanceOf[String], f(1).asInstanceOf[Int]))
+        .toSeq
+        .sortBy(f => f._1)(Ordering[Double].reverse)
+        .take(1)
+        .map(f => {
+          algIndex = f._3
+          modelPath + "/" + f._2.split("/").last
+        })
+    }
+
+    val model = ALSModel.load(models(0))
 
     if (params.contains("userRec")) {
       val userRecs = model.recommendForAllUsers(params.getOrElse("userRec", "10").toInt)
@@ -47,49 +97,10 @@ class SQLALSInPlace extends SQLAlg with Functions {
   }
 
   override def load(sparkSession: SparkSession, _path: String, params: Map[String, String]): Any = {
-    require(params.contains("evaluateTable"), "evaluateTable shoud be configured")
-
-    val maxVersion = SQLPythonFunc.getModelVersion(_path)
-    val versionEnabled = maxVersion match {
-      case Some(v) => true
-      case None => false
-    }
-
-    val modelVersion = params.getOrElse("modelVersion", maxVersion.getOrElse(-1).toString).toInt
-
-    // you can specify model version
-    val path = if (modelVersion == -1) SQLPythonFunc.getAlgMetalPath(_path, versionEnabled)
-    else SQLPythonFunc.getAlgMetalPathWithVersion(_path, modelVersion)
-
-    val modelPath = if (modelVersion == -1) SQLPythonFunc.getAlgModelPath(_path, versionEnabled)
-    else SQLPythonFunc.getAlgModelPathWithVersion(_path, modelVersion)
-
-    var algIndex = params.getOrElse("algIndex", "-1").toInt
-
-    val trainParams = sparkSession.read.parquet(path + "/1").collect().map(f => f.getMap[String, String](1)).head.toMap
-
-    val models = new ArrayBuffer[Any]()
-    models += ALSModel.load(modelPath + "/0")
-
-    (models, trainParams)
+    throw new RuntimeException("register is not supported in ALSInPlace")
   }
 
   override def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = {
-    val (models, trainParams) = _model.asInstanceOf[(ArrayBuffer[Any], Map[String, String])]
-    val model = models.head.asInstanceOf[ALSModel]
-    val evaluateTable = params("evaluateTable")
-
-    val evaluateTableDF = sparkSession.table(evaluateTable)
-    val predictions = model.transform(evaluateTableDF)
-    val evaluator = new RegressionEvaluator()
-      .setMetricName("rmse")
-      .setLabelCol(trainParams.getOrElse("ratingCol", "rating"))
-      .setPredictionCol("prediction")
-
-    val rmse = evaluator.evaluate(predictions)
-    val f = () => {
-      rmse
-    }
-    UserDefinedFunction(f, DoubleType, Some(Seq()))
+    throw new RuntimeException("register is not supported in ALSInPlace")
   }
 }

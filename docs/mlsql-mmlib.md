@@ -76,42 +76,51 @@ LDA 有如下函数：
 ### ALS
 
 ```sql
-train data as ALSInPlace.`/tmp/a` where
-    maxIter -> "5",
-    and regParam -> "0.01",
-    and userCol -> "userId",
-    and itemCol -> "movieId",
-    and ratingCol -> "rating",
-    and userRec -> "10"
+train data as ALSInPlace.`/tmp/als` where
+-- 第一组参数
+    `fitParam.0.maxIter`="5",
+    and `fitParam.0.regParam` -> "0.01",
+    and `fitParam.0.userCol` -> "userId",
+    and `fitParam.0.itemCol` -> "movieId",
+    and `fitParam.0.ratingCol` -> "rating",
+    and "fitParam.0.evaluateTable" -> "test",
+-- 第二组参数    
+    and `fitParam.1.maxIter`="1",
+    and `fitParam.1.regParam` -> "0.1",
+    and `fitParam.1.userCol` -> "userId",
+    and `fitParam.1.itemCol` -> "movieId",
+    and `fitParam.1.ratingCol` -> "rating",
+    and "fitParam.1.evaluateTable" -> "test",
+-- 针对用户做推荐，推荐数量为10        
+    and `userRec` -> "10"
 ```
 
-你可以获取预测结果：
+你可以查看模型最后的详情：
+
+```sql
+load parquet.`/tmp/als/_model_0/meta/0` as models;
+select * from models as result;
+```
+
+效果如下：
+
+```
++--------------------+--------+--------------------+------------------+-------+-------------+-------------+--------------------+
+|           modelPath|algIndex|                 alg|             score| status|    startTime|      endTime|         trainParams|
++--------------------+--------+--------------------+------------------+-------+-------------+-------------+--------------------+
+|/tmp/william/tmp/...|       1|org.apache.spark....|1.8793040074492964|success|1532413509977|1532413516579|Map(ratingCol -> ...|
+|/tmp/william/tmp/...|       0|org.apache.spark....|1.8709383720062565|success|1532413516584|1532413520291|Map(ratingCol -> ...|
++--------------------+--------+--------------------+------------------+-------+-------------+-------------+--------------------+
+```
+
+你可以获取预测结果
 
 ```sql
 load parquet.`/tmp/a/data/userRec` as userRec;
 select * from userRec as result;
 ```
 
-你也可以评估效果(rmse):
-
-```sql
-register ALSInPlace.`${modelPath}` as rmse 
-options 
--- 验证数据集的表名
-evaluateTable="test";
-
-select rmse() as rmse as result; 
-```
-
-显示内容如下：
-
-```sql
-+------------------+
-|             rmse|
-+------------------+
-|1.8469711649398344|
-+------------------+
-```
+算法会自动根据evaluateTable 计算rmse,取rmse最小的作为最好的模型。
 
 
 
