@@ -89,7 +89,6 @@ and `fitParam.1.regParam` = "0.1",
 and `fitParam.1.userCol` = "userId",
 and `fitParam.1.itemCol` = "movieId",
 and `fitParam.1.ratingCol` = "rating",
-and "fitParam.1.evaluateTable" = "test",
 -- 针对用户做推荐，推荐数量为10       
 and evaluateTable="test",
 and `userRec` = "10"
