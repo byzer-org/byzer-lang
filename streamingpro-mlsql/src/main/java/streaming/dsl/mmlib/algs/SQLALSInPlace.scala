@@ -1,8 +1,6 @@
 package streaming.dsl.mmlib.algs
 
-import org.apache.spark.ml.classification.RandomForestClassificationModel
 import org.apache.spark.ml.evaluation.RegressionEvaluator
-import org.apache.spark.ml.linalg.Vector
 import org.apache.spark.ml.recommendation.{ALS, ALSModel}
 import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession}
 import org.apache.spark.sql.expressions.UserDefinedFunction
@@ -18,11 +16,14 @@ import scala.collection.mutable.ArrayBuffer
 class SQLALSInPlace extends SQLAlg with Functions {
   override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
 
-    trainModels[ALSModel](df, SQLPythonFunc.getAlgModelPath(path), params, () => {
+    val keepVersion = params.getOrElse("keepVersion", "true").toBoolean
+    SQLPythonFunc.incrementVersion(path, keepVersion)
+
+    trainModels[ALSModel](df, SQLPythonFunc.getAlgModelPath(path, keepVersion), params, () => {
       new ALS()
     })
 
-    val model = ALSModel.load(SQLPythonFunc.getAlgModelPath(path) + "/0")
+    val model = ALSModel.load(SQLPythonFunc.getAlgModelPath(path, keepVersion) + "/0")
 
     if (params.contains("userRec")) {
       val userRecs = model.recommendForAllUsers(params.getOrElse("userRec", "10").toInt)
@@ -42,16 +43,33 @@ class SQLALSInPlace extends SQLAlg with Functions {
       StructField("trainParams", MapType(StringType, StringType))))).
       write.
       mode(SaveMode.Overwrite).
-      parquet(SQLPythonFunc.getAlgMetalPath(path) + "/1")
+      parquet(SQLPythonFunc.getAlgMetalPath(path, keepVersion) + "/1")
   }
 
-  override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = {
+  override def load(sparkSession: SparkSession, _path: String, params: Map[String, String]): Any = {
     require(params.contains("evaluateTable"), "evaluateTable shoud be configured")
 
-    val trainParams = sparkSession.read.parquet(SQLPythonFunc.getAlgMetalPath(path) + "/1").collect().map(f => f.getMap[String, String](1)).head.toMap
+    val maxVersion = SQLPythonFunc.getModelVersion(_path)
+    val versionEnabled = maxVersion match {
+      case Some(v) => true
+      case None => false
+    }
+
+    val modelVersion = params.getOrElse("modelVersion", maxVersion.getOrElse(-1).toString).toInt
+
+    // you can specify model version
+    val path = if (modelVersion == -1) SQLPythonFunc.getAlgMetalPath(_path, versionEnabled)
+    else SQLPythonFunc.getAlgMetalPathWithVersion(_path, modelVersion)
+
+    val modelPath = if (modelVersion == -1) SQLPythonFunc.getAlgModelPath(_path, versionEnabled)
+    else SQLPythonFunc.getAlgModelPathWithVersion(_path, modelVersion)
+
+    var algIndex = params.getOrElse("algIndex", "-1").toInt
+
+    val trainParams = sparkSession.read.parquet(path + "/1").collect().map(f => f.getMap[String, String](1)).head.toMap
 
     val models = new ArrayBuffer[Any]()
-    models += ALSModel.load(SQLPythonFunc.getAlgModelPath(path) + "/0")
+    models += ALSModel.load(modelPath + "/0")
 
     (models, trainParams)
   }

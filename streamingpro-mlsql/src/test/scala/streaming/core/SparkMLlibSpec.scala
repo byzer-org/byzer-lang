@@ -1,8 +1,11 @@
 package streaming.core
 
+import java.io.File
+
 import org.apache.spark.ml.evaluation.RegressionEvaluator
 import org.apache.spark.ml.recommendation.ALSModel
 import org.apache.spark.streaming.BasicSparkOperation
+import streaming.common.ShellCommand
 import streaming.core.pojo.Rating
 import streaming.core.strategy.platform.SparkRuntime
 import streaming.dsl.ScriptSQLExec
@@ -20,6 +23,9 @@ class SparkMLlibSpec extends BasicSparkOperation with SpecFunctions with BasicML
       //执行sql
       implicit val spark = runtime.sparkSession
       import spark.implicits._
+
+
+      ShellCommand.exec("rm -rf /tmp/william//tmp/als")
 
       val ratings = spark.read.textFile("/tmp/william/sample_movielens_ratings.txt")
         .map { str =>
@@ -48,6 +54,17 @@ class SparkMLlibSpec extends BasicSparkOperation with SpecFunctions with BasicML
          """.stripMargin, sq)
 
       spark.sql("select rmse()").show()
+
+      als.train(training, "/tmp/william" + modelPath, Map(
+        "maxIter" -> "5",
+        "regParam" -> "0.01",
+        "userCol" -> "userId",
+        "itemCol" -> "movieId",
+        "ratingCol" -> "rating",
+        "userRec" -> "10"
+      ))
+
+      assume(new File("/tmp/william//tmp/als/_model_1").exists())
     }
   }
 
