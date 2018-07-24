@@ -73,6 +73,47 @@ LDA 有如下函数：
 
 
 
+### ALS
+
+```sql
+train data as ALSInPlace.`/tmp/a` where
+    maxIter -> "5",
+    and regParam -> "0.01",
+    and userCol -> "userId",
+    and itemCol -> "movieId",
+    and ratingCol -> "rating",
+    and userRec -> "10"
+```
+
+你可以获取预测结果：
+
+```sql
+load parquet.`/tmp/a/data/userRec` as userRec;
+select * from userRec as result;
+```
+
+你也可以评估效果(rmse):
+
+```sql
+register ALSInPlace.`${modelPath}` as rmse 
+options 
+-- 验证数据集的表名
+evaluateTable="test";
+
+select rmse() as rmse as result; 
+```
+
+显示内容如下：
+
+```sql
++------------------+
+|             rmse|
++------------------+
+|1.8469711649398344|
++------------------+
+```
+
+
 
 
 
