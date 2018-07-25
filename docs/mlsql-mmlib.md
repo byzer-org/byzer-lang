@@ -96,6 +96,7 @@ and ratingCol="rating"
 and `userRec` = "10"
 -- 针对内容推荐用户，推荐数量为10
 -- and `itemRec` = "10"
+and coldStartStrategy="drop"
 ```
 
 你可以查看模型最后的详情：
