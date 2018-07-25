@@ -2,15 +2,11 @@ package streaming.core
 
 import java.io.File
 
-import org.apache.spark.ml.evaluation.RegressionEvaluator
-import org.apache.spark.ml.recommendation.ALSModel
 import org.apache.spark.streaming.BasicSparkOperation
 import streaming.common.ShellCommand
 import streaming.core.pojo.Rating
 import streaming.core.strategy.platform.SparkRuntime
-import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib.algs.{SQLALSInPlace, SQLPythonFunc}
-import streaming.dsl.template.TemplateMerge
 
 
 /**
