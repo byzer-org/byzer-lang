@@ -23,6 +23,7 @@ class SQLALSInPlace extends SQLAlg with MllibFunctions with Functions {
     }, (model) => {
       evaluateTable match {
         case Some(etable) =>
+          model.asInstanceOf[ALSModel].setColdStartStrategy(params.getOrElse("coldStartStrategy", "nan"))
           val evaluateTableDF = sparkSession.table(etable)
           val predictions = model.asInstanceOf[ALSModel].transform(evaluateTableDF)
           val evaluator = new RegressionEvaluator()
