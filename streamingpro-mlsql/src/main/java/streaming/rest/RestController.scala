@@ -26,77 +26,8 @@ import streaming.dsl.{ScriptSQLExec, ScriptSQLExecListener}
   */
 class RestController extends ApplicationController {
 
-  @At(path = Array("/runtime/spark/sql"), types = Array(GET, POST))
-  def sql = {
-    if (!runtime.isInstanceOf[SparkRuntime]) render(400, "only support spark application")
-    val sparkRuntime = runtime.asInstanceOf[SparkRuntime]
-    val sparkSession = sparkRuntime.sparkSession
-    val tableToPaths = params().filter(f => f._1.startsWith("tableName.")).map(table => (table._1.split("\\.").last, table._2))
-
-    tableToPaths.foreach { tableToPath =>
-      val tableName = tableToPath._1
-      val loaderClzz = params.filter(f => f._1 == s"loader_clzz.${tableName}").head
-      val newParams = params.filter(f => f._1.startsWith(s"loader_param.${tableName}.")).map { f =>
-        val coms = f._1.split("\\.")
-        val paramStr = coms.takeRight(coms.length - 2).mkString(".")
-        (paramStr, f._2)
-      }.toMap + loaderClzz
-
-      if (!sparkSession.catalog.tableExists(tableToPath._1) || paramAsBoolean("forceCreateTable", false)) {
-        sparkRuntime.operator.createTable(tableToPath._2, tableToPath._1, newParams)
-      }
-    }
-
-    val sql = if (param("sql").contains(" limit ")) param("sql") else param("sql") + " limit 1000"
-    val result = sparkRuntime.operator.runSQL(sql).mkString(",")
-
-    param("resultType", "json") match {
-      case "json" => render(200, "[" + result + "]", ViewType.json)
-      case _ => renderHtml(200, "/rest/sqlui-result.vm", WowCollections.map("feeds", result))
-    }
-  }
-
-  def _save(dfWriter: DataFrameWriter[Row]) = {
-    if (hasParam("tableName")) {
-      dfWriter.saveAsTable(param("tableName"))
-    } else {
-      dfWriter.format(param("format", "csv")).save(param("path", "-"))
-    }
-  }
-
-  @At(path = Array("/cluster/register"), types = Array(GET, POST))
-  def registerCluster = {
-    val Array(host, port) = param("hostAndPort").split(":")
-    val jobName = param("jobName")
-    val taskIndex = param("taskIndex").toInt
-    ClusterSpec.addJob(param("cluster"), ExecutorInfo(host, port.toInt, jobName, taskIndex))
-    render(200, "{}")
-  }
-
-  // when tensorflow cluster is started ,
-  // once the worker finish, it will report to this api
-  @At(path = Array("/cluster/worker/status"), types = Array(GET, POST))
-  def clusterWorkerStatus = {
-    val Array(host, port) = param("hostAndPort").split(":")
-    val jobName = param("jobName")
-    val taskIndex = param("taskIndex").toInt
-    ClusterStatus.count(param("cluster"), ExecutorInfo(host, port.toInt, jobName, taskIndex))
-    render(200, "{}")
-  }
-
-  // the ps in tensorlfow cluster will check worker status,
-  // once all workers finish, then it will kill ps
-  @At(path = Array("/cluster/worker/finish"), types = Array(GET, POST))
-  def clusterWorkerFinish = {
-    val workerFinish = ClusterStatus.count(param("cluster"))
-    render(200, workerFinish + "")
-  }
-
-  @At(path = Array("/cluster"), types = Array(GET))
-  def cluster = {
-    render(200, toJsonString(ClusterSpec.clusterSpec(param("cluster"))), ViewType.string)
-  }
-
+  // mlsql script execute api, support async and sysn
+  // begin -------------------------------------------
   @At(path = Array("/run/script"), types = Array(GET, POST))
   def script = {
     restResponse.httpServletResponse().setHeader("Access-Control-Allow-Origin", "*")
@@ -149,6 +80,40 @@ class RestController extends ApplicationController {
     render(outputResult)
   }
 
+  // download hdfs file
+  @At(path = Array("/download"), types = Array(GET, POST))
+  def download = {
+    val filename = param("fileName", System.currentTimeMillis() + "")
+    param("fileType", "raw") match {
+      case "tar" =>
+        restResponse.httpServletResponse().setContentType("application/octet-stream")
+        restResponse.httpServletResponse().addHeader("Content-Disposition", "attachment;filename=" + new String((filename + ".tar").getBytes))
+        restResponse.httpServletResponse().addHeader("Transfer-Encoding", "chunked")
+        DownloadRunner.getTarFileByPath(restResponse.httpServletResponse(), param("paths")) match {
+          case 200 => render("success")
+          case 400 => render(400, "download fail")
+          case 500 => render(500, "server error")
+        }
+      case "raw" =>
+        restResponse.httpServletResponse().setContentType("application/octet-stream")
+        restResponse.httpServletResponse().addHeader("Content-Disposition", "attachment;filename=" + new String((filename + "." + param("file_suffix")).getBytes))
+        restResponse.httpServletResponse().addHeader("Transfer-Encoding", "chunked")
+        DownloadRunner.getRawFileByPath(restResponse.httpServletResponse(), param("paths"), paramAsLong("pos", 0)) match {
+          case 200 => render("success")
+          case 400 => render(400, "download fail")
+          case 500 => render(500, "server error")
+        }
+
+    }
+
+  }
+
+  //end -------------------------------------------
+
+
+
+  // single spark sql support
+  // begin -------------------------------------------
   @At(path = Array("/run/sql"), types = Array(GET, POST))
   def ddlSql = {
     val sparkRuntime = runtime.asInstanceOf[SparkRuntime]
@@ -197,33 +162,128 @@ class RestController extends ApplicationController {
     }
   }
 
-  @At(path = Array("/download"), types = Array(GET, POST))
-  def download = {
-    val filename = param("fileName", System.currentTimeMillis() + "")
-    param("fileType", "raw") match {
-      case "tar" =>
-        restResponse.httpServletResponse().setContentType("application/octet-stream")
-        restResponse.httpServletResponse().addHeader("Content-Disposition", "attachment;filename=" + new String((filename + ".tar").getBytes))
-        restResponse.httpServletResponse().addHeader("Transfer-Encoding", "chunked")
-        DownloadRunner.getTarFileByPath(restResponse.httpServletResponse(), param("paths")) match {
-          case 200 => render("success")
-          case 400 => render(400, "download fail")
-          case 500 => render(500, "server error")
-        }
-      case "raw" =>
-        restResponse.httpServletResponse().setContentType("application/octet-stream")
-        restResponse.httpServletResponse().addHeader("Content-Disposition", "attachment;filename=" + new String((filename + "." + param("file_suffix")).getBytes))
-        restResponse.httpServletResponse().addHeader("Transfer-Encoding", "chunked")
-        DownloadRunner.getRawFileByPath(restResponse.httpServletResponse(), param("paths"), paramAsLong("pos", 0)) match {
-          case 200 => render("success")
-          case 400 => render(400, "download fail")
-          case 500 => render(500, "server error")
-        }
 
+  @At(path = Array("/runtime/spark/sql"), types = Array(GET, POST))
+  def sql = {
+    if (!runtime.isInstanceOf[SparkRuntime]) render(400, "only support spark application")
+    val sparkRuntime = runtime.asInstanceOf[SparkRuntime]
+    val sparkSession = sparkRuntime.sparkSession
+    val tableToPaths = params().filter(f => f._1.startsWith("tableName.")).map(table => (table._1.split("\\.").last, table._2))
+
+    tableToPaths.foreach { tableToPath =>
+      val tableName = tableToPath._1
+      val loaderClzz = params.filter(f => f._1 == s"loader_clzz.${tableName}").head
+      val newParams = params.filter(f => f._1.startsWith(s"loader_param.${tableName}.")).map { f =>
+        val coms = f._1.split("\\.")
+        val paramStr = coms.takeRight(coms.length - 2).mkString(".")
+        (paramStr, f._2)
+      }.toMap + loaderClzz
+
+      if (!sparkSession.catalog.tableExists(tableToPath._1) || paramAsBoolean("forceCreateTable", false)) {
+        sparkRuntime.operator.createTable(tableToPath._2, tableToPath._1, newParams)
+      }
     }
 
+    val sql = if (param("sql").contains(" limit ")) param("sql") else param("sql") + " limit 1000"
+    val result = sparkRuntime.operator.runSQL(sql).mkString(",")
+
+    param("resultType", "json") match {
+      case "json" => render(200, "[" + result + "]", ViewType.json)
+      case _ => renderHtml(200, "/rest/sqlui-result.vm", WowCollections.map("feeds", result))
+    }
   }
 
+  //end -------------------------------------------
+
+
+
+  // job manager api
+  // begin --------------------------------------------------------
+  @At(path = Array("/runningjobs"), types = Array(GET, POST))
+  def getRunningJobGroup = {
+    val infoMap = StreamingproJobManager.getJobInfo
+    render(200, toJsonString(infoMap))
+  }
+
+  @At(path = Array("/stream/jobs/running"), types = Array(GET, POST))
+  def streamRunningJobs = {
+    restResponse.httpServletResponse().setHeader("Access-Control-Allow-Origin", "*")
+    val infoMap = runtime.asInstanceOf[SparkRuntime].sparkSession.streams.active.map { f =>
+      StreamingproJobInfo(null, StreamingproJobType.STREAM, f.name, f.lastProgress.json, f.id + "", -1l, -1l)
+    }
+    render(200, toJsonString(infoMap))
+  }
+
+  @At(path = Array("/stream/jobs/kill"), types = Array(GET, POST))
+  def killStreamJob = {
+    restResponse.httpServletResponse().setHeader("Access-Control-Allow-Origin", "*")
+    val groupId = param("groupId")
+    runtime.asInstanceOf[SparkRuntime].sparkSession.streams.get(groupId).stop()
+    render(200, "{}")
+  }
+
+  @At(path = Array("/killjob"), types = Array(GET, POST))
+  def killJob = {
+    restResponse.httpServletResponse().setHeader("Access-Control-Allow-Origin", "*")
+    val groupId = param("groupId")
+    if (groupId == null) {
+      val jobName = param("jobName")
+      val groupIds = StreamingproJobManager.getJobInfo.filter(f => f._2.jobName == jobName).map(f => f._1)
+      groupIds.headOption match {
+        case Some(groupId) => StreamingproJobManager.killJob(groupId)
+        case None =>
+      }
+    } else {
+      StreamingproJobManager.killJob(groupId)
+    }
+
+    render(200, "{}")
+  }
+
+  // end --------------------------------------------------------
+
+
+
+  // tensorflow cluster driver api
+  // begin -------------------------------------------
+  @At(path = Array("/cluster/register"), types = Array(GET, POST))
+  def registerCluster = {
+    val Array(host, port) = param("hostAndPort").split(":")
+    val jobName = param("jobName")
+    val taskIndex = param("taskIndex").toInt
+    ClusterSpec.addJob(param("cluster"), ExecutorInfo(host, port.toInt, jobName, taskIndex))
+    render(200, "{}")
+  }
+
+  // when tensorflow cluster is started ,
+  // once the worker finish, it will report to this api
+  @At(path = Array("/cluster/worker/status"), types = Array(GET, POST))
+  def clusterWorkerStatus = {
+    val Array(host, port) = param("hostAndPort").split(":")
+    val jobName = param("jobName")
+    val taskIndex = param("taskIndex").toInt
+    ClusterStatus.count(param("cluster"), ExecutorInfo(host, port.toInt, jobName, taskIndex))
+    render(200, "{}")
+  }
+
+  // the ps in tensorlfow cluster will check worker status,
+  // once all workers finish, then it will kill ps
+  @At(path = Array("/cluster/worker/finish"), types = Array(GET, POST))
+  def clusterWorkerFinish = {
+    val workerFinish = ClusterStatus.count(param("cluster"))
+    render(200, workerFinish + "")
+  }
+
+  @At(path = Array("/cluster"), types = Array(GET))
+  def cluster = {
+    render(200, toJsonString(ClusterSpec.clusterSpec(param("cluster"))), ViewType.string)
+  }
+
+  //end -------------------------------------------
+
+
+  // table create, udf register functions
+  // begin -------------------------------------------
   @At(path = Array("/table/create"), types = Array(GET, POST))
   def tableCreate = {
     val sparkRuntime = runtime.asInstanceOf[SparkRuntime]
@@ -279,47 +339,13 @@ class RestController extends ApplicationController {
     render("{}")
   }
 
-  @At(path = Array("/runningjobs"), types = Array(GET, POST))
-  def getRunningJobGroup = {
-    val infoMap = StreamingproJobManager.getJobInfo
-    render(200, toJsonString(infoMap))
-  }
+  //end -------------------------------------------
 
-  @At(path = Array("/stream/jobs/running"), types = Array(GET, POST))
-  def streamRunningJobs = {
-    restResponse.httpServletResponse().setHeader("Access-Control-Allow-Origin", "*")
-    val infoMap = runtime.asInstanceOf[SparkRuntime].sparkSession.streams.active.map { f =>
-      StreamingproJobInfo(null, StreamingproJobType.STREAM, f.name, f.lastProgress.json, f.id + "", -1l, -1l)
-    }
-    render(200, toJsonString(infoMap))
-  }
 
-  @At(path = Array("/stream/jobs/kill"), types = Array(GET, POST))
-  def killStreamJob = {
-    restResponse.httpServletResponse().setHeader("Access-Control-Allow-Origin", "*")
-    val groupId = param("groupId")
-    runtime.asInstanceOf[SparkRuntime].sparkSession.streams.get(groupId).stop()
-    render(200, "{}")
-  }
 
-  @At(path = Array("/killjob"), types = Array(GET, POST))
-  def killJob = {
-    restResponse.httpServletResponse().setHeader("Access-Control-Allow-Origin", "*")
-    val groupId = param("groupId")
-    if (groupId == null) {
-      val jobName = param("jobName")
-      val groupIds = StreamingproJobManager.getJobInfo.filter(f => f._2.jobName == jobName).map(f => f._1)
-      groupIds.headOption match {
-        case Some(groupId) => StreamingproJobManager.killJob(groupId)
-        case None =>
-      }
-    } else {
-      StreamingproJobManager.killJob(groupId)
-    }
-
-    render(200, "{}")
-  }
-
+  
+  // help method
+  // begin --------------------------------------------------------
   def runtime = PlatformManager.getRuntime
 
   private[this] val _mapper = new ObjectMapper()
@@ -338,4 +364,14 @@ class RestController extends ApplicationController {
         null.asInstanceOf[T]
     }
   }
+
+  def _save(dfWriter: DataFrameWriter[Row]) = {
+    if (hasParam("tableName")) {
+      dfWriter.saveAsTable(param("tableName"))
+    } else {
+      dfWriter.format(param("format", "csv")).save(param("path", "-"))
+    }
+  }
+
+  // end --------------------------------------------------------
 }
