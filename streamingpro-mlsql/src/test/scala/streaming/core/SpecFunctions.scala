@@ -1,6 +1,6 @@
 package streaming.core
 
-import java.io.File
+import java.io.{File, FileNotFoundException}
 import java.sql.DriverManager
 
 import org.apache.commons.io.{FileUtils, IOUtils}
@@ -77,8 +77,12 @@ trait SpecFunctions {
   }
 
   def delDir(file: String) = {
+    try {
     require(file.stripSuffix("/").split("/").size > 1, s"delete $file  maybe too dangerous")
-    FileUtils.forceDelete(new File(file))
+    FileUtils.forceDelete(new File(file))}
+    catch {
+      case ex: FileNotFoundException => println(ex)
+    }
   }
 
   def writeStringToFile(file: String, content: String) = {
