@@ -553,8 +553,27 @@ keepVersion="true"
 load parquet.`/tmp/william/pa_model_k/_model_n/meta/0` as modelInfo;
 select * from modelInfo as result;
 ```
+结果如下：
 
-手动指定版本的方式如下：
+```
++--------------------+--------+--------------------+-------------------+-------+-------------+-------------+--------------------+
+|           modelPath|algIndex|                 alg|              score| status|    startTime|      endTime|         trainParams|
++--------------------+--------+--------------------+-------------------+-------+-------------+-------------+--------------------+
+|/tmp/william/tmp/...|       1|org.apache.spark....|-1.9704115113779945|success|1532659750073|1532659757320|Map(ratingCol -> ...|
+|/tmp/william/tmp/...|       0|org.apache.spark....|-1.8446490919033698|success|1532659757327|1532659760394|Map(ratingCol -> ...|
++--------------------+--------+--------------------+-------------------+-------+-------------+-------------+--------------------+
+```
+
+大家可能注意到里面有一个 score列, 你可以在训练脚本中最后加入这么一行：
+
+```python
+mlsql_validation_score:0.87
+```
+
+然后这个0.87会被提取并且放置到score列中。
+
+
+预测时，可以手动指定版本的方式如下：
 
 ```sql
 register PythonAlg.`/tmp/william/pa_model_k` as predict options
