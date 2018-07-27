@@ -16,7 +16,9 @@ object LocalSparkServiceApp {
       "-streaming.job.cancel", "true",
       "-streaming.ps.enable", "true",
       "-spark.sql.hive.thriftServer.singleSession", "true",
+      "-streaming.rest.intercept.clzz", "streaming.rest.ExampleRestInterceptor",
       "-streaming.driver.port", "9003"
+
       //"-streaming.sql.out.path","file:///tmp/test/pdate=20160809"
 
       //"-streaming.jobs","idf-compute"
