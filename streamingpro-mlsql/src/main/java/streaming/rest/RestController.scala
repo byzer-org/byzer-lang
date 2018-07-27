@@ -1,6 +1,7 @@
 package streaming.rest
 
 import java.lang.reflect.Modifier
+import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
 
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
@@ -83,6 +84,7 @@ class RestController extends ApplicationController {
   // download hdfs file
   @At(path = Array("/download"), types = Array(GET, POST))
   def download = {
+    intercept()
     val filename = param("fileName", System.currentTimeMillis() + "")
     param("fileType", "raw") match {
       case "tar" =>
@@ -109,7 +111,6 @@ class RestController extends ApplicationController {
   }
 
   //end -------------------------------------------
-
 
 
   // single spark sql support
@@ -196,7 +197,6 @@ class RestController extends ApplicationController {
   //end -------------------------------------------
 
 
-
   // job manager api
   // begin --------------------------------------------------------
   @At(path = Array("/runningjobs"), types = Array(GET, POST))
@@ -241,7 +241,6 @@ class RestController extends ApplicationController {
   }
 
   // end --------------------------------------------------------
-
 
 
   // tensorflow cluster driver api
@@ -342,8 +341,6 @@ class RestController extends ApplicationController {
   //end -------------------------------------------
 
 
-
-  
   // help method
   // begin --------------------------------------------------------
   def runtime = PlatformManager.getRuntime
@@ -370,6 +367,14 @@ class RestController extends ApplicationController {
       dfWriter.saveAsTable(param("tableName"))
     } else {
       dfWriter.format(param("format", "csv")).save(param("path", "-"))
+    }
+  }
+
+  def intercept() = {
+    val jparams = runtime.asInstanceOf[SparkRuntime].params
+    if (jparams.containsKey("streaming.rest.intercept.clzz")) {
+      val interceptor = Class.forName(jparams("streaming.rest.intercept.clzz").toString).newInstance()
+      interceptor.asInstanceOf[RestInterceptor].before(request = request.httpServletRequest(), response = restResponse.httpServletResponse())
     }
   }
 

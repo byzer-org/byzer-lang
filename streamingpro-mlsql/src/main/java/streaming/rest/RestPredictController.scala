@@ -17,6 +17,7 @@ class RestPredictController extends ApplicationController {
 
   @At(path = Array("/model/predict"), types = Array(GET, POST))
   def modelPredict = {
+    intercept()
     val res = param("dataType", "vector") match {
       case "vector" => vec2vecPredict
       case "string" => string2vecPredict
@@ -83,5 +84,13 @@ class RestPredictController extends ApplicationController {
   }
 
   def runtime = PlatformManager.getRuntime
+
+  def intercept() = {
+    val jparams = runtime.asInstanceOf[SparkRuntime].params
+    if (jparams.containsKey("streaming.rest.intercept.clzz")) {
+      val interceptor = Class.forName(jparams("streaming.rest.intercept.clzz").toString).newInstance()
+      interceptor.asInstanceOf[RestInterceptor].before(request = request.httpServletRequest(), response = restResponse.httpServletResponse())
+    }
+  }
 }
 
