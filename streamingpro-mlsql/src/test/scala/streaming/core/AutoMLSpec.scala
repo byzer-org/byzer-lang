@@ -347,7 +347,7 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
       val resultFeatures = Seq("index", "")
       val minCounts = Seq("1", "2")
       for (resultFeature <- resultFeatures) {
-        val wordCount = Array(0,0)
+        val wordCount = Array(0, 0)
         var i = 0
         for (minCount <- minCounts) {
           implicit val spark = runtime.sparkSession
