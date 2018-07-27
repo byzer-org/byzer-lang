@@ -1,5 +1,6 @@
 package streaming.core
 
+import net.sf.json.JSONObject
 import org.apache.spark.ml.linalg.Vector
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{Row, SaveMode}
@@ -267,7 +268,8 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
         assume(df.count() == 3)
         df = spark.sql("select label,__split__,count(__split__) as rate from sample_data  group by label,__split__ order by label,__split__,rate")
         df.show(10000)
-    }})
+      }
+    })
 
   }
 
@@ -308,8 +310,8 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
 
-      val wordvecPaths = Seq("/Users/zml/mlsql/word2vec","")
-      val resultFeatures = Seq ("index","")
+      val wordvecPaths = Seq("/Users/zml/mlsql/word2vec", "")
+      val resultFeatures = Seq("index", "")
       for (wordvecPath <- wordvecPaths) {
         for (resultFeature <- resultFeatures) {
           implicit val spark = runtime.sparkSession
@@ -328,7 +330,7 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
           writeStringToFile("/tmp/tfidf/prioritywords", List("天才").mkString("\n"))
           val sq = createSSEL
           ScriptSQLExec.parse(TemplateMerge.merge(loadSQLScriptStr("word2vecplace"),
-            Map("wordvecPaths" -> wordvecPath, "resultFeature" -> resultFeature)), sq)
+            Map("wordvecPaths" -> wordvecPath, "resultFeature" -> resultFeature, "minCount" -> "1")), sq)
           // we should make sure train vector and predict vector the same
           val trainVector = spark.sql("select * from parquet.`/tmp/william/tmp/word2vecinplace/data`").toJSON.collect()
           val predictVector = spark.sql("select jack(content) as content from orginal_text_corpus").toJSON.collect()
@@ -340,12 +342,52 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
     }
   }
 
+  "SQLWord2VecInPlaceMinCount" should "work fine" taggedAs (NotToRunTag) in {
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+      val resultFeatures = Seq("index", "")
+      val minCounts = Seq("1", "2")
+      for (resultFeature <- resultFeatures) {
+        val wordCount = Array(0,0)
+        var i = 0
+        for (minCount <- minCounts) {
+          implicit val spark = runtime.sparkSession
+          delDir("/tmp/william/tmp/word2vecinplace")
+          delDir("/tmp/william/tmp/tfidf")
+          val raw = Seq("我是天才，你呢", "你真的很棒", "天才你好")
+          val dataRDD = spark.sparkContext.parallelize(raw).map { f =>
+            Row.fromSeq(Seq(f))
+          }
+          val df = spark.createDataFrame(dataRDD,
+            StructType(Seq(StructField("content", StringType))))
+
+          df.write.mode(SaveMode.Overwrite).parquet("/tmp/william/tmp/tfidf/df")
+
+          writeStringToFile("/tmp/tfidf/stopwords", List("你").mkString("\n"))
+          writeStringToFile("/tmp/tfidf/prioritywords", List("天才").mkString("\n"))
+          val sq = createSSEL
+          ScriptSQLExec.parse(TemplateMerge.merge(loadSQLScriptStr("word2vecplace"),
+            Map("wordvecPaths" -> "", "resultFeature" -> resultFeature, "minCount" -> minCount)), sq)
+          // we should make sure train vector and predict vector the same
+          val trainVector = spark.sql("select * from parquet.`/tmp/william/tmp/word2vecinplace/data`").toJSON.collect()
+          val predictVector = spark.sql("select jack(content) as content from orginal_text_corpus").toJSON.collect()
+          predictVector.foreach { f =>
+            assume(trainVector.contains(f))
+          }
+          val countVector = spark.sql("select count(*) as a from parquet.`/tmp/william/tmp/word2vecinplace/meta/columns/content/word2vec/data`").toJSON.collect()
+          wordCount(i) = JSONObject.fromObject(countVector(0)).get("a").toString.toInt
+          i = i + 1
+        }
+        assume(wordCount(0) > wordCount(1))
+      }
+    }
+  }
+
   "SQLWord2VecInPlaceSplit" should "work fine" taggedAs (NotToRunTag) in {
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
 
-      val splits = Seq("","，")
-      val resultFeatures = Seq ("index","")
+      val splits = Seq("", "，")
+      val resultFeatures = Seq("index", "")
       for (split <- splits) {
         for (resultFeature <- resultFeatures) {
           implicit val spark = runtime.sparkSession

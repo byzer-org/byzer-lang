@@ -135,6 +135,7 @@ as lwys_corpus_with_featurize;
 |length|None|数组长度|
 |stopWordPath|None|停用词目录路径|
 |split|None|分词分隔符|
+|minCount|None|词出现的最小次数过滤|
 
 lwys_corpus_with_featurize 中的content字段已经是向量化的了，可以直接进行后续的算法训练。
 

@@ -27,13 +27,14 @@ class SQLWord2VecInPlace extends SQLAlg with Functions {
     val length = params.getOrElse("length", "100").toInt
     val stopWordPath = params.getOrElse("stopWordPath", "")
     val resultFeature = params.getOrElse("resultFeature", "") //flat,merge,index
+    val minCount = params.getOrElse("minCount","1").toInt
     val split = params.getOrElse("split", null)
     require(!inputCol.isEmpty, "inputCol is required when use SQLWord2VecInPlace")
     val metaPath = getMetaPath(params("path"))
     // keep params
     saveTraningParams(df.sparkSession, params, metaPath)
 
-    var newDF = StringFeature.word2vec(df, metaPath, dicPaths, wordvecPaths, inputCol, stopWordPath, resultFeature, split, vectorSize, length)
+    var newDF = StringFeature.word2vec(df, metaPath, dicPaths, wordvecPaths, inputCol, stopWordPath, resultFeature, split, vectorSize, length, minCount)
     if (resultFeature.equals("flat")) {
       val flatFeatureUdf = F.udf((a: Seq[Seq[Double]]) => {
         a.flatten
@@ -87,6 +88,7 @@ class SQLWord2VecInPlace extends SQLAlg with Functions {
     val resultFeature = trainParams.getOrElse("resultFeature", "")
     val vectorSize = trainParams.getOrElse("vectorSize", "100").toInt
     val length = trainParams.getOrElse("length", "100").toInt
+    val minCount = trainParams.getOrElse("minCount", "1").toInt
     val wordIndexBr = spark.sparkContext.broadcast(word2vecMeta.wordIndex)
     val split = trainParams.getOrElse("split", null)
 

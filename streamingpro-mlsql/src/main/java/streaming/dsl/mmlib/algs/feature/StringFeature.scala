@@ -173,7 +173,7 @@ object StringFeature extends BaseFeatureFunctions {
     newDF
   }
 
-  def word2vec(df: DataFrame, metaPath: String, dicPaths: String, wordvecPaths: String, inputCol: String, stopWordsPaths: String, resultFeature: String, split: String, vectorSize: Int = 100, length: Int = 100) = {
+  def word2vec(df: DataFrame, metaPath: String, dicPaths: String, wordvecPaths: String, inputCol: String, stopWordsPaths: String, resultFeature: String, split: String, vectorSize: Int = 100, length: Int = 100, minCount: Int = 1) = {
     val stopwords = loadStopwords(df, stopWordsPaths)
     val stopwordsBr = df.sparkSession.sparkContext.broadcast(stopwords)
     val spark = df.sparkSession
@@ -203,7 +203,7 @@ object StringFeature extends BaseFeatureFunctions {
       val word2vec = new SQLWord2Vec()
       word2vec.train(replaceColumn(newDF, inputCol, F.udf((a: Seq[Int]) => {
         a.map(f => f.toString)
-      })), WORD2VEC_PATH(metaPath, inputCol), Map("inputCol" -> inputCol, "minCount" -> "0", "vectorSize" -> (vectorSize + "")))
+      })), WORD2VEC_PATH(metaPath, inputCol), Map("inputCol" -> inputCol, "minCount" -> "0", "vectorSize" -> (vectorSize + ""), "minCount" -> minCount.toString))
       val model = word2vec.load(df.sparkSession, WORD2VEC_PATH(metaPath, inputCol), Map())
       if (!resultFeature.equals("index")) {
         val predictFunc = word2vec.internal_predict(df.sparkSession, model, "wow")("wow_array").asInstanceOf[(Seq[String]) => Seq[Seq[Double]]]
