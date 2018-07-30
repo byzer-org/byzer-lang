@@ -311,7 +311,7 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
       //执行sql
 
       val wordvecPaths = Seq("/Users/zml/mlsql/word2vec", "")
-      val resultFeatures = Seq("index", "")
+      val resultFeatures = Seq("index", "merge", "flat", "")
       for (wordvecPath <- wordvecPaths) {
         for (resultFeature <- resultFeatures) {
           implicit val spark = runtime.sparkSession
@@ -334,6 +334,8 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
           // we should make sure train vector and predict vector the same
           val trainVector = spark.sql("select * from parquet.`/tmp/william/tmp/word2vecinplace/data`").toJSON.collect()
           val predictVector = spark.sql("select jack(content) as content from orginal_text_corpus").toJSON.collect()
+          println("wordvecPath:" + wordvecPath)
+          println("resultFeature:" + resultFeature)
           predictVector.foreach { f =>
             assume(trainVector.contains(f))
           }
@@ -344,7 +346,7 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
 
   "SQLWord2VecInPlaceMinCount" should "work fine" taggedAs (NotToRunTag) in {
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
-      val resultFeatures = Seq("index", "")
+      val resultFeatures = Seq("flat", "merge", "index", "")
       val minCounts = Seq("1", "2")
       for (resultFeature <- resultFeatures) {
         val wordCount = Array(0, 0)
@@ -377,6 +379,7 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
           wordCount(i) = JSONObject.fromObject(countVector(0)).get("a").toString.toInt
           i = i + 1
         }
+        println("resultFeature:" + resultFeature)
         assume(wordCount(0) > wordCount(1))
       }
     }
