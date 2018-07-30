@@ -2,6 +2,7 @@ package streaming.dsl.mmlib.algs.meta
 
 import org.apache.spark.ml.linalg.Vector
 import org.apache.spark.sql.Row
+import org.apache.spark.sql.types.DataType
 import streaming.dsl.mmlib.algs.DiscretizerTrainData
 
 /**
@@ -25,3 +26,8 @@ case class StandardScalerValueMeta(fieldName: String, mean: Array[Double], std: 
 case class DiscretizerMeta(params: Array[DiscretizerTrainData], discretizerFunc: Seq[Double] => Seq[Double])
 
 case class Word2ArrayMeta(trainParams: Map[String, String], words: Set[String])
+
+case class MapValuesMeta(
+    inputCol: String,
+    outputCol: String,
+    mapMissingTo: String)
