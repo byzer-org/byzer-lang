@@ -1,5 +1,8 @@
 package org.apache.spark.api.python
 
+import _root_.streaming.dsl.mmlib.algs.SQLPythonFunc
+import _root_.streaming.core.strategy.platform.PlatformManager
+
 import java.io._
 import java.net.Socket
 import java.nio.charset.StandardCharsets
@@ -12,7 +15,7 @@ import org.apache.spark.util.Utils
 
 import scala.collection.JavaConverters._
 import scala.collection.JavaConversions._
-import _root_.streaming.dsl.mmlib.algs.SQLPythonFunc
+
 
 /**
   * Created by allwefantasy on 5/2/2018.
@@ -20,6 +23,8 @@ import _root_.streaming.dsl.mmlib.algs.SQLPythonFunc
 object WowPythonRunner extends Logging {
   val bufferSize = 65536
   val reuse_worker = true
+
+  def runtime = PlatformManager.getRuntime
 
   def run(pythonPath: String, pythonVer: String, command: Array[Byte], inputIterator: Iterator[_],
           partitionIndex: Int, model: Array[Byte], kafkaParam: Map[String, String]) = {
@@ -32,7 +37,10 @@ object WowPythonRunner extends Logging {
     if (reuse_worker) {
       envVars.put("SPARK_REUSE_WORKER", "1")
     }
-    val worker: Socket = env.createPythonWorker(pythonPath, envVars.asScala.toMap)
+    val deployAPI = runtime.params.getOrElse("streaming.deploy.rest.api", "false").toString.toBoolean
+    val mlsqlEnv = new MLSQLPythonEnv(env, deployAPI)
+
+    val worker: Socket = mlsqlEnv.createPythonWorker(pythonPath, envVars.asScala.toMap)
 
     // Whether is the worker released into idle pool
     @volatile var released = false
@@ -145,7 +153,7 @@ object WowPythonRunner extends Logging {
               // Check whether the worker is ready to be re-used.
               if (stream.readInt() == SpecialLengths.END_OF_STREAM) {
                 if (reuse_worker) {
-                  env.releasePythonWorker(pythonPath, envVars.asScala.toMap, worker)
+                  mlsqlEnv.releasePythonWorker(pythonPath, envVars.asScala.toMap, worker)
                   released = true
                 }
               }
