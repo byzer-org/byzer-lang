@@ -1,12 +1,11 @@
 package streaming.dsl.mmlib.algs
 
-import MetaConst._
-import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession, functions => F}
 import streaming.core.shared.SharedObjManager
 import streaming.dsl.mmlib.SQLAlg
+import streaming.dsl.mmlib.algs.MetaConst._
 import streaming.dsl.mmlib.algs.feature.StringFeature
 import streaming.dsl.mmlib.algs.feature.StringFeature.loadWordvecs
 import streaming.dsl.mmlib.algs.meta.Word2VecMeta
