@@ -17,6 +17,7 @@ object LocalSparkServiceApp {
       "-streaming.ps.enable", "true",
       "-spark.sql.hive.thriftServer.singleSession", "true",
       "-streaming.rest.intercept.clzz", "streaming.rest.ExampleRestInterceptor",
+      "-streaming.deploy.rest.api", "true",
       "-streaming.driver.port", "9003"
 
       //"-streaming.sql.out.path","file:///tmp/test/pdate=20160809"

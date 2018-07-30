@@ -3,6 +3,7 @@ package streaming.core
 import java.io.File
 
 import org.apache.commons.io.FileUtils
+import org.apache.spark.APIDeployPythonRunnerEnv
 import org.apache.spark.streaming.BasicSparkOperation
 import streaming.common.shell.ShellCommand
 import streaming.core.code.PythonCode
@@ -290,6 +291,36 @@ class PythonMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQ
 
       val res = spark.sql("select * from parquet.`/tmp/william/pa_model_tf/_model_0/meta/0`")
       res.show(false)
+    }
+  }
+
+  "api-service-test" should "work fine" taggedAs (NotToRunTag) in {
+    withBatchContext(setupBatchContext(batchParams ++ Array("-streaming.deploy.rest.api", "true"), "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+      //执行sql
+      implicit val spark = runtime.sparkSession
+      val sq = createSSEL
+
+      writeStringToFile("/tmp/sklearn-user-script.py", PythonCode.pythonCodeEnableLocal)
+      writeStringToFile("/tmp/sklearn-user-predict-script.py", PythonCode.pythonPredictCode)
+
+      ShellCommand.exec("rm -rf /tmp/william/pa_model_k")
+
+      ScriptSQLExec.parse(TemplateMerge.merge(loadSQLScriptStr("python-alg-script-enable-data-local"), Map(
+        "pythonScriptPath" -> "/tmp/sklearn-user-script.py",
+        "keepVersion" -> "true",
+        "path" -> "/pa_model_k",
+        "distributeEveryExecutor" -> "false"
+
+      )), sq)
+
+      //we can change model path
+      ScriptSQLExec.parse(TemplateMerge.merge(
+        "register PythonAlg.`/pa_model_k` as jack options\npythonScriptPath=\"${pythonPredictScriptPath}\"\n;select jack(features) from data\nas newdata;",
+        Map(
+          "pythonPredictScriptPath" -> "/tmp/sklearn-user-predict-script.py"
+        )), sq)
+      spark.sql("select * from newdata").show()
+      assume(APIDeployPythonRunnerEnv.workerSize > 0)
     }
   }
 }
