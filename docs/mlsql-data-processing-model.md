@@ -20,6 +20,7 @@
   - [Word2ArrayInPlace](#word2arrayinplace)
   - [WaterMarkInPlace](#watermarkinplace)
   - [SendMessage](#sendmessage)
+  - [MapValues](#mapvalues)
 - [**低阶数据预处理模型**](#低阶特定小功能点数据预处理模型)
   - [Word2vec](#word2vec)
   - [StringIndex](#stringindex)
@@ -776,6 +777,39 @@ and to = "chenfu@dxy.cn"
 and subject = "这是邮件标题"
 -- 邮件服务器地址
 and smtpHost = "${smtp-ip-address}";
+```
+
+### MapValues
+
+字典映射模块
+
+例子:
+
+```sql
+set json = '''
+{"word": "unk", "value": [0.0, 0.0, 0.0, 0.0]}
+{"word": "a", "value": [1.0, 0.0, 0.0, 0.0]}
+{"word": "b", "value": [0.0, 1.0, 0.0, 0.0]}
+{"word": "c", "value": [0.0, 0.0, 1.0, 0.0]}
+{"word": "d", "value": [0.0, 0.0, 0.0, 1.0]}
+''';
+load jsonStr.`json` as input;
+
+select word, vec_dense(value) as feature from input as train_table;
+
+train train_table as MapValues.`/tmp/mapvalues`
+where inputCol = "word"
+and outputCol = "feature"
+and mapMissingTo = "unk";
+
+register MapValues.`/tmp/mapvalues` as fchen;
+
+set json2 = '''
+{"x": "abc"}
+{"x": "a"}
+''';
+load jsonStr.`json2` as input2;
+select fchen(x) from input2 as input3;
 ```
 
 ## 低阶（特定小功能点）数据预处理模型
