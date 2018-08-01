@@ -66,8 +66,9 @@ class RestPredictController extends ApplicationController {
     val sparkSession = runtime.asInstanceOf[SparkRuntime].sparkSession
     val strList = JSONArray.fromObject(param("data", "[]")).map(f => f.toString)
     val sql = getSQL
+    val perRequestCoreNum = paramAsInt("perRequestCoreNum",1)
     import sparkSession.implicits._
-    val rdd = sparkSession.sparkContext.parallelize(strList)
+    val rdd = sparkSession.sparkContext.parallelize(strList, perRequestCoreNum)
     val res = sparkSession.read.json(rdd).selectExpr(sql).toJSON.collect().mkString(",")
     "[" + res + "]"
 
@@ -77,8 +78,9 @@ class RestPredictController extends ApplicationController {
     val sparkSession = runtime.asInstanceOf[SparkRuntime].sparkSession
     val strList = JSONArray.fromObject(param("data", "[]")).map(f => StringFeature(f.toString))
     val sql = getSQL
+    val perRequestCoreNum = paramAsInt("perRequestCoreNum",1)
     import sparkSession.implicits._
-    val res = sparkSession.createDataset(sparkSession.sparkContext.parallelize(strList)).selectExpr(sql).toJSON.collect().mkString(",")
+    val res = sparkSession.createDataset(sparkSession.sparkContext.parallelize(strList, perRequestCoreNum)).selectExpr(sql).toJSON.collect().mkString(",")
     "[" + res + "]"
 
   }
