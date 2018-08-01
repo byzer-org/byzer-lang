@@ -42,14 +42,19 @@ class SQLWord2VecInPlace extends SQLAlg with Functions {
     }
     if (resultFeature.equals("merge")) {
       val flatFeatureUdf = F.udf((a: Seq[Seq[Double]]) => {
-        val r = new Array[Double](vectorSize)
-        for (a1 <- a) {
-          val b = a1.toList
-          for (i <- 0 until b.size) {
-            r(i) = b(i) + r(i)
-          }
+        if (a.size == 0) {
+          Seq[Double]()
         }
-        r.toSeq
+        else {
+          val r = new Array[Double](vectorSize)
+          for (a1 <- a) {
+            val b = a1.toList
+            for (i <- 0 until b.size) {
+              r(i) = b(i) + r(i)
+            }
+          }
+          r.toSeq
+        }
       })
       newDF = newDF.withColumn(inputCol, flatFeatureUdf(F.col(inputCol)))
     }
@@ -146,14 +151,18 @@ class SQLWord2VecInPlace extends SQLAlg with Functions {
       case "merge" => {
         val f2 = (a: String) => {
           val seq = func(a)
-          val r = new Array[Double](vectorSize)
-          for (a1 <- seq) {
-            val b = a1.toList
-            for (i <- 0 until b.size) {
-              r(i) = b(i) + r(i)
+          if (seq.size == 0) {
+            Seq[Double]()
+          } else {
+            val r = new Array[Double](vectorSize)
+            for (a1 <- seq) {
+              val b = a1.toList
+              for (i <- 0 until b.size) {
+                r(i) = b(i) + r(i)
+              }
             }
+            r.toSeq
           }
-          r.toSeq
         }
         UserDefinedFunction(f2, ArrayType(DoubleType), Some(Seq(StringType)))
       }
