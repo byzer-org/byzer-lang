@@ -10,8 +10,8 @@ import streaming.dsl.mmlib.SQLAlg
 import scala.collection.JavaConversions._
 
 /**
-  * Created by allwefantasy on 13/1/2018.
-  */
+ * Created by allwefantasy on 13/1/2018.
+ */
 class SQLWord2Vec extends SQLAlg with Functions {
 
   def train(df: DataFrame, path: String, params: Map[String, String]) = {
@@ -34,13 +34,13 @@ class SQLWord2Vec extends SQLAlg with Functions {
     val f = (co: String) => {
       model.value.get(co) match {
         case Some(vec) => vec.toSeq
-        case None => null
+        case None => Seq[Double]()
       }
 
     }
 
     val f2 = (co: Seq[String]) => {
-      co.map(f(_))
+      co.map(f(_)).filter(x => x.size > 0)
     }
 
     Map((name + "_array") -> f2, name -> f)

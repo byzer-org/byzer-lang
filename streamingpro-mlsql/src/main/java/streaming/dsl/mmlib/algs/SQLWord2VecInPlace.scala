@@ -1,12 +1,11 @@
 package streaming.dsl.mmlib.algs
 
-import MetaConst._
-import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession, functions => F}
 import streaming.core.shared.SharedObjManager
 import streaming.dsl.mmlib.SQLAlg
+import streaming.dsl.mmlib.algs.MetaConst._
 import streaming.dsl.mmlib.algs.feature.StringFeature
 import streaming.dsl.mmlib.algs.feature.StringFeature.loadWordvecs
 import streaming.dsl.mmlib.algs.meta.Word2VecMeta
@@ -27,13 +26,14 @@ class SQLWord2VecInPlace extends SQLAlg with Functions {
     val length = params.getOrElse("length", "100").toInt
     val stopWordPath = params.getOrElse("stopWordPath", "")
     val resultFeature = params.getOrElse("resultFeature", "") //flat,merge,index
+    val minCount = params.getOrElse("minCount", "1").toInt
     val split = params.getOrElse("split", null)
     require(!inputCol.isEmpty, "inputCol is required when use SQLWord2VecInPlace")
     val metaPath = getMetaPath(params("path"))
     // keep params
     saveTraningParams(df.sparkSession, params, metaPath)
 
-    var newDF = StringFeature.word2vec(df, metaPath, dicPaths, wordvecPaths, inputCol, stopWordPath, resultFeature, split, vectorSize, length)
+    var newDF = StringFeature.word2vec(df, metaPath, dicPaths, wordvecPaths, inputCol, stopWordPath, resultFeature, split, vectorSize, length, minCount)
     if (resultFeature.equals("flat")) {
       val flatFeatureUdf = F.udf((a: Seq[Seq[Double]]) => {
         a.flatten
@@ -42,14 +42,19 @@ class SQLWord2VecInPlace extends SQLAlg with Functions {
     }
     if (resultFeature.equals("merge")) {
       val flatFeatureUdf = F.udf((a: Seq[Seq[Double]]) => {
-        val r = new Array[Double](vectorSize)
-        for (a1 <- a) {
-          val b = a1.toList
-          for (i <- 0 until b.size) {
-            r(i) = b(i) + r(i)
-          }
+        if (a.size == 0) {
+          Seq[Double]()
         }
-        r.toSeq
+        else {
+          val r = new Array[Double](vectorSize)
+          for (a1 <- a) {
+            val b = a1.toList
+            for (i <- 0 until b.size) {
+              r(i) = b(i) + r(i)
+            }
+          }
+          r.toSeq
+        }
       })
       newDF = newDF.withColumn(inputCol, flatFeatureUdf(F.col(inputCol)))
     }
@@ -112,53 +117,63 @@ class SQLWord2VecInPlace extends SQLAlg with Functions {
     }
     val func = (content: String) => {
       val wordArray = wordArrayFunc(content)
-      val wordIntArray = wordArray.filter(f => wordIndexBr.value.contains(f)).map(f => wordIndexBr.value(f).toInt)
-      wordIntArray.map(f => f.toString).toSeq
-    }
-
-    val func2 = (content: String) => {
-      val wordArray = wordArrayFunc(content)
-      val r = new Array[Array[Double]](length)
-      val wordvecsMap = wordVecsBr.value
-      val wSize = wordArray.size
-      for (i <- 0 until length) {
-        if (i < wSize && wordvecsMap.contains(wordArray(i))) {
-          r(i) = wordvecsMap(wordArray(i))
-        } else
-          r(i) = new Array[Double](vectorSize)
+      if (wordVecsBr.value.size > 0) {
+        val r = new Array[Seq[Double]](length)
+        val wordvecsMap = wordVecsBr.value
+        val wSize = wordArray.size
+        for (i <- 0 until length) {
+          if (i < wSize && wordvecsMap.contains(wordArray(i))) {
+            r(i) = wordvecsMap(wordArray(i))
+          } else
+            r(i) = new Array[Double](vectorSize)
+        }
+        r.toSeq
       }
-      r
+      else {
+        val wordIntArray = wordArray.filter(f => wordIndexBr.value.contains(f)).map(f => wordIndexBr.value(f).toInt)
+        word2vecMeta.predictFunc(wordIntArray.map(f => f.toString).toSeq)
+      }
     }
 
-    val func3 = (content: String) => {
+
+    val funcIndex = (content: String) => {
       val wordArray = wordArrayFunc(content)
       wordArray.filter(f => wordIndexBr.value.contains(f)).map(f => wordIndexBr.value(f).toInt)
     }
 
-    def resultFeaturematch(x: Int): String = x match {
-      case 1 => "one"
-      case 2 => "two"
-      case _ => "many"
-    }
-
-    if (wordVecsBr.value.size > 0) {
-      UserDefinedFunction(func2, ArrayType(ArrayType(DoubleType)), Some(Seq(StringType)))
-    } else {
-      resultFeature match {
-        case "index" => UserDefinedFunction(func3, ArrayType(IntegerType), Some(Seq(StringType)))
-        case "flag" => {
-          val f2 = (a: String) => {
-            word2vecMeta.predictFunc(func(a)).flatten
-          }
-          UserDefinedFunction(f2, ArrayType(DoubleType), Some(Seq(StringType)))
+    resultFeature match {
+      case "flat" => {
+        val f2 = (a: String) => {
+          func(a).flatten
         }
-        case _ => {
-          val f2 = (a: String) => {
-            word2vecMeta.predictFunc(func(a))
+        UserDefinedFunction(f2, ArrayType(DoubleType), Some(Seq(StringType)))
+      }
+      case "merge" => {
+        val f2 = (a: String) => {
+          val seq = func(a)
+          if (seq.size == 0) {
+            Seq[Double]()
+          } else {
+            val r = new Array[Double](vectorSize)
+            for (a1 <- seq) {
+              val b = a1.toList
+              for (i <- 0 until b.size) {
+                r(i) = b(i) + r(i)
+              }
+            }
+            r.toSeq
           }
-          UserDefinedFunction(f2, ArrayType(ArrayType(DoubleType)), Some(Seq(StringType)))
         }
+        UserDefinedFunction(f2, ArrayType(DoubleType), Some(Seq(StringType)))
+      }
+      case _ => {
+        if (wordVecsBr.value.size == 0 && resultFeature.equals("index"))
+          UserDefinedFunction(funcIndex, ArrayType(IntegerType), Some(Seq(StringType)))
+        else
+          UserDefinedFunction(func, ArrayType(ArrayType(DoubleType)), Some(Seq(StringType)))
       }
     }
   }
+
+
 }
