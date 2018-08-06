@@ -62,21 +62,23 @@ class BatchLoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener,
     path = TemplateMerge.merge(path, scriptSQLExecListener.env().toMap)
     format match {
       case "jdbc" =>
-        val dbAndTable = cleanStr(path).split("\\.")
-        ScriptSQLExec.dbMapping.get(dbAndTable(0)).foreach { f =>
+        val (dbname, dbtable) = parseDBAndTableFromStr(path)
+        ScriptSQLExec.dbMapping.get(dbname).foreach { f =>
           reader.option(f._1, f._2)
         }
-        reader.option("dbtable", dbAndTable(1))
+        reader.option("dbtable", dbtable)
         table = reader.format("jdbc").load()
 
       case "es" | "org.elasticsearch.spark.sql" =>
 
-        val dbAndTable = cleanStr(path).split("\\.")
-        ScriptSQLExec.dbMapping.get(dbAndTable(0)).foreach {
+        val (dbname, dbtable) = parseDBAndTableFromStr(path)
+        println("dbname " + dbname)
+        println("dbtable " + dbtable)
+        ScriptSQLExec.dbMapping.get(dbname).foreach {
           f =>
             reader.option(f._1, f._2)
         }
-        table = reader.format("org.elasticsearch.spark.sql").load(dbAndTable(1))
+        table = reader.format("org.elasticsearch.spark.sql").load(dbtable)
       case "hbase" | "org.apache.spark.sql.execution.datasources.hbase" =>
         table = reader.format("org.apache.spark.sql.execution.datasources.hbase").load()
       case "crawlersql" =>

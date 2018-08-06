@@ -30,4 +30,11 @@ trait DslTool {
     return prefix + newPath
 
   }
+
+  def parseDBAndTableFromStr(str: String) = {
+    val dbAndTable = cleanStr(str).split("\\.")
+    val db = dbAndTable(0)
+    val table = dbAndTable.splitAt(1)._2.mkString(".")
+    (db, table)
+  }
 }
