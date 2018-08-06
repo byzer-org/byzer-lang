@@ -5,10 +5,11 @@ import java.util.{Map => JMap}
 import java.util.concurrent.atomic.AtomicReference
 import java.util.logging.Logger
 
+import net.csdn.common.reflect.ReflectHelper
 import org.apache.spark.api.python.WowSparkEnv
 
 import scala.collection.JavaConversions._
-import org.apache.spark.{SparkConf, SparkEnv, SparkRuntimeOperator}
+import org.apache.spark.{SparkConf, SparkEnv, SparkRuntimeOperator, WowFastSparkContext}
 import org.apache.spark.ps.cluster.PSDriverBackend
 import org.apache.spark.ps.local.LocalPSSchedulerBackend
 import org.apache.spark.sql.SparkSession
@@ -86,11 +87,11 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
         getMethod("getOrCreateCarbonSession", classOf[String], classOf[String]).
         invoke(carbonBuilder, params("streaming.carbondata.store").toString, params("streaming.carbondata.meta").toString).asInstanceOf[SparkSession]
     } else {
+      if (params.getOrDefault("streaming.deploy.rest.api", "false").toString.toBoolean) {
+        val wfsc = new WowFastSparkContext(conf)
+        ReflectHelper.method(sparkSession, "sparkContext", wfsc)
+      }
       sparkSession.getOrCreate()
-    }
-
-    if (params.getOrDefault("streaming.deploy.rest.api", "false").toString.toBoolean) {
-      WowSparkEnv.enhanceSparkEnvForAPIService(ss)
     }
 
     if (params.containsKey("streaming.spark.service") && params.get("streaming.spark.service").toString.toBoolean) {
