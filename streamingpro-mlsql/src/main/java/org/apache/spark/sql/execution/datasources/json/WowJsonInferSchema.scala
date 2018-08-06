@@ -26,7 +26,7 @@ object WowJsonInferSchema {
       Map[String, String](),
       sparkSession.sessionState.conf.sessionLocalTimeZone,
       sparkSession.sessionState.conf.columnNameOfCorruptRecord)
-    val schema = infer(json.map(UTF8String.fromString(_)), parsedOptions, CreateJacksonParser.utf8String)
+    val schema = infer(json.take(1).map(UTF8String.fromString(_)), parsedOptions, CreateJacksonParser.utf8String)
     val createParser = CreateJacksonParser.string _
     val rawParser = new JacksonParser(schema, parsedOptions)
     val parser = new FailureSafeParser[String](
@@ -34,13 +34,13 @@ object WowJsonInferSchema {
       parsedOptions.parseMode,
       schema,
       parsedOptions.columnNameOfCorruptRecord)
-    val parsed = json.flatMap { row =>
-      parser.parse(row)
+    val parsed = json.map { row =>
+      parser.parse(row).next()
     }
     import sparkSession.implicits._
     val attributes = schema.toAttributes
     val plan = new LocalRelation(attributes, parsed)
-    Dataset[String](sparkSession, plan)
+    Dataset.ofRows(sparkSession, plan)
   }
 
   /**
