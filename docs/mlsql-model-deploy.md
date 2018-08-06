@@ -23,7 +23,7 @@
 ./bin/spark-submit   --class streaming.core.StreamingApp \
 --master local[2] \
 --name predict_service \
-streamingpro-spark-2.0-1.0.0.jar    \
+streamingpro-mlsql-x.x.xjar    \
 -streaming.name predict_service    \
 -streaming.job.file.path file:///tmp/query.json \
 -streaming.platform spark   \
@@ -31,8 +31,11 @@ streamingpro-spark-2.0-1.0.0.jar    \
 -streaming.driver.port 9003   \
 -streaming.spark.service true \
 -streaming.thrift false \
--streaming.enableHiveSupport true
+-streaming.enableHiveSupport true \
+-streaming.deploy.rest.api true 
 ```
+
+务必需要加上streaming.deploy.rest.api 参数，该参数可优化请求性能。
 
 2. 访问 `http://127.0.0.1:9003/run/script` 接口动态注册已经生成的模型：
 
@@ -53,10 +56,10 @@ sql=select bayes_predict(feature) as p
 
 | Property Name	 | Default  |Meaning |
 |:-----------|:------------|:------------|
-|dataType|vector|data字段的数据类型，目前只支持vector/string|
-|data|[]|你可以传递一个或者多个vector/string,必须符合json规范|
-|sql|None|用sql的方式调用模型，其中模型的参数feature是固定的字符串|
-|pipeline|None|用pipeline的方式调用模型，写模型名，然后逗号分隔|
+|dataType|vector|data字段的数据类型，目前只支持vector/string/row|
+|data|[]|你可以传递一个或者多个vector/string/json,必须符合json规范|
+|sql|None|用sql的方式调用模型，其中如果是vector/string,则模型的参数feature是固定的字符串，如果是row则根据key决定|
+|pipeline|None|用pipeline的方式调用模型，写模型名，然后逗号分隔，通常只能支持vector/string模式|
 
 
 典型的比如TfIdfInPlace模型接受的参数就是字符串，这个时候dataType就要设置成string。
@@ -74,6 +77,14 @@ pipeline=tfidf,bayes_predict
 
 ```
 bayes_predict(tfidf(feature))
+```
+
+我们用Row格式，比如：
+
+```sql
+dataType=row
+data=[{"content":"您好"},{"content":"大家好"}]
+select=bayes_predict(tfidf(content))
 ```
 
 ### 完整例子
@@ -119,8 +130,7 @@ sql=select bayes_predict(feature) as p
 
 ```
 
-当前版本data只支持多个向量，不支持张量。后续会支持传递shape。向量支持dense 和 sparse两种模式。如果是sparse 模式，则需要额外
-传递参数vecSize
+
 
 ### 部署不是MLSQL生成的SKLearn模型
 
