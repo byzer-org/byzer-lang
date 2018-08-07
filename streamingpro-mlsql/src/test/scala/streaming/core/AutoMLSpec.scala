@@ -622,4 +622,58 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
     }
   }
 
+  "SQLStringIndex" should "work fine" taggedAs (NotToRunTag) in {
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+      //执行sql
+      implicit val spark = runtime.sparkSession
+      val dataRDD = spark.sparkContext.parallelize(Seq(
+        Seq("a"),
+        Seq("b"),
+        Seq("c")
+      )).map { f =>
+        Row.fromSeq(f)
+      }
+
+      val df = spark.createDataFrame(dataRDD,
+        StructType(Seq(
+          StructField("st", StringType)
+        )))
+      df.createOrReplaceTempView("stringIndex")
+      val sq = createSSEL
+
+      ScriptSQLExec.parse("train stringIndex as StringIndex.`/tmp/model` where inputCol=\"st\";register StringIndex.`/tmp/model` as predict;", sq)
+      val res = spark.sql("select predict_r(predict(st)) as st from stringIndex").toJSON.collect()
+      val ori = spark.sql("select st from stringIndex").toJSON.collect()
+      res.foreach( f =>
+        assume(ori.contains(f))
+      )
+    }
+  }
+
+  "SQLStringIndexArray" should "work fine" taggedAs (NotToRunTag) in {
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+      //执行sql
+      implicit val spark = runtime.sparkSession
+      val dataRDD = spark.sparkContext.parallelize(Seq(
+        Seq(Seq("a1","b1","c1")),
+        Seq(Seq("a2","b2")),
+        Seq(Seq("a3","b3","d3"))
+      )).map { f =>
+        Row.fromSeq(f)
+      }
+
+      val df = spark.createDataFrame(dataRDD,
+        StructType(Seq(
+          StructField("st", ArrayType(StringType))
+        )))
+      df.createOrReplaceTempView("stringIndex")
+      val sq = createSSEL
+
+      ScriptSQLExec.parse("train stringIndex as StringIndex.`/tmp/model` where inputCol=\"st\";register StringIndex.`/tmp/model` as predict;", sq)
+      val res = spark.sql("select predict_rarray(predict_array(st)) as st from stringIndex").toJSON.collect()
+      val ori = spark.sql("select st from stringIndex").toJSON.collect()
+      res.foreach( f =>
+        assume(ori.contains(f))
+      )    }
+  }
 }
