@@ -1,6 +1,7 @@
 package org.apache.spark
 
 import java.net.Socket
+import java.util.Properties
 
 import org.apache.spark.api.python.WowPythonWorkerFactory
 
@@ -37,5 +38,13 @@ object APIDeployPythonRunnerEnv {
       val key = (pythonExec, envVars)
       pythonWorkers.get(key).foreach(_.releaseWorker(worker))
     }
+  }
+
+  def setTaskContext(context: TaskContext) = {
+    TaskContext.setTaskContext(context)
+  }
+
+  def createTaskContext() = {
+    new TaskContextImpl(0, 0, 0, 0, null, new Properties, null)
   }
 }
