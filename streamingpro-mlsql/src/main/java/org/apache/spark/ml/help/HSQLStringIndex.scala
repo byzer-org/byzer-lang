@@ -17,7 +17,7 @@ object HSQLStringIndex {
 
     sparkSession.udf.register(name + "_array", res(name + "_array").asInstanceOf[Seq[String] => Seq[Int]])
     sparkSession.udf.register(name + "_r", res(name + "_r").asInstanceOf[Double => String])
-    sparkSession.udf.register(name + "_rarray", res(name + "_rarray").asInstanceOf[Seq[Int] => Seq[String]])
+    sparkSession.udf.register(name + "_rarray", res(name + "_rarray").asInstanceOf[Seq[Double] => Seq[String]])
 
     UserDefinedFunction(res(name), IntegerType, Some(Seq(StringType)))
   }
