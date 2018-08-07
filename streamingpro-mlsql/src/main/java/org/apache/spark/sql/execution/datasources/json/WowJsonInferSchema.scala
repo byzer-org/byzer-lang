@@ -41,7 +41,8 @@ object WowJsonInferSchema {
     }
     import sparkSession.implicits._
     val attributes = schema.toAttributes
-    val plan = new WowFastLocalRelation(attributes, parsed)
+    //val plan = new WowFastLocalRelation(attributes, parsed)
+    val plan = LocalRelation(attributes, parsed)
     Dataset.ofRows(sparkSession, plan)
   }
 

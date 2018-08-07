@@ -95,9 +95,9 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
       sparkSession.getOrCreate()
     }
 
-    if (params.getOrDefault("streaming.deploy.rest.api", "false").toString.toBoolean) {
-      WowFastLocalBasedStrategies.register(ss)
-    }
+//    if (params.getOrDefault("streaming.deploy.rest.api", "false").toString.toBoolean) {
+//      WowFastLocalBasedStrategies.register(ss)
+//    }
 
     if (params.containsKey("streaming.spark.service") && params.get("streaming.spark.service").toString.toBoolean) {
       StreamingproJobManager.init(ss.sparkContext)
