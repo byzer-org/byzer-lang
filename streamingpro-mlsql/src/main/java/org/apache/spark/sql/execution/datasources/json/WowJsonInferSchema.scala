@@ -8,6 +8,7 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, Dataset, SparkSession}
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.analysis.TypeCoercion
+import org.apache.spark.sql.catalyst.encoders.RowEncoder
 import org.apache.spark.sql.catalyst.json.JacksonUtils.nextUntil
 import org.apache.spark.unsafe.types.UTF8String
 import org.apache.spark.sql.catalyst.util.{DropMalformedMode, FailFastMode, ParseMode, PermissiveMode}
@@ -56,7 +57,8 @@ object WowJsonInferSchema {
       new JSONOptions(Map.empty[String, String], sessionLocalTimeZone))
 
     val res = dataSet.collect.map { row =>
-      gen.write(InternalRow.fromSeq(row.toSeq))
+      val enconder = RowEncoder.apply(rowSchema).resolveAndBind()
+      gen.write(enconder.toRow(row))
       gen.flush()
       val json = writer.toString
       writer.reset()
