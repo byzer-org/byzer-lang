@@ -71,7 +71,7 @@ class RestPredictController extends ApplicationController {
     val perRequestCoreNum = paramAsInt("perRequestCoreNum", 1)
     //import sparkSession.implicits._
     //val rdd = sparkSession.sparkContext.parallelize(strList, perRequestCoreNum)
-    val res = WowJsonInferSchema.createDataSet(strList, sparkSession).selectExpr(sql).toJSON.collect().mkString(",")
+    val res = WowJsonInferSchema.toJson(WowJsonInferSchema.createDataSet(strList, sparkSession).selectExpr(sql)).mkString(",")
     "[" + res + "]"
 
   }
@@ -82,7 +82,7 @@ class RestPredictController extends ApplicationController {
     val sql = getSQL
     val perRequestCoreNum = paramAsInt("perRequestCoreNum", 1)
     import sparkSession.implicits._
-    val res = sparkSession.createDataset(strList).selectExpr(sql).toJSON.collect().mkString(",")
+    val res = WowJsonInferSchema.toJson(sparkSession.createDataset(strList).selectExpr(sql)).mkString(",")
     "[" + res + "]"
 
   }

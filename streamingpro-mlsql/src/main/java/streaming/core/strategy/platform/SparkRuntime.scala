@@ -13,6 +13,7 @@ import org.apache.spark.{SparkConf, SparkEnv, SparkRuntimeOperator, WowFastSpark
 import org.apache.spark.ps.cluster.PSDriverBackend
 import org.apache.spark.ps.local.LocalPSSchedulerBackend
 import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.execution.WowFastLocalBasedStrategies
 import org.apache.spark.sql.hive.thriftserver.HiveThriftServer2
 import streaming.core.StreamingproJobManager
 
@@ -93,6 +94,10 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
       }
       sparkSession.getOrCreate()
     }
+
+//    if (params.getOrDefault("streaming.deploy.rest.api", "false").toString.toBoolean) {
+//      WowFastLocalBasedStrategies.register(ss)
+//    }
 
     if (params.containsKey("streaming.spark.service") && params.get("streaming.spark.service").toString.toBoolean) {
       StreamingproJobManager.init(ss.sparkContext)
