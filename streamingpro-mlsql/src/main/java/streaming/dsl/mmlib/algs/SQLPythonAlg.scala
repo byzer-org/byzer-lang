@@ -3,12 +3,12 @@ package streaming.dsl.mmlib.algs
 import java.io.File
 import java.nio.file.{Files, Paths}
 import java.util
-import java.util.UUID
+import java.util.{Properties, UUID}
 
 import org.apache.commons.io.{FileUtils, IOUtils}
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
-import org.apache.spark.TaskContext
+import org.apache.spark.{APIDeployPythonRunnerEnv, TaskContext, TaskContextImpl}
 import org.apache.spark.api.python.WowPythonRunner
 import org.apache.spark.ml.linalg.SQLDataTypes._
 import org.apache.spark.sql.catalyst.InternalRow
@@ -359,6 +359,10 @@ class SQLPythonAlg extends SQLAlg with Functions {
       }
 
       //      val predictTime = System.currentTimeMillis()
+
+      if (TaskContext.get() == null) {
+        APIDeployPythonRunnerEnv.setTaskContext(APIDeployPythonRunnerEnv.createTaskContext())
+      }
       val iter = WowPythonRunner.run(
         pythonPath, pythonVer, command, v_ser3, TaskContext.get().partitionId(), Array(), kafkaParam = kafkaParam2
       )
