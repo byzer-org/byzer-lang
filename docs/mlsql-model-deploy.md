@@ -49,9 +49,9 @@ register NaiveBayes.`/tmp/bayes_model` as bayes_predict;
 请求参数为：
 
 ```sql
-dataType=vector
-data=[[1,2,3...]]
-sql=select bayes_predict(feature) as p
+dataType=row
+data=[{"feature":[1,2,3...]}]
+sql=select bayes_predict(vec_dense(feature)) as p
 ```
 
 | Property Name	 | Default  |Meaning |
@@ -61,31 +61,6 @@ sql=select bayes_predict(feature) as p
 |sql|None|用sql的方式调用模型，其中如果是vector/string,则模型的参数feature是固定的字符串，如果是row则根据key决定|
 |pipeline|None|用pipeline的方式调用模型，写模型名，然后逗号分隔，通常只能支持vector/string模式|
 
-
-典型的比如TfIdfInPlace模型接受的参数就是字符串，这个时候dataType就要设置成string。
-
-如果你不愿意使用类似sql的语法做预测，也可以将sql参数替换为pipeline参数，如下：
-
-```sql
-dataType=string
-data=["你好"，"大家好"]
-pipeline=tfidf,bayes_predict
-```
-
-这里会使用tfidf模型先对数据进行处理，然后接着把tfidf处理的结果给bayes_predict。
-本质上是一个嵌套调用，如下：
-
-```
-bayes_predict(tfidf(feature))
-```
-
-我们用Row格式，比如：
-
-```sql
-dataType=row
-data=[{"content":"您好"},{"content":"大家好"}]
-select=bayes_predict(tfidf(content))
-```
 
 ### 完整例子
 
@@ -110,9 +85,9 @@ register NaiveBayes.`/tmp/bayes_model` as bayes_predict;
 接着就可以外部调用API使用了,需要传递两个参数：
 
 ```
-
-data=[[1,2,3...]]
-sql=select bayes_predict(feature) as p
+dataType=row
+data=[{"feature":[1,2,3...]}]
+sql=select bayes_predict(vec_dense(feature)) as p
 ```
 
 最后的预测结果为：
@@ -130,7 +105,8 @@ sql=select bayes_predict(feature) as p
 
 ```
 
-
+另外，大部分模块都是可以通过这种方式进行注册，不仅仅是算法。这就实现了端到端的部署，允许你将预处理逻辑也部署上。
+通过sql select 语法，你还可以完成一些较为复杂的预测逻辑。
 
 ### 部署不是MLSQL生成的SKLearn模型
 
