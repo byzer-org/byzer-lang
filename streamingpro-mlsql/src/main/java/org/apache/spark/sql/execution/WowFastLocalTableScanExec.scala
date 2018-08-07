@@ -27,11 +27,7 @@ case class WowFastLocalTableScanExec(
   private lazy val rdd = new WowFastRDD(sparkContext, "wow-rdd", unsafeRows)
 
   protected override def doExecute(): RDD[InternalRow] = {
-    val numOutputRows = longMetric("numOutputRows")
-    rdd.map { r =>
-      numOutputRows += 1
-      r
-    }
+    rdd
   }
 
   override protected def stringArgs: Iterator[Any] = {

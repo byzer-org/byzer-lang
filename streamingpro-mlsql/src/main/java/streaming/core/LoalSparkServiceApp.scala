@@ -20,7 +20,7 @@ object LocalSparkServiceApp {
       "-streaming.deploy.rest.api", "true",
       "-spark.driver.maxResultSize", "2g",
       "-spark.serializer", "org.apache.spark.serializer.KryoSerializer",
-      "-spark.sql.codegen.wholeStage", "false",
+      "-spark.sql.codegen.wholeStage", "true",
       "-spark.kryoserializer.buffer.max", "2000m",
       "-streaming.driver.port", "9003"
 
