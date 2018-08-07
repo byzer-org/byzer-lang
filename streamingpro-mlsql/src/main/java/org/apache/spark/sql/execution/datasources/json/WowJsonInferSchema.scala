@@ -1,10 +1,11 @@
 package org.apache.spark.sql.execution.datasources.json
 
+import java.io.CharArrayWriter
 import java.util.Comparator
 
 import com.fasterxml.jackson.core._
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.{Dataset, SparkSession}
+import org.apache.spark.sql.{DataFrame, Dataset, SparkSession}
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.analysis.TypeCoercion
 import org.apache.spark.sql.catalyst.json.JacksonUtils.nextUntil
@@ -12,7 +13,8 @@ import org.apache.spark.unsafe.types.UTF8String
 import org.apache.spark.sql.catalyst.util.{DropMalformedMode, FailFastMode, ParseMode, PermissiveMode}
 import org.apache.spark.sql.types._
 import org.apache.spark.util.Utils
-import org.apache.spark.sql.catalyst.json.{CreateJacksonParser, JSONOptions, JacksonParser}
+import org.apache.spark.sql.catalyst.json.{CreateJacksonParser, JSONOptions, JacksonGenerator, JacksonParser}
+import org.apache.spark.sql.catalyst.logical.WowFastLocalRelation
 import org.apache.spark.sql.catalyst.plans.logical.LocalRelation
 import org.apache.spark.sql.execution.datasources.FailureSafeParser
 
@@ -39,8 +41,28 @@ object WowJsonInferSchema {
     }
     import sparkSession.implicits._
     val attributes = schema.toAttributes
-    val plan = new LocalRelation(attributes, parsed)
+    val plan = new WowFastLocalRelation(attributes, parsed)
     Dataset.ofRows(sparkSession, plan)
+  }
+
+  def toJson(dataSet: DataFrame) = {
+    val rowSchema = dataSet.schema
+    val sessionLocalTimeZone = dataSet.sparkSession.sessionState.conf.sessionLocalTimeZone
+
+    val writer = new CharArrayWriter()
+    // create the Generator without separator inserted between 2 records
+    val gen = new JacksonGenerator(rowSchema, writer,
+      new JSONOptions(Map.empty[String, String], sessionLocalTimeZone))
+
+    val res = dataSet.collect.map { row =>
+      gen.write(InternalRow.fromSeq(row.toSeq))
+      gen.flush()
+      val json = writer.toString
+      writer.reset()
+      json
+    }
+    gen.close()
+    res
   }
 
   /**
