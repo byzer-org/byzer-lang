@@ -45,6 +45,6 @@ object APIDeployPythonRunnerEnv {
   }
 
   def createTaskContext() = {
-    new TaskContextImpl(0, 0, 0, 0, null, new Properties, null)
+    new TaskContextImpl(0, 0, -1024, 0, null, new Properties, null)
   }
 }
