@@ -80,6 +80,4 @@ class SQLWord2ArrayInPlace extends SQLAlg with Functions {
     }
     UserDefinedFunction(func, ArrayType(StringType), Some(Seq(StringType)))
   }
-
-
 }
