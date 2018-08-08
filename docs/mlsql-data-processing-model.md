@@ -875,5 +875,24 @@ register DicOrTableToArray.`/tmp/model2` as p2;
 select p2("dic2")  as k
 ```
 
+### Word2ArrayInPlace
 
+Word2ArrayInPlace是一个根据Word2VecInPlace模型将文本转化成词数组。
+
+
+具体用法：
+
+```sql
+load parquet.`/tmp/tfidf/df`
+as orginal_text_corpus;
+
+-- Word2VecInPlace训练得到模型
+train orginal_text_corpus as Word2VecInPlace.`/tmp/word2vecinplace`
+where inputCol="content"
+and split=""
+;
+-- 注册Word2ArrayInPlace模型
+register Word2ArrayInPlace.`/tmp/word2vecinplace`
+as word2array_predict;
+```
 

@@ -644,7 +644,7 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
       ScriptSQLExec.parse("train stringIndex as StringIndex.`/tmp/model` where inputCol=\"st\";register StringIndex.`/tmp/model` as predict;", sq)
       val res = spark.sql("select predict_r(predict(st)) as st from stringIndex").toJSON.collect()
       val ori = spark.sql("select st from stringIndex").toJSON.collect()
-      res.foreach( f =>
+      res.foreach(f =>
         assume(ori.contains(f))
       )
     }
@@ -655,9 +655,9 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
       //执行sql
       implicit val spark = runtime.sparkSession
       val dataRDD = spark.sparkContext.parallelize(Seq(
-        Seq(Seq("a1","b1","c1")),
-        Seq(Seq("a2","b2")),
-        Seq(Seq("a3","b3","d3"))
+        Seq(Seq("a1", "b1", "c1")),
+        Seq(Seq("a2", "b2")),
+        Seq(Seq("a3", "b3", "d3"))
       )).map { f =>
         Row.fromSeq(f)
       }
@@ -672,8 +672,29 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
       ScriptSQLExec.parse("train stringIndex as StringIndex.`/tmp/model` where inputCol=\"st\";register StringIndex.`/tmp/model` as predict;", sq)
       val res = spark.sql("select predict_rarray(predict_array(st)) as st from stringIndex").toJSON.collect()
       val ori = spark.sql("select st from stringIndex").toJSON.collect()
-      res.foreach( f =>
+      res.foreach(f =>
         assume(ori.contains(f))
-      )    }
+      )
+    }
+  }
+  "SQLWord2ArrayInPlace" should "work fine" taggedAs (NotToRunTag) in {
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+      //执行sql
+      implicit val spark = runtime.sparkSession
+      val raw = Seq("我是天才，你呢", "你真的很棒", "天才你好")
+      val dataRDD = spark.sparkContext.parallelize(raw).map { f =>
+        Row.fromSeq(Seq(f))
+      }
+      val df = spark.createDataFrame(dataRDD,
+        StructType(Seq(StructField("content", StringType))))
+      df.createOrReplaceTempView("t1")
+      val sq = createSSEL
+
+      ScriptSQLExec.parse("train t1 as Word2VecInPlace.`/tmp/model` where inputCol=\"content\" and split=\"\";register Word2ArrayInPlace.`/tmp/model` as jack;", sq)
+      val res = spark.sql("select jack(\"你我，他\") as st").toJSON.collect()
+      res.foreach(f =>
+        assume(f.equals("{\"st\":[\"你\",\"我\",\"，\"]}"))
+      )
+    }
   }
 }
