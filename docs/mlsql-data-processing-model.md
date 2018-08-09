@@ -14,6 +14,7 @@
   - [JavaImage](#javaimage)
   - [TokenExtract / TokenAnalysis](#tokenextract--tokenanalysis)
   - [RateSampler](#ratesampler)
+  - [RowMatrix](#RowMatrix)
 - [**低阶数据预处理模型**](#低阶特定小功能点数据预处理模型)
   - [Word2vec](#word2vec)
   - [StringIndex](#stringindex)
@@ -21,7 +22,7 @@
   - [StandardScaler](#standardscaler)
   - [DicOrTableToArray](#dicortabletoarray)
 
----
+
 
 ### 高阶（开箱即用）数据预处理模型
 
@@ -873,6 +874,58 @@ register DicOrTableToArray.`/tmp/model2` as p2;
 
 ```
 select p2("dic2")  as k
+```
+
+### RowMatrix
+
+当你想计算向量两两相似的时候，RowMatrix提供了一个快速高效的方式。比如LDA计算出了每个文档的向量分布，接着我们需要任意给定一个文章，然后找到
+相似的文章， 则可以使用RowMatrix进行计算。无论如何，当文档到百万，计算量始终都是很大的（没有优化前会有万亿次计算），所以实际使用可以将数据
+先简单分类。之后在类里面再做相似度计算。
+
+另外RowMatrix需要两个字段，一个是向量，一个是数字，数字必须是从0开始递增，用来和矩阵行做对应，方便唯一标记一篇内容。
+如果你的数据不是这样的，比如你的文档的唯一编号是断开的或者是一个字符串，那么你可以使用StringIndex 去生成一个字段作为唯一标记。
+
+```sql
+load libsvm.`/spark-2.2.0-bin-hadoop2.7/data/mllib/sample_lda_libsvm_data.txt` as data;
+train data as LDA.`/tmp/model` where k="10" and maxIter="10";
+
+register LDA.`/tmp/model` as predict;
+
+select *,zhuhl_lda_predict_doc(features) as features from data
+as zhuhl_doclist;
+
+train zhuhl_doclist as RowMatrix.`/tmp/zhuhl_rm_model` where inputCol="features" and labelCol="label";
+register RowMatrix.`/tmp/zhuhl_rm_model` as zhuhl_rm_predict;
+
+select zhuhl_rm_predict(label) from data
+```
+
+### CommunityBasedSimilarityInPlace
+
+该模块可以根据graphx计算所有边大于一定值，并且是联通的的子图。
+
+```sql
+train tab;e as CommunityBasedSimilarityInPlace.`/tmp/zhuhl_rm_model`
+-- 设置需要过滤的边的阈值以及联通子图的大小 
+where minSimilarity="0.7"
+and minCommunitySize="2"
+and minCommunityPercent="0.2"
+
+-- 接受的数据rowNum和columnNum是两个节点的id,edgeValue是节点的边的值
+and "rowNum"="i"
+and "columnNum"="j"
+and "edgeValue"="v"
+;
+
+load parquet.`/tmp/zhuhl_rm_model/data` as result;
+select * from result as output;
+
+-- 结果如下：
+ +-----+---------+
+ |group|vertexIds|
+ +-----+---------+
+ |3    |[3, 7, 5]|
+ +-----+---------+
 ```
 
 

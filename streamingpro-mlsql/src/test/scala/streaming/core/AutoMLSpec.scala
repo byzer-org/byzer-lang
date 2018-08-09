@@ -1,7 +1,9 @@
 package streaming.core
 
 import net.sf.json.JSONObject
+import org.apache.spark.graphx.Edge
 import org.apache.spark.ml.linalg.Vector
+import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{Row, SaveMode}
 import org.apache.spark.streaming.BasicSparkOperation
@@ -9,13 +11,13 @@ import streaming.core.shared.SharedObjManager
 import streaming.core.strategy.platform.SparkRuntime
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib.algs.feature.{DiscretizerIntFeature, DoubleFeature, StringFeature}
-import streaming.dsl.mmlib.algs.{SQLAutoFeature, SQLCorpusExplainInPlace, SQLVecMapInPlace}
+import streaming.dsl.mmlib.algs.{SQLAutoFeature, SQLCommunityBasedSimilarityInPlace, SQLCorpusExplainInPlace, SQLVecMapInPlace}
 import streaming.dsl.template.TemplateMerge
 
 
 /**
- * Created by allwefantasy on 6/5/2018.
- */
+  * Created by allwefantasy on 6/5/2018.
+  */
 class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConfig {
 
 
@@ -644,7 +646,7 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
       ScriptSQLExec.parse("train stringIndex as StringIndex.`/tmp/model` where inputCol=\"st\";register StringIndex.`/tmp/model` as predict;", sq)
       val res = spark.sql("select predict_r(predict(st)) as st from stringIndex").toJSON.collect()
       val ori = spark.sql("select st from stringIndex").toJSON.collect()
-      res.foreach( f =>
+      res.foreach(f =>
         assume(ori.contains(f))
       )
     }
@@ -655,9 +657,9 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
       //执行sql
       implicit val spark = runtime.sparkSession
       val dataRDD = spark.sparkContext.parallelize(Seq(
-        Seq(Seq("a1","b1","c1")),
-        Seq(Seq("a2","b2")),
-        Seq(Seq("a3","b3","d3"))
+        Seq(Seq("a1", "b1", "c1")),
+        Seq(Seq("a2", "b2")),
+        Seq(Seq("a3", "b3", "d3"))
       )).map { f =>
         Row.fromSeq(f)
       }
@@ -672,8 +674,32 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
       ScriptSQLExec.parse("train stringIndex as StringIndex.`/tmp/model` where inputCol=\"st\";register StringIndex.`/tmp/model` as predict;", sq)
       val res = spark.sql("select predict_rarray(predict_array(st)) as st from stringIndex").toJSON.collect()
       val ori = spark.sql("select st from stringIndex").toJSON.collect()
-      res.foreach( f =>
+      res.foreach(f =>
         assume(ori.contains(f))
-      )    }
+      )
+    }
+  }
+
+  "SQLCommunityBasedSimilarityInPlace" should "work fine" in {
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+      //执行sql
+      implicit val spark = runtime.sparkSession
+      import spark.implicits._
+      val rdd = spark.sparkContext.parallelize(Seq((3L, 7L, 0.9), (5L, 3L, 0.9),
+        (2L, 5L, 0.1), (5L, 7L, 0.8),
+        (4L, 0L, 0.9), (5L, 0L, 0.2))).map { f =>
+        Row(f._1, f._2, f._3)
+      }
+      val relationships = spark.createDataFrame(rdd,
+        StructType(Seq(StructField("i", LongType), StructField("j", LongType), StructField("v", DoubleType))))
+
+      val ssip = new SQLCommunityBasedSimilarityInPlace()
+      ssip.train(relationships, "/tmp/jack", Map(
+        "minCommunitySize" -> "2"
+      ))
+      spark.sql("select * from parquet.`/tmp/jack/data`").show(false)
+      val res = spark.sql("select * from parquet.`/tmp/jack/data`").head.getSeq(1)
+      assume(res.mkString(",") == "3,7,5")
+    }
   }
 }
