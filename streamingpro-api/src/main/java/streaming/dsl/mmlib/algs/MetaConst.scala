@@ -22,6 +22,8 @@ object MetaConst {
 
   def PARAMS_PATH(path: String, col: String) = s"$path/params"
 
+  def WORDS_PATH(path:String) = s"$path/words"
+
   def getDataPath(path: String) = {
     s"${path.stripSuffix("/")}/data"
   }

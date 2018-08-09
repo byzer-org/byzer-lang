@@ -2,19 +2,36 @@ package streaming.dsl.mmlib.algs
 
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.types._
-import org.apache.spark.sql.{DataFrame, Row, SparkSession}
+import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
 import streaming.core.shared.SharedObjManager
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.MetaConst._
 import streaming.dsl.mmlib.algs.feature.StringFeature
 import streaming.dsl.mmlib.algs.feature.StringFeature.loadWordvecs
-import streaming.dsl.mmlib.algs.meta.Word2VecMeta
+import streaming.dsl.mmlib.algs.meta.Word2ArrayMeta
+
+import scala.collection.mutable.ArrayBuffer
 
 /**
  * Created by zhuml on 8/8/2018.
  */
 class SQLWord2ArrayInPlace extends SQLAlg with Functions {
   override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
+    val spark = df.sparkSession
+    val wordvecPaths = params.getOrElse("wordvecPaths", "")
+    val wordVecMap = loadWordvecs(spark, wordvecPaths)
+    import spark.implicits._
+    if (wordVecMap.size > 0) {
+      wordVecMap.toSeq.map(_._1).toDF("word")
+    } else {
+      val modelPath = params("modelPath")
+      val modelMetaPath = getMetaPath(modelPath)
+      val modelParams = spark.read.parquet(PARAMS_PATH(modelMetaPath, "params")).map(f => (f.getString(0), f.getString(1))).collect().toMap
+      val inputCol = modelParams.getOrElse("inputCol", "")
+      val wordsDf = spark.read.parquet(WORD_INDEX_PATH(modelMetaPath, inputCol)).map(f => f.getString(0)).toDF()
+      saveTraningParams(df.sparkSession, params ++ modelParams, getMetaPath(path))
+      wordsDf.write.mode(SaveMode.Overwrite).parquet(WORDS_PATH(getMetaPath(path)))
+    }
   }
 
   override def load(spark: SparkSession, _path: String, params: Map[String, String]): Any = {
@@ -23,61 +40,47 @@ class SQLWord2ArrayInPlace extends SQLAlg with Functions {
     val path = getMetaPath(_path)
     val df = spark.read.parquet(PARAMS_PATH(path, "params")).map(f => (f.getString(0), f.getString(1)))
     val trainParams = df.collect().toMap
-    val inputCol = trainParams.getOrElse("inputCol", "")
-    val wordvecPaths = trainParams.getOrElse("wordvecPaths", "")
-    val wordvecsMap = loadWordvecs(spark, wordvecPaths)
-    if (wordvecsMap.size > 0) {
-      Word2VecMeta(trainParams, Map[String, Double](), null)
-    } else {
-      //load wordindex
-      val wordIndex = spark.read.parquet(WORD_INDEX_PATH(path, inputCol)).map(f => ((f.getString(0), f.getDouble(1)))).collect().toMap
-      //load word2vec model
-      val word2vec = new SQLWord2Vec()
-      val model = word2vec.load(spark, WORD2VEC_PATH(path, inputCol), Map())
-      val predictFunc = word2vec.internal_predict(df.sparkSession, model, "wow")("wow_array").asInstanceOf[(Seq[String]) => Seq[Seq[Double]]]
-      Word2VecMeta(trainParams, wordIndex, predictFunc)
-    }
+    val wordsSet = spark.read.parquet(WORDS_PATH(path)).map(_.getString(0)).collect().toSet
+    Word2ArrayMeta(trainParams, wordsSet)
   }
 
   override def predict(spark: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = {
-    val word2vecMeta = _model.asInstanceOf[Word2VecMeta]
-    val trainParams = word2vecMeta.trainParams
+    val word2ArrayMeta = _model.asInstanceOf[Word2ArrayMeta]
+    val trainParams = word2ArrayMeta.trainParams
+    val words = spark.sparkContext.broadcast(word2ArrayMeta.words)
     val dicPaths = trainParams.getOrElse("dicPaths", "")
-    val stopWordPath = trainParams.getOrElse("stopWordPath", "")
-    val wordvecPaths = trainParams.getOrElse("wordvecPaths", "")
-    val wordIndexBr = spark.sparkContext.broadcast(word2vecMeta.wordIndex)
     val split = trainParams.getOrElse("split", null)
+    val wordvecPaths = trainParams.getOrElse("wordvecPaths", "")
+    val nGrams = trainParams.getOrElse("nGrams", "").split(",").filterNot(f => f.isEmpty).map(f => f.toInt).toSeq
+    val wordsBr = spark.sparkContext.broadcast(SQLTokenAnalysis.loadDics(spark, trainParams) ++ StringFeature.loadDicsFromWordvec(spark, wordvecPaths))
 
-    val df = spark.createDataFrame(spark.sparkContext.emptyRDD[Row], StructType(Seq()))
-    val stopwords = StringFeature.loadStopwords(df, stopWordPath)
-    val stopwordsBr = spark.sparkContext.broadcast(stopwords)
-    val wordVecsBr = spark.sparkContext.broadcast(StringFeature.loadWordvecs(spark, wordvecPaths))
-    val wordsArrayBr = spark.sparkContext.broadcast(StringFeature.loadDicsFromWordvec(spark, wordvecPaths))
-    val wordArrayFunc = (content: String) => {
-      if (split != null) {
-        content.split(split)
-      } else {
-        // create analyser
-        val forest = SharedObjManager.getOrCreate[Any](dicPaths, SharedObjManager.forestPool, () => {
-          val words = SQLTokenAnalysis.loadDics(spark, trainParams) ++ wordsArrayBr.value
-          SQLTokenAnalysis.createForest(words, trainParams)
-        })
-        val parser = SQLTokenAnalysis.createAnalyzerFromForest(forest.asInstanceOf[AnyRef], trainParams)
-        // analyser content
-        SQLTokenAnalysis.parseStr(parser, content, trainParams).
-          filter(f => !stopwordsBr.value.contains(f))
-      }
+    val ngram = (words: Seq[String], n: Int) => {
+      words.iterator.sliding(n).withPartial(false).map(_.mkString(" ")).toSeq
     }
     val func = (content: String) => {
-      val wordArray = wordArrayFunc(content)
-      val wordVec = {
-        if (wordVecsBr.value.size > 0)
-          wordVecsBr.value
-        else
-          wordIndexBr.value
+      val wordArray = {
+        if (split != null) {
+          content.split(split)
+        } else {
+          // create analyser
+          val forest = SharedObjManager.getOrCreate[Any](dicPaths, SharedObjManager.forestPool, () => {
+            SQLTokenAnalysis.createForest(wordsBr.value, trainParams)
+          })
+          val parser = SQLTokenAnalysis.createAnalyzerFromForest(forest.asInstanceOf[AnyRef], trainParams)
+          // analyser content
+          SQLTokenAnalysis.parseStr(parser, content, trainParams)
+        }
       }
-      wordArray.filter(f => wordVec.contains(f))
+      //ngram
+      val finalWordArray = new ArrayBuffer[String]()
+      finalWordArray ++= wordArray
+      nGrams.foreach { ng =>
+        finalWordArray ++= ngram(wordArray, ng)
+      }
+
+      finalWordArray.filter(f => words.value.contains(f)).toArray
     }
     UserDefinedFunction(func, ArrayType(StringType), Some(Seq(StringType)))
   }
+
 }

@@ -877,7 +877,7 @@ select p2("dic2")  as k
 
 ### Word2ArrayInPlace
 
-Word2ArrayInPlace是一个根据Word2VecInPlace模型将文本转化成词数组。
+Word2ArrayInPlace是一个根据词向量字典或者模型（Word2VecInPlace,TfIdfInPlace）将文本转化成词数组。
 
 
 具体用法：
@@ -886,13 +886,21 @@ Word2ArrayInPlace是一个根据Word2VecInPlace模型将文本转化成词数组
 load parquet.`/tmp/tfidf/df`
 as orginal_text_corpus;
 
--- Word2VecInPlace训练得到模型
+-- Word2VecInPlace训练得到Word2VecInPlace模型
 train orginal_text_corpus as Word2VecInPlace.`/tmp/word2vecinplace`
 where inputCol="content"
 and split=""
 ;
+
+-- 训练得到Word2ArrayInPlace模型，train任意表，空表也可以
+train orginal_text_corpus as Word2ArrayInPlace.`/tmp/word2arrayinplace`
+-- modelPath为模型绝对路径
+where modelPath="/tmp/word2vecinplace"
+-- 词向量字典
+-- and wordvecPaths=""
+;
 -- 注册Word2ArrayInPlace模型
-register Word2ArrayInPlace.`/tmp/word2vecinplace`
+register Word2ArrayInPlace.`/tmp/word2arrayinplace`
 as word2array_predict;
 ```
 

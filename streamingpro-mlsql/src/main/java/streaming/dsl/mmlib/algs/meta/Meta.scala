@@ -23,3 +23,5 @@ case class StandardScalerValueMeta(fieldName: String, mean: Double, std: Double)
 
 //case class DiscretizerMeta(params: Array[DiscretizerTrainData], discretizerFunc: Seq[Double] => Seq[Double])
 case class DiscretizerMeta(params: Array[DiscretizerTrainData], discretizerFunc: Seq[Double] => Seq[Double])
+
+case class Word2ArrayMeta(trainParams: Map[String, String], words: Set[String])

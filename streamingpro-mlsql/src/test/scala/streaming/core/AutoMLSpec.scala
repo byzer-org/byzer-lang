@@ -690,9 +690,19 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
       df.createOrReplaceTempView("t1")
       val sq = createSSEL
 
-      ScriptSQLExec.parse("train t1 as Word2VecInPlace.`/tmp/model` where inputCol=\"content\" and split=\"\";register Word2ArrayInPlace.`/tmp/model` as jack;", sq)
-      val res = spark.sql("select jack(\"你我，他\") as st").toJSON.collect()
-      res.foreach(f =>
+      ScriptSQLExec.parse("train t1 as Word2VecInPlace.`/tmp/word2vec` where inputCol=\"content\" and split=\"\";" +
+        "train t1 as Word2ArrayInPlace.`/tmp/word2array` where modelPath=\"/tmp/william/tmp/word2vec\";" +
+        "register Word2ArrayInPlace.`/tmp/word2array` as jack;", sq)
+      val res1 = spark.sql("select jack(\"你我，他\") as st").toJSON.collect()
+      res1.foreach(f =>
+        assume(f.equals("{\"st\":[\"你\",\"我\",\"，\"]}"))
+      )
+
+      ScriptSQLExec.parse("train t1 as TfIdfInPlace.`/tmp/tfidf` where inputCol=\"content\" and split=\"\";" +
+        "train t1 as Word2ArrayInPlace.`/tmp/word2array` where modelPath=\"/tmp/william/tmp/tfidf\";" +
+        "register Word2ArrayInPlace.`/tmp/word2array` as jack;", sq)
+      val res2 = spark.sql("select jack(\"你我，他\") as st").toJSON.collect()
+      res2.foreach(f =>
         assume(f.equals("{\"st\":[\"你\",\"我\",\"，\"]}"))
       )
     }
