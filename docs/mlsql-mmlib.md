@@ -232,29 +232,6 @@ save overwrite result as json.`/tmp/result`;
 ```
 
 
-### RowMatrix
-
-当你想计算向量两两相似的时候，RowMatrix提供了一个快速高效的方式。比如LDA计算出了每个文档的向量分布，接着我们需要任意给定一个文章，然后找到
-相似的文章， 则可以使用RowMatrix进行计算。无论如何，当文档到百万，计算量始终都是很大的（没有优化前会有万亿次计算），所以实际使用可以将数据
-先简单分类。之后在类里面再做相似度计算。
-
-另外RowMatrix需要两个字段，一个是向量，一个是数字，数字必须是从0开始递增，用来和矩阵行做对应，方便唯一标记一篇内容。
-如果你的数据不是这样的，比如你的文档的唯一编号是断开的或者是一个字符串，那么你可以使用StringIndex 去生成一个字段作为唯一标记。
-
-```sql
-load libsvm.`/spark-2.2.0-bin-hadoop2.7/data/mllib/sample_lda_libsvm_data.txt` as data;
-train data as LDA.`/tmp/model` where k="10" and maxIter="10";
-
-register LDA.`/tmp/model` as predict;
-
-select *,zhuhl_lda_predict_doc(features) as features from data
-as zhuhl_doclist;
-
-train zhuhl_doclist as RowMatrix.`/tmp/zhuhl_rm_model` where inputCol="features" and labelCol="label";
-register RowMatrix.`/tmp/zhuhl_rm_model` as zhuhl_rm_predict;
-
-select zhuhl_rm_predict(label) from data
-```
 
 ### PageRank
 

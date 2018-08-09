@@ -2,6 +2,8 @@ package streaming.core
 
 import java.net.URL
 
+import org.apache.spark.graphx.{Edge, Graph, VertexId}
+import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.{SparkConf, SparkContext}
 import org.scalatest.{FlatSpec, Matchers}
@@ -13,68 +15,37 @@ import scala.collection.mutable
   * Created by allwefantasy on 28/3/2017.
   */
 object Test {
-  var psDriverUrl: String = null
-  var psExecutorId: String = null
-  var hostname: String = null
-  var cores: Int = 0
-  var appId: String = null
-  val psDriverPort = 7777
-  var psDriverHost: String = null
-  var workerUrl: Option[String] = None
-  val userClassPath = new mutable.ListBuffer[URL]()
-
-  def parseArgs = {
-    //val runtimeMxBean = ManagementFactory.getRuntimeMXBean();
-    //var argv = runtimeMxBean.getInputArguments.toList
-    var argv = "org.apache.spark.executor.CoarseGrainedExecutorBackend --driver-url spark://CoarseGrainedScheduler@192.168.219.49:64455 --executor-id 0 --hostname 192.168.219.49 --cores 1 --app-id app-20180202171521-0037 --worker-url spark://Worker@192.168.219.49:60980".split("\\s+").toList
-    var count = 0
-    var first = 0
-    argv.foreach { f =>
-      if (f.startsWith("--") && first == 0) {
-        first = count
-      }
-      count += 1
-    }
-    argv = argv.drop(first)
-
-    while (!argv.isEmpty) {
-      argv match {
-        case ("--driver-url") :: value :: tail =>
-          psDriverUrl = value
-          argv = tail
-        case ("--executor-id") :: value :: tail =>
-          psExecutorId = value
-          argv = tail
-        case ("--hostname") :: value :: tail =>
-          hostname = value
-          argv = tail
-        case ("--cores") :: value :: tail =>
-          cores = value.toInt
-          argv = tail
-        case ("--app-id") :: value :: tail =>
-          appId = value
-          argv = tail
-        case ("--worker-url") :: value :: tail =>
-          // Worker url is used in spark standalone mode to enforce fate-sharing with worker
-          workerUrl = Some(value)
-          argv = tail
-        case ("--user-class-path") :: value :: tail =>
-          userClassPath += new URL(value)
-          argv = tail
-        case Nil =>
-        case tail =>
-          System.err.println(s"Unrecognized options: ${tail.mkString(" ")}")
-      }
-    }
-    val Array(host, port) = psDriverUrl.split(":")
-    psDriverHost = host
-    psDriverUrl = psDriverHost + ":" + psDriverPort
-  }
-
   def main(args: Array[String]): Unit = {
-    val testS = "你◣◢︼【】┅┇☽☾✚〓▂▃▄▅▆▇█▉▊▋▌▍▎▏↔↕☽☾の·▸◂▴▾┈┊好◣◢︼【】┅┇☽☾✚〓▂▃▄▅▆▇█▉▊▋▌▍▎▏↔↕☽☾の·▸◂▴▾┈┊啊，..。，！?katty"
-    val kk = UnicodeUtils.keepChinese(testS, true, null)
-    println(kk)
+    // Create an RDD for the vertices
+    val sparkSession = SparkSession.builder().master("local[*]").appName("wow").getOrCreate()
+    val sc = sparkSession.sparkContext
+    val users: RDD[(VertexId, (String, String))] =
+      sc.parallelize(Array((3L, ("rxin", "student")), (7L, ("jgonzal", "postdoc")),
+        (5L, ("franklin", "prof")), (2L, ("istoica", "prof")),
+        (4L, ("peter", "student"))))
+    // Create an RDD for edges
+    val relationships: RDD[Edge[Double]] =
+    sc.parallelize(Array(Edge(3L, 7L, 0.9), Edge(5L, 3L, 0.9),
+      Edge(2L, 5L, 0.1), Edge(5L, 7L, 0.8),
+      Edge(4L, 0L, 0.9), Edge(5L, 0L, 0.2)))
+    // Define a default user in case there are relationship with missing user
+    val defaultUser = ("John Doe", "Missing")
+    // Build the initial Graph
+    val graph = Graph(users, relationships, defaultUser)
+    // Notice that there is a user 0 (for which we have no information) connected to users
+    // 4 (peter) and 5 (franklin).
+    graph.triplets.map(
+      triplet => triplet.srcAttr._1 + " is the " + triplet.attr + " of " + triplet.dstAttr._1
+    ).collect.foreach(println(_))
+
+    val validGraph = graph.subgraph(epred = et => {
+      et.attr > 0.7
+    }).connectedComponents()
+
+    val wow = validGraph.vertices.map(f => VeterxAndGroup(f._1, f._2)).groupBy(f => f.group).sortBy(f => -f._2.size).take(1).head
+    wow._2.foreach(f => println(f.vertexId))
 
   }
 }
+
+case class VeterxAndGroup(vertexId: VertexId, group: VertexId)
