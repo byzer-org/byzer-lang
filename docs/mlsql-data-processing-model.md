@@ -15,6 +15,8 @@
   - [TokenExtract / TokenAnalysis](#tokenextract--tokenanalysis)
   - [RateSampler](#ratesampler)
   - [RowMatrix](#RowMatrix)
+  - [CommunityBasedSimilarityInPlace](#CommunityBasedSimilarityInPlace)
+  - [Word2ArrayInPlace](#Word2ArrayInPlace)
 - [**低阶数据预处理模型**](#低阶特定小功能点数据预处理模型)
   - [Word2vec](#word2vec)
   - [StringIndex](#stringindex)
@@ -876,6 +878,38 @@ register DicOrTableToArray.`/tmp/model2` as p2;
 select p2("dic2")  as k
 ```
 
+
+### Word2ArrayInPlace
+
+
+Word2ArrayInPlace是一个根据词向量字典或者模型（Word2VecInPlace,TfIdfInPlace）将文本转化成词数组。
+
+
+具体用法：
+
+```sql
+load parquet.`/tmp/tfidf/df`
+as orginal_text_corpus;
+
+-- Word2VecInPlace训练得到Word2VecInPlace模型
+train orginal_text_corpus as Word2VecInPlace.`/tmp/word2vecinplace`
+where inputCol="content"
+and split=""
+;
+
+-- 训练得到Word2ArrayInPlace模型，train任意表，空表也可以
+train orginal_text_corpus as Word2ArrayInPlace.`/tmp/word2arrayinplace`
+-- modelPath为模型绝对路径
+where modelPath="/tmp/word2vecinplace"
+-- 词向量字典
+-- and wordvecPaths=""
+;
+-- 注册Word2ArrayInPlace模型
+register Word2ArrayInPlace.`/tmp/word2arrayinplace`
+as word2array_predict;
+```
+
+
 ### RowMatrix
 
 当你想计算向量两两相似的时候，RowMatrix提供了一个快速高效的方式。比如LDA计算出了每个文档的向量分布，接着我们需要任意给定一个文章，然后找到
@@ -927,6 +961,3 @@ select * from result as output;
  |3    |[3, 7, 5]|
  +-----+---------+
 ```
-
-
-

@@ -680,6 +680,37 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
     }
   }
 
+  "SQLWord2ArrayInPlace" should "work fine" taggedAs (NotToRunTag) in {
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+      //执行sql
+      implicit val spark = runtime.sparkSession
+      val raw = Seq("我是天才，你呢", "你真的很棒", "天才你好")
+      val dataRDD = spark.sparkContext.parallelize(raw).map { f =>
+        Row.fromSeq(Seq(f))
+      }
+      val df = spark.createDataFrame(dataRDD,
+        StructType(Seq(StructField("content", StringType))))
+      df.createOrReplaceTempView("t1")
+      val sq = createSSEL
+
+      ScriptSQLExec.parse("train t1 as Word2VecInPlace.`/tmp/word2vec` where inputCol=\"content\" and split=\"\";" +
+        "train t1 as Word2ArrayInPlace.`/tmp/word2array` where modelPath=\"/tmp/william/tmp/word2vec\";" +
+        "register Word2ArrayInPlace.`/tmp/word2array` as jack;", sq)
+      val res1 = spark.sql("select jack(\"你我，他\") as st").toJSON.collect()
+      res1.foreach(f =>
+        assume(f.equals("{\"st\":[\"你\",\"我\",\"，\"]}"))
+      )
+
+      ScriptSQLExec.parse("train t1 as TfIdfInPlace.`/tmp/tfidf` where inputCol=\"content\" and split=\"\";" +
+        "train t1 as Word2ArrayInPlace.`/tmp/word2array` where modelPath=\"/tmp/william/tmp/tfidf\";" +
+        "register Word2ArrayInPlace.`/tmp/word2array` as jack;", sq)
+      val res2 = spark.sql("select jack(\"你我，他\") as st").toJSON.collect()
+      res2.foreach(f =>
+        assume(f.equals("{\"st\":[\"你\",\"我\",\"，\"]}"))
+      )
+
+    }
+  }
   "SQLCommunityBasedSimilarityInPlace" should "work fine" in {
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
