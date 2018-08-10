@@ -1,7 +1,232 @@
-# StreamingPro 中文文档
+# Documentation in English
 
-1. [五分钟快速上手和体验](https://github.com/allwefantasy/streamingpro/blob/master/docs/quick-tutorial.md)
-2. [Five Minute Quick Tutorial](https://github.com/allwefantasy/streamingpro/blob/master/docs/en/quick-tutorial.md)
+## What's StreamingPro and MLSQL?
+
+StreamingPro is mainly designed to run on Apache Spark but it also supports Apache Flink for the runtime.
+Thus, it can be considered as a cross,distributed platform which is the combination of BigData platform and AI platform 
+You can run  both Big Data Processing and Machine Learning script in StreamingPro.
+
+
+MLSQL is a DSL akin to SQL but more powerfull based on StreamingPro platform. Since StreamingPro have already 
+intergrated many ML framework including Spark MLLib, DL4J and Python ML framework eg. Sklearn, Tensorflow(supporting cluster mode)
+this means you can use MLSQL to operate all these popular Machine Learning frameworks.
+
+## Why MLSQL
+
+MLSQL give you the power to use just one SQL-like language to finish all your Machine Learning  pipeline.  It also provide so 
+many modules and functions to help you simplify the complex of build Machine Learning application.
+  
+1. MLSQL is the only one language you should take over.
+2. Data preproccessing created in training phase can also be used in streaming, batch , API service directly without coding.
+3. Server mode make you get rid of environment trouble.      
+
+
+## Quick Tutorial
+
+Step 1:
+
+
+Download the jars from the release page: [Release页面](https://github.com/allwefantasy/streamingpro/releases):
+
+1. streamingpro-mlsql-1.1.2.jar
+2. ansj_seg-5.1.6.jar
+3. nlp-lang-1.7.8.jar
+
+Step 2:
+
+Visit the downloads page: [Spark](https://spark.apache.org/downloads.html), to download Apache Spark 2.2.0 and then unarvhive it.
+ 
+Step 3:
+
+```shell
+cd spark-2.2.0-bin-hadoop2.7/
+
+./bin/spark-submit   --class streaming.core.StreamingApp \
+--master local[*] \
+--name sql-interactive \
+--jars ansj_seg-5.1.6.jar,nlp-lang-1.7.8.jar
+streamingpro-mlsql-1.1.2.jar    \
+-streaming.name sql-interactive    \
+-streaming.job.file.path file:///tmp/query.json \
+-streaming.platform spark   \
+-streaming.rest true   \
+-streaming.driver.port 9003   \
+-streaming.spark.service true \
+-streaming.thrift false \
+-streaming.enableHiveSupport true
+```
+
+`query.json` is a json file contains "{}".
+
+Step 4: 
+
+Open your chrome browser, type the following url:
+
+```
+http://127.0.0.1:9003
+```
+
+![](https://github.com/allwefantasy/mlsql-web/raw/master/images/WX20180629-105204@2x.png)
+
+Enjoy.
+
+
+---------------------------------------------------
+Run the first Machine Learning Script in MLSQL.
+
+```sql
+
+-- load data from spark distribution 
+load libsvm.`/spark-2.2.0-bin-hadoop2.7/data/mllib/sample_libsvm_data.txt` as data;
+
+-- train a NaiveBayes model and save it in /tmp/bayes_model.
+-- Here the alg we use  is based on Spark MLlib 
+train data as NaiveBayes.`/tmp/bayes_model`;
+
+-- register your model
+register NaiveBayes.`/tmp/bayes_model` as bayes_predict;
+
+-- predict all data 
+select bayes_predict(features) as predict_label, label  from data as result;
+
+-- save predicted result in /tmp/result with json format
+save overwrite result as json.`/tmp/result`;
+
+-- show predict label in web table.
+select * from result as res;
+```
+
+Please make sure the path `/spark-2.2.0-bin-hadoop2.7/data/mllib/sample_libsvm_data.txt` is correct.
+
+Copy and paste the script to the web page, and click `运行`, then you will see the label and predict_label.
+
+Congratulations, you have completed the first Machine Learning script!
+
+----------------------------------------------------
+
+Run the first ETL Script In MLSQL.
+
+
+```sql
+select "a" as a,"b" as b
+as abc;
+
+-- here we just copy all from table abc and then create a new table newabc.
+
+From Oscar:
+-- we just copy all from table abc and create a new table newabc here.
+
+select * from abc
+as newabc;
+
+-- save the newabc table to mysql.
+save overwrite newabc
+as jdbc.`db.abc`
+options truncate="true"
+and driver="com.mysql.jdbc.Driver"
+and url="jdbc:mysql://127.0.0.1:3306/...."
+and driver="com.mysql.jdbc.Driver"
+and user="..."
+and password="...."
+```
+
+Congratulations, you have completed the first ETL script!
+
+-------------------------------------------------------
+
+
+## Documentation in Chinese
+
+### step1: 下载资源
+
+1. 到[release页面](https://github.com/allwefantasy/streamingpro/releases)下载最新jar包。
+2. 下载一个[spark发行版](https://www.apache.org/dyn/closer.lua/spark/spark-2.2.0/spark-2.2.0-bin-hadoop2.7.tgz)。
+
+### step2 解压进入spark home目录，启动服务
+
+```
+./bin/spark-submit   --class streaming.core.StreamingApp \
+--master local[2] \
+--name sql-interactive \
+streamingpro-spark-2.0-1.1.0.jar    \
+-streaming.name sql-interactive    \
+-streaming.job.file.path file:///tmp/query.json \
+-streaming.platform spark   \
+-streaming.rest true   \
+-streaming.driver.port 9003   \
+-streaming.spark.service true \
+-streaming.thrift false \
+-streaming.enableHiveSupport true
+```
+
+大家复制黏贴就好，其中
+
+1. query.json是一个包含"{}" 字符串的文件
+2. Streamingpro-spark-2.0-1.1.0.jar 是你刚才下载的StreamingPro jar包。
+3. 其他参数大家照着写就好
+
+如果对众多参数感兴趣，不妨移步：[更多参数](https://github.com/allwefantasy/streamingpro#streamingpro的一些参数)
+
+值得注意，这是一个标准的Spark程序启动命令，其中以"--"开头的是spark自有参数，而以'-streaming'开头的则是StreamingPro特有的参数，这里需要区别一下。
+一旦启动后，就可以通过9003端口进行交互了。你可以提交一些SQL脚本即可完成包括爬虫、ETL、流式计算、算法、模型预测等功能。我们推荐使用Postman这个
+HTTP交互软件来完成交互。
+
+### step3: 玩一个ETL处理
+
+目标是随便造一些数据，然后保存到mysql里去：
+
+```sql
+select "a" as a,"b" as b
+as abc;
+
+-- 这里只是表名你是可以使用上面的表形成一张新表
+select * from abc
+as newabc;
+
+save overwrite newabc
+as jdbc.`tableau.abc`
+options truncate="true"
+and driver="com.mysql.jdbc.Driver"
+and url="jdbc:mysql://127.0.0.1:3306/...."
+and driver="com.mysql.jdbc.Driver"
+and user="..."
+and password="...."
+```
+
+当然如果你能连接hive,写hive数据库以及表名就可以了。这里你可以实现非常复杂的逻辑，并且支持类似set语法[PR-181](https://github.com/allwefantasy/streamingpro/pull/181)
+
+
+### step3.1: 玩一把算法
+
+执行脚本的接口是 `http://127.0.0.1:9003/run/script` ，接受的主要参数是sql。 下面是一段sql脚本， 
+
+```sql
+
+-- 加载spark项目里的一个测试数据
+load libsvm.`/spark-2.2.0-bin-hadoop2.7/data/mllib/sample_libsvm_data.txt` as data;
+
+-- 训练一个贝叶斯模型，并且保存在/tmp/bayes_model目录下。
+train data as NaiveBayes.`/tmp/bayes_model`;
+
+-- 注册训练好的模型
+register NaiveBayes.`/tmp/bayes_model` as bayes_predict;
+
+-- 对所有数据进行预测
+select bayes_predict(features)  from data as result;
+
+-- 把预测结果保存到/tmp/result目录下，格式为json。
+save overwrite result as json.`/tmp/result`;
+```
+
+该接口执行成功会返回"{}" ，如果失败，会有对应错误。
+其中 `/spark-2.2.0-bin-hadoop2.7/data/mllib/sample_libsvm_data.txt` 是Spark安装包里已经有的文件。
+
+完成之后你可以打开 /tmp/result 目录查看结果，当然你可以可以通过`http://127.0.0.1:9003/run/sql=select * from result` 
+查看预测结果。
+
+### 继续玩
+
+玩一把流式计算，参看[流式计算](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-stream.md)
 
 
 ## 应用模式和服务模式
@@ -107,228 +332,6 @@
 * [SQL服务](https://github.com/allwefantasy/streamingpro/blob/master/docs/sqlservice.md)
 
 
-## 概述
-
-StreamingPro 支持以Spark,Flink等作为底层分布式计算引擎，通过一套统一的配置文件完成批处理，流式计算，Rest服务的开发。
-特点有：
-
-1. 使用Json描述文件完成流式，批处理的开发，不用写代码。
-2. 支持SQL Server,支持XSQL/MLSQL（重点），完成批处理，机器学习，即席查询等功能。
-3. 标准化输入输出，支持UDF函数注册，支持自定义模块开发
-4. 支持Web化管理Spark应用的启动，监控
-
-如果更细节好处有：
-
-1. 跨版本：StreamingPro可以让你不用任何变更就可以轻易的运行在spark 1.6/2.1/2.2上。 
-2. 新语法：提供了新的DSl查询语法/Json配置语法
-3. 程序的管理工具：提供web界面启动/监控 Spark 程序
-4. 功能增强：2.1之后Structured Streaming 不支持kafka 0.8/0.9 ,Structured，此外还有比如spark streaming 支持offset 保存等
-5. 简化Spark SQL Server搭建成本：提供rest接口/thrift 接口，支持spark sql server 的负载均衡，自动将driver 注册到zookeeper上
-6. 探索更多的吧
-
-
-## 项目模块说明
-
-| 模块名	 | 描述  |备注 |
-|:-----------|:------------|:------------|
-|streamingpro-commons | 一些基础工具类||
-|streamingpro-spark-common | Spark有多个版本，所以可以共享一些基础的东西||
-|streamingpro-flink |  streamingpro对flink的支持||
-|streamingpro-spark  | streamingpro对spark 1.6.x的支持||
-|streamingpro-mlsql | streamingpro对spark 2.x的支持(主项目)||
-|streamingpro-api | streamingpro把底层的spark API暴露出来，方便用户灵活处理问题||
-|streamingpro-manager | 通过该模块，可以很方便的通过web界面启动，管理，监控 spark相关的应用||
-|streamingpro-dls | 自定义connect,load,select,save,train,register等语法，便于用类似sql的方式做批处理任务,机器学习等||
-
-## 相关概念
-
-如果你使用StreamingPro，那么所有的工作都是在编辑一个Json配置文件。通常一个处理流程，会包含三个概念：
-
-1. 多个输入
-2. 多个连续/并行的数据处理
-3. 多个输出
-
-StreamingPro会通过'compositor'的概念来描述他们，你可以理解为一个处理单元。一个典型的输入compositor如下：
-
-```
-{
-        "name": "batch.sources",
-        "params": [
-          {
-            "path": "file:///tmp/hdfsfile/abc.txt",
-            "format": "json",
-            "outputTable": "test"
-
-          },
-           {
-              "path": "file:///tmp/parquet/",
-              "format": "parquet",
-              "outputTable": "test2"
-
-            }
-        ]
-}
-```
-
-`batch.sources` 就是一个compositor的名字。 这个compositor 把一个本地磁盘的文件映射成了一张表，并且告知系统，abc.txt里的内容
- 是json格式的。这样，我们在后续的compositor模块就可以使用这个`test`表名了。通常，StreamingPro希望整个处理流程，
- 也就是不同的compositor都采用表来进行衔接。
-
- StreamingPro不仅仅能做批处理，还能做流式，流式支持Spark Streaming,Structured Streaming。依然以输入compositor为例，假设
- 我们使用的是Structured Streaming,则可以如下配置。
-
- ```
- {
-         "name": "ss.sources",
-         "params": [
-           {
-             "format": "kafka9",
-             "outputTable": "test",
-             "kafka.bootstrap.servers": "127.0.0.1:9092",
-             "topics": "test",
-             "path": "-"
-           },
-           {
-             "format": "com.databricks.spark.csv",
-             "outputTable": "sample",
-             "header": "true",
-             "path": "/Users/allwefantasy/streamingpro/sample.csv"
-           }
-         ]
-       }
- ```
-
- 第一个表示我们对接的数据源是kafka 0.9，我们把Kafka的数据映射成表test。 因为我们可能还需要一些元数据，比如ip和城市的映射关系，
- 所以我们还可以配置一些其他的非流式的数据源，我们这里配置了一个smaple.csv文件，并且命名为表sample。
- 
- 如果你使用的是kafka >= 1.0,则 topics 参数需要换成'subscribe',并且使用时可能需要对内容做下转换，类似：
-  
-  ```
-  select CAST(key AS STRING) as k, CAST(value AS STRING) as v from test
-  ```
-  
- 启动时，你需要把-streaming.platform 设置为 `ss`。 
-
- 如果我们的输入输出都是Hive的话，可能就不需要batch.sources/batch.outputs 等组件了，通常一个batch.sql就够了。比如：
-
- ```
- "without-sources-job": {
-     "desc": "-",
-     "strategy": "spark",
-     "algorithm": [],
-     "ref": [],
-     "compositor": [
-       {
-         "name": "batch.sql",
-         "params": [
-           {
-             "sql": "select * from hiveTable",
-             "outputTableName": "puarquetTable"
-           }
-         ]
-       },
-       {
-         "name": "batch.outputs",
-         "params": [
-           {
-             "format": "parquet",
-             "inputTableName": "puarquetTable",
-             "path": "/tmp/wow",
-             "mode": "Overwrite"
-           }
-         ]
-       }
-     ],
-     "configParams": {
-     }
-   }
-
- ```
-
-在批处理里，batch.sources/batch.outputs 都是可有可无的，但是对于流式程序，stream.sources/stream.outputs/ss.sources/ss.outputs 则是必须的。
-
-
-## StreamingPro的一些参数
-
-
-| Property Name	 | Default  |Meaning |
-|:-----------|:------------|:------------|
-| streaming.name | (none) required | 等价于 spark.app.name |
-| streaming.master | (none) required | 等价于  spark.master |
-| streaming.duration | 10 seconds| spark streaming 周期，默认单位为秒 |
-| streaming.rest |true/false,default is false | 是否提供http接口|
-| streaming.spark.service |true/false,default is false | 开启该选项时，streaming.platform必须为spark. 该选项会保证spark实例不会退出|
-| streaming.platform | spark/spark_streaming/ss/flink,default is spark | 基于什么平台跑|
-| streaming.checkpoint | (none)|spark streaming checkpoint 目录  |
-| streaming.kafka.offsetPath | (none)| kafka的偏移量保存目录。如果没有设置，会保存在内存中 |
-| streaming.driver.port | 9003| 配置streaming.rest使用，streaming.rest为true,你可以设置一个http端口   |
-| streaming.spark.hadoop.* |(none)| hadoop configuration,eg. -streaming.spark.hadoop.fs.defaultFS hdfs://name:8020  |
-| streaming.job.file.path |(none)| 配置文件路径，默认从hdfs加载  |
-| streaming.jobs |(none)| json配置文件里的job名称，按逗号分隔。如果没有配置该参数，默认运行所有job  |
-| streaming.zk.servers |(none)| 如果把spark作为一个server,那么streamingpro会把driver地址注册到zookeeper上|
-| streaming.zk.conf_root_dir |(none)| 配置streaming.zk.servers使用 |
-|streaming.enableHiveSupport|false|是否支持Hive|
-|streaming.thrift|false|是否thrift server|
-| streaming.sql.source.[name].[参数] |(none)| batch/ss/stream.sources 中，你可以替换里面的任何一个参数 |
-| streaming.sql.out.[name].[参数] |(none)| batch/ss/stream.outputs 中，你可以替换里面的任何一个参数 |
-| streaming.sql.params.[param-name] |(none)| batch/ss/stream.sql中，你是可以写表达式的,比如 select * from :table, 之后你可以通过命令行传递该table参数 |
-
-后面三个参数值得进一步说明：
-
-假设我们定义了两个数据源，firstSource,secondSource,描述如下：
-
-```
-{
-        "name": "batch.sources",
-        "params": [
-          {
-            "name":"firstSource",
-            "path": "file:///tmp/sample_article.txt",
-            "format": "com.databricks.spark.csv",
-            "outputTable": "article",
-            "header":true
-          },
-          {
-              "name":"secondSource",
-              "path": "file:///tmp/sample_article2.txt",
-              "format": "com.databricks.spark.csv",
-              "outputTable": "article2",
-              "header":true
-            }
-        ]
-      }
-```
-
-我们希望path不是固定的，而是启动时候决定的，这个时候，我们可以在启动脚本中使用-streaming.sql.source.[name].[参数] 来完成这个需求。
-比如：
-
-```
--streaming.sql.source.firstSource.path  file:///tmp/wow.txt
-```
-
-这个时候，streamingpro启动的时候会动态将path 替换成你要的。包括outputTable等都是可以替换的。
-
-有时候我们需要定时执行一个任务，而sql语句也是动态变化的，具体如下：
-
-```
-{
-        "name": "batch.sql",
-        "params": [
-          {
-            "sql": "select * from test where hp_time=:today",
-            "outputTableName": "finalOutputTable"
-          }
-        ]
-      },
-```
-
-这个时候我们在启动streamingpro的时候，通过参数：
-
-```
--streaming.sql.params.today  "2017"
-```
-
-动态替换 sql语句里的:today
 
 
 
