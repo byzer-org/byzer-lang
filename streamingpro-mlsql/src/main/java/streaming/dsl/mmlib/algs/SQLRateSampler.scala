@@ -85,13 +85,7 @@ class SQLRateSampler extends SQLAlg with Functions {
 
       val dfWithLabelPartition = df.rdd.map { f =>
         (getIntFromRowByName(f, labelCol), f)
-      }.partitionBy(new Partitioner {
-        override def numPartitions: Int = labelCount
-
-        override def getPartition(key: Any): Int = {
-          key.asInstanceOf[Int]
-        }
-      }).mapPartitions { iter =>
+      }.partitionBy(new org.apache.spark.HashPartitioner(labelCount)).mapPartitions { iter =>
         val r = scala.util.Random
         iter.map { wow =>
           val item = r.nextFloat()
