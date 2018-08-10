@@ -1,6 +1,5 @@
 package streaming.dsl.mmlib.algs
 
-import org.apache.commons.lang3.StringUtils
 import org.apache.spark.Partitioner
 import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession, functions => F}
 import org.apache.spark.sql.expressions.UserDefinedFunction
@@ -52,7 +51,7 @@ class SQLRateSampler extends SQLAlg with Functions {
 
     val labelCount = labelToCountSeq.size
 
-
+    val labelPartionMap = labelToCountSeq.map(_._1).zipWithIndex.toMap
 
     if (isSplitWithSubLabel=="true") {
 
@@ -82,14 +81,12 @@ class SQLRateSampler extends SQLAlg with Functions {
         df.schema ++ Seq(StructField("__split__", IntegerType))))
 
     } else {
-
       val dfWithLabelPartition = df.rdd.map { f =>
         (getIntFromRowByName(f, labelCol), f)
       }.partitionBy(new Partitioner {
         override def numPartitions: Int = labelCount
-
         override def getPartition(key: Any): Int = {
-          key.asInstanceOf[Int]
+          labelPartionMap.getOrElse(key.asInstanceOf[Int], 0)
         }
       }).mapPartitions { iter =>
         val r = scala.util.Random
