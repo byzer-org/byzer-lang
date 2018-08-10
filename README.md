@@ -4,7 +4,7 @@
 
 StreamingPro is mainly designed to run on Apache Spark but it also supports Apache Flink for the runtime.
 Thus, it can be considered as a cross,distributed platform which is the combination of BigData platform and AI platform 
-You can run  both Big Data Processing and Machine Learning script in StreamingPro.
+where you can run  both Big Data Processing and Machine Learning script on StreamingPro.
 
 
 MLSQL is a DSL akin to SQL but more powerfull based on StreamingPro platform. Since StreamingPro have already 
