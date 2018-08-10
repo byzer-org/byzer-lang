@@ -7,6 +7,7 @@ import java.util.UUID
 import org.apache.commons.io.FileUtils
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
+import org.apache.spark.ml.clustering.BisectingKMeansModel
 import org.apache.spark.ml.linalg.SQLDataTypes._
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.types._
@@ -22,7 +23,17 @@ import scala.io.Source
  * Created by dxy_why on 2018/6/24.
  */
 class SQLModelExplainInPlace extends SQLAlg with Functions {
-  override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
+
+  def sparkmllibTrain(df: DataFrame, path: String, params: Map[String, String]): Unit = {
+    val modelPath = params.getOrElse("modelPath", "")
+    val model = BisectingKMeansModel.load(modelPath)
+    val model_info = "clusterCenters \n" + model.clusterCenters.mkString("\n") + model.explainParams()
+    import df.sparkSession.sqlContext.implicits._
+    Seq(model_info).toDF("sparkmllib_model_expalin_params")
+      .write.mode(SaveMode.Overwrite).parquet(getDataPath(path))
+  }
+
+  def sklearnTrain(df: DataFrame, path: String, params: Map[String, String]): Unit = {
     val systemParam = mapParams("systemParam", params)
     val pythonPath = systemParam.getOrElse("pythonPath", "python")
 
@@ -68,6 +79,15 @@ class SQLModelExplainInPlace extends SQLAlg with Functions {
     val modelHDFSPath = SQLPythonFunc.getAlgModelPath(path) + "/0"
     df.sparkSession.read.json(modelHDFSPath + "/attributes.json")
       .write.mode(SaveMode.Overwrite).parquet(getDataPath(path))
+  }
+
+  override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
+    val modelType = params.getOrElse("modelType", "sklearn")
+    modelType match {
+      case "sklearn" => sklearnTrain(df, path, params)
+      case "sparkmllib" => sparkmllibTrain(df, path, params)
+      case _ =>
+    }
   }
 
   override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = {
