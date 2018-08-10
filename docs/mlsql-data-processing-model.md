@@ -970,3 +970,44 @@ select * from result as output;
  |3    |[3, 7, 5]|
  +-----+---------+
 ```
+
+### RawSimilarInPlace
+
+RawSimilarInPlace用来计算n篇文章的相似度。训练逻辑如下：
+
+1.准备已经训练好的word2vec模型
+
+2.对文章按分隔符分割，得到多个句子
+
+3.对文章的每个句子进行word2vec，每个句子变成了多个向量，然后多个向量进行merge,最后每个句子都是一个向量，一篇文章由多个向量组成
+
+4.对两篇文章的向量两两相似度进行计算，得到n(n-1)/2个相似度
+
+具体用法：
+
+```sql
+load parquet.`/tmp/tfidf/df`
+as word2vec_corpus;
+
+-- Word2VecInPlace训练得到Word2VecInPlace模型
+train word2vec_corpus as Word2VecInPlace.`/tmp/word2vecinplace`
+where inputCol="content"
+;
+
+-- RawSimilarInPlace训练
+load parquet.`/tmp/raw` as data；
+
+-- modelPath为绝对路径
+train data as RawSimilarInPlace.`/tmp/rawsimilar` where
+modelPath="/tmp/william/tmp/word2vecinplace"
+-- sentenceSplit 句子分割符，默认以"。"分割，可以填多个，比如",。；"
+and sentenceSplit=",。"
+-- modelType默认Word2VecInplace，目前只支持Word2VecInplace模型
+and modelType="Word2VecInplace"
+and inputCol="features"
+and labelCol="label";
+register RawSimilarInPlace.`/tmp/rawsimilar` as rs_predict;
+
+-- 0.8为相似度比例阀值,得到与文章相似度高于阀值的文章label,结果类型为Map[Long,Double]
+select rs_predict(label,0.8) from data;
+```

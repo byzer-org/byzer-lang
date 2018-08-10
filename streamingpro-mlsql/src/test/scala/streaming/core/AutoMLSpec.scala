@@ -16,8 +16,8 @@ import streaming.dsl.template.TemplateMerge
 
 
 /**
-  * Created by allwefantasy on 6/5/2018.
-  */
+ * Created by allwefantasy on 6/5/2018.
+ */
 class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConfig {
 
 
@@ -733,6 +733,35 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
       spark.sql("select * from parquet.`/tmp/jack/data`").show(false)
       val res = spark.sql("select * from parquet.`/tmp/jack/data`").head.getSeq(1)
       assume(res.mkString(",") == "3,7,5")
+    }
+  }
+  "SQLRawSimilarInPlace" should "work fine" taggedAs (NotToRunTag) in {
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+      //执行sql
+      implicit val spark = runtime.sparkSession
+      val dataRDD = spark.sparkContext.parallelize(Seq(
+        Seq("我是天才。你呢，早上吃饭没", 1L),
+        Seq("你真的很棒，晚上吃饭没", 2L),
+        Seq("我是天才。你呢，早上吃饭没", 0L))).map { f =>
+        Row.fromSeq(f)
+      }
+
+      val df = spark.createDataFrame(dataRDD,
+        StructType(Seq(
+          StructField("content", StringType),
+          StructField("label", LongType)
+        )))
+      df.createOrReplaceTempView("t1")
+      val sq = createSSEL
+      //训练得到word2vec模型
+      ScriptSQLExec.parse("train t1 as Word2VecInPlace.`/tmp/word2vec` where inputCol=\"content\";", sq)
+
+      ScriptSQLExec.parse("train t1 as RawSimilarInPlace.`/tmp/rawsimilar` where modelPath=\"/tmp/william/tmp/word2vec\";" +
+        "register RawSimilarInPlace.`/tmp/rawsimilar` as jack;", sq)
+      val res = spark.sql("select label,jack(label,0.9) as result from t1").toJSON.collect()
+      assume(JSONObject.fromObject(res(0)).get("result").toString.equals("{\"0\":1}"))
+      assume(JSONObject.fromObject(res(1)).get("result").toString.equals("{}"))
+      assume(JSONObject.fromObject(res(2)).get("result").toString.equals("{\"1\":1}"))
     }
   }
 }
