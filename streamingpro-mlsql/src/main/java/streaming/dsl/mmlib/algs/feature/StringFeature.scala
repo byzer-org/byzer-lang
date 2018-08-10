@@ -10,6 +10,7 @@ import org.apache.spark.sql.{Row, functions => F, _}
 import _root_.streaming.dsl.mmlib.algs.MetaConst._
 
 import scala.collection.mutable.ArrayBuffer
+import scala.util.control.Breaks.{break, breakable}
 
 
 /**
@@ -300,5 +301,135 @@ object StringFeature extends BaseFeatureFunctions {
     val predictSingleWordFunc = funcMap("wow").asInstanceOf[(String) => Int]
     val newDF = replaceColumn(df, inputCol, F.udf(predictSingleWordFunc))
     (newDF, funcMap)
+  }
+
+  def mergeFunc(seq: Seq[Seq[Double]], vectorSize: Int) = {
+    if (seq.size == 0) {
+      Seq[Double]()
+    } else {
+      val r = new Array[Double](vectorSize)
+      for (a1 <- seq) {
+        val b = a1.toList
+        for (i <- 0 until b.size) {
+          r(i) = b(i) + r(i)
+        }
+      }
+      r.toSeq
+    }
+  }
+
+  def analysisRaw(df: DataFrame, inputCol: String, splits: String, modelSplit: String, dicPaths: String, wordsArray: Array[String] = Array[String]()) = {
+    val spark = df.sparkSession
+    val words = SQLTokenAnalysis.loadDics(spark, Map("dic.paths" -> dicPaths)) ++ wordsArray
+    val parser = SQLTokenAnalysis.createAnalyzer(words, Map())
+    val analysisRawFunc = F.udf((raw: String) => {
+      var raw1 = ""
+      val splitArray = splits.split("")
+      for (split <- splitArray) {
+        raw1 = raw.replace(split, "。")
+      }
+      raw1.split("。").map(f => {
+        if (modelSplit != null) {
+          f.split(modelSplit).toSeq
+        } else {
+          val parser = SQLTokenAnalysis.createAnalyzer(words, Map())
+          SQLTokenAnalysis.parseStr(parser, f, Map("ignoreNature" -> "true")).toSeq
+        }
+      }).toSeq
+    })
+    replaceColumn(df, inputCol, analysisRawFunc)
+  }
+
+  def raw2vec(df: DataFrame, inputCol: String, splits: String, modelPath: String) = {
+    val spark = df.sparkSession
+    import spark.implicits._
+    val modelMetaPath = getMetaPath(modelPath)
+    val modelParams = spark.read.parquet(PARAMS_PATH(modelMetaPath, "params")).map(f => (f.getString(0), f.getString(1))).collect().toMap
+    val modelInputCol = modelParams.getOrElse("inputCol", "")
+    val dicPaths = modelParams.getOrElse("dicPaths", "")
+    val wordvecPaths = modelParams.getOrElse("wordvecPaths", "")
+    val modelSplit = modelParams.getOrElse("split", null)
+    val vectorSize = modelParams.getOrElse("vectorSize", "100").toInt
+    val wordvecsMapBr = spark.sparkContext.broadcast(loadWordvecs(spark, wordvecPaths))
+    val wordsArray = StringFeature.loadDicsFromWordvec(spark, wordvecPaths)
+    val word2vec = new SQLWord2Vec()
+    val model = word2vec.load(spark, WORD2VEC_PATH(modelMetaPath, modelInputCol), Map())
+    val predictFunc = word2vec.internal_predict(df.sparkSession, model, "wow")("wow_array").asInstanceOf[(Seq[String]) => Seq[Seq[Double]]]
+    val wordIndexBr = spark.sparkContext.broadcast(spark.read.parquet(WORD_INDEX_PATH(modelMetaPath, modelInputCol)).map(f => ((f.getString(0), f.getDouble(1)))).collect().toMap)
+
+    val newDf = analysisRaw(df, inputCol, splits, modelSplit, dicPaths, wordsArray)
+    val toVecFunc = F.udf((raw: Seq[Seq[String]]) => {
+      raw.map(wordSeq => {
+        val vecSeq = if (wordvecsMapBr.value.size > 0) {
+          wordSeq.filter(f => wordvecsMapBr.value.contains(f)).map(f => wordvecsMapBr.value(f).toSeq)
+        }
+        else {
+          val wordIntArray = wordSeq.filter(f => wordIndexBr.value.contains(f)).map(f => wordIndexBr.value(f).toInt)
+          predictFunc(wordIntArray.map(f => f.toString))
+        }
+        //merge
+        if (vecSeq.size == 0) {
+          Seq[Double]()
+        }
+        else {
+          val r = new Array[Double](vectorSize)
+          for (vec <- vecSeq) {
+            for (i <- 0 until vec.size) {
+              r(i) = vec(i) + r(i)
+            }
+          }
+          r.toSeq
+        }
+      })
+    })
+    replaceColumn(newDf, inputCol, toVecFunc)
+  }
+
+  def cosineSimilarity(array1: Seq[Double], array2: Seq[Double]): Double = {
+    var dotProduct = 0.0
+    var magnitude1 = 0.0
+    var magnitude2 = 0.0
+    var cosineSimilarity = 0.0
+    if (array1.length == 0 || array2.length == 0 || array1.length != array2.length) {
+      0.0D
+    } else {
+      for (i <- 0 until array1.length) {
+        dotProduct += array1(i) * array2(i) //a.b
+        magnitude1 += Math.pow(array1(i), 2) //(a^2)
+        magnitude2 += Math.pow(array2(i), 2) //(b^2)
+      }
+      magnitude1 = Math.sqrt(magnitude1) //sqrt(a^2)
+      magnitude2 = Math.sqrt(magnitude2) //sqrt(b^2)
+      if ((magnitude1 != 0.0D) && (magnitude2 != 0.0D))
+        cosineSimilarity = dotProduct / (magnitude1 * magnitude2)
+      else return 0.0
+      cosineSimilarity
+    }
+  }
+
+  def rawSimilar(array1: Seq[Seq[Double]], array2: Seq[Seq[Double]], threshold: Double = 0.8): Double = {
+    var similar: Double = 0
+    if (array1.length > 0 && array2.length > 0) {
+      val (smallArray, bigArray) = {
+        if (array1.length < array2.length)
+          (array1, array2)
+        else
+          (array2, array1)
+      }
+      val size = smallArray.length.toDouble
+      var num = 0
+      for (r1 <- smallArray) {
+        breakable {
+          for (r2 <- bigArray) {
+            if (cosineSimilarity(r1, r2) >= threshold) {
+              num = num + 1
+              break
+            }
+          }
+        }
+      }
+      similar = num / size
+    }
+    similar
   }
 }
