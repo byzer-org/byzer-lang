@@ -668,8 +668,9 @@ and isSplitWithSubLabel="true"
 
 ## ModelExplainInPlace
 
-加载sklearn模型，显示训练后的模型参数
+加载sklearn或者sparkmllib模型，显示训练后的模型参数
 
+加载sklearn模型
 ```
 train traindataframe as ModelExplainInPlace.`tmp/modelExplainInPlace/` 
 where `systemParam.pythonPath`="python"
@@ -677,6 +678,14 @@ and `systemParam.pythonVer`="2.7"
 // 模型路径
 and `modelPath`="/tmp/svm.pickle"
 ```
+
+加载sparkmllib模型
+```
+train traindataframe as ModelExplainInPlace.`tmp/modelExplainInPlace/` 
+where `modelPath`="/tmp/model"
+and `modelType`="sparkmllib"
+```
+
 模型参数保存在/tmp/modelExplainInPlace/data，
 该参数在ModelExplainInPlace.`tmp/modelExplainInPlace/` 处设置
 ```
