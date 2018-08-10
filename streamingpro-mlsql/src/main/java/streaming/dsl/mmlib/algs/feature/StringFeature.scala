@@ -318,13 +318,13 @@ object StringFeature extends BaseFeatureFunctions {
     }
   }
 
-  def analysisRaw(df: DataFrame, inputCol: String, splits: String, modelSplit: String, dicPaths: String, wordsArray: Array[String] = Array[String]()) = {
+  def analysisRaw(df: DataFrame, inputCol: String, sentenceSplit: String, modelSplit: String, dicPaths: String, wordsArray: Array[String] = Array[String]()) = {
     val spark = df.sparkSession
     val words = SQLTokenAnalysis.loadDics(spark, Map("dic.paths" -> dicPaths)) ++ wordsArray
     val parser = SQLTokenAnalysis.createAnalyzer(words, Map())
     val analysisRawFunc = F.udf((raw: String) => {
       var raw1 = ""
-      val splitArray = splits.split("")
+      val splitArray = sentenceSplit.split("")
       for (split <- splitArray) {
         raw1 = raw.replace(split, "。")
       }
@@ -340,7 +340,7 @@ object StringFeature extends BaseFeatureFunctions {
     replaceColumn(df, inputCol, analysisRawFunc)
   }
 
-  def raw2vec(df: DataFrame, inputCol: String, splits: String, modelPath: String) = {
+  def raw2vec(df: DataFrame, inputCol: String, sentenceSplit: String, modelPath: String) = {
     val spark = df.sparkSession
     import spark.implicits._
     val modelMetaPath = getMetaPath(modelPath)
@@ -357,7 +357,7 @@ object StringFeature extends BaseFeatureFunctions {
     val predictFunc = word2vec.internal_predict(df.sparkSession, model, "wow")("wow_array").asInstanceOf[(Seq[String]) => Seq[Seq[Double]]]
     val wordIndexBr = spark.sparkContext.broadcast(spark.read.parquet(WORD_INDEX_PATH(modelMetaPath, modelInputCol)).map(f => ((f.getString(0), f.getDouble(1)))).collect().toMap)
 
-    val newDf = analysisRaw(df, inputCol, splits, modelSplit, dicPaths, wordsArray)
+    val newDf = analysisRaw(df, inputCol, sentenceSplit, modelSplit, dicPaths, wordsArray)
     val toVecFunc = F.udf((raw: Seq[Seq[String]]) => {
       raw.map(wordSeq => {
         val vecSeq = if (wordvecsMapBr.value.size > 0) {

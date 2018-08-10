@@ -17,10 +17,12 @@ class SQLRawSimilarInPlace extends SQLAlg with Functions {
     val inputCol = params.getOrElse("inputCol", "content").toString
     val labelCol = params.getOrElse("labelCol", "label").toString
     val threshold = params.getOrElse("threshold", "0.8").toDouble
-    val splits = params.getOrElse("split", "。").toString
+    val sentenceSplit = params.getOrElse("sentenceSplit", "。").toString
+    val modelType = params.getOrElse("modelType", "Word2VecInPlace").toString
     val modelPath = params("modelPath")
-    val newDf = StringFeature.raw2vec(df, inputCol, splits, modelPath)
-    newDf.show()
+    val newDf = modelType match {
+      case _ => StringFeature.raw2vec(df, inputCol, sentenceSplit, modelPath)
+    }
     val rdd = newDf.rdd.map(f => (f.getAs(inputCol).asInstanceOf[Seq[Seq[Double]]], f.getAs(labelCol).asInstanceOf[Long]))
     val rdd1 = rdd.cartesian(rdd).filter(x => x._1._2 > x._2._2).map(x => Row(x._1._2, x._2._2, StringFeature.rawSimilar(x._1._1, x._2._1, threshold)))
     val newDf1 = df.sparkSession.createDataFrame(rdd1,

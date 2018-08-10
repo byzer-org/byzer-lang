@@ -16,8 +16,8 @@ import streaming.dsl.template.TemplateMerge
 
 
 /**
-  * Created by allwefantasy on 6/5/2018.
-  */
+ * Created by allwefantasy on 6/5/2018.
+ */
 class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConfig {
 
 
@@ -752,15 +752,14 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
       df.createOrReplaceTempView("t1")
       val sq = createSSEL
       //训练得到word2vec模型
-      ScriptSQLExec.parse("train t1 as Word2VecInPlace.`/tmp/word2vec` where inputCol=\"content\";",sq)
+      ScriptSQLExec.parse("train t1 as Word2VecInPlace.`/tmp/word2vec` where inputCol=\"content\";", sq)
 
-      ScriptSQLExec.parse( "train t1 as RawSimilarInPlace.`/tmp/rawsimilar` where modelPath=\"/tmp/william/tmp/word2vec\";" +
+      ScriptSQLExec.parse("train t1 as RawSimilarInPlace.`/tmp/rawsimilar` where modelPath=\"/tmp/william/tmp/word2vec\";" +
         "register RawSimilarInPlace.`/tmp/rawsimilar` as jack;", sq)
-      val res1 = spark.sql("select label,jack(label,0.1) as result from t1").toJSON.collect()
-      res1.foreach(f =>
-        println(f)
-      )
-
+      val res = spark.sql("select label,jack(label,0.9) as result from t1").toJSON.collect()
+      assume(JSONObject.fromObject(res(0)).get("result").toString.equals("{\"0\":1}"))
+      assume(JSONObject.fromObject(res(1)).get("result").toString.equals("{}"))
+      assume(JSONObject.fromObject(res(2)).get("result").toString.equals("{\"1\":1}"))
     }
   }
 }
