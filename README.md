@@ -1,5 +1,3 @@
-# Documentation in English
-
 ## What's StreamingPro and MLSQL?
 
 StreamingPro is mainly designed to run on Apache Spark but it also supports Apache Flink for the runtime.
