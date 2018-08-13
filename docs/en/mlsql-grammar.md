@@ -1,6 +1,6 @@
 ## MLSQL Grammar
 
-MLSQL supports following statements:
+MLSQL supports the following statements:
 
 1. connect  
 2. set    
@@ -11,7 +11,7 @@ MLSQL supports following statements:
 
 ### connect
 
-The connect statement is used to connect external storage engine eg. MySQL, ElasticSearch with some options.
+The connect statement is used to connect the external storage engines ie. MySQL, ElasticSearch etc. with options.
 
 Connect Syntax:
 
@@ -20,11 +20,8 @@ Connect Syntax:
 'where'? expression? booleanExpression* ('as' db)?
 ```
 
-Here, `format` is the name of the target storage engine you want to connect ,and  
-`expression` and  `booleanExpression` is used to provide extra information like username, passowrd so MLSQL can establish the 
-connection to the target.
-
-Finally , the `db`  gives the target a name which can be seen as alias to this connection.
+Here, `format` is the name of the target storage engine you want to connect.   
+`expression` and  `booleanExpression` are used to provide extra information such as username and password such that MLSQL can connect to the target. Finally, the `db` is an alias to this connection.
   
 Demo:
   
@@ -42,7 +39,7 @@ as mysql-1;
 load jdbc.`mysql-1.table1` as table1;
 select * from table1 as output;
 
--- of course ,you can operate mysql wihout connect statment. 
+-- of course, you can operate mysql without connect statement. 
 load jdbc.`mysql-1.table1` options
 and driver="com.mysql.jdbc.Driver"
 and url="jdbc:mysql://127.0.0.1:3306/...."
@@ -50,37 +47,31 @@ and driver="com.mysql.jdbc.Driver"
 and user="..."
 and password="...."
 as table1;
-
 ```
 
-This example shows how it brings the convenient to operate the third-party storage engine.
+This example demonstrates how convenient it is to integrate with the third-party storage engine.
 
 
 ### load 
 
-In MLSQL, you can load almost anything as a table. The load statement is used to achieve this target. 
-
-Load syntax:
-
+In MLSQL, you can load almost anything as a table. The load syntax is as follows:
 ```
 ('load'|'LOAD') format '.' path 'options'? expression? booleanExpression*  'as' tableName
 ```
 
 Example:
 
- 
 ```sql
 load csv.`/tmp/abc.csv` as table1;
 ```
 
 Here are the format we build-in support:
 
-
 1.  csv
 2.  parquet
 3.  orc
 4.  jdbc  
-5.  es    (requires elasticsearch-hadoop jar) 
+5.  es (requires elasticsearch-hadoop jar) 
 6.  hbase (requires streamingpro-hbase jar)
 7.  redis (requires streamingpro-redis jar)
 8.  kafka/kafka8/kafka9
@@ -89,8 +80,8 @@ Here are the format we build-in support:
 
 ### select 
  
-The select statement is used to select data from table which is loaded by load statement. 
-Hive table is no need to load, you can use select to query directly.
+The select statement is used to select data from table loaded by load statement. 
+You do not need to load the Hive table, which you can use select to query directly.
 
 Select syntax:
 
@@ -98,9 +89,7 @@ Select syntax:
 ('select'|'SELECT') ~(';')* 'as' tableName
 ```
 
-Select statement is a standard spark SQL except ends with `as tableName` suffix, this means any select statement return as 
-table.
-   
+Select statement is a standard spark SQL statement except that it ends with `as tableName` suffix. This means any select statement will return a table as a result.
    
 Example:
 
@@ -110,14 +99,12 @@ select a.column1 from
 as newtable1;
 ```
 
-This statement is kind of complex, but if you remove the "as newtable1", you will find that it's a standard SQL.
-In MSLQL, select is good at processing data. There is also another statement is more powerful in processing data then select,
-we will introduce it later. 
+This statement looks complex. However, if you remove the "as newtable1", you will find that it's a standard SQL.
+In MSLQL, select is good at processing data. There is also another statement train that is more powerful than select in data processing data. We will introduce it in the next section. 
 
 ### train 
 
-Train statement not only  provide you  the ability to process data, but also train any machine learning algorithm. MLSQL 
-have many modules implemented which can be used in train statement.  
+Train statement provides you not only the ability to process data but also train any machine learning algorithms. MLSQL has many modules implemented which can be used in the train statement.  
  
 Train syntax: 
 
@@ -133,11 +120,10 @@ train data as RandomForest.`/tmp/model`
 where maxDepth="3";
 ```
 
-MLSQL loads libsvm data from HDFS/Local File System, and then train it with  RandomForest implemented in Spark MLLib.
-Finally the model would be saved in directory `/tmp/model`.
+MLSQL loads libsvm data from the HDFS/Local File System, and then train it with RandomForest in Spark MLLib.
+Finally the model would be saved in the directory `/tmp/model`.
 
-Here is another example to show how to processing data:
-
+Here is another example showing how to process data:
 
 ```sql
 load parquet.`/tmp/data`
@@ -150,18 +136,17 @@ where inputCol="content"
 -- stopwords
 and stopWordPath="/tmp/tfidf/stopwords"
 -- flatt hresult
-and resultFeature="flat"
-;
+and resultFeature="flat";
 ```
 
-You can get converting result from `/tmp/word2vecinplace/data`. Let me show you how to do this:
+You can find the converting result in `/tmp/word2vecinplace/data`. Let me show you how to do this:
  
 ```sql
 load parquet.`/tmp/word2vecinplace/data` as converting_result;
 select * from converting_result as output;
 ```
 
-You can also get predict function from `/tmp/word2vecinplace`(The register statement we will learn later):
+You can also get predict function from `/tmp/word2vecinplace`(We will discuss the register statement later):
 
 ```sql
 register Word2VecInPlace.`/tmp/word2vecinplace` as word2vec;
@@ -170,8 +155,7 @@ select word2vec(content) from sometable as output;
 
 ### register
 
-Register statement is used together with train statement. Train statement provides model, and Register statement create function
-from the model.
+Register statement is often used together with train statement. Train statement provides a model, and Register statement create a function from the model.
 
 Register syntax: 
 
@@ -195,26 +179,24 @@ select rf_predict(feature) from data as output;
  
 Save is used to write table to any storage. 
 
-
 Save syntax: 
 
 ```
-('save'|'SAVE') (overwrite | append | errorIfExists |ignore)* tableName 'as' format '.' path 'options'? expression? booleanExpression* ('partitionBy' col)? 
+('save'|'SAVE') (overwrite | append | errorIfExists | ignore)* tableName 'as' format '.' path 'options'? expression? booleanExpression* ('partitionBy' col)? 
 ```
 
 Example:
 
 ```sql
-save overwrite  table1 as csv.`/tmp/data` options
+save overwrite table1 as csv.`/tmp/data` options
 header="true";
 ```
 
-MLSQL will save table1 to `/tmp/data` with csv format. It also keep the header in csv using `header="true"` declared 
-in options.
+MLSQL will save table1 to `/tmp/data` in csv format. It also keeps the header in csv using the option `header="true"`.
   
 ### set 
   
-Set statement is used as variable declared.
+Set statement is used for variable declarations.
   
 Set syntax:
   
@@ -228,27 +210,17 @@ Example:
 -- here we set a xx variable.
 set  xx = `select unix_timestamp()` options type = "sql" ;
 
--- you can use it in select statment with `${}` format.
-select '${xx}'  as  t as tm;
+-- you can use it in select statement with `${}` format.
+select '${xx}' as t as tm;
 
--- you can also use it in path in save statement
+-- you can also use it in the save statement
 save overwrite tm as parquet.`hp_stae=${xx}`;
 ```
 
-set support three types:
+set supports three types:
 
 1. sql  
 2. shell 
 3. conf
 
-SQL,Shell means MLSQL will translate the statement with sql/shell interpreter.
-When you use conf type, MLSQL will just treat is as string.
-
-
-
-
-
-
-
- 
- 
+SQL and Shell mean that MLSQL will translate the statement with sql/shell interpreter, while conf means MLSQL will just treat it as string.
