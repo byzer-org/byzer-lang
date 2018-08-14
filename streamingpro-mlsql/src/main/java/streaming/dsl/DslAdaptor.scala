@@ -33,8 +33,13 @@ trait DslTool {
 
   def parseDBAndTableFromStr(str: String) = {
     val dbAndTable = cleanStr(str).split("\\.")
-    val db = dbAndTable(0)
-    val table = dbAndTable.splitAt(1)._2.mkString(".")
-    (db, table)
+    if (dbAndTable.length > 1) {
+      val db = dbAndTable(0)
+      val table = dbAndTable.splitAt(1)._2.mkString(".")
+      (db, table)
+    } else {
+      (str, str)
+    }
+
   }
 }

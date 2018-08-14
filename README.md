@@ -173,9 +173,10 @@ so you can still use mlsql grammar.(This function provided from v1.1.2)
 }
 ```
 
-## Learn MLSQL grammar
+## Learning MLSQL
 
-* [MLSQL grammar](https://github.com/allwefantasy/streamingpro/blob/master/docs/en/mlsql-grammar.md)
+* [MLSQL Grammar](https://github.com/allwefantasy/streamingpro/blob/master/docs/en/mlsql-grammar.md)
+* [Using Build-in Algorithms](https://github.com/allwefantasy/streamingpro/blob/master/docs/en/mlsql-build-in-algorithms.md)
 
 ## Compiling
 
