@@ -63,20 +63,20 @@ class BatchLoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener,
     format match {
       case "jdbc" =>
         val (dbname, dbtable) = parseDBAndTableFromStr(path)
-        ScriptSQLExec.dbMapping.get(dbname).foreach { f =>
-          reader.option(f._1, f._2)
+        if (ScriptSQLExec.dbMapping.containsKey(dbname)) {
+          ScriptSQLExec.dbMapping.get(dbname).foreach { f =>
+            reader.option(f._1, f._2)
+          }
         }
         reader.option("dbtable", dbtable)
         table = reader.format("jdbc").load()
 
       case "es" | "org.elasticsearch.spark.sql" =>
-
         val (dbname, dbtable) = parseDBAndTableFromStr(path)
-        println("dbname " + dbname)
-        println("dbtable " + dbtable)
-        ScriptSQLExec.dbMapping.get(dbname).foreach {
-          f =>
+        if (ScriptSQLExec.dbMapping.containsKey(dbname)) {
+          ScriptSQLExec.dbMapping.get(dbname).foreach { f =>
             reader.option(f._1, f._2)
+          }
         }
         table = reader.format("org.elasticsearch.spark.sql").load(dbtable)
       case "hbase" | "org.apache.spark.sql.execution.datasources.hbase" =>

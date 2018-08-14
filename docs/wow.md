@@ -220,3 +220,72 @@ StreamingPro会通过'compositor'的概念来描述他们，你可以理解为�
 ```
 
 动态替换 sql语句里的:today
+
+
+
+### 模型训练
+
+语法：
+
+```sql
+-- 从tableName获取数据，通过where条件对Algorithm算法进行参数配置并且进行模型训练，最后
+-- 训练得到的模型会保存在path路径。
+train [tableName] as [Algorithm].[path] where [booleanExpression]
+```
+
+比如：
+
+```sql
+train data as RandomForest.`/tmp/model` where inputCol="featrues" and maxDepth="3"
+```
+
+这句话表示使用对表data中的featrues列使用RandomForest进行训练，树的深度为3。训练完成后的模型会保存在`tmp/model`。
+
+很简单对么？
+
+如果需要知道算法的输入格式以及算法的参数,可以参看[Spark MLlib](https://spark.apache.org/docs/latest/ml-guide.html)。
+在MLSQL中，输入格式和算法的参数和Spark MLLib保持一致。
+
+### 样本不均衡问题
+
+为了解决样本数据不平衡问题，所有模型（目前只支持贝叶斯）都支持一种特殊的训练方式。假设我们是一个二分类，A,B。 A 分类有100个样本，B分类有1000个。
+差距有十倍。为了得到一个更好的训练效果，我们会训练十个（最大样本数/最小样本数）模型。
+
+第一个模型：
+
+A拿到100,从B随机抽样10%(100/1000),训练。
+
+重复第一个模型十次。
+
+这个可以通过在where条件里把multiModels="true" 即可开启。
+
+在预测函数中，会自动拿到置信度最高模型作为预测结果。
+
+
+### 预测
+
+语法：
+
+```sql
+-- 从Path中加载Algorithm算法对应的模型，并且将该模型注册为一个叫做functionName的函数。
+register [Algorithm].[Path] as functionName;
+```
+
+比如：
+
+```
+register RandomForest.`/tmp/zhuwl_rf_model` as zhuwl_rf_predict;
+```
+
+接着我就可以在SQL中使用该函数了：
+
+```
+select zhuwl_rf_predict(features) as predict_label, label as original_label from sample_table;
+```
+
+很多模型会有多个预测函数。假设我们名字都叫predict
+
+LDA 有如下函数：
+
+* predict  参数为一次int类型，返回一个主题分布。
+* predict_doc 参数为一个int数组，返回一个主题分布
