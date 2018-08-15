@@ -206,12 +206,11 @@ object DoubleFeature extends BaseFeatureFunctions {
 
           import spark.implicits._
 
-          val metas = spark.read.parquet(STANDARD_SCALER_PATH(metaPath, getFieldGroupName(fields)))
-            .as[StandardScalerValueMeta].collect().
-            map(f => (f.fieldName, f)).toMap
+          val meta = spark.read.parquet(STANDARD_SCALER_PATH(metaPath, getFieldGroupName(fields)))
+            .as[StandardScalerValueMeta].collect().head
 
-          val mean = OldVectors.dense(fields.map(f => metas(f).mean).toArray)
-          val std = OldVectors.dense(fields.map(f => metas(f).std).toArray)
+          val mean = OldVectors.dense(meta.mean)
+          val std = OldVectors.dense(meta.std)
 
           val model = new StandardScalerModel(std, mean, true, true)
 
@@ -229,12 +228,10 @@ object DoubleFeature extends BaseFeatureFunctions {
   //standard,p-norm
   def normalize(df: DataFrame, metaPath: String, fields: Seq[String], method: String, params: Map[String, String]) = {
     val tempColName = getTempCol
+    val schema = df.schema(fields.head)
     val spark = df.sparkSession
     // TODO:(如果用户输入的是带有array<double> 和 double类型的处理
-    var newDF = if (fields.size > 1) {
-      vectorize(df, metaPath, fields, outputCol = tempColName)
-    } else {
-      val schema = df.schema(fields.head)
+    var newDF = if (fields.size == 1 && schema.dataType.isInstanceOf[ArrayType]) {
       schema.dataType match {
         case ArrayType(DoubleType, _) =>
           val func = F.udf((arr: WrappedArray[Double]) => {
@@ -242,6 +239,8 @@ object DoubleFeature extends BaseFeatureFunctions {
           })
           df.withColumn(tempColName, func(F.col(fields.head)))
       }
+    } else {
+      vectorize(df, metaPath, fields, outputCol = tempColName)
     }
 
     val outputTempColName = getTempCol
@@ -257,11 +256,9 @@ object DoubleFeature extends BaseFeatureFunctions {
         val scalerModel = scaler.fit(newDF)
         val (meanArray, stdArray) = (scalerModel.mean.toArray, scalerModel.std.toArray)
         //save standardScaler meta
-        val metas = meanArray.zipWithIndex.map { f =>
-          StandardScalerValueMeta(fields(f._2), meanArray(f._2), stdArray(f._2))
-        }
+        val metas = StandardScalerValueMeta(fields.mkString("_"), meanArray, stdArray)
         import spark.implicits._
-        spark.createDataset(metas).write.mode(SaveMode.Overwrite).
+        spark.createDataset(Seq(metas)).write.mode(SaveMode.Overwrite).
           parquet(STANDARD_SCALER_PATH(metaPath, getFieldGroupName(fields)))
 
         newDF = scalerModel.transform(newDF).drop(tempColName)

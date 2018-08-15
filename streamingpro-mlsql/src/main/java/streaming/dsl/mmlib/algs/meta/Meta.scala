@@ -19,7 +19,7 @@ case class OutlierValueMeta(fieldName: String, lowerRange: Double, upperRange: D
 
 case class MinMaxValueMeta(fieldName: String, min: Double, max: Double)
 
-case class StandardScalerValueMeta(fieldName: String, mean: Double, std: Double)
+case class StandardScalerValueMeta(fieldName: String, mean: Array[Double], std: Array[Double])
 
 //case class DiscretizerMeta(params: Array[DiscretizerTrainData], discretizerFunc: Seq[Double] => Seq[Double])
 case class DiscretizerMeta(params: Array[DiscretizerTrainData], discretizerFunc: Seq[Double] => Seq[Double])
