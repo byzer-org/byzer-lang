@@ -65,7 +65,7 @@ path
     ;
 
 setValue
-    : qualifiedName | quotedIdentifier | STRING
+    : qualifiedName | quotedIdentifier | STRING | BLOCK_STRING
     ;
 
 setKey
@@ -109,6 +109,10 @@ quotedIdentifier
 STRING
     : '\'' ( ~('\''|'\\') | ('\\' .) )* '\''
     | '"' ( ~('"'|'\\') | ('\\' .) )* '"'
+    ;
+
+BLOCK_STRING
+    : '\'\'\'' ~[+] .*? '\'\'\''
     ;
 
 IDENTIFIER

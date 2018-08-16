@@ -16,6 +16,12 @@ trait DslTool {
     else str
   }
 
+  def cleanBlockStr(str: String) = {
+    if (str.startsWith("'''"))
+      str.substring(3, str.length - 3)
+    else str
+  }
+
   def withPathPrefix(prefix: String, path: String): String = {
 
     val newPath = cleanStr(path)

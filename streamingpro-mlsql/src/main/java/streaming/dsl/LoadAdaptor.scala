@@ -57,6 +57,7 @@ class BatchLoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener,
                       ) extends DslTool {
   def parse = {
     var table: DataFrame = null
+    val sparkSession = scriptSQLExecListener.sparkSession
     val reader = scriptSQLExecListener.sparkSession.read
     reader.options(option)
     path = TemplateMerge.merge(path, scriptSQLExecListener.env().toMap)
@@ -86,6 +87,10 @@ class BatchLoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener,
       case "image" =>
         val owner = option.get("owner")
         table = reader.option("path", withPathPrefix(scriptSQLExecListener.pathPrefix(owner), cleanStr(path))).format("streaming.dsl.mmlib.algs.processing.image").load()
+      case "jsonStr" =>
+        val items = cleanBlockStr(scriptSQLExecListener.env()(cleanStr(path))).split("\n")
+        import sparkSession.implicits._
+        table = reader.json(sparkSession.createDataset[String](items))
       case _ =>
         val owner = option.get("owner")
         table = reader.format(format).load(withPathPrefix(scriptSQLExecListener.pathPrefix(owner), cleanStr(path)))
