@@ -1,13 +1,18 @@
 package streaming.crawler
 
 
+import java.nio.charset.Charset
 import java.security.cert.X509Certificate
+import java.util
 
+import org.apache.http.client.entity.UrlEncodedFormEntity
 import org.apache.http.{HttpHost, HttpRequest}
-import org.apache.http.client.methods.{CloseableHttpResponse, HttpGet, HttpPost}
+import org.apache.http.client.methods.{CloseableHttpResponse, HttpGet, HttpPost, HttpRequestBase}
+import org.apache.http.client.utils.URIBuilder
 import org.apache.http.conn.routing.{HttpRoute, HttpRoutePlanner}
 import org.apache.http.conn.ssl.NoopHostnameVerifier
 import org.apache.http.impl.client.HttpClients
+import org.apache.http.message.BasicNameValuePair
 import org.apache.http.protocol.HttpContext
 import org.apache.http.ssl.{SSLContextBuilder, TrustStrategy}
 import org.apache.http.util.EntityUtils
@@ -66,6 +71,42 @@ object HttpClientCrawler {
         Jsoup.parse(EntityUtils.toString(entity))
       } else null
     } catch {
+      case e: Exception =>
+        e.printStackTrace()
+        null
+    } finally {
+      if (response != null) {
+        response.close()
+      }
+
+    }
+  }
+
+  def requestByMethod(url: String, method: String = "GET", params: Map[String, String], useProxy: Boolean = false): String = {
+
+    var response: CloseableHttpResponse = null
+    val hc = if (useProxy) httpclientWithpProxy else httpclient
+    try {
+      val httpP = method.toLowerCase() match {
+        case "get" =>
+          val builder = new URIBuilder(url)
+          params.foreach(f => builder.setParameter(f._1, f._2))
+          new HttpGet(builder.build())
+        case "post" =>
+          val newParams = new util.ArrayList[BasicNameValuePair]()
+          params.foreach(f => newParams.add(new BasicNameValuePair(f._1, f._2)))
+          val urlEncodedFormEntity = new UrlEncodedFormEntity(newParams, Charset.forName("utf-8"));
+          val httpPost = new HttpPost(url)
+          httpPost.setEntity(urlEncodedFormEntity)
+          httpPost
+      }
+      response = hc.execute(httpP)
+      val entity = response.getEntity
+      if (entity != null) {
+        EntityUtils.toString(entity)
+      } else null
+    }
+    catch {
       case e: Exception =>
         e.printStackTrace()
         null

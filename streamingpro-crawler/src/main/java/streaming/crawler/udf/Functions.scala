@@ -54,6 +54,12 @@ object Functions {
     })
   }
 
+  def crawler_http(uDFRegistration: UDFRegistration) = {
+    uDFRegistration.register("crawler_http", (url: String, method: String, items: Map[String, String]) => {
+      HttpClientCrawler.requestByMethod(url, method, items)
+    })
+  }
+
   def crawler_extract_xpath(uDFRegistration: UDFRegistration) = {
     uDFRegistration.register("crawler_extract_xpath", (html: String, xpath: String) => {
       if (html == null) null
