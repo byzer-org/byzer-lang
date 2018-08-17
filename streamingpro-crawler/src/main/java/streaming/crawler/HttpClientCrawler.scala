@@ -18,6 +18,7 @@ import org.apache.http.ssl.{SSLContextBuilder, TrustStrategy}
 import org.apache.http.util.EntityUtils
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
+import streaming.crawler.beans.WebPage
 
 /**
   * Created by allwefantasy on 2/4/2018.
@@ -58,7 +59,7 @@ object HttpClientCrawler {
   val httpclient = client(false)
   val httpclientWithpProxy = client(true)
 
-  def request(url: String, useProxy: Boolean = false): Document = {
+  def request(url: String, useProxy: Boolean = false): WebPage = {
 
     var response: CloseableHttpResponse = null
     val hc = if (useProxy) httpclientWithpProxy else httpclient
@@ -68,7 +69,7 @@ object HttpClientCrawler {
       response = hc.execute(httpget)
       val entity = response.getEntity
       if (entity != null) {
-        Jsoup.parse(EntityUtils.toString(entity))
+        WebPage(EntityUtils.toString(entity), "")
       } else null
     } catch {
       case e: Exception =>

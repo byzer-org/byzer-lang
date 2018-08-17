@@ -7,6 +7,7 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, Row, SQLContext, SaveMode}
 import org.apache.spark.sql.sources._
 import org.apache.spark.sql.types.StructType
+import org.jsoup.Jsoup
 import streaming.crawler.{BrowserCrawler, HttpClientCrawler}
 import us.codecraft.xsoup.Xsoup
 
@@ -53,23 +54,37 @@ case class CrawlerSqlRelation(
     val pageFlag = parameters.getOrElse("page.flag", "")
     val pageScrollTime = parameters.getOrElse("page.scroll.time", "1000").toInt
 
-    val ptPath = parameters.getOrElse("phantomJSPath", "/usr/local/Cellar/phantomjs/2.1.1/bin/phantomjs")
+    // engine
+    val engineType = parameters.getOrElse("engineType", "browser")
 
-    val doc = if (pageType == "paging") {
-      HttpClientCrawler.request(url)
+    // jsEnginePath
+    val ptPath = parameters.getOrElse("jsEnginePath", "")
+
+    // saveScreen
+    val saveScreen = parameters.getOrElse("saveScreen", "false").toBoolean
+
+    val webPage = if (engineType == "browser") {
+      BrowserCrawler.request(url = url,
+        ptPath = ptPath,
+        c_flag = pageFlag,
+        pageNum = pageNum,
+        pageScrollTime = pageScrollTime,
+        saveScreen = saveScreen)
     } else {
-      BrowserCrawler.request(url, ptPath, pageFlag, pageNum = pageNum, pageScrollTime = pageScrollTime)
+      HttpClientCrawler.request(url)
     }
+
+    val doc = Jsoup.parse(webPage.pageSource)
     val list = Xsoup.compile(matchXPath).evaluate(doc).list()
     log.info(s"fetch $url result  size:" + list.size())
-    //去重
+
     val res = sqlContext.sparkContext.makeRDD(list).map(f => Row.fromSeq(Seq(url, f))).distinct()
     var result = res
-    //保存新抓取到的url
-    if (!parameters.containsKey("tempStore")) {
-      val tempStore = parameters.getOrElse("tempStore", s"/tmp/streamingpro_crawler/${md5Hash(url)}")
+    //保存新抓取到的url,去重
+    if (parameters.containsKey("tempStore")) {
+      val tempStore = parameters("tempStore")
       val fs = FileSystem.get(new Configuration())
-      
+
       if (fs.exists(new Path(tempStore))) {
         val df_name = md5Hash(url) + System.currentTimeMillis()
         sqlContext.sparkSession.createDataFrame(res, schema).createOrReplaceTempView(df_name)
