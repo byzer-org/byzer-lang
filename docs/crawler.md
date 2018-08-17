@@ -3,14 +3,13 @@ StreamingPro crawler 提供了crawlersql 数据源,可以抓取入口页的url,
 
 ## crawlersql 数据源
 
+
 crawlersql 应用在load语法中。
 
 ```
 load crawlersql.`https://www.csdn.net/nav/ai` 
 options matchXPath="//ul[@id='feedlist_id']//div[@class='title']//a/@href" 
 and fetchType="list"
-and tempStore="/tmp/streamingpro_crawler/c61c326a525ce1ddb672147e0096ef26"
-and phantomJSPath="/usr/local/Cellar/phantomjs/2.1.1/bin/phantomjs"
 and `page.type`="scroll"
 and `page.num`="10"
 and `page.flag`="feedlist_id"
@@ -27,10 +26,24 @@ options 参数主要有：
 |matchXPath | xpath语法，提取url列表 ||
 |fetchType | 获取一个列表或者单篇内容。list/single||
 |tempStore |  url暂存目录，方便做去重，比如已经爬取过的url就不再爬取||
-|phantomJSPath | 可选，如果page.type 为scroll,则需要使用phantomJSP去抓，因为要进行ajax下拉||
 |page.type | 可选，paging/scroll,默认为paging,表示传统分页||
-|page.num | 可选，翻多少页||
+|page.num | 可选，尝试下拉次数，获得更多列表记录||
 |page.flag | 抓取时页面出现什么标记的时候，才算成功||
+|tempStore | 临时目录，方便做增量抓取||
+
+
+## 环境配置
+
+1. 确保安装了chrome
+2. 安装驱动： 
+     * Mac users with Homebrew installed: brew install chromedriver
+     * Debian based Linux distros: sudo apt-get install chromium-chromedriver
+     * Windows users with Chocolatey installed: choco install chromedriver
+
+如果brew install 失败，尝试执行如下两步：
+
+1. brew tap homebrew/cask
+2. brew cask install chromedriver
 
 ## 爬虫相关UDF函数
 
@@ -94,6 +107,7 @@ select crawler_md5(url) as md5_url
 ```sql
 set resultTempStore="/tmp/streamingpro_crawler_content";
 set tempStore="/tmp/streamingpro_crawler/c61c326a525ce1ddb672147e0096ef26";
+set csdn_ai_url="https://www.csdn.net/nav/ai";
 
 --注册一张mysql数据库表
 connect mysql where url="..."
@@ -104,14 +118,13 @@ as mysql_crawler_db;
 
 
 -- 抓取列表页的url
-load crawlersql.`https://www.csdn.net/nav/ai` 
+load crawlersql.`${csdn_ai_url}` 
 options matchXPath="//ul[@id='feedlist_id']//div[@class='title']//a/@href" 
 and fetchType="list"
-and tempStore="/tmp/streamingpro_crawler/c61c326a525ce1ddb672147e0096ef26"
-and phantomJSPath="/usr/local/Cellar/phantomjs/2.1.1/bin/phantomjs"
 and `page.type`="scroll"
-and `page.num`="10"
+and `page.num`="20"
 and `page.flag`="feedlist_id"
+and tempStore="${tempStore}"
 as aritle_url_table_source;
 
 -- 抓取全文，并且存储
