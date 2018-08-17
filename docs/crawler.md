@@ -39,7 +39,7 @@ options 参数主要有：
      * Mac users with Homebrew installed: brew install chromedriver
      * Debian based Linux distros: sudo apt-get install chromium-chromedriver
      * Windows users with Chocolatey installed: choco install chromedriver
-
+3. 启动时添加参数： `-streaming.udf.clzznames "streaming.crawler.udf.Functions"`
 如果brew install 失败，尝试执行如下两步：
 
 1. brew tap homebrew/cask
