@@ -4,6 +4,7 @@
   - [Word2VecInPlace](#word2vecinplace)
   - [ScalerInPlace](#scalerinplace)
   - [ConfusionMatrix](#confusionmatrix)
+  - [FeatureExtract](#featureextract)
   - [NormalizeInPlace](#normalizeinplace)
   - [ModelExplainInPlace](#modelexplaininplace)
   - [Discretizer](#discretizer)
@@ -249,6 +250,58 @@ select  * from parquet.`/Users/dxy_why/tmp/confusionMatrix/detail`
 |:----|:----|:----|
 |actualCol|""|真实标签列，该列的值为string类型|
 |predictCol|""|预测列，该列的值为string类型|
+
+
+### FeatureExtract
+
+提取文本字段的属性
+
+假设/Users/dxy_why/featureExtractTestData.csv数据如下：
+
+```csv
+ 请联系 13634282910
+ 扣扣 527153688@qq.com
+ <html> dddd img.dxycdn.com ffff 527153688@qq.com 
+```
+
+使用train语句提取属性
+
+```
+select _c0 as doc
+from csv.`/Users/dxy_why/featureExtractTestData.csv`
+as FeatureExtractInPlaceData;
+train FeatureExtractInPlaceData as FeatureExtractInPlace.`/tmp/featureExtractInPlace`
+where `inputCol`="doc"
+;
+```
+
+属性字段的结果保存在/Users/dxy_why/tmp/featureExtractInPlace/data
+```
+select  * from parquet.`/Users/dxy_why/tmp/featureExtractInPlace/data` 
+```
+
+参数使用说明：
+
+|参数|默认值|说明|
+|:----|:----|:----|
+|inputCol|"doc"|需要提取属性的列名|
+
+通过register注册，注册后生成若干方法：
+predict_phone 是否含有电话,
+predict_email 是否含有邮箱地址,
+predict_qqwechat 是否还有qq微信号,
+predict_url url数量,
+predict_pic 图片数量,
+predict_blank 空格百分比,
+predict_chinese 中文百分比,
+predict_english 英文百分比,
+predict_number 数字百分比,
+predict_punctuation 标点百分比,
+predict_mostchar 出现最多字符百分比,
+predict_length 文本长度
+```
+register FeatureExtractInPlace.`/tmp/featureExtractInPlace` as predict;
+```
 
 
 ## NormalizeInPlace

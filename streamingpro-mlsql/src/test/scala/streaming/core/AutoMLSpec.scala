@@ -256,6 +256,54 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
     }
   }
 
+  "SQLFeatureExtractInPlace" should "work fine" taggedAs (NotToRunTag) in {
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+      //执行sql
+      implicit val spark = runtime.sparkSession
+      val dataRDD = spark.sparkContext.parallelize(Seq(
+        Seq("请联系 13634282910", "dog"),
+        Seq("扣扣 527153688@qq.com", "cat"),
+        Seq("www.baidu.com www.baidu.com www.baidu.com", "cat"),
+        Seq("热线来电   12222222", "rabbit"),
+        Seq("img.dxycdn.com豆腐豆腐   img.dxycdn.com  ddfd img.dxycdn.com", "cat"),
+        Seq("<html> dddd img.dxycdn.com ffff 527153688@qq.com ", "cat"),
+        Seq("dog,rabbit.我  在  这 我 我 我 里123,22", "dog"))).map { f =>
+        Row.fromSeq(f)
+      }
+
+      val df = spark.createDataFrame(dataRDD,
+        StructType(Seq(
+          StructField("doc", StringType),
+          StructField("predict", StringType)
+        )))
+
+      df.createOrReplaceTempView("FeatureExtractInPlaceData")
+
+      val sq = createSSEL
+      ScriptSQLExec.parse(loadSQLScriptStr("feature-extract"), sq)
+
+      spark.sql("select * from parquet.`/tmp/william/tmp/featureExtractInPlace/data`").show(10, false)
+
+      assume(spark.sql(
+        """select predict_email('扣扣 527153688@qq.com') as email,
+          |  predict_phone('请联系 13634282910') as phone,
+          |  predict_qqwechat('扣扣 527153688@qq.com') as qqwechat,
+          |  predict_url('www.baidu.com www.baidu.com www.baidu.com') as url,
+          |  predict_pic('img.dxycdn.com豆腐豆腐   img.dxycdn.com  ddfd img.dxycdn.com') as pic,
+          |  predict_blank('dog,rabbit.我  在  这 我 我 我 里123,22') as blank,
+          |  predict_chinese('dog,rabbit.我  在  这 我 我 我 里123,22') as chinese,
+          |  predict_english('dog,rabbit.我  在  这 我 我 我 里123,22') as english,
+          |  predict_number('dog,rabbit.我  在  这 我 我 我 里123,22') as number,
+          |  predict_punctuation('dog,rabbit.我  在  这 我 我 我 里123,22') as punctuation,
+          |  predict_mostchar('dog,rabbit.我  在  这 我 我 我 里123,22') as mostchar,
+          |  predict_length('dog,rabbit.我  在  这 我 我 我 里123,22') as length
+          |  """.stripMargin)
+        .collect().mkString(",") == "[true,true,true,3,3,25,21,28,15,9,8,32]")
+
+
+
+    }
+  }
 
   "SQLSampler" should "work fine" in {
 
@@ -592,7 +640,7 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
       spark.udf.register("vecToMap", jack)
       val res = spark.sql(
         s"""
-           |select vecToMap(map_value_int_to_double(map("wow",9)))
+            select vecToMap(map_value_int_to_double(map("wow",9)))
          """.stripMargin).collect().head
 
       val vec = res.getAs[Vector](0)
