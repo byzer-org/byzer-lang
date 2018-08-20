@@ -16,8 +16,6 @@ import org.apache.http.message.BasicNameValuePair
 import org.apache.http.protocol.HttpContext
 import org.apache.http.ssl.{SSLContextBuilder, TrustStrategy}
 import org.apache.http.util.EntityUtils
-import org.jsoup.Jsoup
-import org.jsoup.nodes.Document
 import streaming.crawler.beans.WebPage
 
 /**
