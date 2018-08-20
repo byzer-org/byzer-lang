@@ -30,10 +30,13 @@ object Functions {
 
   def crawler_request(uDFRegistration: UDFRegistration) = {
     uDFRegistration.register("crawler_request", (co: String) => {
-      val doc = HttpClientCrawler.request(co)
-      if (doc == null) null
-      else
-        doc.html()
+      val docStr = HttpClientCrawler.request(co)
+      if (docStr != null) {
+        val doc = Jsoup.parse(docStr.pageSource)
+        if (doc == null) null
+        else
+          doc.html()
+      } else null
     })
   }
 
@@ -47,10 +50,14 @@ object Functions {
 
   def crawler_browser_request(uDFRegistration: UDFRegistration) = {
     uDFRegistration.register("crawler_browser_request", (co: String, ptPath: String, c_flag: String) => {
-      val doc = BrowserCrawler.request(co, ptPath, c_flag)
-      if (doc == null) null
-      else
-        doc.html()
+      val docStr = BrowserCrawler.request(co, ptPath, c_flag)
+      if (docStr != null) {
+        val doc = Jsoup.parse(docStr.pageSource)
+        if (doc == null) null
+        else
+          doc.html()
+      } else null
+
     })
   }
 
