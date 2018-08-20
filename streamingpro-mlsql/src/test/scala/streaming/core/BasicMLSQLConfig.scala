@@ -9,7 +9,7 @@ trait BasicMLSQLConfig {
     "-streaming.name", "unit-test",
     "-streaming.rest", "false",
     "-streaming.platform", "spark",
-    "-streaming.enableHiveSupport", "true",
+    "-streaming.enableHiveSupport", "false",
     "-streaming.spark.service", "false",
     "-streaming.udf.clzznames", "streaming.crawler.udf.Functions,streaming.dsl.mmlib.algs.processing.UDFFunctions",
     "-streaming.unittest", "true"
