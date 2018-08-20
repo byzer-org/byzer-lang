@@ -284,7 +284,23 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
 
       spark.sql("select * from parquet.`/tmp/william/tmp/featureExtractInPlace/data`").show(10, false)
 
-      spark.sql("select predict_email('扣扣 527153688@qq.com') as email,  predict_phone('请联系 13634282910') as phone").show(10, false)
+      assume(spark.sql(
+        """select predict_email('扣扣 527153688@qq.com') as email,
+          |  predict_phone('请联系 13634282910') as phone,
+          |  predict_qqwechat('扣扣 527153688@qq.com') as qqwechat,
+          |  predict_url('www.baidu.com www.baidu.com www.baidu.com') as url,
+          |  predict_pic('img.dxycdn.com豆腐豆腐   img.dxycdn.com  ddfd img.dxycdn.com') as pic,
+          |  predict_blank('dog,rabbit.我  在  这 我 我 我 里123,22') as blank,
+          |  predict_chinese('dog,rabbit.我  在  这 我 我 我 里123,22') as chinese,
+          |  predict_english('dog,rabbit.我  在  这 我 我 我 里123,22') as english,
+          |  predict_number('dog,rabbit.我  在  这 我 我 我 里123,22') as number,
+          |  predict_punctuation('dog,rabbit.我  在  这 我 我 我 里123,22') as punctuation,
+          |  predict_mostchar('dog,rabbit.我  在  这 我 我 我 里123,22') as mostchar,
+          |  predict_length('dog,rabbit.我  在  这 我 我 我 里123,22') as length
+          |  """.stripMargin)
+        .collect().mkString(",") == "[true,true,true,3,3,25,21,28,15,9,8,32]")
+
+
 
     }
   }

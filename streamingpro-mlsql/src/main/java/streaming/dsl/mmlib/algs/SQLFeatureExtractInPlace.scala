@@ -267,7 +267,7 @@ class SQLFeatureExtractInPlace extends SQLAlg with Functions {
     sparkSession.udf.register(name + "_qqwechat", qqwechatExisted.f.asInstanceOf[String => Boolean])
     sparkSession.udf.register(name + "_url", urlNumber.f.asInstanceOf[String => Int])
     sparkSession.udf.register(name + "_pic", picNumber.f.asInstanceOf[String => Int])
-    sparkSession.udf.register(name + "_black", blankPercent.f.asInstanceOf[String => Int])
+    sparkSession.udf.register(name + "_blank", blankPercent.f.asInstanceOf[String => Int])
     sparkSession.udf.register(name + "_chinese", chinesePercent.f.asInstanceOf[String => Int])
     sparkSession.udf.register(name + "_english", englishPercent.f.asInstanceOf[String => Int])
     sparkSession.udf.register(name + "_number", numberPercent.f.asInstanceOf[String => Int])
