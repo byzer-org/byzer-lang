@@ -14,9 +14,10 @@
   - [JavaImage](#javaimage)
   - [TokenExtract / TokenAnalysis](#tokenextract--tokenanalysis)
   - [RateSampler](#ratesampler)
-  - [RowMatrix](#RowMatrix)
-  - [CommunityBasedSimilarityInPlace](#CommunityBasedSimilarityInPlace)
-  - [Word2ArrayInPlace](#Word2ArrayInPlace)
+  - [RowMatrix](#rowmatrix)
+  - [CommunityBasedSimilarityInPlace](#communitybasedsimilarityinplace)
+  - [Word2ArrayInPlace](#word2arrayinplace)
+  - [WaterMarkInPlace](#watermarkinplace)
 - [**低阶数据预处理模型**](#低阶特定小功能点数据预处理模型)
   - [Word2vec](#word2vec)
   - [StringIndex](#stringindex)
@@ -1010,4 +1011,22 @@ register RawSimilarInPlace.`/tmp/rawsimilar` as rs_predict;
 
 -- 0.8为相似度比例阀值,得到与文章相似度高于阀值的文章label,结果类型为Map[Long,Double]
 select rs_predict(label,0.8) from data;
+```
+
+### WaterMarkInPlace
+WaterMarkInPlace是流式计算时窗口append模式必须的，等同于代码中的withWatermark(eventTimeCol, delayThreshold)
+
+具体用法：
+
+```sql
+select cast(key as string) as k,cast(timestamp as timestamp) as ts  from newkafkatable1 as table21;
+
+-- as后的表a任意写，不冲突就行，但必须填
+register WaterMarkInPlace.`table21` as a
+options eventTimeCol="ts"
+and delayThreshold="1 seconds";
+
+select count(*) as num from table21
+group by window(ts,"20 seconds","10 seconds")
+as table22;
 ```
