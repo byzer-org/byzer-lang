@@ -286,6 +286,23 @@ select  * from parquet.`/Users/dxy_why/tmp/featureExtractInPlace/data`
 |:----|:----|:----|
 |inputCol|"doc"|需要提取属性的列名|
 
+通过register注册，注册后生成若干方法：
+predict_phone 是否含有电话,
+predict_email 是否含有邮箱地址,
+predict_qqwechat 是否还有qq微信号,
+predict_url url数量,
+predict_pic 图片数量,
+predict_blank 空格百分比,
+predict_chinese 中文百分比,
+predict_english 英文百分比,
+predict_number 数字百分比,
+predict_punctuation 标点百分比,
+predict_mostchar 出现最多字符百分比,
+predict_length 文本长度
+```
+register FeatureExtractInPlace.`/tmp/featureExtractInPlace` as predict;
+```
+
 
 ## NormalizeInPlace
 
