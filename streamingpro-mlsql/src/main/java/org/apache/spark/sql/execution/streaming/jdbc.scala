@@ -23,6 +23,32 @@ class JDBCSink(_options: Map[String, String]) extends Sink with Logging {
   override def addBatch(batchId: Long, data: DataFrame): Unit = synchronized {
     val options = _options
     val schema = data.schema
+
+    def executeInDriver = {
+      val driver = options("driver")
+      val url = options("url")
+      Class.forName(driver)
+      val connection = java.sql.DriverManager.getConnection(url, options("user"), options("password"))
+      try {
+        // we suppose that there is only one create if
+        val statements = options.filter(f =>"""driver\-statement\-[0-9]+""".r.findFirstMatchIn(f._1).nonEmpty).
+          map(f => (f._1.split("-").last.toInt, f._2)).toSeq.sortBy(f => f._1).map(f => f._2).map { f =>
+          connection.prepareStatement(f)
+        }
+
+        statements.map { f =>
+          f.execute()
+          f
+        }.map(_.close())
+      } finally {
+        if (connection != null)
+          connection.close()
+      }
+
+    }
+
+    executeInDriver
+
     val writer = new ForeachWriter[Row] {
       var connection: java.sql.Connection = _
       var statement: java.sql.Statement = _
@@ -46,7 +72,7 @@ class JDBCSink(_options: Map[String, String]) extends Sink with Logging {
 
       def executeUpdate(statement: PreparedStatement, value: Row) = {
         (0 until statement.getParameterMetaData.getParameterCount).foreach { f =>
-          val sqlIndex = f+1
+          val sqlIndex = f + 1
           schema.fields(f).dataType match {
             case StringType => statement.setString(sqlIndex, value.getString(f))
             case IntegerType => statement.setInt(sqlIndex, value.getInt(f))
