@@ -2,18 +2,21 @@ package org.apache.spark.sql.execution.streaming.mock
 
 import java.nio.charset.Charset
 import java.util.UUID
+import java.util.concurrent.atomic.AtomicLong
 
 import org.apache.kafka.common.TopicPartition
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.{DataFrame, SQLContext}
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.util.DateTimeUtils
-import org.apache.spark.sql.execution.streaming.{Offset, Source}
+import org.apache.spark.sql.execution.streaming.{Offset, SerializedOffset, Source}
 import org.apache.spark.sql.sources.{DataSourceRegister, StreamSourceProvider}
 import org.apache.spark.sql.types._
 import org.apache.spark.unsafe.types.UTF8String
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
+
+import scala.util.Random
 
 
 /**
@@ -27,11 +30,17 @@ class MockStreamSource(
 
   private val sc = sqlContext.sparkContext
 
+  val counter = new AtomicLong(0)
+
   override def schema: StructType = MockStreamSource.schema
 
   override def getOffset: Option[Offset] = {
+    val stepSizeRange = sourceOptions.getOrElse("stepSizeRange", "0-3")
+    val Array(start, end) = stepSizeRange.split("\\-")
+    val stepSize = Random.nextInt(end.toInt - start.toInt + 2)
+    counter.incrementAndGet()
     Some(new MockSourceOffset(Map(
-      new TopicPartition("test", 0) -> 0l
+      new TopicPartition("test", 0) -> counter.addAndGet(stepSize)
     )))
   }
 
@@ -39,7 +48,16 @@ class MockStreamSource(
     val table = sourceOptions("path")
     val df = sqlContext.sparkSession.table(table)
     val dSchema = df.schema
-    val rdd = df.rdd.map { f =>
+    val _start = start match {
+      case Some(i) => MockSourceOffset(SerializedOffset(i.json)).partitionToOffsets.toSeq.head._2
+      case None => 0
+    }
+    val _end = MockSourceOffset(SerializedOffset(end.json)).partitionToOffsets.toSeq.head._2
+
+    val rdd = df.rdd.repartition(1).filter { f =>
+      val offset = f.getLong(dSchema.fieldIndex("offset"))
+      offset >= _start && offset < _end
+    }.map { f =>
       val timestamp = DateTime.parse(f.getString(dSchema.fieldIndex("timestamp")), DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss.SSS"))
       InternalRow(
         f.getString(dSchema.fieldIndex("key")).getBytes(Charset.forName("utf-8")),
