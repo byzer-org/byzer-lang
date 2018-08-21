@@ -89,11 +89,15 @@ and checkpointLocation="/tmp/ckl1";
 If you want to add watermark for table:
 
 ```sql
+
 select ..... as table1;
+
+-- register watermark for table1
 register WaterMarkInPlace.`table1` as tmp1
 options eventTimeCol="ts"
 and delayThreshold="1 seconds";
 
+-- process table1
 select count(*) as num from table1
 group by window(ts,"30 minutes","10 seconds")
 as table2;
