@@ -135,8 +135,15 @@ class SQLFeatureExtractInPlace extends SQLAlg with Functions {
    * @return
    */
   def blankPercent = F.udf((doc: String) => {
-    if (doc.length != 0 && doc.split(" ").length >= 1) {
-      (doc.split(" ").length - 1) * 100 / doc.length
+    val pattern = Pattern.compile(SQLFeatureExtractInPlace.BLANK_PERCENT_REGEX(0),
+      Pattern.CASE_INSENSITIVE & Pattern.DOTALL)
+    val matcher = pattern.matcher(doc)
+    var count = 0
+    while (matcher.find()) {
+      count += 1
+    }
+    if (doc.length != 0) {
+      count * 100 / doc.length
     } else {
       0
     }
@@ -322,6 +329,11 @@ object SQLFeatureExtractInPlace {
    * 图片数量的正则表达式规则
    */
   val PIC_NUMBER_REGEX = Seq("""img.dxycdn.com""")
+
+  /**
+   * 空格百分比的正则表达式规则（去除html标签, 邮箱, url, 图片链接后）
+   */
+  val BLANK_PERCENT_REGEX = Seq("""[\\s|\r|\n|\t| ]""")
 
   /**
    * 中文百分比的正则表达式规则（去除html标签, 邮箱, url, 图片链接后）
