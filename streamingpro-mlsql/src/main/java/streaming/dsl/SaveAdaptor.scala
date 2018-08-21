@@ -194,7 +194,18 @@ class StreamSaveAdaptor(val scriptSQLExecListener: ScriptSQLExecListener,
     require(option.contains("duration"), "duration is required")
     require(option.contains("mode"), "mode is required")
 
-    writer = writer.format(option.getOrElse("implClass", format)).outputMode(option("mode")).
+    format match {
+      case "jdbc" => writer.format("org.apache.spark.sql.execution.streaming.JDBCSinkProvider")
+      /*
+      Supports variable in path:
+        save append post_parquet
+        as parquet.`/post/details/hp_stat_date=${date.toString("yyyy-MM-dd")}`
+       */
+      case "newParquet" => writer.format("org.apache.spark.sql.execution.streaming.newfile")
+      case _ => writer.format(option.getOrElse("implClass", format))
+    }
+
+    writer = writer.outputMode(option("mode")).
       partitionBy(partitionByCol: _*).
       options((option - "mode" - "duration"))
 

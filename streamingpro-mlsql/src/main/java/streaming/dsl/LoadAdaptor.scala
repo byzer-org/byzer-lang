@@ -118,9 +118,12 @@ class StreamLoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener,
   def parse = {
     var table: DataFrame = null
     val reader = scriptSQLExecListener.sparkSession.readStream
-
+    val cPath = cleanStr(path)
     format match {
       case "kafka" | "socket" =>
+        if (!cPath.isEmpty) {
+          reader.option("subscribe", cPath)
+        }
         table = reader.options(option).format(format).load()
       case "kafka8" | "kafka9" =>
         val format = "com.hortonworks.spark.sql.kafka08"
@@ -129,6 +132,9 @@ class StreamLoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener,
            kafka.metadata.broker
            startingoffset smallest
          */
+        if (!cPath.isEmpty) {
+          reader.option("topics", cPath)
+        }
         table = reader.format(format).options(option).load()
       case "mockStream" =>
         val format = "org.apache.spark.sql.execution.streaming.mock.MockStreamSourceProvider"
