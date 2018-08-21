@@ -1,6 +1,7 @@
 ## Stream Example
 
-Paste the following script to page of "http://127.0.0.1:9003".
+You can start a stream application just like running a batch script. 
+All you need to do is paste the following script to page of "http://127.0.0.1:9003".
 
 ```sql
 -- the stream name, should be uniq.
@@ -74,7 +75,7 @@ as kafka_post_parquet;
 
 ```
 
-If you want save data with static partition:
+If you want to save data with static partition:
 
 ```sql
 
@@ -85,7 +86,7 @@ and duration="30"
 and checkpointLocation="/tmp/ckl1";
 ```
 
-If you want add watermark for table:
+If you want to add watermark for table:
 
 ```sql
 select ..... as table1;
