@@ -8,7 +8,7 @@ set streamName="streamExample";
 
 -- connect mysql as the data sink.
 connect jdbc where  
-and driver="com.mysql.jdbc.Driver"
+driver="com.mysql.jdbc.Driver"
 and url="jdbc:mysql://127.0.0.1:3306/wow"
 and driver="com.mysql.jdbc.Driver"
 and user="---"
