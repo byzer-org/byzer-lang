@@ -1,7 +1,7 @@
 ## MLSQL Stream
 
-MLSQL is a dsl covering Batch/Stream/Service API/Machine Learning job. 
-This document shows MLSQL the ability on stream application.
+MLSQL is a dsl covering Batch/Stream/Service API/Machine Learning. 
+This document shows how to use MLSQL to write  stream application.
 
 You can start a stream application just like running a batch script. 
 All you need to do is paste the following script to page of "http://127.0.0.1:9003".
