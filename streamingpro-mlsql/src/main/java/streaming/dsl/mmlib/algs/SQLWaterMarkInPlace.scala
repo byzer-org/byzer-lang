@@ -12,9 +12,10 @@ class SQLWaterMarkInPlace extends SQLAlg with Functions {
   }
 
   override def load(spark: SparkSession, _path: String, params: Map[String, String]): Any = {
-    val df = spark.table(_path)
+    val inputTable = params.getOrElse("inputTable", "")
     val eventTimeCol = params.getOrElse("eventTimeCol", "timestamp")
     val delayThreshold = params.getOrElse("delayThreshold", "10 seconds")
+    val df = spark.table(inputTable)
     df.withWatermark(eventTimeCol, delayThreshold).createOrReplaceTempView(_path)
     null
   }

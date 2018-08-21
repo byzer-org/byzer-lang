@@ -1075,8 +1075,9 @@ WaterMarkInPlace是流式计算时窗口append模式必须的，等同于代码�
 select cast(key as string) as k,cast(timestamp as timestamp) as ts  from newkafkatable1 as table21;
 
 -- as后的表a任意写，不冲突就行，但必须填
-register WaterMarkInPlace.`table21` as a
-options eventTimeCol="ts"
+register WaterMarkInPlace.`_` as a
+options inputTable="table21"
+and eventTimeCol="ts"
 and delayThreshold="1 seconds";
 
 select count(*) as num from table21
