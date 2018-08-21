@@ -263,6 +263,13 @@ Example:
 -- here we set a xx variable.
 set  xx = `select unix_timestamp()` options type = "sql" ;
 
+-- set variable with multi lines
+set xx = '''
+sentence1
+sentence2
+sentence3
+'''
+
 -- you can use it in select statement with `${}` format.
 select '${xx}' as t as tm;
 

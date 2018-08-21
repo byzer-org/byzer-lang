@@ -9,8 +9,8 @@
         - [NormalizeInPlace](#normalizeinplace)
         - [ModelExplainInPlace](#modelexplaininplace)
         - [Discretizer](#discretizer)
-        - [bucketizer](#bucketizer方式)
-        - [quantile](#quantile方式)        
+        - [Bucketizer](#bucketizer方式)
+        - [Quantile](#quantile方式)        
         - [VecMapInPlace](#vecmapinplace)        
         - [TokenExtract / TokenAnalysis](#tokenextract--tokenanalysis)
         - [RateSampler](#ratesampler)
@@ -37,11 +37,11 @@
 
 ### TfIdfInPlace
 
-TfIdfInPlace is used to convert raw text to vector.
-
+TF/IDF is really widespread used in NLP classification job. 
+TfIdfInPlace module is a implementation of tf/idf where the target is  to convert raw text to vector.
 The processing steps include:
 
-1. word analysis
+1. text analysis
 2. filter with stopwords 
 3. ngram
 4. word indexed with integer
@@ -54,33 +54,40 @@ Example:
 ```sql
 train orginal_text_corpus as TfIdfInPlace.`/tmp/tfidfinplace`
 where inputCol="content"
-
--- analysis options 
+-- if you want to analysis the text with specific token,use split
+-- and split=" "
+-- analysis options, when analysis the sentence, we will not 
+-- consider POS if set true
 and ignoreNature="true"
+-- user-defined dictionary
 and dicPaths="...."
+-- user-defined stopword dictionary
 and stopWordPath="/tmp/tfidf/stopwords"
-
 -- words should be weighted
 and priorityDicPath="/tmp/tfidf/prioritywords"
+-- how much weight should be applied in priority words
 and priority="5.0"
-
--- ngram 
+-- ngram，we can compose 2 or 3 words together so maby the new 
+-- complex features can more succinctly capture importtant information in 
+-- raw data. Note that too much ngram composition may increase feature space 
+-- too much , this makes it hard to compute.
 and nGram="2,3"
 ;
 
-load parquet.`/tmp/tfidf/data` as lwys_corpus_with_featurize; 
-
+-- load the converting result.
+load parquet.`/tmp/tfidf/data` as lwys_corpus_with_featurize;
+-- register the model as predict function so we can use it in batch/stream/api applications 
 register TfIdfInPlace.`/tmp/tfidfinplace` as predict;
 ```
 
 
 ### Word2VecInPlace
 
-Word2VecInPlace is used to convert raw text to vector/sequence.
+Word2VecInPlace is similar with TfIdfInPlace. The difference is Word2VecInPlace work on word embedding tech. 
 
 The processing steps include:
 
-1. word analysis
+1. text analysis
 2. filter with stopwords 
 3. ngram
 4. word indexed with integer
@@ -113,16 +120,60 @@ Parameters:
 |:----|:----|:----|
 |inputCol|None||
 |resultFeature|None|flag:flat n-dim array to 1-dim array;merge: merge n-dim array；index: output word sequence|
-|dicPaths|None||
-|wordvecPaths|None||
-|vectorSize|None||
+|dicPaths|None|user-defined dictionary|
+|wordvecPaths|None|you can specify the location of existed word2vec model|
+|vectorSize|None|the  word vector size you expect|
 |length|None|input sentence length|
-|stopWordPath|None||
+|stopWordPath|user-defined stop word dictionary||
 |split|None||
 |minCount|None||
 
 
+## NormalizeInPlace
+
+Models that are smooth functions of input features are 
+sensitive to the scale of the input. Other examples include K-means clustering, nearest neighbors methods,
+RBF kernels, and anything that uses the Euclidean distance.
+For these models and model modeling components, It's a good idea to use NormalizeInPlace/ScalerInPlace module in MLSQL to normalize the features
+so that the output can stay on a expected scale.
+
+NormalizeInPlace can be used to normalize double columns. 
+Here is the usage:
+
+```sql
+
+train orginal_text_corpus as NormalizeInPlace.`/tmp/scaler2`
+where inputCols="a,b"
+and method="standard"
+and removeOutlierValue="false"
+;
+register NormalizeInPlace.`/tmp/scaler2` as jack;
+```
+
+Parameters:
+
+|parameter|default|comments|
+|:----|:----|:----|
+|inputCols|None|double type，serparate by comma，or single array&lt;double&gt; column|
+|method|standard|standard,p-norm|
+|removeOutlierValue|false|replace outlier value with median|
+
+Register model:
+
+```sql
+register NormalizeInPlace.`/tmp/scaler2` as jack;
+```
+
+Predict data:
+
+```sql
+select jack(array(a,b))[0] a,jack(array(a,b))[1] b, c from orginal_text_corpus
+```
+
 ### ScalerInPlace
+
+ScalerInPlace use some functions eg.min-max,log2,logn to smooth the value. However it's not 
+like NormalizeInPlace, there are no any connection between different columns. 
 
 ```sql
 
@@ -147,11 +198,13 @@ Parameters：
 
 ### ConfusionMatrix
 
-
+Once you have finished the training of classification job, the first sanity check for the accuracy is  to compute a confusion
+matrix , so you have a overview of the performance of the classification job, and know which category is not good. 
 
 Suppose that you have file  `/Users/dxy_why/confusionMatrixTestData.csv` contains:
 
 ```csv
+ actual,predict
  cat,dog
  cat,cat
  dog,dog
@@ -163,16 +216,16 @@ Suppose that you have file  `/Users/dxy_why/confusionMatrixTestData.csv` contain
  rabbit,rabbit
 ```
 
-we can compute the confusion matrix using this module:
+We can compute the confusion matrix like this:
 
 ```sql
-select _c0 as actual, _c1 as predict 
-from csv.`/Users/dxy_why/confusionMatrixTestData.csv`
-as csvdf;
-train csvdf as ConfusionMatrix.`/Users/dxy_why/tmp/confusionMatrix/` 
--- label，string
+load csv.`/Users/dxy_why/confusionMatrixTestData.csv` options header="true" 
+as table1;
+
+train table1 as ConfusionMatrix.`/Users/dxy_why/tmp/confusionMatrix/` 
+-- actual label column ，string
 where actualCol="actual" 
--- predicted label，string
+-- predicted label column，string
 and predictCol="predict";
 ```
 
@@ -187,7 +240,6 @@ select  * from parquet.`/Users/dxy_why/tmp/confusionMatrix/detail`
 ```
 
 
-
 Parameters:
 
 |parameter|default|comments|
@@ -198,7 +250,7 @@ Parameters:
 
 ### FeatureExtract
 
-Extracting  information eg. phone number, QQ number from text. 
+Extracts information eg. phone number, QQ number from text. 
 
 Suppose that you have a file `/Users/dxy_why/featureExtractTestData.csv` contains:
 
@@ -252,49 +304,13 @@ Then their are some extra prediction functions available:
 1. predict_length text length
 
 
-## NormalizeInPlace
 
-Normalize double type column:
-
-
-
-```
-
-train orginal_text_corpus as NormalizeInPlace.`/tmp/scaler2`
-where inputCols="a,b"
-
-and method="standard"
-and removeOutlierValue="false"
-;
-
-register NormalizeInPlace.`/tmp/scaler2` as jack;
-```
-
-Parameters:
-
-|parameter|default|comments|
-|:----|:----|:----|
-|inputCols|None|double type，serparate by comma，or single array&lt;double&gt; column|
-|method|standard|standard,p-norm|
-|removeOutlierValue|false|replace outlier value with median|
-
-Register model:
-
-```sql
-register NormalizeInPlace.`/tmp/scaler2` as jack;
-```
-
-Predict data:
-
-```sql
-select jack(array(a,b))[0] a,jack(array(a,b))[1] b, c from orginal_text_corpus
-```
 
 ### Discretizer
 
-Discretizer for double column:
+Discretizer for double column
 
-#### bucketizer
+#### Bucketizer
 
 ```sql
 
@@ -333,7 +349,7 @@ Predict data:
 select jack(array(a,b))[0] a,jack(array(a,b))[1] b, c from table2;
 ```
 
-#### quantile
+#### Quantile
 
 Suppose `/tmp/discretizer3.data`:
 
@@ -631,11 +647,14 @@ Here is the result.
 
 ## RateSampler
  
- 对样本里的每个分类按比例进行切分。之后会对数据生成一个新的字段__split__, 该字段为int类型。比如下面的例子中，
- 0.9对应的数据集为0,0.1对应的数据集为1。
+With RateSampler, you can easily split the data to train/test set. 
+A new column `__split__` will be created once you apply this module the corpus.
+
+Note that RateSample will split every category by rate you specify. 
+ 
 
 ```sql
--- 切分训练集、验证集，该算法会保证每个分类都是按比例切分。
+
 train lwys_corpus_final_format as RateSampler.`${traning_dir}/ratesampler` 
 where labelCol="label"
 and sampleRate="0.9,0.1";
@@ -648,9 +667,9 @@ as validateTable;
 select * from data2 where __split__=0
 as trainingTable;
 ```
-说明：数据量比较小的情况下， 如果希望按 labelCol 数量同比例在相应切分块中进行中进行切分 可以添加 
+
+When you know your dataset is small, you can split more accurately with  isSplitWithSubLabel enabled.
 ```
-// 数据量比较大的情况下不建议使用
 and isSplitWithSubLabel="true"
 ```
  
@@ -685,7 +704,7 @@ Parameters:
 
 |parameter|default|comments|
 |:----|:----|:----|
-|modelPath|""|模型路径|
+|modelPath|""|model path|
 
 
 ### Word2ArrayInPlace
@@ -772,25 +791,25 @@ RawSimilarInPlace is used to compute text similarity.
 load parquet.`/tmp/tfidf/df`
 as word2vec_corpus;
 
--- Word2VecInPlace训练得到Word2VecInPlace模型
+
 train word2vec_corpus as Word2VecInPlace.`/tmp/word2vecinplace`
 where inputCol="content"
 ;
 
--- RawSimilarInPlace训练
+
 load parquet.`/tmp/raw` as data；
 
--- modelPath为绝对路径
+
 train data as RawSimilarInPlace.`/tmp/rawsimilar` where
 modelPath="/tmp/william/tmp/word2vecinplace"
--- sentenceSplit 句子分割符，默认以"。"分割，可以填多个，比如",。；"
+-- the splitter of sentensce，default value is "。", you can provide multi values,eg.",。；"
 and sentenceSplit=",。"
--- modelType默认Word2VecInplace，目前只支持Word2VecInplace模型
+-- for now it's only support Word2VecInplace
 and modelType="Word2VecInplace"
 and inputCol="features"
 and labelCol="label";
-register RawSimilarInPlace.`/tmp/rawsimilar` as rs_predict;
 
+register RawSimilarInPlace.`/tmp/rawsimilar` as rs_predict;
 -- 0.8为相似度比例阀值,得到与文章相似度高于阀值的文章label,结果类型为Map[Long,Double]
 select rs_predict(label,0.8) from data;
 ```
@@ -816,7 +835,8 @@ as table22;
 
 ### DicOrTableToArray
 
-DicOrTableToArray can convert dictionary file or table to array.
+Fancy tricks. DicOrTableToArray can convert dictionary file or table to array.
+you can call a user-defined-function to get a array.
 
 
 ```sql
