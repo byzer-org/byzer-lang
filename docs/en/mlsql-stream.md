@@ -1,4 +1,7 @@
-## Stream Example
+## MLSQL Stream
+
+MLSQL is a dsl covering Batch/Stream/Service API/Machine Learning job. 
+This document shows MLSQL the ability on stream application.
 
 You can start a stream application just like running a batch script. 
 All you need to do is paste the following script to page of "http://127.0.0.1:9003".
@@ -58,7 +61,7 @@ and checkpointLocation="/tmp/cpl3";
 ```
 
 
-You can load kafka source like this:
+In real world uou can load kafka source like this:
 
 ```sql
 
@@ -68,7 +71,6 @@ load kafka.`pi-content-realtime-db` options
 as kafka_post_parquet;
 
 -- if you are using kafka 0.8.0/0.9.0
-
 load kafka9.`pi-content-realtime-db` options 
 `kafka.bootstrap.servers`="---"
 as kafka_post_parquet;
@@ -86,7 +88,7 @@ and duration="30"
 and checkpointLocation="/tmp/ckl1";
 ```
 
-If you want to add watermark for table:
+If you want to add watermark for a table:
 
 ```sql
 
