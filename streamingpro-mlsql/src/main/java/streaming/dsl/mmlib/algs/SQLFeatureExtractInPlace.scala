@@ -135,7 +135,7 @@ class SQLFeatureExtractInPlace extends SQLAlg with Functions {
    * @return
    */
   def blankPercent = F.udf((doc: String) => {
-    if (doc.length != 0) {
+    if (doc.length != 0 && doc.split(" ").length >= 1) {
       (doc.split(" ").length - 1) * 100 / doc.length
     } else {
       0
@@ -242,7 +242,7 @@ class SQLFeatureExtractInPlace extends SQLAlg with Functions {
       .withColumn("url", urlNumber(F.col(featureCol)))
       .withColumn("pic", picNumber(F.col(featureCol)))
       .withColumn("cleanedDoc", cleanDoc(F.col(featureCol)))
-      .withColumn("black", blankPercent(F.col("cleanedDoc")))
+      .withColumn("blank", blankPercent(F.col("cleanedDoc")))
       .withColumn("chinese", chinesePercent(F.col("cleanedDoc")))
       .withColumn("english", englishPercent(F.col("cleanedDoc")))
       .withColumn("number", numberPercent(F.col("cleanedDoc")))
