@@ -74,9 +74,60 @@ Here are the format we build-in support:
 5.  es (requires elasticsearch-hadoop jar) 
 6.  hbase (requires streamingpro-hbase jar)
 7.  redis (requires streamingpro-redis jar)
-8.  kafka/kafka8/kafka9
+8.  kafka/kafka8/kafka9(stream program)
 9.  crawlersql
 10. image
+11. jsonStr
+12. mockStream (stream program)
+13. jdbc (stream program)
+14. newParquet(stream program)
+
+We will show you how to use jonsStr:
+
+```sql
+set data='''
+{"key":"yes","value":"no","topic":"test","partition":0,"offset":0,"timestamp":"2008-01-24 18:01:01.001","timestampType":0}
+{"key":"yes","value":"no","topic":"test","partition":0,"offset":1,"timestamp":"2008-01-24 18:01:01.002","timestampType":0}
+{"key":"yes","value":"no","topic":"test","partition":0,"offset":2,"timestamp":"2008-01-24 18:01:01.003","timestampType":0}
+{"key":"yes","value":"no","topic":"test","partition":0,"offset":3,"timestamp":"2008-01-24 18:01:01.003","timestampType":0}
+{"key":"yes","value":"no","topic":"test","partition":0,"offset":4,"timestamp":"2008-01-24 18:01:01.003","timestampType":0}
+{"key":"yes","value":"no","topic":"test","partition":0,"offset":5,"timestamp":"2008-01-24 18:01:01.003","timestampType":0}
+''';
+
+-- load json string in set statement as table.
+load jsonStr.`data` as datasource;
+
+select * from datasource as output;
+```
+
+mockStream format is applied in stream program, it makes stream application is easy to test:
+
+```sql
+
+-- stream name
+set streamName="streamExample";
+
+set data='''
+{"key":"yes","value":"no","topic":"test","partition":0,"offset":0,"timestamp":"2008-01-24 18:01:01.001","timestampType":0}
+{"key":"yes","value":"no","topic":"test","partition":0,"offset":1,"timestamp":"2008-01-24 18:01:01.002","timestampType":0}
+{"key":"yes","value":"no","topic":"test","partition":0,"offset":2,"timestamp":"2008-01-24 18:01:01.003","timestampType":0}
+{"key":"yes","value":"no","topic":"test","partition":0,"offset":3,"timestamp":"2008-01-24 18:01:01.003","timestampType":0}
+{"key":"yes","value":"no","topic":"test","partition":0,"offset":4,"timestamp":"2008-01-24 18:01:01.003","timestampType":0}
+{"key":"yes","value":"no","topic":"test","partition":0,"offset":5,"timestamp":"2008-01-24 18:01:01.003","timestampType":0}
+''';
+
+-- load json string in set statement as table.
+load jsonStr.`data` as datasource;
+
+-- convert the table as stream source
+load mockStream.`datasource` options 
+-- mockStream will fetch data with the number 0-2 from datasource，according to the offset.
+stepSizeRange="0-3"
+as newkafkatable1;
+
+```
+
+
 
 ### select 
  
@@ -152,6 +203,8 @@ You can also get predict function from `/tmp/word2vecinplace`(We will discuss th
 register Word2VecInPlace.`/tmp/word2vecinplace` as word2vec;
 select word2vec(content) from sometable as output;
 ```
+
+We have so many modules can be used in train statement is wait to you to dig. [Using Build-in Algorithms](https://github.com/allwefantasy/streamingpro/blob/master/docs/en/mlsql-build-in-algorithms.md)
 
 ### register
 
