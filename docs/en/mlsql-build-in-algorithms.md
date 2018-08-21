@@ -122,6 +122,723 @@ Parameters:
 |minCount|None||
 
 
+### ScalerInPlace
+
+```sql
+
+train orginal_text_corpus as ScalerInPlace.`/tmp/scaler`
+where inputCols="a,b"
+and scaleMethod="min-max"
+and removeOutlierValue="false"
+;
+
+load parquet.`/tmp/scaler/data` 
+as featurize_table;
+```
+
+Parameters：
+
+|parameter|default|comments|
+|:----|:----|:----|
+|inputCols|None|double, using comma to separate|
+|scaleMethod|log2|supports：minx-max,log2,logn,log10,sqrt,abs|
+|removeOutlierValue|false|replace outlier value with median|
+
+
+### ConfusionMatrix
+
+
+
+Suppose that you have file  `/Users/dxy_why/confusionMatrixTestData.csv` contains:
+
+```csv
+ cat,dog
+ cat,cat
+ dog,dog
+ cat,rabbit
+ rabbit,rabbit
+ cat,cat
+ dog,dog
+ dog,rabbit
+ rabbit,rabbit
+```
+
+we can compute the confusion matrix using this module:
+
+```sql
+select _c0 as actual, _c1 as predict 
+from csv.`/Users/dxy_why/confusionMatrixTestData.csv`
+as csvdf;
+train csvdf as ConfusionMatrix.`/Users/dxy_why/tmp/confusionMatrix/` 
+-- label，string
+where actualCol="actual" 
+-- predicted label，string
+and predictCol="predict";
+```
+
+The model is saved in `/Users/dxy_why/tmp/confusionMatrix/data`
+```
+select  * from parquet.`/Users/dxy_why/tmp/confusionMatrix/data` 
+```
+
+Statistics is saved in `/Users/dxy_why/tmp/confusionMatrix/detail`
+```
+select  * from parquet.`/Users/dxy_why/tmp/confusionMatrix/detail` 
+```
+
+
+
+Parameters:
+
+|parameter|default|comments|
+|:----|:----|:----|
+|actualCol|""||
+|predictCol|""||
+
+
+### FeatureExtract
+
+Extracting  information eg. phone number, QQ number from text. 
+
+Suppose that you have a file `/Users/dxy_why/featureExtractTestData.csv` contains:
+
+```csv
+ 请联系 13634282910
+ 扣扣 527153688@qq.com
+ <html> dddd img.dxycdn.com ffff 527153688@qq.com 
+```
+
+Using FeatureExtract to process the file:
+
+```
+select _c0 as doc
+from csv.`/Users/dxy_why/featureExtractTestData.csv`
+as FeatureExtractInPlaceData;
+train FeatureExtractInPlaceData as FeatureExtractInPlace.`/tmp/featureExtractInPlace`
+where `inputCol`="doc"
+;
+```
+
+The resule is saved in `/Users/dxy_why/tmp/featureExtractInPlace/data`
+```
+select  * from parquet.`/Users/dxy_why/tmp/featureExtractInPlace/data` 
+```
+
+Parameters:
+
+|parameter|default|comments|
+|:----|:----|:----|
+|inputCol|"doc"||
+
+
+```sql
+register FeatureExtractInPlace.`/tmp/featureExtractInPlace` as predict;
+```
+
+Then their are some extra prediction functions available:
+
+
+1. predict_phone  
+1. predict_email 
+1. predict_qqwechat 
+1. predict_url the number of url
+1. predict_pic  the number of pic
+1. predict_blank  blank percentage
+1. predict_chinese chinese percentage,
+1. predict_english english percentage,
+1. predict_number  number percentage,
+1. predict_punctuation  punctuation percentage,
+1. predict_mostchar mostchar percentage,
+1. predict_length text length
+
+
+## NormalizeInPlace
+
+Normalize double type column:
+
+
+
+```
+
+train orginal_text_corpus as NormalizeInPlace.`/tmp/scaler2`
+where inputCols="a,b"
+
+and method="standard"
+and removeOutlierValue="false"
+;
+
+register NormalizeInPlace.`/tmp/scaler2` as jack;
+```
+
+Parameters:
+
+|parameter|default|comments|
+|:----|:----|:----|
+|inputCols|None|double type，serparate by comma，or single array&lt;double&gt; column|
+|method|standard|standard,p-norm|
+|removeOutlierValue|false|replace outlier value with median|
+
+Register model:
+
+```sql
+register NormalizeInPlace.`/tmp/scaler2` as jack;
+```
+
+Predict data:
+
+```sql
+select jack(array(a,b))[0] a,jack(array(a,b))[1] b, c from orginal_text_corpus
+```
+
+### Discretizer
+
+Discretizer for double column:
+
+#### bucketizer
+
+```sql
+
+load libsvm.`/path/to/data/spark/data/mllib/sample_kmeans_data.txt` as data;
+
+select vec_array(features)[0] as a, vec_array(features)[1] as b from data as table2;
+save overwrite table2 as json.`/tmp/table2`;
+train table2 as Discretizer.`/tmp/discretizer`
+
+where method="bucketizer"
+
+and `fitParam.0.inputCol`="a"
+
+and `fitParam.0.splitArray`="-inf,0.0,1.0,inf"
+and `fitParam.1.inputCol`="b"
+and `fitParam.1.splitArray`="-inf,0.0,1.0,inf";
+```
+
+Parameters:
+
+|parameter|default|comments|
+|:----|:----|:----|
+|method|bucketizer|support: bucketizer, quantile|
+|fitParam.${index}.inputCols|None|double类型字段|
+|fitParam.${index}.splitArray|None|bucket array，-inf ~ inf ，size should > 3，[x, y)|
+
+Register model:
+
+```sql
+register Discretizer.`/tmp/discretizer` as jack;
+```
+
+Predict data:
+
+```sql
+select jack(array(a,b))[0] a,jack(array(a,b))[1] b, c from table2;
+```
+
+#### quantile
+
+Suppose `/tmp/discretizer3.data`:
+
+```csv
+id hour minute
+0  18.0 1.0
+1  19.0 20.0
+2  8.0  33.0
+3  5.0  23.4
+4  2.2  44.5
+```
+
+示例
+
+```sql
+
+load csv.`/tmp/discretizer3.data` options header="True" as data;
+
+select CAST(hour AS DOUBLE), CAST(minute AS DOUBLE) from data as table2;
+train table2 as Discretizer.`/tmp/quantile`
+
+where method="quantile"
+
+and `fitParam.0.inputCol`="hour"
+-- number of buckets
+and `fitParam.0.numBuckets`="3"
+and `fitParam.1.inputCol`="minute"
+and `fitParam.1.numBuckets`="3";
+```
+
+Parameters:
+
+|parameter|default|comments|
+|:----|:----|:----|
+|method|bucketizer|bucketizer, quantile|
+|fitParam.${index}.inputCols|None|double type|
+|fitParam.${index}.numBuckets|None|number of buckets|
+
+Register:
+
+```sql
+register Discretizer.`/tmp/quantile` as jack;
+```
+
+Predict:
+
+```sql
+select hour, jack(array(hour, minute))[0] x, minute, jack(array(hour, minute))[1] y from table2 as result;
+save overwrite result as json.`/tmp/result`;
+```
+
+Result: 
+
+```json
+{"hour":18.0,"x":2.0,"minute":1.0,"y":0.0}
+{"hour":19.0,"x":2.0,"minute":20.0,"y":1.0}
+{"hour":8.0,"x":1.0,"minute":33.0,"y":2.0}
+{"hour":5.0,"x":1.0,"minute":23.4,"y":1.0}
+{"hour":2.2,"x":0.0,"minute":44.5,"y":2.0}
+```
+
+
+
+### OpenCVImage
+
+OpenCVImage only support image resize for now. When compile, you should add profile `opencv-support` to make StreamingPro
+support OpenCVImage module.
+
+
+
+```sql
+-- get one url
+select crawler_request_image("https://tpc.googlesyndication.com/simgad/10310202961328364833") as imagePath
+as  images;
+
+-- load images from hdfs file 
+load image.`/training_set`
+options
+-- find image recursivelly 
+recursive="true"
+
+and dropImageFailures="true"
+
+and sampleRatio="1.0"
+-- read partiton number
+and numPartitions="8"
+-- process partion number
+and repartitionNum="4"
+-- image max size
+and filterByteSize="2048576"
+-- where to decode image
+and enableDecode = "true"
+as images;
+
+
+-- select origin,width字段
+-- select image.origin,image.width from images
+-- as newimages;
+
+train images as OpenCVImage.`/tmp/word2vecinplace`
+where inputCol="imagePath"
+and filterByteSize="2048576"
+-- resize shape 
+and shape="100,100,4"
+;
+load parquet.`/tmp/word2vecinplace/data`
+as imagesWithResize;
+
+-- convert vec_image to vector, the shape is [height * width * nChannels]
+select vec_image(imagePath) as feature from imagesWithResize
+as newTable;
+```
+
+Image schema:
+
+```scala
+StructType(
+    StructField("origin", StringType, true) ::
+      StructField("height", IntegerType, false) ::
+      StructField("width", IntegerType, false) ::
+      StructField("nChannels", IntegerType, false) ::
+      StructField("mode", StringType, false) :: //OpenCV-compatible type: CV_8UC3 in most cases
+      StructField("data", BinaryType, false) :: Nil) //bytes in OpenCV-compatible order: row-wise BGR in most cases
+```
+
+
+Register:
+
+```sql
+register OpenCVImage.`/tmp/word2vecinplace/` as jack;
+```
+
+Process:
+
+```sql
+select jack(crawler_request_image(imagePath)) as image from orginal_text_corpus
+```
+
+## VecMapInPlace
+
+VecMapInPlace is used to convert Map[String,Double] column to Vector column。
+
+Here the converting logical:
+1. Collect all keys in all Map
+2. Use StringIndex to convert key to number.
+3. Create a vector space with the size of StringIndex.
+4. Project the value in map to vector space.
+
+Then you can use some normalization module to scale the vector features. 
+
+
+```sql
+
+train data as VecMapInPlace.`/tmp/jack`
+where inputCol="a"
+
+load parquet.`/tmp/jack/data` as newdata;
+
+register VecMapInPlace.`/tmp/quantile` as jack;
+select jack(map_value_int_to_double(map("wow",9)))
+```
+
+
+### JavaImage
+
+JavaImage is a image library implemented by Java. You should enable it with profile opencv-support. 
+
+
+
+具体用法：
+
+```sql
+
+select crawler_request_image("https://tpc.googlesyndication.com/simgad/10310202961328364833") as imagePath
+as  images;
+
+
+load image.`/training_set`
+options
+
+recursive="true"
+
+and dropImageFailures="true"
+
+and sampleRatio="1.0"
+
+and numPartitions="8"
+
+and repartitionNum="4"
+
+and filterByteSize="2048576"
+
+and enableDecode = "false"
+as images;
+
+
+
+-- select image.origin,image.width from images
+-- as newimages;
+
+train images as JavaImage.`/tmp/word2vecinplace`
+where inputCol="imagePath"
+and filterByteSize="2048576"
+
+and shape="100,100,4"
+-- scale method，default：AUTOMATIC
+and method="SPEED"
+-- scale mode，default：FIT_EXACT
+and mode="AUTOMATIC"
+;
+
+load parquet.`/tmp/word2vecinplace/data`
+as imagesWithResize;
+
+select vec_image(imagePath) as feature from imagesWithResize
+as newTable;
+```
+
+Parameters:
+
+|parameter|default|comments|
+|:----|:----|:----|
+|method|AUTOMATIC|缩放方法|
+|mode|FIT_EXACT|缩放模式|
+|shape|none|width,height,channel，for example：100,100,3。channel will not work for now.|
+
+method：
+
+|值|说明|
+|:----|:----|
+|AUTOMATIC|自动,用于表明缩放的实现应该决定使用以获得最佳的期待在最少的时间缩放图像的|
+|BALANCED|平衡,用于表明缩放的实现应该使用缩放操作的速度和质量之间的平衡|
+|QUALITY|质量,用于表明缩放的实现应该尽其所能创造很好的效果越好|
+|SPEED|用于表明缩放的实现的规模应该尽可能快并返回结果|
+|ULTRA_QUALITY|用于表明缩放的实现应该超越的质量所做的工作，使图像看起来特别好的更多的处理时间成本|
+
+mode：
+
+|值|说明|
+|:----|:----|
+|AUTOMATIC|自动,用于表明缩放的实现应该计算所得的图像尺寸，通过查看图像的方向和发电比例尺寸，最佳为目标的宽度和高度，看到“给出更详细的scalr类描述图像的比例”|
+|BEST_FIT_BOTH|最佳模式,用于表明缩放的实现应该计算，适合在包围盒的最大尺寸的图片，没有种植或失真，保持原来的比例|
+|FIT_EXACT|精准模式,用适合的图像给不顾形象的比例精确的尺寸|
+|FIT_TO_HEIGHT|用于表明缩放的实现应该计算尺寸的图像，最适合在给定的高度，无论图像的方向|
+|FIT_TO_WIDTH|用于表明缩放的实现应该计算尺寸的图像，最适合在给定的宽度，无论图像的方向|
+
+Image schema:
+
+```scala
+StructType(
+    StructField("origin", StringType, true) ::
+      StructField("height", IntegerType, false) ::
+      StructField("width", IntegerType, false) ::
+      StructField("nChannels", IntegerType, false) ::
+      StructField("mode", StringType, false) ::
+      StructField("data", BinaryType, false) :: Nil)
+```
+
+
+Register:
+
+```sql
+register JavaImage.`/tmp/word2vecinplace/` as jack;
+```
+
+Process:
+
+```sql
+select jack(crawler_request_image(imagePath)) as image from orginal_text_corpus
+```
+
+## SQLCorpusExplainInPlace
+
+SQLCorpusExplainInPlace provides some statistic on corpus. 
+
+```sql
+train corpus as CorpusExplainInPlace.`/tmp/wow` where 
+labelCol="label";
+
+load parquet.`/tmp/wow/data` as result;
+select * from result;
+```
+
+Here is the result.
+
+```
++-----+----------+------------------+-------+-----+
+|label|labelCount|            weight|percent|total|
++-----+----------+------------------+-------+-----+
+|    1|         3|1.3333333333333333|   0.75|    4|
+|    0|         1|               4.0|   0.25|    4|
++-----+----------+------------------+-------+-----+
+```
+
+
+## RateSampler
+ 
+ 对样本里的每个分类按比例进行切分。之后会对数据生成一个新的字段__split__, 该字段为int类型。比如下面的例子中，
+ 0.9对应的数据集为0,0.1对应的数据集为1。
+
+```sql
+-- 切分训练集、验证集，该算法会保证每个分类都是按比例切分。
+train lwys_corpus_final_format as RateSampler.`${traning_dir}/ratesampler` 
+where labelCol="label"
+and sampleRate="0.9,0.1";
+
+load parquet.`${traning_dir}/ratesampler` as data2;
+
+select * from data2 where __split__=1
+as validateTable;
+
+select * from data2 where __split__=0
+as trainingTable;
+```
+说明：数据量比较小的情况下， 如果希望按 labelCol 数量同比例在相应切分块中进行中进行切分 可以添加 
+```
+// 数据量比较大的情况下不建议使用
+and isSplitWithSubLabel="true"
+```
+ 
+
+## ModelExplainInPlace
+
+ModelExplainInPlace is used to load sklearn or sparkmllib model，and show the parameters in the model.
+
+Load sklearn model:
+```
+train traindataframe as ModelExplainInPlace.`tmp/modelExplainInPlace/` 
+where `systemParam.pythonPath`="python"
+and `systemParam.pythonVer`="2.7"
+// 模型路径
+and `modelPath`="/tmp/svm.pickle"
+```
+
+Load sparkmllib model:
+```
+train traindataframe as ModelExplainInPlace.`tmp/modelExplainInPlace/` 
+where `modelPath`="/tmp/model"
+and `modelType`="sparkmllib"
+```
+
+The model parameters is saved in `/tmp/modelExplainInPlace/data`.
+
+```
+select  * from parquet.`/tmp/modelExplainInPlace/data` 
+```
+
+Parameters:
+
+|parameter|default|comments|
+|:----|:----|:----|
+|modelPath|""|模型路径|
+
+
+### Word2ArrayInPlace
+
+
+Word2ArrayInPlace can load Word2VecInPlace,TfIdfInPlace model, and convert the text to number of sequence.
+
+
+
+
+```sql
+load parquet.`/tmp/tfidf/df`
+as orginal_text_corpus;
+
+train orginal_text_corpus as Word2VecInPlace.`/tmp/word2vecinplace`
+where inputCol="content"
+and split=""
+;
+
+-- here orginal_text_corpus can be any table exits.
+train orginal_text_corpus as Word2ArrayInPlace.`/tmp/word2arrayinplace`
+--  the path of Word2VecInPlace,TfIdfInPlace
+where modelPath="/tmp/word2vecinplace"
+-- and wordvecPaths=""
+;
+-- register 
+register Word2ArrayInPlace.`/tmp/word2arrayinplace`
+as word2array_predict;
+```
+
+
+### RowMatrix
+
+
+```sql
+load libsvm.`/spark-2.2.0-bin-hadoop2.7/data/mllib/sample_lda_libsvm_data.txt` as data;
+train data as LDA.`/tmp/model` where k="10" and maxIter="10";
+
+register LDA.`/tmp/model` as predict;
+
+select *,zhuhl_lda_predict_doc(features) as features from data
+as zhuhl_doclist;
+
+train zhuhl_doclist as RowMatrix.`/tmp/zhuhl_rm_model` where inputCol="features" and labelCol="label";
+register RowMatrix.`/tmp/zhuhl_rm_model` as zhuhl_rm_predict;
+
+select zhuhl_rm_predict(label) from data
+```
+
+### CommunityBasedSimilarityInPlace
+
+
+```sql
+train tab;e as CommunityBasedSimilarityInPlace.`/tmp/zhuhl_rm_model`
+-- 设置需要过滤的边的阈值以及联通子图的大小 
+where minSimilarity="0.7"
+and minCommunitySize="2"
+and minCommunityPercent="0.2"
+
+-- 接受的数据rowNum和columnNum是两个节点的id,edgeValue是节点的边的值
+and "rowNum"="i"
+and "columnNum"="j"
+and "edgeValue"="v"
+;
+
+load parquet.`/tmp/zhuhl_rm_model/data` as result;
+select * from result as output;
+
+-- 结果如下：
+ +-----+---------+
+ |group|vertexIds|
+ +-----+---------+
+ |3    |[3, 7, 5]|
+ +-----+---------+
+```
+
+### RawSimilarInPlace
+
+RawSimilarInPlace is used to compute text similarity.
+
+具体用法：
+
+```sql
+load parquet.`/tmp/tfidf/df`
+as word2vec_corpus;
+
+-- Word2VecInPlace训练得到Word2VecInPlace模型
+train word2vec_corpus as Word2VecInPlace.`/tmp/word2vecinplace`
+where inputCol="content"
+;
+
+-- RawSimilarInPlace训练
+load parquet.`/tmp/raw` as data；
+
+-- modelPath为绝对路径
+train data as RawSimilarInPlace.`/tmp/rawsimilar` where
+modelPath="/tmp/william/tmp/word2vecinplace"
+-- sentenceSplit 句子分割符，默认以"。"分割，可以填多个，比如",。；"
+and sentenceSplit=",。"
+-- modelType默认Word2VecInplace，目前只支持Word2VecInplace模型
+and modelType="Word2VecInplace"
+and inputCol="features"
+and labelCol="label";
+register RawSimilarInPlace.`/tmp/rawsimilar` as rs_predict;
+
+-- 0.8为相似度比例阀值,得到与文章相似度高于阀值的文章label,结果类型为Map[Long,Double]
+select rs_predict(label,0.8) from data;
+```
+
+### WaterMarkInPlace
+
+WaterMarkInPlace is used to set watermark for stream dataframe.
+
+
+```sql
+select cast(key as string) as k,cast(timestamp as timestamp) as ts  from newkafkatable1 as table21;
+
+-- as后的表a任意写，不冲突就行，但必须填
+register WaterMarkInPlace.`table21` as a
+options eventTimeCol="ts"
+and delayThreshold="1 seconds";
+
+select count(*) as num from table21
+group by window(ts,"20 seconds","10 seconds")
+as table22;
+```
+
+
+### DicOrTableToArray
+
+DicOrTableToArray can convert dictionary file or table to array.
+
+
+```sql
+select explode(k) as word from (select p("dic1") as k)
+as words_table;
+
+select lower(word) from words_table
+as array_table;
+
+train newdata as DicOrTableToArray.`/tmp/model2` where 
+`table.paths`="array_table" 
+and `table.names`="dic2";
+
+register DicOrTableToArray.`/tmp/model2` as p2;
+
+-- where you can get dic2 array.
+select p2("dic2")  as k
+
+```
+
+
+
 ### ALS
 
 ALS is the abbreviation of "alternating least squares", and it is a implementation of Collaborative filtering which aims 
@@ -190,7 +907,6 @@ Note: the algorithm find the best model with the smallest value of RMSE.
 
 ### NaiveBayes
 
-示例：
 
 ```sql
 load libsvm.`/spark-2.2.0-bin-hadoop2.7/data/mllib/sample_libsvm_data.txt` as data;
