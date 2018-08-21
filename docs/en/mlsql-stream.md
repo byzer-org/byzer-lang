@@ -11,8 +11,8 @@ connect jdbc where
 and driver="com.mysql.jdbc.Driver"
 and url="jdbc:mysql://127.0.0.1:3306/wow"
 and driver="com.mysql.jdbc.Driver"
-and user="root"
-and password="csdn.net"
+and user="---"
+and password="----"
 as mysql1;
 
 
