@@ -17,7 +17,7 @@ trait DslTool {
   }
 
   def cleanBlockStr(str: String) = {
-    if (str.startsWith("'''"))
+    if (str.startsWith("'''") && str.endsWith("'''"))
       str.substring(3, str.length - 3)
     else str
   }

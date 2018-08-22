@@ -20,6 +20,6 @@ object TemplateMerge {
     )
     val newRoot = predified_variables ++ root
 
-    RenderEngine.render(sql, newRoot)
+    RenderEngine.render(sql, newRoot ++ Map("date" -> new DateTime()))
   }
 }
