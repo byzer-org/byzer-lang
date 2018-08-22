@@ -61,7 +61,7 @@ and checkpointLocation="/tmp/cpl3";
 ```
 
 
-In real world uou can load kafka source like this:
+In real world you can load kafka source like this:
 
 ```sql
 
