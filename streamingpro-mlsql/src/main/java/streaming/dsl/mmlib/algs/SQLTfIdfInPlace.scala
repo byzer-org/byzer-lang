@@ -13,8 +13,8 @@ import streaming.dsl.mmlib.algs.meta.TFIDFMeta
 import scala.collection.mutable.ArrayBuffer
 
 /**
- * Created by allwefantasy on 7/5/2018.
- */
+  * Created by allwefantasy on 7/5/2018.
+  */
 class SQLTfIdfInPlace extends SQLAlg with Functions {
   override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
     interval_train(df, params + ("path" -> path)).write.mode(SaveMode.Overwrite).parquet(getDataPath(path))
@@ -77,7 +77,7 @@ class SQLTfIdfInPlace extends SQLAlg with Functions {
 
     val stopwords = StringFeature.loadStopwords(df, stopWordPath)
     val stopwordsBr = spark.sparkContext.broadcast(stopwords)
-    val words = spark.sparkContext.broadcast(SQLTokenAnalysis.loadDics(spark, trainParams))
+    val words = spark.sparkContext.broadcast(SQLTokenAnalysis.loadDics(spark, trainParams + ("dic.paths" -> dicPaths)))
 
 
     val (priorityWords, priorityFunc) = StringFeature.loadPriorityWords(df, priorityDicPath, priority, (str: String) => {
