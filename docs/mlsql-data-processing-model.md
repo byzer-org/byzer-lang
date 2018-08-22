@@ -19,6 +19,7 @@
   - [CommunityBasedSimilarityInPlace](#communitybasedsimilarityinplace)
   - [Word2ArrayInPlace](#word2arrayinplace)
   - [WaterMarkInPlace](#watermarkinplace)
+  - [SendMessage](#sendmessage)
 - [**低阶数据预处理模型**](#低阶特定小功能点数据预处理模型)
   - [Word2vec](#word2vec)
   - [StringIndex](#stringindex)
@@ -752,7 +753,30 @@ select  * from parquet.`/tmp/modelExplainInPlace/data`
 |:----|:----|:----|
 |modelPath|""|模型路径|
 
+### SendMessage
 
+发送消息模块，目前只支持邮件方式发送消息
+
+> **NOTE:** 由于邮件通过smtp服务器发送，所以需要配置smtp服务器
+
+例子：
+```sql
+-- 设置变量a为执行sql的结果
+set a = `select "这是邮件内容"` options type = "sql";
+-- 设置smtp的ip地址
+set smtp-ip-address = "localhost";
+select "${a}" as content as data;
+-- load json.`/tmp/a.json` as data;
+train data as SendMessage.`_`
+-- 目前只支持mail方法
+where method="mail"
+-- 收件人，支持逗号分割配置多个收件人
+and to = "chenfu@dxy.cn"
+-- 邮件标题
+and subject = "这是邮件标题"
+-- 邮件服务器地址
+and smtpHost = "${smtp-ip-address}";
+```
 
 ## 低阶（特定小功能点）数据预处理模型
 
