@@ -53,7 +53,7 @@ class SetAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapto
       case Some("conf") =>
         scriptSQLExecListener.sparkSession.sql(s""" set ${key} = ${original_command} """)
       case _ =>
-        value = cleanStr(command)
+        value = cleanBlockStr(cleanStr(command))
     }
 
     scriptSQLExecListener.addEnv(key, value)
