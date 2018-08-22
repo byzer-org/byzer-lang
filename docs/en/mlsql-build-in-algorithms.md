@@ -54,9 +54,9 @@ Example:
 ```sql
 train orginal_text_corpus as TfIdfInPlace.`/tmp/tfidfinplace`
 where inputCol="content"
--- if you want to analysis the text with specific token,use split
+-- optinal, a token specifying how to analysis the text string.
 -- and split=" "
--- analysis options, when analysis the sentence, we will not 
+-- when analysis text content, we will not 
 -- consider POS if set true
 and ignoreNature="true"
 -- user-defined dictionary
@@ -83,7 +83,7 @@ register TfIdfInPlace.`/tmp/tfidfinplace` as predict;
 
 ### Word2VecInPlace
 
-Word2VecInPlace is similar with TfIdfInPlace. The difference is Word2VecInPlace work on word embedding tech. 
+Word2VecInPlace is similar with TfIdfInPlace. The difference is Word2VecInPlace works on word embedding tech. 
 
 The processing steps include:
 
@@ -94,7 +94,7 @@ The processing steps include:
 5. convert integer to vector
 6. returns 1/2d array according to the requirements 
 
-If you declare word embedding directory  explicitly, Word2VecInPlace will skip the step training with word2vec algorithm.
+If you declare word-embedding directory explicitly, Word2VecInPlace will skip the step training with word2vec algorithm.
 
 Example：
 
@@ -119,13 +119,13 @@ Parameters:
 |Parameter|Default|Comments|
 |:----|:----|:----|
 |inputCol|None||
-|resultFeature|None|flag:flat n-dim array to 1-dim array;merge: merge n-dim array；index: output word sequence|
+|resultFeature|None|flag:convert n-dim array to 1-dim array;merge: merge multi n-dim arrays to n-dim array；index: output word sequence|
 |dicPaths|None|user-defined dictionary|
 |wordvecPaths|None|you can specify the location of existed word2vec model|
 |vectorSize|None|the  word vector size you expect|
 |length|None|input sentence length|
 |stopWordPath|user-defined stop word dictionary||
-|split|None||
+|split|optinal, a token specifying how to analysis the text string||
 |minCount|None||
 
 

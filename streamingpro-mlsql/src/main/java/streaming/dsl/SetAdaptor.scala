@@ -37,14 +37,19 @@ class SetAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapto
       }
     }
 
+    def evaluate(str: String) = {
+      TemplateMerge.merge(str, scriptSQLExecListener.env().toMap)
+    }
+
     option.get("type") match {
       case Some("sql") =>
-        val resultHead = scriptSQLExecListener.sparkSession.sql(command).collect().headOption
+
+        val resultHead = scriptSQLExecListener.sparkSession.sql(evaluate(command)).collect().headOption
         if (resultHead.isDefined) {
           value = resultHead.get.get(0).toString
         }
       case Some("shell") =>
-        value = ShellCommand.execSimpleCommand(command).trim
+        value = ShellCommand.execSimpleCommand(evaluate(command)).trim
       case Some("conf") =>
         scriptSQLExecListener.sparkSession.sql(s""" set ${key} = ${original_command} """)
       case _ =>
