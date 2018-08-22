@@ -14,7 +14,7 @@ and dicPaths="/tmp/tfidf/dics"
 -- 高权重词加权倍数
 and priority="5.0"
 and nGrams="2"
-and split=""
+-- and split=""
 ;
 
 register TfIdfInPlace.`/tmp/tfidfinplace` as jack;

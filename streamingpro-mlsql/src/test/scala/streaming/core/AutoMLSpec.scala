@@ -323,7 +323,7 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
 
   }
 
-  "SQLTfIdfInPlace" should "work fine" taggedAs (NotToRunTag) in {
+  "SQLTfIdfInPlace" should "work fine" in {
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
       implicit val spark = runtime.sparkSession
@@ -350,7 +350,7 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
       val predictVector = spark.sql("select jack(content) as content from orginal_text_corpus").toJSON.collect()
       predictVector.foreach { f =>
         println(f)
-        //assume(trainVector.contains(f))
+        assume(trainVector.contains(f))
       }
 
     }
