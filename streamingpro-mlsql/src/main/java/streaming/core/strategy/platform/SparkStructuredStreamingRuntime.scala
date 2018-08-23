@@ -3,9 +3,11 @@ package streaming.core.strategy.platform
 import java.util.concurrent.atomic.AtomicReference
 import java.util.{Map => JMap}
 
+import com.dxy.data.sparkMonitor.SparkStreamMonitor
 import org.apache.log4j.Logger
-
-import org.apache.spark.sql.{SparkSession}
+import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.streaming.StreamingQueryListener
+import org.apache.spark.sql.streaming.StreamingQueryListener.{QueryProgressEvent, QueryStartedEvent, QueryTerminatedEvent}
 import org.apache.spark.{SparkConf, SparkContext}
 
 import scala.collection.JavaConversions._
@@ -55,7 +57,33 @@ class SparkStructuredStreamingRuntime(_params: JMap[Any, Any]) extends Streaming
       params.get("streaming.enableHiveSupport").toString.toBoolean) {
       sparkSession.enableHiveSupport()
     }
-    sparkSession.getOrCreate()
+
+    val spark = sparkSession.getOrCreate()
+    spark.conf.set("spark.sql.streaming.metricsEnabled", "true")
+    if (params.containsKey("streaming.graphiteHost") && params.containsKey("streaming.graphitePort")) {
+      val graphitePreix = "spark.StructuredStreaming"
+      val graphiteHost = params.get("streaming.graphiteHost").toString
+      val graphitePort = params.get("streaming.graphitePort").toString.toInt
+
+
+      spark.streams.addListener(new StreamingQueryListener() {
+        override def onQueryStarted(queryStarted: QueryStartedEvent): Unit = {
+          logger.error(s"""spark application ${spark.sparkContext.appName} query start, its runid is ${queryStarted.name} """)
+        }
+        override def onQueryTerminated(queryTerminated: QueryTerminatedEvent): Unit = {
+          logger.error(s"""spark application ${spark.sparkContext.appName} query down, its runid is ${queryTerminated.id} """)
+
+        }
+        override def onQueryProgress(queryProgress: QueryProgressEvent): Unit = {
+
+          SparkStreamMonitor.dataToGranhite(graphitePreix + "." + spark.sparkContext.appName , graphiteHost, graphitePort, queryProgress)
+
+
+        }
+      })
+    }
+
+    spark
   }
 
   params.put("_session_", sparkSession)
