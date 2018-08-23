@@ -34,6 +34,8 @@
 - [PageRank](#pagerank)
 - [LogisticRegressor](#logisticregressor)
 
+- Tools
+  - [SendMessage](#sendmessage)
 
 ### TfIdfInPlace
 
@@ -119,7 +121,7 @@ Parameters:
 |Parameter|Default|Comments|
 |:----|:----|:----|
 |inputCol|None||
-|resultFeature|None|flag:convert n-dim array to 1-dim array;merge: merge multi n-dim arrays to n-dim array；index: output word sequence|
+|resultFeature|None|flag:concat m n-dim arrays to one m*n-dim array;merge: merge multi n-dim arrays into one n-dim array；index: output of conword sequence|
 |dicPaths|None|user-defined dictionary|
 |wordvecPaths|None|you can specify the location of existed word2vec model|
 |vectorSize|None|the  word vector size you expect|
@@ -172,8 +174,8 @@ select jack(array(a,b))[0] a,jack(array(a,b))[1] b, c from orginal_text_corpus
 
 ### ScalerInPlace
 
-ScalerInPlace use some functions eg.min-max,log2,logn to smooth the value. However it's not 
-like NormalizeInPlace, there are no any connection between different columns. 
+ScalerInPlace use some functions e.g. min-max,log2,logn to smooth the value. However it's not 
+like NormalizeInPlace, ScalerInPlace works on individual column. 
 
 ```sql
 
@@ -1053,5 +1055,38 @@ train lr as LogisticRegressor.`/tmp/linear_regression_model`;
 register LogisticRegressor.`/tmp/linear_regression_model` as lr_predict;
 select lr_predict(features) from lr as result;
 save overwrite result as json.`/tmp/lr_result.csv`;
+```
+
+
+### SendMessage
+You can use this module to send email.
+Note that we now only support smtp prototcol.
+
+
+```
+-- 设置变量a为执行sql的结果
+-- set a = `select "email content"` options type = "sql";
+set a = '''
+here is the email content
+''';
+
+set smtp-ip-address="127.0.0.1";
+
+-- 设置smtp的ip地址
+set smtp-ip-address = "localhost";
+select "${a}" as content as data;
+
+-- you also can load email content from file.
+-- load json.`/tmp/a.json` as data;
+
+train data as SendMessage.`_`
+-- for now only support mail.
+where method="mail"
+-- receivers
+and to = "xxxx@xxx.com"
+-- email title
+and subject = "这是邮件标题"
+-- email server
+and smtpHost = "${smtp-ip-address}";
 ```
 

@@ -268,7 +268,7 @@ set xx = '''
 sentence1
 sentence2
 sentence3
-'''
+''';
 
 -- you can use it in select statement with `${}` format.
 select '${xx}' as t as tm;
@@ -284,3 +284,24 @@ set supports three types:
 3. conf
 
 SQL and Shell mean that MLSQL will translate the statement with sql/shell interpreter, while conf means MLSQL will just treat it as string.
+
+Here are some examples may help you to understand how to use set statement:
+
+```sql
+-- sql type also support variable evaluation.
+set end_ts = "2018-08-22 16:12:00";
+
+set end_ut = `SELECT unix_timestamp('${end_ts}', 'yyyy-MM-dd HH:mm:ss') * 1000` 
+options type="sql";
+set start_ut = `SELECT (unix_timestamp('${end_ts}', 'yyyy-MM-dd HH:mm:ss') - 30 * 60) * 1000` 
+options type="sql";
+
+select "${start_ut}" as a, "${end_ut}" as tt as output;
+
+-- multi line set statment also supports
+-- date is a build-in variable so you can easyly get a formatted date.
+set jack='''
+ hello today is:${date.toString("yyyyMMdd")}
+''';
+
+```
