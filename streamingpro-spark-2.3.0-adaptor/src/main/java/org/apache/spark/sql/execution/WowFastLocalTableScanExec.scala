@@ -10,7 +10,9 @@ import org.apache.spark.sql.execution.metric.SQLMetrics
   */
 case class WowFastLocalTableScanExec(
                                       output: Seq[Attribute],
-                                      rows: Seq[InternalRow]) extends LeafExecNode {
+                                      rows: Seq[InternalRow],
+                                      isStreaming: Boolean
+                                    ) extends LeafExecNode {
 
   override lazy val metrics = Map(
     "numOutputRows" -> SQLMetrics.createMetric(sparkContext, "number of output rows"))

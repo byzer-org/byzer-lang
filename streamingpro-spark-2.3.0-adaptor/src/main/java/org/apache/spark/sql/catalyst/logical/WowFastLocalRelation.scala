@@ -35,7 +35,7 @@ case class WowFastLocalRelation(
     }
   }
 
-  override def computeStats(conf: SQLConf): Statistics =
+  override def computeStats(): Statistics =
     Statistics(sizeInBytes = output.map(n => BigInt(n.dataType.defaultSize)).sum * data.length)
 
   def toSQL(inlineTableName: String): String = {
