@@ -63,7 +63,7 @@ class SQLModelExplainInPlace extends SQLAlg with Functions {
         paramMap,
         MapType(StringType, MapType(StringType, StringType)),
         pythonScript.fileContent,
-        pythonScript.fileName, modelPath = null, kafkaParam = Map[String, String](),
+        pythonScript.fileName, modelPath = null, recordLog = SQLPythonFunc.recordAnyLog(Map[String,String]()),
         validateData = null
       )
       res.foreach(f => f)

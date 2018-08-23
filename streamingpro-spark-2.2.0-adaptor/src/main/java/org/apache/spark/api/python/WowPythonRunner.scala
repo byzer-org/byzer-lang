@@ -1,20 +1,17 @@
 package org.apache.spark.api.python
 
-import _root_.streaming.dsl.mmlib.algs.SQLPythonFunc
-import _root_.streaming.core.strategy.platform.PlatformManager
-
 import java.io._
 import java.net.Socket
 import java.nio.charset.StandardCharsets
 import java.util
 import java.util.{List => JList, Map => JMap}
 
-import org.apache.spark._
 import org.apache.spark.internal.Logging
 import org.apache.spark.util.Utils
+import org.apache.spark.{InterruptibleIterator, MLSQLPythonEnv, SparkEnv, SparkException, SparkFiles, TaskContext, TaskKilledException}
 
-import scala.collection.JavaConverters._
 import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 
 
 /**
@@ -24,10 +21,10 @@ object WowPythonRunner extends Logging {
   val bufferSize = 65536
   val reuse_worker = true
 
-  def runtime = PlatformManager.getRuntime
 
+  // kafkaParam: Map[String, String]
   def run(pythonPath: String, pythonVer: String, command: Array[Byte], inputIterator: Iterator[_],
-          partitionIndex: Int, model: Array[Byte], kafkaParam: Map[String, String]) = {
+          partitionIndex: Int, model: Array[Byte], runtimeParams: Map[Any, Any], recordLog: Any => Any) = {
     val envVars: JMap[String, String] = new util.HashMap[String, String]()
     val pythonIncludes = new util.ArrayList[String]()
     val startTime = System.currentTimeMillis
@@ -37,7 +34,7 @@ object WowPythonRunner extends Logging {
     if (reuse_worker) {
       envVars.put("SPARK_REUSE_WORKER", "1")
     }
-    val deployAPI = runtime.params.getOrElse("streaming.deploy.rest.api", "false").toString.toBoolean
+    val deployAPI = runtimeParams.getOrElse("streaming.deploy.rest.api", "false").toString.toBoolean
     val mlsqlEnv = new MLSQLPythonEnv(env, deployAPI)
 
     val worker: Socket = mlsqlEnv.createPythonWorker(pythonPath, envVars.asScala.toMap)
@@ -88,7 +85,7 @@ object WowPythonRunner extends Logging {
           // We must avoid throwing exceptions here, because the thread uncaught exception handler
           // will kill the whole executor (see org.apache.spark.executor.Executor).
           logError("", e)
-          SQLPythonFunc.recordUserException(kafkaParam, e)
+          recordLog(e)
           if (!worker.isClosed) {
             Utils.tryLog(worker.shutdownOutput())
           }
@@ -138,7 +135,7 @@ object WowPythonRunner extends Logging {
               val obj = new Array[Byte](exLength)
               stream.readFully(obj)
               val msg = new String(obj, StandardCharsets.UTF_8)
-              SQLPythonFunc.recordUserLog(kafkaParam, msg)
+              recordLog(msg)
               throw new PythonException(msg,
                 null)
             case SpecialLengths.END_OF_DATA_SECTION =>
@@ -163,7 +160,7 @@ object WowPythonRunner extends Logging {
 
           case e: Exception if context.isInterrupted =>
             logDebug("Exception thrown after task interruption", e)
-            SQLPythonFunc.recordUserException(kafkaParam, e)
+            recordLog(e)
             throw new TaskKilledException(context.getKillReason().getOrElse("unknown reason"))
 
           case e: Exception if env.isStopped =>
@@ -171,7 +168,7 @@ object WowPythonRunner extends Logging {
             null // exit silently
 
           case eof: EOFException =>
-            SQLPythonFunc.recordUserException(kafkaParam, eof)
+            recordLog(eof)
             throw new SparkException("Python worker exited unexpectedly (crashed)", eof)
         }
       }

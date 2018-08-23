@@ -4,15 +4,13 @@ import java.io._
 import java.util.concurrent.atomic.AtomicReference
 
 import org.apache.spark.sql.types._
+import org.apache.spark.util.ObjPickle._
 import org.apache.spark.{SparkEnv, TaskContext}
-
-import scala.collection.JavaConverters._
-import scala.io.Source
-import ObjPickle._
-import streaming.dsl.mmlib.algs.SQLPythonFunc
 import streaming.log.Logging
 
+import scala.collection.JavaConverters._
 import scala.collection.mutable.ArrayBuffer
+import scala.io.Source
 
 /**
   * Created by allwefantasy on 24/1/2018.
@@ -25,7 +23,7 @@ object ExternalCommandRunner extends Logging {
           scriptContent: String,
           scriptName: String,
           modelPath: String,
-          kafkaParam: Map[String, String],
+          recordLog: Any => Any,
           validateData: Array[Array[Byte]] = Array(),
           envVars: Map[String, String] = Map(),
           separateWorkingDir: Boolean = true,
@@ -174,7 +172,7 @@ object ExternalCommandRunner extends Logging {
             val msg = s"Subprocess exited with status $exitStatus. " +
               s"Command ran: " + command.mkString(" ")
             errorBuffer += msg
-            SQLPythonFunc.recordUserLog(kafkaParam, errorBuffer.toIterator)
+            recordLog(errorBuffer.toIterator)
             throw new IllegalStateException(msg)
           }
           false
@@ -207,7 +205,7 @@ object ExternalCommandRunner extends Logging {
           errorBuffer += msg
           proc.destroy()
           cleanup()
-          SQLPythonFunc.recordUserLog(kafkaParam, errorBuffer.toIterator)
+          recordLog(errorBuffer.toIterator)
           throw t
         }
       }

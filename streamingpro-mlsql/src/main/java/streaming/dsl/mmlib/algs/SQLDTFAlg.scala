@@ -261,7 +261,7 @@ class SQLDTFAlg extends SQLAlg with Functions {
             schema = MapType(StringType, MapType(StringType, StringType)),
             scriptContent = pythonScript.fileContent,
             scriptName = pythonScript.fileName,
-            kafkaParam = kafkaParam,
+            recordLog = SQLPythonFunc.recordAnyLog(kafkaParam),
             modelPath = path, validateData = rowsBr.value
           )
 
@@ -288,7 +288,7 @@ class SQLDTFAlg extends SQLAlg with Functions {
                 schema = MapType(StringType, MapType(StringType, StringType)),
                 scriptContent = pythonScript.fileContent,
                 scriptName = pythonScript.fileName,
-                kafkaParam = kafkaParam,
+                recordLog = SQLPythonFunc.recordAnyLog(kafkaParam),
                 modelPath = path, validateData = rowsBr.value
               )
               pythonWorker.set(res.asInstanceOf[ {def getWorker: Process}].getWorker)
@@ -506,7 +506,7 @@ class SQLDTFAlg extends SQLAlg with Functions {
       _model.asInstanceOf[(Seq[String], Seq[Map[String, String]], Map[String, String], Map[String, Any])]
     val models = sparkSession.sparkContext.broadcast(modelsTemp)
 
-
+    val runtimeParams = PlatformManager.getRuntime.params
 
     val pythonPath = metasTemp(0)("pythonPath")
     val pythonVer = metasTemp(0)("pythonVer")
@@ -527,7 +527,7 @@ class SQLDTFAlg extends SQLAlg with Functions {
       maps,
       MapType(StringType, MapType(StringType, StringType)),
       userPythonScript.fileContent,
-      userPythonScript.fileName, modelPath = null, kafkaParam = kafkaParam
+      userPythonScript.fileName, modelPath = null, recordLog = SQLPythonFunc.recordAnyLog(kafkaParam)
     )
     res.foreach(f => f)
     val command = Files.readAllBytes(Paths.get(item.get("funcPath")))
@@ -548,8 +548,9 @@ class SQLDTFAlg extends SQLAlg with Functions {
       }
 
       //      val predictTime = System.currentTimeMillis()
+      val recordLog = SQLPythonFunc.recordAnyLog(kafkaParam2)
       val iter = WowPythonRunner.run(
-        pythonPath, pythonVer, command, v_ser3, TaskContext.get().partitionId(), Array(), kafkaParam = kafkaParam2
+        pythonPath, pythonVer, command, v_ser3, TaskContext.get().partitionId(), Array(), runtimeParams.asScala.toMap, recordLog
       )
       val a = iter.next()
       val predictValue = VectorSerDer.deser_vector(unpickle(a).asInstanceOf[java.util.ArrayList[Object]].get(0))

@@ -29,11 +29,23 @@ object SQLPythonFunc {
     }
   }
 
+
   def recordUserLog(algIndex: Int, pythonScript: PythonScript, kafkaParam: Map[String, String], res: Iterator[String]) = {
     val logPrefix = algIndex + "/" + pythonScript.filePath + ":  "
     val scores = KafkaOperator.writeKafka(logPrefix, kafkaParam, res)
     val score = if (scores.size > 0) scores.head else 0d
     score
+  }
+
+  def recordAnyLog(kafkaParam: Map[String, String]) = {
+    val a = (line: Any) => {
+      line match {
+        case a: Iterator[String] => recordUserLog(kafkaParam, line.asInstanceOf[Iterator[String]])
+        case a: Exception => recordUserException(kafkaParam, line.asInstanceOf[Exception])
+        case _ => recordUserLog(kafkaParam, line.asInstanceOf[String])
+      }
+    }
+    a
   }
 
   def recordUserLog(kafkaParam: Map[String, String], line: String) = {

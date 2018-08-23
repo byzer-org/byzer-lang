@@ -21,9 +21,13 @@ mvn -DskipTests clean package  \
 -Pspark-2.2.0 \
 -Pdsl-legacy \
 -Pcrawler \
--Pshade 
+-Pshade \
+-Popencv-support \
+-Pcarbondata \
+-Pstreamingpro-spark-2.2.0-adaptor
 
 ```
+ 
 
 如果要开启Carbondata支持，加上 `-Pcarbondata` 即可。有个单元测试类编译也需要-Popencv-support 的支持，如果编译不通过可以加上这个选项或者
 删除掉对应的文件。
@@ -96,14 +100,18 @@ mvn install -Pscala-2.10 -Pjetty-9 -Pweb-include-jetty-9
 ```
 git clone https://github.com/allwefantasy/streamingpro.git
 cd streamingpro
-mvn -DskipTests clean package  \
+mvn -DskipTests clean package \
 -pl streamingpro-mlsql -am  \
--Ponline -Pscala-2.11  \
+-Ponline \
+-Pscala-2.11 \
 -Phive-thrift-server \
 -Pspark-2.3.0 \
--Pdsl \
--Pcrawler \
--Pshade 
+-Pdsl  \
+-Pshade \
+-Pcarbondata \
+-Pcrawler  \
+-Popencv-support \
+-Pstreamingpro-spark-2.3.0-adaptor 
 
 ```
 
@@ -120,7 +128,8 @@ mvn -DskipTests clean package  \
 -Phive-thrift-server \
 -Pspark-2.1.0 \
 -Pdsl-legacy \
--Pshade
+-Pshade \
+-Pstreamingpro-spark-2.2.0-adaptor
 
 ```
 

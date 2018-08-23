@@ -5,7 +5,6 @@ import java.nio.file.{Files, Paths}
 import java.util
 import java.util.UUID
 
-
 import org.apache.commons.io.{FileUtils, IOUtils}
 import org.apache.spark.TaskContext
 import org.apache.spark.api.python.WowPythonRunner
@@ -20,6 +19,7 @@ import org.apache.spark.util.ObjPickle._
 import org.apache.spark.util.VectorSerDer._
 import org.apache.spark.sql.{functions => F}
 import SQLPythonFunc._
+import streaming.core.strategy.platform.PlatformManager
 
 import scala.collection.JavaConverters._
 import scala.io.Source
@@ -85,7 +85,7 @@ class SQLSKLearn extends SQLAlg with Functions {
         paramMap,
         MapType(StringType, MapType(StringType, StringType)),
         pythonScript.fileContent,
-        pythonScript.fileName, modelPath = path, kafkaParam = kafkaParam,
+        pythonScript.fileName, modelPath = path, recordLog = SQLPythonFunc.recordAnyLog(kafkaParam),
         validateData = rowsBr.value
       )
 
@@ -139,6 +139,9 @@ class SQLSKLearn extends SQLAlg with Functions {
     val (modelsTemp, metasTemp) = _model.asInstanceOf[(Seq[Array[Byte]], Seq[Map[String, String]])]
     val models = sparkSession.sparkContext.broadcast(modelsTemp)
 
+    val recordLog = SQLPythonFunc.recordAnyLog(Map())
+    val runtimeParams = PlatformManager.getRuntime.params.asScala.toMap
+
     val pythonPath = metasTemp(0)("pythonPath")
     val pythonVer = metasTemp(0)("pythonVer")
 
@@ -155,7 +158,7 @@ class SQLSKLearn extends SQLAlg with Functions {
       userPythonScript.fileContent,
       userPythonScript.fileName,
       modelPath = null,
-      kafkaParam = Map()
+      recordLog = SQLPythonFunc.recordAnyLog(Map[String,String]())
     )
     res.foreach(f => f)
     val command = Files.readAllBytes(Paths.get(item.get("funcPath")))
@@ -165,7 +168,7 @@ class SQLSKLearn extends SQLAlg with Functions {
       val v_ser = pickleInternalRow(Seq(ser_vector(v)).toIterator, vector_schema())
       val v_ser2 = pickleInternalRow(Seq(modelRow).toIterator, StructType(Seq(StructField("model", BinaryType))))
       val v_ser3 = v_ser ++ v_ser2
-      val iter = WowPythonRunner.run(pythonPath, pythonVer, command, v_ser3, TaskContext.get().partitionId(), model, Map())
+      val iter = WowPythonRunner.run(pythonPath, pythonVer, command, v_ser3, TaskContext.get().partitionId(), model, runtimeParams, recordLog)
       val a = iter.next()
       VectorSerDer.deser_vector(unpickle(a).asInstanceOf[java.util.ArrayList[Object]].get(0))
     }
