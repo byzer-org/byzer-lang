@@ -81,7 +81,7 @@ class SQLTensorFlow extends SQLAlg with Functions {
         paramMap,
         MapType(StringType, MapType(StringType, StringType)),
         pythonScript.fileContent,
-        pythonScript.fileName, modelPath = path, kafkaParam = kafkaParam, validateData = rowsBr.value
+        pythonScript.fileName, modelPath = path, recordLog = SQLPythonFunc.recordAnyLog(kafkaParam), validateData = rowsBr.value
       )
 
       val score = recordUserLog(algIndex, pythonScript, kafkaParam, res)

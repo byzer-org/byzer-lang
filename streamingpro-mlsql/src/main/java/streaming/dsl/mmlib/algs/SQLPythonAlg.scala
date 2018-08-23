@@ -165,7 +165,7 @@ class SQLPythonAlg extends SQLAlg with Functions {
           schema = MapType(StringType, MapType(StringType, StringType)),
           scriptContent = pythonScript.fileContent,
           scriptName = pythonScript.fileName,
-          kafkaParam = kafkaParam,
+          recordLog = SQLPythonFunc.recordAnyLog(kafkaParam),
           modelPath = path, validateData = rowsBr.value
         )
 
@@ -338,7 +338,7 @@ class SQLPythonAlg extends SQLAlg with Functions {
       maps,
       MapType(StringType, MapType(StringType, StringType)),
       userPythonScript.fileContent,
-      userPythonScript.fileName, modelPath = null, kafkaParam = kafkaParam
+      userPythonScript.fileName, modelPath = null, recordLog = SQLPythonFunc.recordAnyLog(kafkaParam)
     )
     res.foreach(f => f)
     val command = Files.readAllBytes(Paths.get(item.get("funcPath")))
@@ -346,6 +346,8 @@ class SQLPythonAlg extends SQLAlg with Functions {
     val enableErrorMsgToKafka = params.getOrElse("enableErrorMsgToKafka", "false").toBoolean
     val kafkaParam2 = if (enableErrorMsgToKafka) kafkaParam else Map[String, String]()
 
+    val recordLog = SQLPythonFunc.recordAnyLog(kafkaParam2)
+    val runtimeParams = PlatformManager.getRuntime.params.asScala.toMap
 
     val f = (v: org.apache.spark.ml.linalg.Vector, modelPath: String) => {
       val modelRow = InternalRow.fromSeq(Seq(SQLPythonFunc.getLocalTempModelPath(modelPath)))
@@ -364,8 +366,11 @@ class SQLPythonAlg extends SQLAlg with Functions {
         APIDeployPythonRunnerEnv.setTaskContext(APIDeployPythonRunnerEnv.createTaskContext())
       }
       val startTime = System.currentTimeMillis()
+
+
+
       val iter = WowPythonRunner.run(
-        pythonPath, pythonVer, command, v_ser3, TaskContext.get().partitionId(), Array(), kafkaParam = kafkaParam2
+        pythonPath, pythonVer, command, v_ser3, TaskContext.get().partitionId(), Array(), runtimeParams, recordLog
       )
       val a = iter.next()
       val predictValue = VectorSerDer.deser_vector(unpickle(a).asInstanceOf[java.util.ArrayList[Object]].get(0))
