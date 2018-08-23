@@ -181,7 +181,7 @@ so you can still use mlsql grammar.(This function provided from v1.1.2)
 
 ## Compiling
 
-* [How to compile](https://github.com/allwefantasy/streamingpro/blob/master/docs/compile.md)
+* [How to compile](https://github.com/allwefantasy/streamingpro/blob/master/docs/en/compile.md)
 * [How to compile DSL module](./docs/generate-dsl-java-source.md)
 
 ## Advanced Programming
