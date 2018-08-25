@@ -81,9 +81,11 @@ object MLMapping {
     "JavaImage" -> "streaming.dsl.mmlib.algs.processing.SQLJavaImage",
     "Discretizer" -> "streaming.dsl.mmlib.algs.SQLDiscretizer",
     "SendMessage" -> "streaming.dsl.mmlib.algs.SQLSendMessage",
+    "JDBC" -> "streaming.dsl.mmlib.algs.SQLJDBC",
     "VecMapInPlace" -> "streaming.dsl.mmlib.algs.SQLVecMapInPlace",
     "DTFAlg" -> "streaming.dsl.mmlib.algs.SQLDTFAlg",
-    "Map" -> "streaming.dsl.mmlib.algs.SQLMap"
+    "Map" -> "streaming.dsl.mmlib.algs.SQLMap",
+    "PythonAlgBP" -> "streaming.dsl.mmlib.algs.SQLPythonAlgBatchPrediction"
   )
 
   def findAlg(name: String) = {

@@ -114,7 +114,6 @@ object PythonCode {
       |import pickle
       |import python_fun
       |
-      |
       |def predict(index, s):
       |    items = [i for i in s]
       |    feature = VectorUDT().deserialize(pickle.loads(items[0]))
@@ -126,5 +125,38 @@ object PythonCode {
       |
       |
       |python_fun.udf(predict)
+      | """.stripMargin
+
+  val pythonBatchPredictCode =
+    """
+      |from pyspark.ml.linalg import VectorUDT, Vectors
+      |import pickle
+      |import os
+      |import mlsql
+      |import json
+      |
+      |tempDataLocalPath = mlsql.internal_system_param["tempDataLocalPath"]
+      |tempModelLocalPath = mlsql.internal_system_param["tempModelLocalPath"]
+      |tempResultLocalPath = mlsql.internal_system_param["tempResultLocalPath"]
+      |
+      |print(tempDataLocalPath)
+      |files = [file for file in os.listdir(tempDataLocalPath) if file.endswith(".json")]
+      |res = []
+      |for file in files:
+      |    with open(tempDataLocalPath + "/" + file) as f:
+      |        for line in f.readlines():
+      |            obj = json.loads(line)
+      |            f_size = obj["features"]["size"]
+      |            f_indices = obj["features"]["indices"]
+      |            f_values = obj["features"]["values"]
+      |            res.append(Vectors.sparse(f_size, f_indices, f_values).toArray())
+      |model = pickle.load(open(tempModelLocalPath+"/_model_0/model/0//model.pickle"))
+      |model.predict(res)
+      |
+      |if not os.path.exists(tempResultLocalPath):
+      |    os.makedirs(tempResultLocalPath)
+      |
+      |with open(tempResultLocalPath+"/0.json","w") as f:
+      |    f.write("{}")
       | """.stripMargin
 }

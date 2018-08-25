@@ -332,6 +332,29 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
     }
   }
 
+//  "SQLJDBC" should "work fine" taggedAs (NotToRunTag) in {
+//
+//    withBatchContext(setupBatchContext(batchParamsWithCarbondata, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+//      //执行sql
+//      implicit val spark = runtime.sparkSession
+//      val sq = createSSEL
+//
+//      ScriptSQLExec.parse(
+//        """
+//          |connect jdbc where
+//          |driver="com.mysql.jdbc.Driver"
+//          |and url="jdbc:mysql://127.0.0.1:3306/wow"
+//          |and driver="com.mysql.jdbc.Driver"
+//          |and user="root"
+//          |and password="----"
+//          |as mysql1;
+//          |select 1 as t as fakeTable;
+//          |train fakeTable JDBC.`mysql1` where
+//          |driver-statement-0="drop table test1"
+//        """.stripMargin, sq)
+//    }
+//  }
+
 }
 
 
