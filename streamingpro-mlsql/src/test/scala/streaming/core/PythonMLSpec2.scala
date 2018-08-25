@@ -17,7 +17,7 @@ class PythonMLSpec2 extends BasicSparkOperation with SpecFunctions with BasicMLS
 
   copySampleLibsvmData
 
-  "SQLPythonAlgBatchPrediction" should "work fine" in {
+  "SQLPythonAlgBatchPrediction" should "work fine" taggedAs (NotToRunTag) in {
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
       implicit val spark = runtime.sparkSession
