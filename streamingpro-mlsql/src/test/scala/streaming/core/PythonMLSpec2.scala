@@ -38,7 +38,7 @@ class PythonMLSpec2 extends BasicSparkOperation with SpecFunctions with BasicMLS
 
       ScriptSQLExec.parse(TemplateMerge.merge(loadSQLScriptStr("python-alg-batch-predict"), Map(
         "pythonScriptPath" -> "/tmp/sklearn-user-predict-script.py",
-        "modelPath" -> "/tmp/william/pa_model_k"
+        "modelPath" -> "/pa_model_k"
       )), sq)
 
 

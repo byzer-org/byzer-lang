@@ -58,14 +58,16 @@ class SQLPythonAlgBatchPrediction extends SQLAlg with Functions {
 
 
     val sessionLocalTimeZone = df.sparkSession.sessionState.conf.sessionLocalTimeZone
+    val hdfsModelPath = fitParam("modelPath")
 
+    require(!hdfsModelPath.contains(".."), "modelPath should not contains relative path")
 
     val wowRDD = df.rdd.mapPartitionsWithIndex { (algIndex, data) =>
 
       val pythonPath = systemParam.getOrElse("pythonPath", "python")
       val pythonVer = systemParam.getOrElse("pythonVer", "2.7")
       val pythonParam = systemParam.getOrElse("pythonParam", "").split(",").filterNot(f => f.isEmpty)
-      val hdfsModelPath = fitParam("modelPath")
+
 
       val tempDataLocalPath = SQLPythonFunc.getLocalTempDataPath(wowPath)
       val tempModelLocalPath = s"${SQLPythonFunc.getLocalBasePath}/${UUID.randomUUID().toString}/${algIndex}"

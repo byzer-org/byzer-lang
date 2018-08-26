@@ -18,8 +18,8 @@ object TemplateMerge {
       "tomorrow" -> DateTime.now().plusDays(1).toString(dformat),
       "theDayBeforeYesterday" -> DateTime.now().minusDays(2).toString(dformat)
     )
-    val newRoot = predified_variables ++ root
+    val newRoot = Map("date" -> new DateTime()) ++ predified_variables ++ root
 
-    RenderEngine.render(sql, newRoot ++ Map("date" -> new DateTime()))
+    RenderEngine.render(sql, newRoot)
   }
 }
