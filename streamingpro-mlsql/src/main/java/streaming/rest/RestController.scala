@@ -16,6 +16,7 @@ import net.csdn.modules.http.RestRequest.Method._
 import net.csdn.modules.transport.HttpTransportService
 import org.apache.spark.ps.cluster.Message
 import org.apache.spark.sql.{DataFrameWriter, Row, SaveMode}
+import org.joda.time.format.ISODateTimeFormat
 import streaming.common.JarUtil
 import streaming.core._
 import streaming.core.strategy.platform.{PlatformManager, SparkRuntime}
@@ -201,6 +202,7 @@ class RestController extends ApplicationController {
   // begin --------------------------------------------------------
   @At(path = Array("/runningjobs"), types = Array(GET, POST))
   def getRunningJobGroup = {
+    restResponse.httpServletResponse().setHeader("Access-Control-Allow-Origin", "*")
     val infoMap = StreamingproJobManager.getJobInfo
     render(200, toJsonString(infoMap))
   }
@@ -209,7 +211,8 @@ class RestController extends ApplicationController {
   def streamRunningJobs = {
     restResponse.httpServletResponse().setHeader("Access-Control-Allow-Origin", "*")
     val infoMap = runtime.asInstanceOf[SparkRuntime].sparkSession.streams.active.map { f =>
-      StreamingproJobInfo(null, StreamingproJobType.STREAM, f.name, f.lastProgress.json, f.id + "", -1l, -1l)
+      val startTime = ISODateTimeFormat.dateTime().parseDateTime(f.lastProgress.timestamp).getMillis
+      StreamingproJobInfo(null, StreamingproJobType.STREAM, f.name, f.lastProgress.json, f.id + "", startTime, -1l)
     }
     render(200, toJsonString(infoMap))
   }

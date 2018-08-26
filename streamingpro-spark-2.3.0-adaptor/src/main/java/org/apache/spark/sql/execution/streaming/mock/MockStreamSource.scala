@@ -68,7 +68,7 @@ class MockStreamSource(
         DateTimeUtils.fromJavaTimestamp(new java.sql.Timestamp(timestamp.getMillis)),
         f.getLong(dSchema.fieldIndex("timestampType")).toInt)
     }
-    sqlContext.internalCreateDataFrame(rdd, schema)
+    sqlContext.internalCreateDataFrame(rdd, schema,isStreaming = true)
   }
 
   override def stop(): Unit = {
