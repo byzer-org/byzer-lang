@@ -36,6 +36,7 @@
 
 - Tools
   - [SendMessage](#sendmessage)
+  - [JDBC](#jdbc)
 
 ### TfIdfInPlace
 
@@ -1108,3 +1109,22 @@ and subject = "这是邮件标题"
 and smtpHost = "${smtp-ip-address}";
 ```
 
+### JDBC
+
+JDBC module enable MLSQL operate SQL DB directly.
+Notice that, for now ,The SQL executed by JDBC module is runed on driver.
+
+```sql
+connect jdbc where
+driver="com.mysql.jdbc.Driver"
+and url="jdbc:mysql://127.0.0.1:3306/wow"
+and driver="com.mysql.jdbc.Driver"
+and user="---"
+and password="----"
+as mysql1;
+
+select 1 as t as fakeTable;
+
+train fakeTable as JDBC.`mysql1` where
+`driver-statement-0`="drop table test1";
+```
