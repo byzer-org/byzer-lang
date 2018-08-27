@@ -355,7 +355,7 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
   //    }
   //  }
 
-  "ScalaScriptUDF" should "work fine"  in {
+  "ScalaScriptUDF" should "work fine" in {
 
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
@@ -388,6 +388,45 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
           |-- 使用plusFun
           |select plusFun(1,1) as res as output;
         """.stripMargin, sq)
+      val res = spark.sql("select * from output").collect().head.get(0)
+      assume(res == 2)
+    }
+
+
+  }
+
+  "include" should "work fine" in {
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+      //执行sql
+      implicit val spark = runtime.sparkSession
+      val sq = createSSEL
+      val source = """
+                     |
+                     |--加载脚本
+                     |load script.`plusFun` as scriptTable;
+                     |--注册为UDF函数 名称为plusFun
+                     |register ScalaScriptUDF.`scriptTable` as plusFun options
+                     |className="PlusFun"
+                     |and methodName="plusFun"
+                     |;
+                     |
+                     |-- 使用plusFun
+                     |select plusFun(1,1) as res as output;
+                   """.stripMargin
+      writeStringToFile("/tmp/william/tmp/kk.jj",source)
+      ScriptSQLExec.parse(
+        """
+          |-- 填写script脚本
+          |set plusFun='''
+          |class PlusFun{
+          |  def plusFun(a:Double,b:Double)={
+          |   a + b
+          |  }
+          |}
+          |''';
+          |include hdfs.`/tmp/kk.jj`;
+        """.stripMargin
+        , sq, false)
       val res = spark.sql("select * from output").collect().head.get(0)
       assume(res == 2)
     }

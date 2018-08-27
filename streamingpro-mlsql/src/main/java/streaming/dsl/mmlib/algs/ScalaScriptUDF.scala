@@ -11,13 +11,16 @@ import streaming.udf.ScalaSourceUDF
   * Created by allwefantasy on 27/8/2018.
   */
 class ScalaScriptUDF extends SQLAlg with MllibFunctions with Functions {
+
+  override def skipPathPrefix: Boolean = true
+
   override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {}
 
   /*
       register ScalaScriptUDF.`scriptText` as udf1;
    */
   override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = {
-    val res = sparkSession.table(path.split("/").last).head().getString(0)
+    val res = sparkSession.table(path).head().getString(0)
     require(params.contains("className"), "className is required")
     val className = params("className")
     val methodName = params.get("methodName")

@@ -1,12 +1,13 @@
 package streaming.dsl
 
+import org.apache.spark.sql.SparkSession
 import streaming.dsl.parser.DSLSQLParser._
 import streaming.dsl.template.TemplateMerge
 
 /**
   * Created by allwefantasy on 12/1/2018.
   */
-class RegisterAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdaptor {
+class IncludeAdaptor(scriptSQLExecListener: ScriptSQLExecListener, preProcessListener: PreProcessListener) extends DslAdaptor {
 
   def evaluate(value: String) = {
     TemplateMerge.merge(value, scriptSQLExecListener.env().toMap)
@@ -34,18 +35,32 @@ class RegisterAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslA
         case _ =>
       }
     }
-    val alg = MLMapping.findAlg(format)
+    val alg = IncludeAdaptor.findAlg(format, option)
     if (!alg.skipPathPrefix) {
       path = withPathPrefix(scriptSQLExecListener.pathPrefix(None), path)
     }
-    val sparkSession = scriptSQLExecListener.sparkSession
-    val model = alg.load(sparkSession, path, option)
-    val udf = alg.predict(sparkSession, model, functionName, option)
-    if (udf != null) {
-      scriptSQLExecListener.sparkSession.udf.register(functionName, udf)
-    }
-    scriptSQLExecListener.setLastSelectTable(null)
+    val content = alg.fetchSource(scriptSQLExecListener.sparkSession, path, option)
+    val originIncludeText = currentText(ctx)
+    preProcessListener.addInclude(originIncludeText, content)
   }
+}
+
+object IncludeAdaptor {
+  val mapping = Map[String, String](
+    "hdfs" -> "streaming.dsl.mmlib.algs.includes.HDFSIncludeSource"
+  )
+
+  def findAlg(format: String, options: Map[String, String]) = {
+    val clzz = mapping.getOrElse(format, options.getOrElse("implClass", format))
+    Class.forName(clzz).newInstance().asInstanceOf[IncludeSource]
+  }
+
+}
+
+trait IncludeSource {
+  def fetchSource(sparkSession: SparkSession, path: String, options: Map[String, String]): String
+
+  def skipPathPrefix: Boolean = false
 }
 
 

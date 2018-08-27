@@ -13,4 +13,6 @@ trait SQLAlg {
 
   def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction
 
+  def skipPathPrefix: Boolean = false
+
 }

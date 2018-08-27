@@ -12,12 +12,14 @@ import scala.collection.JavaConversions._
   * Created by allwefantasy on 16/8/2018.
   */
 class SQLMap extends SQLAlg with MllibFunctions with Functions {
+
+  override def skipPathPrefix: Boolean = true
   override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
 
   }
 
   override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = {
-    val res = JSONObject.fromObject(sparkSession.table(path.split("/").last).toJSON.head()).map(f => (f._1.toString(), f._2.toString())).toMap
+    val res = JSONObject.fromObject(sparkSession.table(path).toJSON.head()).map(f => (f._1.toString(), f._2.toString())).toMap
     res
   }
 

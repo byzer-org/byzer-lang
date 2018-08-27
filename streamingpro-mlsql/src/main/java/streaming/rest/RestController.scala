@@ -1,10 +1,8 @@
 package streaming.rest
 
 import java.lang.reflect.Modifier
-import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
 
 import scala.collection.JavaConversions._
-import scala.collection.JavaConverters._
 import scala.util.control.NonFatal
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
@@ -50,7 +48,7 @@ class RestController extends ApplicationController {
           try {
             val allPathPrefix = fromJson(param("allPathPrefix"), classOf[Map[String, String]])
             val defaultPathPrefix = param("defaultPathPrefix")
-            ScriptSQLExec.parse(param("sql"), new ScriptSQLExecListener(sparkSession, defaultPathPrefix, allPathPrefix))
+            ScriptSQLExec.parse(param("sql"), new ScriptSQLExecListener(sparkSession, defaultPathPrefix, allPathPrefix), paramAsBoolean("skipInclude", false))
             htp.get(new Url(param("callback")), Map("stat" -> s"""success"""))
           } catch {
             case e: Exception =>
@@ -63,7 +61,7 @@ class RestController extends ApplicationController {
           val allPathPrefix = fromJson(param("allPathPrefix", "{}"), classOf[Map[String, String]])
           val defaultPathPrefix = param("defaultPathPrefix", "")
           val context = new ScriptSQLExecListener(sparkSession, defaultPathPrefix, allPathPrefix)
-          ScriptSQLExec.parse(param("sql"), context)
+          ScriptSQLExec.parse(param("sql"), context, paramAsBoolean("skipInclude", false))
           if (!silence) {
             outputResult = context.getLastSelectTable() match {
               case Some(table) => "[" + sparkSession.sql(s"select * from $table limit 100").toJSON.collect().mkString(",") + "]"

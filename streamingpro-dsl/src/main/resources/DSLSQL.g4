@@ -25,6 +25,7 @@ sql
     | ('train'|'TRAIN') tableName 'as' format '.' path 'where'? expression? booleanExpression*
     | ('register'|'REGISTER') format '.' path 'as' functionName 'options'? expression? booleanExpression*
     | ('unRegister'|'UNREGISTER') format '.' path 'options'? expression? booleanExpression*
+    | ('include'|'INCLUDE') format '.' path 'options'? expression? booleanExpression*
     |  SIMPLE_COMMENT
     ;
 
