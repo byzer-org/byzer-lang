@@ -2,6 +2,7 @@ package streaming.dsl
 
 import org.apache.spark.sql._
 import _root_.streaming.dsl.parser.DSLSQLParser._
+import net.sf.json.JSONObject
 import template.TemplateMerge
 
 /**
@@ -86,9 +87,17 @@ class BatchLoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener,
         table = reader.option("path", cleanStr(path)).format("org.apache.spark.sql.execution.datasources.crawlersql").load()
       case "image" =>
         val owner = option.get("owner")
-        table = reader.option("path", withPathPrefix(scriptSQLExecListener.pathPrefix(owner), cleanStr(path))).format("streaming.dsl.mmlib.algs.processing.image").load()
+        table = reader.option("pScath", withPathPrefix(scriptSQLExecListener.pathPrefix(owner), cleanStr(path))).format("streaming.dsl.mmlib.algs.processing.image").load()
       case "jsonStr" =>
         val items = cleanBlockStr(scriptSQLExecListener.env()(cleanStr(path))).split("\n")
+        import sparkSession.implicits._
+        table = reader.json(sparkSession.createDataset[String](items))
+      case "script" =>
+        val items = List(cleanBlockStr(scriptSQLExecListener.env()(cleanStr(path)))).map { f =>
+          val obj = new JSONObject()
+          obj.put("content", f)
+          obj.toString()
+        }
         import sparkSession.implicits._
         table = reader.json(sparkSession.createDataset[String](items))
       case _ =>

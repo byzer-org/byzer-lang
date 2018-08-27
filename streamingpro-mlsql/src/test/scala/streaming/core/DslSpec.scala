@@ -332,28 +332,66 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
     }
   }
 
-//  "SQLJDBC" should "work fine" taggedAs (NotToRunTag) in {
-//
-//    withBatchContext(setupBatchContext(batchParamsWithCarbondata, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
-//      //执行sql
-//      implicit val spark = runtime.sparkSession
-//      val sq = createSSEL
-//
-//      ScriptSQLExec.parse(
-//        """
-//          |connect jdbc where
-//          |driver="com.mysql.jdbc.Driver"
-//          |and url="jdbc:mysql://127.0.0.1:3306/wow"
-//          |and driver="com.mysql.jdbc.Driver"
-//          |and user="root"
-//          |and password="----"
-//          |as mysql1;
-//          |select 1 as t as fakeTable;
-//          |train fakeTable JDBC.`mysql1` where
-//          |driver-statement-0="drop table test1"
-//        """.stripMargin, sq)
-//    }
-//  }
+  //  "SQLJDBC" should "work fine" taggedAs (NotToRunTag) in {
+  //
+  //    withBatchContext(setupBatchContext(batchParamsWithCarbondata, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+  //      //执行sql
+  //      implicit val spark = runtime.sparkSession
+  //      val sq = createSSEL
+  //
+  //      ScriptSQLExec.parse(
+  //        """
+  //          |connect jdbc where
+  //          |driver="com.mysql.jdbc.Driver"
+  //          |and url="jdbc:mysql://127.0.0.1:3306/wow"
+  //          |and driver="com.mysql.jdbc.Driver"
+  //          |and user="root"
+  //          |and password="----"
+  //          |as mysql1;
+  //          |select 1 as t as fakeTable;
+  //          |train fakeTable JDBC.`mysql1` where
+  //          |driver-statement-0="drop table test1"
+  //        """.stripMargin, sq)
+  //    }
+  //  }
+
+  "ScalaScriptUDF" should "work fine"  in {
+
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+      //执行sql
+      implicit val spark = runtime.sparkSession
+      val sq = createSSEL
+
+      ScriptSQLExec.parse(
+        """
+          |/*
+          |  MLSQL脚本完成UDF注册示例
+          |*/
+          |
+          |-- 填写script脚本
+          |set plusFun='''
+          |class PlusFun{
+          |  def plusFun(a:Double,b:Double)={
+          |   a + b
+          |  }
+          |}
+          |''';
+          |
+          |--加载脚本
+          |load script.`plusFun` as scriptTable;
+          |--注册为UDF函数 名称为plusFun
+          |register ScalaScriptUDF.`scriptTable` as plusFun options
+          |className="PlusFun"
+          |and methodName="plusFun"
+          |;
+          |
+          |-- 使用plusFun
+          |select plusFun(1,1) as res as output;
+        """.stripMargin, sq)
+      val res = spark.sql("select * from output").collect().head.get(0)
+      assume(res == 2)
+    }
+  }
 
 }
 
