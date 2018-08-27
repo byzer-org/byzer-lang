@@ -5,11 +5,18 @@ import java.net.URL
 import org.apache.spark.graphx.{Edge, Graph, VertexId}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.catalyst.JavaTypeInference
+import org.apache.spark.sql.catalyst.analysis.FunctionRegistry._
+import org.apache.spark.sql.catalyst.expressions.{Expression, ScalaUDF}
+import org.apache.spark.sql.execution.aggregate.ScalaUDAF
+import org.apache.spark.sql.expressions.UserDefinedAggregateFunction
+import org.apache.spark.sql.types.DataType
+import org.apache.spark.util.ScalaSourceCodeCompiler
 import org.apache.spark.{SparkConf, SparkContext}
 import org.joda.time.DateTime
 import org.joda.time.format.ISODateTimeFormat
 import org.scalatest.{FlatSpec, Matchers}
-import streaming.common.{PunctuationUtils, UnicodeUtils}
+import streaming.common.{PunctuationUtils, ScriptCacheKey, SourceCodeCompiler, UnicodeUtils}
 
 import scala.collection.mutable
 
@@ -18,19 +25,43 @@ import scala.collection.mutable
   */
 object Test {
   def main(args: Array[String]): Unit = {
-    // Create an RDD for the vertices
-    //    String input = "07.Haz.2014";
-    //
-    //    java.util.Locale locale = new java.util.Locale( "tr", "TR" );
-    //    DateTimeZone timeZone = DateTimeZone.forID( "Europe/Istanbul" );  // Assuming this time zone (not specified in Question).
-    //    DateTimeFormatter formatter = DateTimeFormat.forPattern( "dd.MMM.yyyy" ).withLocale( locale ).withZone( timeZone );
-    //    DateTime dateTime = formatter.parseDateTime( input );
-    //    String outputQuébécois = DateTimeFormat.forStyle( "FF" ).withLocale( java.util.Locale.CANADA_FRENCH ).print( dateTime ); //
-    //    DateTime dateTimeUtc = dateTime.withZone( DateTimeZone.UTC );
-    val dt = ISODateTimeFormat.dateTime().parseDateTime("2018-08-26T08:28:07.051Z")
-    println(dt.toString("yyyyMMdd HH:mm:ss"))
-
+    val s =
+      """
+        |package jack
+        |class PlusFun{
+        |  def plusFun(a:Double,b:Double)={
+        |   a + b
+        |  }
+        |}
+      """.stripMargin
+    ScalaSourceCodeCompiler.compileAndRun(s,Map())
+    val clzz = SourceCodeCompiler.execute(ScriptCacheKey(s, "jack.PlusFun")).asInstanceOf[Class[_]]
+    val method = UdfUtils.getMethod(clzz, "plusFun")
+    val dataType: (DataType, Boolean) = JavaTypeInference.inferDataType(method.getReturnType)
+    println(method)
+    println(dataType)
   }
+}
+
+object UdfUtils {
+
+  def newInstance(clazz: Class[_]): Any = {
+    val constructor = clazz.getDeclaredConstructors.head
+    constructor.setAccessible(true)
+    constructor.newInstance()
+  }
+
+  def getMethod(clazz: Class[_], method: String) = {
+    val candidate = clazz.getDeclaredMethods.filter(_.getName == method).filterNot(_.isBridge)
+    if (candidate.isEmpty) {
+      throw new Exception(s"No method $method found in class ${clazz.getCanonicalName}")
+    } else if (candidate.length > 1) {
+      throw new Exception(s"Multiple method $method found in class ${clazz.getCanonicalName}")
+    } else {
+      candidate.head
+    }
+  }
+
 }
 
 case class VeterxAndGroup(vertexId: VertexId, group: VertexId)

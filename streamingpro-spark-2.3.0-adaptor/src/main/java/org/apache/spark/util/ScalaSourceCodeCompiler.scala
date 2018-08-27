@@ -99,7 +99,7 @@ object ScalaSourceCodeCompiler {
 
 
   private val scriptCache = CacheBuilder.newBuilder()
-    .maximumSize(100)
+    .maximumSize(10000)
     .build(
       new CacheLoader[ScriptCacheKey, StreamingProGenerateClass]() {
         override def load(scriptCacheKey: ScriptCacheKey): StreamingProGenerateClass = {

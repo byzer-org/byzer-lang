@@ -39,7 +39,9 @@ class RegisterAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslA
     val sparkSession = scriptSQLExecListener.sparkSession
     val model = alg.load(sparkSession, path, option)
     val udf = alg.predict(sparkSession, model, functionName, option)
-    scriptSQLExecListener.sparkSession.udf.register(functionName, udf)
+    if (udf != null) {
+      scriptSQLExecListener.sparkSession.udf.register(functionName, udf)
+    }
     scriptSQLExecListener.setLastSelectTable(null)
   }
 }
