@@ -5,7 +5,7 @@ import java.util.Comparator
 
 import com.fasterxml.jackson.core._
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.{DataFrame, Dataset, SparkSession}
+import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.analysis.TypeCoercion
 import org.apache.spark.sql.catalyst.encoders.RowEncoder
@@ -45,6 +45,23 @@ object WowJsonInferSchema {
     //val plan = new WowFastLocalRelation(attributes, parsed)
     val plan = LocalRelation(attributes, parsed)
     Dataset.ofRows(sparkSession, plan)
+  }
+
+  def toJson(data: Iterator[Row], rowSchema: StructType, sessionLocalTimeZone: String, callback: String => Unit) = {
+    val writer = new CharArrayWriter()
+    // create the Generator without separator inserted between 2 records
+    val gen = new JacksonGenerator(rowSchema, writer,
+      new JSONOptions(Map.empty[String, String], sessionLocalTimeZone))
+    val enconder = RowEncoder.apply(rowSchema).resolveAndBind()
+    data.foreach { row =>
+      gen.write(enconder.toRow(row))
+      gen.flush()
+      val json = writer.toString
+      writer.reset()
+      callback(json)
+    }
+    gen.close()
+
   }
 
   def toJson(dataSet: DataFrame) = {
