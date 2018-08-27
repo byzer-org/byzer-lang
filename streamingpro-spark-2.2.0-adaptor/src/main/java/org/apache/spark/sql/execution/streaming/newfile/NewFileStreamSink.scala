@@ -21,7 +21,7 @@ class NewFileStreamSink(
   }
 
   def path = {
-    evaluate(_path, Map("date" -> new DateTime()))
+    evaluate(_path, Map("pathDate" -> new DateTime()))
   }
 
   private def basePath = new Path(path)
