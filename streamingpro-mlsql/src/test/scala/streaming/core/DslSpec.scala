@@ -425,6 +425,38 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
       assume(res == 2)
       res = spark.sql("select plusFun(1,1)").collect().head.get(0)
       assume(res == 2)
+
+      ScriptSQLExec.parse(
+        """
+          |/*
+          |  MLSQL脚本完成UDF注册示例
+          |*/
+          |
+          |-- 填写script脚本
+          |set plusFun='''
+          |def apply(a:Double,b:Double)={
+          |   a + b
+          |}
+          |''';
+          |
+          |--加载脚本
+          |load script.`plusFun` as scriptTable;
+          |--注册为UDF函数 名称为plusFun
+          |register ScalaScriptUDF.`scriptTable` as plusFun
+          |;
+          |set data='''
+          |{"a":1}
+          |{"a":1}
+          |{"a":1}
+          |{"a":1}
+          |''';
+          |load jsonStr.`data` as dataTable;
+          |-- 使用plusFun
+          |select plusFun(1,1) as res from dataTable as output;
+        """.stripMargin, sq)
+
+      res = spark.sql("select plusFun(1,1)").collect().head.get(0)
+      assume(res == 2)
     }
 
 
