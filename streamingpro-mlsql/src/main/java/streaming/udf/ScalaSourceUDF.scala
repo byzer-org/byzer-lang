@@ -1,5 +1,7 @@
 package streaming.udf
 
+import java.util.UUID
+
 import org.apache.spark.sql.catalyst.JavaTypeInference
 import org.apache.spark.sql.types.DataType
 import streaming.common.{ScriptCacheKey, SourceCodeCompiler}
@@ -8,6 +10,26 @@ import streaming.common.{ScriptCacheKey, SourceCodeCompiler}
   * Created by allwefantasy on 27/8/2018.
   */
 object ScalaSourceUDF {
+
+  private def wrapClass(function: String) = {
+    val className = s"StreamingProUDF_${UUID.randomUUID().toString.replaceAll("-", "")}"
+    val newfun =
+      s"""
+         |class  ${className}{
+         |
+         |${function}
+         |
+         |}
+            """.stripMargin
+    (className, newfun)
+
+  }
+
+  def apply(src: String, methodName: Option[String]): (AnyRef, DataType) = {
+    val (className, newfun) = wrapClass(src)
+    apply(newfun, className, methodName)
+  }
+
   def apply(src: String, className: String, methodName: Option[String]): (AnyRef, DataType) = {
     val (argumentNum, returnType) = getFunctionReturnType(src, className, methodName)
     (generateFunction(src, className, methodName, argumentNum), returnType)
