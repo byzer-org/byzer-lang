@@ -1,14 +1,16 @@
 package streaming.common
 
 import javax.tools._
+
 import scala.collection.JavaConversions._
 import com.google.common.cache.{CacheBuilder, CacheLoader}
+import streaming.log.Logging
 
 
 /**
   * Created by allwefantasy on 27/8/2018.
   */
-object SourceCodeCompiler {
+object SourceCodeCompiler extends Logging {
   private val scriptCache = CacheBuilder.newBuilder()
     .maximumSize(10000)
     .build(
@@ -17,6 +19,7 @@ object SourceCodeCompiler {
           val startTime = System.nanoTime()
           val res = compileScala(prepareScala(scriptCacheKey.code, scriptCacheKey.className))
           def timeMs: Double = (System.nanoTime() - startTime).toDouble / 1000000
+          logInfo(s"generate udf time:${timeMs}")
           res
         }
       })

@@ -21,15 +21,18 @@ class ScalaScriptUDF extends SQLAlg with MllibFunctions with Functions {
    */
   override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = {
     val res = sparkSession.table(path).head().getString(0)
-    require(params.contains("className"), "className is required")
-    val className = params("className")
-    val methodName = params.get("methodName")
-    require(params.contains("methodName"), "methodName is required")
-    val (func, returnType) = ScalaSourceUDF(res, className, methodName)
-    UDFManager.register(sparkSession, methodName.get, (e: Seq[Expression]) => ScalaUDF(func, returnType, e))
+
+    val (func, returnType) = if (params.contains("className")) {
+      ScalaSourceUDF(res, params("className"), params.get("methodName"))
+    } else {
+      ScalaSourceUDF(res, params.get("methodName"))
+    }
+    (e: Seq[Expression]) => ScalaUDF(func, returnType, e)
   }
 
   override def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = {
+    val func = _model.asInstanceOf[(Seq[Expression]) => ScalaUDF]
+    UDFManager.register(sparkSession, name, func)
     null
   }
 }
