@@ -7,7 +7,8 @@ MLSQL supports the following statements:
 3. select 
 4. train  
 5. register 
-6. save     
+6. save    
+7. include
 
 ### connect
 
@@ -304,4 +305,36 @@ set jack='''
  hello today is:${date.toString("yyyyMMdd")}
 ''';
 
+```
+
+### include
+
+Suppose you have file `/tmp/a.mlsql` contains:
+
+```sql
+--加载脚本
+load script.`plusFun` as scriptTable;
+--注册为UDF函数 名称为plusFun
+register ScalaScriptUDF.`scriptTable` as plusFun options
+className="PlusFun"
+and methodName="plusFun"
+;
+
+-- 使用plusFun
+select plusFun(1,1) as res as output;
+```
+
+
+Then you can include this file in your mlsql script.
+
+```sql
+-- 填写script脚本
+set plusFun='''
+class PlusFun{
+  def plusFun(a:Double,b:Double)={
+   a + b
+  }
+}
+include hdfs.`/tmp/a.sql`;
+''';
 ```

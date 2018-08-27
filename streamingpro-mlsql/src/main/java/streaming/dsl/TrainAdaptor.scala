@@ -29,7 +29,6 @@ class TrainAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdap
         case s: PathContext =>
           path = cleanStr(s.getText)
           path = evaluate(path)
-          path = withPathPrefix(scriptSQLExecListener.pathPrefix(owner), path)
         case s: ExpressionContext =>
           options += (cleanStr(s.identifier().getText) -> evaluate(cleanStr(s.STRING().getText)))
         case s: BooleanExpressionContext =>
@@ -39,6 +38,9 @@ class TrainAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdap
     }
     val df = scriptSQLExecListener.sparkSession.table(tableName)
     val sqlAlg = MLMapping.findAlg(format)
+    if(!sqlAlg.skipPathPrefix){
+      path = withPathPrefix(scriptSQLExecListener.pathPrefix(owner), path)
+    }
     sqlAlg.train(df, path, options)
     scriptSQLExecListener.setLastSelectTable(null)
   }
