@@ -38,7 +38,7 @@ class TrainAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdap
     }
     val df = scriptSQLExecListener.sparkSession.table(tableName)
     val sqlAlg = MLMapping.findAlg(format)
-    if(!sqlAlg.skipPathPrefix){
+    if (!sqlAlg.skipPathPrefix) {
       path = withPathPrefix(scriptSQLExecListener.pathPrefix(owner), path)
     }
     sqlAlg.train(df, path, options)
@@ -88,7 +88,8 @@ object MLMapping {
     "DTFAlg" -> "streaming.dsl.mmlib.algs.SQLDTFAlg",
     "Map" -> "streaming.dsl.mmlib.algs.SQLMap",
     "PythonAlgBP" -> "streaming.dsl.mmlib.algs.SQLPythonAlgBatchPrediction",
-    "ScalaScriptUDF" -> "streaming.dsl.mmlib.algs.ScalaScriptUDF"
+    "ScalaScriptUDF" -> "streaming.dsl.mmlib.algs.ScriptUDF",
+    "ScriptUDF" -> "streaming.dsl.mmlib.algs.ScriptUDF"
   )
 
   def findAlg(name: String) = {

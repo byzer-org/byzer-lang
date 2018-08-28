@@ -56,6 +56,11 @@
             </exclusions>
         </dependency>
         <dependency>
+            <groupId>streaming.king</groupId>
+            <artifactId>streamingpro-jython</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <dependency>
             <groupId>com.101tec</groupId>
             <artifactId>zkclient</artifactId>
             <version>0.5</version>

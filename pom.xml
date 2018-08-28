@@ -16,6 +16,7 @@
         <module>streamingpro-dl4j</module>
         <module>streamingpro-tensorflow</module>
         <module>streamingpro-opencv</module>
+        <module>streamingpro-jython</module>
     </modules>
 
     <properties>
