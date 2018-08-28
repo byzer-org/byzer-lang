@@ -3,7 +3,7 @@ package streaming.udf
 import java.util.UUID
 
 import org.apache.spark.sql.catalyst.JavaTypeInference
-import org.apache.spark.sql.types.DataType
+import org.apache.spark.sql.types._
 import streaming.common.{ScriptCacheKey, SourceCodeCompiler}
 
 /**
@@ -41,6 +41,7 @@ object ScalaSourceUDF {
     val dataType: (DataType, Boolean) = JavaTypeInference.inferDataType(method.getReturnType)
     (method.getParameterCount, dataType._1)
   }
+
 
   def generateFunction(src: String, className: String, methodName: Option[String], argumentNum: Int): AnyRef = {
     lazy val clazz = SourceCodeCompiler.execute(ScriptCacheKey(src, className)).asInstanceOf[Class[_]]

@@ -4,6 +4,7 @@ import javax.tools._
 
 import scala.collection.JavaConversions._
 import com.google.common.cache.{CacheBuilder, CacheLoader}
+import streaming.jython.PythonInterp
 import streaming.log.Logging
 
 
@@ -17,7 +18,11 @@ object SourceCodeCompiler extends Logging {
       new CacheLoader[ScriptCacheKey, AnyRef]() {
         override def load(scriptCacheKey: ScriptCacheKey): AnyRef = {
           val startTime = System.nanoTime()
-          val res = compileScala(prepareScala(scriptCacheKey.code, scriptCacheKey.className))
+          val res = scriptCacheKey.lan match {
+            case "python" => PythonInterp.compilePython(scriptCacheKey.code, scriptCacheKey.className)
+            case _ => compileScala(prepareScala(scriptCacheKey.code, scriptCacheKey.className))
+          }
+
           def timeMs: Double = (System.nanoTime() - startTime).toDouble / 1000000
           logInfo(s"generate udf time:${timeMs}")
           res
@@ -78,5 +83,5 @@ object SourceCodeCompiler extends Logging {
 
 class SourceCodeCompiler
 
-case class ScriptCacheKey(code: String, className: String)
+case class ScriptCacheKey(code: String, className: String, lan: String = "scala")
 

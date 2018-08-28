@@ -3,11 +3,13 @@ package streaming.core
 import java.io.File
 
 import net.sf.json.JSONObject
-import org.apache.commons.io.{FileUtils}
+import org.apache.commons.io.FileUtils
 import org.apache.spark.streaming.BasicSparkOperation
+import org.python.core.{PyInteger, PyObject}
 import streaming.core.strategy.platform.SparkRuntime
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.template.TemplateMerge
+import streaming.udf.PythonSourceUDF
 
 /**
   * Created by allwefantasy on 26/4/2018.
@@ -332,28 +334,6 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
     }
   }
 
-  //  "SQLJDBC" should "work fine" taggedAs (NotToRunTag) in {
-  //
-  //    withBatchContext(setupBatchContext(batchParamsWithCarbondata, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
-  //      //执行sql
-  //      implicit val spark = runtime.sparkSession
-  //      val sq = createSSEL
-  //
-  //      ScriptSQLExec.parse(
-  //        """
-  //          |connect jdbc where
-  //          |driver="com.mysql.jdbc.Driver"
-  //          |and url="jdbc:mysql://127.0.0.1:3306/wow"
-  //          |and driver="com.mysql.jdbc.Driver"
-  //          |and user="root"
-  //          |and password="----"
-  //          |as mysql1;
-  //          |select 1 as t as fakeTable;
-  //          |train fakeTable JDBC.`mysql1` where
-  //          |driver-statement-0="drop table test1"
-  //        """.stripMargin, sq)
-  //    }
-  //  }
 
   "ScalaScriptUDF" should "work fine" in {
 
@@ -458,9 +438,134 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
       res = spark.sql("select plusFun(1,1)").collect().head.get(0)
       assume(res == 2)
     }
-
-
   }
+  "pyton udf" should "work fine" in {
+    withBatchContext(setupBatchContext(batchParams ++ Array("-spark.sql.codegen.wholeStage", "false"), "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+
+      implicit val spark = runtime.sparkSession
+      val sq = createSSEL
+      ScriptSQLExec.parse(
+        """
+          |
+          |-- 填写script脚本
+          |set plusFun='''
+          |def plusFun(self,a,b,c,d,e,f):
+          |    return a+b+c+d+e+f
+          |''';
+          |
+          |--加载脚本
+          |load script.`plusFun` as scriptTable;
+          |--注册为UDF函数 名称为plusFun
+          |register ScriptUDF.`scriptTable` as plusFun options
+          |and methodName="plusFun"
+          |and lang="python"
+          |and dataType="integer"
+          |;
+          |set data='''
+          |{"a":1}
+          |{"a":1}
+          |{"a":1}
+          |{"a":1}
+          |''';
+          |load jsonStr.`data` as dataTable;
+          |-- 使用plusFun
+          |select plusFun(1, 2, 3, 4, 5, 6) as res from dataTable as output;
+        """.stripMargin, sq)
+      var res = spark.sql("select * from output").collect().head.get(0)
+      assume(res == 21)
+
+      ScriptSQLExec.parse(
+        """
+          |
+          |-- 填写script脚本
+          |set plusFun='''
+          |def plusFun(self,m):
+          |    return "-".join(m)
+          |''';
+          |
+          |--加载脚本
+          |load script.`plusFun` as scriptTable;
+          |--注册为UDF函数 名称为plusFun
+          |register ScriptUDF.`scriptTable` as plusFun options
+          |and methodName="plusFun"
+          |and lang="python"
+          |and dataType="string"
+          |;
+          |set data='''
+          |{"a":1}
+          |{"a":1}
+          |{"a":1}
+          |{"a":1}
+          |''';
+          |load jsonStr.`data` as dataTable;
+          |-- 使用plusFun
+          |select plusFun(array('a','b')) as res from dataTable as output;
+        """.stripMargin, sq)
+      res = spark.sql("select * from output").collect().head.get(0)
+      assume(res == "a-b")
+      ScriptSQLExec.parse(
+        """
+          |
+          |-- 填写script脚本
+          |set plusFun='''
+          |def plusFun(self,m):
+          |    return m
+          |''';
+          |
+          |--加载脚本
+          |load script.`plusFun` as scriptTable;
+          |--注册为UDF函数 名称为plusFun
+          |register ScriptUDF.`scriptTable` as plusFun options
+          |and methodName="plusFun"
+          |and lang="python"
+          |and dataType="map(string,string)"
+          |;
+          |set data='''
+          |{"a":1}
+          |{"a":1}
+          |{"a":1}
+          |{"a":1}
+          |''';
+          |load jsonStr.`data` as dataTable;
+          |-- 使用plusFun
+          |select plusFun(map('a','b')) as res from dataTable as output;
+        """.stripMargin, sq)
+      res = spark.sql("select * from output").collect().head.get(0)
+      assume(res.asInstanceOf[Map[String, String]]("a") == "b")
+
+      ScriptSQLExec.parse(
+        """
+          |
+          |-- 填写script脚本
+          |set plusFun='''
+          |def apply(self,m):
+          |    return m
+          |''';
+          |
+          |--加载脚本
+          |load script.`plusFun` as scriptTable;
+          |--注册为UDF函数 名称为plusFun
+          |register ScriptUDF.`scriptTable` as plusFun options
+          |and lang="python"
+          |and dataType="map(string,string)"
+          |;
+          |set data='''
+          |{"a":1}
+          |{"a":1}
+          |{"a":1}
+          |{"a":1}
+          |''';
+          |load jsonStr.`data` as dataTable;
+          |-- 使用plusFun
+          |select plusFun(map('a','b')) as res from dataTable as output;
+        """.stripMargin, sq)
+      res = spark.sql("select * from output").collect().head.get(0)
+      assume(res.asInstanceOf[Map[String, String]]("a") == "b")
+      
+    }
+  }
+
+
 
   "include" should "work fine" in {
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
