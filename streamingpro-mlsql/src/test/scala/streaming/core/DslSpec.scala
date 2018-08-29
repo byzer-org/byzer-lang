@@ -561,7 +561,7 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
         """.stripMargin, sq)
       res = spark.sql("select * from output").collect().head.get(0)
       assume(res.asInstanceOf[Map[String, String]]("a") == "b")
-      
+
     }
   }
 

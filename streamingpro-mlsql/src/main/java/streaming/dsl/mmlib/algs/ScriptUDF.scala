@@ -24,7 +24,7 @@ class ScriptUDF extends SQLAlg with MllibFunctions with Functions {
     val res = sparkSession.table(path).head().getString(0)
     val lang = params.getOrElse("lang", "scala")
     val (func, returnType) = lang match {
-      case python =>
+      case "python" =>
         if (params.contains("className")) {
           PythonSourceUDF(res, params("className"), params.get("methodName"), params("dataType"))
         } else {
