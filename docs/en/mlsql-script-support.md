@@ -50,8 +50,6 @@ select echoFun(map('a','b')) as res from dataTable as output;
 ### Scala Script Example
  
 ```sql
--- using set statement to hold your python script
--- Notice that the first parameter of function you defined should be self.  
 set plusFun='''
 
 def apply(a:Double,b:Double)={
