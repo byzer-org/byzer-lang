@@ -130,7 +130,12 @@ object UpsertUtils extends Logging {
           stmt.executeBatch()
         }
       } catch {
-        case jdbce: BatchUpdateException => jdbce.getNextException().printStackTrace()
+        case jdbce: BatchUpdateException =>
+          jdbce.printStackTrace()
+          if (jdbce.getNextException != null) {
+            jdbce.getNextException().printStackTrace()
+          }
+
       } finally {
         stmt.close()
       }
