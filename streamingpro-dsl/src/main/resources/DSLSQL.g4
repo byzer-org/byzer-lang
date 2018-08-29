@@ -13,19 +13,19 @@ statement
 
 
 sql
-    : ('load'|'LOAD') format '.' path 'options'? expression? booleanExpression*  'as' tableName
-    | ('save'|'SAVE') (overwrite | append | errorIfExists |ignore)* tableName 'as' format '.' path 'options'? expression? booleanExpression* ('partitionBy' col)?
+    : ('load'|'LOAD') format '.' path ('options'|'where')? expression? booleanExpression*  'as' tableName
+    | ('save'|'SAVE') (overwrite | append | errorIfExists |ignore)* tableName 'as' format '.' path ('options'|'where')? expression? booleanExpression* ('partitionBy' col)?
     | ('select'|'SELECT') ~(';')* 'as' tableName
     | ('insert'|'INSERT') ~(';')*
     | ('create'|'CREATE') ~(';')*
     | ('drop'|'DROP') ~(';')*
     | ('refresh'|'REFRESH') ~(';')*
-    | ('set'|'SET') setKey '=' setValue 'options'? expression? booleanExpression*
-    | ('connect'|'CONNECT') format 'where'? expression? booleanExpression* ('as' db)?
-    | ('train'|'TRAIN') tableName 'as' format '.' path 'where'? expression? booleanExpression*
-    | ('register'|'REGISTER') format '.' path 'as' functionName 'options'? expression? booleanExpression*
-    | ('unRegister'|'UNREGISTER') format '.' path 'options'? expression? booleanExpression*
-    | ('include'|'INCLUDE') format '.' path 'options'? expression? booleanExpression*
+    | ('set'|'SET') setKey '=' setValue ('options'|'where')? expression? booleanExpression*
+    | ('connect'|'CONNECT') format ('options'|'where')? expression? booleanExpression* ('as' db)?
+    | ('train'|'TRAIN'|'run'|'RUN') tableName 'as' format '.' path ('options'|'where')? expression? booleanExpression*
+    | ('register'|'REGISTER') format '.' path 'as' functionName ('options'|'where')? expression? booleanExpression*
+    | ('unRegister'|'UNREGISTER') format '.' path ('options'|'where')? expression? booleanExpression*
+    | ('include'|'INCLUDE') format '.' path ('options'|'where')? expression? booleanExpression*
     |  SIMPLE_COMMENT
     ;
 

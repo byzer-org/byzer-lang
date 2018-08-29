@@ -240,7 +240,7 @@ class ScriptSQLExecListener(_sparkSession: SparkSession, _defaultPathPrefix: Str
         new RefreshAdaptor(this).parse(ctx)
       case "set" =>
         new SetAdaptor(this).parse(ctx)
-      case "train" =>
+      case "train" | "run" =>
         new TrainAdaptor(this).parse(ctx)
       case "register" =>
         new RegisterAdaptor(this).parse(ctx)
