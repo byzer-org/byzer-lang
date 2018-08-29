@@ -325,7 +325,7 @@ select plusFun(1,1) as res as output;
 ```
 
 
-Then you can include this file in your mlsql script.
+Then you can include this file in your MLSQL script.
 
 ```sql
 -- 填写script脚本
