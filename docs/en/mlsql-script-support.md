@@ -80,3 +80,4 @@ load jsonStr.`data` as dataTable;
 -- using echoFun in SQL.
 select plusFun(1,2) as res from dataTable as output;
 ``` 
+
