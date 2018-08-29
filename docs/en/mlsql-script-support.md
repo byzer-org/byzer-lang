@@ -81,3 +81,63 @@ load jsonStr.`data` as dataTable;
 select plusFun(1,2) as res from dataTable as output;
 ``` 
 
+### Some tricks
+
+Multi methods defined onetime is also supported.
+
+```sql
+ 
+set plusFun='''
+
+def apply(a:Double,b:Double)={
+   a + b
+}
+
+def hello(a:String)={
+   s"hello: ${a}"
+}
+    
+''';
+
+
+load script.`plusFun` as scriptTable;
+register ScriptUDF.`scriptTable` as plusFun;
+register ScriptUDF.`scriptTable` as helloFun options
+methodName="hello"
+;
+
+
+-- using echoFun in SQL.
+select plusFun(1,2) as plus, helloFun("jack") as jack as output;
+```
+
+You can also define this methods in a class:
+
+```sql
+ 
+set plusFun='''
+
+class ScalaScript {
+    def apply(a:Double,b:Double)={
+       a + b
+    }
+    
+    def hello(a:String)={
+       s"hello: ${a}"
+    }
+}
+    
+''';
+
+
+load script.`plusFun` as scriptTable;
+register ScriptUDF.`scriptTable` as helloFun options
+methodName="hello"
+and className="ScalaScript"
+;
+
+
+-- using echoFun in SQL.
+select helloFun("jack") as jack as output;
+```
+
