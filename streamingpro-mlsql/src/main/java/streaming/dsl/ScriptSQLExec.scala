@@ -4,10 +4,11 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicReference
 
 import org.antlr.v4.runtime.tree.{ErrorNode, ParseTreeWalker, TerminalNode}
-import org.antlr.v4.runtime.{ANTLRInputStream, CommonTokenStream, ParserRuleContext}
+import org.antlr.v4.runtime._
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import streaming.dsl.parser.{DSLSQLLexer, DSLSQLListener, DSLSQLParser}
 import streaming.dsl.parser.DSLSQLParser._
+import streaming.log.Logging
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -15,7 +16,7 @@ import scala.collection.mutable.ArrayBuffer
 /**
   * Created by allwefantasy on 25/8/2017.
   */
-object ScriptSQLExec {
+object ScriptSQLExec extends Logging {
 
   //dbName -> (format->jdbc,url->....)
   val dbMapping = new ConcurrentHashMap[String, Map[String, String]]()
@@ -41,6 +42,18 @@ object ScriptSQLExec {
     val loadLexer = new DSLSQLLexer(new ANTLRInputStream(input))
     val tokens = new CommonTokenStream(loadLexer)
     val parser = new DSLSQLParser(tokens)
+    parser.addErrorListener(new BaseErrorListener {
+      override def syntaxError(recognizer: Recognizer[_, _],
+                               offendingSymbol:
+                               scala.Any,
+                               line: Int,
+                               charPositionInLine: Int,
+                               msg: String,
+                               e: RecognitionException): Unit = {
+        logInfo("MLSQL Parser error ", e)
+        throw new RuntimeException(s"MLSQL Parser error : $msg")
+      }
+    })
     val stat = parser.statement()
     ParseTreeWalker.DEFAULT.walk(listener, stat)
   }
