@@ -32,7 +32,7 @@ object ScriptSQLExec extends Logging {
       val preProcessListener = new PreProcessListener(listener.asInstanceOf[ScriptSQLExecListener])
       _parse(input, preProcessListener)
       preProcessListener.includes().foreach { f =>
-        wow = wow.replaceFirst(f._1, f._2)
+        wow = wow.replace(f._1, f._2.substring(0, f._2.lastIndexOf(";")))
       }
     }
     _parse(wow, listener)
@@ -240,7 +240,7 @@ class ScriptSQLExecListener(_sparkSession: SparkSession, _defaultPathPrefix: Str
         new RefreshAdaptor(this).parse(ctx)
       case "set" =>
         new SetAdaptor(this).parse(ctx)
-      case "train" =>
+      case "train" | "run" =>
         new TrainAdaptor(this).parse(ctx)
       case "register" =>
         new RegisterAdaptor(this).parse(ctx)

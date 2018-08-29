@@ -5,11 +5,9 @@ import java.io.File
 import net.sf.json.JSONObject
 import org.apache.commons.io.FileUtils
 import org.apache.spark.streaming.BasicSparkOperation
-import org.python.core.{PyInteger, PyObject}
 import streaming.core.strategy.platform.SparkRuntime
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.template.TemplateMerge
-import streaming.udf.PythonSourceUDF
 
 /**
   * Created by allwefantasy on 26/4/2018.
@@ -602,6 +600,44 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
         , sq, false)
       val res = spark.sql("select * from output").collect().head.get(0)
       assume(res == 2)
+    }
+  }
+
+  "train or run" should "work fine" in {
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+      //执行sql
+      implicit val spark = runtime.sparkSession
+      val sq = createSSEL
+      val source =
+        """
+          |
+          |set data='''
+          |{"a":"c"}
+          |{"a":"a"}
+          |{"a":"k"}
+          |{"a":"g"}
+          |''';
+          |load jsonStr.`data` as dataTable;
+          |run dataTable as StringIndex.`/tmp/model1` where inputCol="a";
+          |train dataTable as StringIndex.`/tmp/model2` where inputCol="a";
+          |train dataTable as StringIndex.`/tmp/model3` options inputCol="a";
+        """.stripMargin
+      ScriptSQLExec.parse(source, sq, false)
+
+      val source1 =
+        """
+          |
+          |set data='''
+          |{"a":"c"}
+          |{"a":"a"}
+          |{"a":"k"}
+          |{"a":"g"}
+          |''';
+          |load jsonStr.`data` as dataTable;
+          |run dataTable where inputCol="a" as StringIndex.`/tmp/model1`;
+        """.stripMargin
+      val res = intercept[RuntimeException](ScriptSQLExec.parse(source1, sq, false)).getMessage
+      assume(res.startsWith("MLSQL Parser error"))
     }
   }
 
