@@ -89,7 +89,8 @@ object MLMapping {
     "Map" -> "streaming.dsl.mmlib.algs.SQLMap",
     "PythonAlgBP" -> "streaming.dsl.mmlib.algs.SQLPythonAlgBatchPrediction",
     "ScalaScriptUDF" -> "streaming.dsl.mmlib.algs.ScriptUDF",
-    "ScriptUDF" -> "streaming.dsl.mmlib.algs.ScriptUDF"
+    "ScriptUDF" -> "streaming.dsl.mmlib.algs.ScriptUDF",
+    "BatchPythonAlg" -> "streaming.dsl.mmlib.algs.SQLBatchPythonAlg"
   )
 
   def findAlg(name: String) = {
