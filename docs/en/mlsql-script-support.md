@@ -19,14 +19,14 @@ def apply(self,m):
 ''';
 
 -- load script as a table, every thing in mlsql should be table which 
--- can be process more convenient.
+-- can be processed more conveniently.
 load script.`echoFun` as scriptTable;
 
 -- register `apply` as UDF named `echoFun` 
 register ScriptUDF.`scriptTable` as echoFun options
 -- specify which script you choose
 and lang="python"
--- As we know python is not strongly typed language, but 
+-- As we know python is not strongly typed language, so 
 -- we should manually spcify the return type.
 -- map(string,string) means a map with key is string type,value also is string type.
 -- array(string) means a array with string type element.
