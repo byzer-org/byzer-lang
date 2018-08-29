@@ -32,7 +32,7 @@ object ScriptSQLExec extends Logging {
       val preProcessListener = new PreProcessListener(listener.asInstanceOf[ScriptSQLExecListener])
       _parse(input, preProcessListener)
       preProcessListener.includes().foreach { f =>
-        wow = wow.replaceFirst(f._1, f._2)
+        wow = wow.replace(f._1, f._2.substring(0, f._2.lastIndexOf(";")))
       }
     }
     _parse(wow, listener)
