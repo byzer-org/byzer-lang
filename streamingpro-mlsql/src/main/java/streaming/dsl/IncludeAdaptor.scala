@@ -47,11 +47,12 @@ class IncludeAdaptor(scriptSQLExecListener: ScriptSQLExecListener, preProcessLis
 
 object IncludeAdaptor {
   val mapping = Map[String, String](
-    "hdfs" -> "streaming.dsl.mmlib.algs.includes.HDFSIncludeSource"
+    "hdfs" -> "streaming.dsl.mmlib.algs.includes.HDFSIncludeSource",
+    "http" -> "streaming.dsl.mmlib.algs.includes.HTTPIncludeSource"
   )
 
   def findAlg(format: String, options: Map[String, String]) = {
-    val clzz = mapping.getOrElse(format, options.getOrElse("implClass", format))
+    val clzz = mapping.getOrElse(format, options.getOrElse("implClass", "streaming.dsl.mmlib.algs.includes." + format))
     Class.forName(clzz).newInstance().asInstanceOf[IncludeSource]
   }
 
