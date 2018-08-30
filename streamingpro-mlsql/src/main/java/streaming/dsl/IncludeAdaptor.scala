@@ -57,10 +57,3 @@ object IncludeAdaptor {
 
 }
 
-trait IncludeSource {
-  def fetchSource(sparkSession: SparkSession, path: String, options: Map[String, String]): String
-
-  def skipPathPrefix: Boolean = false
-}
-
-
