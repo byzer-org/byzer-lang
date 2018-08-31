@@ -19,7 +19,7 @@ import streaming.common.JarUtil
 import streaming.core._
 import streaming.core.strategy.platform.{PlatformManager, SparkRuntime}
 import streaming.dsl.mmlib.algs.tf.cluster.{ClusterSpec, ClusterStatus, ExecutorInfo}
-import streaming.dsl.{ScriptSQLExec, ScriptSQLExecListener}
+import streaming.dsl.{MLSQLExecuteContext, ScriptSQLExec, ScriptSQLExecListener}
 
 /**
   * Created by allwefantasy on 28/3/2017.
@@ -46,9 +46,8 @@ class RestController extends ApplicationController {
       if (paramAsBoolean("async", false)) {
         StreamingproJobManager.asyncRun(sparkSession, jobInfo, () => {
           try {
-            val allPathPrefix = fromJson(param("allPathPrefix"), classOf[Map[String, String]])
-            val defaultPathPrefix = param("defaultPathPrefix")
-            ScriptSQLExec.parse(param("sql"), new ScriptSQLExecListener(sparkSession, defaultPathPrefix, allPathPrefix), paramAsBoolean("skipInclude", false))
+            val context = createScriptSQLExecListener()
+            ScriptSQLExec.parse(param("sql"), context, paramAsBoolean("skipInclude", false))
             htp.get(new Url(param("callback")), Map("stat" -> s"""success"""))
           } catch {
             case e: Exception =>
@@ -58,9 +57,7 @@ class RestController extends ApplicationController {
         })
       } else {
         StreamingproJobManager.run(sparkSession, jobInfo, () => {
-          val allPathPrefix = fromJson(param("allPathPrefix", "{}"), classOf[Map[String, String]])
-          val defaultPathPrefix = param("defaultPathPrefix", "")
-          val context = new ScriptSQLExecListener(sparkSession, defaultPathPrefix, allPathPrefix)
+          val context = createScriptSQLExecListener()
           ScriptSQLExec.parse(param("sql"), context, paramAsBoolean("skipInclude", false))
           if (!silence) {
             outputResult = context.getLastSelectTable() match {
@@ -78,6 +75,17 @@ class RestController extends ApplicationController {
         render(500, e.getMessage + "\n" + msg)
     }
     render(outputResult)
+  }
+
+  private def createScriptSQLExecListener() = {
+    val sparkSession = runtime.asInstanceOf[SparkRuntime].sparkSession
+    val allPathPrefix = fromJson(param("allPathPrefix", "{}"), classOf[Map[String, String]])
+    val defaultPathPrefix = param("defaultPathPrefix", "")
+    val context = new ScriptSQLExecListener(sparkSession, defaultPathPrefix, allPathPrefix)
+    val ownerOption = if (params.containsKey("owner")) Some(param("owner")) else None
+    val userDefineParams = params.toMap.filter(f => f._1.startsWith("context.")).map(f => (f._1.substring("context.".length), f._2)).toMap
+    ScriptSQLExec.setContext(new MLSQLExecuteContext(param("owner"), context.pathPrefix(ownerOption), userDefineParams))
+    context
   }
 
   // download hdfs file
