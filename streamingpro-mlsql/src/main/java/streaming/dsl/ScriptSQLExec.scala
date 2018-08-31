@@ -5,12 +5,10 @@ import java.util.concurrent.atomic.AtomicReference
 
 import org.antlr.v4.runtime.tree.{ErrorNode, ParseTreeWalker, TerminalNode}
 import org.antlr.v4.runtime._
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.{SparkSession}
 import streaming.dsl.parser.{DSLSQLLexer, DSLSQLListener, DSLSQLParser}
 import streaming.dsl.parser.DSLSQLParser._
 import streaming.log.Logging
-
-import scala.collection.mutable.ArrayBuffer
 
 
 /**
@@ -24,6 +22,15 @@ object ScriptSQLExec extends Logging {
   def options(name: String, _options: Map[String, String]) = {
     dbMapping.put(name, _options)
   }
+
+  private[this] val mlsqlExecuteContext: ThreadLocal[MLSQLExecuteContext] = new ThreadLocal[MLSQLExecuteContext]
+
+  def context(): MLSQLExecuteContext = mlsqlExecuteContext.get
+
+  def setContext(ec: MLSQLExecuteContext): Unit = mlsqlExecuteContext.set(ec)
+
+  def unset = mlsqlExecuteContext.remove()
+
 
   def parse(input: String, listener: DSLSQLListener, skipInclude: Boolean = true) = {
     //preprocess some statements e.g. include
@@ -338,3 +345,5 @@ class ScriptSQLExecListener(_sparkSession: SparkSession, _defaultPathPrefix: Str
 
   override def exitSetKey(ctx: SetKeyContext): Unit = {}
 }
+
+case class MLSQLExecuteContext(owner: String, home: String, userDefinedParam: Map[String, String] = Map())

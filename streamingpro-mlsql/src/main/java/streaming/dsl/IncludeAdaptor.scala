@@ -39,7 +39,8 @@ class IncludeAdaptor(scriptSQLExecListener: ScriptSQLExecListener, preProcessLis
     if (!alg.skipPathPrefix) {
       path = withPathPrefix(scriptSQLExecListener.pathPrefix(None), path)
     }
-    val content = alg.fetchSource(scriptSQLExecListener.sparkSession, path, option)
+
+    val content = alg.fetchSource(scriptSQLExecListener.sparkSession, path, Map("owner" -> ScriptSQLExec.context().owner) ++ option)
     val originIncludeText = currentText(ctx)
     preProcessListener.addInclude(originIncludeText, content)
   }
