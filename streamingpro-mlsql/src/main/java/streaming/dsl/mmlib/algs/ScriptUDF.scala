@@ -6,7 +6,7 @@ import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.udf.UDFManager
 import streaming.dsl.mmlib.SQLAlg
-import streaming.udf.{PythonSourceUDF, ScalaSourceUDAF, ScalaSourceUDF}
+import streaming.udf.{PythonSourceUDAF, PythonSourceUDF, ScalaSourceUDAF, ScalaSourceUDF}
 
 /**
   * Created by allwefantasy on 27/8/2018.
@@ -48,7 +48,7 @@ class ScriptUDF extends SQLAlg with MllibFunctions with Functions {
     val udaf = () => {
       val func = lang match {
         case "python" =>
-          null
+          PythonSourceUDAF(res, params("className"))
 
         case _ =>
           ScalaSourceUDAF(res, params("className"))
