@@ -3,9 +3,12 @@ package streaming.udf
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.expressions.{MutableAggregationBuffer, UserDefinedAggregateFunction}
 import org.apache.spark.sql.types.{DataType, StructType}
+import org.python.core.{Py, PyObject}
 import streaming.common.{ScriptCacheKey, SourceCodeCompiler}
+import streaming.jython.JythonUtils
 
 import scala.reflect.ClassTag
+
 
 object ScalaSourceUDAF {
   def apply(src: String, className: String): UserDefinedAggregateFunction = {

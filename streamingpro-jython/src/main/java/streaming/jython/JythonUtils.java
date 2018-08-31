@@ -55,6 +55,8 @@ public class JythonUtils {
                 javaObj = pyObject.__tojava__(Double.class);
             } else if (pyObject instanceof PyString) {
                 javaObj = pyObject.__tojava__(String.class);
+            } else if (pyObject instanceof PyBoolean) {
+                javaObj = pyObject.__tojava__(Boolean.class);
             } else if (pyObject instanceof PyNone) {
                 return null;
             } else {
