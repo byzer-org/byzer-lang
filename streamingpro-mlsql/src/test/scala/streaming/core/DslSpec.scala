@@ -641,6 +641,66 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
     }
   }
 
+  "ScalaScriptUDAF" should "work fine" in {
+
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+      //执行sql
+      implicit val spark = runtime.sparkSession
+      val sq = createSSEL
+
+      ScriptSQLExec.parse(
+        """
+          |set plusFun='''
+          |import org.apache.spark.sql.expressions.{MutableAggregationBuffer, UserDefinedAggregateFunction}
+          |import org.apache.spark.sql.types._
+          |import org.apache.spark.sql.Row
+          |class SumAggregation extends UserDefinedAggregateFunction with Serializable{
+          |    def inputSchema: StructType = new StructType().add("a", LongType)
+          |    def bufferSchema: StructType =  new StructType().add("total", LongType)
+          |    def dataType: DataType = LongType
+          |    def deterministic: Boolean = true
+          |    def initialize(buffer: MutableAggregationBuffer): Unit = {
+          |      buffer.update(0, 0l)
+          |    }
+          |    def update(buffer: MutableAggregationBuffer, input: Row): Unit = {
+          |      val sum   = buffer.getLong(0)
+          |      val newitem = input.getLong(0)
+          |      buffer.update(0, sum + newitem)
+          |    }
+          |    def merge(buffer1: MutableAggregationBuffer, buffer2: Row): Unit = {
+          |      buffer1.update(0, buffer1.getLong(0) + buffer2.getLong(0))
+          |    }
+          |    def evaluate(buffer: Row): Any = {
+          |      buffer.getLong(0)
+          |    }
+          |}
+          |''';
+          |
+          |
+          |--加载脚本
+          |load script.`plusFun` as scriptTable;
+          |--注册为UDF函数 名称为plusFun
+          |register ScriptUDF.`scriptTable` as plusFun options
+          |className="SumAggregation"
+          |and udfType="udaf"
+          |;
+          |
+          |set data='''
+          |{"a":1}
+          |{"a":1}
+          |{"a":1}
+          |{"a":1}
+          |''';
+          |load jsonStr.`data` as dataTable;
+          |
+          |-- 使用plusFun
+          |select a,plusFun(a) as res from dataTable group by a as output;
+        """.stripMargin, sq)
+      val res = spark.sql("select * from output").collect().head.get(1)
+      assume(res == 4)
+    }
+  }
+
 }
 
 
