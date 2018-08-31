@@ -338,3 +338,37 @@ class PlusFun{
 include hdfs.`/tmp/a.sql`;
 ''';
 ```
+
+Include also supports http protocol.  Do like this:
+
+```sql
+include http.`http://abc.com` options 
+`param.a`="coo" 
+and `param.b`="wow";
+and method="GET"
+```
+
+when option starts with "param." ,then this parameter will be send to the request address. Here is the real request:
+
+```
+curl -XGET 'http://abc.com?a=coo&b=wow'
+```
+
+If you send request to StreamingPro server with parameters like this:
+
+```
+context.__default__include_fetch_url__=http://abc.com
+context.__default__include_project_name__=analyser....
+```
+
+Include http source will use  `context.__default__include_fetch_url__` as the target url, so you can use include like follow:
+ 
+```
+include http.`function.dir1.scriptfile1` ;
+```
+the request behind will like this：
+
+```
+curl -XGET 'http://abc.com?a=coo&b=wow&path=function.dir1.scriptfile1&projectName=analyser'
+```
+
