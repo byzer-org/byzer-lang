@@ -6,6 +6,7 @@ import org.apache.spark.streaming.BasicSparkOperation
 import streaming.common.ShellCommand
 import streaming.core.pojo.Rating
 import streaming.core.strategy.platform.SparkRuntime
+import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib.algs.{SQLALSInPlace, SQLPythonFunc}
 
 
@@ -13,7 +14,10 @@ import streaming.dsl.mmlib.algs.{SQLALSInPlace, SQLPythonFunc}
   * Created by allwefantasy on 2/5/2017.
   */
 class SparkMLlibSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConfig {
+
   copySampleMovielensRratingsData
+  copySampleLibsvmData
+
   "als" should "work fine" in {
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
@@ -62,6 +66,31 @@ class SparkMLlibSpec extends BasicSparkOperation with SpecFunctions with BasicML
       ))
 
       assume(new File("/tmp/william//tmp/als/_model_1").exists())
+    }
+  }
+
+  "unbalance_sample" should "work fine" in {
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+      //执行sql
+      implicit val spark = runtime.sparkSession
+      val sq = createSSEL
+
+      ScriptSQLExec.parse(
+        """
+          |load libsvm.`/sample_libsvm_data.txt` as data;
+          |
+          |train data as NaiveBayes.`/tmp/bayes_model` where multiModels="true";
+          |
+          |register NaiveBayes.`/tmp/bayes_model` as bayes_predict;
+          |
+          |select bayes_predict(features) as predict_label, label  from data as result;
+          |
+          |save overwrite result as json.`/tmp/result`;
+          |
+          |select * from result as output;
+        """.stripMargin, sq)
+      val res = spark.sql("select * from output").show(false)
+
     }
   }
 
