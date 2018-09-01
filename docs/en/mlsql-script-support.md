@@ -6,7 +6,7 @@ easily create SQL function with more powerful language which can do complex logi
 Cause the tedious of java's grammar, we will not support java script.
 
 
-### Python Script Example
+### Python UDF Script Example
 
 ```sql
 -- using set statement to hold your python script
@@ -47,7 +47,7 @@ load jsonStr.`data` as dataTable;
 select echoFun(map('a','b')) as res from dataTable as output;
 ```
 
-### Scala Script Example
+### Scala UDF Script Example
  
 ```sql
 set plusFun='''
@@ -78,6 +78,119 @@ load jsonStr.`data` as dataTable;
 -- using echoFun in SQL.
 select plusFun(1,2) as res from dataTable as output;
 ``` 
+
+
+### Python UDAF Example
+
+```sql
+set plusFun='''
+from org.apache.spark.sql.expressions import MutableAggregationBuffer, UserDefinedAggregateFunction
+from org.apache.spark.sql.types import DataTypes,StructType
+from org.apache.spark.sql import Row
+import java.lang.Long as l
+import java.lang.Integer as i
+
+class SumAggregation:
+
+    def inputSchema(self):
+        return StructType().add("a", DataTypes.LongType)
+
+    def bufferSchema(self):
+        return StructType().add("total", DataTypes.LongType)
+
+    def dataType(self):
+        return DataTypes.LongType
+
+    def deterministic(self):
+        return True
+
+    def initialize(self,buffer):
+        return buffer.update(i(0), l(0))
+
+    def update(self,buffer, input):
+        sum = buffer.getLong(i(0))
+        newitem = input.getLong(i(0))
+        buffer.update(i(0), l(sum + newitem))
+
+    def merge(self,buffer1, buffer2):
+        buffer1.update(i(0), l(buffer1.getLong(i(0)) + buffer2.getLong(i(0))))
+
+    def evaluate(self,buffer):
+        return buffer.getLong(i(0))
+''';
+
+
+--加载脚本
+load script.`plusFun` as scriptTable;
+--注册为UDF函数 名称为plusFun
+register ScriptUDF.`scriptTable` as plusFun options
+className="SumAggregation"
+and udfType="udaf"
+and lang="python"
+;
+
+set data='''
+{"a":1}
+{"a":1}
+{"a":1}
+{"a":1}
+''';
+load jsonStr.`data` as dataTable;
+
+-- 使用plusFun
+select a,plusFun(a) as res from dataTable group by a as output;
+```
+
+### Scala UDAF Script Example
+
+```sql
+set plusFun='''
+import org.apache.spark.sql.expressions.{MutableAggregationBuffer, UserDefinedAggregateFunction}
+import org.apache.spark.sql.types._
+import org.apache.spark.sql.Row
+class SumAggregation extends UserDefinedAggregateFunction with Serializable{
+    def inputSchema: StructType = new StructType().add("a", LongType)
+    def bufferSchema: StructType =  new StructType().add("total", LongType)
+    def dataType: DataType = LongType
+    def deterministic: Boolean = true
+    def initialize(buffer: MutableAggregationBuffer): Unit = {
+      buffer.update(0, 0l)
+    }
+    def update(buffer: MutableAggregationBuffer, input: Row): Unit = {
+      val sum   = buffer.getLong(0)
+      val newitem = input.getLong(0)
+      buffer.update(0, sum + newitem)
+    }
+    def merge(buffer1: MutableAggregationBuffer, buffer2: Row): Unit = {
+      buffer1.update(0, buffer1.getLong(0) + buffer2.getLong(0))
+    }
+    def evaluate(buffer: Row): Any = {
+      buffer.getLong(0)
+    }
+}
+''';
+
+
+--加载脚本
+load script.`plusFun` as scriptTable;
+--注册为UDF函数 名称为plusFun
+register ScriptUDF.`scriptTable` as plusFun options
+className="SumAggregation"
+and udfType="udaf"
+;
+
+set data='''
+{"a":1}
+{"a":1}
+{"a":1}
+{"a":1}
+''';
+load jsonStr.`data` as dataTable;
+
+-- 使用plusFun
+select a,plusFun(a) as res from dataTable group by a as output;
+```
+
 
 ### Some tricks
 
