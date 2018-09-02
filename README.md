@@ -179,6 +179,7 @@ so you can still use mlsql grammar.(This function provided from v1.1.2)
 * [Using Build-in Algorithms](https://github.com/allwefantasy/streamingpro/blob/master/docs/en/mlsql-build-in-algorithms.md)
 * [Scala/Python UDF](https://github.com/allwefantasy/streamingpro/blob/master/docs/en/mlsql-script-support.md)
 * [Stream Jobs](https://github.com/allwefantasy/streamingpro/blob/master/docs/en/mlsql-stream.md)
+* [Using Python ML Framework To Train And Predict Within MLSQL](https://github.com/allwefantasy/streamingpro/blob/master/docs/en/mlsql-python-machine-learning.md)
 
 ## Compiling
 
