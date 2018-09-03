@@ -114,7 +114,7 @@ if not os.path.exists(tempModelLocalPath):
     os.makedirs(tempModelLocalPath)
 ```
 
-TThese three points are the only information you should exchange with PythonAlg module. Then, be free to write anything you want.
+These three points are the only information you should exchange with PythonAlg module. Then, be free to write anything you want.
 
 
 ## Training Example
@@ -190,7 +190,7 @@ We have provided a implementation of SKLearn which is more easy to use. Please c
 
 ## Predicting Example
  
-Since the model have been trained , we should know how use it.
+Since the model have been trained , we should know how to use it.
  
 ```sql
 load libsvm.`sample_libsvm_data.txt` as data;
@@ -205,7 +205,7 @@ select predict(features) from data
 as newdata;
 ```
 
-In order to make PythonAlg know to predict, you should provide a script. Here is the content of the script:
+In order to make PythonAlg know how to predict, you should provide a script like in training stage. Here is the content of the script:
  
 ```python
 from pyspark.ml.linalg import VectorUDT, Vectors
@@ -242,12 +242,12 @@ python_fun.udf(predict)
 
 ## More
 
-You can definitely integrate TensorFlow  with the same way.  
+You can definitely integrate TensorFlow  in the same way.  
 
 ## Run  MLSQL with Tensorflow Cluster
  
-The example former shows how to train with single-process. MLSQL also support the Tensorflow cluster mode. We will show you 
-how to do that.
+The example former shows how to train with single-process. MLSQL also supports the Tensorflow cluster mode. We will show you 
+how to  achieve that.
   
 ```sql
 load libsvm.`sample_libsvm_data.txt` as data;
