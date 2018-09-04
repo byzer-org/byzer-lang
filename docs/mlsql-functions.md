@@ -9,6 +9,14 @@
 select sleep(1000)
 ```
 
+### matrix_array
+ 
+矩阵转数组
+
+```sql
+select matrix_array(array_onehot(array(1,2),12))
+```
+
 ### vec_argmax
 
 找到向量里面最大值所在的位置。
