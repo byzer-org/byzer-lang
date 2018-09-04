@@ -1,6 +1,6 @@
 ## 如何使用Carbondata
 
-如果要开启Carbondata支持，编译时需要加上 `-Pcarbondata` ，同时
+如果要开启[Carbondata](https://carbondata.apache.org)支持，编译时需要加上 `-Pcarbondata` ，同时
 启动时需要添加下面参数开启。当前carbondata 版本为 1.3.1。
 
 ```
