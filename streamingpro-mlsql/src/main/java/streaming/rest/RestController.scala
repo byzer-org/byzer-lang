@@ -84,8 +84,8 @@ class RestController extends ApplicationController {
     val context = new ScriptSQLExecListener(sparkSession, defaultPathPrefix, allPathPrefix)
     val ownerOption = if (params.containsKey("owner")) Some(param("owner")) else None
     val userDefineParams = params.toMap.filter(f => f._1.startsWith("context.")).map(f => (f._1.substring("context.".length), f._2)).toMap
-    ScriptSQLExec.setContext(new MLSQLExecuteContext(param("owner"), context.pathPrefix(ownerOption), userDefineParams))
-    context.addEnv("HOME",context.pathPrefix(ownerOption))
+    ScriptSQLExec.setContext(new MLSQLExecuteContext(param("owner"), context.pathPrefix(None), userDefineParams))
+    context.addEnv("HOME",context.pathPrefix(None))
     context
   }
 
