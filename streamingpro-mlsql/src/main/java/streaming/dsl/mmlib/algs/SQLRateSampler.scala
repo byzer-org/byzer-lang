@@ -7,8 +7,8 @@ import org.apache.spark.sql.types.{IntegerType, StructField, StructType}
 import streaming.dsl.mmlib.SQLAlg
 
 /**
- * Created by allwefantasy on 7/5/2018.
- */
+  * Created by allwefantasy on 7/5/2018.
+  */
 class SQLRateSampler extends SQLAlg with Functions {
 
 
@@ -47,13 +47,13 @@ class SQLRateSampler extends SQLAlg with Functions {
       (getIntFromRow(f, 0), f.getLong(1))
     }
     val forLog = labelToCountSeq.map(f => s"${f._1}:${f._2}").mkString(",")
-    logger.info(s"computing data stat:${forLog}")
+    logInfo(format(s"computing data stat:${forLog}"))
 
     val labelCount = labelToCountSeq.size
 
     val labelPartionMap = labelToCountSeq.map(_._1).zipWithIndex.toMap
 
-    if (isSplitWithSubLabel=="true") {
+    if (isSplitWithSubLabel == "true") {
 
       val dfArray = df.rdd.map { f =>
         (getIntFromRowByName(f, labelCol), f)
@@ -62,12 +62,12 @@ class SQLRateSampler extends SQLAlg with Functions {
       val splitWithSubLabel = dfArray.groupBy(_._1).flatMap(data => {
 
         val groupCount = data._2.length
-        var splitIndex  = 0
+        var splitIndex = 0
         var beginIndex = 0
         sampleRates.flatMap(percent => {
           val takeCount = (percent * groupCount).toInt
           val endIndex = beginIndex + takeCount
-          val splitData = data._2.slice(beginIndex,endIndex).map(wow => {
+          val splitData = data._2.slice(beginIndex, endIndex).map(wow => {
             Row.fromSeq(wow._2.toSeq ++ Seq(splitIndex))
           })
           splitIndex = splitIndex + 1
@@ -85,6 +85,7 @@ class SQLRateSampler extends SQLAlg with Functions {
         (getIntFromRowByName(f, labelCol), f)
       }.partitionBy(new Partitioner {
         override def numPartitions: Int = labelCount
+
         override def getPartition(key: Any): Int = {
           labelPartionMap.getOrElse(key.asInstanceOf[Int], 0)
         }

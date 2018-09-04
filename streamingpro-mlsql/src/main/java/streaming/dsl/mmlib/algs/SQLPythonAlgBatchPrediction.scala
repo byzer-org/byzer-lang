@@ -49,10 +49,10 @@ class SQLPythonAlgBatchPrediction extends SQLAlg with Functions {
       resources.foreach {
         case (resourceName, resourcePath) =>
           val tempResourceLocalPath = SQLPythonFunc.getLocalTempResourcePath(resourcePath, resourceName)
-          recordUserLog(kafkaParam, s"resource paramter found,system will load resource ${resourcePath} in ${tempResourceLocalPath} in executor.")
+          recordSingleLineLog(kafkaParam, s"resource paramter found,system will load resource ${resourcePath} in ${tempResourceLocalPath} in executor.")
           HDFSOperator.copyToLocalFile(tempResourceLocalPath, resourcePath, true)
           resourceParams += (resourceName -> tempResourceLocalPath)
-          recordUserLog(kafkaParam, s"resource loaded.")
+          recordSingleLineLog(kafkaParam, s"resource loaded.")
       }
     }
 

@@ -30,34 +30,38 @@ object SQLPythonFunc {
   }
 
 
-  def recordUserLog(algIndex: Int, pythonScript: PythonScript, kafkaParam: Map[String, String], res: Iterator[String]) = {
+  def recordUserLog(algIndex: Int, pythonScript: PythonScript, kafkaParam: Map[String, String], res: Iterator[String],
+                    logCallback: (String) => Unit = (msg: String) => {}) = {
     val logPrefix = algIndex + "/" + pythonScript.filePath + ":  "
-    val scores = KafkaOperator.writeKafka(logPrefix, kafkaParam, res)
+    val scores = KafkaOperator.writeKafka(logPrefix, kafkaParam, res, logCallback)
     val score = if (scores.size > 0) scores.head else 0d
     score
   }
 
-  def recordAnyLog(kafkaParam: Map[String, String]) = {
+  def recordAnyLog(kafkaParam: Map[String, String], logCallback: (String) => Unit = (msg: String) => {}) = {
     val a = (line: Any) => {
       line match {
-        case a: Iterator[String] => recordUserLog(kafkaParam, line.asInstanceOf[Iterator[String]])
-        case a: Exception => recordUserException(kafkaParam, line.asInstanceOf[Exception])
-        case _ => recordUserLog(kafkaParam, line.asInstanceOf[String])
+        case a: Iterator[String] => recordMultiLineLog(kafkaParam, line.asInstanceOf[Iterator[String]], logCallback)
+        case a: Exception => recordUserException(kafkaParam, line.asInstanceOf[Exception], logCallback)
+        case _ => recordSingleLineLog(kafkaParam, line.asInstanceOf[String], logCallback)
       }
     }
     a
   }
 
-  def recordUserLog(kafkaParam: Map[String, String], line: String) = {
-    KafkaOperator.writeKafka("", kafkaParam, Seq(line).toIterator)
+  def recordSingleLineLog(kafkaParam: Map[String, String], line: String, logCallback: (String) => Unit = (msg: String) => {}) = {
+    KafkaOperator.writeKafka("", kafkaParam, Seq(line).toIterator, logCallback)
   }
 
-  def recordUserLog(kafkaParam: Map[String, String], res: Iterator[String]) = {
-    KafkaOperator.writeKafka("", kafkaParam, res)
+  def recordMultiLineLog(kafkaParam: Map[String, String], res: Iterator[String], logCallback: (String) => Unit = (msg: String) => {}) = {
+    KafkaOperator.writeKafka("", kafkaParam, res, logCallback)
   }
 
-  def recordUserException(kafkaParam: Map[String, String], e: Exception) = {
-    KafkaOperator.writeKafka("", kafkaParam, Seq(e.getStackTrace.map(f => f.toString).mkString("\n")).toIterator)
+  def recordUserException(kafkaParam: Map[String, String], e: Exception, logCallback: (String) => Unit = (msg: String) => {}) = {
+    KafkaOperator.writeKafka("", kafkaParam, Seq(e.getStackTrace.map { f =>
+      logCallback(f.toString)
+      f.toString
+    }.mkString("\n")).toIterator)
   }
 
   def findPythonScript(userPythonScript: Option[PythonScript],

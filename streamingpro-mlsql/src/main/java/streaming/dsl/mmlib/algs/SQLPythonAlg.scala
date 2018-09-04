@@ -3,28 +3,30 @@ package streaming.dsl.mmlib.algs
 import java.io.File
 import java.nio.file.{Files, Paths}
 import java.util
-import java.util.{Properties, UUID}
+import java.util.{UUID}
 
-import org.apache.commons.io.{FileUtils, IOUtils}
+import org.apache.commons.io.{FileUtils}
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
-import org.apache.spark.{APIDeployPythonRunnerEnv, TaskContext, TaskContextImpl}
+import org.apache.spark.{APIDeployPythonRunnerEnv, TaskContext}
 import org.apache.spark.api.python.WowPythonRunner
 import org.apache.spark.ml.linalg.SQLDataTypes._
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.util.ArrayBasedMapData
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.types._
-import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession, functions => F}
+import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession}
 import org.apache.spark.util.ObjPickle._
 import org.apache.spark.util.VectorSerDer._
-import org.apache.spark.util.{ExternalCommandRunner, ObjPickle, VectorSerDer, WowMD5}
-import streaming.core.strategy.platform.{PlatformManager, SparkRuntime}
+import org.apache.spark.util.{ExternalCommandRunner, ObjPickle, VectorSerDer}
+import streaming.core.strategy.platform.{PlatformManager}
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.SQLPythonFunc._
 
 import scala.collection.JavaConverters._
 import streaming.common.HDFSOperator
+import streaming.dsl.ScriptSQLExec
+import streaming.log.{Logging, WowLog}
 
 /**
   * Created by allwefantasy on 5/2/2018.
@@ -74,9 +76,12 @@ class SQLPythonAlg extends SQLAlg with Functions {
       newDF.write.format(dataLocalFormat).mode(SaveMode.Overwrite).save(dataHDFSPath)
 
       if (distributeEveryExecutor) {
-        recordUserLog(kafkaParam, s"dataLocalFormat enabled ,system will generate data in ${tempDataLocalPath}  in every executor")
+        logInfo(format(s"dataLocalFormat enabled ,system will generate data in ${tempDataLocalPath}  in every executor"))
+        recordSingleLineLog(kafkaParam, s"dataLocalFormat enabled ,system will generate data in ${tempDataLocalPath}  in every executor")
         distributeResource(df.sparkSession, dataHDFSPath, tempDataLocalPath)
-        recordUserLog(kafkaParam, s"dataLocalFormat is finished")
+        logInfo(format(s"dataLocalFormat is finished"))
+        recordSingleLineLog(kafkaParam, s"dataLocalFormat is finished")
+
       }
     }
 
@@ -95,7 +100,12 @@ class SQLPythonAlg extends SQLAlg with Functions {
 
     incrementVersion(path, keepVersion)
 
+    val mlsqlContext = ScriptSQLExec.contextGetOrForTest()
+
     val wowRDD = fitParamRDD.map { paramAndIndex =>
+
+      ScriptSQLExec.setContext(mlsqlContext)
+
       val f = paramAndIndex._2
       val algIndex = paramAndIndex._1
 
@@ -103,7 +113,9 @@ class SQLPythonAlg extends SQLAlg with Functions {
 
       if (enableDataLocal && !distributeEveryExecutor) {
         tempDataLocalPathWithAlgSuffix = tempDataLocalPathWithAlgSuffix + "/" + algIndex
-        recordUserLog(kafkaParam, s"dataLocalFormat enabled ,system will generate data in ${tempDataLocalPathWithAlgSuffix} ")
+        val msg = s"dataLocalFormat enabled ,system will generate data in ${tempDataLocalPathWithAlgSuffix} "
+        logInfo(format(msg))
+        recordSingleLineLog(kafkaParam, msg)
         HDFSOperator.copyToLocalFile(tempLocalPath = tempDataLocalPathWithAlgSuffix, path = dataHDFSPath, true)
       }
 
@@ -120,10 +132,14 @@ class SQLPythonAlg extends SQLAlg with Functions {
         resources.foreach {
           case (resourceName, resourcePath) =>
             val tempResourceLocalPath = SQLPythonFunc.getLocalTempResourcePath(resourcePath, resourceName)
-            recordUserLog(kafkaParam, s"resource paramter found,system will load resource ${resourcePath} in ${tempResourceLocalPath} in executor.")
+            var msg = s"resource paramter found,system will load resource ${resourcePath} in ${tempResourceLocalPath} in executor."
+            logInfo(format(msg))
+            recordSingleLineLog(kafkaParam, msg)
             HDFSOperator.copyToLocalFile(tempResourceLocalPath, resourcePath, true)
             resourceParams += (resourceName -> tempResourceLocalPath)
-            recordUserLog(kafkaParam, s"resource loaded.")
+            msg = s"resource loaded."
+            logInfo(format(msg))
+            recordSingleLineLog(kafkaParam, msg)
         }
       }
 
@@ -166,12 +182,17 @@ class SQLPythonAlg extends SQLAlg with Functions {
           scriptContent = pythonScript.fileContent,
           scriptName = pythonScript.fileName,
           recordLog = SQLPythonFunc.recordAnyLog(kafkaParam),
-          modelPath = path, validateData = rowsBr.value
+          modelPath = path, validateData = rowsBr.value, logCallback = (msg) => {
+            logInfo(format(msg))
+          }
         )
 
-        score = recordUserLog(algIndex, pythonScript, kafkaParam, res)
+        score = recordUserLog(algIndex, pythonScript, kafkaParam, res, logCallback = (msg) => {
+          logInfo(format(msg))
+        })
       } catch {
         case e: Exception =>
+          logInfo(format(e.getStackTrace.map(f => f.toString).mkString("\t")))
           e.printStackTrace()
           trainFailFlag = true
       }
@@ -280,7 +301,7 @@ class SQLPythonAlg extends SQLAlg with Functions {
       trainParams = getTrainParams(false)
     } catch {
       case e: Exception =>
-        logger.info(s"no directory: ${MetaConst.PARAMS_PATH(path, "params")} ; using ${path + "/1"}")
+        logInfo(format(s"no directory: ${MetaConst.PARAMS_PATH(path, "params")} ; using ${path + "/1"}"))
         trainParams = getTrainParams(true)
     }
 
@@ -346,10 +367,15 @@ class SQLPythonAlg extends SQLAlg with Functions {
     val enableErrorMsgToKafka = params.getOrElse("enableErrorMsgToKafka", "false").toBoolean
     val kafkaParam2 = if (enableErrorMsgToKafka) kafkaParam else Map[String, String]()
 
-    val recordLog = SQLPythonFunc.recordAnyLog(kafkaParam2)
+    val recordLog = SQLPythonFunc.recordAnyLog(kafkaParam2, logCallback = (msg) => {
+      logInfo(format(msg))
+    })
     val runtimeParams = PlatformManager.getRuntime.params.asScala.toMap
 
+    val mlsqlContext = ScriptSQLExec.contextGetOrForTest()
+
     val f = (v: org.apache.spark.ml.linalg.Vector, modelPath: String) => {
+      ScriptSQLExec.setContext(mlsqlContext)
       val modelRow = InternalRow.fromSeq(Seq(SQLPythonFunc.getLocalTempModelPath(modelPath)))
       val trainParamsRow = InternalRow.fromSeq(Seq(ArrayBasedMapData(trainParams)))
       val v_ser = pickleInternalRow(Seq(ser_vector(v)).toIterator, vector_schema())
@@ -375,7 +401,7 @@ class SQLPythonAlg extends SQLAlg with Functions {
       val a = iter.next()
       val predictValue = VectorSerDer.deser_vector(unpickle(a).asInstanceOf[java.util.ArrayList[Object]].get(0))
       val predictEndTime = System.currentTimeMillis()
-      println("WowPythonRunner execute time: " + (predictEndTime - startTime))
+      logInfo(format("WowPythonRunner execute time: " + (predictEndTime - startTime)))
       predictValue
     }
 

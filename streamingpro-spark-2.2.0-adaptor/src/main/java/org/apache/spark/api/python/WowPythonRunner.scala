@@ -84,7 +84,6 @@ object WowPythonRunner extends Logging {
         case e: Exception =>
           // We must avoid throwing exceptions here, because the thread uncaught exception handler
           // will kill the whole executor (see org.apache.spark.executor.Executor).
-          logError("", e)
           recordLog(e)
           if (!worker.isClosed) {
             Utils.tryLog(worker.shutdownOutput())
@@ -122,7 +121,7 @@ object WowPythonRunner extends Logging {
               val init = initTime - bootTime
               val finish = finishTime - initTime
               val total = finishTime - startTime
-              logInfo("Times: total = %s, boot = %s, init = %s, finish = %s".format(total, boot,
+              recordLog("Times: total = %s, boot = %s, init = %s, finish = %s".format(total, boot,
                 init, finish))
               val memoryBytesSpilled = stream.readLong()
               val diskBytesSpilled = stream.readLong()
@@ -159,7 +158,6 @@ object WowPythonRunner extends Logging {
         } catch {
 
           case e: Exception if context.isInterrupted =>
-            logDebug("Exception thrown after task interruption", e)
             recordLog(e)
             throw new TaskKilledException(context.getKillReason().getOrElse("unknown reason"))
 

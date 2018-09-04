@@ -197,7 +197,7 @@ class SQLDTFAlg extends SQLAlg with Functions {
         val partitionDataInHDFS = tfDataMap(algIndex)
         tempDataLocalPathWithAlgSuffix = tempDataLocalPathWithAlgSuffix + "/" + algIndex
         println(s"Copy HDFS ${partitionDataInHDFS} to local ${tempDataLocalPathWithAlgSuffix} ")
-        recordUserLog(kafkaParam, s"Copy HDFS ${partitionDataInHDFS} to local ${tempDataLocalPathWithAlgSuffix} ")
+        recordSingleLineLog(kafkaParam, s"Copy HDFS ${partitionDataInHDFS} to local ${tempDataLocalPathWithAlgSuffix} ")
         HDFSOperator.copyToLocalFile(tempLocalPath = tempDataLocalPathWithAlgSuffix + "/" + partitionDataInHDFS.split("/").last, path = partitionDataInHDFS, true)
       }
 
@@ -214,10 +214,10 @@ class SQLDTFAlg extends SQLAlg with Functions {
         resources.foreach {
           case (resourceName, resourcePath) =>
             val tempResourceLocalPath = SQLPythonFunc.getLocalTempResourcePath(resourcePath, resourceName)
-            recordUserLog(kafkaParam, s"resource paramter found,system will load resource ${resourcePath} in ${tempResourceLocalPath} in executor.")
+            recordSingleLineLog(kafkaParam, s"resource paramter found,system will load resource ${resourcePath} in ${tempResourceLocalPath} in executor.")
             HDFSOperator.copyToLocalFile(tempResourceLocalPath, resourcePath, true)
             resourceParams += (resourceName -> tempResourceLocalPath)
-            recordUserLog(kafkaParam, s"resource loaded.")
+            recordSingleLineLog(kafkaParam, s"resource loaded.")
         }
       }
 
@@ -469,7 +469,7 @@ class SQLDTFAlg extends SQLAlg with Functions {
       trainParams = getTrainParams(false)
     } catch {
       case e: Exception =>
-        logger.info(s"no directory: ${MetaConst.PARAMS_PATH(path, "params")} ; using ${path + "/1"}")
+        logInfo(format(s"no directory: ${MetaConst.PARAMS_PATH(path, "params")} ; using ${path + "/1"}"))
         trainParams = getTrainParams(true)
     }
 
