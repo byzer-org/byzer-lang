@@ -30,7 +30,7 @@ public class JythonUtils {
                     // In jython, list need not be a bag of tuples, as it is in case of pig
                     // So we fail with cast exception if we dont find tuples inside bag
                     // This is consistent with java udf (bag should be filled with tuples)
-                    list.add((List) toJava(bagTuple));
+                    list.add(toJava(bagTuple));
                 }
                 javaObj = list;
             } else if (pyObject instanceof PyDictionary) {
