@@ -35,13 +35,25 @@ object ScriptSQLExec extends Logging {
   def parse(input: String, listener: DSLSQLListener, skipInclude: Boolean = true) = {
     //preprocess some statements e.g. include
     var wow = input
+
+    var max_preprocess = 10
+    var stop = false
+
     if (!skipInclude) {
-      val preProcessListener = new PreProcessListener(listener.asInstanceOf[ScriptSQLExecListener])
-      _parse(input, preProcessListener)
-      preProcessListener.includes().foreach { f =>
-        wow = wow.replace(f._1, f._2.substring(0, f._2.lastIndexOf(";")))
+      while (!stop && max_preprocess > 0) {
+        val preProcessListener = new PreProcessListener(listener.asInstanceOf[ScriptSQLExecListener])
+        _parse(input, preProcessListener)
+        val includes = preProcessListener.includes()
+        if (includes.size == 0) {
+          stop = true
+        }
+        includes.foreach { f =>
+          wow = wow.replace(f._1, f._2.substring(0, f._2.lastIndexOf(";")))
+        }
+        max_preprocess -= 1
       }
     }
+
     _parse(wow, listener)
   }
 
