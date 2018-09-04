@@ -13,7 +13,7 @@
     <dependencies>
         <dependency>
             <groupId>org.python</groupId>
-            <artifactId>jython</artifactId>
+            <artifactId>jython-standalone</artifactId>
             <version>2.7.0</version>
         </dependency>
     </dependencies>
