@@ -193,8 +193,6 @@ class ScriptSQLExecListener(_sparkSession: SparkSession, _defaultPathPrefix: Str
 
   private val _env = new scala.collection.mutable.HashMap[String, String]
 
-  _env.put("HOME", pathPrefix(None))
-
   private val lastSelectTable = new AtomicReference[String]()
 
   def setLastSelectTable(table: String) = {
