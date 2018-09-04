@@ -108,6 +108,19 @@ object Functions {
     })
   }
 
+  def matrix_array(uDFRegistration: UDFRegistration) = {
+    uDFRegistration.register("matrix_array", (matrix: Matrix) => {
+      val rowArray = matrix.toArray
+      var dimArray = Array.ofDim[Double](matrix.numRows, matrix.numCols)
+      for (row <- 0 until matrix.numRows) {
+        for (col <- 0 until matrix.numCols) {
+          dimArray(row)(col) = rowArray(row * matrix.numCols + col)
+        }
+      }
+      dimArray
+    })
+  }
+
   def vecWiseProduct(uDFRegistration: UDFRegistration): Unit = {
     import BreezeImplicit._
     uDFRegistration.register("vec_wise_mul", (vec1: Vector, vec2: Vector) => {
