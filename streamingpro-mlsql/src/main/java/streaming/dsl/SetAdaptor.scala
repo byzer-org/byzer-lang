@@ -41,6 +41,7 @@ class SetAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapto
       TemplateMerge.merge(str, scriptSQLExecListener.env().toMap)
     }
 
+    var overwrite = true
     option.get("type") match {
       case Some("sql") =>
 
@@ -52,11 +53,19 @@ class SetAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapto
         value = ShellCommand.execSimpleCommand(evaluate(command)).trim
       case Some("conf") =>
         scriptSQLExecListener.sparkSession.sql(s""" set ${key} = ${original_command} """)
+      case Some("defaultParam") =>
+        overwrite = false
       case _ =>
         value = cleanBlockStr(cleanStr(command))
     }
 
-    scriptSQLExecListener.addEnv(key, value)
+    if (!overwrite) {
+      if (!scriptSQLExecListener.env().contains(key)) {
+        scriptSQLExecListener.addEnv(key, value)
+      }
+    } else {
+      scriptSQLExecListener.addEnv(key, value)
+    }
 
     scriptSQLExecListener.env().view.foreach {
       case (k, v) =>
