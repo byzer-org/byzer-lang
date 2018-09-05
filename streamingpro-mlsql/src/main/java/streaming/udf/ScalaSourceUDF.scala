@@ -71,11 +71,7 @@ object ScalaSourceUDF extends Logging with WowLog {
         fn()
       } catch {
         case e: Exception =>
-          var cause = e.asInstanceOf[Throwable]
-          while (cause.getCause != null) {
-            cause = cause.getCause
-          }
-          logError(format_throwable(cause))
+          format_cause(e)
           throw e
       }
     }

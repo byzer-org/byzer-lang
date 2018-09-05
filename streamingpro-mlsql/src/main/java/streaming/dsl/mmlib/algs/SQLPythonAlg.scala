@@ -192,7 +192,7 @@ class SQLPythonAlg extends SQLAlg with Functions {
         })
       } catch {
         case e: Exception =>
-          logInfo(format(e.getStackTrace.map(f => f.toString).mkString("\t")))
+          format_cause(e)
           e.printStackTrace()
           trainFailFlag = true
       }

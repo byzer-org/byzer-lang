@@ -9,28 +9,15 @@ import java.net.Socket
 class MLSQLPythonEnv(env: SparkEnv, deployAPI: Boolean) {
 
   def createPythonWorker(pythonExec: String, envVars: Map[String, String], logCallback: (String) => Unit): java.net.Socket = {
-    if (deployAPI) {
-      APIDeployPythonRunnerEnv.createPythonWorker(pythonExec, envVars, logCallback)
-    } else {
-      env.createPythonWorker(pythonExec, envVars)
-    }
+    APIDeployPythonRunnerEnv.createPythonWorker(pythonExec, envVars, logCallback)
   }
 
 
   def destroyPythonWorker(pythonExec: String, envVars: Map[String, String], worker: Socket) {
-    if (deployAPI) {
-      APIDeployPythonRunnerEnv.destroyPythonWorker(pythonExec, envVars, worker)
-    } else {
-      env.destroyPythonWorker(pythonExec, envVars, worker)
-    }
+    APIDeployPythonRunnerEnv.destroyPythonWorker(pythonExec, envVars, worker)
   }
 
-
   def releasePythonWorker(pythonExec: String, envVars: Map[String, String], worker: Socket) {
-    if (deployAPI) {
-      APIDeployPythonRunnerEnv.releasePythonWorker(pythonExec, envVars, worker)
-    } else {
-      env.releasePythonWorker(pythonExec, envVars, worker)
-    }
+    APIDeployPythonRunnerEnv.releasePythonWorker(pythonExec, envVars, worker)
   }
 }

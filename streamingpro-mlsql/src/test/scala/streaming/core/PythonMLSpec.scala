@@ -19,7 +19,7 @@ class PythonMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQ
   copySampleLibsvmData
 
 
-  "python-alg-script" should "work fine"  in {
+  "python-alg-script" should "work fine" taggedAs (NotToRunTag) in {
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
       implicit val spark = runtime.sparkSession
@@ -35,7 +35,7 @@ class PythonMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQ
     }
   }
 
-  "python-alg-script-enable-data-local" should "work fine" taggedAs (NotToRunTag) in {
+  "python-alg-script-enable-data-local" should "work fine"  in {
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
       implicit val spark = runtime.sparkSession
@@ -66,7 +66,7 @@ class PythonMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQ
     }
   }
 
-  "python-alg-script-enable-data-local-with-model-version" should "work fine" taggedAs (NotToRunTag) in {
+  "python-alg-script-enable-data-local-with-model-version" should "work fine"  in {
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
       implicit val spark = runtime.sparkSession
@@ -149,7 +149,7 @@ class PythonMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQ
   }
 
 
-  "python-alg-script-train-fail-should-log" should "work fine" taggedAs (NotToRunTag) in {
+  "python-alg-script-train-fail-should-log" should "work fine"  in {
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
       implicit val spark = runtime.sparkSession
