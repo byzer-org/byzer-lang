@@ -33,7 +33,18 @@ Download the jars from the release page: [Release页面](https://github.com/allw
 Step 2:
 
 Visit the downloads page: [Spark](https://spark.apache.org/downloads.html), to download Apache Spark 2.2.0 and then unarvhive it.
- 
+
+2.1 unarvhive the Apache Spark 2.2.0 package
+tar -zxvf spark-2.2.0-bin-hadoop2.7.tgz
+2.2 configure enviroment variable
+vi /etc/profile
+-- :i add the following sentence at the end of the file
+export SPARK_HOME=/your/path/spark-2.2.0-bin-hadoop2.7
+export PATH=$PATH:$SPARK_HOME/bin
+-- :wq save the file and quit
+2.3 load the new configuration
+source /etc/profile
+
 Step 3:
 
 ```shell
