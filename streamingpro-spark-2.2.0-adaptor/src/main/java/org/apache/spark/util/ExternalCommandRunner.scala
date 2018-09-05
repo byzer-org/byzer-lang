@@ -166,7 +166,8 @@ object ExternalCommandRunner extends Logging {
             proc.waitFor()
           }
           catch {
-            case e: InterruptedException => 0
+            case e: InterruptedException =>
+              0
           }
           cleanup()
           if (exitStatus != 0) {

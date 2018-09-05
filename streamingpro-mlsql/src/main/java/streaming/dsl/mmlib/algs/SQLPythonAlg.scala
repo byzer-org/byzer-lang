@@ -183,16 +183,18 @@ class SQLPythonAlg extends SQLAlg with Functions {
           scriptName = pythonScript.fileName,
           recordLog = SQLPythonFunc.recordAnyLog(kafkaParam),
           modelPath = path, validateData = rowsBr.value, logCallback = (msg) => {
+            ScriptSQLExec.setContextIfNotPresent(mlsqlContext)
             logInfo(format(msg))
           }
         )
 
         score = recordUserLog(algIndex, pythonScript, kafkaParam, res, logCallback = (msg) => {
+          ScriptSQLExec.setContextIfNotPresent(mlsqlContext)
           logInfo(format(msg))
         })
       } catch {
         case e: Exception =>
-          format_cause(e)
+          logError(format_cause(e))
           e.printStackTrace()
           trainFailFlag = true
       }
@@ -369,9 +371,7 @@ class SQLPythonAlg extends SQLAlg with Functions {
 
     val mlsqlContext = ScriptSQLExec.contextGetOrForTest()
     val recordLog = SQLPythonFunc.recordAnyLog(kafkaParam2, logCallback = (msg) => {
-      if (ScriptSQLExec.context() == null) {
-        ScriptSQLExec.setContext(mlsqlContext)
-      }
+      ScriptSQLExec.setContextIfNotPresent(mlsqlContext)
       logInfo(format(msg))
     })
     val runtimeParams = PlatformManager.getRuntime.params.asScala.toMap
