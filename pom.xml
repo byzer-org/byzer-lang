@@ -22,6 +22,11 @@
             <name>ZhuHaiLin</name>
             <email>allwefantasy@gmail.com</email>
         </developer>
+        <developer>
+            <id>chenfu</id>
+            <name>Fu Chen</name>
+            <email>cfmcgrady@gmail.com</email>
+        </developer>
     </developers>
     <issueManagement>
         <url>https://github.com/allwefantasy/streamingpro/issues</url>
