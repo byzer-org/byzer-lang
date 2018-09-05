@@ -5,16 +5,16 @@ import java.util.concurrent.atomic.AtomicReference
 
 import org.antlr.v4.runtime.tree.{ErrorNode, ParseTreeWalker, TerminalNode}
 import org.antlr.v4.runtime._
-import org.apache.spark.sql.{SparkSession}
+import org.apache.spark.sql.SparkSession
 import streaming.dsl.parser.{DSLSQLLexer, DSLSQLListener, DSLSQLParser}
 import streaming.dsl.parser.DSLSQLParser._
-import streaming.log.Logging
+import streaming.log.{Logging, WowLog}
 
 
 /**
   * Created by allwefantasy on 25/8/2017.
   */
-object ScriptSQLExec extends Logging {
+object ScriptSQLExec extends Logging with WowLog {
 
   //dbName -> (format->jdbc,url->....)
   val dbMapping = new ConcurrentHashMap[String, Map[String, String]]()
@@ -27,7 +27,21 @@ object ScriptSQLExec extends Logging {
 
   def context(): MLSQLExecuteContext = mlsqlExecuteContext.get
 
+  def contextGetOrForTest(): MLSQLExecuteContext = {
+    if (context() == null) {
+      val exec = new ScriptSQLExecListener(null, "/tmp/william", Map())
+      setContext(new MLSQLExecuteContext("testUser", exec.pathPrefix(None), Map()))
+    }
+    context()
+  }
+
   def setContext(ec: MLSQLExecuteContext): Unit = mlsqlExecuteContext.set(ec)
+
+  def setContextIfNotPresent(ec: MLSQLExecuteContext): Unit = {
+    if (ScriptSQLExec.context() == null) {
+      mlsqlExecuteContext.set(ec)
+    }
+  }
 
   def unset = mlsqlExecuteContext.remove()
 
@@ -69,7 +83,7 @@ object ScriptSQLExec extends Logging {
                                charPositionInLine: Int,
                                msg: String,
                                e: RecognitionException): Unit = {
-        logInfo("MLSQL Parser error ", e)
+        logInfo(format(s"MLSQL Parser error ${msg}"), e)
         throw new RuntimeException(s"MLSQL Parser error : $msg")
       }
     })

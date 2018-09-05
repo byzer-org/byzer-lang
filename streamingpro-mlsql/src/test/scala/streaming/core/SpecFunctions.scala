@@ -7,8 +7,8 @@ import org.apache.commons.io.{FileUtils, IOUtils}
 import org.apache.http.HttpVersion
 import org.apache.http.client.fluent.{Form, Request}
 import org.apache.http.util.EntityUtils
-import org.apache.spark.sql.SparkSession
-import streaming.dsl.ScriptSQLExecListener
+import org.apache.spark.sql.{SQLContext, SparkSession}
+import streaming.dsl.{MLSQLExecuteContext, ScriptSQLExec, ScriptSQLExecListener}
 
 /**
   * Created by allwefantasy on 28/4/2018.
@@ -29,6 +29,7 @@ trait SpecFunctions {
   }
 
   def createSSEL(implicit spark: SparkSession) = {
+    ScriptSQLExec.setContext(new MLSQLExecuteContext("william", "/tmp/william", Map()))
     new ScriptSQLExecListener(spark, "/tmp/william", Map())
   }
 
@@ -78,8 +79,9 @@ trait SpecFunctions {
 
   def delDir(file: String) = {
     try {
-    require(file.stripSuffix("/").split("/").size > 1, s"delete $file  maybe too dangerous")
-    FileUtils.forceDelete(new File(file))}
+      require(file.stripSuffix("/").split("/").size > 1, s"delete $file  maybe too dangerous")
+      FileUtils.forceDelete(new File(file))
+    }
     catch {
       case ex: FileNotFoundException => println(ex)
     }

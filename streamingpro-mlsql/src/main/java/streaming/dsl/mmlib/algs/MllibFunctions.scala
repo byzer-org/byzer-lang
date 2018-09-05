@@ -6,7 +6,7 @@ import org.apache.spark.sql.{Row, SaveMode, SparkSession}
 /**
   * Created by allwefantasy on 25/7/2018.
   */
-trait MllibFunctions {
+trait MllibFunctions extends Serializable {
   def mllibModelAndMetaPath(path: String, params: Map[String, String], sparkSession: SparkSession) = {
     val maxVersion = SQLPythonFunc.getModelVersion(path)
     val versionEnabled = maxVersion match {

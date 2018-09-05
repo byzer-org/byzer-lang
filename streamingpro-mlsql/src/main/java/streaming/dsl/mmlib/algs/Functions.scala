@@ -3,7 +3,6 @@ package streaming.dsl.mmlib.algs
 import java.io.{ByteArrayOutputStream, File}
 import java.util.Properties
 
-import net.csdn.common.logging.Loggers
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
 import org.apache.spark.Partitioner
 import org.apache.spark.ml.linalg.SQLDataTypes._
@@ -19,14 +18,15 @@ import streaming.common.HDFSOperator
 import MetaConst._
 import org.apache.spark.ps.cluster.Message
 import streaming.core.strategy.platform.{PlatformManager, SparkRuntime}
+import streaming.log.{Logging, WowLog}
 
 import scala.collection.mutable.ArrayBuffer
 
 /**
   * Created by allwefantasy on 13/1/2018.
   */
-trait Functions extends SQlBaseFunc {
-  val logger = Loggers.getLogger(getClass)
+trait Functions extends SQlBaseFunc with Logging with WowLog with Serializable{
+
 
   def sampleUnbalanceWithMultiModel(df: DataFrame, path: String, params: Map[String, String], train: (DataFrame, Int) => Unit) = {
     //select count(*) as subLabelCount,label from _ group by labelCol order by  subLabelCount asc
@@ -36,7 +36,7 @@ trait Functions extends SQlBaseFunc {
       (f.getDouble(0), f.getLong(1))
     }
     val forLog = labelToCountSeq.map(f => s"${f._1}:${f._2}").mkString(",")
-    logger.info(s"computing data stat:${forLog}")
+    logInfo(format(s"computing data stat:${forLog}"))
     val labelCount = labelToCountSeq.size
 
     val dfWithLabelPartition = df.rdd.map { f =>
@@ -63,7 +63,7 @@ trait Functions extends SQlBaseFunc {
         (f._1, minCount.toDouble / f._2)
       }.toMap)
       val forLog2 = labelToCountMapBr.value.map(f => s"${f._1}:${f._2}").mkString(",")
-      logger.info(s"all label sample rate:${forLog2}")
+      logInfo(format(s"all label sample rate:${forLog2}"))
 
       (0 until times.toInt).foreach { time =>
         val tempRdd = dfWithLabelPartition.mapPartitionsWithIndex { (label, iter) =>
@@ -71,7 +71,7 @@ trait Functions extends SQlBaseFunc {
           iter.filter(k => wow.nextDouble <= labelToCountMapBr.value(label)).map(f => f._2)
         }
         val trainData = df.sparkSession.createDataFrame(tempRdd, df.schema)
-        logger.info(s"training model :${time}")
+        logInfo(format(s"training model :${time}"))
         train(trainData, time)
       }
     } finally {
