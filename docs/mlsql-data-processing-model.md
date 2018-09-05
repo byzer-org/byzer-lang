@@ -755,11 +755,11 @@ select  * from parquet.`/tmp/modelExplainInPlace/data`
 
 ### SendMessage
 
-发送消息模块，目前只支持邮件方式发送消息
+发送消息模块，目前支持邮件方式发送消息,和企业微信发送预警消息（内部使用）
 
 > **NOTE:** 由于邮件通过smtp服务器发送，所以需要配置smtp服务器
 
-例子：
+邮件方式例子：
 ```sql
 -- 设置变量a为执行sql的结果
 set a = `select "这是邮件内容"` options type = "sql";
@@ -768,7 +768,7 @@ set smtp-ip-address = "localhost";
 select "${a}" as content as data;
 -- load json.`/tmp/a.json` as data;
 train data as SendMessage.`_`
--- 目前只支持mail方法
+-- 方法
 where method="mail"
 -- 收件人，支持逗号分割配置多个收件人
 and to = "chenfu@dxy.cn"
@@ -776,6 +776,29 @@ and to = "chenfu@dxy.cn"
 and subject = "这是邮件标题"
 -- 邮件服务器地址
 and smtpHost = "${smtp-ip-address}";
+```
+
+企业微信发送预警例子（内部使用）：
+```sql
+-- 设置变量a为执行sql的结果
+set a = `select "这是邮件内容"` options type = "sql";
+-- 设置企业微信发送预警接口地址
+set apiUrl = "localhost";
+-- 设置接口签名验证信息
+set appId = "";
+set appSignKey="";
+select "${a}" as content as data;
+-- load json.`/tmp/a.json` as data;
+train data as SendMessage.`_`
+-- 方法
+where method="wechat_warn"
+-- 收件人，支持逗号分割配置多个收件人
+and to = "zhuml@dxy.cn"
+-- 接口地址
+and apiUrl = "${apiUrl}"
+-- 接口签名验证信息
+and appId = "${appId}"
+and appSignKey="{appSignKey}";
 ```
 
 ## 低阶（特定小功能点）数据预处理模型

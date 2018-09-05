@@ -1,13 +1,16 @@
 package streaming.dsl.mmlib.algs
 
+import java.util
 import java.util.{Date, Properties}
-import javax.mail.{Address, Message, Session, Transport}
-import javax.mail.internet.{InternetAddress, MimeMessage}
 
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import javax.mail.internet.{InternetAddress, MimeMessage}
+import javax.mail.{Address, Message, Session, Transport}
+import net.sf.json.JSONObject
 import org.apache.spark.sql.expressions.UserDefinedFunction
+import org.apache.spark.sql.{DataFrame, SparkSession}
+import streaming.common.http.{HttpClientUtil, HttpConstants, OpenApiUtil}
 import streaming.dsl.mmlib.SQLAlg
-import SQLSendMessage._
+import streaming.dsl.mmlib.algs.SQLSendMessage._
 import streaming.log.Logging
 
 /**
@@ -20,23 +23,40 @@ class SQLSendMessage extends SQLAlg with Logging {
     require(messageCount <= MAX_MESSAGE_THRESHOLD, s"message count should <= ${MAX_MESSAGE_THRESHOLD}!")
 
     val to = params("to")
-    val from = params.getOrElse("from", null)
-    val subject = params.getOrElse("subject", "no subject!")
-    val smtpHost = params("smtpHost")
     val method = params("method")
-
     require(to != null, "to is null!")
-    require(smtpHost != null)
-    val agent = new MailAgent(smtpHost)
-    df.toJSON.collect().foreach(contentJson => {
-      method.toUpperCase() match {
-        case "MAIL" =>
-          logInfo(s"send content: ${contentJson} to ${to}" )
+    method.toUpperCase match {
+      case "MAIL" =>
+        val from = params.getOrElse("from", null)
+        val subject = params.getOrElse("subject", "no subject!")
+        val smtpHost = params("smtpHost")
+        require(smtpHost != null)
+        val agent = new MailAgent(smtpHost)
+        df.toJSON.collect().foreach(contentJson => {
+          logInfo(s"send mail: ${contentJson} to ${to}")
           agent.sendMessage(to, null, null, from, subject, contentJson)
-        case _ =>
-          throw new RuntimeException("unspport method!")
-      }
-    })
+        })
+      case "WECHAT_WARN" =>
+        val apiUrl = params("apiUrl")
+        val appId = params("appId")
+        val appSignKey = params("appSignKey")
+        require(apiUrl != null)
+        require(appId != null)
+        require(appSignKey != null)
+        val paramsMap = new util.TreeMap[String, Object]
+        paramsMap.put("email", to)
+        paramsMap.put("appId", appId)
+        df.toJSON.collect().foreach(contentJson => {
+          paramsMap.put("timestamp", OpenApiUtil.getTimestamp)
+          paramsMap.put("nonce", OpenApiUtil.getNonceStr)
+          paramsMap.put("message", contentJson)
+          paramsMap.put("sign", OpenApiUtil.createSHA1Sign(paramsMap, appSignKey))
+          logInfo(s"send wechat warn: ${contentJson} to ${to}")
+          HttpClientUtil.doPostBody(apiUrl, JSONObject.fromObject(paramsMap).toString(), HttpConstants.HttpClientConfig.DEFAULT)
+        })
+      case _ =>
+        throw new RuntimeException("unspport method!")
+    }
 
   }
 
@@ -51,7 +71,6 @@ class SQLSendMessage extends SQLAlg with Logging {
 
 object SQLSendMessage {
   val MAX_MESSAGE_THRESHOLD = 10
-
 }
 
 class MailAgent(smtpHost: String) {
@@ -100,8 +119,7 @@ class MailAgent(smtpHost: String) {
   def setMessageRecipients(message: Message, recipient: String, recipientType: Message.RecipientType) {
     // had to do the asInstanceOf[...] call here to make scala happy
     val addressArray = buildInternetAddressArray(recipient).asInstanceOf[Array[Address]]
-    if ((addressArray != null) && (addressArray.length > 0))
-    {
+    if ((addressArray != null) && (addressArray.length > 0)) {
       message.setRecipients(recipientType, addressArray)
     }
   }
