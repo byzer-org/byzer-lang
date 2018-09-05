@@ -39,10 +39,10 @@ Visit the downloads page: [Spark](https://spark.apache.org/downloads.html), to d
   
   2.2 configure enviroment variable  
   vi /etc/profile  
-  --  :i add the following sentence at the end of the file  
+  <:i add the following sentence at the end of the file>  
   export SPARK_HOME=/your/path/spark-2.2.0-bin-hadoop2.7  
   export PATH=$PATH:$SPARK_HOME/bin  
-  -- :wq save the file and quit  
+  <:wq save the file and quit>  
   
   2.3 load the new configuration  
   source /etc/profile  
