@@ -37,6 +37,12 @@ object ScriptSQLExec extends Logging with WowLog {
 
   def setContext(ec: MLSQLExecuteContext): Unit = mlsqlExecuteContext.set(ec)
 
+  def setContextIfNotPresent(ec: MLSQLExecuteContext): Unit = {
+    if (ScriptSQLExec.context() == null) {
+      mlsqlExecuteContext.set(ec)
+    }
+  }
+
   def unset = mlsqlExecuteContext.remove()
 
 

@@ -37,7 +37,9 @@ object WowPythonRunner extends Logging {
     val deployAPI = runtimeParams.getOrElse("streaming.deploy.rest.api", "false").toString.toBoolean
     val mlsqlEnv = new MLSQLPythonEnv(env, deployAPI)
 
-    val worker: Socket = mlsqlEnv.createPythonWorker(pythonPath, envVars.asScala.toMap)
+    val worker: Socket = mlsqlEnv.createPythonWorker(pythonPath, envVars.asScala.toMap, (msg) => {
+      recordLog(msg)
+    })
 
     // Whether is the worker released into idle pool
     @volatile var released = false

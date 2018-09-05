@@ -18,58 +18,8 @@ class PythonMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQ
 
   copySampleLibsvmData
 
-  "sklearn-multi-model" should "work fine" taggedAs (NotToRunTag) in {
-    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
-      //执行sql
-      implicit val spark = runtime.sparkSession
-      val sq = createSSEL
-      ScriptSQLExec.parse(loadSQLScriptStr("sklearn-multi-model-trainning"), sq)
-      val res = spark.read.parquet("/tmp/william/tmp/model/0").collect()
-      assume(res.filter(f => f.getAs[String]("alg").contains("SVC")).head.getAs[Int]("algIndex") == 1)
-      assume(res.filter(f => f.getAs[String]("alg").contains("Multinom")).head.getAs[Int]("algIndex") == 0)
-    }
-  }
 
-  "sklearn-user-script" should "work fine" taggedAs (NotToRunTag) in {
-    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
-      //执行sql
-      implicit val spark = runtime.sparkSession
-      val sq = createSSEL
-      val pythonCode =
-        """
-          |import mlsql_model
-          |import mlsql
-          |from sklearn.naive_bayes import MultinomialNB
-          |
-          |clf = MultinomialNB()
-          |
-          |mlsql.sklearn_configure_params(clf)
-          |
-          |
-          |def train(X, y, label_size):
-          |    clf.partial_fit(X, y, classes=range(label_size))
-          |
-          |
-          |mlsql.sklearn_batch_data(train)
-          |
-          |X_test, y_test = mlsql.get_validate_data()
-          |print("cool------")
-          |if len(X_test) > 0:
-          |    testset_score = clf.score(X_test, y_test)
-          |    print("mlsql_validation_score:%f" % testset_score)
-          |
-          |mlsql_model.sk_save_model(clf)
-          |
-        """.stripMargin
-      writeStringToFile("/tmp/sklearn-user-script.py", pythonCode)
-      ScriptSQLExec.parse(TemplateMerge.merge(loadSQLScriptStr("sklearn-user-script"), Map(
-        "pythonScriptPath" -> "/tmp/sklearn-user-script.py"
-      )), sq)
-      spark.read.parquet("/tmp/william/tmp/model/0").show()
-    }
-  }
-
-  "python-alg-script" should "work fine" taggedAs (NotToRunTag) in {
+  "python-alg-script" should "work fine"  in {
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
       implicit val spark = runtime.sparkSession
@@ -157,7 +107,7 @@ class PythonMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQ
     }
   }
 
-  "python-alg-script-enable-data-local-not-distributeEveryExecutor-with-model-version" should "work fine"  in {
+  "python-alg-script-enable-data-local-not-distributeEveryExecutor-with-model-version" should "work fine" in {
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
       implicit val spark = runtime.sparkSession
@@ -294,7 +244,7 @@ class PythonMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQ
     }
   }
 
-  "api-service-test" should "work fine" taggedAs (NotToRunTag) in {
+  "api-service-test" should "work fine" in {
     withBatchContext(setupBatchContext(batchParams ++ Array("-streaming.deploy.rest.api", "true"), "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
       implicit val spark = runtime.sparkSession

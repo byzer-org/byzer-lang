@@ -3,15 +3,14 @@ package org.apache.spark
 import java.net.Socket
 
 
-
 /**
   * Created by allwefantasy on 30/7/2018.
   */
 class MLSQLPythonEnv(env: SparkEnv, deployAPI: Boolean) {
 
-  def createPythonWorker(pythonExec: String, envVars: Map[String, String]): java.net.Socket = {
+  def createPythonWorker(pythonExec: String, envVars: Map[String, String], logCallback: (String) => Unit): java.net.Socket = {
     if (deployAPI) {
-      APIDeployPythonRunnerEnv.createPythonWorker(pythonExec, envVars)
+      APIDeployPythonRunnerEnv.createPythonWorker(pythonExec, envVars, logCallback)
     } else {
       env.createPythonWorker(pythonExec, envVars)
     }

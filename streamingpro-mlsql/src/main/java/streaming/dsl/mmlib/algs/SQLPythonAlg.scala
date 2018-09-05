@@ -76,10 +76,10 @@ class SQLPythonAlg extends SQLAlg with Functions {
       newDF.write.format(dataLocalFormat).mode(SaveMode.Overwrite).save(dataHDFSPath)
 
       if (distributeEveryExecutor) {
-        logInfo(format(s"dataLocalFormat enabled ,system will generate data in ${tempDataLocalPath}  in every executor"))
-        recordSingleLineLog(kafkaParam, s"dataLocalFormat enabled ,system will generate data in ${tempDataLocalPath}  in every executor")
+        recordSingleLineLog(kafkaParam, s"dataLocalFormat enabled ,system will generate data in ${tempDataLocalPath}  in every executor", logCallback = (msg) => {
+          logInfo(format(msg))
+        })
         distributeResource(df.sparkSession, dataHDFSPath, tempDataLocalPath)
-        logInfo(format(s"dataLocalFormat is finished"))
         recordSingleLineLog(kafkaParam, s"dataLocalFormat is finished")
 
       }
@@ -367,15 +367,16 @@ class SQLPythonAlg extends SQLAlg with Functions {
     val enableErrorMsgToKafka = params.getOrElse("enableErrorMsgToKafka", "false").toBoolean
     val kafkaParam2 = if (enableErrorMsgToKafka) kafkaParam else Map[String, String]()
 
+    val mlsqlContext = ScriptSQLExec.contextGetOrForTest()
     val recordLog = SQLPythonFunc.recordAnyLog(kafkaParam2, logCallback = (msg) => {
+      if (ScriptSQLExec.context() == null) {
+        ScriptSQLExec.setContext(mlsqlContext)
+      }
       logInfo(format(msg))
     })
     val runtimeParams = PlatformManager.getRuntime.params.asScala.toMap
 
-    val mlsqlContext = ScriptSQLExec.contextGetOrForTest()
-
     val f = (v: org.apache.spark.ml.linalg.Vector, modelPath: String) => {
-      ScriptSQLExec.setContext(mlsqlContext)
       val modelRow = InternalRow.fromSeq(Seq(SQLPythonFunc.getLocalTempModelPath(modelPath)))
       val trainParamsRow = InternalRow.fromSeq(Seq(ArrayBasedMapData(trainParams)))
       val v_ser = pickleInternalRow(Seq(ser_vector(v)).toIterator, vector_schema())
