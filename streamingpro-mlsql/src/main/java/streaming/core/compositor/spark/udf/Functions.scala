@@ -246,7 +246,7 @@ object Functions {
       val oneValue = Array(1.0)
       val emptyValues = Array.empty[Double]
       val emptyIndices = Array.empty[Int]
-      if (a < size) {
+      if (a < size && a > 0) {
         Vectors.sparse(size, Array(a), oneValue)
       } else {
         Vectors.sparse(size, emptyIndices, emptyValues)
