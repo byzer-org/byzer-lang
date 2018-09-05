@@ -35,7 +35,7 @@ Step 2:
 Visit the downloads page: [Spark](https://spark.apache.org/downloads.html), to download Apache Spark 2.2.0 and then unarvhive it.
 
 2.1 unarvhive the Apache Spark 2.2.0 package  
-``` shell
+```shell
 tar -zxvf spark-2.2.0-bin-hadoop2.7.tgz
 ```
 
@@ -43,15 +43,15 @@ tar -zxvf spark-2.2.0-bin-hadoop2.7.tgz
 ```shell
 vi /etc/profile
 ```
-    :i add the following sentence at the end of the file
-
-    `export SPARK_HOME=/your/path/spark-2.2.0-bin-hadoop2.7`  
-    `export PATH=$PATH:$SPARK_HOME/bin`  
-    
-    :wq save the file and quit  
+:i add the following sentence at the end of the file
+```
+    export SPARK_HOME=/your/path/spark-2.2.0-bin-hadoop2.7  
+    export PATH=$PATH:$SPARK_HOME/bin  
+```
+:wq save the file and quit  
 
 2.3 load the new configuration  
-``` shell
+```shell
 source /etc/profile  
 ```
 
