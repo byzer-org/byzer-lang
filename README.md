@@ -34,8 +34,8 @@ Step 2:
 
 Visit the downloads page: [Spark](https://spark.apache.org/downloads.html), to download Apache Spark 2.2.0 and then unarvhive it.
 
->2.1 unarvhive the Apache Spark 2.2.0 package  
->tar -zxvf spark-2.2.0-bin-hadoop2.7.tgz  
+    2.1 unarvhive the Apache Spark 2.2.0 package  
+    tar -zxvf spark-2.2.0-bin-hadoop2.7.tgz  
   
   2.2 configure enviroment variable  
   vi /etc/profile  
