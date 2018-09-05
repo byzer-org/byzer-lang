@@ -71,7 +71,7 @@ object ScalaSourceUDF extends Logging with WowLog {
         fn()
       } catch {
         case e: Exception =>
-          format_cause(e)
+          logError(format_cause(e))
           throw e
       }
     }
