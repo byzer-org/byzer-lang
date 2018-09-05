@@ -9,7 +9,7 @@ mvn install -Pscala-2.11 -Pjetty-9 -Pweb-include-jetty-9
 ```
 
 
-Step 1： download & compile streamingpro project
+Step 2： download & compile streamingpro project
 
 ```
 git clone https://github.com/allwefantasy/streamingpro.git

@@ -9,7 +9,7 @@ mvn install -Pscala-2.11 -Pjetty-9 -Pweb-include-jetty-9
 ```
 
 
-步骤2： 下载编译StreamingPro项目
+步骤二： 下载编译StreamingPro项目
 
 ```
 git clone https://github.com/allwefantasy/streamingpro.git
