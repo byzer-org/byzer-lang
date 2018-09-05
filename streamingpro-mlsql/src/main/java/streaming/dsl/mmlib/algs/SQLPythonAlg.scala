@@ -392,17 +392,12 @@ class SQLPythonAlg extends SQLAlg with Functions {
       if (TaskContext.get() == null) {
         APIDeployPythonRunnerEnv.setTaskContext(APIDeployPythonRunnerEnv.createTaskContext())
       }
-      val startTime = System.currentTimeMillis()
-
-
 
       val iter = WowPythonRunner.run(
         pythonPath, pythonVer, command, v_ser3, TaskContext.get().partitionId(), Array(), runtimeParams, recordLog
       )
       val a = iter.next()
       val predictValue = VectorSerDer.deser_vector(unpickle(a).asInstanceOf[java.util.ArrayList[Object]].get(0))
-      val predictEndTime = System.currentTimeMillis()
-      logInfo(format("WowPythonRunner execute time: " + (predictEndTime - startTime)))
       predictValue
     }
 

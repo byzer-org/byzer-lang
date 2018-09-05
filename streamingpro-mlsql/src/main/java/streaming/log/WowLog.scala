@@ -13,4 +13,8 @@ trait WowLog {
   def format_exception(e: Exception) = {
     (e.toString.split("\n") ++ e.getStackTrace.map(f => f.toString)).map(f => format(f)).toSeq.mkString("\n")
   }
+
+  def format_throwable(e: Throwable) = {
+    (e.toString.split("\n") ++ e.getStackTrace.map(f => f.toString)).map(f => format(f)).toSeq.mkString("\n")
+  }
 }
