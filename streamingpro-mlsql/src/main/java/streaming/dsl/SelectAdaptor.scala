@@ -17,10 +17,12 @@ class SelectAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAda
     val stop = ctx.stop.getStopIndex()
     val interval = new Interval(start, stop)
     val originalText = input.getText(interval)
-    val chunks = originalText.split("\\s+")
+
+    val wowText = TemplateMerge.merge(originalText, scriptSQLExecListener.env().toMap)
+
+    val chunks = wowText.split("\\s+")
     val tableName = chunks.last.replace(";", "")
-    var sql = originalText.replaceAll(s"as[\\s|\\n]+${tableName}", "")
-    sql = TemplateMerge.merge(sql, scriptSQLExecListener.env().toMap)
+    val sql = originalText.replaceAll(s"as[\\s|\\n]+${tableName}", "")
     scriptSQLExecListener.sparkSession.sql(sql).createOrReplaceTempView(tableName)
     scriptSQLExecListener.setLastSelectTable(tableName)
   }
