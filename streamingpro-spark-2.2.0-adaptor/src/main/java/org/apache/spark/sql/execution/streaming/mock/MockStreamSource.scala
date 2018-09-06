@@ -35,13 +35,21 @@ class MockStreamSource(
   override def schema: StructType = MockStreamSource.schema
 
   override def getOffset: Option[Offset] = {
-    val stepSizeRange = sourceOptions.getOrElse("stepSizeRange", "0-3")
-    val Array(start, end) = stepSizeRange.split("\\-")
-    val stepSize = Random.nextInt(end.toInt - start.toInt + 2)
-    counter.incrementAndGet()
-    Some(new MockSourceOffset(Map(
-      new TopicPartition("test", 0) -> counter.addAndGet(stepSize)
-    )))
+    val stepSizeRange = sourceOptions.getOrElse("stepSizeRange", "-1")
+    if (stepSizeRange == "-1") {
+      val fixSize = sourceOptions.getOrElse("fixSize", "1").toInt
+      Some(new MockSourceOffset(Map(
+        new TopicPartition("test", 0) -> counter.addAndGet(fixSize)
+      )))
+    } else {
+      val Array(start, end) = stepSizeRange.split("\\-")
+      val stepSize = Random.nextInt(end.toInt - start.toInt + 2)
+      Some(new MockSourceOffset(Map(
+        new TopicPartition("test", 0) -> counter.addAndGet(stepSize)
+      )))
+    }
+
+
   }
 
   override def getBatch(start: Option[Offset], end: Offset): DataFrame = {

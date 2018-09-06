@@ -1,13 +1,12 @@
 package org.apache.spark.api.python
 
-import java.io.{DataInputStream, DataOutputStream, InputStream, OutputStreamWriter}
+import java.io._
 import java.net.{InetAddress, ServerSocket, Socket, SocketException}
 import java.nio.charset.StandardCharsets
 import java.util.Arrays
 
 import scala.collection.mutable
 import scala.collection.JavaConverters._
-
 import org.apache.spark._
 import org.apache.spark.internal.Logging
 import org.apache.spark.util.{RedirectThread, Utils}
@@ -15,7 +14,7 @@ import org.apache.spark.util.{RedirectThread, Utils}
 /**
   * Created by allwefantasy on 30/7/2018.
   */
-private[spark] class WowPythonWorkerFactory(pythonExec: String, envVars: Map[String, String])
+private[spark] class WowPythonWorkerFactory(pythonExec: String, envVars: Map[String, String], logCallback: (String) => Unit)
   extends Logging {
 
   import WowPythonWorkerFactory._
@@ -106,7 +105,7 @@ private[spark] class WowPythonWorkerFactory(pythonExec: String, envVars: Map[Str
       val worker = pb.start()
 
       // Redirect worker stdout and stderr
-      redirectStreamsToStderr(worker.getInputStream, worker.getErrorStream)
+      redirectStreamsToStderr(worker.getInputStream, worker.getErrorStream, logCallback)
 
       // Tell the worker our port
       val out = new OutputStreamWriter(worker.getOutputStream, StandardCharsets.UTF_8)
@@ -152,7 +151,7 @@ private[spark] class WowPythonWorkerFactory(pythonExec: String, envVars: Map[Str
         daemonPort = in.readInt()
 
         // Redirect daemon stdout and stderr
-        redirectStreamsToStderr(in, daemon.getErrorStream)
+        redirectStreamsToStderr(in, daemon.getErrorStream, logCallback)
 
       } catch {
         case e: Exception =>
@@ -191,10 +190,10 @@ private[spark] class WowPythonWorkerFactory(pythonExec: String, envVars: Map[Str
   /**
     * Redirect the given streams to our stderr in separate threads.
     */
-  private def redirectStreamsToStderr(stdout: InputStream, stderr: InputStream) {
+  private def redirectStreamsToStderr(stdout: InputStream, stderr: InputStream, logCallback: (String) => Unit) {
     try {
-      new RedirectThread(stdout, System.err, "stdout reader for " + pythonExec).start()
-      new RedirectThread(stderr, System.err, "stderr reader for " + pythonExec).start()
+      new WowRedirectThread(stdout, "stdout reader for " + pythonExec, logCallback).start()
+      new WowRedirectThread(stderr, "stderr reader for " + pythonExec, logCallback).start()
     } catch {
       case e: Exception =>
         logError("Exception in redirecting streams", e)
@@ -291,6 +290,33 @@ private[spark] class WowPythonWorkerFactory(pythonExec: String, envVars: Map[Str
       }
     }
   }
+
+  private class WowRedirectThread(
+                                   in: InputStream,
+                                   name: String,
+                                   logCallback: (String) => Unit = (msg: String) => {},
+                                   propagateEof: Boolean = false)
+    extends Thread(name) {
+
+    setDaemon(true)
+
+    override def run() {
+      scala.util.control.Exception.ignoring(classOf[IOException]) {
+        Utils.tryWithSafeFinally {
+          val br = new BufferedReader(new InputStreamReader(in))
+          var line: String = null
+          while ((line = br.readLine()) != null) {
+            logCallback(line)
+          }
+        } {
+          if (propagateEof) {
+
+          }
+        }
+      }
+    }
+  }
+
 }
 
 private object WowPythonWorkerFactory {
