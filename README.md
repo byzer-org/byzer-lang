@@ -42,7 +42,7 @@ cd spark-2.2.0-bin-hadoop2.7/
 ./bin/spark-submit   --class streaming.core.StreamingApp \
 --master local[*] \
 --name sql-interactive \
---jars ansj_seg-5.1.6.jar,nlp-lang-1.7.8.jar
+--jars ansj_seg-5.1.6.jar,nlp-lang-1.7.8.jar \
 streamingpro-mlsql-1.1.2.jar    \
 -streaming.name sql-interactive    \
 -streaming.job.file.path file:///tmp/query.json \
