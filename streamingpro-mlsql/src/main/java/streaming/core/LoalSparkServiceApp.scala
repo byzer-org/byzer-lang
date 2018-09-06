@@ -22,8 +22,10 @@ object LocalSparkServiceApp {
       "-spark.serializer", "org.apache.spark.serializer.KryoSerializer",
       "-spark.sql.codegen.wholeStage", "true",
       "-spark.kryoserializer.buffer.max", "2000m",
-      "-streaming.udf.clzznames","streaming.crawler.udf.Functions",
-      "-streaming.driver.port", "9003"
+      "-streaming.udf.clzznames", "streaming.crawler.udf.Functions",
+      "-streaming.driver.port", "9003",
+      "-spark.sql.shuffle.partitions", "2",
+      "-spark.sql.shuffle.partitions", "2"
 
       //"-streaming.sql.out.path","file:///tmp/test/pdate=20160809"
 
