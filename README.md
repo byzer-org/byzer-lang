@@ -43,7 +43,7 @@ tar -zxvf spark-2.2.0-bin-hadoop2.7.tgz
 ```shell
 vi /etc/profile
 ```
-    add following sentences at the end of the file
+    add the following sentences at the end of the file
 ```
     export SPARK_HOME=/your/path/spark-2.2.0-bin-hadoop2.7  
     export PATH=$PATH:$SPARK_HOME/bin  
