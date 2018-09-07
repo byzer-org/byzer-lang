@@ -1,10 +1,9 @@
 package streaming.dsl;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 
+import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.misc.Interval;
 
 /**
@@ -32,8 +31,9 @@ public class CaseChangingCharStream implements CharStream {
   }
 
   public CaseChangingCharStream(String string) throws IOException {
-    ByteArrayInputStream bais = new ByteArrayInputStream(string.getBytes());
-    this.stream = CharStreams.fromStream(bais);
+//    ByteArrayInputStream bais = new ByteArrayInputStream(string.getBytes());
+    CharStream stream = new ANTLRInputStream(string);
+    this.stream = stream;
     this.upper = false;
   }
   @Override
