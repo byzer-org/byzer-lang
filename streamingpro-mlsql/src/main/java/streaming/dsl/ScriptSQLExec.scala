@@ -72,7 +72,7 @@ object ScriptSQLExec extends Logging with WowLog {
   }
 
   def _parse(input: String, listener: DSLSQLListener) = {
-    val loadLexer = new DSLSQLLexer(new ANTLRInputStream(input))
+    val loadLexer = new DSLSQLLexer(new CaseChangingCharStream(input))
     val tokens = new CommonTokenStream(loadLexer)
     val parser = new DSLSQLParser(tokens)
     parser.addErrorListener(new BaseErrorListener {
