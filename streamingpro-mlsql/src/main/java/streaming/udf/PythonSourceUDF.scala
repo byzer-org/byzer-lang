@@ -8,6 +8,7 @@ import streaming.common.{ScriptCacheKey, SourceCodeCompiler}
 import streaming.dsl.ScriptSQLExec
 import streaming.jython.JythonUtils
 import streaming.log.{Logging, WowLog}
+import streaming.parser.SparkTypePaser
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -36,82 +37,9 @@ object PythonSourceUDF extends Logging with WowLog {
 
   def apply(src: String, className: String, methodName: Option[String], returnType: String): (AnyRef, DataType) = {
     val argumentNum = getParameterCount(src, className, methodName)
-    (generateFunction(src, className, methodName, argumentNum), toSparkType(returnType))
+    (generateFunction(src, className, methodName, argumentNum), SparkTypePaser.toSparkType(returnType))
   }
 
-  private def findInputInArrayBracket(input: String) = {
-    val max = input.length - 1
-    val rest = ArrayBuffer[Char]()
-    var firstS = false
-    var fBracketCount = 0
-    (0 until max).foreach { i =>
-      input(i) match {
-        case '(' =>
-          if (firstS) {
-            rest += input(i)
-            fBracketCount += 1
-          } else {
-            firstS = true
-          }
-        case ')' => fBracketCount -= 1
-          if (fBracketCount < 0) {
-            firstS = false
-          } else {
-            rest += input(i)
-          }
-        case _ =>
-          if (firstS) {
-            rest += input(i)
-          }
-
-      }
-    }
-    rest.mkString("")
-  }
-
-  private def findKeyAndValue(input: String) = {
-    val max = input.length - 1
-    var fBracketCount = 0
-    var position = 0
-    (0 until max).foreach { i =>
-      input(i) match {
-        case '(' =>
-          fBracketCount += 1
-        case ')' =>
-          fBracketCount -= 1
-        case ',' =>
-          if (fBracketCount == 0) {
-            position = i
-          }
-        case _ =>
-      }
-    }
-    (input.substring(0, position), input.substring(position + 1))
-  }
-
-  //array(array(map(string,string)))
-  private def toSparkType(dt: String): DataType = dt match {
-    case "boolean" => BooleanType
-    case "byte" => ByteType
-    case "short" => ShortType
-    case "integer" => IntegerType
-    case "date" => DateType
-    case "long" => LongType
-    case "float" => FloatType
-    case "double" => DoubleType
-    case "decimal" => DoubleType
-    case "binary" => BinaryType
-    case "string" => StringType
-    case c: String if c.startsWith("array") =>
-      ArrayType(toSparkType(findInputInArrayBracket(c)))
-    case c: String if c.startsWith("map") =>
-      //map(map(string,string),string)
-      val (key, value) = findKeyAndValue(findInputInArrayBracket(c))
-      MapType(toSparkType(key), toSparkType(value))
-
-    case _ => throw new RuntimeException("dt is not found spark type")
-
-  }
 
   private def getParameterCount(src: String, classMethod: String, methodName: Option[String]): Int = {
 
