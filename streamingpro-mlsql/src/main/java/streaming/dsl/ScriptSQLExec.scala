@@ -5,16 +5,16 @@ import java.util.concurrent.atomic.AtomicReference
 
 import org.antlr.v4.runtime.tree.{ErrorNode, ParseTreeWalker, TerminalNode}
 import org.antlr.v4.runtime._
-import org.apache.spark.sql.{SparkSession}
+import org.apache.spark.sql.SparkSession
 import streaming.dsl.parser.{DSLSQLLexer, DSLSQLListener, DSLSQLParser}
 import streaming.dsl.parser.DSLSQLParser._
-import streaming.log.Logging
+import streaming.log.{Logging, WowLog}
 
 
 /**
   * Created by allwefantasy on 25/8/2017.
   */
-object ScriptSQLExec extends Logging {
+object ScriptSQLExec extends Logging with WowLog {
 
   //dbName -> (format->jdbc,url->....)
   val dbMapping = new ConcurrentHashMap[String, Map[String, String]]()
@@ -27,7 +27,21 @@ object ScriptSQLExec extends Logging {
 
   def context(): MLSQLExecuteContext = mlsqlExecuteContext.get
 
+  def contextGetOrForTest(): MLSQLExecuteContext = {
+    if (context() == null) {
+      val exec = new ScriptSQLExecListener(null, "/tmp/william", Map())
+      setContext(new MLSQLExecuteContext("testUser", exec.pathPrefix(None), Map()))
+    }
+    context()
+  }
+
   def setContext(ec: MLSQLExecuteContext): Unit = mlsqlExecuteContext.set(ec)
+
+  def setContextIfNotPresent(ec: MLSQLExecuteContext): Unit = {
+    if (ScriptSQLExec.context() == null) {
+      mlsqlExecuteContext.set(ec)
+    }
+  }
 
   def unset = mlsqlExecuteContext.remove()
 
@@ -35,18 +49,30 @@ object ScriptSQLExec extends Logging {
   def parse(input: String, listener: DSLSQLListener, skipInclude: Boolean = true) = {
     //preprocess some statements e.g. include
     var wow = input
+
+    var max_preprocess = 10
+    var stop = false
+
     if (!skipInclude) {
-      val preProcessListener = new PreProcessListener(listener.asInstanceOf[ScriptSQLExecListener])
-      _parse(input, preProcessListener)
-      preProcessListener.includes().foreach { f =>
-        wow = wow.replace(f._1, f._2.substring(0, f._2.lastIndexOf(";")))
+      while (!stop && max_preprocess > 0) {
+        val preProcessListener = new PreProcessListener(listener.asInstanceOf[ScriptSQLExecListener])
+        _parse(input, preProcessListener)
+        val includes = preProcessListener.includes()
+        if (includes.size == 0) {
+          stop = true
+        }
+        includes.foreach { f =>
+          wow = wow.replace(f._1, f._2.substring(0, f._2.lastIndexOf(";")))
+        }
+        max_preprocess -= 1
       }
     }
+
     _parse(wow, listener)
   }
 
   def _parse(input: String, listener: DSLSQLListener) = {
-    val loadLexer = new DSLSQLLexer(new ANTLRInputStream(input))
+    val loadLexer = new DSLSQLLexer(new CaseChangingCharStream(input))
     val tokens = new CommonTokenStream(loadLexer)
     val parser = new DSLSQLParser(tokens)
     parser.addErrorListener(new BaseErrorListener {
@@ -57,7 +83,7 @@ object ScriptSQLExec extends Logging {
                                charPositionInLine: Int,
                                msg: String,
                                e: RecognitionException): Unit = {
-        logInfo("MLSQL Parser error ", e)
+        logInfo(format(s"MLSQL Parser error ${msg}"), e)
         throw new RuntimeException(s"MLSQL Parser error : $msg")
       }
     })
@@ -180,8 +206,6 @@ class PreProcessListener(scriptSQLExecListener: ScriptSQLExecListener) extends D
 class ScriptSQLExecListener(_sparkSession: SparkSession, _defaultPathPrefix: String, _allPathPrefix: Map[String, String]) extends DSLSQLListener {
 
   private val _env = new scala.collection.mutable.HashMap[String, String]
-
-  _env.put("HOME", pathPrefix(None))
 
   private val lastSelectTable = new AtomicReference[String]()
 

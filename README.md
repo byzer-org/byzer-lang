@@ -42,7 +42,7 @@ cd spark-2.2.0-bin-hadoop2.7/
 ./bin/spark-submit   --class streaming.core.StreamingApp \
 --master local[*] \
 --name sql-interactive \
---jars ansj_seg-5.1.6.jar,nlp-lang-1.7.8.jar
+--jars ansj_seg-5.1.6.jar,nlp-lang-1.7.8.jar \
 streamingpro-mlsql-1.1.2.jar    \
 -streaming.name sql-interactive    \
 -streaming.job.file.path file:///tmp/query.json \
@@ -180,6 +180,7 @@ so you can still use mlsql grammar.(This function provided from v1.1.2)
 * [Scala/Python UDF](https://github.com/allwefantasy/streamingpro/blob/master/docs/en/mlsql-script-support.md)
 * [Stream Jobs](https://github.com/allwefantasy/streamingpro/blob/master/docs/en/mlsql-stream.md)
 * [Using Python ML Framework To Train And Predict Within MLSQL](https://github.com/allwefantasy/streamingpro/blob/master/docs/en/mlsql-python-machine-learning.md)
+* [Using Python ML Framework To Batch Predict Within MLSQL](./docs/mlsql-sklearn-batch-prediction.md)
 
 ## Compiling
 

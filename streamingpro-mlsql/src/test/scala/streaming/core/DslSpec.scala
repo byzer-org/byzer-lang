@@ -603,6 +603,46 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
     }
   }
 
+  "include set" should "work fine" in {
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+      //执行sql
+      implicit val spark = runtime.sparkSession
+      var sq = createSSEL
+      var source =
+        """
+          |set a="b" options type="defaultParam";
+          |
+        """.stripMargin
+      writeStringToFile("/tmp/william/tmp/kk.jj", source)
+      ScriptSQLExec.parse(
+        """
+          |set a="c";
+          |include hdfs.`/tmp/kk.jj`;
+          |select "${a}" as res as display;
+        """.stripMargin
+        , sq, false)
+      var res = spark.sql("select * from display").collect().head.get(0)
+      assume(res == "c")
+
+      sq = createSSEL
+      source =
+        """
+          |set a="b";
+          |
+        """.stripMargin
+      writeStringToFile("/tmp/william/tmp/kk.jj", source)
+      ScriptSQLExec.parse(
+        """
+          |set a="c";
+          |include hdfs.`/tmp/kk.jj`;
+          |select "${a}" as res as display;
+        """.stripMargin
+        , sq, false)
+      res = spark.sql("select * from display").collect().head.get(0)
+      assume(res == "b")
+    }
+  }
+
   "train or run" should "work fine" in {
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql

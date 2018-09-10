@@ -1,5 +1,11 @@
 ## Compilation
 
+Notice 1:StreamingPro is only tested with Java 8, Python 2 and 3, and running against Spark 2.2.0 (Scala 2.11).
+Notice 2: If you use Intellij Idea, please make sure following profiles are selected:
+ 
+![](https://github.com/allwefantasy/streamingpro/raw/master/images/profiles.png)
+
+
 Step 1： download & compile ServiceFramework project
 
 ```
@@ -9,7 +15,7 @@ mvn install -Pscala-2.11 -Pjetty-9 -Pweb-include-jetty-9
 ```
 
 
-Step 1： download & compile streamingpro project
+Step 2： download & compile streamingpro project
 
 ```
 git clone https://github.com/allwefantasy/streamingpro.git

@@ -98,13 +98,23 @@ object Functions {
    */
   def vec_cosine(uDFRegistration: UDFRegistration) = {
     uDFRegistration.register("vec_cosine", (vec1: Vector, vec2: Vector) => {
-      val dot = new org.apache.spark.mllib.feature.ElementwiseProduct(OldVectors.fromML(vec1)).transform(OldVectors.fromML(vec2))
-      var value = 0d
-      val value_add = (a: Int, b: Double) => {
-        value += b
+      if ((vec1.size == 0 || vec2.size == 0 || vec1.size != vec2.size)) {
+        0.0
+      } else {
+        val dot = new org.apache.spark.mllib.feature.ElementwiseProduct(OldVectors.fromML(vec1)).transform(OldVectors.fromML(vec2))
+        var value = 0d
+        val value_add = (a: Int, b: Double) => {
+          value += b
+        }
+        dot.foreachActive(value_add)
+        value / (Vectors.norm(vec1, 2) * Vectors.norm(vec2, 2))
       }
-      dot.foreachActive(value_add)
-      value / (Vectors.norm(vec1, 2) * Vectors.norm(vec2, 2))
+    })
+  }
+
+  def matrix_array(uDFRegistration: UDFRegistration) = {
+    uDFRegistration.register("matrix_array", (matrix: Matrix) => {
+      matrix.rowIter.map(_.toArray).toArray
     })
   }
 
@@ -240,7 +250,7 @@ object Functions {
       val oneValue = Array(1.0)
       val emptyValues = Array.empty[Double]
       val emptyIndices = Array.empty[Int]
-      if (a < size) {
+      if (a < size && a > 0) {
         Vectors.sparse(size, Array(a), oneValue)
       } else {
         Vectors.sparse(size, emptyIndices, emptyValues)

@@ -15,10 +15,14 @@ object KafkaOperator {
     } else 0d
   }
 
-  def writeKafka(prefix: String, kafkaParam: Map[String, String], lines: Iterator[String]) = {
+  def writeKafka(prefix: String, kafkaParam: Map[String, String], lines: Iterator[String], logCallback: (String) => Unit = (msg: String) => {}) = {
 
     if (!kafkaParam.contains("userName")) {
-      lines.map(f => filterScore(f)).filter(f => f > 0d).toSeq
+      lines.map {
+        f =>
+          logCallback(prefix + "" + f)
+          filterScore(f)
+      }.filter(f => f > 0d).toSeq
     } else {
       val topic = "training_msg_" + kafkaParam("userName")
 
@@ -31,6 +35,7 @@ object KafkaOperator {
       val producer = new KafkaProducer[String, String](props)
       try {
         lines.map { line =>
+          logCallback(prefix + "" + line)
           producer.send(new ProducerRecord[String, String](topic, prefix + "" + line))
           filterScore(line)
         }.filter(f => f > 0d).toSeq

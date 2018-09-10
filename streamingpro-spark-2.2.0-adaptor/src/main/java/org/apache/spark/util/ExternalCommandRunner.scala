@@ -28,7 +28,9 @@ object ExternalCommandRunner extends Logging {
           envVars: Map[String, String] = Map(),
           separateWorkingDir: Boolean = true,
           bufferSize: Int = 1024,
-          encoding: String = "utf-8") = {
+          encoding: String = "utf-8",
+          logCallback: (String) => Unit = (msg: String) => {}
+         ) = {
     val errorBuffer = ArrayBuffer[String]()
     val pb = new ProcessBuilder(command.asJava)
     // Add the environmental variables to the process.
@@ -62,8 +64,8 @@ object ExternalCommandRunner extends Logging {
         pb.directory(taskDirFile)
         workInTaskDirectory = true
       } catch {
-        case e: Exception => log.error("Unable to setup task working directory: " + e.getMessage +
-          " (" + taskDirectory + ")", e)
+        case e: Exception => logCallback("Unable to setup task working directory: " + e.getMessage +
+          " (" + taskDirectory + ")")
       }
     }
 
@@ -115,7 +117,7 @@ object ExternalCommandRunner extends Logging {
         try {
           for (line <- Source.fromInputStream(err)(encoding).getLines) {
             // scalastyle:off println
-            log.error("__python__:" + line)
+            logCallback("__python__:" + line)
             errorBuffer += line
             // scalastyle:on println
           }
@@ -153,7 +155,6 @@ object ExternalCommandRunner extends Logging {
           throw new NoSuchElementException()
         }
         val line = lines.next()
-        log.info("__python__:" + line)
         line
       }
 
@@ -165,13 +166,15 @@ object ExternalCommandRunner extends Logging {
             proc.waitFor()
           }
           catch {
-            case e: InterruptedException => 0
+            case e: InterruptedException =>
+              0
           }
           cleanup()
           if (exitStatus != 0) {
             val msg = s"Subprocess exited with status $exitStatus. " +
               s"Command ran: " + command.mkString(" ")
             errorBuffer += msg
+            logCallback(errorBuffer.mkString("\t"))
             recordLog(errorBuffer.toIterator)
             throw new IllegalStateException(msg)
           }
@@ -201,8 +204,8 @@ object ExternalCommandRunner extends Logging {
           val commandRan = command.mkString(" ")
           val msg = s"Caught exception while running pipe() operator. Command ran: $commandRan. " +
             s"Exception: ${t.getMessage}"
-          log.error(msg)
           errorBuffer += msg
+          logCallback(errorBuffer.mkString("\t"))
           proc.destroy()
           cleanup()
           recordLog(errorBuffer.toIterator)

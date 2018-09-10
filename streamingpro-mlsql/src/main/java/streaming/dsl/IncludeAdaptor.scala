@@ -40,7 +40,7 @@ class IncludeAdaptor(scriptSQLExecListener: ScriptSQLExecListener, preProcessLis
       path = withPathPrefix(scriptSQLExecListener.pathPrefix(None), path)
     }
 
-    val content = alg.fetchSource(scriptSQLExecListener.sparkSession, path, option)
+    val content = alg.fetchSource(scriptSQLExecListener.sparkSession, path, Map("format" -> format) ++ option)
     val originIncludeText = currentText(ctx)
     preProcessListener.addInclude(originIncludeText, content)
   }
@@ -49,7 +49,12 @@ class IncludeAdaptor(scriptSQLExecListener: ScriptSQLExecListener, preProcessLis
 object IncludeAdaptor {
   val mapping = Map[String, String](
     "hdfs" -> "streaming.dsl.mmlib.algs.includes.HDFSIncludeSource",
-    "http" -> "streaming.dsl.mmlib.algs.includes.HTTPIncludeSource"
+    "http" -> "streaming.dsl.mmlib.algs.includes.HTTPIncludeSource",
+
+    "function" -> "streaming.dsl.mmlib.algs.includes.analyst.HttpBaseDirIncludeSource",
+    "view" -> "streaming.dsl.mmlib.algs.includes.analyst.HttpBaseDirIncludeSource",
+    "table" -> "streaming.dsl.mmlib.algs.includes.analyst.HttpBaseDirIncludeSource",
+    "job" -> "streaming.dsl.mmlib.algs.includes.analyst.HttpBaseDirIncludeSource"
   )
 
   def findAlg(format: String, options: Map[String, String]) = {
