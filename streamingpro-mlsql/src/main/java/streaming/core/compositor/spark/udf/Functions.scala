@@ -108,6 +108,12 @@ object Functions {
     })
   }
 
+  def matrix_array(uDFRegistration: UDFRegistration) = {
+    uDFRegistration.register("matrix_array", (matrix: Matrix) => {
+      matrix.rowIter.map(_.toArray).toArray
+    })
+  }
+
   def vecWiseProduct(uDFRegistration: UDFRegistration): Unit = {
     import BreezeImplicit._
     uDFRegistration.register("vec_wise_mul", (vec1: Vector, vec2: Vector) => {

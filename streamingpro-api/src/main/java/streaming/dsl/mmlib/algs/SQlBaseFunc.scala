@@ -6,7 +6,7 @@ import org.apache.spark.sql.types.{StringType, StructField, StructType}
 /**
   * Created by allwefantasy on 28/5/2018.
   */
-trait SQlBaseFunc {
+trait SQlBaseFunc extends Serializable{
   def saveTraningParams(spark: SparkSession, params: Map[String, String], metaPath: String) = {
     // keep params
     spark.createDataFrame(

@@ -9,7 +9,6 @@ import streaming.dsl.mmlib.SQLAlg
   */
 class SQLAutoModel extends SQLAlg with Functions {
   override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
-    val sklearn = new SQLSKLearn()
 
   }
 

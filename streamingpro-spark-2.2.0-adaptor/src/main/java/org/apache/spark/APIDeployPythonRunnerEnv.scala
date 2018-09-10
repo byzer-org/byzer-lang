@@ -17,10 +17,10 @@ object APIDeployPythonRunnerEnv {
     pythonWorkers.size
   }
 
-  def createPythonWorker(pythonExec: String, envVars: Map[String, String]): java.net.Socket = {
+  def createPythonWorker(pythonExec: String, envVars: Map[String, String], logCallback: (String) => Unit): java.net.Socket = {
     synchronized {
       val key = (pythonExec, envVars)
-      pythonWorkers.getOrElseUpdate(key, new WowPythonWorkerFactory(pythonExec, envVars)).create()
+      pythonWorkers.getOrElseUpdate(key, new WowPythonWorkerFactory(pythonExec, envVars, logCallback)).create()
     }
   }
 

@@ -26,14 +26,34 @@ Step 1:
 
 Download the jars from the release page: [Release页面](https://github.com/allwefantasy/streamingpro/releases):
 
-1. streamingpro-mlsql-1.1.2.jar
+1. streamingpro-mlsql-1.x.x.jar
 2. ansj_seg-5.1.6.jar
 3. nlp-lang-1.7.8.jar
 
 Step 2:
 
 Visit the downloads page: [Spark](https://spark.apache.org/downloads.html), to download Apache Spark 2.2.0 and then unarvhive it.
- 
+
+2.1 unarvhive the Apache Spark 2.2.0 package  
+```shell
+tar -zxvf spark-2.2.0-bin-hadoop2.7.tgz
+```
+
+2.2 configure enviroment variable  
+```shell
+vi /etc/profile
+```
+    add the following sentences at the end of the file
+```
+    export SPARK_HOME=/your/path/spark-2.2.0-bin-hadoop2.7  
+    export PATH=$PATH:$SPARK_HOME/bin  
+```
+
+2.3 load the new configuration  
+```shell
+source /etc/profile  
+```
+
 Step 3:
 
 ```shell
@@ -42,7 +62,7 @@ cd spark-2.2.0-bin-hadoop2.7/
 ./bin/spark-submit   --class streaming.core.StreamingApp \
 --master local[*] \
 --name sql-interactive \
---jars ansj_seg-5.1.6.jar,nlp-lang-1.7.8.jar
+--jars ansj_seg-5.1.6.jar,nlp-lang-1.7.8.jar \
 streamingpro-mlsql-1.1.2.jar    \
 -streaming.name sql-interactive    \
 -streaming.job.file.path file:///tmp/query.json \
@@ -179,6 +199,7 @@ so you can still use mlsql grammar.(This function provided from v1.1.2)
 * [Using Build-in Algorithms](https://github.com/allwefantasy/streamingpro/blob/master/docs/en/mlsql-build-in-algorithms.md)
 * [Scala/Python UDF](https://github.com/allwefantasy/streamingpro/blob/master/docs/en/mlsql-script-support.md)
 * [Stream Jobs](https://github.com/allwefantasy/streamingpro/blob/master/docs/en/mlsql-stream.md)
+* [Using Python ML Framework To Train And Predict Within MLSQL](https://github.com/allwefantasy/streamingpro/blob/master/docs/en/mlsql-python-machine-learning.md)
 
 ## Compiling
 
