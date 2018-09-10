@@ -8,6 +8,7 @@ import org.apache.spark.ml.linalg.Vectors
 import org.apache.spark.sql.Encoders
 import org.apache.spark.sql.execution.datasources.json.WowJsonInferSchema
 import streaming.core.strategy.platform.{PlatformManager, SparkRuntime}
+import streaming.dsl.{MLSQLExecuteContext, ScriptSQLExec}
 
 import scala.collection.JavaConversions._
 
@@ -20,12 +21,18 @@ class RestPredictController extends ApplicationController {
   @At(path = Array("/model/predict"), types = Array(GET, POST))
   def modelPredict = {
     intercept()
+    createContext
     val res = param("dataType", "vector") match {
       case "vector" => vec2vecPredict
       case "string" => string2vecPredict
       case "row" => row2vecPredict
     }
     render(200, res)
+  }
+
+  def createContext = {
+    val userDefineParams = params.toMap.filter(f => f._1.startsWith("context.")).map(f => (f._1.substring("context.".length), f._2)).toMap
+    ScriptSQLExec.setContext(new MLSQLExecuteContext(param("owner"), "", userDefineParams))
   }
 
   def getSQL = {
