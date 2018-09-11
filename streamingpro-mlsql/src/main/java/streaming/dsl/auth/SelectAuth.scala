@@ -51,7 +51,7 @@ class SelectAuth(authProcessListener: AuthProcessListener) extends MLSQLAuth wit
     }
 
     val exists = authProcessListener.withoutDBs.filter(m => tableName == m.table.get).size > 0
-    if (exists) {
+    if (!exists) {
       authProcessListener.addTable(MLSQLTable(None, Some(tableName), TableType.TEMP))
     }
 
