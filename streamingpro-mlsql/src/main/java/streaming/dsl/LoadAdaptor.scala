@@ -19,7 +19,6 @@ class LoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
   }
 
   override def parse(ctx: SqlContext): Unit = {
-
     var table: DataFrame = null
     var format = ""
     var option = Map[String, String]()

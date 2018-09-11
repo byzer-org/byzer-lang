@@ -6,9 +6,13 @@ import java.util.concurrent.atomic.AtomicReference
 import org.antlr.v4.runtime.tree.{ErrorNode, ParseTreeWalker, TerminalNode}
 import org.antlr.v4.runtime._
 import org.apache.spark.sql.SparkSession
+import streaming.dsl.auth._
 import streaming.dsl.parser.{DSLSQLLexer, DSLSQLListener, DSLSQLParser}
 import streaming.dsl.parser.DSLSQLParser._
 import streaming.log.{Logging, WowLog}
+import streaming.parser.lisener.BaseParseListenerextends
+
+import scala.collection.mutable.ArrayBuffer
 
 
 /**
@@ -46,7 +50,7 @@ object ScriptSQLExec extends Logging with WowLog {
   def unset = mlsqlExecuteContext.remove()
 
 
-  def parse(input: String, listener: DSLSQLListener, skipInclude: Boolean = true) = {
+  def parse(input: String, listener: DSLSQLListener, skipInclude: Boolean = true, skipAuth: Boolean = true) = {
     //preprocess some statements e.g. include
     var wow = input
 
@@ -55,7 +59,7 @@ object ScriptSQLExec extends Logging with WowLog {
 
     if (!skipInclude) {
       while (!stop && max_preprocess > 0) {
-        val preProcessListener = new PreProcessListener(listener.asInstanceOf[ScriptSQLExecListener])
+        val preProcessListener = new PreProcessIncludeListener(listener.asInstanceOf[ScriptSQLExecListener])
         _parse(input, preProcessListener)
         val includes = preProcessListener.includes()
         if (includes.size == 0) {
@@ -67,7 +71,16 @@ object ScriptSQLExec extends Logging with WowLog {
         max_preprocess -= 1
       }
     }
-
+    if (!skipAuth) {
+      val sqel = listener.asInstanceOf[ScriptSQLExecListener]
+      val setListener = new PreProcessSetListener(sqel._sparkSession, sqel._defaultPathPrefix, sqel._allPathPrefix)
+      _parse(input, setListener)
+      // setListener.env()
+      val authListener = new AuthProcessListener(setListener)
+      _parse(input, authListener)
+      val tableAuth = Class.forName(authListener.listener.env().getOrElse("auth_client", "streaming.dsl.auth.meta.client.DefaultConsoleClient")).newInstance().asInstanceOf[TableAuth]
+      tableAuth.auth(authListener.tables().tables.toList)
+    }
     _parse(wow, listener)
   }
 
@@ -92,213 +105,8 @@ object ScriptSQLExec extends Logging with WowLog {
   }
 }
 
-class GrammarProcessListener(scriptSQLExecListener: ScriptSQLExecListener) extends DSLSQLListener {
-  override def exitSql(ctx: SqlContext): Unit = {
-  }
 
-  override def enterStatement(ctx: StatementContext): Unit = {}
-
-  override def exitStatement(ctx: StatementContext): Unit = {}
-
-  override def enterSql(ctx: SqlContext): Unit = {}
-
-  override def enterFormat(ctx: FormatContext): Unit = {}
-
-  override def exitFormat(ctx: FormatContext): Unit = {}
-
-  override def enterPath(ctx: PathContext): Unit = {}
-
-  override def exitPath(ctx: PathContext): Unit = {}
-
-  override def enterTableName(ctx: TableNameContext): Unit = {}
-
-  override def exitTableName(ctx: TableNameContext): Unit = {}
-
-  override def enterCol(ctx: ColContext): Unit = {}
-
-  override def exitCol(ctx: ColContext): Unit = {}
-
-  override def enterQualifiedName(ctx: QualifiedNameContext): Unit = {}
-
-  override def exitQualifiedName(ctx: QualifiedNameContext): Unit = {}
-
-  override def enterIdentifier(ctx: IdentifierContext): Unit = {}
-
-  override def exitIdentifier(ctx: IdentifierContext): Unit = {}
-
-  override def enterStrictIdentifier(ctx: StrictIdentifierContext): Unit = {}
-
-  override def exitStrictIdentifier(ctx: StrictIdentifierContext): Unit = {}
-
-  override def enterQuotedIdentifier(ctx: QuotedIdentifierContext): Unit = {}
-
-  override def exitQuotedIdentifier(ctx: QuotedIdentifierContext): Unit = {}
-
-  override def visitTerminal(node: TerminalNode): Unit = {}
-
-  override def visitErrorNode(node: ErrorNode): Unit = {}
-
-  override def exitEveryRule(ctx: ParserRuleContext): Unit = {}
-
-  override def enterEveryRule(ctx: ParserRuleContext): Unit = {}
-
-  override def enterEnder(ctx: EnderContext): Unit = {}
-
-  override def exitEnder(ctx: EnderContext): Unit = {}
-
-  override def enterExpression(ctx: ExpressionContext): Unit = {}
-
-  override def exitExpression(ctx: ExpressionContext): Unit = {}
-
-  override def enterBooleanExpression(ctx: BooleanExpressionContext): Unit = {}
-
-  override def exitBooleanExpression(ctx: BooleanExpressionContext): Unit = {}
-
-  override def enterDb(ctx: DbContext): Unit = {}
-
-  override def exitDb(ctx: DbContext): Unit = {}
-
-  override def enterOverwrite(ctx: OverwriteContext): Unit = {}
-
-  override def exitOverwrite(ctx: OverwriteContext): Unit = {}
-
-  override def enterAppend(ctx: AppendContext): Unit = {}
-
-  override def exitAppend(ctx: AppendContext): Unit = {}
-
-  override def enterErrorIfExists(ctx: ErrorIfExistsContext): Unit = {}
-
-  override def exitErrorIfExists(ctx: ErrorIfExistsContext): Unit = {}
-
-  override def enterIgnore(ctx: IgnoreContext): Unit = {}
-
-  override def exitIgnore(ctx: IgnoreContext): Unit = {}
-
-  override def enterFunctionName(ctx: FunctionNameContext): Unit = {}
-
-  override def exitFunctionName(ctx: FunctionNameContext): Unit = {}
-
-  override def enterSetValue(ctx: SetValueContext): Unit = {}
-
-  override def exitSetValue(ctx: SetValueContext): Unit = {}
-
-  override def enterSetKey(ctx: SetKeyContext): Unit = {}
-
-  override def exitSetKey(ctx: SetKeyContext): Unit = {}
-}
-
-class PreProcessListener(scriptSQLExecListener: ScriptSQLExecListener) extends DSLSQLListener {
-  private val _includes = new scala.collection.mutable.HashMap[String, String]
-
-  def addInclude(k: String, v: String) = {
-    _includes(k) = v
-    this
-  }
-
-  def includes() = _includes
-
-  override def exitSql(ctx: SqlContext): Unit = {
-
-    ctx.getChild(0).getText.toLowerCase() match {
-      case "include" =>
-        new IncludeAdaptor(scriptSQLExecListener, this).parse(ctx)
-      case _ =>
-    }
-
-  }
-
-  override def enterStatement(ctx: StatementContext): Unit = {}
-
-  override def exitStatement(ctx: StatementContext): Unit = {}
-
-  override def enterSql(ctx: SqlContext): Unit = {}
-
-  override def enterFormat(ctx: FormatContext): Unit = {}
-
-  override def exitFormat(ctx: FormatContext): Unit = {}
-
-  override def enterPath(ctx: PathContext): Unit = {}
-
-  override def exitPath(ctx: PathContext): Unit = {}
-
-  override def enterTableName(ctx: TableNameContext): Unit = {}
-
-  override def exitTableName(ctx: TableNameContext): Unit = {}
-
-  override def enterCol(ctx: ColContext): Unit = {}
-
-  override def exitCol(ctx: ColContext): Unit = {}
-
-  override def enterQualifiedName(ctx: QualifiedNameContext): Unit = {}
-
-  override def exitQualifiedName(ctx: QualifiedNameContext): Unit = {}
-
-  override def enterIdentifier(ctx: IdentifierContext): Unit = {}
-
-  override def exitIdentifier(ctx: IdentifierContext): Unit = {}
-
-  override def enterStrictIdentifier(ctx: StrictIdentifierContext): Unit = {}
-
-  override def exitStrictIdentifier(ctx: StrictIdentifierContext): Unit = {}
-
-  override def enterQuotedIdentifier(ctx: QuotedIdentifierContext): Unit = {}
-
-  override def exitQuotedIdentifier(ctx: QuotedIdentifierContext): Unit = {}
-
-  override def visitTerminal(node: TerminalNode): Unit = {}
-
-  override def visitErrorNode(node: ErrorNode): Unit = {}
-
-  override def exitEveryRule(ctx: ParserRuleContext): Unit = {}
-
-  override def enterEveryRule(ctx: ParserRuleContext): Unit = {}
-
-  override def enterEnder(ctx: EnderContext): Unit = {}
-
-  override def exitEnder(ctx: EnderContext): Unit = {}
-
-  override def enterExpression(ctx: ExpressionContext): Unit = {}
-
-  override def exitExpression(ctx: ExpressionContext): Unit = {}
-
-  override def enterBooleanExpression(ctx: BooleanExpressionContext): Unit = {}
-
-  override def exitBooleanExpression(ctx: BooleanExpressionContext): Unit = {}
-
-  override def enterDb(ctx: DbContext): Unit = {}
-
-  override def exitDb(ctx: DbContext): Unit = {}
-
-  override def enterOverwrite(ctx: OverwriteContext): Unit = {}
-
-  override def exitOverwrite(ctx: OverwriteContext): Unit = {}
-
-  override def enterAppend(ctx: AppendContext): Unit = {}
-
-  override def exitAppend(ctx: AppendContext): Unit = {}
-
-  override def enterErrorIfExists(ctx: ErrorIfExistsContext): Unit = {}
-
-  override def exitErrorIfExists(ctx: ErrorIfExistsContext): Unit = {}
-
-  override def enterIgnore(ctx: IgnoreContext): Unit = {}
-
-  override def exitIgnore(ctx: IgnoreContext): Unit = {}
-
-  override def enterFunctionName(ctx: FunctionNameContext): Unit = {}
-
-  override def exitFunctionName(ctx: FunctionNameContext): Unit = {}
-
-  override def enterSetValue(ctx: SetValueContext): Unit = {}
-
-  override def exitSetValue(ctx: SetValueContext): Unit = {}
-
-  override def enterSetKey(ctx: SetKeyContext): Unit = {}
-
-  override def exitSetKey(ctx: SetKeyContext): Unit = {}
-}
-
-class ScriptSQLExecListener(_sparkSession: SparkSession, _defaultPathPrefix: String, _allPathPrefix: Map[String, String]) extends DSLSQLListener {
+class ScriptSQLExecListener(val _sparkSession: SparkSession, val _defaultPathPrefix: String, val _allPathPrefix: Map[String, String]) extends BaseParseListenerextends {
 
   private val _env = new scala.collection.mutable.HashMap[String, String]
 
@@ -374,95 +182,97 @@ class ScriptSQLExecListener(_sparkSession: SparkSession, _defaultPathPrefix: Str
 
   }
 
-  override def enterStatement(ctx: StatementContext): Unit = {}
+}
 
-  override def exitStatement(ctx: StatementContext): Unit = {}
+class GrammarProcessListener(scriptSQLExecListener: ScriptSQLExecListener) extends BaseParseListenerextends {
+  override def exitSql(ctx: SqlContext): Unit = {
+  }
+}
 
-  override def enterSql(ctx: SqlContext): Unit = {}
+class AuthProcessListener(val listener: ScriptSQLExecListener) extends BaseParseListenerextends {
+  private val _tables = MLSQLTableSet(ArrayBuffer[MLSQLTable]())
 
-  override def enterFormat(ctx: FormatContext): Unit = {}
+  def addTable(table: MLSQLTable) = {
+    _tables.tables.asInstanceOf[ArrayBuffer[MLSQLTable]] += table
+  }
 
-  override def exitFormat(ctx: FormatContext): Unit = {}
+  def withDBs = {
+    _tables.tables.filter(f => f.db.isDefined)
+  }
 
-  override def enterPath(ctx: PathContext): Unit = {}
+  def withoutDBs = {
+    _tables.tables.filterNot(f => f.db.isDefined)
+  }
 
-  override def exitPath(ctx: PathContext): Unit = {}
+  def tables() = _tables
 
-  override def enterTableName(ctx: TableNameContext): Unit = {}
+  override def exitSql(ctx: SqlContext): Unit = {
+    ctx.getChild(0).getText.toLowerCase() match {
+      case "load" =>
+        new LoadAuth(this).auth(ctx)
 
-  override def exitTableName(ctx: TableNameContext): Unit = {}
+      case "select" =>
+        new SelectAuth(this).auth(ctx)
 
-  override def enterCol(ctx: ColContext): Unit = {}
+      case "save" =>
+        new SaveAuth(this).auth(ctx)
 
-  override def exitCol(ctx: ColContext): Unit = {}
+      case "connect" =>
 
-  override def enterQualifiedName(ctx: QualifiedNameContext): Unit = {}
+      case "create" =>
+        new CreateAuth(this).auth(ctx)
+      case "insert" =>
+        new InsertAuth(this).auth(ctx)
+      case "drop" =>
+        new DropAuth(this).auth(ctx)
+      case "refresh" =>
 
-  override def exitQualifiedName(ctx: QualifiedNameContext): Unit = {}
+      case "set" =>
 
-  override def enterIdentifier(ctx: IdentifierContext): Unit = {}
+      case "train" | "run" =>
 
-  override def exitIdentifier(ctx: IdentifierContext): Unit = {}
+      case "register" =>
 
-  override def enterStrictIdentifier(ctx: StrictIdentifierContext): Unit = {}
+    }
+  }
+}
 
-  override def exitStrictIdentifier(ctx: StrictIdentifierContext): Unit = {}
 
-  override def enterQuotedIdentifier(ctx: QuotedIdentifierContext): Unit = {}
+class PreProcessSetListener(_sparkSession: SparkSession, _defaultPathPrefix: String, _allPathPrefix: Map[String, String]) extends ScriptSQLExecListener(_sparkSession: SparkSession, _defaultPathPrefix: String, _allPathPrefix: Map[String, String]) {
 
-  override def exitQuotedIdentifier(ctx: QuotedIdentifierContext): Unit = {}
+  override def exitSql(ctx: SqlContext): Unit = {
 
-  override def visitTerminal(node: TerminalNode): Unit = {}
+    ctx.getChild(0).getText.toLowerCase() match {
+      case "set" =>
+        new SetAdaptor(this).parse(ctx)
+      case _ =>
+    }
 
-  override def visitErrorNode(node: ErrorNode): Unit = {}
+  }
+}
 
-  override def exitEveryRule(ctx: ParserRuleContext): Unit = {}
 
-  override def enterEveryRule(ctx: ParserRuleContext): Unit = {}
+class PreProcessIncludeListener(scriptSQLExecListener: ScriptSQLExecListener) extends BaseParseListenerextends {
+  private val _includes = new scala.collection.mutable.HashMap[String, String]
 
-  override def enterEnder(ctx: EnderContext): Unit = {}
+  def addInclude(k: String, v: String) = {
+    _includes(k) = v
+    this
+  }
 
-  override def exitEnder(ctx: EnderContext): Unit = {}
+  def includes() = _includes
 
-  override def enterExpression(ctx: ExpressionContext): Unit = {}
+  override def exitSql(ctx: SqlContext): Unit = {
 
-  override def exitExpression(ctx: ExpressionContext): Unit = {}
+    ctx.getChild(0).getText.toLowerCase() match {
+      case "include" =>
+        new IncludeAdaptor(scriptSQLExecListener, this).parse(ctx)
+      case _ =>
+    }
 
-  override def enterBooleanExpression(ctx: BooleanExpressionContext): Unit = {}
-
-  override def exitBooleanExpression(ctx: BooleanExpressionContext): Unit = {}
-
-  override def enterDb(ctx: DbContext): Unit = {}
-
-  override def exitDb(ctx: DbContext): Unit = {}
-
-  override def enterOverwrite(ctx: OverwriteContext): Unit = {}
-
-  override def exitOverwrite(ctx: OverwriteContext): Unit = {}
-
-  override def enterAppend(ctx: AppendContext): Unit = {}
-
-  override def exitAppend(ctx: AppendContext): Unit = {}
-
-  override def enterErrorIfExists(ctx: ErrorIfExistsContext): Unit = {}
-
-  override def exitErrorIfExists(ctx: ErrorIfExistsContext): Unit = {}
-
-  override def enterIgnore(ctx: IgnoreContext): Unit = {}
-
-  override def exitIgnore(ctx: IgnoreContext): Unit = {}
-
-  override def enterFunctionName(ctx: FunctionNameContext): Unit = {}
-
-  override def exitFunctionName(ctx: FunctionNameContext): Unit = {}
-
-  override def enterSetValue(ctx: SetValueContext): Unit = {}
-
-  override def exitSetValue(ctx: SetValueContext): Unit = {}
-
-  override def enterSetKey(ctx: SetKeyContext): Unit = {}
-
-  override def exitSetKey(ctx: SetKeyContext): Unit = {}
+  }
 }
 
 case class MLSQLExecuteContext(owner: String, home: String, userDefinedParam: Map[String, String] = Map())
+
+

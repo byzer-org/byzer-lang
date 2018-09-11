@@ -7,7 +7,7 @@ import streaming.dsl.template.TemplateMerge
 /**
   * Created by allwefantasy on 12/1/2018.
   */
-class IncludeAdaptor(scriptSQLExecListener: ScriptSQLExecListener, preProcessListener: PreProcessListener) extends DslAdaptor {
+class IncludeAdaptor(scriptSQLExecListener: ScriptSQLExecListener, preProcessListener: PreProcessIncludeListener) extends DslAdaptor {
 
   def evaluate(value: String) = {
     TemplateMerge.merge(value, scriptSQLExecListener.env().toMap)
