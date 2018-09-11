@@ -13,8 +13,8 @@ statement
 
 
 sql
-    : ('load'|'LOAD') format '.' path ('options'|'where')? expression? booleanExpression*  'as' tableName
-    | ('save'|'SAVE') (overwrite | append | errorIfExists |ignore)* tableName 'as' format '.' path ('options'|'where')? expression? booleanExpression* ('partitionBy' col)?
+    : ('load'|'LOAD') format '.' path ('options'|'where')? expression? booleanExpression* 'as' tableName
+    | ('save'|'SAVE') (overwrite | append | errorIfExists |ignore)* tableName 'as' format '.' path ('options'|'where')? expression? booleanExpression* (('partitionBy'|'partitionby') col)?
     | ('select'|'SELECT') ~(';')* 'as' tableName
     | ('insert'|'INSERT') ~(';')*
     | ('create'|'CREATE') ~(';')*
@@ -24,7 +24,7 @@ sql
     | ('connect'|'CONNECT') format ('options'|'where')? expression? booleanExpression* ('as' db)?
     | ('train'|'TRAIN'|'run'|'RUN') tableName 'as' format '.' path ('options'|'where')? expression? booleanExpression*
     | ('register'|'REGISTER') format '.' path 'as' functionName ('options'|'where')? expression? booleanExpression*
-    | ('unRegister'|'UNREGISTER') format '.' path ('options'|'where')? expression? booleanExpression*
+    | ('unRegister'|'UNREGISTER'|'unregister') format '.' path ('options'|'where')? expression? booleanExpression*
     | ('include'|'INCLUDE') format '.' path ('options'|'where')? expression? booleanExpression*
     |  SIMPLE_COMMENT
     ;
