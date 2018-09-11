@@ -6,7 +6,7 @@ import net.sf.json.JSONObject
 import org.apache.commons.io.FileUtils
 import org.apache.spark.streaming.BasicSparkOperation
 import streaming.core.strategy.platform.SparkRuntime
-import streaming.dsl.ScriptSQLExec
+import streaming.dsl.{GrammarProcessListener, MLSQLExecuteContext, ScriptSQLExec, ScriptSQLExecListener}
 import streaming.dsl.template.TemplateMerge
 
 /**
@@ -809,6 +809,24 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
         """.stripMargin, sq)
       val res = spark.sql("select * from output").collect().head.get(1)
       assume(res == 4)
+    }
+  }
+
+  "save-partitionby" should "work fine" in {
+
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+      //执行sql
+      implicit val spark = runtime.sparkSession
+
+      val ssel = createSSEL
+      val sq = new GrammarProcessListener(ssel)
+      withClue("MLSQL Parser error : mismatched input 'save1' expecting {<EOF>, 'load', 'LOAD', 'save', 'SAVE', 'select', 'SELECT', 'insert', 'INSERT', 'create', 'CREATE', 'drop', 'DROP', 'refresh', 'REFRESH', 'set', 'SET', 'connect', 'CONNECT', 'train', 'TRAIN', 'run', 'RUN', 'register', 'REGISTER', 'unRegister', 'UNREGISTER', 'include', 'INCLUDE', SIMPLE_COMMENT}") {
+        assertThrows[RuntimeException] {
+          ScriptSQLExec.parse("save1 append skone_task_log\nas parquet.`${data_monitor_skone_task_log_2_parquet_data_path}`\noptions mode = \"Append\"\nand duration = \"10\"\nand checkpointLocation = \"${data_monitor_skone_task_log_2_parquet_checkpoint_path}\"\npartitionBy hp_stat_date;", sq)
+        }
+      }
+      ScriptSQLExec.parse("save append skone_task_log\nas parquet.`${data_monitor_skone_task_log_2_parquet_data_path}`\noptions mode = \"Append\"\nand duration = \"10\"\nand checkpointLocation = \"${data_monitor_skone_task_log_2_parquet_checkpoint_path}\"\npartitionBy hp_stat_date;", sq)
+
     }
   }
 
