@@ -40,6 +40,8 @@ class LoadAuth(authProcessListener: AuthProcessListener) extends MLSQLAuth with 
 
     val mLSQLTable = MLSQLTable(None, Some(path), TableType.from(format).get)
     authProcessListener.addTable(mLSQLTable)
+
+    authProcessListener.addTable(MLSQLTable(None, Some(tableName), TableType.TEMP))
     TableAuthResult.empty()
     //Class.forName(env.getOrElse("auth_client", "streaming.dsl.auth.meta.client.DefaultClient")).newInstance().asInstanceOf[TableAuth].auth(mLSQLTable)
   }
