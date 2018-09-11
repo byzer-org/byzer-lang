@@ -45,10 +45,17 @@ class SelectAuth(authProcessListener: AuthProcessListener) extends MLSQLAuth wit
         case None =>
           val exists = authProcessListener.withoutDBs.filter(m => f.table == m.table.get).size > 0
           if (!exists) {
-            authProcessListener.addTable(MLSQLTable(None, Some(f.table), TableType.TEMP))
+            authProcessListener.addTable(MLSQLTable(Some("default"), Some(f.table), TableType.HIVE))
           }
       }
     }
+
+    val exists = authProcessListener.withoutDBs.filter(m => tableName == m.table.get).size > 0
+    if (exists) {
+      authProcessListener.addTable(MLSQLTable(None, Some(tableName), TableType.TEMP))
+    }
+
+
     TableAuthResult.empty()
 
   }
