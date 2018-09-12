@@ -78,7 +78,7 @@ object ScriptSQLExec extends Logging with WowLog {
       // setListener.env()
       val authListener = new AuthProcessListener(setListener)
       _parse(input, authListener)
-      val tableAuth = Class.forName(authListener.listener.env().getOrElse("auth_client", "streaming.dsl.auth.meta.client.DefaultConsoleClient")).newInstance().asInstanceOf[TableAuth]
+      val tableAuth = Class.forName(authListener.listener.env().getOrElse("__auth_client__", "streaming.dsl.auth.meta.client.DefaultConsoleClient")).newInstance().asInstanceOf[TableAuth]
       tableAuth.auth(authListener.tables().tables.toList)
     }
     _parse(wow, listener)

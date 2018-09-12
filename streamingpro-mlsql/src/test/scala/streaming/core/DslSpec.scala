@@ -850,6 +850,7 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
       val ssel = createSSEL
       val mlsql =
         """
+          |set auth_client="streaming.dsl.auth.meta.client.DefaultConsoleClient";
           |load parquet.`/tmp/abc` as newtable;
           |select * from default.abc as cool;
         """.stripMargin
