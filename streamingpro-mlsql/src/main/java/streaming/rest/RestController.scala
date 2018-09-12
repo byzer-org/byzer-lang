@@ -47,7 +47,7 @@ class RestController extends ApplicationController {
         StreamingproJobManager.asyncRun(sparkSession, jobInfo, () => {
           try {
             val context = createScriptSQLExecListener()
-            ScriptSQLExec.parse(param("sql"), context, paramAsBoolean("skipInclude", false))
+            ScriptSQLExec.parse(param("sql"), context, paramAsBoolean("skipInclude", false), paramAsBoolean("skipAuth", true))
             htp.get(new Url(param("callback")), Map("stat" -> s"""success"""))
           } catch {
             case e: Exception =>
@@ -58,7 +58,7 @@ class RestController extends ApplicationController {
       } else {
         StreamingproJobManager.run(sparkSession, jobInfo, () => {
           val context = createScriptSQLExecListener()
-          ScriptSQLExec.parse(param("sql"), context, paramAsBoolean("skipInclude", false))
+          ScriptSQLExec.parse(param("sql"), context, paramAsBoolean("skipInclude", false), paramAsBoolean("skipAuth", true))
           if (!silence) {
             outputResult = context.getLastSelectTable() match {
               case Some(table) => "[" + sparkSession.sql(s"select * from $table limit 100").toJSON.collect().mkString(",") + "]"
@@ -85,7 +85,7 @@ class RestController extends ApplicationController {
     val ownerOption = if (params.containsKey("owner")) Some(param("owner")) else None
     val userDefineParams = params.toMap.filter(f => f._1.startsWith("context.")).map(f => (f._1.substring("context.".length), f._2)).toMap
     ScriptSQLExec.setContext(new MLSQLExecuteContext(param("owner"), context.pathPrefix(None), userDefineParams))
-    context.addEnv("HOME",context.pathPrefix(None))
+    context.addEnv("HOME", context.pathPrefix(None))
     context
   }
 
