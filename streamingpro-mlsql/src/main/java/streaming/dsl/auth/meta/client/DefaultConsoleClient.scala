@@ -1,5 +1,6 @@
 package streaming.dsl.auth.meta.client
 
+import streaming.dsl.ScriptSQLExec
 import streaming.dsl.auth.{MLSQLTable, TableAuth, TableAuthResult}
 import streaming.log.{Logging, WowLog}
 
@@ -8,7 +9,8 @@ import streaming.log.{Logging, WowLog}
   */
 class DefaultConsoleClient extends TableAuth with Logging with WowLog {
   override def auth(tables: List[MLSQLTable]): List[TableAuthResult] = {
-    logInfo(format(s"auth ${tables.mkString(",")}"))
+    val owner = ScriptSQLExec.contextGetOrForTest().owner
+    logInfo(format(s"auth ${owner}  want access tables: ${tables.mkString(",")}"))
     throw new RuntimeException("auth fail")
   }
 }

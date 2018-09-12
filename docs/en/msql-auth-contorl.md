@@ -32,6 +32,7 @@ class DefaultConsoleClient extends TableAuth with Logging with WowLog {
 Suppose you run MLSQL script like this:
 
 ```sql
+set __auth_client__="streaming.dsl.auth.meta.client.DefaultConsoleClient";
 load parquet.`/tmp/abc` as newtable;
 select * from default.abc as cool;
 ```
