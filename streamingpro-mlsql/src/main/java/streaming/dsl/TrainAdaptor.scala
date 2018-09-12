@@ -98,7 +98,7 @@ object MLMapping {
       case Some(clzz) =>
         Class.forName(clzz).newInstance().asInstanceOf[SQLAlg]
       case None =>
-        if (!name.contains(".") && name.endsWith("InPlace")) {
+        if (!name.contains(".") && (name.endsWith("InPlace") || name.endsWith("Ext"))) {
           Class.forName(s"streaming.dsl.mmlib.algs.SQL${name}").newInstance().asInstanceOf[SQLAlg]
         } else {
           throw new RuntimeException(s"${name} is not found")

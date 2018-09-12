@@ -1,9 +1,10 @@
 package streaming.dsl.mmlib.algs
 
-import org.apache.spark.ml.classification.{NaiveBayes, NaiveBayesModel, RandomForestClassificationModel, RandomForestClassifier}
-import org.apache.spark.ml.linalg.SQLDataTypes.VectorType
-import org.apache.spark.ml.linalg.Vector
-import org.apache.spark.mllib.tree.model.RandomForestModel
+import org.apache.spark.ml.{Estimator, Model}
+import org.apache.spark.ml.classification.{RandomForestClassificationModel, RandomForestClassifier}
+
+import org.apache.spark.ml.param.Params
+import org.apache.spark.ml.util.MLWritable
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import streaming.dsl.mmlib.SQLAlg

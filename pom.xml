@@ -64,7 +64,6 @@
         <scope>provided</scope>
     </properties>
 
-
     <repositories>
         <repository>
             <id>aliyun</id>
@@ -76,10 +75,6 @@
             <snapshots>
                 <enabled>true</enabled>
             </snapshots>
-        </repository>
-        <repository>
-            <id>cloudera</id>
-            <url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>
         </repository>
     </repositories>
 
@@ -256,6 +251,7 @@
                 <module>streamingpro-dsl</module>
                 <module>streamingpro-mlsql</module>
                 <module>streamingpro-crawler</module>
+                <module>streamingpro-xgboost</module>
             </modules>
             <dependencies>
                 <dependency>
