@@ -69,6 +69,10 @@ endTime      20180913 59:1538:024
 trainParams  Map(maxDepth -> 2, featuresCol -> features, labelCol -> label)
 ```
 
+The picture:
+
+![](https://github.com/allwefantasy/streamingpro/raw/master/images/WX20180913-161354.png)
+
 If you feel ok, register and use the model:
  
 ```sql
