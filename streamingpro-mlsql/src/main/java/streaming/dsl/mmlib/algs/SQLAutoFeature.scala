@@ -16,7 +16,7 @@ import streaming.dsl.mmlib.algs.feature.{DiscretizerIntFeature, DoubleFeature}
   */
 class SQLAutoFeature extends SQLAlg with Functions {
 
-  override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
+  override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
     val intFields = df.schema.filter(f => f.dataType == IntegerType)
     val doubleFields = df.schema.filter(f => f.dataType == DoubleType)
     val textFields = params.getOrElse("textFields", "").split(",").filterNot(f => f.isEmpty).toSet
@@ -43,6 +43,7 @@ class SQLAutoFeature extends SQLAlg with Functions {
       newDF = newDF.drop(f)
     }
     newDF.write.mode(SaveMode.Overwrite).parquet(path)
+    emptyDataFrame()(df)
   }
 
   override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = {

@@ -11,7 +11,7 @@ import streaming.dsl.mmlib.algs.feature.StringFeature
  */
 class SQLRawSimilarInPlace extends SQLAlg with Functions {
 
-  override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
+  override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
     val spark = df.sparkSession
 
     val inputCol = params.getOrElse("inputCol", "content").toString
@@ -28,6 +28,7 @@ class SQLRawSimilarInPlace extends SQLAlg with Functions {
     val newDf1 = df.sparkSession.createDataFrame(rdd1,
       StructType(Seq(StructField("i", LongType), StructField("j", LongType), StructField("v", DoubleType))))
     newDf1.write.mode(SaveMode.Overwrite).parquet(path)
+    emptyDataFrame()(df)
   }
 
   override def load(spark: SparkSession, path: String, params: Map[String, String]): Any = {

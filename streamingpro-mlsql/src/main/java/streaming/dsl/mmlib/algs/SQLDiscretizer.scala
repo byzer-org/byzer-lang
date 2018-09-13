@@ -50,8 +50,9 @@ class SQLDiscretizer extends SQLAlg with Functions {
       parquet(DISCRETIZER_PATH(metaPath))
   }
 
-  override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
+  override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
     internal_train(df, params + ("path" -> path))
+    emptyDataFrame()(df)
   }
 
   override def load(spark: SparkSession, _path: String, params: Map[String, String]): Any = {

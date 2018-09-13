@@ -14,8 +14,8 @@ import scala.collection.JavaConversions._
 class SQLMap extends SQLAlg with MllibFunctions with Functions {
 
   override def skipPathPrefix: Boolean = true
-  override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
-
+  override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
+    emptyDataFrame()(df)
   }
 
   override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = {

@@ -11,11 +11,11 @@ import SQLSendMessage._
 import streaming.log.Logging
 
 /**
- * Created by fchen on 2018/8/22.
- */
-class SQLSendMessage extends SQLAlg with Logging {
+  * Created by fchen on 2018/8/22.
+  */
+class SQLSendMessage extends SQLAlg with Functions with Logging {
 
-  override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
+  override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
     val messageCount = df.count()
     require(messageCount <= MAX_MESSAGE_THRESHOLD, s"message count should <= ${MAX_MESSAGE_THRESHOLD}!")
 
@@ -31,12 +31,13 @@ class SQLSendMessage extends SQLAlg with Logging {
     df.toJSON.collect().foreach(contentJson => {
       method.toUpperCase() match {
         case "MAIL" =>
-          logInfo(s"send content: ${contentJson} to ${to}" )
+          logInfo(s"send content: ${contentJson} to ${to}")
           agent.sendMessage(to, null, null, from, subject, contentJson)
         case _ =>
           throw new RuntimeException("unspport method!")
       }
     })
+    emptyDataFrame()(df)
 
   }
 
@@ -100,8 +101,7 @@ class MailAgent(smtpHost: String) {
   def setMessageRecipients(message: Message, recipient: String, recipientType: Message.RecipientType) {
     // had to do the asInstanceOf[...] call here to make scala happy
     val addressArray = buildInternetAddressArray(recipient).asInstanceOf[Array[Address]]
-    if ((addressArray != null) && (addressArray.length > 0))
-    {
+    if ((addressArray != null) && (addressArray.length > 0)) {
       message.setRecipients(recipientType, addressArray)
     }
   }

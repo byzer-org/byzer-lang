@@ -113,9 +113,10 @@ class SQLRateSampler extends SQLAlg with Functions {
 
   }
 
-  override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
+  override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
     val newDF = internal_train(df, params)
     newDF.write.mode(SaveMode.Overwrite).parquet(path)
+    emptyDataFrame()(df)
   }
 
   override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = ???

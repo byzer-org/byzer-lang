@@ -11,7 +11,7 @@ import scala.collection.mutable.ArrayBuffer
   * Created by allwefantasy on 24/4/2018.
   */
 class SQLTokenExtract extends SQLAlg with Functions {
-  override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
+  override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
     val session = df.sparkSession
     var result = Array[String]()
     require(params.contains("dic.paths"), "dic.paths is required")
@@ -46,6 +46,7 @@ class SQLTokenExtract extends SQLAlg with Functions {
     }
     session.createDataFrame(rdd, StructType(Seq(StructField("id", idStructFiled.dataType), StructField("keywords", ArrayType(StringType))))).
       write.mode(SaveMode.Overwrite).parquet(path)
+    emptyDataFrame()(df)
   }
 
   override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = {

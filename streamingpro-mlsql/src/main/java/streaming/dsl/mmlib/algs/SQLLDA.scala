@@ -19,11 +19,12 @@ import scala.collection.mutable
   */
 class SQLLDA extends SQLAlg with Functions {
 
-  override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
+  override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
     val rfc = new LDA()
     configureModel(rfc, params)
     val model = rfc.fit(df)
     model.write.overwrite().save(path)
+    emptyDataFrame()(df)
   }
 
   override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = {

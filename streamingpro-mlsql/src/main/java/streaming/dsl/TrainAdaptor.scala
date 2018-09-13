@@ -1,6 +1,7 @@
 package streaming.dsl
 
-import org.apache.spark.sql.SparkSession
+import java.util.UUID
+
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.parser.DSLSQLParser._
 import streaming.dsl.template.TemplateMerge
@@ -41,8 +42,10 @@ class TrainAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdap
     if (!sqlAlg.skipPathPrefix) {
       path = withPathPrefix(scriptSQLExecListener.pathPrefix(owner), path)
     }
-    sqlAlg.train(df, path, options)
-    scriptSQLExecListener.setLastSelectTable(null)
+    val newdf = sqlAlg.train(df, path, options)
+    val tempTable = UUID.randomUUID().toString.replace("-", "")
+    newdf.createOrReplaceTempView(tempTable)
+    scriptSQLExecListener.setLastSelectTable(tempTable)
   }
 }
 

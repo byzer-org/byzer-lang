@@ -12,7 +12,7 @@ import streaming.dsl.mmlib.SQLAlg
   * Created by allwefantasy on 13/1/2018.
   */
 class SQLPageRank extends SQLAlg with Functions {
-  override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
+  override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
     val vertexCol = params.getOrElse("vertexCol", "vertextIds").toString
     val edgeSrcCol = params.getOrElse("edgeSrcCol", "edgeSrc").toString
     val edgeDstCol = params.getOrElse("edgeDstCol", "edgeDst").toString
@@ -44,6 +44,7 @@ class SQLPageRank extends SQLAlg with Functions {
 
     verticesDf.write.mode(SaveMode.Overwrite).parquet(path + "/vertices")
     edgesDf.write.mode(SaveMode.Overwrite).parquet(path + "/edges")
+    emptyDataFrame()(df)
 
   }
 

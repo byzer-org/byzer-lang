@@ -1,5 +1,6 @@
 package streaming.dsl.mmlib.algs
 
+import com.yammer.metrics.core.MetricName
 import org.apache.spark.ml.evaluation.RegressionEvaluator
 import org.apache.spark.ml.recommendation.{ALS, ALSModel}
 import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
@@ -10,7 +11,7 @@ import streaming.dsl.mmlib.SQLAlg
   * Created by allwefantasy on 24/7/2018.
   */
 class SQLALSInPlace extends SQLAlg with MllibFunctions with Functions {
-  override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
+  override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
 
     val keepVersion = params.getOrElse("keepVersion", "true").toBoolean
     SQLPythonFunc.incrementVersion(path, keepVersion)
@@ -33,8 +34,8 @@ class SQLALSInPlace extends SQLAlg with MllibFunctions with Functions {
 
           val rmse = evaluator.evaluate(predictions)
           //分值越低越好
-          -rmse
-        case None => 0d
+          List(MetricValue("rmse", -rmse))
+        case None => List()
       }
     }
     )
@@ -54,6 +55,7 @@ class SQLALSInPlace extends SQLAlg with MllibFunctions with Functions {
     }
 
     saveMllibTrainAndSystemParams(sparkSession, params, metaPath)
+    emptyDataFrame()(df)
   }
 
   override def load(sparkSession: SparkSession, _path: String, params: Map[String, String]): Any = {

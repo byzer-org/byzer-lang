@@ -33,7 +33,7 @@ import streaming.log.{Logging, WowLog}
   * This Module support training or predicting with user-defined python script
   */
 class SQLPythonAlg extends SQLAlg with Functions {
-  override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
+  override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
 
     val keepVersion = params.getOrElse("keepVersion", "false").toBoolean
 
@@ -247,6 +247,7 @@ class SQLPythonAlg extends SQLAlg with Functions {
       write.
       mode(SaveMode.Overwrite).
       parquet(SQLPythonFunc.getAlgMetalPath(path, keepVersion) + "/1")
+    emptyDataFrame()(df)
 
   }
 

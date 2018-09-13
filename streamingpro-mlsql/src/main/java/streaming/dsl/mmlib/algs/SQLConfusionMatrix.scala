@@ -97,10 +97,12 @@ class SQLConfusionMatrix extends SQLAlg with Functions {
     spark.createDataset(confusionMatrix).write.mode(SaveMode.Overwrite).
       parquet(s"${path.stripSuffix("/")}/detail")
 
+
   }
 
-  override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
+  override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
     internal_train(df, params + ("path" -> path))
+    emptyDataFrame()(df)
   }
 
   override def load(spark: SparkSession, _path: String, params: Map[String, String]): Any = {

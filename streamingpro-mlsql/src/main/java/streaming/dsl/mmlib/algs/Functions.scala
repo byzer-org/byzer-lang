@@ -25,8 +25,12 @@ import scala.collection.mutable.ArrayBuffer
 /**
   * Created by allwefantasy on 13/1/2018.
   */
-trait Functions extends SQlBaseFunc with Logging with WowLog with Serializable{
+trait Functions extends SQlBaseFunc with Logging with WowLog with Serializable {
 
+  def emptyDataFrame()(implicit df: DataFrame) = {
+    import df.sparkSession.implicits._
+    Seq.empty[String].toDF("name")
+  }
 
   def sampleUnbalanceWithMultiModel(df: DataFrame, path: String, params: Map[String, String], train: (DataFrame, Int) => Unit) = {
     //select count(*) as subLabelCount,label from _ group by labelCol order by  subLabelCount asc
@@ -159,31 +163,39 @@ trait Functions extends SQlBaseFunc with Logging with WowLog with Serializable{
 
   def trainModelsWithMultiParamGroup[T <: Model[T]](df: DataFrame, path: String, params: Map[String, String],
                                                     modelType: () => Params,
-                                                    evaluate: (Params) => Double
+                                                    evaluate: (Params) => List[MetricValue]
                                                    ) = {
+
     val keepVersion = params.getOrElse("keepVersion", "true").toBoolean
 
     val mf = (trainData: DataFrame, fitParam: Map[String, String], modelIndex: Int) => {
       val alg = modelType()
       configureModel(alg, fitParam)
+
+      logInfo(format(s"[training] [alg=${alg.getClass.getName}] [keepVersion=${keepVersion}]"))
+
       var status = "success"
       val modelTrainStartTime = System.currentTimeMillis()
       val modelPath = SQLPythonFunc.getAlgModelPath(path, keepVersion) + "/" + modelIndex
-      var score = 0d
+      var scores: List[MetricValue] = List()
       try {
         val model = alg.asInstanceOf[Estimator[T]].fit(trainData)
         model.asInstanceOf[MLWritable].write.overwrite().save(modelPath)
-        score = evaluate(model)
+        scores = evaluate(model)
+        logInfo(format(s"[trained] [alg=${alg.getClass.getName}] [metrics=${scores}] [model hyperparameters=${
+          model.asInstanceOf[Params].explainParams().replaceAll("\n", "\t")
+        }]"))
       } catch {
         case e: Exception =>
-          e.printStackTrace()
+          logInfo(format_exception(e))
           status = "fail"
       }
       val modelTrainEndTime = System.currentTimeMillis()
-      if (status == "fail") {
-        throw new RuntimeException(s"Fail to train als model: ${modelIndex}; All will fails")
-      }
-      Row.fromSeq(Seq(modelPath, modelIndex, alg.getClass.getName, score, "success", modelTrainStartTime, modelTrainEndTime, fitParam))
+      //      if (status == "fail") {
+      //        throw new RuntimeException(s"Fail to train als model: ${modelIndex}; All will fails")
+      //      }
+      val metrics = scores.map(score => Row.fromSeq(Seq(score.name, score.value))).toArray
+      Row.fromSeq(Seq(modelPath, modelIndex, alg.getClass.getName, metrics, status, modelTrainStartTime, modelTrainEndTime, fitParam))
     }
     val fitParam = arrayParamsWithIndex("fitParam", params)
 
@@ -197,7 +209,10 @@ trait Functions extends SQlBaseFunc with Logging with WowLog with Serializable{
       StructField("modelPath", StringType),
       StructField("algIndex", IntegerType),
       StructField("alg", StringType),
-      StructField("score", DoubleType),
+      StructField("metrics", ArrayType(StructType(Seq(
+        StructField(name = "name", dataType = StringType),
+        StructField(name = "value", dataType = DoubleType)
+      )))),
 
       StructField("status", StringType),
       StructField("startTime", LongType),

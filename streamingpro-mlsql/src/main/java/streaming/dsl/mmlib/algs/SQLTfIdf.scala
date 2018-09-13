@@ -15,7 +15,7 @@ import org.apache.spark.sql.{SparkSession, _}
 class SQLTfIdf extends SQLAlg with Functions {
 
 
-  override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
+  override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
     val sparkSession = df.sparkSession
     val rfc = new IntTF()
     configureModel(rfc, params)
@@ -27,6 +27,7 @@ class SQLTfIdf extends SQLAlg with Functions {
     idf.setInputCol("__SQLTfIdf__")
     val idfModel = idf.fit(featurizedData)
     idfModel.write.overwrite().save(path)
+    emptyDataFrame()(df)
   }
 
   override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = {
