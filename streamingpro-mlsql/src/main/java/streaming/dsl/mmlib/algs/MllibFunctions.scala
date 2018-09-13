@@ -3,11 +3,38 @@ package streaming.dsl.mmlib.algs
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 import org.apache.spark.sql.types.{MapType, StringType, StructField, StructType}
 import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession}
+import org.joda.time.DateTime
 
 /**
   * Created by allwefantasy on 25/7/2018.
   */
 trait MllibFunctions extends Serializable {
+
+  def formatOutput(newDF: DataFrame) = {
+    val schema = newDF.schema
+    def formatMetrics(field: StructField, row: Row) = {
+      val value = row.getSeq[Row](schema.fieldIndex(field.name))
+      value.map(row => s"${row.getString(0)}:  ${row.getDouble(1)}").mkString("\n")
+    }
+    def formatDate(field: StructField, row: Row) = {
+      val value = row.getLong(schema.fieldIndex(field.name))
+      new DateTime(value).toString("yyyyMMdd mm:HH:ss:SSS")
+    }
+    val rows = newDF.collect().flatMap { row =>
+      List(Row.fromSeq(Seq("---------------", "------------------"))) ++ schema.fields.map { field =>
+        val value = field.name match {
+          case "metrics" => formatMetrics(field, row)
+          case "startTime" | "endTime" => formatDate(field, row)
+          case _ => row.get(schema.fieldIndex(field.name)).toString
+        }
+        Row.fromSeq(Seq(field.name, value))
+      }
+
+    }
+    val newSchema = StructType(Seq(StructField("name", StringType), StructField("value", StringType)))
+    newDF.sparkSession.createDataFrame(newDF.sparkSession.sparkContext.parallelize(rows, 1), newSchema)
+  }
+
 
   def multiclassClassificationEvaluate(predictions: DataFrame, congigureEvaluator: (MulticlassClassificationEvaluator) => Unit) = {
     "f1|weightedPrecision|weightedRecall|accuracy".split("\\|").map { metricName =>

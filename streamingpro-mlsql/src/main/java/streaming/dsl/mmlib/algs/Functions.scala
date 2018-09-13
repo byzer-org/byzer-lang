@@ -163,7 +163,7 @@ trait Functions extends SQlBaseFunc with Logging with WowLog with Serializable {
 
   def trainModelsWithMultiParamGroup[T <: Model[T]](df: DataFrame, path: String, params: Map[String, String],
                                                     modelType: () => Params,
-                                                    evaluate: (Params) => List[MetricValue]
+                                                    evaluate: (Params,Map[String, String]) => List[MetricValue]
                                                    ) = {
 
     val keepVersion = params.getOrElse("keepVersion", "true").toBoolean
@@ -181,7 +181,7 @@ trait Functions extends SQlBaseFunc with Logging with WowLog with Serializable {
       try {
         val model = alg.asInstanceOf[Estimator[T]].fit(trainData)
         model.asInstanceOf[MLWritable].write.overwrite().save(modelPath)
-        scores = evaluate(model)
+        scores = evaluate(model,fitParam)
         logInfo(format(s"[trained] [alg=${alg.getClass.getName}] [metrics=${scores}] [model hyperparameters=${
           model.asInstanceOf[Params].explainParams().replaceAll("\n", "\t")
         }]"))

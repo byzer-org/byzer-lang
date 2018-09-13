@@ -103,6 +103,9 @@ class BatchLoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener,
         }
         import sparkSession.implicits._
         table = reader.json(sparkSession.createDataset[String](items))
+      case "modelParams" =>
+        val sqlAlg = MLMapping.findAlg(cleanStr(path))
+        table = sqlAlg.explainParams(sparkSession)
       case _ =>
         val owner = option.get("owner")
         table = reader.format(format).load(withPathPrefix(scriptSQLExecListener.pathPrefix(owner), cleanStr(path)))
