@@ -87,13 +87,13 @@ class SQLMapValues extends SQLAlg with Functions {
     val defaultvalue = sparkSession.sparkContext.broadcast(mapMissingToValue)
     val dictbc = sparkSession.sparkContext.broadcast(dictionary)
 
-    val f_array = (keys: Seq[String]) => {
+    val fArray = (keys: Seq[String]) => {
       keys.map(key => {
         dictbc.value.getOrElse(key, defaultvalue.value)
       })
     }
 
-    val audf = UserDefinedFunction(f_array, ArrayType(outputDataType), Some(Seq(ArrayType(StringType))))
+    val audf = UserDefinedFunction(fArray, ArrayType(outputDataType), Some(Seq(ArrayType(StringType))))
 
     sparkSession.udf.register(name + "_array", audf)
 
