@@ -75,7 +75,10 @@ class SQLRandomForest(override val uid: String) extends SQLAlg with MllibFunctio
   override def explainParams(sparkSession: SparkSession): DataFrame = {
     val model = new RandomForestClassifier()
     val rfcParams2 = this.params.map(this.explainParam).map(f => Row.fromSeq(f.split(":", 2)))
-    val rfcParams = model.params.map(model.explainParam).map(f => Row.fromSeq(f.split(":", 2)))
+    val rfcParams = model.params.map(model.explainParam).map { f =>
+      val Array(name, value) = f.split(":", 2)
+      Row.fromSeq(Seq("fitParam.[group]." + name, value))
+    }
     sparkSession.createDataFrame(sparkSession.sparkContext.parallelize(rfcParams2 ++ rfcParams, 1), StructType(Seq(StructField("param", StringType), StructField("description", StringType))))
   }
 

@@ -1,6 +1,19 @@
 ## RandomForest Example
+ 
+Suppose you want to use RandomForest to train a model.  
 
-Suppose you want to use RandomForest to train a model.  Here is the MLSQL script.
+The first step you want to do maybe check the hype parameters of RandomForest. You can do like this:
+
+```
+load modelParams.`RandomForest` as output;
+```
+
+The result is like this:
+
+![](https://github.com/allwefantasy/streamingpro/raw/master/images/WX20180913-180015.png)
+
+
+The next step you should do maybe write a script to train your model:
 
 ```sql
 
@@ -46,7 +59,6 @@ and `fitParam.1.maxDepth`="10"
 When this script is executed, the following result will be showed in web console:
 
 
-
 ```
 name   value
 ---------------------------------
@@ -88,6 +100,8 @@ autoSelectByMetric="f1";
 
 select rf_predict(features) as predict_label, label from data1 as output;
 ```
+
+
 
 
 
