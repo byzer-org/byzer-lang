@@ -17,10 +17,11 @@ import scala.collection.mutable.ArrayBuffer
   */
 class SQLNaiveBayes extends SQLAlg with Functions {
 
-  override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
+  override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
     trainModels[NaiveBayesModel](df, path, params, () => {
       new NaiveBayes()
     })
+    emptyDataFrame()(df)
   }
 
   override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = {

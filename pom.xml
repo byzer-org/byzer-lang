@@ -43,6 +43,7 @@
         <module>streamingpro-tensorflow</module>
         <module>streamingpro-opencv</module>
         <module>streamingpro-jython</module>
+        <module>streamingpro-automl</module>
     </modules>
 
     <properties>

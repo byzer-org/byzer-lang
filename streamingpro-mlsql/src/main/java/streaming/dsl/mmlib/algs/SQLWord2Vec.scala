@@ -10,15 +10,16 @@ import streaming.dsl.mmlib.SQLAlg
 import scala.collection.JavaConversions._
 
 /**
- * Created by allwefantasy on 13/1/2018.
- */
+  * Created by allwefantasy on 13/1/2018.
+  */
 class SQLWord2Vec extends SQLAlg with Functions {
 
-  def train(df: DataFrame, path: String, params: Map[String, String]) = {
+  def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
     val w2v = new Word2Vec()
     configureModel(w2v, params)
     val model = w2v.fit(df)
     model.write.overwrite().save(path)
+    emptyDataFrame()(df)
   }
 
   def load(sparkSession: SparkSession, path: String, params: Map[String, String]) = {

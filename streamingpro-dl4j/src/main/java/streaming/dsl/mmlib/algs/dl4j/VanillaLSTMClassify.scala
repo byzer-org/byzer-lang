@@ -17,7 +17,7 @@ import streaming.dsl.mmlib.SQLAlg
   * Created by allwefantasy on 26/2/2018.
   */
 class VanillaLSTMClassify extends SQLAlg with Dl4jFunctions {
-  override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
+  override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
     def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
       dl4jClassificationTrain(df, path, params, () => {
 
@@ -58,11 +58,12 @@ class VanillaLSTMClassify extends SQLAlg with Dl4jFunctions {
 
       })
     }
-
+    import df.sparkSession.implicits._
+    Seq.empty[String].toDF("name")
 
   }
 
-  override def load(sparkSession: SparkSession, path: String,params: Map[String, String]): Any = null
+  override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = null
 
   override def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = null
 }

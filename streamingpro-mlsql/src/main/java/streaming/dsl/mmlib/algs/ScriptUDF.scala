@@ -15,7 +15,9 @@ class ScriptUDF extends SQLAlg with MllibFunctions with Functions {
 
   override def skipPathPrefix: Boolean = true
 
-  override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {}
+  override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
+    emptyDataFrame()(df)
+  }
 
   /*
       register ScalaScriptUDF.`scriptText` as udf1;

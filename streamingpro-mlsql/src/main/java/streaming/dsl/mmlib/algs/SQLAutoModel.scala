@@ -8,8 +8,8 @@ import streaming.dsl.mmlib.SQLAlg
   * Created by allwefantasy on 7/5/2018.
   */
 class SQLAutoModel extends SQLAlg with Functions {
-  override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
-
+  override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
+    emptyDataFrame()(df)
   }
 
   override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = ???

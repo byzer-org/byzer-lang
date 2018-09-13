@@ -9,12 +9,13 @@ import org.apache.spark.sql.types.DoubleType
 import streaming.dsl.mmlib.SQLAlg
 
 class SQLLogisticRegression extends SQLAlg with Functions {
-  override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
+  override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
     val lr = new LogisticRegression()
     configureModel(lr, params)
 
     val model = lr.fit(df)
     model.write.overwrite().save(path)
+    emptyDataFrame()(df)
   }
 
   override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = {

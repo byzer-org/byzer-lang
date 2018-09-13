@@ -27,7 +27,7 @@ import scala.collection.JavaConverters._
   * This Module support training or predicting with user-defined python script
   */
 class SQLPythonAlgBatchPrediction extends SQLAlg with Functions {
-  override def train(df: DataFrame, wowPath: String, params: Map[String, String]): Unit = {
+  override def train(df: DataFrame, wowPath: String, params: Map[String, String]): DataFrame = {
 
     val kafkaParam = mapParams("kafkaParam", params)
 
@@ -158,6 +158,7 @@ class SQLPythonAlgBatchPrediction extends SQLAlg with Functions {
       Seq().toIterator
     }
     wowRDD.count()
+    emptyDataFrame()(df)
   }
 
   override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = {

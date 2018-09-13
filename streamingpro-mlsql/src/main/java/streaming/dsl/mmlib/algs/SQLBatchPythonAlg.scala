@@ -24,7 +24,7 @@ import streaming.dsl.mmlib.SQLAlg
  * Created by fchen on 2018/8/22.
  */
 class SQLBatchPythonAlg extends SQLAlg with Functions {
-  override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
+  override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
     val spark = df.sparkSession
     val pythonAlg = new SQLPythonAlg()
     val model = pythonAlg.load(spark, path, params)
@@ -150,6 +150,7 @@ class SQLBatchPythonAlg extends SQLAlg with Functions {
     val pschema = df.schema.add(predictLabelColumnName, VectorType)
 //    spark.createDataFrame(prdd, pschema).write.mode(SaveMode.Overwrite).json("/tmp/fresult")
     spark.createDataFrame(prdd, pschema).createOrReplaceTempView(predictTableName)
+    emptyDataFrame()(df)
 
   }
 

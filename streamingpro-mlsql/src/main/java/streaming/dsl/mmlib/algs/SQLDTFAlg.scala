@@ -35,7 +35,7 @@ import scala.collection.JavaConverters._
   * Created by allwefantasy on 5/2/2018.
   */
 class SQLDTFAlg extends SQLAlg with Functions {
-  override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
+  override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
 
     val keepVersion = params.getOrElse("keepVersion", "true").toBoolean
 
@@ -85,6 +85,7 @@ class SQLDTFAlg extends SQLAlg with Functions {
       }
       val printData = tfDataMap.map(f => s"${f._1}=>${f._2}").mkString("\n")
       println(s"enableDataLocal is enabled.  data partition to tensorflow worker:\n ${printData}")
+      emptyDataFrame()(df)
 
     }
 
@@ -413,6 +414,7 @@ class SQLDTFAlg extends SQLAlg with Functions {
       write.
       mode(SaveMode.Overwrite).
       parquet(SQLPythonFunc.getAlgMetalPath(path, keepVersion) + "/1")
+    emptyDataFrame()(df)
 
   }
 

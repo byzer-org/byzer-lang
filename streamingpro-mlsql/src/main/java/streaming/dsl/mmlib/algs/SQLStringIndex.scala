@@ -13,7 +13,7 @@ import org.apache.spark.sql.{functions => F}
   */
 class SQLStringIndex extends SQLAlg with Functions {
 
-  override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
+  override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
     require(params.contains("inputCol"), "inputCol is required")
     val inputCol = params("inputCol")
     var newDf = df
@@ -27,6 +27,7 @@ class SQLStringIndex extends SQLAlg with Functions {
     configureModel(rfc, params)
     val model = rfc.fit(newDf)
     model.write.overwrite().save(path)
+    emptyDataFrame()(df)
   }
 
   override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = {

@@ -18,12 +18,14 @@ import scala.collection.mutable.ArrayBuffer
   * Created by allwefantasy on 12/9/2018.
   */
 class SQLXGBoostExt extends SQLAlg with Logging {
-  override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
+  override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
 
 
     trainModels[XGBoostClassificationModel](df, path, params, () => {
       new XGBoostClassifier()
     })
+    import df.sparkSession.implicits._
+    Seq.empty[String].toDF("name")
 
   }
 

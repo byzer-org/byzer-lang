@@ -13,10 +13,10 @@ import streaming.dsl.mmlib.algs.meta.Word2ArrayMeta
 import scala.collection.mutable.ArrayBuffer
 
 /**
- * Created by zhuml on 8/8/2018.
- */
+  * Created by zhuml on 8/8/2018.
+  */
 class SQLWord2ArrayInPlace extends SQLAlg with Functions {
-  override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
+  override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
     val spark = df.sparkSession
     val wordvecPaths = params.getOrElse("wordvecPaths", "")
     val wordVecMap = loadWordvecs(spark, wordvecPaths)
@@ -32,6 +32,7 @@ class SQLWord2ArrayInPlace extends SQLAlg with Functions {
       saveTraningParams(df.sparkSession, params ++ modelParams, getMetaPath(path))
       wordsDf.write.mode(SaveMode.Overwrite).parquet(WORDS_PATH(getMetaPath(path)))
     }
+    emptyDataFrame()(df)
   }
 
   override def load(spark: SparkSession, _path: String, params: Map[String, String]): Any = {
