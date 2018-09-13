@@ -16,7 +16,7 @@ import org.apache.spark.sql.types.{ArrayType, StringType}
 class SQLHashTfIdf extends SQLAlg with Functions {
 
 
-  override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
+  override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
     val rfc = new HashingTF()
     configureModel(rfc, params)
     rfc.setOutputCol("__SQLTfIdf__")
@@ -27,6 +27,7 @@ class SQLHashTfIdf extends SQLAlg with Functions {
     idf.setInputCol("__SQLTfIdf__")
     val idfModel = idf.fit(featurizedData)
     idfModel.write.overwrite().save(path)
+    emptyDataFrame()(df)
   }
 
   override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = {

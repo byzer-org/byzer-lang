@@ -8,7 +8,7 @@ import streaming.dsl.mmlib.SQLAlg
   * Created by allwefantasy on 26/6/2018.
   */
 class SQLCorpusExplainInPlace extends SQLAlg with Functions {
-  override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
+  override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
     require(params.contains("labelCol"), "labelCol is required")
     val labelCol = params.getOrElse("labelCol", "")
 
@@ -34,6 +34,7 @@ class SQLCorpusExplainInPlace extends SQLAlg with Functions {
       withColumn("percent", c2(F.col("labelCount"))).
       withColumn("total", c3())
     newDF.write.mode(SaveMode.Overwrite).parquet(MetaConst.getDataPath(path))
+    emptyDataFrame()(df)
   }
 
   override def load(spark: SparkSession, _path: String, params: Map[String, String]): Any = {

@@ -8,7 +8,8 @@ import streaming.dsl.mmlib.SQLAlg
   * Created by zhuml on 20/8/2018.
   */
 class SQLWaterMarkInPlace extends SQLAlg with Functions {
-  override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
+  override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
+    emptyDataFrame()(df)
   }
 
   override def load(spark: SparkSession, _path: String, params: Map[String, String]): Any = {

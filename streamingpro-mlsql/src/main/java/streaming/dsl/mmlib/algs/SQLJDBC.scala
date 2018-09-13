@@ -35,7 +35,7 @@ class SQLJDBC extends SQLAlg with MllibFunctions with Functions with Logging {
 
   }
 
-  override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
+  override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
     var _params = params
     if (ScriptSQLExec.dbMapping.containsKey(path)) {
       ScriptSQLExec.dbMapping.get(path).foreach { f =>
@@ -43,6 +43,7 @@ class SQLJDBC extends SQLAlg with MllibFunctions with Functions with Logging {
       }
     }
     executeInDriver(_params)
+    emptyDataFrame()(df)
   }
 
   override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = {

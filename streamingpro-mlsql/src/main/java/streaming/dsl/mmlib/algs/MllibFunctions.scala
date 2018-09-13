@@ -1,12 +1,23 @@
 package streaming.dsl.mmlib.algs
 
+import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 import org.apache.spark.sql.types.{MapType, StringType, StructField, StructType}
-import org.apache.spark.sql.{Row, SaveMode, SparkSession}
+import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession}
 
 /**
   * Created by allwefantasy on 25/7/2018.
   */
 trait MllibFunctions extends Serializable {
+
+  def multiclassClassificationEvaluate(predictions: DataFrame, congigureEvaluator: (MulticlassClassificationEvaluator) => Unit) = {
+    "f1|weightedPrecision|weightedRecall|accuracy".split("\\|").map { metricName =>
+      val evaluator = new MulticlassClassificationEvaluator()
+        .setMetricName(metricName)
+      congigureEvaluator(evaluator)
+      MetricValue(metricName, evaluator.evaluate(predictions))
+    }.toList
+  }
+
   def mllibModelAndMetaPath(path: String, params: Map[String, String], sparkSession: SparkSession) = {
     val maxVersion = SQLPythonFunc.getModelVersion(path)
     val versionEnabled = maxVersion match {
@@ -22,12 +33,17 @@ trait MllibFunctions extends Serializable {
     else SQLPythonFunc.getAlgMetalPathWithVersion(path, modelVersion)
 
     var algIndex = params.getOrElse("algIndex", "-1").toInt
+    val autoSelectByMetric = params.getOrElse("autoSelectByMetric", "f1")
 
     val modelList = sparkSession.read.parquet(metaPath + "/0").collect()
     val bestModelPath = if (algIndex != -1) {
       Seq(baseModelPath + "/" + algIndex)
     } else {
-      modelList.map(f => (f(3).asInstanceOf[Double], f(0).asInstanceOf[String], f(1).asInstanceOf[Int]))
+      modelList.map { row =>
+        val metric = row(3).asInstanceOf[scala.collection.mutable.WrappedArray[Row]].filter(f => f.getString(0) == autoSelectByMetric).head
+        val metricScore = metric.getAs[Double](1)
+        (metricScore, row(0).asInstanceOf[String], row(1).asInstanceOf[Int])
+      }
         .toSeq
         .sortBy(f => f._1)(Ordering[Double].reverse)
         .take(1)
@@ -51,3 +67,5 @@ trait MllibFunctions extends Serializable {
       parquet(metaPath + "/1")
   }
 }
+
+case class MetricValue(name: String, value: Double)

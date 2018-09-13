@@ -81,13 +81,14 @@ class SQLModelExplainInPlace extends SQLAlg with Functions {
       .write.mode(SaveMode.Overwrite).parquet(getDataPath(path))
   }
 
-  override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
+  override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
     val modelType = params.getOrElse("modelType", "sklearn")
     modelType match {
       case "sklearn" => sklearnTrain(df, path, params)
       case "sparkmllib" => sparkmllibTrain(df, path, params)
       case _ =>
     }
+    emptyDataFrame()(df)
   }
 
   override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = {

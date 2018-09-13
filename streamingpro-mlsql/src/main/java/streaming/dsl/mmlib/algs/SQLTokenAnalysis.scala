@@ -52,11 +52,12 @@ class SQLTokenAnalysis extends SQLAlg with Functions {
 
   }
 
-  override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
+  override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
     val newDf = internal_train(df, params)
     val fieldName = params("inputCol")
     val id = params("idCol")
     newDf.select(F.col(fieldName).alias("keywords"), F.col(id)).write.mode(SaveMode.Overwrite).parquet(path)
+    emptyDataFrame()(df)
   }
 
   override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = {

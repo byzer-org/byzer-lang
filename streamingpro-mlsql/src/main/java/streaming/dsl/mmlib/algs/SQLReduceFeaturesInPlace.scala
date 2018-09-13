@@ -10,7 +10,7 @@ import streaming.dsl.mmlib.SQLAlg
   * Created by allwefantasy on 26/7/2018.
   */
 class SQLReduceFeaturesInPlace extends SQLAlg with MllibFunctions with Functions {
-  override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
+  override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
 
     val featureReduceType = params.getOrElse("featureReduceType", "pca")
 
@@ -34,6 +34,7 @@ class SQLReduceFeaturesInPlace extends SQLAlg with MllibFunctions with Functions
     }
 
     model.asInstanceOf[Transformer].transform(df).write.mode(SaveMode.Overwrite).parquet(path + "/data")
+    emptyDataFrame()(df)
 
   }
 

@@ -16,8 +16,9 @@ import scala.collection.mutable.ArrayBuffer
   * Created by allwefantasy on 7/5/2018.
   */
 class SQLTfIdfInPlace extends SQLAlg with Functions {
-  override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
+  override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
     interval_train(df, params + ("path" -> path)).write.mode(SaveMode.Overwrite).parquet(getDataPath(path))
+    emptyDataFrame()(df)
   }
 
   def interval_train(df: DataFrame, params: Map[String, String]) = {

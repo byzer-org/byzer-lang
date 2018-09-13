@@ -12,11 +12,12 @@ import org.apache.spark.sql.{SparkSession, _}
   * Created by allwefantasy on 15/1/2018.
   */
 class SQLLSVM extends SQLAlg with Functions {
-  override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
+  override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
     val bayes = new LinearSVC()
     configureModel(bayes, params)
     val model = bayes.fit(df)
     model.write.overwrite().save(path)
+    emptyDataFrame()(df)
   }
 
   override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = {

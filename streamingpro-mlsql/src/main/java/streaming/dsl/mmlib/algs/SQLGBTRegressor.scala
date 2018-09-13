@@ -14,11 +14,12 @@ import org.apache.spark.sql.types.DoubleType
   */
 class SQLGBTRegressor extends SQLAlg with Functions {
 
-  override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
+  override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
     val rfc = new GBTRegressor()
     configureModel(rfc, params)
     val model = rfc.fit(df)
     model.write.overwrite().save(path)
+    emptyDataFrame()(df)
   }
 
   override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = {

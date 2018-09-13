@@ -35,9 +35,10 @@ class SQLDicOrTableToArray extends SQLAlg with Functions {
     model
   }
 
-  override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
+  override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
     val model = internal_train(df, params)
     model.write.mode(SaveMode.Overwrite).parquet(path)
+    emptyDataFrame()(df)
 
   }
 

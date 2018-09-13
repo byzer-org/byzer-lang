@@ -31,9 +31,10 @@ class SQLScalerInPlace extends SQLAlg with Functions {
     newDF
   }
 
-  override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
+  override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
     val newDF = internal_train(df, params + ("path" -> path))
     newDF.write.mode(SaveMode.Overwrite).parquet(getDataPath(path))
+    emptyDataFrame()(df)
   }
 
   override def load(spark: SparkSession, _path: String, params: Map[String, String]): Any = {

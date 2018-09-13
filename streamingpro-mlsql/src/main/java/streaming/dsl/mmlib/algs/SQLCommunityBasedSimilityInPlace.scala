@@ -10,7 +10,7 @@ import streaming.dsl.mmlib.algs.meta.graphx.{GroupVeterxs, VeterxAndGroup}
   * Created by allwefantasy on 9/8/2018.
   */
 class SQLCommunityBasedSimilarityInPlace extends SQLAlg with Functions {
-  override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
+  override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
     val rowNumCol = params.getOrElse("rowNum", "i")
     val columnNumCol = params.getOrElse("columnNum", "j")
     val edgeValueCol = params.getOrElse("edgeValue", "v")
@@ -33,6 +33,7 @@ class SQLCommunityBasedSimilarityInPlace extends SQLAlg with Functions {
       map(f => GroupVeterxs(f._1, f._2.map(k => k.vertexId).toSeq))
     import df.sparkSession.implicits._
     df.sparkSession.createDataset(rdd).write.mode(SaveMode.Overwrite).parquet(path + "/data")
+    emptyDataFrame()(df)
 
   }
 

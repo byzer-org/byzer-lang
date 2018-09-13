@@ -19,7 +19,7 @@ import streaming.dsl.mmlib.SQLAlg
   * Created by allwefantasy on 15/1/2018.
   */
 class SQLDL4J extends SQLAlg with Dl4jFunctions {
-  override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
+  override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
 
     require(params.contains("featureSize"), "featureSize is required")
     require(params.contains("labelSize"), "labelSize is required")
@@ -35,6 +35,8 @@ class SQLDL4J extends SQLAlg with Dl4jFunctions {
        --conf spark.yarn.executor.memoryOverhead=6144
      */
     Class.forName("streaming.dsl.mmlib.algs.dl4j." + params("alg")).newInstance().asInstanceOf[SQLAlg].train(df, path, params)
+    import df.sparkSession.implicits._
+    Seq.empty[String].toDF("name")
   }
 
   override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = {

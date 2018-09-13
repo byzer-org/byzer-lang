@@ -12,7 +12,7 @@ import streaming.dsl.mmlib.SQLAlg
   * Created by allwefantasy on 22/1/2018.
   */
 class SQLRowMatrix extends SQLAlg with Functions {
-  override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
+  override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
     val rdd = df.rdd.map { f =>
       val v = f.getAs(params.getOrElse("inputCol", "features").toString).asInstanceOf[Vector]
       val label = f.getAs(params.getOrElse("labelCol", "label").toString).asInstanceOf[Long]
@@ -29,6 +29,7 @@ class SQLRowMatrix extends SQLAlg with Functions {
     val newdf = df.sparkSession.createDataFrame(csl.entries.map(f => Row(f.i, f.j, f.value)),
       StructType(Seq(StructField("i", LongType), StructField("j", LongType), StructField("v", DoubleType))))
     newdf.write.mode(SaveMode.Overwrite).parquet(path)
+    emptyDataFrame()(df)
   }
 
   override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = {

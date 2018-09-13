@@ -61,9 +61,11 @@ class SQLJavaImage extends SQLAlg with SQlBaseFunc {
     newDF
   }
 
-  override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
+  override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
     val newDF = interval_train(df, path, params)
     newDF.write.mode(SaveMode.Overwrite).parquet(MetaConst.getDataPath(path))
+    import df.sparkSession.implicits._
+    Seq.empty[String].toDF("name")
   }
 
   override def load(spark: SparkSession, _path: String, params: Map[String, String]): Any = {

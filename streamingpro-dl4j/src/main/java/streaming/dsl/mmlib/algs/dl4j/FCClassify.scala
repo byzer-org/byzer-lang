@@ -18,7 +18,7 @@ import streaming.dsl.mmlib.SQLAlg
   * Created by allwefantasy on 23/2/2018.
   */
 class FCClassify extends SQLAlg with Dl4jFunctions {
-  def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
+  def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
     dl4jClassificationTrain(df, path, params, () => {
 
       val featureSize = params.getOrElse("featureSize", "-1").toInt
@@ -55,6 +55,8 @@ class FCClassify extends SQLAlg with Dl4jFunctions {
       netConf
 
     })
+    import df.sparkSession.implicits._
+    Seq.empty[String].toDF("name")
   }
 
   override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = {

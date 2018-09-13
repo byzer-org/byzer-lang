@@ -1,6 +1,7 @@
 package streaming.dsl
 
-import org.apache.spark.sql.SparkSession
+import java.util.UUID
+
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.parser.DSLSQLParser._
 import streaming.dsl.template.TemplateMerge
@@ -41,8 +42,10 @@ class TrainAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdap
     if (!sqlAlg.skipPathPrefix) {
       path = withPathPrefix(scriptSQLExecListener.pathPrefix(owner), path)
     }
-    sqlAlg.train(df, path, options)
-    scriptSQLExecListener.setLastSelectTable(null)
+    val newdf = sqlAlg.train(df, path, options)
+    val tempTable = UUID.randomUUID().toString.replace("-", "")
+    newdf.createOrReplaceTempView(tempTable)
+    scriptSQLExecListener.setLastSelectTable(tempTable)
   }
 }
 
@@ -99,7 +102,7 @@ object MLMapping {
       case Some(clzz) =>
         Class.forName(clzz).newInstance().asInstanceOf[SQLAlg]
       case None =>
-        if (!name.contains(".") && name.endsWith("InPlace")) {
+        if (!name.contains(".") && (name.endsWith("InPlace") || name.endsWith("Ext"))) {
           Class.forName(s"streaming.dsl.mmlib.algs.SQL${name}").newInstance().asInstanceOf[SQLAlg]
         } else {
           throw new RuntimeException(s"${name} is not found")

@@ -16,11 +16,12 @@ import org.apache.spark.mllib.linalg.{Vector => OldVector, Vectors => OldVectors
   * Created by allwefantasy on 4/2/2018.
   */
 class SQLStandardScaler extends SQLAlg with Functions {
-  override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
+  override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
     val rfc = new StandardScaler()
     configureModel(rfc, params)
     val model = rfc.fit(df)
     model.write.overwrite().save(path)
+    emptyDataFrame()(df)
   }
 
   override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = {

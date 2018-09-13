@@ -10,12 +10,13 @@ import streaming.dsl.mmlib.SQLAlg
   * Created by allwefantasy on 8/2/2018.
   */
 class SQLTableToMap extends SQLAlg with Functions {
-  override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
+  override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
     val keyField = params.getOrElse("keyField", "key")
     val valueField = params.getOrElse("keyField", "value")
 
     val mapResult = df.select(F.col(keyField).as("key"), F.col(valueField).as("value"))
     mapResult.write.mode(SaveMode.Overwrite).parquet(path)
+    emptyDataFrame()(df)
 
   }
 
