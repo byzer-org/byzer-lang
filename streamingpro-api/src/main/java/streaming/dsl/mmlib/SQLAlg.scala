@@ -13,6 +13,11 @@ trait SQLAlg extends Serializable {
 
   def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction
 
+  def explainParams(sparkSession: SparkSession): DataFrame = {
+    import sparkSession.implicits._
+    Seq.empty[(String, String)].toDF("name", "value")
+  }
+
   def skipPathPrefix: Boolean = false
 
 }

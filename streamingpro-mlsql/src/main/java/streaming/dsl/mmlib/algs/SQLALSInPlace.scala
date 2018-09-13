@@ -21,7 +21,7 @@ class SQLALSInPlace extends SQLAlg with MllibFunctions with Functions {
 
     trainModelsWithMultiParamGroup[ALSModel](df, path, params, () => {
       new ALS()
-    }, (model) => {
+    }, (model, fitParam) => {
       evaluateTable match {
         case Some(etable) =>
           model.asInstanceOf[ALSModel].setColdStartStrategy(params.getOrElse("coldStartStrategy", "nan"))
@@ -29,7 +29,7 @@ class SQLALSInPlace extends SQLAlg with MllibFunctions with Functions {
           val predictions = model.asInstanceOf[ALSModel].transform(evaluateTableDF)
           val evaluator = new RegressionEvaluator()
             .setMetricName("rmse")
-            .setLabelCol(params.getOrElse("ratingCol", "rating"))
+            .setLabelCol(fitParam.getOrElse("ratingCol", "rating"))
             .setPredictionCol("prediction")
 
           val rmse = evaluator.evaluate(predictions)
