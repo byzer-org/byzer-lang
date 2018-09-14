@@ -68,10 +68,6 @@ class SQLMapValues extends SQLAlg with Functions {
 
     val outputDataType = dict.schema.fields.filter(st => meta.outputCol == st.name).head.dataType
 
-    println("wuheyi" + outputDataType)
-    val a = ArrayType(outputDataType)
-
-
     val mapMissingToValue = dict.filter(row => {
       row.getAs[String](meta.inputCol) == meta.mapMissingTo
     }).collect()
