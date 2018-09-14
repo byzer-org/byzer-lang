@@ -8,7 +8,7 @@ import _root_.streaming.dsl.mmlib.algs.meta.MapValuesMeta
 
 
 class SQLMapValues extends SQLAlg with Functions {
-  override def train(df: DataFrame, path: String, params: Map[String, String]): Unit = {
+  override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
     val spark = df.sparkSession
     import spark.implicits._
     val metaPath = MetaConst.getMetaPath(path)
@@ -42,7 +42,7 @@ class SQLMapValues extends SQLAlg with Functions {
       .write
       .mode(SaveMode.Overwrite)
       .parquet(metaPath)
-
+    emptyDataFrame()(df)
   }
 
   override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = {
@@ -82,6 +82,16 @@ class SQLMapValues extends SQLAlg with Functions {
 
     val defaultvalue = sparkSession.sparkContext.broadcast(mapMissingToValue)
     val dictbc = sparkSession.sparkContext.broadcast(dictionary)
+
+    val fArray = (keys: Seq[String]) => {
+      keys.map(key => {
+        dictbc.value.getOrElse(key, defaultvalue.value)
+      })
+    }
+
+    val audf = UserDefinedFunction(fArray, ArrayType(outputDataType), Some(Seq(ArrayType(StringType))))
+
+    sparkSession.udf.register(name + "_array", audf)
 
     val f = (key: String) => {
       dictbc.value.getOrElse(key, defaultvalue.value)
