@@ -210,15 +210,6 @@ so you can still use mlsql grammar.(This function provided from v1.1.2)
 ## Advanced Programming
 * [How to implements user defined algorithm in MLSQL](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-user-defined-alg.md)
 
-## Machine Learning
-
-* [How to use spark MMLib in MLSQL](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-mmlib.md)
-* [How to use TensorFlow in MLSQL ](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-tensorflow.md)
-* [How to use SKlearn in MLSQL ](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-sklearn.md)
-* [SKlearn example](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-nlp-example.md)
-* [How to reiceive logs from StreamingPro](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-log-monitor.md)
-
-
 ## Model deploy
 * [How to deploy your predict service](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-model-deploy.md)
 
