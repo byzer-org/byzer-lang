@@ -1,23 +1,33 @@
 package streaming.dsl.mmlib.algs
 
-import com.yammer.metrics.core.MetricName
+import org.apache.spark.ml.classification.RandomForestClassifier
 import org.apache.spark.ml.evaluation.RegressionEvaluator
+import org.apache.spark.ml.param.{ParamMap, Params}
 import org.apache.spark.ml.recommendation.{ALS, ALSModel}
+import org.apache.spark.ml.util.Identifiable
 import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import streaming.dsl.mmlib.SQLAlg
+import streaming.dsl.mmlib.algs.param.BaseParams
 
 /**
   * Created by allwefantasy on 24/7/2018.
   */
-class SQLALSInPlace extends SQLAlg with MllibFunctions with Functions {
+class SQLALSInPlace(override val uid: String) extends SQLAlg with MllibFunctions with Functions with BaseParams {
+
+  def this() = this(BaseParams.randomUID())
+
   override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
 
     val keepVersion = params.getOrElse("keepVersion", "true").toBoolean
-    SQLPythonFunc.incrementVersion(path, keepVersion)
+    setKeepVersion(keepVersion)
 
     val evaluateTable = params.get("evaluateTable")
-    val sparkSession = df.sparkSession
+    setEvaluateTable(evaluateTable.getOrElse("None"))
+
+
+    SQLPythonFunc.incrementVersion(path, keepVersion)
+    val spark = df.sparkSession
 
     trainModelsWithMultiParamGroup[ALSModel](df, path, params, () => {
       new ALS()
@@ -25,7 +35,7 @@ class SQLALSInPlace extends SQLAlg with MllibFunctions with Functions {
       evaluateTable match {
         case Some(etable) =>
           model.asInstanceOf[ALSModel].setColdStartStrategy(params.getOrElse("coldStartStrategy", "nan"))
-          val evaluateTableDF = sparkSession.table(etable)
+          val evaluateTableDF = spark.table(etable)
           val predictions = model.asInstanceOf[ALSModel].transform(evaluateTableDF)
           val evaluator = new RegressionEvaluator()
             .setMetricName("rmse")
@@ -40,7 +50,7 @@ class SQLALSInPlace extends SQLAlg with MllibFunctions with Functions {
     }
     )
 
-    val (bestModelPath, baseModelPath, metaPath) = mllibModelAndMetaPath(path, params, sparkSession)
+    val (bestModelPath, baseModelPath, metaPath) = mllibModelAndMetaPath(path, params, spark)
 
     val model = ALSModel.load(bestModelPath(0))
 
@@ -54,8 +64,14 @@ class SQLALSInPlace extends SQLAlg with MllibFunctions with Functions {
       itemRecs.write.mode(SaveMode.Overwrite).parquet(path + "/data/itemRec")
     }
 
-    saveMllibTrainAndSystemParams(sparkSession, params, metaPath)
-    emptyDataFrame()(df)
+    saveMllibTrainAndSystemParams(spark, params, metaPath)
+    formatOutput(getModelMetaData(spark, path))
+  }
+
+  override def explainParams(sparkSession: SparkSession): DataFrame = {
+    _explainParams(sparkSession, () => {
+      new ALS()
+    })
   }
 
   override def load(sparkSession: SparkSession, _path: String, params: Map[String, String]): Any = {
@@ -65,4 +81,5 @@ class SQLALSInPlace extends SQLAlg with MllibFunctions with Functions {
   override def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = {
     throw new RuntimeException("register is not supported in ALSInPlace")
   }
+
 }
