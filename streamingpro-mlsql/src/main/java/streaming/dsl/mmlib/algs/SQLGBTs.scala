@@ -1,5 +1,7 @@
 package streaming.dsl.mmlib.algs
 
+import streaming.dsl.mmlib.algs.classfication.BaseClassification
+import streaming.dsl.mmlib.algs.param.BaseParams
 import org.apache.spark.ml.classification.{GBTClassificationModel, GBTClassifier}
 import org.apache.spark.ml.linalg.SQLDataTypes._
 import org.apache.spark.ml.linalg.Vector
@@ -7,33 +9,60 @@ import streaming.dsl.mmlib.SQLAlg
 import org.apache.spark.sql.{SparkSession, _}
 import org.apache.spark.sql.expressions.UserDefinedFunction
 
+import scala.collection.mutable.ArrayBuffer
+
 /**
   * Created by allwefantasy on 15/1/2018.
   */
-class SQLGBTs extends SQLAlg with Functions {
+class SQLGBTs(override val uid: String) extends SQLAlg with Functions with MllibFunctions with BaseClassification {
+  def this() = this(BaseParams.randomUID())
+
   override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
-    val bayes = new GBTClassifier()
-    configureModel(bayes, params)
-    val model = bayes.fit(df)
-    model.write.overwrite().save(path)
-    emptyDataFrame()(df)
+
+    val keepVersion = params.getOrElse("keepVersion", "true").toBoolean
+    setKeepVersion(keepVersion)
+
+    val evaluateTable = params.get("evaluateTable")
+    setEvaluateTable(evaluateTable.getOrElse("None"))
+
+
+    SQLPythonFunc.incrementVersion(path, keepVersion)
+    val spark = df.sparkSession
+
+    trainModelsWithMultiParamGroup[GBTClassificationModel](df, path, params, () => {
+      new GBTClassifier()
+    }, (_model, fitParam) => {
+      evaluateTable match {
+        case Some(etable) =>
+          val model = _model.asInstanceOf[GBTClassificationModel]
+          val evaluateTableDF = spark.table(etable)
+          val predictions = model.transform(evaluateTableDF)
+          multiclassClassificationEvaluate(predictions, (evaluator) => {
+            evaluator.setLabelCol(fitParam.getOrElse("labelCol", "label"))
+            evaluator.setPredictionCol("prediction")
+          })
+
+        case None => List()
+      }
+    }
+    )
+
+    formatOutput(getModelMetaData(spark, path))
+  }
+
+  override def explainParams(sparkSession: SparkSession): DataFrame = {
+    _explainParams(sparkSession, () => {
+      new GBTClassifier()
+    })
   }
 
   override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = {
-    val model = GBTClassificationModel.load(path)
-    model
+    val (bestModelPath, baseModelPath, metaPath) = mllibModelAndMetaPath(path, params, sparkSession)
+    val model = GBTClassificationModel.load(bestModelPath(0))
+    ArrayBuffer(model)
   }
 
   override def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = {
-    val model = sparkSession.sparkContext.broadcast(_model.asInstanceOf[GBTClassificationModel])
-
-    val f = (vec: Vector) => {
-      val predictRaw = model.value.getClass.getMethod("predictRaw", classOf[Vector]).invoke(model.value, vec).asInstanceOf[Vector]
-      val raw2probability = model.value.getClass.getMethod("raw2probability", classOf[Vector]).invoke(model.value, predictRaw).asInstanceOf[Vector]
-      //model.getClass.getMethod("probability2prediction", classOf[Vector]).invoke(model, raw2probability).asInstanceOf[Vector]
-      raw2probability
-
-    }
-    UserDefinedFunction(f, VectorType, Some(Seq(VectorType)))
+    predict_classification(sparkSession, _model, name)
   }
 }
