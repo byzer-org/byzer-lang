@@ -13,7 +13,7 @@ import net.csdn.modules.http.{ApplicationController, ViewType}
 import net.csdn.modules.http.RestRequest.Method._
 import net.csdn.modules.transport.HttpTransportService
 import org.apache.spark.ps.cluster.Message
-import org.apache.spark.sql.{DataFrameWriter, Row, SaveMode}
+import org.apache.spark.sql.{DataFrameWriter, Row, SaveMode, SparkSession}
 import org.joda.time.format.ISODateTimeFormat
 import streaming.common.JarUtil
 import streaming.core._
@@ -32,7 +32,12 @@ class RestController extends ApplicationController {
   def script = {
     restResponse.httpServletResponse().setHeader("Access-Control-Allow-Origin", "*")
     val silence = paramAsBoolean("silence", false)
-    val sparkSession = runtime.asInstanceOf[SparkRuntime].sparkSession
+    val sparkSession = if (paramAsBoolean("sessionPerUser", false)) {
+      runtime.asInstanceOf[SparkRuntime].getSession(param("owner", "admin"))
+    } else {
+      runtime.asInstanceOf[SparkRuntime].sparkSession
+    }
+
     val htp = findService(classOf[HttpTransportService])
     if (paramAsBoolean("async", false) && !params().containsKey("callback")) {
       render(400, "when async is set true ,then you should set callback url")
@@ -46,7 +51,7 @@ class RestController extends ApplicationController {
       if (paramAsBoolean("async", false)) {
         StreamingproJobManager.asyncRun(sparkSession, jobInfo, () => {
           try {
-            val context = createScriptSQLExecListener()
+            val context = createScriptSQLExecListener(sparkSession)
             ScriptSQLExec.parse(param("sql"), context, paramAsBoolean("skipInclude", false), paramAsBoolean("skipAuth", true))
             htp.get(new Url(param("callback")), Map("stat" -> s"""success"""))
           } catch {
@@ -57,7 +62,7 @@ class RestController extends ApplicationController {
         })
       } else {
         StreamingproJobManager.run(sparkSession, jobInfo, () => {
-          val context = createScriptSQLExecListener()
+          val context = createScriptSQLExecListener(sparkSession)
           ScriptSQLExec.parse(param("sql"), context, paramAsBoolean("skipInclude", false), paramAsBoolean("skipAuth", true))
           if (!silence) {
             outputResult = context.getLastSelectTable() match {
@@ -77,8 +82,8 @@ class RestController extends ApplicationController {
     render(outputResult)
   }
 
-  private def createScriptSQLExecListener() = {
-    val sparkSession = runtime.asInstanceOf[SparkRuntime].sparkSession
+  private def createScriptSQLExecListener(sparkSession: SparkSession) = {
+
     val allPathPrefix = fromJson(param("allPathPrefix", "{}"), classOf[Map[String, String]])
     val defaultPathPrefix = param("defaultPathPrefix", "")
     val context = new ScriptSQLExecListener(sparkSession, defaultPathPrefix, allPathPrefix)
