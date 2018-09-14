@@ -127,6 +127,25 @@ object PythonCode {
       |python_fun.udf(predict)
       | """.stripMargin
 
+  val pythonBadPredictCode =
+    """
+      |from pyspark.ml.linalg import VectorUDT, Vectors
+      |import pickle
+      |import python_fun
+      |
+      |def predict(index, s):
+      |    items = [i for i in s]
+      |    feature = VectorUDT().deserialize(pickle.loads(items[0]))
+      |    print(pickle.loads(items[1])[0])
+      |    model = pickle.load(open(pickle.loads(items[1])[0]+"/model.pickle"))
+      |    y = model.predict([feature.toArray()])
+      |    print("----------".format)
+      |    return [VectorUDT().serialize(Vectors.dense(y))]
+      |
+      |
+      |python_fun.udf(predict)
+      | """.stripMargin
+
   val pythonBatchPredictCode =
     """
       |from pyspark.ml.linalg import VectorUDT, Vectors
