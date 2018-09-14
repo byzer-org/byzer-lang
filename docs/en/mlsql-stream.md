@@ -60,6 +60,98 @@ and checkpointLocation="/tmp/cpl3";
 
 ```
 
+Here is one example you can run without source/sink dependency.
+
+```
+-- the stream name, should be uniq.
+set streamName="streamExample";
+
+
+
+
+-- mock some data.
+set data='''
+{"key":"yes","value":"a,b,c","topic":"test","partition":0,"offset":0,"timestamp":"2008-01-24 18:01:01.001","timestampType":0}
+{"key":"yes","value":"d,f,e","topic":"test","partition":0,"offset":1,"timestamp":"2008-01-24 18:01:01.002","timestampType":0}
+{"key":"yes","value":"k,d,j","topic":"test","partition":0,"offset":2,"timestamp":"2008-01-24 18:01:01.003","timestampType":0}
+{"key":"yes","value":"m,d,z","topic":"test","partition":0,"offset":3,"timestamp":"2008-01-24 18:01:01.003","timestampType":0}
+{"key":"yes","value":"o,d,d","topic":"test","partition":0,"offset":4,"timestamp":"2008-01-24 18:01:01.003","timestampType":0}
+{"key":"yes","value":"m,m,m","topic":"test","partition":0,"offset":5,"timestamp":"2008-01-24 18:01:01.003","timestampType":0}
+''';
+
+-- load data as table
+load jsonStr.`data` as datasource;
+
+-- convert table as stream source
+load mockStream.`datasource` options 
+stepSizeRange="0-3"
+and valueFormat="csv"
+and valueSchema="st(field(column1,string),field(column2,string),field(column3,string))"
+as newkafkatable1;
+
+-- aggregation 
+select column1,column2,column3,kafkaValue from newkafkatable1 
+as table21;
+
+-- output the the result to console.
+save append table21  
+as console.`` 
+options mode="Append"
+and duration="10"
+and checkpointLocation="/tmp/cpl3";
+
+```
+
+
+The output:
+
+```
+-------------------------------------------
+Batch: 6
+-------------------------------------------
++-------+-------+-------+--------------------+
+|column1|column2|column3|          kafkaValue|
++-------+-------+-------+--------------------+
+|      m|      m|      m|[yes, 0, 5, 2008-...|
++-------+-------+-------+--------------------+
+```
+
+
+If you hope MLSQL decode value automatically, you can specify `valueFormat` and `valueSchema` parameters when load 
+source. For now, MLSQL supports json/csv format. In MLSQL, you can describe schema like this:
+
+```
+st(field(column1,string),field(column2,string),field(column3,string))
+```
+
+If you are familiar with Spark StructType ,you will find they are really close. st equal to StructType, field equal 
+to StructField, string equal to StringType.  Following datatypes are supported now:  
+
+1. st
+1. field
+1. string
+1. float
+1. double
+1. integer
+1. short
+1. date
+1. binary
+1. map
+1. array
+
+For example, you can use map like this:
+
+```
+st(field(column1,map(string,string)))
+```
+
+Or be more complicated:
+
+
+```
+st(field(column1,map(string,array(st(field(columnx,string))))))
+```
+
 
 In real world you can load kafka source like this:
 
@@ -86,6 +178,23 @@ as newParquet.`/table1/hp_stat_date=${date.toString("yyyy-MM-dd")}`
 options mode="Append" 
 and duration="30" 
 and checkpointLocation="/tmp/ckl1";
+```
+
+If you want to save data to MySQL:
+
+```sql
+
+-- Save the data to MYSQL
+save append table21  
+as NONE.`mysql1.test1` 
+options mode="Complete"
+and implClass="org.apache.spark.sql.execution.streaming.JDBCSinkProvider"
+-- executed in driver
+and `driver-statement-0`="create table test1 if not exists........."
+-- executed in executor
+and `statement-0`="insert into wow.test1(k,c) values(?,?)"
+and duration="3"
+and checkpointLocation="/tmp/cpl3";
 ```
 
 If you want to add watermark for a table:
