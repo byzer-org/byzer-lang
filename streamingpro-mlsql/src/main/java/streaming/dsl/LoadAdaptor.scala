@@ -1,13 +1,12 @@
 package streaming.dsl
 
-import org.apache.spark.sql._
-import _root_.streaming.parser.SparkTypePaser
-import _root_.streaming.dsl.parser.DSLSQLParser._
 import net.sf.json.JSONObject
 import org.apache.spark.sql.types.WowStructType
 import template.TemplateMerge
-import org.apache.spark.sql.{functions => F}
-
+import org.apache.spark.sql.{DataFrame, functions => F}
+import streaming.parser.SparkTypePaser
+import streaming.dsl.parser.DSLSQLParser._
+import streaming.source.parser.{SourceParser, SourceSchema}
 
 /**
   * Created by allwefantasy on 27/8/2017.
@@ -157,18 +156,20 @@ class StreamLoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener,
       case _ =>
     }
     table = withWaterMark(table, option)
-    val kafkaFields = List("key", "partition", "offset", "timestamp", "timestampType", "topic")
-    val keepOriginalValue = if (option.getOrElse("keepValue", "false").toBoolean) List("value") else List()
-    option.get("valueSchema") match {
-      case Some(schema) =>
-        val parsedSchema = SparkTypePaser.cleanSparkSchema(SparkTypePaser.toSparkSchema(schema).asInstanceOf[WowStructType])
-        table = table.withColumn("kafkaValue", F.struct(
-          (kafkaFields ++ keepOriginalValue).map(F.col(_)): _*
-        )).selectExpr("CAST(value AS STRING) as jsonValue", "kafkaValue")
-          .select(F.from_json(F.col("jsonValue"), schema = parsedSchema).as("data"), F.col("kafkaValue"))
-          .select("data.*", "kafkaValue")
-      case None =>
+
+    if (option.contains("valueSchema") && option.contains("valueFormat")) {
+      val kafkaFields = List("key", "partition", "offset", "timestamp", "timestampType", "topic")
+      val keepOriginalValue = if (option.getOrElse("keepValue", "false").toBoolean) List("value") else List()
+      val sourceSchema = new SourceSchema(option("valueSchema"))
+      val sourceParserInstance = SourceParser.getSourceParser(option("valueFormat"))
+
+      table = table.withColumn("kafkaValue", F.struct(
+        (kafkaFields ++ keepOriginalValue).map(F.col(_)): _*
+      )).selectExpr("CAST(value AS STRING) as tmpValue", "kafkaValue")
+        .select(sourceParserInstance.parse(F.col("tmpValue"), sourceSchema = sourceSchema, Map()).as("data"), F.col("kafkaValue"))
+        .select("data.*", "kafkaValue")
     }
+    
     path = TemplateMerge.merge(path, scriptSQLExecListener.env().toMap)
     table.createOrReplaceTempView(tableName)
   }
