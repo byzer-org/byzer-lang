@@ -5,25 +5,60 @@ import org.apache.spark.ml.linalg.SQLDataTypes._
 import org.apache.spark.ml.linalg.Vector
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.expressions.UserDefinedFunction
-import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.IntegerType
 import streaming.dsl.mmlib.SQLAlg
+import streaming.dsl.mmlib.algs.cluster.BaseCluster
+import streaming.dsl.mmlib.algs.param.BaseParams
 
 /**
   * Created by allwefantasy on 14/1/2018.
   */
-class SQLKMeans extends SQLAlg with Functions {
+class SQLKMeans(override val uid: String) extends SQLAlg with MllibFunctions with Functions with BaseCluster {
+
+  def this() = this(BaseParams.randomUID())
+
   override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
-    val rfc = new BisectingKMeans()
-    configureModel(rfc, params)
-    val model = rfc.fit(df)
-    model.write.overwrite().save(path)
-    emptyDataFrame()(df)
+
+    val keepVersion = params.getOrElse("keepVersion", "true").toBoolean
+    setKeepVersion(keepVersion)
+
+    val evaluateTable = params.get("evaluateTable")
+    setEvaluateTable(evaluateTable.getOrElse("None"))
+
+
+    SQLPythonFunc.incrementVersion(path, keepVersion)
+    val spark = df.sparkSession
+
+    trainModelsWithMultiParamGroup[BisectingKMeansModel](df, path, params, () => {
+      new BisectingKMeans()
+    }, (_model, fitParam) => {
+      evaluateTable match {
+        case Some(etable) =>
+          val model = _model.asInstanceOf[BisectingKMeansModel]
+          val evaluateTableDF = spark.table(etable)
+          val predictions = model.transform(evaluateTableDF)
+          clusterEvaluate(predictions, (evaluator) => {
+            evaluator.setFeaturesCol(params.getOrElse("featuresCol", "features"))
+            evaluator.setPredictionCol("prediction")
+          })
+
+        case None => List()
+      }
+    }
+    )
+    formatOutput(getModelMetaData(spark, path))
   }
 
   override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = {
-    val model = BisectingKMeansModel.load(path)
+    val (bestModelPath, baseModelPath, metaPath) = mllibModelAndMetaPath(path, params, sparkSession)
+    val model = BisectingKMeansModel.load(bestModelPath(0))
     model
+  }
+
+  override def explainParams(sparkSession: SparkSession): DataFrame = {
+    _explainParams(sparkSession, () => {
+      new BisectingKMeans()
+    })
   }
 
   override def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = {
