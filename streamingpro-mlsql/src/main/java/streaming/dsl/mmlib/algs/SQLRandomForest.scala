@@ -1,40 +1,20 @@
 package streaming.dsl.mmlib.algs
 
 import org.apache.spark.ml.classification.{RandomForestClassificationModel, RandomForestClassifier}
-import org.apache.spark.ml.param.Params
-import org.apache.spark.ml.util.Identifiable
-import org.apache.spark.sql.{DataFrame, Row, SparkSession}
+import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.expressions.UserDefinedFunction
-import org.apache.spark.sql.types.{StringType, StructField, StructType}
 import streaming.dsl.mmlib.SQLAlg
 
 import scala.collection.mutable.ArrayBuffer
-import org.apache.spark.ml.param._
+import streaming.dsl.mmlib.algs.classfication.BaseClassification
+import streaming.dsl.mmlib.algs.param.BaseParams
 
 /**
   * Created by allwefantasy on 13/1/2018.
   */
-class SQLRandomForest(override val uid: String) extends SQLAlg with MllibFunctions with Functions with Params {
+class SQLRandomForest(override val uid: String) extends SQLAlg with MllibFunctions with Functions with BaseClassification {
 
-  def this() = this(Identifiable.randomUID("SQLRandomForest"))
-
-  final val evaluateTable: Param[String] = new Param[String](this, "evaluateTable",
-    "The table name of test dataset when tranning",
-    (value: String) => true)
-
-  final def getEvaluateTable: String = $(evaluateTable)
-
-  def setEvaluateTable(value: String): this.type = set(evaluateTable, value)
-
-  final val keepVersion: BooleanParam = new BooleanParam(this, "keepVersion", "If set true, then every time you run the " +
-    "algorithm, it will generate a new directory to save the model.")
-
-  setDefault(keepVersion -> true)
-
-  final def getKeepVersion: Boolean = $(keepVersion)
-
-  def setKeepVersion(value: Boolean): this.type = set(keepVersion, value)
-
+  def this() = this(BaseParams.randomUID())
 
   override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
 
@@ -42,11 +22,11 @@ class SQLRandomForest(override val uid: String) extends SQLAlg with MllibFunctio
     val keepVersion = params.getOrElse("keepVersion", "true").toBoolean
     setKeepVersion(keepVersion)
 
-    SQLPythonFunc.incrementVersion(path, keepVersion)
-
     val evaluateTable = params.get("evaluateTable")
     setEvaluateTable(evaluateTable.getOrElse("None"))
 
+
+    SQLPythonFunc.incrementVersion(path, keepVersion)
     val spark = df.sparkSession
 
     trainModelsWithMultiParamGroup[RandomForestClassificationModel](df, path, params, () => {
@@ -67,19 +47,14 @@ class SQLRandomForest(override val uid: String) extends SQLAlg with MllibFunctio
     }
     )
 
-    val newDF = df.sparkSession.read.parquet(SQLPythonFunc.getAlgMetalPath(path, keepVersion) + "/0")
-    formatOutput(newDF)
+    formatOutput(getModelMetaData(spark, path))
   }
 
 
   override def explainParams(sparkSession: SparkSession): DataFrame = {
-    val model = new RandomForestClassifier()
-    val rfcParams2 = this.params.map(this.explainParam).map(f => Row.fromSeq(f.split(":", 2)))
-    val rfcParams = model.params.map(model.explainParam).map { f =>
-      val Array(name, value) = f.split(":", 2)
-      Row.fromSeq(Seq("fitParam.[group]." + name, value))
-    }
-    sparkSession.createDataFrame(sparkSession.sparkContext.parallelize(rfcParams2 ++ rfcParams, 1), StructType(Seq(StructField("param", StringType), StructField("description", StringType))))
+    _explainParams(sparkSession, () => {
+      new RandomForestClassifier()
+    })
   }
 
   override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = {
@@ -93,5 +68,4 @@ class SQLRandomForest(override val uid: String) extends SQLAlg with MllibFunctio
     predict_classification(sparkSession, _model, name)
   }
 
-  override def copy(extra: ParamMap): Params = defaultCopy(extra)
 }

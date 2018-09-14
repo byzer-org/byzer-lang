@@ -35,16 +35,6 @@ trait MllibFunctions extends Serializable {
     newDF.sparkSession.createDataFrame(newDF.sparkSession.sparkContext.parallelize(rows, 1), newSchema)
   }
 
-
-  def multiclassClassificationEvaluate(predictions: DataFrame, congigureEvaluator: (MulticlassClassificationEvaluator) => Unit) = {
-    "f1|weightedPrecision|weightedRecall|accuracy".split("\\|").map { metricName =>
-      val evaluator = new MulticlassClassificationEvaluator()
-        .setMetricName(metricName)
-      congigureEvaluator(evaluator)
-      MetricValue(metricName, evaluator.evaluate(predictions))
-    }.toList
-  }
-
   def mllibModelAndMetaPath(path: String, params: Map[String, String], sparkSession: SparkSession) = {
     val maxVersion = SQLPythonFunc.getModelVersion(path)
     val versionEnabled = maxVersion match {
