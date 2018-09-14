@@ -16,11 +16,11 @@ import streaming.log.Logging
   */
 class MLSQLSession(username: String,
                    password: String,
-                   conf: SparkConf,
                    ipAddress: String,
                    withImpersonation: Boolean,
                    sessionManager: SessionManager,
-                   opManager: MLSQLOperationManager
+                   opManager: MLSQLOperationManager,
+                   sessionConf: Map[String, String] = Map()
                   ) extends Logging {
 
 
@@ -29,13 +29,11 @@ class MLSQLSession(username: String,
 
   private[this] val activeOperationSet = new MHSet[String]()
 
-  private[this] val sessionIdentifier: SessionIdentifier = new SessionIdentifier()
-
   private[this] val sessionUGI: UserGroupInformation = {
     val currentUser = UserGroupInformation.getCurrentUser
     if (withImpersonation) {
       if (UserGroupInformation.isSecurityEnabled) {
-        if (conf.contains(MLSQLSparkConst.PRINCIPAL) && conf.contains(MLSQLSparkConst.KEYTAB)) {
+        if (sessionConf.contains(MLSQLSparkConst.PRINCIPAL) && sessionConf.contains(MLSQLSparkConst.KEYTAB)) {
           // If principal and keytab are configured, do re-login in case of token expiry.
           // Do not check keytab file existing as spark-submit has it done
           currentUser.reloginFromKeytab()
@@ -48,7 +46,7 @@ class MLSQLSession(username: String,
       currentUser
     }
   }
-  private[this] lazy val sparkSessionWithUGI = new SparkSessionWithUGI(sessionUGI, conf)
+  private[this] lazy val sparkSessionWithUGI = new SparkSessionWithUGI(sessionUGI,sessionConf)
 
   private[this] def acquire(userAccess: Boolean): Unit = {
     if (userAccess) {
@@ -71,8 +69,8 @@ class MLSQLSession(username: String,
 
   def ugi: UserGroupInformation = this.sessionUGI
 
-  def open(sessionConf: Map[String, String], params: Map[Any, Any]): Unit = {
-    sparkSessionWithUGI.init(sessionConf, params)
+  def open(sessionConf: Map[String, String]): Unit = {
+    sparkSessionWithUGI.init(sessionConf)
     lastAccessTime = System.currentTimeMillis
     lastIdleTime = lastAccessTime
   }
@@ -132,8 +130,6 @@ class MLSQLSession(username: String,
 
 
   def getUserName = username
-
-  def getSessionIdentifier = sessionIdentifier
 
   def getOpManager = opManager
 

@@ -356,25 +356,27 @@ class SQLPythonAlg extends SQLAlg with Functions {
 
     val kafkaParam = mapParams("kafkaParam", trainParams)
 
+    val mlsqlContext = ScriptSQLExec.contextGetOrForTest()
+
+    val enableErrorMsgToKafka = params.getOrElse("enableErrorMsgToKafka", "false").toBoolean
+    val kafkaParam2 = if (enableErrorMsgToKafka) kafkaParam else Map[String, String]()
+
+    val recordLog = SQLPythonFunc.recordAnyLog(kafkaParam2, logCallback = (msg) => {
+      ScriptSQLExec.setContextIfNotPresent(mlsqlContext)
+      logInfo(format(msg))
+    })
+
     val enableCopyTrainParamsToPython = params.getOrElse("enableCopyTrainParamsToPython", "false").toBoolean
     //driver 节点执行
     val res = ExternalCommandRunner.run(Seq(pythonPath, userPythonScript.fileName),
       maps,
       MapType(StringType, MapType(StringType, StringType)),
       userPythonScript.fileContent,
-      userPythonScript.fileName, modelPath = null, recordLog = SQLPythonFunc.recordAnyLog(kafkaParam)
+      userPythonScript.fileName, modelPath = null, recordLog = recordLog
     )
     res.foreach(f => f)
     val command = Files.readAllBytes(Paths.get(item.get("funcPath")))
 
-    val enableErrorMsgToKafka = params.getOrElse("enableErrorMsgToKafka", "false").toBoolean
-    val kafkaParam2 = if (enableErrorMsgToKafka) kafkaParam else Map[String, String]()
-
-    val mlsqlContext = ScriptSQLExec.contextGetOrForTest()
-    val recordLog = SQLPythonFunc.recordAnyLog(kafkaParam2, logCallback = (msg) => {
-      ScriptSQLExec.setContextIfNotPresent(mlsqlContext)
-      logInfo(format(msg))
-    })
     val runtimeParams = PlatformManager.getRuntime.params.asScala.toMap
 
     val f = (v: org.apache.spark.ml.linalg.Vector, modelPath: String) => {
