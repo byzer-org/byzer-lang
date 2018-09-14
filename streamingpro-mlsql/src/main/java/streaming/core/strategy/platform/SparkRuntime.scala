@@ -6,16 +6,15 @@ import java.util.concurrent.atomic.AtomicReference
 import java.util.logging.Logger
 
 import net.csdn.common.reflect.ReflectHelper
-import org.apache.spark.api.python.WowSparkEnv
-
-import scala.collection.JavaConversions._
-import org.apache.spark.{SparkConf, SparkEnv, SparkRuntimeOperator, WowFastSparkContext}
+import org.apache.spark.{SparkConf, SparkRuntimeOperator, WowFastSparkContext}
 import org.apache.spark.ps.cluster.PSDriverBackend
 import org.apache.spark.ps.local.LocalPSSchedulerBackend
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.execution.WowFastLocalBasedStrategies
 import org.apache.spark.sql.hive.thriftserver.HiveThriftServer2
 import streaming.core.StreamingproJobManager
+import streaming.session.{SessionIdentifier, SessionManager}
+
+import scala.collection.JavaConversions._
 
 /**
   * Created by allwefantasy on 30/3/2017.
@@ -31,6 +30,12 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
 
   var sparkSession: SparkSession = createRuntime
 
+  var sessionManager = new SessionManager(sparkSession)
+  sessionManager.start()
+
+  def getSession(owner: String) = {
+    sessionManager.getSession(SessionIdentifier(owner)).sparkSession
+  }
 
   def operator = {
     new SparkRuntimeOperator(sparkSession)
@@ -95,9 +100,9 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
       sparkSession.getOrCreate()
     }
 
-//    if (params.getOrDefault("streaming.deploy.rest.api", "false").toString.toBoolean) {
-//      WowFastLocalBasedStrategies.register(ss)
-//    }
+    //    if (params.getOrDefault("streaming.deploy.rest.api", "false").toString.toBoolean) {
+    //      WowFastLocalBasedStrategies.register(ss)
+    //    }
 
     if (params.containsKey("streaming.spark.service") && params.get("streaming.spark.service").toString.toBoolean) {
       StreamingproJobManager.init(ss.sparkContext)

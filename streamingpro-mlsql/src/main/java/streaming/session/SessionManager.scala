@@ -2,13 +2,13 @@ package streaming.session
 
 import java.util.concurrent.ConcurrentHashMap
 
-import org.apache.spark.SparkConf
+import org.apache.spark.sql.SparkSession
 import streaming.log.Logging
 
 /**
   * Created by allwefantasy on 1/6/2018.
   */
-class SessionManager(val conf: SparkConf) extends Logging {
+class SessionManager(rootSparkSession: SparkSession) extends Logging {
 
   private[this] val identifierToSession = new ConcurrentHashMap[SessionIdentifier, MLSQLSession]
   private[this] var shutdown: Boolean = false
@@ -17,7 +17,7 @@ class SessionManager(val conf: SparkConf) extends Logging {
 
   def start(): Unit = {
     opManager.start()
-    SparkSessionCacheManager.startCacheManager(conf)
+    SparkSessionCacheManager.startCacheManager()
   }
 
   def stop(): Unit = {
@@ -30,31 +30,30 @@ class SessionManager(val conf: SparkConf) extends Logging {
                    password: String,
                    ipAddress: String,
                    sessionConf: Map[String, String],
-                   params: Map[Any, Any],
                    withImpersonation: Boolean): SessionIdentifier = {
 
     val session = new MLSQLSession(
       username,
       password,
-      conf.clone(),
       ipAddress,
       withImpersonation,
       this, opManager
     )
     log.info(s"Opening session for $username")
-    session.open(sessionConf,params: Map[Any, Any])
+    session.open(sessionConf)
 
-    val sessionIdentifier = session.getSessionIdentifier
-    identifierToSession.put(sessionIdentifier, session)
-    sessionIdentifier
+    identifierToSession.put(SessionIdentifier(username), session)
+    SessionIdentifier(username)
   }
 
   def getSession(sessionIdentifier: SessionIdentifier): MLSQLSession = {
-    val session = identifierToSession.get(sessionIdentifier)
-    if (session == null) {
-      throw new MLSQLException("Invalid SessionIdentifier: " + sessionIdentifier)
+    synchronized {
+      val session = identifierToSession.get(sessionIdentifier)
+      if (session == null) {
+        openSession(sessionIdentifier.owner, "", "", Map(), true)
+      }
+      identifierToSession.get(sessionIdentifier)
     }
-    session
   }
 
   def closeSession(sessionIdentifier: SessionIdentifier) {
