@@ -15,9 +15,28 @@ trait SQLAlg extends Serializable {
 
   def explainParams(sparkSession: SparkSession): DataFrame = {
     import sparkSession.implicits._
-    Seq.empty[(String, String)].toDF("name", "value")
+    Seq.empty[(String, String)].toDF("param", "description")
   }
 
   def skipPathPrefix: Boolean = false
 
+  def modelType: ModelType = UndefinedType
+
+  def doc: String = ""
+
+  def codeExample: String = ""
+
 }
+
+sealed abstract class ModelType
+(
+  val name: String,
+  val humanFriendlyName: String
+)
+
+case object AlgType extends ModelType("algType", "algorithm")
+
+case object ProcessType extends ModelType("processType", "feature engineer")
+
+case object UndefinedType extends ModelType("undefinedType", "undefined")
+

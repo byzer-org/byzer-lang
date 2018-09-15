@@ -3,7 +3,7 @@ package streaming.dsl.mmlib.algs
 import org.apache.spark.ml.classification.{RandomForestClassificationModel, RandomForestClassifier}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.expressions.UserDefinedFunction
-import streaming.dsl.mmlib.SQLAlg
+import streaming.dsl.mmlib.{AlgType, ModelType, SQLAlg}
 
 import scala.collection.mutable.ArrayBuffer
 import streaming.dsl.mmlib.algs.classfication.BaseClassification
@@ -68,4 +68,66 @@ class SQLRandomForest(override val uid: String) extends SQLAlg with MllibFunctio
     predict_classification(sparkSession, _model, name)
   }
 
+  override def modelType: ModelType = AlgType
+
+  override def doc: String =
+    """
+      | <a href="http://en.wikipedia.org/wiki/Random_forest">Random Forest</a> learning algorithm for
+      | classification.
+      | It supports both binary and multiclass labels, as well as both continuous and categorical
+      | features.
+      |
+      | Please use:
+      |
+      | load modelParams.`RandomForest` as output;
+      |
+      | to check the available hyper parameters;
+      |
+      | use:
+      |
+      | load modelExample.`RandomForest` as output;
+      |
+      | show get example.
+      |
+    """.stripMargin
+
+  override def codeExample: String =
+    """
+      |-- create test data
+      |set jsonStr='''
+      |{"features":[5.1,3.5,1.4,0.2],"label":0.0},
+      |{"features":[5.1,3.5,1.4,0.2],"label":1.0}
+      |{"features":[5.1,3.5,1.4,0.2],"label":0.0}
+      |{"features":[4.4,2.9,1.4,0.2],"label":0.0}
+      |{"features":[5.1,3.5,1.4,0.2],"label":1.0}
+      |{"features":[5.1,3.5,1.4,0.2],"label":0.0}
+      |{"features":[5.1,3.5,1.4,0.2],"label":0.0}
+      |{"features":[4.7,3.2,1.3,0.2],"label":1.0}
+      |{"features":[5.1,3.5,1.4,0.2],"label":0.0}
+      |{"features":[5.1,3.5,1.4,0.2],"label":0.0}
+      |''';
+      |load jsonStr.`jsonStr` as data;
+      |select vec_dense(features) as features ,label as label from data
+      |as data1;
+      |
+      |-- use RandomForest
+      |train data1 as RandomForest.`/tmp/model` where
+      |
+      |-- once set true,every time you run this script, MLSQL will generate new directory for you model
+      |keepVersion="true"
+      |
+      |-- specify the test dataset which will be used to feed evaluator to generate some metrics e.g. F1, Accurate
+      |and evaluateTable="data1"
+      |
+      |-- specify group 0 parameters
+      |and `fitParam.0.labelCol`="features"
+      |and `fitParam.0.featuresCol`="label"
+      |and `fitParam.0.maxDepth`="2"
+      |
+      |-- specify group 1 parameters
+      |and `fitParam.0.featuresCol`="features"
+      |and `fitParam.0.labelCol`="label"
+      |and `fitParam.1.maxDepth`="10"
+      |;
+    """.stripMargin
 }
