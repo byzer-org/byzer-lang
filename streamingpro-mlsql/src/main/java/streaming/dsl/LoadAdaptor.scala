@@ -4,6 +4,7 @@ import net.sf.json.JSONObject
 import org.apache.spark.sql.types.WowStructType
 import template.TemplateMerge
 import org.apache.spark.sql.{DataFrame, functions => F}
+import streaming.dsl.load.batch.ModelSelfExplain
 import streaming.parser.SparkTypePaser
 import streaming.dsl.parser.DSLSQLParser._
 import streaming.source.parser.{SourceParser, SourceSchema}
@@ -88,8 +89,7 @@ class BatchLoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener,
       case "crawlersql" =>
         table = reader.option("path", cleanStr(path)).format("org.apache.spark.sql.execution.datasources.crawlersql").load()
       case "image" =>
-        val owner = option.get("owner")
-        table = reader.option("pScath", withPathPrefix(scriptSQLExecListener.pathPrefix(owner), cleanStr(path))).format("streaming.dsl.mmlib.algs.processing.image").load()
+        table = reader.option("pScath", withPathPrefix(ScriptSQLExec.contextGetOrForTest().home, cleanStr(path))).format("streaming.dsl.mmlib.algs.processing.image").load()
       case "jsonStr" =>
         val items = cleanBlockStr(scriptSQLExecListener.env()(cleanStr(path))).split("\n")
         import sparkSession.implicits._
@@ -106,8 +106,9 @@ class BatchLoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener,
         val sqlAlg = MLMapping.findAlg(cleanStr(path))
         table = sqlAlg.explainParams(sparkSession)
       case _ =>
-        val owner = option.get("owner")
-        table = reader.format(format).load(withPathPrefix(scriptSQLExecListener.pathPrefix(owner), cleanStr(path)))
+        table = ModelSelfExplain(format, cleanStr(path), option, sparkSession).isMatch.thenDo.orElse(() => {
+          reader.format(format).load(ScriptSQLExec.contextGetOrForTest().home, cleanStr(path))
+        }).get
     }
     table.createOrReplaceTempView(tableName)
   }
@@ -169,7 +170,7 @@ class StreamLoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener,
         .select(sourceParserInstance.parse(F.col("tmpValue"), sourceSchema = sourceSchema, Map()).as("data"), F.col("kafkaValue"))
         .select("data.*", "kafkaValue")
     }
-    
+
     path = TemplateMerge.merge(path, scriptSQLExecListener.env().toMap)
     table.createOrReplaceTempView(tableName)
   }
