@@ -3,7 +3,7 @@ package streaming.dsl.mmlib.algs
 import org.apache.spark.ml.classification.{RandomForestClassificationModel, RandomForestClassifier}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.expressions.UserDefinedFunction
-import streaming.dsl.mmlib.{AlgType, ModelType, SQLAlg}
+import streaming.dsl.mmlib._
 
 import scala.collection.mutable.ArrayBuffer
 import streaming.dsl.mmlib.algs.classfication.BaseClassification
@@ -70,28 +70,24 @@ class SQLRandomForest(override val uid: String) extends SQLAlg with MllibFunctio
 
   override def modelType: ModelType = AlgType
 
-  override def doc: String =
+  override def doc: Doc = Doc(HtmlDoc,
     """
       | <a href="http://en.wikipedia.org/wiki/Random_forest">Random Forest</a> learning algorithm for
       | classification.
       | It supports both binary and multiclass labels, as well as both continuous and categorical
       | features.
       |
-      | Please use:
-      |
-      | load modelParams.`RandomForest` as output;
+      | Use "load modelParams.`RandomForest` as output;"
       |
       | to check the available hyper parameters;
       |
-      | use:
+      | Use "load modelExample.`RandomForest` as output;"
+      | get example.
       |
-      | load modelExample.`RandomForest` as output;
-      |
-      | show get example.
-      |
-    """.stripMargin
+    """.stripMargin)
 
-  override def codeExample: String =
+
+  override def codeExample: Code = Code(SQLCode,
     """
       |-- create test data
       |set jsonStr='''
@@ -129,5 +125,6 @@ class SQLRandomForest(override val uid: String) extends SQLAlg with MllibFunctio
       |and `fitParam.0.labelCol`="label"
       |and `fitParam.1.maxDepth`="10"
       |;
-    """.stripMargin
+    """.stripMargin)
+
 }
