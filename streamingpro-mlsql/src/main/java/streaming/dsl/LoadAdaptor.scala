@@ -107,7 +107,7 @@ class BatchLoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener,
         table = sqlAlg.explainParams(sparkSession)
       case _ =>
         table = ModelSelfExplain(format, cleanStr(path), option, sparkSession).isMatch.thenDo.orElse(() => {
-          reader.format(format).load(ScriptSQLExec.contextGetOrForTest().home, cleanStr(path))
+          reader.format(format).load(withPathPrefix(ScriptSQLExec.contextGetOrForTest(), cleanStr(path)))
         }).get
     }
     table.createOrReplaceTempView(tableName)
