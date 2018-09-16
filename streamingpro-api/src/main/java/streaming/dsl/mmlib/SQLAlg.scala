@@ -22,9 +22,9 @@ trait SQLAlg extends Serializable {
 
   def modelType: ModelType = UndefinedType
 
-  def doc: String = ""
+  def doc: Doc = Doc(TextDoc, "")
 
-  def codeExample: String = ""
+  def codeExample: Code = Code(SQLCode, "")
 
 }
 
@@ -39,4 +39,32 @@ case object AlgType extends ModelType("algType", "algorithm")
 case object ProcessType extends ModelType("processType", "feature engineer")
 
 case object UndefinedType extends ModelType("undefinedType", "undefined")
+
+
+case class Doc(docType: DocType, doc: String)
+
+sealed abstract class DocType
+(
+  val docType: String
+)
+
+case object HtmlDoc extends DocType("html")
+
+case object TextDoc extends DocType("text")
+
+
+case class Code(codeType: CodeType, code: String)
+
+sealed abstract class CodeType
+(
+  val codeType: String
+)
+
+case object SQLCode extends CodeType("sql")
+
+case object ScalaCode extends CodeType("scala")
+
+case object PythonCode extends CodeType("python")
+
+
 
