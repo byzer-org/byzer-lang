@@ -74,7 +74,7 @@ class ModelStartup(format: String, path: String, option: Map[String, String])(sp
     val rows = sparkSession.sparkContext.parallelize(Seq(
       Row.fromSeq(Seq("How to use algorithm or data process module in MLSQL", "('train'|'TRAIN') tableName 'as' format '.' path 'where'? expression? booleanExpression*  \n check document: https://github.com/allwefantasy/streamingpro/blob/master/docs/en/mlsql-grammar.md#train")),
       Row.fromSeq(Seq("List available algorithm or data process module", "load model.`list` as output;")),
-      Row.fromSeq(Seq("Explain params of specific algorithm or data process modules", """list model.`params` where alg="RandomForest" as output; """))
+      Row.fromSeq(Seq("Explain params of specific algorithm or data process modules", """load model.`params` where alg="RandomForest" as output; """))
     ), 1)
 
     sparkSession.createDataFrame(rows,
