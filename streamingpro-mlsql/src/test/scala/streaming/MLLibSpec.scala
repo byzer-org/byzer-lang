@@ -45,8 +45,24 @@ class MLLibSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLCo
         "evaluateTable" -> "data",
         "fitParam.0.k" -> "2"
       ))
-      val models = randomForest.load(spark, "/tmp/KMeans", Map("autoSelectByMetric" -> "silhouette"))
-      val udf = randomForest.predict(spark, models, "jack", Map("autoSelectByMetric" -> "silhouette"))
+      var models = randomForest.load(spark, "/tmp/KMeans", Map("autoSelectByMetric" -> "silhouette"))
+      var udf = randomForest.predict(spark, models, "jack", Map("autoSelectByMetric" -> "silhouette"))
+      spark.udf.register("jack", udf)
+      df.selectExpr("jack(features) as predict").show()
+
+
+      models = randomForest.load(spark, "/tmp/KMeans", Map())
+      udf = randomForest.predict(spark, models, "jack", Map())
+      spark.udf.register("jack", udf)
+      df.selectExpr("jack(features) as predict").show()
+
+
+      randomForest.train(df, "/tmp/KMeans", Map(
+        "keepVersion" -> "true",
+        "fitParam.0.k" -> "2"))
+
+      models = randomForest.load(spark, "/tmp/KMeans", Map())
+      udf = randomForest.predict(spark, models, "jack", Map())
       spark.udf.register("jack", udf)
       df.selectExpr("jack(features) as predict").show()
     }
