@@ -49,6 +49,10 @@ trait DslTool {
 
   }
 
+  def withPathPrefix(context: MLSQLExecuteContext, path: String): String = {
+    withPathPrefix(context.home, path)
+  }
+
   def parseDBAndTableFromStr(str: String) = {
     val dbAndTable = cleanStr(str).split("\\.")
     if (dbAndTable.length > 1) {

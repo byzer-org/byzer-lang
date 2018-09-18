@@ -55,7 +55,7 @@ Step 3： run it
 ./bin/spark-submit   --class streaming.core.StreamingApp \
 --master local[2] \
 --name sql-interactive \
-streamingpro-spark-2.0-1.0.0.jar    \
+streamingpro-mlsql-1.1.3.jar    \
 -streaming.name sql-interactive    \
 -streaming.job.file.path file:///tmp/query.json \
 -streaming.platform spark   \

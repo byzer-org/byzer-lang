@@ -89,7 +89,7 @@ class BatchLoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener,
       case "crawlersql" =>
         table = reader.option("path", cleanStr(path)).format("org.apache.spark.sql.execution.datasources.crawlersql").load()
       case "image" =>
-        table = reader.option("pScath", withPathPrefix(ScriptSQLExec.contextGetOrForTest().home, cleanStr(path))).format("streaming.dsl.mmlib.algs.processing.image").load()
+        table = reader.option("path", withPathPrefix(ScriptSQLExec.contextGetOrForTest().home, cleanStr(path))).format("streaming.dsl.mmlib.algs.processing.image").load()
       case "jsonStr" =>
         val items = cleanBlockStr(scriptSQLExecListener.env()(cleanStr(path))).split("\n")
         import sparkSession.implicits._
@@ -107,7 +107,7 @@ class BatchLoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener,
         table = sqlAlg.explainParams(sparkSession)
       case _ =>
         table = ModelSelfExplain(format, cleanStr(path), option, sparkSession).isMatch.thenDo.orElse(() => {
-          reader.format(format).load(ScriptSQLExec.contextGetOrForTest().home, cleanStr(path))
+          reader.format(format).load(withPathPrefix(ScriptSQLExec.contextGetOrForTest(), cleanStr(path)))
         }).get
     }
     table.createOrReplaceTempView(tableName)

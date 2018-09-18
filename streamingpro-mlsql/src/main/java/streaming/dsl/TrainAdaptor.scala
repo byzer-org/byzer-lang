@@ -91,6 +91,8 @@ object MLMapping {
     "PythonAlgBP" -> "streaming.dsl.mmlib.algs.SQLPythonAlgBatchPrediction",
     "ScalaScriptUDF" -> "streaming.dsl.mmlib.algs.ScriptUDF",
     "ScriptUDF" -> "streaming.dsl.mmlib.algs.ScriptUDF",
+    "MapValues" -> "streaming.dsl.mmlib.algs.SQLMapValues",
+    "ExternalPythonAlg" -> "streaming.dsl.mmlib.algs.SQLExternalPythonAlg",
     "BatchPythonAlg" -> "streaming.dsl.mmlib.algs.SQLBatchPythonAlg"
   )
 
