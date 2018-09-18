@@ -121,8 +121,8 @@ class SQLRandomForest(override val uid: String) extends SQLAlg with MllibFunctio
       |and `fitParam.0.maxDepth`="2"
       |
       |-- specify group 1 parameters
-      |and `fitParam.0.featuresCol`="features"
-      |and `fitParam.0.labelCol`="label"
+      |and `fitParam.1.featuresCol`="features"
+      |and `fitParam.1.labelCol`="label"
       |and `fitParam.1.maxDepth`="10"
       |;
     """.stripMargin)
