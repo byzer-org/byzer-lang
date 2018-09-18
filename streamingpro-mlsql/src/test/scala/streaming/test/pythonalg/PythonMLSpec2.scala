@@ -1,12 +1,10 @@
-package streaming.core
+package streaming.test.pythonalg
 
-import java.io.File
-
-import org.apache.spark.APIDeployPythonRunnerEnv
 import org.apache.spark.streaming.BasicSparkOperation
 import streaming.common.shell.ShellCommand
 import streaming.core.code.PythonCode
 import streaming.core.strategy.platform.SparkRuntime
+import streaming.core.{BasicMLSQLConfig, NotToRunTag, SpecFunctions}
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.template.TemplateMerge
 

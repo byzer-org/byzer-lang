@@ -1,14 +1,13 @@
-package streaming.core
+package streaming.test.processing
 
 import net.sf.json.JSONObject
-import org.apache.spark.graphx.Edge
 import org.apache.spark.ml.linalg.Vector
-import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{Row, SaveMode}
 import org.apache.spark.streaming.BasicSparkOperation
 import streaming.core.shared.SharedObjManager
 import streaming.core.strategy.platform.SparkRuntime
+import streaming.core.{BasicMLSQLConfig, NotToRunTag, SpecFunctions}
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib.algs.feature.{DiscretizerIntFeature, DoubleFeature, StringFeature}
 import streaming.dsl.mmlib.algs.{SQLAutoFeature, SQLCommunityBasedSimilarityInPlace, SQLCorpusExplainInPlace, SQLVecMapInPlace}
@@ -18,7 +17,7 @@ import streaming.dsl.template.TemplateMerge
 /**
  * Created by allwefantasy on 6/5/2018.
  */
-class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConfig {
+class TextSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConfig {
 
 
   "tfidf featurize" should "work fine" taggedAs (NotToRunTag) in {
@@ -765,7 +764,6 @@ class AutoMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
       implicit val spark = runtime.sparkSession
-      import spark.implicits._
       val rdd = spark.sparkContext.parallelize(Seq((3L, 7L, 0.9), (5L, 3L, 0.9),
         (2L, 5L, 0.1), (5L, 7L, 0.8),
         (4L, 0L, 0.9), (5L, 0L, 0.2))).map { f =>
