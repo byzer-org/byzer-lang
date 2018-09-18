@@ -17,8 +17,9 @@ import org.joda.time.DateTime
 import org.joda.time.format.ISODateTimeFormat
 import org.scalatest.{FlatSpec, Matchers}
 import streaming.common.{PunctuationUtils, ScriptCacheKey, SourceCodeCompiler, UnicodeUtils}
-
 import org.apache.spark.sql.types._
+import streaming.example.OpTitanicSimple
+
 import scala.collection.mutable.ArrayBuffer
 
 /**
@@ -26,10 +27,7 @@ import scala.collection.mutable.ArrayBuffer
   */
 object Test {
   def main(args: Array[String]): Unit = {
-    println(findInputInArrayBracket("array(array(map(string,array(string))))"))
-    println(findKeyAndValue("string,map(string,array(string))")._1)
-    println(findKeyAndValue("string,map(string,array(string))")._2)
-    println(toSparkType("array(array(map(string,array(string))))"))
+    OpTitanicSimple.main(args)
   }
 
 
