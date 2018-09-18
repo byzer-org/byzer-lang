@@ -7,13 +7,16 @@ package streaming.example
 
 import com.salesforce.op._
 import com.salesforce.op.evaluators.Evaluators
-import com.salesforce.op.features.FeatureBuilder
+import com.salesforce.op.features.{FeatureSparkTypes, _}
 import com.salesforce.op.features.types._
+import com.salesforce.op.readers.DataFrameFieldNames._
 import com.salesforce.op.readers.DataReaders
 import com.salesforce.op.stages.impl.classification.BinaryClassificationModelSelector
 import com.salesforce.op.stages.impl.classification.ClassificationModelsToTry._
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.catalyst.encoders.RowEncoder
+import org.apache.spark.sql.types.{StringType, StructField, StructType}
 
 /**
   * Define a case class corresponding to our data file (nullable columns must be Option types)
@@ -94,15 +97,29 @@ object OpTitanicSimple {
     val ageGroup = age.map[PickList](_.value.map(v => if (v > 18) "adult" else "child").toPickList)
 
     // Define a feature of type vector containing all the predictors you'd like to use
-    val passengerFeatures = Seq(
+    val rawFeatures = Seq(
       pClass, name, age, sibSp, parCh, ticket,
       cabin, embarked, familySize, estimatedCostOfTickets,
       pivotedSex, ageGroup
-    ).transmogrify()
+    )
+    val passengerFeatures = rawFeatures.transmogrify()
 
     // Optionally check the features with a sanity checker
     val sanityCheck = true
     val finalFeatures = if (sanityCheck) survived.sanityCheck(passengerFeatures) else passengerFeatures
+
+
+//    def getSchema(rawFeatures: Array[OPFeature]): StructType = {
+    //      val keyField = StructField(name = KeyFieldName, dataType = StringType, nullable = false)
+    //      val featureFields = rawFeatures.map(FeatureSparkTypes.toStructField(_))
+    //      StructType(keyField +: featureFields)
+    //    }
+    //
+    //    val ds = spark.read.csv(csvFilePath)
+    //    val schema = getSchema(rawFeatures)
+    //    implicit val rowEnc = RowEncoder(schema)
+    //    ds.flatMap(record => generateRow(key(record), record, rawFeatures))
+
 
     // Define the model we want to use (here a simple logistic regression) and get the resulting output
     val (prediction, rawPrediction, prob) =

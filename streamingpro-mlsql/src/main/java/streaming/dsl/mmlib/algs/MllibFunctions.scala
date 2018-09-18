@@ -4,11 +4,12 @@ import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 import org.apache.spark.sql.types.{MapType, StringType, StructField, StructType}
 import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession}
 import org.joda.time.DateTime
+import streaming.log.{Logging, WowLog}
 
 /**
   * Created by allwefantasy on 25/7/2018.
   */
-trait MllibFunctions extends Serializable {
+trait MllibFunctions extends Logging with WowLog with Serializable {
 
   def formatOutput(newDF: DataFrame) = {
     val schema = newDF.schema
@@ -57,8 +58,24 @@ trait MllibFunctions extends Serializable {
       Seq(baseModelPath + "/" + algIndex)
     } else {
       modelList.map { row =>
-        val metric = row(3).asInstanceOf[scala.collection.mutable.WrappedArray[Row]].filter(f => f.getString(0) == autoSelectByMetric).head
-        val metricScore = metric.getAs[Double](1)
+        var metric: Row = null
+        val metrics = row(3).asInstanceOf[scala.collection.mutable.WrappedArray[Row]]
+        if (metrics.size > 0) {
+          val targeMetrics = metrics.filter(f => f.getString(0) == autoSelectByMetric)
+          if (targeMetrics.size > 0) {
+            metric = targeMetrics.head
+          } else {
+            metric = metrics.head
+            logInfo(format(s"No target metric: ${autoSelectByMetric} is found, use the first metric: ${metric.getDouble(1)}"))
+          }
+        }
+        val metricScore = if (metric == null) {
+          logInfo(format("No metric is found, system  will use first model"))
+          0.0
+        } else {
+          metric.getAs[Double](1)
+        }
+
         (metricScore, row(0).asInstanceOf[String], row(1).asInstanceOf[Int])
       }
         .toSeq
