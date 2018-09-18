@@ -18,6 +18,11 @@ trait SQLAlg extends Serializable {
     Seq.empty[(String, String)].toDF("param", "description")
   }
 
+  def explainModel(sparkSession: SparkSession, path: String, params: Map[String, String]): DataFrame = {
+    import sparkSession.implicits._
+    Seq.empty[(String, String)].toDF("key", "value")
+  }
+
   def skipPathPrefix: Boolean = false
 
   def modelType: ModelType = UndefinedType
