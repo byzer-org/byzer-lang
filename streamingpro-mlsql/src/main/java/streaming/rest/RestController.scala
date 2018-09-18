@@ -66,7 +66,7 @@ class RestController extends ApplicationController {
           ScriptSQLExec.parse(param("sql"), context, paramAsBoolean("skipInclude", false), paramAsBoolean("skipAuth", true))
           if (!silence) {
             outputResult = context.getLastSelectTable() match {
-              case Some(table) => "[" + sparkSession.sql(s"select * from $table limit 100").toJSON.collect().mkString(",") + "]"
+              case Some(table) => "[" + sparkSession.sql(s"select * from $table limit " + paramAsInt("outputSize", 5000)).toJSON.collect().mkString(",") + "]"
               case None => "[]"
             }
           }

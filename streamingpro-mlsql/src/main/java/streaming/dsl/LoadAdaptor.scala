@@ -65,6 +65,7 @@ class BatchLoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener,
     val reader = scriptSQLExecListener.sparkSession.read
     reader.options(option)
     path = TemplateMerge.merge(path, scriptSQLExecListener.env().toMap)
+    val resourceOwner = option.get("owner")
     format match {
       case "jdbc" =>
         val (dbname, dbtable) = parseDBAndTableFromStr(path)
@@ -89,7 +90,8 @@ class BatchLoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener,
       case "crawlersql" =>
         table = reader.option("path", cleanStr(path)).format("org.apache.spark.sql.execution.datasources.crawlersql").load()
       case "image" =>
-        table = reader.option("path", withPathPrefix(ScriptSQLExec.contextGetOrForTest().home, cleanStr(path))).format("streaming.dsl.mmlib.algs.processing.image").load()
+        val resourcePath = resourceRealPath(scriptSQLExecListener, resourceOwner, path)
+        table = reader.option("path", resourcePath).format("streaming.dsl.mmlib.algs.processing.image").load()
       case "jsonStr" =>
         val items = cleanBlockStr(scriptSQLExecListener.env()(cleanStr(path))).split("\n")
         import sparkSession.implicits._
@@ -106,8 +108,12 @@ class BatchLoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener,
         val sqlAlg = MLMapping.findAlg(cleanStr(path))
         table = sqlAlg.explainParams(sparkSession)
       case _ =>
+
+        // calculate resource real absolute path
+        val resourcePath = resourceRealPath(scriptSQLExecListener, resourceOwner, path)
+
         table = ModelSelfExplain(format, cleanStr(path), option, sparkSession).isMatch.thenDo.orElse(() => {
-          reader.format(format).load(withPathPrefix(ScriptSQLExec.contextGetOrForTest(), cleanStr(path)))
+          reader.format(format).load(resourcePath)
         }).get
     }
     table.createOrReplaceTempView(tableName)

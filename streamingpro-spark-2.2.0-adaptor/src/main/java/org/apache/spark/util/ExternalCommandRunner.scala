@@ -115,12 +115,9 @@ object ExternalCommandRunner extends Logging {
         val err = proc.getErrorStream
 
         try {
-          for (line <- Source.fromInputStream(err)(encoding).getLines) {
-            // scalastyle:off println
-            logCallback("__python__:" + line)
-            errorBuffer += line
-            // scalastyle:on println
-          }
+          val errorLog = logBuilder(Source.fromInputStream(err)(encoding).getLines())
+          logCallback(errorLog)
+          System.err.println(errorLog)
         } catch {
           case t: Throwable =>
             childThreadException.set(t)
@@ -244,6 +241,15 @@ object ExternalCommandRunner extends Logging {
         }
       }
     }
+  }
+  def logBuilder(iterator: Iterator[String]): String = {
+    val builder = StringBuilder.newBuilder
+    while (iterator.hasNext) {
+      val line = iterator.next()
+      builder.append(s"__python__:$line")
+      builder.append("\n")
+    }
+    builder.toString
   }
 
 }
