@@ -1,18 +1,15 @@
-package streaming.core
+package streaming.test.image
 
 import java.io.File
 
 import net.sf.json.JSONObject
-import org.apache.spark.sql.{Row, SaveMode, functions => F}
 import org.apache.spark.sql.types._
+import org.apache.spark.sql.{Row, functions => F}
 import org.apache.spark.streaming.BasicSparkOperation
 import streaming.core.strategy.platform.SparkRuntime
-import org.apache.spark.ml.linalg.{Vector, Vectors}
+import streaming.core.{BasicMLSQLConfig, NotToRunTag, SpecFunctions}
 import streaming.dsl.ScriptSQLExec
-import streaming.dsl.mmlib.algs.SQLAutoFeature
-import streaming.dsl.mmlib.algs.feature.{DiscretizerIntFeature, DoubleFeature, StringFeature}
 import streaming.dsl.mmlib.algs.processing.image.ImageSchema
-import streaming.dsl.template.TemplateMerge
 
 /**
   * Created by allwefantasy on 31/5/2018.

@@ -1,10 +1,8 @@
-package streaming.core
+package streaming.test.rest
 
 import net.sf.json.JSONArray
-import org.apache.http.HttpVersion
-import org.apache.http.client.fluent.{Form, Request}
-import org.apache.http.util.EntityUtils
 import org.scalatest.{FlatSpec, Matchers}
+import streaming.core.{NotToRunTag, SpecFunctions}
 
 /**
   * Created by allwefantasy on 25/4/2018.

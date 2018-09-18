@@ -1,9 +1,11 @@
-package streaming.core
+package streaming.test.dsl
 
 import java.io.File
+
 import org.apache.spark.streaming.BasicSparkOperation
 import streaming.core.strategy.platform.SparkRuntime
-import streaming.dsl.auth.{TableType}
+import streaming.core.{BasicMLSQLConfig, NotToRunTag, SpecFunctions}
+import streaming.dsl.auth.TableType
 import streaming.dsl.{GrammarProcessListener, ScriptSQLExec}
 
 /**
