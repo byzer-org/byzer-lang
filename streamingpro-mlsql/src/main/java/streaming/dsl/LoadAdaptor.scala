@@ -89,7 +89,7 @@ class BatchLoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener,
       case "crawlersql" =>
         table = reader.option("path", cleanStr(path)).format("org.apache.spark.sql.execution.datasources.crawlersql").load()
       case "image" =>
-        table = reader.option("pScath", withPathPrefix(ScriptSQLExec.contextGetOrForTest().home, cleanStr(path))).format("streaming.dsl.mmlib.algs.processing.image").load()
+        table = reader.option("path", withPathPrefix(ScriptSQLExec.contextGetOrForTest().home, cleanStr(path))).format("streaming.dsl.mmlib.algs.processing.image").load()
       case "jsonStr" =>
         val items = cleanBlockStr(scriptSQLExecListener.env()(cleanStr(path))).split("\n")
         import sparkSession.implicits._
