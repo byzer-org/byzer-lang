@@ -1,5 +1,7 @@
 package streaming.dsl
 
+import java.util.UUID
+
 import streaming.dsl.parser.DSLSQLParser._
 import streaming.dsl.template.TemplateMerge
 
@@ -44,7 +46,10 @@ class RegisterAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslA
     if (udf != null) {
       scriptSQLExecListener.sparkSession.udf.register(functionName, udf)
     }
-    scriptSQLExecListener.setLastSelectTable(null)
+    val newdf = alg.explainModel(sparkSession, path, option)
+    val tempTable = UUID.randomUUID().toString.replace("-", "")
+    newdf.createOrReplaceTempView(tempTable)
+    scriptSQLExecListener.setLastSelectTable(tempTable)
   }
 }
 

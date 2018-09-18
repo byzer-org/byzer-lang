@@ -10,7 +10,7 @@ import scala.collection.mutable.ArrayBuffer
   */
 object Test {
   def main(args: Array[String]): Unit = {
-//    streaming.example.OpTitanicSimple.OpTitanicSimple.main(args)
+    //    streaming.example.OpTitanicSimple.main(args)
   }
 
 
