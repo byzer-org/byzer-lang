@@ -64,4 +64,19 @@ trait DslTool {
     }
 
   }
+
+  /**
+   * we need calculate the real absolute path of resource.
+   * resource path = owner path prefix + input path
+   *
+   * @param scriptSQLExecListener script sql execute listener, which contains owner and owner path prefix relationship.
+   * @param resourceOwner resource owner
+   * @param path resource relative path
+   * @return
+   */
+  def resourceRealPath(scriptSQLExecListener: ScriptSQLExecListener,
+                       resourceOwner: Option[String],
+                       path: String): String= {
+    withPathPrefix(scriptSQLExecListener.pathPrefix(resourceOwner), cleanStr(path))
+  }
 }

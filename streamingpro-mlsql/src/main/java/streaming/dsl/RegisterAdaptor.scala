@@ -17,7 +17,7 @@ class RegisterAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslA
     var format = ""
     var path = ""
     var option = Map[String, String]()
-    //    val owner = option.get("owner")
+    val resourceOwner = option.get("owner")
     (0 to ctx.getChildCount() - 1).foreach { tokenIndex =>
 
       ctx.getChild(tokenIndex) match {
@@ -36,7 +36,7 @@ class RegisterAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslA
     }
     val alg = MLMapping.findAlg(format)
     if (!alg.skipPathPrefix) {
-      path = withPathPrefix(scriptSQLExecListener.pathPrefix(None), path)
+      path = resourceRealPath(scriptSQLExecListener, resourceOwner, path)
     }
     val sparkSession = scriptSQLExecListener.sparkSession
     val model = alg.load(sparkSession, path, option)
