@@ -18,7 +18,7 @@ import org.joda.time.format.ISODateTimeFormat
 import org.scalatest.{FlatSpec, Matchers}
 import streaming.common.{PunctuationUtils, ScriptCacheKey, SourceCodeCompiler, UnicodeUtils}
 import org.apache.spark.sql.types._
-import streaming.example.OpTitanicSimple
+
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -27,7 +27,7 @@ import scala.collection.mutable.ArrayBuffer
   */
 object Test {
   def main(args: Array[String]): Unit = {
-    OpTitanicSimple.main(args)
+//    streaming.example.OpTitanicSimple.OpTitanicSimple.main(args)
   }
 
 
