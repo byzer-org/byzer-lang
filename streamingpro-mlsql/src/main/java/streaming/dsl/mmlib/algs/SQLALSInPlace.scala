@@ -1,10 +1,8 @@
 package streaming.dsl.mmlib.algs
 
-import org.apache.spark.ml.classification.RandomForestClassifier
+
 import org.apache.spark.ml.evaluation.RegressionEvaluator
-import org.apache.spark.ml.param.{ParamMap, Params}
 import org.apache.spark.ml.recommendation.{ALS, ALSModel}
-import org.apache.spark.ml.util.Identifiable
 import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import streaming.dsl.mmlib.SQLAlg

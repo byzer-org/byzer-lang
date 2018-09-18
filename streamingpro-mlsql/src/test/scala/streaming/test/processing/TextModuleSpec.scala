@@ -1,4 +1,4 @@
-package streaming.core
+package streaming.test.processing
 
 import java.io.File
 
@@ -6,6 +6,7 @@ import net.sf.json.JSONObject
 import org.apache.commons.io.FileUtils
 import org.apache.spark.streaming.BasicSparkOperation
 import streaming.core.strategy.platform.SparkRuntime
+import streaming.core.{BasicMLSQLConfig, NotToRunTag, SpecFunctions}
 import streaming.dsl.ScriptSQLExec
 
 /**

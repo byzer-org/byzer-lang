@@ -1,8 +1,9 @@
-package streaming.core
+package streaming.test.carbondata
 
 import net.sf.json.JSONObject
 import org.apache.spark.streaming.BasicSparkOperation
 import streaming.core.strategy.platform.SparkRuntime
+import streaming.core.{BasicMLSQLConfig, NotToRunTag, SpecFunctions}
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.template.TemplateMerge
 

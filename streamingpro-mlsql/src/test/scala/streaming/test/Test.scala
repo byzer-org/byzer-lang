@@ -1,24 +1,7 @@
-package streaming.core
+package streaming.test
 
-import java.net.URL
-
-import org.apache.spark.graphx.{Edge, Graph, VertexId}
-import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.catalyst.JavaTypeInference
-import org.apache.spark.sql.catalyst.analysis.FunctionRegistry._
-import org.apache.spark.sql.catalyst.expressions.{Expression, ScalaUDF}
-import org.apache.spark.sql.execution.aggregate.ScalaUDAF
-import org.apache.spark.sql.expressions.UserDefinedAggregateFunction
-import org.apache.spark.sql.types.DataType
-import org.apache.spark.util.ScalaSourceCodeCompiler
-import org.apache.spark.{SparkConf, SparkContext}
-import org.joda.time.DateTime
-import org.joda.time.format.ISODateTimeFormat
-import org.scalatest.{FlatSpec, Matchers}
-import streaming.common.{PunctuationUtils, ScriptCacheKey, SourceCodeCompiler, UnicodeUtils}
-import org.apache.spark.sql.types._
-import streaming.example.OpTitanicSimple
+import org.apache.spark.graphx.VertexId
+import org.apache.spark.sql.types.{DataType, _}
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -27,7 +10,7 @@ import scala.collection.mutable.ArrayBuffer
   */
 object Test {
   def main(args: Array[String]): Unit = {
-    OpTitanicSimple.main(args)
+//    streaming.example.OpTitanicSimple.OpTitanicSimple.main(args)
   }
 
 
