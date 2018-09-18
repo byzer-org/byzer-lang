@@ -1,7 +1,8 @@
-package streaming.core
+package streaming.test.mysql
 
 import org.apache.spark.streaming.BasicSparkOperation
 import streaming.core.strategy.platform.SparkRuntime
+import streaming.core.{BasicMLSQLConfig, NotToRunTag, SpecFunctions}
 import streaming.dsl.ScriptSQLExec
 
 /**
