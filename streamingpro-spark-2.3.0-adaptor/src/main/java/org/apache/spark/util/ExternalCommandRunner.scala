@@ -115,7 +115,9 @@ object ExternalCommandRunner extends Logging {
         val err = proc.getErrorStream
 
         try {
-          logCallback(logBuilder(Source.fromInputStream(err)(encoding).getLines()))
+          val errorLog = logBuilder(Source.fromInputStream(err)(encoding).getLines())
+          logCallback(errorLog)
+          System.err.println(errorLog)
         } catch {
           case t: Throwable =>
             childThreadException.set(t)

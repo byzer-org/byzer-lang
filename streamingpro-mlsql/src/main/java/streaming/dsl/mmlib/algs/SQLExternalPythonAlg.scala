@@ -41,6 +41,15 @@ class SQLExternalPythonAlg extends SQLPythonAlg {
       }
     }
 
+    // distribute python project
+
+    val loadPythonProject = params.contains("pythonProjectPath")
+    if (loadPythonProject) {
+      distributePythonProject(params).foreach(path => {
+        resourceParams += ("pythonProjectPath" -> path)
+      })
+    }
+
     (Seq(""), metasTemp, params, selectedFitParam + ("resource" -> resourceParams.asJava))
   }
 }
