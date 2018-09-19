@@ -2,7 +2,7 @@ package streaming.dsl
 
 import org.antlr.v4.runtime.misc.Interval
 import streaming.dsl.parser.DSLSQLLexer
-import streaming.dsl.parser.DSLSQLParser.SqlContext
+import streaming.dsl.parser.DSLSQLParser.{ExpressionContext, SqlContext}
 
 /**
   * Created by allwefantasy on 27/8/2017.
@@ -32,6 +32,14 @@ trait DslTool {
     if (str.startsWith("'''") && str.endsWith("'''"))
       str.substring(3, str.length - 3)
     else str
+  }
+
+  def getStrOrBlockStr(ec: ExpressionContext) = {
+    if (ec.STRING() == null || ec.STRING().getText.isEmpty) {
+      cleanBlockStr(ec.BLOCK_STRING().getText)
+    } else {
+      cleanStr(ec.STRING().getText)
+    }
   }
 
   def withPathPrefix(prefix: String, path: String): String = {
@@ -66,17 +74,17 @@ trait DslTool {
   }
 
   /**
-   * we need calculate the real absolute path of resource.
-   * resource path = owner path prefix + input path
-   *
-   * @param scriptSQLExecListener script sql execute listener, which contains owner and owner path prefix relationship.
-   * @param resourceOwner resource owner
-   * @param path resource relative path
-   * @return
-   */
+    * we need calculate the real absolute path of resource.
+    * resource path = owner path prefix + input path
+    *
+    * @param scriptSQLExecListener script sql execute listener, which contains owner and owner path prefix relationship.
+    * @param resourceOwner         resource owner
+    * @param path                  resource relative path
+    * @return
+    */
   def resourceRealPath(scriptSQLExecListener: ScriptSQLExecListener,
                        resourceOwner: Option[String],
-                       path: String): String= {
+                       path: String): String = {
     withPathPrefix(scriptSQLExecListener.pathPrefix(resourceOwner), cleanStr(path))
   }
 }

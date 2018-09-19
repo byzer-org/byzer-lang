@@ -50,7 +50,7 @@ booleanExpression
     ;
 
 expression
-    : identifier '=' STRING
+    : qualifiedName '=' (STRING|BLOCK_STRING)
     ;
 
 ender

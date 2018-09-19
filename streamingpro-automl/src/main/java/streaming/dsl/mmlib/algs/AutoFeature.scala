@@ -13,11 +13,7 @@ import com.salesforce.op.features.types._
   */
 class AutoFeature {
   def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
-//    val label = params.getOrElse("labelCol", "label")
-//    val (survived, predictors) = FeatureBuilder.fromDataFrame[RealNN](df, response = "label")
-//    val featureVector = predictors.transmogrify()
-//    val checkedFeatures = survived.sanityCheck(featureVector, removeBadFeatures = true)
-//    checkedFeatures
+
       null
   }
 }

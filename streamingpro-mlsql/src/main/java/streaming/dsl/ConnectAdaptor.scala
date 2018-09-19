@@ -16,9 +16,9 @@ class ConnectAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAd
           option += ("format" -> s.getText)
 
         case s: ExpressionContext =>
-          option += (cleanStr(s.identifier().getText) -> cleanStr(s.STRING().getText))
+          option += (cleanStr(s.qualifiedName().getText) -> getStrOrBlockStr(s))
         case s: BooleanExpressionContext =>
-          option += (cleanStr(s.expression().identifier().getText)-> cleanStr(s.expression().STRING().getText))
+          option += (cleanStr(s.expression().qualifiedName().getText) -> getStrOrBlockStr(s.expression()))
         case s: DbContext =>
           ScriptSQLExec.options(s.getText, option)
         case _ =>
