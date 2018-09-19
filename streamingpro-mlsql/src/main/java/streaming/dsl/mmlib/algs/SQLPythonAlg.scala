@@ -102,6 +102,8 @@ class SQLPythonAlg extends SQLAlg with Functions {
 
     val mlsqlContext = ScriptSQLExec.contextGetOrForTest()
 
+    distributePythonProject(df.sparkSession, params)
+
     val wowRDD = fitParamRDD.map { paramAndIndex =>
 
       ScriptSQLExec.setContext(mlsqlContext)
@@ -142,7 +144,6 @@ class SQLPythonAlg extends SQLAlg with Functions {
             recordSingleLineLog(kafkaParam, msg)
         }
       }
-      distributePythonProject(params)
 
 
       val pythonScript = findPythonScript(userPythonScript, f, "sk")
@@ -334,7 +335,7 @@ class SQLPythonAlg extends SQLAlg with Functions {
         }
       }
       if (loadPythonProject) {
-        distributePythonProject(trainParams).foreach(path => {
+        distributePythonProject(sparkSession, trainParams).foreach(path => {
           resourceParams += ("pythonProjectPath" -> path)
         })
       }
@@ -421,13 +422,14 @@ class SQLPythonAlg extends SQLAlg with Functions {
     UserDefinedFunction(f2, VectorType, Some(Seq(VectorType)))
   }
 
-  def distributePythonProject(params: Map[String, String]): Option[String] = {
+  def distributePythonProject(spark: SparkSession, params: Map[String, String]): Option[String] = {
     // load python project
     val pythonProjectPath = params.get("pythonProjectPath")
     if (pythonProjectPath.isDefined) {
       val tempPythonProjectLocalPath = SQLPythonFunc.getLocalTempDataPath(pythonProjectPath.get)
       logInfo(s"system load python project into directory: [ ${tempPythonProjectLocalPath} ].")
-      HDFSOperator.copyToLocalFile(tempPythonProjectLocalPath, pythonProjectPath.get, true)
+//      HDFSOperator.copyToLocalFile(tempPythonProjectLocalPath, pythonProjectPath.get, true)
+      distributeResource(spark, pythonProjectPath.get, tempPythonProjectLocalPath)
       logInfo(format("python project loaded!"))
       Some(tempPythonProjectLocalPath)
     } else {
