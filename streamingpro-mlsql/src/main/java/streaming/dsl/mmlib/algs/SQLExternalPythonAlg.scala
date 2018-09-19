@@ -45,7 +45,7 @@ class SQLExternalPythonAlg extends SQLPythonAlg {
 
     val loadPythonProject = params.contains("pythonProjectPath")
     if (loadPythonProject) {
-      distributePythonProject(params).foreach(path => {
+      distributePythonProject(sparkSession, params).foreach(path => {
         resourceParams += ("pythonProjectPath" -> path)
       })
     }

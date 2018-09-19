@@ -1,8 +1,9 @@
 package streaming.dsl.mmlib.algs
 
 import org.apache.spark.ml.classification.{RandomForestClassificationModel, RandomForestClassifier}
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import org.apache.spark.sql.expressions.UserDefinedFunction
+import org.apache.spark.sql.types.{StringType, StructField, StructType}
 import streaming.dsl.mmlib._
 
 import scala.collection.mutable.ArrayBuffer
@@ -62,6 +63,24 @@ class SQLRandomForest(override val uid: String) extends SQLAlg with MllibFunctio
     val (bestModelPath, baseModelPath, metaPath) = mllibModelAndMetaPath(path, params, sparkSession)
     val model = RandomForestClassificationModel.load(bestModelPath(0))
     ArrayBuffer(model)
+  }
+
+
+  override def explainModel(sparkSession: SparkSession, path: String, params: Map[String, String]): DataFrame = {
+    val models = load(sparkSession, path, params).asInstanceOf[ArrayBuffer[RandomForestClassificationModel]]
+    val rows = models.flatMap { model =>
+      val modelParams = model.params.filter(param => model.isSet(param)).map(param =>
+        Seq(("fitParam.[group]." + param.name), model.get(param).get.toString))
+      Seq(
+        Seq("uid", model.uid),
+        Seq("numFeatures", model.numFeatures.toString),
+        Seq("numClasses", model.numClasses.toString),
+        Seq("numTrees", model.treeWeights.length.toString),
+        Seq("treeWeights", model.treeWeights.mkString(","))
+      ) ++ modelParams
+    }.map(Row.fromSeq(_))
+    sparkSession.createDataFrame(sparkSession.sparkContext.parallelize(rows, 1),
+      StructType(Seq(StructField("name", StringType), StructField("value", StringType))))
   }
 
   override def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = {
