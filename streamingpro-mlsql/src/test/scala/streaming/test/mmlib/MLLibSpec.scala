@@ -2,6 +2,7 @@ package streaming.test.mmlib
 
 import java.io.File
 
+import org.apache.spark.sql.types.IntegerType
 import org.apache.spark.streaming.BasicSparkOperation
 import streaming.common.ShellCommand
 import streaming.core.pojo.Rating
@@ -17,6 +18,7 @@ class MLLibSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLCo
 
   copySampleMovielensRratingsData
   copySampleLibsvmData
+  copyTitanic
 
   "als" should "work fine" in {
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
@@ -154,7 +156,7 @@ class MLLibSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLCo
   }
 
   "GBTs" should "work fine" in {
-    copySampleLibsvmData
+
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       implicit val spark = runtime.sparkSession
       val randomForest = new SQLGBTs()
@@ -171,6 +173,16 @@ class MLLibSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLCo
       val udf = randomForest.predict(spark, models, "jack", Map("autoSelectByMetric" -> "f1"))
       spark.udf.register("jack", udf)
       df.selectExpr("jack(features) as predict").show()
+    }
+  }
+  "AutoFeature" should "work fine" in {
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+      implicit val spark = runtime.sparkSession
+      ScriptSQLExec.contextGetOrForTest()
+      val df = spark.read.format("csv").option("header", "true").option("inferSchema", "true").load("/tmp/william/titanic.csv")
+      val feature = new SQLAutoFeatureExt()
+      feature.train(df, "/tmp/mode2", Map("labelCol" -> "Survived"))
+
     }
   }
 }

@@ -104,4 +104,8 @@ trait SpecFunctions {
   def copySampleMovielensRratingsData = {
     writeStringToFile("/tmp/william/sample_movielens_ratings.txt", loadDataStr("als/sample_movielens_ratings.txt"))
   }
+
+  def copyTitanic = {
+    writeStringToFile("/tmp/william/titanic.csv", loadDataStr("titanic.csv"))
+  }
 }

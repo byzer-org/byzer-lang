@@ -10,13 +10,13 @@ import streaming.core.strategy.platform.SparkRuntime
 import streaming.core.{BasicMLSQLConfig, NotToRunTag, SpecFunctions}
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib.algs.feature.{DiscretizerIntFeature, DoubleFeature, StringFeature}
-import streaming.dsl.mmlib.algs.{SQLAutoFeature, SQLCommunityBasedSimilarityInPlace, SQLCorpusExplainInPlace, SQLVecMapInPlace}
+import streaming.dsl.mmlib.algs.{SQLCommunityBasedSimilarityInPlace, SQLCorpusExplainInPlace, SQLVecMapInPlace}
 import streaming.dsl.template.TemplateMerge
 
 
 /**
- * Created by allwefantasy on 6/5/2018.
- */
+  * Created by allwefantasy on 6/5/2018.
+  */
 class TextSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConfig {
 
 
@@ -170,48 +170,6 @@ class TextSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLCon
     }
   }
 
-  "AutoFeature" should "work fine" taggedAs (NotToRunTag) in {
-
-    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
-      //执行sql
-      implicit val spark = runtime.sparkSession
-
-      writeStringToFile("/tmp/tfidf/stopwords", List("你").mkString("\n"))
-      writeStringToFile("/tmp/tfidf/prioritywords", List("天才").mkString("\n"))
-
-      val dataRDD = spark.sparkContext.parallelize(Seq(
-        Seq("我是天才，你呢", 1.0, 2.0, 3.0, 1, 2, 3),
-        Seq("你真的很棒", 1.0, 4.0, 3.0, 1, 4, 3),
-        Seq("天才你好", 1.0, 7.0, 3.0, 1, 7, 3)
-      )).map { f =>
-        Row.fromSeq(f)
-      }
-      val df = spark.createDataFrame(dataRDD,
-        StructType(Seq(
-          StructField("content", StringType),
-          StructField("a", DoubleType),
-          StructField("b", DoubleType),
-          StructField("c", DoubleType),
-          StructField("a1", IntegerType),
-          StructField("b1", IntegerType),
-          StructField("c1", IntegerType)
-
-        )))
-      val af = new SQLAutoFeature()
-      af.train(df, "/tmp/automl", Map(
-        "mappingPath" -> "/tmp/tfidf/mapping",
-        "textFileds" -> "content",
-        "priorityDicPath" -> "/tmp/tfidf/stopwords",
-        "stopWordPath" -> "/tmp/tfidf/prioritywords",
-        "priority" -> "3",
-        "nGrams" -> "2,3"
-      ))
-      val ml = spark.read.parquet("/tmp/automl")
-      ml.show(false)
-
-    }
-  }
-
   "test" should "work fine" taggedAs (NotToRunTag) in {
 
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
@@ -298,7 +256,6 @@ class TextSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLCon
           |  predict_length('dog,rabbit.我  在  这 我 我 我 里123,22') as length
           |  """.stripMargin)
         .collect().mkString(",") == "[true,true,true,3,3,25,21,28,15,9,8,32]")
-
 
 
     }
