@@ -30,9 +30,9 @@ class SetAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapto
             command = original_command
           }
         case s: ExpressionContext =>
-          option += (cleanStr(s.identifier().getText) -> cleanStr(s.STRING().getText))
+          option += (cleanStr(s.qualifiedName().getText) -> getStrOrBlockStr(s))
         case s: BooleanExpressionContext =>
-          option += (cleanStr(s.expression().identifier().getText) -> cleanStr(s.expression().STRING().getText))
+          option += (cleanStr(s.expression().qualifiedName().getText) -> getStrOrBlockStr(s.expression()))
         case _ =>
       }
     }
