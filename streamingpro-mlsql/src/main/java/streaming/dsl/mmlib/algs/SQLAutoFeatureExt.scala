@@ -1,5 +1,6 @@
 package streaming.dsl.mmlib.algs
 
+import net.csdn.common.reflect.ReflectHelper
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import streaming.dsl.mmlib.SQLAlg
@@ -10,7 +11,8 @@ import streaming.log.{Logging, WowLog}
   */
 class SQLAutoFeatureExt extends SQLAlg with Logging with WowLog {
   override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
-    null
+    val instance = Class.forName("streaming.dsl.mmlib.algs.AutoFeature").newInstance()
+    ReflectHelper.method(instance, "train", df, path, params).asInstanceOf[DataFrame]
   }
 
   override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = {

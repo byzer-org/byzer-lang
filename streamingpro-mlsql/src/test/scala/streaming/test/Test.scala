@@ -5,12 +5,29 @@ import org.apache.spark.sql.types.{DataType, _}
 
 import scala.collection.mutable.ArrayBuffer
 
+import scala.Dynamic
+
 /**
   * Created by allwefantasy on 28/3/2017.
   */
 object Test {
   def main(args: Array[String]): Unit = {
-        streaming.example.OpTitanicSimple.main(args)
+    //streaming.example.OpTitanicSimple.main(args)
+    import scala.language.dynamics
+    class DynImpl[T] extends Dynamic {
+      var map = Map.empty[String, Any]
+
+      def selectDynamic(name: String) =
+        map get name getOrElse sys.error("method not found")
+
+      def updateDynamic(name: String)(value: Any) {
+        map += name -> value
+      }
+    }
+
+    val abc = new DynImpl
+    abc.jack = "cool"
+    println(abc.jack)
   }
 
 
