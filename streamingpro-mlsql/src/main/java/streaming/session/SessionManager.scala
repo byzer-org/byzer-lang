@@ -48,11 +48,13 @@ class SessionManager(rootSparkSession: SparkSession) extends Logging {
 
   def getSession(sessionIdentifier: SessionIdentifier): MLSQLSession = {
     synchronized {
-      val session = identifierToSession.get(sessionIdentifier)
+      var session = identifierToSession.get(sessionIdentifier)
       if (session == null) {
         openSession(sessionIdentifier.owner, "", "", Map(), true)
       }
-      identifierToSession.get(sessionIdentifier)
+      session = identifierToSession.get(sessionIdentifier)
+      //to record active times
+      session.visit()
     }
   }
 

@@ -74,10 +74,10 @@ object OpTitanicSimple {
 
 
     // Define features using the OP types based on the data
-    val survived = FeatureBuilder.RealNN[Row].extract(_.getAs[Int]("survived").toRealNN).asResponse
-    val pClass = FeatureBuilder.PickList[Row].extract(_.getAs[String]("pClass").toPickList).asPredictor
-    val name = FeatureBuilder.Text[Row].extract(_.getAs[String]("name").toText).asPredictor
-    val sex = FeatureBuilder.PickList[Row].extract(_.getAs[Int]("sex").toString.toPickList).asPredictor
+    val survived = FeatureBuilder.RealNN[Passenger].extract(_.survived.toRealNN).asResponse
+    val pClass = FeatureBuilder.PickList[Passenger].extract(_.pClass.map(_.toString).toPickList).asPredictor
+    val name = FeatureBuilder.Text[Passenger].extract(_.name.toText).asPredictor
+    val sex = FeatureBuilder.PickList[Passenger].extract(_.sex.map(_.toString).toPickList).asPredictor
     val age = FeatureBuilder.Real[Passenger].extract(_.age.toReal).asPredictor
     val sibSp = FeatureBuilder.Integral[Passenger].extract(_.sibSp.toIntegral).asPredictor
     val parCh = FeatureBuilder.Integral[Passenger].extract(_.parCh.toIntegral).asPredictor
