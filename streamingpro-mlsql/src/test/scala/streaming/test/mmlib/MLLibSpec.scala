@@ -2,6 +2,7 @@ package streaming.test.mmlib
 
 import java.io.File
 
+import org.apache.spark.SparkCoreVersion
 import org.apache.spark.sql.types.IntegerType
 import org.apache.spark.streaming.BasicSparkOperation
 import streaming.common.ShellCommand
@@ -179,10 +180,14 @@ class MLLibSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLCo
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       implicit val spark = runtime.sparkSession
       ScriptSQLExec.contextGetOrForTest()
-      val df = spark.read.format("csv").option("header", "true").option("inferSchema", "true").load("/tmp/william/titanic.csv")
-      val feature = new SQLAutoFeatureExt()
-      feature.train(df, "/tmp/model2", Map("labelCol" -> "Survived", "workflowName" -> "wow"))
-      feature.batchPredict(df, "/tmp/model2", Map()).show()
+
+      if (SparkCoreVersion.version == "2.2.x") {
+        val df = spark.read.format("csv").option("header", "true").option("inferSchema", "true").load("/tmp/william/titanic.csv")
+        val feature = new SQLAutoFeatureExt()
+        feature.train(df, "/tmp/model2", Map("labelCol" -> "Survived", "workflowName" -> "wow"))
+        feature.batchPredict(df, "/tmp/model2", Map()).show()
+      }
+
     }
   }
 }

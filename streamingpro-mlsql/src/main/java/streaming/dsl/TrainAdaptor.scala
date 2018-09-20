@@ -2,6 +2,7 @@ package streaming.dsl
 
 import java.util.UUID
 
+import org.apache.spark.SparkCoreVersion
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.parser.DSLSQLParser._
 import streaming.dsl.template.TemplateMerge
@@ -43,7 +44,7 @@ class TrainAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdap
     val df = scriptSQLExecListener.sparkSession.table(tableName)
     val sqlAlg = MLMapping.findAlg(format)
     //2.3.1
-    val coreVersion = org.apache.spark.SPARK_VERSION.split("\\.").take(2).mkString(".") + ".x"
+    val coreVersion = SparkCoreVersion.version
     if (sqlAlg.coreCompatibility.filter(f => f.coreVersion == coreVersion).size == 0) {
       throw new RuntimeException(s"name: $format class:${sqlAlg.getClass.getName} is not compatible with current core version:$coreVersion")
     }
