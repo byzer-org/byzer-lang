@@ -21,7 +21,7 @@ class WowOpWorkflowModelReader(val workflow: WowOpWorkflow) extends MLReader[OpW
     * @param path to the trained workflow model
     * @return workflow model
     */
-  final override def load(path: String): OpWorkflowModel = {
+  final override def load(path: String): WowOpWorkflowModel = {
     Try(sc.textFile(OpWorkflowModelReadWriteShared.jsonPath(path), 1).collect().mkString)
       .flatMap(loadJson(_, path = path)) match {
       case Failure(error) => throw new RuntimeException(s"Failed to load Workflow from path '$path'", error)
@@ -36,7 +36,7 @@ class WowOpWorkflowModelReader(val workflow: WowOpWorkflow) extends MLReader[OpW
     * @param path to the trained workflow model
     * @return workflow model
     */
-  def loadJson(json: String, path: String): Try[OpWorkflowModel] = Try(parse(json)).flatMap(loadJson(_, path = path))
+  def loadJson(json: String, path: String): Try[WowOpWorkflowModel] = Try(parse(json)).flatMap(loadJson(_, path = path))
 
   /**
     * Load Workflow instance from json
@@ -45,11 +45,11 @@ class WowOpWorkflowModelReader(val workflow: WowOpWorkflow) extends MLReader[OpW
     * @param path to the trained workflow model
     * @return workflow model instance
     */
-  def loadJson(json: JValue, path: String): Try[OpWorkflowModel] = {
+  def loadJson(json: JValue, path: String): Try[WowOpWorkflowModel] = {
     for {
       trainParams <- OpParams.fromString((json \ TrainParameters.entryName).extract[String])
       params <- OpParams.fromString((json \ Parameters.entryName).extract[String])
-      model <- Try(new OpWorkflowModel(uid = (json \ Uid.entryName).extract[String], trainParams))
+      model <- Try(new WowOpWorkflowModel(uid = (json \ Uid.entryName).extract[String], trainParams))
       (stages, resultFeatures) <- Try(resolveFeaturesAndStages(json, path))
       blacklist <- Try(resolveBlacklist(json))
     } yield model

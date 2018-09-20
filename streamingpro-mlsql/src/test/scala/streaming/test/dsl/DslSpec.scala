@@ -573,6 +573,29 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
       ScriptSQLExec.parse("load parquet.`/tmp/abc` as newtable;", sq)
     }
   }
+
+  "load-exaplain" should "work fine" in {
+
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+      //执行sql
+      implicit val spark = runtime.sparkSession
+
+      val ssel = createSSEL
+
+      ScriptSQLExec.parse("load model.`list` as output;", ssel)
+      spark.sql("select * from output").show()
+      ScriptSQLExec.parse("""load model.`params` where alg="RandomForest" as output;""", ssel)
+      spark.sql("select * from output").show()
+      ScriptSQLExec.parse("""load model.`example` where alg="RandomForest" as output;""", ssel)
+      spark.sql("select * from output").show()
+
+      ScriptSQLExec.parse("load workflow.`list` as output;", ssel)
+      spark.sql("select * from output").show()
+      ScriptSQLExec.parse("load workflow.`` as output;", ssel)
+      spark.sql("select * from output").show()
+    }
+  }
+
   "auth-1" should "work fine" in {
 
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>

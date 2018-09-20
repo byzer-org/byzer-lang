@@ -2,12 +2,15 @@ package streaming.dsl.mmlib.algs
 
 import java.io._
 
-import org.apache.spark.sql.{Column, DataFrame, Row, functions => F}
+import org.apache.spark.sql.{Column, DataFrame, Row, SparkSession, functions => F}
 import com.salesforce.op.{WowOpWorkflow, _}
 import com.salesforce.op.features._
 import com.salesforce.op.features.types._
 import org.apache.spark.sql.catalyst.expressions.{Expression, ScalaUDF}
-import org.apache.spark.sql.types.{DoubleType, IntegerType}
+import org.apache.spark.sql.types._
+import org.json4s.JsonDSL._
+import org.json4s.jackson.JsonMethods
+import org.json4s.jackson.JsonMethods.{compact, render}
 
 
 /**
@@ -71,8 +74,32 @@ class AutoFeature extends Serializable {
     val label = params("labelCol")
     val workflow = WorkflowManager.get(workflowName).wowOpWorkflow
     val newdf = convert(df, label)
-    val fittedWorkflow = workflow.loadModel(path)
+    val fittedWorkflow = workflow.loadModel(path + "/model")
     fittedWorkflow.setInputDataset[Row](newdf).score()
+  }
+
+  def explainModel(sparkSession: SparkSession, path: String, params: Map[String, String]) = {
+    implicit val spark = sparkSession
+    val workflowName = params("workflowName")
+    require(WorkflowManager.get(workflowName) != null, s"workflowName $workflowName is is not exists")
+    val workflow = WorkflowManager.get(workflowName).wowOpWorkflow
+    val fittedWorkflow = workflow.loadModel(path + "/model")
+    fittedWorkflow.setResultFeatures(workflow.getResultFeatures())
+
+    val feautres = workflow.getResultFeatures().map(f => Row.fromSeq(Seq("feature", compact(render(f.toJson(true))))))
+
+    spark.createDataFrame(spark.sparkContext.parallelize(Seq(
+      Row.fromSeq(Seq("resultFeaturesDependencyGraphs", workflow.prettyResultFeaturesDependencyGraphs))
+    ) ++ feautres), StructType(Seq(
+      StructField(name = "desc", dataType = StringType),
+      StructField(name = "command", dataType = StringType)
+    )))
+
+
+  }
+
+  def listWorkflows() = {
+    WorkflowManager.items.map(f => f.name)
   }
 }
 

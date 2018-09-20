@@ -9,7 +9,7 @@ import streaming.dsl.mmlib.algs.SQLPythonFunc
 /**
   * Created by allwefantasy on 14/9/2018.
   */
-trait BaseParams extends Params {
+trait BaseParams extends WowParams {
 
 
   final val evaluateTable: Param[String] = new Param[String](this, "evaluateTable",
@@ -31,18 +31,6 @@ trait BaseParams extends Params {
 
   def getModelMetaData(spark: SparkSession, path: String) = {
     spark.read.parquet(SQLPythonFunc.getAlgMetalPath(path, getKeepVersion) + "/0")
-  }
-
-  override def copy(extra: ParamMap): Params = defaultCopy(extra)
-
-  def _explainParams(sparkSession: SparkSession, f: () => Params) = {
-    val model = f()
-    val rfcParams2 = this.params.map(this.explainParam).map(f => Row.fromSeq(f.split(":", 2)))
-    val rfcParams = model.params.map(model.explainParam).map { f =>
-      val Array(name, value) = f.split(":", 2)
-      Row.fromSeq(Seq("fitParam.[group]." + name, value))
-    }
-    sparkSession.createDataFrame(sparkSession.sparkContext.parallelize(rfcParams2 ++ rfcParams, 1), StructType(Seq(StructField("param", StringType), StructField("description", StringType))))
   }
 }
 

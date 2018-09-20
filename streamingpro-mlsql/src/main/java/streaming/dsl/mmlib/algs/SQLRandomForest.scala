@@ -26,7 +26,6 @@ class SQLRandomForest(override val uid: String) extends SQLAlg with MllibFunctio
     val evaluateTable = params.get("evaluateTable")
     setEvaluateTable(evaluateTable.getOrElse("None"))
 
-
     SQLPythonFunc.incrementVersion(path, keepVersion)
     val spark = df.sparkSession
 

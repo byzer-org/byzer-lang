@@ -37,6 +37,10 @@ trait SQLAlg extends Serializable {
 
   def codeExample: Code = Code(SQLCode, "")
 
+  def coreCompatibility: Seq[CoreVersion] = {
+    Seq(Core_2_2_x, Core_2_3_x)
+  }
+
 }
 
 sealed abstract class ModelType
@@ -61,6 +65,8 @@ sealed abstract class DocType
 
 case object HtmlDoc extends DocType("html")
 
+case object MarkDownDoc extends DocType("md")
+
 case object TextDoc extends DocType("text")
 
 
@@ -76,6 +82,17 @@ case object SQLCode extends CodeType("sql")
 case object ScalaCode extends CodeType("scala")
 
 case object PythonCode extends CodeType("python")
+
+
+sealed abstract class CoreVersion
+(
+  val coreVersion: String
+)
+
+case object Core_2_2_x extends CoreVersion("2.2.x")
+
+case object Core_2_3_x extends CoreVersion("2.3.x")
+
 
 
 
