@@ -383,12 +383,12 @@ object Functions {
     })
   }
 
-  def arrayIntToLength(uDFRegistration: UDFRegistration) = {
-    uDFRegistration.register("array_int_to_length", (seq: Seq[Int], length: Int, default: Int) => {
+  def paddingIntArray(uDFRegistration: UDFRegistration) = {
+    uDFRegistration.register("padding_int_array", (seq: Seq[Int], length: Int, default: Int) => {
       if (seq.length > length) {
         seq.slice(0, length)
       } else {
-        seq ++ Array.fill(length - seq.length)(default)
+        seq ++ Seq.fill(length - seq.length)(default)
       }
     })
   }
