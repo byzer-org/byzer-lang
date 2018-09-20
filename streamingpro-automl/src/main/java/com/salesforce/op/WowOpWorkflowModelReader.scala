@@ -90,7 +90,7 @@ class WowOpWorkflowModelReader(val workflow: WowOpWorkflow) extends MLReader[OpW
       val stageUid = (j \ FieldNames.Uid.entryName).extract[String]
       val originalStage = workflow.stages.find(_.uid == stageUid)
       originalStage match {
-        case Some(os) => new OpPipelineStageReader(os).loadFromJson(j, path = path).asInstanceOf[OPStage]
+        case Some(os) => new WowOpPipelineStageReader(os).loadFromJson(j, path = path).asInstanceOf[OPStage]
         case None => throw new RuntimeException(s"Workflow does not contain a stage with uid: $stageUid")
       }
     })

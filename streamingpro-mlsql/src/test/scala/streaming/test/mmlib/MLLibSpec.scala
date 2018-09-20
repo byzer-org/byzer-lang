@@ -181,8 +181,8 @@ class MLLibSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLCo
       ScriptSQLExec.contextGetOrForTest()
       val df = spark.read.format("csv").option("header", "true").option("inferSchema", "true").load("/tmp/william/titanic.csv")
       val feature = new SQLAutoFeatureExt()
-      feature.train(df, "/tmp/mode2", Map("labelCol" -> "Survived"))
-
+      feature.train(df, "/tmp/model2", Map("labelCol" -> "Survived", "workflowName" -> "wow"))
+      feature.batchPredict(df, "/tmp/model2", Map("labelCol" -> "Survived", "workflowName" -> "wow")).show()
     }
   }
 }

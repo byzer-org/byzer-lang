@@ -21,6 +21,7 @@ class TrainAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdap
     var path = ""
     var options = Map[String, String]()
     val owner = options.get("owner")
+    var asTableName = ""
     (0 to ctx.getChildCount() - 1).foreach { tokenIndex =>
       ctx.getChild(tokenIndex) match {
         case s: TableNameContext =>
@@ -34,6 +35,8 @@ class TrainAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdap
           options += (cleanStr(s.qualifiedName().getText) -> evaluate(getStrOrBlockStr(s)))
         case s: BooleanExpressionContext =>
           options += (cleanStr(s.expression().qualifiedName().getText) -> evaluate(getStrOrBlockStr(s.expression())))
+        case s: AsTableNameContext =>
+          asTableName = cleanStr(s.tableName().getText)
         case _ =>
       }
     }
@@ -42,8 +45,13 @@ class TrainAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdap
     if (!sqlAlg.skipPathPrefix) {
       path = withPathPrefix(scriptSQLExecListener.pathPrefix(owner), path)
     }
-    val newdf = sqlAlg.train(df, path, options)
-    val tempTable = UUID.randomUUID().toString.replace("-", "")
+    val newdf = if (options.getOrElse("runMode", "train") == "train") {
+      sqlAlg.train(df, path, options)
+    } else {
+      sqlAlg.batchPredict(df, path, options)
+    }
+
+    val tempTable = if (asTableName.isEmpty) UUID.randomUUID().toString.replace("-", "") else asTableName
     newdf.createOrReplaceTempView(tempTable)
     scriptSQLExecListener.setLastSelectTable(tempTable)
   }
