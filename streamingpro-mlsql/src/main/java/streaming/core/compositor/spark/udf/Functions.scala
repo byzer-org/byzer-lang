@@ -1,9 +1,10 @@
 package streaming.core.compositor.spark.udf
 
+import java.util.UUID
+
 import scala.collection.mutable.WrappedArray
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
-
 import breeze.linalg.{DenseVector => BDV, SparseVector => BSV, Vector => BV}
 import org.apache.spark.ml.linalg.{DenseVector, Matrices, Matrix, SparseVector, Vector, Vectors}
 import org.apache.spark.mllib.linalg.{Vectors => OldVectors}
@@ -26,6 +27,12 @@ object Functions {
   def mkString(uDFRegistration: UDFRegistration) = {
     uDFRegistration.register("mkString", (sep: String, co: WrappedArray[String]) => {
       co.mkString(sep)
+    })
+  }
+
+  def uuid(uDFRegistration: UDFRegistration) = {
+    uDFRegistration.register("uuid", () => {
+      UUID.randomUUID().toString.replace("-", "")
     })
   }
 
