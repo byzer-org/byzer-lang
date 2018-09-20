@@ -46,7 +46,7 @@ class MLSQLSession(username: String,
       currentUser
     }
   }
-  private[this] lazy val sparkSessionWithUGI = new SparkSessionWithUGI(sessionUGI,sessionConf)
+  private[this] lazy val sparkSessionWithUGI = new SparkSessionWithUGI(sessionUGI, sessionConf)
 
   private[this] def acquire(userAccess: Boolean): Unit = {
     if (userAccess) {
@@ -101,6 +101,12 @@ class MLSQLSession(username: String,
     } finally {
       release(true)
     }
+  }
+
+  def visit(): MLSQLSession = {
+    acquire(true)
+    release(true)
+    this
   }
 
   def execute(f: () => Unit, opId: String, desc: String, operationTimeout: Int): MLSQLOperation = {

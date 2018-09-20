@@ -240,11 +240,11 @@
                 <scope>compile</scope>
             </properties>
             <dependencies>
-                <dependency>
-                    <groupId>org.elasticsearch</groupId>
-                    <artifactId>elasticsearch-spark-20_2.11</artifactId>
-                    <version>5.5.2</version>
-                </dependency>
+                <!--<dependency>-->
+                    <!--<groupId>org.elasticsearch</groupId>-->
+                    <!--<artifactId>elasticsearch-spark-20_2.11</artifactId>-->
+                    <!--<version>5.5.2</version>-->
+                <!--</dependency>-->
                 <dependency>
                     <groupId>streaming.king</groupId>
                     <artifactId>streamingpro-spark-common</artifactId>

@@ -101,4 +101,8 @@ abstract class BaseParseListenerextends extends DSLSQLListener {
   override def enterSetKey(ctx: SetKeyContext): Unit = {}
 
   override def exitSetKey(ctx: SetKeyContext): Unit = {}
+
+  override def enterAsTableName(ctx: AsTableNameContext): Unit = {}
+
+  override def exitAsTableName(ctx: AsTableNameContext): Unit = {}
 }

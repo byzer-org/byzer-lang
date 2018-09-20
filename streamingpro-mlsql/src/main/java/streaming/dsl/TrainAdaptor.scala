@@ -2,6 +2,7 @@ package streaming.dsl
 
 import java.util.UUID
 
+import org.apache.spark.SparkCoreVersion
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.parser.DSLSQLParser._
 import streaming.dsl.template.TemplateMerge
@@ -21,6 +22,7 @@ class TrainAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdap
     var path = ""
     var options = Map[String, String]()
     val owner = options.get("owner")
+    var asTableName = ""
     (0 to ctx.getChildCount() - 1).foreach { tokenIndex =>
       ctx.getChild(tokenIndex) match {
         case s: TableNameContext =>
@@ -31,19 +33,32 @@ class TrainAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdap
           path = cleanStr(s.getText)
           path = evaluate(path)
         case s: ExpressionContext =>
-          options += (cleanStr(s.identifier().getText) -> evaluate(cleanStr(s.STRING().getText)))
+          options += (cleanStr(s.qualifiedName().getText) -> evaluate(getStrOrBlockStr(s)))
         case s: BooleanExpressionContext =>
-          options += (cleanStr(s.expression().identifier().getText) -> evaluate(cleanStr(s.expression().STRING().getText)))
+          options += (cleanStr(s.expression().qualifiedName().getText) -> evaluate(getStrOrBlockStr(s.expression())))
+        case s: AsTableNameContext =>
+          asTableName = cleanStr(s.tableName().getText)
         case _ =>
       }
     }
     val df = scriptSQLExecListener.sparkSession.table(tableName)
     val sqlAlg = MLMapping.findAlg(format)
+    //2.3.1
+    val coreVersion = SparkCoreVersion.version
+    if (sqlAlg.coreCompatibility.filter(f => f.coreVersion == coreVersion).size == 0) {
+      throw new RuntimeException(s"name: $format class:${sqlAlg.getClass.getName} is not compatible with current core version:$coreVersion")
+    }
+
     if (!sqlAlg.skipPathPrefix) {
       path = withPathPrefix(scriptSQLExecListener.pathPrefix(owner), path)
     }
-    val newdf = sqlAlg.train(df, path, options)
-    val tempTable = UUID.randomUUID().toString.replace("-", "")
+    val newdf = if (options.getOrElse("runMode", "train") == "train") {
+      sqlAlg.train(df, path, options)
+    } else {
+      sqlAlg.batchPredict(df, path, options)
+    }
+
+    val tempTable = if (asTableName.isEmpty) UUID.randomUUID().toString.replace("-", "") else asTableName
     newdf.createOrReplaceTempView(tempTable)
     scriptSQLExecListener.setLastSelectTable(tempTable)
   }
@@ -74,7 +89,6 @@ object MLMapping {
     "TokenAnalysis" -> "streaming.dsl.mmlib.algs.SQLTokenAnalysis",
     "TfIdfInPlace" -> "streaming.dsl.mmlib.algs.SQLTfIdfInPlace",
     "Word2VecInPlace" -> "streaming.dsl.mmlib.algs.SQLWord2VecInPlace",
-    "AutoFeature" -> "streaming.dsl.mmlib.algs.SQLAutoFeature",
     "RateSampler" -> "streaming.dsl.mmlib.algs.SQLRateSampler",
     "ScalerInPlace" -> "streaming.dsl.mmlib.algs.SQLScalerInPlace",
     "NormalizeInPlace" -> "streaming.dsl.mmlib.algs.SQLNormalizeInPlace",

@@ -4,7 +4,7 @@ import net.sf.json.JSONObject
 import org.apache.spark.sql.types.WowStructType
 import template.TemplateMerge
 import org.apache.spark.sql.{DataFrame, functions => F}
-import streaming.dsl.load.batch.ModelSelfExplain
+import streaming.dsl.load.batch.{AutoWorkflowSelfExplain, ModelSelfExplain}
 import streaming.parser.SparkTypePaser
 import streaming.dsl.parser.DSLSQLParser._
 import streaming.source.parser.{SourceParser, SourceSchema}
@@ -29,9 +29,9 @@ class LoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
         case s: FormatContext =>
           format = s.getText
         case s: ExpressionContext =>
-          option += (cleanStr(s.identifier().getText) -> evaluate(cleanStr(s.STRING().getText)))
+          option += (cleanStr(s.qualifiedName().getText) -> evaluate(getStrOrBlockStr(s)))
         case s: BooleanExpressionContext =>
-          option += (cleanStr(s.expression().identifier().getText) -> evaluate(cleanStr(s.expression().STRING().getText)))
+          option += (cleanStr(s.expression().qualifiedName().getText) -> evaluate(getStrOrBlockStr(s.expression())))
         case s: PathContext =>
           path = s.getText
 
@@ -104,16 +104,17 @@ class BatchLoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener,
         }
         import sparkSession.implicits._
         table = reader.json(sparkSession.createDataset[String](items))
-      case "modelParams" =>
-        val sqlAlg = MLMapping.findAlg(cleanStr(path))
-        table = sqlAlg.explainParams(sparkSession)
       case _ =>
 
         // calculate resource real absolute path
         val resourcePath = resourceRealPath(scriptSQLExecListener, resourceOwner, path)
 
         table = ModelSelfExplain(format, cleanStr(path), option, sparkSession).isMatch.thenDo.orElse(() => {
-          reader.format(format).load(resourcePath)
+
+          AutoWorkflowSelfExplain(format, cleanStr(path), option, sparkSession).isMatch.thenDo().orElse(() => {
+            reader.format(format).load(resourcePath)
+          }).get()
+
         }).get
     }
     table.createOrReplaceTempView(tableName)
