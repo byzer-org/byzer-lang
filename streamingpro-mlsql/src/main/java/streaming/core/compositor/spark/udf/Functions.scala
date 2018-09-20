@@ -383,6 +383,16 @@ object Functions {
     })
   }
 
+  def paddingIntArray(uDFRegistration: UDFRegistration) = {
+    uDFRegistration.register("padding_int_array", (seq: Seq[Int], length: Int, default: Int) => {
+      if (seq.length > length) {
+        seq.slice(0, length)
+      } else {
+        seq ++ Seq.fill(length - seq.length)(default)
+      }
+    })
+  }
+
   // for spark 2.2.x
   object BreezeImplicit {
 
