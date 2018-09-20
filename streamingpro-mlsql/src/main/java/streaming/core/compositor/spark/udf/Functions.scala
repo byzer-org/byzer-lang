@@ -377,11 +377,11 @@ object Functions {
   }
 
   def arrayIntToLength(uDFRegistration: UDFRegistration) = {
-    uDFRegistration.register("array_int_to_length", (seq: Seq[Int], length: Int, defalt: Int) => {
+    uDFRegistration.register("array_int_to_length", (seq: Seq[Int], length: Int, default: Int) => {
       if (seq.length > length) {
         seq.slice(0, length)
       } else {
-        seq ++ Array.fill(length - seq.length)(defalt)
+        seq ++ Array.fill(length - seq.length)(default)
       }
     })
   }
