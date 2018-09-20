@@ -13,6 +13,12 @@ trait SQLAlg extends Serializable {
 
   def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction
 
+  def batchPredict(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
+    val sparkSession = df.sparkSession
+    import sparkSession.implicits._
+    Seq.empty[(String, String)].toDF("param", "description")
+  }
+
   def explainParams(sparkSession: SparkSession): DataFrame = {
     import sparkSession.implicits._
     Seq.empty[(String, String)].toDF("param", "description")

@@ -20,7 +20,7 @@ import scala.util.{Failure, Success, Try}
 /**
   * Created by allwefantasy on 18/9/2018.
   */
-class WowOpWorkflow(val uid: String = UID[OpWorkflow]) extends OpWorkflowCore {
+class WowOpWorkflow(val uid: String = UID[OpWorkflow]) extends OpWorkflowCore with Serializable {
   // raw feature filter stage which can be used in place of a reader
   private[op] var rawFeatureFilter: Option[RawFeatureFilter[_]] = None
 
@@ -33,6 +33,11 @@ class WowOpWorkflow(val uid: String = UID[OpWorkflow]) extends OpWorkflowCore {
   final def setParameters(newParams: OpParams): this.type = {
     parameters = newParams
     if (stages.nonEmpty) setStageParameters(stages)
+    this
+  }
+
+  override def setStages(value: Array[OPStage]): this.type = {
+    stages = value
     this
   }
 

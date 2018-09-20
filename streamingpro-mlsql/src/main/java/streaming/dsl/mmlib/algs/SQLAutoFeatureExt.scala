@@ -15,8 +15,13 @@ class SQLAutoFeatureExt extends SQLAlg with Logging with WowLog {
     ReflectHelper.method(instance, "train", df, path, params).asInstanceOf[DataFrame]
   }
 
+  override def batchPredict(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
+    val instance = Class.forName("streaming.dsl.mmlib.algs.AutoFeature").newInstance()
+    ReflectHelper.method(instance, "batchPredict", df, path, params).asInstanceOf[DataFrame]
+  }
+
   override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = {
-    null
+    throw new RuntimeException(s"Register is not support in ${getClass}")
   }
 
   override def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = {
