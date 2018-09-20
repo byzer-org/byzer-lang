@@ -14,7 +14,7 @@ import com.salesforce.op.readers.DataReaders
 import com.salesforce.op.stages.impl.classification.BinaryClassificationModelSelector
 import com.salesforce.op.stages.impl.classification.ClassificationModelsToTry._
 import org.apache.spark.SparkConf
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.{Row, SparkSession}
 import org.apache.spark.sql.catalyst.encoders.RowEncoder
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
 
@@ -72,6 +72,7 @@ object OpTitanicSimple {
     // RAW FEATURE DEFINITIONS
     /////////////////////////////////////////////////////////////////////////////////
 
+
     // Define features using the OP types based on the data
     val survived = FeatureBuilder.RealNN[Passenger].extract(_.survived.toRealNN).asResponse
     val pClass = FeatureBuilder.PickList[Passenger].extract(_.pClass.map(_.toString).toPickList).asPredictor
@@ -109,7 +110,7 @@ object OpTitanicSimple {
     val finalFeatures = if (sanityCheck) survived.sanityCheck(passengerFeatures) else passengerFeatures
 
 
-//    def getSchema(rawFeatures: Array[OPFeature]): StructType = {
+    //    def getSchema(rawFeatures: Array[OPFeature]): StructType = {
     //      val keyField = StructField(name = KeyFieldName, dataType = StringType, nullable = false)
     //      val featureFields = rawFeatures.map(FeatureSparkTypes.toStructField(_))
     //      StructType(keyField +: featureFields)
@@ -121,17 +122,17 @@ object OpTitanicSimple {
     //    ds.flatMap(record => generateRow(key(record), record, rawFeatures))
 
 
-    // Define the model we want to use (here a simple logistic regression) and get the resulting output
-    val (prediction, rawPrediction, prob) =
-    BinaryClassificationModelSelector.withTrainValidationSplit()
-      .setModelsToTry(LogisticRegression)
-      .setInput(survived, finalFeatures).getOutput()
-
-    val evaluator = Evaluators.BinaryClassification()
-      .setLabelCol(survived)
-      .setRawPredictionCol(rawPrediction)
-      .setPredictionCol(prediction)
-      .setProbabilityCol(prob)
+    //    // Define the model we want to use (here a simple logistic regression) and get the resulting output
+    //    val (prediction, rawPrediction, prob) =
+    //    BinaryClassificationModelSelector.withTrainValidationSplit()
+    //      .setModelsToTry(LogisticRegression)
+    //      .setInput(survived, finalFeatures).getOutput()
+    //
+    //    val evaluator = Evaluators.BinaryClassification()
+    //      .setLabelCol(survived)
+    //      .setRawPredictionCol(rawPrediction)
+    //      .setPredictionCol(prediction)
+    //      .setProbabilityCol(prob)
 
     ////////////////////////////////////////////////////////////////////////////////
     // WORKFLOW
@@ -147,22 +148,24 @@ object OpTitanicSimple {
 
     // Define a new workflow and attach our data reader
     val workflow =
-    new OpWorkflow()
-      .setResultFeatures(survived, rawPrediction, prob, prediction)
+    new WowOpWorkflow()
+      .setResultFeatures(survived, finalFeatures)
       .setReader(trainDataReader)
 
     // Fit the workflow to the data
-    val fittedWorkflow = workflow.train()
-    println(s"Summary: ${fittedWorkflow.summary()}")
+    val fittedWorkflow = workflow.trainFeatureModel()
+    fittedWorkflow.save("/tmp/model1", overwrite = true)
+    //val df = fittedWorkflow.computeDataUpTo(finalFeatures)
 
-    // Manifest the result features of the workflow
-    println("Scoring the model")
-    val (dataframe, metrics) = fittedWorkflow.scoreAndEvaluate(evaluator = evaluator)
 
-    println("Transformed dataframe columns:")
-    dataframe.columns.foreach(println)
-    println("Metrics:")
-    println(metrics)
+    //    // Manifest the result features of the workflow
+    //    println("Scoring the model")
+    //    val (dataframe, metrics) = fittedWorkflow.scoreAndEvaluate(evaluator = evaluator)
+    //
+    //    println("Transformed dataframe columns:")
+    //    dataframe.columns.foreach(println)
+    //    println("Metrics:")
+    //    println(metrics)
   }
 }
 

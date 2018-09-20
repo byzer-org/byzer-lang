@@ -66,9 +66,9 @@ class SaveAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
         case s: ColContext =>
           partitionByCol = cleanStr(s.getText).split(",")
         case s: ExpressionContext =>
-          option += (cleanStr(s.identifier().getText) -> evaluate(cleanStr(s.STRING().getText)))
+          option += (cleanStr(s.qualifiedName().getText) -> evaluate(getStrOrBlockStr(s)))
         case s: BooleanExpressionContext =>
-          option += (cleanStr(s.expression().identifier().getText) -> evaluate(cleanStr(s.expression().STRING().getText)))
+          option += (cleanStr(s.expression().qualifiedName().getText) -> evaluate(getStrOrBlockStr(s.expression())))
         case _ =>
       }
     }

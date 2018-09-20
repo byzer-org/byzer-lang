@@ -22,7 +22,7 @@ sql
     | ('refresh'|'REFRESH') ~(';')*
     | ('set'|'SET') setKey '=' setValue ('options'|'where')? expression? booleanExpression*
     | ('connect'|'CONNECT') format ('options'|'where')? expression? booleanExpression* ('as' db)?
-    | ('train'|'TRAIN'|'run'|'RUN') tableName 'as' format '.' path ('options'|'where')? expression? booleanExpression*
+    | ('train'|'TRAIN'|'run'|'RUN') tableName 'as' format '.' path ('options'|'where')? expression? booleanExpression* asTableName*
     | ('register'|'REGISTER') format '.' path 'as' functionName ('options'|'where')? expression? booleanExpression*
     | ('unRegister'|'UNREGISTER'|'unregister') format '.' path ('options'|'where')? expression? booleanExpression*
     | ('include'|'INCLUDE') format '.' path ('options'|'where')? expression? booleanExpression*
@@ -50,7 +50,7 @@ booleanExpression
     ;
 
 expression
-    : identifier '=' STRING
+    : qualifiedName '=' (STRING|BLOCK_STRING)
     ;
 
 ender
@@ -75,6 +75,10 @@ setKey
 
 db
     :qualifiedName | identifier
+    ;
+
+asTableName
+    : 'as' tableName
     ;
 
 tableName
