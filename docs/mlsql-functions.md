@@ -9,6 +9,21 @@
 select sleep(1000)
 ```
 
+### uuid 
+
+产生一个唯一的字符串，去掉了"-"
+
+```sql
+-- 休眠1s
+select uuid()
+```
+
+使用场景如生成一张随机表：
+
+```
+set table = `select uuid()` options type="sql";
+```
+
 ### matrix_array
  
 矩阵转数组
