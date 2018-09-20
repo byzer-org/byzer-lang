@@ -14,7 +14,7 @@ import org.apache.spark.annotation.Experimental
 import org.apache.spark.ml.{Estimator, Transformer}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
-import scala.collection.mutable.{MutableList => MList}
+import scala.collection.mutable.{ArrayBuffer, MutableList => MList}
 import scala.util.{Failure, Success, Try}
 
 /**
@@ -39,6 +39,21 @@ class WowOpWorkflow(val uid: String = UID[OpWorkflow]) extends OpWorkflowCore wi
   override def setStages(value: Array[OPStage]): this.type = {
     stages = value
     this
+  }
+
+  def prettyResultFeaturesDependencyGraphs = {
+    val buffer = new ArrayBuffer[String]()
+
+    buffer += (s"\nDependency graphs resolved into a stage sequence of:\n{}",
+      getStages().map(s =>
+        s" ${s.uid}[${s.getInputFeatures().map(_.name).mkString(",")}] --> ${s.getOutputFeatureName}"
+      ).mkString("\n")
+      )
+    buffer += ("*" * 80)
+    buffer += ("Result features:")
+    resultFeatures.foreach(feature => buffer += (s"${feature.name}:\n${feature.prettyParentStages}"))
+    buffer += ("*" * 80)
+    buffer.mkString("\n")
   }
 
   /**
@@ -318,7 +333,7 @@ class WowOpWorkflow(val uid: String = UID[OpWorkflow]) extends OpWorkflowCore wi
 
 
   def trainFeatureModel(persistEveryKStages: Int = OpWorkflowModel.PersistEveryKStages)
-                       (implicit spark: SparkSession): OpWorkflowModel = {
+                       (implicit spark: SparkSession): WowOpWorkflowModel = {
 
     val (fittedStages, newResultFeatures) =
       if (stages.exists(_.isInstanceOf[Estimator[_]])) {
@@ -333,7 +348,7 @@ class WowOpWorkflow(val uid: String = UID[OpWorkflow]) extends OpWorkflowCore wi
       }
 
     val model =
-      new OpWorkflowModel(uid, getParameters())
+      new WowOpWorkflowModel(uid, getParameters())
         .setStages(fittedStages)
         .setFeatures(newResultFeatures)
         .setParameters(getParameters())
@@ -540,7 +555,7 @@ class WowOpWorkflow(val uid: String = UID[OpWorkflow]) extends OpWorkflowCore wi
     * @param path to the trained workflow model
     * @return workflow model
     */
-  def loadModel(path: String): OpWorkflowModel = new WowOpWorkflowModelReader(this).load(path)
+  def loadModel(path: String): WowOpWorkflowModel = new WowOpWorkflowModelReader(this).load(path)
 
   /**
     * Returns a dataframe containing all the columns generated up to and including the feature input
