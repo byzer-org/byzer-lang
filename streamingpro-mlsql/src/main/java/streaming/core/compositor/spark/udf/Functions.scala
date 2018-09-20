@@ -203,8 +203,8 @@ object Functions {
       val numCol = vectors.head.length
       var values = Array.empty[Double]
 
-      for(i <- (0 until numCol)) {
-        for(j <- (0 until numRow)) {
+      for (i <- (0 until numCol)) {
+        for (j <- (0 until numRow)) {
           values = values :+ vectors(j)(i)
         }
       }
@@ -373,6 +373,16 @@ object Functions {
   def keepChinese(uDFRegistration: UDFRegistration) = {
     uDFRegistration.register("keepChinese", (item: String, keepPunctuation: Boolean, include: Seq[String]) => {
       UnicodeUtils.keepChinese(item, keepPunctuation, include.toArray)
+    })
+  }
+
+  def arrayIntToLength(uDFRegistration: UDFRegistration) = {
+    uDFRegistration.register("array_int_to_length", (seq: Seq[Int], length: Int, defalt: Int) => {
+      if (seq.length > length) {
+        seq.slice(0, length)
+      } else {
+        seq ++ Array.fill(length - seq.length)(defalt)
+      }
     })
   }
 
