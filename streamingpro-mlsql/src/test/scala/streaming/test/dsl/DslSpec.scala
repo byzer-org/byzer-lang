@@ -593,6 +593,9 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
       spark.sql("select * from output").show()
       ScriptSQLExec.parse("load workflow.`` as output;", ssel)
       spark.sql("select * from output").show()
+
+      ScriptSQLExec.parse("load workflow.`types` as output;", ssel)
+      spark.sql("select * from output").show()
     }
   }
 

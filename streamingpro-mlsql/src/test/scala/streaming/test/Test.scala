@@ -1,11 +1,12 @@
 package streaming.test
 
+import com.google.common.reflect.ClassPath
 import org.apache.spark.graphx.VertexId
 import org.apache.spark.sql.types.{DataType, _}
 
 import scala.collection.mutable.ArrayBuffer
+import scala.collection.JavaConversions._
 
-import scala.Dynamic
 
 /**
   * Created by allwefantasy on 28/3/2017.
@@ -13,21 +14,7 @@ import scala.Dynamic
 object Test {
   def main(args: Array[String]): Unit = {
     //streaming.example.OpTitanicSimple.main(args)
-    import scala.language.dynamics
-    class DynImpl[T] extends Dynamic {
-      var map = Map.empty[String, Any]
-
-      def selectDynamic(name: String) =
-        map get name getOrElse sys.error("method not found")
-
-      def updateDynamic(name: String)(value: Any) {
-        map += name -> value
-      }
-    }
-
-    val abc = new DynImpl
-    abc.jack = "cool"
-    println(abc.jack)
+    ClassPath.from(VeterxAndGroup.getClass.getClassLoader).getTopLevelClasses("com.salesforce.op.features.types").map(f => println(f.getName))
   }
 
 
