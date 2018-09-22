@@ -107,8 +107,16 @@ class SQLAutoFeatureExt(override val uid: String) extends SQLAlg with SQlBaseFun
       |load csv.`/tmp/william/titanic.csv` where header="true" as table1;
       |
       |-- auto generate model of features
+      |-- you can use `load workflow.`types` as output;` to check all available types.
       |train table1 as AutoFeatureExt.`/tmp/model2`
-      |where labelCol="Survived" and workflowName="wow";
+      |where
+      |featureHint='''
+      |Pclass,PickList
+      |Name,Text
+      |Age,Real
+      |'''
+      |and labelCol="Survived"
+      |and workflowName="wow";
       |
       |-- transform data to vector
       |run table1 as AutoFeatureExt.`/tmp/model2` where runMode="predict" as table2;
