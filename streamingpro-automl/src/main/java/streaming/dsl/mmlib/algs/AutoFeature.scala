@@ -50,9 +50,15 @@ class AutoFeature extends Serializable {
     val sanityCheck = params.getOrElse("sanityCheck", "true").toBoolean
     val nonNullable = params.getOrElse("nonNullable", "").split(",").filterNot(_.isEmpty).toSet
 
+    val feature2DataTypeMap = params.getOrElse("featureHint", "").split("\n").filterNot(_.isEmpty).map { f =>
+      val Array(fieldName, dataType) = f.split(",").map(k => k.trim)
+      val fullDataType = "com.salesforce.op.features.types." + dataType
+      (fieldName, fullDataType)
+    }.toMap
+
     val newdf = convert(df, label)
 
-    val (responseFeature, features) = WowFeatureBuilder.fromDataFrame[RealNN](newdf, label, nonNullable)
+    val (responseFeature, features) = WowFeatureBuilder.fromDataFrame[RealNN](newdf, label, nonNullable, feature2DataTypeMap)
     val autoFeatures = features.transmogrify()
     val finalFeatures = if (sanityCheck) responseFeature.sanityCheck(autoFeatures) else autoFeatures
     val workflow = new WowOpWorkflow()
@@ -87,7 +93,7 @@ class AutoFeature extends Serializable {
     fittedWorkflow.setResultFeatures(workflow.getResultFeatures())
 
     val feautres = workflow.getResultFeatures().map(f => Row.fromSeq(Seq("feature", compact(render(f.toJson(true))))))
-
+    println(workflow.prettyResultFeaturesDependencyGraphs)
     spark.createDataFrame(spark.sparkContext.parallelize(Seq(
       Row.fromSeq(Seq("resultFeaturesDependencyGraphs", workflow.prettyResultFeaturesDependencyGraphs))
     ) ++ feautres), StructType(Seq(
