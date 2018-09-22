@@ -1,8 +1,12 @@
 package streaming.test
 
+import java.lang.reflect.{Method, ParameterizedType}
+
 import com.google.common.reflect.ClassPath
+import com.salesforce.op.features.types.PickList
 import org.apache.spark.graphx.VertexId
 import org.apache.spark.sql.types.{DataType, _}
+import streaming.common.ScalaObjectReflect
 
 import scala.collection.mutable.ArrayBuffer
 import scala.collection.JavaConversions._
@@ -14,7 +18,28 @@ import scala.collection.JavaConversions._
 object Test {
   def main(args: Array[String]): Unit = {
     //streaming.example.OpTitanicSimple.main(args)
-    ClassPath.from(VeterxAndGroup.getClass.getClassLoader).getTopLevelClasses("com.salesforce.op.features.types").map(f => println(f.getName))
+    println(invokeFeatureApply("com.salesforce.op.features.types.CurrencyMap", Map("a" -> 7.2)))
+    println(invokeFeatureApply("com.salesforce.op.features.types.PickList", 2.33.asInstanceOf[AnyRef]))
+
+  }
+
+  def invokeFeatureApply(clzzName: String, fieldValue: AnyRef) = {
+    val (clzz, instance) = ScalaObjectReflect.findObjectMethod(clzzName)
+    val methods = clzz.getDeclaredMethods.filter(f => f.getName == "apply")
+
+    def convert = {
+      instance match {
+        case PickList => fieldValue.toString
+        case _ => fieldValue
+      }
+    }
+
+    methods.filter(f => f.getParameterTypes.head == classOf[Option[_]]).headOption.map { method =>
+      method.invoke(instance, Option(convert))
+    }.getOrElse {
+      val method = methods.head
+      method.invoke(instance, convert)
+    }
   }
 
 
