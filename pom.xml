@@ -376,6 +376,12 @@
                 </plugins>
             </build>
         </profile>
+        <profile>
+            <id>assembly</id>
+            <modules>
+                <module>streamingpro-assembly</module>
+            </modules>
+        </profile>
     </profiles>
     <dependencies>
 
