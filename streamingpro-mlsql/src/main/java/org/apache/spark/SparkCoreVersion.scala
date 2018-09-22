@@ -8,4 +8,15 @@ object SparkCoreVersion {
     val coreVersion = org.apache.spark.SPARK_VERSION.split("\\.").take(2).mkString(".") + ".x"
     coreVersion
   }
+
+  def is_2_2_X() = {
+    version == VERSION_2_2_X
+  }
+
+  def is_2_3_X() = {
+    version == VERSION_2_3_X
+  }
+
+  val VERSION_2_2_X = "2.2.x"
+  val VERSION_2_3_X = "2.3.x"
 }
