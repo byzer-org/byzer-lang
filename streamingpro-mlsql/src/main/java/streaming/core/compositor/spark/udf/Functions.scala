@@ -1,9 +1,10 @@
 package streaming.core.compositor.spark.udf
 
+import java.util.UUID
+
 import scala.collection.mutable.WrappedArray
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
-
 import breeze.linalg.{DenseVector => BDV, SparseVector => BSV, Vector => BV}
 import org.apache.spark.ml.linalg.{DenseVector, Matrices, Matrix, SparseVector, Vector, Vectors}
 import org.apache.spark.mllib.linalg.{Vectors => OldVectors}
@@ -26,6 +27,12 @@ object Functions {
   def mkString(uDFRegistration: UDFRegistration) = {
     uDFRegistration.register("mkString", (sep: String, co: WrappedArray[String]) => {
       co.mkString(sep)
+    })
+  }
+
+  def uuid(uDFRegistration: UDFRegistration) = {
+    uDFRegistration.register("uuid", () => {
+      UUID.randomUUID().toString.replace("-", "")
     })
   }
 
@@ -203,8 +210,8 @@ object Functions {
       val numCol = vectors.head.length
       var values = Array.empty[Double]
 
-      for(i <- (0 until numCol)) {
-        for(j <- (0 until numRow)) {
+      for (i <- (0 until numCol)) {
+        for (j <- (0 until numRow)) {
           values = values :+ vectors(j)(i)
         }
       }
@@ -373,6 +380,16 @@ object Functions {
   def keepChinese(uDFRegistration: UDFRegistration) = {
     uDFRegistration.register("keepChinese", (item: String, keepPunctuation: Boolean, include: Seq[String]) => {
       UnicodeUtils.keepChinese(item, keepPunctuation, include.toArray)
+    })
+  }
+
+  def paddingIntArray(uDFRegistration: UDFRegistration) = {
+    uDFRegistration.register("padding_int_array", (seq: Seq[Int], length: Int, default: Int) => {
+      if (seq.length > length) {
+        seq.slice(0, length)
+      } else {
+        seq ++ Seq.fill(length - seq.length)(default)
+      }
     })
   }
 

@@ -1,0 +1,22 @@
+<assembly>
+    <id>bin-${project.version}</id>
+    <formats>
+        <format>tgz</format>
+    </formats>
+    <moduleSets>
+        <moduleSet>
+
+            <!-- Enable access to all projects in the current multimodule build! -->
+            <useAllReactorProjects>true</useAllReactorProjects>
+
+            <!-- Now, select which projects to include in this module-set. -->
+            <includes>
+                <include>streaming.king:*</include>
+            </includes>
+            <binaries>
+                <outputDirectory>libs</outputDirectory>
+                <unpack>false</unpack>
+            </binaries>
+        </moduleSet>
+    </moduleSets>
+</assembly>

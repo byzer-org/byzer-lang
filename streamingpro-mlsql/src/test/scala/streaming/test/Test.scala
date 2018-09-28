@@ -1,11 +1,16 @@
 package streaming.test
 
+import java.lang.reflect.{Method, ParameterizedType}
+
+import com.google.common.reflect.ClassPath
+import com.salesforce.op.features.types.PickList
 import org.apache.spark.graphx.VertexId
 import org.apache.spark.sql.types.{DataType, _}
+import streaming.common.ScalaObjectReflect
 
 import scala.collection.mutable.ArrayBuffer
+import scala.collection.JavaConversions._
 
-import scala.Dynamic
 
 /**
   * Created by allwefantasy on 28/3/2017.
@@ -13,21 +18,28 @@ import scala.Dynamic
 object Test {
   def main(args: Array[String]): Unit = {
     //streaming.example.OpTitanicSimple.main(args)
-    import scala.language.dynamics
-    class DynImpl[T] extends Dynamic {
-      var map = Map.empty[String, Any]
+    println(invokeFeatureApply("com.salesforce.op.features.types.CurrencyMap", Map("a" -> 7.2)))
+    println(invokeFeatureApply("com.salesforce.op.features.types.PickList", 2.33.asInstanceOf[AnyRef]))
 
-      def selectDynamic(name: String) =
-        map get name getOrElse sys.error("method not found")
+  }
 
-      def updateDynamic(name: String)(value: Any) {
-        map += name -> value
+  def invokeFeatureApply(clzzName: String, fieldValue: AnyRef) = {
+    val (clzz, instance) = ScalaObjectReflect.findObjectMethod(clzzName)
+    val methods = clzz.getDeclaredMethods.filter(f => f.getName == "apply")
+
+    def convert = {
+      instance match {
+        case PickList => fieldValue.toString
+        case _ => fieldValue
       }
     }
 
-    val abc = new DynImpl
-    abc.jack = "cool"
-    println(abc.jack)
+    methods.filter(f => f.getParameterTypes.head == classOf[Option[_]]).headOption.map { method =>
+      method.invoke(instance, Option(convert))
+    }.getOrElse {
+      val method = methods.head
+      method.invoke(instance, convert)
+    }
   }
 
 
