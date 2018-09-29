@@ -30,7 +30,9 @@ trait SpecFunctions {
 
   def createSSEL(implicit spark: SparkSession) = {
     ScriptSQLExec.setContext(new MLSQLExecuteContext("william", "/tmp/william", Map()))
-    new ScriptSQLExecListener(spark, "/tmp/william", Map())
+    val context = new ScriptSQLExecListener(spark, "/tmp/william", Map())
+    context.addEnv("HOME", context.pathPrefix(None))
+    context
   }
 
   def dropTables(tables: Seq[String])(implicit spark: SparkSession) = {
