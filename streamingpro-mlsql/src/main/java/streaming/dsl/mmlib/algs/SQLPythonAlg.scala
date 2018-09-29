@@ -3,14 +3,16 @@ package streaming.dsl.mmlib.algs
 import java.io.File
 import java.nio.file.{Files, Paths}
 import java.util
-import java.util.{UUID}
+import java.util.{ArrayList, UUID}
 
-import org.apache.commons.io.{FileUtils}
+import org.apache.commons.io.FileUtils
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.spark.{APIDeployPythonRunnerEnv, TaskContext}
 import org.apache.spark.api.python.WowPythonRunner
 import org.apache.spark.ml.linalg.SQLDataTypes._
+import org.apache.spark.ml.feature.PythonBatchPredictDataSchema
+import org.apache.spark.ml.linalg.{Matrices, Matrix, Vector}
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.util.ArrayBasedMapData
 import org.apache.spark.sql.expressions.UserDefinedFunction
@@ -18,21 +20,28 @@ import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession}
 import org.apache.spark.util.ObjPickle._
 import org.apache.spark.util.VectorSerDer._
-import org.apache.spark.util.{ExternalCommandRunner, ObjPickle, VectorSerDer}
-import streaming.core.strategy.platform.{PlatformManager}
-import streaming.dsl.mmlib.SQLAlg
+import org.apache.spark.util.{ExternalCommandRunner, MatrixSerDer, ObjPickle, VectorSerDer}
+import streaming.core.strategy.platform.PlatformManager
+import streaming.dsl.mmlib._
 import streaming.dsl.mmlib.algs.SQLPythonFunc._
 
 import scala.collection.JavaConverters._
 import streaming.common.HDFSOperator
 import streaming.dsl.ScriptSQLExec
+import streaming.dsl.mmlib.algs.meta.MLFlow
+import streaming.dsl.mmlib.algs.param.{BaseParams, SQLPythonAlgParams}
 import streaming.log.{Logging, WowLog}
+
+import scala.collection.mutable
 
 /**
   * Created by allwefantasy on 5/2/2018.
   * This Module support training or predicting with user-defined python script
   */
-class SQLPythonAlg extends SQLAlg with Functions {
+class SQLPythonAlg(override val uid: String) extends SQLAlg with Functions with SQLPythonAlgParams {
+
+  def this() = this(BaseParams.randomUID())
+
   override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
 
     val keepVersion = params.getOrElse("keepVersion", "false").toBoolean
@@ -60,6 +69,7 @@ class SQLPythonAlg extends SQLAlg with Functions {
     val pythonPath = systemParam.getOrElse("pythonPath", "python")
     val pythonVer = systemParam.getOrElse("pythonVer", "2.7")
     val pythonParam = systemParam.getOrElse("pythonParam", "").split(",").filterNot(f => f.isEmpty)
+    val shellParam = systemParam.getOrElse("shellParam", "").split(",").filterNot(f => f.isEmpty)
     var tempDataLocalPath = ""
     var dataHDFSPath = ""
 
@@ -90,8 +100,8 @@ class SQLPythonAlg extends SQLAlg with Functions {
     val schema = df.schema
     var rows = Array[Array[Byte]]()
     //目前我们只支持同一个测试集
-    if (params.contains("validateTable")) {
-      val validateTable = params("validateTable")
+    if (params.contains("validateTable") || params.contains("evaluateTable")) {
+      val validateTable = params.getOrElse("validateTable", params.getOrElse("evaluateTable", ""))
       rows = df.sparkSession.table(validateTable).rdd.mapPartitions { iter =>
         ObjPickle.pickle(iter, schema)
       }.collect()
@@ -149,7 +159,7 @@ class SQLPythonAlg extends SQLAlg with Functions {
       val pythonScript = findPythonScript(userPythonScript, f, "sk")
 
 
-
+      val taskDirectory = SQLPythonFunc.getLocalRunPath(UUID.randomUUID().toString)
       val tempModelLocalPath = s"${SQLPythonFunc.getLocalBasePath}/${UUID.randomUUID().toString}/${algIndex}"
       //FileUtils.forceMkdir(tempModelLocalPath)
 
@@ -169,7 +179,10 @@ class SQLPythonAlg extends SQLAlg with Functions {
       paramMap.put("systemParam", systemParam.asJava)
 
 
-      val command = Seq(pythonPath) ++ pythonParam ++ Seq(pythonScript.fileName)
+      val command = pythonScript.scriptType match {
+        case MLFlow => shellParam.toSeq ++ Seq("/bin/bash") ++ Seq(pythonScript.fileContent)
+        case _ => Seq(pythonPath) ++ pythonParam ++ Seq(pythonScript.fileName)
+      }
 
       val modelTrainStartTime = System.currentTimeMillis()
 
@@ -178,6 +191,7 @@ class SQLPythonAlg extends SQLAlg with Functions {
 
       try {
         val res = ExternalCommandRunner.run(
+          taskDirectory = taskDirectory,
           command = command,
           iter = paramMap,
           schema = MapType(StringType, MapType(StringType, StringType)),
@@ -373,10 +387,12 @@ class SQLPythonAlg extends SQLAlg with Functions {
       ScriptSQLExec.setContextIfNotPresent(mlsqlContext)
       logInfo(format(msg))
     })
-
+    val taskDirectory = SQLPythonFunc.getLocalRunPath(UUID.randomUUID().toString)
     val enableCopyTrainParamsToPython = params.getOrElse("enableCopyTrainParamsToPython", "false").toBoolean
     //driver 节点执行
-    val res = ExternalCommandRunner.run(Seq(pythonPath, userPythonScript.fileName),
+    val res = ExternalCommandRunner.run(
+      taskDirectory,
+      Seq(pythonPath, userPythonScript.fileName),
       maps,
       MapType(StringType, MapType(StringType, StringType)),
       userPythonScript.fileContent,
@@ -422,18 +438,194 @@ class SQLPythonAlg extends SQLAlg with Functions {
     UserDefinedFunction(f2, VectorType, Some(Seq(VectorType)))
   }
 
+
+  override def batchPredict(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
+    val spark = df.sparkSession
+    val pythonAlg = new SQLPythonAlg()
+    val model = pythonAlg.load(spark, path, params)
+    val (modelsTemp, metasTemp, trainParams, selectedFitParam) =
+      model.asInstanceOf[(Seq[String], Seq[Map[String, String]], Map[String, String], Map[String, Any])]
+    val batchSize = params.getOrElse("batchSize", "10").toInt
+    val inputCol = params.getOrElse("inputCol", "")
+    require(inputCol != null && inputCol != "", s"inputCol in ${getClass} module should be configed!")
+    val batchPredictFun = params.getOrElse("predictFun", UUID.randomUUID().toString.replaceAll("-", ""))
+    val predictLabelColumnName = params.getOrElse("predictCol", "predict_label")
+    val predictTableName = params.getOrElse("predictTable", "")
+    require(
+      predictTableName != null && predictTableName != "",
+      s"predictTable in ${getClass} module should be configed!"
+    )
+
+    val schema = PythonBatchPredictDataSchema.newSchema(df)
+
+    val rdd = df.rdd.mapPartitions(it => {
+      var list = List.empty[List[Row]]
+      var tmpList = List.empty[Row]
+      var batchCount = 0
+      while (it.hasNext) {
+        val e = it.next()
+        if (batchCount == batchSize) {
+          list +:= tmpList
+          batchCount = 0
+          tmpList = List.empty[Row]
+        } else {
+          tmpList +:= e
+          batchCount += 1
+        }
+      }
+      if (batchCount != batchSize) {
+        list +:= tmpList
+      }
+      list.map(x => {
+        Row.fromSeq(Seq(x, SQLPythonAlg.createNewFeatures(x, inputCol)))
+      }).iterator
+    })
+
+    val systemParam = mapParams("systemParam", params)
+    val pythonPath = systemParam.getOrElse("pythonPath", "python")
+    val pythonVer = systemParam.getOrElse("pythonVer", "2.7")
+    val kafkaParam = mapParams("kafkaParam", trainParams)
+
+    // load python script
+    val userPythonScript = SQLPythonFunc.findPythonPredictScript(spark, params, "")
+
+    val maps = new java.util.HashMap[String, java.util.Map[String, _]]()
+    val item = new java.util.HashMap[String, String]()
+    item.put("funcPath", "/tmp/" + System.currentTimeMillis())
+    maps.put("systemParam", item)
+    maps.put("internalSystemParam", selectedFitParam.asJava)
+
+    val taskDirectory = SQLPythonFunc.getLocalRunPath(UUID.randomUUID().toString)
+
+    val res = ExternalCommandRunner.run(taskDirectory, Seq(pythonPath, userPythonScript.fileName),
+      maps,
+      MapType(StringType, MapType(StringType, StringType)),
+      userPythonScript.fileContent,
+      userPythonScript.fileName, modelPath = null, recordLog = SQLPythonFunc.recordAnyLog(kafkaParam)
+    )
+    res.foreach(f => f)
+    val command = Files.readAllBytes(Paths.get(item.get("funcPath")))
+    val runtimeParams = PlatformManager.getRuntime.params.asScala.toMap
+
+    // registe batch predict python function
+
+    val recordLog = SQLPythonFunc.recordAnyLog(Map[String, String]())
+    val models = spark.sparkContext.broadcast(modelsTemp)
+    val f = (m: Matrix, modelPath: String) => {
+      val modelRow = InternalRow.fromSeq(Seq(SQLPythonFunc.getLocalTempModelPath(modelPath)))
+      val trainParamsRow = InternalRow.fromSeq(Seq(ArrayBasedMapData(params)))
+      val v_ser = ObjPickle.pickleInternalRow(Seq(MatrixSerDer.serialize(m)).toIterator, MatrixSerDer.matrixSchema())
+      val v_ser2 = ObjPickle.pickleInternalRow(Seq(modelRow).toIterator, StructType(Seq(StructField("modelPath", StringType))))
+      val v_ser3 = v_ser ++ v_ser2
+
+      if (TaskContext.get() == null) {
+        APIDeployPythonRunnerEnv.setTaskContext(APIDeployPythonRunnerEnv.createTaskContext())
+      }
+      val iter = WowPythonRunner.run(
+        pythonPath, pythonVer, command, v_ser3, TaskContext.get().partitionId(), Array(), runtimeParams, recordLog
+      )
+      val a = iter.next()
+      val predictValue = MatrixSerDer.deserialize(ObjPickle.unpickle(a).asInstanceOf[java.util.ArrayList[Object]].get(0))
+      predictValue
+    }
+
+    val f2 = (m: Matrix) => {
+      models.value.map { modelPath =>
+        f(m, modelPath)
+      }.head
+    }
+
+    val func = UserDefinedFunction(f2, MatrixType, Some(Seq(MatrixType)))
+    spark.udf.register(batchPredictFun, func)
+
+    // temp batch predict column name
+    val tmpPredColName = UUID.randomUUID().toString.replaceAll("-", "")
+    val pdf = spark.createDataFrame(rdd, schema)
+      .selectExpr(s"${batchPredictFun}(newFeature) as ${tmpPredColName}", "originalData")
+
+    val prdd = pdf.rdd.mapPartitions(it => {
+      var list = List.empty[Row]
+      while (it.hasNext) {
+        val e = it.next()
+        val originalData = e.getAs[mutable.WrappedArray[Row]]("originalData")
+        val newFeature = e.getAs[Matrix](tmpPredColName).rowIter.toList
+        val size = originalData.size
+        (0 until size).map(index => {
+          val od = originalData(index)
+          val pd = newFeature(index)
+          list +:= Row.fromSeq(od.toSeq ++ Seq(pd))
+        })
+      }
+      list.iterator
+    })
+    val pschema = df.schema.add(predictLabelColumnName, VectorType)
+    //    spark.createDataFrame(prdd, pschema).write.mode(SaveMode.Overwrite).json("/tmp/fresult")
+    val newdf = spark.createDataFrame(prdd, pschema)
+    newdf.createOrReplaceTempView(predictTableName)
+    newdf
+  }
+
+
+  override def explainParams(sparkSession: SparkSession): DataFrame = {
+    _explainParams(sparkSession, () => {
+      new SQLPythonAlg()
+    })
+  }
+
+  override def explainModel(sparkSession: SparkSession, path: String, params: Map[String, String]): DataFrame = super.explainModel(sparkSession, path, params)
+
+  override def skipPathPrefix: Boolean = false
+
+  override def modelType: ModelType = AlgType
+
+  override def doc: Doc = Doc(MarkDownDoc,
+    s"""
+       |todo
+     """.stripMargin)
+
+  override def codeExample: Code = Code(SQLCode,
+    s"""
+       |todo
+     """.stripMargin)
+
+  override def coreCompatibility: Seq[CoreVersion] = {
+    Seq(Core_2_2_x, Core_2_3_x)
+  }
+
   def distributePythonProject(spark: SparkSession, params: Map[String, String]): Option[String] = {
+    val userPythonScript = loadUserDefinePythonScript(params, spark)
     // load python project
-    val pythonProjectPath = params.get("pythonProjectPath")
+    val pythonProjectPath = userPythonScript.get.scriptType match {
+      case MLFlow => Some(userPythonScript.get.filePath)
+      case _ => params.get("pythonProjectPath")
+    }
+
     if (pythonProjectPath.isDefined) {
-      val tempPythonProjectLocalPath = SQLPythonFunc.getLocalTempDataPath(pythonProjectPath.get)
-      logInfo(s"system load python project into directory: [ ${tempPythonProjectLocalPath} ].")
-//      HDFSOperator.copyToLocalFile(tempPythonProjectLocalPath, pythonProjectPath.get, true)
+      val tempPythonProjectLocalPath = SQLPythonFunc.getLocalRunPath(pythonProjectPath.get)
+      logInfo(format(s"system load python project into directory: [ ${tempPythonProjectLocalPath} ]."))
       distributeResource(spark, pythonProjectPath.get, tempPythonProjectLocalPath)
       logInfo(format("python project loaded!"))
       Some(tempPythonProjectLocalPath)
     } else {
       None
     }
+  }
+}
+
+object SQLPythonAlg {
+  def createNewFeatures(list: List[Row], inputCol: String): Matrix = {
+    val numRows = list.size
+    val numCols = list.head.getAs[Vector](inputCol).size
+    val values = new ArrayList[Double](numCols * numRows)
+
+    val vectorArray = list.map(r => {
+      r.getAs[Vector](inputCol).toArray
+    })
+    for (i <- (0 until numCols)) {
+      for (j <- (0 until numRows)) {
+        values.add(vectorArray(j)(i))
+      }
+    }
+    Matrices.dense(numRows, numCols, values.asScala.toArray).toSparse
   }
 }

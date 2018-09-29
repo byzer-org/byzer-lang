@@ -21,8 +21,8 @@ import streaming.core.strategy.platform.PlatformManager
 import streaming.dsl.mmlib.SQLAlg
 
 /**
- * Created by fchen on 2018/8/22.
- */
+  * Created by fchen on 2018/8/22.
+  */
 class SQLBatchPythonAlg extends SQLAlg with Functions {
   override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
     val spark = df.sparkSession
@@ -100,14 +100,14 @@ class SQLBatchPythonAlg extends SQLAlg with Functions {
       val v_ser = ObjPickle.pickleInternalRow(Seq(MatrixSerDer.serialize(m)).toIterator, MatrixSerDer.matrixSchema())
       val v_ser2 = ObjPickle.pickleInternalRow(Seq(modelRow).toIterator, StructType(Seq(StructField("modelPath", StringType))))
       var v_ser3 = v_ser ++ v_ser2
-//      if (enableCopyTrainParamsToPython) {
-//        val v_ser4 = pickleInternalRow(Seq(trainParamsRow).toIterator, StructType(Seq(StructField("trainParams", MapType(StringType, StringType)))))
-//        v_ser3 = v_ser3 ++ v_ser4
-//      }
+      //      if (enableCopyTrainParamsToPython) {
+      //        val v_ser4 = pickleInternalRow(Seq(trainParamsRow).toIterator, StructType(Seq(StructField("trainParams", MapType(StringType, StringType)))))
+      //        v_ser3 = v_ser3 ++ v_ser4
+      //      }
 
-//      if (TaskContext.get() == null) {
-//        APIDeployPythonRunnerEnv.setTaskContext(APIDeployPythonRunnerEnv.createTaskContext())
-//      }
+      //      if (TaskContext.get() == null) {
+      //        APIDeployPythonRunnerEnv.setTaskContext(APIDeployPythonRunnerEnv.createTaskContext())
+      //      }
       val iter = WowPythonRunner.run(
         pythonPath, pythonVer, command, v_ser3, TaskContext.get().partitionId(), Array(), runtimeParams, recordLog
       )
@@ -148,7 +148,7 @@ class SQLBatchPythonAlg extends SQLAlg with Functions {
       list.iterator
     })
     val pschema = df.schema.add(predictLabelColumnName, VectorType)
-//    spark.createDataFrame(prdd, pschema).write.mode(SaveMode.Overwrite).json("/tmp/fresult")
+    //    spark.createDataFrame(prdd, pschema).write.mode(SaveMode.Overwrite).json("/tmp/fresult")
     spark.createDataFrame(prdd, pschema).createOrReplaceTempView(predictTableName)
     emptyDataFrame()(df)
 

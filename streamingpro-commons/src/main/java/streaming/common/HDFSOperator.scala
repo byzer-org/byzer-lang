@@ -124,6 +124,16 @@ object HDFSOperator {
     fs.delete(new Path(path), true)
   }
 
+  def isDir(path: String) = {
+    val fs = FileSystem.get(new Configuration())
+    fs.isDirectory(new Path(path))
+  }
+
+  def fileExists(path: String) = {
+    val fs = FileSystem.get(new Configuration())
+    fs.exists(new Path(path))
+  }
+
   def createDir(path: String) = {
     val fs = FileSystem.get(new Configuration())
     fs.mkdirs(new Path(path))

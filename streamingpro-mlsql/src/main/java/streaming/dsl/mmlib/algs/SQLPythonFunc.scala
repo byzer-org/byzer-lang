@@ -1,9 +1,12 @@
 package streaming.dsl.mmlib.algs
 
+import java.nio.file.{Files, Paths}
+
 import com.hortonworks.spark.sql.kafka08.KafkaOperator
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.util.{ExternalCommandRunner, WowMD5}
 import streaming.common.HDFSOperator
+import streaming.dsl.mmlib.algs.meta.{MLFlow, PythonScript, Script}
 
 import scala.io.Source
 
@@ -21,10 +24,17 @@ object SQLPythonFunc {
   def loadUserDefinePythonScript(params: Map[String, String], spark: SparkSession) = {
     getPath(params) match {
       case Some(path) =>
-        val pathChunk = path.split("/")
-        val userFileName = pathChunk(pathChunk.length - 1)
-        val userPythonScriptList = spark.sparkContext.textFile(path).collect().mkString("\n")
-        Some(PythonScript(userFileName, userPythonScriptList, path))
+        if (HDFSOperator.isDir(path) && HDFSOperator.fileExists(Paths.get(path, "MLproject").toString)) {
+          val project = path.split("/").last
+          Some(PythonScript("", s"mlflow run ${project}", path, MLFlow))
+
+        } else {
+          val pathChunk = path.split("/")
+          val userFileName = pathChunk.last
+          val userPythonScriptList = spark.sparkContext.textFile(path, 1).collect().mkString("\n")
+          Some(PythonScript(userFileName, userPythonScriptList, path))
+        }
+
       case None => None
     }
   }
@@ -82,7 +92,7 @@ object SQLPythonFunc {
     } else {
       require(!tfSource.isEmpty, "pythonDescPath or fitParam.0.alg is required")
     }
-    PythonScript(tfName, tfSource, filePath)
+    PythonScript(tfName, tfSource, filePath, userPythonScript.map(_.scriptType).getOrElse(Script))
   }
 
   def findPythonPredictScript(sparkSession: SparkSession,
@@ -110,6 +120,10 @@ object SQLPythonFunc {
 
   def getLocalTempDataPath(hdfsPath: String) = {
     s"${getLocalBasePath}/data/${WowMD5.md5Hash(hdfsPath)}"
+  }
+
+  def getLocalRunPath(hdfsPath: String) = {
+    s"${getLocalBasePath}/mlsqlrun/${WowMD5.md5Hash(hdfsPath)}"
   }
 
   def getLocalTempResourcePath(hdfsPath: String, resourceName: String) = {
@@ -186,4 +200,4 @@ object SQLPythonFunc {
   // -- path related
 }
 
-case class PythonScript(fileName: String, fileContent: String, filePath: String)
+

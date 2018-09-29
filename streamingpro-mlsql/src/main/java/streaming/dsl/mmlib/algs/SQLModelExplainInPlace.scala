@@ -15,6 +15,7 @@ import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession}
 import org.apache.spark.util.ExternalCommandRunner
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.MetaConst.getDataPath
+import streaming.dsl.mmlib.algs.meta.PythonScript
 
 import scala.collection.JavaConverters._
 import scala.io.Source
