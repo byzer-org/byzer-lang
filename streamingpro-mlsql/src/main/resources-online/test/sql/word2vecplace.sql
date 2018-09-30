@@ -10,6 +10,7 @@ and ignoreNature="true"
 and stopWordPath="/tmp/tfidf/stopwords"
 and resultFeature="${resultFeature}"
 and wordvecPaths="${wordvecPaths}"
+and minCount="${minCount}"
 ;
 
 register Word2VecInPlace.`/tmp/word2vecinplace` as jack;
