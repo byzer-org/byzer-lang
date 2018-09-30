@@ -1,3 +1,4 @@
+import os
 import tensorflow as tf
 import json
 from tensorflow.contrib.learn.python.learn.datasets.mnist import read_data_sets
@@ -15,12 +16,16 @@ def param(key, value):
 
 jobName = param("jobName", "worker")
 taskIndex = int(param("taskIndex", "0"))
-clusterSpec = json.parse(mlsql.internal_system_param["clusterSpec"])
+clusterSpec = json.loads(mlsql.internal_system_param["clusterSpec"])
+checkpoint_dir = mlsql.internal_system_param["checkpointDir"]
 
-tf.app.flags.DEFINE_integer("num_workers", 2, "Number of workers")
-tf.app.flags.DEFINE_boolean("is_sync", False, "using synchronous training or not")
+if not os.path.exists(checkpoint_dir):
+    os.makedirs(checkpoint_dir)
 
-FLAGS = tf.app.flags.FLAGS
+
+print(mlsql.internal_system_param["clusterSpec"])
+print(jobName)
+print(taskIndex)
 
 
 def model(images):
@@ -31,7 +36,7 @@ def model(images):
     return net
 
 
-def main(_):
+def run():
     # create the cluster configured by `ps_hosts' and 'worker_hosts'
     cluster = tf.train.ClusterSpec(clusterSpec)
 
@@ -66,14 +71,14 @@ def main(_):
             global_step = tf.train.get_or_create_global_step()
             optimizer = tf.train.AdamOptimizer(learning_rate=1e-04)
 
-            if FLAGS.is_sync:
+            if True:
                 # asynchronous training
                 # use tf.train.SyncReplicasOptimizer wrap optimizer
                 # ref: https://www.tensorflow.org/api_docs/python/tf/train/SyncReplicasOptimizer
-                optimizer = tf.train.SyncReplicasOptimizer(optimizer, replicas_to_aggregate=FLAGS.num_workers,
-                                                           total_num_replicas=FLAGS.num_workers)
+                optimizer = tf.train.SyncReplicasOptimizer(optimizer, replicas_to_aggregate=2,
+                                                           total_num_replicas=2)
                 # create the hook which handles initialization and queues
-                hooks.append(optimizer.make_session_run_hook((FLAGS.task_index == 0)))
+                hooks.append(optimizer.make_session_run_hook((taskIndex == 0)))
 
             train_op = optimizer.minimize(loss, global_step=global_step,
                                           aggregation_method=tf.AggregationMethod.ADD_N)
@@ -82,8 +87,8 @@ def main(_):
             # restoring from a checkpoint, saving to a checkpoint, and closing when done
             # or an error occurs.
             with tf.train.MonitoredTrainingSession(master=server.target,
-                                                   is_chief=(FLAGS.task_index == 0),
-                                                   checkpoint_dir="./checkpoint_dir",
+                                                   is_chief=(taskIndex == 0),
+                                                   checkpoint_dir=checkpoint_dir,
                                                    hooks=hooks) as mon_sess:
 
                 while not mon_sess.should_stop():
@@ -94,6 +99,4 @@ def main(_):
                     if step % 100 == 0:
                         print("Train step %d, loss: %f" % (step, ls))
 
-
-if __name__ == "__main__":
-    tf.app.run()
+run()

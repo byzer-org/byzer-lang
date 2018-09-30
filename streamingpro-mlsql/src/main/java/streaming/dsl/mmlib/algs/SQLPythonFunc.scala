@@ -6,7 +6,7 @@ import com.hortonworks.spark.sql.kafka08.KafkaOperator
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.util.{ExternalCommandRunner, WowMD5}
 import streaming.common.HDFSOperator
-import streaming.dsl.mmlib.algs.meta.{MLFlow, PythonScript, Script}
+import streaming.dsl.mmlib.algs.python.{MLFlow, PythonScript, Script}
 
 import scala.io.Source
 
@@ -26,7 +26,7 @@ object SQLPythonFunc {
       case Some(path) =>
         if (HDFSOperator.isDir(path) && HDFSOperator.fileExists(Paths.get(path, "MLproject").toString)) {
           val project = path.split("/").last
-          Some(PythonScript("", s"mlflow run ${project}", path, MLFlow))
+          Some(PythonScript("", project, path, MLFlow))
 
         } else {
           val pathChunk = path.split("/")
@@ -74,26 +74,6 @@ object SQLPythonFunc {
     }.mkString("\n")).toIterator)
   }
 
-  def findPythonScript(userPythonScript: Option[PythonScript],
-                       fitParams: Map[String, String],
-                       defaultScriptName: String
-                      ) = {
-
-    var tfSource = userPythonScript.map(f => f.fileContent).getOrElse("")
-    var tfName = userPythonScript.map(f => f.fileName).getOrElse("")
-    var alg = tfName
-    var filePath = userPythonScript.map(f => f.filePath).getOrElse("")
-    if (fitParams.contains("alg")) {
-      alg = fitParams("alg")
-      tfName = s"mlsql_${defaultScriptName}_${alg}.py"
-      filePath = s"/python/${tfName}"
-      tfSource = Source.fromInputStream(ExternalCommandRunner.getClass.getResourceAsStream(filePath)).
-        getLines().mkString("\n")
-    } else {
-      require(!tfSource.isEmpty, "pythonDescPath or fitParam.0.alg is required")
-    }
-    PythonScript(tfName, tfSource, filePath, userPythonScript.map(_.scriptType).getOrElse(Script))
-  }
 
   def findPythonPredictScript(sparkSession: SparkSession,
                               params: Map[String, String],

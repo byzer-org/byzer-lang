@@ -79,8 +79,8 @@ class SQLBatchPythonAlg extends SQLAlg with Functions {
     item.put("funcPath", "/tmp/" + System.currentTimeMillis())
     maps.put("systemParam", item)
     maps.put("internalSystemParam", selectedFitParam.asJava)
-
-    val res = ExternalCommandRunner.run(Seq(pythonPath, userPythonScript.fileName),
+    val taskDirectory = SQLPythonFunc.getLocalRunPath(UUID.randomUUID().toString)
+    val res = ExternalCommandRunner.run(taskDirectory,Seq(pythonPath, userPythonScript.fileName),
       maps,
       MapType(StringType, MapType(StringType, StringType)),
       userPythonScript.fileContent,

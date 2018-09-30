@@ -222,7 +222,7 @@ class SQLDTFAlg extends SQLAlg with Functions {
         }
       }
 
-      val pythonScript = findPythonScript(userPythonScript, f, "sk")
+      val pythonScript = userPythonScript.get
 
       val tempModelLocalPath = s"${SQLPythonFunc.getLocalBasePath}/${UUID.randomUUID().toString}/${algIndex}"
       val checkpointDir = s"${SQLPythonFunc.getLocalBasePath}/${UUID.randomUUID().toString}/${algIndex}"
@@ -248,6 +248,7 @@ class SQLDTFAlg extends SQLAlg with Functions {
 
 
       val command = Seq(pythonPath) ++ pythonParam ++ Seq(pythonScript.fileName)
+      val taskDirectory = SQLPythonFunc.getLocalRunPath(UUID.randomUUID().toString)
 
       val modelTrainStartTime = System.currentTimeMillis()
 
@@ -256,7 +257,8 @@ class SQLDTFAlg extends SQLAlg with Functions {
 
       if (!isPs) {
         try {
-          val res = ExternalCommandRunner.run(
+
+          val res = ExternalCommandRunner.run(taskDirectory = taskDirectory,
             command = command,
             iter = paramMap,
             schema = MapType(StringType, MapType(StringType, StringType)),
@@ -282,8 +284,9 @@ class SQLDTFAlg extends SQLAlg with Functions {
         val pythonPSThread = new Thread(new Runnable {
           override def run(): Unit = {
             TaskContextUtil.setContext(context)
+            val taskDirectory = SQLPythonFunc.getLocalRunPath(UUID.randomUUID().toString)
             try {
-              val res = ExternalCommandRunner.run(
+              val res = ExternalCommandRunner.run(taskDirectory = taskDirectory,
                 command = command,
                 iter = paramMap,
                 schema = MapType(StringType, MapType(StringType, StringType)),
@@ -522,10 +525,10 @@ class SQLDTFAlg extends SQLAlg with Functions {
     maps.put("internalSystemParam", selectedFitParam.asJava)
 
     val kafkaParam = mapParams("kafkaParam", trainParams)
-
+    val taskDirectory = SQLPythonFunc.getLocalRunPath(UUID.randomUUID().toString)
     val enableCopyTrainParamsToPython = params.getOrElse("enableCopyTrainParamsToPython", "false").toBoolean
     //driver 节点执行
-    val res = ExternalCommandRunner.run(Seq(pythonPath, userPythonScript.fileName),
+    val res = ExternalCommandRunner.run(taskDirectory, Seq(pythonPath, userPythonScript.fileName),
       maps,
       MapType(StringType, MapType(StringType, StringType)),
       userPythonScript.fileContent,

@@ -6,8 +6,9 @@ package streaming.core.code
 object PythonCode {
   val pythonTrainCode =
     """
-      |import mlsql_model
       |import mlsql
+      |import os
+      |import pickle
       |from sklearn.naive_bayes import MultinomialNB
       |
       |clf = MultinomialNB()
@@ -27,16 +28,25 @@ object PythonCode {
       |    testset_score = clf.score(X_test, y_test)
       |    print("mlsql_validation_score:%f" % testset_score)
       |
-      |mlsql_model.sk_save_model(clf)
-      |
+      |isp = mlsql.params()["internalSystemParam"]
+      |def sk_save_model(model):
+      |    isp = mlsql.params()["internalSystemParam"]
+      |    tempModelLocalPath = isp["tempModelLocalPath"] if "tempModelLocalPath" in isp else "/tmp/"
+      |    dir_name = tempModelLocalPath
+      |    if os.path.exists(dir_name):
+      |        shutil.rmtree(dir_name)
+      |    os.makedirs(dir_name)
+      |    with open(os.path.join(dir_name, "model.pickle"), "wb") as f:
+      |        pickle.dump(model, f, protocol=2)
+      |sk_save_model(clf)
     """.stripMargin
 
   val pythonCodeEnableLocal =
     """
-      |import mlsql_model
       |import mlsql
       |import os
       |import json
+      |import pickle
       |from pyspark.ml.linalg import Vectors
       |from sklearn.naive_bayes import MultinomialNB
       |
@@ -72,7 +82,16 @@ object PythonCode {
       |    testset_score = clf.score(X_test, y_test)
       |    print("mlsql_validation_score:%f" % testset_score)
       |
-      |mlsql_model.sk_save_model(clf)
+      |def sk_save_model(model):
+      |    isp = mlsql.params()["internalSystemParam"]
+      |    tempModelLocalPath = isp["tempModelLocalPath"] if "tempModelLocalPath" in isp else "/tmp/"
+      |    dir_name = tempModelLocalPath
+      |    if os.path.exists(dir_name):
+      |        shutil.rmtree(dir_name)
+      |    os.makedirs(dir_name)
+      |    with open(os.path.join(dir_name, "model.pickle"), "wb") as f:
+      |        pickle.dump(model, f, protocol=2)
+      |sk_save_model(clf)
       |
     """.stripMargin
 
@@ -112,6 +131,7 @@ object PythonCode {
     """
       |from pyspark.ml.linalg import VectorUDT, Vectors
       |import pickle
+      |import os
       |import python_fun
       |
       |def predict(index, s):
@@ -131,6 +151,7 @@ object PythonCode {
     """
       |from pyspark.ml.linalg import VectorUDT, Vectors
       |import pickle
+      |import os
       |import python_fun
       |
       |def predict(index, s):
