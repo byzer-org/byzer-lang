@@ -13,6 +13,7 @@ import org.apache.spark.api.python.WowPythonRunner
 import org.apache.spark.ml.linalg.SQLDataTypes._
 import org.apache.spark.ml.feature.PythonBatchPredictDataSchema
 import org.apache.spark.ml.linalg.{Matrices, Matrix, Vector}
+import org.apache.spark.ps.cluster.Message
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.util.ArrayBasedMapData
 import org.apache.spark.sql.expressions.UserDefinedFunction
@@ -21,7 +22,7 @@ import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession}
 import org.apache.spark.util.ObjPickle._
 import org.apache.spark.util.VectorSerDer._
 import org.apache.spark.util._
-import streaming.core.strategy.platform.PlatformManager
+import streaming.core.strategy.platform.{PlatformManager, SparkRuntime}
 import streaming.dsl.mmlib._
 import streaming.dsl.mmlib.algs.SQLPythonFunc._
 
@@ -31,7 +32,6 @@ import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib.algs.param.{BaseParams, SQLPythonAlgParams}
 import streaming.dsl.mmlib.algs.python._
 import streaming.common.ScalaMethodMacros._
-import streaming.dsl.mmlib.algs.python.RichCaseClass._
 
 import scala.collection.mutable
 
@@ -128,23 +128,7 @@ class SQLPythonAlg(override val uid: String) extends SQLAlg with Functions with 
         item = (f + ("modelPath" -> path)).asJava
       }
 
-      // load resource
-      var resourceParams = Map.empty[String, String]
-      if (f.keys.map(_.split("\\.")(0)).toSet.contains("resource")) {
-        val resources = Functions.mapParams(s"resource", f)
-        resources.foreach {
-          case (resourceName, resourcePath) =>
-            val tempResourceLocalPath = SQLPythonFunc.getLocalTempResourcePath(resourcePath, resourceName)
-            var msg = s"resource paramter found,system will load resource ${resourcePath} in ${tempResourceLocalPath} in executor."
-            logInfo(format(msg))
-            recordSingleLineLog(kafkaParam, msg)
-            HDFSOperator.copyToLocalFile(tempResourceLocalPath, resourcePath, true)
-            resourceParams += (resourceName -> tempResourceLocalPath)
-            msg = s"resource loaded."
-            logInfo(format(msg))
-            recordSingleLineLog(kafkaParam, msg)
-        }
-      }
+      val resourceParams = new ResourceManager(f).loadResourceInTrain
 
       val taskDirectory = localPathConfig.localRunPath
       val tempModelLocalPath = s"${localPathConfig.localModelPath}/${algIndex}"
@@ -251,104 +235,33 @@ class SQLPythonAlg(override val uid: String) extends SQLAlg with Functions with 
   }
 
   override def load(sparkSession: SparkSession, _path: String, params: Map[String, String]): Any = {
-    val maxVersion = getModelVersion(_path)
-    val versionEnabled = maxVersion match {
-      case Some(v) => true
-      case None => false
-    }
 
-    val modelVersion = params.getOrElse("modelVersion", maxVersion.getOrElse(-1).toString).toInt
+    val modelMetaManager = new ModelMetaManager(sparkSession, _path, params)
+    val modelMeta = modelMetaManager.loadMetaAndModel
 
-    // you can specify model version
-    val path = if (modelVersion == -1) getAlgMetalPath(_path, versionEnabled)
-    else getAlgMetalPathWithVersion(_path, modelVersion)
+    var (selectedFitParam, resourceParams) = new ResourceManager(params).loadResourceInRegister(sparkSession, modelMeta)
+    val loadPythonProject = modelMeta.trainParams.contains("pythonProjectPath")
 
-    val modelPath = if (modelVersion == -1) getAlgModelPath(_path, versionEnabled)
-    else getAlgModelPathWithVersion(_path, modelVersion)
-
-    var algIndex = params.getOrElse("algIndex", "-1").toInt
-
-    val modelList = sparkSession.read.parquet(path + "/0").collect()
-    val models = if (algIndex != -1) {
-      Seq(modelPath + "/" + algIndex)
-    } else {
-      modelList.map(f => (f(3).asInstanceOf[Double], f(0).asInstanceOf[String], f(1).asInstanceOf[Int]))
-        .toSeq
-        .sortBy(f => f._1)(Ordering[Double].reverse)
-        .take(1)
-        .map(f => {
-          algIndex = f._3
-          modelPath + "/" + f._2.split("/").last
-        })
-    }
-
-    import sparkSession.implicits._
-    val wowMetas = sparkSession.read.parquet(path + "/1").collect()
-    var trainParams = Map[String, String]()
-
-    def getTrainParams(isNew: Boolean) = {
-      if (isNew)
-        wowMetas.map(f => f.getMap[String, String](1)).head.toMap
-      else {
-        val df = sparkSession.read.parquet(MetaConst.PARAMS_PATH(path, "params")).map(f => (f.getString(0), f.getString(1)))
-        df.collect().toMap
-      }
-    }
-
-    if (versionEnabled) {
-      trainParams = getTrainParams(true)
-    }
-
-    try {
-      trainParams = getTrainParams(false)
-    } catch {
-      case e: Exception =>
-        logInfo(format(s"no directory: ${MetaConst.PARAMS_PATH(path, "params")} ; using ${path + "/1"}"))
-        trainParams = getTrainParams(true)
-    }
-
-
-    // load resource
-    val fitParam = arrayParamsWithIndex("fitParam", trainParams)
-    val selectedFitParam = fitParam(algIndex)._2
-    val loadResource = selectedFitParam.keys.map(_.split("\\.")(0)).toSet.contains("resource")
-    val loadPythonProject = trainParams.contains("pythonProjectPath")
-    var resourceParams = Map.empty[String, String]
-
-    val metas = wowMetas.map(f => f.getMap[String, String](0)).toSeq
-    // make sure every executor have the model in local directory.
-    // we should unregister manually
-    models.foreach { modelPath =>
-      val tempModelLocalPath = SQLPythonFunc.getLocalTempModelPath(modelPath)
-      distributeResource(sparkSession, modelPath, tempModelLocalPath)
-
-      if (loadResource) {
-        val resources = Functions.mapParams(s"resource", selectedFitParam)
-        resources.foreach {
-          case (resourceName, resourcePath) =>
-            val tempResourceLocalPath = SQLPythonFunc.getLocalTempResourcePath(resourcePath, resourceName)
-            resourceParams += (resourceName -> tempResourceLocalPath)
-            distributeResource(sparkSession, resourcePath, tempResourceLocalPath)
-        }
-      }
+    // make sure every executor have the resource
+    modelMeta.modelEntityPaths.foreach { modelPath =>
       if (loadPythonProject) {
-        distributePythonProject(sparkSession, _path, trainParams).foreach(path => {
+        distributePythonProject(sparkSession, _path, modelMeta.trainParams).foreach(path => {
           resourceParams += ("pythonProjectPath" -> path)
         })
       }
     }
-
-    (models, metas, trainParams, selectedFitParam + ("resource" -> resourceParams.asJava))
+    modelMeta.copy(resources = selectedFitParam + ("resource" -> resourceParams.asJava))
   }
 
   override def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = {
-    val (modelsTemp, metasTemp, trainParams, selectedFitParam) =
-      _model.asInstanceOf[(Seq[String], Seq[Map[String, String]], Map[String, String], Map[String, Any])]
-    val models = sparkSession.sparkContext.broadcast(modelsTemp)
+    val modelMeta = _model.asInstanceOf[ModelMeta]
+    val models = sparkSession.sparkContext.broadcast(modelMeta.modelEntityPaths)
 
 
-    val pythonPath = metasTemp(0)("pythonPath")
-    val pythonVer = metasTemp(0)("pythonVer")
+    val pythonPath = modelMeta.systemParams(0)("pythonPath")
+    val pythonVer = modelMeta.systemParams(0)("pythonVer")
+
+    val trainParams = modelMeta.trainParams
 
     val userPythonScript = findPythonPredictScript(sparkSession, params, "")
 
@@ -356,7 +269,7 @@ class SQLPythonAlg(override val uid: String) extends SQLAlg with Functions with 
     val item = new util.HashMap[String, String]()
     item.put("funcPath", "/tmp/" + System.currentTimeMillis())
     maps.put("systemParam", item)
-    maps.put("internalSystemParam", selectedFitParam.asJava)
+    maps.put("internalSystemParam", modelMeta.resources.asJava)
 
     val kafkaParam = mapParams("kafkaParam", trainParams)
 
@@ -395,8 +308,6 @@ class SQLPythonAlg(override val uid: String) extends SQLAlg with Functions with 
         val v_ser4 = pickleInternalRow(Seq(trainParamsRow).toIterator, StructType(Seq(StructField("trainParams", MapType(StringType, StringType)))))
         v_ser3 = v_ser3 ++ v_ser4
       }
-
-      //      val predictTime = System.currentTimeMillis()
 
       if (TaskContext.get() == null) {
         APIDeployPythonRunnerEnv.setTaskContext(APIDeployPythonRunnerEnv.createTaskContext())
@@ -609,5 +520,25 @@ object SQLPythonAlg {
       }
     }
     Matrices.dense(numRows, numCols, values.asScala.toArray).toSparse
+  }
+
+  def arrayParamsWithIndex(name: String, params: Map[String, String]): Array[(Int, Map[String, String])] = {
+    params.filter(f => f._1.startsWith(name + ".")).map { f =>
+      val Array(name, group, keys@_*) = f._1.split("\\.")
+      (group, keys.mkString("."), f._2)
+    }.groupBy(f => f._1).map(f => {
+      val params = f._2.map(k => (k._2, k._3)).toMap
+      (f._1.toInt, params)
+    }).toArray
+  }
+
+  def distributeResource(spark: SparkSession, path: String, tempLocalPath: String) = {
+    if (spark.sparkContext.isLocal) {
+      val psDriverBackend = PlatformManager.getRuntime.asInstanceOf[SparkRuntime].localSchedulerBackend
+      psDriverBackend.localEndpoint.askSync[Boolean](Message.CopyModelToLocal(path, tempLocalPath))
+    } else {
+      val psDriverBackend = PlatformManager.getRuntime.asInstanceOf[SparkRuntime].psDriverBackend
+      psDriverBackend.psDriverRpcEndpointRef.askSync[Boolean](Message.CopyModelToLocal(path, tempLocalPath))
+    }
   }
 }
