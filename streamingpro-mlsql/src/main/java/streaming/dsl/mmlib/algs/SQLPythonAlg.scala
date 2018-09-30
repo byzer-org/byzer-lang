@@ -20,7 +20,7 @@ import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession}
 import org.apache.spark.util.ObjPickle._
 import org.apache.spark.util.VectorSerDer._
-import org.apache.spark.util.{ExternalCommandRunner, MatrixSerDer, ObjPickle, VectorSerDer}
+import org.apache.spark.util._
 import streaming.core.strategy.platform.PlatformManager
 import streaming.dsl.mmlib._
 import streaming.dsl.mmlib.algs.SQLPythonFunc._
@@ -28,9 +28,10 @@ import streaming.dsl.mmlib.algs.SQLPythonFunc._
 import scala.collection.JavaConverters._
 import streaming.common.HDFSOperator
 import streaming.dsl.ScriptSQLExec
-import streaming.dsl.mmlib.algs.meta.MLFlow
 import streaming.dsl.mmlib.algs.param.{BaseParams, SQLPythonAlgParams}
-import streaming.log.{Logging, WowLog}
+import streaming.dsl.mmlib.algs.python._
+import streaming.common.ScalaMethodMacros._
+import streaming.dsl.mmlib.algs.python.RichCaseClass._
 
 import scala.collection.mutable
 
@@ -47,7 +48,6 @@ class SQLPythonAlg(override val uid: String) extends SQLAlg with Functions with 
     val keepVersion = params.getOrElse("keepVersion", "false").toBoolean
 
     val enableDataLocal = params.getOrElse("enableDataLocal", "false").toBoolean
-    val distributeEveryExecutor = params.getOrElse("distributeEveryExecutor", "false").toBoolean
 
     var kafkaParam = mapParams("kafkaParam", params)
 
@@ -66,36 +66,26 @@ class SQLPythonAlg(override val uid: String) extends SQLAlg with Functions with 
     require(fitParam.size > 0, "fitParam should be configured")
 
     val fitParamRDD = df.sparkSession.sparkContext.parallelize(fitParam, fitParam.length)
-    val pythonPath = systemParam.getOrElse("pythonPath", "python")
-    val pythonVer = systemParam.getOrElse("pythonVer", "2.7")
-    val pythonParam = systemParam.getOrElse("pythonParam", "").split(",").filterNot(f => f.isEmpty)
-    val shellParam = systemParam.getOrElse("shellParam", "").split(",").filterNot(f => f.isEmpty)
-    var tempDataLocalPath = ""
+
+
+    val mlflowConfig = MLFlowConfig.buildFromSystemParam(systemParam)
+    val pythonConfig = PythonConfig.buildFromSystemParam(systemParam)
+    val envs = EnvConfig.buildFromSystemParam(systemParam)
+
     var dataHDFSPath = ""
 
+    // persist training data to HDFS
     if (enableDataLocal) {
-      val dataLocalFormat = params.getOrElse("dataLocalFormat", "json")
-      val dataLocalFileNum = params.getOrElse("dataLocalFileNum", "-1").toInt
-
+      val dataLocalizeConfig = DataLocalizeConfig.buildFromParams(params)
       dataHDFSPath = SQLPythonFunc.getAlgTmpPath(path) + "/data"
-      tempDataLocalPath = SQLPythonFunc.getLocalTempDataPath(path)
 
-      val newDF = if (dataLocalFileNum > -1) {
-        df.repartition(dataLocalFileNum)
+      val newDF = if (dataLocalizeConfig.dataLocalFileNum > -1) {
+        df.repartition(dataLocalizeConfig.dataLocalFileNum)
       } else df
-      newDF.write.format(dataLocalFormat).mode(SaveMode.Overwrite).save(dataHDFSPath)
-
-      if (distributeEveryExecutor) {
-        recordSingleLineLog(kafkaParam, s"dataLocalFormat enabled ,system will generate data in ${tempDataLocalPath}  in every executor", logCallback = (msg) => {
-          logInfo(format(msg))
-        })
-        distributeResource(df.sparkSession, dataHDFSPath, tempDataLocalPath)
-        recordSingleLineLog(kafkaParam, s"dataLocalFormat is finished")
-
-      }
+      newDF.write.format(dataLocalizeConfig.dataLocalFormat).mode(SaveMode.Overwrite).save(dataHDFSPath)
     }
 
-    val userPythonScript = loadUserDefinePythonScript(params, df.sparkSession)
+    val pythonScript = loadUserDefinePythonScript(params, df.sparkSession)
 
     val schema = df.schema
     var rows = Array[Array[Byte]]()
@@ -112,7 +102,7 @@ class SQLPythonAlg(override val uid: String) extends SQLAlg with Functions with 
 
     val mlsqlContext = ScriptSQLExec.contextGetOrForTest()
 
-    distributePythonProject(df.sparkSession, params)
+    distributePythonProject(df.sparkSession, path, params)
 
     val wowRDD = fitParamRDD.map { paramAndIndex =>
 
@@ -121,9 +111,10 @@ class SQLPythonAlg(override val uid: String) extends SQLAlg with Functions with 
       val f = paramAndIndex._2
       val algIndex = paramAndIndex._1
 
-      var tempDataLocalPathWithAlgSuffix = tempDataLocalPath
+      val localPathConfig = LocalPathConfig.buildFromParams(path)
+      var tempDataLocalPathWithAlgSuffix = localPathConfig.localDataPath
 
-      if (enableDataLocal && !distributeEveryExecutor) {
+      if (enableDataLocal) {
         tempDataLocalPathWithAlgSuffix = tempDataLocalPathWithAlgSuffix + "/" + algIndex
         val msg = s"dataLocalFormat enabled ,system will generate data in ${tempDataLocalPathWithAlgSuffix} "
         logInfo(format(msg))
@@ -155,12 +146,8 @@ class SQLPythonAlg(override val uid: String) extends SQLAlg with Functions with 
         }
       }
 
-
-      val pythonScript = findPythonScript(userPythonScript, f, "sk")
-
-
-      val taskDirectory = SQLPythonFunc.getLocalRunPath(UUID.randomUUID().toString)
-      val tempModelLocalPath = s"${SQLPythonFunc.getLocalBasePath}/${UUID.randomUUID().toString}/${algIndex}"
+      val taskDirectory = localPathConfig.localRunPath
+      val tempModelLocalPath = s"${localPathConfig.localModelPath}/${algIndex}"
       //FileUtils.forceMkdir(tempModelLocalPath)
 
       paramMap.put("fitParam", item)
@@ -169,42 +156,48 @@ class SQLPythonAlg(override val uid: String) extends SQLAlg with Functions with 
       paramMap.put("kafkaParam", kafkaP.asJava)
 
       val internalSystemParam = Map(
-        "stopFlagNum" -> stopFlagNum,
-        "tempModelLocalPath" -> tempModelLocalPath,
-        "tempDataLocalPath" -> tempDataLocalPathWithAlgSuffix,
-        "resource" -> resourceParams.asJava
+        str[RunPythonConfig.InternalSystemParam](_.stopFlagNum) -> stopFlagNum,
+        str[RunPythonConfig.InternalSystemParam](_.tempModelLocalPath) -> tempModelLocalPath,
+        str[RunPythonConfig.InternalSystemParam](_.tempDataLocalPath) -> tempDataLocalPathWithAlgSuffix,
+        str[RunPythonConfig.InternalSystemParam](_.resource) -> resourceParams.asJava
       )
 
-      paramMap.put("internalSystemParam", internalSystemParam.asJava)
-      paramMap.put("systemParam", systemParam.asJava)
+      paramMap.put(RunPythonConfig.internalSystemParam, internalSystemParam.asJava)
+      paramMap.put(RunPythonConfig.systemParam, systemParam.asJava)
 
 
-      val command = pythonScript.scriptType match {
-        case MLFlow => shellParam.toSeq ++ Seq("/bin/bash") ++ Seq(pythonScript.fileContent)
-        case _ => Seq(pythonPath) ++ pythonParam ++ Seq(pythonScript.fileName)
-      }
+      val command = new PythonAlgExecCommand(pythonScript.get, Option(mlflowConfig), Option(pythonConfig)).generateCommand
 
       val modelTrainStartTime = System.currentTimeMillis()
 
       var score = 0.0
       var trainFailFlag = false
-
+      val runner = new PythonProjectExecuteRunner(
+        taskDirectory = taskDirectory,
+        modelPath = path,
+        envVars = envs,
+        recordLog = SQLPythonFunc.recordAnyLog(kafkaParam),
+        logCallback = (msg) => {
+          ScriptSQLExec.setContextIfNotPresent(mlsqlContext)
+          logInfo(format(msg))
+        }
+      )
       try {
-        val res = ExternalCommandRunner.run(
-          taskDirectory = taskDirectory,
+        val projectName = pythonScript.get.scriptType match {
+          case MLFlow => Some(pythonScript.get.fileContent)
+          case _ => None
+        }
+        val res = runner.run(
           command = command,
           iter = paramMap,
           schema = MapType(StringType, MapType(StringType, StringType)),
-          scriptContent = pythonScript.fileContent,
-          scriptName = pythonScript.fileName,
-          recordLog = SQLPythonFunc.recordAnyLog(kafkaParam),
-          modelPath = path, validateData = rowsBr.value, logCallback = (msg) => {
-            ScriptSQLExec.setContextIfNotPresent(mlsqlContext)
-            logInfo(format(msg))
-          }
+          scriptContent = pythonScript.get.fileContent,
+          scriptName = pythonScript.get.fileName,
+          projectName = projectName,
+          validateData = rowsBr.value
         )
 
-        score = recordUserLog(algIndex, pythonScript, kafkaParam, res, logCallback = (msg) => {
+        score = recordUserLog(algIndex, pythonScript.get, kafkaParam, res, logCallback = (msg) => {
           ScriptSQLExec.setContextIfNotPresent(mlsqlContext)
           logInfo(format(msg))
         })
@@ -237,34 +230,24 @@ class SQLPythonAlg(override val uid: String) extends SQLAlg with Functions with 
         FileUtils.deleteDirectory(new File(tempDataLocalPathWithAlgSuffix))
       }
       val status = if (trainFailFlag) "fail" else "success"
-      Row.fromSeq(Seq(modelHDFSPath, algIndex, pythonScript.fileName, score, status, modelTrainStartTime, modelTrainEndTime, f))
+      Row.fromSeq(Seq(modelHDFSPath, algIndex, pythonScript.get.fileName, score, status, modelTrainStartTime, modelTrainEndTime, f))
     }
-    df.sparkSession.createDataFrame(wowRDD, StructType(Seq(
-      StructField("modelPath", StringType),
-      StructField("algIndex", IntegerType),
-      StructField("alg", StringType),
-      StructField("score", DoubleType),
 
-      StructField("status", StringType),
-      StructField("startTime", LongType),
-      StructField("endTime", LongType),
-      StructField("trainParams", MapType(StringType, StringType))
-    ))).
-      write.
-      mode(SaveMode.Overwrite).
-      parquet(SQLPythonFunc.getAlgMetalPath(path, keepVersion) + "/0")
+    df.sparkSession.createDataFrame(wowRDD, PythonTrainingResultSchema.algSchema).write.mode(SaveMode.Overwrite).parquet(SQLPythonFunc.getAlgMetalPath(path, keepVersion) + "/0")
 
-    val tempRDD = df.sparkSession.sparkContext.parallelize(Seq(Seq(Map("pythonPath" -> pythonPath, "pythonVer" -> pythonVer), params)), 1).map { f =>
+    val tempRDD = df.sparkSession.sparkContext.parallelize(Seq(Seq(
+      Map(
+        str[PythonConfig](_.pythonPath) -> pythonConfig.pythonPath,
+        str[PythonConfig](_.pythonVer) -> pythonConfig.pythonVer
+      ), params)), 1).map { f =>
       Row.fromSeq(f)
     }
-    df.sparkSession.createDataFrame(tempRDD, StructType(Seq(
-      StructField("systemParam", MapType(StringType, StringType)),
-      StructField("trainParams", MapType(StringType, StringType))))).
+    df.sparkSession.createDataFrame(tempRDD, PythonTrainingResultSchema.trainParamsSchema).
       write.
       mode(SaveMode.Overwrite).
       parquet(SQLPythonFunc.getAlgMetalPath(path, keepVersion) + "/1")
-    emptyDataFrame()(df)
 
+    df.sparkSession.read.parquet(SQLPythonFunc.getAlgMetalPath(path, keepVersion) + "/0")
   }
 
   override def load(sparkSession: SparkSession, _path: String, params: Map[String, String]): Any = {
@@ -349,7 +332,7 @@ class SQLPythonAlg(override val uid: String) extends SQLAlg with Functions with 
         }
       }
       if (loadPythonProject) {
-        distributePythonProject(sparkSession, trainParams).foreach(path => {
+        distributePythonProject(sparkSession, _path, trainParams).foreach(path => {
           resourceParams += ("pythonProjectPath" -> path)
         })
       }
@@ -362,7 +345,6 @@ class SQLPythonAlg(override val uid: String) extends SQLAlg with Functions with 
     val (modelsTemp, metasTemp, trainParams, selectedFitParam) =
       _model.asInstanceOf[(Seq[String], Seq[Map[String, String]], Map[String, String], Map[String, Any])]
     val models = sparkSession.sparkContext.broadcast(modelsTemp)
-
 
 
     val pythonPath = metasTemp(0)("pythonPath")
@@ -592,7 +574,7 @@ class SQLPythonAlg(override val uid: String) extends SQLAlg with Functions with 
     Seq(Core_2_2_x, Core_2_3_x)
   }
 
-  def distributePythonProject(spark: SparkSession, params: Map[String, String]): Option[String] = {
+  def distributePythonProject(spark: SparkSession, path: String, params: Map[String, String]): Option[String] = {
     val userPythonScript = loadUserDefinePythonScript(params, spark)
     // load python project
     val pythonProjectPath = userPythonScript.get.scriptType match {
@@ -601,7 +583,7 @@ class SQLPythonAlg(override val uid: String) extends SQLAlg with Functions with 
     }
 
     if (pythonProjectPath.isDefined) {
-      val tempPythonProjectLocalPath = SQLPythonFunc.getLocalRunPath(pythonProjectPath.get)
+      val tempPythonProjectLocalPath = SQLPythonFunc.getLocalRunPath(path) + "/" + userPythonScript.get.filePath.split("/").last
       logInfo(format(s"system load python project into directory: [ ${tempPythonProjectLocalPath} ]."))
       distributeResource(spark, pythonProjectPath.get, tempPythonProjectLocalPath)
       logInfo(format("python project loaded!"))

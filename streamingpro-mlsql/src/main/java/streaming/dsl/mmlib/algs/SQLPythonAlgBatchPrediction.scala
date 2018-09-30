@@ -96,7 +96,7 @@ class SQLPythonAlgBatchPrediction extends SQLAlg with Functions {
 
 
       val paramMap = new util.HashMap[String, Object]()
-      val pythonScript = findPythonScript(userPythonScript, fitParam, "sk")
+      val pythonScript = userPythonScript.get
 
       paramMap.put("fitParam", fitParam.asJava)
 
@@ -120,9 +120,9 @@ class SQLPythonAlgBatchPrediction extends SQLAlg with Functions {
 
       var score = 0.0
       var trainFailFlag = false
-
+      val taskDirectory = SQLPythonFunc.getLocalRunPath(UUID.randomUUID().toString)
       try {
-        val res = ExternalCommandRunner.run(
+        val res = ExternalCommandRunner.run(taskDirectory,
           command = command,
           iter = paramMap,
           schema = MapType(StringType, MapType(StringType, StringType)),

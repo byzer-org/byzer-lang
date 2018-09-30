@@ -24,7 +24,7 @@ class PythonMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQ
       //执行sql
       implicit val spark = runtime.sparkSession
       val sq = createSSEL
-
+      //"systemParam.pythonPath" -> "/Users/allwefantasy/nlp_architect_env/bin/python"
       writeStringToFile("/tmp/sklearn-user-script.py", PythonCode.pythonTrainCode)
       writeStringToFile("/tmp/sklearn-user-predict-script.py", PythonCode.pythonPredictCode)
       ScriptSQLExec.parse(TemplateMerge.merge(loadSQLScriptStr("python-alg-script"), Map(
