@@ -242,28 +242,44 @@ class SQLPythonAlg(override val uid: String) extends SQLAlg with Functions with 
     var (selectedFitParam, resourceParams) = new ResourceManager(params).loadResourceInRegister(sparkSession, modelMeta)
     val loadPythonProject = modelMeta.trainParams.contains("pythonProjectPath")
 
-    // make sure every executor have the resource
-    modelMeta.modelEntityPaths.foreach { modelPath =>
-      if (loadPythonProject) {
-        distributePythonProject(sparkSession, _path, modelMeta.trainParams).foreach(path => {
-          resourceParams += ("pythonProjectPath" -> path)
-        })
-      }
+    if (loadPythonProject) {
+      distributePythonProject(sparkSession, _path, modelMeta.trainParams).foreach(path => {
+        resourceParams += ("pythonProjectPath" -> path)
+      })
     }
+
+    val pythonTrainScript = loadUserDefinePythonScript(modelMeta.trainParams, sparkSession)
+
+    pythonTrainScript.get.scriptType match {
+      case MLFlow =>
+        distributePythonProject(sparkSession, pythonTrainScript.get.filePath, modelMeta.trainParams).foreach(path => {
+          resourceParams += ("mlFlowProjectPath" -> path)
+        })
+      case _ => None
+    }
+
     modelMeta.copy(resources = selectedFitParam + ("resource" -> resourceParams.asJava))
   }
 
   override def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = {
     val modelMeta = _model.asInstanceOf[ModelMeta]
     val models = sparkSession.sparkContext.broadcast(modelMeta.modelEntityPaths)
-
-
-    val pythonPath = modelMeta.systemParams(0)("pythonPath")
-    val pythonVer = modelMeta.systemParams(0)("pythonVer")
-
     val trainParams = modelMeta.trainParams
+    val systemParam = mapParams("systemParam", trainParams)
 
-    val userPythonScript = findPythonPredictScript(sparkSession, params, "")
+
+    val pythonConfig = PythonConfig.buildFromSystemParam(systemParam)
+    val envs = EnvConfig.buildFromSystemParam(systemParam)
+    val pythonTrainScript = loadUserDefinePythonScript(trainParams, sparkSession)
+
+    val userPredictScript = findPythonPredictScript(sparkSession, params, "")
+
+    val projectName = pythonTrainScript.get.scriptType match {
+      case MLFlow =>
+        distributePythonProject(sparkSession, pythonTrainScript.get.filePath, trainParams)
+        Some(pythonTrainScript.get.fileContent)
+      case _ => None
+    }
 
     val maps = new util.HashMap[String, java.util.Map[String, _]]()
     val item = new util.HashMap[String, String]()
@@ -284,15 +300,24 @@ class SQLPythonAlg(override val uid: String) extends SQLAlg with Functions with 
     })
     val taskDirectory = SQLPythonFunc.getLocalRunPath(UUID.randomUUID().toString)
     val enableCopyTrainParamsToPython = params.getOrElse("enableCopyTrainParamsToPython", "false").toBoolean
-    //driver 节点执行
-    val res = ExternalCommandRunner.run(
-      taskDirectory,
-      Seq(pythonPath, userPythonScript.fileName),
+
+    val pythonRunner = new PythonProjectExecuteRunner(taskDirectory = taskDirectory, modelPath = null, envVars = envs, recordLog = recordLog)
+
+    /*
+      Run python script in driver so we can get function then broadcast it to all
+      python worker.
+      Make sure you use `sys.path.insert(0,mlsql.internal_system_param["resource"]["mlFlowProjectPath"])`
+      if you run it in project.
+     */
+    val res = pythonRunner.run(
+      Seq(pythonConfig.pythonPath, userPredictScript.fileName),
       maps,
       MapType(StringType, MapType(StringType, StringType)),
-      userPythonScript.fileContent,
-      userPythonScript.fileName, modelPath = null, recordLog = recordLog
+      userPredictScript.fileContent,
+      userPredictScript.fileName,
+      projectName
     )
+
     res.foreach(f => f)
     val command = Files.readAllBytes(Paths.get(item.get("funcPath")))
 
@@ -314,7 +339,7 @@ class SQLPythonAlg(override val uid: String) extends SQLAlg with Functions with 
       }
 
       val iter = WowPythonRunner.run(
-        pythonPath, pythonVer, command, v_ser3, TaskContext.get().partitionId(), Array(), runtimeParams, recordLog
+        pythonConfig.pythonPath, pythonConfig.pythonVer, command, v_ser3, TaskContext.get().partitionId(), Array(), runtimeParams, recordLog
       )
       val a = iter.next()
       val predictValue = VectorSerDer.deser_vector(unpickle(a).asInstanceOf[java.util.ArrayList[Object]].get(0))
