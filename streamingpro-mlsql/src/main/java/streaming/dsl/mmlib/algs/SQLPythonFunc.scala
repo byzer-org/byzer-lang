@@ -1,6 +1,7 @@
 package streaming.dsl.mmlib.algs
 
 import java.nio.file.{Files, Paths}
+import java.util.UUID
 
 import com.hortonworks.spark.sql.kafka08.KafkaOperator
 import org.apache.spark.sql.SparkSession
@@ -103,7 +104,7 @@ object SQLPythonFunc {
   }
 
   def getLocalRunPath(hdfsPath: String) = {
-    s"${getLocalBasePath}/mlsqlrun/${WowMD5.md5Hash(hdfsPath)}"
+    s"${getLocalBasePath}/mlsqlrun/${UUID.randomUUID().toString}"
   }
 
   def getLocalTempResourcePath(hdfsPath: String, resourceName: String) = {
