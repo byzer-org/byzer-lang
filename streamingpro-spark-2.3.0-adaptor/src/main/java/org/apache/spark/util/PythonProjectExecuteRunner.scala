@@ -14,7 +14,6 @@ import scala.io.Source
 import scala.collection.JavaConverters._
 
 class PythonProjectExecuteRunner(taskDirectory: String,
-                                 modelPath: String,
                                  envVars: Map[String, String] = Map(),
                                  recordLog: Any => Any,
                                  logCallback: (String) => Unit = (msg: String) => {},

@@ -10,7 +10,9 @@ class ModelMetaManager(sparkSession: SparkSession, _path: String, params: Map[St
   val wowMetas = sparkSession.read.parquet(metaPath + "/1").collect()
 
   def loadMetaAndModel = {
-    ModelMeta(trainParams, modelEntityPaths, wowMetas.map(f => f.getMap[String, String](0).toMap).toSeq, Map())
+    val _trainParams = trainParams
+    val pythonTrainScript = loadUserDefinePythonScript(_trainParams, sparkSession)
+    ModelMeta(pythonTrainScript.get, _trainParams, modelEntityPaths, Map())
   }
 
   def maxVersion = getModelVersion(_path)

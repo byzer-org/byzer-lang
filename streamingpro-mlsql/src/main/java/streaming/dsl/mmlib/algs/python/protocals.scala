@@ -124,8 +124,8 @@ object PythonTrainingResultSchema {
     StructField("trainParams", MapType(StringType, StringType))))
 }
 
-case class ModelMeta(trainParams: Map[String, String],
+case class ModelMeta(pythonScript: PythonScript,
+                     trainParams: Map[String, String],
                      modelEntityPaths: Seq[String],
-                     systemParams: Seq[Map[String, String]],
                      resources: Map[String, Any]
                     )

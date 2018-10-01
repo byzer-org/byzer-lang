@@ -64,6 +64,10 @@ object ShellCommand extends TFileWriter {
     result
   }
 
+  def execCmd(shellStr: String) = {
+    shellStr.!!
+  }
+
   def execFile(fileName: String) = {
     logger.debug("exec file " + fileName)
 
