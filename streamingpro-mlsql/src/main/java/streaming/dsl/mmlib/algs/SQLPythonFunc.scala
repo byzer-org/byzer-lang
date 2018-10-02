@@ -27,13 +27,13 @@ object SQLPythonFunc {
       case Some(path) =>
         if (HDFSOperator.isDir(path) && HDFSOperator.fileExists(Paths.get(path, "MLproject").toString)) {
           val project = path.split("/").last
-          Some(PythonScript("", project, path, MLFlow))
+          Some(PythonScript("", project, path, "", MLFlow))
 
         } else {
           val pathChunk = path.split("/")
           val userFileName = pathChunk.last
           val userPythonScriptList = spark.sparkContext.textFile(path, 1).collect().mkString("\n")
-          Some(PythonScript(userFileName, userPythonScriptList, path))
+          Some(PythonScript(userFileName, userPythonScriptList, "", path))
         }
 
       case None => None
@@ -81,15 +81,7 @@ object SQLPythonFunc {
                               defaultScriptName: String
                              ) = {
     val userPythonScript = loadUserDefinePythonScript(params, sparkSession)
-    userPythonScript match {
-      case Some(ups) => ups
-      case None =>
-        val userFileName = defaultScriptName
-        val path = s"/python/${userFileName}"
-        val sk_bayes = Source.fromInputStream(ExternalCommandRunner.getClass.getResourceAsStream(path)).
-          getLines().mkString("\n")
-        PythonScript(userFileName, sk_bayes, path)
-    }
+    userPythonScript.get
 
   }
 
