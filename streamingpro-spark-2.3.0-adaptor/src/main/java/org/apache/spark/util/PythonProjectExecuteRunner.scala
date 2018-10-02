@@ -15,17 +15,16 @@ import scala.collection.JavaConverters._
 
 class PythonProjectExecuteRunner(taskDirectory: String,
                                  envVars: Map[String, String] = Map(),
-                                 recordLog: Any => Any,
+                                 recordLog: Any => Any = (msg: Any) => msg,
                                  logCallback: (String) => Unit = (msg: String) => {},
                                  separateWorkingDir: Boolean = true,
                                  bufferSize: Int = 1024,
                                  encoding: String = "utf-8") extends Logging {
   def run(command: Seq[String],
-          iter: Any,
+          params: Any,
           schema: DataType,
           scriptContent: String,
           scriptName: String,
-          projectName: Option[String],
           validateData: Array[Array[Byte]] = Array()
 
          ) = {
@@ -39,7 +38,6 @@ class PythonProjectExecuteRunner(taskDirectory: String,
     // task will be run in separate directory. This should be resolve file
     // access conflict issue
     var workInTaskDirectory = false
-    log.debug("taskDirectory = " + taskDirectory)
     if (separateWorkingDir) {
       val currentDir = new File(".")
       log.debug("currentDir = " + currentDir.getAbsolutePath())
@@ -65,26 +63,17 @@ class PythonProjectExecuteRunner(taskDirectory: String,
     }
 
     def pickleFile(name: String, fileName: String, value: Any) = {
-      val fileTemp = projectName match {
-        case Some(pn) =>
-          new File(taskDirectory + s"/${pn}/" + fileName + ".pickle")
-        case None => new File(taskDirectory + "/" + fileName + ".pickle")
-      }
+      val fileTemp = new File(taskDirectory + "/" + fileName + ".pickle")
       currentEnvVars.put(name, fileTemp.getPath)
       val pythonTempFile = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(fileTemp)))
-      // writeIteratorToStream(ExternalCommandRunner.pickle(iter, schema), pythonTempFile)
       pickle(value, pythonTempFile)
     }
     //使用pickle 把数据写到work目录，之后python程序会读取。首先是保存配置信息。
-    pickleFile("pickleFile", "python_temp", iter)
+    pickleFile("pickleFile", "python_temp", params)
     pickleFile("validateFile", "validate_table", validateData)
 
     def saveFile(scriptName: String, scriptContent: String) = {
-      val scriptFile = projectName match {
-        case Some(pn) =>
-          new File(taskDirectory + s"/${pn}/${scriptName}")
-        case None => new File(taskDirectory + s"/${scriptName}")
-      }
+      val scriptFile = new File(taskDirectory + s"/${scriptName}")
       val fw = new FileWriter(scriptFile)
       try {
         fw.write(scriptContent)
