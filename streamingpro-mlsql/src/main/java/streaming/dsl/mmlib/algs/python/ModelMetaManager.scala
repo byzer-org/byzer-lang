@@ -11,7 +11,7 @@ class ModelMetaManager(sparkSession: SparkSession, _path: String, params: Map[St
 
   def loadMetaAndModel = {
     val _trainParams = trainParams
-    val pythonTrainScript = loadUserDefinePythonScript(_trainParams, sparkSession)
+    val pythonTrainScript = PythonAlgProject.loadProject(_trainParams, sparkSession)
     ModelMeta(pythonTrainScript.get, _trainParams, modelEntityPaths, Map())
   }
 

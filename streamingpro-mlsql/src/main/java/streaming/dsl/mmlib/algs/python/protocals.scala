@@ -20,6 +20,7 @@ object RichCaseClass {
 case class PythonScript(fileName: String,
                         fileContent: String,
                         filePath: String,
+                        projectName: String,
                         scriptType: PythonScriptType = Script)
 
 sealed class PythonScriptType
