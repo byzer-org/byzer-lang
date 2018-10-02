@@ -64,7 +64,8 @@ object EnvConfig {
 case class LocalPathConfig(localModelPath: String,
                            localTmpPath: String,
                            localDataPath: String,
-                           localRunPath: String
+                           localRunPath: String,
+                           localOutputPath: String
                           )
 
 object RunPythonConfig {
@@ -75,6 +76,7 @@ object RunPythonConfig {
   case class InternalSystemParam(stopFlagNum: Int,
                                  tempModelLocalPath: String,
                                  tempDataLocalPath: String,
+                                 tempOutputLocalPath: String,
                                  resource: Map[String, String])
 
   case class SystemParam(systemParam: Map[String, String])
@@ -87,7 +89,8 @@ object LocalPathConfig {
       localDataPath = SQLPythonFunc.getLocalTempDataPath(path),
       localTmpPath = SQLPythonFunc.getAlgTmpPath(path),
       localModelPath = SQLPythonFunc.getLocalTempModelPath(path),
-      localRunPath = SQLPythonFunc.getLocalRunPath(path)
+      localRunPath = SQLPythonFunc.getLocalRunPath(path),
+      localOutputPath = SQLPythonFunc.getLocalTempModelPath(path)
     )
   }
 }

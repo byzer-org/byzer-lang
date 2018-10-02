@@ -11,7 +11,6 @@ import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.spark.{APIDeployPythonRunnerEnv, TaskContext}
 import org.apache.spark.api.python.WowPythonRunner
 import org.apache.spark.ml.linalg.SQLDataTypes._
-import org.apache.spark.ml.feature.PythonBatchPredictDataSchema
 import org.apache.spark.ml.linalg.{Matrices, Matrix, Vector}
 import org.apache.spark.ps.cluster.Message
 import org.apache.spark.sql.catalyst.InternalRow
@@ -33,7 +32,6 @@ import streaming.dsl.mmlib.algs.param.{BaseParams, SQLPythonAlgParams}
 import streaming.dsl.mmlib.algs.python._
 import streaming.common.ScalaMethodMacros._
 
-import scala.collection.mutable
 
 /**
   * Created by allwefantasy on 5/2/2018.
@@ -228,10 +226,10 @@ class SQLPythonAlg(override val uid: String) extends SQLAlg with Functions with 
 
      when you use register statement ,this means you are in API predict mode.
 
-     Since python worker in predict is long-run process, we can not use conda to
+     Since python worker in predict mode is long-run process, we can not use conda to
      find the best env for every project because they share the same python workers.
 
-     In API predict mode,  it's recommended that ld only deploy one python project.
+     In API predict mode,  it's recommended that only deploy one python project.
      When you register model, the system will just distribute the python project and you should add the project
      in your predict script manually e.g. `sys.path.insert(0,mlsql.internal_system_param["resource"]["mlFlowProjectPath"])
      and we will not create suitable env for you for now.
@@ -241,6 +239,9 @@ class SQLPythonAlg(override val uid: String) extends SQLAlg with Functions with 
 
     val modelMetaManager = new ModelMetaManager(sparkSession, _path, params)
     val modelMeta = modelMetaManager.loadMetaAndModel
+    val localPathConfig = LocalPathConfig.buildFromParams(_path)
+
+    val taskDirectory = localPathConfig.localRunPath + "/" + modelMeta.pythonScript.projectName
 
     var (selectedFitParam, resourceParams) = new ResourceManager(params).loadResourceInRegister(sparkSession, modelMeta)
 
@@ -261,11 +262,18 @@ class SQLPythonAlg(override val uid: String) extends SQLAlg with Functions with 
                |""".stripMargin))
         }
 
-        distributePythonProject(sparkSession, modelMeta.pythonScript.filePath, modelMeta.trainParams).foreach(path => {
+        distributePythonProject(sparkSession, taskDirectory, Option(modelMeta.pythonScript.filePath)).foreach(path => {
           resourceParams += ("mlFlowProjectPath" -> path)
         })
 
       case _ => None
+    }
+    val pythonProjectPath = params.get("pythonProjectPath")
+
+    if (pythonProjectPath.isDefined) {
+      distributePythonProject(sparkSession, taskDirectory, Option(modelMeta.pythonScript.filePath)).foreach(path => {
+        resourceParams += ("pythonProjectPath" -> path)
+      })
     }
 
     modelMeta.copy(resources = selectedFitParam + ("resource" -> resourceParams.asJava))
@@ -283,8 +291,6 @@ class SQLPythonAlg(override val uid: String) extends SQLAlg with Functions with 
 
 
     val userPredictScript = findPythonPredictScript(sparkSession, params, "")
-
-    val projectName = modelMeta.pythonScript.projectName
 
     val maps = new util.HashMap[String, java.util.Map[String, _]]()
     val item = new util.HashMap[String, String]()
@@ -361,212 +367,9 @@ class SQLPythonAlg(override val uid: String) extends SQLAlg with Functions with 
   }
 
 
-  def batchPredictForAPI(df: DataFrame, _path: String, params: Map[String, String]): DataFrame = {
-    val sparkSession = df.sparkSession
-
-    val modelMetaManager = new ModelMetaManager(sparkSession, _path, params)
-    val modelMeta = modelMetaManager.loadMetaAndModel
-
-    val batchSize = params.getOrElse("batchSize", "10").toInt
-    val inputCol = params.getOrElse("inputCol", "")
-
-    require(inputCol != null && inputCol != "", s"inputCol in ${getClass} module should be configured!")
-
-    val batchPredictFun = params.getOrElse("predictFun", UUID.randomUUID().toString.replaceAll("-", ""))
-    val predictLabelColumnName = params.getOrElse("predictCol", "predict_label")
-    val predictTableName = params.getOrElse("predictTable", "")
-
-    require(
-      predictTableName != null && predictTableName != "",
-      s"predictTable in ${getClass} module should be configured!"
-    )
-
-    val schema = PythonBatchPredictDataSchema.newSchema(df)
-
-    val rdd = df.rdd.mapPartitions(it => {
-      var list = List.empty[List[Row]]
-      var tmpList = List.empty[Row]
-      var batchCount = 0
-      while (it.hasNext) {
-        val e = it.next()
-        if (batchCount == batchSize) {
-          list +:= tmpList
-          batchCount = 0
-          tmpList = List.empty[Row]
-        } else {
-          tmpList +:= e
-          batchCount += 1
-        }
-      }
-      if (batchCount != batchSize) {
-        list +:= tmpList
-      }
-      list.map(x => {
-        Row.fromSeq(Seq(x, SQLPythonAlg.createNewFeatures(x, inputCol)))
-      }).iterator
-    })
-
-    val systemParam = mapParams("systemParam", modelMeta.trainParams)
-    val pythonPath = systemParam.getOrElse("pythonPath", "python")
-    val pythonVer = systemParam.getOrElse("pythonVer", "2.7")
-    val kafkaParam = mapParams("kafkaParam", modelMeta.trainParams)
-
-    // load python script
-    val userPythonScript = SQLPythonFunc.findPythonPredictScript(sparkSession, params, "")
-
-    val maps = new java.util.HashMap[String, java.util.Map[String, _]]()
-    val item = new java.util.HashMap[String, String]()
-    item.put("funcPath", "/tmp/" + System.currentTimeMillis())
-    maps.put("systemParam", item)
-    maps.put("internalSystemParam", modelMeta.resources.asJava)
-
-    val taskDirectory = SQLPythonFunc.getLocalRunPath(UUID.randomUUID().toString)
-
-    val res = ExternalCommandRunner.run(taskDirectory, Seq(pythonPath, userPythonScript.fileName),
-      maps,
-      MapType(StringType, MapType(StringType, StringType)),
-      userPythonScript.fileContent,
-      userPythonScript.fileName, modelPath = null, recordLog = SQLPythonFunc.recordAnyLog(kafkaParam)
-    )
-    res.foreach(f => f)
-    val command = Files.readAllBytes(Paths.get(item.get("funcPath")))
-    val runtimeParams = PlatformManager.getRuntime.params.asScala.toMap
-
-    // registe batch predict python function
-
-    val recordLog = SQLPythonFunc.recordAnyLog(Map[String, String]())
-    val models = sparkSession.sparkContext.broadcast(modelMeta.modelEntityPaths)
-    val f = (m: Matrix, modelPath: String) => {
-      val modelRow = InternalRow.fromSeq(Seq(SQLPythonFunc.getLocalTempModelPath(modelPath)))
-      val trainParamsRow = InternalRow.fromSeq(Seq(ArrayBasedMapData(params)))
-      val v_ser = ObjPickle.pickleInternalRow(Seq(MatrixSerDer.serialize(m)).toIterator, MatrixSerDer.matrixSchema())
-      val v_ser2 = ObjPickle.pickleInternalRow(Seq(modelRow).toIterator, StructType(Seq(StructField("modelPath", StringType))))
-      val v_ser3 = v_ser ++ v_ser2
-
-      if (TaskContext.get() == null) {
-        APIDeployPythonRunnerEnv.setTaskContext(APIDeployPythonRunnerEnv.createTaskContext())
-      }
-      val iter = WowPythonRunner.run(
-        pythonPath, pythonVer, command, v_ser3, TaskContext.get().partitionId(), Array(), runtimeParams, recordLog
-      )
-      val a = iter.next()
-      val predictValue = MatrixSerDer.deserialize(ObjPickle.unpickle(a).asInstanceOf[java.util.ArrayList[Object]].get(0))
-      predictValue
-    }
-
-    val f2 = (m: Matrix) => {
-      models.value.map { modelPath =>
-        f(m, modelPath)
-      }.head
-    }
-
-    val func = UserDefinedFunction(f2, MatrixType, Some(Seq(MatrixType)))
-    sparkSession.udf.register(batchPredictFun, func)
-
-    // temp batch predict column name
-    val tmpPredColName = UUID.randomUUID().toString.replaceAll("-", "")
-    val pdf = sparkSession.createDataFrame(rdd, schema)
-      .selectExpr(s"${batchPredictFun}(newFeature) as ${tmpPredColName}", "originalData")
-
-    val prdd = pdf.rdd.mapPartitions(it => {
-      var list = List.empty[Row]
-      while (it.hasNext) {
-        val e = it.next()
-        val originalData = e.getAs[mutable.WrappedArray[Row]]("originalData")
-        val newFeature = e.getAs[Matrix](tmpPredColName).rowIter.toList
-        val size = originalData.size
-        (0 until size).map(index => {
-          val od = originalData(index)
-          val pd = newFeature(index)
-          list +:= Row.fromSeq(od.toSeq ++ Seq(pd))
-        })
-      }
-      list.iterator
-    })
-    val pschema = df.schema.add(predictLabelColumnName, VectorType)
-    val newdf = sparkSession.createDataFrame(prdd, pschema)
-    newdf.createOrReplaceTempView(predictTableName)
-    newdf
-  }
-
-  def batchPredictForBatch(df: DataFrame, _path: String, params: Map[String, String]): DataFrame = {
-    //    val sparkSession = df.sparkSession
-    //    import sparkSession.implicits._
-    //    val modelMetaManager = new ModelMetaManager(sparkSession, _path, params)
-    //    val modelMeta = modelMetaManager.loadMetaAndModel
-    //
-    //    modelMeta.pythonScript.scriptType match {
-    //      case MLFlow =>
-    //        distributePythonProject(sparkSession, modelMeta.pythonScript.filePath, modelMeta.trainParams)
-    //      case _ => throw new RuntimeException("When predictMode is batch only support MLFlow project.")
-    //    }
-    //
-    //    val projectName = modelMeta.pythonScript.fileContent
-    //
-    //
-    //    val systemParam = mapParams("systemParam", modelMeta.trainParams)
-    //    val mlflowConfig = MLFlowConfig.buildFromSystemParam(systemParam)
-    //    val pythonConfig = PythonConfig.buildFromSystemParam(systemParam)
-    //    val envs = EnvConfig.buildFromSystemParam(systemParam)
-    //    val kafkaParam = mapParams("kafkaParam", modelMeta.trainParams)
-    //    val mlsqlContext = ScriptSQLExec.contextGetOrForTest()
-    //
-    //    val pythonPredictScript = SQLPythonFunc.findPythonPredictScript(sparkSession, params, "")
-    //
-    //
-    //    df.mapPartitions { iter =>
-    //      ScriptSQLExec.setContext(mlsqlContext)
-    //      // taskDirectory should be uniq, so we should place build function here
-    //      val localPathConfig = LocalPathConfig.buildFromParams(_path)
-    //      val taskDirectory = localPathConfig.localRunPath
-    //
-    //      val command = new PythonAlgExecCommand(modelMeta.pythonScript, Option(mlflowConfig), Option(pythonConfig)).generateCommand
-    //
-    //      val runner = new PythonProjectExecuteRunner(
-    //        taskDirectory = taskDirectory,
-    //        modelPath = _path,
-    //        envVars = envs,
-    //        recordLog = SQLPythonFunc.recordAnyLog(kafkaParam),
-    //        logCallback = (msg) => {
-    //          ScriptSQLExec.setContextIfNotPresent(mlsqlContext)
-    //          logInfo(format(msg))
-    //        }
-    //      )
-    //      try {
-    //        val res = runner.run(
-    //          command = command,
-    //          iter = paramMap,
-    //          schema = MapType(StringType, MapType(StringType, StringType)),
-    //          scriptContent = pythonPredictScript.fileContent,
-    //          scriptName = pythonPredictScript.fileName,
-    //          projectName = modelMeta.pythonScript.fileContent,
-    //          validateData = rowsBr.value
-    //        )
-    //
-    //        score = recordUserLog(algIndex, pythonScript.get, kafkaParam, res, logCallback = (msg) => {
-    //          ScriptSQLExec.setContextIfNotPresent(mlsqlContext)
-    //          logInfo(format(msg))
-    //        })
-    //      } catch {
-    //        case e: Exception =>
-    //          logError(format_cause(e))
-    //          e.printStackTrace()
-    //          trainFailFlag = true
-    //      }
-    //      iter
-    //    }
-
-    null
-
-  }
-
-
   override def batchPredict(df: DataFrame, _path: String, params: Map[String, String]): DataFrame = {
-    val predictMode = params.getOrElse("predictMode", "batch")
-    predictMode match {
-      case "batch" => batchPredictForBatch(df, _path, params)
-      case "api" => batchPredictForAPI(df, _path, params)
-    }
+    val bp = new BatchPredict()
+    bp.predict(df, _path, params)
   }
 
 
