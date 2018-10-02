@@ -5,8 +5,8 @@ import scala.collection.JavaConverters._
 import org.apache.spark.sql.SparkSession
 
 /**
- * a extention of [[SQLPythonAlg]], which you can train python algthrim without mlsql.
- */
+  * a extention of [[SQLPythonAlg]], which you can train python algthrim without mlsql.
+  */
 class SQLExternalPythonAlg extends SQLPythonAlg {
 
   override def load(sparkSession: SparkSession,
@@ -45,7 +45,7 @@ class SQLExternalPythonAlg extends SQLPythonAlg {
 
     val loadPythonProject = params.contains("pythonProjectPath")
     if (loadPythonProject) {
-      distributePythonProject(sparkSession,_path, params).foreach(path => {
+      distributePythonProject(sparkSession, params("pythonProjectPath"), Option(_path)).foreach(path => {
         resourceParams += ("pythonProjectPath" -> path)
       })
     }

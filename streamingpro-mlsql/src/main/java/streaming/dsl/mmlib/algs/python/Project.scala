@@ -44,15 +44,6 @@ object PythonAlgProject extends Logging with WowLog {
 
 class MLProject(val projectDir: String, project: Settings) extends Logging with WowLog {
 
-
-  private[this] def parameters = {
-
-    val parameterMap = project.getGroups(MLProject.parameters)
-    parameterMap.map { f =>
-      (f._1, f._2.getAsMap.toMap)
-    }
-  }
-
   private[this] def conda_env = {
     project.get(MLProject.conda_env)
   }

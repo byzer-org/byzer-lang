@@ -91,6 +91,10 @@ object SQLPythonFunc {
     s"${getLocalBasePath}/models/${WowMD5.md5Hash(hdfsPath)}"
   }
 
+  def localOutputPath(hdfsPath: String) = {
+    s"${getLocalBasePath}/output/${WowMD5.md5Hash(hdfsPath)}"
+  }
+
   def getLocalTempDataPath(hdfsPath: String) = {
     s"${getLocalBasePath}/data/${WowMD5.md5Hash(hdfsPath)}"
   }
