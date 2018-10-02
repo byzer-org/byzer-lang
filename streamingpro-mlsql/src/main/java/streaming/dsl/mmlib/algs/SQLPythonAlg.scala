@@ -102,11 +102,21 @@ class SQLPythonAlg(override val uid: String) extends SQLAlg with Functions with 
 
     val mlsqlContext = ScriptSQLExec.contextGetOrForTest()
 
-    distributePythonProject(df.sparkSession, path, params)
+    //    distributePythonProject(df.sparkSession, path, params)
+    val userPythonScript = loadUserDefinePythonScript(params, df.sparkSession)
+    // load python project
+
+    val pythonProjectPath = userPythonScript.get.scriptType match {
+      case MLFlow => Some(userPythonScript.get.filePath)
+      case _ => params.get("pythonProjectPath")
+    }
+
+    val projectName = SQLPythonAlg.getProjectName(userPythonScript.get)
 
     val wowRDD = fitParamRDD.map { paramAndIndex =>
 
       ScriptSQLExec.setContext(mlsqlContext)
+
 
       val f = paramAndIndex._2
       val algIndex = paramAndIndex._1
@@ -130,7 +140,7 @@ class SQLPythonAlg(override val uid: String) extends SQLAlg with Functions with 
 
       val resourceParams = new ResourceManager(f).loadResourceInTrain
 
-      val taskDirectory = localPathConfig.localRunPath
+      val taskDirectory = localPathConfig.localRunPath + "/" + projectName
       val tempModelLocalPath = s"${localPathConfig.localModelPath}/${algIndex}"
       //FileUtils.forceMkdir(tempModelLocalPath)
 
@@ -149,6 +159,14 @@ class SQLPythonAlg(override val uid: String) extends SQLAlg with Functions with 
       paramMap.put(RunPythonConfig.internalSystemParam, internalSystemParam.asJava)
       paramMap.put(RunPythonConfig.systemParam, systemParam.asJava)
 
+      pythonProjectPath match {
+        case Some(_) =>
+          downloadPythonProject(taskDirectory, pythonProjectPath)
+
+
+        case None => // just normal script
+      }
+
 
       val command = new PythonAlgExecCommand(pythonScript.get, Option(mlflowConfig), Option(pythonConfig)).generateCommand
 
@@ -166,17 +184,13 @@ class SQLPythonAlg(override val uid: String) extends SQLAlg with Functions with 
         }
       )
       try {
-        val projectName = pythonScript.get.scriptType match {
-          case MLFlow => Some(pythonScript.get.fileContent)
-          case _ => None
-        }
+
         val res = runner.run(
           command = command,
-          iter = paramMap,
+          params = paramMap,
           schema = MapType(StringType, MapType(StringType, StringType)),
           scriptContent = pythonScript.get.fileContent,
           scriptName = pythonScript.get.fileName,
-          projectName = projectName,
           validateData = rowsBr.value
         )
 
@@ -195,7 +209,7 @@ class SQLPythonAlg(override val uid: String) extends SQLAlg with Functions with 
 
       val modelHDFSPath = SQLPythonFunc.getAlgModelPath(path, keepVersion) + "/" + algIndex
       try {
-        //模型保存到hdfs上
+        //copy model to HDFS
         val fs = FileSystem.get(new Configuration())
         if (!keepVersion) {
           fs.delete(new Path(modelHDFSPath), true)
@@ -284,11 +298,7 @@ class SQLPythonAlg(override val uid: String) extends SQLAlg with Functions with 
 
     val userPredictScript = findPythonPredictScript(sparkSession, params, "")
 
-    val projectName = modelMeta.pythonScript.scriptType match {
-      case MLFlow =>
-        Some(modelMeta.pythonScript.fileContent)
-      case _ => None
-    }
+    val projectName = SQLPythonAlg.getProjectName(modelMeta.pythonScript)
 
     val maps = new util.HashMap[String, java.util.Map[String, _]]()
     val item = new util.HashMap[String, String]()
@@ -323,8 +333,7 @@ class SQLPythonAlg(override val uid: String) extends SQLAlg with Functions with 
       maps,
       MapType(StringType, MapType(StringType, StringType)),
       userPredictScript.fileContent,
-      userPredictScript.fileName,
-      projectName
+      userPredictScript.fileName
     )
 
     res.foreach(f => f)
@@ -621,6 +630,20 @@ class SQLPythonAlg(override val uid: String) extends SQLAlg with Functions with 
       None
     }
   }
+
+  def downloadPythonProject(localProjectDirectory: String, pythonProjectPath: Option[String]) = {
+
+    if (pythonProjectPath.isDefined) {
+      logInfo(format(s"system load python project into directory: [ ${
+        localProjectDirectory
+      } ]."))
+      HDFSOperator.copyToLocalFile(localProjectDirectory, pythonProjectPath.get, true)
+      logInfo(format("python project loaded!"))
+      Some(localProjectDirectory)
+    }
+    else None
+
+  }
 }
 
 object SQLPythonAlg {
@@ -658,6 +681,12 @@ object SQLPythonAlg {
       val psDriverBackend = PlatformManager.getRuntime.asInstanceOf[SparkRuntime].psDriverBackend
       psDriverBackend.psDriverRpcEndpointRef.askSync[Boolean](Message.CopyModelToLocal(path, tempLocalPath))
     }
+  }
+
+  def getProjectName(pythonScript: PythonScript) = pythonScript.scriptType match {
+    case MLFlow =>
+      pythonScript.fileContent
+    case _ => UUID.randomUUID().toString
   }
 
   def isAPIService() = {
