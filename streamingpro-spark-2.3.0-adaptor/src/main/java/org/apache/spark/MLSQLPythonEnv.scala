@@ -8,17 +8,25 @@ import java.net.Socket
   */
 class MLSQLPythonEnv(env: SparkEnv, deployAPI: Boolean) {
 
-  def createPythonWorker(pythonExec: String, envVars: Map[String, String], logCallback: (String) => Unit): java.net.Socket = {
-    APIDeployPythonRunnerEnv.createPythonWorker(pythonExec, envVars, logCallback)
+  def createPythonWorker(daemonCommand: Option[Seq[String]],
+                         workerCommand: Option[Seq[String]],
+                         envVars: Map[String, String],
+                         logCallback: (String) => Unit,
+                         idleWorkerTimeoutMS: Long): java.net.Socket = {
+    APIDeployPythonRunnerEnv.createPythonWorker(daemonCommand, workerCommand, envVars, logCallback, idleWorkerTimeoutMS)
   }
 
 
-  def destroyPythonWorker(pythonExec: String, envVars: Map[String, String], worker: Socket) {
-    APIDeployPythonRunnerEnv.destroyPythonWorker(pythonExec, envVars, worker)
+  def destroyPythonWorker(daemonCommand: Option[Seq[String]],
+                          workerCommand: Option[Seq[String]],
+                          envVars: Map[String, String], worker: Socket) {
+    APIDeployPythonRunnerEnv.destroyPythonWorker(daemonCommand, workerCommand, envVars, worker)
   }
 
 
-  def releasePythonWorker(pythonExec: String, envVars: Map[String, String], worker: Socket) {
-    APIDeployPythonRunnerEnv.releasePythonWorker(pythonExec, envVars, worker)
+  def releasePythonWorker(daemonCommand: Option[Seq[String]],
+                          workerCommand: Option[Seq[String]],
+                          envVars: Map[String, String], worker: Socket) {
+    APIDeployPythonRunnerEnv.releasePythonWorker(daemonCommand, workerCommand, envVars, worker)
   }
 }

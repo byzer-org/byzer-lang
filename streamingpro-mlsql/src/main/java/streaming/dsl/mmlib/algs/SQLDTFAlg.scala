@@ -90,7 +90,6 @@ class SQLDTFAlg extends SQLAlg with Functions {
     }
 
 
-
     val userPythonScript = loadUserDefinePythonScript(params, df.sparkSession)
 
     val schema = df.schema
@@ -122,6 +121,7 @@ class SQLDTFAlg extends SQLAlg with Functions {
       def isPs = {
         jobName == "ps"
       }
+
       val roleSpec = new JSONObject()
       roleSpec.put("jobName", jobName)
       roleSpec.put("taskIndex", taskIndex)
@@ -191,7 +191,6 @@ class SQLDTFAlg extends SQLAlg with Functions {
       println(clusterSpecJson.toString)
 
       var tempDataLocalPathWithAlgSuffix = tempDataLocalPath
-
 
 
       if (!isPs && enableDataLocal) {
@@ -422,156 +421,11 @@ class SQLDTFAlg extends SQLAlg with Functions {
   }
 
   override def load(sparkSession: SparkSession, _path: String, params: Map[String, String]): Any = {
-    val maxVersion = getModelVersion(_path)
-    val versionEnabled = maxVersion match {
-      case Some(v) => true
-      case None => false
-    }
-
-    val modelVersion = params.getOrElse("modelVersion", maxVersion.getOrElse(-1).toString).toInt
-
-    // you can specify model version
-    val path = if (modelVersion == -1) getAlgMetalPath(_path, versionEnabled)
-    else getAlgMetalPathWithVersion(_path, modelVersion)
-
-    val modelPath = if (modelVersion == -1) getAlgModelPath(_path, versionEnabled)
-    else getAlgModelPathWithVersion(_path, modelVersion)
-
-    var algIndex = params.getOrElse("algIndex", "-1").toInt
-
-    val modelList = sparkSession.read.parquet(path + "/0").collect()
-    val models = if (algIndex != -1) {
-      Seq(modelPath + "/" + algIndex)
-    } else {
-      modelList.map(f => (f(3).asInstanceOf[Double], f(0).asInstanceOf[String], f(1).asInstanceOf[Int]))
-        .toSeq
-        .sortBy(f => f._1)(Ordering[Double].reverse)
-        .take(1)
-        .map(f => {
-          algIndex = f._3
-          modelPath + "/" + f._2.split("/").last
-        })
-    }
-
-    import sparkSession.implicits._
-    val wowMetas = sparkSession.read.parquet(path + "/1").collect()
-    var trainParams = Map[String, String]()
-
-    def getTrainParams(isNew: Boolean) = {
-      if (isNew)
-        wowMetas.map(f => f.getMap[String, String](1)).head.toMap
-      else {
-        val df = sparkSession.read.parquet(MetaConst.PARAMS_PATH(path, "params")).map(f => (f.getString(0), f.getString(1)))
-        df.collect().toMap
-      }
-    }
-
-    if (versionEnabled) {
-      trainParams = getTrainParams(true)
-    }
-
-    try {
-      trainParams = getTrainParams(false)
-    } catch {
-      case e: Exception =>
-        logInfo(format(s"no directory: ${MetaConst.PARAMS_PATH(path, "params")} ; using ${path + "/1"}"))
-        trainParams = getTrainParams(true)
-    }
-
-
-    // load resource
-    val fitParam = arrayParamsWithIndex("fitParam", trainParams)
-    val selectedFitParam = fitParam(algIndex)._2
-    val loadResource = selectedFitParam.keys.map(_.split("\\.")(0)).toSet.contains("resource")
-    var resourceParams = Map.empty[String, String]
-
-    val metas = wowMetas.map(f => f.getMap[String, String](0)).toSeq
-    // make sure every executor have the model in local directory.
-    // we should unregister manually
-    models.foreach { modelPath =>
-      val tempModelLocalPath = SQLPythonFunc.getLocalTempModelPath(modelPath)
-      distributeResource(sparkSession, modelPath, tempModelLocalPath)
-
-      if (loadResource) {
-        val resources = Functions.mapParams(s"resource", selectedFitParam)
-        resources.foreach {
-          case (resourceName, resourcePath) =>
-            val tempResourceLocalPath = SQLPythonFunc.getLocalTempResourcePath(resourcePath, resourceName)
-            resourceParams += (resourceName -> tempResourceLocalPath)
-            distributeResource(sparkSession, resourcePath, tempResourceLocalPath)
-        }
-      }
-    }
-
-    (models, metas, trainParams, selectedFitParam + ("resource" -> resourceParams.asJava))
+    throw new RuntimeException("register is support yet")
   }
 
   override def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = {
-    val (modelsTemp, metasTemp, trainParams, selectedFitParam) =
-      _model.asInstanceOf[(Seq[String], Seq[Map[String, String]], Map[String, String], Map[String, Any])]
-    val models = sparkSession.sparkContext.broadcast(modelsTemp)
-
-    val runtimeParams = PlatformManager.getRuntime.params
-
-    val pythonPath = metasTemp(0)("pythonPath")
-    val pythonVer = metasTemp(0)("pythonVer")
-
-    val userPythonScript = findPythonPredictScript(sparkSession, params, "")
-
-    val maps = new util.HashMap[String, java.util.Map[String, _]]()
-    val item = new util.HashMap[String, String]()
-    item.put("funcPath", "/tmp/" + System.currentTimeMillis())
-    maps.put("systemParam", item)
-    maps.put("internalSystemParam", selectedFitParam.asJava)
-
-    val kafkaParam = mapParams("kafkaParam", trainParams)
-    val taskDirectory = SQLPythonFunc.getLocalRunPath(UUID.randomUUID().toString)
-    val enableCopyTrainParamsToPython = params.getOrElse("enableCopyTrainParamsToPython", "false").toBoolean
-    //driver 节点执行
-    val res = ExternalCommandRunner.run(taskDirectory, Seq(pythonPath, userPythonScript.fileName),
-      maps,
-      MapType(StringType, MapType(StringType, StringType)),
-      userPythonScript.fileContent,
-      userPythonScript.fileName, modelPath = null, recordLog = SQLPythonFunc.recordAnyLog(kafkaParam)
-    )
-    res.foreach(f => f)
-    val command = Files.readAllBytes(Paths.get(item.get("funcPath")))
-
-    val enableErrorMsgToKafka = params.getOrElse("enableErrorMsgToKafka", "false").toBoolean
-    val kafkaParam2 = if (enableErrorMsgToKafka) kafkaParam else Map[String, String]()
-
-
-    val f = (v: org.apache.spark.ml.linalg.Vector, modelPath: String) => {
-      val modelRow = InternalRow.fromSeq(Seq(SQLPythonFunc.getLocalTempModelPath(modelPath)))
-      val trainParamsRow = InternalRow.fromSeq(Seq(ArrayBasedMapData(trainParams)))
-      val v_ser = pickleInternalRow(Seq(ser_vector(v)).toIterator, vector_schema())
-      val v_ser2 = pickleInternalRow(Seq(modelRow).toIterator, StructType(Seq(StructField("modelPath", StringType))))
-      var v_ser3 = v_ser ++ v_ser2
-      if (enableCopyTrainParamsToPython) {
-        val v_ser4 = pickleInternalRow(Seq(trainParamsRow).toIterator, StructType(Seq(StructField("trainParams", MapType(StringType, StringType)))))
-        v_ser3 = v_ser3 ++ v_ser4
-      }
-
-      //      val predictTime = System.currentTimeMillis()
-      val recordLog = SQLPythonFunc.recordAnyLog(kafkaParam2)
-      val iter = WowPythonRunner.run(
-        pythonPath, pythonVer, command, v_ser3, TaskContext.get().partitionId(), Array(), runtimeParams.asScala.toMap, recordLog
-      )
-      val a = iter.next()
-      val predictValue = VectorSerDer.deser_vector(unpickle(a).asInstanceOf[java.util.ArrayList[Object]].get(0))
-      //      val predictEndTime = System.currentTimeMillis()
-      //      println("")
-      predictValue
-    }
-
-    val f2 = (v: org.apache.spark.ml.linalg.Vector) => {
-      models.value.map { modelPath =>
-        val resV = f(v, modelPath)
-        (resV(resV.argmax), resV)
-      }.sortBy(f => f._1).reverse.head._2
-    }
-
-    UserDefinedFunction(f2, VectorType, Some(Seq(VectorType)))
+    throw new RuntimeException("register is support yet")
   }
 
 }

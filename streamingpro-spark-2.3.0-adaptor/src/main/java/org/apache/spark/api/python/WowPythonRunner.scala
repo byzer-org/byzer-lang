@@ -23,8 +23,15 @@ object WowPythonRunner extends Logging {
 
 
   // kafkaParam: Map[String, String]
-  def run(pythonPath: String, pythonVer: String, command: Array[Byte], inputIterator: Iterator[_],
-          partitionIndex: Int, model: Array[Byte], runtimeParams: Map[Any, Any], recordLog: Any => Any) = {
+  def run(daemonCommand: Option[Seq[String]],
+          workerCommand: Option[Seq[String]],
+          idleWorkerTimeoutMS: Long,
+          pythonVer: String,
+          command: Array[Byte],
+          inputIterator: Iterator[_],
+          partitionIndex: Int, model: Array[Byte],
+          runtimeParams: Map[Any, Any],
+          recordLog: Any => Any) = {
     val envVars: JMap[String, String] = new util.HashMap[String, String]()
     val pythonIncludes = new util.ArrayList[String]()
     val startTime = System.currentTimeMillis
@@ -37,9 +44,9 @@ object WowPythonRunner extends Logging {
     val deployAPI = runtimeParams.getOrElse("streaming.deploy.rest.api", "false").toString.toBoolean
     val mlsqlEnv = new MLSQLPythonEnv(env, deployAPI)
 
-    val worker: Socket = mlsqlEnv.createPythonWorker(pythonPath, envVars.asScala.toMap, (msg) => {
+    val worker: Socket = mlsqlEnv.createPythonWorker(daemonCommand, workerCommand, envVars.asScala.toMap, (msg) => {
       recordLog(msg)
-    })
+    }, idleWorkerTimeoutMS)
 
     // Whether is the worker released into idle pool
     @volatile var released = false
@@ -92,6 +99,7 @@ object WowPythonRunner extends Logging {
           }
       }
     }
+
     _run()
 
     // Return an iterator that read lines from the process's stdout
@@ -151,7 +159,7 @@ object WowPythonRunner extends Logging {
               // Check whether the worker is ready to be re-used.
               if (stream.readInt() == SpecialLengths.END_OF_STREAM) {
                 if (reuse_worker) {
-                  mlsqlEnv.releasePythonWorker(pythonPath, envVars.asScala.toMap, worker)
+                  mlsqlEnv.releasePythonWorker(daemonCommand, workerCommand, envVars.asScala.toMap, worker)
                   released = true
                 }
               }

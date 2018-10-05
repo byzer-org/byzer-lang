@@ -27,7 +27,11 @@ class BatchPredict extends Logging with WowLog with Serializable {
     modelMeta.copy(resources = selectedFitParam)
     val resources = modelMeta.resources
 
-    val pythonProject = PythonAlgProject.loadProject(params, df.sparkSession)
+    // if pythonScriptPath is defined in predict/run, then use it otherwise find them in train params.
+    val pythonProject = PythonAlgProject.getPythonScriptPath(params) match {
+      case Some(p) => PythonAlgProject.loadProject(params, df.sparkSession)
+      case None => PythonAlgProject.loadProject(modelMeta.trainParams, df.sparkSession)
+    }
     val projectName = pythonProject.get.projectName
 
     val systemParam = Functions.mapParams("systemParam", modelMeta.trainParams)
