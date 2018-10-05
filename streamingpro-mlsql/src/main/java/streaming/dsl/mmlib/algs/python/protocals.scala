@@ -131,5 +131,6 @@ object PythonTrainingResultSchema {
 case class ModelMeta(pythonScript: PythonScript,
                      trainParams: Map[String, String],
                      modelEntityPaths: Seq[String],
-                     resources: Map[String, Any]
+                     resources: Map[String, Any],
+                     taskDirectory: Option[String] = None
                     )

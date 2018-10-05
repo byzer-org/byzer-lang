@@ -99,7 +99,7 @@ class PythonProjectExecuteRunner(taskDirectory: String,
     val env = SparkEnv.get
     val proc = pb.start()
 
-    new MonitorThread(env, proc, TaskContext.get(), taskDirectory, command.mkString(" ")).start()
+    //new MonitorThread(env, proc, TaskContext.get(), taskDirectory, command.mkString(" ")).start()
 
     val childThreadException = new AtomicReference[Throwable](null)
     // Start a thread to print the process's stderr to ours

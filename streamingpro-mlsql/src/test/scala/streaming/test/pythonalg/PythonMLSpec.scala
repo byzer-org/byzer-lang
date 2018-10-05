@@ -80,8 +80,7 @@ class PythonMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQ
       ScriptSQLExec.parse(TemplateMerge.merge(loadSQLScriptStr("python-alg-script-enable-data-local"), Map(
         "pythonScriptPath" -> "/tmp/sklearn-user-script.py",
         "keepVersion" -> "true",
-        "path" -> "/pa_model_k",
-        "distributeEveryExecutor" -> "true"
+        "path" -> "/pa_model_k"
 
       )), sq)
 
@@ -97,8 +96,7 @@ class PythonMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQ
       ScriptSQLExec.parse(TemplateMerge.merge(loadSQLScriptStr("python-alg-script-enable-data-local"), Map(
         "pythonScriptPath" -> "/tmp/sklearn-user-script.py",
         "keepVersion" -> "true",
-        "path" -> "/pa_model_k",
-        "distributeEveryExecutor" -> "true"
+        "path" -> "/pa_model_k"
 
       )), sq)
 

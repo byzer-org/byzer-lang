@@ -16,15 +16,15 @@ import scala.collection.JavaConversions._
 
 object PythonAlgProject extends Logging with WowLog {
 
+  def getPythonScriptPath(params: Map[String, String]) = {
+    if (params.contains("pythonDescPath") || params.contains("pythonScriptPath")) {
+      Some(params.getOrElse("pythonDescPath", params.getOrElse("pythonScriptPath", "")))
+    } else None
+  }
+
   def loadProject(params: Map[String, String], spark: SparkSession) = {
 
-    def getPath(params: Map[String, String]) = {
-      if (params.contains("pythonDescPath") || params.contains("pythonScriptPath")) {
-        Some(params.getOrElse("pythonDescPath", params.getOrElse("pythonScriptPath", "")))
-      } else None
-    }
-
-    getPath(params) match {
+    getPythonScriptPath(params) match {
       case Some(path) =>
         if (HDFSOperator.isDir(path) && HDFSOperator.fileExists(Paths.get(path, "MLproject").toString)) {
           val project = path.split("/").last
@@ -65,6 +65,14 @@ class MLProject(val projectDir: String, project: Settings) extends Logging with 
     )
     logInfo(format(s"=== Running command '${entryPointCommandWithConda}' in run with ID '${UUID.randomUUID().toString}' === "))
     entryPointCommandWithConda
+  }
+
+  def condaEnvCommand = {
+    val condaEnvManager = new CondaEnvManager()
+    val condaEnvName = condaEnvManager.getOrCreateCondaEnv(Option(projectDir + s"/${MLProject.DEFAULT_CONDA_ENV_NAME}"))
+    val command = s"source ${condaEnvManager.getCondaBinExecutable("activate")} ${condaEnvName}"
+    logInfo(format(s"=== generate command  '${command}' }' === "))
+    command
   }
 
 }

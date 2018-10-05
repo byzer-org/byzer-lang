@@ -1,25 +1,17 @@
 package streaming.dsl.mmlib.algs
 
 import java.io.File
-import java.nio.file.{Files, Paths}
 import java.util
 import java.util.{ArrayList, UUID}
 
 import org.apache.commons.io.FileUtils
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
-import org.apache.spark.{APIDeployPythonRunnerEnv, TaskContext}
-import org.apache.spark.api.python.WowPythonRunner
-import org.apache.spark.ml.linalg.SQLDataTypes._
 import org.apache.spark.ml.linalg.{Matrices, Matrix, Vector}
 import org.apache.spark.ps.cluster.Message
-import org.apache.spark.sql.catalyst.InternalRow
-import org.apache.spark.sql.catalyst.util.ArrayBasedMapData
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession}
-import org.apache.spark.util.ObjPickle._
-import org.apache.spark.util.VectorSerDer._
 import org.apache.spark.util._
 import streaming.core.strategy.platform.{PlatformManager, SparkRuntime}
 import streaming.dsl.mmlib._
@@ -63,9 +55,11 @@ class SQLPythonAlg(override val uid: String) extends SQLAlg with Functions with 
     }
 
     val systemParam = mapParams("systemParam", params)
-    val fitParam = arrayParamsWithIndex("fitParam", params)
+    var fitParam = arrayParamsWithIndex("fitParam", params)
 
-    require(fitParam.size > 0, "fitParam should be configured")
+    if (fitParam.size == 0) {
+      fitParam = Array(0 -> Map[String, String]())
+    }
 
     val fitParamRDD = df.sparkSession.sparkContext.parallelize(fitParam, fitParam.length)
 
@@ -87,6 +81,7 @@ class SQLPythonAlg(override val uid: String) extends SQLAlg with Functions with 
     val pythonProjectPath = Option(pythonProject.get.filePath)
 
     val projectName = pythonProject.get.projectName
+    val projectType = pythonProject.get.scriptType
 
     val wowRDD = fitParamRDD.map { paramAndIndex =>
 
@@ -136,9 +131,14 @@ class SQLPythonAlg(override val uid: String) extends SQLAlg with Functions with 
 
       pythonProjectPath match {
         case Some(_) =>
-          downloadPythonProject(taskDirectory, pythonProjectPath)
+          if (projectType == MLFlow) {
+            downloadPythonProject(taskDirectory, pythonProjectPath)
+          } else {
+            downloadPythonProject(taskDirectory + "/" + pythonProjectPath.get.split("/").last, pythonProjectPath)
+          }
 
-        case None => // just normal script
+
+        case None => // this will not happen, cause even script is a project contains only one python script file.
       }
 
 
@@ -237,6 +237,12 @@ class SQLPythonAlg(override val uid: String) extends SQLAlg with Functions with 
    */
   override def load(sparkSession: SparkSession, _path: String, params: Map[String, String]): Any = {
 
+    if (!SQLPythonAlg.isAPIService()) {
+      throw new RuntimeException(
+        s"""
+           |Register statement in PythonAlg module only support in API deploy mode.
+         """.stripMargin)
+    }
     val modelMetaManager = new ModelMetaManager(sparkSession, _path, params)
     val modelMeta = modelMetaManager.loadMetaAndModel
     val localPathConfig = LocalPathConfig.buildFromParams(_path)
@@ -248,20 +254,6 @@ class SQLPythonAlg(override val uid: String) extends SQLAlg with Functions with 
 
     modelMeta.pythonScript.scriptType match {
       case MLFlow =>
-        if (SQLPythonAlg.isAPIService()) {
-          logWarning(format(
-            s"""
-               |Detect that you are registering MLFlow project but it's not in API mode.
-               |In this situation, we can not use conda to create suitable python environment.
-               |Please use batch predict.
-               |
-               |More detail:
-               |
-               |load modelExample.`PythonAlg` as output;
-               |
-               |""".stripMargin))
-        }
-
         distributePythonProject(sparkSession, taskDirectory, Option(modelMeta.pythonScript.filePath)).foreach(path => {
           resourceParams += ("mlFlowProjectPath" -> path)
         })
@@ -276,94 +268,11 @@ class SQLPythonAlg(override val uid: String) extends SQLAlg with Functions with 
       })
     }
 
-    modelMeta.copy(resources = selectedFitParam + ("resource" -> resourceParams.asJava))
+    modelMeta.copy(resources = selectedFitParam + ("resource" -> resourceParams.asJava), taskDirectory = Option(taskDirectory))
   }
 
   override def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = {
-    val modelMeta = _model.asInstanceOf[ModelMeta]
-    val models = sparkSession.sparkContext.broadcast(modelMeta.modelEntityPaths)
-    val trainParams = modelMeta.trainParams
-    val systemParam = mapParams("systemParam", trainParams)
-
-
-    val pythonConfig = PythonConfig.buildFromSystemParam(systemParam)
-    val envs = EnvConfig.buildFromSystemParam(systemParam)
-
-
-    val userPredictScript = findPythonPredictScript(sparkSession, params, "")
-
-    val maps = new util.HashMap[String, java.util.Map[String, _]]()
-    val item = new util.HashMap[String, String]()
-    item.put("funcPath", "/tmp/" + System.currentTimeMillis())
-    maps.put("systemParam", item)
-    maps.put("internalSystemParam", modelMeta.resources.asJava)
-
-    val kafkaParam = mapParams("kafkaParam", trainParams)
-
-    val mlsqlContext = ScriptSQLExec.contextGetOrForTest()
-
-    val enableErrorMsgToKafka = params.getOrElse("enableErrorMsgToKafka", "false").toBoolean
-    val kafkaParam2 = if (enableErrorMsgToKafka) kafkaParam else Map[String, String]()
-
-    val recordLog = SQLPythonFunc.recordAnyLog(kafkaParam2, logCallback = (msg) => {
-      ScriptSQLExec.setContextIfNotPresent(mlsqlContext)
-      logInfo(format(msg))
-    })
-    val taskDirectory = SQLPythonFunc.getLocalRunPath(UUID.randomUUID().toString)
-    val enableCopyTrainParamsToPython = params.getOrElse("enableCopyTrainParamsToPython", "false").toBoolean
-
-    val pythonRunner = new PythonProjectExecuteRunner(taskDirectory = taskDirectory, envVars = envs, recordLog = recordLog)
-
-    /*
-      Run python script in driver so we can get function then broadcast it to all
-      python worker.
-      Make sure you use `sys.path.insert(0,mlsql.internal_system_param["resource"]["mlFlowProjectPath"])`
-      if you run it in project.
-     */
-    val res = pythonRunner.run(
-      Seq(pythonConfig.pythonPath, userPredictScript.fileName),
-      maps,
-      MapType(StringType, MapType(StringType, StringType)),
-      userPredictScript.fileContent,
-      userPredictScript.fileName
-    )
-
-    res.foreach(f => f)
-    val command = Files.readAllBytes(Paths.get(item.get("funcPath")))
-
-    val runtimeParams = PlatformManager.getRuntime.params.asScala.toMap
-
-    val f = (v: org.apache.spark.ml.linalg.Vector, modelPath: String) => {
-      val modelRow = InternalRow.fromSeq(Seq(SQLPythonFunc.getLocalTempModelPath(modelPath)))
-      val trainParamsRow = InternalRow.fromSeq(Seq(ArrayBasedMapData(trainParams)))
-      val v_ser = pickleInternalRow(Seq(ser_vector(v)).toIterator, vector_schema())
-      val v_ser2 = pickleInternalRow(Seq(modelRow).toIterator, StructType(Seq(StructField("modelPath", StringType))))
-      var v_ser3 = v_ser ++ v_ser2
-      if (enableCopyTrainParamsToPython) {
-        val v_ser4 = pickleInternalRow(Seq(trainParamsRow).toIterator, StructType(Seq(StructField("trainParams", MapType(StringType, StringType)))))
-        v_ser3 = v_ser3 ++ v_ser4
-      }
-
-      if (TaskContext.get() == null) {
-        APIDeployPythonRunnerEnv.setTaskContext(APIDeployPythonRunnerEnv.createTaskContext())
-      }
-
-      val iter = WowPythonRunner.run(
-        pythonConfig.pythonPath, pythonConfig.pythonVer, command, v_ser3, TaskContext.get().partitionId(), Array(), runtimeParams, recordLog
-      )
-      val a = iter.next()
-      val predictValue = VectorSerDer.deser_vector(unpickle(a).asInstanceOf[java.util.ArrayList[Object]].get(0))
-      predictValue
-    }
-
-    val f2 = (v: org.apache.spark.ml.linalg.Vector) => {
-      models.value.map { modelPath =>
-        val resV = f(v, modelPath)
-        (resV(resV.argmax), resV)
-      }.sortBy(f => f._1).reverse.head._2
-    }
-
-    UserDefinedFunction(f2, VectorType, Some(Seq(VectorType)))
+    new APIPredict().predict(sparkSession, _model.asInstanceOf[ModelMeta], name, params)
   }
 
 
