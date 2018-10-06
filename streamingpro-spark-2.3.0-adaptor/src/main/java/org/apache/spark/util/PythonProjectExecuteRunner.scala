@@ -6,7 +6,6 @@ import java.util.concurrent.atomic.AtomicReference
 import org.apache.spark.api.python.WowPythonRunner
 import org.apache.spark.{SparkEnv, TaskContext}
 import org.apache.spark.sql.types.DataType
-import org.apache.spark.util.ExternalCommandRunner.{MonitorThread, log, logBuilder}
 import org.apache.spark.util.ObjPickle.pickle
 import streaming.log.Logging
 
@@ -130,8 +129,8 @@ class PythonProjectExecuteRunner(taskDirectory: String,
         val err = proc.getErrorStream
 
         try {
-          val errorLog = logBuilder(Source.fromInputStream(err)(encoding).getLines())
-          logCallback(errorLog)
+          val iterators = Source.fromInputStream(err)(encoding).getLines()
+          iterators.foreach(f => logCallback(f))
         } catch {
           case t: Throwable =>
             childThreadException.set(t)
