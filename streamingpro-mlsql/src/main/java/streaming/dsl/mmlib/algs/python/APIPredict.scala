@@ -43,29 +43,22 @@ class APIPredict extends Logging with WowLog with Serializable {
     maps.put("systemParam", item)
     maps.put("internalSystemParam", modelMeta.resources.asJava)
 
-    val kafkaParam = Functions.mapParams("kafkaParam", trainParams)
-
     val mlsqlContext = ScriptSQLExec.contextGetOrForTest()
 
-    val enableErrorMsgToKafka = params.getOrElse("enableErrorMsgToKafka", "false").toBoolean
-    val kafkaParam2 = if (enableErrorMsgToKafka) kafkaParam else Map[String, String]()
-
-    val recordLog = SQLPythonFunc.recordAnyLog(kafkaParam2, logCallback = (msg) => {
+    val recordLog = (msg: Any) => {
       ScriptSQLExec.setContextIfNotPresent(mlsqlContext)
-      logInfo(format(msg))
-    })
+      logInfo(format(msg.toString))
+      ""
+    }
+
     val taskDirectory = modelMeta.taskDirectory.get
     val enableCopyTrainParamsToPython = params.getOrElse("enableCopyTrainParamsToPython", "false").toBoolean
 
 
     val condaEnvManager = new CondaEnvManager()
-    val condaEnvName = condaEnvManager.getOrCreateCondaEnv(Option(taskDirectory + s"/${MLProject.DEFAULT_CONDA_ENV_NAME}"))
-
 
     val envs = new util.HashMap[String, String]()
     EnvConfig.buildFromSystemParam(systemParam).foreach(f => envs.put(f._1, f._2))
-    //    ++ Map(
-    //      "PYTHONPATH" -> s"/anaconda3/envs/${condaEnvName}")
 
     val pythonRunner = new PythonProjectExecuteRunner(taskDirectory = taskDirectory, envVars = envs.asScala.toMap, recordLog = recordLog)
 
