@@ -39,8 +39,6 @@ class SQLPythonAlg(override val uid: String) extends SQLAlg with Functions with 
 
     var kafkaParam = mapParams("kafkaParam", params)
 
-    require(kafkaParam.size > 0, "kafkaParam should be configured")
-
     // save data to hdfs and broadcast validate table
     val dataManager = new DataManager(df, path, params)
     val enableDataLocal = dataManager.enableDataLocal
@@ -49,6 +47,8 @@ class SQLPythonAlg(override val uid: String) extends SQLAlg with Functions with 
 
     var stopFlagNum = -1
     if (!enableDataLocal) {
+      require(kafkaParam.size > 0, "We detect that you do not set enableDataLocal true, " +
+        "in this situation, kafkaParam should be configured")
       val (_kafkaParam, _newRDD) = writeKafka(df, path, params)
       stopFlagNum = _newRDD.getNumPartitions
       kafkaParam = _kafkaParam
@@ -60,7 +60,6 @@ class SQLPythonAlg(override val uid: String) extends SQLAlg with Functions with 
     if (fitParam.size == 0) {
       fitParam = Array(0 -> Map[String, String]())
     }
-
     val fitParamRDD = df.sparkSession.sparkContext.parallelize(fitParam, fitParam.length)
 
 
@@ -98,7 +97,6 @@ class SQLPythonAlg(override val uid: String) extends SQLAlg with Functions with 
         tempDataLocalPathWithAlgSuffix = tempDataLocalPathWithAlgSuffix + "/" + algIndex
         val msg = s"dataLocalFormat enabled ,system will generate data in ${tempDataLocalPathWithAlgSuffix} "
         logInfo(format(msg))
-        recordSingleLineLog(kafkaParam, msg)
         HDFSOperator.copyToLocalFile(tempLocalPath = tempDataLocalPathWithAlgSuffix, path = dataHDFSPath, true)
       }
 
@@ -116,8 +114,10 @@ class SQLPythonAlg(override val uid: String) extends SQLAlg with Functions with 
 
       paramMap.put("fitParam", item)
 
-      val kafkaP = kafkaParam + ("group_id" -> (kafkaParam("group_id") + "_" + algIndex))
-      paramMap.put("kafkaParam", kafkaP.asJava)
+      if (!kafkaParam.isEmpty) {
+        val kafkaP = kafkaParam + ("group_id" -> (kafkaParam("group_id") + "_" + algIndex))
+        paramMap.put("kafkaParam", kafkaP.asJava)
+      }
 
       val internalSystemParam = Map(
         str[RunPythonConfig.InternalSystemParam](_.stopFlagNum) -> stopFlagNum,
@@ -152,7 +152,6 @@ class SQLPythonAlg(override val uid: String) extends SQLAlg with Functions with 
       val runner = new PythonProjectExecuteRunner(
         taskDirectory = taskDirectory,
         envVars = envs,
-        recordLog = SQLPythonFunc.recordAnyLog(kafkaParam),
         logCallback = (msg) => {
           ScriptSQLExec.setContextIfNotPresent(mlsqlContext)
           logInfo(format(msg))
@@ -169,10 +168,14 @@ class SQLPythonAlg(override val uid: String) extends SQLAlg with Functions with 
           validateData = rowsBr.value
         )
 
-        score = recordUserLog(algIndex, pythonProject.get, kafkaParam, res, logCallback = (msg) => {
-          ScriptSQLExec.setContextIfNotPresent(mlsqlContext)
-          logInfo(format(msg))
-        })
+        def filterScore(str: String) = {
+          if (str != null && str.startsWith("mlsql_validation_score:")) {
+            str.split(":").last.toDouble
+          } else 0d
+        }
+
+        val scores = res.map(f => filterScore(f)).toSeq
+        score = if (scores.size > 0) scores.head else 0d
       } catch {
         case e: Exception =>
           logError(format_cause(e))

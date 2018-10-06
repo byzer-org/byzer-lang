@@ -45,10 +45,9 @@ class APIPredict extends Logging with WowLog with Serializable {
 
     val mlsqlContext = ScriptSQLExec.contextGetOrForTest()
 
-    val recordLog = (msg: Any) => {
+    val recordLog = (msg: String) => {
       ScriptSQLExec.setContextIfNotPresent(mlsqlContext)
-      logInfo(format(msg.toString))
-      ""
+      logInfo(format(msg))
     }
 
     val taskDirectory = modelMeta.taskDirectory.get
@@ -60,7 +59,7 @@ class APIPredict extends Logging with WowLog with Serializable {
     val envs = new util.HashMap[String, String]()
     EnvConfig.buildFromSystemParam(systemParam).foreach(f => envs.put(f._1, f._2))
 
-    val pythonRunner = new PythonProjectExecuteRunner(taskDirectory = taskDirectory, envVars = envs.asScala.toMap, recordLog = recordLog)
+    val pythonRunner = new PythonProjectExecuteRunner(taskDirectory = taskDirectory, envVars = envs.asScala.toMap, logCallback = recordLog)
 
     val apiPredictCommand = new PythonAlgExecCommand(pythonProject.get, None, Option(pythonConfig)).
       generateCommand(MLProject.api_predict_command)
@@ -83,8 +82,8 @@ class APIPredict extends Logging with WowLog with Serializable {
     val command = Files.readAllBytes(Paths.get(item.get("funcPath")))
 
     val project = MLProject.loadProject(pythonProject.get.filePath)
-    val daemonCommand = Seq("bash", "-c", project.condaEnvCommand + " && cd /tmp/__mlsql__/python && python -m daemon23")
-    val workerCommand = Seq("bash", "-c", project.condaEnvCommand + " && cd /tmp/__mlsql__/python && python -m worker23")
+    val daemonCommand = Seq("bash", "-c", project.condaEnvCommand + s" && cd ${WowPythonRunner.PYSPARK_DAEMON_FILE_LOCATION} && python -m daemon23")
+    val workerCommand = Seq("bash", "-c", project.condaEnvCommand + s" && cd ${WowPythonRunner.PYSPARK_DAEMON_FILE_LOCATION} && python -m worker23")
 
     val f = (v: org.apache.spark.ml.linalg.Vector, modelPath: String) => {
       val modelRow = InternalRow.fromSeq(Seq(SQLPythonFunc.getLocalTempModelPath(modelPath)))
