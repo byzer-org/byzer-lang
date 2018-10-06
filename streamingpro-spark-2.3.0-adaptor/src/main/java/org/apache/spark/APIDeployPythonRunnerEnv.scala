@@ -21,15 +21,28 @@ object APIDeployPythonRunnerEnv {
                          workerCommand: Option[Seq[String]],
                          envVars: Map[String, String],
                          logCallback: (String) => Unit,
-                         idleWorkerTimeoutMS: Long): java.net.Socket = {
+                         idleWorkerTimeoutMS: Long,
+                         noCache: Boolean = true
+                        ): java.net.Socket = {
     synchronized {
       val key = (daemonCommand.get, envVars)
-      pythonWorkers.getOrElseUpdate(key, new WowPythonWorkerFactory(
-        daemonCommand,
-        workerCommand,
-        envVars,
-        logCallback,
-        idleWorkerTimeoutMS)).create()
+      if (noCache) {
+        pythonWorkers.getOrElseUpdate(key, new WowPythonWorkerFactory(
+          daemonCommand,
+          workerCommand,
+          envVars,
+          logCallback,
+          idleWorkerTimeoutMS)).create()
+      } else {
+        new WowPythonWorkerFactory(
+          daemonCommand,
+          workerCommand,
+          envVars,
+          logCallback,
+          idleWorkerTimeoutMS).create()
+      }
+
+
     }
   }
 

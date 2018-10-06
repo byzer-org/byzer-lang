@@ -8,12 +8,16 @@ import java.net.Socket
   */
 class MLSQLPythonEnv(env: SparkEnv, deployAPI: Boolean) {
 
+  def sparkEnv = env
+
   def createPythonWorker(daemonCommand: Option[Seq[String]],
                          workerCommand: Option[Seq[String]],
                          envVars: Map[String, String],
                          logCallback: (String) => Unit,
-                         idleWorkerTimeoutMS: Long): java.net.Socket = {
-    APIDeployPythonRunnerEnv.createPythonWorker(daemonCommand, workerCommand, envVars, logCallback, idleWorkerTimeoutMS)
+                         idleWorkerTimeoutMS: Long,
+                         noCache: Boolean = true
+                        ): java.net.Socket = {
+    APIDeployPythonRunnerEnv.createPythonWorker(daemonCommand, workerCommand, envVars, logCallback, idleWorkerTimeoutMS, noCache)
   }
 
 

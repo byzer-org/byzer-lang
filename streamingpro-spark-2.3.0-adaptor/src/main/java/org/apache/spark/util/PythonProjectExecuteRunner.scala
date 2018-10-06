@@ -82,6 +82,22 @@ class PythonProjectExecuteRunner(taskDirectory: String,
       }
     }
 
+    def saveSystemPythonFile(scriptName: String) = {
+      val scriptContent = Source.fromInputStream(ExternalCommandRunner.getClass.getResourceAsStream("/python/" + scriptName)).
+        getLines().mkString("\n")
+      val file = new File("/tmp/__mlsql__/python")
+      if (!file.exists()) {
+        file.mkdirs()
+      }
+      val scriptFile = new File(s"/tmp/__mlsql__/python/${scriptName}")
+      val fw = new FileWriter(scriptFile)
+      try {
+        fw.write(scriptContent)
+      } finally {
+        fw.close()
+      }
+    }
+
     if (scriptName != null && !scriptName.isEmpty) {
       saveFile(scriptName, scriptContent)
     }
@@ -92,9 +108,13 @@ class PythonProjectExecuteRunner(taskDirectory: String,
       saveFile(name, msg_queue)
     }
 
+
     savePythonFile("msg_queue.py")
     savePythonFile("mlsql.py")
     savePythonFile("python_fun.py")
+
+    saveSystemPythonFile("daemon23.py")
+    saveSystemPythonFile("worker23.py")
 
     val env = SparkEnv.get
     val proc = pb.start()
@@ -202,5 +222,11 @@ class PythonProjectExecuteRunner(taskDirectory: String,
         }
       }
     }
+  }
+}
+
+object PythonProjectExecuteRunner {
+  def sysPython = {
+    "/tmp/__mlsql__/python"
   }
 }
