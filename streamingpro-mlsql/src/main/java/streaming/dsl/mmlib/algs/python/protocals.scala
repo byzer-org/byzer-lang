@@ -47,7 +47,7 @@ case class PythonConfig(pythonPath: String, pythonParam: Seq[String], pythonVer:
 object PythonConfig {
   def buildFromSystemParam(systemParam: Map[String, String]) = {
     val pythonPath = systemParam.getOrElse("pythonPath", "python")
-    val pythonVer = systemParam.getOrElse("pythonVer", "2.7")
+    val pythonVer = systemParam.getOrElse("pythonVer", "3.6")
     val pythonParam = systemParam.getOrElse("pythonParam", "").split(",").filterNot(f => f.isEmpty)
     PythonConfig(pythonPath, pythonParam, pythonVer)
   }

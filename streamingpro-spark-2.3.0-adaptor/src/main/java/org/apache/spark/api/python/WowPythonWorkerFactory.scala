@@ -207,8 +207,8 @@ class WowPythonWorkerFactory(daemonCommand: Option[Seq[String]],
     */
   private def redirectStreamsToStderr(stdout: InputStream, stderr: InputStream, logCallback: (String) => Unit) {
     try {
-      new WowRedirectThread(stdout, "stdout reader for " + flag, logCallback).start()
-      new WowRedirectThread(stderr, "stderr reader for " + flag, logCallback).start()
+      new WowRedirectThread(stdout, "stdout reader for " + flag, System.err, logCallback).start()
+      new WowRedirectThread(stderr, "stderr reader for " + flag, System.err, logCallback).start()
     } catch {
       case e: Exception =>
         logError("Exception in redirecting streams", e)
@@ -309,6 +309,7 @@ class WowPythonWorkerFactory(daemonCommand: Option[Seq[String]],
   private class WowRedirectThread(
                                    in: InputStream,
                                    name: String,
+                                   out: OutputStream,
                                    logCallback: (String) => Unit = (msg: String) => {},
                                    propagateEof: Boolean = false)
     extends Thread(name) {
@@ -316,16 +317,34 @@ class WowPythonWorkerFactory(daemonCommand: Option[Seq[String]],
     setDaemon(true)
 
     override def run() {
-      scala.util.control.Exception.ignoring(classOf[IOException]) {
-        Utils.tryWithSafeFinally {
-          val br = new BufferedReader(new InputStreamReader(in))
-          var line: String = null
-          while ((line = br.readLine()) != null) {
-            logCallback(line)
-          }
-        } {
-          if (propagateEof) {
-
+      //      scala.util.control.Exception.ignoring(classOf[IOException]) {
+      //        Utils.tryWithSafeFinally {
+      //          val br = new BufferedReader(new InputStreamReader(in))
+      //          var line: String = null
+      //          while ((line = br.readLine()) != null) {
+      //            logCallback(line)
+      //          }
+      //        } {
+      //          if (propagateEof) {
+      //
+      //          }
+      //        }
+      //      }
+      {
+        scala.util.control.Exception.ignoring(classOf[IOException]) {
+          // FIXME: We copy the stream on the level of bytes to avoid encoding problems.
+          Utils.tryWithSafeFinally {
+            val buf = new Array[Byte](1024)
+            var len = in.read(buf)
+            while (len != -1) {
+              out.write(buf, 0, len)
+              out.flush()
+              len = in.read(buf)
+            }
+          } {
+            if (propagateEof) {
+              out.close()
+            }
           }
         }
       }

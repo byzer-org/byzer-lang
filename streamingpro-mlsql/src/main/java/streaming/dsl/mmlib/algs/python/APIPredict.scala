@@ -2,10 +2,9 @@ package streaming.dsl.mmlib.algs.python
 
 import java.nio.file.{Files, Paths}
 import java.util
-import java.util.UUID
 
 import org.apache.spark.{APIDeployPythonRunnerEnv, TaskContext}
-import org.apache.spark.api.python.{WowPythonRunner, WowPythonWorkerFactory}
+import org.apache.spark.api.python.WowPythonRunner
 import org.apache.spark.ml.linalg.SQLDataTypes.VectorType
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.catalyst.InternalRow
@@ -15,12 +14,12 @@ import org.apache.spark.sql.types.{MapType, StringType, StructField, StructType}
 import org.apache.spark.util.ObjPickle.{pickleInternalRow, unpickle}
 import org.apache.spark.util.{PythonProjectExecuteRunner, VectorSerDer}
 import org.apache.spark.util.VectorSerDer.{ser_vector, vector_schema}
-import streaming.core.strategy.platform.PlatformManager
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib.algs.{Functions, SQLPythonFunc}
 import streaming.log.{Logging, WowLog}
 
 import scala.collection.JavaConverters._
+import scala.collection.mutable.ArrayBuffer
 
 class APIPredict extends Logging with WowLog with Serializable {
   def predict(sparkSession: SparkSession, modelMeta: ModelMeta, name: String, params: Map[String, String]): UserDefinedFunction = {
@@ -62,11 +61,13 @@ class APIPredict extends Logging with WowLog with Serializable {
     val condaEnvManager = new CondaEnvManager()
     val condaEnvName = condaEnvManager.getOrCreateCondaEnv(Option(taskDirectory + s"/${MLProject.DEFAULT_CONDA_ENV_NAME}"))
 
-    val envs = EnvConfig.buildFromSystemParam(systemParam)
-//    ++ Map(
+
+    val envs = new util.HashMap[String, String]()
+    EnvConfig.buildFromSystemParam(systemParam).foreach(f => envs.put(f._1, f._2))
+    //    ++ Map(
     //      "PYTHONPATH" -> s"/anaconda3/envs/${condaEnvName}")
 
-    val pythonRunner = new PythonProjectExecuteRunner(taskDirectory = taskDirectory, envVars = envs, recordLog = recordLog)
+    val pythonRunner = new PythonProjectExecuteRunner(taskDirectory = taskDirectory, envVars = envs.asScala.toMap, recordLog = recordLog)
 
     val apiPredictCommand = new PythonAlgExecCommand(pythonProject.get, None, Option(pythonConfig)).
       generateCommand(MLProject.api_predict_command)
@@ -88,11 +89,9 @@ class APIPredict extends Logging with WowLog with Serializable {
     res.foreach(f => f)
     val command = Files.readAllBytes(Paths.get(item.get("funcPath")))
 
-    val runtimeParams = PlatformManager.getRuntime.params.asScala.toMap
-
     val project = MLProject.loadProject(pythonProject.get.filePath)
-    val daemonCommand = Seq("bash", "-c", project.condaEnvCommand + " && python -m pyspark.daemon")
-    val workerCommand = Seq("bash", "-c", project.condaEnvCommand + " && python -m pyspark.worker")
+    val daemonCommand = Seq("bash", "-c", project.condaEnvCommand + " && cd /tmp/__mlsql__/python && python -m daemon23")
+    val workerCommand = Seq("bash", "-c", project.condaEnvCommand + " && cd /tmp/__mlsql__/python && python -m worker23")
 
     val f = (v: org.apache.spark.ml.linalg.Vector, modelPath: String) => {
       val modelRow = InternalRow.fromSeq(Seq(SQLPythonFunc.getLocalTempModelPath(modelPath)))
@@ -109,20 +108,21 @@ class APIPredict extends Logging with WowLog with Serializable {
         APIDeployPythonRunnerEnv.setTaskContext(APIDeployPythonRunnerEnv.createTaskContext())
       }
 
-      val iter = WowPythonRunner.run(
-        Option(daemonCommand),
-        Option(workerCommand),
-        WowPythonWorkerFactory.IDLE_WORKER_TIMEOUT_MS,
-        pythonConfig.pythonVer,
-        command,
+      val iter = WowPythonRunner.runner2(
+        Option(daemonCommand), Option(workerCommand),
+        command, envs,
+        recordLog
+      ).run(
         v_ser3,
         TaskContext.get().partitionId(),
-        Array(),
-        runtimeParams,
-        recordLog
+        TaskContext.get()
       )
-      val a = iter.next()
-      val predictValue = VectorSerDer.deser_vector(unpickle(a).asInstanceOf[java.util.ArrayList[Object]].get(0))
+      val res = ArrayBuffer[Array[Byte]]()
+      while (iter.hasNext) {
+        res += iter.next()
+      }
+
+      val predictValue = VectorSerDer.deser_vector(unpickle(res(0)).asInstanceOf[java.util.ArrayList[Object]].get(0))
       predictValue
     }
 
