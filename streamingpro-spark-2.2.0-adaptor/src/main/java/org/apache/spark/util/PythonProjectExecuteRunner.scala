@@ -3,33 +3,29 @@ package org.apache.spark.util
 import java.io._
 import java.util.concurrent.atomic.AtomicReference
 
-import org.apache.spark.sql.types._
-import org.apache.spark.util.ObjPickle._
-import org.apache.spark.{SparkEnv, TaskContext}
+import org.apache.spark.SparkEnv
+import org.apache.spark.api.python.WowPythonRunner
+import org.apache.spark.sql.types.DataType
+import org.apache.spark.util.ObjPickle.pickle
 import streaming.log.Logging
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable.ArrayBuffer
 import scala.io.Source
 
-/**
-  * Created by allwefantasy on 24/1/2018.
-  */
-object ExternalCommandRunner extends Logging {
-
-  def run(taskDirectory: String, command: Seq[String],
-          iter: Any,
+class PythonProjectExecuteRunner(taskDirectory: String,
+                                 envVars: Map[String, String] = Map(),
+                                 logCallback: (String) => Unit = (msg: String) => {},
+                                 separateWorkingDir: Boolean = true,
+                                 bufferSize: Int = 1024,
+                                 encoding: String = "utf-8") extends Logging {
+  def run(command: Seq[String],
+          params: Any,
           schema: DataType,
           scriptContent: String,
           scriptName: String,
-          modelPath: String,
-          recordLog: Any => Any,
-          validateData: Array[Array[Byte]] = Array(),
-          envVars: Map[String, String] = Map(),
-          separateWorkingDir: Boolean = true,
-          bufferSize: Int = 1024,
-          encoding: String = "utf-8",
-          logCallback: (String) => Unit = (msg: String) => {}
+          validateData: Array[Array[Byte]] = Array()
+
          ) = {
     val errorBuffer = ArrayBuffer[String]()
     val pb = new ProcessBuilder(command.asJava)
@@ -41,7 +37,6 @@ object ExternalCommandRunner extends Logging {
     // task will be run in separate directory. This should be resolve file
     // access conflict issue
     var workInTaskDirectory = false
-    log.debug("taskDirectory = " + taskDirectory)
     if (separateWorkingDir) {
       val currentDir = new File(".")
       log.debug("currentDir = " + currentDir.getAbsolutePath())
@@ -70,15 +65,30 @@ object ExternalCommandRunner extends Logging {
       val fileTemp = new File(taskDirectory + "/" + fileName + ".pickle")
       currentEnvVars.put(name, fileTemp.getPath)
       val pythonTempFile = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(fileTemp)))
-      // writeIteratorToStream(ExternalCommandRunner.pickle(iter, schema), pythonTempFile)
       pickle(value, pythonTempFile)
     }
     //使用pickle 把数据写到work目录，之后python程序会读取。首先是保存配置信息。
-    pickleFile("pickleFile", "python_temp", iter)
+    pickleFile("pickleFile", "python_temp", params)
     pickleFile("validateFile", "validate_table", validateData)
 
     def saveFile(scriptName: String, scriptContent: String) = {
       val scriptFile = new File(taskDirectory + s"/${scriptName}")
+      val fw = new FileWriter(scriptFile)
+      try {
+        fw.write(scriptContent)
+      } finally {
+        fw.close()
+      }
+    }
+
+    def saveSystemPythonFile(scriptName: String) = {
+      val scriptContent = Source.fromInputStream(ExternalCommandRunner.getClass.getResourceAsStream("/python/" + scriptName)).
+        getLines().mkString("\n")
+      val file = new File(WowPythonRunner.PYSPARK_DAEMON_FILE_LOCATION)
+      if (!file.exists()) {
+        file.mkdirs()
+      }
+      val scriptFile = new File(s"${WowPythonRunner.PYSPARK_DAEMON_FILE_LOCATION}/${scriptName}")
       val fw = new FileWriter(scriptFile)
       try {
         fw.write(scriptContent)
@@ -97,14 +107,20 @@ object ExternalCommandRunner extends Logging {
       saveFile(name, msg_queue)
     }
 
+
     savePythonFile("msg_queue.py")
     savePythonFile("mlsql.py")
     savePythonFile("python_fun.py")
 
+    // Used to replace pyspark.daemon and pyspark.worker in pyspark.
+    // We can provide  some new features without modify them in pyspark.
+    saveSystemPythonFile("daemon22.py")
+    saveSystemPythonFile("worker22.py")
+
     val env = SparkEnv.get
     val proc = pb.start()
 
-    new MonitorThread(env, proc, TaskContext.get(), taskDirectory, command.mkString(" ")).start()
+    //new MonitorThread(env, proc, TaskContext.get(), taskDirectory, command.mkString(" ")).start()
 
     val childThreadException = new AtomicReference[Throwable](null)
     // Start a thread to print the process's stderr to ours
@@ -113,11 +129,8 @@ object ExternalCommandRunner extends Logging {
         val err = proc.getErrorStream
 
         try {
-          val iterator = Source.fromInputStream(err)(encoding).getLines()
-          while (iterator.hasNext) {
-            val line = iterator.next()
-            logCallback(line)
-          }
+          val iterators = Source.fromInputStream(err)(encoding).getLines()
+          iterators.foreach(f => logCallback(f))
         } catch {
           case t: Throwable =>
             childThreadException.set(t)
@@ -172,7 +185,6 @@ object ExternalCommandRunner extends Logging {
               s"Command ran: " + command.mkString(" ")
             errorBuffer += msg
             logCallback(errorBuffer.mkString("\t"))
-            recordLog(errorBuffer.toIterator)
             throw new IllegalStateException(msg)
           }
           false
@@ -205,44 +217,10 @@ object ExternalCommandRunner extends Logging {
           logCallback(errorBuffer.mkString("\t"))
           proc.destroy()
           cleanup()
-          recordLog(errorBuffer.toIterator)
           throw t
         }
       }
     }
   }
-
-  class MonitorThread(env: SparkEnv, worker: Process, context: TaskContext, taskDirFile: String, pythonExec: String)
-    extends Thread(s"Worker Monitor for $pythonExec") {
-
-    setDaemon(true)
-
-    private def cleanup(): Unit = {
-      // cleanup task working directory if used
-      scala.util.control.Exception.ignoring(classOf[IOException]) {
-        Utils.deleteRecursively(new File(taskDirFile))
-      }
-    }
-
-    override def run() {
-      // Kill the worker if it is interrupted, checking until task completion.
-      // TODO: This has a race condition if interruption occurs, as completed may still become true.
-      while (!context.isInterrupted && !context.isCompleted) {
-        Thread.sleep(2000)
-      }
-      if (!context.isCompleted) {
-        try {
-          logWarning("Incomplete task interrupted: Attempting to kill Python Worker")
-          worker.destroy()
-          cleanup()
-        } catch {
-          case e: Exception =>
-            logError("Exception when trying to kill worker", e)
-        }
-      }
-    }
-  }
-
 }
 
-class ExternalCommandRunner
