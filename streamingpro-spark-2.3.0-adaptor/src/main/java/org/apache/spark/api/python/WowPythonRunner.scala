@@ -47,7 +47,7 @@ private[spark] abstract class WowBasePythonRunner[IN, OUT](
                                                             reuseWorker: Boolean,
                                                             evalType: Int,
                                                             argOffsets: Array[Array[Int]],
-                                                            recordLog: Any => Any,
+                                                            recordLog: String => Unit,
                                                             idleWorkerTimeoutMS: Long
                                                           )
   extends Logging {
@@ -324,7 +324,7 @@ private[spark] class WowPythonRunner(
                                       envVars: util.Map[String, String],
                                       bufferSize: Int,
                                       reuseWorker: Boolean,
-                                      recordLog: Any => Any,
+                                      recordLog: String => Unit,
                                       idleWorkerTimeoutMS: Long)
   extends WowBasePythonRunner[Array[Byte], Array[Byte]](
     daemonCommand, workerCommand, execCommand, envVars, bufferSize, reuseWorker, WowPythonEvalType.NON_UDF, Array(Array(0)), recordLog, idleWorkerTimeoutMS
@@ -392,7 +392,7 @@ object WowPythonRunner {
              execCommand: Array[Byte],
              envVars: util.Map[String, String],
              reuseWorker: Boolean,
-             recordLog: Any => Any,
+             recordLog: String => Unit,
              idleWorkerTimeoutMS: Long) = {
     new WowPythonRunner(daemonCommand, workerCommand, execCommand, envVars, 64 * 1024, reuseWorker, recordLog, idleWorkerTimeoutMS)
   }
@@ -401,10 +401,12 @@ object WowPythonRunner {
               workerCommand: Option[Seq[String]],
               execCommand: Array[Byte],
               envVars: util.Map[String, String],
-              recordLog: Any => Any
+              recordLog: String => Unit
              ) = {
     new WowPythonRunner(daemonCommand, workerCommand, execCommand, envVars, 64 * 1024, true, recordLog, 60 * 60 * 24 * 1000)
   }
+
+  val PYSPARK_DAEMON_FILE_LOCATION = "/tmp/__mlsql__/python"
 }
 
 private[spark] object WowSpecialLengths {

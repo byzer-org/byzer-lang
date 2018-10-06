@@ -3,6 +3,7 @@ package org.apache.spark.util
 import java.io._
 import java.util.concurrent.atomic.AtomicReference
 
+import org.apache.spark.api.python.WowPythonRunner
 import org.apache.spark.{SparkEnv, TaskContext}
 import org.apache.spark.sql.types.DataType
 import org.apache.spark.util.ExternalCommandRunner.{MonitorThread, log, logBuilder}
@@ -15,7 +16,6 @@ import scala.collection.JavaConverters._
 
 class PythonProjectExecuteRunner(taskDirectory: String,
                                  envVars: Map[String, String] = Map(),
-                                 recordLog: Any => Any = (msg: Any) => msg,
                                  logCallback: (String) => Unit = (msg: String) => {},
                                  separateWorkingDir: Boolean = true,
                                  bufferSize: Int = 1024,
@@ -85,11 +85,11 @@ class PythonProjectExecuteRunner(taskDirectory: String,
     def saveSystemPythonFile(scriptName: String) = {
       val scriptContent = Source.fromInputStream(ExternalCommandRunner.getClass.getResourceAsStream("/python/" + scriptName)).
         getLines().mkString("\n")
-      val file = new File("/tmp/__mlsql__/python")
+      val file = new File(WowPythonRunner.PYSPARK_DAEMON_FILE_LOCATION)
       if (!file.exists()) {
         file.mkdirs()
       }
-      val scriptFile = new File(s"/tmp/__mlsql__/python/${scriptName}")
+      val scriptFile = new File(s"${WowPythonRunner.PYSPARK_DAEMON_FILE_LOCATION}/${scriptName}")
       val fw = new FileWriter(scriptFile)
       try {
         fw.write(scriptContent)
@@ -113,6 +113,8 @@ class PythonProjectExecuteRunner(taskDirectory: String,
     savePythonFile("mlsql.py")
     savePythonFile("python_fun.py")
 
+    // Used to replace pyspark.daemon and pyspark.worker in pyspark.
+    // We can provide  some new features without modify them in pyspark.
     saveSystemPythonFile("daemon23.py")
     saveSystemPythonFile("worker23.py")
 
@@ -184,7 +186,6 @@ class PythonProjectExecuteRunner(taskDirectory: String,
               s"Command ran: " + command.mkString(" ")
             errorBuffer += msg
             logCallback(errorBuffer.mkString("\t"))
-            recordLog(errorBuffer.toIterator)
             throw new IllegalStateException(msg)
           }
           false
@@ -217,7 +218,6 @@ class PythonProjectExecuteRunner(taskDirectory: String,
           logCallback(errorBuffer.mkString("\t"))
           proc.destroy()
           cleanup()
-          recordLog(errorBuffer.toIterator)
           throw t
         }
       }
@@ -225,8 +225,3 @@ class PythonProjectExecuteRunner(taskDirectory: String,
   }
 }
 
-object PythonProjectExecuteRunner {
-  def sysPython = {
-    "/tmp/__mlsql__/python"
-  }
-}
