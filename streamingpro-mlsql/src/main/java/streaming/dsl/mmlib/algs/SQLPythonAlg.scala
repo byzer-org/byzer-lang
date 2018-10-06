@@ -199,6 +199,7 @@ class SQLPythonAlg(override val uid: String) extends SQLAlg with Functions with 
           e.printStackTrace()
           trainFailFlag = true
       } finally {
+        FileUtils.deleteDirectory(new File(tempModelLocalPath))
         // delete local model
         FileUtils.deleteDirectory(new File(tempModelLocalPath))
         // delete local data
