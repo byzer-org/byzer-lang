@@ -317,29 +317,14 @@ class WowPythonWorkerFactory(daemonCommand: Option[Seq[String]],
     setDaemon(true)
 
     override def run() {
-      //      scala.util.control.Exception.ignoring(classOf[IOException]) {
-      //        Utils.tryWithSafeFinally {
-      //          val br = new BufferedReader(new InputStreamReader(in))
-      //          var line: String = null
-      //          while ((line = br.readLine()) != null) {
-      //            logCallback(line)
-      //          }
-      //        } {
-      //          if (propagateEof) {
-      //
-      //          }
-      //        }
-      //      }
       {
         scala.util.control.Exception.ignoring(classOf[IOException]) {
-          // FIXME: We copy the stream on the level of bytes to avoid encoding problems.
           Utils.tryWithSafeFinally {
-            val buf = new Array[Byte](1024)
-            var len = in.read(buf)
-            while (len != -1) {
-              out.write(buf, 0, len)
-              out.flush()
-              len = in.read(buf)
+            val br = new BufferedReader(new InputStreamReader(in))
+            var line = br.readLine()
+            while (line != null) {
+              logCallback(line)
+              line = br.readLine()
             }
           } {
             if (propagateEof) {

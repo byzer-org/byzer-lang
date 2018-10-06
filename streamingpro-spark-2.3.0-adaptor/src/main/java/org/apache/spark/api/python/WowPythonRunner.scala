@@ -79,7 +79,7 @@ private[spark] abstract class WowBasePythonRunner[IN, OUT](
       workerCommand,
       envVars.asScala.toMap, (msg) => {
         recordLog(msg)
-      }, idleWorkerTimeoutMS, false
+      }, idleWorkerTimeoutMS, true
     )
     // Whether is the worker released into idle pool
     val released = new AtomicBoolean(false)
