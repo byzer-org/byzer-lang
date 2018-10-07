@@ -24,6 +24,19 @@ trait BasicMLSQLConfig {
     "-streaming.enableHiveSupport", "true",
     "-streaming.spark.service", "false",
     "-streaming.udf.clzznames", "streaming.crawler.udf.Functions,streaming.dsl.mmlib.algs.processing.UDFFunctions",
+    "-streaming.unittest", "true",
+    "-streaming.deploy.rest.api", "true"
+  )
+
+  val batchParamsWithAPI = Array(
+    "-streaming.master", "local[*]",
+    "-streaming.name", "unit-test",
+    "-streaming.rest", "true",
+    "-streaming.driver.port", "9003",
+    "-streaming.platform", "spark",
+    "-streaming.enableHiveSupport", "true",
+    "-streaming.spark.service", "false",
+    "-streaming.udf.clzznames", "streaming.crawler.udf.Functions,streaming.dsl.mmlib.algs.processing.UDFFunctions",
     "-streaming.unittest", "true"
   )
 

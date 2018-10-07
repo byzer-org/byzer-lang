@@ -1,7 +1,5 @@
 package streaming.test.pythonalg
 
-import java.io.File
-
 import net.sf.json.JSONArray
 import org.apache.http.client.fluent.{Form, Request}
 import org.apache.spark.streaming.BasicSparkOperation
@@ -29,7 +27,7 @@ class PythonMLSpec2 extends BasicSparkOperation with SpecFunctions with BasicMLS
   }
 
   "SQLPythonAlgTrain" should "work fine" in {
-    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+    withBatchContext(setupBatchContext(batchParamsWithPort, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
       implicit val spark = runtime.sparkSession
       val sq = createSSEL(spark, "")
@@ -57,6 +55,8 @@ class PythonMLSpec2 extends BasicSparkOperation with SpecFunctions with BasicMLS
       val rowsNum = spark.sql(s"select * from ${table}").collect()
       assert(rowsNum.size > 0)
 
+      ScriptSQLExec.parse(TemplateMerge.merge(ScriptCode.apiPredict, config), sq)
+
       // api predict
       def request = {
         val sql = "select pj(vec_dense(features)) as p1 "
@@ -70,6 +70,7 @@ class PythonMLSpec2 extends BasicSparkOperation with SpecFunctions with BasicMLS
       }
 
       assert(request.size() > 0)
+      Thread.currentThread().join(20000)
 
     }
   }
