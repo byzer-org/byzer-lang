@@ -45,7 +45,6 @@ object ScriptCode {
       |
       |
       | select featureFun(to_json(struct(*))) as features from data  as featureTable;
-      | save overwrite featureTable as parquet.`${featureTablePath}`;
     """.stripMargin
 
 
@@ -56,8 +55,6 @@ object ScriptCode {
 
   val apiPredict =
     """
-      |load parquet.`/tmp/featureTable` as featureTable;
-      | register PythonAlg.`${featureTablePath}` as pj;
-      | select pj(vec_dense(features)) as p1 from featureTable  as output;
+      | register PythonAlg.`${modelPath}` as pj;
     """.stripMargin
 }

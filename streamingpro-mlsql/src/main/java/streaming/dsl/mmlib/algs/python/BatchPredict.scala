@@ -55,6 +55,12 @@ class BatchPredict extends Logging with WowLog with Serializable {
         generateCommand(MLProject.batch_predict_command)
 
       val localPathConfig = LocalPathConfig.buildFromParams(_path)
+
+      val localDataFile = new File(localPathConfig.localDataPath)
+      if (!localDataFile.exists()) {
+        localDataFile.mkdirs()
+      }
+
       val fileWriter = new FileWriter(new File(localPathConfig.localDataPath + s"/${index}.json"))
       try {
         WowJsonInferSchema.toJson(iter, schema, sessionLocalTimeZone, callback = (row) => {
@@ -89,7 +95,7 @@ class BatchPredict extends Logging with WowLog with Serializable {
 
       val taskDirectory = localPathConfig.localRunPath + "/" + projectName
 
-      new SQLPythonAlg().downloadPythonProject(taskDirectory, Option(pythonProject.get.filePath))
+      SQLPythonAlg.downloadPythonProject(taskDirectory, Option(pythonProject.get.filePath))
 
       val runner = new PythonProjectExecuteRunner(
         taskDirectory = taskDirectory,
