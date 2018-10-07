@@ -3,10 +3,12 @@ package streaming.dsl.mmlib.algs.python
 import java.io.{File, FileWriter}
 import java.util
 
+import org.apache.commons.io.FileUtils
 import org.apache.spark.sql.{DataFrame, Encoders, Row}
 import org.apache.spark.sql.execution.datasources.json.WowJsonInferSchema
 import org.apache.spark.sql.types.{MapType, StringType}
 import org.apache.spark.util.PythonProjectExecuteRunner
+import streaming.common.HDFSOperator
 import streaming.common.ScalaMethodMacros.str
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib.algs.{Functions, SQLPythonAlg}
@@ -67,10 +69,13 @@ class BatchPredict extends Logging with WowLog with Serializable {
 
       val paramMap = new util.HashMap[String, Object]()
 
+      val localModelPath = localPathConfig.localModelPath + s"/${index}"
+      HDFSOperator.copyToLocalFile(localModelPath, modelPath, true)
+
       val internalSystemParam = Map(
         str[RunPythonConfig.InternalSystemParam](_.tempDataLocalPath) -> (localPathConfig.localDataPath + s"/${index}.json"),
         str[RunPythonConfig.InternalSystemParam](_.tempOutputLocalPath) -> (localPathConfig.localOutputPath + "/" + index + "/output.json"),
-        str[RunPythonConfig.InternalSystemParam](_.tempModelLocalPath) -> modelPath
+        str[RunPythonConfig.InternalSystemParam](_.tempModelLocalPath) -> localModelPath
       )
 
 
@@ -111,6 +116,9 @@ class BatchPredict extends Logging with WowLog with Serializable {
           logError(format_cause(e))
           e.printStackTrace()
           trainFailFlag = true
+      } finally {
+        FileUtils.deleteDirectory(new File(localModelPath))
+        FileUtils.deleteDirectory(new File(localPathConfig.localDataPath))
       }
       scala.io.Source.fromFile(localPathConfig.localOutputPath + "/" + index + "/output.json").getLines.toIterator
     }

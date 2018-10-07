@@ -90,7 +90,7 @@ object LocalPathConfig {
       localTmpPath = SQLPythonFunc.getAlgTmpPath(path),
       localModelPath = SQLPythonFunc.getLocalTempModelPath(path),
       localRunPath = SQLPythonFunc.getLocalRunPath(path),
-      localOutputPath = SQLPythonFunc.getLocalTempModelPath(path)
+      localOutputPath = SQLPythonFunc.localOutputPath(path)
     )
   }
 }

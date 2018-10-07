@@ -110,7 +110,6 @@ class SQLPythonAlg(override val uid: String) extends SQLAlg with Functions with 
 
       val taskDirectory = localPathConfig.localRunPath + "/" + projectName
       val tempModelLocalPath = s"${localPathConfig.localModelPath}/${algIndex}"
-      //FileUtils.forceMkdir(tempModelLocalPath)
 
       paramMap.put("fitParam", item)
 
@@ -174,7 +173,10 @@ class SQLPythonAlg(override val uid: String) extends SQLAlg with Functions with 
           } else 0d
         }
 
-        val scores = res.map(f => filterScore(f)).toSeq
+        val scores = res.map { f =>
+          logInfo(format(f))
+          filterScore(f)
+        }.toSeq
         score = if (scores.size > 0) scores.head else 0d
       } catch {
         case e: Exception =>
@@ -199,7 +201,6 @@ class SQLPythonAlg(override val uid: String) extends SQLAlg with Functions with 
           e.printStackTrace()
           trainFailFlag = true
       } finally {
-        FileUtils.deleteDirectory(new File(tempModelLocalPath))
         // delete local model
         FileUtils.deleteDirectory(new File(tempModelLocalPath))
         // delete local data

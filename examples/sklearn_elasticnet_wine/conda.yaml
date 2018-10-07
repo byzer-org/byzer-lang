@@ -1,0 +1,12 @@
+name: tutorial
+channels:
+  - defaults
+dependencies:
+  - python=3.6
+  - numpy=1.14.3
+  - pandas=0.22.0
+  - scikit-learn=0.19.1
+  - pip:
+    - mlflow
+    - kafka-python==1.4.3
+    - pyspark==2.3.1

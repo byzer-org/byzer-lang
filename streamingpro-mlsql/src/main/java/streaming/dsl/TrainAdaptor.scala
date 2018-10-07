@@ -52,7 +52,14 @@ class TrainAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdap
     if (!sqlAlg.skipPathPrefix) {
       path = withPathPrefix(scriptSQLExecListener.pathPrefix(owner), path)
     }
-    val newdf = if (options.getOrElse("runMode", "train") == "train") {
+
+    val isTrain = ctx.getChild(0).getText match {
+      case "predict" => false
+      case "run" => false
+      case "train" => true
+    }
+
+    val newdf = if (isTrain) {
       sqlAlg.train(df, path, options)
     } else {
       sqlAlg.batchPredict(df, path, options)
