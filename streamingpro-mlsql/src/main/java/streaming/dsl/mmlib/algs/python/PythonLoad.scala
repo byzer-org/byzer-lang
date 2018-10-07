@@ -7,12 +7,6 @@ import scala.collection.JavaConverters._
 class PythonLoad extends Serializable {
   def load(sparkSession: SparkSession, _path: String, params: Map[String, String]): Any = {
 
-    if (!SQLPythonAlg.isAPIService()) {
-      throw new RuntimeException(
-        s"""
-           |Register statement in PythonAlg module only support in API deploy mode.
-         """.stripMargin)
-    }
     val modelMetaManager = new ModelMetaManager(sparkSession, _path, params)
     val modelMeta = modelMetaManager.loadMetaAndModel
     val localPathConfig = LocalPathConfig.buildFromParams(_path)
@@ -24,6 +18,14 @@ class PythonLoad extends Serializable {
 
     modelMeta.pythonScript.scriptType match {
       case MLFlow =>
+
+        if (!SQLPythonAlg.isAPIService()) {
+          throw new RuntimeException(
+            s"""
+               |If you use MLFlow project,Register statement in PythonAlg module only support in API deploy mode.
+         """.stripMargin)
+        }
+
         SQLPythonAlg.distributePythonProject(sparkSession, taskDirectory, Option(modelMeta.pythonScript.filePath)).foreach(path => {
           resourceParams += ("mlFlowProjectPath" -> path)
         })
