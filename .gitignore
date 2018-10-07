@@ -128,3 +128,5 @@ project/plugins/project/
 /streamingpro-spark-2.0/src/main/resources-local/python/python_temp.pickle
 streamingpro-crawler/tasks/
 streamingpro-commons/logs
+streamingpro-dsl/logs/
+streamingpro-dsl-legacy/logs/

@@ -3,7 +3,7 @@ package streaming.dsl.mmlib.algs.python
 import java.nio.file.{Files, Paths}
 import java.util
 
-import org.apache.spark.{APIDeployPythonRunnerEnv, TaskContext}
+import org.apache.spark.{APIDeployPythonRunnerEnv, SparkCoreVersion, TaskContext}
 import org.apache.spark.api.python.WowPythonRunner
 import org.apache.spark.ml.linalg.SQLDataTypes.VectorType
 import org.apache.spark.sql.{DataFrame, SparkSession}
@@ -81,9 +81,25 @@ class APIPredict extends Logging with WowLog with Serializable {
     res.foreach(f => f)
     val command = Files.readAllBytes(Paths.get(item.get("funcPath")))
 
-    val project = MLProject.loadProject(pythonProject.get.filePath)
-    val daemonCommand = Seq("bash", "-c", project.condaEnvCommand + s" && cd ${WowPythonRunner.PYSPARK_DAEMON_FILE_LOCATION} && python -m daemon23")
-    val workerCommand = Seq("bash", "-c", project.condaEnvCommand + s" && cd ${WowPythonRunner.PYSPARK_DAEMON_FILE_LOCATION} && python -m worker23")
+
+    def coreVersion = {
+      if (SparkCoreVersion.is_2_2_X) {
+        "22"
+      } else {
+        "23"
+      }
+    }
+
+    val (daemonCommand, workerCommand) = pythonProject.get.scriptType match {
+      case MLFlow =>
+        val project = MLProject.loadProject(pythonProject.get.filePath)
+        (Seq("bash", "-c", project.condaEnvCommand + s" && cd ${WowPythonRunner.PYSPARK_DAEMON_FILE_LOCATION} && python -m daemon${coreVersion}"),
+          Seq("bash", "-c", project.condaEnvCommand + s" && cd ${WowPythonRunner.PYSPARK_DAEMON_FILE_LOCATION} && python -m worker${coreVersion}"))
+      case _ =>
+        (Seq("bash", "-c", s" cd ${WowPythonRunner.PYSPARK_DAEMON_FILE_LOCATION} && python -m daemon${coreVersion}"),
+          Seq("bash", "-c", s" cd ${WowPythonRunner.PYSPARK_DAEMON_FILE_LOCATION} && python -m worker${coreVersion}"))
+    }
+
 
     val f = (v: org.apache.spark.ml.linalg.Vector, modelPath: String) => {
       val modelRow = InternalRow.fromSeq(Seq(SQLPythonFunc.getLocalTempModelPath(modelPath)))
