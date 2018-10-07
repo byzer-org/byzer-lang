@@ -27,7 +27,7 @@ class PythonMLSpec2 extends BasicSparkOperation with SpecFunctions with BasicMLS
   }
 
   "SQLPythonAlgTrain" should "work fine" in {
-    withBatchContext(setupBatchContext(batchParamsWithPort, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+    withBatchContext(setupBatchContext(batchParamsWithAPI, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
       implicit val spark = runtime.sparkSession
       val sq = createSSEL(spark, "")
@@ -70,8 +70,6 @@ class PythonMLSpec2 extends BasicSparkOperation with SpecFunctions with BasicMLS
       }
 
       assert(request.size() > 0)
-      Thread.currentThread().join(20000)
-
     }
   }
 

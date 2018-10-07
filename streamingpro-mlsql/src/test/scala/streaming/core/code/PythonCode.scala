@@ -138,9 +138,9 @@ object PythonCode {
       |    items = [i for i in s]
       |    feature = VectorUDT().deserialize(pickle.loads(items[0]))
       |    print(pickle.loads(items[1])[0])
-      |    model = pickle.load(open(pickle.loads(items[1])[0]+"/model.pickle"))
+      |    model = pickle.load(open(pickle.loads(items[1])[0]+"/model.pickle","rb"))
       |    y = model.predict([feature.toArray()])
-      |    print("------".format)
+      |    print("------")
       |    return [VectorUDT().serialize(Vectors.dense(y))]
       |
       |
@@ -158,7 +158,7 @@ object PythonCode {
       |    items = [i for i in s]
       |    feature = VectorUDT().deserialize(pickle.loads(items[0]))
       |    print(pickle.loads(items[1])[0])
-      |    model = pickle.load(open(pickle.loads(items[1])[0]+"/model.pickle"))
+      |    model = pickle.load(open(pickle.loads(items[1])[0]+"/model.pickle","rb"))
       |    y = model.predict([feature.toArray()])
       |    print("----------".format)
       |    return [VectorUDT().serialize(Vectors.dense(y))]
@@ -190,7 +190,7 @@ object PythonCode {
       |            f_indices = obj["features"]["indices"]
       |            f_values = obj["features"]["values"]
       |            res.append(Vectors.sparse(f_size, f_indices, f_values).toArray())
-      |model = pickle.load(open(tempModelLocalPath+"/_model_0/model/0//model.pickle"))
+      |model = pickle.load(open(tempModelLocalPath+"/_model_0/model/0//model.pickle","rb"))
       |model.predict(res)
       |
       |if not os.path.exists(tempResultLocalPath):

@@ -67,7 +67,7 @@ class PythonMLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQ
   }
 
   "python-alg-script-enable-data-local-with-model-version" should "work fine" in {
-    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+    withBatchContext(setupBatchContext(batchParamsWithAPI, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
       implicit val spark = runtime.sparkSession
       val sq = createSSEL
