@@ -14,5 +14,5 @@ and validateTable="data"
 and keepVersion="${keepVersion}"
 and distributeEveryExecutor="${distributeEveryExecutor}"
 and `systemParam.pythonPath`="python"
-and `systemParam.pythonVer`="2.7"
+and `systemParam.pythonVer`="3.6"
 ;

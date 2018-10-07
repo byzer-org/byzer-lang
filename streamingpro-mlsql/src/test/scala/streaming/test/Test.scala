@@ -4,6 +4,7 @@ import java.lang.reflect.{Method, ParameterizedType}
 
 import com.google.common.reflect.ClassPath
 import com.salesforce.op.features.types.PickList
+import org.apache.http.client.fluent.{Form, Request}
 import org.apache.spark.graphx.VertexId
 import org.apache.spark.sql.types.{DataType, _}
 import streaming.common.ScalaObjectReflect
@@ -17,105 +18,14 @@ import scala.collection.JavaConversions._
   */
 object Test {
   def main(args: Array[String]): Unit = {
-    //streaming.example.OpTitanicSimple.main(args)
-    println(invokeFeatureApply("com.salesforce.op.features.types.CurrencyMap", Map("a" -> 7.2)))
-    println(invokeFeatureApply("com.salesforce.op.features.types.PickList", 2.33.asInstanceOf[AnyRef]))
+    val sql = "select pj(vec_dense(features)) as p1 "
 
-  }
-
-  def invokeFeatureApply(clzzName: String, fieldValue: AnyRef) = {
-    val (clzz, instance) = ScalaObjectReflect.findObjectMethod(clzzName)
-    val methods = clzz.getDeclaredMethods.filter(f => f.getName == "apply")
-
-    def convert = {
-      instance match {
-        case PickList => fieldValue.toString
-        case _ => fieldValue
-      }
-    }
-
-    methods.filter(f => f.getParameterTypes.head == classOf[Option[_]]).headOption.map { method =>
-      method.invoke(instance, Option(convert))
-    }.getOrElse {
-      val method = methods.head
-      method.invoke(instance, convert)
-    }
-  }
-
-
-  //
-  private def findInputInArrayBracket(input: String) = {
-    val max = input.length - 1
-    val rest = ArrayBuffer[Char]()
-    var firstS = false
-    var fBracketCount = 0
-    (0 until max).foreach { i =>
-      input(i) match {
-        case '(' =>
-          if (firstS) {
-            rest += input(i)
-            fBracketCount += 1
-          } else {
-            firstS = true
-          }
-        case ')' => fBracketCount -= 1
-          if (fBracketCount < 0) {
-            firstS = false
-          } else {
-            rest += input(i)
-          }
-        case _ =>
-          if (firstS) {
-            rest += input(i)
-          }
-
-      }
-    }
-    rest.mkString("")
-  }
-
-  private def findKeyAndValue(input: String) = {
-    val max = input.length - 1
-    var fBracketCount = 0
-    var position = 0
-    (0 until max).foreach { i =>
-      input(i) match {
-        case '(' =>
-          fBracketCount += 1
-        case ')' =>
-          fBracketCount -= 1
-        case ',' =>
-          if (fBracketCount == 0) {
-            position = i
-          }
-        case _ =>
-      }
-    }
-    (input.substring(0, position), input.substring(position + 1))
-  }
-
-  //array(array(map(string,string)))
-  private def toSparkType(dt: String): DataType = dt match {
-    case "boolean" => BooleanType
-    case "byte" => ByteType
-    case "short" => ShortType
-    case "integer" => IntegerType
-    case "date" => DateType
-    case "long" => LongType
-    case "float" => FloatType
-    case "double" => DoubleType
-    case "decimal" => DoubleType
-    case "binary" => BinaryType
-    case "string" => StringType
-    case c: String if c.startsWith("array") =>
-      ArrayType(toSparkType(findInputInArrayBracket(c)))
-    case c: String if c.startsWith("map") =>
-      //map(map(string,string),string)
-      val (key, value) = findKeyAndValue(findInputInArrayBracket(c))
-      MapType(toSparkType(key), toSparkType(value))
-
-    case _ => throw new RuntimeException("dt is not found spark type")
-
+    val res = Request.Post("http://127.0.0.1:9003/model/predict").bodyForm(Form.form().
+      add("sql", sql).
+      add("data", s"""[{"features":[ 0.045, 8.8, 1.001, 45.0, 7.0, 170.0, 0.27, 0.45, 0.36, 3.0, 20.7 ]}]""").
+      add("dataType", "row")
+      .build()).execute().returnContent().asString()
+    println(res)
   }
 }
 

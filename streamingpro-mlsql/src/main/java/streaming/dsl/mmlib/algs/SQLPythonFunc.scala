@@ -1,9 +1,13 @@
 package streaming.dsl.mmlib.algs
 
+import java.nio.file.{Files, Paths}
+import java.util.UUID
+
 import com.hortonworks.spark.sql.kafka08.KafkaOperator
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.util.{ExternalCommandRunner, WowMD5}
 import streaming.common.HDFSOperator
+import streaming.dsl.mmlib.algs.python.{MLFlow, PythonScript, Script}
 
 import scala.io.Source
 
@@ -21,10 +25,17 @@ object SQLPythonFunc {
   def loadUserDefinePythonScript(params: Map[String, String], spark: SparkSession) = {
     getPath(params) match {
       case Some(path) =>
-        val pathChunk = path.split("/")
-        val userFileName = pathChunk(pathChunk.length - 1)
-        val userPythonScriptList = spark.sparkContext.textFile(path).collect().mkString("\n")
-        Some(PythonScript(userFileName, userPythonScriptList, path))
+        if (HDFSOperator.isDir(path) && HDFSOperator.fileExists(Paths.get(path, "MLproject").toString)) {
+          val project = path.split("/").last
+          Some(PythonScript("", project, path, "", MLFlow))
+
+        } else {
+          val pathChunk = path.split("/")
+          val userFileName = pathChunk.last
+          val userPythonScriptList = spark.sparkContext.textFile(path, 1).collect().mkString("\n")
+          Some(PythonScript(userFileName, userPythonScriptList, "", path))
+        }
+
       case None => None
     }
   }
@@ -64,41 +75,13 @@ object SQLPythonFunc {
     }.mkString("\n")).toIterator)
   }
 
-  def findPythonScript(userPythonScript: Option[PythonScript],
-                       fitParams: Map[String, String],
-                       defaultScriptName: String
-                      ) = {
-
-    var tfSource = userPythonScript.map(f => f.fileContent).getOrElse("")
-    var tfName = userPythonScript.map(f => f.fileName).getOrElse("")
-    var alg = tfName
-    var filePath = userPythonScript.map(f => f.filePath).getOrElse("")
-    if (fitParams.contains("alg")) {
-      alg = fitParams("alg")
-      tfName = s"mlsql_${defaultScriptName}_${alg}.py"
-      filePath = s"/python/${tfName}"
-      tfSource = Source.fromInputStream(ExternalCommandRunner.getClass.getResourceAsStream(filePath)).
-        getLines().mkString("\n")
-    } else {
-      require(!tfSource.isEmpty, "pythonDescPath or fitParam.0.alg is required")
-    }
-    PythonScript(tfName, tfSource, filePath)
-  }
 
   def findPythonPredictScript(sparkSession: SparkSession,
                               params: Map[String, String],
                               defaultScriptName: String
                              ) = {
     val userPythonScript = loadUserDefinePythonScript(params, sparkSession)
-    userPythonScript match {
-      case Some(ups) => ups
-      case None =>
-        val userFileName = defaultScriptName
-        val path = s"/python/${userFileName}"
-        val sk_bayes = Source.fromInputStream(ExternalCommandRunner.getClass.getResourceAsStream(path)).
-          getLines().mkString("\n")
-        PythonScript(userFileName, sk_bayes, path)
-    }
+    userPythonScript.get
 
   }
 
@@ -108,8 +91,16 @@ object SQLPythonFunc {
     s"${getLocalBasePath}/models/${WowMD5.md5Hash(hdfsPath)}"
   }
 
+  def localOutputPath(hdfsPath: String) = {
+    s"${getLocalBasePath}/output/${WowMD5.md5Hash(hdfsPath)}"
+  }
+
   def getLocalTempDataPath(hdfsPath: String) = {
     s"${getLocalBasePath}/data/${WowMD5.md5Hash(hdfsPath)}"
+  }
+
+  def getLocalRunPath(hdfsPath: String) = {
+    s"${getLocalBasePath}/mlsqlrun/${UUID.randomUUID().toString}"
   }
 
   def getLocalTempResourcePath(hdfsPath: String, resourceName: String) = {
@@ -186,4 +177,4 @@ object SQLPythonFunc {
   // -- path related
 }
 
-case class PythonScript(fileName: String, fileContent: String, filePath: String)
+

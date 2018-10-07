@@ -17,7 +17,7 @@ import scala.io.Source
   */
 object ExternalCommandRunner extends Logging {
 
-  def run(command: Seq[String],
+  def run(taskDirectory: String, command: Seq[String],
           iter: Any,
           schema: DataType,
           scriptContent: String,
@@ -36,11 +36,10 @@ object ExternalCommandRunner extends Logging {
     // Add the environmental variables to the process.
     val currentEnvVars = pb.environment()
     envVars.foreach { case (variable, value) => currentEnvVars.put(variable, value) }
-
+    logCallback(envVars.map(f => s"env:\n${f._1}:${f._2}").mkString("\n"))
     // When spark.worker.separated.working.directory option is turned on, each
     // task will be run in separate directory. This should be resolve file
     // access conflict issue
-    val taskDirectory = "tasks" + File.separator + java.util.UUID.randomUUID.toString
     var workInTaskDirectory = false
     log.debug("taskDirectory = " + taskDirectory)
     if (separateWorkingDir) {
@@ -50,8 +49,6 @@ object ExternalCommandRunner extends Logging {
       taskDirFile.mkdirs()
 
       try {
-        val tasksDirFilter = new NotEqualsFileNameFilter("tasks")
-
         // Need to add symlinks to jars, files, and directories.  On Yarn we could have
         // directories and other files not known to the SparkContext that were added via the
         // Hadoop distributed cache.  We also don't want to symlink to the /tasks directories we
@@ -89,7 +86,10 @@ object ExternalCommandRunner extends Logging {
         fw.close()
       }
     }
-    saveFile(scriptName, scriptContent)
+
+    if (scriptName != null && !scriptName.isEmpty) {
+      saveFile(scriptName, scriptContent)
+    }
 
     def savePythonFile(name: String) = {
       val msg_queue = Source.fromInputStream(ExternalCommandRunner.getClass.getResourceAsStream("/python/" + name)).
@@ -99,8 +99,6 @@ object ExternalCommandRunner extends Logging {
 
     savePythonFile("msg_queue.py")
     savePythonFile("mlsql.py")
-    savePythonFile("mlsql_model.py")
-    savePythonFile("mlsql_tf.py")
     savePythonFile("python_fun.py")
 
     val env = SparkEnv.get
@@ -115,9 +113,11 @@ object ExternalCommandRunner extends Logging {
         val err = proc.getErrorStream
 
         try {
-          val errorLog = logBuilder(Source.fromInputStream(err)(encoding).getLines())
-          logCallback(errorLog)
-          System.err.println(errorLog)
+          val iterator = Source.fromInputStream(err)(encoding).getLines()
+          while (iterator.hasNext) {
+            val line = iterator.next()
+            logCallback(line)
+          }
         } catch {
           case t: Throwable =>
             childThreadException.set(t)
@@ -242,22 +242,7 @@ object ExternalCommandRunner extends Logging {
       }
     }
   }
-  def logBuilder(iterator: Iterator[String]): String = {
-    val builder = StringBuilder.newBuilder
-    while (iterator.hasNext) {
-      val line = iterator.next()
-      builder.append(s"__python__:$line")
-      builder.append("\n")
-    }
-    builder.toString
-  }
 
 }
 
 class ExternalCommandRunner
-
-class NotEqualsFileNameFilter(filterName: String) extends FilenameFilter {
-  def accept(dir: File, name: String): Boolean = {
-    !name.equals(filterName)
-  }
-}

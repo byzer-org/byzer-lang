@@ -15,6 +15,7 @@ import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession}
 import org.apache.spark.util.ExternalCommandRunner
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.MetaConst.getDataPath
+import streaming.dsl.mmlib.algs.python.{PythonScript, Script}
 
 import scala.collection.JavaConverters._
 import scala.io.Source
@@ -57,9 +58,9 @@ class SQLModelExplainInPlace extends SQLAlg with Functions {
       val filePath = s"/python/${tfName}"
       val tfSource = Source.fromInputStream(ExternalCommandRunner.getClass.getResourceAsStream(filePath)).
         getLines().mkString("\n")
-      val pythonScript = PythonScript(tfName, tfSource, filePath)
-
-      val res = ExternalCommandRunner.run(Seq(pythonPath, pythonScript.fileName),
+      val pythonScript = PythonScript(tfName, tfSource, filePath,"",Script)
+      val taskDirectory = SQLPythonFunc.getLocalRunPath(UUID.randomUUID().toString)
+      val res = ExternalCommandRunner.run(taskDirectory,Seq(pythonPath, pythonScript.fileName),
         paramMap,
         MapType(StringType, MapType(StringType, StringType)),
         pythonScript.fileContent,

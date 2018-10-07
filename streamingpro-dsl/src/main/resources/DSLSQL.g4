@@ -13,19 +13,19 @@ statement
 
 
 sql
-    : ('load'|'LOAD') format '.' path ('options'|'where')? expression? booleanExpression* 'as' tableName
-    | ('save'|'SAVE') (overwrite | append | errorIfExists |ignore)* tableName 'as' format '.' path ('options'|'where')? expression? booleanExpression* (('partitionBy'|'partitionby') col)?
-    | ('select'|'SELECT') ~(';')* 'as' tableName
-    | ('insert'|'INSERT') ~(';')*
-    | ('create'|'CREATE') ~(';')*
-    | ('drop'|'DROP') ~(';')*
-    | ('refresh'|'REFRESH') ~(';')*
-    | ('set'|'SET') setKey '=' setValue ('options'|'where')? expression? booleanExpression*
-    | ('connect'|'CONNECT') format ('options'|'where')? expression? booleanExpression* ('as' db)?
-    | ('train'|'TRAIN'|'run'|'RUN') tableName 'as' format '.' path ('options'|'where')? expression? booleanExpression* asTableName*
-    | ('register'|'REGISTER') format '.' path 'as' functionName ('options'|'where')? expression? booleanExpression*
-    | ('unRegister'|'UNREGISTER'|'unregister') format '.' path ('options'|'where')? expression? booleanExpression*
-    | ('include'|'INCLUDE') format '.' path ('options'|'where')? expression? booleanExpression*
+    : 'load' format '.' path ('options'|'where')? expression? booleanExpression* 'as' tableName
+    | 'save' (overwrite | append | errorIfExists |ignore)* tableName 'as' format '.' path ('options'|'where')? expression? booleanExpression* (('partitionBy'|'partitionby') col)?
+    | 'select' ~(';')* 'as' tableName
+    | 'insert' ~(';')*
+    | 'create' ~(';')*
+    | 'drop' ~(';')*
+    | 'refresh' ~(';')*
+    | 'set' setKey '=' setValue ('options'|'where')? expression? booleanExpression*
+    | 'connect' format ('options'|'where')? expression? booleanExpression* ('as' db)?
+    | ('train'|'run'|'predict') tableName 'as' format '.' path ('options'|'where')? expression? booleanExpression* asTableName*
+    | 'register' format '.' path 'as' functionName ('options'|'where')? expression? booleanExpression*
+    | 'unregister' format '.' path ('options'|'where')? expression? booleanExpression*
+    | 'include' format '.' path ('options'|'where')? expression? booleanExpression*
     |  SIMPLE_COMMENT
     ;
 

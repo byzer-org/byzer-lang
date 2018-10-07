@@ -187,7 +187,7 @@ class ScriptSQLExecListener(val _sparkSession: SparkSession, val _defaultPathPre
         new RefreshAdaptor(this).parse(ctx)
       case "set" =>
         new SetAdaptor(this).parse(ctx)
-      case "train" | "run" =>
+      case "train" | "run" | "predict" =>
         new TrainAdaptor(this).parse(ctx)
       case "register" =>
         new RegisterAdaptor(this).parse(ctx)

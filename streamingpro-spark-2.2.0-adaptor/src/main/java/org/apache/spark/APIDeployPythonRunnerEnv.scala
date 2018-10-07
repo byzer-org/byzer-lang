@@ -17,25 +17,57 @@ object APIDeployPythonRunnerEnv {
     pythonWorkers.size
   }
 
-  def createPythonWorker(pythonExec: String, envVars: Map[String, String], logCallback: (String) => Unit): java.net.Socket = {
+  def generate_key(daemonCommand: Option[Seq[String]],
+                   workerCommand: Option[Seq[String]]) = {
+    daemonCommand.get.mkString(" ") + workerCommand.get.mkString(" ")
+  }
+
+  def createPythonWorker(daemonCommand: Option[Seq[String]],
+                         workerCommand: Option[Seq[String]],
+                         envVars: Map[String, String],
+                         logCallback: (String) => Unit,
+                         idleWorkerTimeoutMS: Long,
+                         noCache: Boolean = true
+                        ): java.net.Socket = {
     synchronized {
-      val key = (pythonExec, envVars)
-      pythonWorkers.getOrElseUpdate(key, new WowPythonWorkerFactory(pythonExec, envVars, logCallback)).create()
+      val key = (generate_key(daemonCommand, workerCommand), envVars)
+      if (noCache) {
+        pythonWorkers.getOrElseUpdate(key, new WowPythonWorkerFactory(
+          daemonCommand,
+          workerCommand,
+          envVars,
+          logCallback,
+          idleWorkerTimeoutMS)).create()
+      } else {
+        new WowPythonWorkerFactory(
+          daemonCommand,
+          workerCommand,
+          envVars,
+          logCallback,
+          idleWorkerTimeoutMS).create()
+      }
+
+
     }
   }
 
 
-  def destroyPythonWorker(pythonExec: String, envVars: Map[String, String], worker: Socket) {
+  def destroyPythonWorker(daemonCommand: Option[Seq[String]],
+                          workerCommand: Option[Seq[String]],
+                          envVars: Map[String, String],
+                          worker: Socket) {
     synchronized {
-      val key = (pythonExec, envVars)
+      val key = (generate_key(daemonCommand, workerCommand), envVars)
       pythonWorkers.get(key).foreach(_.stopWorker(worker))
     }
   }
 
 
-  def releasePythonWorker(pythonExec: String, envVars: Map[String, String], worker: Socket) {
+  def releasePythonWorker(daemonCommand: Option[Seq[String]],
+                          workerCommand: Option[Seq[String]],
+                          envVars: Map[String, String], worker: Socket) {
     synchronized {
-      val key = (pythonExec, envVars)
+      val key = (generate_key(daemonCommand, workerCommand), envVars)
       pythonWorkers.get(key).foreach(_.releaseWorker(worker))
     }
   }

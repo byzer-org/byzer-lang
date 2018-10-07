@@ -12,6 +12,7 @@ and  `fitParam.0.batchSize`="1000"
 and  `fitParam.0.labelSize`="2"
 and validateTable="data"
 and keepVersion="${keepVersion}"
-and `systemParam.pythonPath`="python"
+and distributeEveryExecutor="${distributeEveryExecutor}"
+and `systemParam.pythonPath`="python2"
 and `systemParam.pythonVer`="2.7"
 ;

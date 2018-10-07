@@ -9,21 +9,31 @@ import scala.collection.mutable
 import scala.collection.JavaConverters._
 import org.apache.spark._
 import org.apache.spark.internal.Logging
+import org.apache.spark.security.SocketAuthHelper
 import org.apache.spark.util.{RedirectThread, Utils}
 
 /**
   * Created by allwefantasy on 30/7/2018.
   */
-private[spark] class WowPythonWorkerFactory(pythonExec: String, envVars: Map[String, String], logCallback: (String) => Unit)
+class WowPythonWorkerFactory(daemonCommand: Option[Seq[String]],
+                             workerCommand: Option[Seq[String]],
+                             envVars: Map[String, String],
+                             logCallback: (String) => Unit,
+                             idleWorkerTimeoutMS: Long = WowPythonWorkerFactory.IDLE_WORKER_TIMEOUT_MS
+                            )
   extends Logging {
 
   import WowPythonWorkerFactory._
+
+  val flag = daemonCommand.get.mkString(" ")
 
   // Because forking processes from Java is expensive, we prefer to launch a single Python daemon
   // (pyspark/daemon.py) and tell it to fork new workers for our tasks. This daemon currently
   // only works on UNIX-based systems now because it uses signals for child management, so we can
   // also fall back to launching workers (pyspark/worker.py) directly.
   val useDaemon = !System.getProperty("os.name").startsWith("Windows")
+
+  private val authHelper = new SocketAuthHelper(SparkEnv.get.conf)
 
   var daemon: Process = null
   val daemonHost = InetAddress.getByAddress(Array(127, 0, 0, 1))
@@ -96,10 +106,13 @@ private[spark] class WowPythonWorkerFactory(pythonExec: String, envVars: Map[Str
       serverSocket = new ServerSocket(0, 1, InetAddress.getByAddress(Array(127, 0, 0, 1)))
 
       // Create and start the worker
-      val pb = new ProcessBuilder(Arrays.asList(pythonExec, "-m", "pyspark.worker"))
+      //Arrays.asList(pythonExec, "-m", "pyspark.worker")
+      val pb = new ProcessBuilder(workerCommand.get.asJava)
       val workerEnv = pb.environment()
       workerEnv.putAll(envVars.asJava)
       workerEnv.put("PYTHONPATH", pythonPath)
+      workerEnv.put("PYTHON_WORKER_FACTORY_SECRET", authHelper.secret)
+      // This is equivalent to setting the -u flag; we use it because ipython doesn't support -u:
       // This is equivalent to setting the -u flag; we use it because ipython doesn't support -u:
       workerEnv.put("PYTHONUNBUFFERED", "YES")
       val worker = pb.start()
@@ -139,10 +152,12 @@ private[spark] class WowPythonWorkerFactory(pythonExec: String, envVars: Map[Str
 
       try {
         // Create and start the daemon
-        val pb = new ProcessBuilder(Arrays.asList(pythonExec, "-m", "pyspark.daemon"))
+        //Arrays.asList(pythonExec, "-m", "pyspark.daemon")
+        val pb = new ProcessBuilder(daemonCommand.get.asJava)
         val workerEnv = pb.environment()
         workerEnv.putAll(envVars.asJava)
         workerEnv.put("PYTHONPATH", pythonPath)
+        workerEnv.put("PYTHON_WORKER_FACTORY_SECRET", authHelper.secret)
         // This is equivalent to setting the -u flag; we use it because ipython doesn't support -u:
         workerEnv.put("PYTHONUNBUFFERED", "YES")
         daemon = pb.start()
@@ -192,8 +207,8 @@ private[spark] class WowPythonWorkerFactory(pythonExec: String, envVars: Map[Str
     */
   private def redirectStreamsToStderr(stdout: InputStream, stderr: InputStream, logCallback: (String) => Unit) {
     try {
-      new WowRedirectThread(stdout, "stdout reader for " + pythonExec, logCallback).start()
-      new WowRedirectThread(stderr, "stderr reader for " + pythonExec, logCallback).start()
+      new WowRedirectThread(stdout, "stdout reader for " + flag, System.err, logCallback).start()
+      new WowRedirectThread(stderr, "stderr reader for " + flag, System.err, logCallback).start()
     } catch {
       case e: Exception =>
         logError("Exception in redirecting streams", e)
@@ -203,14 +218,14 @@ private[spark] class WowPythonWorkerFactory(pythonExec: String, envVars: Map[Str
   /**
     * Monitor all the idle workers, kill them after timeout.
     */
-  private class WowMonitorThread extends Thread(s"Idle Worker Monitor for $pythonExec") {
+  private class WowMonitorThread extends Thread(s"Idle Worker Monitor for $flag") {
 
     setDaemon(true)
 
     override def run() {
       while (true) {
         synchronized {
-          if (lastActivity + IDLE_WORKER_TIMEOUT_MS < System.currentTimeMillis()) {
+          if (lastActivity + idleWorkerTimeoutMS < System.currentTimeMillis()) {
             cleanupIdleWorkers()
             lastActivity = System.currentTimeMillis()
           }
@@ -294,6 +309,7 @@ private[spark] class WowPythonWorkerFactory(pythonExec: String, envVars: Map[Str
   private class WowRedirectThread(
                                    in: InputStream,
                                    name: String,
+                                   out: OutputStream,
                                    logCallback: (String) => Unit = (msg: String) => {},
                                    propagateEof: Boolean = false)
     extends Thread(name) {
@@ -301,16 +317,19 @@ private[spark] class WowPythonWorkerFactory(pythonExec: String, envVars: Map[Str
     setDaemon(true)
 
     override def run() {
-      scala.util.control.Exception.ignoring(classOf[IOException]) {
-        Utils.tryWithSafeFinally {
-          val br = new BufferedReader(new InputStreamReader(in))
-          var line: String = null
-          while ((line = br.readLine()) != null) {
-            logCallback(line)
-          }
-        } {
-          if (propagateEof) {
-
+      {
+        scala.util.control.Exception.ignoring(classOf[IOException]) {
+          Utils.tryWithSafeFinally {
+            val br = new BufferedReader(new InputStreamReader(in))
+            var line = br.readLine()
+            while (line != null) {
+              logCallback(line)
+              line = br.readLine()
+            }
+          } {
+            if (propagateEof) {
+              out.close()
+            }
           }
         }
       }
@@ -319,7 +338,7 @@ private[spark] class WowPythonWorkerFactory(pythonExec: String, envVars: Map[Str
 
 }
 
-private object WowPythonWorkerFactory {
+object WowPythonWorkerFactory {
   val PROCESS_WAIT_TIMEOUT_MS = 10000
   val IDLE_WORKER_TIMEOUT_MS = 60000 * 60 * 24 // kill idle workers after 24 hours
 }
