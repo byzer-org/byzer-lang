@@ -28,9 +28,9 @@ trait SpecFunctions {
     }
   }
 
-  def createSSEL(implicit spark: SparkSession) = {
+  def createSSEL(implicit spark: SparkSession, defaultPathPrefix: String = "/tmp/william") = {
     ScriptSQLExec.setContext(new MLSQLExecuteContext("william", "/tmp/william", Map()))
-    val context = new ScriptSQLExecListener(spark, "/tmp/william", Map())
+    val context = new ScriptSQLExecListener(spark, defaultPathPrefix, Map())
     context.addEnv("HOME", context.pathPrefix(None))
     context
   }
