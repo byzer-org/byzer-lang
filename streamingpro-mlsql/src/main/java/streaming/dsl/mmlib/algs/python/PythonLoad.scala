@@ -22,7 +22,7 @@ class PythonLoad extends Serializable {
         if (!SQLPythonAlg.isAPIService()) {
           throw new RuntimeException(
             s"""
-               |If you use MLFlow project,Register statement in PythonAlg module only support in API deploy mode.
+               |If you use MLFlow project,Register statement in PythonAlg module only supports in API deploy mode.
          """.stripMargin)
         }
 
