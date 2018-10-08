@@ -18,14 +18,6 @@ class PythonLoad extends Serializable {
 
     modelMeta.pythonScript.scriptType match {
       case MLFlow =>
-
-        if (!SQLPythonAlg.isAPIService()) {
-          throw new RuntimeException(
-            s"""
-               |If you use MLFlow project,Register statement in PythonAlg module only supports in API deploy mode.
-         """.stripMargin)
-        }
-
         SQLPythonAlg.distributePythonProject(sparkSession, taskDirectory, Option(modelMeta.pythonScript.filePath)).foreach(path => {
           resourceParams += ("mlFlowProjectPath" -> path)
         })

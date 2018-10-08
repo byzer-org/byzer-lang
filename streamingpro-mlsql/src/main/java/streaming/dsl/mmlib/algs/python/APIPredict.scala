@@ -15,7 +15,7 @@ import org.apache.spark.util.ObjPickle.{pickleInternalRow, unpickle}
 import org.apache.spark.util.{PythonProjectExecuteRunner, VectorSerDer}
 import org.apache.spark.util.VectorSerDer.{ser_vector, vector_schema}
 import streaming.dsl.ScriptSQLExec
-import streaming.dsl.mmlib.algs.{Functions, SQLPythonFunc}
+import streaming.dsl.mmlib.algs.{Functions, SQLPythonAlg, SQLPythonFunc}
 import streaming.log.{Logging, WowLog}
 
 import scala.collection.JavaConverters._
@@ -52,9 +52,6 @@ class APIPredict extends Logging with WowLog with Serializable {
 
     val taskDirectory = modelMeta.taskDirectory.get
     val enableCopyTrainParamsToPython = params.getOrElse("enableCopyTrainParamsToPython", "false").toBoolean
-
-
-    val condaEnvManager = new CondaEnvManager()
 
     val envs = new util.HashMap[String, String]()
     EnvConfig.buildFromSystemParam(systemParam).foreach(f => envs.put(f._1, f._2))
@@ -119,7 +116,8 @@ class APIPredict extends Logging with WowLog with Serializable {
       val iter = WowPythonRunner.runner2(
         Option(daemonCommand), Option(workerCommand),
         command, envs,
-        recordLog
+        recordLog,
+        SQLPythonAlg.isAPIService()
       ).run(
         v_ser3,
         TaskContext.get().partitionId(),
