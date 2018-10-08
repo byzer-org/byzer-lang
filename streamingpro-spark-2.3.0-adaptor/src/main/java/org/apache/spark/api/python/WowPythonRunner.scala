@@ -393,7 +393,9 @@ object WowPythonRunner {
              envVars: util.Map[String, String],
              reuseWorker: Boolean,
              recordLog: String => Unit,
-             idleWorkerTimeoutMS: Long) = {
+             idleWorkerTimeoutMS: Long,
+             apiMode: Boolean
+            ) = {
     new WowPythonRunner(daemonCommand, workerCommand, execCommand, envVars, 64 * 1024, reuseWorker, recordLog, idleWorkerTimeoutMS)
   }
 
@@ -401,9 +403,11 @@ object WowPythonRunner {
               workerCommand: Option[Seq[String]],
               execCommand: Array[Byte],
               envVars: util.Map[String, String],
-              recordLog: String => Unit
+              recordLog: String => Unit,
+              apiMode: Boolean
              ) = {
-    new WowPythonRunner(daemonCommand, workerCommand, execCommand, envVars, 64 * 1024, true, recordLog, 60 * 60 * 24 * 1000)
+    val idleWorkerTimeoutMS = if (apiMode) 60 * 60 * 24 * 1000 else 1000 * 60 * 2
+    new WowPythonRunner(daemonCommand, workerCommand, execCommand, envVars, 64 * 1024, true, recordLog, idleWorkerTimeoutMS)
   }
 
   val PYSPARK_DAEMON_FILE_LOCATION = "/tmp/__mlsql__/python"

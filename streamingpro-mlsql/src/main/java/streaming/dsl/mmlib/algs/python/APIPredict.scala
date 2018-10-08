@@ -1,8 +1,11 @@
 package streaming.dsl.mmlib.algs.python
 
+import java.io.File
 import java.nio.file.{Files, Paths}
 import java.util
+import java.util.UUID
 
+import org.apache.commons.io.FileUtils
 import org.apache.spark.{APIDeployPythonRunnerEnv, SparkCoreVersion, TaskContext}
 import org.apache.spark.api.python.WowPythonRunner
 import org.apache.spark.ml.linalg.SQLDataTypes.VectorType
@@ -15,7 +18,7 @@ import org.apache.spark.util.ObjPickle.{pickleInternalRow, unpickle}
 import org.apache.spark.util.{PythonProjectExecuteRunner, VectorSerDer}
 import org.apache.spark.util.VectorSerDer.{ser_vector, vector_schema}
 import streaming.dsl.ScriptSQLExec
-import streaming.dsl.mmlib.algs.{Functions, SQLPythonFunc}
+import streaming.dsl.mmlib.algs.{Functions, SQLPythonAlg, SQLPythonFunc}
 import streaming.log.{Logging, WowLog}
 
 import scala.collection.JavaConverters._
@@ -39,7 +42,8 @@ class APIPredict extends Logging with WowLog with Serializable {
 
     val maps = new util.HashMap[String, java.util.Map[String, _]]()
     val item = new util.HashMap[String, String]()
-    item.put("funcPath", "/tmp/" + System.currentTimeMillis())
+    val funcSerLocation = "/tmp/__mlsql__/" + UUID.randomUUID().toString
+    item.put("funcPath", funcSerLocation)
     maps.put("systemParam", item)
     maps.put("internalSystemParam", modelMeta.resources.asJava)
 
@@ -52,9 +56,6 @@ class APIPredict extends Logging with WowLog with Serializable {
 
     val taskDirectory = modelMeta.taskDirectory.get
     val enableCopyTrainParamsToPython = params.getOrElse("enableCopyTrainParamsToPython", "false").toBoolean
-
-
-    val condaEnvManager = new CondaEnvManager()
 
     val envs = new util.HashMap[String, String]()
     EnvConfig.buildFromSystemParam(systemParam).foreach(f => envs.put(f._1, f._2))
@@ -80,6 +81,12 @@ class APIPredict extends Logging with WowLog with Serializable {
 
     res.foreach(f => f)
     val command = Files.readAllBytes(Paths.get(item.get("funcPath")))
+    try {
+      FileUtils.forceDelete(new File(funcSerLocation))
+    } catch {
+      case e: Exception =>
+        logError(s"API predict command is not stored in ${funcSerLocation}. Maybe there are something wrong when serializable predict command?", e)
+    }
 
 
     def coreVersion = {
@@ -100,6 +107,7 @@ class APIPredict extends Logging with WowLog with Serializable {
           Seq("bash", "-c", s" cd ${WowPythonRunner.PYSPARK_DAEMON_FILE_LOCATION} && python -m worker${coreVersion}"))
     }
 
+    logInfo(format(s"daemonCommand => ${daemonCommand.mkString(" ")} workerCommand=> ${workerCommand.mkString(" ")}"))
 
     val f = (v: org.apache.spark.ml.linalg.Vector, modelPath: String) => {
       val modelRow = InternalRow.fromSeq(Seq(SQLPythonFunc.getLocalTempModelPath(modelPath)))
@@ -119,7 +127,8 @@ class APIPredict extends Logging with WowLog with Serializable {
       val iter = WowPythonRunner.runner2(
         Option(daemonCommand), Option(workerCommand),
         command, envs,
-        recordLog
+        recordLog,
+        SQLPythonAlg.isAPIService()
       ).run(
         v_ser3,
         TaskContext.get().partitionId(),
@@ -140,7 +149,7 @@ class APIPredict extends Logging with WowLog with Serializable {
         (resV(resV.argmax), resV)
       }.sortBy(f => f._1).reverse.head._2
     }
-
+    logInfo(format("Generate UDF in MSQL"))
     UserDefinedFunction(f2, VectorType, Some(Seq(VectorType)))
   }
 }

@@ -71,7 +71,7 @@ class MLProject(val projectDir: String, project: Settings) extends Logging with 
     val condaEnvManager = new CondaEnvManager()
     val condaEnvName = condaEnvManager.getOrCreateCondaEnv(Option(projectDir + s"/${MLProject.DEFAULT_CONDA_ENV_NAME}"))
     val command = s"source ${condaEnvManager.getCondaBinExecutable("activate")} ${condaEnvName}"
-    logInfo(format(s"=== generate command  '${command}' }' === "))
+    logInfo(format(s"=== generate command  '${command}' for ${projectDir} === "))
     command
   }
 

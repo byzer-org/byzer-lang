@@ -43,6 +43,7 @@ class PythonTrain extends Functions with Serializable {
     var fitParam = arrayParamsWithIndex("fitParam", params)
 
     if (fitParam.size == 0) {
+      logWarning(format("fitParam is not configured, we will use empty configuration"))
       fitParam = Array(0 -> Map[String, String]())
     }
     val fitParamRDD = df.sparkSession.sparkContext.parallelize(fitParam, fitParam.length)
@@ -116,13 +117,18 @@ class PythonTrain extends Functions with Serializable {
       pythonProjectPath match {
         case Some(_) =>
           if (projectType == MLFlow) {
+            logInfo(format(s"'${pythonProjectPath.get}' is MLflow project. download it from [${pythonProject}] to local [${taskDirectory}]"))
             SQLPythonAlg.downloadPythonProject(taskDirectory, pythonProjectPath)
           } else {
-            SQLPythonAlg.downloadPythonProject(taskDirectory + "/" + pythonProjectPath.get.split("/").last, pythonProjectPath)
+            val localPath = taskDirectory + "/" + pythonProjectPath.get.split("/").last
+            logInfo(format(s"'${pythonProjectPath.get}' is Normal project. download it from [${pythonProject}] to local [${localPath}]"))
+            SQLPythonAlg.downloadPythonProject(localPath, pythonProjectPath)
           }
 
 
-        case None => // this will not happen, cause even script is a project contains only one python script file.
+        case None =>
+          // this will not happen, cause even script is a project contains only one python script file.
+          throw new RuntimeException("The project or script you configured in pythonScriptPath is not a validate project")
       }
 
 
