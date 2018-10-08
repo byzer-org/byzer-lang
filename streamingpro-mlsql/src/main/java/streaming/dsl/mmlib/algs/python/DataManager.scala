@@ -8,7 +8,7 @@ import streaming.log.{Logging, WowLog}
 class DataManager(df: DataFrame, path: String, params: Map[String, String]) extends Logging with WowLog {
 
   def enableDataLocal = {
-    params.getOrElse("enableDataLocal", "false").toBoolean
+    params.getOrElse("enableDataLocal", "true").toBoolean
   }
 
   def saveDataToHDFS = {

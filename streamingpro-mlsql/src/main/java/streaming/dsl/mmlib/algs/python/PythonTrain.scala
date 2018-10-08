@@ -20,7 +20,7 @@ import streaming.dsl.mmlib.algs.{Functions, SQLPythonAlg, SQLPythonFunc}
 class PythonTrain extends Functions with Serializable {
   def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
 
-    val keepVersion = params.getOrElse("keepVersion", "false").toBoolean
+    val keepVersion = params.getOrElse("keepVersion", "true").toBoolean
 
     var kafkaParam = mapParams("kafkaParam", params)
 
