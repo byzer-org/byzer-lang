@@ -17,7 +17,7 @@ object LocalSparkServiceApp {
       "-streaming.ps.enable", "true",
       "-spark.sql.hive.thriftServer.singleSession", "true",
       "-streaming.rest.intercept.clzz", "streaming.rest.ExampleRestInterceptor",
-      "-streaming.deploy.rest.api", "true",
+      "-streaming.deploy.rest.api", "false",
       "-spark.driver.maxResultSize", "2g",
       "-spark.serializer", "org.apache.spark.serializer.KryoSerializer",
       "-spark.sql.codegen.wholeStage", "true",
