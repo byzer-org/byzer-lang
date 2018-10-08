@@ -9,7 +9,7 @@ trait SQLPythonAlgParams extends BaseParams {
 
   final val enableDataLocal: BooleanParam = new BooleanParam(this, "enableDataLocal",
     "Save prepared data to HDFS and then copy them to local")
-  setDefault(enableDataLocal, false)
+  setDefault(enableDataLocal, true)
 
 
   final val dataLocalFormat: Param[String] = new Param[String](this, "dataLocalFormat",
