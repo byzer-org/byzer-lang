@@ -10,7 +10,7 @@
  
 ## The Design
  
-Python Integration is implemented by PythonAlg module which is used in train/run statement. 
+Python Integration is implemented by PythonAlg module which is used in train/run/predict statement.
 
 At training stage,  PythonAlg first starts python workers according to the params provided in train/run statement,
 then transport the data which already processed to them. 
@@ -25,10 +25,11 @@ who execute the real training code.
 For Tensorflow, Kafka would be a good choice ,since most algorithm in TF is batch by batch. We can write and read in parallel.
 For most other frameworks e.g. SKLearn, put the data to local disk where python processes stand would be a good option.
 
-At predicting stage, PythonAlg will hold many python worker, and communicate with them by socket, and this is really fast so 
+At predicting stage, PythonAlg will holds many python worker,  communicates with them by socket, and this is really fast so
 that we can deploy as API server.  
 
-##  Interactive Specification 
+
+## Usage
 
 Say that we have already converted data to vector format, then we need to use SVM algorithm in SKLearn. You can do like 
 following: 
@@ -239,6 +240,64 @@ def predict(index, input):
 python_fun.udf(predict)
 ```
 
+## MLFlow Support
+
+PythonAlg module supports MLFlow project. You can get the example project [here](https://github.com/allwefantasy/streamingpro/tree/master/examples/sklearn_elasticnet_wine).
+
+Please make sure you have conda env installed. PythonAlg will use conda to
+resolve python lib dependencies according conda.yaml in project directory.
+
+Train example:
+
+```sql
+
+load csv.`/Users/allwefantasy/CSDNWorkSpace/mlflow/examples/sklearn_elasticnet_wine/wine-quality.csv`
+where header="true" and inferSchema="true"
+as data;
+
+train data as PythonAlg.`/tmp/abc`
+ where pythonScriptPath="/Users/allwefantasy/CSDNWorkSpace/mlflow/examples/sklearn_elasticnet_wine"
+ and keepVersion="true"
+ and  enableDataLocal="true"
+ and  dataLocalFormat="csv"
+ and systemParam.envs='''{"MLFLOW_CONDA_HOME":"/anaconda3"}'''
+ ;
+```
+
+Batch predict
+
+```sql
+predict data as PythonAlg.`/tmp/abc`;
+```
+
+
+Run StreamingPro with local with API model enabled, then register the model:
+
+```sql
+register PythonAlg.`/tmp/abc` as pj;
+```
+
+Request example:
+
+```
+import org.apache.http.client.fluent.{Form, Request}
+import org.apache.spark.graphx.VertexId
+
+object Test {
+  def main(args: Array[String]): Unit = {
+    val sql = "select pj(vec_dense(features)) as p1 "
+
+    val res = Request.Post("http://127.0.0.1:9003/model/predict").bodyForm(Form.form().
+      add("sql", sql).
+      add("data", s"""[{"features":[ 0.045, 8.8, 1.001, 45.0, 7.0, 170.0, 0.27, 0.45, 0.36, 3.0, 20.7 ]}]""").
+      add("dataType", "row")
+      .build()).execute().returnContent().asString()
+    println(res)
+  }
+}
+```
+
+
 
 ## More
 
@@ -383,8 +442,6 @@ def run():
 run()
 
 ```
-
-
 
 
 

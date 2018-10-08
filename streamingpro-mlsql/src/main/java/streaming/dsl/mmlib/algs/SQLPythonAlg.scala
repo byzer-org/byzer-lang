@@ -29,19 +29,6 @@ class SQLPythonAlg(override val uid: String) extends SQLAlg with Functions with 
     new PythonTrain().train(df, path, params)
   }
 
-  /*
-
-     when you use register statement ,this means you are in API predict mode.
-
-     Since python worker in predict mode is long-run process, we can not use conda to
-     find the best env for every project because they share the same python workers.
-
-     In API predict mode,  it's recommended that only deploy one python project.
-     When you register model, the system will just distribute the python project and you should add the project
-     in your predict script manually e.g. `sys.path.insert(0,mlsql.internal_system_param["resource"]["mlFlowProjectPath"])
-     and we will not create suitable env for you for now.
-
-   */
   override def load(sparkSession: SparkSession, _path: String, params: Map[String, String]): Any = {
     new PythonLoad().load(sparkSession, _path, params)
   }
