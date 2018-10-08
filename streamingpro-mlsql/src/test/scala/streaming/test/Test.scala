@@ -1,16 +1,7 @@
 package streaming.test
 
-import java.lang.reflect.{Method, ParameterizedType}
-
-import com.google.common.reflect.ClassPath
-import com.salesforce.op.features.types.PickList
 import org.apache.http.client.fluent.{Form, Request}
 import org.apache.spark.graphx.VertexId
-import org.apache.spark.sql.types.{DataType, _}
-import streaming.common.ScalaObjectReflect
-
-import scala.collection.mutable.ArrayBuffer
-import scala.collection.JavaConversions._
 
 
 /**
