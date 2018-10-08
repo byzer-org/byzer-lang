@@ -200,4 +200,18 @@ class MLLibSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLCo
 
     }
   }
+
+//  "XGBoost" should "work fine" in {
+//    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+//      implicit val spark = runtime.sparkSession
+//      ScriptSQLExec.contextGetOrForTest()
+//      val df = spark.read.format("libsvm").load("/tmp/william/sample_libsvm_data.txt")
+//      val feature = new SQLXGBoostExt()
+//      val newdf = feature.train(df, "/tmp/model2", Map())
+//      val status = newdf.collect().map(f => f.getAs[String]("status")).head
+//      assert(status == "success")
+//      feature.batchPredict(df, "/tmp/model2", Map()).show()
+//    }
+//  }
+
 }
