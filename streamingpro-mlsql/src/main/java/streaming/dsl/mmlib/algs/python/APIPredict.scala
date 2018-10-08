@@ -1,8 +1,11 @@
 package streaming.dsl.mmlib.algs.python
 
+import java.io.File
 import java.nio.file.{Files, Paths}
 import java.util
+import java.util.UUID
 
+import org.apache.commons.io.FileUtils
 import org.apache.spark.{APIDeployPythonRunnerEnv, SparkCoreVersion, TaskContext}
 import org.apache.spark.api.python.WowPythonRunner
 import org.apache.spark.ml.linalg.SQLDataTypes.VectorType
@@ -39,7 +42,8 @@ class APIPredict extends Logging with WowLog with Serializable {
 
     val maps = new util.HashMap[String, java.util.Map[String, _]]()
     val item = new util.HashMap[String, String]()
-    item.put("funcPath", "/tmp/" + System.currentTimeMillis())
+    val funcSerLocation = "/tmp/__mlsql__/" + UUID.randomUUID().toString
+    item.put("funcPath", funcSerLocation)
     maps.put("systemParam", item)
     maps.put("internalSystemParam", modelMeta.resources.asJava)
 
@@ -77,6 +81,12 @@ class APIPredict extends Logging with WowLog with Serializable {
 
     res.foreach(f => f)
     val command = Files.readAllBytes(Paths.get(item.get("funcPath")))
+    try {
+      FileUtils.forceDelete(new File(funcSerLocation))
+    } catch {
+      case e: Exception =>
+        logError(s"API predict command is not stored in ${funcSerLocation}. Maybe there are something wrong when serializable predict command?", e)
+    }
 
 
     def coreVersion = {
@@ -97,6 +107,7 @@ class APIPredict extends Logging with WowLog with Serializable {
           Seq("bash", "-c", s" cd ${WowPythonRunner.PYSPARK_DAEMON_FILE_LOCATION} && python -m worker${coreVersion}"))
     }
 
+    logInfo(format(s"daemonCommand => ${daemonCommand.mkString(" ")} workerCommand=> ${workerCommand.mkString(" ")}"))
 
     val f = (v: org.apache.spark.ml.linalg.Vector, modelPath: String) => {
       val modelRow = InternalRow.fromSeq(Seq(SQLPythonFunc.getLocalTempModelPath(modelPath)))
@@ -138,7 +149,7 @@ class APIPredict extends Logging with WowLog with Serializable {
         (resV(resV.argmax), resV)
       }.sortBy(f => f._1).reverse.head._2
     }
-
+    logInfo(format("Generate UDF in MSQL"))
     UserDefinedFunction(f2, VectorType, Some(Seq(VectorType)))
   }
 }
