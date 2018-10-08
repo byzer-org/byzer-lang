@@ -16,6 +16,7 @@ import org.apache.spark.sql.{DataFrame, Dataset, Row, SaveMode, SparkSession, fu
 import org.apache.spark.util.{ExternalCommandRunner, ObjPickle, WowMD5, WowXORShiftRandom}
 import streaming.common.HDFSOperator
 import MetaConst._
+import net.csdn.common.reflect.ReflectHelper
 import org.apache.spark.ps.cluster.Message
 import streaming.core.strategy.platform.{PlatformManager, SparkRuntime}
 import streaming.log.{Logging, WowLog}
@@ -109,8 +110,9 @@ trait Functions extends SQlBaseFunc with Logging with WowLog with Serializable {
     params.filter(f => f._1.startsWith(name + ".")).map { f =>
       val Array(name, group, keys@_*) = f._1.split("\\.")
       (group, keys.mkString("."), f._2)
-    }.groupBy(f => f._1).map { f => f._2.map(k =>
-      (k._2, k._3)).toMap
+    }.groupBy(f => f._1).map { f =>
+      f._2.map(k =>
+        (k._2, k._3)).toMap
     }.toArray
   }
 
@@ -154,11 +156,79 @@ trait Functions extends SQlBaseFunc with Logging with WowLog with Serializable {
       val model = alg.asInstanceOf[Estimator[T]].fit(trainData)
       model.asInstanceOf[MLWritable].write.overwrite().save(path + "/" + modelIndex)
     }
+
     params.getOrElse("multiModels", "false").toBoolean match {
       case true => sampleUnbalanceWithMultiModel(df, path, params, f)
       case false =>
         f(df, 0)
     }
+  }
+
+
+  def trainModelsWithMultiParamGroup2(df: DataFrame, path: String, params: Map[String, String],
+                                      modelType: () => Params,
+                                      evaluate: (Params, Map[String, String]) => List[MetricValue]
+                                     ) = {
+
+    val keepVersion = params.getOrElse("keepVersion", "true").toBoolean
+
+    val mf = (trainData: DataFrame, fitParam: Map[String, String], modelIndex: Int) => {
+      val alg = modelType()
+      configureModel(alg, fitParam)
+
+      logInfo(format(s"[training] [alg=${alg.getClass.getName}] [keepVersion=${keepVersion}]"))
+
+      var status = "success"
+      val modelTrainStartTime = System.currentTimeMillis()
+      val modelPath = SQLPythonFunc.getAlgModelPath(path, keepVersion) + "/" + modelIndex
+      var scores: List[MetricValue] = List()
+      try {
+        val model = ReflectHelper.method(alg, "fit", trainData)
+        model.asInstanceOf[MLWritable].write.overwrite().save(modelPath)
+        scores = evaluate(model.asInstanceOf[Params], fitParam)
+        logInfo(format(s"[trained] [alg=${alg.getClass.getName}] [metrics=${scores}] [model hyperparameters=${
+          model.asInstanceOf[Params].explainParams().replaceAll("\n", "\t")
+        }]"))
+      } catch {
+        case e: Exception =>
+          logInfo(format_exception(e))
+          status = "fail"
+      }
+      val modelTrainEndTime = System.currentTimeMillis()
+      //      if (status == "fail") {
+      //        throw new RuntimeException(s"Fail to train als model: ${modelIndex}; All will fails")
+      //      }
+      val metrics = scores.map(score => Row.fromSeq(Seq(score.name, score.value))).toArray
+      Row.fromSeq(Seq(modelPath, modelIndex, alg.getClass.getName, metrics, status, modelTrainStartTime, modelTrainEndTime, fitParam))
+    }
+    var fitParam = arrayParamsWithIndex("fitParam", params)
+    if (fitParam.size == 0) {
+      fitParam = Array((0, Map[String, String]()))
+    }
+
+    val wowRes = fitParam.map { fp =>
+      mf(df, fp._2, fp._1)
+    }
+
+    val wowRDD = df.sparkSession.sparkContext.parallelize(wowRes, 1)
+
+    df.sparkSession.createDataFrame(wowRDD, StructType(Seq(
+      StructField("modelPath", StringType),
+      StructField("algIndex", IntegerType),
+      StructField("alg", StringType),
+      StructField("metrics", ArrayType(StructType(Seq(
+        StructField(name = "name", dataType = StringType),
+        StructField(name = "value", dataType = DoubleType)
+      )))),
+
+      StructField("status", StringType),
+      StructField("startTime", LongType),
+      StructField("endTime", LongType),
+      StructField("trainParams", MapType(StringType, StringType))
+    ))).
+      write.
+      mode(SaveMode.Overwrite).
+      parquet(SQLPythonFunc.getAlgMetalPath(path, keepVersion) + "/0")
   }
 
   def trainModelsWithMultiParamGroup[T <: Model[T]](df: DataFrame, path: String, params: Map[String, String],
@@ -197,9 +267,11 @@ trait Functions extends SQlBaseFunc with Logging with WowLog with Serializable {
       val metrics = scores.map(score => Row.fromSeq(Seq(score.name, score.value))).toArray
       Row.fromSeq(Seq(modelPath, modelIndex, alg.getClass.getName, metrics, status, modelTrainStartTime, modelTrainEndTime, fitParam))
     }
-    val fitParam = arrayParamsWithIndex("fitParam", params)
+    var fitParam = arrayParamsWithIndex("fitParam", params)
 
-    require(fitParam.size > 0, "fitParam.[group].[parameter] should be configured at least once")
+    if (fitParam.size == 0) {
+      fitParam = Array((0, Map[String, String]()))
+    }
 
     val wowRes = fitParam.map { fp =>
       mf(df, fp._2, fp._1)
