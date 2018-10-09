@@ -38,7 +38,8 @@ class PythonMLSpec2 extends BasicSparkOperation with SpecFunctions with BasicMLS
       val config = Map(
         str[ScriptCode](_.featureTablePath) -> scriptCode.featureTablePath,
         str[ScriptCode](_.modelPath) -> scriptCode.modelPath,
-        str[ScriptCode](_.projectPath) -> scriptCode.projectPath
+        str[ScriptCode](_.projectPath) -> scriptCode.projectPath,
+        "kv" -> ""
       )
 
       //train
