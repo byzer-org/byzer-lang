@@ -83,7 +83,7 @@ trait Dl4jFunctions {
   }
 
   def copyToHDFS(tempModelLocalPath: String, path: String, clean: Boolean) = {
-    HDFSOperator.copyToHDFS(tempModelLocalPath, path, clean)
+    HDFSOperator.copyToHDFS(tempModelLocalPath, path, clean, true)
   }
 
   def createTempModelLocalPath(path: String, autoCreateParentDir: Boolean = true) = {
