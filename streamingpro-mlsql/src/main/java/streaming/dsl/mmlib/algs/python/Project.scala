@@ -12,6 +12,8 @@ import streaming.common.HDFSOperator
 import streaming.common.shell.ShellCommand
 import streaming.dsl.ScriptSQLExec
 import streaming.log.{Logging, WowLog}
+import streaming.session.MLSQLException
+
 import scala.collection.JavaConversions._
 
 object PythonAlgProject extends Logging with WowLog {
@@ -31,6 +33,9 @@ object PythonAlgProject extends Logging with WowLog {
           Some(PythonScript("", "", path, project, MLFlow))
 
         } else {
+          if (!HDFSOperator.isFile(path)) {
+            throw new MLSQLException(s"pythonScriptPath=$path should be a directory containing MLproject file or a python file.")
+          }
           val pythonScriptFileName = path.split("/").last
           val pythonScriptContent = spark.sparkContext.textFile(path, 1).collect().mkString("\n")
           Some(PythonScript(pythonScriptFileName, pythonScriptContent, path, UUID.randomUUID().toString, NormalProject))
@@ -93,7 +98,7 @@ object MLProject {
   val MLPROJECT = "MLproject"
 
   def loadProject(projectDir: String) = {
-    val projectContent = scala.io.Source.fromFile(new File(projectDir + s"/${MLPROJECT}")).getLines().mkString("\n")
+    val projectContent = HDFSOperator.readFile(projectDir + s"/${MLPROJECT}")
     val projectDesc = ImmutableSettings.settingsBuilder().loadFromSource(projectContent).build()
     new MLProject(projectDir, projectDesc)
   }
