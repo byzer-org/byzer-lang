@@ -14,6 +14,7 @@ import scala.io.Source
 import scala.collection.JavaConverters._
 
 class PythonProjectExecuteRunner(taskDirectory: String,
+                                 keepLocalDirectory: Boolean,
                                  envVars: Map[String, String] = Map(),
                                  logCallback: (String) => Unit = (msg: String) => {},
                                  separateWorkingDir: Boolean = true,
@@ -27,7 +28,6 @@ class PythonProjectExecuteRunner(taskDirectory: String,
           validateData: Array[Array[Byte]] = Array()
 
          ) = {
-    val errorBuffer = ArrayBuffer[String]()
     val pb = new ProcessBuilder(command.asJava)
     // Add the environmental variables to the process.
     val currentEnvVars = pb.environment()
@@ -65,7 +65,15 @@ class PythonProjectExecuteRunner(taskDirectory: String,
       val fileTemp = new File(taskDirectory + "/" + fileName + ".pickle")
       currentEnvVars.put(name, fileTemp.getPath)
       val pythonTempFile = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(fileTemp)))
-      pickle(value, pythonTempFile)
+      try {
+        pickle(value, pythonTempFile)
+      } catch {
+        case e: Exception =>
+          val msg = s"Unable to create ${fileTemp.getPath} in $taskDirectory. " +
+            s"Please check you you have the right permission to write the file. caused by ${e.getMessage}"
+          logError(msg, e)
+          throw new RuntimeException(msg)
+      }
     }
     //使用pickle 把数据写到work目录，之后python程序会读取。首先是保存配置信息。
     pickleFile("pickleFile", "python_temp", params)
@@ -183,8 +191,7 @@ class PythonProjectExecuteRunner(taskDirectory: String,
           if (exitStatus != 0) {
             val msg = s"Subprocess exited with status $exitStatus. " +
               s"Command ran: " + command.mkString(" ")
-            errorBuffer += msg
-            logCallback(errorBuffer.mkString("\t"))
+            logCallback(msg)
             throw new IllegalStateException(msg)
           }
           false
@@ -201,7 +208,9 @@ class PythonProjectExecuteRunner(taskDirectory: String,
         // cleanup task working directory if used
         if (workInTaskDirectory) {
           scala.util.control.Exception.ignoring(classOf[IOException]) {
-            Utils.deleteRecursively(new File(taskDirectory))
+            if (!keepLocalDirectory) {
+              Utils.deleteRecursively(new File(taskDirectory))
+            }
           }
           log.debug(s"Removed task working directory $taskDirectory")
         }
@@ -213,8 +222,7 @@ class PythonProjectExecuteRunner(taskDirectory: String,
           val commandRan = command.mkString(" ")
           val msg = s"Caught exception while running pipe() operator. Command ran: $commandRan. " +
             s"Exception: ${t.getMessage}"
-          errorBuffer += msg
-          logCallback(errorBuffer.mkString("\t"))
+          logCallback(msg)
           proc.destroy()
           cleanup()
           throw t

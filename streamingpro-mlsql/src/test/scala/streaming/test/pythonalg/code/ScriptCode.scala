@@ -19,6 +19,7 @@ object ScriptCode {
       | and keepVersion="true"
       | and  enableDataLocal="true"
       | and  dataLocalFormat="csv"
+      | ${kv}
       |-- and  systemParam.envs='''{"MLFLOW_CONDA_HOME":"/anaconda3"}'''
       | ;
     """.stripMargin
