@@ -145,6 +145,8 @@ class PythonTrain extends Functions with Serializable {
            |Execute command: [${command.mkString(" ")}]
            |in directory [$taskDirectory]
            |
+           |The data is in : [$tempDataLocalPathWithAlgSuffix]
+           |
            |If you wanna keep [$taskDirectory] for debug, please set
            |keepLocalDirectory=true in train statement.
            |
@@ -221,7 +223,9 @@ class PythonTrain extends Functions with Serializable {
         // delete local model
         FileUtils.deleteDirectory(new File(tempModelLocalPath))
         // delete local data
-        FileUtils.deleteDirectory(new File(tempDataLocalPathWithAlgSuffix))
+        if (!keepLocalDirectory) {
+          FileUtils.deleteDirectory(new File(tempDataLocalPathWithAlgSuffix))
+        }
       }
       val status = if (trainFailFlag) "fail" else "success"
       Row.fromSeq(Seq(modelHDFSPath, algIndex, pythonProject.get.fileName, score, status, modelTrainStartTime, modelTrainEndTime, f))
