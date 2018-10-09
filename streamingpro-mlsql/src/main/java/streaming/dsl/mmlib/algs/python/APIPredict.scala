@@ -62,7 +62,7 @@ class APIPredict extends Logging with WowLog with Serializable {
 
     val pythonRunner = new PythonProjectExecuteRunner(taskDirectory = taskDirectory, envVars = envs.asScala.toMap, logCallback = recordLog)
 
-    val apiPredictCommand = new PythonAlgExecCommand(pythonProject.get, None, Option(pythonConfig)).
+    val apiPredictCommand = new PythonAlgExecCommand(pythonProject.get, None, Option(pythonConfig),envs.asScala.toMap).
       generateCommand(MLProject.api_predict_command)
 
     /*
@@ -99,7 +99,7 @@ class APIPredict extends Logging with WowLog with Serializable {
 
     val (daemonCommand, workerCommand) = pythonProject.get.scriptType match {
       case MLFlow =>
-        val project = MLProject.loadProject(pythonProject.get.filePath)
+        val project = MLProject.loadProject(pythonProject.get.filePath, envs.asScala.toMap)
         (Seq("bash", "-c", project.condaEnvCommand + s" && cd ${WowPythonRunner.PYSPARK_DAEMON_FILE_LOCATION} && python -m daemon${coreVersion}"),
           Seq("bash", "-c", project.condaEnvCommand + s" && cd ${WowPythonRunner.PYSPARK_DAEMON_FILE_LOCATION} && python -m worker${coreVersion}"))
       case _ =>

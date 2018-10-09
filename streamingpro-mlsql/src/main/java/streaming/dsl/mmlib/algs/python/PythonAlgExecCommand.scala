@@ -5,12 +5,14 @@ package streaming.dsl.mmlib.algs.python
   */
 class PythonAlgExecCommand(pythonScript: PythonScript,
                            mlflowConfig: Option[MLFlowConfig],
-                           pythonConfig: Option[PythonConfig]) {
+                           pythonConfig: Option[PythonConfig],
+                           envs: Map[String, String]
+                          ) {
 
   def generateCommand(commandType: String) = {
     pythonScript.scriptType match {
       case MLFlow =>
-        val project = MLProject.loadProject(pythonScript.filePath)
+        val project = MLProject.loadProject(pythonScript.filePath, envs)
         Seq("bash", "-c", project.entryPointCommandWithConda(commandType))
 
       case _ =>

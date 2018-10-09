@@ -10,11 +10,8 @@ import org.json4s.DefaultFormats
 import org.json4s.jackson.JsonMethods.parse
 import streaming.common.HDFSOperator
 import streaming.common.shell.ShellCommand
-import streaming.dsl.ScriptSQLExec
 import streaming.log.{Logging, WowLog}
 import streaming.session.MLSQLException
-
-import scala.collection.JavaConversions._
 
 object PythonAlgProject extends Logging with WowLog {
 
@@ -47,7 +44,7 @@ object PythonAlgProject extends Logging with WowLog {
 }
 
 
-class MLProject(val projectDir: String, project: Settings) extends Logging with WowLog {
+class MLProject(val projectDir: String, project: Settings, options: Map[String, String]) extends Logging with WowLog {
 
   private[this] def conda_env = {
     project.get(MLProject.conda_env)
@@ -62,7 +59,7 @@ class MLProject(val projectDir: String, project: Settings) extends Logging with 
   }
 
   def entryPointCommandWithConda(commandType: String) = {
-    val condaEnvManager = new CondaEnvManager()
+    val condaEnvManager = new CondaEnvManager(options)
     val condaEnvName = condaEnvManager.getOrCreateCondaEnv(Option(projectDir + s"/${MLProject.DEFAULT_CONDA_ENV_NAME}"))
     val entryPointCommandWithConda = commandWithConda(
       condaEnvManager.getCondaBinExecutable("activate"),
@@ -73,7 +70,7 @@ class MLProject(val projectDir: String, project: Settings) extends Logging with 
   }
 
   def condaEnvCommand = {
-    val condaEnvManager = new CondaEnvManager()
+    val condaEnvManager = new CondaEnvManager(options)
     val condaEnvName = condaEnvManager.getOrCreateCondaEnv(Option(projectDir + s"/${MLProject.DEFAULT_CONDA_ENV_NAME}"))
     val command = s"source ${condaEnvManager.getCondaBinExecutable("activate")} ${condaEnvName}"
     logInfo(format(s"=== generate command  '${command}' for ${projectDir} === "))
@@ -97,14 +94,19 @@ object MLProject {
   val DEFAULT_CONDA_ENV_NAME = "conda.yaml"
   val MLPROJECT = "MLproject"
 
-  def loadProject(projectDir: String) = {
+  def loadProject(projectDir: String, options: Map[String, String]) = {
     val projectContent = HDFSOperator.readFile(projectDir + s"/${MLPROJECT}")
     val projectDesc = ImmutableSettings.settingsBuilder().loadFromSource(projectContent).build()
-    new MLProject(projectDir, projectDesc)
+    new MLProject(projectDir, projectDesc, options)
   }
 }
 
-class CondaEnvManager extends Logging with WowLog {
+object CondaEnvManager {
+  val condaHomeKey = "MLFLOW_CONDA_HOME"
+}
+
+class CondaEnvManager(options: Map[String, String]) extends Logging with WowLog {
+
   def getOrCreateCondaEnv(condaEnvPath: Option[String]) = {
     val condaPath = getCondaBinExecutable("conda")
     try {
@@ -112,7 +114,7 @@ class CondaEnvManager extends Logging with WowLog {
     } catch {
       case e: Exception =>
         logError(s"Could not find Conda executable at ${condaPath}.", e)
-        throw new RuntimeException(
+        throw new MLSQLException(
           s"""
              |Could not find Conda executable at ${condaPath}.
              |Ensure Conda is installed as per the instructions
@@ -154,20 +156,14 @@ class CondaEnvManager extends Logging with WowLog {
   }
 
   def getCondaBinExecutable(executableName: String) = {
-    val condaHome = System.getenv("MLFLOW_CONDA_HOME")
+    val condaHome = options.get(CondaEnvManager.condaHomeKey) match {
+      case Some(home) => home
+      case None => System.getenv(CondaEnvManager.condaHomeKey)
+    }
     if (condaHome != null) {
       s"${condaHome}/bin/${executableName}"
     } else executableName
   }
 }
 
-object CondaEnvManager {
-  def main(args: Array[String]): Unit = {
-    val mlsqlContext = ScriptSQLExec.contextGetOrForTest()
-    ScriptSQLExec.setContext(mlsqlContext)
-    val project = MLProject.loadProject("/Users/allwefantasy/CSDNWorkSpace/mlflow/examples/sklearn_elasticnet_wine")
-    //val condaEnvManager = new CondaEnvManager()
-    //condaEnvManager.getOrCreateCondaEnv(Option(project.projectDir + "/conda.yaml"))
 
-  }
-}

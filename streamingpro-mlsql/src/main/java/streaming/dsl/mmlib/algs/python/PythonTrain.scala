@@ -132,7 +132,7 @@ class PythonTrain extends Functions with Serializable {
       }
 
 
-      val command = new PythonAlgExecCommand(pythonProject.get, Option(mlflowConfig), Option(pythonConfig)).
+      val command = new PythonAlgExecCommand(pythonProject.get, Option(mlflowConfig), Option(pythonConfig), envs).
         generateCommand(MLProject.train_command)
 
       val modelTrainStartTime = System.currentTimeMillis()
