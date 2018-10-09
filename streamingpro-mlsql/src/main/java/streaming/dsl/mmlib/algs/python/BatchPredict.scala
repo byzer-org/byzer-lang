@@ -21,6 +21,7 @@ class BatchPredict extends Logging with WowLog with Serializable {
     val spark = df.sparkSession
     import spark.implicits._
 
+    val keepLocalDirectory = params.getOrElse("keepLocalDirectory", "false").toBoolean
     val modelMetaManager = new ModelMetaManager(spark, _path, params)
     val modelMeta = modelMetaManager.loadMetaAndModel
     val localPathConfig = LocalPathConfig.buildFromParams(_path)
@@ -51,7 +52,7 @@ class BatchPredict extends Logging with WowLog with Serializable {
       val pythonConfig = PythonConfig.buildFromSystemParam(systemParam)
       val envs = EnvConfig.buildFromSystemParam(systemParam)
 
-      val command = new PythonAlgExecCommand(pythonProject.get, Option(mlflowConfig), Option(pythonConfig),envs).
+      val command = new PythonAlgExecCommand(pythonProject.get, Option(mlflowConfig), Option(pythonConfig), envs).
         generateCommand(MLProject.batch_predict_command)
 
       val localPathConfig = LocalPathConfig.buildFromParams(_path)
@@ -99,6 +100,7 @@ class BatchPredict extends Logging with WowLog with Serializable {
 
       val runner = new PythonProjectExecuteRunner(
         taskDirectory = taskDirectory,
+        keepLocalDirectory = keepLocalDirectory,
         envVars = envs,
         logCallback = (msg) => {
           ScriptSQLExec.setContextIfNotPresent(mlsqlContext)

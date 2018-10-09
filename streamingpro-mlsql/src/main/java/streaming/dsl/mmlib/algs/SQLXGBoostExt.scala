@@ -74,21 +74,8 @@ class SQLXGBoostExt(override val uid: String) extends SQLAlg with MllibFunctions
   }
 
 
-  override def codeExample: Code = Code(SQLCode,
+  override def codeExample: Code = Code(SQLCode, CodeExampleText.jsonStr +
     """
-      |-- create test data
-      |set jsonStr='''
-      |{"features":[5.1,3.5,1.4,0.2],"label":0.0},
-      |{"features":[5.1,3.5,1.4,0.2],"label":1.0}
-      |{"features":[5.1,3.5,1.4,0.2],"label":0.0}
-      |{"features":[4.4,2.9,1.4,0.2],"label":0.0}
-      |{"features":[5.1,3.5,1.4,0.2],"label":1.0}
-      |{"features":[5.1,3.5,1.4,0.2],"label":0.0}
-      |{"features":[5.1,3.5,1.4,0.2],"label":0.0}
-      |{"features":[4.7,3.2,1.3,0.2],"label":1.0}
-      |{"features":[5.1,3.5,1.4,0.2],"label":0.0}
-      |{"features":[5.1,3.5,1.4,0.2],"label":0.0}
-      |''';
       |load jsonStr.`jsonStr` as data;
       |select vec_dense(features) as features ,label as label from data
       |as data1;
@@ -97,7 +84,7 @@ class SQLXGBoostExt(override val uid: String) extends SQLAlg with MllibFunctions
       |train data as XGBoostExt.`/tmp/model`;
       |predict data as XGBoostExt.`/tmp/model`;
       |
-      |- api predict
+      |-- api predict
       |register XGBoostExt.`/tmp/model` as npredict;
       |select npredict(features) from data as output;
       |
