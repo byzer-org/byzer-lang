@@ -369,9 +369,6 @@ trait Functions extends SQlBaseFunc with Logging with WowLog with Serializable {
     (kafkaParam, newRDD)
   }
 
-  def copyToHDFS(tempModelLocalPath: String, path: String, clean: Boolean) = {
-    HDFSOperator.copyToHDFS(tempModelLocalPath, path, clean)
-  }
 
   def createTempModelLocalPath(path: String, autoCreateParentDir: Boolean = true) = {
     HDFSOperator.createTempModelLocalPath(path, autoCreateParentDir)

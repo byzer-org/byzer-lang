@@ -11,7 +11,7 @@ import org.apache.spark.util.PythonProjectExecuteRunner
 import streaming.common.HDFSOperator
 import streaming.common.ScalaMethodMacros.str
 import streaming.dsl.ScriptSQLExec
-import streaming.dsl.mmlib.algs.{Functions, SQLPythonAlg}
+import streaming.dsl.mmlib.algs.{Functions, SQLPythonAlg, SQLPythonFunc}
 import streaming.log.{Logging, WowLog}
 
 import scala.collection.JavaConverters._
@@ -24,7 +24,6 @@ class BatchPredict extends Logging with WowLog with Serializable {
     val keepLocalDirectory = params.getOrElse("keepLocalDirectory", "false").toBoolean
     val modelMetaManager = new ModelMetaManager(spark, _path, params)
     val modelMeta = modelMetaManager.loadMetaAndModel
-    val localPathConfig = LocalPathConfig.buildFromParams(_path)
     var (selectedFitParam, resourceParams) = new ResourceManager(params).loadResourceInRegister(spark, modelMeta)
 
     modelMeta.copy(resources = selectedFitParam)
@@ -45,6 +44,8 @@ class BatchPredict extends Logging with WowLog with Serializable {
     val sessionLocalTimeZone = df.sparkSession.sessionState.conf.sessionLocalTimeZone
 
     val modelPath = modelMeta.modelEntityPaths.head
+
+    val outoutFile = SQLPythonFunc.getAlgTmpPath(_path) + "/output"
 
     val jsonRDD = df.rdd.mapPartitionsWithIndex { (index, iter) =>
       ScriptSQLExec.setContext(mlsqlContext)
@@ -79,14 +80,16 @@ class BatchPredict extends Logging with WowLog with Serializable {
       val localModelPath = localPathConfig.localModelPath + s"/${index}"
       HDFSOperator.copyToLocalFile(localModelPath, modelPath, true)
 
+      val localOutputFileStr = localPathConfig.localOutputPath + s"/output-${index}.json"
+
       val internalSystemParam = Map(
         str[RunPythonConfig.InternalSystemParam](_.tempDataLocalPath) -> (localPathConfig.localDataPath + s"/${index}.json"),
-        str[RunPythonConfig.InternalSystemParam](_.tempOutputLocalPath) -> (localPathConfig.localOutputPath + "/" + index + "/output.json"),
+        str[RunPythonConfig.InternalSystemParam](_.tempOutputLocalPath) -> localOutputFileStr,
         str[RunPythonConfig.InternalSystemParam](_.tempModelLocalPath) -> localModelPath
       )
 
 
-      val localOutputPathFile = new File(localPathConfig.localOutputPath + "/" + index)
+      val localOutputPathFile = new File(localPathConfig.localOutputPath)
       if (!localOutputPathFile.exists()) {
         localOutputPathFile.mkdirs()
       }
@@ -119,6 +122,9 @@ class BatchPredict extends Logging with WowLog with Serializable {
           validateData = Array()
         )
         res.foreach(f => logInfo(format(f)))
+
+        HDFSOperator.copyToHDFS(localOutputFileStr, outoutFile, cleanTarget = true, cleanSource = false)
+
       } catch {
         case e: Exception =>
           logError(format_cause(e))
@@ -127,10 +133,11 @@ class BatchPredict extends Logging with WowLog with Serializable {
       } finally {
         FileUtils.deleteDirectory(new File(localModelPath))
         FileUtils.deleteDirectory(new File(localPathConfig.localDataPath))
+        FileUtils.deleteDirectory(new File(localPathConfig.localOutputPath))
       }
-      scala.io.Source.fromFile(localPathConfig.localOutputPath + "/" + index + "/output.json").getLines.toIterator
-    }
-    spark.read.json(spark.createDataset(jsonRDD)(Encoders.STRING))
+      List[String]().toIterator
+    }.count()
+    spark.read.json(outoutFile)
   }
 
 }
