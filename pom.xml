@@ -245,7 +245,7 @@
                 <spark.streaming.kafka.artifactId>spark-streaming-kafka-0-8_${scala.binary.version}
                 </spark.streaming.kafka.artifactId>
                 <spark.sql.kafka.artifactId>spark-sql-kafka-0-10_${scala.binary.version}</spark.sql.kafka.artifactId>
-                <spark.version>2.3.1</spark.version>
+                <spark.version>2.3.2</spark.version>
             </properties>
             <modules>
                 <module>streamingpro-spark-2.3.0-adaptor</module>

@@ -31,7 +31,8 @@ object PythonAlgProject extends Logging with WowLog {
 
         } else {
           if (!HDFSOperator.isFile(path)) {
-            throw new MLSQLException(s"pythonScriptPath=$path should be a directory containing MLproject file or a python file.")
+            throw new MLSQLException(s"pythonScriptPath=$path should be a directory which contains MLproject file " +
+              s"or directly a python file.")
           }
           val pythonScriptFileName = path.split("/").last
           val pythonScriptContent = spark.sparkContext.textFile(path, 1).collect().mkString("\n")
@@ -119,7 +120,7 @@ class CondaEnvManager(options: Map[String, String]) extends Logging with WowLog 
              |Could not find Conda executable at ${condaPath}.
              |Ensure Conda is installed as per the instructions
              |at https://conda.io/docs/user-guide/install/index.html. You can
-             |also configure MLflow to look for a specific Conda executable
+             |also configure MLSQL to look for a specific Conda executable
              |by setting the MLFLOW_CONDA_HOME environment variable to the path of the Conda
         """.stripMargin)
     }
