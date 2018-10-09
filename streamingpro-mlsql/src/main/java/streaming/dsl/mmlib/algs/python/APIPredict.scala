@@ -60,9 +60,11 @@ class APIPredict extends Logging with WowLog with Serializable {
     val envs = new util.HashMap[String, String]()
     EnvConfig.buildFromSystemParam(systemParam).foreach(f => envs.put(f._1, f._2))
 
-    val pythonRunner = new PythonProjectExecuteRunner(taskDirectory = taskDirectory, envVars = envs.asScala.toMap, logCallback = recordLog)
+    val pythonRunner = new PythonProjectExecuteRunner(taskDirectory = taskDirectory,
+      keepLocalDirectory = false,
+      envVars = envs.asScala.toMap, logCallback = recordLog)
 
-    val apiPredictCommand = new PythonAlgExecCommand(pythonProject.get, None, Option(pythonConfig),envs.asScala.toMap).
+    val apiPredictCommand = new PythonAlgExecCommand(pythonProject.get, None, Option(pythonConfig), envs.asScala.toMap).
       generateCommand(MLProject.api_predict_command)
 
     /*

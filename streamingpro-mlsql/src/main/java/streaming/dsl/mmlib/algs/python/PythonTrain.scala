@@ -12,7 +12,7 @@ import org.apache.spark.util._
 import streaming.dsl.mmlib.algs.SQLPythonFunc._
 
 import scala.collection.JavaConverters._
-import streaming.common.HDFSOperator
+import streaming.common.{HDFSOperator, NetUtils}
 import streaming.dsl.ScriptSQLExec
 import streaming.common.ScalaMethodMacros._
 import streaming.dsl.mmlib.algs.{Functions, SQLPythonAlg, SQLPythonFunc}
@@ -21,6 +21,7 @@ class PythonTrain extends Functions with Serializable {
   def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
 
     val keepVersion = params.getOrElse("keepVersion", "true").toBoolean
+    val keepLocalDirectory = params.getOrElse("keepLocalDirectory", "false").toBoolean
 
     var kafkaParam = mapParams("kafkaParam", params)
 
@@ -135,12 +136,33 @@ class PythonTrain extends Functions with Serializable {
       val command = new PythonAlgExecCommand(pythonProject.get, Option(mlflowConfig), Option(pythonConfig), envs).
         generateCommand(MLProject.train_command)
 
+      logInfo(format(
+        s"""
+           |
+           |----------------------------------------------------------------
+           |host: ${NetUtils.getHost}
+           |
+           |Execute command: [${command.mkString(" ")}]
+           |in directory [$taskDirectory]
+           |
+           |If you wanna keep [$taskDirectory] for debug, please set
+           |keepLocalDirectory=true in train statement.
+           |
+           |Remember that the local directories are in executor side.
+           |
+           |e.g:
+           |
+           |train data as PythonAlg.`/tmp/abc` where keepLocalDirectory="true";
+           |----------------------------------------------------------------
+         """.stripMargin))
+
       val modelTrainStartTime = System.currentTimeMillis()
 
       var score = 0.0
       var trainFailFlag = false
       val runner = new PythonProjectExecuteRunner(
         taskDirectory = taskDirectory,
+        keepLocalDirectory = keepLocalDirectory,
         envVars = envs,
         logCallback = (msg) => {
           ScriptSQLExec.setContextIfNotPresent(mlsqlContext)
@@ -180,13 +202,17 @@ class PythonTrain extends Functions with Serializable {
 
       val modelHDFSPath = SQLPythonFunc.getAlgModelPath(path, keepVersion) + "/" + algIndex
       try {
-        //copy model to HDFS
-        val fs = FileSystem.get(new Configuration())
-        if (!keepVersion) {
-          fs.delete(new Path(modelHDFSPath), true)
+        // If training failed, we do not need
+        // copy model to hdfs
+        if (!trainFailFlag) {
+          //copy model to HDFS
+          val fs = FileSystem.get(new Configuration())
+          if (!keepVersion) {
+            fs.delete(new Path(modelHDFSPath), true)
+          }
+          fs.copyFromLocalFile(new Path(tempModelLocalPath),
+            new Path(modelHDFSPath))
         }
-        fs.copyFromLocalFile(new Path(tempModelLocalPath),
-          new Path(modelHDFSPath))
       } catch {
         case e: Exception =>
           e.printStackTrace()

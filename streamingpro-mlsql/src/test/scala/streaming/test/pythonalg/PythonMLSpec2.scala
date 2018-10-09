@@ -73,4 +73,31 @@ class PythonMLSpec2 extends BasicSparkOperation with SpecFunctions with BasicMLS
     }
   }
 
+  "SQLPythonAlgTrain keepLocalDirectory" should "work fine" in {
+    withBatchContext(setupBatchContext(batchParamsWithAPI, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+      //执行sql
+      implicit val spark = runtime.sparkSession
+      val sq = createSSEL(spark, "")
+      val projectName = "sklearn_elasticnet_wine"
+      val projectPath = getExampleProject(projectName)
+      val scriptCode = ScriptCode(s"/tmp/${projectName}", projectPath)
+
+      val config = Map(
+        str[ScriptCode](_.featureTablePath) -> scriptCode.featureTablePath,
+        str[ScriptCode](_.modelPath) -> scriptCode.modelPath,
+        str[ScriptCode](_.projectPath) -> scriptCode.projectPath,
+        "kv" -> """ and keepLocalDirectory="true" """
+      )
+
+      //train
+      ScriptSQLExec.parse(TemplateMerge.merge(ScriptCode.train, config), sq)
+
+      var table = sq.getLastSelectTable().get
+      val status = spark.sql(s"select * from ${table}").collect().map(f => f.getAs[String]("status")).head
+      assert(status == "success")
+
+
+    }
+  }
+
 }
