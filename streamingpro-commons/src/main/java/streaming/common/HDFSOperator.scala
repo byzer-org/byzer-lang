@@ -129,6 +129,11 @@ object HDFSOperator {
     fs.isDirectory(new Path(path))
   }
 
+  def isFile(path: String) = {
+    val fs = FileSystem.get(new Configuration())
+    fs.isFile(new Path(path))
+  }
+
   def fileExists(path: String) = {
     val fs = FileSystem.get(new Configuration())
     fs.exists(new Path(path))
