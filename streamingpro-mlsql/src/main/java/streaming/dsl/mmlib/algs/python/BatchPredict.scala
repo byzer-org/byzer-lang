@@ -51,7 +51,7 @@ class BatchPredict extends Logging with WowLog with Serializable {
       val pythonConfig = PythonConfig.buildFromSystemParam(systemParam)
       val envs = EnvConfig.buildFromSystemParam(systemParam)
 
-      val command = new PythonAlgExecCommand(pythonProject.get, Option(mlflowConfig), Option(pythonConfig)).
+      val command = new PythonAlgExecCommand(pythonProject.get, Option(mlflowConfig), Option(pythonConfig),envs).
         generateCommand(MLProject.batch_predict_command)
 
       val localPathConfig = LocalPathConfig.buildFromParams(_path)
