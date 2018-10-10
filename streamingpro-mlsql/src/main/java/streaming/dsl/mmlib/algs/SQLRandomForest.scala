@@ -68,8 +68,13 @@ class SQLRandomForest(override val uid: String) extends SQLAlg with MllibFunctio
   override def explainModel(sparkSession: SparkSession, path: String, params: Map[String, String]): DataFrame = {
     val models = load(sparkSession, path, params).asInstanceOf[ArrayBuffer[RandomForestClassificationModel]]
     val rows = models.flatMap { model =>
-      val modelParams = model.params.filter(param => model.isSet(param)).map(param =>
-        Seq(("fitParam.[group]." + param.name), model.get(param).get.toString))
+      val modelParams = model.params.filter(param => model.isSet(param)).map { param =>
+        val tmp = model.get(param).get
+        val str = if (tmp == null) {
+          "null"
+        } else tmp.toString
+        Seq(("fitParam.[group]." + param.name), str)
+      }
       Seq(
         Seq("uid", model.uid),
         Seq("numFeatures", model.numFeatures.toString),
@@ -101,6 +106,12 @@ class SQLRandomForest(override val uid: String) extends SQLAlg with MllibFunctio
       |
       | Use "load modelExample.`RandomForest` as output;"
       | get example.
+      |
+      | If you wanna check the params of model you have trained, use this command:
+      |
+      | ```
+      | load modelExplain.`/tmp/model` where alg="RandomForest" as outout;
+      | ```
       |
     """.stripMargin)
 
