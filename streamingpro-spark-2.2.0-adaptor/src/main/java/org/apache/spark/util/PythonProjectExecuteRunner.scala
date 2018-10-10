@@ -14,6 +14,7 @@ import scala.collection.mutable.ArrayBuffer
 import scala.io.Source
 
 class PythonProjectExecuteRunner(taskDirectory: String,
+                                 keepLocalDirectory: Boolean,
                                  envVars: Map[String, String] = Map(),
                                  logCallback: (String) => Unit = (msg: String) => {},
                                  separateWorkingDir: Boolean = true,
@@ -201,7 +202,9 @@ class PythonProjectExecuteRunner(taskDirectory: String,
         // cleanup task working directory if used
         if (workInTaskDirectory) {
           scala.util.control.Exception.ignoring(classOf[IOException]) {
-            Utils.deleteRecursively(new File(taskDirectory))
+            if (!keepLocalDirectory) {
+              Utils.deleteRecursively(new File(taskDirectory))
+            }
           }
           log.debug(s"Removed task working directory $taskDirectory")
         }

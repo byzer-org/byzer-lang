@@ -80,7 +80,7 @@ object ObjPickle {
     iterator
   }
 
-  def pickleInternalRow(iter: Iterator[InternalRow], schema: DataType) = {
+  def  pickleInternalRow(iter: Iterator[InternalRow], schema: DataType) = {
     EvaluatePython.registerPicklers()
     val toJava: (Any) => Any = { item =>
       EvaluatePython.toJava(item, schema)
