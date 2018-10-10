@@ -72,16 +72,28 @@ class SQLXGBoostExt(override val uid: String) extends SQLAlg with MllibFunctions
   }
 
 
-//  override def explainModel(sparkSession: SparkSession, path: String, params: Map[String, String]): DataFrame = {
-//    val obj = Class.forName("streaming.dsl.mmlib.algs.XGBoostExt").newInstance()
-//    ReflectHelper.method(obj, "explainModel", load(sparkSession, path, params).asInstanceOf[AnyRef]).asInstanceOf[DataFrame]
-//  }
+  override def explainModel(sparkSession: SparkSession, path: String, params: Map[String, String]): DataFrame = {
+    val obj = Class.forName("streaming.dsl.mmlib.algs.XGBoostExt").newInstance()
+    ReflectHelper.method(obj, "explainModel", sparkSession, load(sparkSession, path, params).asInstanceOf[ArrayBuffer[_]]).asInstanceOf[DataFrame]
+  }
 
   override def doc: Doc = Doc(MarkDownDoc,
     """
       |XGBoostExt is based on [xgboost4j-spark](https://xgboost.readthedocs.io/en/latest/jvm/scaladocs/xgboost4j-spark/index.html).
       |
       |If you wanna use this module, compile StreamingPro with -Pstreamingpro-xgboost enabled.
+      |
+      |Check model params:
+      |
+      | ```sql
+      | load modelExplain.`/tmp/model` where alg="XGBoostExt" as outout;
+      | ```
+      |
+      |Check Alg params:
+      |
+      |```sql
+      | load modelParam.`XGBoostExt`  as outout;
+      |```
       |
      """.stripMargin)
 
