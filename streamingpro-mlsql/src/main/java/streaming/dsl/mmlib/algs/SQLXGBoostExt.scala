@@ -72,10 +72,10 @@ class SQLXGBoostExt(override val uid: String) extends SQLAlg with MllibFunctions
   }
 
 
-  override def explainModel(sparkSession: SparkSession, path: String, params: Map[String, String]): DataFrame = {
-    val obj = Class.forName("streaming.dsl.mmlib.algs.XGBoostExt").newInstance()
-    ReflectHelper.method(obj, "explainModel", load(sparkSession, path, params).asInstanceOf[AnyRef]).asInstanceOf[DataFrame]
-  }
+//  override def explainModel(sparkSession: SparkSession, path: String, params: Map[String, String]): DataFrame = {
+//    val obj = Class.forName("streaming.dsl.mmlib.algs.XGBoostExt").newInstance()
+//    ReflectHelper.method(obj, "explainModel", load(sparkSession, path, params).asInstanceOf[AnyRef]).asInstanceOf[DataFrame]
+//  }
 
   override def doc: Doc = Doc(MarkDownDoc,
     """
