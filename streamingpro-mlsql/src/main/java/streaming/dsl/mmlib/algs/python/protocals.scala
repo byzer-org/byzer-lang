@@ -120,7 +120,8 @@ object PythonTrainingResultSchema {
     StructField("status", StringType),
     StructField("startTime", LongType),
     StructField("endTime", LongType),
-    StructField("trainParams", MapType(StringType, StringType))
+    StructField("trainParams", MapType(StringType, StringType)),
+    StructField("execDesc", StringType)
   ))
 
   val trainParamsSchema = StructType(Seq(

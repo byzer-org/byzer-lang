@@ -1,8 +1,6 @@
 package streaming.dsl.mmlib.algs
 
 import net.csdn.common.reflect.ReflectHelper
-import org.apache.spark.SparkCoreVersion
-import org.apache.spark.ml.classification.RandomForestClassificationModel
 import org.apache.spark.ml.linalg.SQLDataTypes.VectorType
 import org.apache.spark.ml.linalg.Vector
 import org.apache.spark.ml.{Model, Transformer}
@@ -73,6 +71,19 @@ class SQLXGBoostExt(override val uid: String) extends SQLAlg with MllibFunctions
     })
   }
 
+
+//  override def explainModel(sparkSession: SparkSession, path: String, params: Map[String, String]): DataFrame = {
+//    val obj = Class.forName("streaming.dsl.mmlib.algs.XGBoostExt").newInstance()
+//    ReflectHelper.method(obj, "explainModel", load(sparkSession, path, params).asInstanceOf[AnyRef]).asInstanceOf[DataFrame]
+//  }
+
+  override def doc: Doc = Doc(MarkDownDoc,
+    """
+      |XGBoostExt is based on [xgboost4j-spark](https://xgboost.readthedocs.io/en/latest/jvm/scaladocs/xgboost4j-spark/index.html).
+      |
+      |If you wanna use this module, compile StreamingPro with -Pstreamingpro-xgboost enabled.
+      |
+     """.stripMargin)
 
   override def codeExample: Code = Code(SQLCode, CodeExampleText.jsonStr +
     """

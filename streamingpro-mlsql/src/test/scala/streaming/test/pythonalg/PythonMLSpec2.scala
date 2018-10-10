@@ -75,7 +75,7 @@ class PythonMLSpec2 extends BasicSparkOperation with SpecFunctions with BasicMLS
   }
 
   "SQLPythonAlgTrain keepLocalDirectory" should "work fine" in {
-    withBatchContext(setupBatchContext(batchParamsWithAPI, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
       implicit val spark = runtime.sparkSession
       val sq = createSSEL(spark, "")
