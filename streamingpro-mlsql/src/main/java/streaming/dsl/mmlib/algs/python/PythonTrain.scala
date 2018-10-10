@@ -136,27 +136,28 @@ class PythonTrain extends Functions with Serializable {
       val command = new PythonAlgExecCommand(pythonProject.get, Option(mlflowConfig), Option(pythonConfig), envs).
         generateCommand(MLProject.train_command)
 
-      logInfo(format(
+
+      val execDesc =
         s"""
            |
            |----------------------------------------------------------------
            |host: ${NetUtils.getHost}
            |
-           |Execute command: [${command.mkString(" ")}]
-           |in directory [$taskDirectory]
+           |Command: ${command.mkString(" ")}
+           |TaskDirectory: ${taskDirectory}
+           |DataDirectory: ${tempDataLocalPathWithAlgSuffix}
+           |ModelDirectory: ${tempModelLocalPath}
            |
-           |The data is in : [$tempDataLocalPathWithAlgSuffix]
+           |Notice:
            |
-           |If you wanna keep [$taskDirectory] for debug, please set
+           |If you wanna keep [${taskDirectory}] for debug, please set
            |keepLocalDirectory=true in train statement.
-           |
-           |Remember that the local directories are in executor side.
            |
            |e.g:
            |
            |train data as PythonAlg.`/tmp/abc` where keepLocalDirectory="true";
            |----------------------------------------------------------------
-         """.stripMargin))
+         """.stripMargin
 
       val modelTrainStartTime = System.currentTimeMillis()
 
@@ -228,7 +229,17 @@ class PythonTrain extends Functions with Serializable {
         }
       }
       val status = if (trainFailFlag) "fail" else "success"
-      Row.fromSeq(Seq(modelHDFSPath, algIndex, pythonProject.get.fileName, score, status, modelTrainStartTime, modelTrainEndTime, f))
+      Row.fromSeq(Seq(
+        modelHDFSPath,
+        algIndex,
+        pythonProject.get.fileName,
+        score,
+        status,
+        modelTrainStartTime,
+        modelTrainEndTime,
+        f,
+        execDesc
+      ))
     }
 
     df.sparkSession.createDataFrame(wowRDD, PythonTrainingResultSchema.algSchema).write.mode(SaveMode.Overwrite).parquet(SQLPythonFunc.getAlgMetalPath(path, keepVersion) + "/0")
