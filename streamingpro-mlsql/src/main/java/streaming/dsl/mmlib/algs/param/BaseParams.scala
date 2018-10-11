@@ -16,6 +16,7 @@ trait BaseParams extends WowParams {
     "The table name of test dataset when tranning",
     (value: String) => true)
 
+
   final def getEvaluateTable: String = $(evaluateTable)
 
   def setEvaluateTable(value: String): this.type = set(evaluateTable, value)

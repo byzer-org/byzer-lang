@@ -95,7 +95,9 @@ class ModelList(format: String, path: String, option: Map[String, String])(spark
   }
 
   override def explain: DataFrame = {
-
+    /*
+       todo: we can scan `streaming.dsl.mmlib.algs` package and get all available algs.
+     */
     val rows = sparkSession.sparkContext.parallelize(MLMapping.mapping.keys.toSeq.sorted, 1)
     sparkSession.createDataFrame(rows.filter(f => ModelSelfExplain.findAlg(f).isDefined).map { algName =>
       val sqlAlg = ModelSelfExplain.findAlg(algName).get
