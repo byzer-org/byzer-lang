@@ -149,17 +149,6 @@
         </profile>
 
         <profile>
-            <id>bigdl</id>
-            <dependencies>
-                <dependency>
-                    <groupId>streaming.king</groupId>
-                    <artifactId>streamingpro-bigdl</artifactId>
-                    <version>${project.parent.version}</version>
-                </dependency>
-            </dependencies>
-        </profile>
-
-        <profile>
             <id>streamingpro-spark-2.2.0-adaptor</id>
             <dependencies>
                 <dependency>
@@ -280,6 +269,12 @@
         <dependency>
             <groupId>streaming.king</groupId>
             <artifactId>streamingpro-api</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>streaming.king</groupId>
+            <artifactId>streamingpro-bigdl</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
 
