@@ -59,8 +59,11 @@ class SQLMnistLoaderExt(override val uid: String) extends SQLAlg with BaseParams
     Engine.init
     params.get(mnistDir.name).
       map(m => set(mnistDir, m)).getOrElse {
-      throw new MLSQLException(s"mnistDir is required. ${mnistDir.doc}")
+      set(mnistDir, path)
+      require($(mnistDir) != null, "mnistDir should not empty")
     }
+
+
 
     params.get(dataType.name).
       map(m => set(dataType, m)).
