@@ -51,6 +51,11 @@ class SQLRandomForest(override val uid: String) extends SQLAlg with MllibFunctio
   }
 
 
+  override def batchPredict(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
+    val model = load(df.sparkSession, path, params).asInstanceOf[ArrayBuffer[RandomForestClassificationModel]].head
+    model.transform(df)
+  }
+
   override def explainParams(sparkSession: SparkSession): DataFrame = {
     _explainParams(sparkSession, () => {
       new RandomForestClassifier()
