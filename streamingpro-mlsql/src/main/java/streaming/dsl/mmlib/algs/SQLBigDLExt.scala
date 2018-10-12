@@ -1,5 +1,8 @@
 package streaming.dsl.mmlib.algs
 
+import java.util.UUID
+
+import com.intel.analytics.bigdl.Module
 import com.intel.analytics.bigdl.dlframes.{DLClassifier, DLModel}
 import com.intel.analytics.bigdl.models.lenet.LeNet5
 import com.intel.analytics.bigdl.models.utils.ModelBroadcast
@@ -11,7 +14,8 @@ import org.apache.spark.ml.linalg.SQLDataTypes.VectorType
 import org.apache.spark.ml.linalg.{Vector, Vectors}
 import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession}
 import org.apache.spark.sql.expressions.UserDefinedFunction
-import streaming.common.HDFSOperator
+import streaming.common.{HDFSOperator, ScriptCacheKey, SourceCodeCompiler}
+import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib._
 import streaming.dsl.mmlib.algs.classfication.BaseClassification
 import streaming.dsl.mmlib.algs.param.BaseParams
@@ -20,12 +24,13 @@ import streaming.dsl.mmlib.algs.bigdl.BigDLFunctions
 import scala.collection.JavaConversions._
 import scala.collection.mutable.ArrayBuffer
 
-class SQLLeNet5Ext(override val uid: String) extends SQLAlg with MllibFunctions with BigDLFunctions with BaseClassification {
+class SQLBigDLExt(override val uid: String) extends SQLAlg with MllibFunctions with BigDLFunctions with BaseClassification {
 
   def this() = this(BaseParams.randomUID())
 
   override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
     Engine.init
+
     params.get(keepVersion.name).
       map(m => set(keepVersion, m.toBoolean)).
       getOrElse($(keepVersion))
@@ -35,9 +40,44 @@ class SQLLeNet5Ext(override val uid: String) extends SQLAlg with MllibFunctions 
     SQLPythonFunc.incrementVersion(path, $(keepVersion))
     val spark = df.sparkSession
 
+    val c = ScriptSQLExec.contextGetOrForTest()
+
+    val wrap = (fn: () => Any) => {
+      try {
+        ScriptSQLExec.setContextIfNotPresent(c)
+        fn()
+      } catch {
+        case e: Exception =>
+          logError(format_exception(e))
+          throw e
+      }
+    }
+
+    val wrapClass = (function: String) => {
+      val className = s"StreamingProUDF_${UUID.randomUUID().toString.replaceAll("-", "")}"
+      val newfun =
+        s"""
+           |class  ${className}{
+           |import com.intel.analytics.bigdl._
+           |import com.intel.analytics.bigdl.numeric.NumericFloat
+           |import com.intel.analytics.bigdl.nn._
+           |  ${function}
+           |}
+            """.stripMargin
+      (className, newfun)
+    }
+
 
     bigDLClassifyTrain[Float](df, path, params, (newFitParam) => {
-      val model = LeNet5(classNum = newFitParam("classNum").toInt)
+      require(newFitParam.contains("code"), "code is required")
+      val (className, newfun) = wrapClass(newFitParam("code"))
+      val clazz = wrap(() => {
+        SourceCodeCompiler.execute(ScriptCacheKey(newfun, className))
+      }).asInstanceOf[Class[_]]
+
+      val method = SourceCodeCompiler.getMethod(clazz, "apply")
+      val model = method.invoke(clazz.newInstance(), newFitParam).asInstanceOf[Module[Float]]
+      //val model = LeNet5(classNum = newFitParam("classNum").toInt)
       val criterion = ClassNLLCriterion[Float]()
       val alg = new DLClassifier[Float](model, criterion,
         JSONArray.fromObject(newFitParam("featureSize")).map(f => f.asInstanceOf[Int]).toArray)
@@ -112,7 +152,7 @@ class SQLLeNet5Ext(override val uid: String) extends SQLAlg with MllibFunctions 
   override def doc: Doc = Doc(MarkDownDoc,
     """
       |
-      |load modelParams.`LeNet5Ext`  as output;
+      |
     """.stripMargin)
 
   override def codeExample: Code = Code(SQLCode,
@@ -124,10 +164,28 @@ class SQLLeNet5Ext(override val uid: String) extends SQLAlg with MllibFunctions 
       |mnistDir="/Users/allwefantasy/Downloads/mnist"
       |as data;
       |
-      |train data as LeNet5Ext.`/tmp/lenet` where
+      |train data as BigDLExt.`/tmp/bigdl` where
       |fitParam.0.featureSize="[28,28]"
-      |and fitParam.0.classNum="10";
-      |
+      |and fitParam.0.classNum="10"
+      |and fitParam.0.maxEpoch="1"
+      |and fitParam.0.code='''
+      |def apply(params:Map[String,String])={
+      |    val model = Sequential()
+      |    model.add(Reshape(Array(1, 28, 28)))
+      |      .add(SpatialConvolution(1, 6, 5, 5).setName("conv1_5x5"))
+      |      .add(Tanh())
+      |      .add(SpatialMaxPooling(2, 2, 2, 2))
+      |      .add(SpatialConvolution(6, 12, 5, 5).setName("conv2_5x5"))
+      |      .add(Tanh())
+      |      .add(SpatialMaxPooling(2, 2, 2, 2))
+      |      .add(Reshape(Array(12 * 4 * 4)))
+      |      .add(Linear(12 * 4 * 4, 100).setName("fc1"))
+      |      .add(Tanh())
+      |      .add(Linear(100, params("classNum").toInt).setName("fc2"))
+      |      .add(LogSoftMax())
+      |}
+      |'''
+      |;
       |predict data as LeNet5Ext.`/tmp/lenet`;
       |
       |register LeNet5Ext.`/tmp/lenet` as mnistPredict;
@@ -139,4 +197,3 @@ class SQLLeNet5Ext(override val uid: String) extends SQLAlg with MllibFunctions 
     """.stripMargin)
 }
 
-case class BigDLDefaultConfig(batchSize: Int = 128, maxEpoch: Int = 1)
