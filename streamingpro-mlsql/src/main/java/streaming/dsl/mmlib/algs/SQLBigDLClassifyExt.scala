@@ -3,12 +3,13 @@ package streaming.dsl.mmlib.algs
 import java.util.UUID
 
 import com.intel.analytics.bigdl.Module
+import com.intel.analytics.bigdl.dataset.SampleToMiniBatch
 import com.intel.analytics.bigdl.dlframes.{DLClassifier, DLModel}
 import com.intel.analytics.bigdl.models.lenet.LeNet5
 import com.intel.analytics.bigdl.models.utils.ModelBroadcast
 import com.intel.analytics.bigdl.nn.{ClassNLLCriterion, Module}
 import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.utils.Engine
+import com.intel.analytics.bigdl.utils.{Engine, T}
 import net.sf.json.JSONArray
 import org.apache.spark.ml.linalg.SQLDataTypes.VectorType
 import org.apache.spark.ml.linalg.{Vector, Vectors}
@@ -128,7 +129,7 @@ class SQLBigDLClassifyExt(override val uid: String) extends SQLAlg with MllibFun
     val f = (vec: Vector) => {
 
       val localModel = modelBroadCast.value()
-      val featureTensor = Tensor(vec.toArray.map(f => f.toFloat), featureSize)
+      val featureTensor = Tensor(vec.toArray.map(f => f.toFloat), Array(1) ++ featureSize)
       val output = localModel.forward(featureTensor)
       val res = output.toTensor[Float].clone().storage().array().map(f => f.toDouble)
       Vectors.dense(res)
@@ -183,7 +184,7 @@ class SQLBigDLClassifyExt(override val uid: String) extends SQLAlg with MllibFun
       |                        model.add(Dense(100, activation = "tanh").setName("fc1"))
       |                        model.add(Dense(params("classNum").toInt, activation = "softmax").setName("fc2"))
       |                    }
-      |}
+      |
       |'''
       |;
       |predict data as BigDLClassifyExt.`/tmp/lenet`;
