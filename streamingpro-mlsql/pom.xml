@@ -241,9 +241,9 @@
             </properties>
             <dependencies>
                 <!--<dependency>-->
-                    <!--<groupId>org.elasticsearch</groupId>-->
-                    <!--<artifactId>elasticsearch-spark-20_2.11</artifactId>-->
-                    <!--<version>5.5.2</version>-->
+                <!--<groupId>org.elasticsearch</groupId>-->
+                <!--<artifactId>elasticsearch-spark-20_2.11</artifactId>-->
+                <!--<version>5.5.2</version>-->
                 <!--</dependency>-->
                 <dependency>
                     <groupId>streaming.king</groupId>
@@ -269,6 +269,12 @@
         <dependency>
             <groupId>streaming.king</groupId>
             <artifactId>streamingpro-api</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>streaming.king</groupId>
+            <artifactId>streamingpro-bigdl</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
 

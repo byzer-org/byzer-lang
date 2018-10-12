@@ -2,7 +2,7 @@ name: tutorial
 channels:
   - defaults
 dependencies:
-  - python=3.6
+  - python=2.7
   - numpy=1.14.3
   - pandas=0.22.0
   - scikit-learn=0.19.1

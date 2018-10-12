@@ -158,6 +158,7 @@ class PythonTrain extends Functions with Serializable {
            |train data as PythonAlg.`/tmp/abc` where keepLocalDirectory="true";
            |----------------------------------------------------------------
          """.stripMargin
+      logInfo(format(execDesc))
 
       val modelTrainStartTime = System.currentTimeMillis()
 
