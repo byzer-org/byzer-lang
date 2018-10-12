@@ -20,6 +20,7 @@ import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.NumericF
 import com.intel.analytics.bigdl.utils.{Engine, File, LoggerFilter}
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkContext
+import org.apache.spark.ml.linalg.Vectors
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SQLContext
 import streaming.dsl.ScriptSQLExec
@@ -126,7 +127,17 @@ object DLClassifierLeNet {
     }
     val validationDF = sqLContext.createDataFrame(validationRDD).toDF("features", "label")
     val transformed = bigdl.batchPredict(validationDF, "/tmp/jack", Map())
-    transformed.show()
+    transformed.show(true)
+
+    val spark = validationDF.sparkSession
+    val model = bigdl.load(spark, "/tmp/jack", Map())
+    spark.udf.register("jack", bigdl.predict(spark, model, "jack", Map()))
+    spark.udf.register("vec_dense", (a: Seq[Double]) => {
+      Vectors.dense(a.toArray)
+    })
+    validationDF.createOrReplaceTempView("data")
+    spark.sql("select jack(vec_dense(features)) as p,label from data").show(false)
+
     sc.stop()
 
   }

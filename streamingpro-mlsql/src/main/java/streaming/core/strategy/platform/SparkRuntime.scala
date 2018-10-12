@@ -61,6 +61,13 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
       master == "local" || master.startsWith("local[")
     }
 
+    if (params.getOrDefault("streaming.bigdl.enable", "true").toString.toBoolean) {
+      conf.setIfMissing("spark.shuffle.reduceLocality.enabled", "false")
+      conf.setIfMissing("spark.shuffle.blockTransferService", "nio")
+      conf.setIfMissing("spark.scheduler.minRegisteredResourcesRatio", "1.0")
+      conf.setIfMissing("spark.speculation", "false")
+    }
+
     if (params.containsKey("streaming.ps.enable") && params.get("streaming.ps.enable").toString.toBoolean) {
       if (!isLocalMaster(conf)) {
         logger.info("register worker.sink.pservice.class with org.apache.spark.ps.cluster.PSServiceSink")
@@ -75,7 +82,6 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
       params.get("streaming.enableHiveSupport").toString.toBoolean) {
       sparkSession.enableHiveSupport()
     }
-
 
 
     val ss = if (params.containsKey("streaming.enableCarbonDataSupport") &&
@@ -120,7 +126,6 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
         psDriverBackend.start()
       }
     }
-
     ss
   }
 
