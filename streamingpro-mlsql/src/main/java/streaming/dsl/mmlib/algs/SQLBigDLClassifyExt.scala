@@ -24,7 +24,7 @@ import streaming.dsl.mmlib.algs.bigdl.BigDLFunctions
 import scala.collection.JavaConversions._
 import scala.collection.mutable.ArrayBuffer
 
-class SQLBigDLExt(override val uid: String) extends SQLAlg with MllibFunctions with BigDLFunctions with BaseClassification {
+class SQLBigDLClassifyExt(override val uid: String) extends SQLAlg with MllibFunctions with BigDLFunctions with BaseClassification {
 
   def this() = this(BaseParams.randomUID())
 
@@ -58,9 +58,9 @@ class SQLBigDLExt(override val uid: String) extends SQLAlg with MllibFunctions w
       val newfun =
         s"""
            |class  ${className}{
-           |import com.intel.analytics.bigdl._
+           |import com.intel.analytics.bigdl.nn.keras._
+           |import com.intel.analytics.bigdl.utils.Shape
            |import com.intel.analytics.bigdl.numeric.NumericFloat
-           |import com.intel.analytics.bigdl.nn._
            |  ${function}
            |}
             """.stripMargin

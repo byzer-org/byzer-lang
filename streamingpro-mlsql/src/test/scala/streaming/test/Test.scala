@@ -24,7 +24,7 @@ import org.apache.spark.ml.linalg.Vectors
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SQLContext
 import streaming.dsl.ScriptSQLExec
-import streaming.dsl.mmlib.algs.SQLBigDLExt
+import streaming.dsl.mmlib.algs.SQLBigDLClassifyExt
 
 
 /**
@@ -112,7 +112,7 @@ object DLClassifierLeNet {
     })
     val trainingDF = sqLContext.createDataFrame(trainingRDD).toDF("features", "label")
 
-    val bigdl = new SQLBigDLExt()
+    val bigdl = new SQLBigDLClassifyExt()
     bigdl.train(trainingDF, "/tmp/jack", Map("fitParam.0.featureSize" -> "[28,28]", "fitParam.0.classNum" -> "10"))
 
 
