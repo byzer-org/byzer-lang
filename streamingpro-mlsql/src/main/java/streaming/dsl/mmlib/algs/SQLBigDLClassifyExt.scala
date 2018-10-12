@@ -157,6 +157,9 @@ class SQLBigDLClassifyExt(override val uid: String) extends SQLAlg with MllibFun
 
   override def codeExample: Code = Code(SQLCode,
     """
+      |-- You can download the MNIST Data from [here](http://yann.lecun.com/exdb/mnist/). Unzip all the
+      |-- files and put them in one folder(e.g. mnist).
+      |
       |set json = '''{}''';
       |load jsonStr.`json` as emptyData;
       |
@@ -164,31 +167,28 @@ class SQLBigDLClassifyExt(override val uid: String) extends SQLAlg with MllibFun
       |mnistDir="/Users/allwefantasy/Downloads/mnist"
       |as data;
       |
-      |train data as BigDLExt.`/tmp/bigdl` where
+      |train data as BigDLClassifyExt.`/tmp/bigdl` where
       |fitParam.0.featureSize="[28,28]"
       |and fitParam.0.classNum="10"
       |and fitParam.0.maxEpoch="1"
       |and fitParam.0.code='''
-      |def apply(params:Map[String,String])={
-      |    val model = Sequential()
-      |    model.add(Reshape(Array(1, 28, 28)))
-      |      .add(SpatialConvolution(1, 6, 5, 5).setName("conv1_5x5"))
-      |      .add(Tanh())
-      |      .add(SpatialMaxPooling(2, 2, 2, 2))
-      |      .add(SpatialConvolution(6, 12, 5, 5).setName("conv2_5x5"))
-      |      .add(Tanh())
-      |      .add(SpatialMaxPooling(2, 2, 2, 2))
-      |      .add(Reshape(Array(12 * 4 * 4)))
-      |      .add(Linear(12 * 4 * 4, 100).setName("fc1"))
-      |      .add(Tanh())
-      |      .add(Linear(100, params("classNum").toInt).setName("fc2"))
-      |      .add(LogSoftMax())
+      |                   def apply(params:Map[String,String])={
+      |                        val model = Sequential()
+      |                        model.add(Reshape(Array(1, 28, 28), inputShape = Shape(28, 28, 1)))
+      |                        model.add(Convolution2D(6, 5, 5, activation = "tanh").setName("conv1_5x5"))
+      |                        model.add(MaxPooling2D())
+      |                        model.add(Convolution2D(12, 5, 5, activation = "tanh").setName("conv2_5x5"))
+      |                        model.add(MaxPooling2D())
+      |                        model.add(Flatten())
+      |                        model.add(Dense(100, activation = "tanh").setName("fc1"))
+      |                        model.add(Dense(params("classNum").toInt, activation = "softmax").setName("fc2"))
+      |                    }
       |}
       |'''
       |;
-      |predict data as LeNet5Ext.`/tmp/lenet`;
+      |predict data as BigDLClassifyExt.`/tmp/lenet`;
       |
-      |register LeNet5Ext.`/tmp/lenet` as mnistPredict;
+      |register BigDLClassifyExt.`/tmp/lenet` as mnistPredict;
       |
       |select
       |vec_argmax(mnistPredict(vec_dense(features))) as predict_label,
