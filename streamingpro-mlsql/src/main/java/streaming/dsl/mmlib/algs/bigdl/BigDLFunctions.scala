@@ -3,6 +3,7 @@ package streaming.dsl.mmlib.algs.bigdl
 import com.intel.analytics.bigdl.dlframes.{DLClassifier, DLModel}
 import org.apache.spark.sql.{DataFrame, Row, SaveMode}
 import org.apache.spark.sql.types._
+import streaming.common.HDFSOperator
 import streaming.common.ScalaMethodMacros._
 import streaming.dsl.mmlib.algs._
 import streaming.log.{Logging, WowLog}
@@ -36,7 +37,7 @@ trait BigDLFunctions extends Functions with Logging with WowLog with Serializabl
       var scores: List[MetricValue] = List()
       try {
         val newmodel = alg.fit(trainData)
-        newmodel.model.saveModule(modelPath)
+        newmodel.model.saveModule(HDFSOperator.getFilePath(modelPath))
         scores = evaluate(newmodel, newFitParam)
         logInfo(format(s"[trained] [alg=${alg.getClass.getName}] [metrics=${scores}] [model hyperparameters=${
           newmodel.explainParams().replaceAll("\n", "\t")

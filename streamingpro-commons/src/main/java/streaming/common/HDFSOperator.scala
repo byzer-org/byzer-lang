@@ -1,10 +1,12 @@
 package streaming.common
 
-import java.io.{BufferedReader, File, InputStreamReader}
+import java.io.{BufferedReader, ByteArrayOutputStream, File, InputStreamReader}
+import java.net.URI
 
 import org.apache.commons.io.FileUtils
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.{FSDataOutputStream, FileStatus, FileSystem, Path}
+import org.apache.hadoop.fs._
+import org.apache.hadoop.io.IOUtils
 
 import scala.collection.mutable.ArrayBuffer
 import scala.collection.JavaConversions._
@@ -31,6 +33,20 @@ object HDFSOperator {
     }
     result.mkString("\n")
 
+  }
+
+  def readBytes(fileName: String): Array[Byte] = {
+    val fs = FileSystem.get(new Configuration())
+    val src: Path = new Path(fileName)
+    var in: FSDataInputStream = null
+    try {
+      in = fs.open(src)
+      val byteArrayOut = new ByteArrayOutputStream()
+      IOUtils.copyBytes(in, byteArrayOut, 1024, true)
+      byteArrayOut.toByteArray
+    } finally {
+      if (null != in) in.close()
+    }
   }
 
   def listModelDirectory(path: String): Seq[FileStatus] = {
@@ -100,6 +116,10 @@ object HDFSOperator {
       }
     }
 
+  }
+
+  def getFilePath(path: String) = {
+    new Path(path).toString
   }
 
   def copyToHDFS(tempLocalPath: String, path: String, cleanTarget: Boolean, cleanSource: Boolean) = {
