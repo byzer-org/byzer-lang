@@ -5,7 +5,7 @@ import java.util.UUID
 import com.intel.analytics.bigdl.dataset.Sample
 import com.intel.analytics.bigdl.transform.vision.image._
 import com.intel.analytics.bigdl.utils.Engine
-import org.apache.spark.ml.param.{BooleanParam, IntArrayParam, IntParam, Param}
+import org.apache.spark.ml.param.{IntParam, Param}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import streaming.common.{ScriptCacheKey, SourceCodeCompiler}
@@ -95,6 +95,52 @@ class SQLImageLoaderExt(override val uid: String) extends SQLAlg with BaseParams
 
   override def modelType: ModelType = ProcessType
 
+
+  override def doc: Doc = Doc(MarkDownDoc,
+    """
+      |ImageLoaderExt module is used to process images.
+      |
+      |Check available params:
+      |
+      |```sql
+      |load modelParams.`ImageLoaderExt` as output;
+      |```
+      |
+      |Check example:
+      |
+      |```
+      |load modelExample.`ImageLoaderExt` as output;
+      |```
+      |
+      |The `code` param is used to configure image processing pipeline.
+      |MLSQL provide a DSL which is supported by BigDL.
+      |
+      |For example, if you define a processing pipeline like this(check example)
+      |
+      |```
+      |code='''
+      |        def apply(params:Map[String,String]) = {
+      |         Resize(256, 256) -> CenterCrop(224, 224) ->
+      |          MatToTensor() -> ImageFrameToSample()
+      |       }
+      |```
+      |
+      |The parameter of params in apply function is contains all expressions in where/options statement.
+      |
+      |```
+      |Resize(256, 256) -> CenterCrop(224, 224) ->
+      |          MatToTensor() -> ImageFrameToSample()
+      |```
+      |
+      |This means first step, resize the image to 256*256 ,and then crop the image in center ,change the image
+      |to tensor, finally convert to ImageFrame which is a collection of sample.
+      |
+      |ImageFrame is a data collections  contains two columns,they are `imageName` and `features`.
+      |The imageName is the url of image.
+      |
+      |More details about FeatureTransformer something like Resize,CenterCrop please check
+      |[URL](https://github.com/intel-analytics/BigDL/blob/master/docs/docs/APIGuide/Transformer.md)
+    """.stripMargin)
 
   override def codeExample: Code = Code(SQLCode,
     """
