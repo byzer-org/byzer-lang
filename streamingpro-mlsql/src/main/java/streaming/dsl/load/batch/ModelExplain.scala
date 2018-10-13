@@ -1,8 +1,10 @@
 package streaming.dsl.load.batch
 
-import org.apache.spark.sql.{Row, SparkSession, _}
+import streaming.dsl.MLMapping
+import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
-import _root_.streaming.dsl.MLMapping
+import com.google.common.reflect.ClassPath
+import scala.collection.JavaConversions._
 
 /**
   * Created by allwefantasy on 21/9/2018.
@@ -95,10 +97,20 @@ class ModelList(format: String, path: String, option: Map[String, String])(spark
   }
 
   override def explain: DataFrame = {
-    /*
-       todo: we can scan `streaming.dsl.mmlib.algs` package and get all available algs.
-     */
-    val rows = sparkSession.sparkContext.parallelize(MLMapping.mapping.keys.toSeq.sorted, 1)
+
+    def getAlgName(fullName: String) = {
+      if (fullName.contains(".") && fullName.startsWith("SQL")) {
+        fullName
+      } else {
+        fullName.split("\\.").last.replace("SQL", "")
+      }
+    }
+
+    val items = ClassPath.from(getClass.getClassLoader).getTopLevelClasses("streaming.dsl.mmlib.algs").map { f =>
+      getAlgName(f.getName)
+    }.toSet ++ MLMapping.mapping.keys.toSet
+
+    val rows = sparkSession.sparkContext.parallelize(items.toSeq.sorted, 1)
     sparkSession.createDataFrame(rows.filter(f => ModelSelfExplain.findAlg(f).isDefined).map { algName =>
       val sqlAlg = ModelSelfExplain.findAlg(algName).get
       Row.fromSeq(Seq(algName, sqlAlg.modelType.humanFriendlyName,

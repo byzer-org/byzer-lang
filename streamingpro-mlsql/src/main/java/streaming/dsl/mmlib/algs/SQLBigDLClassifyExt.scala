@@ -3,7 +3,6 @@ package streaming.dsl.mmlib.algs
 import java.util.UUID
 
 import com.intel.analytics.bigdl.Module
-import com.intel.analytics.bigdl.dataset.SampleToMiniBatch
 import com.intel.analytics.bigdl.dlframes.{DLClassifier, DLModel}
 import com.intel.analytics.bigdl.models.lenet.LeNet5
 import com.intel.analytics.bigdl.models.utils.ModelBroadcast
@@ -152,6 +151,45 @@ class SQLBigDLClassifyExt(override val uid: String) extends SQLAlg with MllibFun
 
   override def doc: Doc = Doc(MarkDownDoc,
     """
+      |BigDLClassifyExt is used to do classification tasks with deep learning tech which
+      |based on [BigDL](https://github.com/intel-analytics/BigDL).
+      |
+      |Check available params:
+      |
+      |```sql
+      |load modelParams.`BigDLClassifyExt` as output;
+      |```
+      |
+      |Check example:
+      |
+      |```
+      |load modelExample.`BigDLClassifyExt` as output;
+      |```
+      |
+      |The most powerful of this module is that you can define your model with code snippet in
+      |Keras style.
+      |
+      |and fitParam.0.code='''
+      |                   def apply(params:Map[String,String])={
+      |                        val model = Sequential()
+      |                        model.add(Reshape(Array(1, 28, 28), inputShape = Shape(28, 28, 1)))
+      |                        model.add(Convolution2D(6, 5, 5, activation = "tanh").setName("conv1_5x5"))
+      |                        model.add(MaxPooling2D())
+      |                        model.add(Convolution2D(12, 5, 5, activation = "tanh").setName("conv2_5x5"))
+      |                        model.add(MaxPooling2D())
+      |                        model.add(Flatten())
+      |                        model.add(Dense(100, activation = "tanh").setName("fc1"))
+      |                        model.add(Dense(params("classNum").toInt, activation = "softmax").setName("fc2"))
+      |                    }
+      |
+      |The `code` param is used to describe your model architecture.
+      |The code example defines LeNet5 model.
+      |
+      |More layers(e.g. Reshape,Convolution2D) please check
+      |[bigdl-keras-doc](https://bigdl-project.github.io/master/#KerasStyleAPIGuide/Layers/activation/)
+      |and
+      |[bigdl-keras-classes-list](https://github.com/intel-analytics/BigDL/tree/master/spark/dl/src/main/scala/com/intel/analytics/bigdl/nn/keras).
+      |
       |
       |
     """.stripMargin)
