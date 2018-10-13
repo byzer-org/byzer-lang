@@ -147,7 +147,9 @@ class SQLImageLoaderExt(override val uid: String) extends SQLAlg with BaseParams
       |set json='''{}''';
       |load jsonStr.`json` as emptyData;
       |
-      |run emptyData as ImageLoaderExt.`/Users/allwefantasy/Downloads/jack`
+      |set imageDir="/Users/allwefantasy/Downloads/jack";
+      |
+      |run emptyData as ImageLoaderExt.`${imageDir}`
       |where code='''
       |        def apply(params:Map[String,String]) = {
       |         Resize(256, 256) -> CenterCrop(224, 224) ->
