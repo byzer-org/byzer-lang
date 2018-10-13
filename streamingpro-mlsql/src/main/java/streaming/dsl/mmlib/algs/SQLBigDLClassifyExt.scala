@@ -206,7 +206,9 @@ class SQLBigDLClassifyExt(override val uid: String) extends SQLAlg with MllibFun
       |mnistDir="/Users/allwefantasy/Downloads/mnist"
       |as data;
       |
-      |train data as BigDLClassifyExt.`/tmp/bigdl` where
+      |set modelOutputPath = "/tmp/bigdl";
+      |
+      |train data as BigDLClassifyExt.`${modelOutputPath}` where
       |fitParam.0.featureSize="[28,28]"
       |and fitParam.0.classNum="10"
       |and fitParam.0.maxEpoch="1"
@@ -225,9 +227,9 @@ class SQLBigDLClassifyExt(override val uid: String) extends SQLAlg with MllibFun
       |
       |'''
       |;
-      |predict data as BigDLClassifyExt.`/tmp/bigdl`;
+      |predict data as BigDLClassifyExt.`${modelOutputPath}`;
       |
-      |register BigDLClassifyExt.`/tmp/bigdl` as mnistPredict;
+      |register BigDLClassifyExt.`${modelOutputPath}` as mnistPredict;
       |
       |select
       |vec_argmax(mnistPredict(vec_dense(features))) as predict_label,
