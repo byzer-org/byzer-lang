@@ -361,17 +361,14 @@ class SQLDTFAlg extends SQLAlg with Functions {
         val modelHDFSPath = SQLPythonFunc.getAlgModelPath(path, keepVersion) + "/" + algIndex
         try {
           //模型保存到hdfs上
-          val fs = FileSystem.get(new Configuration())
           if (!keepVersion) {
-            fs.delete(new Path(modelHDFSPath), true)
+            HDFSOperator.deleteDir(modelHDFSPath)
           }
           if (new File(tempModelLocalPath).exists()) {
-            fs.copyFromLocalFile(new Path(tempModelLocalPath),
-              new Path(modelHDFSPath))
+            HDFSOperator.copyToHDFS(tempModelLocalPath, modelHDFSPath, true, false)
           } else {
             if (new File(checkpointDir).exists()) {
-              fs.copyFromLocalFile(new Path(checkpointDir),
-                new Path(modelHDFSPath))
+              HDFSOperator.copyToHDFS(checkpointDir, modelHDFSPath, true, false)
             }
           }
 
