@@ -124,7 +124,15 @@ object MLMapping {
         if (!name.contains(".") && (name.endsWith("InPlace") || name.endsWith("Ext"))) {
           Class.forName(s"streaming.dsl.mmlib.algs.SQL${name}").newInstance().asInstanceOf[SQLAlg]
         } else {
-          throw new RuntimeException(s"${name} is not found")
+          try {
+            Class.forName(name).newInstance().asInstanceOf[SQLAlg]
+          }
+          catch {
+            case e: Exception =>
+              throw new RuntimeException(s"${name} is not found")
+          }
+
+
         }
     }
   }
