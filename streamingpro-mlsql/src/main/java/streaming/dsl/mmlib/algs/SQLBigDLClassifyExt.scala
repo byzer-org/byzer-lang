@@ -225,9 +225,9 @@ class SQLBigDLClassifyExt(override val uid: String) extends SQLAlg with MllibFun
       |
       |'''
       |;
-      |predict data as BigDLClassifyExt.`/tmp/lenet`;
+      |predict data as BigDLClassifyExt.`/tmp/bigdl`;
       |
-      |register BigDLClassifyExt.`/tmp/lenet` as mnistPredict;
+      |register BigDLClassifyExt.`/tmp/bigdl` as mnistPredict;
       |
       |select
       |vec_argmax(mnistPredict(vec_dense(features))) as predict_label,
