@@ -104,7 +104,7 @@ class SQLFeatureExtractInPlace extends SQLAlg with Functions {
     val regEx_html = "<[^>]+>"
     // 过滤script标签
     val p_script = Pattern.compile(regEx_script, Pattern.CASE_INSENSITIVE)
-    val m_script = p_script.matcher(doc)
+    val m_script = p_script.matcher(htmlStr)
     htmlStr = m_script.replaceAll("")
     // 过滤style标签
     val p_style = Pattern.compile(regEx_style, Pattern.CASE_INSENSITIVE)
