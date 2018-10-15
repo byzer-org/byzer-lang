@@ -89,7 +89,26 @@ class SQLFeatureExtractInPlace extends SQLAlg with Functions {
     /**
      * 去除html标签
      */
-    var cleanedDoc = doc.replaceAll("<[^>]*>", "").replaceAll("&nbsp", "")
+    // 定义script的正则表达式
+    val regEx_script = "<script[^>]*?>[\\s\\S]*?<\\/script>"
+    // 定义style的正则表达式
+    val regEx_style = "<style[^>]*?>[\\s\\S]*?<\\/style>"
+    // 定义HTML标签的正则表达式
+    val regEx_html = "<[^>]+>"
+    // 过滤script标签
+    val p_script = Pattern.compile(regEx_script, Pattern.CASE_INSENSITIVE)
+    val m_script = p_script.matcher(doc)
+    var htmlStr = m_script.replaceAll("")
+    // 过滤style标签
+    val p_style = Pattern.compile(regEx_style, Pattern.CASE_INSENSITIVE)
+    val m_style = p_style.matcher(htmlStr)
+    htmlStr = m_style.replaceAll("")
+    // 过滤html标签
+    val p_html = Pattern.compile(regEx_html, Pattern.CASE_INSENSITIVE)
+    val m_html = p_html.matcher(htmlStr)
+    htmlStr = m_html.replaceAll("")
+    var cleanedDoc = htmlStr.trim().replaceAll("\r|\n|\t", "")
+      .replaceAll("<[^>]*>", "").replaceAll("&nbsp", "")
 
     /**
      * 去除url
@@ -229,6 +248,27 @@ class SQLFeatureExtractInPlace extends SQLAlg with Functions {
     }
   })
 
+
+  /**
+   * 不可见字符百分比
+   * @return
+   */
+  def uninvislblePercent = F.udf((doc: String) => {
+    val pattern = Pattern.compile(SQLFeatureExtractInPlace.UNINVISIBLE_PERCENT_REGEX(0),
+      Pattern.CASE_INSENSITIVE & Pattern.DOTALL)
+    val matcher = pattern.matcher(doc)
+    var count = 0
+    while (matcher.find()) {
+      count += 1
+    }
+    if (doc.length != 0) {
+      // 特殊字符长度为2
+      count * 100 * 2 / doc.length
+    } else {
+      0
+    }
+  })
+
   /**
    * 出现最多字符百分比
    *
@@ -254,6 +294,7 @@ class SQLFeatureExtractInPlace extends SQLAlg with Functions {
       .withColumn("english", englishPercent(F.col("cleanedDoc")))
       .withColumn("number", numberPercent(F.col("cleanedDoc")))
       .withColumn("punctuation", punctuationPercent(F.col("cleanedDoc")))
+      .withColumn("uninvisible", uninvislblePercent(F.col("cleanedDoc")))
       .withColumn("mostchar", mostcharPercent(F.col("cleanedDoc")))
       .withColumn("length", docLength(F.col("cleanedDoc")))
     featureExtractResult.write.mode(SaveMode.Overwrite).parquet(MetaConst.getDataPath(path))
@@ -325,7 +366,7 @@ object SQLFeatureExtractInPlace {
   /**
    * url数量的正则表达式规则
    */
-  val URL_NUMBER_REGEX = Seq("""[^@](\w[\w\-_]+\.){1,3}(com|cn|net|jp[^\w])/?""")
+  val URL_NUMBER_REGEX = Seq("""(?i)\b((?:[a-z][\w-]+:(?:/{1,3}|[a-z0-9%])|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:\'".,<>?«»“”‘’]))""")
   /**
    * 图片数量的正则表达式规则
    */
@@ -360,4 +401,9 @@ object SQLFeatureExtractInPlace {
    * 出现最多字符百分比的正则表达式规则（去除html标签, 邮箱, url, 图片链接后）
    */
   val MOSTCHAR_PERCENT_REGEX = Seq("""\w+""")
+
+  /**
+   * 不可见字符百分比的正则表达式（去除html标签, 邮箱, url, 图片链接后）
+   */
+  val UNINVISIBLE_PERCENT_REGEX = Seq("""\p{C}""")
 }
