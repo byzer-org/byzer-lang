@@ -87,6 +87,13 @@ class SQLFeatureExtractInPlace extends SQLAlg with Functions {
 
   def cleanDoc = F.udf((doc: String) => {
     /**
+     * 去除新版app内自带的用户标签
+     */
+    val regEx_user = """<div class="quote"><blockquote><b>[\s\S]*?</b><br>"""
+    val p_user = Pattern.compile(regEx_user, Pattern.CASE_INSENSITIVE)
+    val m_user = p_user.matcher(doc)
+    var htmlStr = m_user.replaceAll("")
+    /**
      * 去除html标签
      */
     // 定义script的正则表达式
@@ -98,7 +105,7 @@ class SQLFeatureExtractInPlace extends SQLAlg with Functions {
     // 过滤script标签
     val p_script = Pattern.compile(regEx_script, Pattern.CASE_INSENSITIVE)
     val m_script = p_script.matcher(doc)
-    var htmlStr = m_script.replaceAll("")
+    htmlStr = m_script.replaceAll("")
     // 过滤style标签
     val p_style = Pattern.compile(regEx_style, Pattern.CASE_INSENSITIVE)
     val m_style = p_style.matcher(htmlStr)
