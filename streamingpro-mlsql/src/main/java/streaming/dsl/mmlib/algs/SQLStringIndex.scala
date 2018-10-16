@@ -35,6 +35,12 @@ class SQLStringIndex extends SQLAlg with Functions {
     model
   }
 
+
+  override def batchPredict(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
+    val model = load(df.sparkSession, path, params).asInstanceOf[StringIndexerModel]
+    model.transform(df)
+  }
+
   override def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = {
     HSQLStringIndex.predict(sparkSession, _model, name)
   }
