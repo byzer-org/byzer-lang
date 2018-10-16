@@ -168,7 +168,7 @@ class SQLImageLoaderExt(override val uid: String) extends SQLAlg with BaseParams
   }
 
   final val imageDir: Param[String] = new Param[String](this, "imageDir", "imageDir directory")
-  final val numOfImageTasks: IntParam = new IntParam(this, "numOfImageWorkers", "how many")
+  final val numOfImageTasks: IntParam = new IntParam(this, "numOfImageTasks", "how many")
   final val code: Param[String] = new Param[String](this, "code", "code")
 
 }
