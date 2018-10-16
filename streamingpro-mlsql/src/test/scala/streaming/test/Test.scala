@@ -15,6 +15,7 @@ import com.intel.analytics.bigdl.dlframes.DLClassifier
 import com.intel.analytics.bigdl.models.lenet.LeNet5
 import com.intel.analytics.bigdl.models.lenet.Utils._
 import com.intel.analytics.bigdl.nn.ClassNLLCriterion
+import com.intel.analytics.bigdl.optim.Trigger
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.NumericFloat
 import com.intel.analytics.bigdl.utils.{Engine, File, LoggerFilter}
@@ -32,7 +33,9 @@ import streaming.dsl.mmlib.algs.SQLBigDLClassifyExt
   */
 object Test {
   def main(args: Array[String]): Unit = {
-
+    val (a,b) = "fitParam.[group].a.b".split("\\.").splitAt(2)
+    println(a.mkString(","))
+    println(b.mkString(","))
   }
 }
 

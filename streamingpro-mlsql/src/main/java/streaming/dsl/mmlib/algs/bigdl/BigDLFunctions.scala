@@ -3,13 +3,14 @@ package streaming.dsl.mmlib.algs.bigdl
 import com.intel.analytics.bigdl.dlframes.{DLClassifier, DLModel}
 import org.apache.spark.sql.{DataFrame, Row, SaveMode}
 import org.apache.spark.sql.types._
-import streaming.common.HDFSOperator
+import streaming.common.{HDFSOperator, ScalaObjectReflect}
 import streaming.common.ScalaMethodMacros._
 import streaming.dsl.mmlib.algs._
 import streaming.log.{Logging, WowLog}
 
 
 trait BigDLFunctions extends Functions with Logging with WowLog with Serializable {
+
   def bigDLClassifyTrain[T](df: DataFrame, path: String, params: Map[String, String],
                             modelType: (Map[String, String]) => DLClassifier[T],
                             evaluate: (DLModel[T], Map[String, String]) => List[MetricValue]
@@ -83,3 +84,5 @@ trait BigDLFunctions extends Functions with Logging with WowLog with Serializabl
 
 
 }
+
+
