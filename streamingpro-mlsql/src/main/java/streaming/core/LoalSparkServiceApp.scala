@@ -24,6 +24,7 @@ object LocalSparkServiceApp {
       "-spark.kryoserializer.buffer.max", "2000m",
       "-streaming.udf.clzznames", "streaming.crawler.udf.Functions",
       "-streaming.driver.port", "9003",
+      "-spark.files.maxPartitionBytes", "10485760",
       "-spark.sql.shuffle.partitions", "2"
 
       //"-streaming.sql.out.path","file:///tmp/test/pdate=20160809"
