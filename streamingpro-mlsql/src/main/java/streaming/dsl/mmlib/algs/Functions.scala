@@ -95,7 +95,8 @@ trait Functions extends SQlBaseFunc with Logging with WowLog with Serializable {
           case i if i.isAssignableFrom(classOf[Double]) => v.toDouble
           case i if i.isAssignableFrom(classOf[Float]) => v.toFloat
           case i if i.isAssignableFrom(classOf[Boolean]) => v.toBoolean
-          case _ => v
+          case i if i.isAssignableFrom(classOf[String]) => v
+          case _ => logWarning(format(s"Can not assign value to model: ${f.name} -> ${v}"))
         }
         m.invoke(model, v2.asInstanceOf[AnyRef])
       }
