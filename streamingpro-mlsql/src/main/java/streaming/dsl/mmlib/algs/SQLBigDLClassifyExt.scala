@@ -29,15 +29,17 @@ import scala.collection.mutable.ArrayBuffer
 
 class SQLBigDLClassifyExt(override val uid: String) extends SQLAlg with MllibFunctions with BigDLFunctions with BaseClassification {
 
-  //final val optimMethod = new Param[OptimMethod[Float]](this, "optimMethod", "optimMethod")
-
   def this() = this(BaseParams.randomUID())
 
   override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
     params.get(disableSparkLog.name).
       map { m =>
-        WowLoggerFilter.redirectSparkInfoLogs()
-      }
+        if (m.toBoolean) {
+          WowLoggerFilter.redirectSparkInfoLogs()
+        }
+      }.getOrElse {
+      WowLoggerFilter.redirectSparkInfoLogs()
+    }
 
     Engine.init
 
@@ -128,6 +130,12 @@ class SQLBigDLClassifyExt(override val uid: String) extends SQLAlg with MllibFun
       summaryParamExtractor.summaryValidateDir.map { dir =>
         alg.setValidationSummary(new LogValidateSummary(dir, "validate" + this.uid.split("\\$").last))
       }
+
+      val optimizeParamExtractor = new OptimizeParamExtractor(this, newFitParam)
+      optimizeParamExtractor.optimizeMethod.map { om =>
+        alg.setOptimMethod(om)
+      }
+
       alg
     }, (_model, newFitParam) => {
       eTable match {
@@ -342,6 +350,9 @@ class SQLBigDLClassifyExt(override val uid: String) extends SQLAlg with MllibFun
 
   final val disableSparkLog: Param[String] = new Param[String](this, "disableSparkLog",
     "")
+
+  final val optimizeMethod: Param[String] = new Param[String](this, "fitParam.[group].optimizeMethod",
+    s"""${OptimizeParamExtractor.optimizeMethodCandidatesStr}""")
 
 }
 

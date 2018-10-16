@@ -17,6 +17,50 @@ class SummaryParamExtractor(bigDLClassifyExt: SQLBigDLClassifyExt, _params: Map[
   }
 }
 
+class OptimizeParamExtractor(bigDLClassifyExt: SQLBigDLClassifyExt, _params: Map[String, String]) extends BaseExtractor {
+  def optimizeMethod = {
+    val methods = _params.filter(f => f._1 == cleanGroupPrefix(bigDLClassifyExt.optimizeMethod.name)).map { f =>
+      f._2
+    }.toArray
+    OptimizeParamExtractor.extractOptimizeMethods(methods).headOption
+  }
+}
+
+object OptimizeParamExtractor {
+  private[bigdl] val optimizeMethodCandidates = List(
+    classOf[Adam[Float]],
+    classOf[Adamax[Float]],
+    classOf[Adadelta[Float]],
+    classOf[Ftrl[Float]],
+    classOf[Top5Accuracy[Float]],
+    classOf[LBFGS[Float]],
+    classOf[RMSprop[Float]],
+    classOf[SGD[Float]]
+  )
+
+  def extractOptimizeMethods(methods: Array[String]) = {
+    val filterSet = optimizeMethodCandidates.map(f => f.getSimpleName).toSet
+    val notExistMethods = methods.filterNot(f => filterSet.contains(f))
+    if (notExistMethods.size > 0) {
+      throw new MLSQLException(
+        s"""
+           |${notExistMethods.mkString(",")} are not exits.
+           |${EvaluateParamsExtractor.helperStr}
+         """.stripMargin)
+    }
+    methods.map { name =>
+      import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
+      val candiate = optimizeMethodCandidates.filter(c => c.getSimpleName == name).head
+      candiate.getConstructor(classOf[TensorNumeric[Float]]).newInstance(TensorNumeric.NumericFloat).asInstanceOf[OptimMethod[Float]]
+    }.toSeq
+  }
+
+  def optimizeMethodCandidatesStr = {
+    optimizeMethodCandidates.map(f => f.getSimpleName).mkString("|")
+  }
+
+}
+
 class ClassWeightParamExtractor(bigDLClassifyExt: SQLBigDLClassifyExt, _params: Map[String, String]) extends BaseExtractor {
   def weights = {
     implicit val formats = DefaultFormats
