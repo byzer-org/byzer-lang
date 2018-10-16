@@ -7,7 +7,12 @@ import streaming.dsl.ScriptSQLExec
   */
 trait WowLog {
   def format(msg: String) = {
-    s"""[owner] [${ScriptSQLExec.context().owner}] $msg"""
+    if (ScriptSQLExec.context() != null) {
+      s"""[owner] [${ScriptSQLExec.context().owner}] $msg"""
+    } else {
+      s"""[owner] [null] $msg"""
+    }
+
   }
 
   def format_exception(e: Exception) = {

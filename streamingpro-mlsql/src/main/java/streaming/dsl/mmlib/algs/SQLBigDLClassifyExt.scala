@@ -9,7 +9,7 @@ import com.intel.analytics.bigdl.models.utils.ModelBroadcast
 import com.intel.analytics.bigdl.nn.{ClassNLLCriterion, Module}
 import com.intel.analytics.bigdl.optim.Trigger
 import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.utils.{Engine, LoggerFilter, T}
+import com.intel.analytics.bigdl.utils.{Engine, T}
 import com.intel.analytics.bigdl.visualization.{LogTrainSummary, LogValidateSummary, TrainSummary, ValidationSummary}
 import net.sf.json.JSONArray
 import org.apache.spark.ml.linalg.SQLDataTypes.VectorType
@@ -35,7 +35,9 @@ class SQLBigDLClassifyExt(override val uid: String) extends SQLAlg with MllibFun
 
   override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
     params.get(disableSparkLog.name).
-      map(m => LoggerFilter.redirectSparkInfoLogs())
+      map { m =>
+        WowLoggerFilter.redirectSparkInfoLogs()
+      }
 
     Engine.init
 
