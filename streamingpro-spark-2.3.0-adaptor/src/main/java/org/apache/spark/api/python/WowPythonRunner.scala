@@ -160,7 +160,7 @@ private[spark] abstract class WowBasePythonRunner[IN, OUT](
         // Partition index
         dataOut.writeInt(partitionIndex)
         // Python version of driver
-        PythonRDD.writeUTF("3.6", dataOut)
+        PythonRDD.writeUTF(envVars.getOrDefault("pythonVer", "3.6"), dataOut)
         // Write out the TaskContextInfo
         dataOut.writeInt(context.stageId())
         dataOut.writeInt(context.partitionId())

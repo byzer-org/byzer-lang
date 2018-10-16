@@ -7,11 +7,13 @@ import com.intel.analytics.bigdl.dlframes.{DLClassifier, DLModel}
 import com.intel.analytics.bigdl.models.lenet.LeNet5
 import com.intel.analytics.bigdl.models.utils.ModelBroadcast
 import com.intel.analytics.bigdl.nn.{ClassNLLCriterion, Module}
+import com.intel.analytics.bigdl.optim.OptimMethod
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.{Engine, T}
 import net.sf.json.JSONArray
 import org.apache.spark.ml.linalg.SQLDataTypes.VectorType
 import org.apache.spark.ml.linalg.{Vector, Vectors}
+import org.apache.spark.ml.param.Param
 import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession}
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import streaming.common.{HDFSOperator, ScriptCacheKey, SourceCodeCompiler}
@@ -25,6 +27,8 @@ import scala.collection.JavaConversions._
 import scala.collection.mutable.ArrayBuffer
 
 class SQLBigDLClassifyExt(override val uid: String) extends SQLAlg with MllibFunctions with BigDLFunctions with BaseClassification {
+
+  //final val optimMethod = new Param[OptimMethod[Float]](this, "optimMethod", "optimMethod")
 
   def this() = this(BaseParams.randomUID())
 
