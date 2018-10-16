@@ -7,9 +7,9 @@ import com.intel.analytics.bigdl.dlframes.{DLClassifier, DLModel}
 import com.intel.analytics.bigdl.models.lenet.LeNet5
 import com.intel.analytics.bigdl.models.utils.ModelBroadcast
 import com.intel.analytics.bigdl.nn.{ClassNLLCriterion, Module}
-import com.intel.analytics.bigdl.optim.OptimMethod
+import com.intel.analytics.bigdl.optim.Trigger
 import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.utils.{Engine, T}
+import com.intel.analytics.bigdl.utils.{Engine, LoggerFilter, T}
 import net.sf.json.JSONArray
 import org.apache.spark.ml.linalg.SQLDataTypes.VectorType
 import org.apache.spark.ml.linalg.{Vector, Vectors}
@@ -21,7 +21,7 @@ import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib._
 import streaming.dsl.mmlib.algs.classfication.BaseClassification
 import streaming.dsl.mmlib.algs.param.BaseParams
-import streaming.dsl.mmlib.algs.bigdl.BigDLFunctions
+import streaming.dsl.mmlib.algs.bigdl.{BigDLFunctions, ClassWeightParamExtractor, EvaluateParamsExtractor, WowClassNLLCriterion}
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable.ArrayBuffer
@@ -33,6 +33,7 @@ class SQLBigDLClassifyExt(override val uid: String) extends SQLAlg with MllibFun
   def this() = this(BaseParams.randomUID())
 
   override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
+    LoggerFilter.redirectSparkInfoLogs()
     Engine.init
 
     params.get(keepVersion.name).
@@ -81,10 +82,40 @@ class SQLBigDLClassifyExt(override val uid: String) extends SQLAlg with MllibFun
 
       val method = SourceCodeCompiler.getMethod(clazz, "apply")
       val model = method.invoke(clazz.newInstance(), newFitParam).asInstanceOf[Module[Float]]
-      //val model = LeNet5(classNum = newFitParam("classNum").toInt)
-      val criterion = ClassNLLCriterion[Float]()
+
+      val classWeightParamExtractor = new ClassWeightParamExtractor(this, newFitParam)
+      val criterion = WowClassNLLCriterion(classWeightParamExtractor)
+
+      s"""Criterion is configured :
+         |weights: [${classWeightParamExtractor.weights.mkString(",")}]
+         |sizeAverage: ${classWeightParamExtractor.sizeAverage.getOrElse(true)}
+         |logProbAsInput: ${classWeightParamExtractor.logProbAsInput.getOrElse(true)}
+         |paddingValue: ${classWeightParamExtractor.paddingValue.getOrElse(-1)}
+         """.stripMargin.split("\n").foreach(line => logInfo(format(line)))
+
       val alg = new DLClassifier[Float](model, criterion,
         JSONArray.fromObject(newFitParam("featureSize")).map(f => f.asInstanceOf[Int]).toArray)
+
+      val evaluateParamsExtractor = new EvaluateParamsExtractor(this, newFitParam)
+      val bigDLEvaluateConfig = evaluateParamsExtractor.bigDLEvaluateConfig
+      if (eTable.isDefined || bigDLEvaluateConfig.validationTable.isDefined) {
+        val trigger = bigDLEvaluateConfig.trigger.getOrElse(Trigger.everyEpoch)
+        val validateTable = spark.table(bigDLEvaluateConfig.validationTable.getOrElse($(evaluateTable)))
+        val vMethods = bigDLEvaluateConfig.vMethods.getOrElse(evaluateParamsExtractor.defaultEvaluateMethods)
+        val evaluateBatchSize = bigDLEvaluateConfig.batchSize.getOrElse(128)
+        alg.setValidation(
+          trigger,
+          validateTable,
+          vMethods,
+          evaluateBatchSize
+        )
+        s"""Evaluate table is configured :
+           |trigger: ${trigger.getClass.getName}
+           |validateTable: ${validateTable}
+           |vMethods: ${vMethods.map(f => f.getClass.getName).mkString(",")}
+           |evaluateBatchSize: ${evaluateBatchSize}
+         """.stripMargin.split("\n").foreach(line => logInfo(format(line)))
+      }
       alg
     }, (_model, newFitParam) => {
       eTable match {
@@ -240,5 +271,56 @@ class SQLBigDLClassifyExt(override val uid: String) extends SQLAlg with MllibFun
       |label from data
       |as output;
     """.stripMargin)
+
+  /*
+  // evaluate.trigger.
+  // evaluate.table
+  // evaluate.method
+  // evaluate.batchSize
+   */
+  final val evaluate_table: Param[String] = new Param[String](this, "fitParam.[group].evaluate.table", "")
+
+  final val evaluate_methods: Param[String] = new Param[String](this, "fitParam.[group].evaluate.methods",
+    s"${EvaluateParamsExtractor.evaluateMethodCandidatesStr}")
+
+  final val evaluate_batchSize: Param[String] = new Param[String](this, "fitParam.[group].evaluate.batchSize", "")
+
+  final val evaluate_trigger_everyEpoch: Param[String] = new Param[String](this, "fitParam.[group].evaluate.trigger.everyEpoch",
+    "A trigger that triggers an action when each epoch finishs.")
+
+  final val evaluate_trigger_severalIteration: Param[Int] = new Param[Int](this, "fitParam.[group].evaluate.trigger.severalIteration",
+    "A trigger that triggers an action every \"n\" iterations.")
+
+  final val evaluate_trigger_maxEpoch: Param[Int] = new Param[Int](this, "fitParam.[group].evaluate.trigger.maxEpoch",
+    "A trigger that triggers an action when training reaches")
+
+  final val evaluate_trigger_maxIteration: Param[Int] = new Param[Int](this, "fitParam.[group].evaluate.trigger.maxIteration",
+    "A trigger that triggers an action when training reaches\n the number of iterations specified by \"max\".")
+
+  final val evaluate_trigger_maxScore: Param[Float] = new Param[Float](this, "fitParam.[group].evaluate.trigger.maxScore",
+    "A trigger that triggers an action when validation score larger than \"max\" score")
+
+  final val minLoss: Param[Float] = new Param[Float](this, "fitParam.[group].evaluate.trigger.minLoss",
+    "A trigger that triggers an action when training loss less than \"min\" loss")
+
+
+  final val criterion_classWeight: Param[String] = new Param[String](this, "fitParam.[group].criterion.classWeight",
+    """
+      |It's used in negative log likelihood criterion which is useful to train a classification problem with n
+      | * classes.
+      |If provided, the optional argument weights should be float json array e.g. [2.0,1.0] assigning weight to
+      |each of the classes. This is particularly useful when you have an unbalanced training set.
+      |default null
+    """.stripMargin)
+
+  final val criterion_sizeAverage: Param[Boolean] = new Param[Boolean](this, "fitParam.[group].criterion.sizeAverage",
+    "default true")
+
+  final val criterion_logProbAsInput: Param[Boolean] = new Param[Boolean](this, "fitParam.[group].criterion.logProbAsInput",
+    "default true")
+
+  final val criterion_paddingValue: Param[Int] = new Param[Int](this, "fitParam.[group].criterion.paddingValue",
+    "default -1")
+
 }
 
