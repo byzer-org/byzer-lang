@@ -50,13 +50,13 @@ object OptimizeParamExtractor {
     methods.map { name =>
       val candiate = optimizeMethodCandidates.filter(c => c.getSimpleName == name).head
       val instance = candiate match {
-        case _: Class[Adam[Float]] => new Adam[Float]()
-        case _: Class[Adamax[Float]] => new Adamax[Float]()
-        case _: Class[Adadelta[Float]] => new Adadelta[Float]()
-        case _: Class[Ftrl[Float]] => new Ftrl[Float]()
-        case _: Class[LBFGS[Float]] => new LBFGS[Float]()
-        case _: Class[RMSprop[Float]] => new RMSprop[Float]()
-        case _: Class[SGD[Float]] => new SGD[Float]()
+        case c if c == classOf[Adam[Float]] => new Adam[Float]()
+        case c if c == classOf[Adamax[Float]] => new Adamax[Float]()
+        case c if c == classOf[Adadelta[Float]] => new Adadelta[Float]()
+        case c if c == classOf[Ftrl[Float]] => new Ftrl[Float]()
+        case c if c == classOf[LBFGS[Float]] => new LBFGS[Float]()
+        case c if c == classOf[RMSprop[Float]] => new RMSprop[Float]()
+        case c if c == classOf[SGD[Float]] => new SGD[Float]()
       }
       instance
     }.toSeq
