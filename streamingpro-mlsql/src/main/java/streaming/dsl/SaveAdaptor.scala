@@ -53,8 +53,8 @@ class SaveAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
           final_path = TemplateMerge.merge(final_path, scriptSQLExecListener.env().toMap)
 
         case s: TableNameContext =>
-          tableName = s.getText
-          oldDF = scriptSQLExecListener.sparkSession.table(s.getText)
+          tableName = evaluate(s.getText)
+          oldDF = scriptSQLExecListener.sparkSession.table(tableName)
         case s: OverwriteContext =>
           mode = SaveMode.Overwrite
         case s: AppendContext =>

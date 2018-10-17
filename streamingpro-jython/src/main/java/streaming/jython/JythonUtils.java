@@ -107,9 +107,9 @@ public class JythonUtils {
         } else if (o instanceof Boolean) {
             return new PyBoolean((boolean) o);
         } else if (o instanceof Character) {
-            return new PyUnicode((char) o);
+            return Py.newStringOrUnicode(((Character) o).toString());
         } else if (o instanceof String) {
-            return new PyUnicode((String) o);
+            return Py.newStringOrUnicode((String) o);
         } else {
             throw new RuntimeException(o.getClass().getCanonicalName() + " can not been converted to python object");
         }

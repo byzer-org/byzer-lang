@@ -291,9 +291,25 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
       res = spark.sql("select * from output").collect().head.get(0)
       assume(res.asInstanceOf[Map[String, String]]("a") == "b")
 
+      ScriptSQLExec.parse(
+        """
+          |
+          |register ScriptUDF.`` as count_board options lang="python"
+          |    and methodName="apply"
+          |    and dataType="map(string,integer)"
+          |    and code='''
+          |def apply(self, s):
+          |    from collections import Counter
+          |    return dict(Counter(s))
+          |    '''
+          |;
+          |select count_board(array("你好","我好","大家好","你好")) as c as output;
+        """.stripMargin, sq)
+      res = spark.sql("select * from output").toJSON.collect().head
+      assume(res == "{\"c\":{\"我好\":1,\"你好\":2,\"大家好\":1}}")
+
     }
   }
-
 
 
   "include" should "work fine" in {
@@ -623,6 +639,35 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
       assume(tempTable == Set("cool", "newtable"))
       val hdfsTable = ssel.authProcessListner.get.tables().tables.filter(f => f.tableType == TableType.HDFS).map(f => f.table.get).toSet
       assume(hdfsTable == Set("/tmp/abc"))
+    }
+  }
+
+  "load save support variable" should "work fine" in {
+
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+      //执行sql
+      implicit val spark = runtime.sparkSession
+
+      val ssel = createSSEL
+      val mlsql =
+        """
+          |set table1="jack";
+          |select "a" as a as `${table1}`;
+          |select *  from jack as output;
+        """.stripMargin
+      ScriptSQLExec.parse(mlsql, ssel)
+      assume(spark.sql("select * from output").collect().map(f => f.getAs[String](0)).head == "a")
+      val mlsql2 =
+        """
+          |set table1="jack";
+          |select "a" as a as `${table1}`;
+          |save overwrite `${table1}` as parquet.`/tmp/jack`;
+          |load parquet.`/tmp/jack` as jackm;
+          |select *  from jackm as output;
+        """.stripMargin
+      ScriptSQLExec.parse(mlsql2, ssel)
+      assume(spark.sql("select * from output").collect().map(f => f.getAs[String](0)).head == "a")
+
     }
   }
 
