@@ -32,7 +32,6 @@ object OptimizeParamExtractor {
     classOf[Adamax[Float]],
     classOf[Adadelta[Float]],
     classOf[Ftrl[Float]],
-    classOf[Top5Accuracy[Float]],
     classOf[LBFGS[Float]],
     classOf[RMSprop[Float]],
     classOf[SGD[Float]]
@@ -49,9 +48,17 @@ object OptimizeParamExtractor {
          """.stripMargin)
     }
     methods.map { name =>
-      import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
       val candiate = optimizeMethodCandidates.filter(c => c.getSimpleName == name).head
-      candiate.getConstructor(classOf[TensorNumeric[Float]]).newInstance(TensorNumeric.NumericFloat).asInstanceOf[OptimMethod[Float]]
+      val instance = candiate match {
+        case _: Class[Adam[Float]] => new Adam[Float]()
+        case _: Class[Adamax[Float]] => new Adamax[Float]()
+        case _: Class[Adadelta[Float]] => new Adadelta[Float]()
+        case _: Class[Ftrl[Float]] => new Ftrl[Float]()
+        case _: Class[LBFGS[Float]] => new LBFGS[Float]()
+        case _: Class[RMSprop[Float]] => new RMSprop[Float]()
+        case _: Class[SGD[Float]] => new SGD[Float]()
+      }
+      instance
     }.toSeq
   }
 
@@ -182,11 +189,13 @@ object EvaluateParamsExtractor {
          """.stripMargin)
     }
     methods.map { name =>
-      import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
       evaluateMethodCandidates.filter(c => c.getSimpleName == name).head match {
 
         case a if a.isAssignableFrom(classOf[Loss[Float]]) => new Loss[Float]()
-        case a: Class[_] => a.getConstructor(classOf[TensorNumeric[Float]]).newInstance(TensorNumeric.NumericFloat)
+        case a if a.isAssignableFrom(classOf[Top1Accuracy[Float]]) => new Top1Accuracy[Float]()
+        case a if a.isAssignableFrom(classOf[MAE[Float]]) => new MAE[Float]()
+        case a if a.isAssignableFrom(classOf[Top5Accuracy[Float]]) => new Top5Accuracy[Float]()
+        case a if a.isAssignableFrom(classOf[TreeNNAccuracy[Float]]) => new TreeNNAccuracy[Float]()
 
       }
     }.toSeq
