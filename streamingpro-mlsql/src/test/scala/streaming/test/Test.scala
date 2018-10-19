@@ -33,9 +33,7 @@ import streaming.dsl.mmlib.algs.SQLBigDLClassifyExt
   */
 object Test {
   def main(args: Array[String]): Unit = {
-    val (a,b) = "fitParam.[group].a.b".split("\\.").splitAt(2)
-    println(a.mkString(","))
-    println(b.mkString(","))
+   println(new SQLBigDLClassifyExt().doc.doc)
   }
 }
 
