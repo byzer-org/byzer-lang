@@ -291,9 +291,25 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
       res = spark.sql("select * from output").collect().head.get(0)
       assume(res.asInstanceOf[Map[String, String]]("a") == "b")
 
+      ScriptSQLExec.parse(
+        """
+          |
+          |register ScriptUDF.`` as count_board options lang="python"
+          |    and methodName="apply"
+          |    and dataType="map(string,integer)"
+          |    and code='''
+          |def apply(self, s):
+          |    from collections import Counter
+          |    return dict(Counter(s))
+          |    '''
+          |;
+          |select count_board(array("你好","我好","大家好","你好")) as c as output;
+        """.stripMargin, sq)
+      res = spark.sql("select * from output").toJSON.collect().head
+      assume(res == "{\"c\":{\"我好\":1,\"你好\":2,\"大家好\":1}}")
+
     }
   }
-
 
 
   "include" should "work fine" in {
