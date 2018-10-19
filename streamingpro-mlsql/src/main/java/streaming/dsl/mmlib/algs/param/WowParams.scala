@@ -1,6 +1,6 @@
 package streaming.dsl.mmlib.algs.param
 
-import org.apache.spark.ml.param.{ParamMap, Params}
+import org.apache.spark.ml.param.{Param, ParamMap, Params}
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
 import org.apache.spark.sql.{Row, SparkSession}
 
@@ -26,4 +26,5 @@ trait WowParams extends Params {
     val rfcParams2 = this.params.map(this.explainParam).map(f => Row.fromSeq(f.split(":", 2)))
     sparkSession.createDataFrame(sparkSession.sparkContext.parallelize(rfcParams2, 1), StructType(Seq(StructField("param", StringType), StructField("description", StringType))))
   }
+
 }
