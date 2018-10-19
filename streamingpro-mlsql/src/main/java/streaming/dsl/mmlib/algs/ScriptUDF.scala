@@ -23,7 +23,7 @@ class ScriptUDF extends SQLAlg with MllibFunctions with Functions {
       register ScalaScriptUDF.`scriptText` as udf1;
    */
   override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = {
-    val res = sparkSession.table(path).head().getString(0)
+    val res = params.get("code").getOrElse(sparkSession.table(path).head().getString(0))
 
     val lang = params.getOrElse("lang", "scala")
     val udfType = params.getOrElse("udfType", "udf")
