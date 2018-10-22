@@ -18,10 +18,11 @@ import scala.collection.mutable.ArrayBuffer
 object PythonSourceUDF extends Logging with WowLog {
 
   private def wrapClass(function: String) = {
-    val temp = function.split("\n").map(f => s"\t$f").mkString("\n")
+    val temp = function.split("\n").map(f => s"    $f").mkString("\n")
     val className = s"StreamingProUDF_${UUID.randomUUID().toString.replaceAll("-", "")}"
     val newfun =
       s"""
+         |# -*- coding: utf-8 -*-
          |class  ${className}:
          |${temp}
          """.stripMargin
