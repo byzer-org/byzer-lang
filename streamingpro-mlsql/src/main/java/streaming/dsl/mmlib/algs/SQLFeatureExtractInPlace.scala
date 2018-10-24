@@ -2,6 +2,7 @@ package streaming.dsl.mmlib.algs
 
 import java.util.regex.Pattern
 
+import org.apache.commons.lang3.StringUtils
 import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession, functions => F}
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import streaming.dsl.mmlib.SQLAlg
@@ -57,15 +58,7 @@ class SQLFeatureExtractInPlace extends SQLAlg with Functions {
    * @return
    */
   def urlNumber = F.udf((doc: String) => {
-    SQLFeatureExtractInPlace.URL_NUMBER_REGEX.map(regex => {
-      val pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE & Pattern.DOTALL)
-      val matcher = pattern.matcher(doc)
-      var count = 0
-      while (matcher.find()) {
-        count += 1
-      }
-      count
-    }).head
+    StringUtils.countMatches(doc, "http")
   })
 
   /**
