@@ -36,7 +36,7 @@ class LoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
           path = s.getText
 
         case s: TableNameContext =>
-          tableName = s.getText
+          tableName = evaluate(s.getText)
         case _ =>
       }
     }

@@ -642,6 +642,35 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
     }
   }
 
+  "load save support variable" should "work fine" in {
+
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+      //执行sql
+      implicit val spark = runtime.sparkSession
+
+      val ssel = createSSEL
+      val mlsql =
+        """
+          |set table1="jack";
+          |select "a" as a as `${table1}`;
+          |select *  from jack as output;
+        """.stripMargin
+      ScriptSQLExec.parse(mlsql, ssel)
+      assume(spark.sql("select * from output").collect().map(f => f.getAs[String](0)).head == "a")
+      val mlsql2 =
+        """
+          |set table1="jack";
+          |select "a" as a as `${table1}`;
+          |save overwrite `${table1}` as parquet.`/tmp/jack`;
+          |load parquet.`/tmp/jack` as jackm;
+          |select *  from jackm as output;
+        """.stripMargin
+      ScriptSQLExec.parse(mlsql2, ssel)
+      assume(spark.sql("select * from output").collect().map(f => f.getAs[String](0)).head == "a")
+
+    }
+  }
+
 }
 
 
