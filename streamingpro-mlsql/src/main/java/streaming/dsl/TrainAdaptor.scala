@@ -26,7 +26,7 @@ class TrainAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdap
     (0 to ctx.getChildCount() - 1).foreach { tokenIndex =>
       ctx.getChild(tokenIndex) match {
         case s: TableNameContext =>
-          tableName = s.getText
+          tableName = evaluate(s.getText)
         case s: FormatContext =>
           format = s.getText
         case s: PathContext =>
@@ -37,7 +37,7 @@ class TrainAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdap
         case s: BooleanExpressionContext =>
           options += (cleanStr(s.expression().qualifiedName().getText) -> evaluate(getStrOrBlockStr(s.expression())))
         case s: AsTableNameContext =>
-          asTableName = cleanStr(s.tableName().getText)
+          asTableName = evaluate(cleanStr(s.tableName().getText))
         case _ =>
       }
     }
