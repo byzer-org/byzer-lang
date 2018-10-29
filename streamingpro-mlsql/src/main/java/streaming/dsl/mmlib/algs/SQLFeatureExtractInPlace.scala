@@ -78,11 +78,19 @@ class SQLFeatureExtractInPlace extends SQLAlg with Functions {
     }).head
   })
 
+  def cleanEmotionAndSpecChar = F.udf((doc: String) => {
+    val regEx_emotion = """<img src="http://assets.dxycdn.com(.*?)/>"""
+    val p_emotion = Pattern.compile(regEx_emotion, Pattern.CASE_INSENSITIVE)
+    val m_emotion = p_emotion.matcher(doc)
+    m_emotion.replaceAll("").replaceAll("&lt;", "<").replaceAll("&gt;", ">")
+      .replaceAll("&amp;", "&").replaceAll("#64;", "@")
+  })
+
   def cleanDoc = F.udf((doc: String) => {
     /**
      * 去除新版app内自带的用户标签
      */
-    val regEx_user = """<div class="quote"><blockquote><b>[\s\S]*?</b><br>"""
+    val regEx_user = """<div class="quote"><blockquote>[\s\S]*?</blockquote>"""
     val p_user = Pattern.compile(regEx_user, Pattern.CASE_INSENSITIVE)
     val m_user = p_user.matcher(doc)
     var htmlStr = m_user.replaceAll("")
@@ -284,11 +292,12 @@ class SQLFeatureExtractInPlace extends SQLAlg with Functions {
     saveTraningParams(df.sparkSession, params, metaPath)
     val featureCol = params.getOrElse(SQLFeatureExtractInPlace.INPUTCOL, SQLFeatureExtractInPlace.FEATUREC_COL)
     val featureExtractResult = df.withColumn("phone", phoneExisted(F.col(featureCol)))
-      .withColumn("email", emailExisted(F.col(featureCol)))
-      .withColumn("qqwechat", qqwechatExisted(F.col(featureCol)))
-      .withColumn("url", urlNumber(F.col(featureCol)))
-      .withColumn("pic", picNumber(F.col(featureCol)))
-      .withColumn("cleanedDoc", cleanDoc(F.col(featureCol)))
+      .withColumn("noEmoAndSpec", cleanEmotionAndSpecChar(F.col(featureCol)))
+      .withColumn("email", emailExisted(F.col("noEmoAndSpec")))
+      .withColumn("qqwechat", qqwechatExisted(F.col("noEmoAndSpec")))
+      .withColumn("url", urlNumber(F.col("noEmoAndSpec")))
+      .withColumn("pic", picNumber(F.col("noEmoAndSpec")))
+      .withColumn("cleanedDoc", cleanDoc(F.col("noEmoAndSpec")))
       .withColumn("blank", blankPercent(F.col("cleanedDoc")))
       .withColumn("chinese", chinesePercent(F.col("cleanedDoc")))
       .withColumn("english", englishPercent(F.col("cleanedDoc")))
@@ -315,6 +324,8 @@ class SQLFeatureExtractInPlace extends SQLAlg with Functions {
     sparkSession.udf.register(name + "_email", emailExisted.f.asInstanceOf[String => Boolean])
     sparkSession.udf.register(name + "_qqwechat", qqwechatExisted.f.asInstanceOf[String => Boolean])
     sparkSession.udf.register(name + "_url", urlNumber.f.asInstanceOf[String => Int])
+    sparkSession.udf.register(name + "_cleanEmotionAndSpec", cleanEmotionAndSpecChar.f.asInstanceOf[String => String])
+    sparkSession.udf.register(name + "_cleanHtml", cleanDoc.f.asInstanceOf[String => String])
     sparkSession.udf.register(name + "_pic", picNumber.f.asInstanceOf[String => Int])
     sparkSession.udf.register(name + "_blank", blankPercent.f.asInstanceOf[String => Int])
     sparkSession.udf.register(name + "_chinese", chinesePercent.f.asInstanceOf[String => Int])
@@ -344,10 +355,9 @@ object SQLFeatureExtractInPlace {
    * 是否含有电话的正则表达式规则
    */
   val EXISTED_PHONE_REGEX = Seq(
-    """[01]{1}\d{2,3}-?\d{8}""",
+    """\D[01]{1}\d{2,3}-?\d{8}\D""",
     """(热线|电话|TEL|来电|短信|手机).{0,3}\d{3,}""",
     """400-?\d{3}-?\d{3}""",
-    """\D1\d{2}[\- ]?\d{4}[\- ]??\d{4}""",
     """(热线|电话|TEL|来电|手机).{0,3}\d{3,}[- ]?\d{3,}[- ]?\d{3,}""",
     """\D1\d{2}\s*\D?\s*\d{4}\s*\D?\s*\d{4}""",
     """\D1\d{3}\s*\D?\s*\d{4}\s*\D?\s*\d{3}""")
