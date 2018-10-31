@@ -83,7 +83,7 @@ class SQLFeatureExtractInPlace extends SQLAlg with Functions {
     val p_emotion = Pattern.compile(regEx_emotion, Pattern.CASE_INSENSITIVE)
     val m_emotion = p_emotion.matcher(doc)
     m_emotion.replaceAll("").replaceAll("&lt;", "<").replaceAll("&gt;", ">")
-      .replaceAll("&amp;", "&").replaceAll("#64;", "@")
+      .replaceAll("&amp;", "&").replaceAll("&#64;", "@")
   })
 
   def cleanDoc = F.udf((doc: String) => {
