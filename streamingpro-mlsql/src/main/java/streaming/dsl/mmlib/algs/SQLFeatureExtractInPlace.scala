@@ -82,18 +82,19 @@ class SQLFeatureExtractInPlace extends SQLAlg with Functions {
     val regEx_emotion = """<img src="http://assets.dxycdn.com(.*?)/>"""
     val p_emotion = Pattern.compile(regEx_emotion, Pattern.CASE_INSENSITIVE)
     val m_emotion = p_emotion.matcher(doc)
-    m_emotion.replaceAll("").replaceAll("&lt;", "<").replaceAll("&gt;", ">")
+    val htmlStr = m_emotion.replaceAll("").replaceAll("&lt;", "<").replaceAll("&gt;", ">")
       .replaceAll("&amp;", "&").replaceAll("&#64;", "@")
-  })
-
-  def cleanDoc = F.udf((doc: String) => {
     /**
      * 去除新版app内自带的用户标签
      */
     val regEx_user = """<div class="quote"><blockquote>[\s\S]*?</blockquote>"""
     val p_user = Pattern.compile(regEx_user, Pattern.CASE_INSENSITIVE)
-    val m_user = p_user.matcher(doc)
-    var htmlStr = m_user.replaceAll("")
+    val m_user = p_user.matcher(htmlStr)
+    m_user.replaceAll("")
+
+  })
+
+  def cleanDoc = F.udf((doc: String) => {
     /**
      * 去除html标签
      */
@@ -105,8 +106,8 @@ class SQLFeatureExtractInPlace extends SQLAlg with Functions {
     val regEx_html = "<[^>]+>"
     // 过滤script标签
     val p_script = Pattern.compile(regEx_script, Pattern.CASE_INSENSITIVE)
-    val m_script = p_script.matcher(htmlStr)
-    htmlStr = m_script.replaceAll("")
+    val m_script = p_script.matcher(doc)
+    var htmlStr = m_script.replaceAll("")
     // 过滤style标签
     val p_style = Pattern.compile(regEx_style, Pattern.CASE_INSENSITIVE)
     val m_style = p_style.matcher(htmlStr)
