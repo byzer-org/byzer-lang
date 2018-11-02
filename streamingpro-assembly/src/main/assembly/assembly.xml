@@ -19,4 +19,14 @@
             </binaries>
         </moduleSet>
     </moduleSets>
+    <fileSets>
+        <fileSet>
+            <directory>${project.parent.basedir}/dev</directory>
+            <outputDirectory>.</outputDirectory>
+            <includes>
+                <include>start-local.sh</include>
+                <include>empty.json</include>
+            </includes>
+        </fileSet>
+    </fileSets>
 </assembly>
