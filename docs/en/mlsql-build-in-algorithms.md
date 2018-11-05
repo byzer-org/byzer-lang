@@ -79,7 +79,7 @@ and priority="5.0"
 -- complex features can more succinctly capture importtant information in 
 -- raw data. Note that too much ngram composition may increase feature space 
 -- too much , this makes it hard to compute.
-and nGram="2,3"
+and nGrams="2,3"
 ;
 
 -- load the converting result.
@@ -98,7 +98,7 @@ Parameters:
 |dicPaths|None|user-defined dictionary|
 |stopWordPath|user-defined stop word dictionary||
 |priority||how much weight should be applied in priority words|
-|nGram|None|ngram，we can compose 2 or 3 words together so maby the new complex features can more succinctly capture importtant information in raw data. Note that too much ngram composition may increase feature space too much , this makes it hard to compute.|
+|nGrams|None|ngram，we can compose 2 or 3 words together so maby the new complex features can more succinctly capture importtant information in raw data. Note that too much ngram composition may increase feature space too much , this makes it hard to compute.|
 |split|optinal, a token specifying how to analysis the text string||
 
 
