@@ -5,7 +5,7 @@ MLSQL supports the following statements:
 1. connect  
 2. set    
 3. select 
-4. train  
+4. train/predict/run
 5. register 
 6. save    
 7. include
@@ -154,7 +154,7 @@ as newtable1;
 This statement looks complex. However, if you remove the "as newtable1", you will find that it's a standard SQL.
 In MSLQL, select is good at processing data. There is also another statement train that is more powerful than select in data processing data. We will introduce it in the next section. 
 
-### train 
+### train/predict/run
 
 Train statement provides you not only the ability to process data but also train any machine learning algorithms. MLSQL has many modules implemented which can be used in the train statement.  
  
@@ -206,6 +206,13 @@ select word2vec(content) from sometable as output;
 ```
 
 We have so many modules can be used in train statement is wait to you to dig. [Using Build-in Algorithms](https://github.com/allwefantasy/streamingpro/blob/master/docs/en/mlsql-build-in-algorithms.md)
+
+`predict` and `run` statement have the same syntax with train. run is used when you just want to transform data. predict is used to transform data with model trained before.
+
+```sql
+predict orginal_text_corpus as Word2VecInPlace.`/tmp/word2vecinplace` as output;
+```
+
 
 ### register
 
