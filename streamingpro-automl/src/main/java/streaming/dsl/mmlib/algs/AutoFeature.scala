@@ -76,7 +76,7 @@ class AutoFeature extends Serializable {
     require(params.contains("workflowName"), "workflowName is required")
     require(params.contains("labelCol"), "labelCol is required")
     val workflowName = params("workflowName")
-    require(WorkflowManager.get(workflowName) != null, s"workflowName $workflowName is is not exists")
+    require(WorkflowManager.get(workflowName) != null, s"workflowName $workflowName is not exists")
     val label = params("labelCol")
     val workflow = WorkflowManager.get(workflowName).wowOpWorkflow
     val newdf = convert(df, label)
@@ -87,7 +87,7 @@ class AutoFeature extends Serializable {
   def explainModel(sparkSession: SparkSession, path: String, params: Map[String, String]) = {
     implicit val spark = sparkSession
     val workflowName = params("workflowName")
-    require(WorkflowManager.get(workflowName) != null, s"workflowName $workflowName is is not exists")
+    require(WorkflowManager.get(workflowName) != null, s"workflowName $workflowName is not exists")
     val workflow = WorkflowManager.get(workflowName).wowOpWorkflow
     val fittedWorkflow = workflow.loadModel(path + "/model")
     fittedWorkflow.setResultFeatures(workflow.getResultFeatures())
