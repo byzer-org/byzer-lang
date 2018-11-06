@@ -9,10 +9,53 @@
 - ETL(Feature Engineer)
     - Data Sources
         - [MySQL](https://github.com/allwefantasy/streamingpro/blob/master/docs/docv2/datasources/mysql.md)
-        - [Parquet](https://github.com/allwefantasy/streamingpro/blob/master/docs/docv2/datasources/mysql.md)
-        - [CSV](https://github.com/allwefantasy/streamingpro/blob/master/docs/docv2/datasources/mysql.md)
-        - [JSON](https://github.com/allwefantasy/streamingpro/blob/master/docs/docv2/datasources/mysql.md)
+        - [Parquet]()
+        - [CSV]()
+        - [JSON]()
+        - [ElasticSearch]()
+        - [HBase]()
+        - [Redis]()
+        - [Kafka]()
+    - Processing
+        - [TfIdfInPlace]()
+        - [Word2VecInPlace]()
+        - [ScalerInPlace](#scalerinplace)
+        - [ConfusionMatrix](#confusionmatrix)
+        - [NormalizeInPlace](#normalizeinplace)
+        - [ModelExplainInPlace](#modelexplaininplace)
+        - [Discretizer](#discretizer)
+        - [Bucketizer](#bucketizer方式)
+        - [Quantile](#quantile方式)
+        - [VecMapInPlace](#vecmapinplace)
+        - [TokenExtract / TokenAnalysis](#tokenextract--tokenanalysis)
+        - [RateSampler](#ratesampler)
+        - [RowMatrix](#rowmatrix)
+        - [CommunityBasedSimilarityInPlace](#communitybasedsimilarityonplace)
+        - [Word2ArrayInPlace](#word2arrayinplace)
+
+- Algorithms
+    - Machine Learning
+        - [RandomForest]()
+        - [NaiveBayes]()
+        - [ALS]()
+        - [GBTRegressor](#gbtregressor)
+        - [LDA](#lda)
+        - [KMeans](#kmeans)
+        - [FPGrowth](#fpgrowth)
+        - [GBTs](#gbts)
+        - [PageRank](#pagerank)
+        - [LogisticRegressor](#logisticregressor)
+        
+    - Deep Learning
+        - [Classify]()
+    - Python ML Frameworks
+        - [SkLearn]()
+        - [Tensorflow]()
+        - [Keras]()
 
 - Stream
     - Data Sources
-        - [MySQL](https://github.com/allwefantasy/streamingpro/blob/master/docs/docv2/datasources/stream-mlsql.md)
+        - [MySQL]()
+        - [Parquet]()
+        - [Kafka]()
+
