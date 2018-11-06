@@ -55,7 +55,7 @@ class TrainAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdap
 
     val isTrain = ctx.getChild(0).getText match {
       case "predict" => false
-      case "run" => false
+      case "run" => true
       case "train" => true
     }
 
