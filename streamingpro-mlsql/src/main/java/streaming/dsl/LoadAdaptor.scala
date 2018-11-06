@@ -104,6 +104,10 @@ class BatchLoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener,
         }
         import sparkSession.implicits._
         table = reader.json(sparkSession.createDataset[String](items))
+      case "hive" =>
+        table = reader.table(cleanStr(path))
+      case "text" =>
+        table = reader.text(cleanStr(path).split(","): _*)
       case _ =>
 
         // calculate resource real absolute path
