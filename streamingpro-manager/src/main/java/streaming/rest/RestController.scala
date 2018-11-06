@@ -205,14 +205,6 @@ class RestController extends ApplicationController {
   }
 
   @At(path = Array("/form/upload"), types = Array(RestRequest.Method.GET, RestRequest.Method.POST))
-  @BasicInfo(
-    desc = "可指定哪些服务器下载指定url地址的文件到指定目录",
-    state = State.alpha,
-    testParams = "",
-    testResult = "task submit",
-    author = "WilliamZhu",
-    email = "allwefantasy@gmail.com"
-  )
   def formUpload = {
     val items = new ServletFileUpload(new DiskFileItemFactory()).parseRequest(request.httpServletRequest())
     var jarPath: File = null
