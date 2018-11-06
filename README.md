@@ -1,6 +1,6 @@
-## MLSQL - A cross,distributed platform which is the combination of BigData and AI.
+## MLSQL - A cross,distributed platform unions BigData and AI.
 
-MLSQL is a Language akin to SQL which covers most scenes e.g. batch, stream,crawler,AI you may meet.
+MLSQL is also  a Language akin to SQL which you can use to do batch, stream,crawler and AI.
 
 ## Usage:
 
