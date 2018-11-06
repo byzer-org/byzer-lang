@@ -4,7 +4,7 @@ MLSQL is also  a Language akin to SQL which you can use to do batch, stream,craw
 
 ## Usage:
 
-[](https://github.com/allwefantasy/mlsql-web/raw/master/images/WX20181106-164911.png)
+![](https://github.com/allwefantasy/streamingpro/raw/master/images/WX20181106-164911.png)
 
 Find more examples on [our user guide](https://github.com/allwefantasy/streamingpro/blob/master/docs/docv2/user-guide.md).
 
