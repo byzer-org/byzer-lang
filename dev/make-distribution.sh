@@ -12,7 +12,7 @@ mvn -DskipTests clean package -pl streamingpro-mlsql -am \
 -Ponline \
 -Pscala-2.11 \
 -Pdsl \
--Pshade \
+-Passembly \
 -Pcrawler \
 -Phive-thrift-server \
 -Pautoml \
