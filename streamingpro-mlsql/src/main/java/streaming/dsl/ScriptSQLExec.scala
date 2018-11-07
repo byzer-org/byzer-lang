@@ -62,7 +62,7 @@ object ScriptSQLExec extends Logging with WowLog {
       while (!stop && max_preprocess > 0) {
         val preProcessListener = new PreProcessIncludeListener(sqel._sparkSession, sqel._defaultPathPrefix, sqel._allPathPrefix)
         sqel.includeProcessListner = Some(preProcessListener)
-        _parse(input, preProcessListener)
+        _parse(wow, preProcessListener)
         val includes = preProcessListener.includes()
         if (includes.size == 0) {
           stop = true
