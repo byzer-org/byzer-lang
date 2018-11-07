@@ -107,7 +107,11 @@ class BatchLoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener,
       case "hive" =>
         table = reader.table(cleanStr(path))
       case "text" =>
-        table = reader.text(cleanStr(path).split(","): _*)
+        val resourcePath = resourceRealPath(scriptSQLExecListener, resourceOwner, path)
+        table = reader.text(resourcePath.split(","): _*)
+      case "xml" =>
+        val resourcePath = resourceRealPath(scriptSQLExecListener, resourceOwner, path)
+        table = reader.option("path", resourcePath).format("com.databricks.spark.xml").load()
       case _ =>
 
         // calculate resource real absolute path
