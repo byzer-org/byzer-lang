@@ -17,6 +17,17 @@ This is an active open source project for everyone,
 and we are always open to people who want to use this system or contribute to it.
 This guide document introduce [how to contribute to MLSQL](https://github.com/allwefantasy/streamingpro/blob/master/docs/docv2/contribute/contribute.md).
 
+## Build Distribution
+
+
+```
+git clone https://github.com/allwefantasy/streamingpro .
+cd streamingpro
+
+./dev/make-distribution.sh
+export SPARK_HOME="....." ; ./dev/start-local.sh
+```
+
 ## Contributors
 
 * Zhu William/allwefantasy#gmail.com
@@ -32,5 +43,5 @@ This guide document introduce [how to contribute to MLSQL](https://github.com/al
 * 9bbword
 
 ----------
-Visit count:[![HitCount](http://hits.dwyl.io/allwefantasy/streamingpro.svg)](http://hits.dwyl.io/allwefantasy/streamingpro)
+[![HitCount](http://hits.dwyl.io/allwefantasy/streamingpro.svg)](http://hits.dwyl.io/allwefantasy/streamingpro)
 
