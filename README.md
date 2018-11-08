@@ -28,6 +28,10 @@ cd streamingpro
 export SPARK_HOME="....." ; ./dev/start-local.sh
 ```
 
+## Get Latest PreBuild Package
+
+[PreBuild Package](http://streamingpro.rebiekong.com/index.html)
+
 ## Contributors
 
 * Zhu William/allwefantasy#gmail.com
