@@ -4,6 +4,17 @@
 
 ## Installation
 
+```
+git clone https://github.com/allwefantasy/streamingpro .
+cd streamingpro
+
+./dev/make-distribution.sh
+
+export SPARK_HOME="....." ; ./dev/start-local.sh
+```
+
+## Manually Installation
+
 Step 1: Download the jars from the release page: [Release页面](https://github.com/allwefantasy/streamingpro/releases):
 
 1. streamingpro-mlsql-1.x.x.jar
@@ -131,7 +142,7 @@ When you use spark-2.2.x:
 |dsl-legacy                            | true  |   |   |   |
 |crawler                               | true  |   |   |   |
 |automl                                | false  |   |   |   |
-|xgboost                               | false  |   |   |   |
+|xgboost                               | false  | no support  |   |   |
 |streamingpro-spark-2.2.0-adaptor      | true  |   |   |   |
 |carbondata                            | false  |   |   |   |
 |opencv-support                        | false  |   |   |   |
