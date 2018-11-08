@@ -1,7 +1,7 @@
 ## MLSQL
 
 - Getting Started
-    - [Introductioin](https://github.com/allwefantasy/streamingpro/blob/master/docs/docv2/Introduction.md)
+    - [Introduction](https://github.com/allwefantasy/streamingpro/blob/master/docs/docv2/Introduction.md)
     - [Installation](https://github.com/allwefantasy/streamingpro/blob/master/docs/docv2/getting_started/installation.md)
 - Grammar Overview
     - [Grammar](https://github.com/allwefantasy/streamingpro/blob/master/docs/docv2/getting_started/mlsql-grammar.md)
