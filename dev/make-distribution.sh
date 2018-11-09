@@ -6,7 +6,7 @@ mvn install -DskipTests -Pjetty-9 -Pweb-include-jetty-9
 
 cd -
 
-mvn -DskipTests clean package -pl streamingpro-mlsql -am \
+mvn -DskipTests clean package \
 -Pspark-2.3.0 \
 -Pstreamingpro-spark-2.3.0-adaptor \
 -Ponline \
@@ -17,5 +17,4 @@ mvn -DskipTests clean package -pl streamingpro-mlsql -am \
 -Phive-thrift-server \
 -Pautoml \
 -Pxgboost \
--Pcarbondata \
--Popencv-support
+-Pcarbondata
