@@ -13,6 +13,10 @@
             <includes>
                 <include>streaming.king:*</include>
             </includes>
+            <!--<excludes>-->
+                <!--<exclude>streaming.king:streamingpro-manager</exclude>-->
+                <!--<exclude>streaming.king:streamingpro-dl4j</exclude>-->
+            <!--</excludes>-->
             <binaries>
                 <outputDirectory>libs</outputDirectory>
                 <unpack>false</unpack>

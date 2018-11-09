@@ -156,6 +156,17 @@
                     <artifactId>streamingpro-spark-2.2.0-adaptor</artifactId>
                     <version>${project.parent.version}</version>
                 </dependency>
+                <dependency>
+                    <groupId>com.intel.analytics.bigdl</groupId>
+                    <artifactId>bigdl-SPARK_2.2</artifactId>
+                    <version>0.6.0</version>
+                </dependency>
+                <!--<dependency>-->
+                    <!--<groupId>com.intel.analytics.zoo</groupId>-->
+                    <!--<artifactId>analytics-zoo-bigdl_0.6.0-spark_2.2.0</artifactId>-->
+                    <!--<version>0.3.0</version>-->
+                <!--</dependency>-->
+
             </dependencies>
         </profile>
 
@@ -167,6 +178,16 @@
                     <artifactId>streamingpro-spark-2.3.0-adaptor</artifactId>
                     <version>${project.parent.version}</version>
                 </dependency>
+                <dependency>
+                    <groupId>com.intel.analytics.bigdl</groupId>
+                    <artifactId>bigdl-SPARK_2.3</artifactId>
+                    <version>0.6.0</version>
+                </dependency>
+                <!--<dependency>-->
+                    <!--<groupId>com.intel.analytics.zoo</groupId>-->
+                    <!--<artifactId>analytics-zoo-bigdl_0.6.0-spark_2.3.1</artifactId>-->
+                    <!--<version>0.3.0</version>-->
+                <!--</dependency>-->
             </dependencies>
         </profile>
 
@@ -178,6 +199,16 @@
                     <artifactId>streamingpro-spark-2.4.0-adaptor</artifactId>
                     <version>${project.parent.version}</version>
                 </dependency>
+                <dependency>
+                    <groupId>com.intel.analytics.bigdl</groupId>
+                    <artifactId>bigdl-SPARK_2.3</artifactId>
+                    <version>0.6.0</version>
+                </dependency>
+                <!--<dependency>-->
+                    <!--<groupId>com.intel.analytics.zoo</groupId>-->
+                    <!--<artifactId>analytics-zoo-bigdl_0.6.0-spark_2.3.1</artifactId>-->
+                    <!--<version>0.3.0</version>-->
+                <!--</dependency>-->
             </dependencies>
         </profile>
 
@@ -280,12 +311,6 @@
         <dependency>
             <groupId>streaming.king</groupId>
             <artifactId>streamingpro-api</artifactId>
-            <version>${project.parent.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>streaming.king</groupId>
-            <artifactId>streamingpro-bigdl</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
 

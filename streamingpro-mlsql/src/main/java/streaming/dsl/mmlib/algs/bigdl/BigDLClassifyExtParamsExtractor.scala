@@ -7,15 +7,6 @@ import streaming.session.MLSQLException
 import org.json4s._
 import org.json4s.jackson.JsonMethods
 
-class SummaryParamExtractor(bigDLClassifyExt: SQLBigDLClassifyExt, _params: Map[String, String]) extends BaseExtractor {
-  def summaryTrainDir = {
-    _params.filter(f => f._1 == cleanGroupPrefix(bigDLClassifyExt.summary_trainDir.name)).map(f => f._2).headOption
-  }
-
-  def summaryValidateDir = {
-    _params.filter(f => f._1 == cleanGroupPrefix(bigDLClassifyExt.summary_validateDir.name)).map(f => f._2).headOption
-  }
-}
 
 class OptimizeParamExtractor(bigDLClassifyExt: SQLBigDLClassifyExt, _params: Map[String, String]) extends BaseExtractor {
   def optimizeMethod = {
