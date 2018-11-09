@@ -93,6 +93,8 @@ case object Core_2_2_x extends CoreVersion("2.2.x")
 
 case object Core_2_3_x extends CoreVersion("2.3.x")
 
+case object Core_2_4_x extends CoreVersion("2.4.x")
+
 
 
 
