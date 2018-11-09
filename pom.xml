@@ -59,6 +59,9 @@
         <spark.version>2.2.0</spark.version>
         <spark.bigversion>2.2</spark.bigversion>
 
+        <spark.version.minor>2.2.0</spark.version.minor>
+
+
         <flink.version>1.4.2</flink.version>
         <guava.version>16.0</guava.version>
         <httpclient.version>4.5.3</httpclient.version>
@@ -182,6 +185,7 @@
                 <spark.sql.kafka.artifactId>spark-sql-kafka-0-10_${scala.binary.version}</spark.sql.kafka.artifactId>
                 <spark.version>2.2.0</spark.version>
                 <spark.bigversion>2.2</spark.bigversion>
+                <spark.version.minor>2.2.0</spark.version.minor>
             </properties>
             <modules>
                 <module>streamingpro-spark-2.2.0-adaptor</module>
@@ -250,6 +254,7 @@
                 <spark.sql.kafka.artifactId>spark-sql-kafka-0-10_${scala.binary.version}</spark.sql.kafka.artifactId>
                 <spark.version>2.3.2</spark.version>
                 <spark.bigversion>2.3</spark.bigversion>
+                <spark.version.minor>2.3.1</spark.version.minor>
             </properties>
             <modules>
                 <module>streamingpro-spark-2.3.0-adaptor</module>
@@ -318,6 +323,7 @@
                 <spark.sql.kafka.artifactId>spark-sql-kafka-0-10_${scala.binary.version}</spark.sql.kafka.artifactId>
                 <spark.version>2.4.0</spark.version>
                 <spark.bigversion>2.4</spark.bigversion>
+                <spark.version.minor>2.4.0</spark.version.minor>
             </properties>
             <modules>
                 <module>streamingpro-spark-2.4.0-adaptor</module>

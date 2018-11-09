@@ -25,7 +25,13 @@ git clone https://github.com/allwefantasy/streamingpro .
 cd streamingpro
 
 ./dev/make-distribution.sh
-export SPARK_HOME="....." ; ./dev/start-local.sh
+
+
+cp streamingpro-bin-1.1.3.tgz /tmp
+cd /tmp && tar xzvf  streamingpro-bin-1.1.3.tgz
+cd /tmp/streamingpro
+
+export SPARK_HOME="....." ; ./start-local.sh
 ```
 
 ## Get Latest PreBuild Package
