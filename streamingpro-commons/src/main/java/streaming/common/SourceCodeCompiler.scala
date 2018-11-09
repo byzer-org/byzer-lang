@@ -24,6 +24,7 @@ object SourceCodeCompiler extends Logging {
           }
 
           def timeMs: Double = (System.nanoTime() - startTime).toDouble / 1000000
+
           logInfo(s"generate udf time:${timeMs}")
           res
         }
@@ -53,7 +54,11 @@ object SourceCodeCompiler extends Logging {
   def compileScala(src: String): Class[_] = {
     import scala.reflect.runtime.universe
     import scala.tools.reflect.ToolBox
-    val classLoader = scala.reflect.runtime.universe.getClass.getClassLoader
+    //val classLoader = scala.reflect.runtime.universe.getClass.getClassLoader
+    var classLoader = Thread.currentThread().getContextClassLoader
+    if (classLoader == null) {
+      classLoader = scala.reflect.runtime.universe.getClass.getClassLoader
+    }
     val tb = universe.runtimeMirror(classLoader).mkToolBox()
     val tree = tb.parse(src)
     val clazz = tb.compile(tree).apply().asInstanceOf[Class[_]]
