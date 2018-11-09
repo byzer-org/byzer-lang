@@ -11,11 +11,28 @@
 
     <artifactId>streamingpro-bigdl</artifactId>
     <dependencies>
+        <!--<dependency>-->
+        <!--<groupId>com.intel.analytics.bigdl</groupId>-->
+        <!--<artifactId>bigdl-SPARK_${spark.bigversion}</artifactId>-->
+        <!--<version>0.7.1</version>-->
+        <!--</dependency>-->
+        <!--<dependency>-->
+        <!--<groupId>com.intel.analytics.zoo</groupId>-->
+        <!--<artifactId>analytics-zoo-bigdl_0.6.0-spark_${spark.version.minor}</artifactId>-->
+        <!--<version>0.3.0</version>-->
+        <!--</dependency>-->
+
+        <dependency>
+            <groupId>com.intel.analytics.bigdl</groupId>
+            <artifactId>bigdl-SPARK_${spark.bigversion}</artifactId>
+            <version>0.6.0</version>
+        </dependency>
         <dependency>
             <groupId>com.intel.analytics.zoo</groupId>
-            <artifactId>analytics-zoo-bigdl_0.7.1-spark_${spark.version.minor}</artifactId>
+            <artifactId>analytics-zoo-bigdl_0.6.0-spark_${spark.version.minor}</artifactId>
             <version>0.3.0</version>
         </dependency>
+
     </dependencies>
 
 </project>
