@@ -171,6 +171,17 @@
         </profile>
 
         <profile>
+            <id>streamingpro-spark-2.4.0-adaptor</id>
+            <dependencies>
+                <dependency>
+                    <groupId>streaming.king</groupId>
+                    <artifactId>streamingpro-spark-2.4.0-adaptor</artifactId>
+                    <version>${project.parent.version}</version>
+                </dependency>
+            </dependencies>
+        </profile>
+
+        <profile>
             <id>dl4j</id>
             <dependencies>
                 <dependency>
