@@ -135,4 +135,5 @@ class WowLocalSchedulerBackend(
     }
   }
 
+  override def maxNumConcurrentTasks(): Int = totalCores / scheduler.CPUS_PER_TASK
 }

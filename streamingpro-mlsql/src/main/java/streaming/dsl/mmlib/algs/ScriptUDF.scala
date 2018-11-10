@@ -1,7 +1,7 @@
 package streaming.dsl.mmlib.algs
 
 import org.apache.spark.ml.param.Param
-import org.apache.spark.sql.catalyst.expressions.{Expression, ScalaUDF}
+import org.apache.spark.sql.catalyst.expressions.{Expression, ScalaUDF, WowScalaUDF}
 import org.apache.spark.sql.execution.aggregate.ScalaUDAF
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.{DataFrame, SparkSession}
@@ -77,7 +77,7 @@ class ScriptUDF(override val uid: String) extends SQLAlg with MllibFunctions wit
             ScalaSourceUDF(res, params.get(methodName.name))
           }
       }
-      (e: Seq[Expression]) => ScalaUDF(func, returnType, e)
+      (e: Seq[Expression]) => new WowScalaUDF(func, returnType, e).toScalaUDF
     }
 
     val udaf = () => {
