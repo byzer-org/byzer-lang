@@ -17,6 +17,11 @@ object SparkCoreVersion {
     version == VERSION_2_3_X
   }
 
+  def is_2_4_X() = {
+    version == VERSION_2_4_X
+  }
+
   val VERSION_2_2_X = "2.2.x"
   val VERSION_2_3_X = "2.3.x"
+  val VERSION_2_4_X = "2.4.x"
 }

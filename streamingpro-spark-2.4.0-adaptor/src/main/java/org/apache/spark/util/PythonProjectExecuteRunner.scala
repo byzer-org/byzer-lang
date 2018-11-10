@@ -122,8 +122,8 @@ class PythonProjectExecuteRunner(taskDirectory: String,
 
     // Used to replace pyspark.daemon and pyspark.worker in pyspark.
     // We can provide  some new features without modify them in pyspark.
-    saveSystemPythonFile("daemon23.py")
-    saveSystemPythonFile("worker23.py")
+    saveSystemPythonFile("daemon24.py")
+    saveSystemPythonFile("worker24.py")
 
     val env = SparkEnv.get
     val proc = pb.start()
