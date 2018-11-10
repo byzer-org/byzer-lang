@@ -61,7 +61,7 @@ class SQLPythonAlg(override val uid: String) extends SQLAlg with Functions with 
   override def codeExample: Code = PythonAlgCodeExample.codeExample
 
   override def coreCompatibility: Seq[CoreVersion] = {
-    Seq(Core_2_2_x, Core_2_3_x)
+    Seq(Core_2_2_x, Core_2_3_x, Core_2_4_x)
   }
 
 
