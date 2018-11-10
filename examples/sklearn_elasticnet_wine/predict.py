@@ -10,8 +10,6 @@ def predict(index, s):
     print(pickle.loads(items[1])[0])
     model = pickle.load(open(pickle.loads(items[1])[0] + "/model.pkl", "rb"))
     y = model.predict([feature.toArray()])
-    print("------------")
-    1/0
     return [VectorUDT().serialize(Vectors.dense(y))]
 
 
