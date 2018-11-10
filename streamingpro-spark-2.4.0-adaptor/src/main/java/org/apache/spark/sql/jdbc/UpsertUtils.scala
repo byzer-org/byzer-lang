@@ -24,7 +24,7 @@ object UpsertUtils extends Logging {
     val rddSchema = df.schema
     val getConnection: () => Connection = JdbcUtils.createConnectionFactory(jdbcOptions)
     df.foreachPartition { iterator =>
-      upsertPartition(getConnection, jdbcOptions.table, iterator, idCol, rddSchema, nullTypes, jdbcOptions.batchSize,
+      upsertPartition(getConnection, jdbcOptions.tableOrQuery, iterator, idCol, rddSchema, nullTypes, jdbcOptions.batchSize,
         dialect, isCaseSensitive)
     }
   }
@@ -198,9 +198,9 @@ object MysqlUpsertBuilder extends UpsertBuilder with Logging {
         val updateFields = updateColumns.split(",").zip(updatePlaceholders.split(",")).map(f => s"${f._1} = ${f._2}").mkString(",")
         val sql =
           s"""insert into ${table} ($columns) values ($placeholders)
-              |ON DUPLICATE KEY UPDATE
-              |${updateFields}
-              |;""".stripMargin
+             |ON DUPLICATE KEY UPDATE
+             |${updateFields}
+             |;""".stripMargin
 
         log.info(s"Using sql $sql")
 

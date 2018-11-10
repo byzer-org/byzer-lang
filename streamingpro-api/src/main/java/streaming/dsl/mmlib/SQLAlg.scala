@@ -38,7 +38,7 @@ trait SQLAlg extends Serializable {
   def codeExample: Code = Code(SQLCode, "")
 
   def coreCompatibility: Seq[CoreVersion] = {
-    Seq(Core_2_2_x, Core_2_3_x)
+    Seq(Core_2_2_x, Core_2_3_x, Core_2_4_x)
   }
 
 }
