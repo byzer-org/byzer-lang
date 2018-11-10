@@ -4,7 +4,7 @@ import java.io._
 
 import com.salesforce.op.{WowOpWorkflow, _}
 import net.csdn.common.reflect.ReflectHelper
-import org.apache.spark.sql.catalyst.expressions.{Expression, ScalaUDF, WowScalaUDF}
+import org.apache.spark.sql.catalyst.expressions.{Expression, ScalaUDF}
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{Column, DataFrame, Row, SparkSession, functions => F}
 import org.json4s.JsonDSL._
