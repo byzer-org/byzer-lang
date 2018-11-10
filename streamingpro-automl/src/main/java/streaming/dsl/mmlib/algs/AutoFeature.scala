@@ -2,14 +2,15 @@ package streaming.dsl.mmlib.algs
 
 import java.io._
 
-import com.salesforce.op.features._
-import com.salesforce.op.features.types._
 import com.salesforce.op.{WowOpWorkflow, _}
-import org.apache.spark.sql.catalyst.expressions.{Expression, WowScalaUDF}
+import net.csdn.common.reflect.ReflectHelper
+import org.apache.spark.sql.catalyst.expressions.{Expression, ScalaUDF, WowScalaUDF}
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{Column, DataFrame, Row, SparkSession, functions => F}
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods.{compact, render}
+import com.salesforce.op.features._
+import com.salesforce.op.features.types._
 
 
 /**
@@ -25,12 +26,16 @@ class AutoFeature extends Serializable {
       a.toLong
     })
 
+    val clzz = Class.forName("org.apache.spark.sql.catalyst.expressions.WowScalaUDF").getConstructor(classOf[AnyRef], classOf[DataType], classOf[Seq[Expression]])
 
-    val toDouble = (e: Seq[Expression]) => new WowScalaUDF(new Function1[Object, Any] with Serializable {
-      override def apply(v1: Object): Any = {
-        v1.toString.toDouble
-      }
-    }, DoubleType, e).toScalaUDF
+    val toDouble = (e: Seq[Expression]) => {
+      val instance = clzz.newInstance(new Function1[Object, Any] with Serializable {
+        override def apply(v1: Object): Any = {
+          v1.toString.toDouble
+        }
+      }, DoubleType, e)
+      ReflectHelper.method(instance, "toScalaUDF").asInstanceOf[ScalaUDF]
+    }
 
 
     // convert label to double
