@@ -99,18 +99,28 @@ class APIPredict extends Logging with WowLog with Serializable {
       }
     }
 
+    def daemon = {
+      //s"daemon${coreVersion}"
+      "pyspark.daemon"
+    }
+
+    def worker: String = {
+      //s"worker${coreVersion}"
+      "pyspark.worker"
+    }
+
     val (daemonCommand, workerCommand) = pythonProject.get.scriptType match {
       case MLFlow =>
         val project = MLProject.loadProject(pythonProject.get.filePath, envs.asScala.toMap)
-        (Seq("bash", "-c", project.condaEnvCommand + s" && cd ${WowPythonRunner.PYSPARK_DAEMON_FILE_LOCATION} && python -m daemon${coreVersion}"),
-          Seq("bash", "-c", project.condaEnvCommand + s" && cd ${WowPythonRunner.PYSPARK_DAEMON_FILE_LOCATION} && python -m worker${coreVersion}"))
+        (Seq("bash", "-c", project.condaEnvCommand + s" && cd ${WowPythonRunner.PYSPARK_DAEMON_FILE_LOCATION} && python -m ${daemon}"),
+          Seq("bash", "-c", project.condaEnvCommand + s" && cd ${WowPythonRunner.PYSPARK_DAEMON_FILE_LOCATION} && python -m ${worker}"))
       case _ =>
         (
           Seq("bash", "-c", s" cd ${WowPythonRunner.PYSPARK_DAEMON_FILE_LOCATION} &&" +
-            s" ${pythonConfig.pythonPath} -m daemon${coreVersion}"),
+            s" ${pythonConfig.pythonPath} -m ${daemon}"),
           Seq("bash", "-c", s" cd ${WowPythonRunner.PYSPARK_DAEMON_FILE_LOCATION} &&" +
-            s" ${pythonConfig.pythonPath} -m worker${coreVersion}")
-          )
+            s" ${pythonConfig.pythonPath} -m ${worker}")
+        )
     }
 
     logInfo(format(s"daemonCommand => ${daemonCommand.mkString(" ")} workerCommand=> ${workerCommand.mkString(" ")}"))
