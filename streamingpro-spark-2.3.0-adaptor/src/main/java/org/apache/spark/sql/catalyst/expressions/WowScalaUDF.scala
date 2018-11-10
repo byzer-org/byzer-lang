@@ -1,6 +1,5 @@
 package org.apache.spark.sql.catalyst.expressions
 
-import org.apache.spark.sql.catalyst.ScalaReflection
 import org.apache.spark.sql.types.DataType
 
 case class WowScalaUDF(function: AnyRef,
@@ -18,7 +17,7 @@ case class WowScalaUDF(function: AnyRef,
             children: Seq[Expression]
           ) = {
     this(
-      function, dataType, children, ScalaReflection.getParameterTypeNullability(function),
+      function, dataType, children, Nil,
       Nil, None, nullable = true, udfDeterministic = true)
   }
 
