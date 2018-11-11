@@ -28,8 +28,8 @@ from errno import EINTR, EAGAIN
 from socket import AF_INET, SOCK_STREAM, SOMAXCONN
 from signal import SIGHUP, SIGTERM, SIGCHLD, SIG_DFL, SIG_IGN, SIGINT
 
-from worker24 import main as worker_main
 from pyspark.serializers import read_int, write_int, write_with_length, UTF8Deserializer
+from worker23 import main as worker_main
 
 
 def compute_real_exit_code(exit_code):
@@ -101,7 +101,7 @@ def manager():
         signal.signal(SIGTERM, SIG_DFL)
         # Send SIGHUP to notify workers of shutdown
         os.kill(0, SIGHUP)
-        sys.exit(code)
+        exit(code)
 
     def handle_sigterm(*args):
         shutdown(1)

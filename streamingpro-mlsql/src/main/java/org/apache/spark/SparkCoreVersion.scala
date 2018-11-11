@@ -9,6 +9,11 @@ object SparkCoreVersion {
     coreVersion
   }
 
+  def exactVersion = {
+    val coreVersion = org.apache.spark.SPARK_VERSION
+    coreVersion
+  }
+
   def is_2_2_X() = {
     version == VERSION_2_2_X
   }
