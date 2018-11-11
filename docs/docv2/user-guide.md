@@ -1,4 +1,4 @@
-## MLSQL
+## User
 
 - Getting Started
     - [Introduction](https://github.com/allwefantasy/streamingpro/blob/master/docs/docv2/Introduction.md)
@@ -47,7 +47,7 @@
         - [LogisticRegressor](#logisticregressor)
 
     - Deep Learning
-        - [Classify](https://gist.github.com/allwefantasy/59d1f89026d8049e23f182c7d1de2870)
+        - [BigDLClassify](https://gist.github.com/allwefantasy/59d1f89026d8049e23f182c7d1de2870)
     - Python ML Frameworks
         - [SkLearn]()
         - [Tensorflow]()
@@ -67,3 +67,8 @@
     - [Concept]()
     - [Deploy]()
     - [Example]()
+
+## Developer
+
+- Basic Concepts
+    - [Estimator and Transformer in MLSQL](https://github.com/allwefantasy/streamingpro/blob/master/docs/docv2/contribute/estimator-transformer-in-mlsql.md)
