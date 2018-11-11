@@ -28,7 +28,7 @@ from errno import EINTR, EAGAIN
 from socket import AF_INET, SOCK_STREAM, SOMAXCONN
 from signal import SIGHUP, SIGTERM, SIGCHLD, SIG_DFL, SIG_IGN, SIGINT
 
-from pyspark.worker import main as worker_main
+from worker22 import main as worker_main
 from pyspark.serializers import read_int, write_int
 
 
