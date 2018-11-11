@@ -130,3 +130,4 @@ streamingpro-crawler/tasks/
 streamingpro-commons/logs
 streamingpro-dsl/logs/
 streamingpro-dsl-legacy/logs/
+streamingpro-api/logs
