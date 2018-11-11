@@ -109,9 +109,27 @@ mvn -DskipTests clean package \
 -Pautoml \
 -Pxgboost  \
 -Pstreamingpro-spark-2.3.0-adaptor \
--Pcarbondata \
--Popencv-support
+-Pcarbondata
 ````
+
+
+When you use spark-2.4.x:
+
+|profile name   | required  | description  |   |   |
+|---|---|---|---|---|
+|online                                | true  |   |   |   |
+|scala-2.11                            | true  |   |   |   |
+|shade                                 | true  |   |   |   |
+|hive-thrift-server                    | false |   |   |   |
+|spark-2.4.0                           | true  |   |   |   |
+|dsl                                   | true  |   |   |   |
+|crawler                               | true  |   |   |   |
+|automl                                | false  |   |   |   |
+|xgboost                               | false  |   |   |   |
+|streamingpro-spark-2.4.0-adaptor      | true  |   |   |   |
+|carbondata                            | false  |   |   |   |
+|opencv-support                        | false  |   |   |   |
+
 
 
 
