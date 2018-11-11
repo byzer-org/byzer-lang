@@ -2,7 +2,7 @@ name: tutorial
 channels:
   - defaults
 dependencies:
-  - python=2.7
+  - python=3.6
   - pip:
     - mlflow
     - numpy==1.14.3

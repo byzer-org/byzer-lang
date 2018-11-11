@@ -11,9 +11,7 @@ class WowJsonToStructs(
                         schema: DataType,
                         options: Map[String, String],
                         child: Expression,
-                        timeZoneId: Option[String],
-                        forceNullableSchema: Boolean) extends JsonToStructs(schema, options, child, timeZoneId, forceNullableSchema) {
+                        timeZoneId: Option[String]) extends JsonToStructs(schema, options, child, timeZoneId) {
   def this(schema: DataType, options: Map[String, String], child: Expression) =
-    this(schema, options, child, timeZoneId = None,
-      forceNullableSchema = SQLConf.get.getConf(SQLConf.FROM_JSON_FORCE_NULLABLE_SCHEMA))
+    this(schema, options, child, timeZoneId = None)
 }

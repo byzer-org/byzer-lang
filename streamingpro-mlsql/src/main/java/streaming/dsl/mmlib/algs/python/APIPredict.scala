@@ -15,7 +15,7 @@ import org.apache.spark.sql.catalyst.util.ArrayBasedMapData
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.types.{MapType, StringType, StructField, StructType}
 import org.apache.spark.util.ObjPickle.{pickleInternalRow, unpickle}
-import org.apache.spark.util.{PythonProjectExecuteRunner, VectorSerDer}
+import org.apache.spark.util.{PredictTaskContext, PythonProjectExecuteRunner, TaskContextUtil, VectorSerDer}
 import org.apache.spark.util.VectorSerDer.{ser_vector, vector_schema}
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib.algs.{Functions, SQLPythonAlg, SQLPythonFunc}
@@ -94,23 +94,43 @@ class APIPredict extends Logging with WowLog with Serializable {
     def coreVersion = {
       if (SparkCoreVersion.is_2_2_X) {
         "22"
-      } else {
-        "23"
+      } else if (SparkCoreVersion.exactVersion == "2.3.2") {
+        "232"
       }
+      else if (SparkCoreVersion.is_2_3_X()) {
+        "23"
+      } else {
+        "24"
+      }
+    }
+
+    val customDeamon = true
+
+    def daemon = {
+      if (customDeamon)
+        s"-m daemon${coreVersion}"
+      else "-m pyspark.daemon"
+    }
+
+    def worker: String = {
+      if (customDeamon)
+        s"-m worker${coreVersion}"
+      else
+        "-m pyspark.worker"
     }
 
     val (daemonCommand, workerCommand) = pythonProject.get.scriptType match {
       case MLFlow =>
         val project = MLProject.loadProject(pythonProject.get.filePath, envs.asScala.toMap)
-        (Seq("bash", "-c", project.condaEnvCommand + s" && cd ${WowPythonRunner.PYSPARK_DAEMON_FILE_LOCATION} && python -m daemon${coreVersion}"),
-          Seq("bash", "-c", project.condaEnvCommand + s" && cd ${WowPythonRunner.PYSPARK_DAEMON_FILE_LOCATION} && python -m worker${coreVersion}"))
+        (Seq("bash", "-c", project.condaEnvCommand + s" && cd ${WowPythonRunner.PYSPARK_DAEMON_FILE_LOCATION} && python  ${daemon}"),
+          Seq("bash", "-c", project.condaEnvCommand + s" && cd ${WowPythonRunner.PYSPARK_DAEMON_FILE_LOCATION} && python  ${worker}"))
       case _ =>
         (
           Seq("bash", "-c", s" cd ${WowPythonRunner.PYSPARK_DAEMON_FILE_LOCATION} &&" +
-            s" ${pythonConfig.pythonPath} -m daemon${coreVersion}"),
+            s" ${pythonConfig.pythonPath}  ${daemon}"),
           Seq("bash", "-c", s" cd ${WowPythonRunner.PYSPARK_DAEMON_FILE_LOCATION} &&" +
-            s" ${pythonConfig.pythonPath} -m worker${coreVersion}")
-          )
+            s" ${pythonConfig.pythonPath}  ${worker}")
+        )
     }
 
     logInfo(format(s"daemonCommand => ${daemonCommand.mkString(" ")} workerCommand=> ${workerCommand.mkString(" ")}"))
@@ -126,8 +146,8 @@ class APIPredict extends Logging with WowLog with Serializable {
         v_ser3 = v_ser3 ++ v_ser4
       }
 
-      if (TaskContext.get() == null) {
-        APIDeployPythonRunnerEnv.setTaskContext(APIDeployPythonRunnerEnv.createTaskContext())
+      if (PredictTaskContext.get() == null) {
+        PredictTaskContext.setTaskContext(APIDeployPythonRunnerEnv.createTaskContext())
       }
 
       val iter = WowPythonRunner.runner2(
@@ -137,8 +157,8 @@ class APIPredict extends Logging with WowLog with Serializable {
         SQLPythonAlg.isAPIService()
       ).run(
         v_ser3,
-        TaskContext.get().partitionId(),
-        TaskContext.get()
+        PredictTaskContext.get().partitionId(),
+        PredictTaskContext.get()
       )
       val res = ArrayBuffer[Array[Byte]]()
       while (iter.hasNext) {

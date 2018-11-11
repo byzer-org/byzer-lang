@@ -28,8 +28,8 @@ from errno import EINTR, EAGAIN
 from socket import AF_INET, SOCK_STREAM, SOMAXCONN
 from signal import SIGHUP, SIGTERM, SIGCHLD, SIG_DFL, SIG_IGN, SIGINT
 
-from worker22 import main as worker_main
-from pyspark.serializers import read_int, write_int
+from pyspark.serializers import read_int, write_int, write_with_length, UTF8Deserializer
+from worker23 import main as worker_main
 
 
 def compute_real_exit_code(exit_code):
@@ -40,7 +40,7 @@ def compute_real_exit_code(exit_code):
         return 1
 
 
-def worker(sock):
+def worker(sock, authenticated):
     """
     Called by a worker process after the fork().
     """
@@ -56,6 +56,18 @@ def worker(sock):
     # otherwise writes also cause a seek that makes us miss data on the read side.
     infile = os.fdopen(os.dup(sock.fileno()), "rb", 65536)
     outfile = os.fdopen(os.dup(sock.fileno()), "wb", 65536)
+
+    # if not authenticated:
+    #     client_secret = UTF8Deserializer().loads(infile)
+    #     if os.environ["PYTHON_WORKER_FACTORY_SECRET"] == client_secret:
+    #         write_with_length("ok".encode("utf-8"), outfile)
+    #         outfile.flush()
+    #     else:
+    #         write_with_length("err".encode("utf-8"), outfile)
+    #         outfile.flush()
+    #         sock.close()
+    #         return 1
+
     exit_code = 0
     try:
         worker_main(infile, outfile)
@@ -93,6 +105,7 @@ def manager():
 
     def handle_sigterm(*args):
         shutdown(1)
+
     signal.signal(SIGTERM, handle_sigterm)  # Gracefully exit on SIGTERM
     signal.signal(SIGHUP, SIG_IGN)  # Don't die on SIGHUP
     signal.signal(SIGCHLD, SIG_IGN)
@@ -153,8 +166,11 @@ def manager():
                         write_int(os.getpid(), outfile)
                         outfile.flush()
                         outfile.close()
+                        authenticated = False
                         while True:
-                            code = worker(sock)
+                            code = worker(sock, authenticated)
+                            if code == 0:
+                                authenticated = True
                             if not reuse or code:
                                 # wait for closing
                                 try:

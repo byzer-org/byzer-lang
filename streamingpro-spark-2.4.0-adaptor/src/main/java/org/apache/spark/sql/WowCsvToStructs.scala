@@ -36,7 +36,7 @@ case class WowCsvToStructs(schema: DataType,
   lazy val parser =
     new UnivocityParser(
       rowSchema,
-      new CSVOptions(options, timeZoneId.get))
+      new CSVOptions(options, true, timeZoneId.get))
 
   @transient
   lazy val rowSchema = nullableSchema match {
