@@ -15,7 +15,7 @@ import org.apache.spark.sql.catalyst.util.ArrayBasedMapData
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.types.{MapType, StringType, StructField, StructType}
 import org.apache.spark.util.ObjPickle.{pickleInternalRow, unpickle}
-import org.apache.spark.util.{PythonProjectExecuteRunner, VectorSerDer}
+import org.apache.spark.util.{PredictTaskContext, PythonProjectExecuteRunner, TaskContextUtil, VectorSerDer}
 import org.apache.spark.util.VectorSerDer.{ser_vector, vector_schema}
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib.algs.{Functions, SQLPythonAlg, SQLPythonFunc}
@@ -94,21 +94,29 @@ class APIPredict extends Logging with WowLog with Serializable {
     def coreVersion = {
       if (SparkCoreVersion.is_2_2_X) {
         "22"
-      } else if (SparkCoreVersion.is_2_3_X()) {
+      } else if (SparkCoreVersion.exactVersion == "2.3.2") {
+        "232"
+      }
+      else if (SparkCoreVersion.is_2_3_X()) {
         "23"
       } else {
         "24"
       }
     }
 
+    val customDeamon = true
+
     def daemon = {
-      s"-m daemon${coreVersion}"
-      //      "-m pyspark.daemon"
+      if (customDeamon)
+        s"-m daemon${coreVersion}"
+      else "-m pyspark.daemon"
     }
 
     def worker: String = {
-      s"-m worker${coreVersion}"
-      //      "-m pyspark.worker"
+      if (customDeamon)
+        s"-m worker${coreVersion}"
+      else
+        "-m pyspark.worker"
     }
 
     val (daemonCommand, workerCommand) = pythonProject.get.scriptType match {
@@ -138,8 +146,8 @@ class APIPredict extends Logging with WowLog with Serializable {
         v_ser3 = v_ser3 ++ v_ser4
       }
 
-      if (TaskContext.get() == null) {
-        APIDeployPythonRunnerEnv.setTaskContext(APIDeployPythonRunnerEnv.createTaskContext())
+      if (PredictTaskContext.get() == null) {
+        PredictTaskContext.setTaskContext(APIDeployPythonRunnerEnv.createTaskContext())
       }
 
       val iter = WowPythonRunner.runner2(
@@ -149,8 +157,8 @@ class APIPredict extends Logging with WowLog with Serializable {
         SQLPythonAlg.isAPIService()
       ).run(
         v_ser3,
-        TaskContext.get().partitionId(),
-        TaskContext.get()
+        PredictTaskContext.get().partitionId(),
+        PredictTaskContext.get()
       )
       val res = ArrayBuffer[Array[Byte]]()
       while (iter.hasNext) {
