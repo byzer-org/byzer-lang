@@ -125,6 +125,9 @@ class PythonProjectExecuteRunner(taskDirectory: String,
     saveSystemPythonFile("daemon23.py")
     saveSystemPythonFile("worker23.py")
 
+    saveSystemPythonFile("daemon232.py")
+    saveSystemPythonFile("worker232.py")
+
     val env = SparkEnv.get
     val proc = pb.start()
 
