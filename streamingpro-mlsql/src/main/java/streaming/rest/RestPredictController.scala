@@ -4,8 +4,8 @@ import net.csdn.annotation.rest.At
 import net.csdn.modules.http.ApplicationController
 import net.csdn.modules.http.RestRequest.Method._
 import net.sf.json.{JSONArray, JSONObject}
+import org.apache.spark.{MiniTaskContext}
 import org.apache.spark.ml.linalg.Vectors
-import org.apache.spark.sql.Encoders
 import org.apache.spark.sql.execution.datasources.json.WowJsonInferSchema
 import streaming.core.strategy.platform.{PlatformManager, SparkRuntime}
 import streaming.dsl.{MLSQLExecuteContext, ScriptSQLExec}
@@ -28,6 +28,23 @@ class RestPredictController extends ApplicationController {
       case "row" => row2vecPredict
     }
     render(200, res)
+  }
+
+  @At(path = Array("/compute"), types = Array(GET, POST))
+  def compute = {
+    intercept()
+    val sparkSession = runtime.asInstanceOf[SparkRuntime].sparkSession
+    val df = sparkSession.sql(param("sql"))
+    val sparkPlan = df.queryExecution.sparkPlan
+    val rdd = sparkPlan.execute()
+    val rPartitions = rdd.partitions
+    val taskContext = new MiniTaskContext
+    val rs = rdd.compute(rPartitions.head, taskContext)
+    val dateTypes = df.schema.map(f => f.dataType)
+    val list = rs.map(iRow => iRow.toSeq(dateTypes)).toList
+    print(list)
+    taskContext.removeContext()
+    render(200, "")
   }
 
   def createContext = {
