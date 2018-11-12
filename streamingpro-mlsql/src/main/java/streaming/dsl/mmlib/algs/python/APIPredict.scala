@@ -97,7 +97,7 @@ class APIPredict extends Logging with WowLog with Serializable {
       } else if (SparkCoreVersion.exactVersion == "2.3.2") {
         "232"
       }
-      else if (SparkCoreVersion.is_2_3_X()) {
+      else if (SparkCoreVersion.is_2_3_X) {
         "23"
       } else {
         "24"
