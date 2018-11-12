@@ -255,6 +255,20 @@ class RestController extends ApplicationController {
     render(200, "{}")
   }
 
+  @At(path = Array("/user/logout"), types = Array(GET, POST))
+  def userLogout = {
+    restResponse.httpServletResponse().setHeader("Access-Control-Allow-Origin", "*")
+    require(hasParam("owner"), "owner is should be set ")
+    if (paramAsBoolean("sessionPerUser", false)) {
+      val sparkRuntime = runtime.asInstanceOf[SparkRuntime]
+      sparkRuntime.closeSession(param("owner", "admin"))
+      render(200, toJsonString(Map("msg" -> "success")))
+    } else {
+      render(400, toJsonString(Map("msg" -> "please make sure sessionPerUser is set to true")))
+    }
+
+  }
+
   // end --------------------------------------------------------
 
 

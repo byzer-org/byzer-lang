@@ -20,22 +20,17 @@ import streaming.core.strategy.platform.{PlatformManager, SparkRuntime}
 /**
   * Created by allwefantasy on 3/6/2018.
   */
-class SparkSessionWithUGI(user: UserGroupInformation, conf: Map[String, String]) extends Logging {
+class MLSQLSparkSession(userName: String, conf: Map[String, String]) extends Logging {
   private[this] var _sparkSession: SparkSession = _
 
   def sparkSession: SparkSession = _sparkSession
-
-
-  private[this] var initialDatabase: Option[String] = None
-
-  private[this] val sparkContext: AtomicReference[SparkContext] = new AtomicReference[SparkContext]()
 
 
   private[this] def getOrCreate(sessionConf: Map[String, String]): Unit = synchronized {
     var checkRound = 15
     val interval = 1l
     // if user's sc is being constructed by another
-    while (SparkSessionWithUGI.isPartiallyConstructed(userName)) {
+    while (MLSQLSparkSession.isPartiallyConstructed(userName)) {
       wait(interval)
       checkRound -= 1
       if (checkRound <= 0) {
@@ -49,7 +44,7 @@ class SparkSessionWithUGI(user: UserGroupInformation, conf: Map[String, String])
       case Some(ss) =>
         _sparkSession = ss.newSession()
       case _ =>
-        SparkSessionWithUGI.setPartiallyConstructed(userName)
+        MLSQLSparkSession.setPartiallyConstructed(userName)
         notifyAll()
         create(sessionConf)
     }
@@ -58,32 +53,15 @@ class SparkSessionWithUGI(user: UserGroupInformation, conf: Map[String, String])
 
   private[this] def create(sessionConf: Map[String, String]): Unit = {
     log.info(s"--------- Create new SparkSession for $userName ----------")
-    val appName = s"MLSQLSession[$userName]@" + conf.get(BIND_HOST.key)
-
-    val totalWaitTime: Long = 60L
-
     try {
-      user.doAs(new PrivilegedExceptionAction[Unit] {
-        override def run(): Unit = {
-          val context = sparkContext.get()
-          _sparkSession = PlatformManager.getRuntime.asInstanceOf[SparkRuntime].sparkSession.newSession()
-        }
-      })
+      _sparkSession = PlatformManager.getRuntime.asInstanceOf[SparkRuntime].sparkSession.newSession()
       SparkSessionCacheManager.get.set(userName, _sparkSession)
     } catch {
-      case ute: UndeclaredThrowableException =>
-        ute.getCause match {
-          case te: TimeoutException =>
-            throw new MLSQLException(
-              s"Get SparkSession for [$userName] failed: " + te, "", 1001, te)
-          case _ =>
-            throw new MLSQLException(ute.toString, "08S01", ute.getCause)
-        }
       case e: Exception =>
         throw new MLSQLException(
           s"Get SparkSession for [$userName] failed: " + e, "", e)
     } finally {
-      SparkSessionWithUGI.setFullyConstructed(userName)
+      MLSQLSparkSession.setFullyConstructed(userName)
     }
   }
 
@@ -92,8 +70,6 @@ class SparkSessionWithUGI(user: UserGroupInformation, conf: Map[String, String])
     master == "local" || master.startsWith("local[")
   }
 
-
-  def userName: String = user.getShortUserName
 
   def init(sessionConf: Map[String, String]): Unit = {
     try {
@@ -105,7 +81,7 @@ class SparkSessionWithUGI(user: UserGroupInformation, conf: Map[String, String])
   }
 }
 
-object SparkSessionWithUGI extends Logging {
+object MLSQLSparkSession extends Logging {
   private[this] val userSparkContextBeingConstruct = new MHSet[String]()
 
   def setPartiallyConstructed(user: String): Unit = {

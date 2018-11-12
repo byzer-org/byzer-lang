@@ -30,6 +30,17 @@ class RestPredictController extends ApplicationController {
     render(200, res)
   }
 
+
+  @At(path = Array("/compute"), types = Array(GET, POST))
+  def compute = {
+    intercept()
+    val sparkSession = runtime.asInstanceOf[SparkRuntime].sparkSession
+    val res = WowJsonInferSchema.toJson(sparkSession.sql(param("sql"))).mkString(",")
+
+    render(200, res)
+  }
+
+
   def createContext = {
     val userDefineParams = params.toMap.filter(f => f._1.startsWith("context.")).map(f => (f._1.substring("context.".length), f._2)).toMap
     ScriptSQLExec.setContext(new MLSQLExecuteContext(param("owner"), "", userDefineParams))

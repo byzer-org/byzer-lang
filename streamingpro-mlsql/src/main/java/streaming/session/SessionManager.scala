@@ -16,7 +16,6 @@ class SessionManager(rootSparkSession: SparkSession) extends Logging {
 
 
   def start(): Unit = {
-    opManager.start()
     SparkSessionCacheManager.startCacheManager()
   }
 
