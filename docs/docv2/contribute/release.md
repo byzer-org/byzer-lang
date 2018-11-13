@@ -2,7 +2,7 @@
 
 
 Starting with MLSQL 1.1.3, the MLSQL project will follow the semantic versioning guidelines with a few deviations.
-These small differences account for Spark’s nature as a multi-module project.
+These small differences account for MLSQL’s nature as a multi-module project.
 
 
 ## MLSQL Versions
@@ -24,7 +24,7 @@ Each MLSQL release will be versioned: \[MAJOR\].\[FEATURE\].\[MAINTENANCE\]
 
 ## Release Cadence
 In general, feature (“minor”) releases occur about every 1.5 months.
-Hence, MLSQL 1.2.x would generally be released about 2 months after 1.1.x.
+Hence, MLSQL 1.2.x would generally be released about 1.5 months after 1.1.x.
 Maintenance releases happen as needed in between feature releases.
 Major releases do not happen according to a fixed schedule.
 
