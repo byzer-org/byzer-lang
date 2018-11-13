@@ -5,7 +5,6 @@ import net.csdn.modules.http.ApplicationController
 import net.csdn.modules.http.RestRequest.Method._
 import net.sf.json.{JSONArray, JSONObject}
 import org.apache.spark.ml.linalg.Vectors
-import org.apache.spark.sql.Encoders
 import org.apache.spark.sql.execution.datasources.json.WowJsonInferSchema
 import streaming.core.strategy.platform.{PlatformManager, SparkRuntime}
 import streaming.dsl.{MLSQLExecuteContext, ScriptSQLExec}
@@ -39,7 +38,6 @@ class RestPredictController extends ApplicationController {
 
     render(200, res)
   }
-
 
   def createContext = {
     val userDefineParams = params.toMap.filter(f => f._1.startsWith("context.")).map(f => (f._1.substring("context.".length), f._2)).toMap

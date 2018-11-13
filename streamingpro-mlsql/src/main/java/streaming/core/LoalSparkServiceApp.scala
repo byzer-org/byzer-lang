@@ -17,7 +17,7 @@ object LocalSparkServiceApp {
       "-streaming.ps.enable", "true",
       "-spark.sql.hive.thriftServer.singleSession", "true",
       "-streaming.rest.intercept.clzz", "streaming.rest.ExampleRestInterceptor",
-      "-streaming.deploy.rest.api", "false",
+      "-streaming.deploy.rest.api", "true",
       "-spark.driver.maxResultSize", "2g",
       "-spark.serializer", "org.apache.spark.serializer.KryoSerializer",
       "-spark.sql.codegen.wholeStage", "true",
@@ -25,7 +25,7 @@ object LocalSparkServiceApp {
       "-streaming.udf.clzznames", "streaming.crawler.udf.Functions",
       "-streaming.driver.port", "9003",
       "-spark.files.maxPartitionBytes", "10485760",
-      "-spark.sql.shuffle.partitions", "2"
+      "-spark.sql.shuffle.partitions", "1"
 
       //"-streaming.sql.out.path","file:///tmp/test/pdate=20160809"
 
