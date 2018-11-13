@@ -104,6 +104,8 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
         invoke(carbonBuilder, params("streaming.carbondata.store").toString, params("streaming.carbondata.meta").toString).asInstanceOf[SparkSession]
     } else {
       if (params.getOrDefault("streaming.deploy.rest.api", "false").toString.toBoolean) {
+        conf.setIfMissing("spark.default.parallelism", "1")
+          .setIfMissing("spark.sql.shuffle.partitions", "1")
         val wfsc = new WowFastSparkContext(conf)
         ReflectHelper.method(sparkSession, "sparkContext", wfsc)
       }
