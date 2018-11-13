@@ -45,6 +45,7 @@ if __name__ == "__main__":
     lr.fit(train_x, train_y)
     isp = mlsql.params()["internalSystemParam"]
     tempModelLocalPath = isp["tempModelLocalPath"]
-    os.mkdir(tempModelLocalPath)
+    if not os.path.exists(tempModelLocalPath):
+        os.makedirs(tempModelLocalPath)
     with open(tempModelLocalPath + "/model.pkl", "wb") as f:
         pickle.dump(lr, f)
