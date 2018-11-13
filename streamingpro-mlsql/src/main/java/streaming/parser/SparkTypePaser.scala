@@ -3,6 +3,8 @@ package streaming.parser
 import org.apache.spark.sql.types._
 import scala.collection.mutable.ArrayBuffer
 
+import org.apache.spark.sql.catalyst.ScalaReflection
+
 /**
   * Created by allwefantasy on 8/9/2018.
   */
@@ -58,27 +60,31 @@ object SparkTypePaser {
   }
 
   //array(array(map(string,string)))
-  def toSparkType(dt: String): DataType = dt match {
-    case "boolean" => BooleanType
-    case "byte" => ByteType
-    case "short" => ShortType
-    case "integer" => IntegerType
-    case "date" => DateType
-    case "long" => LongType
-    case "float" => FloatType
-    case "double" => DoubleType
-    case "decimal" => DoubleType
-    case "binary" => BinaryType
-    case "string" => StringType
-    case c: String if c.startsWith("array") =>
-      ArrayType(toSparkType(findInputInArrayBracket(c)))
-    case c: String if c.startsWith("map") =>
-      //map(map(string,string),string)
-      val (key, value) = findKeyAndValue(findInputInArrayBracket(c))
-      MapType(toSparkType(key), toSparkType(value))
+  def toSparkType(dt: String): DataType = {
+    println(dt)
 
-    case _ => throw new RuntimeException("dt is not found spark type")
+    dt match {
+      case "boolean" => BooleanType
+      case "byte" => ByteType
+      case "short" => ShortType
+      case "integer" => IntegerType
+      case "date" => DateType
+      case "long" => LongType
+      case "float" => FloatType
+      case "double" => DoubleType
+      case "decimal" => DoubleType
+      case "binary" => BinaryType
+      case "string" => StringType
+      case c: String if c.startsWith("array") =>
+        ArrayType(toSparkType(findInputInArrayBracket(c)))
+      case c: String if c.startsWith("map") =>
+        //map(map(string,string),string)
+        val (key, value) = findKeyAndValue(findInputInArrayBracket(c))
+        MapType(toSparkType(key), toSparkType(value))
 
+      case _ => throw new RuntimeException(s"$dt is not found spark type")
+
+    }
   }
 
   def cleanSparkSchema(wowStructType: WowStructType): StructType = {
@@ -169,10 +175,60 @@ object SparkTypePaser {
   }
 
   def main(args: Array[String]): Unit = {
-    val res = toSparkSchema("st(field(name,string),field(name1,st(field(name2,array(string)))))", WowStructType(ArrayBuffer()))
-    println(cleanSparkSchema(res.asInstanceOf[WowStructType]))
-    //    val wow = ArrayBuffer[String]()
-    //    findFieldArray("field(name,string),field(name1,st(field(name2,array(string))))", wow)
-    //    println(wow)
+    xxxxx()
   }
+  def xxxxx(): Unit = {
+    import scala.reflect.runtime.currentMirror
+    import scala.reflect.runtime.universe._
+    import scala.tools.reflect.ToolBox
+    val tb = currentMirror.mkToolBox()
+    val code =
+      """
+        |  def xxx(i: Map[String, String]): Map[String, String] = {
+        |    null
+        |  }
+      """.stripMargin
+    val code2 =
+      """
+        |  def xxx(i: Int): Int = {
+        |    null
+        |  }
+      """.stripMargin
+
+    val code3 =
+      """
+        |  def xxx(i: Array[String]): Array[String] = {
+        |    null
+        |  }
+      """.stripMargin
+
+    val code4 =
+      """
+        |def apply(m: String): Map[String, String] = {
+        |  Map("a" -> "b")
+        |}
+      """.stripMargin
+    val code5 =
+      """
+        |def apply(m: String) = {
+        |  Map("a" -> "b")
+        |}
+      """.stripMargin
+    val tree = tb.parse(code5)
+    val zz = tb.typecheck(tree)
+    println("=================")
+
+    val yy = zz.asInstanceOf[DefDef]
+    println("----")
+//    println(yy.tpt)
+    println(yy.tpt.tpe)
+    println(yy.tpt.symbol.asType.typeParams)
+    println()
+    val dt = ScalaReflection.schemaFor(yy.tpt.tpe)
+    println(dt)
+    val x = typeOf[String]
+    typeOf[Int]
+    x
+  }
+
 }

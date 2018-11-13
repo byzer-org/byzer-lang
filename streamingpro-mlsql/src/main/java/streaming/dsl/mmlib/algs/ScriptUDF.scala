@@ -71,11 +71,11 @@ class ScriptUDF(override val uid: String) extends SQLAlg with MllibFunctions wit
           }
 
         case _ =>
-          if (params.contains(className.name)) {
-            ScalaSourceUDF(res, params(className.name), params.get(methodName.name))
-          } else {
+//          if (params.contains(className.name)) {
+//            ScalaSourceUDF(res, params(className.name), params.get(methodName.name))
+//          } else {
             ScalaSourceUDF(res, params.get(methodName.name))
-          }
+//          }
       }
       (e: Seq[Expression]) => new WowScalaUDF(func, returnType, e).toScalaUDF
     }

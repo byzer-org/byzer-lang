@@ -34,3 +34,5 @@ case class WowScalaUDF(function: AnyRef,
   }
 
 }
+
+case class RuntimeComplieUDF()

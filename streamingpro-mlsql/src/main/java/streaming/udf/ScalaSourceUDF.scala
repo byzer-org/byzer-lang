@@ -2,7 +2,7 @@ package streaming.udf
 
 import java.util.UUID
 
-import org.apache.spark.sql.catalyst.JavaTypeInference
+import org.apache.spark.sql.catalyst.{JavaTypeInference, ScalaReflection}
 import org.apache.spark.sql.types._
 import streaming.common.{ScriptCacheKey, SourceCodeCompiler}
 import streaming.dsl.ScriptSQLExec
@@ -27,17 +27,18 @@ object ScalaSourceUDF extends Logging with WowLog {
 
   }
 
-  def apply(src: String, methodName: Option[String]): (AnyRef, DataType) = {
-    val (className, newfun) = wrapClass(src)
-    apply(newfun, className, methodName)
+//  def apply(src: String, methodName: Option[String]): (AnyRef, DataType) = {
+//    val (className, newfun) = src
+//    apply(src , methodName)
+//  }
+
+  def apply(function: String, methodName: Option[String]): (AnyRef, DataType) = {
+    val (argumentNum, returnType) = getFunctionReturnType(function, methodName)
+    (generateFunction(function, methodName, argumentNum), returnType)
   }
 
-  def apply(src: String, className: String, methodName: Option[String]): (AnyRef, DataType) = {
-    val (argumentNum, returnType) = getFunctionReturnType(src, className, methodName)
-    (generateFunction(src, className, methodName, argumentNum), returnType)
-  }
-
-  private def getFunctionReturnType(src: String, className: String, methodName: Option[String]): (Int, DataType) = {
+  private def getFunctionReturnType(function: String, methodName: Option[String]): (Int, DataType) = {
+    val (className, src) = wrapClass(function)
 
     val c = ScriptSQLExec.contextGetOrForTest()
 
@@ -56,12 +57,14 @@ object ScalaSourceUDF extends Logging with WowLog {
       SourceCodeCompiler.execute(ScriptCacheKey(src, className))
     }).asInstanceOf[Class[_]]
     val method = SourceCodeCompiler.getMethod(clazz, methodName.getOrElse("apply"))
-    val dataType: (DataType, Boolean) = JavaTypeInference.inferDataType(method.getReturnType)
-    (method.getParameterCount, dataType._1)
+    val tpe = SourceCodeCompiler.getFunReturnType(function)
+    val dataType = ScalaReflection.schemaFor(tpe).dataType
+    (method.getParameterCount, dataType)
   }
 
 
-  def generateFunction(src: String, className: String, methodName: Option[String], argumentNum: Int): AnyRef = {
+  def generateFunction(function: String, methodName: Option[String], argumentNum: Int): AnyRef = {
+    val (className, src) = wrapClass(function)
 
     val c = ScriptSQLExec.contextGetOrForTest()
 

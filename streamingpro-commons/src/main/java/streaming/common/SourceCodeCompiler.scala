@@ -1,5 +1,6 @@
 package streaming.common
 
+import scala.reflect.runtime.universe._
 import javax.tools._
 
 import scala.collection.JavaConversions._
@@ -49,6 +50,20 @@ object SourceCodeCompiler extends Logging {
     } else {
       candidate.head
     }
+  }
+
+  def getFunReturnType(fun: String): Type = {
+    println(fun)
+    import scala.tools.reflect.ToolBox
+    //val classLoader = scala.reflect.runtime.universe.getClass.getClassLoader
+    var classLoader = Thread.currentThread().getContextClassLoader
+    if (classLoader == null) {
+      classLoader = scala.reflect.runtime.universe.getClass.getClassLoader
+    }
+    val tb = runtimeMirror(classLoader).mkToolBox()
+    val tree = tb.parse(fun)
+    val defDef = tb.typecheck(tree).asInstanceOf[DefDef]
+    defDef.tpt.tpe
   }
 
   def compileScala(src: String): Class[_] = {
