@@ -107,7 +107,6 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
         conf.setIfMissing("spark.default.parallelism", "1")
           .setIfMissing("spark.sql.shuffle.partitions", "1")
         //          .setIfMissing("spark.sql.codegen.wholeStage", "false")
-        //          .set("spark.sql.extensions", "org.apache.spark.sql.StarrySparkSessionExtension")
         val wfsc = new WowFastSparkContext(conf)
         ReflectHelper.method(sparkSession, "sparkContext", wfsc)
       }
