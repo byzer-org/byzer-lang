@@ -119,6 +119,31 @@ class MLLibSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLCo
     }
   }
 
+  "SQLLDA" should "work fine" in {
+    copySampleLibsvmData
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+      implicit val spark = runtime.sparkSession
+      val sqlLDA = new SQLLDA()
+      ScriptSQLExec.contextGetOrForTest()
+
+      val df = spark.read.format("libsvm").load("/tmp/william/sample_lda_libsvm_data.txt")
+      df.createOrReplaceTempView("data")
+      sqlLDA.train(df, "/tmp/SQLLDA", Map(
+        "k" -> "3",
+        "topicConcentration" -> "3.0",
+        "docConcentration" -> "3.0",
+        "optimizer" -> "online",
+        "checkpointInterval" -> "10",
+        "maxIter" -> "100"
+      ))
+      val models = sqlLDA.load(spark, "/tmp/SQLLDA", Map())
+      val udf = sqlLDA.predict(spark, models, "jack", Map())
+      spark.udf.register("jack", udf)
+      spark.sql("select label,jack(4) topicsMatrix,jack_doc(features) TopicDistribution,jack_topic(label,4) describeTopics " +
+        "from data as result").show()
+    }
+  }
+
   "KMeans" should "work fine" in {
     copySampleLibsvmData
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
@@ -201,17 +226,17 @@ class MLLibSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLCo
     }
   }
 
-//  "XGBoost" should "work fine" in {
-//    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
-//      implicit val spark = runtime.sparkSession
-//      ScriptSQLExec.contextGetOrForTest()
-//      val df = spark.read.format("libsvm").load("/tmp/william/sample_libsvm_data.txt")
-//      val feature = new SQLXGBoostExt()
-//      val newdf = feature.train(df, "/tmp/model2", Map())
-//      val status = newdf.collect().map(f => f.getAs[String]("status")).head
-//      assert(status == "success")
-//      feature.batchPredict(df, "/tmp/model2", Map()).show()
-//    }
-//  }
+  //  "XGBoost" should "work fine" in {
+  //    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+  //      implicit val spark = runtime.sparkSession
+  //      ScriptSQLExec.contextGetOrForTest()
+  //      val df = spark.read.format("libsvm").load("/tmp/william/sample_libsvm_data.txt")
+  //      val feature = new SQLXGBoostExt()
+  //      val newdf = feature.train(df, "/tmp/model2", Map())
+  //      val status = newdf.collect().map(f => f.getAs[String]("status")).head
+  //      assert(status == "success")
+  //      feature.batchPredict(df, "/tmp/model2", Map()).show()
+  //    }
+  //  }
 
 }

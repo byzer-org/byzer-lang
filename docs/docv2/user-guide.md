@@ -39,7 +39,7 @@
         - [NaiveBayes]()
         - [ALS]()
         - [GBTRegressor](#gbtregressor)
-        - [LDA](#lda)
+        - [LDA](https://github.com/allwefantasy/streamingpro/blob/master/docs/docv2/algorithms/LDA.md)
         - [KMeans](#kmeans)
         - [FPGrowth](#fpgrowth)
         - [GBTs](#gbts)
