@@ -17,6 +17,11 @@ This is an active open source project for everyone,
 and we are always open to people who want to use this system or contribute to it.
 This guide document introduce [how to contribute to MLSQL](https://github.com/allwefantasy/streamingpro/blob/master/docs/docv2/contribute/contribute.md).
 
+## Roadmap
+
+1. [Roadmap](https://github.com/allwefantasy/streamingpro/blob/master/docs/docv2/contribute/roadmap.md)
+2. [Versioning Policy](https://github.com/allwefantasy/streamingpro/blob/master/docs/docv2/contribute/release.md)
+
 ## Build Distribution
 
 
