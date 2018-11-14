@@ -157,14 +157,16 @@ In real world you can load kafka source like this:
 
 ```sql
 
--- if you are using kafka 1.0
+-- if you are using kafka 0.10
 load kafka.`pi-content-realtime-db` options 
 `kafka.bootstrap.servers`="---"
+and `subscribe`="---"
 as kafka_post_parquet;
 
 -- if you are using kafka 0.8.0/0.9.0
-load kafka9.`pi-content-realtime-db` options 
+load kafka8.`pi-content-realtime-db` options 
 `kafka.bootstrap.servers`="---"
+and `topics`="---"
 as kafka_post_parquet;
 
 ```
@@ -173,8 +175,8 @@ If you want to save data with static partition:
 
 ```sql
 
-save append post_parquet  
-as newParquet.`/table1/hp_stat_date=${date.toString("yyyy-MM-dd")}` 
+save append post_parquet 
+as parquet.`/table1/hp_stat_date=${pathDate.toString("yyyy-MM-dd")}` 
 options mode="Append" 
 and duration="30" 
 and checkpointLocation="/tmp/ckl1";
@@ -183,13 +185,18 @@ and checkpointLocation="/tmp/ckl1";
 If you want to save data to MySQL:
 
 ```sql
-
+-- connect mysql as the data sink.
+connect jdbc where  
+driver="com.mysql.jdbc.Driver"
+and url="jdbc:mysql://127.0.0.1:3306/wow"
+and driver="com.mysql.jdbc.Driver"
+and user="---"
+and password="----"
+as mysql1;
 -- Save the data to MYSQL
 save append table21  
-as NONE.`mysql1.test1` 
+as jdbc.`mysql1.test1` 
 options mode="Complete"
-and implClass="org.apache.spark.sql.execution.streaming.JDBCSinkProvider"
--- executed in driver
 and `driver-statement-0`="create table test1 if not exists........."
 -- executed in executor
 and `statement-0`="insert into wow.test1(k,c) values(?,?)"
@@ -201,19 +208,19 @@ If you want to add watermark for a table:
 
 ```sql
 
-select ..... as table1;
+select ts,f1 as table1;
 
 -- register watermark for table1
-register WaterMarkInPlace.`table1` as tmp1
+register WaterMarkInPlace.`_` as tmp1
 options eventTimeCol="ts"
 and delayThreshold="1 seconds";
 
 -- process table1
-select count(*) as num from table1
-group by window(ts,"30 minutes","10 seconds")
+select f1,count(*) as num from table1
+group by f1, window(ts,"30 minutes","10 seconds")
 as table2;
 
-save append ......
+save append table2 as ....
 ```
 
 
