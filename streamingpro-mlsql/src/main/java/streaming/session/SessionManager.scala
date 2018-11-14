@@ -16,6 +16,7 @@ class SessionManager(rootSparkSession: SparkSession) extends Logging {
 
 
   def start(): Unit = {
+    SparkSessionCacheManager.setSessionManager(this)
     SparkSessionCacheManager.startCacheManager()
   }
 
@@ -52,6 +53,8 @@ class SessionManager(rootSparkSession: SparkSession) extends Logging {
         openSession(sessionIdentifier.owner, "", "", Map(), true)
       }
       session = identifierToSession.get(sessionIdentifier)
+      //to record last visit timestamp
+      SparkSessionCacheManager.get.visit(session.getUserName)
       //to record active times
       session.visit()
     }
