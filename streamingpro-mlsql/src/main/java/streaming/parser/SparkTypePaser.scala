@@ -4,6 +4,7 @@ import org.apache.spark.sql.types._
 import scala.collection.mutable.ArrayBuffer
 
 import org.apache.spark.sql.catalyst.ScalaReflection
+import streaming.common.SourceCodeCompiler
 
 /**
   * Created by allwefantasy on 8/9/2018.
@@ -61,8 +62,6 @@ object SparkTypePaser {
 
   //array(array(map(string,string)))
   def toSparkType(dt: String): DataType = {
-    println(dt)
-
     dt match {
       case "boolean" => BooleanType
       case "byte" => ByteType
@@ -173,62 +172,4 @@ object SparkTypePaser {
 
     }
   }
-
-  def main(args: Array[String]): Unit = {
-    xxxxx()
-  }
-  def xxxxx(): Unit = {
-    import scala.reflect.runtime.currentMirror
-    import scala.reflect.runtime.universe._
-    import scala.tools.reflect.ToolBox
-    val tb = currentMirror.mkToolBox()
-    val code =
-      """
-        |  def xxx(i: Map[String, String]): Map[String, String] = {
-        |    null
-        |  }
-      """.stripMargin
-    val code2 =
-      """
-        |  def xxx(i: Int): Int = {
-        |    null
-        |  }
-      """.stripMargin
-
-    val code3 =
-      """
-        |  def xxx(i: Array[String]): Array[String] = {
-        |    null
-        |  }
-      """.stripMargin
-
-    val code4 =
-      """
-        |def apply(m: String): Map[String, String] = {
-        |  Map("a" -> "b")
-        |}
-      """.stripMargin
-    val code5 =
-      """
-        |def apply(m: String) = {
-        |  Map("a" -> "b")
-        |}
-      """.stripMargin
-    val tree = tb.parse(code5)
-    val zz = tb.typecheck(tree)
-    println("=================")
-
-    val yy = zz.asInstanceOf[DefDef]
-    println("----")
-//    println(yy.tpt)
-    println(yy.tpt.tpe)
-    println(yy.tpt.symbol.asType.typeParams)
-    println()
-    val dt = ScalaReflection.schemaFor(yy.tpt.tpe)
-    println(dt)
-    val x = typeOf[String]
-    typeOf[Int]
-    x
-  }
-
 }

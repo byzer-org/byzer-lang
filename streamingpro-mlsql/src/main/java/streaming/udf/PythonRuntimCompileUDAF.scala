@@ -4,21 +4,31 @@ import org.apache.spark.sql.Row
 import org.apache.spark.sql.expressions.{MutableAggregationBuffer, UserDefinedAggregateFunction}
 import org.apache.spark.sql.types.{DataType, StructType}
 import org.python.core.{Py, PyObject}
-import streaming.common.{ScriptCacheKey, SourceCodeCompiler}
 import streaming.dsl.ScriptSQLExec
-import streaming.jython.JythonUtils
-import streaming.log.{Logging, WowLog}
-
+import streaming.dsl.mmlib.algs.ScriptUDFCacheKey
+import streaming.jython.{JythonUtils, PythonInterp}
 
 /**
-  * Created by allwefantasy on 31/8/2018.
-  */
-object PythonSourceUDAF extends Logging with WowLog {
-  def apply(src: String, className: String): UserDefinedAggregateFunction = {
-    generateAggregateFunction(src, className)
+ * Created by fchen on 2018/11/15.
+ */
+object PythonRuntimCompileUDAF extends RuntimeCompileUDAF {
+  /**
+   * validate the source code
+   */
+  override def check(sourceCode: String): Boolean = true
+
+  /**
+   * compile the source code.
+   *
+   * @param scriptCacheKey
+   * @return
+   */
+  override def compile(scriptCacheKey: ScriptUDFCacheKey): AnyRef = {
+    PythonInterp.compilePython(scriptCacheKey.originalCode, scriptCacheKey.className)
   }
 
-  private def generateAggregateFunction(src: String, className: String): UserDefinedAggregateFunction = {
+  override def generateFunction(scriptCacheKey: ScriptUDFCacheKey): UserDefinedAggregateFunction = {
+
     new UserDefinedAggregateFunction with Serializable {
 
       val c = ScriptSQLExec.contextGetOrForTest()
@@ -28,17 +38,16 @@ object PythonSourceUDAF extends Logging with WowLog {
           fn()
         } catch {
           case e: Exception =>
-            logError(format_exception(e))
             throw e
         }
       }
 
       @transient val objectUsingInDriver = wrap(() => {
-        SourceCodeCompiler.execute(ScriptCacheKey(src, className, "python")).asInstanceOf[PyObject].__call__()
+        execute(scriptCacheKey).asInstanceOf[PyObject].__call__()
       }).asInstanceOf[PyObject]
 
       lazy val objectUsingInExecutor = wrap(() => {
-        SourceCodeCompiler.execute(ScriptCacheKey(src, className, "python")).asInstanceOf[PyObject].__call__()
+        execute(scriptCacheKey).asInstanceOf[PyObject].__call__()
       }).asInstanceOf[PyObject]
 
 
@@ -112,4 +121,6 @@ object PythonSourceUDAF extends Logging with WowLog {
 
     }
   }
+
+  override def lang: String = "python"
 }

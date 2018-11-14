@@ -53,9 +53,7 @@ object SourceCodeCompiler extends Logging {
   }
 
   def getFunReturnType(fun: String): Type = {
-    println(fun)
     import scala.tools.reflect.ToolBox
-    //val classLoader = scala.reflect.runtime.universe.getClass.getClassLoader
     var classLoader = Thread.currentThread().getContextClassLoader
     if (classLoader == null) {
       classLoader = scala.reflect.runtime.universe.getClass.getClassLoader

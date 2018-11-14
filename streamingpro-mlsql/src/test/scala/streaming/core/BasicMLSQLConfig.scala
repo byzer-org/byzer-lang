@@ -74,4 +74,14 @@ trait BasicMLSQLConfig {
     "-streaming.unittest", "true"
 
   )
+
+  val batchParamsWithoutHive = Array(
+    "-streaming.master", "local[2]",
+    "-streaming.name", "unit-test",
+    "-streaming.rest", "false",
+    "-streaming.platform", "spark",
+    "-streaming.spark.service", "false",
+    "-streaming.udf.clzznames", "streaming.crawler.udf.Functions,streaming.dsl.mmlib.algs.processing.UDFFunctions",
+    "-streaming.unittest", "true"
+  )
 }

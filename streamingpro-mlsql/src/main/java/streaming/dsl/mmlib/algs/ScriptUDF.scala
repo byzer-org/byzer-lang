@@ -1,14 +1,13 @@
 package streaming.dsl.mmlib.algs
 
 import org.apache.spark.ml.param.Param
-import org.apache.spark.sql.catalyst.expressions.{Expression, ScalaUDF, WowScalaUDF}
-import org.apache.spark.sql.execution.aggregate.ScalaUDAF
+import org.apache.spark.sql.catalyst.expressions.{Expression, ScalaUDF}
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.udf.UDFManager
 import streaming.dsl.mmlib._
 import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
-import streaming.udf.{PythonSourceUDAF, PythonSourceUDF, ScalaSourceUDAF, ScalaSourceUDF}
+import streaming.udf._
 
 /**
   * Created by allwefantasy on 27/8/2018.
@@ -23,9 +22,6 @@ class ScriptUDF(override val uid: String) extends SQLAlg with MllibFunctions wit
     emptyDataFrame()(df)
   }
 
-  /*
-      register ScalaScriptUDF.`scriptText` as udf1;
-   */
   override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = {
     val res = params.get(code.name).getOrElse(sparkSession.table(path).head().getString(0))
 
@@ -60,40 +56,23 @@ class ScriptUDF(override val uid: String) extends SQLAlg with MllibFunctions wit
       if (!dataType.isValid(l)) thr(dataType, l)
       set(dataType, l)
     }
-
-    val udf = () => {
-      val (func, returnType) = $(lang) match {
-        case "python" =>
-          if (params.contains(className.name)) {
-            PythonSourceUDF(res, params(className.name), params.get(methodName.name), params(dataType.name))
-          } else {
-            PythonSourceUDF(res, params.get(methodName.name), params(dataType.name))
-          }
-
-        case _ =>
-//          if (params.contains(className.name)) {
-//            ScalaSourceUDF(res, params(className.name), params.get(methodName.name))
-//          } else {
-            ScalaSourceUDF(res, params.get(methodName.name))
-//          }
-      }
-      (e: Seq[Expression]) => new WowScalaUDF(func, returnType, e).toScalaUDF
-    }
-
-    val udaf = () => {
-      val func = $(lang) match {
-        case "python" =>
-          PythonSourceUDAF(res, $(className))
-
-        case _ =>
-          ScalaSourceUDAF(res, $(className))
-      }
-      (e: Seq[Expression]) => ScalaUDAF(e, func)
-    }
+    val scriptCacheKey = ScriptUDFCacheKey(
+      res, "", $(className), $(udfType), $(methodName), $(dataType), $(lang)
+    )
 
     $(udfType) match {
-      case "udaf" => udaf()
-      case _ => udf()
+      case "udaf" =>
+        val udaf = RuntimeCompileScriptFactory.getUDAFCompilerBylang($(lang))
+        if (!udaf.isDefined) {
+          throw new IllegalArgumentException()
+        }
+        (e: Seq[Expression]) => udaf.get.udaf(e, scriptCacheKey)
+      case _ =>
+        val udf = RuntimeCompileScriptFactory.getUDFCompilerBylang($(lang))
+        if (!udf.isDefined) {
+          throw new IllegalArgumentException()
+        }
+        (e: Seq[Expression]) => udf.get.udf(e, scriptCacheKey)
     }
   }
 
@@ -396,9 +375,7 @@ class ScriptUDF(override val uid: String) extends SQLAlg with MllibFunctions wit
 
 
   final val lang: Param[String] = new Param[String](this, "lang",
-    s"""Which type of language you want. [scala|python]""", (s: String) => {
-      s == "scala" || s == "python"
-    })
+    s"""Which type of language you want. [scala|python]""")
   setDefault(lang, "scala")
 
   final val udfType: Param[String] = new Param[String](this, "udfType",
@@ -409,10 +386,23 @@ class ScriptUDF(override val uid: String) extends SQLAlg with MllibFunctions wit
 
   final val className: Param[String] = new Param[String](this, "className",
     s"""the className of you defined in code snippet.""")
+  setDefault(className, "")
 
   final val methodName: Param[String] = new Param[String](this, "methodName",
     s"""the methodName of you defined in code snippet. If the name is apply, this parameter is optional""")
+  setDefault(methodName, "apply")
 
   final val dataType: Param[String] = new Param[String](this, "dataType",
     s"""when you use python udf, you should define return type.""")
+  setDefault(dataType, "")
 }
+
+case class ScriptUDFCacheKey(
+    originalCode: String,
+    wrappedCode: String,
+    className: String,
+    udfType: String,
+    methodName: String,
+    dataType: String,
+    lang: String)
+
