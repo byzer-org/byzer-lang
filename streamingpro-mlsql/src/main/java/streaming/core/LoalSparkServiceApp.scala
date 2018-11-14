@@ -11,7 +11,7 @@ object LocalSparkServiceApp {
       "-streaming.rest", "true",
       "-streaming.thrift", "false",
       "-streaming.platform", "spark",
-      "-streaming.job.file.path", "classpath:///test/empty.json",
+      //"-streaming.job.file.path", "classpath:///test/empty.json",
       "-streaming.spark.service", "true",
       "-streaming.job.cancel", "true",
       "-streaming.ps.enable", "true",
