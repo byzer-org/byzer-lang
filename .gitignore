@@ -131,3 +131,5 @@ streamingpro-commons/logs
 streamingpro-dsl/logs/
 streamingpro-dsl-legacy/logs/
 streamingpro-api/logs
+
+dev/create-release/do-release.sh
