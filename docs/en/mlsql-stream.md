@@ -196,10 +196,10 @@ as mysql1;
 -- Save the data to MYSQL
 save append table21  
 as jdbc.`mysql1.test1` 
-options mode="Complete"
+options mode="append"
 and `driver-statement-0`="create table test1 if not exists........."
 -- executed in executor
-and `statement-0`="insert into wow.test1(k,c) values(?,?)"
+and `statement-0`="replace into wow.test1(k,c) values(?,?)"
 and duration="3"
 and checkpointLocation="/tmp/cpl3";
 ```
