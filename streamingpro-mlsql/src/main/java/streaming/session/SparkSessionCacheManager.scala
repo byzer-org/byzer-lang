@@ -23,10 +23,12 @@ class SparkSessionCacheManager() extends Logging {
     new ConcurrentHashMap[String, (SparkSession, AtomicInteger)]
 
   private[this] val userLatestLogout = new ConcurrentHashMap[String, Long]
+  private[this] val userLatestVisit = new ConcurrentHashMap[String, Long]
   private[this] val idleTimeout = 60 * 1000
 
   def set(user: String, sparkSession: SparkSession): Unit = {
     userToSparkSession.put(user, (sparkSession, new AtomicInteger(1)))
+    userLatestVisit.put(user ,System.currentTimeMillis())
   }
 
   def getAndIncrease(user: String): Option[SparkSession] = {
@@ -50,6 +52,10 @@ class SparkSessionCacheManager() extends Logging {
     }
   }
 
+  def visit(user: String): Unit = {
+    userLatestVisit.put(user ,System.currentTimeMillis())
+  }
+
   private[this] def removeSparkSession(user: String): Unit = {
     userToSparkSession.remove(user)
   }
@@ -57,9 +63,15 @@ class SparkSessionCacheManager() extends Logging {
   private[this] val sessionCleaner = new Runnable {
     override def run(): Unit = {
       userToSparkSession.asScala.foreach {
-        case (user, (_, times)) if times.get() > 0 =>
-          log.debug(s"There are $times active connection(s) bound to the SparkSession instance" +
-            s" of $user ")
+        case (user, (_, times)) if times.get() > 0 => {
+          if (userLatestVisit.getOrDefault(user ,Long.MaxValue) + SparkSessionCacheManager.getExpireTimeout
+            > System.currentTimeMillis()){
+            log.debug(s"There are $times active connection(s) bound to the SparkSession instance" +
+              s" of $user ")
+          }else{
+            SparkSessionCacheManager.getSessionManager.closeSession(SessionIdentifier(user))
+          }
+        }
         case (user, (_, _)) if !userLatestLogout.containsKey(user) =>
         case (user, (session, _))
           if userLatestLogout.get(user) + idleTimeout <= System.currentTimeMillis() =>
@@ -93,10 +105,33 @@ object SparkSessionCacheManager {
 
   private[this] var sparkSessionCacheManager: SparkSessionCacheManager = _
 
+  private[this] var sessionManager: SessionManager = _
+
+  private[this] val EXPIRE_SMALL_TIMEOUT = 1 * 60 * 60 * 1000L
+  private[this] var expireTimeout = EXPIRE_SMALL_TIMEOUT
+
   def startCacheManager(): Unit = {
     sparkSessionCacheManager = new SparkSessionCacheManager()
     sparkSessionCacheManager.start()
   }
+
+  def setSessionManager(manager: SessionManager): Unit ={
+    sessionManager = manager
+  }
+
+  def getSessionManager: SessionManager = sessionManager
+
+
+  def setExpireTimeout(expire :Long): String ={
+    if(expire > EXPIRE_SMALL_TIMEOUT){
+      expireTimeout = expire
+      s"set session expire success $expire"
+    }else{
+      s"session expire must bigger than $EXPIRE_SMALL_TIMEOUT ,current is $expire"
+    }
+  }
+
+  def getExpireTimeout: Long = expireTimeout
 
   def get: SparkSessionCacheManager = sparkSessionCacheManager
 }
