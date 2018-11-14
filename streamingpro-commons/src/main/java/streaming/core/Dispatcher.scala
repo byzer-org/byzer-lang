@@ -2,6 +2,7 @@ package streaming.core
 
 import java.util.{Map => JMap}
 
+import org.apache.http.client.fluent.Request
 import serviceframework.dispatcher.StrategyDispatcher
 import streaming.common.{DefaultShortNameMapping, HDFSOperator}
 import streaming.core.strategy.platform.{PlatformManager, StreamingRuntime}
@@ -9,8 +10,8 @@ import streaming.core.strategy.platform.{PlatformManager, StreamingRuntime}
 import scala.collection.JavaConversions._
 
 /**
- * 5/2/16 WilliamZhu(allwefantasy@gmail.com)
- */
+  * 5/2/16 WilliamZhu(allwefantasy@gmail.com)
+  */
 object Dispatcher {
   def dispatcher(contextParams: JMap[Any, Any]): StrategyDispatcher[Any] = {
     val defaultShortNameMapping = new DefaultShortNameMapping()
@@ -18,17 +19,22 @@ object Dispatcher {
       val runtime = contextParams.get("_runtime_").asInstanceOf[StreamingRuntime]
 
 
-
       val jobFilePath = contextParams.get("streaming.job.file.path").toString
 
       var jobConfigStr = "{}"
 
-      if (jobFilePath.startsWith("classpath://")) {
+      if (jobFilePath.toLowerCase().startsWith("classpath://")) {
         val cleanJobFilePath = jobFilePath.substring("classpath://".length)
         jobConfigStr = scala.io.Source.fromInputStream(
           Dispatcher.getClass.getResourceAsStream(cleanJobFilePath)).getLines().
           mkString("\n")
-      } else {
+      } else if (jobFilePath.toLowerCase().startsWith("http://") || jobFilePath.toLowerCase().startsWith("https://")) {
+        jobConfigStr = Request.Get(jobFilePath)
+          .connectTimeout(30000)
+          .socketTimeout(30000)
+          .execute().returnContent().asString();
+      }
+      else {
         jobConfigStr = HDFSOperator.readFile(jobFilePath)
       }
 
@@ -37,7 +43,7 @@ object Dispatcher {
 
       StrategyDispatcher.getOrCreate(jobConfigStr, defaultShortNameMapping)
     } else {
-      StrategyDispatcher.getOrCreate(null, defaultShortNameMapping)
+      StrategyDispatcher.getOrCreate("{}", defaultShortNameMapping)
     }
 
   }
