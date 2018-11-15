@@ -22,6 +22,12 @@ This guide document introduce [how to contribute to MLSQL](https://github.com/al
 1. [Roadmap](https://github.com/allwefantasy/streamingpro/blob/master/docs/docv2/contribute/roadmap.md)
 2. [Versioning Policy](https://github.com/allwefantasy/streamingpro/blob/master/docs/docv2/contribute/release.md)
 
+
+## Get PreBuild Distribution
+
+[Releases Page]()
+You also can refer this: [Compile Assistance](http://streamingpro.rebiekong.com/index.html)
+
 ## Build Distribution
 
 
@@ -38,10 +44,6 @@ cd /tmp/streamingpro
 
 export SPARK_HOME="....." ; ./start-local.sh
 ```
-
-## Get Latest PreBuild Package
-
-[PreBuild Package](http://streamingpro.rebiekong.com/index.html)
 
 ## Contributors
 
