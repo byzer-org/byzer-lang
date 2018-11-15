@@ -1,7 +1,16 @@
 #!/bin/bash
+
+for env in SPARK_HOME ; do
+  if [ -z "${!env}" ]; then
+    echo "$env must be set to run this script"
+    exit 1
+  fi
+done
+
 if [ -z "${MLSQL_HOME}" ]; then
   export MLSQL_HOME="$(cd "`dirname "$0"`"/.; pwd)"
 fi
+
 JARS=$(echo ${MLSQL_HOME}/libs/*.jar | tr ' ' ',')
 $SPARK_HOME/bin/spark-submit --class streaming.core.StreamingApp \
         --jars ${JARS} \
