@@ -157,65 +157,93 @@ In real world you can load kafka source like this:
 
 ```sql
 
--- if you are using kafka 1.0
-load kafka.`pi-content-realtime-db` options 
+-- if you are using kafka 0.10
+load kafka.`pi-content-realtime-db` options
 `kafka.bootstrap.servers`="---"
+and `subscribe`="---"
 as kafka_post_parquet;
 
 -- if you are using kafka 0.8.0/0.9.0
-load kafka9.`pi-content-realtime-db` options 
+load kafka8.`pi-content-realtime-db` options
 `kafka.bootstrap.servers`="---"
+and `topics`="---"
 as kafka_post_parquet;
 
+```
+
+If you want to save data with dynamic partition:
+
+```sql
+
+save append table
+as parquet.`table`
+options mode="Append"
+and duration="10"
+and checkpointLocation="/tmp/ckl1"
+partitionBy partition_field;
 ```
 
 If you want to save data with static partition:
 
 ```sql
 
-save append post_parquet  
-as newParquet.`/table1/hp_stat_date=${date.toString("yyyy-MM-dd")}` 
-options mode="Append" 
-and duration="30" 
+save append post_parquet
+as parquet.`/table1/hp_stat_date=${pathDate.toString("yyyy-MM-dd")}`
+options mode="Append"
+and duration="30"
 and checkpointLocation="/tmp/ckl1";
 ```
 
 If you want to save data to MySQL:
 
 ```sql
-
+-- connect mysql as the data sink.
+connect jdbc where
+driver="com.mysql.jdbc.Driver"
+and url="jdbc:mysql://127.0.0.1:3306/wow"
+and driver="com.mysql.jdbc.Driver"
+and user="---"
+and password="----"
+as mysql1;
 -- Save the data to MYSQL
-save append table21  
-as NONE.`mysql1.test1` 
-options mode="Complete"
-and implClass="org.apache.spark.sql.execution.streaming.JDBCSinkProvider"
--- executed in driver
+save append table21
+as jdbc.`mysql1.test1`
+options mode="append"
 and `driver-statement-0`="create table test1 if not exists........."
 -- executed in executor
-and `statement-0`="insert into wow.test1(k,c) values(?,?)"
+and `statement-0`="replace into wow.test1(k,c) values(?,?)"
+-- one batch duration
 and duration="3"
 and checkpointLocation="/tmp/cpl3";
 ```
 
-If you want to add watermark for a table:
+If you want to use window with watermark for a table:
 
 ```sql
 
-select ..... as table1;
+select ts,f1 as table1;
 
 -- register watermark for table1
 register WaterMarkInPlace.`table1` as tmp1
 options eventTimeCol="ts"
-and delayThreshold="1 seconds";
+and delayThreshold="10 seconds";
 
 -- process table1
-select count(*) as num from table1
-group by window(ts,"30 minutes","10 seconds")
+select f1,count(*) as num from table1
+-- window size is 30 minutes,slide is 10 seconds
+group by f1, window(ts,"30 minutes","10 seconds")
 as table2;
 
-save append ......
+save append table2 as ....
 ```
 
+Streaming has three modes:
+
+Complete Mode - The entire updated Result Table will be written to the external storage. It is up to the storage connector to decide how to handle writing of the entire table.
+
+Append Mode - Only the new rows appended in the Result Table since the last trigger will be written to the external storage. This is applicable only on the queries where existing rows in the Result Table are not expected to change.
+
+Update Mode - Only the rows that were updated in the Result Table since the last trigger will be written to the external storage. Note that this is different from the Complete Mode in that this mode only outputs the rows that have changed since the last trigger. If the query doesn’t contain aggregations, it will be equivalent to Append mode.
 
 ## How to manager your stream jobs?
 
