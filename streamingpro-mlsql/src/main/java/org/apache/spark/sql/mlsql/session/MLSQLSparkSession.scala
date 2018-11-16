@@ -1,19 +1,18 @@
-package streaming.session
+package org.apache.spark.sql.mlsql.session
 
-import java.lang.reflect.{UndeclaredThrowableException}
+import java.lang.reflect.UndeclaredThrowableException
 import java.security.PrivilegedExceptionAction
 import java.util.concurrent.atomic.AtomicReference
-import java.util.concurrent.{TimeoutException}
+import java.util.concurrent.TimeoutException
 
 import org.apache.hadoop.security.UserGroupInformation
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.sql.SparkSession
 import streaming.log.Logging
-
 import scala.collection.mutable.{HashSet => MHSet}
 
-
 import org.apache.spark.MLSQLConf._
+import org.apache.spark.sql.mlsql.session.MLSQLException
 import streaming.core.strategy.platform.{PlatformManager, SparkRuntime}
 
 
@@ -42,7 +41,7 @@ class MLSQLSparkSession(userName: String, conf: Map[String, String]) extends Log
 
     SparkSessionCacheManager.get.getAndIncrease(userName) match {
       case Some(ss) =>
-        _sparkSession = ss.newSession()
+        _sparkSession = ss.cloneSession()
       case _ =>
         MLSQLSparkSession.setPartiallyConstructed(userName)
         notifyAll()
@@ -54,7 +53,7 @@ class MLSQLSparkSession(userName: String, conf: Map[String, String]) extends Log
   private[this] def create(sessionConf: Map[String, String]): Unit = {
     log.info(s"--------- Create new SparkSession for $userName ----------")
     try {
-      _sparkSession = PlatformManager.getRuntime.asInstanceOf[SparkRuntime].sparkSession.newSession()
+      _sparkSession = PlatformManager.getRuntime.asInstanceOf[SparkRuntime].sparkSession.cloneSession()
       SparkSessionCacheManager.get.set(userName, _sparkSession)
     } catch {
       case e: Exception =>

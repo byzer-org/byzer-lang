@@ -1,6 +1,7 @@
-package streaming.session.operation
+package org.apache.spark.sql.mlsql.session.operation
 
-import streaming.session.MLSQLException
+import org.apache.spark.sql.mlsql.session.MLSQLException
+
 
 /**
   * Created by allwefantasy on 4/6/2018.
