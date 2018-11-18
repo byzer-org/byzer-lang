@@ -31,7 +31,10 @@ All other inputs are environment variables
 GIT_REF - Release tag or commit to build from
 MLSQL_PACKAGE_VERSION - Release identifier in top level package directory (e.g. 2.1.2-rc1)
 MLSQL_VERSION - (optional) Version of Spark being built (e.g. 2.1.2)
-MLSQL_SPARK_VERSIOIN
+MLSQL_SPARK_VERSIOIN  e.g. 2.3.0
+MLSQL_BIG_SPARK_VERSIOIN  e.g. 2.3
+AK
+AKS
 EOF
   exit 1
 }
@@ -59,6 +62,15 @@ BASE_DIR=$(pwd)
 init_java
 init_maven_sbt
 
+
+for env in GIT_REF MLSQL_PACKAGE_VERSION MLSQL_VERSION MLSQL_SPARK_VERSIOIN MLSQL_BIG_SPARK_VERSIOIN AK AKS; do
+  if [ -z "${!env}" ]; then
+    echo "$env must be set to run this script"
+    exit 1
+  fi
+done
+
+
 rm -rf streamingpro
 git clone "$MLSQL_GIT_REPO"
 cd streamingpro
@@ -76,11 +88,11 @@ fi
 
 # Depending on the version being built, certain extra profiles need to be activated, and
 # different versions of Scala are supported.
-BASE_PROFILES="-Pscala-2.11 -Ponline -Phive-thrift-server -Pxgboost -Pcarbondata -Pshade -Pcrawler -Pautoml"
+BASE_PROFILES="-Pscala-2.11 -Ponline -Phive-thrift-server -Pcarbondata -Pshade -Pcrawler -Pautoml"
 PUBLISH_SCALA_2_10=0
 SCALA_2_11_PROFILES=
 if [[ $MLSQL_SPARK_VERSIOIN > "2.3" ]]; then
-  BASE_PROFILES="$BASE_PROFILES -Pdsl"
+  BASE_PROFILES="$BASE_PROFILES -Pdsl -Pxgboost"
 else
   BASE_PROFILES="$BASE_PROFILES -Pdsl-legacy"
 fi
@@ -135,10 +147,15 @@ mvn -DskipTests clean package -pl streamingpro-mlsql -am $BASE_PROFILES
 EOF
   mvn -DskipTests clean package -pl streamingpro-mlsql -am $BASE_PROFILES
   cd ..
-  PNAME=streamingpro-spark_$MLSQL_SPARK_VERSIOIN-$MLSQL_PACKAGE_VERSION
+  PNAME="streamingpro-spark_$MLSQL_BIG_SPARK_VERSIOIN-$MLSQL_PACKAGE_VERSION"
   mkdir -p $PNAME/libs
-  cp streamingpro/streamingpro-mlsql/target/streamingpro-mlsql-spark_$MLSQL_SPARK_VERSIOIN-$MLSQL_VERSION.jar $$PNAME/libs/
-  cp ../start-local.sh $$PNAME/
+  cp streamingpro/streamingpro-mlsql/target/streamingpro-mlsql-spark_$MLSQL_BIG_SPARK_VERSIOIN-$MLSQL_VERSION.jar $PNAME/libs/
+  cp ../start-local.sh $PNAME/
+  tar czvf $PNAME.tar.gz $PNAME
+  cd ../
+  export MLSQL_RELEASE_TAR="./create-release/$PNAME.tar.gz"
+  python -m mlsqltestssupport.aliyun.upload_release
+  rm $MLSQL_RELEASE_TAR
   exit 0
 fi
 
