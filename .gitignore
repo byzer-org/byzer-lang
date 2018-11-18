@@ -133,3 +133,5 @@ streamingpro-dsl-legacy/logs/
 streamingpro-api/logs
 
 dev/create-release/do-release.sh
+dev/create-release/streamingpro-spark*
+__pycache__
