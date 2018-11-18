@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
-
 import os
 import mlsqltestssupport.aliyun.config as config
-
 
 if not os.environ['MLSQL_RELEASE_TAR']:
     raise ValueError('MLSQL_RELEASE_TAR should be configured')
