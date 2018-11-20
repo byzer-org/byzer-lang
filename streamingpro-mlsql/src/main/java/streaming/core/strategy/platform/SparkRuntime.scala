@@ -3,16 +3,20 @@ package streaming.core.strategy.platform
 import java.lang.reflect.Modifier
 import java.util.{Map => JMap}
 import java.util.concurrent.atomic.AtomicReference
-import java.util.logging.Logger
+import java.util.logging.{Level, Logger}
 
 import net.csdn.common.reflect.ReflectHelper
-import org.apache.spark.{SparkConf, SparkRuntimeOperator, WowFastSparkContext}
 import org.apache.spark.ps.cluster.PSDriverBackend
 import org.apache.spark.ps.local.LocalPSSchedulerBackend
-import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.hive.thriftserver.HiveThriftServer2
+import org.apache.spark.sql.{SQLContext, SparkSession}
+import streaming.common.ScalaObjectReflect
 import streaming.core.StreamingproJobManager
 import streaming.session.{SessionIdentifier, SessionManager}
+import org.apache.spark.SparkConf
+import org.apache.spark.SparkRuntimeOperator
+import org.apache.spark.CarbonCoreVersion
+import org.apache.spark.WowFastSparkContext
+import org.apache.spark.SparkCoreVersion
 
 import scala.collection.JavaConversions._
 
@@ -87,10 +91,17 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
       sparkSession.enableHiveSupport()
     }
 
+    val checkCarbonDataCoreCompatibility = CarbonCoreVersion.coreCompatibility(SparkCoreVersion.version, SparkCoreVersion.exactVersion)
+    val isCarbonDataEnabled = params.containsKey("streaming.enableCarbonDataSupport") &&
+      params.get("streaming.enableCarbonDataSupport").toString.toBoolean && checkCarbonDataCoreCompatibility
 
-    val ss = if (params.containsKey("streaming.enableCarbonDataSupport") &&
-      params.get("streaming.enableCarbonDataSupport").toString.toBoolean) {
-      logger.info("carbondata enabled...")
+    if (!checkCarbonDataCoreCompatibility) {
+      logger.warning(s"------- CarbonData do not support current version of spark [${SparkCoreVersion.exactVersion}], streaming.enableCarbonDataSupport will not take effect.--------")
+    }
+
+    val ss = if (isCarbonDataEnabled) {
+
+      logger.info("CarbonData enabled...")
       val url = params.getOrElse("streaming.hive.javax.jdo.option.ConnectionURL", "").toString
       if (!url.isEmpty) {
         logger.info("set hive javax.jdo.option.ConnectionURL=" + url)
@@ -112,9 +123,6 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
       sparkSession.getOrCreate()
     }
 
-    //    if (params.getOrDefault("streaming.deploy.rest.api", "false").toString.toBoolean) {
-    //      WowFastLocalBasedStrategies.register(ss)
-    //    }
 
     if (params.containsKey("streaming.spark.service") && params.get("streaming.spark.service").toString.toBoolean) {
       StreamingproJobManager.init(ss.sparkContext)
@@ -195,7 +203,9 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
   SparkRuntime.setLastInstantiatedContext(this)
 
   override def startThriftServer: Unit = {
-    HiveThriftServer2.startWithContext(sparkSession.sqlContext)
+    val (clzz, instance) = ScalaObjectReflect.findObjectMethod("org.apache.spark.sql.hive.thriftserver.HiveThriftServer2")
+    val method = clzz.getMethod("startWithContext", classOf[SQLContext])
+    method.invoke(instance, sparkSession.sqlContext)
   }
 
   override def startHttpServer: Unit = {}
