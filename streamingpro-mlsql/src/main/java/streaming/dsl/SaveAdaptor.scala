@@ -191,7 +191,6 @@ class StreamSaveAdaptor(val scriptSQLExecListener: ScriptSQLExecListener,
 
 
     require(option.contains("checkpointLocation"), "checkpointLocation is required")
-    require(option.contains("duration"), "duration is required")
     require(option.contains("mode"), "mode is required")
 
     format match {
@@ -218,6 +217,10 @@ class StreamSaveAdaptor(val scriptSQLExecListener: ScriptSQLExecListener,
       case Some(name) => writer.queryName(name)
       case None =>
     }
-    writer.trigger(Trigger.ProcessingTime(option("duration").toInt, TimeUnit.SECONDS)).start()
+
+    if (option.contains("duration")) {
+      writer = writer.trigger(Trigger.ProcessingTime(option("duration").toInt, TimeUnit.SECONDS))
+    }
+    writer.start()
   }
 }
