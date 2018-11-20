@@ -6,11 +6,11 @@ import java.util.concurrent.atomic.AtomicReference
 import java.util.logging.Logger
 
 import net.csdn.common.reflect.ReflectHelper
-import org.apache.spark.{SparkConf, SparkRuntimeOperator, WowFastSparkContext}
+import org.apache.spark.{SparkConf, SparkCoreVersion, SparkRuntimeOperator, WowFastSparkContext}
 import org.apache.spark.ps.cluster.PSDriverBackend
 import org.apache.spark.ps.local.LocalPSSchedulerBackend
-import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.hive.thriftserver.HiveThriftServer2
+import org.apache.spark.sql.{SQLContext, SparkSession}
+import streaming.common.ScalaObjectReflect
 import streaming.core.StreamingproJobManager
 import streaming.session.{SessionIdentifier, SessionManager}
 
@@ -90,6 +90,7 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
 
     val ss = if (params.containsKey("streaming.enableCarbonDataSupport") &&
       params.get("streaming.enableCarbonDataSupport").toString.toBoolean) {
+
       logger.info("carbondata enabled...")
       val url = params.getOrElse("streaming.hive.javax.jdo.option.ConnectionURL", "").toString
       if (!url.isEmpty) {
@@ -195,7 +196,9 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
   SparkRuntime.setLastInstantiatedContext(this)
 
   override def startThriftServer: Unit = {
-    HiveThriftServer2.startWithContext(sparkSession.sqlContext)
+    val (clzz, instance) = ScalaObjectReflect.findObjectMethod("org.apache.spark.sql.hive.thriftserver.HiveThriftServer2")
+    val method = clzz.getMethod("startWithContext", classOf[SQLContext])
+    method.invoke(instance, sparkSession.sqlContext)
   }
 
   override def startHttpServer: Unit = {}
