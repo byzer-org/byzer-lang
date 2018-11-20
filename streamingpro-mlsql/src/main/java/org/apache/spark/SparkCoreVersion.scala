@@ -1,5 +1,7 @@
 package org.apache.spark
 
+import _root_.streaming.dsl.mmlib._
+
 /**
   * Created by allwefantasy on 20/9/2018.
   */
@@ -15,18 +17,27 @@ object SparkCoreVersion {
   }
 
   def is_2_2_X() = {
-    version == VERSION_2_2_X
+    version == Core_2_2_x.coreVersion
   }
 
-  def is_2_3_X() = {
-    version == VERSION_2_3_X
+  def is_2_3_1() = {
+    exactVersion == Core_2_3_1.coreVersion
+  }
+
+  def is_2_3_2() = {
+    exactVersion == Core_2_3_2.coreVersion
   }
 
   def is_2_4_X() = {
-    version == VERSION_2_4_X
+    version == Core_2_4_x.coreVersion
   }
 
-  val VERSION_2_2_X = "2.2.x"
-  val VERSION_2_3_X = "2.3.x"
-  val VERSION_2_4_X = "2.4.x"
+
+}
+
+object CarbonCoreVersion {
+  def coreCompatibility(version: String, exactVersion: String) = {
+    val vs = Seq(Core_2_2_x, Core_2_3_1).map(f => f.coreVersion).toSet
+    vs.contains(version) || vs.contains(exactVersion)
+  }
 }

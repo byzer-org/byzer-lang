@@ -94,14 +94,17 @@ class APIPredict extends Logging with WowLog with Serializable {
     def coreVersion = {
       if (SparkCoreVersion.is_2_2_X) {
         "22"
-      } else if (SparkCoreVersion.exactVersion == "2.3.2") {
+      } else if (SparkCoreVersion.is_2_3_2()) {
         "232"
       }
-      else if (SparkCoreVersion.is_2_3_X) {
+      else if (SparkCoreVersion.is_2_3_1()) {
         "23"
-      } else {
+      } else if (SparkCoreVersion.is_2_4_X()) {
         "24"
+      } else {
+        throw new RuntimeException(s"No such spark version ${SparkCoreVersion.exactVersion}")
       }
+
     }
 
     val customDeamon = true
