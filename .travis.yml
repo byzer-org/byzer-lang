@@ -30,7 +30,7 @@ install: true
 before_install: [
     "git clone https://github.com/allwefantasy/ServiceFramework.git allwefantasy/ServiceFramework",
     "cd allwefantasy/ServiceFramework",
-    "mvn install -Pscala-2.11 -Pjetty-9 -Pweb-include-jetty-9 > /dev/null 2>&1",
+    "mvn install -DskipTests -Pjetty-9 -Pweb-include-jetty-9 > /dev/null 2>&1",
     "cd ../.."
   ]
 

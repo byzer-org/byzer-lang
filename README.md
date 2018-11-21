@@ -25,8 +25,8 @@ This guide document introduce [how to contribute to MLSQL](https://github.com/al
 
 ## Get PreBuild Distribution
 
-[Releases Page]()
-You also can refer this: [Compile Assistance](http://streamingpro.rebiekong.com/index.html)
+[Releases Page](https://github.com/allwefantasy/streamingpro/releases)
+You also can refer this: [Compile Assistance](https://streamingpro.rebiekong.com/index.html)
 
 ## Build Distribution
 
