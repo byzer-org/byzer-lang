@@ -206,33 +206,27 @@ class MLLibSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLCo
   }
   "AutoFeature" should "work fine" in {
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
-      val coreCompatibility = new SQLLDA().coreCompatibility.filter(f => f.coreVersion == SparkCoreVersion.version).size > 0
+      implicit val spark = runtime.sparkSession
+      ScriptSQLExec.contextGetOrForTest()
 
-      if (coreCompatibility) {
-        implicit val spark = runtime.sparkSession
-        ScriptSQLExec.contextGetOrForTest()
-
-        if (SparkCoreVersion.is_2_2_X()) {
-          val df = spark.read.format("csv").option("header", "true").option("inferSchema", "true").load("/tmp/william/titanic.csv")
-          val feature = new SQLAutoFeatureExt()
-          feature.train(df, "/tmp/model2", Map("labelCol" -> "Survived", "workflowName" -> "wow"))
-          feature.batchPredict(df, "/tmp/model2", Map()).show()
-        }
-
-        if (SparkCoreVersion.is_2_2_X()) {
-          val df = spark.read.format("csv").option("header", "true").option("inferSchema", "true").load("/tmp/william/titanic.csv")
-          val feature = new SQLAutoFeatureExt()
-          feature.train(df, "/tmp/model2", Map(
-            "labelCol" -> "Survived",
-            "workflowName" -> "wow"
-          ))
-          feature.batchPredict(df, "/tmp/model2", Map()).show()
-        }
-
+      if (SparkCoreVersion.is_2_2_X()) {
+        val df = spark.read.format("csv").option("header", "true").option("inferSchema", "true").load("/tmp/william/titanic.csv")
+        val feature = new SQLAutoFeatureExt()
+        feature.train(df, "/tmp/model2", Map("labelCol" -> "Survived", "workflowName" -> "wow"))
+        feature.batchPredict(df, "/tmp/model2", Map()).show()
       }
+
+      if (SparkCoreVersion.is_2_2_X()) {
+        val df = spark.read.format("csv").option("header", "true").option("inferSchema", "true").load("/tmp/william/titanic.csv")
+        val feature = new SQLAutoFeatureExt()
+        feature.train(df, "/tmp/model2", Map(
+          "labelCol" -> "Survived",
+          "workflowName" -> "wow"
+        ))
+        feature.batchPredict(df, "/tmp/model2", Map()).show()
+      }
+
     }
   }
-
-}
 
 }
