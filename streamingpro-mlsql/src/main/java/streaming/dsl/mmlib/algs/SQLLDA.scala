@@ -68,7 +68,8 @@ class SQLLDA(override val uid: String) extends SQLAlg with MllibFunctions with F
   }
 
   override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = {
-    val model = LocalLDAModel.load(path)
+    val (bestModelPath, baseModelPath, metaPath) = mllibModelAndMetaPath(path, params, sparkSession)
+    val model = LocalLDAModel.load(bestModelPath(0))
     ArrayBuffer(model)
   }
 
