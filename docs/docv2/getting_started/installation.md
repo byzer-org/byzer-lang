@@ -106,12 +106,12 @@ mvn -DskipTests clean package \
 -Pdsl  \
 -Pshade \
 -Pcrawler \
--Pautoml \
 -Pxgboost  \
 -Pstreamingpro-spark-2.3.0-adaptor \
 -Pcarbondata
 ````
 
+Warning: that -Pautoml is not capable with -Pcarbondata.
 
 When you use spark-2.4.x:
 

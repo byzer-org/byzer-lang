@@ -15,6 +15,5 @@ mvn -DskipTests clean package \
 -Passembly \
 -Pcrawler \
 -Phive-thrift-server \
--Pautoml \
 -Pxgboost \
 -Pcarbondata
