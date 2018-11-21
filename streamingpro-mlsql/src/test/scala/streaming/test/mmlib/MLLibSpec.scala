@@ -213,7 +213,7 @@ class MLLibSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLCo
         val df = spark.read.format("csv").option("header", "true").option("inferSchema", "true").load("/tmp/william/titanic.csv")
         val feature = new SQLAutoFeatureExt()
         feature.train(df, "/tmp/model2", Map("labelCol" -> "Survived", "workflowName" -> "wow"))
-        feature.batchPredict(df, "/tmp/model2", Map()).show()
+        feature.batchPredict(df, "/tmp/model2", Map("workflowName" -> "wow")).show()
       }
 
       if (SparkCoreVersion.is_2_2_X()) {
@@ -223,7 +223,7 @@ class MLLibSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLCo
           "labelCol" -> "Survived",
           "workflowName" -> "wow"
         ))
-        feature.batchPredict(df, "/tmp/model2", Map()).show()
+        feature.batchPredict(df, "/tmp/model2", Map("workflowName" -> "wow")).show()
       }
 
     }
