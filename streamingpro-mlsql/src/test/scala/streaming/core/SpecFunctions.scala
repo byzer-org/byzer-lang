@@ -1,7 +1,7 @@
 package streaming.core
 
 import java.io.{File, FileNotFoundException}
-import java.sql.DriverManager
+import java.sql.{DriverManager, Statement}
 
 import org.apache.commons.io.{FileUtils, IOUtils}
 import org.apache.http.HttpVersion
@@ -14,6 +14,9 @@ import streaming.dsl.{MLSQLExecuteContext, ScriptSQLExec, ScriptSQLExecListener}
   * Created by allwefantasy on 28/4/2018.
   */
 trait SpecFunctions {
+
+  def password = "mlsql"
+
   def request(url: String, params: Map[String, String]) = {
     val form = Form.form()
     params.map(f => form.add(f._1, f._2))
@@ -45,15 +48,27 @@ trait SpecFunctions {
     }
   }
 
-  def jdbc(ddlStr: String) = {
+  def jdbc(ddlStr: String, connectStat: String) = {
     Class.forName("com.mysql.jdbc.Driver")
     val con = DriverManager.getConnection("jdbc:mysql://127.0.0.1:3306/wow?characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&tinyInt1isBit=false",
       "root",
-      "csdn.net")
-    val stat = con.createStatement()
-    stat.execute(ddlStr)
-    stat.close()
-    con.close()
+      password)
+    var stat: Statement = null
+    try {
+      stat = con.createStatement()
+      stat.execute(ddlStr)
+
+    }  finally {
+      if (stat != null) {
+        stat.close()
+      }
+      if (con != null) {
+        con.close()
+      }
+
+    }
+
+
   }
 
   def loadSQLScriptStr(name: String) = {

@@ -83,10 +83,19 @@ class AutoWorkflowList(format: String, path: String, option: Map[String, String]
   }
 
   override def explain: DataFrame = {
-    val instance = Class.forName("streaming.dsl.mmlib.algs.AutoFeature").newInstance()
+    val instance = try {
+      Class.forName("streaming.dsl.mmlib.algs.AutoFeature").newInstance()
+    } catch {
+      case e: Exception =>
+        null
+    }
+    if (instance == null) {
+      import sparkSession.implicits._
+      return Seq.empty[(String, String)].toDF("name", "description")
+    }
     val items = ReflectHelper.method(instance, "listWorkflows").asInstanceOf[Seq[String]].map(f => Row.fromSeq(Seq(f)))
     val rows = sparkSession.sparkContext.parallelize(items, 1)
-    sparkSession.createDataFrame(rows,
+    return sparkSession.createDataFrame(rows,
       StructType(Seq(
         StructField(name = "name", dataType = StringType)
       )))
