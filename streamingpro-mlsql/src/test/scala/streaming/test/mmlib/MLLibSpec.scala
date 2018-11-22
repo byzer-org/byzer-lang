@@ -122,25 +122,28 @@ class MLLibSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLCo
   "SQLLDA" should "work fine" in {
     copySampleLibsvmData
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
-      implicit val spark = runtime.sparkSession
-      val sqlLDA = new SQLLDA()
-      ScriptSQLExec.contextGetOrForTest()
+      val coreCompatibility = new SQLLDA().coreCompatibility.filter(f => f.coreVersion == SparkCoreVersion.version).size > 0
+      if (coreCompatibility) {
+        implicit val spark = runtime.sparkSession
+        val sqlLDA = new SQLLDA()
+        ScriptSQLExec.contextGetOrForTest()
 
-      val df = spark.read.format("libsvm").load("/tmp/william/sample_lda_libsvm_data.txt")
-      df.createOrReplaceTempView("data")
-      sqlLDA.train(df, "/tmp/SQLLDA", Map(
-        "k" -> "3",
-        "topicConcentration" -> "3.0",
-        "docConcentration" -> "3.0",
-        "optimizer" -> "online",
-        "checkpointInterval" -> "10",
-        "maxIter" -> "100"
-      ))
-      val models = sqlLDA.load(spark, "/tmp/SQLLDA", Map())
-      val udf = sqlLDA.predict(spark, models, "jack", Map())
-      spark.udf.register("jack", udf)
-      spark.sql("select label,jack(4) topicsMatrix,jack_doc(features) TopicDistribution,jack_topic(label,4) describeTopics " +
-        "from data as result").show()
+        val df = spark.read.format("libsvm").load("/tmp/william/sample_lda_libsvm_data.txt")
+        df.createOrReplaceTempView("data")
+        sqlLDA.train(df, "/tmp/SQLLDA", Map(
+          "k" -> "3",
+          "topicConcentration" -> "3.0",
+          "docConcentration" -> "3.0",
+          "optimizer" -> "online",
+          "checkpointInterval" -> "10",
+          "maxIter" -> "100"
+        ))
+        val models = sqlLDA.load(spark, "/tmp/SQLLDA", Map())
+        val udf = sqlLDA.predict(spark, models, "jack", Map())
+        spark.udf.register("jack", udf)
+        spark.sql("select label,jack(4) topicsMatrix,jack_doc(features) TopicDistribution,jack_topic(label,4) describeTopics " +
+          "from data as result").show()
+      }
     }
   }
 
@@ -203,40 +206,40 @@ class MLLibSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLCo
   }
   "AutoFeature" should "work fine" in {
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
-      implicit val spark = runtime.sparkSession
-      ScriptSQLExec.contextGetOrForTest()
 
-      if (SparkCoreVersion.is_2_2_X()) {
-        val df = spark.read.format("csv").option("header", "true").option("inferSchema", "true").load("/tmp/william/titanic.csv")
-        val feature = new SQLAutoFeatureExt()
-        feature.train(df, "/tmp/model2", Map("labelCol" -> "Survived", "workflowName" -> "wow"))
-        feature.batchPredict(df, "/tmp/model2", Map()).show()
+      val isCarbonLoaded = try {
+        Class.forName("org.apache.spark.sql.CarbonSource")
+        true
+      } catch {
+        case e: Exception =>
+          false
       }
 
-      if (SparkCoreVersion.is_2_2_X()) {
-        val df = spark.read.format("csv").option("header", "true").option("inferSchema", "true").load("/tmp/william/titanic.csv")
-        val feature = new SQLAutoFeatureExt()
-        feature.train(df, "/tmp/model2", Map(
-          "labelCol" -> "Survived",
-          "workflowName" -> "wow"
-        ))
-        feature.batchPredict(df, "/tmp/model2", Map()).show()
+      if (!isCarbonLoaded) {
+        // carbondata is not capable with automl. We should check this.
+        implicit val spark = runtime.sparkSession
+        ScriptSQLExec.contextGetOrForTest()
+
+        if (SparkCoreVersion.is_2_2_X()) {
+          val df = spark.read.format("csv").option("header", "true").option("inferSchema", "true").load("/tmp/william/titanic.csv")
+          val feature = new SQLAutoFeatureExt()
+          feature.train(df, "/tmp/model2", Map("labelCol" -> "Survived", "workflowName" -> "wow"))
+          feature.batchPredict(df, "/tmp/model2", Map("workflowName" -> "wow")).show()
+        }
+
+        if (SparkCoreVersion.is_2_2_X()) {
+          val df = spark.read.format("csv").option("header", "true").option("inferSchema", "true").load("/tmp/william/titanic.csv")
+          val feature = new SQLAutoFeatureExt()
+          feature.train(df, "/tmp/model2", Map(
+            "labelCol" -> "Survived",
+            "workflowName" -> "wow"
+          ))
+          feature.batchPredict(df, "/tmp/model2", Map("workflowName" -> "wow")).show()
+        }
       }
+
 
     }
   }
-
-  //  "XGBoost" should "work fine" in {
-  //    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
-  //      implicit val spark = runtime.sparkSession
-  //      ScriptSQLExec.contextGetOrForTest()
-  //      val df = spark.read.format("libsvm").load("/tmp/william/sample_libsvm_data.txt")
-  //      val feature = new SQLXGBoostExt()
-  //      val newdf = feature.train(df, "/tmp/model2", Map())
-  //      val status = newdf.collect().map(f => f.getAs[String]("status")).head
-  //      assert(status == "success")
-  //      feature.batchPredict(df, "/tmp/model2", Map()).show()
-  //    }
-  //  }
 
 }

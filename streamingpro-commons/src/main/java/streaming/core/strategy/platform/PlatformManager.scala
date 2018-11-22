@@ -89,7 +89,6 @@ class PlatformManager {
       jobs = params.getParam("streaming.jobs").split(",")
 
 
-
     lastStreamingRuntimeInfo match {
       case Some(ssri) =>
         runtime.configureStreamingRuntimeInfo(ssri)
@@ -111,6 +110,9 @@ class PlatformManager {
       registerToZk(params)
     }
 
+
+    val failsAll = params.getBooleanParam("streaming.mode.application.fails_all", false)
+    StrategyDispatcher.throwsException = failsAll
 
     val jobCounter = new AtomicInteger(0)
     jobs.foreach {

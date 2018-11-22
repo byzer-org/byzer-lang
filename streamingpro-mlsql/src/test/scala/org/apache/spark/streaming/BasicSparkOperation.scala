@@ -43,5 +43,27 @@ class BasicSparkOperation extends FlatSpec with Matchers {
     runtime
   }
 
+  def appWithBatchContext(batchParams: Array[String], configFilePath: String) = {
+    var runtime: SparkRuntime = null
+    try {
+      val extraParam = Array("-streaming.job.file.path", configFilePath)
+      val params = new ParamsUtil(batchParams ++ extraParam)
+      PlatformManager.getOrCreate.run(params, false)
+      runtime = PlatformManager.getRuntime.asInstanceOf[SparkRuntime]
+    } finally {
+      try {
+        StrategyDispatcher.clear
+        PlatformManager.clear
+        if (runtime != null) {
+          runtime.destroyRuntime(false, true)
+        }
+        FileUtils.deleteDirectory(new File("./metastore_db"))
+      } catch {
+        case e: Exception =>
+          e.printStackTrace()
+      }
+    }
+  }
+
 
 }
