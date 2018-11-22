@@ -1,0 +1,23 @@
+{
+  "mlsql": {
+    "desc": "测试",
+    "strategy": "spark",
+    "algorithm": [],
+    "ref": [],
+    "compositor": [
+      {
+        "name": "batch.mlsql",
+        "params": [
+          {
+            "sql": [
+              "select a as a as table1;",
+              "save overwrite table1 as parquet.`/tmp/kk`;"
+            ]
+          }
+        ]
+      }
+    ],
+    "configParams": {
+    }
+  }
+}
