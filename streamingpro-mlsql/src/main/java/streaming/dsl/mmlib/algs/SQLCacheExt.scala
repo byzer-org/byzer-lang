@@ -1,9 +1,9 @@
 package streaming.dsl.mmlib.algs
 
-import org.apache.spark.ml.param.Param
+import org.apache.spark.ml.param.{BooleanParam, Param}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.expressions.UserDefinedFunction
-import streaming.dsl.mmlib.SQLAlg
+import streaming.dsl.mmlib._
 import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
 import streaming.session.MLSQLException
 
@@ -16,6 +16,8 @@ class SQLCacheExt(override val uid: String) extends SQLAlg with WowParams {
       "cache"
     }
 
+    val _isEager = params.get(isEager.name).map(f => f.toBoolean).getOrElse(false)
+
     if (!execute.isValid(exe)) {
       throw new MLSQLException(s"${execute.name} should be cache or uncache")
     }
@@ -24,6 +26,10 @@ class SQLCacheExt(override val uid: String) extends SQLAlg with WowParams {
       df.persist()
     } else {
       df.unpersist()
+    }
+
+    if (_isEager) {
+      df.count()
     }
     df
   }
@@ -40,5 +46,29 @@ class SQLCacheExt(override val uid: String) extends SQLAlg with WowParams {
     m == "cache" || m == "uncache"
   })
 
+  final val isEager: BooleanParam = new BooleanParam(this, "isEager", "if set true, execute computing right now, and cache the table")
+
+
+  override def doc: Doc = Doc(MarkDownDoc,
+    """
+      |SQLCacheExt is used to cache/uncache table.
+      |
+      |```sql
+      |run table CacheExt.`` where execute="cache" and isEager="true";
+      |```
+      |
+      |If you execute the upper command, then table will be cached immediately, othersise only the second time
+      |to use the table you will fetch the table from cache.
+      |
+      |To release the table , do like this:
+      |
+      |```sql
+      |run table CacheExt.`` where execute="uncache";
+      |```
+    """.stripMargin)
+
+  override def modelType: ModelType = ProcessType
+
   def this() = this(BaseParams.randomUID())
+
 }

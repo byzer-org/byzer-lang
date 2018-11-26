@@ -40,7 +40,6 @@
         <module>streamingpro-hbase</module>
         <module>streamingpro-redis</module>
         <module>streamingpro-dl4j</module>
-        <module>streamingpro-tensorflow</module>
         <module>streamingpro-opencv</module>
         <module>streamingpro-jython</module>
         <module>streamingpro-automl</module>
