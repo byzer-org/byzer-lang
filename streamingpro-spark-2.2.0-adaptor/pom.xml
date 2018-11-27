@@ -23,11 +23,6 @@
             <version>${project.parent.version}</version>
         </dependency>
 
-        <dependency>
-            <groupId>streaming.king</groupId>
-            <artifactId>streamingpro-tensorflow</artifactId>
-            <version>${project.parent.version}</version>
-        </dependency>
 
         <dependency>
             <groupId>org.apache.spark</groupId>
