@@ -1,4 +1,4 @@
 train ModelExplainInPlaceData as ModelExplainInPlace.`/tmp/modelExplainInPlace`
-where `modelPath`="/Users/dxy_why/model"
+where `modelPath`="/tmp/dxy_why/model"
 and `modelType`="sparkmllib"
 ;

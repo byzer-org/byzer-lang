@@ -2,4 +2,4 @@ train FeatureExtractInPlaceData as FeatureExtractInPlace.`/tmp/featureExtractInP
 where `inputCol`="doc"
 ;
 
-register FeatureExtractInPlace.`/tmp/featureExtractInPlace` as predict;
+register FeatureExtractInPlace.`/tmp/featureExtractInPlace` as mpredict;

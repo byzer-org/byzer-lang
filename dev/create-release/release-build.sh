@@ -88,7 +88,7 @@ fi
 
 # Depending on the version being built, certain extra profiles need to be activated, and
 # different versions of Scala are supported.
-BASE_PROFILES="-Pscala-2.11 -Ponline -Phive-thrift-server -Pcarbondata -Pshade -Pcrawler -Pautoml"
+BASE_PROFILES="-Pscala-2.11 -Ponline -Phive-thrift-server -Pcarbondata -Pshade -Pcrawler "
 PUBLISH_SCALA_2_10=0
 SCALA_2_11_PROFILES=
 if [[ $MLSQL_SPARK_VERSIOIN > "2.3" ]]; then

@@ -24,7 +24,7 @@ class SQLCompositor[T] extends Compositor[T] with CompositorHelper {
 
   def sql = {
     _configParams.get(0).get("sql") match {
-      case a: util.List[String] => Some(a.mkString(" "))
+      case a: util.List[_] => Some(a.mkString(" "))
       case a: String => Some(a)
       case _ => None
     }

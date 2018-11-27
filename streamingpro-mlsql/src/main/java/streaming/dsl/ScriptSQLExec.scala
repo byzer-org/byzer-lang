@@ -3,8 +3,10 @@ package streaming.dsl
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicReference
 
-import org.antlr.v4.runtime.tree.{ParseTreeWalker}
+import org.antlr.v4.runtime.tree.ParseTreeWalker
 import org.antlr.v4.runtime._
+import org.antlr.v4.runtime.atn.ATNSimulator
+import org.apache.spark.MLSQLSyntaxErrorListener
 import org.apache.spark.sql.SparkSession
 import streaming.dsl.auth._
 import streaming.dsl.parser.{DSLSQLLexer, DSLSQLListener, DSLSQLParser}
@@ -95,18 +97,9 @@ object ScriptSQLExec extends Logging with WowLog {
     val loadLexer = new DSLSQLLexer(new CaseChangingCharStream(input))
     val tokens = new CommonTokenStream(loadLexer)
     val parser = new DSLSQLParser(tokens)
-    parser.addErrorListener(new BaseErrorListener {
-      override def syntaxError(recognizer: Recognizer[_, _],
-                               offendingSymbol:
-                               scala.Any,
-                               line: Int,
-                               charPositionInLine: Int,
-                               msg: String,
-                               e: RecognitionException): Unit = {
-        logInfo(format(s"MLSQL Parser error ${msg}"), e)
-        throw new RuntimeException(s"MLSQL Parser error : $msg")
-      }
-    })
+
+    parser.addErrorListener(new MLSQLSyntaxErrorListener())
+
     val stat = parser.statement()
     ParseTreeWalker.DEFAULT.walk(listener, stat)
   }
