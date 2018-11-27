@@ -1,6 +1,5 @@
 package org.apache.spark.ps.cluster
 
-import streaming.tensorflow.TFModelLoader
 import java.util.Locale
 
 import org.apache.spark.internal.Logging
@@ -48,11 +47,6 @@ class PSExecutorBackend(env: SparkEnv, override val rpcEnv: RpcEnv, psDriverUrl:
 
 
   override def receiveAndReply(context: RpcCallContext): PartialFunction[Any, Unit] = {
-    case Message.TensorFlowModelClean(modelPath) => {
-      logInfo("clean tensorflow model")
-      TFModelLoader.close(modelPath)
-      context.reply(true)
-    }
     case Message.CopyModelToLocal(modelPath, destPath) => {
       logInfo(s"copying model: ${modelPath} -> ${destPath}")
       HDFSOperator.copyToLocalFile(destPath, modelPath, true)
