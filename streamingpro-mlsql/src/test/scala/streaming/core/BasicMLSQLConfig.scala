@@ -15,6 +15,17 @@ trait BasicMLSQLConfig {
     "-streaming.unittest", "true"
   )
 
+  val batchParamsWithoutHive = Array(
+    "-streaming.master", "local[2]",
+    "-streaming.name", "unit-test",
+    "-streaming.rest", "false",
+    "-streaming.platform", "spark",
+    "-streaming.enableHiveSupport", "false",
+    "-streaming.spark.service", "false",
+    "-streaming.udf.clzznames", "streaming.crawler.udf.Functions",
+    "-streaming.unittest", "true"
+  )
+
   val batchParamsWithPort = Array(
     "-streaming.master", "local[*]",
     "-streaming.name", "unit-test",

@@ -3,6 +3,7 @@ package streaming.session
 import java.util.concurrent.ConcurrentHashMap
 
 import org.apache.spark.sql.SparkSession
+import streaming.core.StreamingproJobManager
 import streaming.log.Logging
 
 /**
@@ -61,13 +62,22 @@ class SessionManager(rootSparkSession: SparkSession) extends Logging {
   }
 
   def closeSession(sessionIdentifier: SessionIdentifier) {
-    val session = identifierToSession.remove(sessionIdentifier)
-    if (session == null) {
-      throw new MLSQLException(s"Session $sessionIdentifier does not exist!")
+    val runningJobCnt = StreamingproJobManager.getJobInfo
+      .filter(_._2.owner == sessionIdentifier.owner)
+      .size
+
+    if(runningJobCnt == 0){
+      val session = identifierToSession.remove(sessionIdentifier)
+      if (session == null) {
+        throw new MLSQLException(s"Session $sessionIdentifier does not exist!")
+      }
+      val sessionUser = session.getUserName
+      SparkSessionCacheManager.get.decrease(sessionUser)
+      session.close()
+    }else{
+      SparkSessionCacheManager.get.visit(sessionIdentifier.owner)
+      log.info(s"Session can't close ,$runningJobCnt jobs are running")
     }
-    val sessionUser = session.getUserName
-    SparkSessionCacheManager.get.decrease(sessionUser)
-    session.close()
   }
 
   def getOpenSessionCount: Int = identifierToSession.size
