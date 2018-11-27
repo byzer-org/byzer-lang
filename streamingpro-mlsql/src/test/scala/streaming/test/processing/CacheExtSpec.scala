@@ -1,5 +1,6 @@
 package streaming.test.processing
 
+import org.apache.spark.execution.TestHelper
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.streaming.BasicSparkOperation
 import streaming.core.strategy.platform.SparkRuntime
@@ -60,7 +61,7 @@ class CacheExtSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQ
   }
 
   def isCacheBuild(df: DataFrame)(implicit spark: SparkSession) = {
-    spark.sharedState.cacheManager.lookupCachedData(df).get.cachedRepresentation.batchStats.value > 0l
+    TestHelper.isCacheBuild(df)(spark)
   }
 
 }
