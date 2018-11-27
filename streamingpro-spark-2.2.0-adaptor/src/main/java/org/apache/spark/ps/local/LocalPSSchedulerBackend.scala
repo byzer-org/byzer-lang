@@ -1,6 +1,5 @@
 package org.apache.spark.ps.local
 
-import streaming.tensorflow.TFModelLoader
 import java.io.File
 import java.net.URL
 
@@ -8,7 +7,6 @@ import org.apache.spark.{SparkConf, SparkContext, SparkEnv}
 import org.apache.spark.internal.Logging
 import org.apache.spark.launcher.{LauncherBackend, SparkAppHandle}
 import org.apache.spark.ps.cluster.Message
-import org.apache.spark.ps.cluster.Message.CopyModelToLocal
 import org.apache.spark.rpc.{RpcCallContext, RpcEndpointRef, RpcEnv, ThreadSafeRpcEndpoint}
 import org.apache.spark.scheduler._
 import org.apache.spark.scheduler.cluster.CoarseGrainedClusterMessages.StopExecutor
@@ -38,10 +36,6 @@ class LocalPSEndpoint(override val rpcEnv: RpcEnv,
   }
 
   override def receiveAndReply(context: RpcCallContext): PartialFunction[Any, Unit] = {
-    case TensorFlowModelClean(modelPath) =>
-      logInfo("close tensorflow model: " + modelPath)
-      TFModelLoader.close(modelPath)
-      context.reply(true)
     case Message.CopyModelToLocal(modelPath, destPath) => {
       logInfo(s"copying model: ${modelPath} -> ${destPath}")
       HDFSOperator.copyToLocalFile(destPath, modelPath, true)
