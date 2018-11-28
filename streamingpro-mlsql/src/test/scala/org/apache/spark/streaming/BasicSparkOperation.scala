@@ -22,7 +22,10 @@ trait BasicSparkOperation extends FlatSpec with Matchers {
         StrategyDispatcher.clear
         PlatformManager.clear
         runtime.destroyRuntime(false, true)
-        FileUtils.deleteDirectory(new File("./metastore_db"))
+        val db = new File("./metastore_db")
+        if (db.exists()) {
+          FileUtils.deleteDirectory(db)
+        }
       } catch {
         case e: Exception =>
           e.printStackTrace()
