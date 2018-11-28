@@ -22,7 +22,7 @@ class MySQLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLCo
 
   "save mysql with update" should "work fine" in {
 
-    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+    withBatchContext(setupBatchContext(batchParamsWithoutHive, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
       implicit val spark = runtime.sparkSession
 
@@ -77,7 +77,7 @@ class MySQLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLCo
 
   "save mysql with default" should "work fine" in {
 
-    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+    withBatchContext(setupBatchContext(batchParamsWithoutHive, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
       implicit val spark = runtime.sparkSession
 
