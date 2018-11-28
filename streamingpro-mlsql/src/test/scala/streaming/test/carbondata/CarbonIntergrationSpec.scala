@@ -19,6 +19,9 @@ class CarbonIntergrationSpec extends BasicSparkOperation with SpecFunctions with
 
   "script-support-drop" should "work fine" in {
 
+    ShellCommand.execCmd("rm -rf /tmp/carbondata/store")
+    ShellCommand.execCmd("rm -rf /tmp/carbondata/meta")
+
     withBatchContext(setupBatchContext(batchParamsWithCarbondata, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
       implicit val spark = runtime.sparkSession
@@ -59,12 +62,14 @@ class CarbonIntergrationSpec extends BasicSparkOperation with SpecFunctions with
           }
         }
       } finally {
-        ShellCommand.execCmd("rm -rf /tmp/carbondata/store")
-        ShellCommand.execCmd("rm -rf /tmp/carbondata/meta")
+
       }
     }
   }
   "carbondata save" should "work fine" in {
+
+    ShellCommand.execCmd("rm -rf /tmp/carbondata/store")
+    ShellCommand.execCmd("rm -rf /tmp/carbondata/meta")
 
     withBatchContext(setupBatchContext(batchParamsWithCarbondata, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       if (checkCarbonDataCoreCompatibility) {
@@ -96,8 +101,6 @@ class CarbonIntergrationSpec extends BasicSparkOperation with SpecFunctions with
           assume(keyRes == "1")
           dropTables(Seq(tableName))
         } finally {
-          ShellCommand.execCmd("rm -rf /tmp/carbondata/store")
-          ShellCommand.execCmd("rm -rf /tmp/carbondata/meta")
         }
 
       }
