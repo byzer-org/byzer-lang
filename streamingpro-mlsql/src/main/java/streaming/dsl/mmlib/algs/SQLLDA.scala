@@ -129,7 +129,7 @@ class SQLLDA(override val uid: String) extends SQLAlg with MllibFunctions with F
 
 
   override def coreCompatibility: Seq[CoreVersion] = {
-    Seq(Core_2_3_x)
+    Seq()
   }
 
   override def modelType: ModelType = AlgType
