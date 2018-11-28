@@ -22,7 +22,7 @@ trait RuntimeCompileUDF extends RuntimeCompileScriptInterface[AnyRef] {
 
   /**
    * wrap original source code.
-   * e.g. in [[ScalaRuntimCompileUDAF]], user pass function code, we should wrap code as a class.
+   * e.g. in [[ScalaRuntimeCompileUDAF]], user pass function code, we should wrap code as a class.
    * so the runtime compiler will compile source code as runtime instance.
    */
   def wrapCode(scriptCacheKey: ScriptUDFCacheKey): ScriptUDFCacheKey

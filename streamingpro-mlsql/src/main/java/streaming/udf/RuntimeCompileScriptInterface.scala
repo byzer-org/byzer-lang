@@ -61,7 +61,7 @@ trait RuntimeCompileScriptInterface[FunType] extends Logging {
   }
 }
 
-object RuntimeCompileScriptFactory {
+object RuntimeCompileScriptFactory extends Logging {
 
   private val _udfCache = HashMap[String, RuntimeCompileUDF]()
   private val _udafCache = HashMap[String, RuntimeCompileUDAF]()
@@ -83,10 +83,14 @@ object RuntimeCompileScriptFactory {
   }
 
   def registerUDF(lang: String, runtimeCompileUDF: RuntimeCompileUDF): Unit = {
+    logInfo(s"register $lang runtime compile udf" +
+      s" engine ${runtimeCompileUDF.getClass.getCanonicalName}!")
     _udfCache.put(lang, runtimeCompileUDF)
   }
 
   def registerUDAF(lang: String, runtimeCompileUDAF: RuntimeCompileUDAF): Unit = {
+    logInfo(s"register $lang runtime compile udaf" +
+      s" engine ${runtimeCompileUDAF.getClass.getCanonicalName}!")
     _udafCache.put(lang, runtimeCompileUDAF)
   }
 
@@ -94,12 +98,16 @@ object RuntimeCompileScriptFactory {
    * load all [[RuntimeCompileUDF]] and [[RuntimeCompileUDAF]]
    */
   def loadAll(): Unit = {
+    def isRuntimeComile(className: String): Boolean = {
+      (className.endsWith("RuntimeCompileUDF") && className != "streaming.udf.RuntimeCompileUDF") ||
+        (className.endsWith("RuntimeCompileUDAF") && className != "streaming.udf.RuntimeCompileUDAF")
+    }
     _lock.synchronized {
       ClassPath.from(this.getClass.getClassLoader)
         .getTopLevelClasses("streaming.udf")
         .map(_.load())
           .filter(n => {
-            n.getName.endsWith("RuntimeCompileUDF") && n.getName != "streaming.udf.RuntimeCompileUDF"
+            isRuntimeComile(n.getName)
           }).map(getInstance)
         .foreach {
           case udf: RuntimeCompileUDF => registerUDF(udf.lang, udf)

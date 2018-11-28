@@ -13,7 +13,7 @@ import streaming.dsl.mmlib.algs.ScriptUDFCacheKey
 /**
  * Created by fchen on 2018/11/14.
  */
-object ScalaRuntimCompileUDAF extends RuntimeCompileUDAF with ScalaCompileUtils {
+object ScalaRuntimeCompileUDAF extends RuntimeCompileUDAF with ScalaCompileUtils {
   /**
    * validate the source code
    */

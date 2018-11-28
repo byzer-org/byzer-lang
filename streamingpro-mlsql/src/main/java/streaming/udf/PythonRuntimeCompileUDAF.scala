@@ -11,7 +11,7 @@ import streaming.jython.{JythonUtils, PythonInterp}
 /**
  * Created by fchen on 2018/11/15.
  */
-object PythonRuntimCompileUDAF extends RuntimeCompileUDAF {
+object PythonRuntimeCompileUDAF extends RuntimeCompileUDAF {
   /**
    * validate the source code
    */
