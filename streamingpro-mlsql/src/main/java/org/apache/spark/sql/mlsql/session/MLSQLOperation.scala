@@ -1,5 +1,4 @@
-package streaming.session
-
+package org.apache.spark.sql.mlsql.session
 
 import streaming.log.Logging
 

@@ -1,11 +1,11 @@
 package streaming.dsl.mmlib.algs
 
 import org.apache.spark.ml.param.{BooleanParam, Param}
-import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.expressions.UserDefinedFunction
+import org.apache.spark.sql.mlsql.session.MLSQLException
+import org.apache.spark.sql.{DataFrame, SparkSession}
 import streaming.dsl.mmlib._
 import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
-import streaming.session.MLSQLException
 
 
 class SQLCacheExt(override val uid: String) extends SQLAlg with WowParams {

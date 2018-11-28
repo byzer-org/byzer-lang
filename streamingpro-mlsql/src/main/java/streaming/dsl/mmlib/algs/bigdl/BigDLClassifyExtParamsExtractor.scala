@@ -1,9 +1,9 @@
 package streaming.dsl.mmlib.algs.bigdl
 
 import com.intel.analytics.bigdl.optim.{Loss, _}
+import org.apache.spark.sql.mlsql.session.MLSQLException
 import streaming.common.ScalaObjectReflect
 import streaming.dsl.mmlib.algs.SQLBigDLClassifyExt
-import streaming.session.MLSQLException
 import org.json4s._
 import org.json4s.jackson.JsonMethods
 

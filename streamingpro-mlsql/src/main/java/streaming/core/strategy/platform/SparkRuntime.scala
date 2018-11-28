@@ -1,24 +1,20 @@
 package streaming.core.strategy.platform
 
 import java.lang.reflect.Modifier
-import java.util.{Map => JMap}
 import java.util.concurrent.atomic.AtomicReference
-import java.util.logging.{Level, Logger}
+import java.util.logging.Logger
+import java.util.{Map => JMap}
+
+import scala.collection.JavaConversions._
 
 import net.csdn.common.reflect.ReflectHelper
+import org.apache.spark.{CarbonCoreVersion, SparkConf, SparkCoreVersion, SparkRuntimeOperator, WowFastSparkContext}
 import org.apache.spark.ps.cluster.PSDriverBackend
 import org.apache.spark.ps.local.LocalPSSchedulerBackend
+import org.apache.spark.sql.mlsql.session.{SessionIdentifier, SessionManager}
 import org.apache.spark.sql.{SQLContext, SparkSession}
 import streaming.common.ScalaObjectReflect
 import streaming.core.StreamingproJobManager
-import streaming.session.{SessionIdentifier, SessionManager}
-import org.apache.spark.SparkConf
-import org.apache.spark.SparkRuntimeOperator
-import org.apache.spark.CarbonCoreVersion
-import org.apache.spark.WowFastSparkContext
-import org.apache.spark.SparkCoreVersion
-
-import scala.collection.JavaConversions._
 
 /**
   * Created by allwefantasy on 30/3/2017.

@@ -1,4 +1,4 @@
-package streaming.session
+package org.apache.spark.sql.mlsql.session
 
 /**
   * Created by allwefantasy on 3/6/2018.

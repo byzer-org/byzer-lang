@@ -6,12 +6,12 @@ import java.util.UUID
 
 import net.csdn.common.settings.{ImmutableSettings, Settings}
 import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.mlsql.session.MLSQLException
 import org.json4s.DefaultFormats
 import org.json4s.jackson.JsonMethods.parse
 import streaming.common.HDFSOperator
 import streaming.common.shell.ShellCommand
 import streaming.log.{Logging, WowLog}
-import streaming.session.MLSQLException
 
 object PythonAlgProject extends Logging with WowLog {
 

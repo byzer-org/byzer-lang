@@ -1,4 +1,4 @@
-package streaming.session
+package org.apache.spark.sql.mlsql.session
 
 import java.io.IOException
 
