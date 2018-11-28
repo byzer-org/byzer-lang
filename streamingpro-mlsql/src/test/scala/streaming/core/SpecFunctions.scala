@@ -15,7 +15,7 @@ import streaming.dsl.{MLSQLExecuteContext, ScriptSQLExec, ScriptSQLExecListener}
   */
 trait SpecFunctions {
 
-  def password = "csdn.net"
+  def password = "mlsql"
 
   def request(url: String, params: Map[String, String]) = {
     val form = Form.form()
