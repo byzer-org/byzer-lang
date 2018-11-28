@@ -1,6 +1,6 @@
 package streaming.udf
 
-import org.apache.spark.sql.catalyst.expressions.{Expression, ScalaUDF}
+import org.apache.spark.sql.catalyst.expressions.{Expression, ScalaUDF, WowScalaUDF}
 import org.apache.spark.sql.types.DataType
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib.algs.ScriptUDFCacheKey
@@ -36,7 +36,7 @@ trait RuntimeCompileUDF extends RuntimeCompileScriptInterface[AnyRef] {
 
   def udf(exp: Seq[Expression], scriptCacheKey: ScriptUDFCacheKey): ScalaUDF = {
     val newScript = wrapCode(scriptCacheKey)
-    ScalaUDF(generateFunction(newScript), returnType(newScript).get, exp)
+    new WowScalaUDF(generateFunction(newScript), returnType(newScript).get, exp).toScalaUDF
   }
 
   def toPartialFunc(scriptCacheKey: ScriptUDFCacheKey,

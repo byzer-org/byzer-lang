@@ -290,7 +290,7 @@ class ScriptUDFSuite extends BasicSparkOperation with SpecFunctions with BasicML
 
   "test ScalaRuntimeCompileUDAF" should "work fine" in {
 
-    withBatchContext(setupBatchContext(batchParams)) { runtime: SparkRuntime =>
+    withBatchContext(setupBatchContext(batchParamsWithoutHive)) { runtime: SparkRuntime =>
       //执行sql
       implicit val spark = runtime.sparkSession
       val sq = createSSEL
@@ -350,7 +350,7 @@ class ScriptUDFSuite extends BasicSparkOperation with SpecFunctions with BasicML
 
   "test PythonRuntimeCompileUDAF" should "work fine" in {
 
-    withBatchContext(setupBatchContext(batchParams)) { runtime: SparkRuntime =>
+    withBatchContext(setupBatchContext(batchParamsWithoutHive)) { runtime: SparkRuntime =>
       //执行sql
       implicit val spark = runtime.sparkSession
       val sq = createSSEL
