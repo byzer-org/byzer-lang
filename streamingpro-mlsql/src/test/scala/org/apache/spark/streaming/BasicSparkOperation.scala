@@ -35,9 +35,14 @@ class BasicSparkOperation extends FlatSpec with Matchers {
       asInstanceOf[java.util.List[java.util.Map[Any, Any]]]
   }
 
-  def setupBatchContext(batchParams: Array[String], configFilePath: String) = {
-    val extraParam = Array("-streaming.job.file.path", configFilePath)
-    val params = new ParamsUtil(batchParams ++ extraParam)
+  def setupBatchContext(batchParams: Array[String], configFilePath: String = null) = {
+    var params: ParamsUtil = null
+    if (configFilePath != null) {
+      val extraParam = Array("-streaming.job.file.path", configFilePath)
+      params = new ParamsUtil(batchParams ++ extraParam)
+    } else {
+      params = new ParamsUtil(batchParams)
+    }
     PlatformManager.getOrCreate.run(params, false)
     val runtime = PlatformManager.getRuntime.asInstanceOf[SparkRuntime]
     runtime
