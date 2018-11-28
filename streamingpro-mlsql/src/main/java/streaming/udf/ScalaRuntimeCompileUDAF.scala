@@ -1,45 +1,66 @@
 package streaming.udf
 
+import scala.reflect.ClassTag
+
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.expressions.{MutableAggregationBuffer, UserDefinedAggregateFunction}
 import org.apache.spark.sql.types.{DataType, StructType}
-import streaming.common.{ScriptCacheKey, SourceCodeCompiler}
+import org.python.antlr.ast.ClassDef
+import streaming.common.SourceCodeCompiler
 import streaming.dsl.ScriptSQLExec
-import streaming.log.{Logging, WowLog}
+import streaming.dsl.mmlib.algs.ScriptUDFCacheKey
 
-import scala.reflect.ClassTag
-
-
-object ScalaSourceUDAF extends Logging with WowLog {
-  def apply(src: String, className: String): UserDefinedAggregateFunction = {
-    generateAggregateFunction(src, className)
+/**
+ * Created by fchen on 2018/11/14.
+ */
+object ScalaRuntimeCompileUDAF extends RuntimeCompileUDAF with ScalaCompileUtils {
+  /**
+   * validate the source code
+   */
+  override def check(sourceCode: String): Boolean = {
+    val tree = tb.parse(sourceCode)
+    val typeCheckResult = tb.typecheck(tree)
+    val checkResult = typeCheckResult.isInstanceOf[ClassDef]
+    if (!checkResult) {
+      throw new IllegalArgumentException("scala udaf require a class define!")
+    }
+    checkResult
   }
 
-  private def generateAggregateFunction(src: String, className: String): UserDefinedAggregateFunction = {
+  /**
+   * compile the source code.
+   *
+   * @param scriptCacheKey
+   * @return
+   */
+  override def compile(scriptCacheKey: ScriptUDFCacheKey): AnyRef = {
+    val tree = tb.parse(prepareScala(scriptCacheKey.originalCode, scriptCacheKey.className))
+    tb.compile(tree).apply().asInstanceOf[Class[_]]
+  }
+
+  override def generateFunction(scriptCacheKey: ScriptUDFCacheKey): UserDefinedAggregateFunction = {
+    val c = ScriptSQLExec.contextGetOrForTest()
+
+    val wrap = (fn: () => Any) => {
+      try {
+        ScriptSQLExec.setContextIfNotPresent(c)
+        fn()
+      } catch {
+        case e: Exception =>
+          throw e
+      }
+    }
     new UserDefinedAggregateFunction with Serializable {
 
-      val c = ScriptSQLExec.contextGetOrForTest()
-
-      val wrap = (fn: () => Any) => {
-        try {
-          ScriptSQLExec.setContextIfNotPresent(c)
-          fn()
-        } catch {
-          case e: Exception =>
-            logError(format_cause(e))
-            throw e
-        }
-      }
-
       @transient val clazzUsingInDriver = wrap(() => {
-        SourceCodeCompiler.execute(ScriptCacheKey(src, className))
+        execute(scriptCacheKey)
       }).asInstanceOf[Class[_]]
-      @transient val instanceUsingInDriver = SourceCodeCompiler.newInstance(clazzUsingInDriver)
+      @transient val instanceUsingInDriver = newInstance(clazzUsingInDriver)
 
       lazy val clazzUsingInExecutor = wrap(() => {
-        SourceCodeCompiler.execute(ScriptCacheKey(src, className))
+        execute(scriptCacheKey)
       }).asInstanceOf[Class[_]]
-      lazy val instanceUsingInExecutor = SourceCodeCompiler.newInstance(clazzUsingInExecutor)
+      lazy val instanceUsingInExecutor = newInstance(clazzUsingInExecutor)
 
       def invokeMethod[T: ClassTag](clazz: Class[_], instance: Any, method: String): T = {
         wrap(() => {
@@ -100,4 +121,6 @@ object ScalaSourceUDAF extends Logging with WowLog {
 
     }
   }
+
+  override def lang: String = "scala"
 }

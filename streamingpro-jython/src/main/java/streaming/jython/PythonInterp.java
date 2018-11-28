@@ -26,13 +26,4 @@ public class PythonInterp {
         return pi.get(methodName);
     }
 
-    public static void main(String[] args) {
-        String source = "class A:\n" +
-                "\tdef a(self,k1,k2):\n" +
-                "\t    return k1 + k2";
-        PyObject ob = compilePython(source, "A");
-        PyObject instance = ob.__call__();
-        System.out.println(instance.__getattr__("a").__call__(new PyInteger(2), new PyInteger(3)));
-    }
-
 }

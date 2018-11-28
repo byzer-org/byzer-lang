@@ -74,4 +74,5 @@ trait BasicMLSQLConfig {
     "-streaming.unittest", "true"
 
   )
+
 }

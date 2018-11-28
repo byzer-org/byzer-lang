@@ -4,7 +4,7 @@ import java.io.File
 
 import net.csdn.common.reflect.ReflectHelper
 import org.apache.commons.io.FileUtils
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.{FlatSpec, FunSuite, Matchers}
 import serviceframework.dispatcher.{Compositor, StrategyDispatcher}
 import streaming.common.ParamsUtil
 import streaming.core.strategy.platform.{PlatformManager, SparkRuntime}
@@ -12,7 +12,7 @@ import streaming.core.strategy.platform.{PlatformManager, SparkRuntime}
 /**
   * Created by allwefantasy on 30/3/2017.
   */
-class BasicSparkOperation extends FlatSpec with Matchers {
+trait BasicSparkOperation extends FlatSpec with Matchers {
 
   def withBatchContext[R](runtime: SparkRuntime)(block: SparkRuntime => R): R = {
     try {
