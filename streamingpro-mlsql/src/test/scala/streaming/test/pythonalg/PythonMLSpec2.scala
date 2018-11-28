@@ -1,7 +1,13 @@
 package streaming.test.pythonalg
 
+import java.io.File
+import java.nio.charset.Charset
+import java.util.UUID
+
+import com.google.common.io.Files
 import net.sf.json.JSONArray
 import org.apache.http.client.fluent.{Form, Request}
+import org.apache.spark.SparkCoreVersion
 import org.apache.spark.streaming.BasicSparkOperation
 import streaming.core.strategy.platform.SparkRuntime
 import streaming.core.{BasicMLSQLConfig, SpecFunctions}
@@ -9,6 +15,9 @@ import streaming.dsl.ScriptSQLExec
 import streaming.dsl.template.TemplateMerge
 import streaming.test.pythonalg.code.ScriptCode
 import streaming.common.ScalaMethodMacros._
+import streaming.common.shell.ShellCommand
+
+import scala.io.Source
 
 /**
   * Created by allwefantasy on 26/5/2018.
@@ -30,9 +39,20 @@ class PythonMLSpec2 extends BasicSparkOperation with SpecFunctions with BasicMLS
     withBatchContext(setupBatchContext(batchParamsWithAPI, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
       implicit val spark = runtime.sparkSession
+
+      //SPARK_VERSION
       val sq = createSSEL(spark, "")
       val projectName = "sklearn_elasticnet_wine"
-      val projectPath = getExampleProject(projectName)
+      var projectPath = getExampleProject(projectName)
+
+      var newpath = s"/tmp/${UUID.randomUUID().toString}"
+      ShellCommand.execCmd(s"cp -r ${projectPath} $newpath")
+
+      val newcondafile = TemplateMerge.merge(Source.fromFile(new File(newpath + "/conda.yaml")).getLines().mkString("\n"), Map("SPARK_VERSION" -> SparkCoreVersion.exactVersion))
+      Files.write(newcondafile, new File(newpath + "/conda.yaml"), Charset.forName("utf-8"))
+
+      projectPath = newpath
+
       val scriptCode = ScriptCode(s"/tmp/${projectName}", projectPath)
 
       val config = Map(
@@ -80,7 +100,16 @@ class PythonMLSpec2 extends BasicSparkOperation with SpecFunctions with BasicMLS
       implicit val spark = runtime.sparkSession
       val sq = createSSEL(spark, "")
       val projectName = "sklearn_elasticnet_wine"
-      val projectPath = getExampleProject(projectName)
+      var projectPath = getExampleProject(projectName)
+
+      var newpath = s"/tmp/${UUID.randomUUID().toString}"
+      ShellCommand.execCmd(s"cp -r ${projectPath} $newpath")
+
+      val newcondafile = TemplateMerge.merge(Source.fromFile(new File(newpath + "/conda.yaml")).getLines().mkString("\n"), Map("SPARK_VERSION" -> SparkCoreVersion.exactVersion))
+      Files.write(newcondafile, new File(newpath + "/conda.yaml"), Charset.forName("utf-8"))
+
+      projectPath = newpath
+
       val scriptCode = ScriptCode(s"/tmp/${projectName}", projectPath)
 
       val config = Map(
