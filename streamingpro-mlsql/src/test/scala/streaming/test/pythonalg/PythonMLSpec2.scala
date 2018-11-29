@@ -9,13 +9,13 @@ import net.sf.json.JSONArray
 import org.apache.http.client.fluent.{Form, Request}
 import org.apache.spark.SparkCoreVersion
 import org.apache.spark.streaming.BasicSparkOperation
+import streaming.common.ScalaMethodMacros._
+import streaming.common.shell.ShellCommand
 import streaming.core.strategy.platform.SparkRuntime
 import streaming.core.{BasicMLSQLConfig, SpecFunctions}
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.template.TemplateMerge
 import streaming.test.pythonalg.code.ScriptCode
-import streaming.common.ScalaMethodMacros._
-import streaming.common.shell.ShellCommand
 
 import scala.io.Source
 
@@ -35,6 +35,12 @@ class PythonMLSpec2 extends BasicSparkOperation with SpecFunctions with BasicMLS
     getHome + "examples/" + name
   }
 
+  def getPysparkVersion = {
+    val version = SparkCoreVersion.exactVersion
+    if (version == "2.2.0") "2.2.1"
+    else version
+  }
+
   "SQLPythonAlgTrain" should "work fine" in {
     withBatchContext(setupBatchContext(batchParamsWithAPI, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
@@ -48,7 +54,8 @@ class PythonMLSpec2 extends BasicSparkOperation with SpecFunctions with BasicMLS
       var newpath = s"/tmp/${UUID.randomUUID().toString}"
       ShellCommand.execCmd(s"cp -r ${projectPath} $newpath")
 
-      val newcondafile = TemplateMerge.merge(Source.fromFile(new File(newpath + "/conda.yaml")).getLines().mkString("\n"), Map("SPARK_VERSION" -> SparkCoreVersion.exactVersion))
+      val newcondafile = TemplateMerge.merge(Source.fromFile(new File(newpath + "/conda.yaml")).getLines().mkString("\n"),
+        Map("SPARK_VERSION" -> getPysparkVersion))
       Files.write(newcondafile, new File(newpath + "/conda.yaml"), Charset.forName("utf-8"))
 
       projectPath = newpath
@@ -105,7 +112,8 @@ class PythonMLSpec2 extends BasicSparkOperation with SpecFunctions with BasicMLS
       var newpath = s"/tmp/${UUID.randomUUID().toString}"
       ShellCommand.execCmd(s"cp -r ${projectPath} $newpath")
 
-      val newcondafile = TemplateMerge.merge(Source.fromFile(new File(newpath + "/conda.yaml")).getLines().mkString("\n"), Map("SPARK_VERSION" -> SparkCoreVersion.exactVersion))
+      val newcondafile = TemplateMerge.merge(Source.fromFile(new File(newpath + "/conda.yaml")).getLines().mkString("\n"),
+        Map("SPARK_VERSION" -> getPysparkVersion))
       Files.write(newcondafile, new File(newpath + "/conda.yaml"), Charset.forName("utf-8"))
 
       projectPath = newpath
