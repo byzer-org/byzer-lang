@@ -89,13 +89,57 @@ trait Functions extends SQlBaseFunc with Logging with WowLog with Serializable {
       if (params.contains(f.name)) {
         val v = params(f.name)
         val m = model.getClass.getMethods.filter(m => m.getName == s"set${f.name.capitalize}").head
+        val pa = m.getParameters.head.toString.toLowerCase()
         val pt = m.getParameterTypes.head
+        /**
+          * Supports array determination and comma division if the type is an array.
+          */
         val v2 = pt match {
-          case i if i.isAssignableFrom(classOf[Int]) => v.toInt
-          case i if i.isAssignableFrom(classOf[Double]) => v.toDouble
-          case i if i.isAssignableFrom(classOf[Float]) => v.toFloat
-          case i if i.isAssignableFrom(classOf[Boolean]) => v.toBoolean
-          case i if i.isAssignableFrom(classOf[String]) => v
+          case i if (i.isAssignableFrom(classOf[Int]) || pa.contains("int")) => {
+            if (pt.isArray) {
+              val arr = new ArrayBuffer[Int]()
+              v.split(",").foreach(d => arr += d.toInt)
+              arr.toArray[Int]
+            } else {
+              v.toInt
+            }
+          }
+          case i if (i.isAssignableFrom(classOf[Double]) || pa.contains("double")) => {
+            if (pt.isArray) {
+              val arr = new ArrayBuffer[Double]()
+              v.split(",").foreach(d => arr += d.toDouble)
+              arr.toArray[Double]
+            } else {
+              v.toDouble
+            }
+          }
+          case i if (i.isAssignableFrom(classOf[Float]) || pa.contains("float")) => {
+            if (pt.isArray) {
+              val arr = new ArrayBuffer[Float]()
+              v.split(",").foreach(d => arr += d.toFloat)
+              arr.toArray[Float]
+            } else {
+              v.toFloat
+            }
+          }
+          case i if (i.isAssignableFrom(classOf[Boolean]) || pa.contains("boolean")) => {
+            if (pt.isArray) {
+              val arr = new ArrayBuffer[Boolean]()
+              v.split(",").foreach(d => arr += d.toBoolean)
+              arr.toArray[Boolean]
+            } else {
+              v.toBoolean
+            }
+          }
+          case i if (i.isAssignableFrom(classOf[String]) || pa.contains("string")) => {
+            if (pt.isArray) {
+              val arr = new ArrayBuffer[String]()
+              v.split(",").foreach(d => arr += d)
+              arr.toArray[String]
+            } else {
+              v
+            }
+          }
           case _ => logWarning(format(s"Can not assign value to model: ${f.name} -> ${v}"))
         }
         m.invoke(model, v2.asInstanceOf[AnyRef])
