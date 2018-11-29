@@ -1,19 +1,13 @@
 package org.apache.spark.sql.mlsql.session
 
 import java.lang.reflect.UndeclaredThrowableException
-import java.security.PrivilegedExceptionAction
-import java.util.concurrent.atomic.AtomicReference
-import java.util.concurrent.TimeoutException
 
-import org.apache.hadoop.security.UserGroupInformation
-import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
-import streaming.log.Logging
-import scala.collection.mutable.{HashSet => MHSet}
-
-import org.apache.spark.MLSQLConf._
-import org.apache.spark.sql.mlsql.session.MLSQLException
 import streaming.core.strategy.platform.{PlatformManager, SparkRuntime}
+import streaming.log.Logging
+
+import scala.collection.mutable.{HashSet => MHSet}
 
 
 /**
