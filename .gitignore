@@ -136,3 +136,4 @@ dev/create-release/do-release.sh
 dev/mlsqltestssupport/__pycache__/
 dev/create-release/streamingpro*
 __pycache__
+streamingpro-mlsql/logs/template
