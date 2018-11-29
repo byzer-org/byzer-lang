@@ -1,21 +1,24 @@
 package streaming.core
 
+import java.util.UUID
+
 /**
   * Created by allwefantasy on 6/5/2018.
   */
 trait BasicMLSQLConfig {
-  val batchParams = Array(
+  def batchParams = Array(
     "-streaming.master", "local[2]",
     "-streaming.name", "unit-test",
     "-streaming.rest", "false",
     "-streaming.platform", "spark",
     "-streaming.enableHiveSupport", "true",
+    "-streaming.hive.javax.jdo.option.ConnectionURL", s"jdbc:derby:;databaseName=metastore_db/${UUID.randomUUID().toString};create=true",
     "-streaming.spark.service", "false",
     "-streaming.udf.clzznames", "streaming.crawler.udf.Functions",
     "-streaming.unittest", "true"
   )
 
-  val batchParamsWithoutHive = Array(
+  def batchParamsWithoutHive = Array(
     "-streaming.master", "local[2]",
     "-streaming.name", "unit-test",
     "-streaming.rest", "false",
@@ -26,37 +29,40 @@ trait BasicMLSQLConfig {
     "-streaming.unittest", "true"
   )
 
-  val batchParamsWithPort = Array(
+  def batchParamsWithPort = Array(
     "-streaming.master", "local[*]",
     "-streaming.name", "unit-test",
     "-streaming.rest", "true",
     "-streaming.driver.port", "9003",
     "-streaming.platform", "spark",
     "-streaming.enableHiveSupport", "true",
+    "-streaming.hive.javax.jdo.option.ConnectionURL", s"jdbc:derby:;databaseName=metastore_db/${UUID.randomUUID().toString};create=true",
     "-streaming.spark.service", "false",
     "-streaming.udf.clzznames", "streaming.crawler.udf.Functions",
     "-streaming.unittest", "true"
   )
 
-  val batchParamsWithAPI = Array(
+  def batchParamsWithAPI = Array(
     "-streaming.master", "local[*]",
     "-streaming.name", "unit-test",
     "-streaming.rest", "true",
     "-streaming.driver.port", "9003",
     "-streaming.platform", "spark",
     "-streaming.enableHiveSupport", "true",
+    "-streaming.hive.javax.jdo.option.ConnectionURL", s"jdbc:derby:;databaseName=metastore_db/${UUID.randomUUID().toString};create=true",
     "-streaming.spark.service", "false",
     "-streaming.udf.clzznames", "streaming.crawler.udf.Functions",
     "-streaming.unittest", "true",
     "-streaming.deploy.rest.api", "true"
   )
 
-  val batchParamsWithCarbondata = Array(
+  def batchParamsWithCarbondata = Array(
     "-streaming.master", "local[2]",
     "-streaming.name", "unit-test",
     "-streaming.rest", "false",
     "-streaming.platform", "spark",
     "-streaming.enableHiveSupport", "true",
+    "-streaming.hive.javax.jdo.option.ConnectionURL", s"jdbc:derby:;databaseName=metastore_db/${UUID.randomUUID().toString};create=true",
     "-streaming.spark.service", "false",
     "-streaming.unittest", "true",
     "-streaming.enableCarbonDataSupport", "true",
@@ -65,7 +71,7 @@ trait BasicMLSQLConfig {
     "-streaming.carbondata.meta", "/tmp/carbondata/meta"
   )
 
-  val mlsqlParams = Array(
+  def mlsqlParams = Array(
     "-streaming.master", "local[2]",
     "-streaming.name", "unit-test",
     "-streaming.rest", "false",

@@ -5,16 +5,16 @@ import java.util.concurrent.atomic.AtomicReference
 import java.util.logging.Logger
 import java.util.{Map => JMap}
 
-import scala.collection.JavaConversions._
-
+import _root_.streaming.common.ScalaObjectReflect
+import _root_.streaming.core.StreamingproJobManager
 import net.csdn.common.reflect.ReflectHelper
-import org.apache.spark.{CarbonCoreVersion, SparkConf, SparkCoreVersion, SparkRuntimeOperator, WowFastSparkContext}
+import org.apache.spark._
 import org.apache.spark.ps.cluster.PSDriverBackend
 import org.apache.spark.ps.local.LocalPSSchedulerBackend
 import org.apache.spark.sql.mlsql.session.{SessionIdentifier, SessionManager}
 import org.apache.spark.sql.{SQLContext, SparkSession}
-import streaming.common.ScalaObjectReflect
-import streaming.core.StreamingproJobManager
+
+import scala.collection.JavaConversions._
 
 /**
   * Created by allwefantasy on 30/3/2017.
@@ -82,8 +82,18 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
     //    SQLDL4J.tm = SQLDL4J.init(isLocalMaster(conf))
 
     val sparkSession = SparkSession.builder().config(conf)
+
+    def setHiveConnectionURL = {
+      val url = params.getOrElse("streaming.hive.javax.jdo.option.ConnectionURL", "").toString
+      if (!url.isEmpty) {
+        logger.info("set hive javax.jdo.option.ConnectionURL=" + url)
+        sparkSession.config("javax.jdo.option.ConnectionURL", url)
+      }
+    }
+
     if (params.containsKey("streaming.enableHiveSupport") &&
       params.get("streaming.enableHiveSupport").toString.toBoolean) {
+      setHiveConnectionURL
       sparkSession.enableHiveSupport()
     }
 
@@ -98,11 +108,7 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
     val ss = if (isCarbonDataEnabled) {
 
       logger.info("CarbonData enabled...")
-      val url = params.getOrElse("streaming.hive.javax.jdo.option.ConnectionURL", "").toString
-      if (!url.isEmpty) {
-        logger.info("set hive javax.jdo.option.ConnectionURL=" + url)
-        sparkSession.config("javax.jdo.option.ConnectionURL", url)
-      }
+      setHiveConnectionURL
       val carbonBuilder = Class.forName("org.apache.spark.sql.CarbonSession$CarbonBuilder").
         getConstructor(classOf[SparkSession.Builder]).
         newInstance(sparkSession)
