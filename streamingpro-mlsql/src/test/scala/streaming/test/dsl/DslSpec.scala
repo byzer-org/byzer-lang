@@ -552,7 +552,23 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
         """.stripMargin
       ScriptSQLExec.parse(mlsql, ssel)
       spark.sql("select * from output").show()
-      
+
+    }
+  }
+
+  "load conf" should "work fine" in {
+
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+      //执行sql
+      implicit val spark = runtime.sparkSession
+
+      val ssel = createSSEL
+      val mlsql =
+        """
+          |load mlsqlConf.`` as output;
+        """.stripMargin
+      ScriptSQLExec.parse(mlsql, ssel)
+      spark.sql("select * from output").show()
 
     }
   }

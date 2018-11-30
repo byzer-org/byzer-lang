@@ -9,7 +9,7 @@ import scala.collection.JavaConversions._
 /**
   * 2018-11-30 WilliamZhu(allwefantasy@gmail.com)
   */
-class MLSQLConf(sparkSession: SparkSession) extends SelfExplain {
+class MLSQLConfExplain(sparkSession: SparkSession) extends SelfExplain {
   override def isMatch: Boolean = false
 
   override def explain: DataFrame = {
