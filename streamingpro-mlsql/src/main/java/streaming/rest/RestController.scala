@@ -2,15 +2,13 @@ package streaming.rest
 
 import java.lang.reflect.Modifier
 
-import scala.collection.JavaConversions._
-import scala.util.control.NonFatal
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
-import net.csdn.annotation.rest.At
+import net.csdn.annotation.rest.{At, _}
 import net.csdn.common.collections.WowCollections
 import net.csdn.common.path.Url
-import net.csdn.modules.http.{ApplicationController, ViewType}
 import net.csdn.modules.http.RestRequest.Method._
+import net.csdn.modules.http.{ApplicationController, ViewType}
 import net.csdn.modules.transport.HttpTransportService
 import org.apache.spark.ps.cluster.Message
 import org.apache.spark.sql.{DataFrameWriter, Row, SaveMode, SparkSession}
@@ -21,13 +19,53 @@ import streaming.core.strategy.platform.{PlatformManager, SparkRuntime}
 import streaming.dsl.mmlib.algs.tf.cluster.{ClusterSpec, ClusterStatus, ExecutorInfo}
 import streaming.dsl.{MLSQLExecuteContext, ScriptSQLExec, ScriptSQLExecListener}
 
+import scala.collection.JavaConversions._
+import scala.util.control.NonFatal
+
 /**
   * Created by allwefantasy on 28/3/2017.
   */
+@OpenAPIDefinition(
+  info = new BasicInfo(
+    desc = "The collection of rest api are used to execute SQL, manager jobs and download hdfs file.",
+    state = State.alpha,
+    contact = new Contact(url = "https://github.com/allwefantasy", name = "WilliamZhu", email = "allwefantasy@gmail.com"),
+    license = new License(name = "Apache-2.0", url = "https://github.com/allwefantasy/streamingpro/blob/master/LICENSE")),
+  externalDocs = new ExternalDocumentation(description =
+    """
+
+    """),
+  servers = Array()
+)
 class RestController extends ApplicationController {
 
   // mlsql script execute api, support async and sysn
   // begin -------------------------------------------
+
+  @Action(
+    summary = "used to execute MLSQL script", description = "async/sync supports"
+  )
+  @Parameters(Array(
+    new Parameter(name = "sql", required = true, description = "MLSQL script content", `type` = "string", allowEmptyValue = false),
+    new Parameter(name = "owner", required = false,
+      description = "the user who execute this API and also will be used in MLSQL script automatically. " +
+        "default: admin. Please set this owner properly.",
+      `type` = "boolean", allowEmptyValue = false),
+    new Parameter(name = "jobType", required = false, description = "script|stream|sql; default is script", `type` = "string", allowEmptyValue = false),
+    new Parameter(name = "jobName", required = false, description = "give the job you submit a name. uuid is ok.", `type` = "string", allowEmptyValue = false),
+    new Parameter(name = "timeout", required = false, description = "set timeout value for your job. default is -1 which means it is never timeout. millisecond", `type` = "int", allowEmptyValue = false),
+    new Parameter(name = "silence", required = false, description = "the last sql in the script will return nothing. default: false", `type` = "boolean", allowEmptyValue = false),
+    new Parameter(name = "sessionPerUser", required = false, description = "If set true, the owner will have their own session otherwise share the same. default: false", `type` = "boolean", allowEmptyValue = false),
+    new Parameter(name = "async", required = false, description = "If set true ,please also provide a callback url use `callback` parameter and the job will run in background and the API will return.  default: false", `type` = "boolean", allowEmptyValue = false),
+    new Parameter(name = "callback", required = false, description = "Used when async is set true. callback is a url. default: false", `type` = "string", allowEmptyValue = false),
+    new Parameter(name = "skipInclude", required = false, description = "disable include statement. default: false", `type` = "boolean", allowEmptyValue = false),
+    new Parameter(name = "skipAuth", required = false, description = "disable table authorize . default: true", `type` = "boolean", allowEmptyValue = false)
+  ))
+  @Responses(Array(
+    new ApiResponse(responseCode = "200", description = "", content = new Content(mediaType = "application/json",
+      schema = new Schema(`type` = "string", format = """{}""", description = "")
+    ))
+  ))
   @At(path = Array("/run/script"), types = Array(GET, POST))
   def script = {
     restResponse.httpServletResponse().setHeader("Access-Control-Allow-Origin", "*")
@@ -95,6 +133,20 @@ class RestController extends ApplicationController {
   }
 
   // download hdfs file
+  @Action(
+    summary = "download file from hdfs", description = "tar/raw supports"
+  )
+  @Parameters(Array(
+    new Parameter(name = "paths", required = false, description = "the paths you want download", `type` = "string", allowEmptyValue = false),
+    new Parameter(name = "fileType", required = false, description = "raw will combine all files to one file; tar will package all files; tar|raw default: raw", `type` = "string", allowEmptyValue = false),
+    new Parameter(name = "fileName", required = false, description = "the filename you want after downloaded", `type` = "string", allowEmptyValue = false)
+
+  ))
+  @Responses(Array(
+    new ApiResponse(responseCode = "200", description = "", content = new Content(mediaType = "text",
+      schema = new Schema(`type` = "string", format = """success""", description = "")
+    ))
+  ))
   @At(path = Array("/download"), types = Array(GET, POST))
   def download = {
     intercept()
@@ -212,6 +264,15 @@ class RestController extends ApplicationController {
 
   // job manager api
   // begin --------------------------------------------------------
+  @Action(
+    summary = "show all running jobs", description = ""
+  )
+  @Parameters(Array())
+  @Responses(Array(
+    new ApiResponse(responseCode = "200", description = "", content = new Content(mediaType = "application/json",
+      schema = new Schema(`type` = "string", format = """{}""", description = "")
+    ))
+  ))
   @At(path = Array("/runningjobs"), types = Array(GET, POST))
   def getRunningJobGroup = {
     restResponse.httpServletResponse().setHeader("Access-Control-Allow-Origin", "*")
@@ -219,6 +280,15 @@ class RestController extends ApplicationController {
     render(200, toJsonString(infoMap))
   }
 
+  @Action(
+    summary = "show all running stream jobs", description = ""
+  )
+  @Parameters(Array())
+  @Responses(Array(
+    new ApiResponse(responseCode = "200", description = "", content = new Content(mediaType = "application/json",
+      schema = new Schema(`type` = "string", format = """{}""", description = "")
+    ))
+  ))
   @At(path = Array("/stream/jobs/running"), types = Array(GET, POST))
   def streamRunningJobs = {
     restResponse.httpServletResponse().setHeader("Access-Control-Allow-Origin", "*")
@@ -229,6 +299,17 @@ class RestController extends ApplicationController {
     render(200, toJsonString(infoMap))
   }
 
+  @Action(
+    summary = "kill specific stream job", description = ""
+  )
+  @Parameters(Array(
+    new Parameter(name = "groupId", required = false, description = "the job id", `type` = "string", allowEmptyValue = false)
+  ))
+  @Responses(Array(
+    new ApiResponse(responseCode = "200", description = "", content = new Content(mediaType = "application/json",
+      schema = new Schema(`type` = "string", format = """{}""", description = "")
+    ))
+  ))
   @At(path = Array("/stream/jobs/kill"), types = Array(GET, POST))
   def killStreamJob = {
     restResponse.httpServletResponse().setHeader("Access-Control-Allow-Origin", "*")
@@ -237,6 +318,18 @@ class RestController extends ApplicationController {
     render(200, "{}")
   }
 
+  @Action(
+    summary = "kill specific job", description = ""
+  )
+  @Parameters(Array(
+    new Parameter(name = "groupId", required = false, description = "the job id", `type` = "string", allowEmptyValue = false),
+    new Parameter(name = "jobName", required = false, description = "the job name", `type` = "string", allowEmptyValue = false)
+  ))
+  @Responses(Array(
+    new ApiResponse(responseCode = "200", description = "", content = new Content(mediaType = "application/json",
+      schema = new Schema(`type` = "string", format = """{}""", description = "")
+    ))
+  ))
   @At(path = Array("/killjob"), types = Array(GET, POST))
   def killJob = {
     restResponse.httpServletResponse().setHeader("Access-Control-Allow-Origin", "*")
@@ -255,6 +348,18 @@ class RestController extends ApplicationController {
     render(200, "{}")
   }
 
+  @Action(
+    summary = "logout user", description = ""
+  )
+  @Parameters(Array(
+    new Parameter(name = "owner", required = true, description = "the user you want to logout", `type` = "string", allowEmptyValue = false),
+    new Parameter(name = "sessionPerUser", required = true, description = "make sure sessionPerUser is set true", `type` = "boolean", allowEmptyValue = false)
+  ))
+  @Responses(Array(
+    new ApiResponse(responseCode = "200", description = "", content = new Content(mediaType = "application/json",
+      schema = new Schema(`type` = "string", format = """{}""", description = "")
+    ))
+  ))
   @At(path = Array("/user/logout"), types = Array(GET, POST))
   def userLogout = {
     restResponse.httpServletResponse().setHeader("Access-Control-Allow-Origin", "*")
