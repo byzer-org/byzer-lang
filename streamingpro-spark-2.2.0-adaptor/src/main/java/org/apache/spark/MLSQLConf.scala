@@ -164,7 +164,7 @@ private[spark] class MLSQLConfigProvider(conf: JMap[String, String]) extends Con
 
   override def get(key: String): Option[String] = {
     if (key.startsWith("streaming.")) {
-      Option(conf.get(key)).orElse(SparkConf.getDeprecatedConfig(key, conf))
+      Option(conf.get(key))
     } else {
       None
     }
