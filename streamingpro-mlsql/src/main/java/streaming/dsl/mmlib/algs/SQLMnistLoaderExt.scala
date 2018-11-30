@@ -69,10 +69,10 @@ class SQLMnistLoaderExt(override val uid: String) extends SQLAlg with BaseParams
       map(m => set(dataType, m)).
       getOrElse("")
 
-    val trainData = $(mnistDir) + "/train-images.idx3-ubyte"
-    val trainLabel = $(mnistDir) + "/train-labels.idx1-ubyte"
-    val validationData = $(mnistDir) + "/t10k-images.idx3-ubyte"
-    val validationLabel = $(mnistDir) + "/t10k-labels.idx1-ubyte"
+    val trainData = $(mnistDir) + "/train-images-idx3-ubyte"
+    val trainLabel = $(mnistDir) + "/train-labels-idx1-ubyte"
+    val validationData = $(mnistDir) + "/t10k-images-idx3-ubyte"
+    val validationLabel = $(mnistDir) + "/t10k-labels-idx1-ubyte"
 
     val data = if ($(dataType) == "train") trainData else validationData
     val validate = if ($(dataType) == "train") trainLabel else validationLabel

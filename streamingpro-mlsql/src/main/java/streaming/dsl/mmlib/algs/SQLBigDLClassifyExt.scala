@@ -9,19 +9,19 @@ import com.intel.analytics.bigdl.models.utils.ModelBroadcast
 import com.intel.analytics.bigdl.nn.{ClassNLLCriterion, Module}
 import com.intel.analytics.bigdl.optim.Trigger
 import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.utils.{Engine, T}
+import com.intel.analytics.bigdl.utils.Engine
 import net.sf.json.JSONArray
 import org.apache.spark.ml.linalg.SQLDataTypes.VectorType
 import org.apache.spark.ml.linalg.{Vector, Vectors}
 import org.apache.spark.ml.param.Param
-import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession}
 import org.apache.spark.sql.expressions.UserDefinedFunction
+import org.apache.spark.sql.{DataFrame, SparkSession}
 import streaming.common.{HDFSOperator, ScriptCacheKey, SourceCodeCompiler}
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib._
+import streaming.dsl.mmlib.algs.bigdl._
 import streaming.dsl.mmlib.algs.classfication.BaseClassification
 import streaming.dsl.mmlib.algs.param.BaseParams
-import streaming.dsl.mmlib.algs.bigdl._
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable.ArrayBuffer
@@ -31,14 +31,6 @@ class SQLBigDLClassifyExt(override val uid: String) extends SQLAlg with MllibFun
   def this() = this(BaseParams.randomUID())
 
   override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
-    params.get(disableSparkLog.name).
-      map { m =>
-        if (m.toBoolean) {
-          WowLoggerFilter.redirectSparkInfoLogs()
-        }
-      }.getOrElse {
-      WowLoggerFilter.redirectSparkInfoLogs()
-    }
 
     Engine.init
 
@@ -333,10 +325,6 @@ class SQLBigDLClassifyExt(override val uid: String) extends SQLAlg with MllibFun
   final val criterion_paddingValue: Param[Int] = new Param[Int](this, "fitParam.[group].criterion.paddingValue",
     "default -1")
 
-
-
-  final val disableSparkLog: Param[String] = new Param[String](this, "disableSparkLog",
-    "")
 
   final val optimizeMethod: Param[String] = new Param[String](this, "fitParam.[group].optimizeMethod",
     s"""${OptimizeParamExtractor.optimizeMethodCandidatesStr}""")

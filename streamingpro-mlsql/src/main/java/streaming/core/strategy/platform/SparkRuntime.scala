@@ -7,6 +7,7 @@ import java.util.{Map => JMap}
 
 import _root_.streaming.common.ScalaObjectReflect
 import _root_.streaming.core.StreamingproJobManager
+import _root_.streaming.dsl.mmlib.algs.bigdl.WowLoggerFilter
 import net.csdn.common.reflect.ReflectHelper
 import org.apache.spark._
 import org.apache.spark.ps.cluster.PSDriverBackend
@@ -141,6 +142,10 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
         psDriverBackend = new PSDriverBackend(ss.sparkContext)
         psDriverBackend.start()
       }
+    }
+
+    if (params.getOrDefault("streaming.disableSparkLog", "false").toString.toBoolean) {
+      WowLoggerFilter.redirectSparkInfoLogs()
     }
     ss
   }
