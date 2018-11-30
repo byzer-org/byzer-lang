@@ -1,9 +1,10 @@
 package org.apache.spark
 
-import java.util.HashMap
 import java.util.concurrent.TimeUnit
+import java.util.{HashMap, Map => JMap}
 
-import org.apache.spark.internal.config.{ConfigBuilder, ConfigEntry}
+import org.apache.spark.internal.config._
+
 import scala.collection.JavaConverters._
 
 /**
@@ -23,6 +24,90 @@ object MLSQLConf {
   private[this] object MLSQLConfigBuilder {
     def apply(key: String): ConfigBuilder = ConfigBuilder(key).onCreate(register)
   }
+
+  val MLSQL_PLATFORM = MLSQLConfigBuilder("streaming.platform")
+    .doc("for now only supports spark,spark_streaming,flink").stringConf.checkValues(Set("spark", "spark_streaming", "flink")).createOptional
+
+  val MLSQL_ENABLE_REST = MLSQLConfigBuilder("streaming.rest").doc(
+    """
+      |enable rest api
+    """.stripMargin).booleanConf.createWithDefault(false)
+
+  val MLSQL_DRIVER_PORT = MLSQLConfigBuilder("streaming.driver.port").doc(
+    """
+      | The port of rest api
+    """.stripMargin).intConf.createWithDefault(9003)
+
+
+  val MLSQL_MASTER = MLSQLConfigBuilder("streaming.master")
+    .doc("the same with spark master").stringConf.createOptional
+
+  val MLSQL_NAME: ConfigEntry[String] = MLSQLConfigBuilder("streaming.name")
+    .doc("The name will showed in yarn cluster and spark ui").stringConf.createWithDefault("mlsql")
+
+  val MLSQL_BIGDL_ENABLE: ConfigEntry[Boolean] = MLSQLConfigBuilder("streaming.bigdl.enable")
+    .doc(
+      """
+        |Enable embedded deep learning support.
+        |if set true, then we will automatically add spark conf like following:
+        |
+        |  conf.setIfMissing("spark.shuffle.reduceLocality.enabled", "false")
+        |  conf.setIfMissing("spark.shuffle.blockTransferService", "nio")
+        |  conf.setIfMissing("spark.scheduler.minRegisteredResourcesRatio", "1.0")
+        |  conf.setIfMissing("spark.speculation", "false")
+      """.stripMargin).booleanConf.createWithDefault(true)
+
+  val MLSQL_PS_ENABLE: ConfigEntry[Boolean] = MLSQLConfigBuilder("streaming.ps.enable").doc(
+    """
+      |MLSQL supports directly communicating with executor if you set this true.
+    """.stripMargin).booleanConf.createWithDefault(false)
+
+  val MLSQL_HIVE_CONNECTION = MLSQLConfigBuilder("streaming.hive.javax.jdo.option.ConnectionURL").doc(
+    """
+      |Use this to configure `hive.javax.jdo.option.ConnectionURL`
+    """.stripMargin).stringConf.createWithDefault("")
+
+  val MLSQL_ENABLE_HIVE_SUPPORT: ConfigEntry[Boolean] = MLSQLConfigBuilder("streaming.enableHiveSupport").doc(
+    """
+      |enable hive
+    """.stripMargin).booleanConf.createWithDefault(false)
+
+  val MLSQL_ENABLE_CARBONDATA_SUPPORT: ConfigEntry[Boolean] = MLSQLConfigBuilder("streaming.enableCarbonDataSupport").doc(
+    """
+      |carbondata support. If set true, please configure `streaming.carbondata.store` and `streaming.carbondata.meta`
+    """.stripMargin).booleanConf.createWithDefault(false)
+
+
+  val MLSQL_CARBONDATA_STORE = MLSQLConfigBuilder("streaming.carbondata.store").doc(
+    """
+      |
+    """.stripMargin).stringConf.createOptional
+
+  val MLSQL_CARBONDATA_META = MLSQLConfigBuilder("streaming.carbondata.meta").doc(
+    """
+      |
+    """.stripMargin).stringConf.createOptional
+
+  val MLSQL_DEPLOY_REST_API = MLSQLConfigBuilder("streaming.deploy.rest.api").doc(
+    """
+      |If you deploy MLSQL as predict service, please enable this.
+    """.stripMargin).booleanConf.createWithDefault(false)
+
+  val MLSQL_SPARK_SERVICE = MLSQLConfigBuilder("streaming.spark.service").doc(
+    """
+      |Run MLSQL as service and without quit.
+    """.stripMargin).booleanConf.createWithDefault(false)
+
+  val MLSQL_DISABLE_SPARK_LOG = MLSQLConfigBuilder("streaming.disableSparkLog").doc(
+    """
+      |Sometimes there are too much spark job info, you can disable them.
+    """.stripMargin).booleanConf.createWithDefault(false)
+
+  val MLSQL_UDF_CLZZNAMES = MLSQLConfigBuilder("streaming.udf.clzznames").doc(
+    """
+      |register udf class
+    """.stripMargin).stringConf.createOptional
+
 
   val SESSION_IDLE_TIMEOUT: ConfigEntry[Long] =
     MLSQLConfigBuilder("spark.mlsql.session.idle.timeout")
@@ -64,8 +149,25 @@ object MLSQLConf {
       .createWithDefault(TimeUnit.SECONDS.toSeconds(60L))
 
   def getAllDefaults: Map[String, String] = {
-    entries.entrySet().asScala.map {kv =>
+    entries.entrySet().asScala.map { kv =>
       (kv.getKey, kv.getValue.defaultValueString)
     }.toMap
   }
+
+  def createConfigReader(settings: JMap[String, String]) = {
+    val reader = new ConfigReader(new MLSQLConfigProvider(settings))
+    reader
+  }
+}
+
+private[spark] class MLSQLConfigProvider(conf: JMap[String, String]) extends ConfigProvider {
+
+  override def get(key: String): Option[String] = {
+    if (key.startsWith("streaming.")) {
+      Option(conf.get(key)).orElse(SparkConf.getDeprecatedConfig(key, conf))
+    } else {
+      None
+    }
+  }
+
 }
