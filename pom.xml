@@ -36,13 +36,15 @@
         <module>streamingpro-commons</module>
         <module>streamingpro-spark-common</module>
         <module>streamingpro-manager</module>
-        <module>streamingpro-api</module>
-        <module>streamingpro-hbase</module>
-        <module>streamingpro-redis</module>
-        <module>streamingpro-dl4j</module>
-        <module>streamingpro-opencv</module>
         <module>streamingpro-jython</module>
-        <module>streamingpro-automl</module>
+        <module>streamingpro-api</module>
+
+        <module>external/streamingpro-hbase</module>
+        <module>external/streamingpro-redis</module>
+        <module>contri/streamingpro-dl4j</module>
+        <module>contri/streamingpro-automl</module>
+        <module>contri/streamingpro-opencv</module>
+
     </modules>
 
     <properties>
@@ -236,7 +238,7 @@
                 <module>streamingpro-dsl</module>
                 <module>streamingpro-mlsql</module>
                 <module>streamingpro-crawler</module>
-                <module>streamingpro-xgboost</module>
+                <module>contri/streamingpro-xgboost</module>
             </modules>
             <dependencies>
                 <dependency>
@@ -305,7 +307,7 @@
                 <module>streamingpro-dsl</module>
                 <module>streamingpro-mlsql</module>
                 <module>streamingpro-crawler</module>
-                <module>streamingpro-xgboost</module>
+                <module>contri/streamingpro-xgboost</module>
             </modules>
             <dependencies>
                 <dependency>
