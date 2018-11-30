@@ -155,9 +155,7 @@ EOF
   cd ../
   export MLSQL_RELEASE_TAR="./create-release/$PNAME.tar.gz"
   python -m mlsqltestssupport.aliyun.upload_release
-  rm $MLSQL_RELEASE_TAR
   exit 0
 fi
 
-rm -rf steamingpro
 echo "ERROR: expects to be called with 'package', 'docs'"

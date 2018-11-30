@@ -153,27 +153,6 @@
         </profile>
 
         <profile>
-            <id>spark-1.6.1</id>
-            <properties>
-                <spark.version>1.6.1</spark.version>
-                <hadoop-client-version>2.6.0</hadoop-client-version>
-                <spark.streaming.kafka.artifactId>spark-streaming-kafka_${scala.binary.version}
-                </spark.streaming.kafka.artifactId>
-                <spark.sql.kafka.artifactId>spark-streaming-kafka_${scala.binary.version}</spark.sql.kafka.artifactId>
-            </properties>
-            <modules>
-                <module>streamingpro-spark</module>
-            </modules>
-            <dependencies>
-                <dependency>
-                    <groupId>net.csdn</groupId>
-                    <artifactId>serviceframework-jetty-9-server</artifactId>
-                    <version>${serviceframework.version}</version>
-                </dependency>
-            </dependencies>
-        </profile>
-
-        <profile>
             <id>spark-2.2.0</id>
             <properties>
                 <spark.streaming.kafka.artifactId>spark-streaming-kafka-0-8_${scala.binary.version}
