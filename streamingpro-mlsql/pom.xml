@@ -230,6 +230,10 @@
                             <groupId>com.google.guava</groupId>
                             <artifactId>guava</artifactId>
                         </exclusion>
+                        <exclusion>
+                            <groupId>junit</groupId>
+                            <artifactId>junit</artifactId>
+                        </exclusion>
                     </exclusions>
                 </dependency>
                 <!--<dependency>-->
@@ -258,6 +262,10 @@
                             <groupId>com.google.guava</groupId>
                             <artifactId>guava</artifactId>
                         </exclusion>
+                        <exclusion>
+                            <groupId>junit</groupId>
+                            <artifactId>junit</artifactId>
+                        </exclusion>
                     </exclusions>
                 </dependency>
                 <!--<dependency>-->
@@ -284,6 +292,10 @@
                         <exclusion>
                             <groupId>com.google.guava</groupId>
                             <artifactId>guava</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>junit</groupId>
+                            <artifactId>junit</artifactId>
                         </exclusion>
                     </exclusions>
                 </dependency>
