@@ -60,7 +60,7 @@ object MLSQLConf {
   val MLSQL_PS_ENABLE: ConfigEntry[Boolean] = MLSQLConfigBuilder("streaming.ps.enable").doc(
     """
       |MLSQL supports directly communicating with executor if you set this true.
-    """.stripMargin).booleanConf.createWithDefault(false)
+    """.stripMargin).booleanConf.createWithDefault(true)
 
   val MLSQL_HIVE_CONNECTION = MLSQLConfigBuilder("streaming.hive.javax.jdo.option.ConnectionURL").doc(
     """

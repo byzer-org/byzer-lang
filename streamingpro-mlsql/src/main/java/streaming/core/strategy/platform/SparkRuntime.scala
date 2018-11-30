@@ -23,6 +23,7 @@ import scala.collection.JavaConversions._
 class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with PlatformManagerListener {
 
   val logger = Logger.getLogger(getClass.getName)
+  val configReader = MLSQLConf.createConfigReader(params.map(f => (f._1.toString, f._2.toString)))
 
   def name = "SPARK"
 
@@ -46,7 +47,6 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
     new SparkRuntimeOperator(sparkSession)
   }
 
-  val configReader = MLSQLConf.createConfigReader(params.map(f => (f._1.toString, f._2.toString)))
 
   def createRuntime = {
     logger.info("create Runtime...")
