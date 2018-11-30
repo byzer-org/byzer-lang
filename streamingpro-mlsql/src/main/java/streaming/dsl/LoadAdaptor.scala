@@ -1,12 +1,10 @@
 package streaming.dsl
 
 import net.sf.json.JSONObject
-import org.apache.spark.sql.types.WowStructType
-import template.TemplateMerge
 import org.apache.spark.sql.{DataFrame, functions => F}
-import streaming.dsl.load.batch.{AutoWorkflowSelfExplain, ModelSelfExplain}
-import streaming.parser.SparkTypePaser
+import streaming.dsl.load.batch.{AutoWorkflowSelfExplain, MLSQLAPIExplain, MLSQLConfExplain, ModelSelfExplain}
 import streaming.dsl.parser.DSLSQLParser._
+import streaming.dsl.template.TemplateMerge
 import streaming.source.parser.{SourceParser, SourceSchema}
 
 /**
@@ -112,6 +110,10 @@ class BatchLoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener,
       case "xml" =>
         val resourcePath = resourceRealPath(scriptSQLExecListener, resourceOwner, path)
         table = reader.option("path", resourcePath).format("com.databricks.spark.xml").load()
+      case "mlsqlAPI" =>
+        table = new MLSQLAPIExplain(sparkSession).explain
+      case "mlsqlConf" =>
+        table = new MLSQLConfExplain(sparkSession).explain
       case _ =>
 
         // calculate resource real absolute path
