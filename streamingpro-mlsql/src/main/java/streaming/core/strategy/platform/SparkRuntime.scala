@@ -23,6 +23,7 @@ import scala.collection.JavaConversions._
 class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with PlatformManagerListener {
 
   val logger = Logger.getLogger(getClass.getName)
+  val configReader = MLSQLConf.createConfigReader(params.map(f => (f._1.toString, f._2.toString)))
 
   def name = "SPARK"
 
@@ -46,8 +47,10 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
     new SparkRuntimeOperator(sparkSession)
   }
 
+
   def createRuntime = {
     logger.info("create Runtime...")
+
     val conf = new SparkConf()
     params.filter(f =>
       f._1.toString.startsWith("spark.") ||
@@ -55,25 +58,25 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
     ).foreach { f =>
       conf.set(f._1.toString, f._2.toString)
     }
-    if (params.containsKey("streaming.master")) {
-      conf.setMaster(params.get("streaming.master").toString)
+    if (MLSQLConf.MLSQL_MASTER.readFrom(configReader).isDefined) {
+      conf.setMaster(MLSQLConf.MLSQL_MASTER.readFrom(configReader).get)
     }
 
-    conf.setAppName(params.get("streaming.name").toString)
+    conf.setAppName(MLSQLConf.MLSQL_NAME.readFrom(configReader))
 
     def isLocalMaster(conf: SparkConf): Boolean = {
-      val master = conf.get("spark.master", "")
+      val master = MLSQLConf.MLSQL_MASTER.readFrom(configReader).getOrElse("")
       master == "local" || master.startsWith("local[")
     }
 
-    if (params.getOrDefault("streaming.bigdl.enable", "true").toString.toBoolean) {
+    if (MLSQLConf.MLSQL_BIGDL_ENABLE.readFrom(configReader)) {
       conf.setIfMissing("spark.shuffle.reduceLocality.enabled", "false")
       conf.setIfMissing("spark.shuffle.blockTransferService", "nio")
       conf.setIfMissing("spark.scheduler.minRegisteredResourcesRatio", "1.0")
       conf.setIfMissing("spark.speculation", "false")
     }
 
-    if (params.containsKey("streaming.ps.enable") && params.get("streaming.ps.enable").toString.toBoolean) {
+    if (MLSQLConf.MLSQL_PS_ENABLE.readFrom(configReader)) {
       if (!isLocalMaster(conf)) {
         logger.info("register worker.sink.pservice.class with org.apache.spark.ps.cluster.PSServiceSink")
         conf.set("spark.metrics.conf.executor.sink.pservice.class", "org.apache.spark.ps.cluster.PSServiceSink")
@@ -85,22 +88,20 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
     val sparkSession = SparkSession.builder().config(conf)
 
     def setHiveConnectionURL = {
-      val url = params.getOrElse("streaming.hive.javax.jdo.option.ConnectionURL", "").toString
+      val url = MLSQLConf.MLSQL_HIVE_CONNECTION.readFrom(configReader)
       if (!url.isEmpty) {
         logger.info("set hive javax.jdo.option.ConnectionURL=" + url)
         sparkSession.config("javax.jdo.option.ConnectionURL", url)
       }
     }
 
-    if (params.containsKey("streaming.enableHiveSupport") &&
-      params.get("streaming.enableHiveSupport").toString.toBoolean) {
+    if (MLSQLConf.MLSQL_ENABLE_HIVE_SUPPORT.readFrom(configReader)) {
       setHiveConnectionURL
       sparkSession.enableHiveSupport()
     }
 
     val checkCarbonDataCoreCompatibility = CarbonCoreVersion.coreCompatibility(SparkCoreVersion.version, SparkCoreVersion.exactVersion)
-    val isCarbonDataEnabled = params.containsKey("streaming.enableCarbonDataSupport") &&
-      params.get("streaming.enableCarbonDataSupport").toString.toBoolean && checkCarbonDataCoreCompatibility
+    val isCarbonDataEnabled = MLSQLConf.MLSQL_ENABLE_CARBONDATA_SUPPORT.readFrom(configReader) && checkCarbonDataCoreCompatibility
 
     if (!checkCarbonDataCoreCompatibility) {
       logger.warning(s"------- CarbonData do not support current version of spark [${SparkCoreVersion.exactVersion}], streaming.enableCarbonDataSupport will not take effect.--------")
@@ -117,7 +118,7 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
         getMethod("getOrCreateCarbonSession", classOf[String], classOf[String]).
         invoke(carbonBuilder, params("streaming.carbondata.store").toString, params("streaming.carbondata.meta").toString).asInstanceOf[SparkSession]
     } else {
-      if (params.getOrDefault("streaming.deploy.rest.api", "false").toString.toBoolean) {
+      if (MLSQLConf.MLSQL_DEPLOY_REST_API.readFrom(configReader)) {
         conf.setIfMissing("spark.default.parallelism", "1")
           .setIfMissing("spark.sql.shuffle.partitions", "1")
         val wfsc = new WowFastSparkContext(conf)
@@ -127,12 +128,12 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
     }
 
 
-    if (params.containsKey("streaming.spark.service") && params.get("streaming.spark.service").toString.toBoolean) {
+    if (MLSQLConf.MLSQL_SPARK_SERVICE.readFrom(configReader)) {
       StreamingproJobManager.init(ss.sparkContext)
     }
 
     // parameter server should be enabled by default
-    if (!params.containsKey("streaming.ps.enable") || params.get("streaming.ps.enable").toString.toBoolean) {
+    if (MLSQLConf.MLSQL_PS_ENABLE.readFrom(configReader)) {
       logger.info("ps enabled...")
       if (ss.sparkContext.isLocal) {
         localSchedulerBackend = new LocalPSSchedulerBackend(ss.sparkContext)
@@ -144,7 +145,7 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
       }
     }
 
-    if (params.getOrDefault("streaming.disableSparkLog", "false").toString.toBoolean) {
+    if (MLSQLConf.MLSQL_DISABLE_SPARK_LOG.readFrom(configReader)) {
       WowLoggerFilter.redirectSparkInfoLogs()
     }
     ss
@@ -154,8 +155,8 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
 
   registerUDF("streaming.core.compositor.spark.udf.Functions")
 
-  if (params.containsKey("streaming.udf.clzznames")) {
-    params("streaming.udf.clzznames").toString.split(",").foreach { clzz =>
+  if (params.containsKey(MLSQLConf.MLSQL_UDF_CLZZNAMES.key)) {
+    MLSQLConf.MLSQL_UDF_CLZZNAMES.readFrom(configReader).get.split(",").foreach { clzz =>
       registerUDF(clzz)
     }
   }
@@ -182,7 +183,7 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
   }
 
   override def awaitTermination: Unit = {
-    if (params.getOrElse("streaming.spark.service", false).toString.toBoolean) {
+    if (MLSQLConf.MLSQL_SPARK_SERVICE.readFrom(configReader)) {
       Thread.currentThread().join()
     }
   }
