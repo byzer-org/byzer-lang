@@ -141,9 +141,16 @@
                         </exclusion>
                         <exclusion>
                             <groupId>org.apache.hadoop</groupId>
+                            <artifactId>hadoop-aws</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>org.apache.hadoop</groupId>
                             <artifactId>hadoop-hdfs</artifactId>
                         </exclusion>
-
+                        <exclusion>
+                            <groupId>io.netty</groupId>
+                            <artifactId>netty-all</artifactId>
+                        </exclusion>
 
                     </exclusions>
                 </dependency>
@@ -218,6 +225,16 @@
                     <groupId>com.intel.analytics.bigdl</groupId>
                     <artifactId>bigdl-SPARK_2.2</artifactId>
                     <version>0.6.0</version>
+                    <exclusions>
+                        <exclusion>
+                            <groupId>com.google.guava</groupId>
+                            <artifactId>guava</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>junit</groupId>
+                            <artifactId>junit</artifactId>
+                        </exclusion>
+                    </exclusions>
                 </dependency>
                 <!--<dependency>-->
                 <!--<groupId>com.intel.analytics.zoo</groupId>-->
@@ -240,6 +257,16 @@
                     <groupId>com.intel.analytics.bigdl</groupId>
                     <artifactId>bigdl-SPARK_2.3</artifactId>
                     <version>0.6.0</version>
+                    <exclusions>
+                        <exclusion>
+                            <groupId>com.google.guava</groupId>
+                            <artifactId>guava</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>junit</groupId>
+                            <artifactId>junit</artifactId>
+                        </exclusion>
+                    </exclusions>
                 </dependency>
                 <!--<dependency>-->
                 <!--<groupId>com.intel.analytics.zoo</groupId>-->
@@ -261,6 +288,16 @@
                     <groupId>com.intel.analytics.bigdl</groupId>
                     <artifactId>bigdl-SPARK_2.3</artifactId>
                     <version>0.6.0</version>
+                    <exclusions>
+                        <exclusion>
+                            <groupId>com.google.guava</groupId>
+                            <artifactId>guava</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>junit</groupId>
+                            <artifactId>junit</artifactId>
+                        </exclusion>
+                    </exclusions>
                 </dependency>
                 <!--<dependency>-->
                 <!--<groupId>com.intel.analytics.zoo</groupId>-->
@@ -483,6 +520,14 @@
                 <exclusion>
                     <groupId>com.google.code.gson</groupId>
                     <artifactId>gson</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.google.code.gson</groupId>
+                    <artifactId>gson</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>io.netty</groupId>
+                    <artifactId>netty</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
