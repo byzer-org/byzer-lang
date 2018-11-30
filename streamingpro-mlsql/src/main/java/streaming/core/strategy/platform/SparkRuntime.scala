@@ -133,16 +133,17 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
     }
 
     // parameter server should be enabled by default
-    if (MLSQLConf.MLSQL_PS_ENABLE.readFrom(configReader)) {
-      logger.info("ps enabled...")
-      if (ss.sparkContext.isLocal) {
-        localSchedulerBackend = new LocalPSSchedulerBackend(ss.sparkContext)
-        localSchedulerBackend.start()
-      } else {
-        logger.info("start PSDriverBackend")
-        psDriverBackend = new PSDriverBackend(ss.sparkContext)
-        psDriverBackend.start()
-      }
+
+    if (params.getOrDefault(MLSQLConf.MLSQL_PS_ENABLE.key, "true").toString.toBoolean && isLocalMaster(conf)) {
+      logger.info("start LocalPSSchedulerBackend")
+      localSchedulerBackend = new LocalPSSchedulerBackend(ss.sparkContext)
+      localSchedulerBackend.start()
+    }
+
+    if (MLSQLConf.MLSQL_PS_ENABLE.readFrom(configReader) && !isLocalMaster(conf)) {
+      logger.info("start PSDriverBackend")
+      psDriverBackend = new PSDriverBackend(ss.sparkContext)
+      psDriverBackend.start()
     }
 
     if (MLSQLConf.MLSQL_DISABLE_SPARK_LOG.readFrom(configReader)) {
