@@ -85,7 +85,7 @@ Here are the format we build-in support:
 13. jdbc (stream program)
 14. newParquet(stream program)
 
-We will show you how to use jonsStr:
+We will show you how to use jsonStr:
 
 ```sql
 set data='''
