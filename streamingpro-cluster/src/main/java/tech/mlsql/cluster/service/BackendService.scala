@@ -26,6 +26,9 @@ trait BackendService {
 
   @At(path = Array("/run/sql"), types = Array(GET, POST))
   def runSQL(params: Map[String, String]): HttpTransportService.SResponse
+
+  @At(path = Array("/instance/resource"), types = Array(GET, POST))
+  def instanceResource: HttpTransportService.SResponse
 }
 
 case class BackendCache(meta: Backend, instance: BackendService)
@@ -44,6 +47,10 @@ object BackendService {
   def nonActiveBackend = {
     val items = backendMetaCache.get(backend_meta_key).map(f => f.meta).toSet
     items -- active_task_meta.keySet()
+  }
+
+  def backends = {
+    backendMetaCache.get(backend_meta_key)
   }
 
   def find(backend: Option[Backend]) = {
@@ -66,10 +73,14 @@ object BackendService {
       })
 
 
-  def execute(f: BackendService => HttpTransportService.SResponse, tags: String) = {
+  def execute(f: BackendService => HttpTransportService.SResponse, tags: String, proxyStrategy: String) = {
     val items = backendMetaCache.get(backend_meta_key)
 
-    val chooseProxy = new TaskLessBackendStrategy(tags)
+    val chooseProxy = proxyStrategy match {
+      case "FreeCoreBackendStrategy" => new TaskLessBackendStrategy(tags)
+      case "TaskLessBackendStrategy" => new FreeCoreBackendStrategy(tags)
+      case _ => new TaskLessBackendStrategy(tags)
+    }
     val backendCache = chooseProxy.invoke(items)
     backendCache match {
       case Some(ins) =>
@@ -94,10 +105,10 @@ object BackendService {
 
 class SResponseEnhance(x: java.util.List[HttpTransportService.SResponse]) {
 
-  def toBean[T](res: String)(implicit manifest: Manifest[T]): Option[T] = {
+  def toBean[T]()(implicit manifest: Manifest[T]): Option[T] = {
     if (validate) {
       implicit val formats = SJSon.DefaultFormats
-      Option(SJSon.parse(res).extract[T])
+      Option(SJSon.parse(x(0).getContent).extract[T])
     } else None
   }
 

@@ -54,9 +54,11 @@ class APIController extends ApplicationController {
   @At(path = Array("/run/script"), types = Array(GET, POST))
   def runScript = {
     val tags = param("tags", "")
+    //FreeCoreBackendStrategy|TaskLessBackendStrategy
+    val proxyStrategy = param("proxyStrategy", "TaskLessBackendStrategy")
     val res = BackendService.execute(instance => {
       instance.runScript(params().asScala.toMap)
-    }, tags)
+    }, tags, proxyStrategy)
     if (!res.isDefined) {
       render(500, map("msg", s"There are no backend with tags [${tags}]"))
     }
@@ -69,9 +71,10 @@ class APIController extends ApplicationController {
   @At(path = Array("/run/sql"), types = Array(GET, POST))
   def runSQL = {
     val tags = param("tags", "")
+    val proxyStrategy = param("proxyStrategy", "FreeCoreBackendStrategy")
     val res = BackendService.execute(instance => {
       instance.runSQL(params().asScala.toMap)
-    }, param("tags", ""))
+    }, param("tags", ""), proxyStrategy)
     if (!res.isDefined) {
       render(500, map("msg", s"There are no backend with tags [${tags}]"))
     }
