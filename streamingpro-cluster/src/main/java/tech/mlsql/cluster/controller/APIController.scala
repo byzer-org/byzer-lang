@@ -3,6 +3,8 @@ package tech.mlsql.cluster.controller
 import net.csdn.annotation.rest._
 import net.csdn.modules.http.ApplicationController
 import net.csdn.modules.http.RestRequest.Method.{GET, POST}
+import net.liftweb.json.NoTypeHints
+import net.liftweb.{json => SJSon}
 import tech.mlsql.cluster.model.Backend
 import tech.mlsql.cluster.service.BackendService
 import tech.mlsql.cluster.service.BackendService.mapSResponseToObject
@@ -51,7 +53,20 @@ class APIController extends ApplicationController {
   ))
   @At(path = Array("/run/script"), types = Array(GET, POST))
   def runScript = {
-    val res = BackendService.instance.runScript(params().asScala.toMap)
+    val res = BackendService.execute(instance => {
+      instance.runScript(params().asScala.toMap)
+    })
+    res.jsonStr match {
+      case Some(i) => render(i)
+      case None => render(500, map("msg", "backend error"))
+    }
+  }
+
+  @At(path = Array("/run/sql"), types = Array(GET, POST))
+  def runSQL = {
+    val res = BackendService.execute(instance => {
+      instance.runSQL(params().asScala.toMap)
+    })
     res.jsonStr match {
       case Some(i) => render(i)
       case None => render(500, map("msg", "backend error"))
@@ -67,5 +82,11 @@ class APIController extends ApplicationController {
   @At(path = Array("/backend/list"), types = Array(GET, POST))
   def backendList = {
     render(Backend.items())
+  }
+
+  @At(path = Array("/backend/active"), types = Array(GET, POST))
+  def activeBackend = {
+    implicit val formats = SJSon.Serialization.formats(NoTypeHints)
+    render(SJSon.Serialization.write(BackendService.activeBackend.map(f => (f._1.getName, f._2))))
   }
 }

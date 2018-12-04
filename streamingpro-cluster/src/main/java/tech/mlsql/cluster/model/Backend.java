@@ -23,6 +23,7 @@ public class Backend extends Model {
 
     private String url;
     private String tag;
+    private String name;
 
     public String getUrl() {
         return url;
@@ -30,5 +31,9 @@ public class Backend extends Model {
 
     public String getTag() {
         return tag;
+    }
+
+    public String getName() {
+        return name;
     }
 }
