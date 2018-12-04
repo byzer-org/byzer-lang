@@ -1,5 +1,8 @@
 package org.apache.spark
 
+import net.csdn.common.reflect.ReflectHelper
+import org.apache.spark.scheduler.cluster.{CoarseGrainedSchedulerBackend, StandaloneSchedulerBackend}
+import org.apache.spark.scheduler.local.LocalSchedulerBackend
 import org.apache.spark.sql.SparkSession
 
 /**
@@ -17,8 +20,16 @@ class SparkInstanceService(session: SparkSession) {
       totalMemory += -1
 
     }
-    SparkInstanceResource(totalTasks, totalUsedMemory, totalMemory)
+    val totalCores = session.sparkContext.schedulerBackend match {
+      case sb: CoarseGrainedSchedulerBackend =>
+        ReflectHelper.field(sb, "totalCoreCount").asInstanceOf[Int]
+      case sb: LocalSchedulerBackend =>
+        java.lang.Runtime.getRuntime.availableProcessors
+      case sb: StandaloneSchedulerBackend =>
+        -1
+    }
+    SparkInstanceResource(totalCores.toLong, totalTasks, totalUsedMemory, totalMemory)
   }
 }
 
-case class SparkInstanceResource(totalTasks: Long, totalUsedMemory: Long, totalMemory: Long)
+case class SparkInstanceResource(totalCores: Long, totalTasks: Long, totalUsedMemory: Long, totalMemory: Long)
