@@ -44,6 +44,7 @@
         <module>contri/streamingpro-dl4j</module>
         <module>contri/streamingpro-automl</module>
         <module>contri/streamingpro-opencv</module>
+        <module>streamingpro-cluster</module>
 
     </modules>
 
@@ -668,17 +669,7 @@
             <version>1.7.5</version>
         </dependency>
 
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-            <version>1.1.8</version>
-        </dependency>
-
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-core</artifactId>
-            <version>1.1.8</version>
-        </dependency>
+        
 
     </dependencies>
     <build>
