@@ -53,10 +53,14 @@ class APIController extends ApplicationController {
   ))
   @At(path = Array("/run/script"), types = Array(GET, POST))
   def runScript = {
+    val tags = param("tags", "")
     val res = BackendService.execute(instance => {
       instance.runScript(params().asScala.toMap)
-    })
-    res.jsonStr match {
+    }, tags)
+    if (!res.isDefined) {
+      render(500, map("msg", s"There are no backend with tags [${tags}]"))
+    }
+    res.get.jsonStr match {
       case Some(i) => render(i)
       case None => render(500, map("msg", "backend error"))
     }
@@ -64,10 +68,14 @@ class APIController extends ApplicationController {
 
   @At(path = Array("/run/sql"), types = Array(GET, POST))
   def runSQL = {
+    val tags = param("tags", "")
     val res = BackendService.execute(instance => {
       instance.runSQL(params().asScala.toMap)
-    })
-    res.jsonStr match {
+    }, param("tags", ""))
+    if (!res.isDefined) {
+      render(500, map("msg", s"There are no backend with tags [${tags}]"))
+    }
+    res.get.jsonStr match {
       case Some(i) => render(i)
       case None => render(500, map("msg", "backend error"))
     }

@@ -1,6 +1,7 @@
 package tech.mlsql.cluster.service
 
 import java.util.concurrent.atomic.AtomicLong
+import java.util.logging.Logger
 
 import com.google.common.cache.{CacheBuilder, CacheLoader}
 import net.csdn.annotation.Param
@@ -32,6 +33,7 @@ case class BackendCache(meta: Backend, instance: BackendService)
 case class BackendExecuteMeta(activeTaskNum: Long, totalTaskNum: Long, failTaskNum: Long)
 
 object BackendService {
+  val logger = Logger.getLogger("BackendService")
   val backend_meta_key = "backend_meta"
   private val active_task_meta = new java.util.concurrent.ConcurrentHashMap[Backend, AtomicLong]()
 
@@ -44,8 +46,12 @@ object BackendService {
     items -- active_task_meta.keySet()
   }
 
-  def find(backend: Backend) = {
-    backendMetaCache.get(backend_meta_key).filter(f => f.meta == backend).head
+  def find(backend: Option[Backend]) = {
+    backend match {
+      case Some(i) => backendMetaCache.get(backend_meta_key).filter(f => f.meta == i).headOption
+      case None => None
+    }
+
   }
 
   private val backendMetaCache = CacheBuilder.newBuilder()
@@ -60,19 +66,25 @@ object BackendService {
       })
 
 
-  def execute(f: BackendService => HttpTransportService.SResponse) = {
+  def execute(f: BackendService => HttpTransportService.SResponse, tags: String) = {
     val items = backendMetaCache.get(backend_meta_key)
 
-    val chooseProxy = new FirstBackendStrategy()
+    val chooseProxy = new TaskLessBackendStrategy(tags)
     val backendCache = chooseProxy.invoke(items)
-    val counter = active_task_meta.putIfAbsent(backendCache.meta, new AtomicLong())
-    try {
-      counter.incrementAndGet()
-      f(backendCache.instance)
-    } finally {
-      counter.decrementAndGet()
+    backendCache match {
+      case Some(ins) =>
+        active_task_meta.putIfAbsent(ins.meta, new AtomicLong())
+        val counter = active_task_meta.get(ins.meta)
+        try {
+          counter.incrementAndGet()
+          Option(f(ins.instance))
+        } finally {
+          counter.decrementAndGet()
+        }
+      case None =>
+        logger.info(s"No backened with tags [${tags}] are found")
+        None
     }
-
   }
 
   implicit def mapSResponseToObject(response: HttpTransportService.SResponse): SResponseEnhance = {
