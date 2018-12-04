@@ -13,8 +13,8 @@ class SparkInstanceService(session: SparkSession) {
     var totalMemory = 0l
     session.sparkContext.statusTracker.getExecutorInfos.map { worker =>
       totalTasks += worker.numRunningTasks()
-      totalUsedMemory += (worker.usedOnHeapStorageMemory() + worker.usedOffHeapStorageMemory())
-      totalMemory += (worker.totalOnHeapStorageMemory() + worker.totalOffHeapStorageMemory())
+      totalUsedMemory += -1
+      totalMemory += -1
 
     }
     SparkInstanceResource(totalTasks, totalUsedMemory, totalMemory)
