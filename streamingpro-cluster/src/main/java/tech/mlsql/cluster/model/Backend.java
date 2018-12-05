@@ -17,6 +17,10 @@ public class Backend extends Model {
         return backend;
     }
 
+    public static Backend find(int id) {
+        return Backend.find(id);
+    }
+
     public static List<Backend> items() {
         return Backend.findAll();
     }

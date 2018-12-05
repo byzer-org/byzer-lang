@@ -38,14 +38,13 @@
         <module>streamingpro-manager</module>
         <module>streamingpro-jython</module>
         <module>streamingpro-api</module>
+        <module>streamingpro-cluster</module>
 
         <module>external/streamingpro-hbase</module>
         <module>external/streamingpro-redis</module>
         <module>contri/streamingpro-dl4j</module>
         <module>contri/streamingpro-automl</module>
         <module>contri/streamingpro-opencv</module>
-        <module>streamingpro-cluster</module>
-
     </modules>
 
     <properties>
@@ -669,7 +668,6 @@
             <version>1.7.5</version>
         </dependency>
 
-        
 
     </dependencies>
     <build>
