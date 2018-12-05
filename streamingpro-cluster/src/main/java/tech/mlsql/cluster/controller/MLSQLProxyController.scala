@@ -26,7 +26,7 @@ import scala.collection.JavaConverters._
     """),
   servers = Array()
 )
-class APIController extends ApplicationController {
+class MLSQLProxyController extends ApplicationController {
   @Action(
     summary = "used to execute MLSQL script", description = "async/sync supports"
   )
@@ -44,7 +44,8 @@ class APIController extends ApplicationController {
     new Parameter(name = "async", required = false, description = "If set true ,please also provide a callback url use `callback` parameter and the job will run in background and the API will return.  default: false", `type` = "boolean", allowEmptyValue = false),
     new Parameter(name = "callback", required = false, description = "Used when async is set true. callback is a url. default: false", `type` = "string", allowEmptyValue = false),
     new Parameter(name = "skipInclude", required = false, description = "disable include statement. default: false", `type` = "boolean", allowEmptyValue = false),
-    new Parameter(name = "skipAuth", required = false, description = "disable table authorize . default: true", `type` = "boolean", allowEmptyValue = false)
+    new Parameter(name = "tags", required = false, description = "proxy parameter,filter backend with this tags", `type` = "string", allowEmptyValue = false),
+    new Parameter(name = "proxyStrategy", required = false, description = "proxy parameter,How to choose backend, for now  supports: FreeCoreBackendStrategy|TaskLessBackendStrategy, default TaskLessBackendStrategy", `type` = "string", allowEmptyValue = false)
   ))
   @Responses(Array(
     new ApiResponse(responseCode = "200", description = "", content = new Content(mediaType = "application/json",
@@ -53,10 +54,16 @@ class APIController extends ApplicationController {
   ))
   @At(path = Array("/run/script"), types = Array(GET, POST))
   def runScript = {
+    val tags = param("tags", "")
+    //FreeCoreBackendStrategy|TaskLessBackendStrategy
+    val proxyStrategy = param("proxyStrategy", "TaskLessBackendStrategy")
     val res = BackendService.execute(instance => {
       instance.runScript(params().asScala.toMap)
-    })
-    res.jsonStr match {
+    }, tags, proxyStrategy)
+    if (!res.isDefined) {
+      render(500, map("msg", s"There are no backend with tags [${tags}]"))
+    }
+    res.get.jsonStr match {
       case Some(i) => render(i)
       case None => render(500, map("msg", "backend error"))
     }
@@ -64,10 +71,15 @@ class APIController extends ApplicationController {
 
   @At(path = Array("/run/sql"), types = Array(GET, POST))
   def runSQL = {
+    val tags = param("tags", "")
+    val proxyStrategy = param("proxyStrategy", "FreeCoreBackendStrategy")
     val res = BackendService.execute(instance => {
       instance.runSQL(params().asScala.toMap)
-    })
-    res.jsonStr match {
+    }, param("tags", ""), proxyStrategy)
+    if (!res.isDefined) {
+      render(500, map("msg", s"There are no backend with tags [${tags}]"))
+    }
+    res.get.jsonStr match {
       case Some(i) => render(i)
       case None => render(500, map("msg", "backend error"))
     }
@@ -76,6 +88,26 @@ class APIController extends ApplicationController {
   @At(path = Array("/backend/add"), types = Array(GET, POST))
   def backendAdd = {
     Backend.newBackend(params())
+    render(map("msg", "success"))
+  }
+
+  @At(path = Array("/backend/tags/update"), types = Array(GET, POST))
+  def backendTagsUpdate = {
+    val backend = Backend.find(paramAsInt("id"))
+    if (param("merge", "overwrite") == "overwrite") {
+      backend.attr("tag", param("tags"))
+    } else {
+      val newTags = backend.getTag.split(",").toSet ++ param("tags").split(",").toSet
+      backend.attr("tag", newTags.mkString(","))
+    }
+    backend.save()
+    render(map("msg", "success"))
+  }
+
+  @At(path = Array("/backend/remove"), types = Array(GET, POST))
+  def backendRemove = {
+    val backend = Backend.find(paramAsInt("id"))
+    backend.delete()
     render(map("msg", "success"))
   }
 

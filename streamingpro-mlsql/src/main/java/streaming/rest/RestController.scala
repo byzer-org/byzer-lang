@@ -10,6 +10,7 @@ import net.csdn.common.path.Url
 import net.csdn.modules.http.RestRequest.Method._
 import net.csdn.modules.http.{ApplicationController, ViewType}
 import net.csdn.modules.transport.HttpTransportService
+import org.apache.spark.SparkInstanceService
 import org.apache.spark.ps.cluster.Message
 import org.apache.spark.sql.{DataFrameWriter, Row, SaveMode, SparkSession}
 import org.joda.time.format.ISODateTimeFormat
@@ -470,6 +471,13 @@ class RestController extends ApplicationController {
     val psDriverBackend = runtime.asInstanceOf[SparkRuntime].psDriverBackend
     psDriverBackend.psDriverRpcEndpointRef.send(Message.TensorFlowModelClean("/tmp/ok"))
     render("{}")
+  }
+
+  @At(path = Array("/instance/resource"), types = Array(GET, POST))
+  def instanceResource = {
+    val session = runtime.asInstanceOf[SparkRuntime].sparkSession
+    val resource = new SparkInstanceService(session).resources
+    render(toJsonString(resource))
   }
 
   //end -------------------------------------------
