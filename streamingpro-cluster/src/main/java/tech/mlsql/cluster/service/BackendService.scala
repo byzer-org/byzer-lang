@@ -61,6 +61,10 @@ object BackendService {
 
   }
 
+  def refreshCache = {
+    backendMetaCache.refresh(backend_meta_key)
+  }
+
   private val backendMetaCache = CacheBuilder.newBuilder()
     .maximumSize(10000)
     .build(

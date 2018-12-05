@@ -88,6 +88,7 @@ class MLSQLProxyController extends ApplicationController {
   @At(path = Array("/backend/add"), types = Array(GET, POST))
   def backendAdd = {
     Backend.newBackend(params())
+    BackendService.refreshCache
     render(map("msg", "success"))
   }
 
@@ -101,6 +102,7 @@ class MLSQLProxyController extends ApplicationController {
       backend.attr("tag", newTags.mkString(","))
     }
     backend.save()
+    BackendService.refreshCache
     render(map("msg", "success"))
   }
 
@@ -108,6 +110,7 @@ class MLSQLProxyController extends ApplicationController {
   def backendRemove = {
     val backend = Backend.find(paramAsInt("id"))
     backend.delete()
+    BackendService.refreshCache
     render(map("msg", "success"))
   }
 
