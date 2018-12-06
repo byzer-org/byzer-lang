@@ -3,9 +3,6 @@ package tech.mlsql.cluster.controller
 import net.csdn.annotation.rest._
 import net.csdn.modules.http.ApplicationController
 import net.csdn.modules.http.RestRequest.Method.{GET, POST}
-import net.liftweb.json.NoTypeHints
-import net.liftweb.{json => SJSon}
-import tech.mlsql.cluster.model.Backend
 import tech.mlsql.cluster.service.BackendService
 import tech.mlsql.cluster.service.BackendService.mapSResponseToObject
 
@@ -45,7 +42,7 @@ class MLSQLProxyController extends ApplicationController {
     new Parameter(name = "callback", required = false, description = "Used when async is set true. callback is a url. default: false", `type` = "string", allowEmptyValue = false),
     new Parameter(name = "skipInclude", required = false, description = "disable include statement. default: false", `type` = "boolean", allowEmptyValue = false),
     new Parameter(name = "tags", required = false, description = "proxy parameter,filter backend with this tags", `type` = "string", allowEmptyValue = false),
-    new Parameter(name = "proxyStrategy", required = false, description = "proxy parameter,How to choose backend, for now  supports: FreeCoreBackendStrategy|TaskLessBackendStrategy, default TaskLessBackendStrategy", `type` = "string", allowEmptyValue = false)
+    new Parameter(name = "proxyStrategy", required = false, description = "proxy parameter,How to choose backend, for now  supports: ResourceAwareStrategy|JobNumAwareStrategy, default TaskLessBackendStrategy", `type` = "string", allowEmptyValue = false)
   ))
   @Responses(Array(
     new ApiResponse(responseCode = "200", description = "", content = new Content(mediaType = "application/json",
@@ -56,7 +53,7 @@ class MLSQLProxyController extends ApplicationController {
   def runScript = {
     val tags = param("tags", "")
     //FreeCoreBackendStrategy|TaskLessBackendStrategy
-    val proxyStrategy = param("proxyStrategy", "TaskLessBackendStrategy")
+    val proxyStrategy = param("proxyStrategy", "JobNumAwareStrategy")
     val res = BackendService.execute(instance => {
       instance.runScript(params().asScala.toMap)
     }, tags, proxyStrategy)
@@ -85,43 +82,5 @@ class MLSQLProxyController extends ApplicationController {
     }
   }
 
-  @At(path = Array("/backend/add"), types = Array(GET, POST))
-  def backendAdd = {
-    Backend.newBackend(params())
-    BackendService.refreshCache
-    render(map("msg", "success"))
-  }
-
-  @At(path = Array("/backend/tags/update"), types = Array(GET, POST))
-  def backendTagsUpdate = {
-    val backend = Backend.find(paramAsInt("id"))
-    if (param("merge", "overwrite") == "overwrite") {
-      backend.attr("tag", param("tags"))
-    } else {
-      val newTags = backend.getTag.split(",").toSet ++ param("tags").split(",").toSet
-      backend.attr("tag", newTags.mkString(","))
-    }
-    backend.save()
-    BackendService.refreshCache
-    render(map("msg", "success"))
-  }
-
-  @At(path = Array("/backend/remove"), types = Array(GET, POST))
-  def backendRemove = {
-    val backend = Backend.find(paramAsInt("id"))
-    backend.delete()
-    BackendService.refreshCache
-    render(map("msg", "success"))
-  }
-
-  @At(path = Array("/backend/list"), types = Array(GET, POST))
-  def backendList = {
-    render(Backend.items())
-  }
-
-  @At(path = Array("/backend/active"), types = Array(GET, POST))
-  def activeBackend = {
-    implicit val formats = SJSon.Serialization.formats(NoTypeHints)
-    render(SJSon.Serialization.write(BackendService.activeBackend.map(f => (f._1.getName, f._2))))
-  }
+  
 }

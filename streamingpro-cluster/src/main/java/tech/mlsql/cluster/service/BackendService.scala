@@ -11,6 +11,7 @@ import net.csdn.modules.http.RestRequest.Method.{GET, POST}
 import net.csdn.modules.transport.HttpTransportService
 import net.liftweb.{json => SJSon}
 import tech.mlsql.cluster.model.Backend
+import tech.mlsql.cluster.service.dispatch.{JobNumAwareStrategy, ResourceAwareStrategy}
 
 import scala.collection.JavaConversions._
 
@@ -53,6 +54,13 @@ object BackendService {
     backendMetaCache.get(backend_meta_key)
   }
 
+  def backendsWithTags(tags: String) = {
+    if (tags.isEmpty) backends
+    else {
+      backends.filter(f => tags.split(",").toSet.intersect(f.meta.getTags.toSet).size > 0)
+    }
+  }
+
   def find(backend: Option[Backend]) = {
     backend match {
       case Some(i) => backendMetaCache.get(backend_meta_key).filter(f => f.meta == i).headOption
@@ -81,9 +89,9 @@ object BackendService {
     val items = backendMetaCache.get(backend_meta_key)
 
     val chooseProxy = proxyStrategy match {
-      case "FreeCoreBackendStrategy" => new TaskLessBackendStrategy(tags)
-      case "TaskLessBackendStrategy" => new FreeCoreBackendStrategy(tags)
-      case _ => new TaskLessBackendStrategy(tags)
+      case "ResourceAwareStrategy" => new ResourceAwareStrategy(tags)
+      case "JobNumAwareStrategy" => new JobNumAwareStrategy(tags)
+      case _ => new ResourceAwareStrategy(tags)
     }
     val backendCache = chooseProxy.invoke(items)
     backendCache match {

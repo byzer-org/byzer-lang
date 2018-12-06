@@ -22,8 +22,17 @@ resource-aware-strategy or tasks-aware-strategy.
 
 1. Start up MLSQL instances.
 2. Setup DB.Find the db.sql in resource directory of streamingpro-cluster module and create database called streamingpro_cluster then execute the db.sql.
-3. Build streamingpro-cluster; mvn -Pcluster-shade -am -pl streamingpro-cluster clean package
-4. Start java -cp .:streamingpro-cluster-1.1.6-SNAPSHOT.jar tech.mlsql.cluster.ProxyApplication -config application.yml 
+3. Build streamingpro-cluster 
+
+```
+mvn -Pcluster-shade -am -pl streamingpro-cluster clean package
+```
+
+4. Start server
+
+```
+java -cp .:streamingpro-cluster-1.1.6-SNAPSHOT.jar tech.mlsql.cluster.ProxyApplication -config application.yml
+``` 
 
 No you can use postman or CURL to add MLSQL instances information to  streamingpro-cluster.
 
@@ -45,7 +54,7 @@ try to run MLSQL script:
 ```
 # sql=select sleep(1000) as a as t;
 # tags=read
-# proxyStrategy=FreeCoreBackendStrategy|TaskLessBackendStrategy
+# proxyStrategy=ResourceAwareStrategy|JobNumAwareStrategy
 curl -X POST \
   http://127.0.0.1:8080/run/script \  
   -H 'content-type: application/x-www-form-urlencoded' \  
@@ -59,7 +68,7 @@ Done.
 Here is the implementation of FreeCoreBackendStrategy:
 
 ```scala
-   class FreeCoreBackendStrategy(tags: String) extends BackendStrategy {
+   class ResourceAwareStrategy(tags: String) extends BackendStrategy {
      override def invoke(backends: Seq[BackendCache]): Option[BackendCache] = {
    
        val tagSet = tags.split(",").toSet

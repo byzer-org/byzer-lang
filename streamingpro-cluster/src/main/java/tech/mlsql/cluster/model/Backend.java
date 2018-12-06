@@ -37,6 +37,13 @@ public class Backend extends Model {
         return tag;
     }
 
+    public String[] getTags() {
+        if (getTag() != null) {
+            return getTag().split(",");
+        }
+        return new String[]{};
+    }
+
     public String getName() {
         return name;
     }

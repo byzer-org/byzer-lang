@@ -1,6 +1,7 @@
 package streaming.common.shell
 
 import java.io.{File, FileWriter, RandomAccessFile}
+import java.util.UUID
 
 import net.csdn.common.logging.Loggers
 
@@ -20,6 +21,26 @@ object ShellCommand extends TFileWriter {
         logger.info("exec fail", e)
         ""
     }
+  }
+
+  def sshExec(keypath: String, hostname: String, username: String, command: String, execute_user: String): String = {
+    val localPath = s"/tmp/${UUID.randomUUID().toString}"
+    writeToFile(localPath, "#!/bin/bash\nsource /etc/profile\n" + command)
+    val copyScriptCommand = List("scp", "-oStrictHostKeyChecking=no", "-oUserKnownHostsFile=/dev/null", "-i", keypath, localPath,
+      username + "@" + hostname + ":" + localPath)
+    execCmd(copyScriptCommand.mkString(" "))
+    val execute_command = if (execute_user == username) {
+      "chmod u+x " + localPath + ";/bin/bash " + localPath
+    } else {
+      val tmp = "chmod u+x " + localPath + ";/bin/bash " + localPath
+      execCmd(
+        List("ssh", "-oStrictHostKeyChecking=no", "-oUserKnownHostsFile=/dev/null", "-i", keypath,
+          username + "@" + hostname, "chown -R  " + execute_user + " " + localPath).mkString(" "))
+      "su - " + execute_user + " -c \"" + tmp + "\""
+    }
+    execCmd(
+      List("ssh", "-oStrictHostKeyChecking=no", "-oUserKnownHostsFile=/dev/null", "-i", keypath,
+        username + "@" + hostname, execute_command).mkString(" "))
   }
 
   def wrapCommand(user: String, fileName: String) = {

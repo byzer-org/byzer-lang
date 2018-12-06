@@ -1,5 +1,6 @@
-package tech.mlsql.cluster.service
+package tech.mlsql.cluster.service.dispatch
 
+import tech.mlsql.cluster.service.{BackendCache, BackendService}
 import tech.mlsql.cluster.service.BackendService.mapSResponseToObject
 
 /**
@@ -22,7 +23,7 @@ class FirstBackendStrategy(tags: String) extends BackendStrategy {
   }
 }
 
-class TaskLessBackendStrategy(tags: String) extends BackendStrategy {
+class ResourceAwareStrategy(tags: String) extends BackendStrategy {
   override def invoke(backends: Seq[BackendCache]): Option[BackendCache] = {
     val tagSet = tags.split(",").toSet
     var nonActiveBackend = BackendService.nonActiveBackend
@@ -43,7 +44,7 @@ class TaskLessBackendStrategy(tags: String) extends BackendStrategy {
   }
 }
 
-class FreeCoreBackendStrategy(tags: String) extends BackendStrategy {
+class JobNumAwareStrategy(tags: String) extends BackendStrategy {
   override def invoke(backends: Seq[BackendCache]): Option[BackendCache] = {
 
     val tagSet = tags.split(",").toSet
