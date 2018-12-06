@@ -1,0 +1,73 @@
+{
+  "scalamaptojson": {
+    "desc": "测试",
+    "strategy": "spark",
+    "algorithm": [],
+    "ref": [
+    ],
+    "compositor": [
+      {
+        "name": "stream.sources",
+        "params": [
+          {
+            "format": "socket",
+            "outputTable": "test",
+            "port": "9999",
+            "host": "localhost",
+            "path": "-"
+          }
+        ]
+      },
+      {
+        "name": "stream.sql",
+        "params": [
+          {
+            "sql": "select avg(value) avgAge from test",
+            "outputTableName": "test3"
+          }
+        ]
+      },
+      {
+        "name": "stream.sql",
+        "params": [
+          {
+            "sql": "select count(value) as nameCount from test",
+            "outputTableName": "test1"
+          }
+        ]
+      },
+      {
+        "name": "stream.sql",
+        "params": [
+          {
+            "sql": "select sum(value) ageSum from test",
+            "outputTableName": "test2"
+          }
+        ]
+      },
+      {
+        "name": "stream.sql",
+        "params": [
+          {
+            "sql": "select * from test1 union select * from test2 union select * from test3",
+            "outputTableName": "test4"
+          }
+        ]
+      },
+      {
+        "name": "stream.outputs",
+        "params": [
+          {
+            "name": "jack",
+            "format": "console",
+            "path": "-",
+            "inputTableName": "test4",
+            "mode": "Overwrite"
+          }
+        ]
+      }
+    ],
+    "configParams": {
+    }
+  }
+}

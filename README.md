@@ -1,93 +1,64 @@
+## MLSQL - A cross,distributed platform unions BigData and AI.
 
-StreamingPro is a fast,expresivive,and convenient cluster system running on Spark with streaming,batch,interactive,machine learning support.
+MLSQL is also  a Language akin to SQL which you can use to do batch, stream,crawler and AI.
 
-It make devlopers more easy to build spark application without writing any code by means of:
+## Usage:
 
-* Using json file in combination with many powerful modules which are easy to be reused provides the user declarative configurations to  build your spark application.
-* Data processing are SQL-Based 
-* Script support 
- 
+![](https://github.com/allwefantasy/streamingpro/raw/master/images/WX20181106-164911.png)
 
-StreamingPro is not only a out of box complete
-application, but also  a extensible and programmable framework for spark since you can develop you ower compositors (moduler). 
+Find more examples on [our user guide](https://github.com/allwefantasy/streamingpro/blob/master/docs/docv2/user-guide.md).
 
+## Fork and Contribute
 
+If you are planning to contribute to this repository, we first request you to create an issue at [our Issue page](https://github.com/allwefantasy/streamingpro/issues)
+even if the topic is not related to source code itself (e.g., documentation, new idea and proposal).
 
-## Features
+This is an active open source project for everyone,
+and we are always open to people who want to use this system or contribute to it.
+This guide document introduce [how to contribute to MLSQL](https://github.com/allwefantasy/streamingpro/blob/master/docs/docv2/contribute/contribute.md).
 
-* Pure Spark Streaming(Or normal Spark) program
-* No need of coding, only declarative workflows
-* Rest API for interactive
-* SQL-Oriented workflows support  
-* Data continuously streamed in & processed in near real-time
-* dynamically CURD of workflows  at runtime via Rest API 
-* Flexible workflows (input, output, parsers, etc...) 
-* High performance
-* Scalable   
+## Roadmap
 
-## downloads
+1. [Roadmap](https://github.com/allwefantasy/streamingpro/blob/master/docs/docv2/contribute/roadmap.md)
+2. [Versioning Policy](https://github.com/allwefantasy/streamingpro/blob/master/docs/docv2/contribute/release.md)
 
 
-> Precomile version based on Spark 1.6.1 ： https://pan.baidu.com/s/1eRO5Wga
->
-> Precomile version based on Spark 2.0.0:  http://pan.baidu.com/s/1mijmgi8
->
-> [Spark 2.0 based on Scala 2.10] http://pan.baidu.com/s/1mhH1NQS
+## Get PreBuild Distribution
 
-> Precomile version based on Spark 2.0.2 supporting structrued streaming: https://pan.baidu.com/s/1geNIq1X 
-> [Spark 2.0.2 based on Scala 2.10](https://pan.baidu.com/s/1hrCkVEc)
+[Releases Page](https://github.com/allwefantasy/streamingpro/releases)
+You also can refer this: [Compile Assistance](https://streamingpro.rebiekong.com/index.html)
+
+## Build Distribution
 
 
+```
+git clone https://github.com/allwefantasy/streamingpro .
+cd streamingpro
 
-## Documents
-
-* [Three steps to run your first application](https://github.com/allwefantasy/streamingpro/wiki/Three-steps-to-run-your-first-application)
-
-* [自己编译streamingpro](http://blog.csdn.net/itfootball/article/details/52875766)
-* [How to build streamingpro](https://github.com/allwefantasy/streamingpro/wiki/Build)
-
-* [三步跑起你的第一个应用](https://github.com/allwefantasy/streamingpro/wiki/三步跑起你的第一个应用)
-* [利用StreamingPro实现SQL-交互式查询](https://github.com/allwefantasy/streamingpro/wiki/利用StreamingPro实现SQL-交互式查询)
-* [使用Spark SQL 构建流式处理程序](http://www.jianshu.com/p/d10edd6c7cf9)
-* [使用Spark SQL构建批处理程序](http://www.jianshu.com/p/7f6cb8eaadef)
-
-* [流式计算常见模块用法说明](http://www.jianshu.com/p/9c0d00498cb8)
-* [用线性回归无编码实现文章浏览数预测](http://www.jianshu.com/p/d053a21944f5)
-* [StreamingPro添加Scala script 模块支持](http://www.jianshu.com/p/b33c36cd3481)
-* [Properties](https://github.com/allwefantasy/streamingpro/wiki/Properties)
-
-* [Run your first application](docs/Run-your-first-application.md)
-* [Submit application](https://github.com/allwefantasy/streamingpro/wiki/Submit-application)
-* [dynamically CURD of workflows  at runtime via Rest API](https://github.com/allwefantasy/streamingpro/wiki/Dynamically-add-Job-via-Rest-API)
-* [Recovery](https://github.com/allwefantasy/streamingpro/wiki/Recovery)
-* [Useful modules introduction](https://github.com/allwefantasy/streamingpro/wiki/Common-compositors-introduction)
-* [Other runtime support](https://github.com/allwefantasy/streamingpro/wiki/Runtime-support)
+./dev/make-distribution.sh
 
 
-### Architecture  
+cp streamingpro-bin-1.1.3.tgz /tmp
+cd /tmp && tar xzvf  streamingpro-bin-1.1.3.tgz
+cd /tmp/streamingpro
 
-![](https://github.com/allwefantasy/streamingpro/blob/master/images/Snip20160510_3.png)
-[If no picture show,please click me](http://upload-images.jianshu.io/upload_images/1063603-383c19104e141031.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+export SPARK_HOME="....." ; ./start-local.sh
+```
 
+## Contributors
 
-[If github is too slow to view ,please click me](http://www.jianshu.com/p/3c19f8b9341c)
+* Zhu William/allwefantasy#gmail.com
+* Chen Fu/cfmcgrady#gmail.com
+* Geng Yifei/pigeongeng#gmail.com
+* wanp1989/wanp1989#126.com
+* CoderOverflow
+* ghsuzzy
+* xubo245
+* zhuohuwu0603
+* liyubin117
+* RebieKong
+* 9bbword
 
+----------
+[![HitCount](http://hits.dwyl.io/allwefantasy/streamingpro.svg)](http://hits.dwyl.io/allwefantasy/streamingpro)
 
-## Declarative workflows for building Spark Streaming  
-
-![](https://github.com/allwefantasy/streamingpro/blob/master/images/Snip20160510_4.png)
-[If no picture show,please click me](http://upload-images.jianshu.io/upload_images/1063603-968e744a1ef2e334.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
-
-### Implementation
-
-![](https://github.com/allwefantasy/streamingpro/blob/master/images/Snip20160510_1.png)
-[If no picture show,please click me](http://upload-images.jianshu.io/upload_images/1063603-26dd2d88611a8b93.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
-
-
-
-
-
-
-
-
- 

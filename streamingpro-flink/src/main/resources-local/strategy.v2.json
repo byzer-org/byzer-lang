@@ -1,0 +1,40 @@
+{
+  "example": {
+    "desc": "测试",
+    "strategy": "flink",
+    "algorithm": [],
+    "ref": [],
+    "compositor": [
+      {
+        "name": "flink.sources",
+        "params": [
+          {
+            "format": "socket",
+            "outputTable": "test"
+          }
+        ]
+      },
+      {
+        "name": "flink.sql",
+        "params": [
+          {
+            "sql": "select * from test",
+            "outputTableName": "finalOutputTable"
+          }
+        ]
+      },
+      {
+        "name": "flink.outputs",
+        "params": [
+          {
+            "name":"jack",
+            "format": "console",
+            "inputTableName": "finalOutputTable"
+          }
+        ]
+      }
+    ],
+    "configParams": {
+    }
+  }
+}

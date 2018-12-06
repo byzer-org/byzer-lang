@@ -1,0 +1,54 @@
+{
+  "scalamaptojson": {
+    "desc": "测试",
+    "strategy": "spark",
+    "algorithm": [],
+    "ref": [
+    ],
+    "compositor": [
+      {
+        "name": "stream.sources",
+        "params": [
+          {
+            "format": "socket",
+            "outputTable": "test",
+            "port": "9999",
+            "host": "localhost",
+            "path": "-"
+          }
+        ]
+      },
+      {
+        "name": "stream.script.df",
+        "params": [
+          {
+            "clzz": "streaming.core.compositor.spark.api.example.TestTransform",
+            "source": "-"
+          }
+        ]
+      },
+      {
+        "name": "stream.sql",
+        "params": [
+          {
+            "sql": "select * from test2",
+            "outputTableName": "test3"
+          }
+        ]
+      },
+      {
+        "name": "stream.outputs",
+        "params": [
+          {
+            "mode": "Overwrite",
+            "format": "console",
+            "inputTableName": "test3",
+            "path": "-"
+          }
+        ]
+      }
+    ],
+    "configParams": {
+    }
+  }
+}

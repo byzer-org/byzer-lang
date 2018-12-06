@@ -1,0 +1,21 @@
+name: tutorial
+
+conda_env: conda.yaml
+
+entry_points:
+  main:
+    train:
+        parameters:
+          alpha: {type: float, default: 0.5}
+          l1_ratio: {type: float, default: 0.1}
+        command: "python train.py 0.5 0.1"
+    batch_predict:
+        parameters:
+          alpha: {type: float, default: 0.5}
+          l1_ratio: {type: float, default: 0.1}
+        command: "python batchPredict.py"
+    api_predict:
+        parameters:
+          alpha: {type: float, default: 0.5}
+          l1_ratio: {type: float, default: 0.1}
+        command: "python predict.py"

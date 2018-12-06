@@ -1,0 +1,163 @@
+{
+  "alg": {
+    "desc": "测试",
+    "strategy": "spark",
+    "algorithm": [],
+    "ref": [],
+    "compositor": [
+      {
+        "name": "batch.sources",
+        "params": [
+          {
+            "path": "file:///tmp/sample_article.txt",
+            "format": "com.databricks.spark.csv",
+            "outputTable": "article",
+            "header":true
+          }
+        ]
+      },
+
+      {
+        "name": "batch.sql",
+        "params": [
+          {
+            "desc": "形成 term ,id 这种表",
+            "sql": [
+              "select explode(split(content,' ')) as term,id,views from article"
+            ],
+            "outputTableName": "t_table_term_id"
+          }
+        ]
+      },
+
+      {
+        "name": "batch.sql",
+        "params": [
+          {
+            "desc": "得到所有term",
+            "sql": [
+              "select distinct(term) from t_table_term_id"
+            ],
+            "outputTableName":"t_table_term"
+          }
+        ]
+      },
+
+      {
+        "name": "batch.row.index",
+        "params": [
+          {
+            "desc": "形成 term ,index这种表",
+            "inputTableName":"t_table_term",
+            "outputTableName":"t_table_term_index",
+            "rankField":"label"
+          }
+        ]
+      },
+
+      {
+        "name": "batch.sql",
+        "params": [
+          {
+            "desc":"idf=log(总文章数/term出现的文章总数)，形成term,idf 的表",
+            "sql": "select t_table_term.term,temp.total_docs from t_table_term left join  (select term,count(*) as total_docs from t_table_term group by term) temp on temp.term=t_table_term.term",
+            "outputTableName": "t_table_term_with_total_docs"
+          }
+        ]
+      },
+
+      {
+        "name": "batch.sql",
+        "params": [
+          {
+            "desc":"idf=log(总文章数/term出现的文章总数)，形成term,idf 的表",
+            "sql": [
+              " select term ,log(first(total_docs)/(count(term)+1)) as idf ",
+              "from  t_table_term_with_total_docs ",
+              " group by t_table_term_with_total_docs.term"
+            ],
+            "outputTableName": "t_table_term_idf"
+          }
+        ]
+      },
+
+      {
+        "name": "batch.sql",
+        "params": [
+          {
+            "desc": "tf=term 在文章出现的次数/文章总词数，形成id,term,tf 的表",
+            "sql": [
+              "select t_table_total_terms.views,t_table_total_terms.id,t_table_tf1.term ,t_table_tf1.tf1/t_table_total_terms.total_terms as tf  from  ",
+              "(select id,term,count(term) as tf1,id from t_table_term_id group by id,term) t_table_tf1 left join  ",
+              "(select id,first(views) as views,count(term) as total_terms  from t_table_term_id group by id) t_table_total_terms ",
+              "on t_table_tf1.id = t_table_total_terms.id"
+            ],
+            "outputTableName": "t_table_term_tf"
+          }
+        ]
+      },
+      {
+        "name": "batch.sql",
+        "params": [
+          {
+            "desc": "tf/idf=tf*idf 形成 id,term, tfIDF 的表",
+            "sql": [
+              "select t_table_term_tf.views,t_table_term_tf.id,t_table_term_tf.term,t_table_term_tf.tf * t_table_term_idf.idf  as tfIDF from t_table_term_tf left join t_table_term_idf on t_table_term_tf.term=t_table_term_idf.term order by tfIDF desc"
+            ],
+            "outputTableName": "t_table_term_tfidf"
+          }
+        ]
+      },
+      {
+        "name": "batch.sql",
+        "params": [
+          {
+            "desc": "把term变成index数字表示",
+            "sql": [
+              "select  t_table_term_tfidf.views,t_table_term_tfidf.id,t_table_term_tfidf.term,t_table_term_index.label,t_table_term_tfidf.tfIDF ",
+              "from t_table_term_tfidf left join ",
+              "t_table_term_index  ",
+              "on t_table_term_index.term=t_table_term_tfidf.term"
+            ],
+            "outputTableName": "t_table_term_index_tfidf"
+          }
+        ]
+      },
+      {
+        "name": "batch.sql",
+        "params": [
+          {
+            "desc": "转化成向量字符串",
+            "sql": [
+              "select first(views) as label,mkString(' ',collect_list(concat_ws(':',label,tfIDF))) as features ",
+              "from  t_table_term_index_tfidf ",
+              "group by id"
+            ],
+            "outputTableName": "t_table_term_vector"
+          }
+        ]
+      },
+      {
+        "name": "batch.outputs",
+        "params": [
+          {
+            "format": "com.databricks.spark.csv",
+            "path": "file:///tmp/t_table_term_vector",
+            "inputTableName": "t_table_term_vector",
+            "mode":"Overwrite",
+            "header":true
+          },
+          {
+            "format": "com.databricks.spark.csv",
+            "path": "file:///tmp/t_table_term_index",
+            "inputTableName": "t_table_term_index",
+            "mode":"Overwrite",
+            "header":true
+          }
+        ]
+      }
+    ],
+    "configParams": {
+    }
+  }
+}

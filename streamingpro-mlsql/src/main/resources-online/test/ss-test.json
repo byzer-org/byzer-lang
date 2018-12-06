@@ -1,0 +1,51 @@
+{
+  "scalamaptojson": {
+    "desc": "测试",
+    "strategy": "spark",
+    "algorithm": [],
+    "ref": [
+    ],
+    "compositor": [
+      {
+        "name": "ss.sources",
+        "params": [
+          {
+            "format": "socket",
+            "outputTable": "test",
+            "port":"9999",
+            "host":"localhost",
+            "path": "-"
+          },
+          {
+            "format": "com.databricks.spark.csv",
+            "outputTable": "sample",
+            "header":"true",
+            "path": "/Users/allwefantasy/streamingpro/sample.csv"
+          }
+        ]
+      },
+      {
+        "name": "ss.sql",
+        "params": [
+          {
+            "sql": "select city from test left join sample on test.value == sample.name",
+            "outputTableName": "test3"
+          }
+        ]
+      },
+      {
+        "name": "ss.outputs",
+        "params": [
+          {
+            "mode": "append",
+            "format": "console",
+            "inputTableName": "test3",
+            "path": "-"
+          }
+        ]
+      }
+    ],
+    "configParams": {
+    }
+  }
+}
