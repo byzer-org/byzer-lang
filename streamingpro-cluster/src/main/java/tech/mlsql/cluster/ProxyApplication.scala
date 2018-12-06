@@ -11,8 +11,11 @@ import tech.mlsql.cluster.service.elastic_resource.AllocateService
   */
 
 object ProxyApplication {
+  var commandConfig: ProxyApplication = null
+
   def main(args: Array[String]): Unit = {
     val params = new ParamsUtil(args)
+    commandConfig = new ProxyApplication(params)
     val applicationYamlName = params.getParam("config", "application.yml")
     ServiceFramwork.applicaionYamlName(applicationYamlName)
     ServiceFramwork.scanService.setLoader(classOf[ProxyApplication])
@@ -22,6 +25,10 @@ object ProxyApplication {
 }
 
 
-class ProxyApplication
+class ProxyApplication(params: ParamsUtil) {
+  def allocateCheckInterval = {
+    params.getIntParam("allocateCheckInterval", 10)
+  }
+}
 
 

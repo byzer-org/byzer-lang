@@ -2,6 +2,7 @@ package tech.mlsql.cluster.service.elastic_resource.local
 
 import net.sf.json.JSONObject
 import streaming.common.shell.ShellCommand
+import streaming.log.Logging
 import tech.mlsql.cluster.model.{Backend, EcsResourcePool}
 
 import scala.collection.JavaConverters._
@@ -10,19 +11,37 @@ import scala.collection.mutable.ArrayBuffer
 /**
   * 2018-12-05 WilliamZhu(allwefantasy@gmail.com)
   */
-object DeployInstance {
-  def deploy(id: Int) = {
+object LocalDeployInstance extends Logging {
+  def deploy(id: Int): Boolean = {
     val ecs = EcsResourcePool.find(id)
-    ShellCommand.sshExec(ecs.getKeyPath, ecs.getIp, ecs.getLoginUser, script(ecs), ecs.getExecuteUser)
+    var success = true
+    try {
+      logInfo(
+        s"""
+           |${ecs.getLoginUser} login in ${ecs.getIp} and execute command with user ${ecs.getExecuteUser}.
+           |The content of script:
+           |${script(ecs)}
+         """.stripMargin)
+      ShellCommand.sshExec(ecs.getKeyPath, ecs.getIp, ecs.getLoginUser, script(ecs), ecs.getExecuteUser)
+    } catch {
+      case e: Exception =>
+        logError("fail to deploy new instance", e)
+        success = false
+    }
+    if (success) {
+      logInfo(s"Command execute successful, remove ${ecs.getIp} with name ${ecs.getName} from EcsResourcePool to Backend table.")
+      Backend.newBackend(Map(
+        "url" -> (ecs.getIp + ":" + getPort(ecs)),
+        "tag" -> ecs.getTag,
+        "name" -> ecs.getName
+      ).asJava).save()
+      ecs.delete()
+    }
+    return success
 
-    Backend.newBackend(Map(
-      "url" -> (ecs.getIp + ":" + getPort(ecs)),
-      "tag" -> ecs.getTag,
-      "name" -> ecs.getName
-    ).asJava).save()
   }
 
-  private def getPort(ecs: EcsResourcePool) = {
+  def getPort(ecs: EcsResourcePool) = {
     val port = JSONObject.fromObject(ecs.getMlsqlConfig).asScala.filter { k =>
       k._1.toString == "streaming.driver.port"
     }.map(f => f._2.toString).headOption

@@ -1,5 +1,8 @@
 rootLogger: INFO,console
 
+logging:
+  level:
+    tech.mlsql.cluster: DEBUG
 
 appender:
   console:
