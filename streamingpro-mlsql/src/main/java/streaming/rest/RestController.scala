@@ -69,7 +69,7 @@ class RestController extends ApplicationController {
   ))
   @At(path = Array("/run/script"), types = Array(GET, POST))
   def script = {
-    restResponse.httpServletResponse().setHeader("Access-Control-Allow-Origin", "*")
+    setAccessControlAllowOrigin
     val silence = paramAsBoolean("silence", false)
     val sparkSession = if (paramAsBoolean("sessionPerUser", false)) {
       runtime.asInstanceOf[SparkRuntime].getSession(param("owner", "admin"))
@@ -276,7 +276,7 @@ class RestController extends ApplicationController {
   ))
   @At(path = Array("/runningjobs"), types = Array(GET, POST))
   def getRunningJobGroup = {
-    restResponse.httpServletResponse().setHeader("Access-Control-Allow-Origin", "*")
+    setAccessControlAllowOrigin
     val infoMap = StreamingproJobManager.getJobInfo
     render(200, toJsonString(infoMap))
   }
@@ -292,7 +292,7 @@ class RestController extends ApplicationController {
   ))
   @At(path = Array("/stream/jobs/running"), types = Array(GET, POST))
   def streamRunningJobs = {
-    restResponse.httpServletResponse().setHeader("Access-Control-Allow-Origin", "*")
+    setAccessControlAllowOrigin
     val infoMap = runtime.asInstanceOf[SparkRuntime].sparkSession.streams.active.map { f =>
       val startTime = ISODateTimeFormat.dateTime().parseDateTime(f.lastProgress.timestamp).getMillis
       StreamingproJobInfo(null, StreamingproJobType.STREAM, f.name, f.lastProgress.json, f.id + "", startTime, -1l)
@@ -313,10 +313,18 @@ class RestController extends ApplicationController {
   ))
   @At(path = Array("/stream/jobs/kill"), types = Array(GET, POST))
   def killStreamJob = {
-    restResponse.httpServletResponse().setHeader("Access-Control-Allow-Origin", "*")
+    setAccessControlAllowOrigin
     val groupId = param("groupId")
     runtime.asInstanceOf[SparkRuntime].sparkSession.streams.get(groupId).stop()
     render(200, "{}")
+  }
+
+  def setAccessControlAllowOrigin = {
+    try {
+      restResponse.httpServletResponse().setHeader("Access-Control-Allow-Origin", "*")
+    } catch {
+      case e: RuntimeException =>
+    }
   }
 
   @Action(
@@ -333,7 +341,7 @@ class RestController extends ApplicationController {
   ))
   @At(path = Array("/killjob"), types = Array(GET, POST))
   def killJob = {
-    restResponse.httpServletResponse().setHeader("Access-Control-Allow-Origin", "*")
+    setAccessControlAllowOrigin
     val groupId = param("groupId")
     if (groupId == null) {
       val jobName = param("jobName")
@@ -363,7 +371,7 @@ class RestController extends ApplicationController {
   ))
   @At(path = Array("/user/logout"), types = Array(GET, POST))
   def userLogout = {
-    restResponse.httpServletResponse().setHeader("Access-Control-Allow-Origin", "*")
+    setAccessControlAllowOrigin
     require(hasParam("owner"), "owner is should be set ")
     if (paramAsBoolean("sessionPerUser", false)) {
       val sparkRuntime = runtime.asInstanceOf[SparkRuntime]
