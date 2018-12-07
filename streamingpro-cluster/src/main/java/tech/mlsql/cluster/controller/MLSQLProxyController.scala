@@ -3,6 +3,7 @@ package tech.mlsql.cluster.controller
 import net.csdn.annotation.rest._
 import net.csdn.modules.http.ApplicationController
 import net.csdn.modules.http.RestRequest.Method.{GET, POST}
+import net.csdn.modules.transport.HttpTransportService.SResponse
 import tech.mlsql.cluster.service.BackendService
 import tech.mlsql.cluster.service.BackendService.mapSResponseToObject
 
@@ -57,13 +58,22 @@ class MLSQLProxyController extends ApplicationController {
     val res = BackendService.execute(instance => {
       instance.runScript(params().asScala.toMap)
     }, tags, proxyStrategy)
-    if (!res.isDefined) {
+    renderResult(tags, res)
+  }
+
+  def renderResult(tags: String, res: Seq[Option[SResponse]]) = {
+    if (res.size == 0) {
       render(500, map("msg", s"There are no backend with tags [${tags}]"))
     }
-    res.get.jsonStr match {
-      case Some(i) => render(i)
-      case None => render(500, map("msg", "backend error"))
+
+    if (res.size == 1) {
+      res(0).get.jsonStr match {
+        case Some(i) => render(i)
+        case None => render(500, map("msg", "backend error"))
+      }
     }
+    val response = res.map { item => item.map(f => f.jsonStr).getOrElse("[]") }
+    render("[" + response.mkString(",") + "]")
   }
 
   @At(path = Array("/run/sql"), types = Array(GET, POST))
@@ -73,14 +83,8 @@ class MLSQLProxyController extends ApplicationController {
     val res = BackendService.execute(instance => {
       instance.runSQL(params().asScala.toMap)
     }, param("tags", ""), proxyStrategy)
-    if (!res.isDefined) {
-      render(500, map("msg", s"There are no backend with tags [${tags}]"))
-    }
-    res.get.jsonStr match {
-      case Some(i) => render(i)
-      case None => render(500, map("msg", "backend error"))
-    }
+    renderResult(tags, res)
   }
 
-  
+
 }
