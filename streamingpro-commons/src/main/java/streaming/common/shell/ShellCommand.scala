@@ -1,15 +1,17 @@
 package streaming.common.shell
 
 import java.io.{File, FileWriter, RandomAccessFile}
+import java.util.UUID
 
 import net.csdn.common.logging.Loggers
+import streaming.log.Logging
 
 import scala.sys.process.{ProcessLogger, _}
 
 /**
   * Created by allwefantasy on 12/7/2017.
   */
-object ShellCommand extends TFileWriter {
+object ShellCommand extends TFileWriter with Logging {
   val logger = Loggers.getLogger(classOf[ShellCommand])
 
   def exec(shellStr: String): String = {
@@ -20,6 +22,41 @@ object ShellCommand extends TFileWriter {
         logger.info("exec fail", e)
         ""
     }
+  }
+
+  def sshExec(keypath: String, hostname: String, username: String, command: String, execute_user: String, dryRun: Boolean = false): String = {
+    val localPath = s"/tmp/${UUID.randomUUID().toString}"
+    writeToFile(localPath, "#!/bin/bash\nsource /etc/profile\n" + command)
+    val copyScriptCommand = List("scp", "-oStrictHostKeyChecking=no", "-oUserKnownHostsFile=/dev/null", "-i", keypath, localPath,
+      username + "@" + hostname + ":" + localPath)
+    logDebug("copy shell scirpt: " + copyScriptCommand.mkString(" "))
+    if (!dryRun) {
+      execCmd(copyScriptCommand.mkString(" "))
+    }
+    val execute_command = if (execute_user == username) {
+      "chmod u+x " + localPath + ";/bin/bash " + localPath
+    } else {
+      val tmp = "chmod u+x " + localPath + ";/bin/bash " + localPath
+      if (!dryRun) {
+        execCmd(
+          List("ssh", "-oStrictHostKeyChecking=no", "-oUserKnownHostsFile=/dev/null", "-i", keypath,
+            username + "@" + hostname, "chown -R  " + execute_user + " " + localPath).mkString(" "))
+      }
+      "'su - " + execute_user + " -c \"" + tmp + "\"'"
+    }
+
+    val sshExecuteCommand = List("ssh", "-oStrictHostKeyChecking=no", "-oUserKnownHostsFile=/dev/null", "-i", keypath,
+      username + "@" + hostname, execute_command)
+
+    logDebug("execute script: " + sshExecuteCommand.mkString(" "))
+
+    if (!dryRun) {
+      execCmd(
+        sshExecuteCommand.mkString(" "))
+    } else {
+      sshExecuteCommand.mkString(" ")
+    }
+
   }
 
   def wrapCommand(user: String, fileName: String) = {

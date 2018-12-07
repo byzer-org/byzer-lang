@@ -16,9 +16,11 @@ class RestAPISpec extends BasicSparkOperation with SpecFunctions with BasicMLSQL
 
   def mockServer = {
     try {
-      ServiceFramwork.disableHTTP()
-      ServiceFramwork.enableNoThreadJoin()
-      Bootstrap.main(Array())
+      if (ServiceFramwork.injector == null) {
+        ServiceFramwork.disableHTTP()
+        ServiceFramwork.enableNoThreadJoin()
+        Bootstrap.main(Array())
+      }
     } catch {
       case e: Exception =>
     }

@@ -11,9 +11,11 @@ import java.util.Map;
 public class Backend extends Model {
 
 
-    public static Backend newBackend(Map<String, String> params) {
+    public static Backend newOne(Map<String, String> params, boolean persist) {
         Backend backend = create(params);
-        backend.save();
+        if (persist) {
+            backend.save();
+        }
         return backend;
     }
 
@@ -28,6 +30,15 @@ public class Backend extends Model {
     private String url;
     private String tag;
     private String name;
+    private Integer ecsResourcePoolId;
+
+    public int getEcsResourcePoolId() {
+        return ecsResourcePoolId;
+    }
+
+    public void setEcsResourcePoolId(int ecsResourcePoolId) {
+        this.ecsResourcePoolId = ecsResourcePoolId;
+    }
 
     public String getUrl() {
         return url;
@@ -35,6 +46,13 @@ public class Backend extends Model {
 
     public String getTag() {
         return tag;
+    }
+
+    public String[] getTags() {
+        if (getTag() != null) {
+            return getTag().split(",");
+        }
+        return new String[]{};
     }
 
     public String getName() {

@@ -1,6 +1,4 @@
 rootLogger: INFO,console
-
-
 appender:
   console:
     type: console
