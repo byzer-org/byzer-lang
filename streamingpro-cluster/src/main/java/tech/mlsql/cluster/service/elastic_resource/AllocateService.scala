@@ -32,14 +32,14 @@ object AllocateService extends Logging {
           try {
             val allocateStrategy = mapping(monitor.getAllocateStrategy)
             val tags = monitor.getTag.split(",").toSeq
-            val allocate = allocateStrategy.plan(tags, monitor.getAllocateType)
+            val allocate = allocateStrategy.plan(tags, monitor)
 
             allocate match {
               case Some(item) =>
                 _executor.execute(new Runnable {
                   override def run(): Unit = {
                     logDebug(s"check instances tagged with [$tags]. Allocate ${item}")
-                    allocateStrategy.allocate(item, monitor.getAllocateType)
+                    allocateStrategy.allocate(item, monitor)
                   }
                 })
               case None =>

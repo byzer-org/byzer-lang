@@ -16,7 +16,7 @@ class BackendController extends ApplicationController {
   @At(path = Array("/backend/add"), types = Array(GET, POST))
   def backendAdd = {
     List("url", "tag", "name").foreach(item => require(hasParam(item), s"${item} is required"))
-    Backend.newBackend(params())
+    Backend.newOne(params(),true)
     BackendService.refreshCache
     render(map("msg", "success"))
   }

@@ -14,7 +14,7 @@ class EcsResourceController extends ApplicationController {
   @At(path = Array("/ecs/add"), types = Array(GET, POST))
   def ecsAdd = {
     EcsResourcePool.requiredFields().asScala.foreach(item => require(hasParam(item), s"${item} is required"))
-    EcsResourcePool.newOne(params())
+    EcsResourcePool.newOne(params(),true)
     render(map("msg", "success"))
   }
 

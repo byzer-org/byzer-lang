@@ -1,7 +1,7 @@
 package tech.mlsql.cluster.service.elastic_resource
 
 import streaming.log.Logging
-import tech.mlsql.cluster.model.EcsResourcePool
+import tech.mlsql.cluster.model.{Backend, EcsResourcePool, ElasticMonitor}
 import tech.mlsql.cluster.service.BackendService
 import tech.mlsql.cluster.service.elastic_resource.local.LocalDeployInstance
 
@@ -29,9 +29,9 @@ trait AllocateStrategy {
      If the value is LocalResourceAllocation, then deploy new instances.
      If the value is LocalResourceDeAllocation, then shutdown some instances
    */
-  def plan(tags: Seq[String], allocateType: String): Option[BaseResource]
+  def plan(tags: Seq[String], em: ElasticMonitor): Option[BaseResource]
 
-  def allocate(command: BaseResource, allocateType: String): Boolean
+  def allocate(command: BaseResource, em: ElasticMonitor): Boolean
 }
 
 /*
@@ -40,53 +40,121 @@ trait AllocateStrategy {
  */
 class JobNumAwareAllocateStrategy extends AllocateStrategy with Logging {
 
+  var rounds = 30
+
+  // these methods start with "fetch" should be overwrite if needs, cause they depends database
+  // and this will make it's difficult to test our strategy. please
+  // check how we do in `tech.mlsql.cluster.test.DeploySpec`
+  def fetchAvailableResources = {
+    EcsResourcePool.items()
+  }
+
+  def fetchBackendsWithTags(tagsStr: String) = {
+    BackendService.backendsWithTags(tagsStr).map(f => f.meta).toSet
+  }
+
+  def fetchAllActiveBackends() = {
+    BackendService.activeBackend.map(f => f._1).toSet
+  }
+
+  def fetchAllNonActiveBackendsWithTags(tagsStr: String) = {
+    BackendService.nonActiveBackend.filter(f => tagsStr.split(",").toSet.intersect(f.getTags.toSet).size > 0)
+  }
+
+  //only for testing
+  def ecsResourcePoolForTesting(backend: Backend) = {
+    EcsResourcePool.find(backend.getEcsResourcePoolId)
+  }
+
+  def dryRun() = {
+    false
+  }
+
   private val holder = new java.util.concurrent.ConcurrentHashMap[String, scala.collection.mutable.Queue[Int]]()
 
-  override def allocate(command: BaseResource, allocateType: String): Boolean = {
+  override def allocate(command: BaseResource, em: ElasticMonitor): Boolean = {
     command match {
       case LocalResourceAllocation(tags) =>
-        val tempResources = EcsResourcePool.items()
+        val tempResources = fetchAvailableResources
 
         if (tempResources.size() == 0) {
-          logError("No resources available, Allocate new MLSQL instance fail")
+          logError(s"No resources available for ${tags}, Allocate new MLSQL instance fail")
           return false
         }
         val resource = tempResources.asScala.head
-        return LocalDeployInstance.deploy(resource.id())
+        if (dryRun()) {
+          return LocalDeployInstance._deploy(resource, dryRun())
+        } else {
+          return LocalDeployInstance.deploy(resource.id())
+        }
 
+      case LocalResourceDeAllocation(tags) => {
+        var success = false
+        fetchAllNonActiveBackendsWithTags(tags).headOption match {
+          case Some(backendWillBeRemove) =>
+            success = if (dryRun()) {
+              LocalDeployInstance._unDeploy(backendWillBeRemove, ecsResourcePoolForTesting(backendWillBeRemove), dryRun())
+            } else {
+              LocalDeployInstance.unDeploy(backendWillBeRemove.id())
+            }
 
-      case LocalResourceDeAllocation(tags) => throw new RuntimeException("not implemented yet")
+          case None =>
+        }
+        success
+      }
       case ClusterResourceAllocation(tags) => throw new RuntimeException("not implemented yet")
       case ClusterResourceDeAllocation(tags) => throw new RuntimeException("not implemented yet")
     }
   }
 
-  override def plan(tags: Seq[String], allocateType: String): Option[BaseResource] = {
+  override def plan(tags: Seq[String], em: ElasticMonitor): Option[BaseResource] = {
     val tagsStr = tags.mkString(",")
-    val backendsWithTags = BackendService.backendsWithTags(tagsStr).map(f => f.meta).toSet
-    if (backendsWithTags.size == 0) return None
-    val nonActiveBackend = BackendService.nonActiveBackend
+    val allocateType = em.getAllocateType
+    val backendsWithTags = fetchBackendsWithTags(tagsStr)
+    if (backendsWithTags.size == 0) {
+      logError("the number of instances tagged with ${tagsStr} is zero now, JobNumAwareAllocateStrategy" +
+        "do not support this type.")
+      return None
+    }
+    if (backendsWithTags.size == em.getMaxInstances) {
+      logInfo(s"the number of instances tagged with ${tagsStr} have already retched max size [${em.getMaxInstances}]")
+      return None
+    }
+
+    if (backendsWithTags.size < em.getMinInstances) {
+      logInfo(s"the number of instances tagged with ${tagsStr} have already lower min size [${em.getMinInstances}]")
+      return allocateType match {
+        case "local" => Option(LocalResourceAllocation(tagsStr))
+        case "cluster" => Option(ClusterResourceAllocation(tagsStr))
+      }
+    }
+
+    val activeBackends = fetchAllActiveBackends
     if (!holder.containsKey(tagsStr)) {
       holder.put(tagsStr, scala.collection.mutable.Queue[Int]())
     }
     val queue = holder.get(tagsStr)
-    if ((backendsWithTags -- nonActiveBackend).size == 0) {
+    logDebug(s"backendsWithTags:${backendsWithTags.size} nonActiveBackend:${activeBackends.size} ${(backendsWithTags -- activeBackends).size}")
+    // all busy
+    if ((backendsWithTags -- activeBackends).size == 0) {
       queue.enqueue(0)
     } else {
       queue.enqueue(1)
     }
 
-    if (queue.size > 30) {
+    if (queue.size > rounds) {
       queue.dequeue()
       if (queue.sum == 0) {
         holder.remove(tagsStr)
+        logDebug(s"check ${rounds} times, instances with ${tagsStr} always are busy, try to allocate new instance")
         return allocateType match {
           case "local" => Option(LocalResourceAllocation(tagsStr))
           case "cluster" => Option(ClusterResourceAllocation(tagsStr))
         }
       }
-      if (queue.sum > 15) {
+      if (queue.sum > rounds / 2) {
         holder.remove(tagsStr)
+        logDebug(s"check ${rounds} times, instances with ${tagsStr} always are idle, try to reduce the number of instances")
         return allocateType match {
           case "local" => Option(LocalResourceDeAllocation(tagsStr))
           case "cluster" => Option(ClusterResourceDeAllocation(tagsStr))

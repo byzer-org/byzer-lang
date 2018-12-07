@@ -29,7 +29,7 @@ trait BackendService {
   def runSQL(params: Map[String, String]): HttpTransportService.SResponse
 
   @At(path = Array("/instance/resource"), types = Array(GET, POST))
-  def instanceResource: HttpTransportService.SResponse
+  def instanceResource(params: Map[String, String]): HttpTransportService.SResponse
 }
 
 case class BackendCache(meta: Backend, instance: BackendService)

@@ -1,9 +1,10 @@
 CREATE TABLE backend
 (
-  id   int(11) NOT NULL AUTO_INCREMENT,
-  name varchar(255) DEFAULT NULL,
-  url  text,
-  tag  text,
+  id                int(11) NOT NULL AUTO_INCREMENT,
+  name              varchar(255) DEFAULT NULL,
+  url               text,
+  tag               text,
+  ecsResourcePoolId int(11),
   PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
@@ -17,6 +18,7 @@ CREATE TABLE ecs_resource_pool
   host         text,
   key_path     text,
   spark_home   text,
+  mlsql_home   text,
   mlsql_config text,
   tag          text,
   PRIMARY KEY (id)

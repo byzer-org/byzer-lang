@@ -1,7 +1,8 @@
 package tech.mlsql.cluster.service.dispatch
 
-import tech.mlsql.cluster.service.{BackendCache, BackendService}
+import streaming.log.Logging
 import tech.mlsql.cluster.service.BackendService.mapSResponseToObject
+import tech.mlsql.cluster.service.{BackendCache, BackendService}
 
 /**
   * 2018-12-04 WilliamZhu(allwefantasy@gmail.com)
@@ -44,7 +45,7 @@ class ResourceAwareStrategy(tags: String) extends BackendStrategy {
   }
 }
 
-class JobNumAwareStrategy(tags: String) extends BackendStrategy {
+class JobNumAwareStrategy(tags: String) extends BackendStrategy with Logging {
   override def invoke(backends: Seq[BackendCache]): Option[BackendCache] = {
 
     val tagSet = tags.split(",").toSet
@@ -54,7 +55,8 @@ class JobNumAwareStrategy(tags: String) extends BackendStrategy {
       backends = backends.filter(f => tagSet.intersect(f.meta.getTag.split(",").toSet).size > 0)
     }
     val backend = backends.seq.map { b =>
-      val res = b.instance.instanceResource
+      logDebug(s"visit backend: ${b.meta.getUrl} tags: ${b.meta.getTag}")
+      val res = b.instance.instanceResource(Map())
       val resource = res.toBean[CSparkInstanceResource]().head
       (resource.totalCores - resource.totalTasks, b)
     }.sortBy(f => f._1).reverse.headOption.map(f => f._2.meta)
