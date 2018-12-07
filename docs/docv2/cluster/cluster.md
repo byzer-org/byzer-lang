@@ -68,27 +68,26 @@ Done.
 Here is the implementation of FreeCoreBackendStrategy:
 
 ```scala
-   class ResourceAwareStrategy(tags: String) extends BackendStrategy {
-     override def invoke(backends: Seq[BackendCache]): Option[BackendCache] = {
-   
-       val tagSet = tags.split(",").toSet
-       //get all backends(MLSQL instances meta)
-       var backends = BackendService.backends
-       // filter by tags
-       if (!tags.isEmpty) {
-         backends = backends.filter(f => tagSet.intersect(f.meta.getTag.split(",").toSet).size > 0)
-       }
-       // Get current available free cpus of all MLSQL instances
-       val backend = backends.seq.map { b =>
-         val res = b.instance.instanceResource
-         val resource = res.toBean[CSparkInstanceResource]().head
-         (resource.totalCores - resource.totalTasks, b)
-       }.sortBy(f => f._1).reverse.headOption.map(f => f._2.meta)
-   
-       // return the final choosed backend.   
-       BackendService.find(backend)
-     }
-   }
+  class ResourceAwareStrategy(tags: String) extends BackendStrategy {
+    override def invoke(backends: Seq[BackendCache]): Option[Seq[BackendCache]] = {
+      val tagSet = tags.split(",").toSet
+      var nonActiveBackend = BackendService.nonActiveBackend
+      if (!tags.isEmpty) {
+        nonActiveBackend = nonActiveBackend.filter(f => tagSet.intersect(f.getTag.split(",").toSet).size > 0)
+      }
+      val backend = if (nonActiveBackend.size > 0) {
+        nonActiveBackend.headOption
+      } else {
+        var activeBackends = BackendService.activeBackend.toSeq
+        if (!tags.isEmpty) {
+          activeBackends = activeBackends.filter(f => tagSet.intersect(f._1.getTag.split(",").toSet).size > 0).sortBy(f => f._2)
+        }
+        activeBackends.headOption.map(f => f._1)
+  
+      }
+      BackendService.find(backend).map(f => Seq(f))
+    }
+  }
 ```
 
 
