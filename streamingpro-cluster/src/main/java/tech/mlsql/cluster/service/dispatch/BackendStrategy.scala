@@ -8,24 +8,24 @@ import tech.mlsql.cluster.service.{BackendCache, BackendService}
   * 2018-12-04 WilliamZhu(allwefantasy@gmail.com)
   */
 trait BackendStrategy {
-  def invoke(backends: Seq[BackendCache]): Option[BackendCache]
+  def invoke(backends: Seq[BackendCache]): Option[Seq[BackendCache]]
 
 }
 
-class FirstBackendStrategy(tags: String) extends BackendStrategy {
-  override def invoke(backends: Seq[BackendCache]): Option[BackendCache] = {
+class AllBackendsStrategy(tags: String) extends BackendStrategy {
+  override def invoke(backends: Seq[BackendCache]): Option[Seq[BackendCache]] = {
     val tagSet = tags.split(",").toSet
     if (tags.isEmpty) {
-      backends.headOption
+      Option(backends)
     } else {
-      backends.filter(f => tagSet.intersect(f.meta.getTag.split(",").toSet).size > 0).headOption
+      Option(backends.filter(f => tagSet.intersect(f.meta.getTag.split(",").toSet).size > 0))
     }
 
   }
 }
 
 class ResourceAwareStrategy(tags: String) extends BackendStrategy {
-  override def invoke(backends: Seq[BackendCache]): Option[BackendCache] = {
+  override def invoke(backends: Seq[BackendCache]): Option[Seq[BackendCache]] = {
     val tagSet = tags.split(",").toSet
     var nonActiveBackend = BackendService.nonActiveBackend
     if (!tags.isEmpty) {
@@ -41,12 +41,12 @@ class ResourceAwareStrategy(tags: String) extends BackendStrategy {
       activeBackends.headOption.map(f => f._1)
 
     }
-    BackendService.find(backend)
+    BackendService.find(backend).map(f => Seq(f))
   }
 }
 
 class JobNumAwareStrategy(tags: String) extends BackendStrategy with Logging {
-  override def invoke(backends: Seq[BackendCache]): Option[BackendCache] = {
+  override def invoke(backends: Seq[BackendCache]): Option[Seq[BackendCache]] = {
 
     val tagSet = tags.split(",").toSet
 
@@ -61,7 +61,7 @@ class JobNumAwareStrategy(tags: String) extends BackendStrategy with Logging {
       (resource.totalCores - resource.totalTasks, b)
     }.sortBy(f => f._1).reverse.headOption.map(f => f._2.meta)
 
-    BackendService.find(backend)
+    BackendService.find(backend).map(f => Seq(f))
   }
 }
 

@@ -11,7 +11,7 @@ import net.csdn.modules.http.RestRequest.Method.{GET, POST}
 import net.csdn.modules.transport.HttpTransportService
 import net.liftweb.{json => SJSon}
 import tech.mlsql.cluster.model.Backend
-import tech.mlsql.cluster.service.dispatch.{JobNumAwareStrategy, ResourceAwareStrategy}
+import tech.mlsql.cluster.service.dispatch.{AllBackendsStrategy, JobNumAwareStrategy, ResourceAwareStrategy}
 
 import scala.collection.JavaConversions._
 
@@ -91,22 +91,26 @@ object BackendService {
     val chooseProxy = proxyStrategy match {
       case "ResourceAwareStrategy" => new ResourceAwareStrategy(tags)
       case "JobNumAwareStrategy" => new JobNumAwareStrategy(tags)
+      case "AllBackendsStrategy" => new AllBackendsStrategy(tags)
       case _ => new ResourceAwareStrategy(tags)
     }
     val backendCache = chooseProxy.invoke(items)
     backendCache match {
-      case Some(ins) =>
-        active_task_meta.putIfAbsent(ins.meta, new AtomicLong())
-        val counter = active_task_meta.get(ins.meta)
-        try {
-          counter.incrementAndGet()
-          Option(f(ins.instance))
-        } finally {
-          counter.decrementAndGet()
+      case Some(items) =>
+        items.seq.map { ins =>
+          active_task_meta.putIfAbsent(ins.meta, new AtomicLong())
+          val counter = active_task_meta.get(ins.meta)
+          try {
+            counter.incrementAndGet()
+            Option(f(ins.instance))
+          } finally {
+            counter.decrementAndGet()
+          }
         }
+
       case None =>
         logger.info(s"No backened with tags [${tags}] are found")
-        None
+        Seq(None)
     }
   }
 

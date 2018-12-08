@@ -4,7 +4,7 @@ CREATE TABLE backend
   name              varchar(255) DEFAULT NULL,
   url               text,
   tag               text,
-  ecsResourcePoolId int(11),
+  ecs_resource_pool_id int(11),
   PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
