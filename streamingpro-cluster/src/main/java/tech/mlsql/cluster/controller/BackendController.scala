@@ -23,7 +23,7 @@ class BackendController extends ApplicationController {
 
   @At(path = Array("/backend/tags/update"), types = Array(GET, POST))
   def backendTagsUpdate = {
-    val backend = Backend.find(paramAsInt("id"))
+    val backend = Backend.findById(paramAsInt("id"))
     if (param("merge", "overwrite") == "overwrite") {
       backend.attr("tag", param("tags"))
     } else {
@@ -37,7 +37,7 @@ class BackendController extends ApplicationController {
 
   @At(path = Array("/backend/remove"), types = Array(GET, POST))
   def backendRemove = {
-    val backend = Backend.find(paramAsInt("id"))
+    val backend = Backend.findById(paramAsInt("id"))
     backend.delete()
     BackendService.refreshCache
     render(map("msg", "success"))

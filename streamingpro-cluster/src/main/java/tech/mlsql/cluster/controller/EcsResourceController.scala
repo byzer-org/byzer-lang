@@ -20,7 +20,7 @@ class EcsResourceController extends ApplicationController {
 
   @At(path = Array("/ecs/remove"), types = Array(GET, POST))
   def ecsRemove = {
-    val backend = EcsResourcePool.find(paramAsInt("id"))
+    val backend = EcsResourcePool.findById(paramAsInt("id"))
     backend.delete()
     render(map("msg", "success"))
   }

@@ -3,6 +3,7 @@ package tech.mlsql.cluster
 import net.csdn.ServiceFramwork
 import net.csdn.bootstrap.Application
 import streaming.common.ParamsUtil
+import tech.mlsql.cluster.commands.Command
 import tech.mlsql.cluster.service.elastic_resource.AllocateService
 
 
@@ -19,8 +20,16 @@ object ProxyApplication {
     val applicationYamlName = params.getParam("config", "application.yml")
     ServiceFramwork.applicaionYamlName(applicationYamlName)
     ServiceFramwork.scanService.setLoader(classOf[ProxyApplication])
-    AllocateService.run
-    Application.main(args)
+    if (params.hasParam("command")) {
+      ServiceFramwork.enableNoThreadJoin()
+      ServiceFramwork.disableHTTP()
+      Application.main(args)
+      Command.deploy
+    } else {
+      AllocateService.run
+      Application.main(args)
+    }
+
   }
 }
 

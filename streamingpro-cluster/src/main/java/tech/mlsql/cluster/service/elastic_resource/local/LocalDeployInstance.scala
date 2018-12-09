@@ -32,7 +32,7 @@ object LocalDeployInstance extends Logging {
   }
 
   def deploy(id: Int): Boolean = {
-    val ecs = EcsResourcePool.find(id)
+    val ecs = EcsResourcePool.findById(id)
     val success = _deploy(ecs)
     if (success) {
       logInfo(s"Command execute successful, remove ${ecs.getIp} with name ${ecs.getName} from EcsResourcePool to Backend table.")
@@ -60,12 +60,12 @@ object LocalDeployInstance extends Logging {
   }
 
   def unDeploy(id: Int): Boolean = {
-    val backend = Backend.find(id)
+    val backend = Backend.findById(id)
     if (backend.getEcsResourcePoolId == null) {
       logError(s"cannot find ${backend.getName} in resource pool")
       return false
     }
-    val ecs = EcsResourcePool.find(backend.getEcsResourcePoolId)
+    val ecs = EcsResourcePool.findById(backend.getEcsResourcePoolId)
     val success = _unDeploy(backend, ecs, false)
     if (success) {
       ecs.setInUse(EcsResourcePool.NOT_IN_USE)

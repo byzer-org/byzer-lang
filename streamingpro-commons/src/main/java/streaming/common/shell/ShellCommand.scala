@@ -51,8 +51,12 @@ object ShellCommand extends TFileWriter with Logging {
     logDebug("execute script: " + sshExecuteCommand.mkString(" "))
 
     if (!dryRun) {
-      execCmd(
-        sshExecuteCommand.mkString(" "))
+      val res = execWithUserAndExitValue(null, sshExecuteCommand.mkString(" "), -1)
+      logInfo(s"execute: \n[code: ${res._1}] \n[out： ${res._2}] \n[error: ${res._3}]")
+      if (res._1 != 0) {
+        throw new RuntimeException(s"fail to start mlsql instance. execute: \n[code: ${res._1}] \n[out： ${res._2}] \n[error: ${res._3}]")
+      }
+      res._2
     } else {
       sshExecuteCommand.mkString(" ")
     }

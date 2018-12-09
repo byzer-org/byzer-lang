@@ -19,8 +19,8 @@ public class EcsResourcePool extends Model {
         return backend;
     }
 
-    public static EcsResourcePool find(int id) {
-        return EcsResourcePool.find(id);
+    public static EcsResourcePool findById(int id) {
+        return find(id);
     }
 
     public static List<EcsResourcePool> items() {
