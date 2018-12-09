@@ -14,9 +14,9 @@ MLSQL-Cluster should have following features:
 1. Dynamic resource adjust. Proxy will close the MLSQL instances with specific tag tagged if the system load is low or create
 new MLSQL instances if the system load increase. Notice that MLSQL instance  supports worker dynamic allocation, they are different.
 
-2. Dispatching. We may have different businesses, and each of them need multi MLSQL instances as load balance. The first step is MLSQL-Cluster
-will dispatch the requests to the proper instances according to the tags and then dispatch the single request to specific instance by some strategy e.g.
-resource-aware-strategy or tasks-aware-strategy.
+2. Dispatching. We may have different businesses, and each of them may needs multi MLSQL instances as load balance. 
+The first step is MLSQL-Cluster will dispatch the requests to the proper instances according to the tags and then dispatch the single request 
+to specific instance by some strategy e.g.resource-aware-strategy or tasks-aware-strategy.
 
 ## Setup MLSQL-Cluster
 
@@ -34,7 +34,7 @@ mvn -Pcluster-shade -am -pl streamingpro-cluster clean package
 java -cp .:streamingpro-cluster-1.1.6-SNAPSHOT.jar tech.mlsql.cluster.ProxyApplication -config application.yml
 ``` 
 
-No you can use postman or CURL to add MLSQL instances information to  streamingpro-cluster.
+Now you can use postman or CURL to add MLSQL instances information to  streamingpro-cluster.
 
 ```
 # name=backend1
@@ -63,7 +63,7 @@ curl -X POST \
 
 Done.
 
-## How to create your owner  strategy
+## How to create your owner  dispatch strategy
 
 Here is the implementation of FreeCoreBackendStrategy:
 
@@ -90,13 +90,14 @@ Here is the implementation of FreeCoreBackendStrategy:
   }
 ```
 
-## JobNumAwareAllocateStrategy
+## Allocate Feature
 
-As we mentioned before, mlsql-cluster supports dynamic resource adjust. For now, mlsql local/yarn-client modes
-are available.  JobNumAwareAllocateStrategy is the only allocate strategy implemented.
+As we mentioned before, MLSQL-cluster supports DRA(dynamic resource adjust). For now, 
+the local/yarn-client modes are supported. yarn-cluster is coming soon. 
+JobNumAwareAllocateStrategy is the only allocate strategy implemented.
 
 In order to enable JobNumAwareAllocateStrategy, please use the api `/monitor/add` to add 
-a monitor which will tell mlsql-cluster who(tags) should be monitored and use the api `/ecs/add`
+a monitor which tells mlsql-cluster who(tags) should be monitored and use the api `/ecs/add`
 to tell mlsql-cluster where is the free elastic server.
 
 monitor parameters example:
@@ -111,11 +112,10 @@ monitor parameters example:
 
 ``` 
 
-The monitor will make sure the number of instances with tag `jack` between 1-3 using JobNumAwareAllocateStrategy Strategy 
-to allocate new instance.   
+The monitor will make sure the number of instances with tag `jack` between 1-3 
+and use  JobNumAwareAllocateStrategy Strategy 
+to allocate new instance or remove a exists instance.   
  
-
-
 ecs parameters example:
 
 ```
@@ -142,9 +142,14 @@ ecs parameters example:
 ```
 
 ecs tell mlsql-cluster how to start a mlsql-instance. With these information, mlsql-cluster 
-can ssh to server whose ip is 127.0.0.1 and start a local mode spark mlsql instance listening port 9003.
-The mlsql-cluster  will be updat this row to in_use and add a new backen to backend table.  
-  
+will  ssh to server  whose ip is 127.0.0.1 and start a local mode mlsql instance listening on port 9003.
+Once success, update it to in_use status and add a new backend to backend table.
+
+Notice that `/ecs/add` do not mean really a server, it just a special template how mlsql-cluster create a new instance.
+
+In upper example, mlsql-cluster will use loginUser root with keypath to login in server without password, then 
+use webuser to invoke mlsql instance. The user should make sure sparkHome,mlsqlHome configured properly.
+      
 
 
      

@@ -12,7 +12,7 @@ import java.util.Map;
  */
 public class ElasticMonitor extends Model {
 
-    public static ElasticMonitor newOne(Map<String, String> params) {
+    public static ElasticMonitor newOne(Map<String, String> params, boolean persist) {
         Map<String, Object> newParams = new HashMap<>();
         params.entrySet().forEach((a) -> {
             if (a.getKey() == "minInstances" || a.getKey() == "maxInstances") {
@@ -20,11 +20,13 @@ public class ElasticMonitor extends Model {
             } else newParams.put(a.getKey(), a.getValue());
         });
         ElasticMonitor backend = create(newParams);
-        backend.save();
+        if (persist) {
+            backend.save();
+        }
         return backend;
     }
 
-    public static ElasticMonitor find(int id) {
+    public static ElasticMonitor findById(int id) {
         return ElasticMonitor.find(id);
     }
 

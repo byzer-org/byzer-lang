@@ -41,7 +41,7 @@ object Command {
       "maxInstances" -> "3",
       "allocateType" -> "local",
       "allocateStrategy" -> "JobNumAwareAllocateStrategy"
-    ).asJava)
+    ).asJava,true)
 
     allocate.allocate(LocalResourceAllocation("jack"), monitor)
   }

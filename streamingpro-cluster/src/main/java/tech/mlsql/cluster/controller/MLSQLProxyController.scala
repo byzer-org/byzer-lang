@@ -43,7 +43,7 @@ class MLSQLProxyController extends ApplicationController {
     new Parameter(name = "callback", required = false, description = "Used when async is set true. callback is a url. default: false", `type` = "string", allowEmptyValue = false),
     new Parameter(name = "skipInclude", required = false, description = "disable include statement. default: false", `type` = "boolean", allowEmptyValue = false),
     new Parameter(name = "tags", required = false, description = "proxy parameter,filter backend with this tags", `type` = "string", allowEmptyValue = false),
-    new Parameter(name = "proxyStrategy", required = false, description = "proxy parameter,How to choose backend, for now  supports: ResourceAwareStrategy|JobNumAwareStrategy, default TaskLessBackendStrategy", `type` = "string", allowEmptyValue = false)
+    new Parameter(name = "proxyStrategy", required = false, description = "proxy parameter,How to choose backend, for now  supports: ResourceAwareStrategy|JobNumAwareStrategy|AllBackendsStrategy, default JobNumAwareStrategy", `type` = "string", allowEmptyValue = false)
   ))
   @Responses(Array(
     new ApiResponse(responseCode = "200", description = "", content = new Content(mediaType = "application/json",
