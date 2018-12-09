@@ -2,6 +2,7 @@ package tech.mlsql.cluster.model;
 
 import net.csdn.jpa.model.Model;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -12,7 +13,19 @@ public class Backend extends Model {
 
 
     public static Backend newOne(Map<String, String> params, boolean persist) {
-        Backend backend = create(params);
+        Map<String, Object> newParams = new HashMap<>();
+        params.entrySet().forEach((a) -> {
+            if (a.getKey() != "ecsResourcePoolId") {
+                newParams.put(a.getKey(), a.getValue());
+            }
+        });
+
+        Backend backend = create(newParams);
+        if (!params.containsKey("ecsResourcePoolId")) {
+            backend.setEcsResourcePoolId(-1);
+        } else {
+            backend.setEcsResourcePoolId(Integer.parseInt(params.get("ecsResourcePoolId")));
+        }
         if (persist) {
             backend.save();
         }

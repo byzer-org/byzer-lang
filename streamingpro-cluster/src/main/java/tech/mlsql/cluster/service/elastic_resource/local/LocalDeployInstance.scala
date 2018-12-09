@@ -39,7 +39,8 @@ object LocalDeployInstance extends Logging {
       Backend.newOne(Map(
         "url" -> (ecs.getIp + ":" + getPort(ecs)),
         "tag" -> ecs.getTag,
-        "name" -> ecs.getName
+        "name" -> ecs.getName,
+        "ecsResourcePoolId" -> (ecs.id() + "")
       ).asJava, true).save()
       ecs.delete()
     }
@@ -61,7 +62,7 @@ object LocalDeployInstance extends Logging {
 
   def unDeploy(id: Int): Boolean = {
     val backend = Backend.findById(id)
-    if (backend.getEcsResourcePoolId == null) {
+    if (backend.getEcsResourcePoolId == -1) {
       logError(s"cannot find ${backend.getName} in resource pool")
       return false
     }

@@ -66,7 +66,7 @@ class DeploySpec extends FlatSpec with Matchers {
       "maxInstances" -> "3",
       "allocateType" -> "local",
       "allocateStrategy" -> "JobNumAwareAllocateStrategy"
-    ).asJava)
+    ).asJava,false)
 
     val backend = Backend.newOne(Map(
       "url" -> "127.0.0.1:9003",
@@ -119,7 +119,7 @@ class DeploySpec extends FlatSpec with Matchers {
       "maxInstances" -> "3",
       "allocateType" -> "local",
       "allocateStrategy" -> "JobNumAwareAllocateStrategy"
-    ).asJava)
+    ).asJava,false)
 
     val backend = Backend.newOne(Map(
       "url" -> "127.0.0.1:9003",
