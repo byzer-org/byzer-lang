@@ -63,7 +63,7 @@ class JobNumAwareAllocateStrategy extends AllocateStrategy with Logging {
 
   //only for testing
   def ecsResourcePoolForTesting(backend: Backend) = {
-    EcsResourcePool.find(backend.getEcsResourcePoolId)
+    EcsResourcePool.findById(backend.getEcsResourcePoolId)
   }
 
   def dryRun() = {

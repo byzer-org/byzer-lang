@@ -20,9 +20,9 @@ resource-aware-strategy or tasks-aware-strategy.
 
 ## Setup MLSQL-Cluster
 
-1. Start up MLSQL instances.
-2. Setup DB.Find the db.sql in resource directory of streamingpro-cluster module and create database called streamingpro_cluster then execute the db.sql.
-3. Build streamingpro-cluster 
+1. Start MLSQL instances.
+2. Setup DB. Find the `db.sql` in resource directory of streamingpro-cluster module and create database called streamingpro_cluster then execute the db.sql.
+3. Build streamingpro-cluster package
 
 ```
 mvn -Pcluster-shade -am -pl streamingpro-cluster clean package
@@ -54,7 +54,7 @@ try to run MLSQL script:
 ```
 # sql=select sleep(1000) as a as t;
 # tags=read
-# proxyStrategy=ResourceAwareStrategy|JobNumAwareStrategy
+# proxyStrategy=ResourceAwareStrategy|JobNumAwareStrategy|AllBackendsStrategy
 curl -X POST \
   http://127.0.0.1:8080/run/script \  
   -H 'content-type: application/x-www-form-urlencoded' \  
@@ -89,6 +89,62 @@ Here is the implementation of FreeCoreBackendStrategy:
     }
   }
 ```
+
+## JobNumAwareAllocateStrategy
+
+As we mentioned before, mlsql-cluster supports dynamic resource adjust. For now, mlsql local/yarn-client modes
+are available.  JobNumAwareAllocateStrategy is the only allocate strategy implemented.
+
+In order to enable JobNumAwareAllocateStrategy, please use the api `/monitor/add` to add 
+a monitor which will tell mlsql-cluster who(tags) should be monitored and use the api `/ecs/add`
+to tell mlsql-cluster where is the free elastic server.
+
+monitor parameters example:
+
+```
+          "name" -> "jack-monitor",
+          "tag" -> "jack",
+          "minInstances" -> "1",
+          "maxInstances" -> "3",
+          "allocateType" -> "local",
+          "allocateStrategy" -> "JobNumAwareAllocateStrategy"
+
+``` 
+
+The monitor will make sure the number of instances with tag `jack` between 1-3 using JobNumAwareAllocateStrategy Strategy 
+to allocate new instance.   
+ 
+
+
+ecs parameters example:
+
+```
+    "ip" -> "127.0.0.1",
+    "keyPath" -> "./ssh/private-key",
+    "loginUser" -> "root",
+    "name" -> "backend2",
+    "sparkHome" -> "/home/spark",
+    "mlsqlHome" -> "/home/mlsql",
+    "mlsqlConfig" ->
+      """
+        |{"master":"local",
+        |"name":"mlsql",
+        |"conf":"spark.serializer=org.apache.spark.serializer.KryoSerializer",
+        |"streaming.name":"mlsql",
+        |"streaming.driver.port":"9003",
+        |"streaming.spark.service":"true",
+        |"streaming.platform":"spark"
+        |}
+      """.stripMargin,
+    "executeUser" -> "webuser",
+    "tag" -> "jack"
+
+```
+
+ecs tell mlsql-cluster how to start a mlsql-instance. With these information, mlsql-cluster 
+can ssh to server whose ip is 127.0.0.1 and start a local mode spark mlsql instance listening port 9003.
+The mlsql-cluster  will be updat this row to in_use and add a new backen to backend table.  
+  
 
 
      
