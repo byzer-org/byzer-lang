@@ -3,6 +3,8 @@ package streaming.core
 import java.io.{File, FileNotFoundException}
 import java.sql.{DriverManager, Statement}
 
+import net.csdn.ServiceFramwork
+import net.csdn.bootstrap.Bootstrap
 import org.apache.commons.io.{FileUtils, IOUtils}
 import org.apache.http.HttpVersion
 import org.apache.http.client.fluent.{Form, Request}
@@ -16,6 +18,18 @@ import streaming.dsl.{MLSQLExecuteContext, ScriptSQLExec, ScriptSQLExecListener}
 trait SpecFunctions {
 
   def password = "mlsql"
+
+  def mockServer = {
+    try {
+      if (ServiceFramwork.injector == null) {
+        ServiceFramwork.disableHTTP()
+        ServiceFramwork.enableNoThreadJoin()
+        Bootstrap.main(Array())
+      }
+    } catch {
+      case e: Exception =>
+    }
+  }
 
   def request(url: String, params: Map[String, String]) = {
     val form = Form.form()

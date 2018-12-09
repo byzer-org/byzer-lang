@@ -21,12 +21,11 @@ class SparkInstanceService(session: SparkSession) {
 
     }
     val totalCores = session.sparkContext.schedulerBackend match {
-      case sb: CoarseGrainedSchedulerBackend =>
+      case sb if sb.isInstanceOf[CoarseGrainedSchedulerBackend] =>
         ReflectHelper.field(sb, "totalCoreCount").asInstanceOf[Int]
-      case sb: LocalSchedulerBackend =>
+      case sb if sb.isInstanceOf[LocalSchedulerBackend] =>
         java.lang.Runtime.getRuntime.availableProcessors
-      case sb: StandaloneSchedulerBackend =>
-        -1
+      case sb if sb.isInstanceOf[StandaloneSchedulerBackend] => -1
     }
     SparkInstanceResource(totalCores.toLong, totalTasks, totalUsedMemory, totalMemory)
   }
