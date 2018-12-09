@@ -14,18 +14,6 @@ import streaming.core.{BasicMLSQLConfig, SpecFunctions, StreamingproJobManager}
   */
 class RestAPISpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConfig with BeforeAndAfterAll {
 
-  def mockServer = {
-    try {
-      if (ServiceFramwork.injector == null) {
-        ServiceFramwork.disableHTTP()
-        ServiceFramwork.enableNoThreadJoin()
-        Bootstrap.main(Array())
-      }
-    } catch {
-      case e: Exception =>
-    }
-  }
-
 
   "/run/script" should "work fine" in {
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>

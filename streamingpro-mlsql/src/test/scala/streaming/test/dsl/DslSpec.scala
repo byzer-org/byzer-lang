@@ -2,6 +2,8 @@ package streaming.test.dsl
 
 import java.io.File
 
+import net.csdn.ServiceFramwork
+import net.csdn.bootstrap.Bootstrap
 import org.apache.spark.streaming.BasicSparkOperation
 import streaming.core.strategy.platform.SparkRuntime
 import streaming.core.{BasicMLSQLConfig, NotToRunTag, SpecFunctions}
@@ -541,10 +543,10 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
 
   "load api" should "work fine" in {
 
-    withBatchContext(setupBatchContext(batchParamsWithPort, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
       implicit val spark = runtime.sparkSession
-
+      mockServer
       val ssel = createSSEL
       val mlsql =
         """
@@ -572,7 +574,7 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
 
     }
   }
-
+  
 }
 
 

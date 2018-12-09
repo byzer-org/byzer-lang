@@ -5,14 +5,17 @@ import java.nio.charset.Charset
 import java.util.UUID
 
 import com.google.common.io.Files
+import net.csdn.ServiceFramwork
+import net.csdn.bootstrap.Bootstrap
+import net.csdn.common.collections.WowCollections
+import net.csdn.junit.BaseControllerTest
 import net.sf.json.JSONArray
-import org.apache.http.client.fluent.{Form, Request}
 import org.apache.spark.SparkCoreVersion
 import org.apache.spark.streaming.BasicSparkOperation
 import streaming.common.ScalaMethodMacros._
 import streaming.common.shell.ShellCommand
 import streaming.core.strategy.platform.SparkRuntime
-import streaming.core.{BasicMLSQLConfig, SpecFunctions}
+import streaming.core.{BasicMLSQLConfig, SpecFunctions, StreamingproJobManager}
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.template.TemplateMerge
 import streaming.test.pythonalg.code.ScriptCode
@@ -41,11 +44,12 @@ class PythonMLSpec2 extends BasicSparkOperation with SpecFunctions with BasicMLS
     else version
   }
 
+
   "SQLPythonAlgTrain" should "work fine" in {
     withBatchContext(setupBatchContext(batchParamsWithAPI, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
       implicit val spark = runtime.sparkSession
-
+      mockServer
       //SPARK_VERSION
       val sq = createSSEL(spark, "")
       val projectName = "sklearn_elasticnet_wine"
@@ -87,14 +91,18 @@ class PythonMLSpec2 extends BasicSparkOperation with SpecFunctions with BasicMLS
 
       // api predict
       def request = {
-        val sql = "select pj(vec_dense(features)) as p1 "
+        StreamingproJobManager.init(spark.sparkContext)
+        val controller = new BaseControllerTest()
 
-        val res = Request.Post("http://127.0.0.1:9003/model/predict").bodyForm(Form.form().
-          add("sql", sql).
-          add("data", s"""[{"features":[ 0.045, 8.8, 1.001, 45.0, 7.0, 170.0, 0.27, 0.45, 0.36, 3.0, 20.7 ]}]""").
-          add("dataType", "row")
-          .build()).execute().returnContent().asString()
-        JSONArray.fromObject(res)
+        val response = controller.get("/model/predict", WowCollections.map(
+          "sql", "select pj(vec_dense(features)) as p1 ",
+          "data",
+          s"""[{"features":[ 0.045, 8.8, 1.001, 45.0, 7.0, 170.0, 0.27, 0.45, 0.36, 3.0, 20.7 ]}]""",
+          "dataType", "row"
+        ));
+        assume(response.status() == 200)
+        StreamingproJobManager.shutdown
+        JSONArray.fromObject(response.originContent())
       }
 
       assert(request.size() > 0)
@@ -105,6 +113,7 @@ class PythonMLSpec2 extends BasicSparkOperation with SpecFunctions with BasicMLS
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
       implicit val spark = runtime.sparkSession
+      mockServer
       val sq = createSSEL(spark, "")
       val projectName = "sklearn_elasticnet_wine"
       var projectPath = getExampleProject(projectName)
