@@ -79,11 +79,11 @@ object ScriptSQLExec extends Logging with WowLog {
       val sqel = listener.asInstanceOf[ScriptSQLExecListener]
       val setListener = new PreProcessSetListener(sqel._sparkSession, sqel._defaultPathPrefix, sqel._allPathPrefix)
       sqel.setProcessListner = Some(setListener)
-      _parse(input, setListener)
+      _parse(wow, setListener)
       // setListener.env()
       val authListener = new AuthProcessListener(setListener)
       sqel.authProcessListner = Some(authListener)
-      _parse(input, authListener)
+      _parse(wow, authListener)
       val tableAuth = Class.forName(authListener.listener.env().getOrElse("__auth_client__", "streaming.dsl.auth.meta.client.DefaultConsoleClient")).newInstance().asInstanceOf[TableAuth]
       tableAuth.auth(authListener.tables().tables.toList)
     }
