@@ -32,4 +32,27 @@ class RestAPISpec extends BasicSparkOperation with SpecFunctions with BasicMLSQL
       StreamingproJobManager.shutdown
     }
   }
+
+  "/run/script auth" should "work fine" in {
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+      //执行sql
+      implicit val spark = runtime.sparkSession
+      mockServer
+
+      StreamingproJobManager.init(spark.sparkContext)
+      val controller = new BaseControllerTest()
+
+      val path = this.getClass().getClassLoader().getResource("").getPath()
+        .replace("test-" ,"")
+
+      val response = controller.get("/run/script", WowCollections.map(
+        "sql", s"include hdfs.`${path}/test/include-set.txt` ;select '$${xx}' as a as t;"
+        ,"skipAuth" ,"false"
+        ,"owner" ,"latincross"
+      ));
+      assume(response.status() == 200)
+      assume(response.originContent() == "[{\"a\":\"latincross\"}]")
+      StreamingproJobManager.shutdown
+    }
+  }
 }
