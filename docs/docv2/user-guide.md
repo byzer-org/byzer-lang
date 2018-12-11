@@ -7,6 +7,7 @@
     - [Grammar](https://github.com/allwefantasy/streamingpro/blob/master/docs/docv2/getting_started/mlsql-grammar.md)
 - UDF/UDAF script
     - [Python/Scala](https://github.com/allwefantasy/streamingpro/blob/master/docs/en/mlsql-script-support.md)
+    - [Functions](https://github.com/allwefantasy/streamingpro/blob/master/docs/mlsql-functions.md)
 - ETL(Feature Engineer)
     - Data Sources
         - [MySQL](https://github.com/allwefantasy/streamingpro/blob/master/docs/docv2/datasources/mysql.md)
@@ -62,6 +63,9 @@
 
 - Crawler
     - [Example](https://github.com/allwefantasy/streamingpro/blob/master/docs/crawler.md)
+    
+- Cluster
+    - [mlsql-cluster](https://github.com/allwefantasy/streamingpro/blob/master/docs/docv2/cluster/cluster.md)    
 
 - API Service
     - [Concept]()

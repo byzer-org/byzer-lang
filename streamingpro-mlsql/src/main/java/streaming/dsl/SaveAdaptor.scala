@@ -2,9 +2,9 @@ package streaming.dsl
 
 import java.util.concurrent.TimeUnit
 
-import org.apache.spark.sql._
 import _root_.streaming.dsl.parser.DSLSQLParser._
 import _root_.streaming.dsl.template.TemplateMerge
+import org.apache.spark.sql._
 import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
 import org.apache.spark.sql.streaming.{DataStreamWriter, Trigger}
 
@@ -115,14 +115,28 @@ class BatchSaveAdaptor(val scriptSQLExecListener: ScriptSQLExecListener,
 
 
     writer = writer.format(format).mode(mode).partitionBy(partitionByCol: _*).options(option)
+
+    def getKafkaBrokers = {
+      "metadata.broker.list" -> option.getOrElse("metadata.broker.list", "kafka.bootstrap.servers")
+    }
+
     format match {
       case "es" =>
         writer.save(final_path)
       case "hive" =>
         writer.format(option.getOrElse("file_format", "parquet"))
         writer.saveAsTable(final_path)
+
       case "kafka8" | "kafka9" =>
-        writer.option("topics", final_path).format("com.hortonworks.spark.sql.kafka08").save()
+
+        writer.option("topics", final_path).
+          option(getKafkaBrokers._1, getKafkaBrokers._2).
+          format("com.hortonworks.spark.sql.kafka08").save()
+
+      case "kafka" =>
+        writer.option("topic", final_path).
+          option(getKafkaBrokers._1, getKafkaBrokers._2).format("kafka").save()
+
       case "hbase" =>
         writer.option("outputTableName", final_path).format(
           option.getOrElse("implClass", "org.apache.spark.sql.execution.datasources.hbase")).save()
