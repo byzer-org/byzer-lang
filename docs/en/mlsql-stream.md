@@ -160,13 +160,11 @@ In real world you can load kafka source like this:
 -- if you are using kafka 0.10
 load kafka.`pi-content-realtime-db` options
 `kafka.bootstrap.servers`="---"
-and `subscribe`="---"
 as kafka_post_parquet;
 
 -- if you are using kafka 0.8.0/0.9.0
 load kafka8.`pi-content-realtime-db` options
 `kafka.bootstrap.servers`="---"
-and `topics`="---"
 as kafka_post_parquet;
 
 ```
