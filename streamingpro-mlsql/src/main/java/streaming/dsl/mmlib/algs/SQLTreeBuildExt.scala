@@ -194,13 +194,12 @@ class SQLTreeBuildExt(override val uid: String) extends SQLAlg with Functions wi
       |+---+-------------+
       ||id |children     |
       |+---+-------------+
-      ||200|[200]        |
+      ||200|[]           |
       ||0  |[7]          |
       ||1  |[200, 2, 199]|
-      ||7  |[7]          |
+      ||7  |[]           |
       ||199|[200]        |
-      ||2  |[2]          |
-      |+---+-------------+
+      ||2  |[]           |
       |
       |if treeType == treePerRow
       |
