@@ -91,37 +91,37 @@ class SQLTreeBuildExt(override val uid: String) extends SQLAlg with Functions wi
     newdf = newdf.withColumn("level", computeLevelUDF(F.col("children"), F.lit(0)))
 
     val idToItem = items.map(f => (f.id, f)).toMap
-    val ROOTSBr = df.sparkSession.sparkContext.broadcast(ROOTS)
-    val idToItemBr = df.sparkSession.sparkContext.broadcast(idToItem)
+    //    val ROOTSBr = df.sparkSession.sparkContext.broadcast(ROOTS)
+    //    val idToItemBr = df.sparkSession.sparkContext.broadcast(idToItem)
 
-    val fetchTopID = (item: IDParentID) => {
-      var res = item.id
-      var stopCond = 100000
-      while (idToItemBr.value(res).parentID != null && idToItemBr.value(res).parentID != t && stopCond > 0) {
-        res = idToItemBr.value(res).parentID
-        stopCond -= 1
-      }
-      res
-    }
+    //    val fetchTopID = (item: IDParentID) => {
+    //      var res = item.id
+    //      var stopCond = 100000
+    //      while (idToItemBr.value(res).parentID != null && idToItemBr.value(res).parentID != t && stopCond > 0) {
+    //        res = idToItemBr.value(res).parentID
+    //        stopCond -= 1
+    //      }
+    //      res
+    //    }
 
     $(treeType) match {
       case "treePerRow" => newdf
       case "nodeTreePerRow" =>
         val rdd = df.sparkSession.sparkContext.parallelize(items.toSeq).map { item =>
           //find the top of one tree
-          val topTree = ROOTSBr.value.filter(f => f.id == fetchTopID(item)).head
+          //          val topTree = ROOTSBr.value.filter(f => f.id == fetchTopID(item)).head
 
-          // find the subTree of some item
-          val subTree = new ((IDParentID) => Option[IDParentID]) {
-            def apply(a: IDParentID): Option[IDParentID] = {
-              if (a.id == item.id) {
-                Option(a)
-              } else {
-                a.children.map(sub => apply(sub)).filter(f => f.isDefined).map(f => f.get).headOption
-              }
-            }
-          }
-          val computeTree = subTree(topTree)
+          //          // find the subTree of some item
+          //          val subTree = new ((IDParentID) => Option[IDParentID]) {
+          //            def apply(a: IDParentID): Option[IDParentID] = {
+          //              if (a.id == item.id) {
+          //                Option(a)
+          //              } else {
+          //                a.children.map(sub => apply(sub)).filter(f => f.isDefined).map(f => f.get).headOption
+          //              }
+          //            }
+          //          }
+          //          val computeTree = subTree(topTree)
 
           // collect all items of subTree
           val resultset = new mutable.HashSet[IDParentID]()
@@ -136,7 +136,9 @@ class SQLTreeBuildExt(override val uid: String) extends SQLAlg with Functions wi
               }
             }
           }
-          collectAll(computeTree.head)
+          if (item.children.size > 0) {
+            collectAll(item)
+          }
           Row.fromSeq(Seq(item.id.toString, resultset.map(f => f.id.toString).toSeq))
         }
         df.sparkSession.createDataFrame(rdd, StructType(Seq(
@@ -192,13 +194,12 @@ class SQLTreeBuildExt(override val uid: String) extends SQLAlg with Functions wi
       |+---+-------------+
       ||id |children     |
       |+---+-------------+
-      ||200|[200]        |
+      ||200|[]           |
       ||0  |[7]          |
       ||1  |[200, 2, 199]|
-      ||7  |[7]          |
+      ||7  |[]           |
       ||199|[200]        |
-      ||2  |[2]          |
-      |+---+-------------+
+      ||2  |[]           |
       |
       |if treeType == treePerRow
       |
