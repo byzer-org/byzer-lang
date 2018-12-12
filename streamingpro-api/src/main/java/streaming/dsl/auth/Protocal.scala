@@ -29,7 +29,7 @@ object TableType {
   val WEB = TableTypeMeta("web", Set("crawlersql"))
 
   def from(str: String) = {
-    List(HIVE, HBASE, HDFS, HTTP, JDBC, ES, TEMP).filter(f => f.includes.contains(str)).headOption
+    List(HIVE, HBASE, HDFS, HTTP, JDBC, ES, TEMP ,API ,WEB).filter(f => f.includes.contains(str)).headOption
   }
 }
 
