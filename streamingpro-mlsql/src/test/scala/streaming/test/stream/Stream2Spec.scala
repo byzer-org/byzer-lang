@@ -16,7 +16,7 @@ class Stream2Spec extends BasicSparkOperation with SpecFunctions with BasicMLSQL
       //执行sql
       implicit val spark = runtime.sparkSession
       // we suppose that if KAFKA_HOME is configured ,then there must be a kafka server exists
-      if (SparkCoreVersion.is_2_3_2() && KAFKA_1_0_HOME != null) {
+      if (KAFKA_1_0_HOME != null) {
 
         ShellCommand.execCmd("rm -rf /tmp/cpl3")
 
