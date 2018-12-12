@@ -1,6 +1,5 @@
 package streaming.test.stream
 
-import org.apache.spark.SparkCoreVersion
 import org.apache.spark.streaming.BasicSparkOperation
 import org.scalatest.BeforeAndAfterAll
 import streaming.common.shell.ShellCommand
@@ -18,7 +17,7 @@ class StreamSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
       //执行sql
       implicit val spark = runtime.sparkSession
       // we suppose that if KAFKA_HOME is configured ,then there must be a kafka server exists
-      if (SparkCoreVersion.is_2_3_2() && KAFKA_0_8_HOME != null) {
+      if (KAFKA_0_8_HOME != null) {
 
         ShellCommand.execCmd("rm -rf /tmp/cpl3")
 
