@@ -2,12 +2,12 @@ package streaming.core.strategy.platform
 
 import java.lang.reflect.Modifier
 import java.util.concurrent.atomic.AtomicReference
-import java.util.logging.Logger
 import java.util.{Map => JMap}
 
 import _root_.streaming.common.ScalaObjectReflect
 import _root_.streaming.core.StreamingproJobManager
 import _root_.streaming.dsl.mmlib.algs.bigdl.WowLoggerFilter
+import _root_.streaming.log.Logging
 import net.csdn.common.reflect.ReflectHelper
 import org.apache.spark._
 import org.apache.spark.ps.cluster.PSDriverBackend
@@ -20,9 +20,8 @@ import scala.collection.JavaConversions._
 /**
   * Created by allwefantasy on 30/3/2017.
   */
-class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with PlatformManagerListener {
+class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with PlatformManagerListener with Logging {
 
-  val logger = Logger.getLogger(getClass.getName)
   val configReader = MLSQLConf.createConfigReader(params.map(f => (f._1.toString, f._2.toString)))
 
   def name = "SPARK"
@@ -49,7 +48,7 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
 
 
   def createRuntime = {
-    logger.info("create Runtime...")
+    logInfo("create Runtime...")
 
     val conf = new SparkConf()
     params.filter(f =>
@@ -76,12 +75,20 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
       conf.setIfMissing("spark.speculation", "false")
     }
 
-//    if (MLSQLConf.MLSQL_PS_ENABLE.readFrom(configReader)) {
-//      if (!isLocalMaster(conf)) {
-//        logger.info("register worker.sink.pservice.class with org.apache.spark.ps.cluster.PSServiceSink")
-//        conf.set("spark.metrics.conf.executor.sink.pservice.class", "org.apache.spark.ps.cluster.PSServiceSink")
-//      }
-//    }
+    if (MLSQLConf.MLSQL_CLUSTER_PS_ENABLE.readFrom(configReader) && !isLocalMaster(conf)) {
+      logWarning(
+        s"""
+           |------------------------------------------------------------------------
+           |${MLSQLConf.MLSQL_CLUSTER_PS_ENABLE.key} is enabled by default. Please make sure
+           |you have the uber-jar of mlsql placed in --jars. Otherwise the executor will
+           |fail to start and the whole application will fails.
+           |------------------------------------------------------------------------
+          """.stripMargin)
+
+      logInfo("register worker.sink.pservice.class with org.apache.spark.ps.cluster.PSServiceSink")
+      conf.set("spark.metrics.conf.executor.sink.pservice.class", "org.apache.spark.ps.cluster.PSServiceSink")
+    }
+
 
     //    SQLDL4J.tm = SQLDL4J.init(isLocalMaster(conf))
 
@@ -90,7 +97,7 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
     def setHiveConnectionURL = {
       val url = MLSQLConf.MLSQL_HIVE_CONNECTION.readFrom(configReader)
       if (!url.isEmpty) {
-        logger.info("set hive javax.jdo.option.ConnectionURL=" + url)
+        logInfo("set hive javax.jdo.option.ConnectionURL=" + url)
         sparkSession.config("javax.jdo.option.ConnectionURL", url)
       }
     }
@@ -104,12 +111,12 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
     val isCarbonDataEnabled = MLSQLConf.MLSQL_ENABLE_CARBONDATA_SUPPORT.readFrom(configReader) && checkCarbonDataCoreCompatibility
 
     if (!checkCarbonDataCoreCompatibility) {
-      logger.warning(s"------- CarbonData do not support current version of spark [${SparkCoreVersion.exactVersion}], streaming.enableCarbonDataSupport will not take effect.--------")
+      logWarning(s"------- CarbonData do not support current version of spark [${SparkCoreVersion.exactVersion}], streaming.enableCarbonDataSupport will not take effect.--------")
     }
 
     val ss = if (isCarbonDataEnabled) {
 
-      logger.info("CarbonData enabled...")
+      logInfo("CarbonData enabled...")
       setHiveConnectionURL
       val carbonBuilder = Class.forName("org.apache.spark.sql.CarbonSession$CarbonBuilder").
         getConstructor(classOf[SparkSession.Builder]).
@@ -134,17 +141,17 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
 
     // parameter server should be enabled by default
 
-    if (params.getOrDefault(MLSQLConf.MLSQL_PS_ENABLE.key, "true").toString.toBoolean && isLocalMaster(conf)) {
-      logger.info("start LocalPSSchedulerBackend")
+    if (MLSQLConf.MLSQL_LOCAL_PS_ENABLE.readFrom(configReader) && isLocalMaster(conf)) {
+      logInfo("start LocalPSSchedulerBackend")
       localSchedulerBackend = new LocalPSSchedulerBackend(ss.sparkContext)
       localSchedulerBackend.start()
     }
 
-//    if (MLSQLConf.MLSQL_PS_ENABLE.readFrom(configReader) && !isLocalMaster(conf)) {
-//      logger.info("start PSDriverBackend")
-//      psDriverBackend = new PSDriverBackend(ss.sparkContext)
-//      psDriverBackend.start()
-//    }
+    if (MLSQLConf.MLSQL_CLUSTER_PS_ENABLE.readFrom(configReader) && !isLocalMaster(conf)) {
+      logInfo("start PSDriverBackend")
+      psDriverBackend = new PSDriverBackend(ss.sparkContext)
+      psDriverBackend.start()
+    }
 
     if (MLSQLConf.MLSQL_DISABLE_SPARK_LOG.readFrom(configReader)) {
       WowLoggerFilter.redirectSparkInfoLogs()
@@ -164,11 +171,11 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
 
 
   def registerUDF(clzz: String) = {
-    logger.info("register functions.....")
+    logInfo("register functions.....")
     Class.forName(clzz).getMethods.foreach { f =>
       try {
         if (Modifier.isStatic(f.getModifiers)) {
-          logger.info(f.getName)
+          logInfo(f.getName)
           f.invoke(null, sparkSession.udf)
         }
       } catch {
