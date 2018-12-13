@@ -76,12 +76,12 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
       conf.setIfMissing("spark.speculation", "false")
     }
 
-    if (MLSQLConf.MLSQL_PS_ENABLE.readFrom(configReader)) {
-      if (!isLocalMaster(conf)) {
-        logger.info("register worker.sink.pservice.class with org.apache.spark.ps.cluster.PSServiceSink")
-        conf.set("spark.metrics.conf.executor.sink.pservice.class", "org.apache.spark.ps.cluster.PSServiceSink")
-      }
-    }
+//    if (MLSQLConf.MLSQL_PS_ENABLE.readFrom(configReader)) {
+//      if (!isLocalMaster(conf)) {
+//        logger.info("register worker.sink.pservice.class with org.apache.spark.ps.cluster.PSServiceSink")
+//        conf.set("spark.metrics.conf.executor.sink.pservice.class", "org.apache.spark.ps.cluster.PSServiceSink")
+//      }
+//    }
 
     //    SQLDL4J.tm = SQLDL4J.init(isLocalMaster(conf))
 
@@ -140,11 +140,11 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
       localSchedulerBackend.start()
     }
 
-    if (MLSQLConf.MLSQL_PS_ENABLE.readFrom(configReader) && !isLocalMaster(conf)) {
-      logger.info("start PSDriverBackend")
-      psDriverBackend = new PSDriverBackend(ss.sparkContext)
-      psDriverBackend.start()
-    }
+//    if (MLSQLConf.MLSQL_PS_ENABLE.readFrom(configReader) && !isLocalMaster(conf)) {
+//      logger.info("start PSDriverBackend")
+//      psDriverBackend = new PSDriverBackend(ss.sparkContext)
+//      psDriverBackend.start()
+//    }
 
     if (MLSQLConf.MLSQL_DISABLE_SPARK_LOG.readFrom(configReader)) {
       WowLoggerFilter.redirectSparkInfoLogs()
