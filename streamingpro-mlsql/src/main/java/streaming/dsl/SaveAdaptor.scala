@@ -8,6 +8,8 @@ import org.apache.spark.sql._
 import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
 import org.apache.spark.sql.streaming.{DataStreamWriter, Trigger}
 
+import scala.collection.mutable.ArrayBuffer
+
 /**
   * Created by allwefantasy on 27/8/2017.
   */
@@ -25,7 +27,7 @@ class SaveAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
     var format = ""
     var option = Map[String, String]()
     var tableName = ""
-    var partitionByCol = Array[String]()
+    var partitionByCol = ArrayBuffer[String]()
 
     val owner = option.get("owner")
 
@@ -64,7 +66,9 @@ class SaveAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
         case s: IgnoreContext =>
           mode = SaveMode.Ignore
         case s: ColContext =>
-          partitionByCol = cleanStr(s.getText).split(",")
+          partitionByCol += cleanStr(s.identifier().getText)
+        case s: ColGroupContext =>
+          partitionByCol += cleanStr(s.col().identifier().getText)
         case s: ExpressionContext =>
           option += (cleanStr(s.qualifiedName().getText) -> evaluate(getStrOrBlockStr(s)))
         case s: BooleanExpressionContext =>
@@ -74,9 +78,9 @@ class SaveAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
     }
 
     if (scriptSQLExecListener.env().contains("stream")) {
-      new StreamSaveAdaptor(scriptSQLExecListener, option, oldDF, final_path, tableName, format, mode, partitionByCol).parse
+      new StreamSaveAdaptor(scriptSQLExecListener, option, oldDF, final_path, tableName, format, mode, partitionByCol.toArray).parse
     } else {
-      new BatchSaveAdaptor(scriptSQLExecListener, option, oldDF, final_path, tableName, format, mode, partitionByCol).parse
+      new BatchSaveAdaptor(scriptSQLExecListener, option, oldDF, final_path, tableName, format, mode, partitionByCol.toArray).parse
     }
     scriptSQLExecListener.setLastSelectTable(null)
 
