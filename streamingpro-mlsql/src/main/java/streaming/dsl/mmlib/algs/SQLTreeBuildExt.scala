@@ -108,7 +108,6 @@ class SQLTreeBuildExt(override val uid: String) extends SQLAlg with Functions wi
           var level = 0
           val collectAll = new ((IDParentID) => Int) {
             def apply(a: IDParentID): Int = {
-              if (resultset.contains(a)) return 1
               if (a.children.size == 0) {
                 resultset += a
                 1
@@ -128,9 +127,10 @@ class SQLTreeBuildExt(override val uid: String) extends SQLAlg with Functions wi
             }
           }
           level = computeLevel(item, 0)
-
-          if (item.children.size > 0) {
-            collectAll(item)
+          if (level < maxTimes) {
+            if (item.children.size > 0) {
+              collectAll(item)
+            }
           }
 
           Row.fromSeq(Seq(item.id.toString, level, resultset.map(f => f.id.toString).toSeq))
@@ -178,6 +178,7 @@ class SQLTreeBuildExt(override val uid: String) extends SQLAlg with Functions wi
       |{"id":7,"parentId":0}
       |{"id":199,"parentId":1}
       |{"id":200,"parentId":199}
+      |{"id":201,"parentId":199}
       |''';
       |
       |load jsonStr.`jsonStr` as data;
@@ -185,16 +186,17 @@ class SQLTreeBuildExt(override val uid: String) extends SQLAlg with Functions wi
       |
       |here are the result:
       |
-      |+---+-----+--------+
-      ||id |level|children|
-      |+---+-----+--------+
-      ||200|0    |[]      |
-      ||0  |1    |[7]     |
-      ||1  |2    |[2, 199]|
-      ||7  |0    |[]      |
-      ||199|1    |[200]   |
-      ||2  |0    |[]      |
-      |+---+-----+--------+
+      |+---+-----+------------------+
+      ||id |level|children          |
+      |+---+-----+------------------+
+      ||200|0    |[]                |
+      ||0  |1    |[7]               |
+      ||1  |2    |[200, 2, 201, 199]|
+      ||7  |0    |[]                |
+      ||201|0    |[]                |
+      ||199|1    |[200, 201]        |
+      ||2  |0    |[]                |
+      |+---+-----+------------------+
       |
       |if treeType == treePerRow
       |
