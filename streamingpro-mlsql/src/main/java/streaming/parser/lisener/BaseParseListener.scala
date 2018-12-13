@@ -105,4 +105,7 @@ abstract class BaseParseListenerextends extends DSLSQLListener {
   override def enterAsTableName(ctx: AsTableNameContext): Unit = {}
 
   override def exitAsTableName(ctx: AsTableNameContext): Unit = {}
+
+  override def enterColGroup(ctx: ColGroupContext): Unit = {}
+  override def exitColGroup(ctx: ColGroupContext): Unit = {}
 }

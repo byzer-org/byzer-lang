@@ -14,7 +14,7 @@ statement
 
 sql
     : 'load' format '.' path ('options'|'where')? expression? booleanExpression* 'as' tableName
-    | 'save' (overwrite | append | errorIfExists |ignore)* tableName 'as' format '.' path ('options'|'where')? expression? booleanExpression* (('partitionBy'|'partitionby') col)?
+    | 'save' (overwrite | append | errorIfExists |ignore)* tableName 'as' format '.' path ('options'|'where')? expression? booleanExpression* (('partitionBy'|'partitionby') col? colGroup*)?
     | 'select' ~(';')* 'as' tableName
     | 'insert' ~(';')*
     | 'create' ~(';')*
@@ -87,6 +87,10 @@ tableName
 
 functionName
     : identifier
+    ;
+
+colGroup
+    : ',' col
     ;
 
 col

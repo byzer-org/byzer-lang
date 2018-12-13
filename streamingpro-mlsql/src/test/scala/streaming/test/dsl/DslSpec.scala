@@ -2,9 +2,8 @@ package streaming.test.dsl
 
 import java.io.File
 
-import net.csdn.ServiceFramwork
-import net.csdn.bootstrap.Bootstrap
 import org.apache.spark.streaming.BasicSparkOperation
+import streaming.common.shell.ShellCommand
 import streaming.core.strategy.platform.SparkRuntime
 import streaming.core.{BasicMLSQLConfig, NotToRunTag, SpecFunctions}
 import streaming.dsl.auth.TableType
@@ -62,6 +61,29 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
       val sq = createSSEL
       ScriptSQLExec.parse(loadSQLScriptStr("save-filenum"), sq)
       assume(new File("/tmp/william/tmp/abc/").list().filter(f => f.endsWith(".json")).size == 3)
+    }
+  }
+
+  "save with partition by options" should "work fine" taggedAs (NotToRunTag) in {
+
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+      //执行sql
+      implicit val spark = runtime.sparkSession
+      val sq = createSSEL
+      ShellCommand.execCmd("rm -rf /tmp/william/tmp/abc")
+      ScriptSQLExec.parse(
+        s"""
+           |select 1 as jack,2 as bj,3 as kk as table1;
+           |save overwrite  table1 as parquet.`/tmp/abc` partitionBy jack, bj;
+         """.stripMargin, sq)
+      assume(new File("/tmp/william/tmp/abc/jack=1/bj=2").exists())
+
+      ScriptSQLExec.parse(
+        s"""
+           |select 1 as jack,2 as bj,3 as kk as table1;
+           |save overwrite  table1 as parquet.`/tmp/abc` partitionBy jack;
+         """.stripMargin, sq)
+      assume(new File("/tmp/william/tmp/abc/jack=1/").list().filter(f => f.endsWith(".parquet")).size > 0)
     }
   }
 
@@ -574,7 +596,7 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
 
     }
   }
-  
+
 }
 
 
