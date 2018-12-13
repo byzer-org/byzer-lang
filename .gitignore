@@ -131,6 +131,7 @@ streamingpro-commons/logs
 streamingpro-dsl/logs/
 streamingpro-dsl-legacy/logs/
 streamingpro-api/logs
+streamingpro-cluster/logs
 
 dev/create-release/do-release.sh
 dev/mlsqltestssupport/__pycache__/
