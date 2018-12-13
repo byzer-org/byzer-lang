@@ -41,6 +41,13 @@ class SQLTreeBuildExt(override val uid: String) extends SQLAlg with Functions wi
       set(treeType, "treePerRow")
     }
 
+    params.get(recurringDependencyBreakTimes.name).
+      map(m => set(recurringDependencyBreakTimes, m.toInt)).getOrElse {
+      set(recurringDependencyBreakTimes, 1000)
+    }
+
+    val maxTimes = $(recurringDependencyBreakTimes)
+
     val parentIdColType = df.schema.filter(f => f.name == $(parentIdCol)).head
     val t = if ($(topLevelMark) != null) {
       parentIdColType.dataType match {
@@ -77,6 +84,7 @@ class SQLTreeBuildExt(override val uid: String) extends SQLAlg with Functions wi
       val computeLevel = new ((Seq[Row], Int) => Int) {
         def apply(a: Seq[Row], level: Int): Int = {
           if (a.size == 0) return level
+          if (level > maxTimes) return level
           return a.map { row =>
             val index = a.head.schema.zipWithIndex.filter(s => s._1.name == "children").head._2
             val value = row.getSeq[Row](index)
@@ -90,43 +98,16 @@ class SQLTreeBuildExt(override val uid: String) extends SQLAlg with Functions wi
     val computeLevelUDF = F.udf(computeLevel1, IntegerType)
     newdf = newdf.withColumn("level", computeLevelUDF(F.col("children"), F.lit(0)))
 
-    val idToItem = items.map(f => (f.id, f)).toMap
-    //    val ROOTSBr = df.sparkSession.sparkContext.broadcast(ROOTS)
-    //    val idToItemBr = df.sparkSession.sparkContext.broadcast(idToItem)
-
-    //    val fetchTopID = (item: IDParentID) => {
-    //      var res = item.id
-    //      var stopCond = 100000
-    //      while (idToItemBr.value(res).parentID != null && idToItemBr.value(res).parentID != t && stopCond > 0) {
-    //        res = idToItemBr.value(res).parentID
-    //        stopCond -= 1
-    //      }
-    //      res
-    //    }
-
     $(treeType) match {
       case "treePerRow" => newdf
       case "nodeTreePerRow" =>
+
         val rdd = df.sparkSession.sparkContext.parallelize(items.toSeq).map { item =>
-          //find the top of one tree
-          //          val topTree = ROOTSBr.value.filter(f => f.id == fetchTopID(item)).head
 
-          //          // find the subTree of some item
-          //          val subTree = new ((IDParentID) => Option[IDParentID]) {
-          //            def apply(a: IDParentID): Option[IDParentID] = {
-          //              if (a.id == item.id) {
-          //                Option(a)
-          //              } else {
-          //                a.children.map(sub => apply(sub)).filter(f => f.isDefined).map(f => f.get).headOption
-          //              }
-          //            }
-          //          }
-          //          val computeTree = subTree(topTree)
-
-          // collect all items of subTree
           val resultset = new mutable.HashSet[IDParentID]()
           val collectAll = new ((IDParentID) => Int) {
             def apply(a: IDParentID): Int = {
+              if (resultset.contains(a)) return 1
               if (a.children.size == 0) {
                 resultset += a
                 1
@@ -213,6 +194,9 @@ class SQLTreeBuildExt(override val uid: String) extends SQLAlg with Functions wi
       |+----------------------------------------+---+--------+-----+
       |
       |Notice that children's datatype is Row, you can change it to json so you can use python to deal with it.
+      |
+      |The max level should lower than this 1000(set by recurringDependencyBreakTimes).
+      |When travel a tree, once a node is found two times, then the subtree will be ignore
     """.stripMargin)
 
   override def coreCompatibility: Seq[CoreVersion] = super.coreCompatibility
@@ -221,6 +205,9 @@ class SQLTreeBuildExt(override val uid: String) extends SQLAlg with Functions wi
   final val parentIdCol: Param[String] = new Param[String](this, "parentIdCol", "")
   final val topLevelMark: Param[String] = new Param[String](this, "topLevelMark", "")
   final val treeType: Param[String] = new Param[String](this, "treeType", "treePerRow|nodeTreePerRow")
+  final val recurringDependencyBreakTimes: Param[Int] = new Param[Int](this, "recurringDependencyBreakTimes",
+    "default:1000  the max level should lower than this value; " +
+      "When travel a tree, once a node is found two times, then the subtree will be ignore")
 }
 
 case class IDParentID(id: Any, parentID: Any, children: scala.collection.mutable.ArrayBuffer[IDParentID])
