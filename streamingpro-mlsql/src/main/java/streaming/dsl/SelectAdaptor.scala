@@ -22,7 +22,7 @@ class SelectAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAda
 
     val chunks = wowText.split("\\s+")
     val tableName = chunks.last.replace(";", "")
-    val sql = wowText.replaceAll(s"as[\\s|\\n]+${tableName}", "")
+    val sql = wowText.replaceAll(s"((?i)as)[\\s|\\n]+${tableName}", "")
     scriptSQLExecListener.sparkSession.sql(sql).createOrReplaceTempView(tableName)
     scriptSQLExecListener.setLastSelectTable(tableName)
   }
