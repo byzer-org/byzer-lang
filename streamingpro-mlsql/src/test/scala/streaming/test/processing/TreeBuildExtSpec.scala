@@ -82,7 +82,14 @@ class TreeBuildExtSpec extends BasicSparkOperation with SpecFunctions with Basic
           |load jsonStr.`jsonStr` as data;
           |run data as TreeBuildExt.`` where idCol="id" and parentIdCol="parentId" and treeType="nodeTreePerRow" as result;
         """.stripMargin, sq)
-      spark.sql("select * from result").show(false)
+      val rows = spark.sql("select * from result").collect()
+      val wow200 = rows.filter(f => f.getAs[String]("id") == "200").head
+      assume(wow200.getAs[Int]("level") == 0)
+      assume(wow200.getSeq[String](2).size == 0)
+
+      val wow1 = rows.filter(f => f.getAs[String]("id") == "1").head
+      assume(wow1.getAs[Int]("level") == 2)
+      assume(wow1.getSeq[String](2).size == 2)
     }
   }
 

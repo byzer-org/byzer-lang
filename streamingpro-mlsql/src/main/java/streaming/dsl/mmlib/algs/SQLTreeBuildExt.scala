@@ -105,6 +105,7 @@ class SQLTreeBuildExt(override val uid: String) extends SQLAlg with Functions wi
         val rdd = df.sparkSession.sparkContext.parallelize(items.toSeq).map { item =>
 
           val resultset = new mutable.HashSet[IDParentID]()
+          var level = 0
           val collectAll = new ((IDParentID) => Int) {
             def apply(a: IDParentID): Int = {
               if (resultset.contains(a)) return 1
@@ -117,13 +118,25 @@ class SQLTreeBuildExt(override val uid: String) extends SQLAlg with Functions wi
               }
             }
           }
+          val computeLevel = new ((IDParentID, Int) => Int) {
+            def apply(a: IDParentID, level: Int): Int = {
+              if (a.children.size == 0) return level
+              if (level > maxTimes) return level
+              return a.children.map { row =>
+                apply(row, level + 1)
+              }.max
+            }
+          }
+          level = computeLevel(item, 0)
+
           if (item.children.size > 0) {
             collectAll(item)
           }
-          Row.fromSeq(Seq(item.id.toString, resultset.map(f => f.id.toString).toSeq))
+
+          Row.fromSeq(Seq(item.id.toString, level, resultset.map(f => f.id.toString).toSeq))
         }
         df.sparkSession.createDataFrame(rdd, StructType(Seq(
-          StructField(name = "id", dataType = StringType), StructField(name = "children", dataType = ArrayType(StringType))
+          StructField(name = "id", dataType = StringType), StructField(name = "level", dataType = IntegerType), StructField(name = "children", dataType = ArrayType(StringType))
         )))
 
     }
@@ -172,15 +185,16 @@ class SQLTreeBuildExt(override val uid: String) extends SQLAlg with Functions wi
       |
       |here are the result:
       |
-      |+---+-------------+
-      ||id |children     |
-      |+---+-------------+
-      ||200|[]           |
-      ||0  |[7]          |
-      ||1  |[200, 2, 199]|
-      ||7  |[]           |
-      ||199|[200]        |
-      ||2  |[]           |
+      |+---+-----+--------+
+      ||id |level|children|
+      |+---+-----+--------+
+      ||200|0    |[]      |
+      ||0  |1    |[7]     |
+      ||1  |2    |[2, 199]|
+      ||7  |0    |[]      |
+      ||199|1    |[200]   |
+      ||2  |0    |[]      |
+      |+---+-----+--------+
       |
       |if treeType == treePerRow
       |
