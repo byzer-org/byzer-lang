@@ -163,13 +163,14 @@ class SQLTreeBuildExt(override val uid: String) extends SQLAlg with Functions wi
 
   override def doc: Doc = Doc(HtmlDoc,
     """
-      |  TreeBuildExt used to build a tree when you have father - child relationship, please
-      |  check the codeExample to see how to use it.
+      |  TreeBuildExt used to build a tree when you have father - child relationship in some table,
+      |  please check the codeExample to see how to use it.
     """.stripMargin)
 
 
   override def codeExample: Code = Code(SQLCode, CodeExampleText.jsonStr +
     """
+      |```sql
       |set jsonStr = '''
       |{"id":0,"parentId":null}
       |{"id":1,"parentId":null}
@@ -183,9 +184,11 @@ class SQLTreeBuildExt(override val uid: String) extends SQLAlg with Functions wi
       |
       |load jsonStr.`jsonStr` as data;
       |run data as TreeBuildExt.`` where idCol="id" and parentIdCol="parentId" and treeType="nodeTreePerRow" as result;
+      |```
       |
-      |here are the result:
+      |Here are the result:
       |
+      |```
       |+---+-----+------------------+
       ||id |level|children          |
       |+---+-----+------------------+
@@ -197,6 +200,23 @@ class SQLTreeBuildExt(override val uid: String) extends SQLAlg with Functions wi
       ||199|1    |[200, 201]        |
       ||2  |0    |[]                |
       |+---+-----+------------------+
+      |```
+      |
+      |Notice that we will convert the id to string in final result. That means id is string type, and children are array of
+      |string and you should be careful when comparing.
+      |
+      |The max level should lower than 1000(You can set by parameter recurringDependencyBreakTimes).
+      |When you found some rows are weired, the level >= 1000 and the children is empty, this means
+      |there are recurring dependency and we can not deal with this situation yet.
+      |
+      |Here is the example:
+      |
+      |```
+      |+---+-----+------------------+
+      ||id |level|children          |
+      |+---+-----+------------------+
+      ||7  |1000    |[]             |
+      |```
       |
       |if treeType == treePerRow
       |
@@ -211,8 +231,6 @@ class SQLTreeBuildExt(override val uid: String) extends SQLAlg with Functions wi
       |
       |Notice that children's datatype is Row, you can change it to json so you can use python to deal with it.
       |
-      |The max level should lower than this 1000(set by recurringDependencyBreakTimes).
-      |When travel a tree, once a node is found two times, then the subtree will be ignore
     """.stripMargin)
 
   override def coreCompatibility: Seq[CoreVersion] = super.coreCompatibility
