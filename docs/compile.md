@@ -5,7 +5,7 @@
 ```
 git clone https://github.com/allwefantasy/ServiceFramework.git
 cd ServiceFramework
-mvn install -Pscala-2.11 -Pjetty-9 -Pweb-include-jetty-9
+mvn install -DskipTests -Pscala-2.11 -Pjetty-9 -Pweb-include-jetty-9
 ```
 
 
