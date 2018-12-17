@@ -35,11 +35,11 @@ You also can refer this: [Compile Assistance](https://streamingpro.rebiekong.com
 git clone https://github.com/allwefantasy/streamingpro .
 cd streamingpro
 
-./dev/make-distribution.sh
+export MLSQL_SPARK_VERSIOIN=2.3;export DRY_RUN=false && ./dev/make-distribution.sh
 
 
-cp streamingpro-bin-1.1.3.tgz /tmp
-cd /tmp && tar xzvf  streamingpro-bin-1.1.3.tgz
+cp streamingpro-bin-x.x.x.tgz /tmp
+cd /tmp && tar xzvf  streamingpro-bin-x.x.x.tgz
 cd /tmp/streamingpro
 
 export SPARK_HOME="....." ; ./start-local.sh
@@ -51,13 +51,15 @@ export SPARK_HOME="....." ; ./start-local.sh
 * Chen Fu/cfmcgrady#gmail.com
 * Geng Yifei/pigeongeng#gmail.com
 * wanp1989/wanp1989#126.com
+* chenliang613
+* RebieKong
 * CoderOverflow
 * ghsuzzy
 * xubo245
 * zhuohuwu0603
 * liyubin117
-* RebieKong
 * 9bbword
+
 
 ----------
 [![HitCount](http://hits.dwyl.io/allwefantasy/streamingpro.svg)](http://hits.dwyl.io/allwefantasy/streamingpro)
