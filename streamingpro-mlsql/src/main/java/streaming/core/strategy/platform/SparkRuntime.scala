@@ -4,7 +4,7 @@ import java.lang.reflect.Modifier
 import java.util.concurrent.atomic.AtomicReference
 import java.util.{Map => JMap}
 
-import _root_.streaming.common.ScalaObjectReflect
+import _root_.streaming.common.{NetUtils, ScalaObjectReflect}
 import _root_.streaming.core.StreamingproJobManager
 import _root_.streaming.dsl.mmlib.algs.bigdl.WowLoggerFilter
 import _root_.streaming.log.Logging
@@ -96,6 +96,13 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
 
       logInfo("register worker.sink.pservice.class with org.apache.spark.ps.cluster.PSServiceSink")
       conf.set("spark.metrics.conf.executor.sink.pservice.class", "org.apache.spark.ps.cluster.PSServiceSink")
+      val holdPort = NetUtils.availableAndReturn(7778, 7999)
+
+      if (holdPort == null) {
+        throw new RuntimeException(s"Fail to create for ps cluster, maybe executor cannot bind port ")
+      }
+      val port = holdPort.getLocalPort
+      conf.set(MLSQLConf.MLSQL_CLUSTER_PS_DRIVER_PORT.key, port.toString)
     }
 
 
