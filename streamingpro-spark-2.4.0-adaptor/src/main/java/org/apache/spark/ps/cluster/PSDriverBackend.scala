@@ -2,7 +2,7 @@ package org.apache.spark.ps.cluster
 
 import java.util.concurrent.atomic.AtomicReference
 
-import org.apache.spark.SparkContext
+import org.apache.spark.{MLSQLConf, SparkContext}
 import org.apache.spark.internal.Logging
 import org.apache.spark.internal.config._
 import org.apache.spark.rpc.{RpcEndpointRef, RpcEnv}
@@ -21,7 +21,7 @@ class PSDriverBackend(sc: SparkContext) extends Logging {
     val isDriver = sc.env.executorId == SparkContext.DRIVER_IDENTIFIER
     val bindAddress = sc.conf.get(DRIVER_BIND_ADDRESS)
     val advertiseAddress = sc.conf.get(DRIVER_HOST_ADDRESS)
-    var port = sc.conf.getOption("spark.ps.driver.port").getOrElse("7777").toInt
+    var port = sc.conf.getOption(MLSQLConf.MLSQL_CLUSTER_PS_DRIVER_PORT.key).getOrElse("7777").toInt
     val ioEncryptionKey = if (sc.conf.get(IO_ENCRYPTION_ENABLED)) {
       Some(CryptoStreamUtils.createKey(sc.conf))
     } else {
