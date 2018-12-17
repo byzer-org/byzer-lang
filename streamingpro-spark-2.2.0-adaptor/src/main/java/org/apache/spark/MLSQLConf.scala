@@ -67,6 +67,12 @@ object MLSQLConf {
       |MLSQL supports directly communicating with executor if you set this true.
     """.stripMargin).booleanConf.createWithDefault(false)
 
+  val MLSQL_CLUSTER_PS_DRIVER_PORT: ConfigEntry[Int] = MLSQLConfigBuilder("streaming.ps.cluster.driver.port").doc(
+    """
+      |ps driver port
+    """.stripMargin).intConf.createWithDefault(7777)
+
+
   val MLSQL_HIVE_CONNECTION = MLSQLConfigBuilder("streaming.hive.javax.jdo.option.ConnectionURL").doc(
     """
       |Use this to configure `hive.javax.jdo.option.ConnectionURL`
