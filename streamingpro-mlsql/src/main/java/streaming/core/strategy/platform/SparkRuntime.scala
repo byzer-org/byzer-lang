@@ -87,7 +87,7 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
            |for exmaple:
            |
            |--jars ./streamingpro-mlsql-spark_2.x-x.x.x-SNAPSHOT.jar
-           |--conf "spark.executor.extraClassPath=streamingpro-mlsql-spark_2.x-x.x.x-SNAPSHOT.jar" 
+           |--conf "spark.executor.extraClassPath=streamingpro-mlsql-spark_2.x-x.x.x-SNAPSHOT.jar"
            |
            |Otherwise the executor will
            |fail to start and the whole application will fails.

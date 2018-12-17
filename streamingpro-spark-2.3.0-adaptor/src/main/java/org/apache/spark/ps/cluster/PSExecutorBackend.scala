@@ -52,6 +52,9 @@ class PSExecutorBackend(env: SparkEnv, override val rpcEnv: RpcEnv, psDriverUrl:
       HDFSOperator.copyToLocalFile(destPath, modelPath, true)
       context.reply(true)
     }
+    case Message.Ping =>
+      logInfo(s"received message ${Message.Ping}")
+      context.reply(Message.Pong(psExecutorId))
   }
 }
 

@@ -25,4 +25,8 @@ object Message {
 
   case class CopyModelToLocal(modelPath: String, destPath: String)
 
+  case object Ping
+
+  case class Pong(executorId: String)
+
 }
