@@ -8,6 +8,7 @@ Inputs are specified with the following environment variables:
 
 MLSQL_SPARK_VERSIOIN - the spark version, 2.2/2.3/2.4
 DRY_RUN true|false
+DISTRIBUTION true|false
 EOF
   exit 1
 }
@@ -19,7 +20,7 @@ if [[ $@ == *"help"* ]]; then
   exit_with_usage
 fi
 
-for env in MLSQL_SPARK_VERSIOIN DRY_RUN; do
+for env in MLSQL_SPARK_VERSIOIN DRY_RUN DISTRIBUTION; do
   if [[ -z "${!env}" ]]; then
     echo "===$env must be set to run this script==="
     echo "===Please run ./dev/package.sh help to get how to use.==="
@@ -27,12 +28,15 @@ for env in MLSQL_SPARK_VERSIOIN DRY_RUN; do
   fi
 done
 
+if [[ ${DRY_RUN} != "true" ]];then
 rm -rf /tmp/temp_ServiceFramework
 git clone --depth 1 https://github.com/allwefantasy/ServiceFramework.git /tmp/temp_ServiceFramework
 cd /tmp/temp_ServiceFramework
 mvn install -DskipTests -Pjetty-9 -Pweb-include-jetty-9
 
 cd -
+fi
+
 
 BASE_PROFILES="-Pscala-2.11 -Ponline -Phive-thrift-server -Pcarbondata  -Pcrawler"
 
@@ -44,20 +48,22 @@ fi
 
 BASE_PROFILES="$BASE_PROFILES -Pspark-$MLSQL_SPARK_VERSIOIN.0 -Pstreamingpro-spark-$MLSQL_SPARK_VERSIOIN.0-adaptor"
 
+if [[ ${DISTRIBUTION} == "true" ]];then
+BASE_PROFILES="$BASE_PROFILES -Passembly"
+else
+BASE_PROFILES="$BASE_PROFILES -Pshade -pl streamingpro-mlsql -am"
+fi
+
 export MAVEN_OPTS="-Xmx6000m"
 
 if [[ ${DRY_RUN} == "true" ]];then
 
 cat << EOF
-mvn clean package \
--Pshade \
--DskipTests \
--pl streamingpro-mlsql \
--am ${BASE_PROFILES}
+mvn clean package  -DskipTests ${BASE_PROFILES}
 EOF
 
 else
-mvn clean package -Pshade -DskipTests -pl streamingpro-mlsql -am ${BASE_PROFILES}
+mvn clean package  -DskipTests ${BASE_PROFILES}
 fi
 
 
