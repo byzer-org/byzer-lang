@@ -16,6 +16,12 @@
             <groupId>com.salesforce.transmogrifai</groupId>
             <artifactId>transmogrifai-core_2.11</artifactId>
             <version>0.3.4</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.optimaize.languagedetector</groupId>
+                    <artifactId>language-detector</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.optimaize.languagedetector</groupId>

@@ -37,6 +37,10 @@ class PSDriverEndpoint(sc: SparkContext, override val rpcEnv: RpcEnv)
           ed._2.executorEndpoint.askSync[Boolean](Message.TensorFlowModelClean(modelPath))
         }
       }
+    case Message.Pong(id) =>
+      logInfo(s"received message ${Message.Pong} from executor ${id}!")
+    case Message.Ping =>
+      ping
   }
 
   override def receiveAndReply(context: RpcCallContext): PartialFunction[Any, Unit] = {
@@ -68,6 +72,20 @@ class PSDriverEndpoint(sc: SparkContext, override val rpcEnv: RpcEnv)
         }
       }
       context.reply(true)
+    case Message.Ping =>
+      ping
+      context.reply(true)
+  }
+
+  private def ping: Unit = {
+    logInfo("received ping message")
+    val ks = sc.getExecutorIds().toSet
+    executorDataMap.foreach { ed =>
+      if (ks.contains(ed._1)) {
+        val response = ed._2.executorEndpoint.askSync[Message.Pong](Message.Ping)
+        self.send(response)
+      }
+    }
 
   }
 

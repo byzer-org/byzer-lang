@@ -481,6 +481,13 @@ class RestController extends ApplicationController {
     render(s"""{"msg":${res}""")
   }
 
+  @At(path = Array("/debug/executor/ping"), types = Array(GET, POST))
+  def pingExecuotrs = {
+    val psDriverBackend = runtime.asInstanceOf[SparkRuntime].psDriverBackend
+    psDriverBackend.psDriverRpcEndpointRef.ask(Message.Ping)
+    render("{}")
+  }
+
   @At(path = Array("/instance/resource"), types = Array(GET, POST))
   def instanceResource = {
     val session = runtime.asInstanceOf[SparkRuntime].sparkSession
