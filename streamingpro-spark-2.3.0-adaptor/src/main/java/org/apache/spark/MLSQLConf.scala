@@ -67,7 +67,7 @@ object MLSQLConf {
       |MLSQL supports directly communicating with executor if you set this true.
     """.stripMargin).booleanConf.createWithDefault(false)
 
-  val MLSQL_CLUSTER_PS_DRIVER_PORT: ConfigEntry[Int] = MLSQLConfigBuilder("streaming.ps.cluster.driver.port").doc(
+  val MLSQL_CLUSTER_PS_DRIVER_PORT: ConfigEntry[Int] = MLSQLConfigBuilder("spark.ps.cluster.driver.port").doc(
     """
       |ps driver port
     """.stripMargin).intConf.createWithDefault(7777)
