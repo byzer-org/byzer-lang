@@ -82,12 +82,12 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
            |${MLSQLConf.MLSQL_CLUSTER_PS_ENABLE.key} is enabled. Please make sure
            |you have the uber-jar of mlsql placed in
            |1. --jars
-           |2. --conf "spark.executor.extraClassPath=[your jar name in jars]" \
+           |2. --conf "spark.executor.extraClassPath=[your jar name in jars]"
            |
            |for exmaple:
            |
-           |--jars ./streamingpro-mlsql-spark_2.x-x.x.x-SNAPSHOT.jar \
-           |--conf "spark.executor.extraClassPath=streamingpro-mlsql-spark_2.x-x.x.x-SNAPSHOT.jar" \
+           |--jars ./streamingpro-mlsql-spark_2.x-x.x.x-SNAPSHOT.jar
+           |--conf "spark.executor.extraClassPath=streamingpro-mlsql-spark_2.x-x.x.x-SNAPSHOT.jar" 
            |
            |Otherwise the executor will
            |fail to start and the whole application will fails.
