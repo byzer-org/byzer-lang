@@ -477,8 +477,8 @@ class RestController extends ApplicationController {
   @At(path = Array("/test"), types = Array(GET, POST))
   def test = {
     val psDriverBackend = runtime.asInstanceOf[SparkRuntime].psDriverBackend
-    psDriverBackend.psDriverRpcEndpointRef.send(Message.TensorFlowModelClean("/tmp/ok"))
-    render("{}")
+    val res = psDriverBackend.psDriverRpcEndpointRef.ask[Boolean](Message.CopyModelToLocal(param("hdfs"), param("local")))
+    render(s"""{"msg":${res}""")
   }
 
   @At(path = Array("/instance/resource"), types = Array(GET, POST))
