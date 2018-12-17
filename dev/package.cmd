@@ -60,6 +60,7 @@ rd %temp%\temp_ServiceFramework /s /q
 git clone --depth 1 https://github.com/allwefantasy/ServiceFramework.git  %temp%\temp_ServiceFramework
 cd /d %temp%\temp_ServiceFramework
 call mvn install -DskipTests -Pjetty-9 -Pweb-include-jetty-9
+rd %temp%\temp_ServiceFramework /s /q
 
 cd /d %MLSQL_PATH%
 
