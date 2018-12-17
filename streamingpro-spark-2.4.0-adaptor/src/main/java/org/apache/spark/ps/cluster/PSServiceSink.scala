@@ -83,8 +83,6 @@ class PSServiceSink(val property: Properties, val registry: MetricRegistry,
     psDriverUrl = "spark://ps-driver-endpoint@" + psDriverHost + ":" + psDriverPort
   }
 
-  parseArgs
-
   def createRpcEnv = {
     val isDriver = env.executorId == SparkContext.DRIVER_IDENTIFIER
     val bindAddress = hostname
@@ -108,6 +106,7 @@ class PSServiceSink(val property: Properties, val registry: MetricRegistry,
         Thread.sleep(3000)
         logInfo(s"start PSExecutor;env:${env}")
         if (env.executorId != SparkContext.DRIVER_IDENTIFIER) {
+          parseArgs
           val rpcEnv = createRpcEnv
           val pSExecutorBackend = new PSExecutorBackend(env, rpcEnv, psDriverUrl, psExecutorId, hostname, cores)
           PSExecutorBackend.executorBackend = Some(pSExecutorBackend)

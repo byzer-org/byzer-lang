@@ -1,16 +1,7 @@
 package org.apache.spark.ps.cluster
 
-import java.lang.management.ManagementFactory
 import java.net.URL
 import java.util.Properties
-
-import com.codahale.metrics.MetricRegistry
-import org.apache.spark.internal.Logging
-import org.apache.spark.{MLSQLConf, SecurityManager, SparkContext, SparkEnv}
-import org.apache.spark.internal.config._
-import org.apache.spark.metrics.sink.Sink
-import org.apache.spark.rpc.RpcEnv
-import org.apache.spark.security.CryptoStreamUtils
 
 import scala.collection.mutable
 
@@ -83,9 +74,7 @@ class PSServiceSink(val property: Properties, val registry: MetricRegistry,
     psDriverHost = host
     psDriverUrl = "spark://ps-driver-endpoint@" + psDriverHost + ":" + psDriverPort
   }
-
-  parseArgs
-
+  
   def createRpcEnv = {
     val isDriver = env.executorId == SparkContext.DRIVER_IDENTIFIER
     val bindAddress = hostname
@@ -109,6 +98,7 @@ class PSServiceSink(val property: Properties, val registry: MetricRegistry,
         Thread.sleep(3000)
         logInfo(s"start PSExecutor;env:${env}")
         if (env.executorId != SparkContext.DRIVER_IDENTIFIER) {
+          parseArgs
           val rpcEnv = createRpcEnv
           val pSExecutorBackend = new PSExecutorBackend(env, rpcEnv, psDriverUrl, psExecutorId, hostname, cores)
           PSExecutorBackend.executorBackend = Some(pSExecutorBackend)
