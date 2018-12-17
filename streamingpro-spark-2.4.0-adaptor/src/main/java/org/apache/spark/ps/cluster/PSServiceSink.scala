@@ -26,7 +26,7 @@ class PSServiceSink(val property: Properties, val registry: MetricRegistry,
   var hostname: String = null
   var cores: Int = 0
   var appId: String = null
-  val psDriverPort = 7777
+  var psDriverPort = 7777
   var psDriverHost: String = null
   var workerUrl: Option[String] = None
   val userClassPath = new mutable.ListBuffer[URL]()

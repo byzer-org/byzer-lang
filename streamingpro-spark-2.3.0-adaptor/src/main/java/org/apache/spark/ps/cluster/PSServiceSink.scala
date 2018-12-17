@@ -1,16 +1,15 @@
 package org.apache.spark.ps.cluster
 
-import java.lang.management.ManagementFactory
 import java.net.URL
 import java.util.Properties
 
 import com.codahale.metrics.MetricRegistry
 import org.apache.spark.internal.Logging
-import org.apache.spark.{SecurityManager, SparkContext, SparkEnv}
 import org.apache.spark.internal.config._
 import org.apache.spark.metrics.sink.Sink
 import org.apache.spark.rpc.RpcEnv
 import org.apache.spark.security.CryptoStreamUtils
+import org.apache.spark.{MLSQLConf, SecurityManager, SparkContext, SparkEnv}
 
 import scala.collection.mutable
 
@@ -26,7 +25,7 @@ class PSServiceSink(val property: Properties, val registry: MetricRegistry,
   var hostname: String = null
   var cores: Int = 0
   var appId: String = null
-  val psDriverPort = 7777
+  var psDriverPort = 7777
   var psDriverHost: String = null
   var workerUrl: Option[String] = None
   val userClassPath = new mutable.ListBuffer[URL]()
@@ -80,6 +79,7 @@ class PSServiceSink(val property: Properties, val registry: MetricRegistry,
     }
     val Array(host, port) = psDriverUrl.split(":")
     psDriverHost = host
+    psDriverPort = env.conf.getInt(MLSQLConf.MLSQL_CLUSTER_PS_DRIVER_PORT.key, 7777)
     psDriverUrl = "spark://ps-driver-endpoint@" + psDriverHost + ":" + psDriverPort
   }
 

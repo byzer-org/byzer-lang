@@ -6,7 +6,7 @@ import java.util.Properties
 
 import com.codahale.metrics.MetricRegistry
 import org.apache.spark.internal.Logging
-import org.apache.spark.{SecurityManager, SparkContext, SparkEnv}
+import org.apache.spark.{MLSQLConf, SecurityManager, SparkContext, SparkEnv}
 import org.apache.spark.internal.config._
 import org.apache.spark.metrics.sink.Sink
 import org.apache.spark.rpc.RpcEnv
@@ -26,7 +26,7 @@ class PSServiceSink(val property: Properties, val registry: MetricRegistry,
   var hostname: String = null
   var cores: Int = 0
   var appId: String = null
-  val psDriverPort = 7777
+  var psDriverPort = 7777
   var psDriverHost: String = null
   var workerUrl: Option[String] = None
   val userClassPath = new mutable.ListBuffer[URL]()
@@ -79,6 +79,7 @@ class PSServiceSink(val property: Properties, val registry: MetricRegistry,
       psDriverUrl = psDriverUrl.split("@").last
     }
     val Array(host, port) = psDriverUrl.split(":")
+    psDriverPort = env.conf.getInt(MLSQLConf.MLSQL_CLUSTER_PS_DRIVER_PORT.key, 7777)
     psDriverHost = host
     psDriverUrl = "spark://ps-driver-endpoint@" + psDriverHost + ":" + psDriverPort
   }
