@@ -16,6 +16,7 @@ import org.apache.spark.sql.mlsql.session.{SessionIdentifier, SessionManager}
 import org.apache.spark.sql.{SQLContext, SparkSession}
 
 import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 
 /**
   * Created by allwefantasy on 30/3/2017.
@@ -64,7 +65,8 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
     conf.setAppName(MLSQLConf.MLSQL_NAME.readFrom(configReader))
 
     def isLocalMaster(conf: SparkConf): Boolean = {
-      val master = MLSQLConf.MLSQL_MASTER.readFrom(configReader).getOrElse("")
+//      val master = MLSQLConf.MLSQL_MASTER.readFrom(configReader).getOrElse("")
+      val master = conf.get("spark.master", "")
       master == "local" || master.startsWith("local[")
     }
 
@@ -172,6 +174,7 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
     if (MLSQLConf.MLSQL_DISABLE_SPARK_LOG.readFrom(configReader)) {
       WowLoggerFilter.redirectSparkInfoLogs()
     }
+    show(params.asScala.map(kv => (kv._1.toString, kv._2.toString)).toMap)
     ss
   }
 
@@ -241,6 +244,23 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
   }
 
   override def startHttpServer: Unit = {}
+
+  private def show(conf: Map[String, String]) {
+    val keyLength = conf.keys.map(_.size).max
+    val valueLength = conf.values.map(_.size).max
+    val header = "-" * (keyLength + valueLength + 3)
+    logInfo("mlsql server start with configuration!")
+    logInfo(header)
+    conf.map {
+      case (key, value) =>
+        val keyStr = key + (" " * (keyLength - key.size))
+        val valueStr = value + (" " * (valueLength - value.size))
+        s"|${keyStr}|${valueStr}|"
+    }.foreach(line => {
+      logInfo(line)
+    })
+    logInfo(header)
+  }
 
 }
 

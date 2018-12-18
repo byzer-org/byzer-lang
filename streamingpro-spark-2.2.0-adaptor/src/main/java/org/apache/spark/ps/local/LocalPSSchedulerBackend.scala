@@ -31,6 +31,8 @@ class LocalPSEndpoint(override val rpcEnv: RpcEnv,
   val localExecutorHostname = "localhost"
 
   override def receive: PartialFunction[Any, Unit] = {
+    case Message.Pong(id) =>
+      logInfo(s"received message ${Message.Pong} from executor ${id}!")
     case _ =>
 
   }
@@ -41,6 +43,11 @@ class LocalPSEndpoint(override val rpcEnv: RpcEnv,
       HDFSOperator.copyToLocalFile(destPath, modelPath, true)
       context.reply(true)
     }
+    case Message.Ping =>
+      logInfo(s"received message ${Message.Ping}")
+      val response = Message.Pong("localhost")
+      self.send(response)
+      context.reply(response)
   }
 }
 
