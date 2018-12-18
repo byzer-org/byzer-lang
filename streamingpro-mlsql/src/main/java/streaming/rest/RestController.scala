@@ -501,8 +501,17 @@ class RestController extends ApplicationController {
 
   @At(path = Array("/debug/executor/ping"), types = Array(GET, POST))
   def pingExecuotrs = {
-    val psDriverBackend = runtime.asInstanceOf[SparkRuntime].psDriverBackend
-    psDriverBackend.psDriverRpcEndpointRef.ask(Message.Ping)
+    runtime match {
+      case sparkRuntime: SparkRuntime =>
+        val endpoint = if (sparkRuntime.sparkSession.sparkContext.isLocal) {
+          sparkRuntime.localSchedulerBackend.localEndpoint
+        } else {
+          sparkRuntime.psDriverBackend.psDriverRpcEndpointRef
+        }
+        endpoint.ask(Message.Ping)
+      case _ =>
+        throw new RuntimeException(s"unsupport runtime ${runtime.getClass} !")
+    }
     render("{}")
   }
 
