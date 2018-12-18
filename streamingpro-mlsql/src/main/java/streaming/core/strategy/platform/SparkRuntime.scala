@@ -75,11 +75,11 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
       conf.setIfMissing("spark.speculation", "false")
     }
 
-    if (MLSQLConf.MLSQL_CLUSTER_PS_ENABLE.readFrom(configReader) && !isLocalMaster(conf)) {
+    if (MLSQLConf.MLSQL_PS_ENABLE.readFrom(configReader) && !isLocalMaster(conf)) {
       logWarning(
         s"""
            |------------------------------------------------------------------------
-           |${MLSQLConf.MLSQL_CLUSTER_PS_ENABLE.key} is enabled. Please make sure
+           |in cluster run mode, ${MLSQLConf.MLSQL_PS_ENABLE.key} is enabled. Please make sure
            |you have the uber-jar of mlsql placed in
            |1. --jars
            |2. --conf "spark.executor.extraClassPath=[your jar name in jars]"
@@ -157,13 +157,13 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
 
     // parameter server should be enabled by default
 
-    if (MLSQLConf.MLSQL_LOCAL_PS_ENABLE.readFrom(configReader) && isLocalMaster(conf)) {
+    if (MLSQLConf.MLSQL_PS_ENABLE.readFrom(configReader) && isLocalMaster(conf)) {
       logInfo("start LocalPSSchedulerBackend")
       localSchedulerBackend = new LocalPSSchedulerBackend(ss.sparkContext)
       localSchedulerBackend.start()
     }
 
-    if (MLSQLConf.MLSQL_CLUSTER_PS_ENABLE.readFrom(configReader) && !isLocalMaster(conf)) {
+    if (MLSQLConf.MLSQL_PS_ENABLE.readFrom(configReader) && !isLocalMaster(conf)) {
       logInfo("start PSDriverBackend")
       psDriverBackend = new PSDriverBackend(ss.sparkContext)
       psDriverBackend.start()
