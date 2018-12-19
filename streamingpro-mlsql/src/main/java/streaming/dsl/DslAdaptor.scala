@@ -79,9 +79,9 @@ trait DslTool {
     withPathPrefix(context.home, path)
   }
 
-  def parseDBAndTableFromStr(str: String) = {
+  def parseDBAndTableFromStr(str: String  ,separator: String = "\\.") = {
     val cleanedStr = cleanStr(str)
-    val dbAndTable = cleanedStr.split("\\.")
+    val dbAndTable = cleanedStr.split(separator)
     if (dbAndTable.length > 1) {
       val db = dbAndTable(0)
       val table = dbAndTable.splitAt(1)._2.mkString(".")
