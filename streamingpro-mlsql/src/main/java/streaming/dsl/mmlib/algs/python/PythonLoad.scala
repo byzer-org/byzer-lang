@@ -25,7 +25,7 @@ import streaming.log.{Logging, WowLog}
 import scala.collection.JavaConverters._
 
 class PythonLoad extends Logging with WowLog with Serializable {
-  def load(sparkSession: SparkSession, _path: String, params: Map[String, String]): Any = {
+  def load(sparkSession: SparkSession, _path: String, params: Map[String, String]): ModelMeta = {
 
     val modelMetaManager = new ModelMetaManager(sparkSession, _path, params)
     val modelMeta = modelMetaManager.loadMetaAndModel
