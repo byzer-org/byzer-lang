@@ -144,7 +144,8 @@ class BatchSaveAdaptor(val scriptSQLExecListener: ScriptSQLExecListener,
 
     format match {
       case "es" =>
-        writer.save(final_path)
+        writer.format(
+          option.getOrElse("implClass", "org.elasticsearch.spark.sql")).save(final_path)
       case "hive" =>
         writer.format(option.getOrElse("file_format", "parquet"))
         writer.saveAsTable(final_path)
