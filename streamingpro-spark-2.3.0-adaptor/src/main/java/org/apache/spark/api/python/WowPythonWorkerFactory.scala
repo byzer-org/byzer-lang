@@ -224,6 +224,8 @@ class WowPythonWorkerFactory(daemonCommand: Option[Seq[String]],
     * Redirect the given streams to our stderr in separate threads.
     */
   private def redirectStreamsToStderr(stdout: InputStream, stderr: InputStream, logCallback: (String) => Unit) {
+    println(scala.io.Source.fromInputStream(stdout).mkString(""))
+    println(scala.io.Source.fromInputStream(stderr).mkString(""))
     try {
       new WowRedirectThread(stdout, "stdout reader for " + flag, System.err, logCallback).start()
       new WowRedirectThread(stderr, "stderr reader for " + flag, System.err, logCallback).start()
@@ -341,6 +343,8 @@ class WowPythonWorkerFactory(daemonCommand: Option[Seq[String]],
             val br = new BufferedReader(new InputStreamReader(in))
             var line = br.readLine()
             while (line != null) {
+              println("---------error----------")
+              println(line)
               logCallback(line)
               line = br.readLine()
             }
