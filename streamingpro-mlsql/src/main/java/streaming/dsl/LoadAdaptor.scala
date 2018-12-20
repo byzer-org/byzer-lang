@@ -88,16 +88,6 @@ class BatchLoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener,
       table = datasource.asInstanceOf[MLSQLSource].load(reader, DataSourceConfig(cleanStr(path), option))
     }.getOrElse {
       format match {
-        case "jdbc" =>
-          val (dbname, dbtable) = parseDBAndTableFromStr(path)
-          if (ScriptSQLExec.dbMapping.containsKey(dbname)) {
-            ScriptSQLExec.dbMapping.get(dbname).foreach { f =>
-              reader.option(f._1, f._2)
-            }
-          }
-          reader.option("dbtable", dbtable)
-          table = reader.format("jdbc").load()
-
         case "hbase" | "org.apache.spark.sql.execution.datasources.hbase" =>
           table = reader.format("org.apache.spark.sql.execution.datasources.hbase").load()
         case "crawlersql" =>

@@ -19,14 +19,16 @@
 package streaming.test.mysql
 
 import org.apache.spark.streaming.BasicSparkOperation
+import org.scalatest.BeforeAndAfterAll
 import streaming.core.strategy.platform.SparkRuntime
-import streaming.core.{BasicMLSQLConfig, NotToRunTag, SpecFunctions}
+import streaming.core.{BasicMLSQLConfig, SpecFunctions}
 import streaming.dsl.ScriptSQLExec
+import streaming.log.Logging
 
 /**
   * Created by allwefantasy on 12/9/2018.
   */
-class MySQLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConfig {
+class MySQLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConfig with BeforeAndAfterAll with Logging {
 
   val connect_stat =
     s"""
@@ -140,6 +142,17 @@ class MySQLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLCo
       assume(spark.sql("select * from tbs").toJSON.collect().size == 1)
 
     }
+  }
+
+  val server = new streaming.test.servers.MySQLServer("5.7")
+
+  override protected def beforeAll(): Unit = {
+    server.startServer
+    server.exec("mysql", "exec mysql -uroot -pmlsql --protocol=tcp -e 'create database wow'")
+  }
+
+  override protected def afterAll(): Unit = {
+    server.stopServer
   }
 
 }

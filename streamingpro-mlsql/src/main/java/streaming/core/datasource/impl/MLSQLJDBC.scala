@@ -18,18 +18,21 @@
 
 package streaming.core.datasource.impl
 
+import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
 import org.apache.spark.sql.{DataFrame, DataFrameReader, DataFrameWriter, Row}
 import streaming.core.datasource._
 import streaming.dsl.{ConnectMeta, DBMappingKey}
 
-class MLSQLElasticSearch extends MLSQLSource with MLSQLSink with MLSQLRegistry {
+class MLSQLJDBC extends MLSQLSource with MLSQLSink with MLSQLRegistry {
 
 
-  override def fullFormat: String = "org.elasticsearch.spark.sql"
+  override def fullFormat: String = "jdbc"
 
-  override def shortFormat: String = "es"
+  override def shortFormat: String = fullFormat
 
-  override def dbSplitter: String = "/"
+  override def dbSplitter: String = "."
+
+  def toSplit = "\\."
 
   override def load(reader: DataFrameReader, config: DataSourceConfig): DataFrame = {
     var dbtable = config.path
@@ -38,7 +41,7 @@ class MLSQLElasticSearch extends MLSQLSource with MLSQLSink with MLSQLRegistry {
     // it will do no harm.
     val format = config.config.getOrElse("implClass", fullFormat)
     if (config.path.contains(dbSplitter)) {
-      val Array(_dbname, _dbtable) = config.path.split(dbSplitter, 2)
+      val Array(_dbname, _dbtable) = config.path.split(toSplit, 2)
       ConnectMeta.presentThenCall(DBMappingKey(format, _dbname), options => {
         dbtable = _dbtable
         reader.options(options)
@@ -46,6 +49,7 @@ class MLSQLElasticSearch extends MLSQLSource with MLSQLSink with MLSQLRegistry {
     }
     //load configs should overwrite connect configs
     reader.options(config.config)
+    reader.option("dbtable", dbtable)
     reader.format(format).load(dbtable)
   }
 
@@ -56,7 +60,7 @@ class MLSQLElasticSearch extends MLSQLSource with MLSQLSink with MLSQLRegistry {
     // it will do no harm.
     val format = config.config.getOrElse("implClass", fullFormat)
     if (config.path.contains(dbSplitter)) {
-      val Array(_dbname, _dbtable) = config.path.split(dbSplitter, 2)
+      val Array(_dbname, _dbtable) = config.path.split(toSplit, 2)
       ConnectMeta.presentThenCall(DBMappingKey(format, _dbname), options => {
         dbtable = _dbtable
         writer.options(options)
@@ -68,7 +72,18 @@ class MLSQLElasticSearch extends MLSQLSource with MLSQLSink with MLSQLRegistry {
     config.config.get("partitionByCol").map { item =>
       writer.partitionBy(item.split(","): _*)
     }
-    writer.format(config.config.getOrElse("implClass", fullFormat)).save(dbtable)
+
+    config.config.get("idCol").map { item =>
+      import org.apache.spark.sql.jdbc.DataFrameWriterExtensions._
+      val extraOptionsField = writer.getClass.getDeclaredField("extraOptions")
+      extraOptionsField.setAccessible(true)
+      val extraOptions = extraOptionsField.get(writer).asInstanceOf[scala.collection.mutable.HashMap[String, String]]
+      val jdbcOptions = new JDBCOptions(extraOptions.toMap + ("dbtable" -> dbtable))
+      writer.upsert(Option(item), jdbcOptions, config.df.get)
+    }.getOrElse {
+      writer.option("dbtable", dbtable)
+      writer.format(format).save(dbtable)
+    }
   }
 
   override def register(): Unit = {
