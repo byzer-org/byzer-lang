@@ -20,11 +20,12 @@ package streaming.dsl
 
 import java.util.concurrent.TimeUnit
 
-import _root_.streaming.dsl.parser.DSLSQLParser._
-import _root_.streaming.dsl.template.TemplateMerge
-import org.apache.spark.sql._
 import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
 import org.apache.spark.sql.streaming.{DataStreamWriter, Trigger}
+import org.apache.spark.sql.{DataFrame, Row, SaveMode}
+import streaming.core.datasource.{DataSinkConfig, DataSourceRegistry, MLSQLSink}
+import streaming.dsl.parser.DSLSQLParser._
+import streaming.dsl.template.TemplateMerge
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -119,81 +120,88 @@ class BatchSaveAdaptor(val scriptSQLExecListener: ScriptSQLExecListener,
     if (option.contains("fileNum")) {
       oldDF = oldDF.repartition(option.getOrElse("fileNum", "").toString.toInt)
     }
-
     var writer = oldDF.write
-    val dbAndTable = final_path.split("\\.")
-    var connect_provied = false
-    if (dbAndTable.length == 2 && ScriptSQLExec.dbMapping.containsKey(dbAndTable(0))) {
-      ScriptSQLExec.dbMapping.get(dbAndTable(0)).foreach {
-        f =>
-          writer.option(f._1, f._2)
+    DataSourceRegistry.fetch(format).map { datasource =>
+      datasource.asInstanceOf[MLSQLSink].save(
+        writer,
+        DataSinkConfig(final_path, option ++ Map("partitionByCol" -> partitionByCol.mkString(",")),
+          mode))
+    }.getOrElse {
+      val dbAndTable = final_path.split("\\.")
+      var connect_provied = false
+      if (dbAndTable.length == 2 && ScriptSQLExec.dbMapping.containsKey(dbAndTable(0))) {
+        ScriptSQLExec.dbMapping.get(dbAndTable(0)).foreach {
+          f =>
+            writer.option(f._1, f._2)
+        }
+        connect_provied = true
       }
-      connect_provied = true
+
+      if (connect_provied) {
+        final_path = dbAndTable(1)
+      }
+
+
+      writer = writer.format(format).mode(mode).partitionBy(partitionByCol: _*).options(option)
+
+      def getKafkaBrokers = {
+        "metadata.broker.list" -> option.getOrElse("metadata.broker.list", "kafka.bootstrap.servers")
+      }
+
+      format match {
+        case "es" =>
+          writer.format(
+            option.getOrElse("implClass", "org.elasticsearch.spark.sql")).save(final_path)
+        case "hive" =>
+          writer.format(option.getOrElse("file_format", "parquet"))
+          writer.saveAsTable(final_path)
+
+        case "kafka8" | "kafka9" =>
+
+          writer.option("topics", final_path).
+            option(getKafkaBrokers._1, getKafkaBrokers._2).
+            format("com.hortonworks.spark.sql.kafka08").save()
+
+        case "kafka" =>
+          writer.option("topic", final_path).
+            option(getKafkaBrokers._1, getKafkaBrokers._2).format("kafka").save()
+
+        case "hbase" =>
+          writer.option("outputTableName", final_path).format(
+            option.getOrElse("implClass", "org.apache.spark.sql.execution.datasources.hbase")).save()
+        case "redis" =>
+          writer.option("outputTableName", final_path).format(
+            option.getOrElse("implClass", "org.apache.spark.sql.execution.datasources.redis")).save()
+        case "jdbc" =>
+          if (option.contains("idCol")) {
+            import org.apache.spark.sql.jdbc.DataFrameWriterExtensions._
+            val extraOptionsField = writer.getClass.getDeclaredField("extraOptions")
+            extraOptionsField.setAccessible(true)
+            val extraOptions = extraOptionsField.get(writer).asInstanceOf[scala.collection.mutable.HashMap[String, String]]
+            val jdbcOptions = new JDBCOptions(extraOptions.toMap + ("dbtable" -> final_path))
+            writer.upsert(option.get("idCol"), jdbcOptions, oldDF)
+          } else {
+            writer.option("dbtable", final_path).save()
+          }
+
+        case "carbondata" =>
+          if (dbAndTable.size == 2) {
+            writer.option("tableName", dbAndTable(1)).option("dbName", dbAndTable(0))
+          }
+          if (dbAndTable.size == 1 && dbAndTable(0) != "-") {
+            writer.option("tableName", dbAndTable(0))
+          }
+          writer.format(option.getOrElse("implClass", "org.apache.spark.sql.CarbonSource")).save()
+        case _ =>
+          if (final_path == "-" || final_path.isEmpty) {
+            writer.format(option.getOrElse("implClass", format)).save()
+          } else {
+            writer.format(option.getOrElse("implClass", format)).save(final_path)
+          }
+
+      }
     }
 
-    if (connect_provied) {
-      final_path = dbAndTable(1)
-    }
-
-
-    writer = writer.format(format).mode(mode).partitionBy(partitionByCol: _*).options(option)
-
-    def getKafkaBrokers = {
-      "metadata.broker.list" -> option.getOrElse("metadata.broker.list", "kafka.bootstrap.servers")
-    }
-
-    format match {
-      case "es" =>
-        writer.format(
-          option.getOrElse("implClass", "org.elasticsearch.spark.sql")).save(final_path)
-      case "hive" =>
-        writer.format(option.getOrElse("file_format", "parquet"))
-        writer.saveAsTable(final_path)
-
-      case "kafka8" | "kafka9" =>
-
-        writer.option("topics", final_path).
-          option(getKafkaBrokers._1, getKafkaBrokers._2).
-          format("com.hortonworks.spark.sql.kafka08").save()
-
-      case "kafka" =>
-        writer.option("topic", final_path).
-          option(getKafkaBrokers._1, getKafkaBrokers._2).format("kafka").save()
-
-      case "hbase" =>
-        writer.option("outputTableName", final_path).format(
-          option.getOrElse("implClass", "org.apache.spark.sql.execution.datasources.hbase")).save()
-      case "redis" =>
-        writer.option("outputTableName", final_path).format(
-          option.getOrElse("implClass", "org.apache.spark.sql.execution.datasources.redis")).save()
-      case "jdbc" =>
-        if (option.contains("idCol")) {
-          import org.apache.spark.sql.jdbc.DataFrameWriterExtensions._
-          val extraOptionsField = writer.getClass.getDeclaredField("extraOptions")
-          extraOptionsField.setAccessible(true)
-          val extraOptions = extraOptionsField.get(writer).asInstanceOf[scala.collection.mutable.HashMap[String, String]]
-          val jdbcOptions = new JDBCOptions(extraOptions.toMap + ("dbtable" -> final_path))
-          writer.upsert(option.get("idCol"), jdbcOptions, oldDF)
-        } else {
-          writer.option("dbtable", final_path).save()
-        }
-
-      case "carbondata" =>
-        if (dbAndTable.size == 2) {
-          writer.option("tableName", dbAndTable(1)).option("dbName", dbAndTable(0))
-        }
-        if (dbAndTable.size == 1 && dbAndTable(0) != "-") {
-          writer.option("tableName", dbAndTable(0))
-        }
-        writer.format(option.getOrElse("implClass", "org.apache.spark.sql.CarbonSource")).save()
-      case _ =>
-        if (final_path == "-" || final_path.isEmpty) {
-          writer.format(option.getOrElse("implClass", format)).save()
-        } else {
-          writer.format(option.getOrElse("implClass", format)).save(final_path)
-        }
-
-    }
   }
 }
 
