@@ -19,7 +19,7 @@
 package streaming.core.datasource
 
 import com.google.common.reflect.ClassPath
-import org.apache.spark.sql.SaveMode
+import org.apache.spark.sql.{DataFrame, SaveMode}
 import streaming.log.Logging
 
 import scala.collection.JavaConverters._
@@ -64,6 +64,6 @@ trait MLSQLRegistry {
   def register(): Unit
 }
 
-case class DataSourceConfig(path: String, config: Map[String, String])
+case class DataSourceConfig(path: String, config: Map[String, String], df: Option[DataFrame] = None)
 
-case class DataSinkConfig(path: String, config: Map[String, String], mode: SaveMode)
+case class DataSinkConfig(path: String, config: Map[String, String], mode: SaveMode, df: Option[DataFrame] = None)

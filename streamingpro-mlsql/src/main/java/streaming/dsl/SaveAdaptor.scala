@@ -20,7 +20,6 @@ package streaming.dsl
 
 import java.util.concurrent.TimeUnit
 
-import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
 import org.apache.spark.sql.streaming.{DataStreamWriter, Trigger}
 import org.apache.spark.sql.{DataFrame, Row, SaveMode}
 import streaming.core.datasource.{DataSinkConfig, DataSourceRegistry, MLSQLSink}
@@ -125,22 +124,16 @@ class BatchSaveAdaptor(val scriptSQLExecListener: ScriptSQLExecListener,
       datasource.asInstanceOf[MLSQLSink].save(
         writer,
         DataSinkConfig(final_path, option ++ Map("partitionByCol" -> partitionByCol.mkString(",")),
-          mode))
+          mode, Option(oldDF)))
     }.getOrElse {
-      val dbAndTable = final_path.split("\\.")
-      var connect_provied = false
-      if (dbAndTable.length == 2 && ScriptSQLExec.dbMapping.containsKey(dbAndTable(0))) {
-        ScriptSQLExec.dbMapping.get(dbAndTable(0)).foreach {
-          f =>
-            writer.option(f._1, f._2)
-        }
-        connect_provied = true
-      }
 
-      if (connect_provied) {
-        final_path = dbAndTable(1)
+      if (final_path.contains("\\.")) {
+        val Array(_dbname, _dbtable) = final_path.split("\\.", 2)
+        ConnectMeta.presentThenCall(DBMappingKey(format, _dbname), options => {
+          final_path = _dbtable
+          writer.options(options)
+        })
       }
-
 
       writer = writer.format(format).mode(mode).partitionBy(partitionByCol: _*).options(option)
 
@@ -149,9 +142,6 @@ class BatchSaveAdaptor(val scriptSQLExecListener: ScriptSQLExecListener,
       }
 
       format match {
-        case "es" =>
-          writer.format(
-            option.getOrElse("implClass", "org.elasticsearch.spark.sql")).save(final_path)
         case "hive" =>
           writer.format(option.getOrElse("file_format", "parquet"))
           writer.saveAsTable(final_path)
@@ -172,25 +162,15 @@ class BatchSaveAdaptor(val scriptSQLExecListener: ScriptSQLExecListener,
         case "redis" =>
           writer.option("outputTableName", final_path).format(
             option.getOrElse("implClass", "org.apache.spark.sql.execution.datasources.redis")).save()
-        case "jdbc" =>
-          if (option.contains("idCol")) {
-            import org.apache.spark.sql.jdbc.DataFrameWriterExtensions._
-            val extraOptionsField = writer.getClass.getDeclaredField("extraOptions")
-            extraOptionsField.setAccessible(true)
-            val extraOptions = extraOptionsField.get(writer).asInstanceOf[scala.collection.mutable.HashMap[String, String]]
-            val jdbcOptions = new JDBCOptions(extraOptions.toMap + ("dbtable" -> final_path))
-            writer.upsert(option.get("idCol"), jdbcOptions, oldDF)
-          } else {
-            writer.option("dbtable", final_path).save()
-          }
 
         case "carbondata" =>
-          if (dbAndTable.size == 2) {
-            writer.option("tableName", dbAndTable(1)).option("dbName", dbAndTable(0))
+          if (final_path.contains("\\.")) {
+            val Array(_dbname, _dbtable) = final_path.split("\\.", 2)
+            writer.option("tableName", _dbtable).option("dbName", _dbname)
+          } else {
+            writer.option("tableName", final_path)
           }
-          if (dbAndTable.size == 1 && dbAndTable(0) != "-") {
-            writer.option("tableName", dbAndTable(0))
-          }
+
           writer.format(option.getOrElse("implClass", "org.apache.spark.sql.CarbonSource")).save()
         case _ =>
           if (final_path == "-" || final_path.isEmpty) {
@@ -220,18 +200,13 @@ class StreamSaveAdaptor(val scriptSQLExecListener: ScriptSQLExecListener,
     }
 
     var writer: DataStreamWriter[Row] = oldDF.writeStream
-    val dbAndTable = final_path.split("\\.")
-    var connect_provied = false
-    if (dbAndTable.length == 2 && ScriptSQLExec.dbMapping.containsKey(dbAndTable(0))) {
-      ScriptSQLExec.dbMapping.get(dbAndTable(0)).foreach {
-        f =>
-          writer.option(f._1, f._2)
-      }
-      connect_provied = true
-    }
 
-    if (connect_provied) {
-      final_path = dbAndTable(1)
+    if (final_path.contains("\\.")) {
+      val Array(_dbname, _dbtable) = final_path.split("\\.", 2)
+      ConnectMeta.presentThenCall(DBMappingKey(format, _dbname), options => {
+        final_path = _dbtable
+        writer.options(options)
+      })
     }
 
 

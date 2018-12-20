@@ -16,18 +16,21 @@
  * limitations under the License.
  */
 
+
 package streaming.dsl.mmlib.algs
 
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.ml.param.Param
 import org.apache.spark.sql.expressions.UserDefinedFunction
-import streaming.dsl.ScriptSQLExec
+import org.apache.spark.sql.{DataFrame, SparkSession}
 import streaming.dsl.mmlib.SQLAlg
-import streaming.log.Logging
+import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
+import streaming.dsl.{ConnectMeta, DBMappingKey}
 
 /**
   * Created by allwefantasy on 25/8/2018.
   */
-class SQLJDBC extends SQLAlg with MllibFunctions with Functions with Logging {
+class SQLJDBC(override val uid: String) extends SQLAlg with Functions with WowParams {
+  def this() = this(BaseParams.randomUID())
 
   def executeInDriver(options: Map[String, String]) = {
     val driver = options("driver")
@@ -55,11 +58,11 @@ class SQLJDBC extends SQLAlg with MllibFunctions with Functions with Logging {
 
   override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
     var _params = params
-    if (ScriptSQLExec.dbMapping.containsKey(path)) {
-      ScriptSQLExec.dbMapping.get(path).foreach { f =>
-        _params = _params + (f._1 -> f._2)
+    ConnectMeta.presentThenCall(DBMappingKey("jdbc", path), options => {
+      options.foreach { item =>
+        _params += (item._1 -> item._2)
       }
-    }
+    })
     executeInDriver(_params)
     emptyDataFrame()(df)
   }
@@ -71,4 +74,7 @@ class SQLJDBC extends SQLAlg with MllibFunctions with Functions with Logging {
   override def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = {
     throw new RuntimeException(s"${getClass.getName} not support predict function.")
   }
+
+  final val sqlMode: Param[String] = new Param[String](this, "sqlMode", "query/ddl")
 }
+
