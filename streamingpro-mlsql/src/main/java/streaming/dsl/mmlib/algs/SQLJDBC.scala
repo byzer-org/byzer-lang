@@ -19,12 +19,20 @@
 
 package streaming.dsl.mmlib.algs
 
+import java.sql.ResultSet
+
+import net.sf.json.JSONObject
 import org.apache.spark.ml.param.Param
 import org.apache.spark.sql.expressions.UserDefinedFunction
+import org.apache.spark.sql.mlsql.session.MLSQLException
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
 import streaming.dsl.{ConnectMeta, DBMappingKey}
+
+import scala.collection.JavaConverters._
+import scala.collection.mutable
+import scala.collection.mutable.ArrayBuffer
 
 /**
   * Created by allwefantasy on 25/8/2018.
@@ -56,25 +64,101 @@ class SQLJDBC(override val uid: String) extends SQLAlg with Functions with WowPa
 
   }
 
-  override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
-    var _params = params
-    ConnectMeta.presentThenCall(DBMappingKey("jdbc", path), options => {
-      options.foreach { item =>
-        _params += (item._1 -> item._2)
+
+  def getRsCloumns(rs: ResultSet): Array[String] = {
+    val rsm = rs.getMetaData
+    (0 until rsm.getColumnCount).map { index =>
+      rsm.getColumnLabel(index + 1)
+    }.toArray
+  }
+
+  def rsToMaps(rs: ResultSet): Seq[Map[String, Any]] = {
+    val buffer = new ArrayBuffer[Map[String, Any]]()
+    while (rs.next()) {
+      buffer += rsToMap(rs, getRsCloumns(rs))
+    }
+    buffer
+  }
+
+  def rsToMap(rs: ResultSet, columns: Array[String]): Map[String, Any] = {
+    val item = new mutable.HashMap[String, Any]()
+    columns.foreach { col =>
+      item.put(col, rs.getObject(col))
+    }
+    item.toMap
+  }
+
+
+  def executeQueryInDriver(options: Map[String, String]) = {
+    val driver = options("driver")
+    val url = options("url")
+    Class.forName(driver)
+    val connection = java.sql.DriverManager.getConnection(url, options("user"), options("password"))
+    try {
+      options.get("driver-statement-query").map { sql =>
+        val stat = connection.prepareStatement(sql)
+        val rs = stat.executeQuery()
+        val res = rsToMaps(rs)
+        stat.close()
+        res
+      }.getOrElse {
+        throw new MLSQLException("driver-statement-query is required")
       }
-    })
-    executeInDriver(_params)
-    emptyDataFrame()(df)
+    } finally {
+      if (connection != null)
+        connection.close()
+    }
+
+  }
+
+
+  override def batchPredict(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
+    train(df, path, params)
+  }
+
+  override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
+
+    params.get(sqlMode.name).
+      map(m => set(sqlMode, m)).getOrElse {
+      // we should be compatible with preview version. 
+      set(sqlMode, "ddl")
+    }
+    var _params = params
+    if (path.contains(".")) {
+      val Array(db, table) = path.split("\\.", 2)
+      ConnectMeta.presentThenCall(DBMappingKey("jdbc", db), options => {
+        options.foreach { item =>
+          _params += (item._1 -> item._2)
+        }
+      })
+    }
+
+
+    $(sqlMode) match {
+      case "ddl" =>
+        executeInDriver(_params)
+        emptyDataFrame()(df)
+      case "query" =>
+        val res = executeQueryInDriver(_params)
+        val rdd = df.sparkSession.sparkContext.parallelize(res.map(item => JSONObject.fromObject(item.asJava).toString()))
+        df.sparkSession.read.json(rdd)
+
+    }
+
+
   }
 
   override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = {
-    throw new RuntimeException(s"${getClass.getName} not support register ")
+    throw new MLSQLException(s"${getClass.getName} not support register ")
   }
 
   override def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = {
-    throw new RuntimeException(s"${getClass.getName} not support predict function.")
+    throw new MLSQLException(s"${getClass.getName} not support predict function.")
   }
 
-  final val sqlMode: Param[String] = new Param[String](this, "sqlMode", "query/ddl")
+
+  override def skipPathPrefix: Boolean = true
+
+  final val sqlMode: Param[String] = new Param[String](this, "sqlMode", "query/ddl default:ddl")
 }
 
