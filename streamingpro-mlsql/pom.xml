@@ -214,6 +214,17 @@
         </profile>
 
         <profile>
+            <id>unit-test</id>
+            <dependencies>
+                <dependency>
+                    <groupId>org.elasticsearch</groupId>
+                    <artifactId>elasticsearch-spark-20_2.11</artifactId>
+                    <version>6.5.0</version>
+                </dependency>
+            </dependencies>
+        </profile>
+
+        <profile>
             <id>streamingpro-spark-2.2.0-adaptor</id>
             <dependencies>
                 <dependency>

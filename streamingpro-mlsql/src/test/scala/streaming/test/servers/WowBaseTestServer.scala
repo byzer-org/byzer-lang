@@ -91,5 +91,6 @@ trait WowBaseTestServer extends Logging {
     logInfo(s"command=[${dockerComposeCommand}] status=${status} out=[${out}] err=[${err}]")
     require(status == 0, "Fail to start server")
     ShellCommand.execCmd(s"rm -rf ${pjDir}")
+    ShellCommand.execWithExitValue("docker network prune --force")
   }
 }

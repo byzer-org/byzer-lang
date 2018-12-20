@@ -20,6 +20,7 @@ package streaming.dsl
 
 import net.sf.json.JSONObject
 import org.apache.spark.sql.{DataFrame, functions => F}
+import streaming.core.datasource.{DataSourceConfig, DataSourceRegistry, MLSQLSource}
 import streaming.dsl.load.batch.{AutoWorkflowSelfExplain, MLSQLAPIExplain, MLSQLConfExplain, ModelSelfExplain}
 import streaming.dsl.parser.DSLSQLParser._
 import streaming.dsl.template.TemplateMerge
@@ -82,69 +83,68 @@ class BatchLoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener,
     reader.options(option)
     path = TemplateMerge.merge(path, scriptSQLExecListener.env().toMap)
     val resourceOwner = option.get("owner")
-    format match {
-      case "jdbc" =>
-        val (dbname, dbtable) = parseDBAndTableFromStr(path)
-        if (ScriptSQLExec.dbMapping.containsKey(dbname)) {
-          ScriptSQLExec.dbMapping.get(dbname).foreach { f =>
-            reader.option(f._1, f._2)
+
+    DataSourceRegistry.fetch(format).map { datasource =>
+      table = datasource.asInstanceOf[MLSQLSource].load(reader, DataSourceConfig(cleanStr(path), option))
+    }.getOrElse {
+      format match {
+        case "jdbc" =>
+          val (dbname, dbtable) = parseDBAndTableFromStr(path)
+          if (ScriptSQLExec.dbMapping.containsKey(dbname)) {
+            ScriptSQLExec.dbMapping.get(dbname).foreach { f =>
+              reader.option(f._1, f._2)
+            }
           }
-        }
-        reader.option("dbtable", dbtable)
-        table = reader.format("jdbc").load()
+          reader.option("dbtable", dbtable)
+          table = reader.format("jdbc").load()
 
-      case "es" | "org.elasticsearch.spark.sql" =>
-        val (dbname, dbtable) = parseDBAndTableFromStr(path)
-        if (ScriptSQLExec.dbMapping.containsKey(dbname)) {
-          ScriptSQLExec.dbMapping.get(dbname).foreach { f =>
-            reader.option(f._1, f._2)
+        case "hbase" | "org.apache.spark.sql.execution.datasources.hbase" =>
+          table = reader.format("org.apache.spark.sql.execution.datasources.hbase").load()
+        case "crawlersql" =>
+          table = reader.option("path", cleanStr(path)).format("org.apache.spark.sql.execution.datasources.crawlersql").load()
+        case "image" =>
+          val resourcePath = resourceRealPath(scriptSQLExecListener, resourceOwner, path)
+          table = reader.option("path", resourcePath).format("streaming.dsl.mmlib.algs.processing.image").load()
+        case "jsonStr" =>
+          val items = cleanBlockStr(scriptSQLExecListener.env()(cleanStr(path))).split("\n")
+          import sparkSession.implicits._
+          table = reader.json(sparkSession.createDataset[String](items))
+        case "script" =>
+          val items = List(cleanBlockStr(scriptSQLExecListener.env()(cleanStr(path)))).map { f =>
+            val obj = new JSONObject()
+            obj.put("content", f)
+            obj.toString()
           }
-        }
-        table = reader.format("org.elasticsearch.spark.sql").load(dbtable)
-      case "hbase" | "org.apache.spark.sql.execution.datasources.hbase" =>
-        table = reader.format("org.apache.spark.sql.execution.datasources.hbase").load()
-      case "crawlersql" =>
-        table = reader.option("path", cleanStr(path)).format("org.apache.spark.sql.execution.datasources.crawlersql").load()
-      case "image" =>
-        val resourcePath = resourceRealPath(scriptSQLExecListener, resourceOwner, path)
-        table = reader.option("path", resourcePath).format("streaming.dsl.mmlib.algs.processing.image").load()
-      case "jsonStr" =>
-        val items = cleanBlockStr(scriptSQLExecListener.env()(cleanStr(path))).split("\n")
-        import sparkSession.implicits._
-        table = reader.json(sparkSession.createDataset[String](items))
-      case "script" =>
-        val items = List(cleanBlockStr(scriptSQLExecListener.env()(cleanStr(path)))).map { f =>
-          val obj = new JSONObject()
-          obj.put("content", f)
-          obj.toString()
-        }
-        import sparkSession.implicits._
-        table = reader.json(sparkSession.createDataset[String](items))
-      case "hive" =>
-        table = reader.table(cleanStr(path))
-      case "text" =>
-        val resourcePath = resourceRealPath(scriptSQLExecListener, resourceOwner, path)
-        table = reader.text(resourcePath.split(","): _*)
-      case "xml" =>
-        val resourcePath = resourceRealPath(scriptSQLExecListener, resourceOwner, path)
-        table = reader.option("path", resourcePath).format("com.databricks.spark.xml").load()
-      case "mlsqlAPI" =>
-        table = new MLSQLAPIExplain(sparkSession).explain
-      case "mlsqlConf" =>
-        table = new MLSQLConfExplain(sparkSession).explain
-      case _ =>
+          import sparkSession.implicits._
+          table = reader.json(sparkSession.createDataset[String](items))
+        case "hive" =>
+          table = reader.table(cleanStr(path))
+        case "text" =>
+          val resourcePath = resourceRealPath(scriptSQLExecListener, resourceOwner, path)
+          table = reader.text(resourcePath.split(","): _*)
+        case "xml" =>
+          val resourcePath = resourceRealPath(scriptSQLExecListener, resourceOwner, path)
+          table = reader.option("path", resourcePath).format("com.databricks.spark.xml").load()
+        case "mlsqlAPI" =>
+          table = new MLSQLAPIExplain(sparkSession).explain
+        case "mlsqlConf" =>
+          table = new MLSQLConfExplain(sparkSession).explain
+        case _ =>
 
-        // calculate resource real absolute path
-        val resourcePath = resourceRealPath(scriptSQLExecListener, resourceOwner, path)
+          // calculate resource real absolute path
+          val resourcePath = resourceRealPath(scriptSQLExecListener, resourceOwner, path)
 
-        table = ModelSelfExplain(format, cleanStr(path), option, sparkSession).isMatch.thenDo.orElse(() => {
+          table = ModelSelfExplain(format, cleanStr(path), option, sparkSession).isMatch.thenDo.orElse(() => {
 
-          AutoWorkflowSelfExplain(format, cleanStr(path), option, sparkSession).isMatch.thenDo().orElse(() => {
-            reader.format(format).load(resourcePath)
-          }).get()
+            AutoWorkflowSelfExplain(format, cleanStr(path), option, sparkSession).isMatch.thenDo().orElse(() => {
+              reader.format(format).load(resourcePath)
+            }).get()
 
-        }).get
+          }).get
+      }
     }
+
+
     table.createOrReplaceTempView(tableName)
   }
 }
