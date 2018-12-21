@@ -19,8 +19,8 @@
 package streaming.dsl
 
 import net.sf.json.JSONObject
-import org.apache.spark.sql.{DataFrame, functions => F}
-import streaming.core.datasource.{DataSourceConfig, DataSourceRegistry, MLSQLSource}
+import org.apache.spark.sql.{DataFrame, DataFrameReader, functions => F}
+import streaming.core.datasource.{DataSourceConfig, DataSourceRegistry}
 import streaming.dsl.load.batch.{AutoWorkflowSelfExplain, MLSQLAPIExplain, MLSQLConfExplain, ModelSelfExplain}
 import streaming.dsl.parser.DSLSQLParser._
 import streaming.dsl.template.TemplateMerge
@@ -84,8 +84,15 @@ class BatchLoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener,
     path = TemplateMerge.merge(path, scriptSQLExecListener.env().toMap)
     val resourceOwner = option.get("owner")
 
-    DataSourceRegistry.fetch(format).map { datasource =>
-      table = datasource.asInstanceOf[MLSQLSource].load(reader, DataSourceConfig(cleanStr(path), option))
+
+    DataSourceRegistry.fetch(format, option).map { datasource =>
+      def emptyDataFrame = {
+        import sparkSession.implicits._
+        Seq.empty[String].toDF("name")
+      }
+
+      table = datasource.asInstanceOf[ {def load(reader: DataFrameReader, config: DataSourceConfig): DataFrame}].
+        load(reader, DataSourceConfig(cleanStr(path), option, Option(emptyDataFrame)))
     }.getOrElse {
       format match {
         case "jdbc" =>

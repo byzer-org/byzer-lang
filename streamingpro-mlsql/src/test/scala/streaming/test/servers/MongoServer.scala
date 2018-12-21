@@ -16,38 +16,31 @@
  * limitations under the License.
  */
 
-package streaming.core.datasource
-
-import org.apache.spark.sql.{DataFrame, DataFrameReader, DataFrameWriter, Row}
+package streaming.test.servers
 
 /**
-  * 2018-12-20 WilliamZhu(allwefantasy@gmail.com)
+  * 2018-12-21 WilliamZhu(allwefantasy@gmail.com)
   */
+class MongoServer(version: String) extends WowBaseTestServer {
 
-trait MLSQLDataSource {
-  def dbSplitter = {
-    "."
+  override def composeYaml: String =
+    s"""
+       |version: '2'
+       |
+       |networks:
+       |  app-tier:
+       |    driver: bridge
+       |
+       |services:
+       |  mongodb:
+       |    image: 'bitnami/mongodb:4.0'
+       |    ports:
+       |      - "27017:27017"
+    """.stripMargin
+
+  override def waitToServiceReady: Boolean = {
+    // wait mongo to ready, runs on host server
+    val shellCommand = s"nc -z 127.0.0.1 27017"
+    readyCheck("", shellCommand, false)
   }
-
-  def fullFormat: String
-
-  def shortFormat: String
-
 }
-
-trait MLSQLSource extends MLSQLDataSource {
-  def load(reader: DataFrameReader, config: DataSourceConfig): DataFrame
-}
-
-trait MLSQLSink extends MLSQLDataSource {
-  def save(writer: DataFrameWriter[Row], config: DataSinkConfig): Unit
-}
-
-trait MLSQLDirectSource extends MLSQLDataSource {
-  def load(reader: DataFrameReader, config: DataSourceConfig): DataFrame
-}
-
-trait MLSQLDirectSink extends MLSQLDataSource {
-  def save(writer: DataFrameWriter[Row], config: DataSinkConfig): Unit
-}
-

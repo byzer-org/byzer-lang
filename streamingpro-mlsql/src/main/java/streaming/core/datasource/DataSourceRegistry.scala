@@ -28,21 +28,27 @@ import scala.collection.JavaConverters._
   * 2018-12-20 WilliamZhu(allwefantasy@gmail.com)
   */
 object DataSourceRegistry extends Logging {
-  private val registry = new java.util.concurrent.ConcurrentHashMap[String, MLSQLDataSource]()
+  private val registry = new java.util.concurrent.ConcurrentHashMap[MLSQLDataSourceKey, MLSQLDataSource]()
 
-  def register(name: String, obj: MLSQLDataSource) = {
+  def register(name: MLSQLDataSourceKey, obj: MLSQLDataSource) = {
     registry.put(name, obj)
 
   }
 
-  def fetch(name: String): Option[MLSQLDataSource] = {
-    if (registry.containsKey(name)) {
-      Option(registry.get(name))
+  def fetch(name: String, option: Map[String, String] = Map()): Option[MLSQLDataSource] = {
+    val sourceType = if (option.contains("directQuery")) {
+      MLSQLDirectDataSourceType
+    } else {
+      MLSQLSparkDataSourceType
+    }
+    val key = MLSQLDataSourceKey(name, sourceType)
+    if (registry.containsKey(key)) {
+      Option(registry.get(key))
     } else None
   }
 
   def findAllNames(name: String): Seq[String] = {
-    val item = registry.asScala.filter(f => f._1 == name).head
+    val item = registry.asScala.filter(f => f._1.name == name).head
     Seq(item._2.shortFormat, item._2.fullFormat)
   }
 
@@ -72,3 +78,11 @@ trait MLSQLRegistry {
 case class DataSourceConfig(path: String, config: Map[String, String], df: Option[DataFrame] = None)
 
 case class DataSinkConfig(path: String, config: Map[String, String], mode: SaveMode, df: Option[DataFrame] = None)
+
+case class MLSQLDataSourceKey(name: String, sourceType: MLSQLDataSourceType)
+
+sealed abstract class MLSQLDataSourceType
+
+case object MLSQLSparkDataSourceType extends MLSQLDataSourceType
+
+case object MLSQLDirectDataSourceType extends MLSQLDataSourceType
