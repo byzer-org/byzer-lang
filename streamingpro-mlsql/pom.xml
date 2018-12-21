@@ -221,6 +221,11 @@
                     <artifactId>elasticsearch-spark-20_2.11</artifactId>
                     <version>6.5.0</version>
                 </dependency>
+                <dependency>
+                    <groupId>org.mongodb.spark</groupId>
+                    <artifactId>mongo-spark-connector_2.11</artifactId>
+                    <version>2.2.5</version>
+                </dependency>
             </dependencies>
         </profile>
 
