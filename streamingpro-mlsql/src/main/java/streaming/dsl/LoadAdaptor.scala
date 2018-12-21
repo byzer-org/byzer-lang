@@ -97,7 +97,14 @@ class BatchLoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener,
           }
           reader.option("dbtable", dbtable)
           table = reader.format("jdbc").load()
-
+          val columns = table.columns
+          val colNames = new Array[String](columns.length)
+          for( i <- 0 to columns.length - 1){
+            val column = columns(i)
+            val (dbname, dbtable) = parseDBAndTableFromStr(column)
+            colNames(i)=dbtable
+          }
+          table=table.toDF(colNames: _*)
         case "hbase" | "org.apache.spark.sql.execution.datasources.hbase" =>
           table = reader.format("org.apache.spark.sql.execution.datasources.hbase").load()
         case "crawlersql" =>
