@@ -30,6 +30,7 @@ import net.csdn.common.reflect.ReflectHelper
 import org.apache.spark._
 import org.apache.spark.ps.cluster.PSDriverBackend
 import org.apache.spark.ps.local.LocalPSSchedulerBackend
+import org.apache.spark.sql.jdbc.{JdbcDialect, JdbcDialects}
 import org.apache.spark.sql.mlsql.session.{SessionIdentifier, SessionManager}
 import org.apache.spark.sql.{SQLContext, SparkSession}
 
@@ -44,7 +45,7 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
   val configReader = MLSQLConf.createConfigReader(params.map(f => (f._1.toString, f._2.toString)))
 
   def name = "SPARK"
-
+  registerJdbcDialect(HiveJdbcDialect)
   var localSchedulerBackend: LocalPSSchedulerBackend = null
   var psDriverBackend: PSDriverBackend = null
 
@@ -205,7 +206,10 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
       registerUDF(clzz)
     }
   }
-
+  def registerJdbcDialect(dialect: JdbcDialect)={
+    logInfo("register HiveSqlDialect.....")
+    JdbcDialects.registerDialect(dialect)
+  }
 
   def registerUDF(clzz: String) = {
     logInfo("register functions.....")
