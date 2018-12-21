@@ -19,20 +19,19 @@
 
 package streaming.dsl.mmlib.algs
 
-import java.sql.ResultSet
 
 import net.sf.json.JSONObject
 import org.apache.spark.ml.param.Param
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.mlsql.session.MLSQLException
 import org.apache.spark.sql.{DataFrame, SparkSession}
+import streaming.core.datasource.JDBCUtils
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
 import streaming.dsl.{ConnectMeta, DBMappingKey}
 
 import scala.collection.JavaConverters._
-import scala.collection.mutable
-import scala.collection.mutable.ArrayBuffer
+
 
 /**
   * Created by allwefantasy on 25/8/2018.
@@ -57,53 +56,6 @@ class SQLJDBC(override val uid: String) extends SQLAlg with Functions with WowPa
         f.execute()
         f
       }.map(_.close())
-    } finally {
-      if (connection != null)
-        connection.close()
-    }
-
-  }
-
-
-  def getRsCloumns(rs: ResultSet): Array[String] = {
-    val rsm = rs.getMetaData
-    (0 until rsm.getColumnCount).map { index =>
-      rsm.getColumnLabel(index + 1)
-    }.toArray
-  }
-
-  def rsToMaps(rs: ResultSet): Seq[Map[String, Any]] = {
-    val buffer = new ArrayBuffer[Map[String, Any]]()
-    while (rs.next()) {
-      buffer += rsToMap(rs, getRsCloumns(rs))
-    }
-    buffer
-  }
-
-  def rsToMap(rs: ResultSet, columns: Array[String]): Map[String, Any] = {
-    val item = new mutable.HashMap[String, Any]()
-    columns.foreach { col =>
-      item.put(col, rs.getObject(col))
-    }
-    item.toMap
-  }
-
-
-  def executeQueryInDriver(options: Map[String, String]) = {
-    val driver = options("driver")
-    val url = options("url")
-    Class.forName(driver)
-    val connection = java.sql.DriverManager.getConnection(url, options("user"), options("password"))
-    try {
-      options.get("driver-statement-query").map { sql =>
-        val stat = connection.prepareStatement(sql)
-        val rs = stat.executeQuery()
-        val res = rsToMaps(rs)
-        stat.close()
-        res
-      }.getOrElse {
-        throw new MLSQLException("driver-statement-query is required")
-      }
     } finally {
       if (connection != null)
         connection.close()
@@ -139,7 +91,7 @@ class SQLJDBC(override val uid: String) extends SQLAlg with Functions with WowPa
         executeInDriver(_params)
         emptyDataFrame()(df)
       case "query" =>
-        val res = executeQueryInDriver(_params)
+        val res = JDBCUtils.executeQueryInDriver(_params)
         val rdd = df.sparkSession.sparkContext.parallelize(res.map(item => JSONObject.fromObject(item.asJava).toString()))
         df.sparkSession.read.json(rdd)
 

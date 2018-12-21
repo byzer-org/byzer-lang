@@ -87,7 +87,7 @@ class MLSQLJDBC extends MLSQLSource with MLSQLSink with MLSQLRegistry {
   }
 
   override def register(): Unit = {
-    DataSourceRegistry.register(fullFormat, this)
-    DataSourceRegistry.register(shortFormat, this)
+    DataSourceRegistry.register(MLSQLDataSourceKey(fullFormat, MLSQLSparkDataSourceType), this)
+    DataSourceRegistry.register(MLSQLDataSourceKey(shortFormat, MLSQLSparkDataSourceType), this)
   }
 }
