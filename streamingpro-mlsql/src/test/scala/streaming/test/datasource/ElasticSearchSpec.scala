@@ -10,7 +10,7 @@ import streaming.log.Logging
 /**
   * 2018-12-20 WilliamZhu(allwefantasy@gmail.com)
   */
-class DataSourceSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConfig with BeforeAndAfterAll with Logging {
+class ElasticSearchSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConfig with BeforeAndAfterAll with Logging {
   "load es" should "work fine" in {
 
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>

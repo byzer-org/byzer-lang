@@ -41,6 +41,11 @@ object DataSourceRegistry extends Logging {
     } else None
   }
 
+  def findAllNames(name: String): Seq[String] = {
+    val item = registry.asScala.filter(f => f._1 == name).head
+    Seq(item._2.shortFormat, item._2.fullFormat)
+  }
+
   private def registerFromPackage(name: String) = {
     ClassPath.from(getClass.getClassLoader).getTopLevelClasses(name).asScala.foreach { clzz =>
       val dataSource = Class.forName(clzz.getName).newInstance()
