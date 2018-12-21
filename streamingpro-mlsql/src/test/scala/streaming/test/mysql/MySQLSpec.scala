@@ -198,6 +198,36 @@ class MySQLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLCo
     }
   }
 
+  "MLSQLDirectJDBC" should "work fine" in {
+
+    withBatchContext(setupBatchContext(batchParamsWithoutHive, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+      //执行sql
+      implicit val spark = runtime.sparkSession
+
+      //注册表连接
+      var sq = createSSEL
+      ScriptSQLExec.parse(connect_stat, sq)
+
+      sq = createSSEL
+      ScriptSQLExec.parse("select \"a\" as a,\"b\" as b\n,\"c\" as c\nas tod_boss_dashboard_sheet_1;", sq)
+
+      sq = createSSEL
+      ScriptSQLExec.parse(
+        s"""
+           |save overwrite tod_boss_dashboard_sheet_1
+           |as jdbc.`tableau.tod_boss_dashboard_sheet_2`
+           |options truncate="false";
+           |load jdbc.`tableau.tod_boss_dashboard_sheet_2` where directQuery='''
+           |select * from tod_boss_dashboard_sheet_2 where a = "b"
+           |''' as tbs;
+         """.stripMargin, sq)
+
+      assume(spark.sql("select * from tbs").toJSON.collect().size == 0)
+
+
+    }
+  }
+
   val server = new streaming.test.servers.MySQLServer("5.7")
 
   override protected def beforeAll(): Unit = {

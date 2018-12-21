@@ -21,8 +21,8 @@ package streaming.dsl
 import java.util.concurrent.TimeUnit
 
 import org.apache.spark.sql.streaming.{DataStreamWriter, Trigger}
-import org.apache.spark.sql.{DataFrame, Row, SaveMode}
-import streaming.core.datasource.{DataSinkConfig, DataSourceRegistry, MLSQLSink}
+import org.apache.spark.sql.{DataFrame, DataFrameWriter, Row, SaveMode}
+import streaming.core.datasource.{DataSinkConfig, DataSourceRegistry}
 import streaming.dsl.parser.DSLSQLParser._
 import streaming.dsl.template.TemplateMerge
 
@@ -120,8 +120,8 @@ class BatchSaveAdaptor(val scriptSQLExecListener: ScriptSQLExecListener,
       oldDF = oldDF.repartition(option.getOrElse("fileNum", "").toString.toInt)
     }
     var writer = oldDF.write
-    DataSourceRegistry.fetch(format).map { datasource =>
-      datasource.asInstanceOf[MLSQLSink].save(
+    DataSourceRegistry.fetch(format, option).map { datasource =>
+      datasource.asInstanceOf[ {def save(writer: DataFrameWriter[Row], config: DataSinkConfig): Unit}].save(
         writer,
         DataSinkConfig(final_path, option ++ Map("partitionByCol" -> partitionByCol.mkString(",")),
           mode, Option(oldDF)))

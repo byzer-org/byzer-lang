@@ -43,3 +43,11 @@ trait MLSQLSink extends MLSQLDataSource {
   def save(writer: DataFrameWriter[Row], config: DataSinkConfig): Unit
 }
 
+trait MLSQLDirectSource extends MLSQLDataSource {
+  def load(reader: DataFrameReader, config: DataSourceConfig): DataFrame
+}
+
+trait MLSQLDirectSink extends MLSQLDataSource {
+  def save(writer: DataFrameWriter[Row], config: DataSinkConfig): Unit
+}
+

@@ -45,7 +45,7 @@ class MLSQLMongo extends MLSQLSource with MLSQLSink with MLSQLRegistry {
       })
     }
 
-    reader.option("collection" ,dbtable)
+    reader.option("collection", dbtable)
     //load configs should overwrite connect configs
     reader.options(config.config)
     reader.format(format).load()
@@ -65,7 +65,7 @@ class MLSQLMongo extends MLSQLSource with MLSQLSink with MLSQLRegistry {
       })
     }
     writer.mode(config.mode)
-    writer.option("collection" ,dbtable)
+    writer.option("collection", dbtable)
     //load configs should overwrite connect configs
     writer.options(config.config)
     config.config.get("partitionByCol").map { item =>
@@ -75,7 +75,7 @@ class MLSQLMongo extends MLSQLSource with MLSQLSink with MLSQLRegistry {
   }
 
   override def register(): Unit = {
-    DataSourceRegistry.register(fullFormat, this)
-    DataSourceRegistry.register(shortFormat, this)
+    DataSourceRegistry.register(MLSQLDataSourceKey(fullFormat, MLSQLSparkDataSourceType), this)
+    DataSourceRegistry.register(MLSQLDataSourceKey(shortFormat, MLSQLSparkDataSourceType), this)
   }
 }
