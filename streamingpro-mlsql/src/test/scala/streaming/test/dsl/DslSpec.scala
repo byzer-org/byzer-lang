@@ -350,6 +350,22 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
       res = spark.sql("select * from output").toJSON.collect().head
       assume(res == "{\"c\":{\"我好\":1,\"你好\":2,\"大家好\":1}}")
 
+      ScriptSQLExec.parse(
+        """
+          |register ScriptUDF.scriptTable as dateRange options
+          |and lang="python"
+          |and dataType="array(string)"
+          |and code='''
+          |def apply(self, begin_time, end_time):
+          |    import datetime
+          |    range_list = ['a', 'b']
+          |    return range_list
+          |''';
+          |
+          |select dateRange(1544715389, 1544715390) as a as outer;
+        """.stripMargin, sq)
+      spark.sql("select * from outer").show()
+
     }
   }
 

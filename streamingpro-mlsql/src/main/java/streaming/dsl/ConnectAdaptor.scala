@@ -18,6 +18,7 @@
 
 package streaming.dsl
 
+import streaming.core.datasource.DataSourceRegistry
 import streaming.dsl.parser.DSLSQLParser._
 
 /**
@@ -40,7 +41,9 @@ class ConnectAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAd
         case s: BooleanExpressionContext =>
           option += (cleanStr(s.expression().qualifiedName().getText) -> getStrOrBlockStr(s.expression()))
         case s: DbContext =>
-          ConnectMeta.options(DBMappingKey(format, s.getText), option)
+          DataSourceRegistry.findAllNames(format).foreach { name =>
+            ConnectMeta.options(DBMappingKey(name, s.getText), option)
+          }
         case _ =>
 
       }

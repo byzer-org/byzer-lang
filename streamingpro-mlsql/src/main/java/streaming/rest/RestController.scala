@@ -488,8 +488,7 @@ class RestController extends ApplicationController {
 
   @At(path = Array("/check"), types = Array(GET, POST))
   def check = {
-    val sparkSession = runtime.asInstanceOf[SparkRuntime].sparkSession
-    render(sparkSession.table(param("name")))
+    render(WowCollections.map())
   }
 
   @At(path = Array("/test"), types = Array(GET, POST))
