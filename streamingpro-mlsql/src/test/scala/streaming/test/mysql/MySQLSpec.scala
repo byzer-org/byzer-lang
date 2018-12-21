@@ -217,10 +217,12 @@ class MySQLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLCo
            |save overwrite tod_boss_dashboard_sheet_1
            |as jdbc.`tableau.tod_boss_dashboard_sheet_2`
            |options truncate="false";
-           |load jdbc.`tableau.tod_boss_dashboard_sheet_2` where directQuery="select * from tod_boss_dashboard_sheet_2" as tbs;
+           |load jdbc.`tableau.tod_boss_dashboard_sheet_2` where directQuery='''
+           |select * from tod_boss_dashboard_sheet_2 where a = "b"
+           |''' as tbs;
          """.stripMargin, sq)
 
-      assume(spark.sql("select * from tbs").toJSON.collect().size == 1)
+      assume(spark.sql("select * from tbs").toJSON.collect().size == 0)
 
 
     }
