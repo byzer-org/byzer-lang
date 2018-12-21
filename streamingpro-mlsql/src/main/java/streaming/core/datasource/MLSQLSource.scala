@@ -26,7 +26,7 @@ import org.apache.spark.sql.{DataFrame, DataFrameReader, DataFrameWriter, Row}
 
 trait MLSQLDataSource {
   def dbSplitter = {
-    "\\."
+    "."
   }
 
   def fullFormat: String

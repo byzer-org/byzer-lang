@@ -19,14 +19,16 @@
 package streaming.test.mysql
 
 import org.apache.spark.streaming.BasicSparkOperation
+import org.scalatest.BeforeAndAfterAll
 import streaming.core.strategy.platform.SparkRuntime
-import streaming.core.{BasicMLSQLConfig, NotToRunTag, SpecFunctions}
+import streaming.core.{BasicMLSQLConfig, SpecFunctions}
 import streaming.dsl.ScriptSQLExec
+import streaming.log.Logging
 
 /**
   * Created by allwefantasy on 12/9/2018.
   */
-class MySQLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConfig {
+class MySQLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConfig with BeforeAndAfterAll with Logging {
 
   val connect_stat =
     s"""
@@ -140,6 +142,71 @@ class MySQLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLCo
       assume(spark.sql("select * from tbs").toJSON.collect().size == 1)
 
     }
+  }
+
+  "SQLJDBC" should "work fine" in {
+
+    withBatchContext(setupBatchContext(batchParamsWithoutHive, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+      //执行sql
+      implicit val spark = runtime.sparkSession
+
+      //注册表连接
+      var sq = createSSEL
+      ScriptSQLExec.parse(connect_stat, sq)
+
+      sq = createSSEL
+      ScriptSQLExec.parse("select \"a\" as a,\"b\" as b\n,\"c\" as c\nas tod_boss_dashboard_sheet_1;", sq)
+
+      sq = createSSEL
+      ScriptSQLExec.parse(
+        s"""
+           |save overwrite tod_boss_dashboard_sheet_1
+           |as jdbc.`tableau.tod_boss_dashboard_sheet_2`
+           |options truncate="false";
+           |load jdbc.`tableau.tod_boss_dashboard_sheet_2` as tbs;
+         """.stripMargin, sq)
+
+      assume(spark.sql("select * from tbs").toJSON.collect().size == 1)
+
+      sq = createSSEL
+      ScriptSQLExec.parse(
+        s"""
+           |select 1 as t as NoneTable;
+           |run NoneTable as JDBC.`tableau.tod_boss_dashboard_sheet_2`
+           |where `driver-statement-query`="select * from tod_boss_dashboard_sheet_2"
+           |and sqlMode="query"
+           |as jack;
+           |
+         """.stripMargin, sq)
+      assume(spark.sql("select * from jack").collect().size == 1)
+
+      ScriptSQLExec.parse(
+        s"""
+           |select 1 as t as NoneTable;
+           |run NoneTable as JDBC.``
+           |where `driver-statement-query`="select * from tod_boss_dashboard_sheet_2"
+           |and sqlMode="query"
+           |and url="jdbc:mysql://127.0.0.1:3306/wow?characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&tinyInt1isBit=false"
+           |and driver="com.mysql.jdbc.Driver"
+           |and user="root"
+           |and password="${password}"
+           |as jack;
+           |
+         """.stripMargin, sq)
+      assume(spark.sql("select * from jack").collect().size == 1)
+
+    }
+  }
+
+  val server = new streaming.test.servers.MySQLServer("5.7")
+
+  override protected def beforeAll(): Unit = {
+    server.startServer
+    server.exec("mysql", "exec mysql -uroot -pmlsql --protocol=tcp -e 'create database wow'")
+  }
+
+  override protected def afterAll(): Unit = {
+    server.stopServer
   }
 
 }

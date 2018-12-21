@@ -21,14 +21,13 @@ package streaming.dsl
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicReference
 
-import org.antlr.v4.runtime.tree.ParseTreeWalker
 import org.antlr.v4.runtime._
-import org.antlr.v4.runtime.atn.ATNSimulator
+import org.antlr.v4.runtime.tree.ParseTreeWalker
 import org.apache.spark.MLSQLSyntaxErrorListener
 import org.apache.spark.sql.SparkSession
 import streaming.dsl.auth._
-import streaming.dsl.parser.{DSLSQLLexer, DSLSQLListener, DSLSQLParser}
 import streaming.dsl.parser.DSLSQLParser._
+import streaming.dsl.parser.{DSLSQLLexer, DSLSQLListener, DSLSQLParser}
 import streaming.log.{Logging, WowLog}
 import streaming.parser.lisener.BaseParseListenerextends
 
@@ -39,13 +38,6 @@ import scala.collection.mutable.ArrayBuffer
   * Created by allwefantasy on 25/8/2017.
   */
 object ScriptSQLExec extends Logging with WowLog {
-
-  //dbName -> (format->jdbc,url->....)
-  val dbMapping = new ConcurrentHashMap[String, Map[String, String]]()
-
-  def options(name: String, _options: Map[String, String]) = {
-    dbMapping.put(name, _options)
-  }
 
   private[this] val mlsqlExecuteContext: ThreadLocal[MLSQLExecuteContext] = new ThreadLocal[MLSQLExecuteContext]
 
@@ -303,6 +295,31 @@ class PreProcessIncludeListener(_sparkSession: SparkSession,
   }
 }
 
+object ConnectMeta {
+  //dbName -> (format->jdbc,url->....)
+  private val dbMapping = new ConcurrentHashMap[DBMappingKey, Map[String, String]]()
+
+  def options(key: DBMappingKey, _options: Map[String, String]) = {
+    dbMapping.put(key, _options)
+  }
+
+  def options(key: DBMappingKey) = {
+    if (dbMapping.containsKey(key)) {
+      Option(dbMapping.get(key))
+    } else None
+  }
+
+  def presentThenCall(key: DBMappingKey, f: Map[String, String] => Unit) = {
+    if (dbMapping.containsKey(key)) {
+      val item = dbMapping.get(key)
+      f(item)
+      Option(item)
+    } else None
+  }
+}
+
 case class MLSQLExecuteContext(owner: String, home: String, userDefinedParam: Map[String, String] = Map())
+
+case class DBMappingKey(format: String, db: String)
 
 
