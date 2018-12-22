@@ -50,7 +50,14 @@ class MLSQLJDBC extends MLSQLSource with MLSQLSink with MLSQLRegistry {
     //load configs should overwrite connect configs
     reader.options(config.config)
     reader.option("dbtable", dbtable)
-    reader.format(format).load(dbtable)
+    var table = reader.format(format).load(dbtable)
+    val columns = table.columns
+    val colNames = new Array[String](columns.length)
+    for( i <- 0 to columns.length - 1){
+      val (dbtable, column) = parseTableAndColumnFromStr(columns(i))
+      colNames(i)=column
+    }
+    table.toDF(colNames: _*)
   }
 
   override def save(writer: DataFrameWriter[Row], config: DataSinkConfig): Unit = {
@@ -89,5 +96,21 @@ class MLSQLJDBC extends MLSQLSource with MLSQLSink with MLSQLRegistry {
   override def register(): Unit = {
     DataSourceRegistry.register(MLSQLDataSourceKey(fullFormat, MLSQLSparkDataSourceType), this)
     DataSourceRegistry.register(MLSQLDataSourceKey(shortFormat, MLSQLSparkDataSourceType), this)
+  }
+  def parseTableAndColumnFromStr(str: String): (String, String) = {
+    val cleanedStr = cleanStr(str)
+    val dbAndTable = cleanedStr.split("\\.")
+    if (dbAndTable.length > 1) {
+      val table = dbAndTable(0)
+      val column = dbAndTable.splitAt(1)._2.mkString(".")
+      (table, column)
+    } else {
+      (cleanedStr, cleanedStr)
+    }
+  }
+  def cleanStr(str: String): String = {
+    if (str.startsWith("`") || str.startsWith("\""))
+      str.substring(1, str.length - 1)
+    else str
   }
 }
