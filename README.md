@@ -1,6 +1,11 @@
-## MLSQL - A cross,distributed platform unions BigData and AI.
+## MLSQL
 
-MLSQL is also  a Language akin to SQL which you can use to do batch, stream,crawler and AI.
+MLSQL is a Language which is the superset of SQL and  a distributed compute engine based on Spark. 
+
+With MLSQL,you can unifies big data and machine learning,one language, one platform.
+
+Notice that with the power of [UDF/Script](https://github.com/allwefantasy/streamingpro/blob/master/docs/en/mlsql-script-support.md) supports,no matter where your data is, what APIs you have, 
+you can use them in MLSQL script to make your job more easy. 
 
 ## Usage:
 
@@ -26,22 +31,32 @@ This guide document introduce [how to contribute to MLSQL](https://github.com/al
 ## Get PreBuild Distribution
 
 [Releases Page](https://github.com/allwefantasy/streamingpro/releases)
-You also can refer this: [Compile Assistance](https://streamingpro.rebiekong.com/index.html)
+The lasted version is [MLSQL-v1.1.6](https://github.com/allwefantasy/streamingpro/releases/tag/v1.1.6).
+You can also download from [MLSQL Website](http://download.mlsql.tech/mlsql-1.1.6/)
 
 ## Build Distribution
 
 
-```
+```shell
+# clone project
 git clone https://github.com/allwefantasy/streamingpro .
 cd streamingpro
 
-export MLSQL_SPARK_VERSIOIN=2.3;export DRY_RUN=false && ./dev/make-distribution.sh
+## configure build envs
+export MLSQL_SPARK_VERSIOIN=2.3
+export DRY_RUN=false 
+export DISTRIBUTION=false
+
+## build  
+./dev/make-distribution.sh
 
 
 cp streamingpro-bin-x.x.x.tgz /tmp
 cd /tmp && tar xzvf  streamingpro-bin-x.x.x.tgz
 cd /tmp/streamingpro
 
+## make sure spark distribution is available
+## visit http://127.0.0.1:9003
 export SPARK_HOME="....." ; ./start-local.sh
 ```
 
