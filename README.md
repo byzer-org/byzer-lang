@@ -48,7 +48,7 @@ export DRY_RUN=false
 export DISTRIBUTION=false
 
 ## build  
-./dev/make-distribution.sh
+./dev/package.sh
 
 
 cp streamingpro-bin-x.x.x.tgz /tmp
