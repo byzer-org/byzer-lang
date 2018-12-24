@@ -22,17 +22,32 @@ This is an active open source project for everyone,
 and we are always open to people who want to use this system or contribute to it.
 This guide document introduce [how to contribute to MLSQL](https://github.com/allwefantasy/streamingpro/blob/master/docs/docv2/contribute/contribute.md).
 
-## Roadmap
+## RoadMap
 
-1. [Roadmap](https://github.com/allwefantasy/streamingpro/blob/master/docs/docv2/contribute/roadmap.md)
+1. [MLSQL v1.1.7 RoadMap](https://www.jianshu.com/p/622ff0c7beb1) MLSQL v1.1.7 plans to release in Mid Jan 2019 
 2. [Versioning Policy](https://github.com/allwefantasy/streamingpro/blob/master/docs/docv2/contribute/release.md)
+
 
 
 ## Get PreBuild Distribution
 
-[Releases Page](https://github.com/allwefantasy/streamingpro/releases)
-The lasted version is [MLSQL-v1.1.6](https://github.com/allwefantasy/streamingpro/releases/tag/v1.1.6).
-You can also download from [MLSQL Website](http://download.mlsql.tech/mlsql-1.1.6/)
+* [Release Notes](https://github.com/allwefantasy/streamingpro/tree/master/docs/docv2/release_notes)
+* [Releases Page](https://github.com/allwefantasy/streamingpro/releases)
+* The lasted version is [MLSQL-v1.1.6](https://github.com/allwefantasy/streamingpro/releases/tag/v1.1.6).
+* You can also download from [MLSQL Website](http://download.mlsql.tech/mlsql-1.1.6/)
+
+
+Run PreBuild Distribution:
+
+```shell
+cp streamingpro-spark_2.x-x.x.x.tar.gz /tmp
+cd /tmp && tar xzvf  streamingpro-spark_2.x-x.x.x.tar.gz
+cd /tmp/streamingpro-spark_2.x-x.x.x
+
+## make sure spark distribution is available
+## visit http://127.0.0.1:9003
+export SPARK_HOME="....." ; ./start-local.sh
+```
 
 ## Build Distribution
 
@@ -49,15 +64,6 @@ export DISTRIBUTION=false
 
 ## build  
 ./dev/package.sh
-
-
-cp streamingpro-bin-x.x.x.tgz /tmp
-cd /tmp && tar xzvf  streamingpro-bin-x.x.x.tgz
-cd /tmp/streamingpro
-
-## make sure spark distribution is available
-## visit http://127.0.0.1:9003
-export SPARK_HOME="....." ; ./start-local.sh
 ```
 
 ## Contributors

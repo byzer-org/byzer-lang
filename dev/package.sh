@@ -28,16 +28,6 @@ for env in MLSQL_SPARK_VERSION DRY_RUN DISTRIBUTION; do
   fi
 done
 
-if [[ ${DRY_RUN} != "true" ]];then
-rm -rf /tmp/temp_ServiceFramework
-git clone --depth 1 https://github.com/allwefantasy/ServiceFramework.git /tmp/temp_ServiceFramework
-cd /tmp/temp_ServiceFramework
-mvn install -DskipTests -Pjetty-9 -Pweb-include-jetty-9
-
-cd -
-fi
-
-
 BASE_PROFILES="-Pscala-2.11 -Ponline -Phive-thrift-server -Pcarbondata  -Pcrawler"
 
 if [[ "$MLSQL_SPARK_VERSION" > "2.2" ]]; then
