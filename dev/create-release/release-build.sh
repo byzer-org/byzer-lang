@@ -55,8 +55,6 @@ export LANG=C.UTF-8
 # Commit ref to checkout when building
 GIT_REF=${GIT_REF:-master}
 
-RELEASE_STAGING_LOCATION="https://dist.apache.org/repos/dist/dev/spark"
-
 BASE_DIR=$(pwd)
 
 init_java
@@ -76,7 +74,7 @@ git clone "$MLSQL_GIT_REPO"
 cd streamingpro
 git checkout $GIT_REF
 git_hash=`git rev-parse --short HEAD`
-echo "Checked out Spark git hash $git_hash"
+echo "Checked out MLSQL git hash $git_hash"
 
 if [ -z "$MLSQL_VERSION" ]; then
   # Run $MVN in a separate command so that 'set -e' does the right thing.
@@ -147,7 +145,7 @@ mvn -DskipTests clean package -pl streamingpro-mlsql -am $BASE_PROFILES
 EOF
   mvn -DskipTests clean package -pl streamingpro-mlsql -am $BASE_PROFILES
   cd ..
-  PNAME="streamingpro-spark_$MLSQL_BIG_SPARK_VERSIOIN-$MLSQL_PACKAGE_VERSION"
+  PNAME="mlsql-spark_$MLSQL_BIG_SPARK_VERSIOIN-$MLSQL_PACKAGE_VERSION"
   mkdir -p $PNAME/libs
   cp streamingpro/streamingpro-mlsql/target/streamingpro-mlsql-spark_$MLSQL_BIG_SPARK_VERSIOIN-$MLSQL_VERSION.jar $PNAME/libs/
   cp ../start-local.sh $PNAME/
