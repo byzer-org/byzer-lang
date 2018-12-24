@@ -216,7 +216,6 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
     Class.forName(clzz).getMethods.foreach { f =>
       try {
         if (Modifier.isStatic(f.getModifiers)) {
-          logInfo(f.getName)
           f.invoke(null, sparkSession.udf)
         }
       } catch {
