@@ -91,7 +91,7 @@
 
     <dependencies>
         <dependency>
-            <groupId>streaming.king</groupId>
+            <groupId>tech.msql</groupId>
             <artifactId>streamingpro-common</artifactId>
             <version>${project.version}</version>
         </dependency>

@@ -55,7 +55,7 @@
                     <artifactId>zkclient</artifactId>
                 </exclusion>
                 <exclusion>
-                    <groupId>streaming.king</groupId>
+                    <groupId>tech.msql</groupId>
                     <artifactId>streamingpro-jython</artifactId>
                 </exclusion>
             </exclusions>

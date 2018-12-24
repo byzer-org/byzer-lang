@@ -87,11 +87,11 @@ trait WowBaseTestServer extends Logging {
   }
 
   def stopServer = {
-    val dockerComposeCommand = s"cd ${pjDir};docker-compose stop"
+    val dockerComposeCommand = s"cd ${pjDir};docker-compose -p ${projectName} down"
     val (status, out, err) = ShellCommand.execWithExitValue(dockerComposeCommand, -1)
     logInfo(s"command=[${dockerComposeCommand}] status=${status} out=[${out}] err=[${err}]")
     require(status == 0, "Fail to start server")
     ShellCommand.execCmd(s"rm -rf ${pjDir}")
-    ShellCommand.execWithExitValue("docker network prune --force")
+    //ShellCommand.execWithExitValue("docker network prune --force")
   }
 }

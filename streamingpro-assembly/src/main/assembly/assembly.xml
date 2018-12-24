@@ -11,11 +11,11 @@
 
             <!-- Now, select which projects to include in this module-set. -->
             <includes>
-                <include>streaming.king:*</include>
+                <include>tech.msql:*</include>
             </includes>
             <!--<excludes>-->
-                <!--<exclude>streaming.king:streamingpro-manager</exclude>-->
-                <!--<exclude>streaming.king:streamingpro-dl4j</exclude>-->
+                <!--<exclude>tech.msql:streamingpro-manager</exclude>-->
+                <!--<exclude>tech.msql:streamingpro-dl4j</exclude>-->
             <!--</excludes>-->
             <binaries>
                 <outputDirectory>libs</outputDirectory>

@@ -110,7 +110,7 @@
                                     <relocations>
                                         <relocation>
                                             <pattern>org.eclipse.jetty</pattern>
-                                            <shadedPattern>streaming.king.org.eclipse.jetty</shadedPattern>
+                                            <shadedPattern>tech.mlsql.org.eclipse.jetty</shadedPattern>
                                         </relocation>
 
                                     </relocations>
