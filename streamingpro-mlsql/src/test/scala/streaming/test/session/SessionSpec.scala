@@ -50,9 +50,13 @@ class SessionSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQL
 
       assume(runtime.sessionManager.getOpenSessionCount == 1)
 
-      while(StreamingproJobManager.getJobInfo.size == 0){
+      var counter = 0
+      while(counter < 30 && StreamingproJobManager.getJobInfo.size == 0){
+        counter += 1
         Thread.sleep(1000)
       }
+
+      assume(counter < 30)
 
       StreamingproJobManager.killJob(StreamingproJobManager.getJobInfo.head._2.groupId)
 
