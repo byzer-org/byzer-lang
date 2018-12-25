@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+set -e
+set -o pipefail
+
 for env in AK AKS MLSQL_KEY_PARE_NAME; do
   if [[ -z "${!env}" ]]; then
     echo "===$env must be set to run this script==="
@@ -35,6 +38,8 @@ done
 echo "FAILs: ${FAIL_NUM}"
 echo ${pids}
 
-rm mlsql.master
-rm mlsql.slaves
-rm cluster.info
+if [[ ${FAIL_NUM} == "0" ]];then
+    rm mlsql.master
+    rm mlsql.slaves
+    rm cluster.info
+fi

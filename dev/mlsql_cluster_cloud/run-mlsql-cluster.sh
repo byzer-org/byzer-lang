@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-
+set -e
+set -o pipefail
 
 function exit_with_usage {
   cat << EOF
@@ -28,13 +29,11 @@ MLSQL_VERSION        - the mlsql version, 1.1.6 default 1.1.6
 
 MLSQL_SLAVE_NUM      - the number of worker. default 1
 MASTER_WITH_PUBLIC_IP - default true
+PYMLSQL_VERSIOIN      - 1.1.6.3
 
 EOF
   exit 0
 }
-
-set -e
-set -o pipefail
 
 if [[ $@ == *"help"* ]]; then
   exit_with_usage
@@ -64,10 +63,19 @@ export MASTER_INSTANCE_TYPE=${MASTER_INSTANCE_TYPE:-ecs.r5.large}
 export SLAVE_INSTANCE_TYPE=${SLAVE_INSTANCE_TYPE:-ecs.r5.large}
 export MASTER_WITH_PUBLIC_IP=${MASTER_WITH_PUBLIC_IP:-true}
 export MLSQL_SLAVE_NUM=${MLSQL_SLAVE_NUM:-1}
+export PYMLSQL_VERSIOIN=${PYMLSQL_VERSIOIN:-1.1.6.3}
 
 export MLSQL_TAR="streamingpro-spark_${MLSQL_SPARK_VERSION}-${MLSQL_VERSION}.tar.gz"
 export MLSQL_NAME="streamingpro-spark_${MLSQL_SPARK_VERSION}-${MLSQL_VERSION}"
 export SCRIPT_FILE="/tmp/k.sh"
+
+if [[ -z "${OSS_AK}" ]];then
+   export OSS_AK=${AK}
+fi
+
+if [[ -z "${OSS_AKS}" ]];then
+   export OSS_AKS=${AKS}
+fi
 
 echo "Create ECS instance for master"
 start_output=$(pymlsql start --image-id m-bp13ubsorlrxdb9lmv2x --instance-type ${MASTER_INSTANCE_TYPE}  --need-public-ip ${MASTER_WITH_PUBLIC_IP} --init-ssh-key false --security-group ${SECURITY_GROUP})
@@ -119,7 +127,7 @@ pymlsql exec-shell --instance-id ${instance_id} \
 
 echo "copy ssh file and script to master, so we can create/start slave in master"
 pymlsql copy-from-local --instance-id ${instance_id} --execute-user root \
---source /Users/allwefantasy/.ssh/mlsql-build-env-local \
+--source ~/.ssh/${MLSQL_KEY_PARE_NAME} \
 --target /home/webuser/.ssh/
 
 
@@ -132,8 +140,8 @@ echo "configure auth of the script"
 cat << EOF > ${SCRIPT_FILE}
 #!/usr/bin/env bash
 chown -R webuser:webuser /home/webuser/start-slaves.sh
-chown -R webuser:webuser /home/webuser/.ssh/mlsql-build-env-local
-chmod 600 /home/webuser/.ssh/mlsql-build-env-local
+chown -R webuser:webuser /home/webuser/.ssh/${MLSQL_KEY_PARE_NAME}
+chmod 600 /home/webuser/.ssh/${MLSQL_KEY_PARE_NAME}
 chmod u+x /home/webuser/start-slaves.sh
 EOF
 
@@ -153,7 +161,7 @@ echo -e "[global]\ntrusted-host = mirrors.aliyun.com\nindex-url = https://mirror
 if [[ -z "${PyMLSQL_PIP}" ]];then
     git clone https://github.com/allwefantasy/PyMLSQL.git
     cd PyMLSQL
-    rm -rf ./dist && pip uninstall -y pymlsql && python setup.py sdist bdist_wheel && cd ./dist/ && pip install pymlsql-1.1.6.2-py2.py3-none-any.whl && cd -
+    rm -rf ./dist && pip uninstall -y pymlsql && python setup.py sdist bdist_wheel && cd ./dist/ && pip install pymlsql-${PYMLSQL_VERSIOIN}-py2.py3-none-any.whl && cd -
 else
     pip install pymlsql
 fi
@@ -218,8 +226,8 @@ cat << EOF > ${SCRIPT_FILE}
 #!/usr/bin/env bash
 cd /home/webuser
 source activate mlsql-3.5
-export AK=${AK}
-export AKS=${AKS}
+export AK=${OSS_AK}
+export AKS=${OSS_AKS}
 
 pymlsql oss-download --bucket-name mlsql-release-repo --source ${MLSQL_TAR}  --target ${MLSQL_TAR}
 tar xf ${MLSQL_TAR}
