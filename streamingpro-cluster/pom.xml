@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <artifactId>streamingpro</artifactId>
-        <groupId>streaming.king</groupId>
+        <groupId>tech.mlsql</groupId>
         <version>1.1.7-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -46,7 +46,7 @@
     </profiles>
     <dependencies>
         <dependency>
-            <groupId>streaming.king</groupId>
+            <groupId>tech.mlsql</groupId>
             <artifactId>streamingpro-common</artifactId>
             <version>${project.parent.version}</version>
             <exclusions>
@@ -55,7 +55,7 @@
                     <artifactId>zkclient</artifactId>
                 </exclusion>
                 <exclusion>
-                    <groupId>streaming.king</groupId>
+                    <groupId>tech.msql</groupId>
                     <artifactId>streamingpro-jython</artifactId>
                 </exclusion>
             </exclusions>

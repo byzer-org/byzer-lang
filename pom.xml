@@ -2,7 +2,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>streaming.king</groupId>
+    <groupId>tech.mlsql</groupId>
     <artifactId>streamingpro</artifactId>
     <packaging>pom</packaging>
     <version>1.1.7-SNAPSHOT</version>
@@ -706,7 +706,6 @@
             <artifactId>slf4j-log4j12</artifactId>
             <version>1.7.5</version>
         </dependency>
-
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>

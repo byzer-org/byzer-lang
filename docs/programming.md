@@ -251,7 +251,7 @@ Spark 2.+:
 
 ```
   <dependency>
-            <groupId>streaming.king</groupId>
+            <groupId>tech.mlsql</groupId>
             <artifactId>streamingpro-api</artifactId>
             <version>2.0.0</version>
         </dependency>
