@@ -13,6 +13,9 @@ SECURITY_GROUP       - the security-group id of  aliyun.  Notice that by default
 AK                   - access key
 AKS                  - access key secret
 
+MASTER_INSTANCE_TYPE - default ecs.r5.large
+SLAVE_INSTANCE_TYPE - default ecs.r5.large
+
 -- MLSQL configuration
 
 MLSQL_KEY_PARE_NAME  - a ssh key which you can connect to the esc server.
@@ -23,7 +26,8 @@ MLSQL_KEY_PARE_NAME  - a ssh key which you can connect to the esc server.
 MLSQL_SPARK_VERSION  - the spark version, 2.2/2.3/2.4 default 2.3
 MLSQL_VERSION        - the mlsql version, 1.1.6 default 1.1.6
 
-
+MLSQL_SLAVE_NUM      - the number of worker. default 1
+MASTER_WITH_PUBLIC_IP - default true
 
 EOF
   exit 0
@@ -43,7 +47,7 @@ for env in AK AKS MLSQL_KEY_PARE_NAME; do
   fi
 done
 
-pymlsql --help
+pymlsql --help > /dev/null
 
 if [[ "$?" != "0"  ]];then
     echo "=== please use pip install pymlsql first==="
@@ -56,13 +60,17 @@ fi
 export MLSQL_SPARK_VERSION=${MLSQL_SPARK_VERSION:-2.3}
 export MLSQL_VERSION=${MLSQL_VERSION:-1.1.6}
 export SECURITY_GROUP=${SECURITY_GROUP:-sg-bp1hi23xfzybp0exjp8a}
+export MASTER_INSTANCE_TYPE=${MASTER_INSTANCE_TYPE:-ecs.r5.large}
+export SLAVE_INSTANCE_TYPE=${SLAVE_INSTANCE_TYPE:-ecs.r5.large}
+export MASTER_WITH_PUBLIC_IP=${MASTER_WITH_PUBLIC_IP:-true}
+export MLSQL_SLAVE_NUM=${MLSQL_SLAVE_NUM:-1}
 
 export MLSQL_TAR="streamingpro-spark_${MLSQL_SPARK_VERSION}-${MLSQL_VERSION}.tar.gz"
 export MLSQL_NAME="streamingpro-spark_${MLSQL_SPARK_VERSION}-${MLSQL_VERSION}"
 export SCRIPT_FILE="/tmp/k.sh"
 
 echo "Create ECS instance for master"
-start_output=$(pymlsql start --image-id m-bp13ubsorlrxdb9lmv2x --need-public-ip true --init-ssh-key false --security-group ${SECURITY_GROUP})
+start_output=$(pymlsql start --image-id m-bp13ubsorlrxdb9lmv2x --instance-type ${MASTER_INSTANCE_TYPE}  --need-public-ip ${MASTER_WITH_PUBLIC_IP} --init-ssh-key false --security-group ${SECURITY_GROUP})
 echo ----"${start_output}"-----
 
 export instance_id=$(echo "${start_output}"|grep '^instance_id:'|cut -d ':' -f2)
@@ -71,21 +79,28 @@ export inter_ip=$(echo "${start_output}"|grep '^intern_ip:'|cut -d ':' -f2)
 
 echo "${instance_id}" > mlsql.master
 
-cat << EOF
-master instance_id : ${instance_id}
-master public_ip : ${public_ip}
-master inter_ip : ${inter_ip}
-EOF
+
 
 
 echo "Fetch master hostname"
 cat << EOF > ${SCRIPT_FILE}
 #!/usr/bin/env bash
-hostname
+echo hostname:\`hostname\`
 EOF
 
-export master_hostname=$(pymlsql exec-shell --instance-id ${instance_id} --script-file ${SCRIPT_FILE} --execute-user root)
+host_output=$(pymlsql exec-shell --instance-id ${instance_id} --script-file ${SCRIPT_FILE} --execute-user root)
+export master_hostname=$(echo "${host_output}"|grep '^hostname:'|cut -d ':' -f2)
 
+cat << EOF
+---------------------------------------
+Master INFO:
+
+master instance_id : ${instance_id}
+master public_ip : ${public_ip}
+master inter_ip : ${inter_ip}
+master host_name: ${master_hostname}
+---------------------------------------
+EOF
 
 echo "Start spark master"
 
@@ -159,18 +174,37 @@ export instance_id=${instance_id}
 export public_ip=${public_ip}
 export inter_ip=${inter_ip}
 export master_hostname=${master_hostname}
-export MLSQL_KEY_PARE_NAME=mlsql-build-env-local
+export MLSQL_KEY_PARE_NAME=${MLSQL_KEY_PARE_NAME}
 export AK=${AK}
 export AKS=${AKS}
-export SCRIPT_FILE="/tmp/k.sh"
 export SECURITY_GROUP=${SECURITY_GROUP}
+export SLAVE_INSTANCE_TYPE=${SLAVE_INSTANCE_TYPE}
 
-./start-slaves.sh
+pids=""
+for page in {1..${MLSQL_SLAVE_NUM}}
+do
+    ./start-slaves.sh &
+    pids[\${page}]=\$!
+done
+
+FAIL_NUM=0
+
+for job in \${pids[*]};
+do
+    echo \$job
+    wait \$job || let "FAIL_NUM+=1"
+done
+
+echo "total salves: ${MLSQL_SLAVE_NUM} FAILs: \${FAIL_NUM}"
+
 EOF
 
 pymlsql exec-shell --instance-id ${instance_id} \
 --script-file ${SCRIPT_FILE} \
 --execute-user webuser
+
+echo "sleep 15 wait until the salves are up"
+sleep 15
 
 echo "copy mlsql.slaves from master"
 pymlsql copy-to-local --instance-id ${instance_id} --execute-user root \
@@ -225,7 +259,7 @@ nohup ./bin/spark-submit --class streaming.core.StreamingApp \
         -streaming.driver.port 9003   \
         -streaming.spark.service true \
         -streaming.thrift false \
-        -streaming.enableHiveSupport false > /dev/null 2>&1 &
+        -streaming.enableHiveSupport false > mlsql.log 2>&1 &
 EOF
 
 pymlsql exec-shell --instance-id ${instance_id} \
