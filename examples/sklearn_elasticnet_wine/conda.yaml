@@ -4,7 +4,7 @@ dependencies:
   - pip:
     - numpy==1.14.3
     - kafka-python==1.4.3
-    - pyspark==${SPARK_VERSION}
+    - pyspark==2.3.2
     - pandas==0.22.0
     - scikit-learn==0.19.1
     - scipy==1.1.0
