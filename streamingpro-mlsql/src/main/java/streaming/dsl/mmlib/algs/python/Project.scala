@@ -154,8 +154,13 @@ class CondaEnvManager(options: Map[String, String]) extends Logging with WowLog 
       condaEnvPath match {
         case Some(path) =>
           val tempFile = "/tmp/" + UUID.randomUUID() + ".yaml"
-          FileUtils.write(new File(tempFile), getCondaYamlContent(condaEnvPath), Charset.forName("utf-8"))
-          ShellCommand.execCmd(s"${condaPath} env create -n $projectEnvName --file $tempFile")
+          try {
+            FileUtils.write(new File(tempFile), getCondaYamlContent(condaEnvPath), Charset.forName("utf-8"))
+            ShellCommand.execCmd(s"${condaPath} env create -n $projectEnvName --file $tempFile")
+          } finally {
+            FileUtils.deleteQuietly(new File(tempFile))
+          }
+
         case None =>
           ShellCommand.execCmd(s"${condaPath} create  -n $projectEnvName python")
       }
