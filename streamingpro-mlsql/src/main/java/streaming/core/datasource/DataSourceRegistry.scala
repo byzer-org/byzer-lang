@@ -86,3 +86,5 @@ sealed abstract class MLSQLDataSourceType
 case object MLSQLSparkDataSourceType extends MLSQLDataSourceType
 
 case object MLSQLDirectDataSourceType extends MLSQLDataSourceType
+
+case class DataAuthConfig(path: String, config: Map[String, String])

@@ -80,9 +80,9 @@ class SaveAuth(authProcessListener: AuthProcessListener) extends MLSQLAuth with 
 
     val mLSQLTable = if (format == "hive") {
       val Array(db, table) = final_path.split("\\.")
-      MLSQLTable(Some(db), Some(table), TableType.HIVE)
+      MLSQLTable(Some(db), Some(table) ,"" , "", TableType.HIVE)
     } else {
-      MLSQLTable(None, Some(final_path), TableType.from(format).get)
+      MLSQLTable(None, Some(final_path) ,"" , "", TableType.from(format).get)
     }
     authProcessListener.addTable(mLSQLTable)
     TableAuthResult.empty()

@@ -21,7 +21,7 @@ package streaming.dsl.auth
 /**
   * Created by allwefantasy on 11/9/2018.
   */
-case class MLSQLTable(db: Option[String], table: Option[String], tableType: TableTypeMeta)
+case class MLSQLTable(db: Option[String], table: Option[String], operateType: String , dataSourceType :String, tableType: TableTypeMeta)
 
 case class MLSQLTableSet(tables: Seq[MLSQLTable])
 
@@ -33,6 +33,13 @@ object TableAuthResult {
   def empty() = {
     TableAuthResult(false, "")
   }
+}
+
+object OperateType {
+  val SAVE = "save"
+  val LOAD = "load"
+  val CREATE = "create"
+  val DROP = "drop"
 }
 
 object TableType {

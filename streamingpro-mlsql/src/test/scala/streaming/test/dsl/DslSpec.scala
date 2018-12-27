@@ -568,6 +568,52 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
     }
   }
 
+  "auth-jdbc" should "work fine" in {
+
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+      //执行sql
+      implicit val spark = runtime.sparkSession
+
+      val ssel = createSSEL
+      val mlsql =
+        """
+          |connect jdbc where
+          |truncate="true"
+          |and driver="com.mysql.jdbc.Driver"
+          |and url="jdbc:mysql://127.0.0.1:3306/test_db"
+          |and user="root"
+          |and password="root123456"
+          |as test_conn;
+          |
+          |load jdbc.`test_conn.test_table` options
+          |as t_test_table;
+          |
+          |load jdbc.`test_table_1` options
+          |and driver="com.mysql.jdbc.Driver"
+          |and url="jdbc:mysql://127.0.0.1:3306/test_db_1"
+          |and user="root"
+          |and password="root"
+          |as t_test_table_1;
+          |
+        """.stripMargin
+      withClue("auth fail") {
+        assertThrows[RuntimeException] {
+          ScriptSQLExec.parse(mlsql, ssel, true, false ,true)
+        }
+      }
+      val jdbcMLSQLTable = ssel.authProcessListner.get.tables().tables
+        .filter(f => f.tableType == TableType.JDBC)
+      val jdbcTable = jdbcMLSQLTable.map(f => f.table.get).toSet
+      assume(jdbcTable == Set("test_table" ,"test_table_1"))
+      val jdbcDB = jdbcMLSQLTable.map(f => f.db.get).toSet
+      assume(jdbcDB == Set("test_db" ,"test_db_1"))
+      val operateType = jdbcMLSQLTable.map(f => f.operateType).toSet
+      assume(operateType == Set("load"))
+      val dataSourceType = jdbcMLSQLTable.map(f => f.dataSourceType).toSet
+      assume(dataSourceType == Set("mysql"))
+    }
+  }
+
   "load save support variable" should "work fine" in {
 
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>

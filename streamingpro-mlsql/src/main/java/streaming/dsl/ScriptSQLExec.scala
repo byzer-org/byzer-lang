@@ -234,6 +234,7 @@ class AuthProcessListener(val listener: ScriptSQLExecListener) extends BaseParse
         new SaveAuth(this).auth(ctx)
 
       case "connect" =>
+        new ConnectAuth(this).auth(ctx)
 
       case "create" =>
         new CreateAuth(this).auth(ctx)
@@ -241,6 +242,7 @@ class AuthProcessListener(val listener: ScriptSQLExecListener) extends BaseParse
         new InsertAuth(this).auth(ctx)
       case "drop" =>
         new DropAuth(this).auth(ctx)
+
       case "refresh" =>
 
       case "set" =>
