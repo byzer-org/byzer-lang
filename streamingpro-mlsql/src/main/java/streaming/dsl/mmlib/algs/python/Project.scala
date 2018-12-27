@@ -18,7 +18,6 @@
 
 package streaming.dsl.mmlib.algs.python
 
-import java.io.File
 import java.nio.file.Paths
 import java.util.UUID
 
@@ -168,7 +167,10 @@ class CondaEnvManager(options: Map[String, String]) extends Logging with WowLog 
 
   def getCondaEnvName(condaEnvPath: Option[String]) = {
     val condaEnvContents = condaEnvPath match {
-      case Some(cep) => scala.io.Source.fromFile(new File(cep)).getLines().mkString("\n")
+      case Some(cep) =>
+        // we should read from local ,but for now, we read from hdfs
+        // scala.io.Source.fromFile(new File(cep)).getLines().mkString("\n")
+        HDFSOperator.readFile(cep)
       case None => ""
     }
     s"mlflow-${sha1(condaEnvContents)}"
