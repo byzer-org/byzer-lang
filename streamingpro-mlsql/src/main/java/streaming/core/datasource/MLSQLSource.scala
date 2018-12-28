@@ -51,3 +51,9 @@ trait MLSQLDirectSink extends MLSQLDataSource {
   def save(writer: DataFrameWriter[Row], config: DataSinkConfig): Unit
 }
 
+case class SourceInfo(sourceType: String, db: String, table: String)
+
+trait MLSQLSourceInfo extends MLSQLDataSource {
+  def sourceInfo(config: DataAuthConfig): SourceInfo
+}
+

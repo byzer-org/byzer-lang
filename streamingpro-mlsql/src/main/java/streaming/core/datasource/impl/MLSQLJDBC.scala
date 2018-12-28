@@ -23,7 +23,7 @@ import org.apache.spark.sql.{DataFrame, DataFrameReader, DataFrameWriter, Row}
 import streaming.core.datasource._
 import streaming.dsl.{ConnectMeta, DBMappingKey}
 
-class MLSQLJDBC extends MLSQLSource with MLSQLSink with MLSQLRegistry {
+class MLSQLJDBC extends MLSQLSource with MLSQLSink with MLSQLSourceInfo with MLSQLRegistry {
 
 
   override def fullFormat: String = "jdbc"
@@ -113,4 +113,26 @@ class MLSQLJDBC extends MLSQLSource with MLSQLSink with MLSQLRegistry {
       str.substring(1, str.length - 1)
     else str
   }
+
+  override def sourceInfo(config: DataAuthConfig): SourceInfo = {
+    val Array(_dbname, _dbtable) =  if (config.path.contains(dbSplitter)) {
+      config.path.split(toSplit, 2)
+    }else{
+      Array("" ,config.path)
+    }
+
+    val url = if (config.config.contains("url")){
+      config.config.get("url").get
+    }else{
+      val format = config.config.getOrElse("implClass", fullFormat)
+
+      ConnectMeta.options(DBMappingKey(format, _dbname)).get("url")
+    }
+
+    val dataSourceType = url.split(":")(1)
+    val dbName = url.substring(url.lastIndexOf('/') + 1).takeWhile(_ != '?')
+
+    SourceInfo(dataSourceType ,dbName ,_dbtable)
+  }
+
 }

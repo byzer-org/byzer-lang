@@ -18,10 +18,12 @@
 
 package streaming.dsl.auth
 
+import streaming.dsl.auth.OperateType.OperateType
+
 /**
   * Created by allwefantasy on 11/9/2018.
   */
-case class MLSQLTable(db: Option[String], table: Option[String], tableType: TableTypeMeta)
+case class MLSQLTable(db: Option[String], table: Option[String], operateType: OperateType , sourceType :Option[String], tableType: TableTypeMeta)
 
 case class MLSQLTableSet(tables: Seq[MLSQLTable])
 
@@ -33,6 +35,17 @@ object TableAuthResult {
   def empty() = {
     TableAuthResult(false, "")
   }
+}
+
+object OperateType extends Enumeration {
+  type OperateType = Value
+  val SAVE = Value("save")
+  val LOAD = Value("load")
+  val CREATE = Value("create")
+  val DROP = Value("drop")
+  val INSERT = Value("insert")
+  val SELECT = Value("select")
+  val EMPTY = Value("empty")
 }
 
 object TableType {

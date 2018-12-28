@@ -56,12 +56,12 @@ class CreateAuth(authProcessListener: AuthProcessListener) extends MLSQLAuth wit
         case Some(db) =>
           val exists = authProcessListener.withDBs.filter(m => f.table == m.table.get && db == m.db.get).size > 0
           if (!exists) {
-            authProcessListener.addTable(MLSQLTable(Some(db), Some(f.table), TableType.HIVE))
+            authProcessListener.addTable(MLSQLTable(Some(db), Some(f.table) ,OperateType.CREATE , None, TableType.HIVE))
           }
         case None =>
           val exists = authProcessListener.withoutDBs.filter(m => f.table == m.table.get).size > 0
           if (!exists) {
-            authProcessListener.addTable(MLSQLTable(None, Some(f.table), TableType.TEMP))
+            authProcessListener.addTable(MLSQLTable(None, Some(f.table) ,OperateType.CREATE , None, TableType.TEMP))
           }
       }
     }

@@ -24,7 +24,7 @@ import org.apache.spark.streaming.BasicSparkOperation
 import streaming.common.shell.ShellCommand
 import streaming.core.strategy.platform.SparkRuntime
 import streaming.core.{BasicMLSQLConfig, NotToRunTag, SpecFunctions}
-import streaming.dsl.auth.TableType
+import streaming.dsl.auth.{OperateType, TableType}
 import streaming.dsl.{GrammarProcessListener, ScriptSQLExec}
 
 /**
@@ -565,6 +565,64 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
       assume(tempTable == Set("cool", "newtable"))
       val hdfsTable = ssel.authProcessListner.get.tables().tables.filter(f => f.tableType == TableType.HDFS).map(f => f.table.get).toSet
       assume(hdfsTable == Set("/tmp/abc"))
+    }
+  }
+
+  "auth-jdbc" should "work fine" in {
+
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+      //执行sql
+      implicit val spark = runtime.sparkSession
+
+      val ssel = createSSEL
+      val mlsql =
+        """
+          |connect jdbc where
+          |truncate="true"
+          |and driver="com.mysql.jdbc.Driver"
+          |and url="jdbc:mysql://127.0.0.1:3306/test_db"
+          |and user="root"
+          |and password="root123456"
+          |as test_conn;
+          |
+          |load jdbc.`test_conn.test_table` options
+          |as t_test_table;
+          |
+          |load jdbc.`test_table_1` options
+          |and driver="com.mysql.jdbc.Driver"
+          |and url="jdbc:mysql://127.0.0.1:3306/test_db_1"
+          |and user="root"
+          |and password="root"
+          |as t_test_table_1;
+          |
+          |save append t_test_table
+          |as jdbc.`test_conn.test_table_2`
+          |options idCol="id";
+        """.stripMargin
+      withClue("auth fail") {
+        assertThrows[RuntimeException] {
+          ScriptSQLExec.parse(mlsql, ssel, true, false ,true)
+        }
+      }
+
+      val loadMLSQLTable = ssel.authProcessListner.get.tables().tables
+        .filter(f => (f.tableType == TableType.JDBC && f.operateType == OperateType.LOAD))
+
+      var jdbcTable = loadMLSQLTable.map(f => f.table.get).toSet
+      assume(jdbcTable == Set("test_table" ,"test_table_1"))
+      var jdbcDB = loadMLSQLTable.map(f => f.db.get).toSet
+      assume(jdbcDB == Set("test_db" ,"test_db_1"))
+      var dataSourceType = loadMLSQLTable.map(f => f.sourceType.get).toSet
+      assume(dataSourceType == Set("mysql"))
+
+      val saveMLSQLTable = ssel.authProcessListner.get.tables().tables
+        .filter(f => (f.tableType == TableType.JDBC && f.operateType == OperateType.SAVE))
+      jdbcTable = saveMLSQLTable.map(f => f.table.get).toSet
+      assume(jdbcTable == Set("test_table_2"))
+      jdbcDB = saveMLSQLTable.map(f => f.db.get).toSet
+      assume(jdbcDB == Set("test_db"))
+      dataSourceType = saveMLSQLTable.map(f => f.sourceType.get).toSet
+      assume(dataSourceType == Set("mysql"))
     }
   }
 

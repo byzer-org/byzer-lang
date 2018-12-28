@@ -18,6 +18,7 @@
 
 package streaming.dsl.auth
 
+import streaming.core.datasource.{DataAuthConfig, DataSourceRegistry, SourceInfo}
 import streaming.dsl.parser.DSLSQLParser._
 import streaming.dsl.template.TemplateMerge
 import streaming.dsl.{AuthProcessListener, DslTool}
@@ -78,12 +79,20 @@ class SaveAuth(authProcessListener: AuthProcessListener) extends MLSQLAuth with 
       }
     }
 
-    val mLSQLTable = if (format == "hive") {
-      val Array(db, table) = final_path.split("\\.")
-      MLSQLTable(Some(db), Some(table), TableType.HIVE)
-    } else {
-      MLSQLTable(None, Some(final_path), TableType.from(format).get)
+    val mLSQLTable = DataSourceRegistry.fetch(format, option).map { datasource =>
+      val sourceInfo = datasource.asInstanceOf[ {def sourceInfo(config: DataAuthConfig): SourceInfo}].
+        sourceInfo(DataAuthConfig(final_path, option))
+      MLSQLTable(Some(sourceInfo.db), Some(sourceInfo.table), OperateType.SAVE , Some(sourceInfo.sourceType), TableType.from(format).get)
+    } getOrElse {
+      format match {
+        case "hive" =>
+          val Array(db, table) = final_path.split("\\.")
+          MLSQLTable(Some(db), Some(table), OperateType.SAVE ,Some(format) , TableType.HIVE)
+        case _ =>
+          MLSQLTable(None, Some(final_path), OperateType.SAVE ,Some(format) , TableType.from(format).get)
+      }
     }
+
     authProcessListener.addTable(mLSQLTable)
     TableAuthResult.empty()
 
