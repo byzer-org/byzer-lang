@@ -626,6 +626,116 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
     }
   }
 
+  "auth-mongo" should "work fine" in {
+
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+      //执行sql
+      implicit val spark = runtime.sparkSession
+
+      val ssel = createSSEL
+      val mlsql =
+        """
+          |connect mongo where
+          |    partitioner="MongoPaginateBySizePartitioner"
+          |and uri="mongodb://127.0.0.1:27017/twitter" as mongo_instance;
+          |
+          |load mongo.`mongo_instance/cool`
+          |as test_table;
+          |
+          |load mongo.`cool_1` where
+          |    partitioner="MongoPaginateBySizePartitioner"
+          |and uri="mongodb://127.0.0.1:27017/twitter_1"
+          |as test_table_2;
+          |
+          |save overwrite test_table as mongo.`mongo_instance/cool_2` where
+          |    partitioner="MongoPaginateBySizePartitioner";
+        """.stripMargin
+      withClue("auth fail") {
+        assertThrows[RuntimeException] {
+          ScriptSQLExec.parse(mlsql, ssel, true, false ,true)
+        }
+      }
+
+      val loadMLSQLTable = ssel.authProcessListner.get.tables().tables
+        .filter(f => (f.tableType == TableType.MONGO && f.operateType == OperateType.LOAD))
+
+      var table = loadMLSQLTable.map(f => f.table.get).toSet
+      assume(table == Set("cool" ,"cool_1"))
+      var db = loadMLSQLTable.map(f => f.db.get).toSet
+      assume(db == Set("twitter" ,"twitter_1"))
+      var sourceType = loadMLSQLTable.map(f => f.sourceType.get).toSet
+      assume(sourceType == Set("mongo"))
+
+      val saveMLSQLTable = ssel.authProcessListner.get.tables().tables
+        .filter(f => (f.tableType == TableType.MONGO && f.operateType == OperateType.SAVE))
+      table = saveMLSQLTable.map(f => f.table.get).toSet
+      assume(table == Set("cool_2"))
+      db = saveMLSQLTable.map(f => f.db.get).toSet
+      assume(db == Set("twitter"))
+      sourceType = saveMLSQLTable.map(f => f.sourceType.get).toSet
+      assume(sourceType == Set("mongo"))
+    }
+  }
+
+  "auth-es" should "work fine" in {
+
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+      //执行sql
+      implicit val spark = runtime.sparkSession
+
+      val ssel = createSSEL
+      val mlsql =
+        """
+          |connect es where
+          |`es.nodes`="127.0.0.1"
+          |and `es.port`="9200"
+          |and `es.resource`="test_index"
+          |as es_conn;
+          |
+          |load es.`es_conn/test_type`
+          |as es_test;
+          |
+          |load es.`test_type_1` options `es.nodes`="127.0.0.1"
+          |and `es.resource`="test_index_1"
+          |and `es.port`="9200"
+          |as es_test_1;
+          |
+          |load es.`.test.index/` options `es.nodes`="172.16.1.159"
+          |and `es.port`="9200"
+          |as es_test;
+          |
+          |save overwrite data1 as es.`es_conn/test_index_2` where
+          |`es.index.auto.create`="true"
+          |and `es.port`="9200"
+          |and `es.nodes`="127.0.0.1";
+        """.stripMargin
+      withClue("auth fail") {
+        assertThrows[RuntimeException] {
+          ScriptSQLExec.parse(mlsql, ssel, true, false ,true)
+        }
+      }
+
+      val loadMLSQLTable = ssel.authProcessListner.get.tables().tables
+        .filter(f => (f.tableType == TableType.ES && f.operateType == OperateType.LOAD))
+
+      var table = loadMLSQLTable.map(f => f.table.get).toSet
+      assume(table == Set("test_type" ,"test_type_1" ,""))
+      var db = loadMLSQLTable.map(f => f.db.get).toSet
+      assume(db == Set("test_index" ,"test_index_1" ,".test.index"))
+      var sourceType = loadMLSQLTable.map(f => f.sourceType.get).toSet
+      assume(sourceType == Set("es"))
+
+      val saveMLSQLTable = ssel.authProcessListner.get.tables().tables
+        .filter(f => (f.tableType == TableType.ES && f.operateType == OperateType.SAVE))
+      table = saveMLSQLTable.map(f => f.table.get).toSet
+      assume(table == Set("test_index_2"))
+      db = saveMLSQLTable.map(f => f.db.get).toSet
+      assume(db == Set("test_index"))
+      sourceType = saveMLSQLTable.map(f => f.sourceType.get).toSet
+      assume(sourceType == Set("es"))
+    }
+  }
+
   "load save support variable" should "work fine" in {
 
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
