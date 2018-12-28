@@ -22,7 +22,7 @@ import org.apache.spark.sql.{DataFrame, DataFrameReader, DataFrameWriter, Row}
 import streaming.core.datasource._
 import streaming.dsl.{ConnectMeta, DBMappingKey}
 
-class MLSQLMongo extends MLSQLSource with MLSQLSink with MLSQLRegistry {
+class MLSQLMongo extends MLSQLSource with MLSQLSink with MLSQLSourceInfo with MLSQLRegistry {
 
 
   override def fullFormat: String = "com.mongodb.spark.sql"
@@ -77,5 +77,25 @@ class MLSQLMongo extends MLSQLSource with MLSQLSink with MLSQLRegistry {
   override def register(): Unit = {
     DataSourceRegistry.register(MLSQLDataSourceKey(fullFormat, MLSQLSparkDataSourceType), this)
     DataSourceRegistry.register(MLSQLDataSourceKey(shortFormat, MLSQLSparkDataSourceType), this)
+  }
+
+  override def sourceInfo(config: DataAuthConfig): SourceInfo = {
+    val Array(_dbname, _dbtable) = if (config.path.contains(dbSplitter)) {
+      config.path.split(dbSplitter, 2)
+    }else{
+      Array("" ,config.path)
+    }
+
+    val uri = if (config.config.contains("uri")){
+      config.config.get("uri").get
+    }else{
+      val format = config.config.getOrElse("implClass", fullFormat)
+
+      ConnectMeta.options(DBMappingKey(format, _dbname)).get("uri")
+    }
+
+    val db = uri.substring(uri.lastIndexOf('/') + 1).takeWhile(_ != '?')
+
+    SourceInfo(shortFormat ,db ,_dbtable)
   }
 }

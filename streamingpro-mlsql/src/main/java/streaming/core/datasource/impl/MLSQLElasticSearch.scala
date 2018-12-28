@@ -22,7 +22,7 @@ import org.apache.spark.sql.{DataFrame, DataFrameReader, DataFrameWriter, Row}
 import streaming.core.datasource._
 import streaming.dsl.{ConnectMeta, DBMappingKey}
 
-class MLSQLElasticSearch extends MLSQLSource with MLSQLSink with MLSQLRegistry {
+class MLSQLElasticSearch extends MLSQLSource with MLSQLSink with MLSQLSourceInfo with MLSQLRegistry {
 
 
   override def fullFormat: String = "org.elasticsearch.spark.sql"
@@ -74,5 +74,37 @@ class MLSQLElasticSearch extends MLSQLSource with MLSQLSink with MLSQLRegistry {
   override def register(): Unit = {
     DataSourceRegistry.register(MLSQLDataSourceKey(fullFormat, MLSQLSparkDataSourceType), this)
     DataSourceRegistry.register(MLSQLDataSourceKey(shortFormat, MLSQLSparkDataSourceType), this)
+  }
+
+  override def sourceInfo(config: DataAuthConfig): SourceInfo = {
+    val Array(_dbname, _dbtable) =  if (config.path.contains(dbSplitter)) {
+      config.path.split(dbSplitter, 2)
+    }else{
+      Array("" ,config.path)
+    }
+
+    var table = _dbtable
+
+    val esResource = if (config.config.contains("es.resource")){
+      config.config.get("es.resource").get
+        .takeWhile(_.toString != dbSplitter)
+    }else{
+      val format = config.config.getOrElse("implClass", fullFormat)
+      val dbMapping = ConnectMeta.options(DBMappingKey(format, _dbname))
+      if (dbMapping.isEmpty){
+        _dbname
+      }else {
+        if (dbMapping.get.contains("es.resource")){
+          dbMapping.get("es.resource")
+            .takeWhile(_.toString != dbSplitter)
+        }else {
+          table = ""
+          _dbname
+        }
+
+      }
+    }
+
+    SourceInfo(shortFormat ,esResource ,table)
   }
 }
