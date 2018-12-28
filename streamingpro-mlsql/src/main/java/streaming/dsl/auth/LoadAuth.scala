@@ -18,7 +18,7 @@
 
 package streaming.dsl.auth
 
-import streaming.core.datasource.{DataAuthConfig, DataSourceRegistry}
+import streaming.core.datasource.{DataAuthConfig, DataSourceRegistry, SourceInfo}
 import streaming.dsl.parser.DSLSQLParser._
 import streaming.dsl.{AuthProcessListener, DslTool}
 import streaming.dsl.template.TemplateMerge
@@ -58,17 +58,17 @@ class LoadAuth(authProcessListener: AuthProcessListener) extends MLSQLAuth with 
     }
 
     val mLSQLTable = DataSourceRegistry.fetch(format, option).map { datasource =>
-      val (dataSourceType ,dbName ,dbTable) = datasource.asInstanceOf[ {def auth(config: DataAuthConfig): (String, String, String)}].
-        auth(DataAuthConfig(cleanStr(path), option))
+      val sourceInfo = datasource.asInstanceOf[ {def sourceInfo(config: DataAuthConfig): SourceInfo}].
+        sourceInfo(DataAuthConfig(cleanStr(path), option))
 
-      MLSQLTable(Some(dbName), Some(dbTable), OperateType.LOAD ,dataSourceType, TableType.from(format).get)
+      MLSQLTable(Some(sourceInfo.db), Some(sourceInfo.table), OperateType.LOAD, Some(sourceInfo.sourceType), TableType.from(format).get)
     } getOrElse {
-      MLSQLTable(None, Some(cleanStr(path)), OperateType.LOAD ,"" , TableType.from(format).get)
+      MLSQLTable(None, Some(cleanStr(path)), OperateType.LOAD, Some(format) ,TableType.from(format).get)
     }
 
     authProcessListener.addTable(mLSQLTable)
 
-    authProcessListener.addTable(MLSQLTable(None, Some(cleanStr(tableName)) ,"" , "", TableType.TEMP))
+    authProcessListener.addTable(MLSQLTable(None, Some(cleanStr(tableName)) ,OperateType.LOAD , None, TableType.TEMP))
     TableAuthResult.empty()
     //Class.forName(env.getOrElse("auth_client", "streaming.dsl.auth.meta.client.DefaultClient")).newInstance().asInstanceOf[TableAuth].auth(mLSQLTable)
   }

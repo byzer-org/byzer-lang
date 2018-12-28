@@ -24,7 +24,7 @@ import org.apache.spark.streaming.BasicSparkOperation
 import streaming.common.shell.ShellCommand
 import streaming.core.strategy.platform.SparkRuntime
 import streaming.core.{BasicMLSQLConfig, NotToRunTag, SpecFunctions}
-import streaming.dsl.auth.TableType
+import streaming.dsl.auth.{OperateType, TableType}
 import streaming.dsl.{GrammarProcessListener, ScriptSQLExec}
 
 /**
@@ -595,21 +595,33 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
           |and password="root"
           |as t_test_table_1;
           |
+          |save append t_test_table
+          |as jdbc.`test_conn.test_table_2`
+          |options idCol="id";
         """.stripMargin
       withClue("auth fail") {
         assertThrows[RuntimeException] {
           ScriptSQLExec.parse(mlsql, ssel, true, false ,true)
         }
       }
-      val jdbcMLSQLTable = ssel.authProcessListner.get.tables().tables
-        .filter(f => f.tableType == TableType.JDBC)
-      val jdbcTable = jdbcMLSQLTable.map(f => f.table.get).toSet
+
+      val loadMLSQLTable = ssel.authProcessListner.get.tables().tables
+        .filter(f => (f.tableType == TableType.JDBC && f.operateType == OperateType.LOAD))
+
+      var jdbcTable = loadMLSQLTable.map(f => f.table.get).toSet
       assume(jdbcTable == Set("test_table" ,"test_table_1"))
-      val jdbcDB = jdbcMLSQLTable.map(f => f.db.get).toSet
+      var jdbcDB = loadMLSQLTable.map(f => f.db.get).toSet
       assume(jdbcDB == Set("test_db" ,"test_db_1"))
-      val operateType = jdbcMLSQLTable.map(f => f.operateType).toSet
-      assume(operateType == Set("load"))
-      val dataSourceType = jdbcMLSQLTable.map(f => f.dataSourceType).toSet
+      var dataSourceType = loadMLSQLTable.map(f => f.sourceType.get).toSet
+      assume(dataSourceType == Set("mysql"))
+
+      val saveMLSQLTable = ssel.authProcessListner.get.tables().tables
+        .filter(f => (f.tableType == TableType.JDBC && f.operateType == OperateType.SAVE))
+      jdbcTable = saveMLSQLTable.map(f => f.table.get).toSet
+      assume(jdbcTable == Set("test_table_2"))
+      jdbcDB = saveMLSQLTable.map(f => f.db.get).toSet
+      assume(jdbcDB == Set("test_db"))
+      dataSourceType = saveMLSQLTable.map(f => f.sourceType.get).toSet
       assume(dataSourceType == Set("mysql"))
     }
   }
