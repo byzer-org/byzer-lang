@@ -18,85 +18,68 @@
 
 package streaming.udf
 
-import java.util.concurrent.atomic.AtomicBoolean
-
-import scala.collection.mutable.HashMap
-import scala.collection.JavaConversions._
-
 import com.google.common.cache.{CacheBuilder, CacheLoader}
-import com.google.common.reflect.ClassPath
 import streaming.dsl.mmlib.algs.ScriptUDFCacheKey
 import streaming.log.Logging
 
+import scala.collection.mutable.HashMap
+
 /**
- * Created by fchen on 2018/11/13.
- */
+  * Created by fchen on 2018/11/13.
+  */
 trait RuntimeCompileScriptInterface[FunType] extends Logging {
 
-  private val _scriptCache = CacheBuilder.newBuilder()
-    .maximumSize(10000)
-    .build(
-      new CacheLoader[ScriptUDFCacheKey, AnyRef]() {
-        override def load(scriptCacheKey: ScriptUDFCacheKey): AnyRef = {
-          val startTime = System.nanoTime()
-          val compiled = compile(scriptCacheKey)
+  /**
+    * compile source code or get binary code for cache.
+    *
+    * @param scriptCacheKey
+    * @return
+    */
+  def driverExecute(scriptCacheKey: ScriptUDFCacheKey): AnyRef = {
+    RuntimeCompileScriptFactory.driverScriptCache.get(scriptCacheKey)
+  }
 
-          def timeMs: Double = (System.nanoTime() - startTime).toDouble / 1000000
-
-          logInfo(s"generate udf time: [ ${timeMs} ]ms.")
-          compiled
-        }
-      })
-
+  def executorExecute(scriptCacheKey: ScriptUDFCacheKey): AnyRef = {
+    RuntimeCompileScriptFactory.executorScriptCache.get(scriptCacheKey)
+  }
 
   /**
-   * validate the source code
-   */
+    * validate the source code
+    */
   def check(sourceCode: String): Boolean
 
   /**
-   * how to compile the language source code with jvm.
-   *
-   * @param scriptCacheKey
-   * @return
-   */
+    * how to compile the language source code with jvm.
+    *
+    * @param scriptCacheKey
+    * @return
+    */
   def compile(scriptCacheKey: ScriptUDFCacheKey): AnyRef
 
   /**
-   * generate udf or udaf
-   */
+    * generate udf or udaf
+    */
   def generateFunction(scriptCacheKey: ScriptUDFCacheKey): FunType
 
   def lang: String
 
-  /**
-   * compile source code or get binary code for cache.
-   * @param scriptCacheKey
-   * @return
-   */
-  def execute(scriptCacheKey: ScriptUDFCacheKey): AnyRef = {
-    _scriptCache.get(scriptCacheKey)
-  }
 }
 
 object RuntimeCompileScriptFactory extends Logging {
 
   private val _udfCache = HashMap[String, RuntimeCompileUDF]()
   private val _udafCache = HashMap[String, RuntimeCompileUDAF]()
-  private val _loaded = new AtomicBoolean(false)
-  private val _lock = new Object()
+
+  registerUDF(PythonRuntimeCompileUDF.lang, PythonRuntimeCompileUDF)
+  registerUDF(ScalaRuntimeCompileUDF.lang, ScalaRuntimeCompileUDF)
+  registerUDAF(ScalaRuntimeCompileUDAF.lang, ScalaRuntimeCompileUDAF)
+  registerUDAF(PythonRuntimeCompileUDAF.lang, PythonRuntimeCompileUDAF)
 
   def getUDFCompilerBylang(lang: String): Option[RuntimeCompileUDF] = {
-    if (!_loaded.get()) {
-      loadAll()
-    }
     _udfCache.get(lang)
   }
 
   def getUDAFCompilerBylang(lang: String): Option[RuntimeCompileUDAF] = {
-    if (!_loaded.get()) {
-      loadAll()
-    }
     _udafCache.get(lang)
   }
 
@@ -112,35 +95,46 @@ object RuntimeCompileScriptFactory extends Logging {
     _udafCache.put(lang, runtimeCompileUDAF)
   }
 
-  /**
-   * load all [[RuntimeCompileUDF]] and [[RuntimeCompileUDAF]]
-   */
-  def loadAll(): Unit = {
-    def isRuntimeComile(className: String): Boolean = {
-      (className.endsWith("RuntimeCompileUDF") && className != "streaming.udf.RuntimeCompileUDF") ||
-        (className.endsWith("RuntimeCompileUDAF") && className != "streaming.udf.RuntimeCompileUDAF")
-    }
-    _lock.synchronized {
-      ClassPath.from(this.getClass.getClassLoader)
-        .getTopLevelClasses("streaming.udf")
-        .map(_.load())
-          .filter(n => {
-            isRuntimeComile(n.getName)
-          }).map(getInstance)
-        .foreach {
-          case udf: RuntimeCompileUDF => registerUDF(udf.lang, udf)
-          case udaf: RuntimeCompileUDAF => registerUDAF(udaf.lang, udaf)
-        }
-      _loaded.set(true)
-    }
-  }
 
-  private def getInstance(clz: Class[_]): Any = {
-    import scala.reflect.runtime.universe
-    val runtimeMirror = universe.runtimeMirror(this.getClass.getClassLoader)
-    val module = runtimeMirror.staticModule(clz.getName)
-    val obj = runtimeMirror.reflectModule(module)
-    obj.instance
-  }
+  val driverScriptCache = CacheBuilder.newBuilder()
+    .maximumSize(10000)
+    .build(
+      new CacheLoader[ScriptUDFCacheKey, AnyRef]() {
+        override def load(scriptCacheKey: ScriptUDFCacheKey): AnyRef = {
+          val startTime = System.nanoTime()
+          val compiler = scriptCacheKey.udfType match {
+            case "udf" => getUDFCompilerBylang(scriptCacheKey.lang)
+            case "udaf" => getUDAFCompilerBylang(scriptCacheKey.lang)
+          }
+
+          val compiled = compiler.get.compile(scriptCacheKey)
+
+          def timeMs: Double = (System.nanoTime() - startTime).toDouble / 1000000
+
+          logInfo(s"Dynamic in driver generate udf time: [ ${timeMs} ]ms.")
+          compiled
+        }
+      })
+
+
+  val executorScriptCache = CacheBuilder.newBuilder()
+    .maximumSize(10000)
+    .build(
+      new CacheLoader[ScriptUDFCacheKey, AnyRef]() {
+        override def load(scriptCacheKey: ScriptUDFCacheKey): AnyRef = {
+          val startTime = System.nanoTime()
+          val compiler = scriptCacheKey.udfType match {
+            case "udf" => getUDFCompilerBylang(scriptCacheKey.lang)
+            case "udaf" => getUDAFCompilerBylang(scriptCacheKey.lang)
+          }
+
+          val compiled = compiler.get.compile(scriptCacheKey)
+
+          def timeMs: Double = (System.nanoTime() - startTime).toDouble / 1000000
+
+          logInfo(s"Dynamic in executor generate udf time: [ ${timeMs} ]ms.")
+          compiled
+        }
+      })
 
 }

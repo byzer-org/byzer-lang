@@ -27,23 +27,24 @@ import streaming.dsl.mmlib.algs.ScriptUDFCacheKey
 import streaming.jython.{JythonUtils, PythonInterp}
 
 /**
- * Created by fchen on 2018/11/15.
- */
+  * Created by fchen on 2018/11/15.
+  */
 object PythonRuntimeCompileUDAF extends RuntimeCompileUDAF {
   /**
-   * validate the source code
-   */
+    * validate the source code
+    */
   override def check(sourceCode: String): Boolean = true
 
   /**
-   * compile the source code.
-   *
-   * @param scriptCacheKey
-   * @return
-   */
+    * compile the source code.
+    *
+    * @param scriptCacheKey
+    * @return
+    */
   override def compile(scriptCacheKey: ScriptUDFCacheKey): AnyRef = {
     PythonInterp.compilePython(scriptCacheKey.originalCode, scriptCacheKey.className)
   }
+
 
   override def generateFunction(scriptCacheKey: ScriptUDFCacheKey): UserDefinedAggregateFunction = {
 
@@ -61,11 +62,11 @@ object PythonRuntimeCompileUDAF extends RuntimeCompileUDAF {
       }
 
       @transient val objectUsingInDriver = wrap(() => {
-        execute(scriptCacheKey).asInstanceOf[PyObject].__call__()
+        driverExecute(scriptCacheKey).asInstanceOf[PyObject].__call__()
       }).asInstanceOf[PyObject]
 
       lazy val objectUsingInExecutor = wrap(() => {
-        execute(scriptCacheKey).asInstanceOf[PyObject].__call__()
+        executorExecute(scriptCacheKey).asInstanceOf[PyObject].__call__()
       }).asInstanceOf[PyObject]
 
 
