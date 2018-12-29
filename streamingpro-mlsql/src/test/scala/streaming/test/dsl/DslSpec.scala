@@ -736,6 +736,59 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
     }
   }
 
+  "auth-hbase" should "work fine" in {
+
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+      //执行sql
+      implicit val spark = runtime.sparkSession
+
+      val ssel = createSSEL
+      val mlsql =
+        """
+          |connect hbase where
+          |    namespace="test_ns"
+          |and zk="hbase-docker:2181" as hbase_instance;
+          |
+          |load hbase.`hbase_instance:test_tb` options
+          |family="cf"
+          |as test_table;
+          |
+          |load hbase.`test_ns_1:test_tb_1`
+          |options zk="hbase-docker:2181"
+          |and family="cf"
+          |as output1;
+          |
+          |save overwrite test_table as hbase.`hbase_instance:test_tb_2` where
+          |    rowkey="rowkey"
+          |and family="cf";
+        """.stripMargin
+      withClue("auth fail") {
+        assertThrows[RuntimeException] {
+          ScriptSQLExec.parse(mlsql, ssel, true, false ,true)
+        }
+      }
+
+      val loadMLSQLTable = ssel.authProcessListner.get.tables().tables
+        .filter(f => (f.tableType == TableType.HBASE && f.operateType == OperateType.LOAD))
+
+      var table = loadMLSQLTable.map(f => f.table.get).toSet
+      assume(table == Set("test_tb" ,"test_tb_1"))
+      var db = loadMLSQLTable.map(f => f.db.get).toSet
+      assume(db == Set("test_ns" ,"test_ns_1"))
+      var sourceType = loadMLSQLTable.map(f => f.sourceType.get).toSet
+      assume(sourceType == Set("hbase"))
+
+      val saveMLSQLTable = ssel.authProcessListner.get.tables().tables
+        .filter(f => (f.tableType == TableType.HBASE && f.operateType == OperateType.SAVE))
+      table = saveMLSQLTable.map(f => f.table.get).toSet
+      assume(table == Set("test_tb_2"))
+      db = saveMLSQLTable.map(f => f.db.get).toSet
+      assume(db == Set("test_ns"))
+      sourceType = saveMLSQLTable.map(f => f.sourceType.get).toSet
+      assume(sourceType == Set("hbase"))
+    }
+  }
+
   "load save support variable" should "work fine" in {
 
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>

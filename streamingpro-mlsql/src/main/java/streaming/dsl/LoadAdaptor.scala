@@ -95,8 +95,6 @@ class BatchLoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener,
         load(reader, DataSourceConfig(cleanStr(path), option, Option(emptyDataFrame)))
     }.getOrElse {
       format match {
-        case "hbase" | "org.apache.spark.sql.execution.datasources.hbase" =>
-          table = reader.format("org.apache.spark.sql.execution.datasources.hbase").load()
         case "crawlersql" =>
           table = reader.option("path", cleanStr(path)).format("org.apache.spark.sql.execution.datasources.crawlersql").load()
         case "image" =>
