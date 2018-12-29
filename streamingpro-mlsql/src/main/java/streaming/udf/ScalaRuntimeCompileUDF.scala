@@ -20,19 +20,18 @@ package streaming.udf
 
 import java.util.UUID
 
-import scala.reflect.runtime.universe._
-import scala.tools.reflect.ToolBox
-
 import org.apache.spark.sql.catalyst.ScalaReflection
 import org.apache.spark.sql.types.DataType
 import streaming.common.SourceCodeCompiler
-import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib.algs.ScriptUDFCacheKey
 import streaming.log.Logging
 
+import scala.reflect.runtime.universe._
+import scala.tools.reflect.ToolBox
+
 /**
- * Created by fchen on 2018/11/14.
- */
+  * Created by fchen on 2018/11/14.
+  */
 object ScalaRuntimeCompileUDF extends RuntimeCompileUDF with ScalaCompileUtils with Logging {
 
   override def returnType(scriptCacheKey: ScriptUDFCacheKey): Option[DataType] = {
@@ -51,8 +50,8 @@ object ScalaRuntimeCompileUDF extends RuntimeCompileUDF with ScalaCompileUtils w
   }
 
   /**
-   * validate the source code
-   */
+    * validate the source code
+    */
   override def check(sourceCode: String): Boolean = {
     val tree = tb.parse(sourceCode)
     val typeCheckResult = tb.typecheck(tree)
@@ -64,11 +63,11 @@ object ScalaRuntimeCompileUDF extends RuntimeCompileUDF with ScalaCompileUtils w
   }
 
   /**
-   * compile the source code.
-   *
-   * @param scriptCacheKey
-   * @return
-   */
+    * compile the source code.
+    *
+    * @param scriptCacheKey
+    * @return
+    */
   override def compile(scriptCacheKey: ScriptUDFCacheKey): AnyRef = {
     val tree = tb.parse(prepareScala(scriptCacheKey.wrappedCode, scriptCacheKey.className))
     tb.compile(tree).apply().asInstanceOf[Class[_]]
@@ -118,7 +117,7 @@ object ScalaRuntimeCompileUDF extends RuntimeCompileUDF with ScalaCompileUtils w
 
   def invokeFunctionFromInstance(scriptCacheKey: ScriptUDFCacheKey): (Seq[Object]) => AnyRef = {
 
-    lazy val clz = execute(scriptCacheKey).asInstanceOf[Class[_]]
+    lazy val clz = executorExecute(scriptCacheKey).asInstanceOf[Class[_]]
     lazy val instance = newInstance(clz)
     lazy val method = SourceCodeCompiler.getMethod(clz, scriptCacheKey.methodName)
 

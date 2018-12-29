@@ -138,3 +138,6 @@ dev/mlsqltestssupport/__pycache__/
 dev/create-release/streamingpro*
 __pycache__
 streamingpro-mlsql/logs/template
+cluster.info
+mlsql.slaves
+mlsql.master

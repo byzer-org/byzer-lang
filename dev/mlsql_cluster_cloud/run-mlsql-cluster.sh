@@ -131,18 +131,22 @@ pymlsql copy-from-local --instance-id ${instance_id} --execute-user root \
 --target /home/webuser/.ssh/
 
 
-pymlsql copy-from-local --instance-id ${instance_id} --execute-user root \
---source start-slaves.sh \
---target /home/webuser
+for file in "start-slaves.sh" "copy-main-jar-to-slaves.sh";
+do
+    pymlsql copy-from-local --instance-id ${instance_id} --execute-user root \
+    --source $file \
+    --target /home/webuser
+done
+
 
 echo "configure auth of the script"
 
 cat << EOF > ${SCRIPT_FILE}
 #!/usr/bin/env bash
-chown -R webuser:webuser /home/webuser/start-slaves.sh
+chown -R webuser:webuser /home/webuser/*.sh
 chown -R webuser:webuser /home/webuser/.ssh/${MLSQL_KEY_PARE_NAME}
 chmod 600 /home/webuser/.ssh/${MLSQL_KEY_PARE_NAME}
-chmod u+x /home/webuser/start-slaves.sh
+chmod u+x /home/webuser/*.sh
 EOF
 
 pymlsql exec-shell --instance-id ${instance_id} \
@@ -237,6 +241,48 @@ pymlsql exec-shell --instance-id ${instance_id} \
 --script-file ${SCRIPT_FILE} \
 --execute-user webuser
 
+echo "copy main-jar to slave"
+cat << EOF > ${SCRIPT_FILE}
+#!/usr/bin/env bash
+source activate mlsql-3.5
+cd /home/webuser
+
+export AK=${AK}
+export AKS=${AKS}
+export MLSQL_KEY_PARE_NAME=${MLSQL_KEY_PARE_NAME}
+export MLSQL_JAR_PATH=/home/webuser/${MLSQL_NAME}
+
+pids=""
+
+while read LINE
+do
+    if [[ -z "\$LINE" ]];then
+     echo "\$LINE is empty skip."
+   else
+     export slave_instance_id=\$LINE
+     ./copy-main-jar-to-slaves.sh &
+     pids[\${page}]=\$!
+     let "count+=1"
+   fi
+done <<< "\$(cat mlsql.slaves)"
+
+FAIL_NUM=0
+
+for job in \${pids[*]};
+do
+    echo \$job
+    wait \$job || let "FAIL_NUM+=1"
+done
+
+echo "copy FAILs: \${FAIL_NUM}"
+
+EOF
+
+pymlsql exec-shell --instance-id ${instance_id} \
+--script-file ${SCRIPT_FILE} \
+--execute-user webuser
+
+
 echo "submit MLSQL"
 
 cat << EOF > ${SCRIPT_FILE}
@@ -260,9 +306,11 @@ nohup ./bin/spark-submit --class streaming.core.StreamingApp \
         --conf "spark.kryoserializer.buffer.max=1024m" \
         --conf "spark.serializer=org.apache.spark.serializer.KryoSerializer" \
         --conf "spark.scheduler.mode=FAIR" \
+        --conf "spark.executor.extraClassPath=\${SPARK_HOME}/conf/:\${SPARK_HOME}/jars/*:/home/webuser/\${MAIN_JAR}" \
         \${MLSQL_HOME}/libs/\${MAIN_JAR}    \
         -streaming.name mlsql    \
         -streaming.platform spark   \
+        -streaming.ps.cluster.enable true \
         -streaming.rest true   \
         -streaming.driver.port 9003   \
         -streaming.spark.service true \

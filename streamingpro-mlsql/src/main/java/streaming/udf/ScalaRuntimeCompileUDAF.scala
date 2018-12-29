@@ -18,8 +18,6 @@
 
 package streaming.udf
 
-import scala.reflect.ClassTag
-
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.expressions.{MutableAggregationBuffer, UserDefinedAggregateFunction}
 import org.apache.spark.sql.types.{DataType, StructType}
@@ -28,13 +26,15 @@ import streaming.common.SourceCodeCompiler
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib.algs.ScriptUDFCacheKey
 
+import scala.reflect.ClassTag
+
 /**
- * Created by fchen on 2018/11/14.
- */
+  * Created by fchen on 2018/11/14.
+  */
 object ScalaRuntimeCompileUDAF extends RuntimeCompileUDAF with ScalaCompileUtils {
   /**
-   * validate the source code
-   */
+    * validate the source code
+    */
   override def check(sourceCode: String): Boolean = {
     val tree = tb.parse(sourceCode)
     val typeCheckResult = tb.typecheck(tree)
@@ -44,13 +44,14 @@ object ScalaRuntimeCompileUDAF extends RuntimeCompileUDAF with ScalaCompileUtils
     }
     checkResult
   }
+  
 
   /**
-   * compile the source code.
-   *
-   * @param scriptCacheKey
-   * @return
-   */
+    * compile the source code.
+    *
+    * @param scriptCacheKey
+    * @return
+    */
   override def compile(scriptCacheKey: ScriptUDFCacheKey): AnyRef = {
     val tree = tb.parse(prepareScala(scriptCacheKey.originalCode, scriptCacheKey.className))
     tb.compile(tree).apply().asInstanceOf[Class[_]]
@@ -71,12 +72,12 @@ object ScalaRuntimeCompileUDAF extends RuntimeCompileUDAF with ScalaCompileUtils
     new UserDefinedAggregateFunction with Serializable {
 
       @transient val clazzUsingInDriver = wrap(() => {
-        execute(scriptCacheKey)
+        driverExecute(scriptCacheKey)
       }).asInstanceOf[Class[_]]
       @transient val instanceUsingInDriver = newInstance(clazzUsingInDriver)
 
       lazy val clazzUsingInExecutor = wrap(() => {
-        execute(scriptCacheKey)
+        executorExecute(scriptCacheKey)
       }).asInstanceOf[Class[_]]
       lazy val instanceUsingInExecutor = newInstance(clazzUsingInExecutor)
 
