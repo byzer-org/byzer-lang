@@ -736,6 +736,52 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
     }
   }
 
+  "auth-solr" should "work fine" in {
+
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+      //执行sql
+      implicit val spark = runtime.sparkSession
+
+      val ssel = createSSEL
+      val mlsql =
+        """
+          |
+          |connect solr where `zkhost`="127.0.0.1:9983"
+          |and `collection`="mlsql_example"
+          |and `flatten_multivalued`="false"
+          |as solr1
+          |;
+          |
+          |load solr.`solr1/mlsql_example` as mlsql_example;
+          |
+          |save mlsql_example_data as solr.`solr1/mlsql_example`
+          |options soft_commit_secs = "1";
+          |
+        """.stripMargin
+      withClue("auth fail") {
+        assertThrows[RuntimeException] {
+          ScriptSQLExec.parse(mlsql, ssel, true, false ,true)
+        }
+      }
+
+      val loadMLSQLTable = ssel.authProcessListner.get.tables().tables
+        .filter(f => (f.tableType == TableType.SOLR && f.operateType == OperateType.LOAD))
+
+      var db = loadMLSQLTable.map(f => f.db.get).toSet
+      assume(db == Set("mlsql_example"))
+      var sourceType = loadMLSQLTable.map(f => f.sourceType.get).toSet
+      assume(sourceType == Set("solr"))
+
+      val saveMLSQLTable = ssel.authProcessListner.get.tables().tables
+        .filter(f => (f.tableType == TableType.SOLR && f.operateType == OperateType.SAVE))
+      db = saveMLSQLTable.map(f => f.db.get).toSet
+      assume(db == Set("mlsql_example"))
+      sourceType = saveMLSQLTable.map(f => f.sourceType.get).toSet
+      assume(sourceType == Set("solr"))
+    }
+  }
+
+
   "load save support variable" should "work fine" in {
 
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
