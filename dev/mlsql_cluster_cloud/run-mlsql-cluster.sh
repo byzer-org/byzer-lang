@@ -30,6 +30,7 @@ MLSQL_VERSION        - the mlsql version, 1.1.6 default 1.1.6
 MLSQL_SLAVE_NUM      - the number of worker. default 1
 MASTER_WITH_PUBLIC_IP - default true
 PYMLSQL_VERSIOIN      - 1.1.6.3
+MLSQL_THIRD_PARTY_JARS - None
 
 EOF
   exit 0
@@ -143,6 +144,8 @@ echo "configure auth of the script"
 
 cat << EOF > ${SCRIPT_FILE}
 #!/usr/bin/env bash
+mkdir -p /home/webuser/third-party-jars
+chown -R webuser:webuser /home/webuser/third-party-jars
 chown -R webuser:webuser /home/webuser/*.sh
 chown -R webuser:webuser /home/webuser/.ssh/${MLSQL_KEY_PARE_NAME}
 chmod 600 /home/webuser/.ssh/${MLSQL_KEY_PARE_NAME}
@@ -241,7 +244,16 @@ pymlsql exec-shell --instance-id ${instance_id} \
 --script-file ${SCRIPT_FILE} \
 --execute-user webuser
 
-echo "copy main-jar to slave"
+if [[ ! -z "${MLSQL_THIRD_PARTY_JARS}" ]];then
+
+    echo "copy ${MLSQL_THIRD_PARTY_JARS} to master"
+
+    pymlsql copy-from-local --instance-id ${instance_id} --execute-user root \
+    --source ${MLSQL_THIRD_PARTY_JARS} \
+    --target /home/webuser/third-party-jars
+fi
+
+echo "copy main-jar and third-party-jars to slave"
 cat << EOF > ${SCRIPT_FILE}
 #!/usr/bin/env bash
 source activate mlsql-3.5
@@ -292,7 +304,13 @@ cd /home/webuser
 cd ${MLSQL_NAME}
 export SPARK_HOME=/home/webuser/apps/spark-2.3
 export MLSQL_HOME=\`pwd\`
+
 JARS=\$(echo \${MLSQL_HOME}/libs/*.jar | tr ' ' ',')
+
+if [ -d "/home/webuser/third-party-jars" ]; then
+  JARS=\${JARS},\$(echo /home/webuser/third-party-jars/*.jar | tr ' ' ',')
+fi
+
 MAIN_JAR=\$(ls \${MLSQL_HOME}/libs|grep 'streamingpro-mlsql')
 echo \$JARS
 echo \${MAIN_JAR}
