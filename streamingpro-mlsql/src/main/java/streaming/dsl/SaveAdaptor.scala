@@ -156,9 +156,6 @@ class BatchSaveAdaptor(val scriptSQLExecListener: ScriptSQLExecListener,
           writer.option("topic", final_path).
             option(getKafkaBrokers._1, getKafkaBrokers._2).format("kafka").save()
 
-        case "hbase" =>
-          writer.option("outputTableName", final_path).format(
-            option.getOrElse("implClass", "org.apache.spark.sql.execution.datasources.hbase")).save()
         case "redis" =>
           writer.option("outputTableName", final_path).format(
             option.getOrElse("implClass", "org.apache.spark.sql.execution.datasources.redis")).save()
