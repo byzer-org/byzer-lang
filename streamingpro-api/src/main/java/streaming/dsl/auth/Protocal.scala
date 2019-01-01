@@ -56,12 +56,13 @@ object TableType {
   val JDBC = TableTypeMeta("jdbc", Set("jdbc"))
   val ES = TableTypeMeta("es", Set("es"))
   val MONGO = TableTypeMeta("mongo", Set("mongo"))
+  val SOLR = TableTypeMeta("solr", Set("solr"))
   val TEMP = TableTypeMeta("temp", Set("temp", "jsonStr" ,"script"))
   val API = TableTypeMeta("api", Set("mlsqlAPI", "mlsqlConf"))
   val WEB = TableTypeMeta("web", Set("crawlersql"))
 
   def from(str: String) = {
-    List(HIVE, HBASE, HDFS, HTTP, JDBC, ES, MONGO, TEMP ,API ,WEB).filter(f => f.includes.contains(str)).headOption
+    List(HIVE, HBASE, HDFS, HTTP, JDBC, ES, MONGO, SOLR, TEMP ,API ,WEB).filter(f => f.includes.contains(str)).headOption
   }
 }
 
