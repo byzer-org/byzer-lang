@@ -24,25 +24,25 @@ import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib.algs.ScriptUDFCacheKey
 
 /**
- * Created by fchen on 2018/11/15.
- */
+  * Created by fchen on 2018/11/15.
+  */
 trait RuntimeCompileUDF extends RuntimeCompileScriptInterface[AnyRef] {
 
   /**
-   * udf return DataType
-   */
+    * udf return DataType
+    */
   def returnType(scriptCacheKey: ScriptUDFCacheKey): Option[DataType]
 
   /**
-   * reture udf input argument number
-   */
+    * reture udf input argument number
+    */
   def argumentNum(scriptCacheKey: ScriptUDFCacheKey): Int
 
   /**
-   * wrap original source code.
-   * e.g. in [[ScalaRuntimeCompileUDAF]], user pass function code, we should wrap code as a class.
-   * so the runtime compiler will compile source code as runtime instance.
-   */
+    * wrap original source code.
+    * e.g. in [[ScalaRuntimeCompileUDAF]], user pass function code, we should wrap code as a class.
+    * so the runtime compiler will compile source code as runtime instance.
+    */
   def wrapCode(scriptCacheKey: ScriptUDFCacheKey): ScriptUDFCacheKey
 
   def invokeFunctionFromInstance(scriptCacheKey: ScriptUDFCacheKey): (Seq[Object]) => AnyRef

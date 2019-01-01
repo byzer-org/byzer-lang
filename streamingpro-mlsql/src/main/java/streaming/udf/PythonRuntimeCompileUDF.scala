@@ -29,20 +29,22 @@ import streaming.log.Logging
 import streaming.parser.SparkTypePaser
 
 /**
- * Created by fchen on 2018/11/14.
- */
+  * Created by fchen on 2018/11/14.
+  */
 object PythonRuntimeCompileUDF extends RuntimeCompileUDF with Logging {
+  
 
   override def returnType(scriptCacheKey: ScriptUDFCacheKey): Option[DataType] = {
     Option(SparkTypePaser.toSparkType(scriptCacheKey.dataType))
   }
 
+
   /**
-   * reture udf input argument number
-   */
+    * reture udf input argument number
+    */
   override def argumentNum(scriptCacheKey: ScriptUDFCacheKey): Int = {
 
-    val po = execute(scriptCacheKey).asInstanceOf[PyObject]
+    val po = driverExecute(scriptCacheKey).asInstanceOf[PyObject]
     val pi = po.__getattr__(scriptCacheKey.methodName).asInstanceOf[PyMethod]
     pi.__func__.asInstanceOf[PyFunction].__code__.asInstanceOf[PyTableCode].co_argcount - 1
   }
@@ -57,18 +59,18 @@ object PythonRuntimeCompileUDF extends RuntimeCompileUDF with Logging {
   }
 
   /**
-   * validate the source code
-   */
+    * validate the source code
+    */
   override def check(sourceCode: String): Boolean = {
     true
   }
 
   /**
-   * compile the source code.
-   *
-   * @param scriptCacheKey
-   * @return
-   */
+    * compile the source code.
+    *
+    * @param scriptCacheKey
+    * @return
+    */
   override def compile(scriptCacheKey: ScriptUDFCacheKey): AnyRef = {
     PythonInterp.compilePython(scriptCacheKey.wrappedCode, scriptCacheKey.className)
   }
@@ -90,7 +92,7 @@ object PythonRuntimeCompileUDF extends RuntimeCompileUDF with Logging {
 
     // instance will call by spark executor, so we declare as lazy val
     lazy val instance = wrap(() => {
-      execute(scriptCacheKey).asInstanceOf[PyObject].__call__()
+      executorExecute(scriptCacheKey).asInstanceOf[PyObject].__call__()
     }).asInstanceOf[PyObject]
 
     // the same with instance, method will call by spark executor too.
