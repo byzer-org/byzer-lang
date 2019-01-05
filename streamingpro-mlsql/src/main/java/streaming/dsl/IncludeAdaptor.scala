@@ -76,7 +76,13 @@ object IncludeAdaptor {
 
   def findAlg(format: String, options: Map[String, String]) = {
     val clzz = mapping.getOrElse(format, options.getOrElse("implClass", "streaming.dsl.mmlib.algs.includes." + format))
-    Class.forName(clzz).newInstance().asInstanceOf[IncludeSource]
+    val clzzInstance = try {
+      Class.forName(clzz)
+    } catch {
+      case e: Exception =>
+        Class.forName("streaming.dsl.mmlib.algs.includes.analyst.HttpBaseDirIncludeSource")
+    }
+    clzzInstance.newInstance().asInstanceOf[IncludeSource]
   }
 
 }
