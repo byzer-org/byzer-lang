@@ -31,12 +31,29 @@ RUN conda config --set show_channel_urls yes
 
 RUN mkdir ~/.pip
 
-RUN echo ' [global]\n trusted-host = mirrors.aliyun.com\n index-url = https://mirrors.aliyun.com/pypi/simple' > ~/.pip/pip.conf
+RUN echo -e "[global]\n trusted-host = mirrors.aliyun.com\n index-url = https://mirrors.aliyun.com/pypi/simple" > ~/.pip/pip.conf
+
+ARG MAVEN_VERSION=3.6.0
+ARG USER_HOME_DIR="/root"
+ARG SHA=fae9c12b570c3ba18116a4e26ea524b29f7279c17cbaadc3326ca72927368924d9131d11b9e851b8dc9162228b6fdea955446be41207a5cfc61283dd8a561d2f
+ARG BASE_URL=https://apache.osuosl.org/maven/maven-3/${MAVEN_VERSION}/binaries
+
+RUN mkdir -p /usr/share/maven /usr/share/maven/ref \
+  && curl -fsSL -o /tmp/apache-maven.tar.gz ${BASE_URL}/apache-maven-${MAVEN_VERSION}-bin.tar.gz \
+  && echo "${SHA}  /tmp/apache-maven.tar.gz" | sha512sum -c - \
+  && tar -xzf /tmp/apache-maven.tar.gz -C /usr/share/maven --strip-components=1 \
+  && rm -f /tmp/apache-maven.tar.gz \
+  && ln -s /usr/share/maven/bin/mvn /usr/bin/mvn
+
+ENV MAVEN_HOME /usr/share/maven
+ENV MAVEN_CONFIG "$USER_HOME_DIR/.m2"
+
 
 # download spark binary package from mirror
+ENV SPARK_VERSION=2.3.2
 ENV URL_BASE http://www.apache.org/dyn/closer.cgi/
-ENV FILENAME spark-2.3.2-bin-hadoop2.7.tgz
-ENV URL_DIRECTORIES spark/spark-2.3.2/
+ENV FILENAME spark-${SPARK_VERSION}-bin-hadoop2.7.tgz
+ENV URL_DIRECTORIES spark/spark-${SPARK_VERSION}/
 
 # use the closer.cgi to pick a mirror
 RUN CURLCMD="curl -s -L ${URL_BASE}${URL_DIRECTORIES}${FILENAME}?as_json=1" && \
@@ -47,7 +64,17 @@ RUN CURLCMD="curl -s -L ${URL_BASE}${URL_DIRECTORIES}${FILENAME}?as_json=1" && \
     cd /work && tar zxf ${FILENAME} && \
     rm ${FILENAME}
 
-ENV SPARK_HOME /work/spark-2.3.2-bin-hadoop2.7
+ENV SPARK_HOME /work/spark-${SPARK_VERSION}-bin-hadoop2.7
 
-ENTRYPOINT [ "/usr/bin/tini", "--" ]
-CMD [ "/bin/bash" ]
+RUN mkdir -p /home/deploy
+RUN mkdir -p /home/deploy/mlsql
+RUN mkdir -p /home/deploy/mlsql-console
+
+RUN mkdir -p /home/deploy/mlsql/libs
+ENV MLSQL_DISTRIBUTIOIN_URL="streamingpro-mlsql-spark_2.3-1.1.7-SNAPSHOT.jar"
+ADD  ${MLSQL_DISTRIBUTIOIN_URL} /home/deploy/mlsql/libs
+ADD  start-local.sh /home/deploy/mlsql
+WORKDIR /home/deploy/mlsql
+
+#ENTRYPOINT [ "/usr/bin/tini", "--" ]
+CMD ./start-local.sh

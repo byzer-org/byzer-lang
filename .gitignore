@@ -141,3 +141,9 @@ streamingpro-mlsql/logs/template
 cluster.info
 mlsql.slaves
 mlsql.master
+
+dev/docker/*.jar
+dev/docker/*.sh
+streamingpro-cluster/dev/mlsql-cluster-docker/*.jar
+streamingpro-cluster/dev/mlsql-cluster-docker/*.sh
+streamingpro-cluster/dev/mlsql-cluster-docker/*.yml
