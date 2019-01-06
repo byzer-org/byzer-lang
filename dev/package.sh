@@ -20,6 +20,10 @@ if [[ $@ == *"help"* ]]; then
   exit_with_usage
 fi
 
+MLSQL_SPARK_VERSION=${MLSQL_SPARK_VERSION:-2.3}
+DRY_RUN=${MLSQL_SPARK_VERSION:-false}
+DISTRIBUTION=${MLSQL_SPARK_VERSION:-false}
+
 for env in MLSQL_SPARK_VERSION DRY_RUN DISTRIBUTION; do
   if [[ -z "${!env}" ]]; then
     echo "===$env must be set to run this script==="
