@@ -6,4 +6,4 @@ SELF=$(cd $(dirname $0) && pwd)
 docker run --name mlsql-cluster \
 -d --network mlsql-network \
 -p 8080:8080 \
-mlsql-cluster:1.1.7-SNAPSHOT
+techmlsql/mlsql-cluster:1.1.7-SNAPSHOT
