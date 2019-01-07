@@ -21,8 +21,8 @@ if [[ $@ == *"help"* ]]; then
 fi
 
 MLSQL_SPARK_VERSION=${MLSQL_SPARK_VERSION:-2.3}
-DRY_RUN=${MLSQL_SPARK_VERSION:-false}
-DISTRIBUTION=${MLSQL_SPARK_VERSION:-false}
+DRY_RUN=${DRY_RUN:-false}
+DISTRIBUTION=${DISTRIBUTION:-false}
 
 for env in MLSQL_SPARK_VERSION DRY_RUN DISTRIBUTION; do
   if [[ -z "${!env}" ]]; then
