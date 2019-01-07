@@ -22,7 +22,7 @@ import java.util.UUID
 
 import org.apache.spark.sql.catalyst.ScalaReflection
 import org.apache.spark.sql.types.DataType
-import streaming.common.SourceCodeCompiler
+import streaming.common.{Md5, SourceCodeCompiler}
 import streaming.dsl.mmlib.algs.ScriptUDFCacheKey
 import streaming.log.Logging
 
@@ -103,7 +103,8 @@ object ScalaRuntimeCompileUDF extends RuntimeCompileUDF with ScalaCompileUtils w
   }
 
   private def wrapClass(function: String): WrappedType = {
-    val className = s"StreamingProUDF_${UUID.randomUUID().toString.replaceAll("-", "")}"
+    val classNameHash = Md5.md5Hash(function)
+    val className = s"StreamingProUDF_${classNameHash}"
     val newfun =
       s"""
          |class ${className} {
