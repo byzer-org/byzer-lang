@@ -18,10 +18,9 @@
 
 package streaming.udf
 
-import java.util.UUID
-
 import org.apache.spark.sql.types.DataType
 import org.python.core.{PyFunction, PyMethod, PyObject, PyTableCode}
+import streaming.common.Md5
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib.algs.ScriptUDFCacheKey
 import streaming.jython.{JythonUtils, PythonInterp}
@@ -32,7 +31,7 @@ import streaming.parser.SparkTypePaser
   * Created by fchen on 2018/11/14.
   */
 object PythonRuntimeCompileUDF extends RuntimeCompileUDF with Logging {
-  
+
 
   override def returnType(scriptCacheKey: ScriptUDFCacheKey): Option[DataType] = {
     Option(SparkTypePaser.toSparkType(scriptCacheKey.dataType))
@@ -110,9 +109,9 @@ object PythonRuntimeCompileUDF extends RuntimeCompileUDF with Logging {
   override def lang: String = "python"
 
   private def wrapClass(function: String): WrappedType = {
-
+    val classNameHash = Md5.md5Hash(function)
     val temp = function.split("\n").map(f => s"    $f").mkString("\n")
-    val className = s"StreamingProUDF_${UUID.randomUUID().toString.replaceAll("-", "")}"
+    val className = s"StreamingProUDF_${classNameHash}"
     val newfun =
       s"""
          |# -*- coding: utf-8 -*-
