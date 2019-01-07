@@ -24,6 +24,8 @@ MLSQL_KEY_PARE_NAME  - a ssh key which you can connect to the esc server.
                       pymlsql start --image-id m-bp13ubsorlrxdb9lmv2x --need-public-ip false --init-ssh-key true
                       then the ssh key file will be created in your directory ~/.ssh
 
+MLSQL_INIT_SSH_KEY   - Is need to  init ssh key. default false
+
 MLSQL_SPARK_VERSION  - the spark version, 2.2/2.3/2.4 default 2.3
 MLSQL_VERSION        - the mlsql version, 1.1.6 default 1.1.6
 
@@ -65,6 +67,7 @@ export SLAVE_INSTANCE_TYPE=${SLAVE_INSTANCE_TYPE:-ecs.r5.large}
 export MASTER_WITH_PUBLIC_IP=${MASTER_WITH_PUBLIC_IP:-true}
 export MLSQL_SLAVE_NUM=${MLSQL_SLAVE_NUM:-1}
 export PYMLSQL_VERSIOIN=${PYMLSQL_VERSIOIN:-1.1.6.3}
+export MLSQL_INIT_SSH_KEY=${MLSQL_INIT_SSH_KEY:-false}
 
 export MLSQL_TAR="streamingpro-spark_${MLSQL_SPARK_VERSION}-${MLSQL_VERSION}.tar.gz"
 export MLSQL_NAME="streamingpro-spark_${MLSQL_SPARK_VERSION}-${MLSQL_VERSION}"
@@ -79,7 +82,7 @@ if [[ -z "${OSS_AKS}" ]];then
 fi
 
 echo "Create ECS instance for master"
-start_output=$(pymlsql start --image-id m-bp13ubsorlrxdb9lmv2x --instance-type ${MASTER_INSTANCE_TYPE}  --need-public-ip ${MASTER_WITH_PUBLIC_IP} --init-ssh-key false --security-group ${SECURITY_GROUP})
+start_output=$(pymlsql start --image-id m-bp13ubsorlrxdb9lmv2x --instance-type ${MASTER_INSTANCE_TYPE}  --need-public-ip ${MASTER_WITH_PUBLIC_IP} --init-ssh-key ${MLSQL_INIT_SSH_KEY} --security-group ${SECURITY_GROUP})
 echo ----"${start_output}"-----
 
 export instance_id=$(echo "${start_output}"|grep '^instance_id:'|cut -d ':' -f2)
