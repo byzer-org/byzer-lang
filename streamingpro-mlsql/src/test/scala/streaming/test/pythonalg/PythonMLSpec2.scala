@@ -23,8 +23,6 @@ import java.nio.charset.Charset
 import java.util.UUID
 
 import com.google.common.io.Files
-import net.csdn.ServiceFramwork
-import net.csdn.bootstrap.Bootstrap
 import net.csdn.common.collections.WowCollections
 import net.csdn.junit.BaseControllerTest
 import net.sf.json.JSONArray
@@ -161,6 +159,23 @@ class PythonMLSpec2 extends BasicSparkOperation with SpecFunctions with BasicMLS
       val status = spark.sql(s"select * from ${table}").collect().map(f => f.getAs[String]("status")).head
       assert(status == "success")
 
+
+    }
+  }
+
+  "SQLPythonParallelExt " should "work fine" in {
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+      //执行sql
+      implicit val spark = runtime.sparkSession
+      mockServer
+      val sq = createSSEL(spark, "")
+      //train
+      ScriptSQLExec.parse(ScriptCode._j1, sq)
+
+      var table = sq.getLastSelectTable().get
+      val res = spark.sql(s"select * from output").collect()
+      assert(res.length == 1)
+      assert(res.head.getAs[String](0).contains("jack"))
 
     }
   }
