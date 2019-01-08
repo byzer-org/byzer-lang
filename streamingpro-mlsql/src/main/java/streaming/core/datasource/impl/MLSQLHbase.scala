@@ -32,7 +32,7 @@ class MLSQLHbase extends MLSQLSource with MLSQLSink with MLSQLSourceInfo with ML
 
   override def shortFormat: String = "hbase"
 
-  override def dbSplitter: String = ":"
+  override def dbSplitter: String = "/"
 
   override def load(reader: DataFrameReader, config: DataSourceConfig): DataFrame = {
     val Array(_dbname, _dbtable) = if (config.path.contains(dbSplitter)) {
@@ -41,20 +41,20 @@ class MLSQLHbase extends MLSQLSource with MLSQLSink with MLSQLSourceInfo with ML
       Array("" ,config.path)
     }
 
-    var namespace = _dbname
+    var namespace = ""
 
     val format = config.config.getOrElse("implClass", fullFormat)
     if (_dbname != "") {
       ConnectMeta.presentThenCall(DBMappingKey(format, _dbname), options => {
         if(options.contains("namespace")){
-          namespace = options.get("namespace").get
+          namespace = options("namespace")
         }
         reader.options(options)
       })
     }
 
     if (config.config.contains("namespace")){
-      namespace = config.config.get("namespace").get
+      namespace = config.config("namespace")
     }
 
     val inputTableName = if (namespace == "") _dbtable else s"${namespace}:${_dbtable}"
@@ -73,7 +73,7 @@ class MLSQLHbase extends MLSQLSource with MLSQLSink with MLSQLSourceInfo with ML
       Array("" ,config.path)
     }
 
-    var namespace = _dbname
+    var namespace = ""
 
     val format = config.config.getOrElse("implClass", fullFormat)
     if (_dbname != "") {
