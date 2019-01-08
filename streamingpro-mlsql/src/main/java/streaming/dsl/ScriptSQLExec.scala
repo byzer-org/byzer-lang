@@ -25,6 +25,7 @@ import org.antlr.v4.runtime._
 import org.antlr.v4.runtime.tree.ParseTreeWalker
 import org.apache.spark.MLSQLSyntaxErrorListener
 import org.apache.spark.sql.SparkSession
+import streaming.core.Dispatcher
 import streaming.dsl.auth._
 import streaming.dsl.parser.DSLSQLParser._
 import streaming.dsl.parser.{DSLSQLLexer, DSLSQLListener, DSLSQLParser}
@@ -94,7 +95,10 @@ object ScriptSQLExec extends Logging with WowLog {
       val authListener = new AuthProcessListener(setListener)
       sqel.authProcessListner = Some(authListener)
       _parse(wow, authListener)
-      val tableAuth = Class.forName(authListener.listener.env().getOrElse("__auth_client__", "streaming.dsl.auth.meta.client.DefaultConsoleClient")).newInstance().asInstanceOf[TableAuth]
+
+      val tableAuth = Class.forName(context.userDefinedParam.getOrElse("__auth_client__",
+        Dispatcher.contextParams("").getOrDefault("context.__auth_client__" ,"streaming.dsl.auth.meta.client.DefaultConsoleClient").toString))
+        .newInstance().asInstanceOf[TableAuth]
       tableAuth.auth(authListener.tables().tables.toList)
     }
 
