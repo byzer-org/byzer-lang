@@ -33,6 +33,7 @@ import streaming.log.{Logging, WowLog}
 import streaming.parser.lisener.BaseParseListenerextends
 
 import scala.collection.mutable.ArrayBuffer
+import scala.util.matching.Regex
 
 
 /**
@@ -81,7 +82,7 @@ object ScriptSQLExec extends Logging with WowLog {
           stop = true
         }
         includes.foreach { f =>
-          wow = wow.replace(f._1, f._2.substring(0, f._2.lastIndexOf(";")))
+          wow = wow.replaceFirst(s"${Regex.quote(f._1)}\\s*;", f._2)
         }
         max_preprocess -= 1
       }

@@ -1,1 +1,8 @@
+/*
+select ....;
+*/
 set xx="latincross";
+/*
+select ....;
+*/
+
