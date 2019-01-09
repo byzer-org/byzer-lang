@@ -23,7 +23,7 @@ import streaming.dsl.auth.OperateType.OperateType
 /**
   * Created by allwefantasy on 11/9/2018.
   */
-case class MLSQLTable(db: Option[String], table: Option[String], operateType: OperateType , sourceType :Option[String], tableType: TableTypeMeta)
+case class MLSQLTable(db: Option[String], table: Option[String], operateType: OperateType, sourceType: Option[String], tableType: TableTypeMeta)
 
 case class MLSQLTableSet(tables: Seq[MLSQLTable])
 
@@ -37,6 +37,11 @@ object TableAuthResult {
   }
 }
 
+object DB_DEFAULT extends Enumeration {
+  type DB_DEFAULT = Value
+  val MLSQL_SYSTEM = Value("mlsql_system")
+}
+
 object OperateType extends Enumeration {
   type OperateType = Value
   val SAVE = Value("save")
@@ -45,6 +50,7 @@ object OperateType extends Enumeration {
   val DROP = Value("drop")
   val INSERT = Value("insert")
   val SELECT = Value("select")
+  val SET = Value("set")
   val EMPTY = Value("empty")
 }
 
@@ -57,12 +63,13 @@ object TableType {
   val ES = TableTypeMeta("es", Set("es"))
   val MONGO = TableTypeMeta("mongo", Set("mongo"))
   val SOLR = TableTypeMeta("solr", Set("solr"))
-  val TEMP = TableTypeMeta("temp", Set("temp", "jsonStr" ,"script"))
+  val TEMP = TableTypeMeta("temp", Set("temp", "jsonStr", "script"))
   val API = TableTypeMeta("api", Set("mlsqlAPI", "mlsqlConf"))
   val WEB = TableTypeMeta("web", Set("crawlersql"))
+  val GRAMMAR = TableTypeMeta("grammar", Set("grammar"))
 
   def from(str: String) = {
-    List(HIVE, HBASE, HDFS, HTTP, JDBC, ES, MONGO, SOLR, TEMP ,API ,WEB).filter(f => f.includes.contains(str)).headOption
+    List(HIVE, HBASE, HDFS, HTTP, JDBC, ES, MONGO, SOLR, TEMP, API, WEB, GRAMMAR).filter(f => f.includes.contains(str)).headOption
   }
 }
 
