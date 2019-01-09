@@ -21,7 +21,7 @@ class ElasticSearchServer(version: String) extends WowBaseTestServer {
 
   override def waitToServiceReady: Boolean = {
     // wait zk to ready, runs on host server
-    val shellCommand = s"nc -z 127.0.0.1 9200"
+    val shellCommand = s"curl -XGET http://127.0.0.1:9200/_cat/indices?v"
     readyCheck("", shellCommand, false)
   }
 }

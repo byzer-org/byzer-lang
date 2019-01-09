@@ -755,6 +755,13 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
       save mlsql_example_data as solr.`solr1/mlsql_example`
       options soft_commit_secs = "1";
       """.stripMargin
+
+      withClue("auth fail") {
+        assertThrows[RuntimeException] {
+          ScriptSQLExec.parse(mlsql, ssel, true, false, true)
+        }
+      }
+
       val loadMLSQLTable = ssel.authProcessListner.get.tables().tables.filter(f => (f.tableType == TableType.SOLR && f.operateType == OperateType.LOAD))
 
       var db = loadMLSQLTable.map(f => f.db.get).toSet
@@ -827,6 +834,7 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
 
 
   }
+
 
   "load save support variable" should "work fine" in {
 

@@ -20,11 +20,17 @@ package streaming.dsl
 
 import streaming.core.datasource.DataSourceRegistry
 import streaming.dsl.parser.DSLSQLParser._
+import streaming.dsl.template.TemplateMerge
 
 /**
   * Created by allwefantasy on 27/8/2017.
   */
 class ConnectAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdaptor {
+
+  def evaluate(value: String) = {
+    TemplateMerge.merge(value, scriptSQLExecListener.env().toMap)
+  }
+
   override def parse(ctx: SqlContext): Unit = {
 
     var option = Map[String, String]()
@@ -37,9 +43,9 @@ class ConnectAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAd
           option += ("format" -> format)
 
         case s: ExpressionContext =>
-          option += (cleanStr(s.qualifiedName().getText) -> getStrOrBlockStr(s))
+          option += (cleanStr(s.qualifiedName().getText) -> evaluate(getStrOrBlockStr(s)))
         case s: BooleanExpressionContext =>
-          option += (cleanStr(s.expression().qualifiedName().getText) -> getStrOrBlockStr(s.expression()))
+          option += (cleanStr(s.expression().qualifiedName().getText) -> evaluate(getStrOrBlockStr(s.expression())))
         case s: DbContext =>
           DataSourceRegistry.findAllNames(format).foreach { name =>
             ConnectMeta.options(DBMappingKey(name, s.getText), option)

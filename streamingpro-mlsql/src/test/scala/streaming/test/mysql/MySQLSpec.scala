@@ -32,10 +32,11 @@ class MySQLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLCo
 
   val connect_stat =
     s"""
+       |set user="root";
        |connect jdbc where
        |url="jdbc:mysql://127.0.0.1:3306/wow?characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&tinyInt1isBit=false"
        |and driver="com.mysql.jdbc.Driver"
-       |and user="root"
+       |and user="$${user}"
        |and password="${password}"
        |as tableau;
     """.stripMargin
