@@ -20,9 +20,15 @@ if [[ $@ == *"help"* ]]; then
   exit_with_usage
 fi
 
+SELF=$(cd $(dirname $0) && pwd)
+cd $SELF
+
+cd ..
+
 MLSQL_SPARK_VERSION=${MLSQL_SPARK_VERSION:-2.3}
 DRY_RUN=${DRY_RUN:-false}
 DISTRIBUTION=${DISTRIBUTION:-false}
+COMMAND=${COMMAND:-package}
 
 for env in MLSQL_SPARK_VERSION DRY_RUN DISTRIBUTION; do
   if [[ -z "${!env}" ]]; then
@@ -50,14 +56,24 @@ fi
 
 export MAVEN_OPTS="-Xmx6000m"
 
+SKIPTEST=""
+TESTPROFILE=""
+if [[ "$COMMAND" != "package" ]];then
+     TESTPROFILE="-Punit-test"
+     #COMMAND="surefire-report:report"
+else
+     SKIPTEST="-DskipTests"
+fi
+
+
 if [[ ${DRY_RUN} == "true" ]];then
 
 cat << EOF
-mvn clean package  -DskipTests ${BASE_PROFILES}
+mvn clean ${COMMAND}  ${SKIPTEST} ${BASE_PROFILES}  ${TESTPROFILE}
 EOF
 
 else
-mvn clean package  -DskipTests ${BASE_PROFILES}
+mvn clean ${COMMAND}  ${SKIPTEST} ${BASE_PROFILES} ${TESTPROFILE}
 fi
 
 

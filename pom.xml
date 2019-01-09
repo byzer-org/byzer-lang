@@ -582,6 +582,13 @@
         </dependency>
 
         <dependency>
+            <groupId>org.pegdown</groupId>
+            <artifactId>pegdown</artifactId>
+            <version>1.6.0</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
             <groupId>net.csdn</groupId>
             <artifactId>serviceframework-web_${scala.binary.version}</artifactId>
             <version>${serviceframework.version}</version>
@@ -719,6 +726,7 @@
         </dependency>
 
     </dependencies>
+
     <build>
 
         <sourceDirectory>src/main/java/</sourceDirectory>
@@ -728,6 +736,7 @@
             </resource>
         </resources>
         <plugins>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
@@ -832,10 +841,14 @@
             <plugin>
                 <groupId>org.scalatest</groupId>
                 <artifactId>scalatest-maven-plugin</artifactId>
-                <version>1.0</version>
-                <!-- Note config is repeated in surefire config -->
+                <version>2.0.0</version>
                 <configuration>
                     <tagsToExclude>streaming.core.NotToRunTag</tagsToExclude>
+                    <reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
+                    <junitxml>.</junitxml>
+                    <filereports>WDF TestSuite.txt</filereports>
+                    <htmlreporters>${project.build.directory}/html/scalatest</htmlreporters>
+                    <testFailureIgnore>false</testFailureIgnore>
                 </configuration>
                 <executions>
                     <execution>
