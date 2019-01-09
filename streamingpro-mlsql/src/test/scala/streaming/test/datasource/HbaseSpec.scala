@@ -42,7 +42,7 @@ class HbaseSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLCo
            |connect hbase where `zk`="127.0.0.1:2181"
            |and `family`="cf" as hbase1;
            |
-           |load hbase.`hbase1/mlsql_example`
+           |load hbase.`hbase1:mlsql_example`
            |as mlsql_example;
            |
            |select * from mlsql_example as show_data;
@@ -50,7 +50,7 @@ class HbaseSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLCo
            |
            |select '2' as rowkey, 'insert test data' as name as insert_table;
            |
-           |save insert_table as hbase.`hbase1/mlsql_example`;
+           |save insert_table as hbase.`hbase1:mlsql_example`;
            |
          """.stripMargin, sq)
       assume(spark.sql("select * from mlsql_example where rowkey='2' ").collect().last.get(0) == "2")

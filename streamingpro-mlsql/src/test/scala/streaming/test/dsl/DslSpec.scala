@@ -791,14 +791,14 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
         """
           |connect hbase where
           |    namespace="test_ns"
-          |and zk="hbase-docker:2181" as hbase_instance;
+          |and zk="127.0.0.1:2181" as hbase_instance;
           |
           |load hbase.`hbase_instance:test_tb` options
           |family="cf"
           |as test_table;
           |
           |load hbase.`test_ns_1:test_tb_1`
-          |options zk="hbase-docker:2181"
+          |options zk="127.0.0.1:2181"
           |and family="cf"
           |as output1;
           |

@@ -32,7 +32,7 @@ class MLSQLHbase extends MLSQLSource with MLSQLSink with MLSQLSourceInfo with ML
 
   override def shortFormat: String = "hbase"
 
-  override def dbSplitter: String = "/"
+  override def dbSplitter: String = ":"
 
   override def load(reader: DataFrameReader, config: DataSourceConfig): DataFrame = {
     val Array(_dbname, _dbtable) = if (config.path.contains(dbSplitter)) {
