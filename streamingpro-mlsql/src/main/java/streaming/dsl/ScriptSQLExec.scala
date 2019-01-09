@@ -97,7 +97,7 @@ object ScriptSQLExec extends Logging with WowLog {
       _parse(wow, authListener)
 
       val tableAuth = Class.forName(context.userDefinedParam.getOrElse("__auth_client__",
-        Dispatcher.contextParams("").getOrDefault("context.__auth_client__" ,"streaming.dsl.auth.meta.client.DefaultConsoleClient").toString))
+        Dispatcher.contextParams("").getOrDefault("context.__auth_client__", "streaming.dsl.auth.meta.client.DefaultConsoleClient").toString))
         .newInstance().asInstanceOf[TableAuth]
       tableAuth.auth(authListener.tables().tables.toList)
     }
@@ -250,6 +250,7 @@ class AuthProcessListener(val listener: ScriptSQLExecListener) extends BaseParse
       case "refresh" =>
 
       case "set" =>
+        new SetAuth(this).auth(ctx)
 
       case "train" | "run" =>
 
