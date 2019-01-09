@@ -38,31 +38,22 @@ class HbaseSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLCo
       var sq = createSSEL
       ScriptSQLExec.parse(
         s"""
-           |select 'a' as id, 'c' as ck, 1 as jk,1552419324001 as ck_ts as test ;
            |
-           |save overwrite test
-           |as hbase.`test_ns:test_tb`
-           |options  rowkey="id"
-           |and family="cf"
-           |and `field.type.ck`="StringType"
-           |and `field.type.jk`="StringType"
-           |and zk="hbase-docker:2181";
+           |connect hbase where `zk`="127.0.0.1:2181"
+           |and `family`="cf" as hbase1;
            |
-           |load hbase.`test_ns:test_tb`
-           |options zk="hbase-docker:2181"
-           |and family="cf"
-           |as output1;
+           |load hbase.`hbase1/mlsql_example`
+           |as mlsql_example;
            |
-           |connect hbase where
-           |    namespace="test_ns"
-           |and family="cf"
-           |and zk="hbase-docker:2181" as hbase_instance;
+           |select * from mlsql_example as show_data;
            |
-           |load hbase.`hbase_instance:test_tb`
-           |as output2;
+           |
+           |select '2' as rowkey, 'insert test data' as name as insert_table;
+           |
+           |save insert_table as hbase.`hbase1/mlsql_example`;
+           |
          """.stripMargin, sq)
-      assume(spark.sql("select rowkey from output1").collect().last.get(0) == "a")
-      assume(spark.sql("select rowkey from output2").collect().last.get(0) == "a")
+      assume(spark.sql("select * from mlsql_example where rowkey='2' ").collect().last.get(0) == "2")
     }
   }
 
@@ -70,7 +61,8 @@ class HbaseSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLCo
 
   override protected def beforeAll(): Unit = {
     server.startServer
-    server.exec("hbase", "exec hbase shell <<EOF \n create_namespace 'test_ns' \n create 'test_ns:test_tb', 'cf' \nEOF\n")
+    server.exec("hbase", s"""echo \"create 'mlsql_example','cf'\"| hbase shell""")
+    server.exec("hbase", s"""echo \"put 'mlsql_example','1','cf:name','this is a test data'\"| hbase shell""")
   }
 
   override protected def afterAll(): Unit = {

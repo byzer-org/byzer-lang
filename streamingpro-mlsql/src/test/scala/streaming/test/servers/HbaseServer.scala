@@ -18,6 +18,8 @@
 
 package streaming.test.servers
 
+import java.net.InetAddress
+
 /**
   * Created by latincross on 12/28/2018.
   */
@@ -39,12 +41,12 @@ class HbaseServer(version: String) extends WowBaseTestServer {
        |      - "16010:16010"
        |      - "16201:16201"
        |      - "16301:16301"
-       |    hostname: hbase-docker
+       |    hostname: ${InetAddress.getLocalHost.getHostName}
     """.stripMargin
 
   override def waitToServiceReady: Boolean = {
     // wait mongo to ready, runs on host server
-    val shellCommand = s"exec hbase shell <<EOF \n list_namespace \nEOF\n"
-    readyCheck("", shellCommand, false)
+    val shellCommand = s"""echo 'list'| hbase shell"""
+    readyCheck("hbase", shellCommand)
   }
 }
