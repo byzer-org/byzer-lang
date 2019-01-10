@@ -47,8 +47,10 @@ class ConnectAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAd
         case s: BooleanExpressionContext =>
           option += (cleanStr(s.expression().qualifiedName().getText) -> evaluate(getStrOrBlockStr(s.expression())))
         case s: DbContext =>
-          DataSourceRegistry.findAllNames(format).foreach { name =>
-            ConnectMeta.options(DBMappingKey(name, s.getText), option)
+          DataSourceRegistry.findAllNames(format).map { names =>
+            names.foreach { name => ConnectMeta.options(DBMappingKey(name, s.getText), option) }
+          }.getOrElse {
+            ConnectMeta.options(DBMappingKey(format, s.getText), option)
           }
         case _ =>
 
