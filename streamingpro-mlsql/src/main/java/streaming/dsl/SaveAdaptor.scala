@@ -127,7 +127,7 @@ class BatchSaveAdaptor(val scriptSQLExecListener: ScriptSQLExecListener,
           mode, Option(oldDF)))
     }.getOrElse {
 
-      if (final_path.contains("\\.")) {
+      if (final_path.contains(".")) {
         val Array(_dbname, _dbtable) = final_path.split("\\.", 2)
         ConnectMeta.presentThenCall(DBMappingKey(format, _dbname), options => {
           final_path = _dbtable
