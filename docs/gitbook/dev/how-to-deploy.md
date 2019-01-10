@@ -23,5 +23,5 @@ git subtree push --prefix=docs/gitbook/en/_book fchen-doc-en master
 
 3.发布更新.
 
-接下来就是走正常的pr流程了，将自己fork仓库的master分枝合并到[documents-en](git subtree push --prefix=docs/gitbook/en/_book fchen-doc-en master)的gh-pages分枝
+接下来就是走正常的pr流程了，将自己fork仓库的`master`分枝合并到[documents-en](https://github.com/mlsql-project/documents-en)的`gh-pages`分枝
 
