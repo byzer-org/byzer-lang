@@ -18,7 +18,7 @@
 
 package streaming.dsl.mmlib.algs.python
 
-import java.io.File
+import java.io.{File, FileWriter}
 import java.util
 import java.util.UUID
 
@@ -84,7 +84,18 @@ class PythonTrain extends Functions with Serializable {
         tempDataLocalPathWithAlgSuffix = tempDataLocalPathWithAlgSuffix + "/" + algIndex
         val msg = s"dataLocalFormat enabled ,system will generate data in ${tempDataLocalPathWithAlgSuffix} "
         logInfo(format(msg))
-        HDFSOperator.saveFile(tempDataLocalPathWithAlgSuffix, UUID.randomUUID().toString + ".json", iter.map(("", _)))
+        if (!new File(tempDataLocalPathWithAlgSuffix).exists()) {
+          FileUtils.forceMkdir(new File(tempDataLocalPathWithAlgSuffix))
+        }
+        val localFile = new File(tempDataLocalPathWithAlgSuffix, UUID.randomUUID().toString + ".json")
+        val localFileWriter = new FileWriter(localFile)
+        try {
+          iter.foreach { line =>
+            localFileWriter.write(line + "\n")
+          }
+        } finally {
+          localFileWriter.close()
+        }
       }
 
       val paramMap = new util.HashMap[String, Object]()
