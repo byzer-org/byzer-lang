@@ -50,8 +50,10 @@ class ConnectAuth(authProcessListener: AuthProcessListener) extends MLSQLAuth wi
           option += (cleanStr(s.expression().qualifiedName().getText) -> getStrOrBlockStr(s.expression()))
 
         case s: DbContext =>
-          DataSourceRegistry.findAllNames(format).foreach { name =>
-            ConnectMeta.options(DBMappingKey(name, s.getText), option)
+          DataSourceRegistry.findAllNames(format).map { names =>
+            names.foreach { name => ConnectMeta.options(DBMappingKey(name, s.getText), option) }
+          }.getOrElse {
+            ConnectMeta.options(DBMappingKey(format, s.getText), option)
           }
         case _ =>
 

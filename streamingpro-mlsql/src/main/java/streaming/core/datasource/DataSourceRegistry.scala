@@ -47,9 +47,12 @@ object DataSourceRegistry extends Logging {
     } else None
   }
 
-  def findAllNames(name: String): Seq[String] = {
-    val item = registry.asScala.filter(f => f._1.name == name).head
-    Seq(item._2.shortFormat, item._2.fullFormat)
+  def findAllNames(name: String): Option[Seq[String]] = {
+    registry.asScala.filter(f => f._1.name == name).headOption match {
+      case Some(item) => Option(Seq(item._2.shortFormat, item._2.fullFormat))
+      case None => None
+    }
+
   }
 
   private def registerFromPackage(name: String) = {
