@@ -59,7 +59,7 @@ class LoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
     }
 
 
-    if (format.startsWith("kafka") || format.startsWith("mockStream")) {
+    if (format.startsWith("kafka") || format.startsWith("mockStream") || option.contains("stream.source")) {
       scriptSQLExecListener.addEnv("stream", "true")
       new StreamLoadAdaptor(scriptSQLExecListener, option, path, tableName, format).parse
     } else {
@@ -185,6 +185,8 @@ class StreamLoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener,
         val format = "org.apache.spark.sql.execution.streaming.mock.MockStreamSourceProvider"
         table = reader.format(format).options(option + ("path" -> cleanStr(path))).load()
       case _ =>
+        val provider = option.getOrElse("provider", format)
+        table = reader.format(provider).options(option).load()
     }
     table = withWaterMark(table, option)
 
