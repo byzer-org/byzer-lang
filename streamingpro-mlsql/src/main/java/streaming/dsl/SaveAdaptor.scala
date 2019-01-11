@@ -198,7 +198,7 @@ class StreamSaveAdaptor(val scriptSQLExecListener: ScriptSQLExecListener,
 
     var writer: DataStreamWriter[Row] = oldDF.writeStream
 
-    if (final_path.contains("\\.")) {
+    if (final_path.contains(".")) {
       val Array(_dbname, _dbtable) = final_path.split("\\.", 2)
       ConnectMeta.presentThenCall(DBMappingKey(format, _dbname), options => {
         final_path = _dbtable
