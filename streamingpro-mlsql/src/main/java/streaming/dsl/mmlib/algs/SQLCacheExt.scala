@@ -53,7 +53,7 @@ class SQLCacheExt(override val uid: String) extends SQLAlg with WowParams {
   }
 
   override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = {
-    throw new RuntimeException("train is not support")
+    throw new RuntimeException("register is not support")
   }
 
   override def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = {

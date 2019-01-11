@@ -67,7 +67,7 @@ trait WowBaseTestServer extends Logging {
       s"""
          |cd $pjDir;docker-compose -p ${projectName} exec -T ${serviceName} bash -c "${command}"
       """.stripMargin
-    val (status, out, error) = ShellCommand.execWithExitValue(wrapCommand, -1)
+    val (status, error, out) = ShellCommand.execWithExitValue(wrapCommand, -1)
     logInfo(s"command=[${wrapCommand}] status=${status} out=[${out}] err=[${error}]")
     require(status == 0, "execute fail")
     (out, error)
