@@ -22,7 +22,7 @@ import java.io.{File, FileWriter}
 import java.util
 
 import org.apache.commons.io.FileUtils
-import org.apache.spark.sql.{DataFrame, Encoders, Row}
+import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.execution.datasources.json.WowJsonInferSchema
 import org.apache.spark.sql.types.{MapType, StringType}
 import org.apache.spark.util.PythonProjectExecuteRunner
@@ -37,7 +37,6 @@ import scala.collection.JavaConverters._
 class BatchPredict extends Logging with WowLog with Serializable {
   def predict(df: DataFrame, _path: String, params: Map[String, String]): DataFrame = {
     val spark = df.sparkSession
-    import spark.implicits._
 
     val keepLocalDirectory = params.getOrElse("keepLocalDirectory", "false").toBoolean
     val modelMetaManager = new ModelMetaManager(spark, _path, params)
@@ -64,6 +63,8 @@ class BatchPredict extends Logging with WowLog with Serializable {
     val modelPath = modelMeta.modelEntityPaths.head
 
     val outoutFile = SQLPythonFunc.getAlgTmpPath(_path) + "/output"
+
+    val trainParams = modelMeta.trainParams
 
     val jsonRDD = df.rdd.mapPartitionsWithIndex { (index, iter) =>
       ScriptSQLExec.setContext(mlsqlContext)
@@ -104,7 +105,7 @@ class BatchPredict extends Logging with WowLog with Serializable {
         str[RunPythonConfig.InternalSystemParam](_.tempDataLocalPath) -> (localPathConfig.localDataPath + s"/${index}.json"),
         str[RunPythonConfig.InternalSystemParam](_.tempOutputLocalPath) -> localOutputFileStr,
         str[RunPythonConfig.InternalSystemParam](_.tempModelLocalPath) -> localModelPath
-      )
+      ) ++ modelMeta.resources
 
 
       val localOutputPathFile = new File(localPathConfig.localOutputPath)
@@ -114,6 +115,8 @@ class BatchPredict extends Logging with WowLog with Serializable {
 
       paramMap.put(RunPythonConfig.internalSystemParam, (resources ++ internalSystemParam).asJava)
       paramMap.put(RunPythonConfig.systemParam, systemParam.asJava)
+      paramMap.put("trainParams", trainParams.asJava)
+      paramMap.put("fitParams", params.asJava)
 
       val taskDirectory = localPathConfig.localRunPath + "/" + projectName
 
