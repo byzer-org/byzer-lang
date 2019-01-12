@@ -2,16 +2,14 @@
 
 MLSQL is a Language which is the superset of SQL and  a distributed compute engine based on Spark. 
 
-With MLSQL,you can unifies big data and machine learning,one language, one platform.
-
-Notice that with the power of [UDF/Script](https://github.com/allwefantasy/streamingpro/blob/master/docs/en/mlsql-script-support.md) supports,no matter where your data is, what APIs you have, 
-you can use them in MLSQL script to make your job more easy. 
 
 ## Usage:
 
 ![](https://github.com/allwefantasy/streamingpro/raw/master/images/WX20181106-164911.png)
 
 Find more examples on [our user guide](https://github.com/allwefantasy/streamingpro/blob/master/docs/docv2/user-guide.md).
+
+[中文文档](http://docs.mlsql.tech/zh)
 
 ## Fork and Contribute
 
