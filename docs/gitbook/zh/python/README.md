@@ -1,0 +1,4 @@
+# Python项目支持
+
+MLSQL可以很好的支持Python语言,除了前面我们介绍的Python UDF/UDAF以外，我们也支持直接运行Python项目。我们不仅在MLSQL中支持Python,
+同时也利用conda解决了Python的环境依赖问题。只要集群中的服务器安装了conda并且通过代理能够拉去pip库即可。
