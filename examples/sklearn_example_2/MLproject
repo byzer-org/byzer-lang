@@ -1,0 +1,12 @@
+name: tutorial
+
+conda_env: conda.yaml
+
+entry_points:
+  main:
+    train:
+        command: "python train.py"
+    batch_predict:
+        command: "python batchPredict.py"
+    api_predict:
+        command: "python predict.py"
