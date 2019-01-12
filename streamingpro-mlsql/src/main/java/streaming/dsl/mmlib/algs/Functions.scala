@@ -18,24 +18,23 @@
 
 package streaming.dsl.mmlib.algs
 
-import java.io.{ByteArrayOutputStream, File}
+import java.io.ByteArrayOutputStream
 import java.util.Properties
 
+import net.csdn.common.reflect.ReflectHelper
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
 import org.apache.spark.Partitioner
 import org.apache.spark.ml.linalg.SQLDataTypes._
 import org.apache.spark.ml.linalg.Vector
-import org.apache.spark.ml.{Estimator, Model}
 import org.apache.spark.ml.param.Params
-import org.apache.spark.ml.util.{MLReadable, MLWritable}
+import org.apache.spark.ml.util.MLWritable
+import org.apache.spark.ml.{Estimator, Model}
+import org.apache.spark.ps.cluster.Message
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.types._
-import org.apache.spark.sql.{DataFrame, Dataset, Row, SaveMode, SparkSession, functions => F}
-import org.apache.spark.util.{ExternalCommandRunner, ObjPickle, WowMD5, WowXORShiftRandom}
+import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession, functions => F}
+import org.apache.spark.util.{ObjPickle, WowXORShiftRandom}
 import streaming.common.HDFSOperator
-import MetaConst._
-import net.csdn.common.reflect.ReflectHelper
-import org.apache.spark.ps.cluster.Message
 import streaming.core.strategy.platform.{PlatformManager, SparkRuntime}
 import streaming.log.{Logging, WowLog}
 
@@ -112,11 +111,13 @@ trait Functions extends SQlBaseFunc with Logging with WowLog with Serializable {
           case i if i.isAssignableFrom(classOf[Int]) => v.toInt
           case i if i.isAssignableFrom(classOf[Double]) => v.toDouble
           case i if i.isAssignableFrom(classOf[Float]) => v.toFloat
+          case i if i.isAssignableFrom(classOf[Long]) => v.toLong
           case i if i.isAssignableFrom(classOf[Boolean]) => v.toBoolean
           case i if i.isAssignableFrom(classOf[String]) => v
           case i if i.isAssignableFrom(classOf[Array[Int]]) => v.split(",").map(_.toInt)
           case i if i.isAssignableFrom(classOf[Array[Double]]) => v.split(",").map(_.toDouble)
           case i if i.isAssignableFrom(classOf[Array[Float]]) => v.split(",").map(_.toFloat)
+          case i if i.isAssignableFrom(classOf[Array[Long]]) => v.split(",").map(_.toLong)
           case i if i.isAssignableFrom(classOf[Array[Boolean]]) => v.split(",").map(_.toBoolean)
           case i if i.isAssignableFrom(classOf[Array[String]]) => v.split(",")
           case _ => logWarning(format(s"Can not assign value to model: ${f.name} -> ${v}"))

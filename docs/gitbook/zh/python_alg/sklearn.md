@@ -349,6 +349,8 @@ predict
 ....
 ```
 
+> 如果训练时你配置了多个算法或者多组参数 预测时可以在where条件里指定个algIndex。
+
 ## API预测
 
 训练后模型，最大的用处就是部署成API服务，通过http暴露出去，这样谁到可以访问。MLSQL提供了将模型转化为函数的机制，这样，该函数可以注册到我们的API服务里。
@@ -451,6 +453,10 @@ return [VectorUDT().serialize(Vectors.dense(y))]
 python_fun.udf(predict)
 ```
 
+
+> 大家还记得如何携带资源文件么？比如字典文件什么的？
+
+> 如果训练时你配置了多个算法或者多组参数 预测时可以在where条件里指定个algIndex。
 
 
 

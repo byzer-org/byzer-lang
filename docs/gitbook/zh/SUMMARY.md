@@ -113,30 +113,23 @@
                        
     * [Python算法](python_alg/README.md)
         * [集成SKlearn示例](python_alg/sklearn.md)
-        * [集成TensorFlow示例]()
-        * [TensorFlow Cluster支持]()
+        * [集成TensorFlow示例-待写]()
+        * [TensorFlow Cluster支持-待写]()
     
-    * [MLSQL内置算法]()
-        * [NaiveBayes]()
-        * [ALS]()
-        * [RandomForest]()
-        * [GBTRegressor]()
-        * [LDA]()
-        * [KMeans]()
-        * [FPGrowth]()
-        * [GBTs]()
-        * [LSVM]()
-        * [PageRank]()
-        * [LogisticRegressor]()
-        * [XGBoost]()
+    * [MLSQL内置算法](algs/README.md)
+        * [NaiveBayes](algs/naive_bayes.md)
+        * [ALS](algs/als.md)
+        * [RandomForest](algs/random_forest.md)        
+        * [LDA](algs/lda.md)        
+        * [XGBoost](algs/xgboost.md)
     
-    * [深度学习]()
-        * [加载图片数据]()
-        * [Cifar10示例]()
+    * [深度学习](dl/README.md)
+        * [加载图片数据](dl/load_image.md)
+        * [Cifar10示例](dl/cifar10.md)
         
-    * [部署算法API服务]()
-        * [设计和原理]()
-        * [案例剖析]()        
+    * [部署算法API服务](api_deploy/README.md)
+        * [设计和原理](api_deploy/design.md)
+        * [部署流程](api_deploy/case.md)        
         
     * [爬虫]()
         * [爬虫示例]()
@@ -154,6 +147,7 @@
 * 开发者指南
     * [如何参与开发]()
     * [开发者列表]() 
+
 * MLSQL实战            
          
     
