@@ -19,13 +19,13 @@
 package streaming.dsl.mmlib.algs
 
 import net.csdn.common.reflect.ReflectHelper
+import org.apache.spark.ml.Transformer
 import org.apache.spark.ml.linalg.SQLDataTypes.VectorType
 import org.apache.spark.ml.linalg.Vector
-import org.apache.spark.ml.{Model, Transformer}
 import org.apache.spark.ml.param.Params
-import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.types.DoubleType
+import org.apache.spark.sql.{DataFrame, SparkSession}
 import streaming.dsl.mmlib._
 import streaming.dsl.mmlib.algs.classfication.BaseClassification
 import streaming.dsl.mmlib.algs.param.BaseParams
@@ -151,5 +151,5 @@ class SQLXGBoostExt(override val uid: String) extends SQLAlg with MllibFunctions
     UserDefinedFunction(f, DoubleType, Some(Seq(VectorType)))
   }
 
-
+  override def coreCompatibility: Seq[CoreVersion] = Seq(Core_2_3_x)
 }

@@ -1,0 +1,10 @@
+name: tutorial
+dependencies:
+  - python=3.6
+  - pip:
+    - numpy==1.14.3
+    - kafka-python==1.4.3
+    - pyspark==2.4.0
+    - pandas==0.22.0
+    - scikit-learn==0.19.1
+    - scipy==1.1.0
