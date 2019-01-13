@@ -208,4 +208,40 @@ class CondaEnvManager(options: Map[String, String]) extends Logging with WowLog 
   }
 }
 
+class AutoCreateMLproject(scripts: String, condaFile: String, entryPoint: String) {
+
+  def projectName = "mlsql-python-project"
+
+  /*
+     We will automatically create project for user according the configuration
+   */
+  def saveProject(sparkSession: SparkSession, path: String) = {
+    val projectPath = path + s"/${projectName}"
+    scripts.split(",").foreach { script =>
+      val content = sparkSession.table(script).head().getString(0)
+      HDFSOperator.saveFile(projectPath, script + ".py", Seq(("", content)).iterator)
+    }
+    HDFSOperator.saveFile(projectPath, "MLproject", Seq(("", MLprojectTemplate)).iterator)
+    val condaContent = sparkSession.table(condaFile).head().getString(0)
+    HDFSOperator.saveFile(projectPath, "conda.yaml", Seq(("", condaContent)).iterator)
+    projectPath
+  }
+
+
+  private def MLprojectTemplate = {
+    s"""
+       |name: mlsql-python
+       |
+       |conda_env: conda.yaml
+       |
+       |entry_points:
+       |  main:
+       |    train:
+       |        command: "python ${entryPoint}.py"
+       |    batchPredict:
+       |        command: "python ${entryPoint}.py"
+     """.stripMargin
+  }
+}
+
 
