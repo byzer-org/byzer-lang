@@ -79,6 +79,65 @@ object ScriptCode {
       |
     """.stripMargin
 
+
+  val _j2 =
+    """
+      |set python1='''
+      |import os
+      |import warnings
+      |import sys
+      |
+      |import mlsql
+      |
+      |if __name__ == "__main__":
+      |    warnings.filterwarnings("ignore")
+      |
+      |    tempDataLocalPath = mlsql.internal_system_param["tempDataLocalPath"]
+      |
+      |    isp = mlsql.params()["internalSystemParam"]
+      |    tempModelLocalPath = isp["tempModelLocalPath"]
+      |    if not os.path.exists(tempModelLocalPath):
+      |        os.makedirs(tempModelLocalPath)
+      |    with open(tempModelLocalPath + "/result.txt", "w") as f:
+      |        f.write("jack")
+      |''';
+      |
+      |set dependencies='''
+      |name: tutorial
+      |dependencies:
+      |  - python=3.6
+      |  - pip:
+      |    - numpy==1.14.3
+      |    - kafka-python==1.4.3
+      |    - pyspark==2.3.2
+      |    - pandas==0.22.0
+      |    - scikit-learn==0.19.1
+      |    - scipy==1.1.0
+      |''';
+      |
+      |set modelPath="/tmp/jack2";
+      |
+      |set data='''
+      |{"jack":1}
+      |''';
+      |
+      |load jsonStr.`data` as testData;
+      |load script.`python1` as python1;
+      |load script.`dependencies` as dependencies;
+      |
+      |-- train sklearn model
+      |run testData as PythonAlg.`${modelPath}`
+      |where scripts="python1"
+      |and entryPoint="python1"
+      |and condaFile="dependencies"
+      |and fitParam.0.abc="test"
+      |;
+      |
+      |load text.`${modelPath}/model/0` as output;   -- 查看目标文件
+      |
+      |
+    """.stripMargin
+
   val train =
     """
       |load csv.`${projectPath}/wine-quality.csv`
@@ -93,6 +152,7 @@ object ScriptCode {
       | and keepVersion="true"
       | and  enableDataLocal="true"
       | and  dataLocalFormat="csv"
+      | and fitParam.0.abc="example"
       | ${kv}
       |-- and  systemParam.envs='''{"MLFLOW_CONDA_HOME":"/anaconda3"}'''
       | ;

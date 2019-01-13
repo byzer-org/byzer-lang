@@ -19,6 +19,7 @@
 package streaming.dsl.mmlib.algs.param
 
 import org.apache.spark.ml.param.{BooleanParam, Param}
+import org.apache.spark.sql.mlsql.session.MLSQLException
 
 /**
   * Created by allwefantasy on 28/9/2018.
@@ -53,5 +54,40 @@ trait SQLPythonAlgParams extends BaseParams {
 
   final val fitParam: Param[String] = new Param[String](this, "fitParam",
     "fitParam is dynamic params. e.g. fitParam.0.moduleName,fitParam.1.moduleName`")
+
+  final val scripts: Param[String] = new Param[String](this, "scripts",
+    "")
+
+  final val projectPath: Param[String] = new Param(this, "projectPath",
+    "")
+
+  final val entryPoint: Param[String] = new Param(this, "entryPoint",
+    "")
+
+  final val condaFile: Param[String] = new Param(this, "condaFile",
+    "")
+
+
+  def autoConfigureAutoCreateProjectParams(params: Map[String, String]) = {
+
+    params.get(scripts.name).map { item =>
+      set(scripts, item)
+      item
+    }.getOrElse {
+    }
+
+    params.get(entryPoint.name).map { item =>
+      set(entryPoint, item)
+      item
+    }.getOrElse {
+    }
+
+    params.get(condaFile.name).map { item =>
+      set(condaFile, item)
+      item
+    }.getOrElse {
+      
+    }
+  }
 
 }

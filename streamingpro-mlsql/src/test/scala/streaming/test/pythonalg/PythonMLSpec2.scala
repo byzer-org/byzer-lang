@@ -163,6 +163,23 @@ class PythonMLSpec2 extends BasicSparkOperation with SpecFunctions with BasicMLS
     }
   }
 
+  "SQLPythonAlg auto create project" should "work fine" in {
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+      //执行sql
+      implicit val spark = runtime.sparkSession
+      mockServer
+      val sq = createSSEL(spark, "")
+      //train
+      ScriptSQLExec.parse(ScriptCode._j2, sq)
+
+      var table = sq.getLastSelectTable().get
+      val res = spark.sql(s"select * from output").collect()
+      assert(res.length == 1)
+      assert(res.head.getAs[String](0).contains("jack"))
+
+    }
+  }
+
   "SQLPythonParallelExt " should "work fine" in {
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql

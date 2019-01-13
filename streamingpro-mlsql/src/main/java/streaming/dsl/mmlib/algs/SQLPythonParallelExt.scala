@@ -4,17 +4,16 @@ import org.apache.spark.ml.param.Param
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.mlsql.session.MLSQLException
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import streaming.common.HDFSOperator
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib.SQLAlg
-import streaming.dsl.mmlib.algs.param.BaseParams
-import streaming.dsl.mmlib.algs.python.PythonTrain
+import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
+import streaming.dsl.mmlib.algs.python.{AutoCreateMLproject, PythonTrain}
 
 
 /**
   * 2019-01-08 WilliamZhu(allwefantasy@gmail.com)
   */
-class SQLPythonParallelExt(override val uid: String) extends SQLAlg with Functions with BaseParams {
+class SQLPythonParallelExt(override val uid: String) extends SQLAlg with Functions with WowParams {
   def this() = this(BaseParams.randomUID())
 
   private def validateParams(params: Map[String, String]) = {
@@ -43,38 +42,6 @@ class SQLPythonParallelExt(override val uid: String) extends SQLAlg with Functio
     }
   }
 
-  def projectName = "mlsql-python-project"
-
-  /*
-     We will automatically create project for user according the configuration 
-   */
-  private def saveProject(sparkSession: SparkSession, path: String) = {
-    val projectPath = path + s"/${projectName}"
-    $(scripts).split(",").foreach { script =>
-      val content = sparkSession.table(script).head().getString(0)
-      HDFSOperator.saveFile(projectPath, script + ".py", Seq(("", content)).iterator)
-    }
-    HDFSOperator.saveFile(projectPath, "MLproject", Seq(("", MLprojectTemplate)).iterator)
-    val condaContent = sparkSession.table($(condaFile)).head().getString(0)
-    HDFSOperator.saveFile(projectPath, "conda.yaml", Seq(("", condaContent)).iterator)
-    projectPath
-  }
-
-
-  private def MLprojectTemplate = {
-    s"""
-       |name: mlsql-python
-       |
-       |conda_env: conda.yaml
-       |
-       |entry_points:
-       |  main:
-       |    train:
-       |        command: "python ${$(entryPoint)}.py"
-       |    batchPredict:
-       |        command: "python ${$(entryPoint)}.py"
-     """.stripMargin
-  }
 
   override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
     pythonCheckRequirements(df)
@@ -82,12 +49,16 @@ class SQLPythonParallelExt(override val uid: String) extends SQLAlg with Functio
 
     validateParams(params)
 
-    val projectPath = saveProject(df.sparkSession, path)
+    val autoCreateMLproject = new AutoCreateMLproject($(scripts), $(condaFile), $(entryPoint))
+
+    val projectPath = autoCreateMLproject.saveProject(df.sparkSession, path)
 
     var newParams = params
 
     newParams += ("enableDataLocal" -> ($(feedMode) == "file").toString)
     newParams += ("pythonScriptPath" -> projectPath)
+    newParams += ("pythonDescPath" -> projectPath)
+    
     val pt = new PythonTrain()
     pt.train_per_partition(df, path, newParams)
 
