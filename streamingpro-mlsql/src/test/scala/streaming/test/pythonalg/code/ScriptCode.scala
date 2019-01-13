@@ -79,6 +79,65 @@ object ScriptCode {
       |
     """.stripMargin
 
+  val _j3 =
+    """
+      |set python1='''
+      |import os
+      |import warnings
+      |import sys
+      |import json
+      |
+      |import mlsql
+      |
+      |if __name__ == "__main__":
+      |    warnings.filterwarnings("ignore")
+      |
+      |    tempDataLocalPath = mlsql.internal_system_param["tempDataLocalPath"]
+      |
+      |    isp = mlsql.params()["internalSystemParam"]
+      |    tempModelLocalPath = isp["tempModelLocalPath"]
+      |    if not os.path.exists(tempModelLocalPath):
+      |        os.makedirs(tempModelLocalPath)
+      |    with open(tempModelLocalPath + "/result.txt", "w") as f:
+      |        f.write(json.dumps({"wow":"jack"}))
+      |''';
+      |
+      |set dependencies='''
+      |name: tutorial
+      |dependencies:
+      |  - python=3.6
+      |  - pip:
+      |    - numpy==1.14.3
+      |    - kafka-python==1.4.3
+      |    - pyspark==2.3.2
+      |    - pandas==0.22.0
+      |    - scikit-learn==0.19.1
+      |    - scipy==1.1.0
+      |''';
+      |
+      |set modelPath="/tmp/jack2";
+      |
+      |set data='''
+      |{"jack":1}
+      |''';
+      |
+      |load jsonStr.`data` as testData;
+      |load script.`python1` as python1;
+      |load script.`dependencies` as dependencies;
+      |
+      |-- train sklearn model
+      |run testData as PythonParallelExt.`${modelPath}`
+      |where scripts="python1"
+      |and entryPoint="python1"
+      |and condaFile="dependencies"
+      |and partitionKey="hp_date"
+      |;
+      |
+      |load json.`${modelPath}/model/` as output;   -- 查看目标文件
+      |
+      |
+    """.stripMargin
+
 
   val _j2 =
     """

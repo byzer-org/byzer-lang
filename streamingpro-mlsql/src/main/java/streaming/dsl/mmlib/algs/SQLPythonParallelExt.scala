@@ -24,21 +24,22 @@ class SQLPythonParallelExt(override val uid: String) extends SQLAlg with Functio
       set(scripts, item)
       item
     }.getOrElse {
-      throw new MLSQLException(s"${scripts.name} is required")
+      if (!params.contains("pythonScriptPath") && !params.contains("pythonDescPath")) {
+        throw new MLSQLException(s"${scripts.name} is required")
+      }
     }
 
     params.get(entryPoint.name).map { item =>
       set(entryPoint, item)
       item
     }.getOrElse {
-      throw new MLSQLException(s"${entryPoint.name} is required")
+
     }
 
     params.get(condaFile.name).map { item =>
       set(condaFile, item)
       item
     }.getOrElse {
-      throw new MLSQLException(s"${condaFile.name} is required")
     }
   }
 
@@ -58,7 +59,7 @@ class SQLPythonParallelExt(override val uid: String) extends SQLAlg with Functio
     newParams += ("enableDataLocal" -> ($(feedMode) == "file").toString)
     newParams += ("pythonScriptPath" -> projectPath)
     newParams += ("pythonDescPath" -> projectPath)
-    
+
     val pt = new PythonTrain()
     pt.train_per_partition(df, path, newParams)
 

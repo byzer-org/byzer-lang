@@ -197,4 +197,22 @@ class PythonMLSpec2 extends BasicSparkOperation with SpecFunctions with BasicMLS
     }
   }
 
+  "SQLPythonParallelExt with paritition" should "work fine" in {
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+      //执行sql
+      implicit val spark = runtime.sparkSession
+      mockServer
+      ShellCommand.exec("rm -rf /tmp/jack2/")
+      val sq = createSSEL(spark, "")
+      //train
+      ScriptSQLExec.parse(ScriptCode._j3, sq)
+
+      var table = sq.getLastSelectTable().get
+      spark.sql(s"select * from output").show()
+      val res = spark.sql(s"select * from output").collect()
+      assert(res.head.getAs[String]("wow").contains("jack"))
+
+    }
+  }
+
 }

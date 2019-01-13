@@ -41,6 +41,8 @@ class PythonTrain extends Functions with Serializable {
     val keepVersion = params.getOrElse("keepVersion", "false").toBoolean
     val keepLocalDirectory = params.getOrElse("keepLocalDirectory", "false").toBoolean
 
+    val partitionKey = params.get("partitionKey")
+
     var kafkaParam = mapParams("kafkaParam", params)
 
     val enableDataLocal = params.getOrElse("enableDataLocal", "true").toBoolean
@@ -214,7 +216,12 @@ class PythonTrain extends Functions with Serializable {
 
       val modelTrainEndTime = System.currentTimeMillis()
 
-      val modelHDFSPath = SQLPythonFunc.getAlgModelPath(path, keepVersion) + "/" + algIndex
+      val partitionName = partitionKey match {
+        case Some(i) => s"${i}=" + algIndex
+        case None => algIndex
+      }
+
+      val modelHDFSPath = SQLPythonFunc.getAlgModelPath(path, keepVersion) + "/" + partitionName
       try {
         // If training failed, we do not need
         // copy model to hdfs

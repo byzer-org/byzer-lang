@@ -111,11 +111,24 @@ and scripts="pythonScript"
 and entryPoint="pythonScript"
 and condaFile="dependencies";
 
+
 ```
 
 如果你有多个脚本文件，那么可以在`scripts`参数中用","进行分割即可。计算完成后，在
 
 `/tmp/jack2/model`下你会看到有0-4五个目录，每个目录里有一个json（你先前写的文件）。
+
+但是你会发现读取这些文件是一个麻烦的事情，因为有五个目录，你可以这么做添加一个参数：
+
+```
+and partitionKey="hp_date"
+```
+
+里面hp_date 是分区字段。这样你接着就可以这样读取你的计算结果：
+
+```
+load json.`/tmp/jack2/model` as output;
+```
 
 假设我还希望能够有一些资源文件怎么办？比如我希望在python脚本里完成分词,这个时候需要有词典，你可以这样用：
 
@@ -141,6 +154,8 @@ dir_list_B = [i for i in dir_list_B if i.endswith(".txt")]
 ```
 
 是不是非常方便？
+
+
 
 
 
