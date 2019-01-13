@@ -24,6 +24,7 @@ import java.util.{Map => JMap}
 
 import _root_.streaming.common.{NetUtils, ScalaObjectReflect}
 import _root_.streaming.core.StreamingproJobManager
+import _root_.streaming.core.message.MLSQLMessage
 import _root_.streaming.dsl.mmlib.algs.bigdl.WowLoggerFilter
 import _root_.streaming.log.Logging
 import net.csdn.common.reflect.ReflectHelper
@@ -45,6 +46,7 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
   val configReader = MLSQLConf.createConfigReader(params.map(f => (f._1.toString, f._2.toString)))
 
   def name = "SPARK"
+
   registerJdbcDialect(HiveJdbcDialect)
   var localSchedulerBackend: LocalPSSchedulerBackend = null
   var psDriverBackend: PSDriverBackend = null
@@ -66,7 +68,6 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
     new SparkRuntimeOperator(sparkSession)
   }
 
-
   def createRuntime = {
     logInfo("create Runtime...")
 
@@ -84,7 +85,7 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
     conf.setAppName(MLSQLConf.MLSQL_NAME.readFrom(configReader))
 
     def isLocalMaster(conf: SparkConf): Boolean = {
-//      val master = MLSQLConf.MLSQL_MASTER.readFrom(configReader).getOrElse("")
+      //      val master = MLSQLConf.MLSQL_MASTER.readFrom(configReader).getOrElse("")
       val master = conf.get("spark.master", "")
       master == "local" || master.startsWith("local[")
     }
@@ -97,24 +98,7 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
     }
 
     if (MLSQLConf.MLSQL_CLUSTER_PS_ENABLE.readFrom(configReader) && !isLocalMaster(conf)) {
-      logWarning(
-        s"""
-           |------------------------------------------------------------------------
-           |${MLSQLConf.MLSQL_CLUSTER_PS_ENABLE.key} is enabled. Please make sure
-           |you have the uber-jar of mlsql placed in
-           |1. --jars
-           |2. --conf "spark.executor.extraClassPath=[your jar name in jars]"
-           |
-           |for exmaple:
-           |
-           |--jars ./streamingpro-mlsql-spark_2.x-x.x.x-SNAPSHOT.jar
-           |--conf "spark.executor.extraClassPath=streamingpro-mlsql-spark_2.x-x.x.x-SNAPSHOT.jar"
-           |
-           |Otherwise the executor will
-           |fail to start and the whole application will fails.
-           |------------------------------------------------------------------------
-          """.stripMargin)
-
+      logWarning(MLSQLMessage.MLSQL_CLUSTER_PS_ENABLE_NOTICE)
       logInfo("register worker.sink.pservice.class with org.apache.spark.ps.cluster.PSServiceSink")
       conf.set("spark.metrics.conf.executor.sink.pservice.class", "org.apache.spark.ps.cluster.PSServiceSink")
       val holdPort = NetUtils.availableAndReturn(7778, 7999)
@@ -206,7 +190,8 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
       registerUDF(clzz)
     }
   }
-  def registerJdbcDialect(dialect: JdbcDialect)={
+
+  def registerJdbcDialect(dialect: JdbcDialect) = {
     logInfo("register HiveSqlDialect.....")
     JdbcDialects.registerDialect(dialect)
   }

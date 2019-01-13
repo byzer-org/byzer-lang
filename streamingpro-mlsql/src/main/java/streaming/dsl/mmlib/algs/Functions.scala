@@ -23,7 +23,6 @@ import java.util.Properties
 
 import net.csdn.common.reflect.ReflectHelper
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
-import org.apache.spark.Partitioner
 import org.apache.spark.ml.linalg.SQLDataTypes._
 import org.apache.spark.ml.linalg.Vector
 import org.apache.spark.ml.param.Params
@@ -31,10 +30,13 @@ import org.apache.spark.ml.util.MLWritable
 import org.apache.spark.ml.{Estimator, Model}
 import org.apache.spark.ps.cluster.Message
 import org.apache.spark.sql.expressions.UserDefinedFunction
+import org.apache.spark.sql.mlsql.session.MLSQLException
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession, functions => F}
 import org.apache.spark.util.{ObjPickle, WowXORShiftRandom}
+import org.apache.spark.{MLSQLConf, Partitioner, SparkConf}
 import streaming.common.HDFSOperator
+import streaming.core.message.MLSQLMessage
 import streaming.core.strategy.platform.{PlatformManager, SparkRuntime}
 import streaming.log.{Logging, WowLog}
 
@@ -44,6 +46,17 @@ import scala.collection.mutable.ArrayBuffer
   * Created by allwefantasy on 13/1/2018.
   */
 trait Functions extends SQlBaseFunc with Logging with WowLog with Serializable {
+
+  def pythonCheckRequirements(df: DataFrame) = {
+    val conf: SparkConf = df.sparkSession.sparkContext.getConf
+    val master = conf.get("spark.master", "")
+    val isLocalMaster = (master == "local" || master.startsWith("local["))
+    val runtime = PlatformManager.getRuntime.asInstanceOf[SparkRuntime]
+
+    if (!isLocalMaster && !MLSQLConf.MLSQL_CLUSTER_PS_ENABLE.readFrom(runtime.configReader)) {
+      throw new MLSQLException(MLSQLMessage.PYTHON_REQUEIRE_MLSQL_CLUSTER_PS_ENABLE)
+    }
+  }
 
   def emptyDataFrame()(implicit df: DataFrame) = {
     import df.sparkSession.implicits._
