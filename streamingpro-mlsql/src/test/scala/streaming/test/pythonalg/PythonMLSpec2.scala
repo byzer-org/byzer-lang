@@ -66,6 +66,7 @@ class PythonMLSpec2 extends BasicSparkOperation with SpecFunctions with BasicMLS
       //执行sql
       implicit val spark = runtime.sparkSession
       mockServer
+      ShellCommand.exec("rm -rf /tmp/jack2/")
       //SPARK_VERSION
       val sq = createSSEL(spark, "")
       val projectName = "sklearn_elasticnet_wine"
@@ -130,6 +131,7 @@ class PythonMLSpec2 extends BasicSparkOperation with SpecFunctions with BasicMLS
       //执行sql
       implicit val spark = runtime.sparkSession
       mockServer
+      ShellCommand.exec("rm -rf /tmp/jack2/")
       val sq = createSSEL(spark, "")
       val projectName = "sklearn_elasticnet_wine"
       var projectPath = getExampleProject(projectName)
@@ -168,6 +170,7 @@ class PythonMLSpec2 extends BasicSparkOperation with SpecFunctions with BasicMLS
       //执行sql
       implicit val spark = runtime.sparkSession
       mockServer
+      ShellCommand.exec("rm -rf /tmp/jack2/")
       val sq = createSSEL(spark, "")
       //train
       ScriptSQLExec.parse(ScriptCode._j2, sq)
@@ -185,6 +188,7 @@ class PythonMLSpec2 extends BasicSparkOperation with SpecFunctions with BasicMLS
       //执行sql
       implicit val spark = runtime.sparkSession
       mockServer
+      ShellCommand.exec("rm -rf /tmp/jack2/")
       val sq = createSSEL(spark, "")
       //train
       ScriptSQLExec.parse(ScriptCode._j1, sq)
@@ -203,6 +207,8 @@ class PythonMLSpec2 extends BasicSparkOperation with SpecFunctions with BasicMLS
       implicit val spark = runtime.sparkSession
       mockServer
       ShellCommand.exec("rm -rf /tmp/jack2/")
+      ShellCommand.exec("mkdir -p /tmp/resource")
+      ShellCommand.exec("touch /tmp/resource/a.txt")
       val sq = createSSEL(spark, "")
       //train
       ScriptSQLExec.parse(ScriptCode._j3, sq)
@@ -211,6 +217,9 @@ class PythonMLSpec2 extends BasicSparkOperation with SpecFunctions with BasicMLS
       spark.sql(s"select * from output").show()
       val res = spark.sql(s"select * from output").collect()
       assert(res.head.getAs[String]("wow").contains("jack"))
+      assert(res.head.getAs[Long]("resource_a") == 2)
+      assert(res.head.getAs[Long]("resource_b") == 2)
+
 
     }
   }

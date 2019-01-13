@@ -96,10 +96,12 @@ object ScriptCode {
       |
       |    isp = mlsql.params()["internalSystemParam"]
       |    tempModelLocalPath = isp["tempModelLocalPath"]
+      |    dir_list_A = os.listdir(mlsql.internal_system_param["resource"]["a"])
+      |    dir_list_B = os.listdir(mlsql.internal_system_param["resource"]["b"])
       |    if not os.path.exists(tempModelLocalPath):
       |        os.makedirs(tempModelLocalPath)
       |    with open(tempModelLocalPath + "/result.txt", "w") as f:
-      |        f.write(json.dumps({"wow":"jack"}))
+      |        f.write(json.dumps({"wow":"jack","resource_a":len(dir_list_A),"resource_b":len(dir_list_B)}))
       |''';
       |
       |set dependencies='''
@@ -131,6 +133,8 @@ object ScriptCode {
       |and entryPoint="python1"
       |and condaFile="dependencies"
       |and partitionKey="hp_date"
+      |and fitParam.0.resource.a="/tmp/resource"
+      |and fitParam.resource.b="/tmp/resource"
       |;
       |
       |load json.`${modelPath}/model/` as output;   -- 查看目标文件
@@ -190,6 +194,7 @@ object ScriptCode {
       |and entryPoint="python1"
       |and condaFile="dependencies"
       |and fitParam.0.abc="test"
+      |and keepVersion="false"
       |;
       |
       |load text.`${modelPath}/model/0` as output;   -- 查看目标文件

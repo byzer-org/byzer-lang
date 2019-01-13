@@ -67,7 +67,26 @@ class PythonTrain extends Functions with Serializable {
     val projectName = pythonProject.get.projectName
     val projectType = pythonProject.get.scriptType
 
-    val f = mapParams("fitParam", params)
+    var fitParam = mapParams("fitParam", params)
+
+
+    def cleanNumber() = {
+      fitParam.map { f =>
+        var key = f._1
+        val value = f._2
+        try {
+          val prefix = key.split("\\.")(0)
+          (prefix).toLong
+          key = key.substring(prefix.length + 1)
+        } catch {
+          case e: Exception =>
+        }
+        (key, value)
+
+      }
+    }
+
+    fitParam = cleanNumber()
 
     val systemParam = mapParams("systemParam", params)
     val mlflowConfig = MLFlowConfig.buildFromSystemParam(systemParam)
@@ -101,12 +120,12 @@ class PythonTrain extends Functions with Serializable {
       }
 
       val paramMap = new util.HashMap[String, Object]()
-      var item = f.asJava
-      if (!f.contains("modelPath")) {
-        item = (f + ("modelPath" -> path)).asJava
+      var item = fitParam.asJava
+      if (!fitParam.contains("modelPath")) {
+        item = (fitParam + ("modelPath" -> path)).asJava
       }
 
-      val resourceParams = new ResourceManager(f).loadResourceInTrain
+      val resourceParams = new ResourceManager(fitParam).loadResourceInTrain
 
       val taskDirectory = localPathConfig.localRunPath + "/" + projectName
       val tempModelLocalPath = s"${localPathConfig.localModelPath}/${algIndex}"
@@ -239,11 +258,15 @@ class PythonTrain extends Functions with Serializable {
           e.printStackTrace()
           trainFailFlag = true
       } finally {
+        // delete resource
+        resourceParams.foreach { rp =>
+          FileUtils.deleteQuietly(new File(rp._2))
+        }
         // delete local model
-        FileUtils.deleteDirectory(new File(tempModelLocalPath))
+        FileUtils.deleteQuietly(new File(tempModelLocalPath))
         // delete local data
         if (!keepLocalDirectory) {
-          FileUtils.deleteDirectory(new File(tempDataLocalPathWithAlgSuffix))
+          FileUtils.deleteQuietly(new File(tempDataLocalPathWithAlgSuffix))
         }
       }
       val status = if (trainFailFlag) "fail" else "success"
@@ -255,7 +278,7 @@ class PythonTrain extends Functions with Serializable {
         status,
         modelTrainStartTime,
         modelTrainEndTime,
-        f,
+        fitParam,
         execDesc
       ))
       Seq(row).toIterator
@@ -483,10 +506,14 @@ class PythonTrain extends Functions with Serializable {
           trainFailFlag = true
       } finally {
         // delete local model
-        FileUtils.deleteDirectory(new File(tempModelLocalPath))
+        FileUtils.deleteQuietly(new File(tempModelLocalPath))
         // delete local data
         if (!keepLocalDirectory) {
-          FileUtils.deleteDirectory(new File(tempDataLocalPathWithAlgSuffix))
+          FileUtils.deleteQuietly(new File(tempDataLocalPathWithAlgSuffix))
+        }
+        // delete resource
+        resourceParams.foreach { rp =>
+          FileUtils.deleteQuietly(new File(rp._2))
         }
       }
       val status = if (trainFailFlag) "fail" else "success"
