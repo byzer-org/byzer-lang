@@ -19,20 +19,19 @@
 package streaming.dsl.mmlib.algs
 
 import java.util.ArrayList
-import scala.collection.JavaConverters._
 
 import org.apache.spark.ml.linalg.{Matrices, Matrix, Vector}
 import org.apache.spark.ps.cluster.Message
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
-import streaming.core.strategy.platform.{PlatformManager, SparkRuntime}
-
 import streaming.common.HDFSOperator
-import streaming.log.{Logging, WowLog}
-
+import streaming.core.strategy.platform.{PlatformManager, SparkRuntime}
+import streaming.dsl.mmlib._
 import streaming.dsl.mmlib.algs.param.{BaseParams, SQLPythonAlgParams}
 import streaming.dsl.mmlib.algs.python._
-import streaming.dsl.mmlib._
+import streaming.log.{Logging, WowLog}
+
+import scala.collection.JavaConverters._
 
 
 /**
@@ -44,6 +43,7 @@ class SQLPythonAlg(override val uid: String) extends SQLAlg with Functions with 
   def this() = this(BaseParams.randomUID())
 
   override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
+    pythonCheckRequirements(df)
     new PythonTrain().train(df, path, params)
   }
 

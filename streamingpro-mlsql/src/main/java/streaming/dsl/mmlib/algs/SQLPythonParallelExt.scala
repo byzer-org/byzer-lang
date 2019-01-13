@@ -77,7 +77,7 @@ class SQLPythonParallelExt(override val uid: String) extends SQLAlg with Functio
   }
 
   override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
-
+    pythonCheckRequirements(df)
     val mlsqlContext = ScriptSQLExec.contextGetOrForTest()
 
     validateParams(params)

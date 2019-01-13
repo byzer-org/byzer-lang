@@ -141,8 +141,8 @@
         * [如何管理connect账号和密码](security/user_password.md)
     
     * [MLSQL两种运行模式](mode/README.md)
-            * [Service模式](mode/service.md)
-            * [Application模式](mode/application.md)
+        * [Service模式](mode/service.md)
+        * [Application模式](mode/application.md)
             
     * [如何执行初始化脚本](application/README.md)            
         
@@ -150,6 +150,7 @@
         * [MLSQL-Cluster设计和原理]()
         * [MLSQL-Cluster部署]()
         
+
 * 开发者指南
     * [如何参与开发]()
     * [开发者列表]() 
