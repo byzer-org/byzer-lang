@@ -135,11 +135,17 @@
         * [爬虫示例]()
         * [基于MLSQL爬虫系统的设计]()
     
-    * [保障数据安全]()
-        * [MLSQL统一授权体系]()
-        * [如何开发自定义授权规则]()
-        * [如何管理connect账号和密码]()
+    * [保障数据安全](security/README.md)
+        * [MLSQL统一授权体系设计原理](security/design.md)
+        * [如何开发自定义授权规则](security/build.md)
+        * [如何管理connect账号和密码](security/user_password.md)
     
+    * [MLSQL两种运行模式](mode/README.md)
+            * [Service模式](mode/service.md)
+            * [Application模式](mode/application.md)
+            
+    * [如何执行初始化脚本](application/README.md)            
+        
     * [管理多个MLSQL实例]()
         * [MLSQL-Cluster设计和原理]()
         * [MLSQL-Cluster部署]()

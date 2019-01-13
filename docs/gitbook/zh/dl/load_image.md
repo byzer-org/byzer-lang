@@ -20,10 +20,9 @@ where code='''
 select imageName from images limit 1 as output;
 ```
 
-ImageLoaderExt支持传递Scala处理代码对图片进行处理。我们看看里面的代码片段,首先方法是apply,则个是默认的必须是
-这个名字。其次里面的params参数其实是where条件里的其他参数。
+ImageLoaderExt支持传递Scala处理代码对图片进行处理。我们看看里面的代码片段,首先方法是apply,这个是默认的，而且是必须。其次里面的params参数其实是where条件里的其他参数。
 
-接着方法主题是一个DSL:
+接着方法主体是一个DSL:
 
 ```scala
 Resize(256, 256) -> CenterCrop(224, 224) -> MatToTensor() -> ImageFrameToSample()
