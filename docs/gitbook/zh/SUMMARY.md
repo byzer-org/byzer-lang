@@ -43,6 +43,7 @@
         * [Parquet/Json/Text/Xml/Csv](datasource/file.md)
         * [jsonStr/script/mlsqlAPI/mlsqlConf](datasource/mlsql_source.md)        
         * [其他](datasource/other.md)
+        * [运行时添加数据源依赖](datasource/dynamically_add.md)
     
     * [变量设置](variable/README.md)
         * [Conf](variable/conf.md)
