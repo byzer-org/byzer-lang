@@ -70,7 +70,7 @@ class DataSourceRepository(url: String) {
     // fileName format e.g es, mongodb
     val finalUrl = s"${getOrDefaultUrl}/jar/manager/http?fileName=${URLEncoder.encode(artifactId, "utf-8")}&url=${URLEncoder.encode(url, "utf-8")}"
     val inputStream = Request.Get(finalUrl).execute().returnContent().asStream()
-    val tmpLocation = new File("./dataousrce_jars")
+    val tmpLocation = new File("./dataousrce_upjars")
     if (!tmpLocation.exists()) {
       tmpLocation.mkdirs()
     }
