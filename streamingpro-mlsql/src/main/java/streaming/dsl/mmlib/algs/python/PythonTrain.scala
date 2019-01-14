@@ -25,6 +25,7 @@ import java.util.UUID
 import org.apache.commons.io.FileUtils
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
+import org.apache.spark.sql.mlsql.session.MLSQLException
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Row, SaveMode}
 import org.apache.spark.util._
@@ -93,6 +94,13 @@ class PythonTrain extends Functions with Serializable {
     val pythonConfig = PythonConfig.buildFromSystemParam(systemParam)
     val envs = EnvConfig.buildFromSystemParam(systemParam)
 
+
+    if (!keepVersion) {
+      if (path.contains("..") || path == "/" || path.split("\\.").length < 3) {
+        throw new MLSQLException("path should at least three layer")
+      }
+      HDFSOperator.deleteDir(SQLPythonFunc.getAlgModelPath(path, keepVersion))
+    }
 
     val wowRDD = df.toJSON.rdd.mapPartitionsWithIndex { case (algIndex, iter) =>
 
