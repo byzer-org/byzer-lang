@@ -1,7 +1,7 @@
 package streaming.core.datasource
 
 import java.io.File
-import java.net.{URLClassLoader, URLEncoder}
+import java.net.{URL, URLClassLoader, URLEncoder}
 import java.nio.file.Files
 
 import net.csdn.ServiceFramwork
@@ -70,7 +70,7 @@ class DataSourceRepository(url: String) {
     // fileName format e.g es, mongodb
     val finalUrl = s"${getOrDefaultUrl}/jar/manager/http?fileName=${URLEncoder.encode(artifactId, "utf-8")}&url=${URLEncoder.encode(url, "utf-8")}"
     val inputStream = Request.Get(finalUrl).execute().returnContent().asStream()
-    val tmpLocation = new File("/tmp/__mlsql__/jars")
+    val tmpLocation = new File("./dataousrce_jars")
     if (!tmpLocation.exists()) {
       tmpLocation.mkdirs()
     }
@@ -85,11 +85,10 @@ class DataSourceRepository(url: String) {
 
   def loadJarInDriver(path: String) = {
 
-    val child = new URLClassLoader(
-      Array(new File(path).toURI.toURL),
-      Thread.currentThread().getContextClassLoader
-    )
-    Thread.currentThread().setContextClassLoader(child)
+    val systemClassLoader = ClassLoader.getSystemClassLoader().asInstanceOf[URLClassLoader]
+    val method = classOf[URLClassLoader].getDeclaredMethod("addURL", classOf[URL])
+    method.setAccessible(true)
+    method.invoke(systemClassLoader, new File(path).toURI.toURL)
   }
 
 }
