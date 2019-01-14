@@ -27,8 +27,8 @@ class SQLDataSourceExt(override val uid: String) extends SQLAlg with WowParams w
       set(repository, item)
       item
     }
-
-    val dataSourceRepository = new DataSourceRepository($(repository))
+    val rep = if (isDefined(repository)) $(repository) else ""
+    val dataSourceRepository = new DataSourceRepository(rep)
 
     val spark = df.sparkSession
     import spark.implicits._
@@ -36,12 +36,24 @@ class SQLDataSourceExt(override val uid: String) extends SQLAlg with WowParams w
       case "list" =>
         spark.read.json(spark.createDataset(dataSourceRepository.listCommand))
       case "add" =>
-        val Array(dsFormat, groupid, artifactId, version) = path.split("/")
-        val url = dataSourceRepository.addCommand(dsFormat, groupid, artifactId, version)
-        val logMsg = format(s"Datasource is loading jar from ${url}")
-        logInfo(logMsg)
-        spark.sparkContext.addJar(url)
-        Seq[Seq[String]](Seq(logMsg)).toDF("desc")
+        if (!path.contains("/")) {
+          //          spark.table(path).collect().map{row=>
+          //             row.get()
+          //
+          //          }
+          Seq[Seq[String]](Seq()).toDF("desc")
+        } else {
+          val Array(dsFormat, groupid, artifactId, version) = path.split("/")
+          val url = dataSourceRepository.addCommand(dsFormat, groupid, artifactId, version)
+          val logMsg = format(s"Datasource is loading jar from ${url}")
+          logInfo(logMsg)
+          dataSourceRepository.loadJarInDriver(url)
+          spark.sparkContext.addJar(url)
+
+          //FileUtils.deleteQuietly(new File(url))
+          Seq[Seq[String]](Seq(logMsg)).toDF("desc")
+        }
+
     }
   }
 
