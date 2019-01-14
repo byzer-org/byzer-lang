@@ -23,11 +23,12 @@ import java.sql.{DriverManager, Statement}
 
 import net.csdn.ServiceFramwork
 import net.csdn.bootstrap.Bootstrap
-import org.apache.commons.io.{FileUtils, IOUtils}
+import org.apache.commons.io.FileUtils
 import org.apache.http.HttpVersion
 import org.apache.http.client.fluent.{Form, Request}
 import org.apache.http.util.EntityUtils
-import org.apache.spark.sql.{SQLContext, SparkSession}
+import org.apache.spark.sql.SparkSession
+import streaming.common.shell.ShellCommand
 import streaming.dsl.{MLSQLExecuteContext, ScriptSQLExec, ScriptSQLExecListener}
 
 /**
@@ -90,7 +91,7 @@ trait SpecFunctions {
       stat = con.createStatement()
       stat.execute(ddlStr)
 
-    }  finally {
+    } finally {
       if (stat != null) {
         stat.close()
       }
