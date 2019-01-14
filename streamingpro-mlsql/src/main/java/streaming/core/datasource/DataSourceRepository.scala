@@ -1,12 +1,15 @@
 package streaming.core.datasource
 
-import java.net.URLEncoder
+import java.io.File
+import java.net.{URL, URLClassLoader, URLEncoder}
+import java.nio.file.Files
 
 import net.csdn.ServiceFramwork
 import net.csdn.common.path.Url
 import net.csdn.modules.http.RestRequest
 import net.csdn.modules.transport.HttpTransportService
 import net.sf.json.{JSONArray, JSONObject}
+import org.apache.http.client.fluent.Request
 import streaming.dsl.ScriptSQLExec
 
 import scala.collection.JavaConverters._
@@ -65,7 +68,27 @@ class DataSourceRepository(url: String) {
   def addCommand(format: String, groupid: String, artifactId: String, version: String) = {
     val url = s"http://central.maven.org/maven2/${groupid.replaceAll("\\.", "/")}/${artifactId}/${version}"
     // fileName format e.g es, mongodb
-    s"${getOrDefaultUrl}/jar/manager/http?fileName=${URLEncoder.encode(format, "utf-8")}&url=${URLEncoder.encode(url, "utf-8")}"
+    val finalUrl = s"${getOrDefaultUrl}/jar/manager/http?fileName=${URLEncoder.encode(artifactId, "utf-8")}&url=${URLEncoder.encode(url, "utf-8")}"
+    val inputStream = Request.Get(finalUrl).execute().returnContent().asStream()
+    val tmpLocation = new File("./dataousrce_upjars")
+    if (!tmpLocation.exists()) {
+      tmpLocation.mkdirs()
+    }
+    val jarFile = new File(tmpLocation.getPath + s"/${artifactId}-${version}.jar")
+    if (!jarFile.exists()) {
+      Files.copy(inputStream, jarFile.toPath)
+    } else {
+      inputStream.close()
+    }
+    jarFile.getPath
+  }
+
+  def loadJarInDriver(path: String) = {
+
+    val systemClassLoader = ClassLoader.getSystemClassLoader().asInstanceOf[URLClassLoader]
+    val method = classOf[URLClassLoader].getDeclaredMethod("addURL", classOf[URL])
+    method.setAccessible(true)
+    method.invoke(systemClassLoader, new File(path).toURI.toURL)
   }
 
 }
