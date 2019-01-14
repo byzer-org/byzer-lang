@@ -66,7 +66,7 @@ class PythonMLSpec2 extends BasicSparkOperation with SpecFunctions with BasicMLS
       //执行sql
       implicit val spark = runtime.sparkSession
       mockServer
-      ShellCommand.exec("rm -rf /tmp/william")
+      ShellCommand.exec("rm -rf /tmp/william/tmp/jack2")
       //SPARK_VERSION
       val sq = createSSEL(spark, "")
       val projectName = "sklearn_elasticnet_wine"
@@ -131,7 +131,7 @@ class PythonMLSpec2 extends BasicSparkOperation with SpecFunctions with BasicMLS
       //执行sql
       implicit val spark = runtime.sparkSession
       mockServer
-      ShellCommand.exec("rm -rf /tmp/william")
+      ShellCommand.exec("rm -rf /tmp/william/tmp/jack2")
       val sq = createSSEL(spark, "")
       val projectName = "sklearn_elasticnet_wine"
       var projectPath = getExampleProject(projectName)
@@ -170,7 +170,7 @@ class PythonMLSpec2 extends BasicSparkOperation with SpecFunctions with BasicMLS
       //执行sql
       implicit val spark = runtime.sparkSession
       mockServer
-      ShellCommand.exec("rm -rf /tmp/william")
+      ShellCommand.exec("rm -rf /tmp/william/tmp/jack2")
       val sq = createSSEL(spark, "")
       //train
       ScriptSQLExec.parse(ScriptCode._j2, sq)
@@ -188,7 +188,7 @@ class PythonMLSpec2 extends BasicSparkOperation with SpecFunctions with BasicMLS
       //执行sql
       implicit val spark = runtime.sparkSession
       mockServer
-      ShellCommand.exec("rm -rf /tmp/william")
+      ShellCommand.exec("rm -rf /tmp/william/tmp/jack2")
       val sq = createSSEL(spark, "")
       //train
       ScriptSQLExec.parse(ScriptCode._j1, sq)
@@ -206,7 +206,7 @@ class PythonMLSpec2 extends BasicSparkOperation with SpecFunctions with BasicMLS
       //执行sql
       implicit val spark = runtime.sparkSession
       mockServer
-      ShellCommand.exec("rm -rf /tmp/william")
+      ShellCommand.exec("rm -rf /tmp/william/tmp/jack2")
       ShellCommand.exec("mkdir -p /tmp/resource")
       ShellCommand.exec("touch /tmp/resource/a.txt")
       val sq = createSSEL(spark, "")

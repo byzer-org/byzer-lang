@@ -46,8 +46,6 @@ class MLLibSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLCo
       import spark.implicits._
       ScriptSQLExec.contextGetOrForTest()
 
-      ShellCommand.exec("rm -rf /tmp/william//tmp/als")
-
       val ratings = spark.read.textFile("/tmp/william/sample_movielens_ratings.txt")
         .map { str =>
           val fields = str.split("::")
