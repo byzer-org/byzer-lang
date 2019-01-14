@@ -96,7 +96,7 @@ class PythonTrain extends Functions with Serializable {
 
 
     if (!keepVersion) {
-      if (path.contains("..") || path == "/" || path.split("\\.").length < 3) {
+      if (path.contains("..") || path == "/" || path.split("/").length < 3) {
         throw new MLSQLException("path should at least three layer")
       }
       HDFSOperator.deleteDir(SQLPythonFunc.getAlgModelPath(path, keepVersion))
