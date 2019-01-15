@@ -22,17 +22,13 @@ This guide document introduce [how to contribute to MLSQL](https://github.com/al
 
 ## RoadMap
 
-1. [MLSQL v1.1.7 RoadMap](https://www.jianshu.com/p/622ff0c7beb1) MLSQL v1.1.7 plans to release in Mid Jan 2019 
-2. [Versioning Policy](https://github.com/allwefantasy/streamingpro/blob/master/docs/docv2/contribute/release.md)
-
+1. [Versioning Policy](https://github.com/allwefantasy/streamingpro/blob/master/docs/docv2/contribute/release.md)
 
 
 ## Get PreBuild Distribution
 
-* [Release Notes](https://github.com/allwefantasy/streamingpro/tree/master/docs/docv2/release_notes)
-* [Releases Page](https://github.com/allwefantasy/streamingpro/releases)
-* The lasted version is [MLSQL-v1.1.6](https://github.com/allwefantasy/streamingpro/releases/tag/v1.1.6).
-* You can also download from [MLSQL Website](http://download.mlsql.tech/mlsql-1.1.6/)
+* The lasted version is MLSQL-v1.1.7.
+* You can download from [MLSQL Website](http://download.mlsql.tech/)
 
 
 Run PreBuild Distribution:
