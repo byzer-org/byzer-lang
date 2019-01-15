@@ -49,8 +49,10 @@ ENV MAVEN_HOME /usr/share/maven
 ENV MAVEN_CONFIG "$USER_HOME_DIR/.m2"
 
 
-# download spark binary package from mirror
-ENV SPARK_VERSION=2.3.2
+ARG SPARK_VERSION
+ARG MLSQL_SPARK_VERSION
+ARG MLSQL_VERSION
+
 ENV URL_BASE http://www.apache.org/dyn/closer.cgi/
 ENV FILENAME spark-${SPARK_VERSION}-bin-hadoop2.7.tgz
 ENV URL_DIRECTORIES spark/spark-${SPARK_VERSION}/
@@ -71,8 +73,10 @@ RUN mkdir -p /home/deploy/mlsql
 RUN mkdir -p /home/deploy/mlsql-console
 
 RUN mkdir -p /home/deploy/mlsql/libs
-ENV MLSQL_DISTRIBUTIOIN_URL="streamingpro-mlsql-spark_2.3-1.1.7-SNAPSHOT.jar"
+ENV MLSQL_DISTRIBUTIOIN_URL="streamingpro-mlsql-spark_${MLSQL_SPARK_VERSION}-${MLSQL_VERSION}.jar"
 ADD  ${MLSQL_DISTRIBUTIOIN_URL} /home/deploy/mlsql/libs
+ADD  lib/ansj_seg-5.1.6.jar /home/deploy/mlsql/libs
+ADD  lib/nlp-lang-1.7.8.jar /home/deploy/mlsql/libs
 ADD  start-local.sh /home/deploy/mlsql
 WORKDIR /home/deploy/mlsql
 

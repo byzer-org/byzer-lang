@@ -33,7 +33,8 @@
         * [使用Docker](installation/docker.md)   
         * [如何运行](installation/run.md)
         * [启动参数说明](installation/startup-configuration.md)
-    
+        * [使用docker快速体验](installation/docker-fast.md)
+        
     * [数据源](datasource/README.md)      
         * [JDBC](datasource/jdbc.md)
         * [ElasticSearch](datasource/es.md)
