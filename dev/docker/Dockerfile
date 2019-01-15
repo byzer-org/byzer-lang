@@ -31,7 +31,7 @@ RUN conda config --set show_channel_urls yes
 
 RUN mkdir ~/.pip
 
-RUN echo -e "[global]\n trusted-host = mirrors.aliyun.com\n index-url = https://mirrors.aliyun.com/pypi/simple" > ~/.pip/pip.conf
+RUN echo "[global]\n trusted-host = mirrors.aliyun.com\n index-url = https://mirrors.aliyun.com/pypi/simple" > ~/.pip/pip.conf
 
 ARG MAVEN_VERSION=3.6.0
 ARG USER_HOME_DIR="/root"
