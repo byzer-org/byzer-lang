@@ -151,5 +151,5 @@ streamingpro-cluster/dev/mlsql-cluster-docker/*.jar
 streamingpro-cluster/dev/mlsql-cluster-docker/*.sh
 streamingpro-cluster/dev/mlsql-cluster-docker/*.yml
 streamingpro-cluster/dev/mlsql-cluster-docker/*.tar.gz
-
 dev/sync-doc.sh
+docs/gitbook/zh/_book/
