@@ -28,12 +28,12 @@ class PythonLoad extends Logging with WowLog with Serializable {
   def load(sparkSession: SparkSession, _path: String, params: Map[String, String]): ModelMeta = {
 
     val modelMetaManager = new ModelMetaManager(sparkSession, _path, params)
-    val modelMeta = modelMetaManager.loadMetaAndModel
     val localPathConfig = LocalPathConfig.buildFromParams(_path)
+    val modelMeta = modelMetaManager.loadMetaAndModel(localPathConfig, Map())
 
     val taskDirectory = localPathConfig.localRunPath + "/" + modelMeta.pythonScript.projectName
 
-    var (selectedFitParam, resourceParams) = new ResourceManager(params).loadResourceInRegister(sparkSession, modelMeta)
+    var (selectedFitParam, resourceParams, modelHDFSToLocalPath) = new ResourceManager(params).loadResourceInRegister(sparkSession, modelMeta)
 
 
     modelMeta.pythonScript.scriptType match {
@@ -54,6 +54,6 @@ class PythonLoad extends Logging with WowLog with Serializable {
       })
     }
 
-    modelMeta.copy(resources = selectedFitParam + ("resource" -> resourceParams.asJava), taskDirectory = Option(taskDirectory))
+    modelMeta.copy(resources = selectedFitParam + ("resource" -> resourceParams.asJava), taskDirectory = Option(taskDirectory), modelHDFSToLocalPath = modelHDFSToLocalPath)
   }
 }

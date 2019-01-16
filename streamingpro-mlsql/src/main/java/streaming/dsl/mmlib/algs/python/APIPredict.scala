@@ -24,19 +24,19 @@ import java.util
 import java.util.UUID
 
 import org.apache.commons.io.FileUtils
-import org.apache.spark.{APIDeployPythonRunnerEnv, SparkCoreVersion, TaskContext}
 import org.apache.spark.api.python.WowPythonRunner
 import org.apache.spark.ml.linalg.SQLDataTypes.VectorType
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.util.ArrayBasedMapData
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.types.{MapType, StringType, StructField, StructType}
 import org.apache.spark.util.ObjPickle.{pickleInternalRow, unpickle}
-import org.apache.spark.util.{PredictTaskContext, PythonProjectExecuteRunner, TaskContextUtil, VectorSerDer}
 import org.apache.spark.util.VectorSerDer.{ser_vector, vector_schema}
+import org.apache.spark.util.{PredictTaskContext, PythonProjectExecuteRunner, VectorSerDer}
+import org.apache.spark.{APIDeployPythonRunnerEnv, SparkCoreVersion}
 import streaming.dsl.ScriptSQLExec
-import streaming.dsl.mmlib.algs.{Functions, SQLPythonAlg, SQLPythonFunc}
+import streaming.dsl.mmlib.algs.{Functions, SQLPythonAlg}
 import streaming.log.{Logging, WowLog}
 
 import scala.collection.JavaConverters._
@@ -155,9 +155,9 @@ class APIPredict extends Logging with WowLog with Serializable {
     }
 
     logInfo(format(s"daemonCommand => ${daemonCommand.mkString(" ")} workerCommand=> ${workerCommand.mkString(" ")}"))
-
+    val modelHDFSToLocalPath = modelMeta.modelHDFSToLocalPath
     val f = (v: org.apache.spark.ml.linalg.Vector, modelPath: String) => {
-      val modelRow = InternalRow.fromSeq(Seq(SQLPythonFunc.getLocalTempModelPath(modelPath)))
+      val modelRow = InternalRow.fromSeq(Seq(modelHDFSToLocalPath.getOrElse(modelPath, "")))
       val trainParamsRow = InternalRow.fromSeq(Seq(ArrayBasedMapData(trainParams)))
       val v_ser = pickleInternalRow(Seq(ser_vector(v)).toIterator, vector_schema())
       val v_ser2 = pickleInternalRow(Seq(modelRow).toIterator, StructType(Seq(StructField("modelPath", StringType))))

@@ -18,10 +18,10 @@
 
 package streaming.dsl.mmlib.algs
 
-import scala.collection.JavaConverters._
-
 import org.apache.spark.sql.SparkSession
 import streaming.dsl.mmlib.algs.python._
+
+import scala.collection.JavaConverters._
 
 /**
   * a extention of [[SQLPythonAlg]], which you can train python algthrim without mlsql.
@@ -35,6 +35,9 @@ class SQLExternalPythonAlg extends SQLPythonAlg {
     val pythonPath = systemParam.getOrElse("pythonPath", "python")
     val pythonVer = systemParam.getOrElse("pythonVer", "2.7")
     val metasTemp = Seq(Map("pythonPath" -> pythonPath, "pythonVer" -> pythonVer))
+
+    // distribute python project
+    val localPathConfig = LocalPathConfig.buildFromParams(_path)
 
     val algIndex = params.getOrElse("algIndex", "-1").toInt
     val fitParam = arrayParamsWithIndex("fitParam", params)
@@ -60,8 +63,6 @@ class SQLExternalPythonAlg extends SQLPythonAlg {
       }
     }
 
-    // distribute python project
-    val localPathConfig = LocalPathConfig.buildFromParams(_path)
 
     val loadPythonProject = params.contains("pythonProjectPath")
     if (loadPythonProject) {
@@ -70,10 +71,9 @@ class SQLExternalPythonAlg extends SQLPythonAlg {
         resourceParams += ("pythonProjectPath" -> path)
       })
     }
-
     val taskDirectory = localPathConfig.localRunPath + params("pythonProjectPath").split("/").last
     val pythonScript = PythonAlgProject.loadProject(params, sparkSession)
     val resources = selectedFitParam + ("resource" -> resourceParams.asJava)
-    ModelMeta(pythonScript.get, params, Seq(""), resources, Option(taskDirectory))
+    ModelMeta(pythonScript.get, params, Seq(""), resources, localPathConfig, Map(), Option(taskDirectory))
   }
 }

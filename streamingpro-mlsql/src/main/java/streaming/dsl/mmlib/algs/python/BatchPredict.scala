@@ -40,10 +40,10 @@ class BatchPredict extends Logging with WowLog with Serializable {
 
     val keepLocalDirectory = params.getOrElse("keepLocalDirectory", "false").toBoolean
     val modelMetaManager = new ModelMetaManager(spark, _path, params)
-    val modelMeta = modelMetaManager.loadMetaAndModel
-    var (selectedFitParam, resourceParams) = new ResourceManager(params).loadResourceInRegister(spark, modelMeta)
+    val modelMeta = modelMetaManager.loadMetaAndModel(null, Map())
+    var (selectedFitParam, resourceParams, modelHDFSToLocalPath) = new ResourceManager(params).loadResourceInRegister(spark, modelMeta)
 
-    modelMeta.copy(resources = selectedFitParam)
+    modelMeta.copy(resources = selectedFitParam, modelHDFSToLocalPath = modelHDFSToLocalPath)
     val resources = modelMeta.resources
 
     // if pythonScriptPath is defined in predict/run, then use it otherwise find them in train params.

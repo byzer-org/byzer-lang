@@ -18,16 +18,13 @@
 
 package org.apache.spark.scheduler.cluster
 
-import java.util.concurrent.TimeUnit
-
-import org.apache.spark.{SparkContext, SparkEnv}
+import org.apache.spark.SparkContext
 import org.apache.spark.internal.Logging
-import org.apache.spark.internal.config._
 import org.apache.spark.ps.cluster.Message
 import org.apache.spark.rpc.{RpcAddress, RpcCallContext, RpcEnv, ThreadSafeRpcEndpoint}
-import org.apache.spark.security.CryptoStreamUtils
-import org.apache.spark.util.{ThreadUtils, Utils}
+import org.apache.spark.util.ThreadUtils
 
+import scala.collection.mutable
 import scala.collection.mutable.HashMap
 
 /**
@@ -84,7 +81,15 @@ class PSDriverEndpoint(sc: SparkContext, override val rpcEnv: RpcEnv)
       }
     case Message.CopyModelToLocal(modelPath, destPath) =>
       val ks = sc.getExecutorIds().toSet
-      executorDataMap.foreach { ed =>
+      val hostMap = new mutable.HashMap[String, (String, ExecutorData)]()
+
+      executorDataMap.foreach { f =>
+        if (!hostMap.contains(f._2.executorHost)) {
+          hostMap.put(f._2.executorHost, (f._1, f._2))
+        }
+      }
+
+      hostMap.values.foreach { ed =>
         if (ks.contains(ed._1)) {
           ed._2.executorEndpoint.askSync[Boolean](Message.CopyModelToLocal(modelPath, destPath))
         }

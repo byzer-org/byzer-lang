@@ -151,5 +151,7 @@ case class ModelMeta(pythonScript: PythonScript,
                      trainParams: Map[String, String],
                      modelEntityPaths: Seq[String],
                      resources: Map[String, Any],
+                     localPathConfig: LocalPathConfig,
+                     modelHDFSToLocalPath: Map[String, String],
                      taskDirectory: Option[String] = None
                     )

@@ -148,7 +148,7 @@ object HDFSOperator {
     fs.copyFromLocalFile(new Path(tempLocalPath),
       new Path(path))
     if (cleanSource) {
-      FileUtils.deleteQuietly(new File(tempLocalPath))
+      FileUtils.forceDelete(new File(tempLocalPath))
     }
 
   }
@@ -157,7 +157,7 @@ object HDFSOperator {
     val fs = FileSystem.get(new Configuration())
     val tmpFile = new File(tempLocalPath)
     if (tmpFile.exists()) {
-      FileUtils.deleteQuietly(tmpFile)
+      FileUtils.forceDelete(tmpFile)
     }
     fs.copyToLocalFile(new Path(path), new Path(tempLocalPath))
   }

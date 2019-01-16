@@ -27,10 +27,10 @@ class ModelMetaManager(sparkSession: SparkSession, _path: String, params: Map[St
 
   val wowMetas = sparkSession.read.parquet(metaPath + "/1").collect()
 
-  def loadMetaAndModel = {
+  def loadMetaAndModel(localPathConfig: LocalPathConfig, modelHDFSToLocalPath: Map[String, String]) = {
     val _trainParams = trainParams
     val pythonTrainScript = PythonAlgProject.loadProject(_trainParams, sparkSession)
-    ModelMeta(pythonTrainScript.get, _trainParams, modelEntityPaths, Map())
+    ModelMeta(pythonTrainScript.get, _trainParams, modelEntityPaths, Map(), localPathConfig, modelHDFSToLocalPath)
   }
 
   def maxVersion = getModelVersion(_path)
