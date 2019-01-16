@@ -106,15 +106,15 @@ object SQLPythonFunc {
   // --  path related (local/hdfs)
 
   def getLocalTempModelPath(hdfsPath: String) = {
-    s"${getLocalBasePath}/models/${WowMD5.md5Hash(hdfsPath)}"
+    s"${getLocalBasePath}/models/${UUID.randomUUID().toString}"
   }
 
   def localOutputPath(hdfsPath: String) = {
-    s"${getLocalBasePath}/output/${WowMD5.md5Hash(hdfsPath)}"
+    s"${getLocalBasePath}/output/${UUID.randomUUID().toString}"
   }
 
   def getLocalTempDataPath(hdfsPath: String) = {
-    s"${getLocalBasePath}/data/${WowMD5.md5Hash(hdfsPath)}"
+    s"${getLocalBasePath}/data/${UUID.randomUUID().toString}"
   }
 
   def getLocalRunPath(hdfsPath: String) = {
@@ -122,7 +122,7 @@ object SQLPythonFunc {
   }
 
   def getLocalTempResourcePath(hdfsPath: String, resourceName: String) = {
-    s"${getLocalBasePath}/resource/${WowMD5.md5Hash(hdfsPath)}/${resourceName}"
+    s"${getLocalBasePath}/resource/${UUID.randomUUID()}/${resourceName}"
   }
 
   def getLocalBasePath = {

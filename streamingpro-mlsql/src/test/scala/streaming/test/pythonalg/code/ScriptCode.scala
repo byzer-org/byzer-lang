@@ -121,14 +121,20 @@ object ScriptCode {
       |
       |set data='''
       |{"jack":1}
+      |{"jack":2}
+      |{"jack":3}
+      |{"jack":4}
+      |{"jack":5}
+      |{"jack":6}
       |''';
       |
       |load jsonStr.`data` as testData;
       |load script.`python1` as python1;
       |load script.`dependencies` as dependencies;
       |
+      |run testData as RepartitionExt.`` where partitionNum="3" as testData1;
       |-- train sklearn model
-      |run testData as PythonParallelExt.`${modelPath}`
+      |run testData1 as PythonParallelExt.`${modelPath}`
       |where scripts="python1"
       |and entryPoint="python1"
       |and condaFile="dependencies"
@@ -182,14 +188,20 @@ object ScriptCode {
       |
       |set data='''
       |{"jack":1}
+      |{"jack":2}
+      |{"jack":3}
+      |{"jack":4}
+      |{"jack":5}
+      |{"jack":6}
       |''';
       |
       |load jsonStr.`data` as testData;
       |load script.`python1` as python1;
       |load script.`dependencies` as dependencies;
       |
+      |run testData as RepartitionExt.`` where partitionNum="3" as testData1;
       |-- train sklearn model
-      |run testData as PythonAlg.`${modelPath}`
+      |run testData1 as PythonAlg.`${modelPath}`
       |where scripts="python1"
       |and entryPoint="python1"
       |and condaFile="dependencies"

@@ -514,14 +514,14 @@ class PythonTrain extends Functions with Serializable {
           trainFailFlag = true
       } finally {
         // delete local model
-        FileUtils.deleteQuietly(new File(tempModelLocalPath))
+        FileUtils.forceDelete(new File(tempModelLocalPath))
         // delete local data
         if (!keepLocalDirectory) {
-          FileUtils.deleteQuietly(new File(tempDataLocalPathWithAlgSuffix))
+          FileUtils.forceDelete(new File(tempDataLocalPathWithAlgSuffix))
         }
         // delete resource
         resourceParams.foreach { rp =>
-          FileUtils.deleteQuietly(new File(rp._2))
+          FileUtils.forceDelete(new File(rp._2))
         }
       }
       val status = if (trainFailFlag) "fail" else "success"

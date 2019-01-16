@@ -50,11 +50,12 @@ class ResourceManager(params: Map[String, String]) extends Logging with WowLog {
     val selectedFitParam = if (algIndex == -1) Map[String, String]() else fitParam(algIndex)._2
     val loadResource = selectedFitParam.keys.map(_.split("\\.")(0)).toSet.contains("resource")
     var resourceParams = Map.empty[String, String]
-
+    var modelHDFSToLocalPath = Map.empty[String, String]
     // make sure every executor have the model in local directory.
     // we should unregister manually
     modelMeta.modelEntityPaths.foreach { modelPath =>
       val tempModelLocalPath = SQLPythonFunc.getLocalTempModelPath(modelPath)
+      modelHDFSToLocalPath += (modelPath -> tempModelLocalPath)
       SQLPythonAlg.distributeResource(sparkSession, modelPath, tempModelLocalPath)
 
       if (loadResource) {
@@ -68,6 +69,6 @@ class ResourceManager(params: Map[String, String]) extends Logging with WowLog {
       }
 
     }
-    (selectedFitParam,resourceParams)
+    (selectedFitParam, resourceParams, modelHDFSToLocalPath)
   }
 }
