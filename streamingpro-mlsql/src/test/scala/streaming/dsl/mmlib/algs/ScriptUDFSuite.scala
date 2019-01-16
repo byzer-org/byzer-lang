@@ -153,6 +153,48 @@ class ScriptUDFSuite extends BasicSparkOperation with SpecFunctions with BasicML
     }
   }
 
+  "test java script without default class name and function name" should "work fine" in {
+    withBatchContext(setupBatchContext(batchParamsWithoutHive)) { runtime: SparkRuntime =>
+      implicit val spark = runtime.sparkSession
+      var sq = createSSEL
+      ScriptSQLExec.parse(
+        """
+          |  set echoFun='''
+          |  import java.util.HashMap;
+          |  import java.util.Map;
+          |  public class Test {
+          |      public Map<String, String> test(String s) {
+          |        Map m = new HashMap<>();
+          |        m.put(s, s);
+          |        return m;
+          |    }
+          |  }
+          |  ''';
+          |
+          |  load script.`echoFun` as scriptTable;
+          |
+          |  register ScriptUDF.`scriptTable` as funx
+          |  options lang="java"
+          |  and className = "Test"
+          |  and methodName = "test"
+          |  ;
+          |
+          |  -- create a data table.
+          |  set data='''
+          |  {"a":"a"}
+          |  ''';
+          |  load jsonStr.`data` as dataTable;
+          |
+          |  select funx(a) as res from dataTable as output;
+          |
+        """.stripMargin, sq)
+
+      val result = runtime.sparkSession.sql("select * from output").collect()
+      assert(result.size == 1)
+      assert(result.head.getAs[Map[String, String]]("res").get("a").head == "a")
+    }
+  }
+
 
   "test multi java script with the same class name" should "work fine" in {
     withBatchContext(setupBatchContext(batchParamsWithoutHive)) { runtime: SparkRuntime =>
