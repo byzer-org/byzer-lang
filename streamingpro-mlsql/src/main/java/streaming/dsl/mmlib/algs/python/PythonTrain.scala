@@ -92,7 +92,10 @@ class PythonTrain extends Functions with Serializable {
     val systemParam = mapParams("systemParam", params)
     val mlflowConfig = MLFlowConfig.buildFromSystemParam(systemParam)
     val pythonConfig = PythonConfig.buildFromSystemParam(systemParam)
-    val envs = EnvConfig.buildFromSystemParam(systemParam)
+
+    val appName = df.sparkSession.sparkContext.getConf.get("spark.app.name")
+
+    val envs = EnvConfig.buildFromSystemParam(systemParam) ++ Map(BasicCondaEnvManager.MLSQL_INSTNANCE_NAME_KEY -> appName)
 
 
     if (!keepVersion) {
@@ -344,7 +347,9 @@ class PythonTrain extends Functions with Serializable {
     //configuration about project and env
     val mlflowConfig = MLFlowConfig.buildFromSystemParam(systemParam)
     val pythonConfig = PythonConfig.buildFromSystemParam(systemParam)
-    val envs = EnvConfig.buildFromSystemParam(systemParam)
+
+    val appName = df.sparkSession.sparkContext.getConf.get("spark.app.name")
+    val envs = EnvConfig.buildFromSystemParam(systemParam) ++ Map(BasicCondaEnvManager.MLSQL_INSTNANCE_NAME_KEY -> appName)
 
 
     // find python project

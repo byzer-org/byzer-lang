@@ -20,6 +20,8 @@ package org.apache.spark.ps.cluster
 
 import org.apache.spark.rpc.RpcEndpointRef
 
+import scala.collection.mutable.ArrayBuffer
+
 /**
   * Created by allwefantasy on 30/1/2018.
   */
@@ -42,6 +44,10 @@ object Message {
   case class CopyModelToLocal(modelPath: String, destPath: String)
 
   case class CreateOrRemovePythonCondaEnv(condaYamlFile: String, options: Map[String, String], command: EnvCommand)
+
+  case class CreateOrRemovePythonCondaEnvResponseItem(success: Boolean, host: String, startTime: Long, endTime: Long, msg: String)
+
+  case class CreateOrRemovePythonCondaEnvResponse(condaYamlFile: String, items: ArrayBuffer[CreateOrRemovePythonCondaEnvResponseItem],totalNum:Int)
 
   sealed abstract class EnvCommand
 

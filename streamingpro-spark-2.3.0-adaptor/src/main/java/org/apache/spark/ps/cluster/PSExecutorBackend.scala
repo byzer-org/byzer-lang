@@ -72,14 +72,22 @@ class PSExecutorBackend(env: SparkEnv, override val rpcEnv: RpcEnv, psDriverUrl:
       context.reply(true)
     }
     case Message.CreateOrRemovePythonCondaEnv(condaYamlFile, options, command) => {
-      val condaEnvManager = new BasicCondaEnvManager(options)
-      command match {
-        case Message.AddEnvCommand =>
-          condaEnvManager.getOrCreateCondaEnv(Option(condaYamlFile))
-        case Message.RemoveEnvCommand =>
-          condaEnvManager.removeEnv(Option(condaYamlFile))
+      val success = try {
+        val condaEnvManager = new BasicCondaEnvManager(options)
+        command match {
+          case Message.AddEnvCommand =>
+            condaEnvManager.getOrCreateCondaEnv(Option(condaYamlFile))
+          case Message.RemoveEnvCommand =>
+            condaEnvManager.removeEnv(Option(condaYamlFile))
+        }
+        true
+      } catch {
+        case e: Exception =>
+          logError("Create PythonEnv fail", e)
+          false
       }
-      context.reply(true)
+
+      context.reply(success)
     }
     case Message.Ping =>
       logInfo(s"received message ${Message.Ping}")

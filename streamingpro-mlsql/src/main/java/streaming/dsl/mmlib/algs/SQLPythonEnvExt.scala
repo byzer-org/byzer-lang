@@ -2,6 +2,8 @@ package streaming.dsl.mmlib.algs
 
 import org.apache.spark.ml.param.Param
 import org.apache.spark.ps.cluster.Message
+import org.apache.spark.ps.cluster.Message.CreateOrRemovePythonCondaEnvResponse
+import org.apache.spark.scheduler.cluster.PSDriverEndpoint
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.mlsql.session.MLSQLException
 import org.apache.spark.sql.{DataFrame, SparkSession}
@@ -9,6 +11,7 @@ import streaming.common.HDFSOperator
 import streaming.core.strategy.platform.{PlatformManager, SparkRuntime}
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
+import streaming.dsl.mmlib.algs.python.BasicCondaEnvManager
 
 /**
   * 2019-01-16 WilliamZhu(allwefantasy@gmail.com)
@@ -46,18 +49,18 @@ class SQLPythonEnvExt(override val uid: String) extends SQLAlg with WowParams {
       case "create" => Message.AddEnvCommand
       case "remove" => Message.RemoveEnvCommand
     }
+    val appName = spark.sparkContext.getConf.get("spark.app.name")
+    val remoteCommand = Message.CreateOrRemovePythonCondaEnv($(condaYamlFilePath), params ++ Map(BasicCondaEnvManager.MLSQL_INSTNANCE_NAME_KEY -> appName), wowCommand)
 
-    val remoteCommand = Message.CreateOrRemovePythonCondaEnv($(condaYamlFilePath), params, wowCommand)
-
-    val executorNum = if (spark.sparkContext.isLocal) {
+    val response = if (spark.sparkContext.isLocal) {
       val psDriverBackend = PlatformManager.getRuntime.asInstanceOf[SparkRuntime].localSchedulerBackend
-      psDriverBackend.localEndpoint.askSync[Integer](remoteCommand)
+      psDriverBackend.localEndpoint.askSync[CreateOrRemovePythonCondaEnvResponse](remoteCommand, PSDriverEndpoint.MLSQL_DEFAULT_RPC_TIMEOUT(spark.sparkContext.getConf))
     } else {
       val psDriverBackend = PlatformManager.getRuntime.asInstanceOf[SparkRuntime].psDriverBackend
-      psDriverBackend.psDriverRpcEndpointRef.askSync[Integer](remoteCommand)
+      psDriverBackend.psDriverRpcEndpointRef.askSync[CreateOrRemovePythonCondaEnvResponse](remoteCommand, PSDriverEndpoint.MLSQL_DEFAULT_RPC_TIMEOUT(spark.sparkContext.getConf))
     }
     import spark.implicits._
-    Seq[Seq[Int]](Seq(executorNum)).toDF("success_executor_num")
+    spark.createDataset[CreateOrRemovePythonCondaEnvResponse](Seq(response)).toDF()
   }
 
 
@@ -69,7 +72,7 @@ class SQLPythonEnvExt(override val uid: String) extends SQLAlg with WowParams {
 
   override def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = throw new RuntimeException("register is not support")
 
-  final val command: Param[String] = new Param[String](this, "command", "", isValid = (s:String) => {
+  final val command: Param[String] = new Param[String](this, "command", "", isValid = (s: String) => {
     s == "create" || s == "remove"
   })
 

@@ -20,14 +20,16 @@ package org.apache.spark.scheduler.cluster
 
 import java.util.concurrent.atomic.AtomicInteger
 
-import org.apache.spark.SparkContext
 import org.apache.spark.internal.Logging
 import org.apache.spark.ps.cluster.Message
-import org.apache.spark.rpc.{RpcAddress, RpcCallContext, RpcEnv, ThreadSafeRpcEndpoint}
-import org.apache.spark.util.ThreadUtils
+import org.apache.spark.ps.cluster.Message.{CreateOrRemovePythonCondaEnvResponse, CreateOrRemovePythonCondaEnvResponseItem}
+import org.apache.spark.rpc._
+import org.apache.spark.util.{ThreadUtils, Utils}
+import org.apache.spark.{MLSQLConf, SparkConf, SparkContext}
 
 import scala.collection.mutable
-import scala.collection.mutable.HashMap
+import scala.collection.mutable.{ArrayBuffer, HashMap}
+import scala.concurrent.duration._
 
 /**
   * Created by allwefantasy on 31/1/2018.
@@ -36,6 +38,7 @@ class PSDriverEndpoint(sc: SparkContext, override val rpcEnv: RpcEnv)
   extends ThreadSafeRpcEndpoint with Logging {
   protected val addressToExecutorId = new HashMap[RpcAddress, String]
   private val executorDataMap = new HashMap[String, ExecutorData]()
+
   //  private var sparkExecutorDataMap = new HashMap[String, ExecutorData]()
   //  private val refreshThread =
   ThreadUtils.newDaemonSingleThreadScheduledExecutor("ps-driver-refresh-thread")
@@ -78,19 +81,36 @@ class PSDriverEndpoint(sc: SparkContext, override val rpcEnv: RpcEnv)
       val counter = new AtomicInteger(0)
       filterDuplicateHost.par.foreach { ed =>
         if (ks.contains(ed._1)) {
-          ed._2.executorEndpoint.askSync[Boolean](Message.CopyModelToLocal(modelPath, destPath))
+          ed._2.executorEndpoint.askSync[Boolean](Message.CopyModelToLocal(modelPath, destPath), PSDriverEndpoint.MLSQL_DEFAULT_RPC_TIMEOUT(sc.conf))
           counter.incrementAndGet()
         }
       }
-      context.reply(counter.get())
+      context.reply(true)
     case Message.CreateOrRemovePythonCondaEnv(condaYamlFile, options, command) => {
       val ks = sc.getExecutorIds().toSet
+      val counter = new AtomicInteger(0)
+
+      val resBuffer = ArrayBuffer[CreateOrRemovePythonCondaEnvResponseItem]()
       filterDuplicateHost.par.foreach { ed =>
         if (ks.contains(ed._1)) {
-          ed._2.executorEndpoint.askSync[Boolean](Message.CreateOrRemovePythonCondaEnv(condaYamlFile, options, command))
+          val res = CreateOrRemovePythonCondaEnvResponseItem(false, ed._2.executorHost, System.currentTimeMillis(), 0, "")
+          logInfo(s"PythonEnv[${condaYamlFile}]: Prepare python env in ${ed._2.executorHost} ")
+          var msg = ""
+          val success = try {
+            ed._2.executorEndpoint.askSync[Boolean](Message.CreateOrRemovePythonCondaEnv(condaYamlFile, options, command), PSDriverEndpoint.MLSQL_DEFAULT_RPC_TIMEOUT(sc.conf))
+          } catch {
+            case e: Exception =>
+              logError("PythonEnv create exception", e)
+              msg = e.getMessage
+              false
+          }
+          counter.incrementAndGet()
+          resBuffer += res.copy(success = success, endTime = System.currentTimeMillis(), msg = msg)
+          logInfo(s"PythonEnv[${condaYamlFile}]: Finish prepare python env in ${ed._2.executorHost}")
+          logInfo(s"PythonEnv[${condaYamlFile}]: process: ${counter.get()}  total: ${filterDuplicateHost.size}")
         }
       }
-      context.reply(true)
+      context.reply(CreateOrRemovePythonCondaEnvResponse(condaYamlFile, resBuffer, filterDuplicateHost.size))
     }
     case Message.Ping =>
       ping
@@ -122,4 +142,13 @@ class PSDriverEndpoint(sc: SparkContext, override val rpcEnv: RpcEnv)
   }
 
 
+}
+
+object PSDriverEndpoint {
+  def MLSQL_DEFAULT_RPC_TIMEOUT(conf: SparkConf) = {
+    val timeout = {
+      Utils.timeStringAsSeconds("3600s").seconds
+    }
+    new RpcTimeout(timeout, MLSQLConf.MLSQL_PS_ASK_TIMEOUT.key)
+  }
 }

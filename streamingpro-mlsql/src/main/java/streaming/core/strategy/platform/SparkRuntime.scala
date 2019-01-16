@@ -100,6 +100,7 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
     if (MLSQLConf.MLSQL_CLUSTER_PS_ENABLE.readFrom(configReader) && !isLocalMaster(conf)) {
       logWarning(MLSQLMessage.MLSQL_CLUSTER_PS_ENABLE_NOTICE)
       logInfo("register worker.sink.pservice.class with org.apache.spark.ps.cluster.PSServiceSink")
+      conf.set("spark.network.timeout", MLSQLConf.MLSQL_PS_NETWORK_TIMEOUT.readFrom(configReader) + "s")
       conf.set("spark.metrics.conf.executor.sink.pservice.class", "org.apache.spark.ps.cluster.PSServiceSink")
       val holdPort = NetUtils.availableAndReturn(7778, 7999)
 

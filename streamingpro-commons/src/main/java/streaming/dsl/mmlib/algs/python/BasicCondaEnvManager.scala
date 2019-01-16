@@ -32,6 +32,7 @@ import streaming.log.Logging
 
 object BasicCondaEnvManager {
   val condaHomeKey = "MLFLOW_CONDA_HOME"
+  val MLSQL_INSTNANCE_NAME_KEY = "mlsql_instance_name"
 }
 
 class BasicCondaEnvManager(options: Map[String, String]) extends Logging {
@@ -70,12 +71,15 @@ class BasicCondaEnvManager(options: Map[String, String]) extends Logging {
           try {
             FileUtils.write(new File(tempFile), getCondaYamlContent(condaEnvPath), Charset.forName("utf-8"))
             ShellCommand.execCmd(s"${condaPath} env create -n $projectEnvName --file $tempFile")
-          } finally {
-            FileUtils.deleteQuietly(new File(tempFile))
+          } catch {
+            case e: Exception =>
+              removeEnv(condaEnvPath)
+              throw e
           }
-
+          finally {
+            FileUtils.forceDelete(new File(tempFile))
+          }
         case None =>
-          ShellCommand.execCmd(s"${condaPath} create  -n $projectEnvName python")
       }
     }
 
@@ -85,7 +89,7 @@ class BasicCondaEnvManager(options: Map[String, String]) extends Logging {
   def removeEnv(condaEnvPath: Option[String]) = {
     val condaPath = validateCondaExec
     val projectEnvName = getCondaEnvName(condaEnvPath)
-    ShellCommand.execCmd(s"${condaPath} env remove --name ${projectEnvName}")
+    ShellCommand.execCmd(s"${condaPath} env remove -y -n ${projectEnvName}")
   }
 
   def sha1(str: String) = {
@@ -95,6 +99,8 @@ class BasicCondaEnvManager(options: Map[String, String]) extends Logging {
   }
 
   def getCondaEnvName(condaEnvPath: Option[String]) = {
+    require(options.contains(BasicCondaEnvManager.MLSQL_INSTNANCE_NAME_KEY), s"${BasicCondaEnvManager.MLSQL_INSTNANCE_NAME_KEY} is required")
+    val prefix = options(BasicCondaEnvManager.MLSQL_INSTNANCE_NAME_KEY)
     val condaEnvContents = condaEnvPath match {
       case Some(cep) =>
         // we should read from local ,but for now, we read from hdfs
@@ -102,7 +108,7 @@ class BasicCondaEnvManager(options: Map[String, String]) extends Logging {
         HDFSOperator.readFile(cep)
       case None => ""
     }
-    s"mlflow-${sha1(condaEnvContents)}"
+    s"mlflow-${prefix}-${sha1(condaEnvContents)}"
   }
 
   def getCondaYamlContent(condaEnvPath: Option[String]) = {
