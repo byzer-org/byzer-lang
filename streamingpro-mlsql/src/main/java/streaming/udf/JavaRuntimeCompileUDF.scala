@@ -1,7 +1,5 @@
 package streaming.udf
 
-import java.util.UUID
-
 import org.apache.spark.sql.MLSQLUtils
 import org.apache.spark.sql.types.DataType
 import streaming.common.{Md5, SourceCodeCompiler}
@@ -39,7 +37,6 @@ object JavaRuntimeCompileUDF extends RuntimeCompileUDF with Logging {
    */
   override def wrapCode(scriptCacheKey: ScriptUDFCacheKey): ScriptUDFCacheKey = {
 
-//    val className = s"StreamingProJavaUDF_${UUID.randomUUID().toString.replaceAll("-", "")}"
     val className = if (scriptCacheKey.className == null || scriptCacheKey.className.isEmpty) {
       "UDF"
     } else {
