@@ -80,7 +80,7 @@ class MLProject(val projectDir: String, project: Settings, options: Map[String, 
   }
 
   def entryPointCommandWithConda(commandType: String) = {
-    val condaEnvManager = new CondaEnvManager(options)
+    val condaEnvManager = new BasicCondaEnvManager(options)
     val condaEnvName = condaEnvManager.getOrCreateCondaEnv(Option(projectDir + s"/${MLProject.DEFAULT_CONDA_ENV_NAME}"))
     val entryPointCommandWithConda = commandWithConda(
       condaEnvManager.getCondaBinExecutable("activate"),
@@ -91,7 +91,7 @@ class MLProject(val projectDir: String, project: Settings, options: Map[String, 
   }
 
   def condaEnvCommand = {
-    val condaEnvManager = new CondaEnvManager(options)
+    val condaEnvManager = new BasicCondaEnvManager(options)
     val condaEnvName = condaEnvManager.getOrCreateCondaEnv(Option(projectDir + s"/${MLProject.DEFAULT_CONDA_ENV_NAME}"))
     val command = s"source ${condaEnvManager.getCondaBinExecutable("activate")} ${condaEnvName}"
     logInfo(format(s"=== generate command  '${command}' for ${projectDir} === "))
@@ -198,9 +198,9 @@ class CondaEnvManager(options: Map[String, String]) extends Logging with WowLog 
   }
 
   def getCondaBinExecutable(executableName: String) = {
-    val condaHome = options.get(CondaEnvManager.condaHomeKey) match {
+    val condaHome = options.get(BasicCondaEnvManager.condaHomeKey) match {
       case Some(home) => home
-      case None => System.getenv(CondaEnvManager.condaHomeKey)
+      case None => System.getenv(BasicCondaEnvManager.condaHomeKey)
     }
     if (condaHome != null) {
       s"${condaHome}/bin/${executableName}"

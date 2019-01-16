@@ -20,11 +20,12 @@ package org.apache.spark.ps.cluster
 
 import java.util.Locale
 
-import org.apache.spark.internal.Logging
 import org.apache.spark.SparkEnv
+import org.apache.spark.internal.Logging
 import org.apache.spark.rpc.{RpcCallContext, RpcEnv, ThreadSafeRpcEndpoint}
 import org.apache.spark.util.ThreadUtils
 import streaming.common.HDFSOperator
+import streaming.dsl.mmlib.algs.python.BasicCondaEnvManager
 
 import scala.util.{Failure, Success}
 
@@ -68,6 +69,16 @@ class PSExecutorBackend(env: SparkEnv, override val rpcEnv: RpcEnv, psDriverUrl:
     case Message.CopyModelToLocal(modelPath, destPath) => {
       logInfo(s"copying model: ${modelPath} -> ${destPath}")
       HDFSOperator.copyToLocalFile(destPath, modelPath, true)
+      context.reply(true)
+    }
+    case Message.CreateOrRemovePythonCondaEnv(condaYamlFile, options, command) => {
+      val condaEnvManager = new BasicCondaEnvManager(options)
+      command match {
+        case Message.AddEnvCommand =>
+          condaEnvManager.getOrCreateCondaEnv(Option(condaYamlFile))
+        case Message.RemoveEnvCommand =>
+          condaEnvManager.removeEnv(Option(condaYamlFile))
+      }
       context.reply(true)
     }
     case Message.Ping =>

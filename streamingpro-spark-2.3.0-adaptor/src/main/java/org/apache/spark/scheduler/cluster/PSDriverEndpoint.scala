@@ -18,6 +18,8 @@
 
 package org.apache.spark.scheduler.cluster
 
+import java.util.concurrent.atomic.AtomicInteger
+
 import org.apache.spark.SparkContext
 import org.apache.spark.internal.Logging
 import org.apache.spark.ps.cluster.Message
@@ -44,14 +46,6 @@ class PSDriverEndpoint(sc: SparkContext, override val rpcEnv: RpcEnv)
   }
 
   override def receive: PartialFunction[Any, Unit] = {
-    case Message.TensorFlowModelClean(modelPath) =>
-      val ks = sc.getExecutorIds().toSet
-      logInfo(s"ps driver send message: Message.TensorFlowModelClean:executors:${ks}")
-      executorDataMap.foreach { ed =>
-        if (ks.contains(ed._1)) {
-          ed._2.executorEndpoint.askSync[Boolean](Message.TensorFlowModelClean(modelPath))
-        }
-      }
     case Message.Pong(id) =>
       logInfo(s"received message ${Message.Pong} from executor ${id}!")
     case Message.Ping =>
@@ -81,23 +75,38 @@ class PSDriverEndpoint(sc: SparkContext, override val rpcEnv: RpcEnv)
       }
     case Message.CopyModelToLocal(modelPath, destPath) =>
       val ks = sc.getExecutorIds().toSet
-      val hostMap = new mutable.HashMap[String, (String, ExecutorData)]()
-
-      executorDataMap.foreach { f =>
-        if (!hostMap.contains(f._2.executorHost)) {
-          hostMap.put(f._2.executorHost, (f._1, f._2))
-        }
-      }
-
-      hostMap.values.foreach { ed =>
+      val counter = new AtomicInteger(0)
+      filterDuplicateHost.par.foreach { ed =>
         if (ks.contains(ed._1)) {
           ed._2.executorEndpoint.askSync[Boolean](Message.CopyModelToLocal(modelPath, destPath))
+          counter.incrementAndGet()
+        }
+      }
+      context.reply(counter.get())
+    case Message.CreateOrRemovePythonCondaEnv(condaYamlFile, options, command) => {
+      val ks = sc.getExecutorIds().toSet
+      filterDuplicateHost.par.foreach { ed =>
+        if (ks.contains(ed._1)) {
+          ed._2.executorEndpoint.askSync[Boolean](Message.CreateOrRemovePythonCondaEnv(condaYamlFile, options, command))
         }
       }
       context.reply(true)
+    }
     case Message.Ping =>
       ping
       context.reply(true)
+  }
+
+  private def filterDuplicateHost = {
+    val hostMap = new mutable.HashMap[String, (String, ExecutorData)]()
+
+    executorDataMap.foreach { f =>
+      if (!hostMap.contains(f._2.executorHost)) {
+        hostMap.put(f._2.executorHost, (f._1, f._2))
+      }
+    }
+
+    hostMap.values
   }
 
   private def ping: Unit = {
