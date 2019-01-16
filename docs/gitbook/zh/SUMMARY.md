@@ -76,6 +76,7 @@
         * [Python UDAF](udf/python_udaf.md)
         * [Scala UDF](udf/scala_udf.md)
         * [Scala UDAF](udf/scala_udaf.md)
+        * [Java UDF](udf/java_udf.md)
     
     * [系统UDF函数列表](system_udf/README.md)
         * [http请求](system_udf/http.md)
