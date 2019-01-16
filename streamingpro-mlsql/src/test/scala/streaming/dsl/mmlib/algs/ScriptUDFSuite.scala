@@ -30,6 +30,185 @@ import streaming.dsl.ScriptSQLExec
  */
 class ScriptUDFSuite extends BasicSparkOperation with SpecFunctions with BasicMLSQLConfig {
 
+  "test java script map return type" should "work fine" in {
+    withBatchContext(setupBatchContext(batchParamsWithoutHive)) { runtime: SparkRuntime =>
+      implicit val spark = runtime.sparkSession
+      var sq = createSSEL
+      ScriptSQLExec.parse(
+        """
+          |  set echoFun='''
+          |  import java.util.HashMap;
+          |  import java.util.Map;
+          |  public class UDF {
+          |      public Map<String, String> apply(String s) {
+          |        Map m = new HashMap<>();
+          |        m.put(s, s);
+          |        return m;
+          |    }
+          |  }
+          |  ''';
+          |
+          |  load script.`echoFun` as scriptTable;
+          |
+          |  register ScriptUDF.`scriptTable` as funx
+          |  options lang="java"
+          |  ;
+          |
+          |  -- create a data table.
+          |  set data='''
+          |  {"a":"a"}
+          |  ''';
+          |  load jsonStr.`data` as dataTable;
+          |
+          |  select funx(a) as res from dataTable as output;
+          |
+        """.stripMargin, sq)
+
+      val result = runtime.sparkSession.sql("select * from output").collect()
+      assert(result.size == 1)
+      assert(result.head.getAs[Map[String, String]]("res").get("a").head == "a")
+    }
+  }
+
+  "test java script Map[string, Array[Int]] return type" should "work fine" in {
+    withBatchContext(setupBatchContext(batchParamsWithoutHive)) { runtime: SparkRuntime =>
+      implicit val spark = runtime.sparkSession
+      var sq = createSSEL
+      ScriptSQLExec.parse(
+        """
+          |  set echoFun='''
+          |  import java.util.HashMap;
+          |  import java.util.Map;
+          |  public class UDF {
+          |    public Map<String, Integer[]> apply(String s) {
+          |      Map<String, Integer[]> m = new HashMap<>();
+          |      Integer[] arr = {1};
+          |      m.put(s, arr);
+          |      return m;
+          |    }
+          |  }
+          |  ''';
+          |
+          |  load script.`echoFun` as scriptTable;
+          |
+          |  register ScriptUDF.`scriptTable` as funx
+          |  options lang="java"
+          |  ;
+          |
+          |  -- create a data table.
+          |  set data='''
+          |  {"a":"a"}
+          |  ''';
+          |  load jsonStr.`data` as dataTable;
+          |
+          |  select funx(a) as res from dataTable as output;
+          |
+        """.stripMargin, sq)
+
+      val result = runtime.sparkSession.sql("select * from output").collect()
+      assert(result.size == 1)
+      result.foreach(println)
+      assert(result.head.getAs[Map[String, WrappedArray[Int]]]("res")("a")(0) == 1)
+    }
+  }
+
+  "test java script with a class name which is different from 'UDF'" should "work fine" in {
+    withBatchContext(setupBatchContext(batchParamsWithoutHive)) { runtime: SparkRuntime =>
+      implicit val spark = runtime.sparkSession
+      var sq = createSSEL
+      ScriptSQLExec.parse(
+        """
+          |  set echoFun='''
+          |  import java.util.HashMap;
+          |  import java.util.Map;
+          |  public class Test {
+          |      public Map<String, String> apply(String s) {
+          |        Map m = new HashMap<>();
+          |        m.put(s, s);
+          |        return m;
+          |    }
+          |  }
+          |  ''';
+          |
+          |  load script.`echoFun` as scriptTable;
+          |
+          |  register ScriptUDF.`scriptTable` as funx
+          |  options lang="java"
+          |  and className = "Test"
+          |  ;
+          |
+          |  -- create a data table.
+          |  set data='''
+          |  {"a":"a"}
+          |  ''';
+          |  load jsonStr.`data` as dataTable;
+          |
+          |  select funx(a) as res from dataTable as output;
+          |
+        """.stripMargin, sq)
+
+      val result = runtime.sparkSession.sql("select * from output").collect()
+      assert(result.size == 1)
+      assert(result.head.getAs[Map[String, String]]("res").get("a").head == "a")
+    }
+  }
+
+
+  "test multi java script with the same class name" should "work fine" in {
+    withBatchContext(setupBatchContext(batchParamsWithoutHive)) { runtime: SparkRuntime =>
+      implicit val spark = runtime.sparkSession
+      var sq = createSSEL
+      ScriptSQLExec.parse(
+        """
+          |  set echoFun='''
+          |  import java.util.HashMap;
+          |  import java.util.Map;
+          |  public class UDF {
+          |      public Map<String, String> apply(String s) {
+          |        Map m = new HashMap<>();
+          |        m.put(s, s);
+          |        return m;
+          |    }
+          |  }
+          |  ''';
+          |
+          |  set fun2='''
+          |  public class UDF {
+          |    public int apply(String s) {
+          |      return 1;
+          |    }
+          |  }
+          |  ''';
+          |
+          |  load script.`echoFun` as scriptTable;
+          |
+          |  register ScriptUDF.`scriptTable` as fun1
+          |  options lang="java"
+          |  ;
+          |
+          |  load script.`fun2` as scriptTable;
+          |
+          |  register ScriptUDF.`scriptTable` as fun2
+          |  options lang="java"
+          |  ;
+          |
+          |  -- create a data table.
+          |  set data='''
+          |  {"a":"a"}
+          |  ''';
+          |  load jsonStr.`data` as dataTable;
+          |
+          |  select fun1(a) as res1, fun2(a) as res2 from dataTable as output;
+          |
+        """.stripMargin, sq)
+
+      val result = runtime.sparkSession.sql("select * from output").collect()
+      assert(result.size == 1)
+      assert(result.head.getAs[Map[String, String]]("res1").get("a").head == "a")
+      assert(result.head.getAs[Int]("res2") == 1)
+    }
+  }
+
   "test scala script map return type" should "work fine" in {
     withBatchContext(setupBatchContext(batchParamsWithoutHive)) { runtime: SparkRuntime =>
       implicit val spark = runtime.sparkSession

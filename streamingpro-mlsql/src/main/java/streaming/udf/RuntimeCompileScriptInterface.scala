@@ -21,7 +21,6 @@ package streaming.udf
 import com.google.common.cache.{CacheBuilder, CacheLoader}
 import streaming.dsl.mmlib.algs.ScriptUDFCacheKey
 import streaming.log.Logging
-
 import scala.collection.mutable.HashMap
 
 /**
@@ -72,6 +71,7 @@ object RuntimeCompileScriptFactory extends Logging {
 
   registerUDF(PythonRuntimeCompileUDF.lang, PythonRuntimeCompileUDF)
   registerUDF(ScalaRuntimeCompileUDF.lang, ScalaRuntimeCompileUDF)
+  registerUDF(JavaRuntimeCompileUDF.lang, JavaRuntimeCompileUDF)
   registerUDAF(ScalaRuntimeCompileUDAF.lang, ScalaRuntimeCompileUDAF)
   registerUDAF(PythonRuntimeCompileUDAF.lang, PythonRuntimeCompileUDAF)
 
