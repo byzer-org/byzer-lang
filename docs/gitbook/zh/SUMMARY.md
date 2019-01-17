@@ -84,6 +84,7 @@
     
     * [Python项目支持](python/README.md)
         * [Python项目规范](python/project.md)
+        * [Python环境管理](python/python-env.md)        
         * [分布式运行Python项目](python/distribute-python.md)
         * [单实例运行Python项目](python/python.md)
         * [如何附带资源文件](python/resource.md)  

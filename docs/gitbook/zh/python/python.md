@@ -7,9 +7,12 @@
 如果MLSQL运行在Local模式下，你只要确保conda环境有即可。如果你需要yarn环境下使用，请确保每个节点都安装有conda,并且
 确保启动脚本中按如下要求进行设置：
 
+
 ```
 
--streaming.ps.cluster.enable  is enabled. Please make sure
+-streaming.ps.cluster.enable  should be  enabled.
+
+Please make sure
 you have the uber-jar of mlsql placed in
 1. --jars
 2. --conf "spark.executor.extraClassPath=[your jar name in jars]"
@@ -19,9 +22,18 @@ for exmaple:
 --jars ./streamingpro-mlsql-spark_2.x-x.x.x-SNAPSHOT.jar
 --conf "spark.executor.extraClassPath=streamingpro-mlsql-spark_2.x-x.x.x-SNAPSHOT.jar"
 
-Otherwise the executor will
+Otherwise the executor wil
+l
 fail to start and the whole application will fails.
 
+```
+
+否则会出现不可预料错误。
+
+如果你是在Standalone模式下使用，请将MLSQL Uber Jar 发送到各个节点上，然后配置
+
+```
+--conf "spark.executor.extraClassPath=[MLSQL jar包完整路径]"
 ```
 
 ## 案例场景
@@ -88,6 +100,10 @@ if __name__ == "__main__":
 
 ```sql
 set modelPath="/testStreamingB";
+
+-- 创建依赖环境
+select 1 as a as fakeTable;
+run fakeTable as PythonEnvExt.`/tmp/jack` where condaYamlFilePath="${HOME}/testStreamingB" and command="create";
 
 load csv.`/testStreamingB` as testData;
 

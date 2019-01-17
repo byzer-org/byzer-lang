@@ -36,6 +36,12 @@ fail to start and the whole application will fails.
 
 否则会出现不可预料错误。
 
+如果你是在Standalone模式下使用，请将MLSQL Uber Jar 发送到各个节点上，然后配置
+
+```
+--conf "spark.executor.extraClassPath=[MLSQL jar包完整路径]"
+```
+
 ## 使用步骤
 
 MLSQL支持在脚本中完成以上逻辑。我们来具体看看如何实现.  
@@ -71,7 +77,7 @@ if __name__ == "__main__":
 在tempDataLocalPath中，会有很多json文件，你需要过滤出后缀名为`.json`的文件，然后读取和处理。处理完成之后，你把处理的结果用json的方式
 写回 tempModelLocalPath。当然，不是json的也行，但是后面就不太好用了。
 
-第二步，用set语法描述下这个python脚本需要依赖哪些库：
+第二步，用set语法描述下这个python脚本需要依赖哪些库，并且让同自动创建这些依赖的环境：
 
 ```sql
 set dependencies='''
@@ -86,6 +92,10 @@ dependencies:
     - pyspark==2.3.2
     - pandas==0.22.0
 ''';
+
+load script.`dependencies` as dependencies;
+select 1 as a as fakeTable;
+run fakeTable as PythonEnvExt.`/tmp/jack` where condaFile="dependencies" and command="create";
 
 ```
 
@@ -102,7 +112,6 @@ set data='''
 
 load jsonStr.`data` as testData;
 load script.`pythonScript` as pythonScript;
-load script.`dependencies` as dependencies;
 
 run testData as RepartitionExt.`` where partitionNum="5" as newdata;    --partitionNum=5即将数据分成5个分区
 

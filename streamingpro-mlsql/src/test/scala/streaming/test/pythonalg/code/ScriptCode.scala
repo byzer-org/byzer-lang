@@ -66,7 +66,7 @@ object ScriptCode {
       |load jsonStr.`data` as testData;
       |load script.`python1` as python1;
       |load script.`dependencies` as dependencies;
-      |
+      |run testData as PythonEnvExt.`/tmp/jack` where condaFile="dependencies" and command="create";
       |-- train sklearn model
       |run testData as PythonParallelExt.`${modelPath}`
       |where scripts="python1"
@@ -131,6 +131,8 @@ object ScriptCode {
       |load jsonStr.`data` as testData;
       |load script.`python1` as python1;
       |load script.`dependencies` as dependencies;
+      |
+      |run testData as PythonEnvExt.`/tmp/jack` where condaFile="dependencies" and command="create";
       |
       |run testData as RepartitionExt.`` where partitionNum="3" as testData1;
       |-- train sklearn model
@@ -198,7 +200,7 @@ object ScriptCode {
       |load jsonStr.`data` as testData;
       |load script.`python1` as python1;
       |load script.`dependencies` as dependencies;
-      |
+      |run testData as PythonEnvExt.`/tmp/jack` where condaFile="dependencies" and command="create";
       |run testData as RepartitionExt.`` where partitionNum="3" as testData1;
       |-- train sklearn model
       |run testData1 as PythonAlg.`${modelPath}`

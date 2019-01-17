@@ -41,5 +41,16 @@ MLProject 指定了项目名称以及conda.yamm描述文件。
 第二个是conda.yaml文件：
 
 ```
-
+name: tutorial
+dependencies:
+  - python=3.6
+  - pip
+  - pip:
+    - --index-url https://mirrors.aliyun.com/pypi/simple/
+    - numpy==1.14.3
+    - kafka==1.3.5
+    - pyspark==2.3.2
+    - pandas==0.22.0
 ```
+
+描述每个人物需要依赖的环境。
