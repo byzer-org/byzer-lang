@@ -15,4 +15,8 @@ object MLSQLUtils {
     Utils.getContextOrSparkClassLoader
   }
 
+  def localCanonicalHostName = {
+    Utils.localHostName()
+  }
+
 }

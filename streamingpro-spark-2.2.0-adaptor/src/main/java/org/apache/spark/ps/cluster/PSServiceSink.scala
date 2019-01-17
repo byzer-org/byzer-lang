@@ -27,7 +27,7 @@ import org.apache.spark.internal.config._
 import org.apache.spark.metrics.sink.Sink
 import org.apache.spark.rpc.RpcEnv
 import org.apache.spark.security.CryptoStreamUtils
-import org.apache.spark.{MLSQLConf, SecurityManager, SparkContext, SparkEnv}
+import org.apache.spark.{SecurityManager, SparkContext, SparkEnv}
 
 import scala.collection.mutable
 
@@ -96,11 +96,15 @@ class PSServiceSink(val property: Properties, val registry: MetricRegistry,
       psDriverUrl = psDriverUrl.split("@").last
     }
     val Array(host, port) = psDriverUrl.split(":")
-    psDriverPort = env.conf.getInt(MLSQLConf.MLSQL_CLUSTER_PS_DRIVER_PORT.key, 7777)
     psDriverHost = host
+    // this port have been set in SparkRuntime dynamically
+    psDriverPort = env.conf.getInt("spark.ps.cluster.driver.port", 0)
+    if (psDriverPort == 0) {
+      throw new RuntimeException("Executor psDriverPort can not get spark.ps.cluster.driver.port")
+    }
     psDriverUrl = "spark://ps-driver-endpoint@" + psDriverHost + ":" + psDriverPort
   }
-  
+
   def createRpcEnv = {
     val isDriver = env.executorId == SparkContext.DRIVER_IDENTIFIER
     val bindAddress = hostname
@@ -121,7 +125,15 @@ class PSServiceSink(val property: Properties, val registry: MetricRegistry,
     new Thread(new Runnable {
       override def run(): Unit = {
         logInfo(s"delay PSExecutorBackend 3s")
-        Thread.sleep(3000)
+        var counter = 30
+        while (SparkEnv.get == null && counter > 0) {
+          Thread.sleep(1000)
+          counter -= 1
+        }
+
+        if (SparkEnv.get == null) {
+          throw new RuntimeException("cannot get SparkEnv in PSServiceSink")
+        }
         logInfo(s"start PSExecutor;env:${env}")
         if (env.executorId != SparkContext.DRIVER_IDENTIFIER) {
           parseArgs
