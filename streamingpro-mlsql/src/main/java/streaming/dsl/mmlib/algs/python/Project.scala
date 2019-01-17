@@ -18,19 +18,13 @@
 
 package streaming.dsl.mmlib.algs.python
 
-import java.io.File
-import java.nio.charset.Charset
 import java.nio.file.Paths
 import java.util.UUID
 
 import net.csdn.common.settings.{ImmutableSettings, Settings}
-import org.apache.commons.io.FileUtils
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.mlsql.session.MLSQLException
-import org.json4s.DefaultFormats
-import org.json4s.jackson.JsonMethods.parse
 import streaming.common.HDFSOperator
-import streaming.common.shell.ShellCommand
 import streaming.log.{Logging, WowLog}
 
 object PythonAlgProject extends Logging with WowLog {
@@ -80,7 +74,7 @@ class MLProject(val projectDir: String, project: Settings, options: Map[String, 
   }
 
   def entryPointCommandWithConda(commandType: String) = {
-    val condaEnvManager = new CondaEnvManager(options)
+    val condaEnvManager = new BasicCondaEnvManager(options)
     val condaEnvName = condaEnvManager.getOrCreateCondaEnv(Option(projectDir + s"/${MLProject.DEFAULT_CONDA_ENV_NAME}"))
     val entryPointCommandWithConda = commandWithConda(
       condaEnvManager.getCondaBinExecutable("activate"),
@@ -91,7 +85,7 @@ class MLProject(val projectDir: String, project: Settings, options: Map[String, 
   }
 
   def condaEnvCommand = {
-    val condaEnvManager = new CondaEnvManager(options)
+    val condaEnvManager = new BasicCondaEnvManager(options)
     val condaEnvName = condaEnvManager.getOrCreateCondaEnv(Option(projectDir + s"/${MLProject.DEFAULT_CONDA_ENV_NAME}"))
     val command = s"source ${condaEnvManager.getCondaBinExecutable("activate")} ${condaEnvName}"
     logInfo(format(s"=== generate command  '${command}' for ${projectDir} === "))
@@ -119,92 +113,6 @@ object MLProject {
     val projectContent = HDFSOperator.readFile(projectDir + s"/${MLPROJECT}")
     val projectDesc = ImmutableSettings.settingsBuilder().loadFromSource(projectContent).build()
     new MLProject(projectDir, projectDesc, options)
-  }
-}
-
-object CondaEnvManager {
-  val condaHomeKey = "MLFLOW_CONDA_HOME"
-}
-
-class CondaEnvManager(options: Map[String, String]) extends Logging with WowLog {
-
-  def getOrCreateCondaEnv(condaEnvPath: Option[String]) = {
-    val condaPath = getCondaBinExecutable("conda")
-    try {
-      ShellCommand.execCmd(s"${condaPath} --help")
-    } catch {
-      case e: Exception =>
-        logError(s"Could not find Conda executable at ${condaPath}.", e)
-        throw new MLSQLException(
-          s"""
-             |Could not find Conda executable at ${condaPath}.
-             |Ensure Conda is installed as per the instructions
-             |at https://conda.io/docs/user-guide/install/index.html. You can
-             |also configure MLSQL to look for a specific Conda executable
-             |by setting the MLFLOW_CONDA_HOME environment variable to the path of the Conda
-        """.stripMargin)
-    }
-
-    val stdout = ShellCommand.execCmd(s"${condaPath} env list --json")
-    implicit val formats = DefaultFormats
-    val envNames = (parse(stdout) \ "envs").extract[List[String]].map(_.split("/").last).toSet
-    val projectEnvName = getCondaEnvName(condaEnvPath)
-    if (!envNames.contains(projectEnvName)) {
-      logInfo(format(s"=== Creating conda environment $projectEnvName ==="))
-      condaEnvPath match {
-        case Some(path) =>
-          val tempFile = "/tmp/" + UUID.randomUUID() + ".yaml"
-          try {
-            FileUtils.write(new File(tempFile), getCondaYamlContent(condaEnvPath), Charset.forName("utf-8"))
-            ShellCommand.execCmd(s"${condaPath} env create -n $projectEnvName --file $tempFile")
-          } finally {
-            FileUtils.deleteQuietly(new File(tempFile))
-          }
-
-        case None =>
-          ShellCommand.execCmd(s"${condaPath} create  -n $projectEnvName python")
-      }
-    }
-
-    projectEnvName
-  }
-
-  def sha1(str: String) = {
-    val md = java.security.MessageDigest.getInstance("SHA-1")
-    val ha = md.digest(str.getBytes).map("%02x".format(_)).mkString
-    ha
-  }
-
-  def getCondaEnvName(condaEnvPath: Option[String]) = {
-    val condaEnvContents = condaEnvPath match {
-      case Some(cep) =>
-        // we should read from local ,but for now, we read from hdfs
-        // scala.io.Source.fromFile(new File(cep)).getLines().mkString("\n")
-        HDFSOperator.readFile(cep)
-      case None => ""
-    }
-    s"mlflow-${sha1(condaEnvContents)}"
-  }
-
-  def getCondaYamlContent(condaEnvPath: Option[String]) = {
-    val condaEnvContents = condaEnvPath match {
-      case Some(cep) =>
-        // we should read from local ,but for now, we read from hdfs
-        // scala.io.Source.fromFile(new File(cep)).getLines().mkString("\n")
-        HDFSOperator.readFile(cep)
-      case None => ""
-    }
-    condaEnvContents
-  }
-
-  def getCondaBinExecutable(executableName: String) = {
-    val condaHome = options.get(CondaEnvManager.condaHomeKey) match {
-      case Some(home) => home
-      case None => System.getenv(CondaEnvManager.condaHomeKey)
-    }
-    if (condaHome != null) {
-      s"${condaHome}/bin/${executableName}"
-    } else executableName
   }
 }
 

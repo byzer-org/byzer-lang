@@ -65,12 +65,15 @@ class BatchPredict extends Logging with WowLog with Serializable {
     val outoutFile = SQLPythonFunc.getAlgTmpPath(_path) + "/output"
 
     val trainParams = modelMeta.trainParams
+    val appName = df.sparkSession.sparkContext.getConf.get("spark.app.name")
 
     val jsonRDD = df.rdd.mapPartitionsWithIndex { (index, iter) =>
       ScriptSQLExec.setContext(mlsqlContext)
       val mlflowConfig = MLFlowConfig.buildFromSystemParam(systemParam)
       val pythonConfig = PythonConfig.buildFromSystemParam(systemParam)
-      val envs = EnvConfig.buildFromSystemParam(systemParam)
+
+      val envs = EnvConfig.buildFromSystemParam(systemParam) ++ Map(BasicCondaEnvManager.MLSQL_INSTNANCE_NAME_KEY -> appName)
+
 
       val command = new PythonAlgExecCommand(pythonProject.get, Option(mlflowConfig), Option(pythonConfig), envs).
         generateCommand(MLProject.batch_predict_command)

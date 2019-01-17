@@ -76,6 +76,10 @@ class APIPredict extends Logging with WowLog with Serializable {
     val enableCopyTrainParamsToPython = params.getOrElse("enableCopyTrainParamsToPython", "false").toBoolean
 
     val envs = new util.HashMap[String, String]()
+
+    val appName = sparkSession.sparkContext.getConf.get("spark.app.name")
+    envs.put(BasicCondaEnvManager.MLSQL_INSTNANCE_NAME_KEY, appName)
+
     EnvConfig.buildFromSystemParam(systemParam).foreach(f => envs.put(f._1, f._2))
 
     val pythonRunner = new PythonProjectExecuteRunner(taskDirectory = taskDirectory,
