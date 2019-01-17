@@ -90,6 +90,16 @@ object MLSQLConf {
       |ps driver port
     """.stripMargin).intConf.createWithDefault(7777)
 
+  val MLSQL_PS_ASK_TIMEOUT: ConfigEntry[Long] = MLSQLConfigBuilder("streaming.ps.ask.timeout").doc(
+    s"""
+       |control how long distributing resource/python env take then timeout. unit: seconds
+     """.stripMargin).longConf.createWithDefault(3600)
+
+  val MLSQL_PS_NETWORK_TIMEOUT: ConfigEntry[Long] = MLSQLConfigBuilder("streaming.ps.network.timeout").doc(
+    s"""
+       |set spark.network.timeout
+     """.stripMargin).longConf.createWithDefault(60 * 60 * 8)
+
   val MLSQL_HIVE_CONNECTION = MLSQLConfigBuilder("streaming.hive.javax.jdo.option.ConnectionURL").doc(
     """
       |Use this to configure `hive.javax.jdo.option.ConnectionURL`

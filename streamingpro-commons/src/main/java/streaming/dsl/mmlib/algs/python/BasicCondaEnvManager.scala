@@ -90,6 +90,7 @@ class BasicCondaEnvManager(options: Map[String, String]) extends Logging {
   def removeEnv(condaEnvPath: Option[String]) = {
     val condaPath = validateCondaExec
     val projectEnvName = getCondaEnvName(condaEnvPath)
+    logInfo(s"${condaPath} env remove -y -n ${projectEnvName}")
     ShellCommand.execCmd(s"${condaPath} env remove -y -n ${projectEnvName}")
   }
 

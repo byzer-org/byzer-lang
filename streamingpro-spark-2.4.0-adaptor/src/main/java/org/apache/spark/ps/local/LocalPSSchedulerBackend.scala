@@ -21,17 +21,18 @@ package org.apache.spark.ps.local
 import java.io.File
 import java.net.URL
 
-import org.apache.spark.{SparkConf, SparkContext, SparkEnv}
 import org.apache.spark.internal.Logging
 import org.apache.spark.launcher.{LauncherBackend, SparkAppHandle}
 import org.apache.spark.ps.cluster.Message
+import org.apache.spark.ps.cluster.Message.{CreateOrRemovePythonCondaEnvResponse, CreateOrRemovePythonCondaEnvResponseItem}
 import org.apache.spark.rpc.{RpcCallContext, RpcEndpointRef, RpcEnv, ThreadSafeRpcEndpoint}
 import org.apache.spark.scheduler._
 import org.apache.spark.scheduler.cluster.CoarseGrainedClusterMessages.StopExecutor
+import org.apache.spark.{SparkConf, SparkContext, SparkEnv}
 import streaming.common.HDFSOperator
+import streaming.dsl.mmlib.algs.python.BasicCondaEnvManager
 
-
-private case class TensorFlowModelClean(modelPath: String)
+import scala.collection.mutable.ArrayBuffer
 
 
 /**
@@ -60,6 +61,28 @@ class LocalPSEndpoint(override val rpcEnv: RpcEnv,
       logInfo(s"copying model: ${modelPath} -> ${destPath}")
       HDFSOperator.copyToLocalFile(destPath, modelPath, true)
       context.reply(true)
+    }
+    case Message.CreateOrRemovePythonCondaEnv(condaYamlFile, options, command) => {
+      val res = CreateOrRemovePythonCondaEnvResponseItem(false, "localhost", System.currentTimeMillis(), 0, "")
+      var msg = ""
+      val success = try {
+        val condaEnvManager = new BasicCondaEnvManager(options)
+        command match {
+          case Message.AddEnvCommand =>
+            condaEnvManager.getOrCreateCondaEnv(Option(condaYamlFile))
+          case Message.RemoveEnvCommand =>
+            condaEnvManager.removeEnv(Option(condaYamlFile))
+        }
+        true
+      } catch {
+        case e: Exception =>
+          logError("Fail to create python env", e)
+          msg = e.getMessage
+          false
+      }
+      context.reply(CreateOrRemovePythonCondaEnvResponse(condaYamlFile,
+        ArrayBuffer(res.copy(success = success, msg = msg, endTime = System.currentTimeMillis())),
+        1))
     }
     case Message.Ping =>
       logInfo(s"received message ${Message.Ping}")
@@ -105,10 +128,6 @@ class LocalPSSchedulerBackend(sparkContext: SparkContext)
 
   def stop() {
     stop(SparkAppHandle.State.FINISHED)
-  }
-
-  def cleanTensorFlowModel(modelPath: String) = {
-    localEndpoint.askSync[Boolean](TensorFlowModelClean(modelPath))
   }
 
   private def stop(finalState: SparkAppHandle.State): Unit = {
