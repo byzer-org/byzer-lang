@@ -126,7 +126,6 @@ public class NetUtils {
                 }
                 bindSuccess = true;
             } catch (IOException e) {
-                e.printStackTrace();
                 bindSuccess = false;
                 start.set(start.get() + 1);
             } finally {
