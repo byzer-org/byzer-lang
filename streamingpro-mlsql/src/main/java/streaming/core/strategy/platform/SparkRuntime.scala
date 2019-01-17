@@ -33,7 +33,7 @@ import org.apache.spark.ps.cluster.PSDriverBackend
 import org.apache.spark.ps.local.LocalPSSchedulerBackend
 import org.apache.spark.sql.jdbc.{JdbcDialect, JdbcDialects}
 import org.apache.spark.sql.mlsql.session.{SessionIdentifier, SessionManager}
-import org.apache.spark.sql.{SQLContext, SparkSession}
+import org.apache.spark.sql.{MLSQLUtils, SQLContext, SparkSession}
 
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
@@ -102,12 +102,13 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
       logInfo("register worker.sink.pservice.class with org.apache.spark.ps.cluster.PSServiceSink")
       conf.set("spark.network.timeout", MLSQLConf.MLSQL_PS_NETWORK_TIMEOUT.readFrom(configReader) + "s")
       conf.set("spark.metrics.conf.executor.sink.pservice.class", "org.apache.spark.ps.cluster.PSServiceSink")
-      val holdPort = NetUtils.availableAndReturn(7778, 7999)
 
-      if (holdPort == null) {
+
+      val port = NetUtils.availableAndReturn(MLSQLUtils.localCanonicalHostName, 7778, 7999)
+
+      if (port == -1) {
         throw new RuntimeException(s"Fail to create for ps cluster, maybe executor cannot bind port ")
       }
-      val port = holdPort.getLocalPort
       conf.set(MLSQLConf.MLSQL_CLUSTER_PS_DRIVER_PORT.key, port.toString)
     }
 

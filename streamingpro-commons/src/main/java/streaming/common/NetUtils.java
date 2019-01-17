@@ -19,9 +19,7 @@
 package streaming.common;
 
 import java.io.IOException;
-import java.net.DatagramSocket;
-import java.net.ServerSocket;
-import java.net.UnknownHostException;
+import java.net.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -103,12 +101,59 @@ public class NetUtils {
                 try {
                     ss.close();
                 } catch (IOException e) {
-                /* should not be thrown */
+                    /* should not be thrown */
                 }
             }
         }
 
         return false;
+    }
+
+    public static int availableAndReturn(String hostname, int MIN_PORT_NUMBER, int MAX_PORT_NUMBER) {
+        boolean bindSuccess = false;
+        Socket ss = null;
+        Socket ss1 = null;
+        AtomicInteger start = new AtomicInteger(MIN_PORT_NUMBER);
+
+        while (!bindSuccess && start.get() < MAX_PORT_NUMBER) {
+            try {
+                ss = new Socket();
+                ss.bind(new InetSocketAddress(hostname, start.get()));
+                ss.close();
+                if (hostname != "0.0.0.0") {
+                    ss1 = new Socket();
+                    ss1.bind(new InetSocketAddress("0.0.0.0", start.get()));
+                }
+                bindSuccess = true;
+            } catch (IOException e) {
+                e.printStackTrace();
+                bindSuccess = false;
+                start.set(start.get() + 1);
+            } finally {
+                if (ss != null) {
+                    try {
+                        ss.close();
+                    } catch (IOException e) {
+                        /* should not be thrown */
+                    }
+                }
+                if (ss1 != null) {
+                    try {
+                        ss1.close();
+                    } catch (IOException e) {
+                        /* should not be thrown */
+                    }
+                }
+            }
+
+
+        }
+        if (bindSuccess) {
+            return start.get();
+        } else {
+            return -1;
+        }
+
     }
 
     public static ServerSocket availableAndReturn(int MIN_PORT_NUMBER, int MAX_PORT_NUMBER) {
@@ -129,7 +174,7 @@ public class NetUtils {
                     try {
                         ss.close();
                     } catch (IOException e) {
-                /* should not be thrown */
+                        /* should not be thrown */
                     }
                 }
             }
@@ -137,5 +182,10 @@ public class NetUtils {
 
         }
         return ss;
+    }
+
+    public static void main(String[] args) {
+        int ss = availableAndReturn("192.168.218.166", 7778, 7783);
+        System.out.println(ss);
     }
 }
