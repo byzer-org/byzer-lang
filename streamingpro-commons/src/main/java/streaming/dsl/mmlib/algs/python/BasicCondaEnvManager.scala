@@ -62,7 +62,7 @@ class BasicCondaEnvManager(options: Map[String, String]) extends Logging {
     val condaPath = validateCondaExec
     val stdout = ShellCommand.execCmd(s"${condaPath} env list --json")
 
-    val envNames = JSONObject.fromObject(stdout).getJSONObject("envs").asScala.map(_.asInstanceOf[String].split("/").last).toSet
+    val envNames = JSONObject.fromObject(stdout).getJSONArray("envs").asScala.map(_.asInstanceOf[String].split("/").last).toSet
     val projectEnvName = getCondaEnvName(condaEnvPath)
     if (!envNames.contains(projectEnvName)) {
       logInfo(s"=== Creating conda environment $projectEnvName ===")
