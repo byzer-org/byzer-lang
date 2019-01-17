@@ -61,12 +61,6 @@
             <version>${project.parent.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.json4s</groupId>
-            <artifactId>json4s-jackson_2.11</artifactId>
-            <version>3.2.11</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
             <groupId>com.101tec</groupId>
             <artifactId>zkclient</artifactId>
             <version>0.5</version>

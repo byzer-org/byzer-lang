@@ -22,12 +22,13 @@ import java.io.File
 import java.nio.charset.Charset
 import java.util.UUID
 
+import net.sf.json.JSONObject
 import org.apache.commons.io.FileUtils
-import org.json4s.DefaultFormats
-import org.json4s.jackson.JsonMethods.parse
 import streaming.common.HDFSOperator
 import streaming.common.shell.ShellCommand
 import streaming.log.Logging
+
+import scala.collection.JavaConverters._
 
 
 object BasicCondaEnvManager {
@@ -60,8 +61,8 @@ class BasicCondaEnvManager(options: Map[String, String]) extends Logging {
 
     val condaPath = validateCondaExec
     val stdout = ShellCommand.execCmd(s"${condaPath} env list --json")
-    implicit val formats = DefaultFormats
-    val envNames = (parse(stdout) \ "envs").extract[List[String]].map(_.split("/").last).toSet
+
+    val envNames = JSONObject.fromObject(stdout).getJSONObject("envs").asScala.map(_.asInstanceOf[String].split("/").last).toSet
     val projectEnvName = getCondaEnvName(condaEnvPath)
     if (!envNames.contains(projectEnvName)) {
       logInfo(s"=== Creating conda environment $projectEnvName ===")
