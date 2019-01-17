@@ -104,6 +104,10 @@ class BatchLoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener,
           val items = cleanBlockStr(scriptSQLExecListener.env()(cleanStr(path))).split("\n")
           import sparkSession.implicits._
           table = reader.json(sparkSession.createDataset[String](items))
+        case "csvStr" =>
+          val items = cleanBlockStr(scriptSQLExecListener.env()(cleanStr(path))).split("\n")
+          import sparkSession.implicits._
+          table = reader.options(option).csv(sparkSession.createDataset[String](items))
         case "script" =>
           val items = List(cleanBlockStr(scriptSQLExecListener.env()(cleanStr(path)))).map { f =>
             val obj = new JSONObject()

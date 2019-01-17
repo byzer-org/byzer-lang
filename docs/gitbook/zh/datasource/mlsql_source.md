@@ -62,3 +62,17 @@ mlsqlAPI 可以查看所有API,mlsqlConf可以查看所有启动脚本参数。�
 load mslqlAPI.`` as api_table;
 load mlsqlConf.`` as confg_table;
 ```
+
+## csvStr
+
+同`jsonStr`，脚本数据源也支持`csvStr`。例如：
+
+```sql
+set rawData='''
+name,age
+zhangsan,1
+lisi,2
+''';
+load csvStr.`rawData` options header="true"
+as output;
+```
