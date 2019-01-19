@@ -30,6 +30,15 @@
             <email>cfmcgrady@gmail.com</email>
         </developer>
     </developers>
+    <scm>
+        <connection>
+            scm:git:git@github.com:allwefantasy/streamingpro.git
+        </connection>
+        <developerConnection>
+            scm:git:git@github.com:allwefantasy/streamingpro.git
+        </developerConnection>
+        <url>https://github.com/allwefantasy/streamingpro</url>
+    </scm>
     <issueManagement>
         <url>https://github.com/allwefantasy/streamingpro/issues</url>
     </issueManagement>
