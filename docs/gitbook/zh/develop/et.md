@@ -64,7 +64,7 @@ register RandomForest.`/tmp/model` as rf_predict;
      <groupId>tech.mlsql</groupId>
      <artifactId>streamingpro-mlsql-spark_2.4</artifactId>
      <version>1.1.7.1</version>
-     <scope>provide</scope>
+     <scope>provided</scope>
 </dependency>
 ```
 
