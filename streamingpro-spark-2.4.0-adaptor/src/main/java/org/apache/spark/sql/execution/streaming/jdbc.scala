@@ -78,12 +78,14 @@ class JDBCSink(_options: Map[String, String]) extends Sink with Logging {
         val url = options("url")
         Class.forName(driver)
         connection = java.sql.DriverManager.getConnection(url, options("user"), options("password"))
+        connection.setAutoCommit(false)
         sqlArray = options.filter(f =>"""statement\-[0-9]+""".r.findFirstMatchIn(f._1).nonEmpty).
+          filter(f => !f._1.startsWith("driver")).
           map(f => (f._1.split("-").last.toInt, f._2)).toSeq.sortBy(f => f._1).map(f => f._2).map { f =>
           connection.prepareStatement(f)
         }
         if (sqlArray.size == 0) {
-          throw new RuntimeException("statement-[number] should be configured")
+          throw new RuntimeException("executor-statement-[number] should be configured")
         }
         true
       }
@@ -95,6 +97,7 @@ class JDBCSink(_options: Map[String, String]) extends Sink with Logging {
             case StringType => statement.setString(sqlIndex, value.getString(f))
             case IntegerType => statement.setInt(sqlIndex, value.getInt(f))
             case LongType => statement.setLong(sqlIndex, value.getLong(f))
+            case DoubleType => statement.setDouble(sqlIndex, value.getDouble(f))
             case NullType => statement.setString(sqlIndex, null)
             case BooleanType => statement.setBoolean(sqlIndex, value.getBoolean(f))
             case DateType => statement.setDate(sqlIndex, value.getDate(f))
@@ -102,7 +105,7 @@ class JDBCSink(_options: Map[String, String]) extends Sink with Logging {
           }
 
         }
-        statement.execute()
+        statement.addBatch()
         true
       }
 
@@ -114,8 +117,21 @@ class JDBCSink(_options: Map[String, String]) extends Sink with Logging {
       }
 
       override def close(errorOrNull: Throwable): Unit = {
-        sqlArray.map(_.close())
-        connection.close()
+        if (connection != null) {
+          try {
+            sqlArray.map(_.execute()).size
+            connection.commit()
+          } catch {
+            case e: Exception =>
+              e.printStackTrace()
+              connection.rollback()
+          } finally {
+            sqlArray.map(_.close())
+            connection.close()
+          }
+
+        }
+
       }
     }
 
