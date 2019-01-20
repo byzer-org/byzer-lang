@@ -136,52 +136,52 @@ def this() = this(BaseParams.randomUID())
 
 ```scala   
     
-    /*
-    获取keepVersion的值
-          另外一种用法如下：
-          params.get(command.name).map { s =>
-                set(command, s)
-                s
-              }.getOrElse {
-                throw new MLSQLException(s"${command.name} is required")
-              }
-    */
-    val keepVersion = params.getOrElse("keepVersion", "true").toBoolean
-    setKeepVersion(keepVersion)    
-        
-    val evaluateTable = params.get("evaluateTable")
-    setEvaluateTable(evaluateTable.getOrElse("None"))
+/*
+获取keepVersion的值
+      另外一种用法如下：
+      params.get(command.name).map { s =>
+            set(command, s)
+            s
+          }.getOrElse {
+            throw new MLSQLException(s"${command.name} is required")
+          }
+*/
+val keepVersion = params.getOrElse("keepVersion", "true").toBoolean
+setKeepVersion(keepVersion)    
+    
+val evaluateTable = params.get("evaluateTable")
+setEvaluateTable(evaluateTable.getOrElse("None"))
 
-    /*
-     递增版本
-    */
-    SQLPythonFunc.incrementVersion(path, keepVersion)
-    val spark = df.sparkSession
+/*
+ 递增版本
+*/
+SQLPythonFunc.incrementVersion(path, keepVersion)
+val spark = df.sparkSession
 
-    /*
-      多组参数解析，包装Mllib里的算法，最后进行训练，并且计算效果
-    */
-    trainModelsWithMultiParamGroup[RandomForestClassificationModel](df, path, params, () => {
-      new RandomForestClassifier()
-    }, (_model, fitParam) => {
-      evaluateTable match {
-        case Some(etable) =>
-          val model = _model.asInstanceOf[RandomForestClassificationModel]
-          val evaluateTableDF = spark.table(etable)
-          val predictions = model.transform(evaluateTableDF)
-          multiclassClassificationEvaluate(predictions, (evaluator) => {
-            evaluator.setLabelCol(fitParam.getOrElse("labelCol", "label"))
-            evaluator.setPredictionCol("prediction")
-          })
+/*
+  多组参数解析，包装Mllib里的算法，最后进行训练，并且计算效果
+*/
+trainModelsWithMultiParamGroup[RandomForestClassificationModel](df, path, params, () => {
+  new RandomForestClassifier()
+}, (_model, fitParam) => {
+  evaluateTable match {
+    case Some(etable) =>
+      val model = _model.asInstanceOf[RandomForestClassificationModel]
+      val evaluateTableDF = spark.table(etable)
+      val predictions = model.transform(evaluateTableDF)
+      multiclassClassificationEvaluate(predictions, (evaluator) => {
+        evaluator.setLabelCol(fitParam.getOrElse("labelCol", "label"))
+        evaluator.setPredictionCol("prediction")
+      })
 
-        case None => List()
-      }
-    }
-    )
-    /*
-          输出训练结果
-        */
-    formatOutput(getModelMetaData(spark, path))
+    case None => List()
+  }
+}
+)
+/*
+      输出训练结果
+    */
+formatOutput(getModelMetaData(spark, path))
 
 ```
 
@@ -312,24 +312,8 @@ def predict_classification(sparkSession: SparkSession, _model: Any, name: String
 
 下面是RandomForest的完整代码。
 
-```
-/*
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+
+```scala
 
 package streaming.dsl.mmlib.algs
 
@@ -446,10 +430,8 @@ class SQLRandomForest(override val uid: String) extends SQLAlg with MllibFunctio
       | get example.
       |
       | If you wanna check the params of model you have trained, use this command:
-      |
-      | ```
-      | load modelExplain.`/tmp/model` where alg="RandomForest" as outout;
-      | ```
+      |      
+      | load modelExplain.`/tmp/model` where alg="RandomForest" as outout;      
       |
     """.stripMargin)
 
@@ -487,9 +469,11 @@ class SQLRandomForest(override val uid: String) extends SQLAlg with MllibFunctio
 
 如果你的包名为streaming.dsl.mmlib.algs并且以SQL开始，Ext结尾，那么该类会被自动注册。比如假设类名为
 
+
 ```
 SQLABCExt
 ```
+
 那么就可以使用在MLSQL中使用ABCExt这个名字了。
 
 ### 另外一个示例
@@ -541,19 +525,15 @@ class SQLCacheExt(override val uid: String) extends SQLAlg with WowParams {
   override def doc: Doc = Doc(MarkDownDoc,
     """
       |SQLCacheExt is used to cache/uncache table.
-      |
-      |```sql
-      |run table CacheExt.`` where execute="cache" and isEager="true";
-      |```
+      |      
+      |run table CacheExt.`` where execute="cache" and isEager="true";      
       |
       |If you execute the upper command, then table will be cached immediately, othersise only the second time
       |to use the table you will fetch the table from cache.
       |
       |To release the table , do like this:
-      |
-      |```sql
-      |run table CacheExt.`` where execute="uncache";
-      |```
+      |      
+      |run table CacheExt.`` where execute="uncache";      
     """.stripMargin)
 
   override def modelType: ModelType = ProcessType

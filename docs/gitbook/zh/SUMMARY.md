@@ -98,7 +98,8 @@
     * [流式计算](stream/README.md)        
         * [数据源](stream/datasource.md)           
         * [如何将Kafka中JSON/CSV转化为表](stream/data_convert.md)
-        * [window/watermark的使用](stream/window_wartermark.md)                   
+        * [window/watermark的使用](stream/window_wartermark.md) 
+        * [如何使用MLSQL流式更新MySQL数据](stream/stream_mysql_update.md)                   
     
     * [特征工程组件](feature/README.md)          
       * [文本向量化](feature/nlp.md)
@@ -156,7 +157,7 @@
         
 
 * 开发者指南
-    * [MLSQL-ET开发指南](develop/et.md)
+    * [MLSQL-ET开发指南](develop/et.md)   
     * [如何参与开发]()
     * [开发者列表]() 
 
