@@ -18,11 +18,14 @@
 
 package streaming.dsl
 
+import java.util.UUID
 import java.util.concurrent.TimeUnit
 
-import org.apache.spark.sql.streaming.{DataStreamWriter, Trigger}
+import org.apache.spark.sql.streaming.{DataStreamWriter, StreamingQuery, Trigger}
 import org.apache.spark.sql.{DataFrame, DataFrameWriter, Row, SaveMode}
 import streaming.core.datasource.{DataSinkConfig, DataSourceRegistry}
+import streaming.core.stream.MLSQLStreamManager
+import streaming.core.{StreamingproJobManager, StreamingproJobType}
 import streaming.dsl.parser.DSLSQLParser._
 import streaming.dsl.template.TemplateMerge
 
@@ -95,13 +98,41 @@ class SaveAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
       }
     }
 
+    def isStream = {
+      scriptSQLExecListener.env().contains("stream")
+    }
+
+    val spark = oldDF.sparkSession
+    import spark.implicits._
+    val context = ScriptSQLExec.context()
+    var job = StreamingproJobManager.getJobInfo(context.groupId)
+
+
+    if (isStream) {
+      job = job.copy(jobType = StreamingproJobType.STREAM, jobName = scriptSQLExecListener.env()("streamName"))
+      StreamingproJobManager.addJobManually(job)
+    }
+
+    var streamQuery: StreamingQuery = null
     if (scriptSQLExecListener.env().contains("stream")) {
-      new StreamSaveAdaptor(scriptSQLExecListener, option, oldDF, final_path, tableName, format, mode, partitionByCol.toArray).parse
+      streamQuery = new StreamSaveAdaptor(scriptSQLExecListener, option, oldDF, final_path, tableName, format, mode, partitionByCol.toArray).parse
     } else {
       new BatchSaveAdaptor(scriptSQLExecListener, option, oldDF, final_path, tableName, format, mode, partitionByCol.toArray).parse
     }
-    scriptSQLExecListener.setLastSelectTable(null)
 
+    job = StreamingproJobManager.getJobInfo(context.groupId)
+    if (streamQuery != null) {
+      //here we do not need to clean the original groupId, since the StreamingproJobManager.handleJobDone(job.groupId)
+      // will handle this. Also, if this is stream job, so it should be remove by the StreamManager if it fails
+      job = job.copy(groupId = streamQuery.id.toString)
+      StreamingproJobManager.addJobManually(job)
+      MLSQLStreamManager.addStore(job)
+    }
+
+    val tempTable = UUID.randomUUID().toString.replace("-", "")
+    val outputTable = spark.createDataset(Seq(job))
+    outputTable.createOrReplaceTempView(tempTable)
+    scriptSQLExecListener.setLastSelectTable(tempTable)
   }
 }
 

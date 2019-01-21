@@ -32,7 +32,7 @@ class SessionSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQL
 
   "session close" should "work fine" in {
     withBatchContext(setupBatchContext(batchParamsWithoutHive)) { runtime: SparkRuntime =>
-      StreamingproJobManager.init(runtime.sparkSession.sparkContext)
+      StreamingproJobManager.init(runtime.sparkSession)
       runtime.getSession("latincross")
 
       assume(runtime.sessionManager.getOpenSessionCount == 1)
@@ -68,7 +68,7 @@ class SessionSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQL
 
   "sessionPerUser mode create different temporary tables for different user." should "work fine" in {
     withBatchContext(setupBatchContext(batchParamsWithoutHive)) { runtime: SparkRuntime =>
-      StreamingproJobManager.init(runtime.sparkSession.sparkContext)
+      StreamingproJobManager.init(runtime.sparkSession)
       val testUserA = "usera"
       val testUserB = "userb"
 
@@ -90,7 +90,7 @@ class SessionSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQL
       runtime.sparkSession.udf.register("test_udf", (arg: String) => {
         arg + "_append_string"
       })
-      StreamingproJobManager.init(runtime.sparkSession.sparkContext)
+      StreamingproJobManager.init(runtime.sparkSession)
       val testUserA = "usera"
 
       val sessionA = runtime.getSession(testUserA)

@@ -24,7 +24,7 @@ class MLSQLSystemSpec extends BasicSparkOperation with SpecFunctions with BasicM
 
       mockServer
 
-      StreamingproJobManager.init(spark.sparkContext)
+      StreamingproJobManager.init(spark)
 
 
       val t = new Thread(new Runnable {

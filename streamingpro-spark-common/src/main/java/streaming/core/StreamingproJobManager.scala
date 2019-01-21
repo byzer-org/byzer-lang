@@ -18,15 +18,14 @@
 
 package streaming.core
 
-import java.util.concurrent.{ConcurrentHashMap, Executors, TimeUnit}
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.{ConcurrentHashMap, Executors, TimeUnit}
+
+import org.apache.log4j.Logger
+import org.apache.spark.sql.SparkSession
 
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
-
-import org.apache.log4j.Logger
-import org.apache.spark.SparkContext
-import org.apache.spark.sql.SparkSession
 
 /**
   * Created by allwefantasy on 15/5/2017.
@@ -41,14 +40,18 @@ object StreamingproJobManager {
     _jobManager.shutdown
   }
 
-  def init(sc: SparkContext, initialDelay: Long = 30, checkTimeInterval: Long = 5) = {
+  def init(spark: SparkSession, initialDelay: Long = 30, checkTimeInterval: Long = 5) = {
     synchronized {
       if (_jobManager == null) {
         logger.info(s"JobCanceller Timer  started with initialDelay=${initialDelay} checkTimeInterval=${checkTimeInterval}")
-        _jobManager = new StreamingproJobManager(sc, initialDelay, checkTimeInterval)
+        _jobManager = new StreamingproJobManager(spark, initialDelay, checkTimeInterval)
         _jobManager.run
       }
     }
+  }
+
+  def initForTest(spark: SparkSession, initialDelay: Long = 30, checkTimeInterval: Long = 5) = {
+    _jobManager = new StreamingproJobManager(spark, initialDelay, checkTimeInterval)
   }
 
   def run(session: SparkSession, job: StreamingproJobInfo, f: () => Unit): Unit = {
@@ -95,6 +98,14 @@ object StreamingproJobManager {
   def getJobInfo: Map[String, StreamingproJobInfo] =
     _jobManager.groupIdToStringproJobInfo.asScala.toMap
 
+  def addJobManually(job: StreamingproJobInfo) = {
+    _jobManager.groupIdToStringproJobInfo.put(job.groupId, job)
+  }
+
+  def removeJobManually(groupId: String) = {
+    handleJobDone(groupId)
+  }
+
   def killJob(groupId: String): Unit = {
     _jobManager.cancelJobGroup(groupId)
   }
@@ -105,7 +116,7 @@ object StreamingproJobManager {
   }
 }
 
-class StreamingproJobManager(sc: SparkContext, initialDelay: Long, checkTimeInterval: Long) {
+class StreamingproJobManager(spark: SparkSession, initialDelay: Long, checkTimeInterval: Long) {
   val groupIdToStringproJobInfo = new ConcurrentHashMap[String, StreamingproJobInfo]()
   val nextGroupId = new AtomicInteger(0)
   val logger = Logger.getLogger(classOf[StreamingproJobManager])
@@ -126,7 +137,12 @@ class StreamingproJobManager(sc: SparkContext, initialDelay: Long, checkTimeInte
 
   def cancelJobGroup(groupId: String): Unit = {
     logger.info("JobCanceller Timer cancel job group " + groupId)
-    sc.cancelJobGroup(groupId)
+    val job = groupIdToStringproJobInfo.get(groupId)
+    if (job != null && job.jobType == StreamingproJobType.STREAM) {
+      spark.streams.get(job.groupId).stop()
+    } else {
+      spark.sparkContext.cancelJobGroup(groupId)
+    }
     groupIdToStringproJobInfo.remove(groupId)
   }
 

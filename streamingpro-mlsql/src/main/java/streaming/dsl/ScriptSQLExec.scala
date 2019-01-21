@@ -47,7 +47,7 @@ object ScriptSQLExec extends Logging with WowLog {
   def contextGetOrForTest(): MLSQLExecuteContext = {
     if (context() == null) {
       val exec = new ScriptSQLExecListener(null, "/tmp/william", Map())
-      setContext(new MLSQLExecuteContext("testUser", exec.pathPrefix(None), Map()))
+      setContext(new MLSQLExecuteContext("testUser", exec.pathPrefix(None), "", Map()))
     }
     context()
   }
@@ -325,7 +325,7 @@ object ConnectMeta {
   }
 }
 
-case class MLSQLExecuteContext(owner: String, home: String, userDefinedParam: Map[String, String] = Map())
+case class MLSQLExecuteContext(owner: String, home: String, groupId: String, userDefinedParam: Map[String, String] = Map())
 
 case class DBMappingKey(format: String, db: String)
 
