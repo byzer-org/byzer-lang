@@ -28,7 +28,6 @@ import org.apache.http.HttpVersion
 import org.apache.http.client.fluent.{Form, Request}
 import org.apache.http.util.EntityUtils
 import org.apache.spark.sql.SparkSession
-import streaming.common.shell.ShellCommand
 import streaming.dsl.{MLSQLExecuteContext, ScriptSQLExec, ScriptSQLExecListener}
 
 /**
@@ -64,9 +63,24 @@ trait SpecFunctions {
     }
   }
 
-  def createSSEL(implicit spark: SparkSession, defaultPathPrefix: String = "/tmp/william") = {
-    ScriptSQLExec.setContext(new MLSQLExecuteContext("william", "/tmp/william", Map()))
+  def createSSEL(implicit spark: SparkSession, defaultPathPrefix: String = "/tmp/william", groupId: String = "-") = {
+    StreamingproJobManager.initForTest(spark)
+    StreamingproJobManager.addJobManually(StreamingproJobInfo(
+      "william", StreamingproJobType.SCRIPT, "", "", groupId, System.currentTimeMillis(), -1
+    ))
+    ScriptSQLExec.setContext(new MLSQLExecuteContext("william", "/tmp/william", groupId, Map()))
     val context = new ScriptSQLExecListener(spark, defaultPathPrefix, Map())
+    context.addEnv("HOME", context.pathPrefix(None))
+    context
+  }
+
+  def createSSELWithJob(spark: SparkSession, jobName: String, groupId: String) = {
+    StreamingproJobManager.initForTest(spark)
+    StreamingproJobManager.addJobManually(StreamingproJobInfo(
+      "william", StreamingproJobType.SCRIPT, "", "", groupId, System.currentTimeMillis(), -1
+    ))
+    ScriptSQLExec.setContext(new MLSQLExecuteContext("william", "/tmp/william", groupId, Map()))
+    val context = new ScriptSQLExecListener(spark, "/tmp/william", Map())
     context.addEnv("HOME", context.pathPrefix(None))
     context
   }

@@ -108,7 +108,7 @@ class PythonMLSpec2 extends BasicSparkOperation with SpecFunctions with BasicMLS
 
       // api predict
       def request = {
-        StreamingproJobManager.init(spark.sparkContext)
+        StreamingproJobManager.init(spark)
         val controller = new BaseControllerTest()
 
         val response = controller.get("/model/predict", WowCollections.map(

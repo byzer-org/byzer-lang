@@ -32,7 +32,6 @@ class Stream2Spec extends BasicSparkOperation with SpecFunctions with BasicMLSQL
       //执行sql
       implicit val spark = runtime.sparkSession
       ShellCommand.execCmd("rm -rf /tmp/cpl3")
-
       new Thread(new Runnable {
         override def run(): Unit = {
           var count = 20

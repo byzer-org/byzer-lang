@@ -108,7 +108,7 @@ class RestController extends ApplicationController {
       if (paramAsBoolean("async", false)) {
         StreamingproJobManager.asyncRun(sparkSession, jobInfo, () => {
           try {
-            val context = createScriptSQLExecListener(sparkSession)
+            val context = createScriptSQLExecListener(sparkSession, jobInfo.groupId)
             ScriptSQLExec.parse(param("sql"), context, paramAsBoolean("skipInclude", false), paramAsBoolean("skipAuth", true))
             htp.get(new Url(param("callback")), Map("stat" -> s"""success"""))
           } catch {
@@ -119,7 +119,7 @@ class RestController extends ApplicationController {
         })
       } else {
         StreamingproJobManager.run(sparkSession, jobInfo, () => {
-          val context = createScriptSQLExecListener(sparkSession)
+          val context = createScriptSQLExecListener(sparkSession, jobInfo.groupId)
           ScriptSQLExec.parse(param("sql"), context, paramAsBoolean("skipInclude", false), paramAsBoolean("skipAuth", true))
           if (!silence) {
             outputResult = context.getLastSelectTable() match {
@@ -139,14 +139,14 @@ class RestController extends ApplicationController {
     render(outputResult)
   }
 
-  private def createScriptSQLExecListener(sparkSession: SparkSession) = {
+  private def createScriptSQLExecListener(sparkSession: SparkSession, groupId: String) = {
 
     val allPathPrefix = fromJson(param("allPathPrefix", "{}"), classOf[Map[String, String]])
     val defaultPathPrefix = param("defaultPathPrefix", "")
     val context = new ScriptSQLExecListener(sparkSession, defaultPathPrefix, allPathPrefix)
     val ownerOption = if (params.containsKey("owner")) Some(param("owner")) else None
     val userDefineParams = params.toMap.filter(f => f._1.startsWith("context.")).map(f => (f._1.substring("context.".length), f._2)).toMap
-    ScriptSQLExec.setContext(new MLSQLExecuteContext(param("owner"), context.pathPrefix(None), userDefineParams))
+    ScriptSQLExec.setContext(new MLSQLExecuteContext(param("owner"), context.pathPrefix(None), groupId, userDefineParams))
     context.addEnv("HOME", context.pathPrefix(None))
     context.addEnv("OWNER", ownerOption.getOrElse("anonymous"))
     context

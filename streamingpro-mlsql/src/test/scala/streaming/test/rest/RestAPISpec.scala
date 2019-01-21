@@ -39,7 +39,7 @@ class RestAPISpec extends BasicSparkOperation with SpecFunctions with BasicMLSQL
       implicit val spark = runtime.sparkSession
       mockServer
 
-      StreamingproJobManager.init(spark.sparkContext)
+      StreamingproJobManager.init(spark)
       val controller = new BaseControllerTest()
 
       val response = controller.get("/run/script", WowCollections.map(
@@ -57,7 +57,7 @@ class RestAPISpec extends BasicSparkOperation with SpecFunctions with BasicMLSQL
       implicit val spark = runtime.sparkSession
       mockServer
 
-      StreamingproJobManager.init(spark.sparkContext)
+      StreamingproJobManager.init(spark)
       val controller = new BaseControllerTest()
 
       val path = this.getClass().getClassLoader().getResource("").getPath()

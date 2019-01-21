@@ -47,7 +47,7 @@ class MLSQLCompositor[T] extends Compositor[T] with CompositorHelper {
 
 
   override def result(alg: util.List[Processor[T]], ref: util.List[Strategy[T]], middleResult: util.List[T], params: util.Map[Any, Any]): util.List[T] = {
-    StreamingproJobManager.init(sparkSession(params).sparkContext)
+    StreamingproJobManager.init(sparkSession(params))
     require(sql.isDefined, "please set sql  by variable `sql` in config file")
 
     val _sql = translateSQL(sql.get, params)
