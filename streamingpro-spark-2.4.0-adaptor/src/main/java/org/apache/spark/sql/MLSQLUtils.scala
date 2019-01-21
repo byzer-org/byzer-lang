@@ -19,4 +19,8 @@ object MLSQLUtils {
     Utils.localCanonicalHostName()
   }
 
+  def getAppStatusStore(sparkSession: SparkSession) = {
+    sparkSession.sparkContext.statusStore
+  }
+
 }
