@@ -63,7 +63,7 @@
            * [如何发送邮件](process/estimator_transformer/SendMessage.md) 
            * [如何缓存表](process/estimator_transformer/CacheExt.md)   
     
-    * [任务管理](jobs/README.md)
+    * [任务/资源管理](jobs/README.md)
         * [查看正在任务列表](jobs/list_jobs.md)
         * [取消正在运行任务](jobs/cancel_job.md)
     

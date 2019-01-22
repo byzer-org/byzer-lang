@@ -27,3 +27,15 @@ case class MLSQLScriptJob(
                            val numSkippedStages: Int,
                            val numFailedStages: Int
                          )
+
+case class MLSQLResourceRender(
+                                currentJobGroupActiveTasks: Int,
+                                activeTasks: Int,
+                                failedTasks: Int,
+                                completedTasks: Int,
+                                totalTasks: Int,
+                                taskTime: Double,
+                                gcTime: Double,
+                                activeExecutorNum: Int,
+                                totalCores: Int
+                              )
