@@ -70,7 +70,15 @@ class SetAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapto
       case Some("shell") =>
         value = ShellCommand.execSimpleCommand(evaluate(command)).trim
       case Some("conf") =>
-        scriptSQLExecListener.sparkSession.sql(s""" set ${key} = ${original_command} """)
+        key match {
+          case "spark.scheduler.pool" =>
+            scriptSQLExecListener.sparkSession
+              .sqlContext
+              .sparkContext
+              .setLocalProperty(key, original_command)
+          case _ =>
+            scriptSQLExecListener.sparkSession.sql(s""" set ${key} = ${original_command} """)
+        }
       case Some("defaultParam") =>
         overwrite = false
       case _ =>
