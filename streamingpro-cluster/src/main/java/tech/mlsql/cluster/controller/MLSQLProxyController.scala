@@ -70,6 +70,9 @@ class MLSQLProxyController extends ApplicationController {
   ))
   @At(path = Array("/run/script"), types = Array(GET, POST))
   def runScript = {
+    if (!hasParam("tags") || param("tags", "").isEmpty) {
+      throw new RuntimeException("tags is required")
+    }
     val tags = param("tags", "")
     //FreeCoreBackendStrategy|TaskLessBackendStrategy
     val proxyStrategy = param("proxyStrategy", "JobNumAwareStrategy")
