@@ -131,7 +131,9 @@ object MLMapping {
     "ScalaScriptUDF" -> "streaming.dsl.mmlib.algs.ScriptUDF",
     "ScriptUDF" -> "streaming.dsl.mmlib.algs.ScriptUDF",
     "MapValues" -> "streaming.dsl.mmlib.algs.SQLMapValues",
-    "ExternalPythonAlg" -> "streaming.dsl.mmlib.algs.SQLExternalPythonAlg"
+    "ExternalPythonAlg" -> "streaming.dsl.mmlib.algs.SQLExternalPythonAlg",
+    "Kill" -> "streaming.dsl.mmlib.algs.SQLMLSQLJobExt"
+
   )
 
   def findAlg(name: String) = {

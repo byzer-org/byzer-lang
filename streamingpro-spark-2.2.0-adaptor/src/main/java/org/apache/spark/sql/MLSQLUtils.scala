@@ -19,4 +19,11 @@ object MLSQLUtils {
     Utils.localHostName()
   }
 
+  def getAppStatusStore(sparkSession: SparkSession) = {
+    sparkSession.sparkContext.jobProgressListener
+  }
+
+  def getExecutorAllocationManager(sparkSession: SparkSession) = {
+    sparkSession.sparkContext.ui.get.executorsListener
+  }
 }

@@ -1,8 +1,9 @@
 package streaming.core.datasource.impl
 
 import org.apache.spark.sql.{DataFrame, DataFrameReader}
+import streaming.core.StreamingproJobInfo
 import streaming.core.datasource._
-import streaming.core.{StreamingproJobInfo, StreamingproJobManager}
+import streaming.core.datasource.util.MLSQLJobCollect
 import streaming.dsl.ScriptSQLExec
 
 /**
@@ -12,13 +13,21 @@ class MLSQLSystemTables extends MLSQLSource with MLSQLSourceInfo with MLSQLRegis
 
   override def load(reader: DataFrameReader, config: DataSourceConfig): DataFrame = {
     val owner = ScriptSQLExec.contextGetOrForTest().owner
-    config.path match {
-      case "jobs" =>
-        val infoMap = StreamingproJobManager.getJobInfo
-        val spark = config.df.get.sparkSession
-        val data = infoMap.toSeq.map(_._2).filter(_.owner == owner)
-        import spark.implicits._
-        spark.createDataset[StreamingproJobInfo](data).toDF()
+    val spark = config.df.get.sparkSession
+    import spark.implicits._
+
+    val jobCollect = new MLSQLJobCollect(spark, owner)
+    config.path.split("/") match {
+      case Array("jobs") =>
+        spark.createDataset[StreamingproJobInfo](jobCollect.jobs).toDF()
+      case Array("jobs", jobGroupId) =>
+        spark.createDataset(Seq(jobCollect.jobDetail(jobGroupId))).toDF()
+      case Array("resource") =>
+        spark.createDataset(Seq(jobCollect.resourceSummary(null))).toDF()
+      case Array("resource", jobGroupId) =>
+        val detail = jobCollect.jobDetail(jobGroupId)
+        detail.activeJobs.map(_.numActiveTasks)
+        spark.createDataset(Seq(jobCollect.resourceSummary(jobGroupId))).toDF()
     }
 
   }

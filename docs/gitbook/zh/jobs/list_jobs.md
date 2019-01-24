@@ -14,3 +14,27 @@ owner                   jobType jobName                                 jobConte
 allwefantasy@gmail.com	script	2595b404-c54c-436a-9cb7-ccd33438bc36	load _mlsql_.`jobs` as output;	23	                     1547194894263	-1
 ```
 
+获取某个任务详细情况：
+
+```sql
+load _mlsql_.`job/2595b404-c54c-436a-9cb7-ccd33438bc36` as output;
+```
+
+
+获取当前资源总体情况:
+
+```sql
+load _mlsql_.`resource` as output;
+```
+
+获取某个任务详细资源情况：
+
+```sql
+load _mlsql_.`resource/2595b404-c54c-436a-9cb7-ccd33438bc36` as output;
+```
+
+> groupId,jobName 都可以做为任务的唯一标识
+
+
+
+

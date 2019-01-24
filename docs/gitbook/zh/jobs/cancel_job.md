@@ -5,6 +5,8 @@
 具体取消的方式为：
 
 ```sql
-select 1 as a as EMPTY_TABLE;
-run EMPTY_TABLE as MLSQLJobExt.`` where groupId="23"; 
+run command as Kill.`23`; 
 ```
+
+> groupId,jobName 都可以做为任务的唯一标识
+

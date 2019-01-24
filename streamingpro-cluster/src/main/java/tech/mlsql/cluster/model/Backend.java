@@ -63,7 +63,7 @@ public class Backend extends Model {
     private String name;
     private Integer ecsResourcePoolId;
 
-    public int getEcsResourcePoolId() {
+    public Integer getEcsResourcePoolId() {
         return ecsResourcePoolId;
     }
 
