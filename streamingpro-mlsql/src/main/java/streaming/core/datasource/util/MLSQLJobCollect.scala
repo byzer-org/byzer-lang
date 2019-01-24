@@ -1,12 +1,8 @@
 package streaming.core.datasource.util
 
-import org.apache.spark.JobExecutionStatus
 import org.apache.spark.sql.{MLSQLUtils, SparkSession}
-import org.apache.spark.status.api.v1
 import streaming.core.StreamingproJobManager
 import streaming.core.output.protocal.{MLSQLResourceRender, MLSQLScriptJob, MLSQLScriptJobGroup}
-
-import scala.collection.mutable.{Buffer, ListBuffer}
 
 /**
   * 2019-01-22 WilliamZhu(allwefantasy@gmail.com)
@@ -26,28 +22,33 @@ class MLSQLJobCollect(spark: SparkSession, owner: String) {
   }
 
   def resourceSummary(jobGroupId: String) = {
-    val store = MLSQLUtils.getAppStatusStore(spark)
-    val executorList = store.executorList(true)
-    val activeJobs = store.jobsList(null).filter(f => f.status == JobExecutionStatus.RUNNING)
+    val store = MLSQLUtils.getExecutorAllocationManager(spark)
+    val listener = MLSQLUtils.getAppStatusStore(spark)
+    val executorList = store.executorToTaskSummary.values.toSeq
+    val activeJobs = listener.activeJobs
 
     val finalJobGroupId = getGroupId(jobGroupId)
 
-    def getNumActiveTaskByJob(job: v1.JobData) = {
-      val (activeStages, completedStages, failedStages) = fetchStageByJob(job)
-      activeStages.map(f => f.numActiveTasks).sum
+    def getNumActiveTaskByJob(stageIds: Set[Int]) = {
+      val (activeStages, completedStages, failedStages) = fetchStageByJob(stageIds)
+      activeStages.map(f => listener.stageIdToData(f.stageId, f.attemptId).numActiveTasks).sum
     }
 
-    val currentJobGroupActiveTasks = if (jobGroupId == null) activeJobs.map(getNumActiveTaskByJob).sum
-    else activeJobs.filter(f => f.jobGroup.get == finalJobGroupId).map(getNumActiveTaskByJob).sum
+    val currentJobGroupActiveTasks = if (jobGroupId == null) activeJobs.map { f =>
+      getNumActiveTaskByJob(f._2.stageIds.toSet)
+    }.sum
+    else activeJobs.filter(f => f._2.jobGroup.get == finalJobGroupId).map { f =>
+      getNumActiveTaskByJob(f._2.stageIds.toSet)
+    }.sum
 
     MLSQLResourceRender(
       currentJobGroupActiveTasks = currentJobGroupActiveTasks,
-      activeTasks = executorList.map(_.activeTasks).sum,
-      failedTasks = executorList.map(_.failedTasks).sum,
-      completedTasks = executorList.map(_.completedTasks).sum,
-      totalTasks = executorList.map(_.totalTasks).sum,
-      taskTime = executorList.map(_.totalDuration).sum,
-      gcTime = executorList.map(_.totalGCTime).sum,
+      activeTasks = executorList.map(_.tasksActive).sum,
+      failedTasks = executorList.map(_.tasksFailed).sum,
+      completedTasks = executorList.map(_.tasksComplete).sum,
+      totalTasks = executorList.map(_.tasksMax).sum,
+      taskTime = executorList.map(_.duration).sum,
+      gcTime = executorList.map(_.jvmGCTime).sum,
       activeExecutorNum = executorList.size,
       totalCores = executorList.map(_.totalCores).sum
     )
@@ -55,76 +56,46 @@ class MLSQLJobCollect(spark: SparkSession, owner: String) {
 
   }
 
-  def fetchStageByJob(f: v1.JobData) = {
-    val store = MLSQLUtils.getAppStatusStore(spark)
-    val stages = f.stageIds.map { stageId =>
-      // This could be empty if the listener hasn't received information about the
-      // stage or if the stage information has been garbage collected
-      store.asOption(store.lastStageAttempt(stageId)).getOrElse {
-        MLSQLUtils.createStage(stageId)
-      }
-    }
-
-    val activeStages = Buffer[v1.StageData]()
-    val completedStages = Buffer[v1.StageData]()
-    // If the job is completed, then any pending stages are displayed as "skipped":
-    val pendingOrSkippedStages = Buffer[v1.StageData]()
-    val failedStages = Buffer[v1.StageData]()
-    for (stage <- stages) {
-      if (stage.submissionTime.isEmpty) {
-        pendingOrSkippedStages += stage
-      } else if (stage.completionTime.isDefined) {
-        if (stage.status == v1.StageStatus.FAILED) {
-          failedStages += stage
-        } else {
-          completedStages += stage
-        }
-      } else {
-        activeStages += stage
-      }
-    }
+  def fetchStageByJob(stageIds: Set[Int]) = {
+    val listener = MLSQLUtils.getAppStatusStore(spark)
+    val activeStages = listener.activeStages.values.filter(f => stageIds.contains(f.stageId)).toSeq
+    val completedStages = listener.completedStages.filter(f => stageIds.contains(f.stageId)).reverse
+    val failedStages = listener.failedStages.filter(f => stageIds.contains(f.stageId)).reverse
     (activeStages, completedStages, failedStages)
   }
 
   def jobDetail(jobGroupId: String) = {
-    val store = MLSQLUtils.getAppStatusStore(spark)
-    val appInfo = store.applicationInfo()
-    val startTime = appInfo.attempts.head.startTime.getTime()
-    val endTime = appInfo.attempts.head.endTime.getTime()
+    val listener = MLSQLUtils.getAppStatusStore(spark)
+    val startTime = listener.startTime
+    val endTime = listener.endTime
 
     val finalJobGroupId = getGroupId(jobGroupId)
 
-    val activeJobs = new ListBuffer[v1.JobData]()
-    val completedJobs = new ListBuffer[v1.JobData]()
-    val failedJobs = new ListBuffer[v1.JobData]()
-    store.jobsList(null).filter(f => f.jobGroup.get == finalJobGroupId).foreach { job =>
-      job.status match {
-        case JobExecutionStatus.SUCCEEDED =>
-          completedJobs += job
-        case JobExecutionStatus.FAILED =>
-          failedJobs += job
-        case _ =>
-          activeJobs += job
-      }
-    }
+    val activeJobs = listener.activeJobs.values.toSeq
+    val completedJobs = listener.completedJobs.reverse
+    val failedJobs = listener.failedJobs.reverse
+
 
     val mlsqlActiveJobs = activeJobs.map { f =>
 
-      val (activeStages, completedStages, failedStages) = fetchStageByJob(f)
+
+      val (activeStages, completedStages, failedStages) = fetchStageByJob(f.stageIds.toSet)
+
+      val activeTasks = activeStages.map(f => listener.stageIdToData(f.stageId, f.attemptId).numActiveTasks).sum
 
       MLSQLScriptJob(
         f.jobId,
-        f.submissionTime.map(date => new java.sql.Date(date.getTime())),
-        f.completionTime.map(date => new java.sql.Date(date.getTime())),
+        f.submissionTime.map(date => new java.sql.Date(date)),
+        f.completionTime.map(date => new java.sql.Date(date)),
         f.numTasks,
-        activeStages.map(f => f.numActiveTasks).sum,
+        f.numActiveTasks,
         f.numCompletedTasks,
         f.numSkippedTasks,
         f.numFailedTasks,
-        f.numKilledTasks,
-        f.numCompletedIndices,
+        0,
+        0,
         f.numActiveStages,
-        f.numCompletedStages,
+        0,
         f.numSkippedStages,
         f.numFailedStages
       )
