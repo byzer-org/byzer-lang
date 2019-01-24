@@ -151,9 +151,7 @@
             
     * [如何执行初始化脚本](application/README.md)            
         
-    * [管理多个MLSQL实例]()
-        * [MLSQL-Cluster设计和原理]()
-        * [MLSQL-Cluster部署]()
+    * [管理多个MLSQL实例](cluster/README.md)        
         
 
 * 开发者指南
