@@ -658,5 +658,72 @@ class ScriptUDFSuite extends BasicSparkOperation with SpecFunctions with BasicML
     }
   }
 
+  "test scala script function with empty parameters (MLSQL-930)" should "work fine" in {
+    withBatchContext(setupBatchContext(batchParamsWithoutHive)) { runtime: SparkRuntime =>
+      implicit val spark = runtime.sparkSession
+      var sq = createSSEL
+      ScriptSQLExec.parse(
+        """
+          |  set echoFun='''
+          |  def apply() = {
+          |    11
+          |  }
+          |  ''';
+          |
+          |  load script.`echoFun` as scriptTable;
+          |
+          |  register ScriptUDF.`scriptTable` as funx
+          |  ;
+          |
+          |  -- create a data table.
+          |  set data='''
+          |  {"a":"a"}
+          |  ''';
+          |  load jsonStr.`data` as dataTable;
+          |
+          |  select funx() as res from dataTable as output;
+          |
+        """.stripMargin, sq)
 
+      val result = runtime.sparkSession.sql("select * from output").collect()
+      assert(result.size == 1)
+      assert(result.head.getAs[Int]("res") == 11)
+    }
+  }
+
+  "test java script function with empty parameters (MLSQL-930)" should "work fine" in {
+    withBatchContext(setupBatchContext(batchParamsWithoutHive)) { runtime: SparkRuntime =>
+      implicit val spark = runtime.sparkSession
+      var sq = createSSEL
+      ScriptSQLExec.parse(
+        """
+          |  set echoFun='''
+          |  public class UDF {
+          |      public String apply() {
+          |        return "a";
+          |    }
+          |  }
+          |  ''';
+          |
+          |  load script.`echoFun` as scriptTable;
+          |
+        |  register ScriptUDF.`scriptTable` as funx
+          |  options lang="java"
+          |  ;
+          |
+          |  -- create a data table.
+          |  set data='''
+          |  {"a":"a"}
+          |  ''';
+          |  load jsonStr.`data` as dataTable;
+          |
+          |  select funx() as res from dataTable as output;
+          |
+        """.stripMargin, sq)
+
+      val result = runtime.sparkSession.sql("select * from output").collect()
+      assert(result.size == 1)
+      assert(result.head.getAs[String]("res") == "a")
+    }
+  }
 }

@@ -75,7 +75,7 @@ trait RuntimeCompileUDF extends RuntimeCompileScriptInterface[AnyRef] {
       case 0 => new Function0[Any] with Serializable {
         override def apply(): Any = {
           wrap(() => {
-            invokeFunction
+            invokeFunction(Seq())
           })
         }
       }
