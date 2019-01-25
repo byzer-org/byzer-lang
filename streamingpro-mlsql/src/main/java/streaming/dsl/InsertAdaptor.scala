@@ -19,6 +19,7 @@
 package streaming.dsl
 
 import org.antlr.v4.runtime.misc.Interval
+import org.apache.spark.SparkCoreVersion
 import streaming.dsl.parser.DSLSQLLexer
 import streaming.dsl.parser.DSLSQLParser.SqlContext
 import streaming.dsl.template.TemplateMerge
@@ -34,7 +35,12 @@ class InsertAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAda
     val interval = new Interval(start, stop)
     val originalText = input.getText(interval)
     val sql = TemplateMerge.merge(originalText, scriptSQLExecListener.env().toMap)
-    scriptSQLExecListener.sparkSession.sql(sql).count()
+    if (SparkCoreVersion.is_2_2_X()) {
+      scriptSQLExecListener.sparkSession.sql(sql).count()
+    } else {
+      scriptSQLExecListener.sparkSession.sql(sql)
+    }
+
     scriptSQLExecListener.setLastSelectTable(null)
   }
 }
