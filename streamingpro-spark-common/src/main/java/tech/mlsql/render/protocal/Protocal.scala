@@ -1,8 +1,7 @@
-package streaming.core.output.protocal
-
+package tech.mlsql.render.protocal
 
 /**
-  * 2019-01-21 WilliamZhu(allwefantasy@gmail.com)
+  * 2019-01-28 WilliamZhu(allwefantasy@gmail.com)
   */
 case class MLSQLScriptJobGroup(groupId: String,
                                activeJobsNum: Int,
