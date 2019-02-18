@@ -18,8 +18,7 @@
 
 package streaming.common
 
-import java.io.{BufferedReader, ByteArrayOutputStream, File, InputStreamReader}
-import java.net.URI
+import java.io.{FileSystem => _, _}
 
 import org.apache.commons.io.FileUtils
 import org.apache.hadoop.conf.Configuration
@@ -27,7 +26,6 @@ import org.apache.hadoop.fs._
 import org.apache.hadoop.io.IOUtils
 
 import scala.collection.mutable.ArrayBuffer
-import scala.collection.JavaConversions._
 
 /**
   * 5/5/16 WilliamZhu(allwefantasy@gmail.com)
@@ -88,6 +86,34 @@ object HDFSOperator {
       }
       dos = fs.create(new Path(new java.io.File(path, fileName).getPath), true)
       dos.write(bytes)
+    } catch {
+      case ex: Exception =>
+        println("file save exception")
+    } finally {
+      if (null != dos) {
+        try {
+          dos.close()
+        } catch {
+          case ex: Exception =>
+            println("close exception")
+        }
+        dos.close()
+      }
+    }
+
+  }
+
+  def saveStream(path: String, fileName: String, inputStream: InputStream) = {
+
+    var dos: FSDataOutputStream = null
+    try {
+
+      val fs = FileSystem.get(new Configuration())
+      if (!fs.exists(new Path(path))) {
+        fs.mkdirs(new Path(path))
+      }
+      dos = fs.create(new Path(new java.io.File(path, fileName).getPath), true)
+      IOUtils.copyBytes(inputStream, dos, 4 * 1024 * 1024)
     } catch {
       case ex: Exception =>
         println("file save exception")
