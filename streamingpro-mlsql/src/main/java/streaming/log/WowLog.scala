@@ -26,9 +26,10 @@ import streaming.dsl.ScriptSQLExec
 trait WowLog {
   def format(msg: String) = {
     if (ScriptSQLExec.context() != null) {
-      s"""[owner] [${ScriptSQLExec.context().owner}] $msg"""
+      val context = ScriptSQLExec.context()
+      s"""[owner] [${context.owner}] [groupId] [${context.groupId}] $msg"""
     } else {
-      s"""[owner] [null] $msg"""
+      s"""[owner] [null] [groupId] [null] $msg"""
     }
 
   }

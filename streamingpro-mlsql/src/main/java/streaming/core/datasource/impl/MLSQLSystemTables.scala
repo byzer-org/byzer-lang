@@ -22,6 +22,8 @@ class MLSQLSystemTables extends MLSQLSource with MLSQLSourceInfo with MLSQLRegis
         spark.createDataset[StreamingproJobInfo](jobCollect.jobs).toDF()
       case Array("jobs", jobGroupId) =>
         spark.createDataset(Seq(jobCollect.jobDetail(jobGroupId))).toDF()
+      case Array("progress", jobGroupId) =>
+        spark.createDataset(jobCollect.jobProgress(jobGroupId)).toDF()
       case Array("resource") =>
         spark.createDataset(Seq(jobCollect.resourceSummary(null))).toDF()
       case Array("resource", jobGroupId) =>

@@ -10,12 +10,17 @@ class MLSQLExcel extends MLSQLSource with MLSQLSink with MLSQLSourceInfo with ML
   override def load(reader: DataFrameReader, config: DataSourceConfig): DataFrame = {
     val format = config.config.getOrElse("implClass", fullFormat)
 
-    reader.options(config.config).format(format).load(config.path)
+    reader.options(rewriteConfig(config.config)).format(format).load(config.path)
   }
 
   override def save(writer: DataFrameWriter[Row], config: DataSinkConfig): Unit = {
     val format = config.config.getOrElse("implClass", fullFormat)
-    writer.options(config.config).format(format).save(config.path)
+
+    writer.options(rewriteConfig(config.config)).format(format).save(config.path)
+  }
+
+  def rewriteConfig(config: Map[String, String]) = {
+    config ++ Map("useHeader" -> config.getOrElse("useHeader", "false"))
   }
 
   override def sourceInfo(config: DataAuthConfig): SourceInfo = SourceInfo(shortFormat, "", "")
