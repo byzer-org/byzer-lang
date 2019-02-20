@@ -10,7 +10,7 @@ import streaming.core.StreamingproJobManager
   */
 class MLSQLJobCollect(spark: SparkSession, owner: String) {
   val resource = new MLSQLResource(spark, owner, getGroupId)
-  
+
   def jobs = {
     val infoMap = StreamingproJobManager.getJobInfo
     val data = infoMap.toSeq.map(_._2).filter(_.owner == owner)
@@ -31,5 +31,17 @@ class MLSQLJobCollect(spark: SparkSession, owner: String) {
 
   def jobDetail(jobGroupId: String) = {
     resource.jobDetail(jobGroupId)
+  }
+
+  def jobProgress(jobGroupId: String) = {
+    val finalJobGroupId = getGroupId(jobGroupId)
+    val stream = spark.streams.get(finalJobGroupId)
+    if (stream != null) {
+      stream.recentProgress.map { f =>
+        f.json
+      }
+    } else {
+      Array[String]()
+    }
   }
 }
