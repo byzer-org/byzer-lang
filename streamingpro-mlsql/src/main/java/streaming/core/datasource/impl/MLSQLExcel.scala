@@ -9,14 +9,13 @@ import streaming.core.datasource._
 class MLSQLExcel extends MLSQLSource with MLSQLSink with MLSQLSourceInfo with MLSQLRegistry {
   override def load(reader: DataFrameReader, config: DataSourceConfig): DataFrame = {
     val format = config.config.getOrElse("implClass", fullFormat)
-
-    reader.options(rewriteConfig(config.config)).format(format).load(config.path)
+    reader.options(rewriteConfig(config.config)).format(format).load(config.config("_filePath_"))
   }
 
   override def save(writer: DataFrameWriter[Row], config: DataSinkConfig): Unit = {
     val format = config.config.getOrElse("implClass", fullFormat)
 
-    writer.options(rewriteConfig(config.config)).format(format).save(config.path)
+    writer.options(rewriteConfig(config.config)).format(format).save(config.config("_filePath_"))
   }
 
   def rewriteConfig(config: Map[String, String]) = {
