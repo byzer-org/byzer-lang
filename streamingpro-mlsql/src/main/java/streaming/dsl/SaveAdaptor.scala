@@ -51,6 +51,7 @@ class SaveAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
     var partitionByCol = ArrayBuffer[String]()
 
     val owner = option.get("owner")
+    var path = ""
 
     (0 to ctx.getChildCount() - 1).foreach { tokenIndex =>
       ctx.getChild(tokenIndex) match {
@@ -64,6 +65,7 @@ class SaveAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
 
 
         case s: PathContext =>
+          path = cleanStr(s.getText)
           format match {
             case "hive" | "kafka8" | "kafka9" | "hbase" | "redis" | "es" | "jdbc" =>
               final_path = cleanStr(s.getText)
@@ -114,6 +116,7 @@ class SaveAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
     }
 
     var streamQuery: StreamingQuery = null
+    option = option ++ Map("_filePath_" -> TemplateMerge.merge(withPathPrefix(scriptSQLExecListener.pathPrefix(owner), cleanStr(path)), scriptSQLExecListener.env().toMap))
     if (scriptSQLExecListener.env().contains("stream")) {
       streamQuery = new StreamSaveAdaptor(scriptSQLExecListener, option, oldDF, final_path, tableName, format, mode, partitionByCol.toArray).parse
     } else {
@@ -150,10 +153,12 @@ class BatchSaveAdaptor(val scriptSQLExecListener: ScriptSQLExecListener,
     if (option.contains("fileNum")) {
       oldDF = oldDF.repartition(option.getOrElse("fileNum", "").toString.toInt)
     }
-    var writer = oldDF.write
+    var writer = oldDF.write.mode(mode).partitionBy(partitionByCol: _*)
+
     DataSourceRegistry.fetch(format, option).map { datasource =>
       datasource.asInstanceOf[ {def save(writer: DataFrameWriter[Row], config: DataSinkConfig): Unit}].save(
         writer,
+        // here we should change final_path to path in future
         DataSinkConfig(final_path, option ++ Map("partitionByCol" -> partitionByCol.mkString(",")),
           mode, Option(oldDF)))
     }.getOrElse {

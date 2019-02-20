@@ -84,6 +84,8 @@ class BatchLoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener,
     path = TemplateMerge.merge(path, scriptSQLExecListener.env().toMap)
     val resourceOwner = option.get("owner")
 
+    // calculate resource real absolute path
+    val filePath = resourceRealPath(scriptSQLExecListener, resourceOwner, path)
 
     DataSourceRegistry.fetch(format, option).map { datasource =>
       def emptyDataFrame = {
@@ -92,7 +94,7 @@ class BatchLoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener,
       }
 
       table = datasource.asInstanceOf[ {def load(reader: DataFrameReader, config: DataSourceConfig): DataFrame}].
-        load(reader, DataSourceConfig(cleanStr(path), option, Option(emptyDataFrame)))
+        load(reader, DataSourceConfig(cleanStr(path), option ++ Map("_filePath_" -> filePath), Option(emptyDataFrame)))
     }.getOrElse {
       format match {
         case "crawlersql" =>
