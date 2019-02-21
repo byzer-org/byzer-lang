@@ -69,6 +69,7 @@ export MLSQL_SLAVE_NUM=${MLSQL_SLAVE_NUM:-1}
 export PYMLSQL_VERSIOIN=${PYMLSQL_VERSIOIN:-1.1.6.3}
 export MLSQL_INIT_SSH_KEY=${MLSQL_INIT_SSH_KEY:-false}
 export PyMLSQL_DOWNLOAD=${PyMLSQL_DOWNLOAD:-git}
+export HDFS_TO_OSS_ENABLE=${HDFS_TO_OSS_ENABLE:-true}
 
 export MLSQL_TAR="mlsql-spark_${MLSQL_SPARK_VERSION}-${MLSQL_VERSION}.tar.gz"
 export MLSQL_NAME="mlsql-spark_${MLSQL_SPARK_VERSION}-${MLSQL_VERSION}"
@@ -149,7 +150,6 @@ if [[ "${PyMLSQL_DOWNLOAD}" == "tar" ]];then
     --source ${PyMLSQL_DOWNLOAD_SOURCE}/PyMLSQL.tar.gz \
     --target /home/webuser
 fi
-
 
 echo "configure auth of the script"
 
@@ -327,6 +327,12 @@ JARS=\$(echo \${MLSQL_HOME}/libs/*.jar | tr ' ' ',')
 if [ -d "/home/webuser/third-party-jars" ]; then
   JARS=\${JARS},\$(echo /home/webuser/third-party-jars/*.jar | tr ' ' ',')
 fi
+
+if [[ "${HDFS_TO_OSS_ENABLE}" == "true" ]];then
+ cp /home/webuser/third-party-jars/core-site.xml \${SPARK_HOME}/conf/
+ cp /home/webuser/third-party-jars/*aliyun* \${SPARK_HOME}/jars/
+fi
+
 
 MAIN_JAR=\$(ls \${MLSQL_HOME}/libs|grep 'streamingpro-mlsql')
 echo \$JARS
