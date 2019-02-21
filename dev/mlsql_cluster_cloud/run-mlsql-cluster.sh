@@ -69,8 +69,8 @@ export MLSQL_SLAVE_NUM=${MLSQL_SLAVE_NUM:-1}
 export PYMLSQL_VERSIOIN=${PYMLSQL_VERSIOIN:-1.1.6.3}
 export MLSQL_INIT_SSH_KEY=${MLSQL_INIT_SSH_KEY:-false}
 
-export MLSQL_TAR="streamingpro-spark_${MLSQL_SPARK_VERSION}-${MLSQL_VERSION}.tar.gz"
-export MLSQL_NAME="streamingpro-spark_${MLSQL_SPARK_VERSION}-${MLSQL_VERSION}"
+export MLSQL_TAR="mlsql-spark_${MLSQL_SPARK_VERSION}-${MLSQL_VERSION}.tar.gz"
+export MLSQL_NAME="mlsql-spark_${MLSQL_SPARK_VERSION}-${MLSQL_VERSION}"
 export SCRIPT_FILE="/tmp/k.sh"
 
 if [[ -z "${OSS_AK}" ]];then
