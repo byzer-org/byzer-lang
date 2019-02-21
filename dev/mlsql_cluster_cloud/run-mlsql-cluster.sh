@@ -181,6 +181,7 @@ if [[ "${PyMLSQL_DOWNLOAD}" == "git" ]];then
     cd PyMLSQL
     rm -rf ./dist && pip uninstall -y pymlsql && python setup.py sdist bdist_wheel && cd ./dist/ && pip install pymlsql-${PYMLSQL_VERSIOIN}-py2.py3-none-any.whl && cd -
 elif [[ "${PyMLSQL_DOWNLOAD}" == "tar" ]];then
+    echo -e "[global]\ntrusted-host = mirrors.cloud.aliyuncs.com\nindex-url = https://mirrors.cloud.aliyuncs.com/pypi/simple" > ~/.pip/pip.conf
     tar xzvf /home/webuser/PyMLSQL.tar.gz
     cd  PyMLSQL
     rm -rf ./dist && pip uninstall -y pymlsql && python setup.py sdist bdist_wheel && cd ./dist/ && pip install pymlsql-${PYMLSQL_VERSIOIN}-py2.py3-none-any.whl && cd -
