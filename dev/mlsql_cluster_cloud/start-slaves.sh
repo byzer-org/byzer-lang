@@ -23,7 +23,7 @@ echo "start spark slave"
 cat << EOF > ${SCRIPT_FILE}
 #!/usr/bin/env bash
 source activate mlsql-3.5
-cd /home/webuser/apps/spark-2.3
+cd /home/webuser/apps/spark-${MLSQL_SPARK_VERSION}
 ./sbin/start-slave.sh spark://${inter_ip}:7077
 EOF
 
