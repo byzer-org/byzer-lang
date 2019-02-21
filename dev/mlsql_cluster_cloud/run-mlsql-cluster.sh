@@ -142,6 +142,12 @@ do
     --target /home/webuser
 done
 
+if [[ "${PyMLSQL_DOWNLOAD}" == "tar" ]];then
+    pymlsql copy-from-local --instance-id ${instance_id} --execute-user root \
+    --source /home/webuser/softwares/PyMLSQL.tar.gz \
+    --target /home/webuser
+fi
+
 
 echo "configure auth of the script"
 
@@ -168,9 +174,13 @@ conda config --set show_channel_urls yes
 mkdir ~/.pip
 echo -e "[global]\ntrusted-host = mirrors.aliyun.com\nindex-url = https://mirrors.aliyun.com/pypi/simple" > ~/.pip/pip.conf
 
-if [[ -z "${PyMLSQL_PIP}" ]];then
+if [[ "${PyMLSQL_DOWNLOAD}" == "git" ]];then
     git clone https://github.com/allwefantasy/PyMLSQL.git
     cd PyMLSQL
+    rm -rf ./dist && pip uninstall -y pymlsql && python setup.py sdist bdist_wheel && cd ./dist/ && pip install pymlsql-${PYMLSQL_VERSIOIN}-py2.py3-none-any.whl && cd -
+elif [[ "${PyMLSQL_DOWNLOAD}" == "tar" ]];then
+    tar xzvf /home/webuser/PyMLSQL.tar.gz
+    cd  PyMLSQL
     rm -rf ./dist && pip uninstall -y pymlsql && python setup.py sdist bdist_wheel && cd ./dist/ && pip install pymlsql-${PYMLSQL_VERSIOIN}-py2.py3-none-any.whl && cd -
 else
     pip install pymlsql
