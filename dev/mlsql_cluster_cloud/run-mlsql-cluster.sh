@@ -68,6 +68,7 @@ export MASTER_WITH_PUBLIC_IP=${MASTER_WITH_PUBLIC_IP:-true}
 export MLSQL_SLAVE_NUM=${MLSQL_SLAVE_NUM:-1}
 export PYMLSQL_VERSIOIN=${PYMLSQL_VERSIOIN:-1.1.6.3}
 export MLSQL_INIT_SSH_KEY=${MLSQL_INIT_SSH_KEY:-false}
+export PyMLSQL_DOWNLOAD=${PyMLSQL_DOWNLOAD:-git}
 
 export MLSQL_TAR="mlsql-spark_${MLSQL_SPARK_VERSION}-${MLSQL_VERSION}.tar.gz"
 export MLSQL_NAME="mlsql-spark_${MLSQL_SPARK_VERSION}-${MLSQL_VERSION}"
@@ -143,8 +144,9 @@ do
 done
 
 if [[ "${PyMLSQL_DOWNLOAD}" == "tar" ]];then
+    export PyMLSQL_DOWNLOAD_SOURCE=${PyMLSQL_DOWNLOAD_SOURCE:-/home/webuser/softwares}
     pymlsql copy-from-local --instance-id ${instance_id} --execute-user root \
-    --source /home/webuser/softwares/PyMLSQL.tar.gz \
+    --source ${PyMLSQL_DOWNLOAD_SOURCE}/PyMLSQL.tar.gz \
     --target /home/webuser
 fi
 
