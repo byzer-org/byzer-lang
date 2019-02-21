@@ -267,7 +267,7 @@ if [[ ! -z "${MLSQL_THIRD_PARTY_JARS}" ]];then
 
     pymlsql copy-from-local --instance-id ${instance_id} --execute-user root \
     --source ${MLSQL_THIRD_PARTY_JARS} \
-    --target /home/webuser/third-party-jars
+    --target /home/webuser
 fi
 
 echo "copy main-jar and third-party-jars to slave"
