@@ -305,7 +305,7 @@ cat << EOF > ${SCRIPT_FILE}
 source activate mlsql-3.5
 cd /home/webuser
 cd ${MLSQL_NAME}
-export SPARK_HOME=/home/webuser/apps/spark-2.3
+export SPARK_HOME=/home/webuser/apps/spark-${MLSQL_SPARK_VERSION}
 export MLSQL_HOME=\`pwd\`
 
 JARS=\$(echo \${MLSQL_HOME}/libs/*.jar | tr ' ' ',')

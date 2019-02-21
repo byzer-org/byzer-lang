@@ -154,3 +154,4 @@ streamingpro-cluster/dev/mlsql-cluster-docker/*.tar.gz
 dev/sync-doc.sh
 docs/gitbook/zh/_book/
 contri/streamingpro-automl/logs/
+/tmp
