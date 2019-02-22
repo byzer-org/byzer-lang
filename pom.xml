@@ -56,6 +56,7 @@
         <module>contri/streamingpro-dl4j</module>
         <module>contri/streamingpro-automl</module>
         <module>contri/streamingpro-opencv</module>
+        <module>streamingpro-oss-dependency</module>
     </modules>
 
     <properties>
@@ -149,71 +150,85 @@
                     <groupId>org.apache.hadoop</groupId>
                     <artifactId>hadoop-hdfs</artifactId>
                     <version>${hadoop-client-version}</version>
+                    <scope>${scope}</scope>
                 </dependency>
                 <dependency>
                     <groupId>org.apache.hadoop</groupId>
                     <artifactId>hadoop-hdfs-client</artifactId>
                     <version>${hadoop-client-version}</version>
+                    <scope>${scope}</scope>
                 </dependency>
                 <dependency>
                     <groupId>org.apache.hadoop</groupId>
                     <artifactId>hadoop-client</artifactId>
                     <version>${hadoop-client-version}</version>
+                    <scope>${scope}</scope>
                 </dependency>
                 <dependency>
                     <groupId>org.apache.hadoop</groupId>
                     <artifactId>hadoop-common</artifactId>
                     <version>${hadoop-client-version}</version>
+                    <scope>${scope}</scope>
                 </dependency>
                 <dependency>
                     <groupId>org.apache.hadoop</groupId>
                     <artifactId>hadoop-auth</artifactId>
                     <version>${hadoop-client-version}</version>
+                    <scope>${scope}</scope>
                 </dependency>
                 <dependency>
                     <groupId>org.apache.hadoop</groupId>
                     <artifactId>hadoop-annotations</artifactId>
                     <version>${hadoop-client-version}</version>
+                    <scope>${scope}</scope>
                 </dependency>
                 <dependency>
                     <groupId>org.apache.hadoop</groupId>
                     <artifactId>hadoop-yarn-api</artifactId>
                     <version>${hadoop-client-version}</version>
+                    <scope>${scope}</scope>
                 </dependency>
                 <dependency>
                     <groupId>org.apache.hadoop</groupId>
                     <artifactId>hadoop-yarn-client</artifactId>
                     <version>${hadoop-client-version}</version>
+                    <scope>${scope}</scope>
                 </dependency>
                 <dependency>
                     <groupId>org.apache.hadoop</groupId>
                     <artifactId>hadoop-yarn-common</artifactId>
                     <version>${hadoop-client-version}</version>
+                    <scope>${scope}</scope>
                 </dependency>
                 <dependency>
                     <groupId>org.apache.hadoop</groupId>
                     <artifactId>hadoop-yarn-server-common</artifactId>
                     <version>${hadoop-client-version}</version>
+                    <scope>${scope}</scope>
                 </dependency>
                 <dependency>
                     <groupId>org.apache.hadoop</groupId>
                     <artifactId>hadoop-mapreduce-client-app</artifactId>
                     <version>${hadoop-client-version}</version>
+                    <scope>${scope}</scope>
                 </dependency>
                 <dependency>
                     <groupId>org.apache.hadoop</groupId>
                     <artifactId>hadoop-mapreduce-client-common</artifactId>
                     <version>${hadoop-client-version}</version>
+                    <scope>${scope}</scope>
                 </dependency>
                 <dependency>
                     <groupId>org.apache.hadoop</groupId>
                     <artifactId>hadoop-mapreduce-client-jobclient</artifactId>
                     <version>${hadoop-client-version}</version>
+                    <scope>${scope}</scope>
                 </dependency>
                 <dependency>
                     <groupId>org.apache.hadoop</groupId>
                     <artifactId>hadoop-mapreduce-client-shuffle</artifactId>
                     <version>${hadoop-client-version}</version>
+                    <scope>${scope}</scope>
                 </dependency>
             </dependencies>
         </profile>
