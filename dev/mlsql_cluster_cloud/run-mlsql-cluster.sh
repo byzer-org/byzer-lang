@@ -334,9 +334,9 @@ if [[ "${HDFS_TO_OSS_ENABLE}" == "true" ]];then
  cp /home/webuser/third-party-jars/hadoop-*.jar \${SPARK_HOME}/jars
  rm /home/webuser/third-party-jars/hadoop-*.jar
 
- for item in stax2-api-3.1.4.jar
+ for item in stax2-api-3.1.4.jar woodstox-core-5.0.3.jar dnsjava-2.1.7.jar
  do
-  cp /home/webuser/third-party-jars/${item} \${SPARK_HOME}/jars
+  mv /home/webuser/third-party-jars/${item} \${SPARK_HOME}/jars
  done
 
 fi
