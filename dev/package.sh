@@ -28,6 +28,7 @@ cd ..
 MLSQL_SPARK_VERSION=${MLSQL_SPARK_VERSION:-2.3}
 DRY_RUN=${DRY_RUN:-false}
 DISTRIBUTION=${DISTRIBUTION:-false}
+OSS_ENABLE=${OSS_ENABLE:-false}
 COMMAND=${COMMAND:-package}
 
 for env in MLSQL_SPARK_VERSION DRY_RUN DISTRIBUTION; do
@@ -75,6 +76,10 @@ fi
 if [[ "${COMMAND}" == "deploy" ]];then
    BASE_PROFILES="$BASE_PROFILES -Prelease-sign-artifacts"
    BASE_PROFILES="$BASE_PROFILES -Pdisable-java8-doclint"
+fi
+
+if [[ "${OSS_ENABLE}" == "true" ]];then
+   BASE_PROFILES="$BASE_PROFILES -Poss-support"
 fi
 
 if [[ ${DRY_RUN} == "true" ]];then

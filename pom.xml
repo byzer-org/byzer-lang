@@ -195,10 +195,29 @@
                     <artifactId>hadoop-yarn-server-common</artifactId>
                     <version>${hadoop-client-version}</version>
                 </dependency>
-
+                <dependency>
+                    <groupId>org.apache.hadoop</groupId>
+                    <artifactId>hadoop-mapreduce-client-app</artifactId>
+                    <version>${hadoop-client-version}</version>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.hadoop</groupId>
+                    <artifactId>hadoop-mapreduce-client-common</artifactId>
+                    <version>${hadoop-client-version}</version>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.hadoop</groupId>
+                    <artifactId>hadoop-mapreduce-client-jobclient</artifactId>
+                    <version>${hadoop-client-version}</version>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.hadoop</groupId>
+                    <artifactId>hadoop-mapreduce-client-shuffle</artifactId>
+                    <version>${hadoop-client-version}</version>
+                </dependency>
             </dependencies>
         </profile>
-        
+
         <profile>
             <id>release-sign-artifacts</id>
             <activation>

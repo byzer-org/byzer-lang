@@ -331,7 +331,7 @@ fi
 
 if [[ "${HDFS_TO_OSS_ENABLE}" == "true" ]];then
  cp /home/webuser/third-party-jars/core-site.xml \${SPARK_HOME}/conf/
- cp /home/webuser/third-party-jars/*aliyun* \${SPARK_HOME}/jars/
+ rm \${SPARK_HOME}/jars/hadoop-*.jar
 fi
 
 
