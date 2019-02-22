@@ -43,7 +43,8 @@ object LocalSparkServiceApp {
       "-streaming.udf.clzznames", "streaming.crawler.udf.Functions",
       "-streaming.driver.port", "9003",
       "-spark.files.maxPartitionBytes", "10485760",
-      "-spark.sql.shuffle.partitions", "1"
+      "-spark.sql.shuffle.partitions", "1",
+      "-spark.hadoop.mapreduce.job.run-local", "true"
 
       //"-streaming.sql.out.path","file:///tmp/test/pdate=20160809"
 
