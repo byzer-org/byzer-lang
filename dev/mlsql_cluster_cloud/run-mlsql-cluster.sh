@@ -323,38 +323,34 @@ cd ${MLSQL_NAME}
 export SPARK_HOME=/home/webuser/apps/spark-${MLSQL_SPARK_VERSION}
 export MLSQL_HOME=\`pwd\`
 
+
+
+MAIN_JAR=\$(ls \${MLSQL_HOME}/libs|grep 'streamingpro-mlsql')
+
+if [[ "${HDFS_TO_OSS_ENABLE}" == "true" ]];then
+ cp /home/webuser/third-party-jars/core-site.xml \${SPARK_HOME}/conf/
+ rm \${SPARK_HOME}/jars/hadoop-*.jar
+
+ cp /home/webuser/third-party-jars/hadoop-*.jar \${SPARK_HOME}/jars
+ rm /home/webuser/third-party-jars/hadoop-*.jar
+
+ for item in stax2-api-3.1.4.jar
+ do
+  cp /home/webuser/third-party-jars/${item} \${SPARK_HOME}/jars
+ done
+
+fi
+
 JARS=\$(echo \${MLSQL_HOME}/libs/*.jar | tr ' ' ',')
 
 if [ -d "/home/webuser/third-party-jars" ]; then
   JARS=\${JARS},\$(echo /home/webuser/third-party-jars/*.jar | tr ' ' ',')
 fi
-
-MAIN_JAR=\$(ls \${MLSQL_HOME}/libs|grep 'streamingpro-mlsql')
 echo \$JARS
 echo \${MAIN_JAR}
 cd \$SPARK_HOME
 
-if [[ "${HDFS_TO_OSS_ENABLE}" == "true" ]];then
- cp /home/webuser/third-party-jars/core-site.xml \${SPARK_HOME}/conf/
- rm \${SPARK_HOME}/jars/hadoop-*.jar
- cd \$SPARK_HOME/jars
-    wget http://central.maven.org/maven2/org/apache/hadoop/hadoop-annotations/3.2.0/hadoop-annotations-3.2.0.jar
-    wget http://central.maven.org/maven2/org/apache/hadoop/hadoop-auth/3.2.0/hadoop-auth-3.2.0.jar
-    wget http://central.maven.org/maven2/org/apache/hadoop/hadoop-client/3.2.0/hadoop-client-3.2.0.jar
-    wget http://central.maven.org/maven2/org/apache/hadoop/hadoop-common/3.2.0/hadoop-common-3.2.0.jar
-    wget http://central.maven.org/maven2/org/apache/hadoop/hadoop-hdfs/3.2.0/hadoop-hdfs-3.2.0.jar
-    wget http://central.maven.org/maven2/org/apache/hadoop/hadoop-mapreduce-client-app/3.2.0/hadoop-mapreduce-client-app-3.2.0.jar
-    wget http://central.maven.org/maven2/org/apache/hadoop/hadoop-mapreduce-client-common/3.2.0/hadoop-mapreduce-client-common-3.2.0.jar
-    wget http://central.maven.org/maven2/org/apache/hadoop/hadoop-mapreduce-client-core/3.2.0/hadoop-mapreduce-client-core-3.2.0.jar
-    wget http://central.maven.org/maven2/org/apache/hadoop/hadoop-mapreduce-client-jobclient/3.2.0/hadoop-mapreduce-client-jobclient-3.2.0.jar
-    wget http://central.maven.org/maven2/org/apache/hadoop/hadoop-mapreduce-client-shuffle/3.2.0/hadoop-mapreduce-client-shuffle-3.2.0.jar
-    wget http://central.maven.org/maven2/org/apache/hadoop/hadoop-yarn-api/3.2.0/hadoop-yarn-api-3.2.0.jar
-    wget http://central.maven.org/maven2/org/apache/hadoop/hadoop-yarn-client/3.2.0/hadoop-yarn-client-3.2.0.jar
-    wget http://central.maven.org/maven2/org/apache/hadoop/hadoop-yarn-common/3.2.0/hadoop-yarn-common-3.2.0.jar
-    wget http://central.maven.org/maven2/org/apache/hadoop/hadoop-yarn-server-common/3.2.0/hadoop-yarn-server-common-3.2.0.jar
-    wget http://central.maven.org/maven2/org/apache/hadoop/hadoop-yarn-server-web-proxy/3.2.0/hadoop-yarn-server-web-proxy-3.2.0.jar
- cd ..
-fi
+
 
 nohup ./bin/spark-submit --class streaming.core.StreamingApp \
         --jars \${JARS} \
