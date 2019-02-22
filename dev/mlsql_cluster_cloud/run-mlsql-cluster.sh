@@ -330,22 +330,14 @@ MAIN_JAR=\$(ls \${MLSQL_HOME}/libs|grep 'streamingpro-mlsql')
 if [[ "${HDFS_TO_OSS_ENABLE}" == "true" ]];then
  cp /home/webuser/third-party-jars/core-site.xml \${SPARK_HOME}/conf/
  rm \${SPARK_HOME}/jars/hadoop-*.jar
-
- cp /home/webuser/third-party-jars/hadoop-*.jar \${SPARK_HOME}/jars
- rm /home/webuser/third-party-jars/hadoop-*.jar
-
- for item in stax2-api-3.1.4.jar woodstox-core-5.0.3.jar dnsjava-2.1.7.jar
- do
-  mv /home/webuser/third-party-jars/${item} \${SPARK_HOME}/jars
- done
-
+ cp /home/webuser/third-party-jars/*.jar \${SPARK_HOME}/jars
 fi
 
 JARS=\$(echo \${MLSQL_HOME}/libs/*.jar | tr ' ' ',')
 
-if [ -d "/home/webuser/third-party-jars" ]; then
-  JARS=\${JARS},\$(echo /home/webuser/third-party-jars/*.jar | tr ' ' ',')
-fi
+#if [ -d "/home/webuser/third-party-jars" ]; then
+#  JARS=\${JARS},\$(echo /home/webuser/third-party-jars/*.jar | tr ' ' ',')
+#fi
 echo \$JARS
 echo \${MAIN_JAR}
 cd \$SPARK_HOME
