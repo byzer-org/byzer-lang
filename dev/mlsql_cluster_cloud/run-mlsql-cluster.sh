@@ -332,6 +332,7 @@ fi
 if [[ "${HDFS_TO_OSS_ENABLE}" == "true" ]];then
  cp /home/webuser/third-party-jars/core-site.xml \${SPARK_HOME}/conf/
  rm \${SPARK_HOME}/jars/hadoop-*.jar
+ cp \${MLSQL_HOME}/libs/\${MAIN_JAR} \${SPARK_HOME}/jars/
 fi
 
 
