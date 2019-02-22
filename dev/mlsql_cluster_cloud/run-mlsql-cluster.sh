@@ -151,6 +151,16 @@ if [[ "${PyMLSQL_DOWNLOAD}" == "tar" ]];then
     --target /home/webuser
 fi
 
+
+if [[ ! -z "${MLSQL_THIRD_PARTY_JARS}" ]];then
+
+    echo "copy ${MLSQL_THIRD_PARTY_JARS} to master"
+
+    pymlsql copy-from-local --instance-id ${instance_id} --execute-user root \
+    --source ${MLSQL_THIRD_PARTY_JARS} \
+    --target /home/webuser
+fi
+
 echo "configure auth of the script"
 
 cat << EOF > ${SCRIPT_FILE}
@@ -260,15 +270,6 @@ EOF
 pymlsql exec-shell --instance-id ${instance_id} \
 --script-file ${SCRIPT_FILE} \
 --execute-user webuser
-
-if [[ ! -z "${MLSQL_THIRD_PARTY_JARS}" ]];then
-
-    echo "copy ${MLSQL_THIRD_PARTY_JARS} to master"
-
-    pymlsql copy-from-local --instance-id ${instance_id} --execute-user root \
-    --source ${MLSQL_THIRD_PARTY_JARS} \
-    --target /home/webuser
-fi
 
 echo "copy main-jar and third-party-jars to slave"
 cat << EOF > ${SCRIPT_FILE}
