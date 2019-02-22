@@ -337,7 +337,8 @@ cd \$SPARK_HOME
 if [[ "${HDFS_TO_OSS_ENABLE}" == "true" ]];then
  cp /home/webuser/third-party-jars/core-site.xml \${SPARK_HOME}/conf/
  rm \${SPARK_HOME}/jars/hadoop-*.jar
- wget http://central.maven.org/maven2/org/apache/hadoop/hadoop-annotations/3.2.0/hadoop-annotations-3.2.0.jar
+ cd \$SPARK_HOME/jars
+    wget http://central.maven.org/maven2/org/apache/hadoop/hadoop-annotations/3.2.0/hadoop-annotations-3.2.0.jar
     wget http://central.maven.org/maven2/org/apache/hadoop/hadoop-auth/3.2.0/hadoop-auth-3.2.0.jar
     wget http://central.maven.org/maven2/org/apache/hadoop/hadoop-client/3.2.0/hadoop-client-3.2.0.jar
     wget http://central.maven.org/maven2/org/apache/hadoop/hadoop-common/3.2.0/hadoop-common-3.2.0.jar
@@ -352,6 +353,7 @@ if [[ "${HDFS_TO_OSS_ENABLE}" == "true" ]];then
     wget http://central.maven.org/maven2/org/apache/hadoop/hadoop-yarn-common/3.2.0/hadoop-yarn-common-3.2.0.jar
     wget http://central.maven.org/maven2/org/apache/hadoop/hadoop-yarn-server-common/3.2.0/hadoop-yarn-server-common-3.2.0.jar
     wget http://central.maven.org/maven2/org/apache/hadoop/hadoop-yarn-server-web-proxy/3.2.0/hadoop-yarn-server-web-proxy-3.2.0.jar
+ cd ..
 fi
 
 nohup ./bin/spark-submit --class streaming.core.StreamingApp \
