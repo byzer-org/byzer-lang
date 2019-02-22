@@ -329,17 +329,17 @@ if [ -d "/home/webuser/third-party-jars" ]; then
   JARS=\${JARS},\$(echo /home/webuser/third-party-jars/*.jar | tr ' ' ',')
 fi
 
+MAIN_JAR=\$(ls \${MLSQL_HOME}/libs|grep 'streamingpro-mlsql')
+echo \$JARS
+echo \${MAIN_JAR}
+cd \$SPARK_HOME
+
 if [[ "${HDFS_TO_OSS_ENABLE}" == "true" ]];then
  cp /home/webuser/third-party-jars/core-site.xml \${SPARK_HOME}/conf/
  rm \${SPARK_HOME}/jars/hadoop-*.jar
  cp \${MLSQL_HOME}/libs/\${MAIN_JAR} \${SPARK_HOME}/jars/
 fi
 
-
-MAIN_JAR=\$(ls \${MLSQL_HOME}/libs|grep 'streamingpro-mlsql')
-echo \$JARS
-echo \${MAIN_JAR}
-cd \$SPARK_HOME
 nohup ./bin/spark-submit --class streaming.core.StreamingApp \
         --jars \${JARS} \
         --master spark://${inter_ip}:7077 \
