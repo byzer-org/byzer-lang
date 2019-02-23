@@ -131,25 +131,21 @@
                     <groupId>org.eclipse.jetty</groupId>
                     <artifactId>jetty-server</artifactId>
                     <version>9.2.16.v20160414</version>
-                    <scope>${scope}</scope>
                 </dependency>
                 <dependency>
                     <groupId>org.eclipse.jetty</groupId>
                     <artifactId>jetty-io</artifactId>
                     <version>9.2.16.v20160414</version>
-                    <scope>${scope}</scope>
                 </dependency>
                 <dependency>
                     <groupId>org.eclipse.jetty</groupId>
                     <artifactId>jetty-util</artifactId>
                     <version>9.2.16.v20160414</version>
-                    <scope>${scope}</scope>
                 </dependency>
                 <dependency>
                     <groupId>org.eclipse.jetty</groupId>
                     <artifactId>jetty-http</artifactId>
                     <version>9.2.16.v20160414</version>
-                    <scope>${scope}</scope>
                 </dependency>
                 <dependency>
                     <groupId>org.apache.hadoop</groupId>

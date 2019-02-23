@@ -88,9 +88,13 @@ class MLSQLProxyController extends ApplicationController {
     }
 
     if (res.size == 1) {
-      res(0).get.jsonStr match {
-        case Some(i) => render(i)
-        case None => render(500, map("msg", "backend error"))
+      if (res(0).get.getStatus == 200) {
+        res(0).get.jsonStr match {
+          case Some(i) => render(i)
+          case None => render(res(0).get.getStatus, map("msg", res(0).get.getContent))
+        }
+      } else {
+        render(res(0).get.getStatus, map("msg", res(0).get.getContent))
       }
     }
     val response = res.map { item => item.map(f => f.jsonStr).getOrElse("[]") }

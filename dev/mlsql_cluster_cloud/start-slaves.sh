@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 echo "Create instance for slave"
 start_output=$(pymlsql start --image-id m-bp13ubsorlrxdb9lmv2x --instance-type ${SLAVE_INSTANCE_TYPE} --init-ssh-key false --security-group ${SECURITY_GROUP} --need-public-ip false)
 echo ----"${start_output}"-----
