@@ -120,8 +120,13 @@ class SQLDownloadExt(override val uid: String) extends SQLAlg with WowParams {
   override def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = throw new RuntimeException("register is not support")
 
 
-  final val from: Param[String] = new Param[String](this, "from", "")
-  final val to: Param[String] = new Param[String](this, "to", "")
+  final val from: Param[String] = new Param[String](this, "from", "the file(directory) name you have uploaded")
+  final val to: Param[String] = new Param[String](this, "to", "the path you want to save")
+
+
+  override def explainParams(sparkSession: SparkSession): DataFrame = {
+    _explainParams(sparkSession)
+  }
 
 }
 

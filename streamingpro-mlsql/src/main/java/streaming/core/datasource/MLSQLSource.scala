@@ -18,7 +18,7 @@
 
 package streaming.core.datasource
 
-import org.apache.spark.sql.{DataFrame, DataFrameReader, DataFrameWriter, Row}
+import org.apache.spark.sql._
 
 /**
   * 2018-12-20 WilliamZhu(allwefantasy@gmail.com)
@@ -55,5 +55,10 @@ case class SourceInfo(sourceType: String, db: String, table: String)
 
 trait MLSQLSourceInfo extends MLSQLDataSource {
   def sourceInfo(config: DataAuthConfig): SourceInfo
+
+  def explainParams(spark: SparkSession): DataFrame = {
+    import spark.implicits._
+    spark.createDataset[String](Seq()).toDF("name")
+  }
 }
 

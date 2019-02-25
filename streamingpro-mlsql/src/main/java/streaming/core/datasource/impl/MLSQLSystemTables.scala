@@ -18,6 +18,19 @@ class MLSQLSystemTables extends MLSQLSource with MLSQLSourceInfo with MLSQLRegis
 
     val jobCollect = new MLSQLJobCollect(spark, owner)
     config.path.split("/") match {
+      case Array("datasources") => {
+        spark.createDataset(DataSourceRegistry.allSourceNames.toSet.toSeq ++ Seq(
+          "parquet", "csv", "jsonStr", "csvStr", "json", "text", "orc", "kafka", "kafka8", "kafka9", "crawlersql", "image",
+          "script", "hive", "xml", "mlsqlAPI", "mlsqlConf"
+        )).toDF("name")
+      }
+      case Array("datasources", "params", item: String) => {
+        DataSourceRegistry.fetch(item, Map[String, String]()) match {
+          case Some(ds) => ds.asInstanceOf[MLSQLSourceInfo].explainParams(spark)
+          case None => spark.createDataset[String](Seq()).toDF("name")
+        }
+
+      }
       case Array("jobs") =>
         spark.createDataset[StreamingproJobInfo](jobCollect.jobs).toDF()
       case Array("jobs", jobGroupId) =>

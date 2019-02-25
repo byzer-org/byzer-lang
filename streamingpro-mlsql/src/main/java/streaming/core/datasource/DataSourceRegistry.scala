@@ -32,7 +32,10 @@ object DataSourceRegistry extends Logging {
 
   def register(name: MLSQLDataSourceKey, obj: MLSQLDataSource) = {
     registry.put(name, obj)
+  }
 
+  def allSourceNames = {
+    registry.asScala.map(f => f._2.shortFormat).toSeq
   }
 
   def fetch(name: String, option: Map[String, String] = Map()): Option[MLSQLDataSource] = {

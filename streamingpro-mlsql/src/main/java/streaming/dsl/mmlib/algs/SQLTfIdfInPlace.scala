@@ -18,35 +18,65 @@
 
 package streaming.dsl.mmlib.algs
 
-import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession}
+import org.apache.spark.ml.linalg.SQLDataTypes._
+import org.apache.spark.ml.param.{DoubleParam, Param}
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.types._
-import streaming.dsl.mmlib.SQLAlg
-import streaming.dsl.mmlib.algs.feature.StringFeature
-import MetaConst._
-import org.apache.spark.ml.linalg.SQLDataTypes._
+import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession}
 import streaming.core.shared.SharedObjManager
+import streaming.dsl.mmlib.algs.MetaConst._
+import streaming.dsl.mmlib.algs.classfication.BaseClassification
+import streaming.dsl.mmlib.algs.feature.StringFeature
 import streaming.dsl.mmlib.algs.meta.TFIDFMeta
+import streaming.dsl.mmlib.algs.param.BaseParams
+import streaming.dsl.mmlib.{CoreVersion, SQLAlg}
 
 import scala.collection.mutable.ArrayBuffer
 
 /**
   * Created by allwefantasy on 7/5/2018.
   */
-class SQLTfIdfInPlace extends SQLAlg with Functions {
+class SQLTfIdfInPlace(override val uid: String) extends SQLAlg with MllibFunctions with Functions with BaseClassification {
+  def this() = this(BaseParams.randomUID())
+
   override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
     interval_train(df, params + ("path" -> path)).write.mode(SaveMode.Overwrite).parquet(getDataPath(path))
     emptyDataFrame()(df)
   }
 
   def interval_train(df: DataFrame, params: Map[String, String]) = {
-    val dicPaths = params.getOrElse("dicPaths", "")
-    val inputCol = params.getOrElse("inputCol", "")
-    val stopWordPath = params.getOrElse("stopWordPath", "")
-    val priorityDicPath = params.getOrElse("priorityDicPath", "")
-    val priority = params.getOrElse("priority", "1").toDouble
-    val nGrams = params.getOrElse("nGrams", "").split(",").filterNot(f => f.isEmpty).map(f => f.toInt).toSeq
-    require(!inputCol.isEmpty, "inputCol is required when use SQLTfIdfInPlace")
+    params.get(dicPaths.name).
+      map(m => set(dicPaths, m)).getOrElse {
+      set(dicPaths, "")
+    }
+
+    params.get(inputCol.name).
+      map(m => set(inputCol, m)).getOrElse {
+      set(inputCol, "")
+    }
+
+    params.get(stopWordPath.name).
+      map(m => set(stopWordPath, m)).getOrElse {
+      set(stopWordPath, "")
+    }
+
+    params.get(priorityDicPath.name).
+      map(m => set(priorityDicPath, m)).getOrElse {
+      set(priorityDicPath, "")
+    }
+
+    params.get(priority.name).
+      map(m => set(priority, m.toDouble)).getOrElse {
+      set(priority, 1d)
+    }
+
+    params.get(nGrams.name).
+      map(m => set(nGrams, m)).getOrElse {
+      set(nGrams, "")
+    }
+
+    require($(inputCol) != null, "inputCol is required when use SQLTfIdfInPlace")
+
     val path = params("path")
     val split = params.getOrElse("split", null)
 
@@ -54,7 +84,9 @@ class SQLTfIdfInPlace extends SQLAlg with Functions {
 
     // keep params
     saveTraningParams(df.sparkSession, params, metaPath)
-    val newDF = StringFeature.tfidf(df, metaPath, dicPaths, inputCol, stopWordPath, priorityDicPath, priority, nGrams, split)
+    val newDF = StringFeature.tfidf(df, metaPath,
+      $(dicPaths), $(inputCol), $(stopWordPath), $(priorityDicPath), $(priority),
+      $(nGrams).split(",").filterNot(f => f.isEmpty).map(f => f.toInt).toSeq, split)
     newDF
   }
 
@@ -140,5 +172,18 @@ class SQLTfIdfInPlace extends SQLAlg with Functions {
     }
     func
   }
+
+  override def explainParams(sparkSession: SparkSession): DataFrame = {
+    _explainParams(sparkSession)
+  }
+
+  override def coreCompatibility: Seq[CoreVersion] = super.coreCompatibility
+
+  final val dicPaths: Param[String] = new Param[String](this, "dicPaths", "user-defined dictionary")
+  final val inputCol: Param[String] = new Param[String](this, "inputCol", "Which text column you want to process")
+  final val stopWordPath: Param[String] = new Param[String](this, "stopWordPath", "user-defined stop word dictionary")
+  final val priorityDicPath: Param[String] = new Param[String](this, "priorityDicPath", "user-defined dictionary")
+  final val priority: DoubleParam = new DoubleParam(this, "priority", "how much weight should be applied in priority words")
+  final val nGrams: Param[String] = new Param[String](this, "nGrams", "ngram，we can compose 2 or 3 words together so maby the new complex features can more succinctly capture importtant information in raw data. Note that too much ngram composition may increase feature space too much , this makes it hard to compute.")
 
 }
