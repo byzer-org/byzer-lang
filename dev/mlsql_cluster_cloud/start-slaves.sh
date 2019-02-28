@@ -25,7 +25,15 @@ echo "start spark slave"
 cat << EOF > ${SCRIPT_FILE}
 #!/usr/bin/env bash
 source activate mlsql-3.5
-cd /home/webuser/apps/spark-${MLSQL_SPARK_VERSION}
+export SPARK_HOME=/home/webuser/apps/spark-${MLSQL_SPARK_VERSION}
+
+if [[ "${HDFS_TO_OSS_ENABLE}" == "true" ]];then
+ cp /home/webuser/third-party-jars/core-site.xml \${SPARK_HOME}/conf/
+ rm \${SPARK_HOME}/jars/hadoop-*.jar
+ cp /home/webuser/third-party-jars/*.jar \${SPARK_HOME}/jars
+fi
+
+cd \${SPARK_HOME}
 ./sbin/start-slave.sh spark://${inter_ip}:7077
 EOF
 
