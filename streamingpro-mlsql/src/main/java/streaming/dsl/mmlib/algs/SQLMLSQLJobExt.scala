@@ -28,5 +28,5 @@ class SQLMLSQLJobExt(override val uid: String) extends SQLAlg with WowParams {
 
   override def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = null
 
-
+  override def skipPathPrefix: Boolean = true
 }

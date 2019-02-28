@@ -40,8 +40,9 @@ class SQLTfIdfInPlace(override val uid: String) extends SQLAlg with MllibFunctio
   def this() = this(BaseParams.randomUID())
 
   override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
-    interval_train(df, params + ("path" -> path)).write.mode(SaveMode.Overwrite).parquet(getDataPath(path))
-    emptyDataFrame()(df)
+    val newDF = interval_train(df, params + ("path" -> path))
+    newDF.write.mode(SaveMode.Overwrite).parquet(getDataPath(path))
+    newDF
   }
 
   def interval_train(df: DataFrame, params: Map[String, String]) = {
@@ -52,7 +53,7 @@ class SQLTfIdfInPlace(override val uid: String) extends SQLAlg with MllibFunctio
 
     params.get(inputCol.name).
       map(m => set(inputCol, m)).getOrElse {
-      set(inputCol, "")
+      throw new IllegalArgumentException("inputCol is required by TfIdfInPlace")
     }
 
     params.get(stopWordPath.name).
@@ -83,7 +84,7 @@ class SQLTfIdfInPlace(override val uid: String) extends SQLAlg with MllibFunctio
     val metaPath = getMetaPath(path)
 
     // keep params
-    saveTraningParams(df.sparkSession, params, metaPath)
+    saveTraningParams(df.sparkSession, Map("ignoreNature" -> "true") ++ params, metaPath)
     val newDF = StringFeature.tfidf(df, metaPath,
       $(dicPaths), $(inputCol), $(stopWordPath), $(priorityDicPath), $(priority),
       $(nGrams).split(",").filterNot(f => f.isEmpty).map(f => f.toInt).toSeq, split)

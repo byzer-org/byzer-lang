@@ -108,9 +108,14 @@ class SQLJDBC(override val uid: String) extends SQLAlg with Functions with WowPa
     throw new MLSQLException(s"${getClass.getName} not support predict function.")
   }
 
+  override def explainParams(sparkSession: SparkSession): DataFrame = {
+    _explainParams(sparkSession)
+  }
+
 
   override def skipPathPrefix: Boolean = true
 
   final val sqlMode: Param[String] = new Param[String](this, "sqlMode", "query/ddl default:ddl")
+  final val driverStatement: Param[String] = new Param[String](this, "driver-statement-[group]", "DDL you wanna run")
 }
 

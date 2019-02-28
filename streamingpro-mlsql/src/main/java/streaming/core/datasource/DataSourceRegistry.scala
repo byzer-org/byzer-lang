@@ -60,15 +60,17 @@ object DataSourceRegistry extends Logging {
 
   private def registerFromPackage(name: String) = {
     ClassPath.from(getClass.getClassLoader).getTopLevelClasses(name).asScala.foreach { clzz =>
-      val dataSource = Class.forName(clzz.getName).newInstance()
-      if (dataSource.isInstanceOf[MLSQLRegistry]) {
-        dataSource.asInstanceOf[MLSQLRegistry].register()
-      } else {
-        logWarning(
-          s"""
-             |${clzz.getName} does not implement MLSQLRegistry,
-             |we cannot register it automatically.
+      if (!clzz.getName.endsWith("MLSQLFileDataSource")) {
+        val dataSource = Class.forName(clzz.getName).newInstance()
+        if (dataSource.isInstanceOf[MLSQLRegistry]) {
+          dataSource.asInstanceOf[MLSQLRegistry].register()
+        } else {
+          logWarning(
+            s"""
+               |${clzz.getName} does not implement MLSQLRegistry,
+               |we cannot register it automatically.
          """.stripMargin)
+        }
       }
     }
   }

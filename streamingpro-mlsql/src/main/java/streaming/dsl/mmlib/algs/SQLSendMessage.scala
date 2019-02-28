@@ -19,19 +19,21 @@
 package streaming.dsl.mmlib.algs
 
 import java.util.{Date, Properties}
-import javax.mail.{Address, Message, Session, Transport}
-import javax.mail.internet.{InternetAddress, MimeMessage}
 
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import javax.mail.internet.{InternetAddress, MimeMessage}
+import javax.mail.{Address, Message, Session, Transport}
+import org.apache.spark.ml.param.Param
 import org.apache.spark.sql.expressions.UserDefinedFunction
+import org.apache.spark.sql.{DataFrame, SparkSession}
 import streaming.dsl.mmlib.SQLAlg
-import SQLSendMessage._
-import streaming.log.Logging
+import streaming.dsl.mmlib.algs.SQLSendMessage._
+import streaming.dsl.mmlib.algs.param.BaseParams
 
 /**
   * Created by fchen on 2018/8/22.
   */
-class SQLSendMessage extends SQLAlg with Functions with Logging {
+class SQLSendMessage(override val uid: String) extends SQLAlg with Functions with BaseParams {
+  def this() = this(BaseParams.randomUID())
 
   override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
     val messageCount = df.count()
@@ -46,15 +48,26 @@ class SQLSendMessage extends SQLAlg with Functions with Logging {
     require(to != null, "to is null!")
     require(smtpHost != null)
     val agent = new MailAgent(smtpHost)
-    df.toJSON.collect().foreach(contentJson => {
+    if (df.count() == 0) {
       method.toUpperCase() match {
         case "MAIL" =>
-          logInfo(s"send content: ${contentJson} to ${to}")
-          agent.sendMessage(to, null, null, from, subject, contentJson)
+          logInfo(s"send content: ${$(content)} to ${to}")
+          agent.sendMessage(to, null, null, from, subject, $(content))
         case _ =>
           throw new RuntimeException("unspport method!")
       }
-    })
+    } else {
+      df.toJSON.collect().foreach(contentJson => {
+        method.toUpperCase() match {
+          case "MAIL" =>
+            logInfo(s"send content: ${contentJson} to ${to}")
+            agent.sendMessage(to, null, null, from, subject, contentJson)
+          case _ =>
+            throw new RuntimeException("unspport method!")
+        }
+      })
+    }
+
     emptyDataFrame()(df)
 
   }
@@ -66,6 +79,25 @@ class SQLSendMessage extends SQLAlg with Functions with Logging {
   override def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = {
     throw new RuntimeException(s"${getClass.getName} not support predict function.")
   }
+
+  override def batchPredict(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
+    train(df, path, params)
+  }
+
+  final val from: Param[String] = new Param[String](this, "from",
+    "the sender")
+  final val to: Param[String] = new Param[String](this, "to",
+    "the target email")
+  final val subject: Param[String] = new Param[String](this, "subject",
+    "the title of email")
+  final val smtpHost: Param[String] = new Param[String](this, "smtpHost",
+    "email server")
+  final val method: Param[String] = new Param[String](this, "method",
+    "MAIL")
+  final val content: Param[String] = new Param[String](this, "content",
+    "the content of email if you do not configure input table")
+
+  override def explainParams(sparkSession: SparkSession): DataFrame = _explainParams(sparkSession)
 }
 
 object SQLSendMessage {

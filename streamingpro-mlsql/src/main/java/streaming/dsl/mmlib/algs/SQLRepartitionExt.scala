@@ -33,4 +33,6 @@ class SQLRepartitionExt(override val uid: String) extends SQLAlg with Functions 
 
   final val partitionNum: IntParam = new IntParam(this, "partitionNum",
     "")
+
+  override def explainParams(sparkSession: SparkSession): DataFrame = _explainParams(sparkSession)
 }

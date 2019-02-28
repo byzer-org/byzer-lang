@@ -18,54 +18,110 @@
 
 package streaming.dsl.mmlib.algs
 
+import org.apache.spark.ml.param.{IntParam, Param}
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession, functions => F}
 import streaming.core.shared.SharedObjManager
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.MetaConst._
+import streaming.dsl.mmlib.algs.classfication.BaseClassification
 import streaming.dsl.mmlib.algs.feature.StringFeature
 import streaming.dsl.mmlib.algs.feature.StringFeature.loadWordvecs
 import streaming.dsl.mmlib.algs.meta.Word2VecMeta
+import streaming.dsl.mmlib.algs.param.BaseParams
 
 /**
- * Created by allwefantasy on 7/5/2018.
- */
-class SQLWord2VecInPlace extends SQLAlg with Functions {
+  * Created by allwefantasy on 7/5/2018.
+  */
+class SQLWord2VecInPlace(override val uid: String) extends SQLAlg with MllibFunctions with Functions with BaseClassification {
+  def this() = this(BaseParams.randomUID())
+
   override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
     interval_train(df, params + ("path" -> path)).write.mode(SaveMode.Overwrite).parquet(getDataPath(path))
     emptyDataFrame()(df)
   }
 
+  final val dicPaths: Param[String] = new Param[String](this, "dicPaths", "user-defined dictionary")
+  final val inputCol: Param[String] = new Param[String](this, "inputCol", "Which text column you want to process")
+  final val stopWordPath: Param[String] = new Param[String](this, "stopWordPath", "user-defined stop word dictionary")
+  final val wordvecPaths: Param[String] = new Param[String](this, "wordvecPaths", "you can specify the location of existed word2vec model")
+  final val vectorSize: IntParam = new IntParam(this, "vectorSize", "the word vector size you expect")
+  final val minCount: IntParam = new IntParam(this, "minCount", "")
+  final val split: Param[String] = new Param[String](this, "split", "optinal, a token specifying how to analysis the text string")
+  final val length: IntParam = new IntParam(this, "length", "input sentence length")
+  final val resultFeature: Param[String] = new Param[String](this, "resultFeature", "flag:concat m n-dim arrays to one m*n-dim array;merge: merge multi n-dim arrays into one n-dim array；index: output of conword sequence")
+
   def interval_train(df: DataFrame, params: Map[String, String]) = {
-    val dicPaths = params.getOrElse("dicPaths", "")
-    val wordvecPaths = params.getOrElse("wordvecPaths", "")
-    val inputCol = params.getOrElse("inputCol", "")
-    val vectorSize = params.getOrElse("vectorSize", "100").toInt
-    val length = params.getOrElse("length", "100").toInt
-    val stopWordPath = params.getOrElse("stopWordPath", "")
-    val resultFeature = params.getOrElse("resultFeature", "") //flat,merge,index
-    val minCount = params.getOrElse("minCount", "1").toInt
-    val split = params.getOrElse("split", null)
-    require(!inputCol.isEmpty, "inputCol is required when use SQLWord2VecInPlace")
+
+    params.get(dicPaths.name).
+      map(m => set(dicPaths, m)).getOrElse {
+      set(dicPaths, "")
+    }
+
+    params.get(wordvecPaths.name).
+      map(m => set(wordvecPaths, m)).getOrElse {
+      set(wordvecPaths, "")
+    }
+
+    params.get(inputCol.name).
+      map(m => set(inputCol, m)).getOrElse {
+      set(inputCol, "")
+    }
+
+    params.get(vectorSize.name).
+      map(m => set(vectorSize, m.toInt)).getOrElse {
+      set(vectorSize, 100)
+    }
+
+    params.get(length.name).
+      map(m => set(length, m.toInt)).getOrElse {
+      set(length, 100)
+    }
+
+    params.get(stopWordPath.name).
+      map(m => set(stopWordPath, m)).getOrElse {
+      set(stopWordPath, "")
+    }
+
+    params.get(resultFeature.name).
+      map(m => set(resultFeature, m)).getOrElse {
+      set(resultFeature, "")
+    }
+
+
+    params.get(minCount.name).
+      map(m => set(minCount, m.toInt)).getOrElse {
+      set(minCount, 1)
+    }
+
+    params.get(split.name).
+      map(m => set(split, m)).getOrElse {
+      set(split, "")
+    }
+
+    require($(inputCol) == null || $(inputCol).isEmpty, "inputCol is required when use SQLWord2VecInPlace")
     val metaPath = getMetaPath(params("path"))
     // keep params
     saveTraningParams(df.sparkSession, params, metaPath)
 
-    var newDF = StringFeature.word2vec(df, metaPath, dicPaths, wordvecPaths, inputCol, stopWordPath, resultFeature, split, vectorSize, length, minCount)
+    var newDF = StringFeature.word2vec(df, metaPath, $(dicPaths), $(wordvecPaths), $(inputCol), $(stopWordPath), $(resultFeature), $(split), $(vectorSize), $(length), $(minCount))
     if (resultFeature.equals("flat")) {
       val flatFeatureUdf = F.udf((a: Seq[Seq[Double]]) => {
         a.flatten
       })
-      newDF = newDF.withColumn(inputCol, flatFeatureUdf(F.col(inputCol)))
+      newDF = newDF.withColumn($(inputCol), flatFeatureUdf(F.col($(inputCol))))
     }
+
+    val _vectorSize = $(vectorSize)
+
     if (resultFeature.equals("merge")) {
       val flatFeatureUdf = F.udf((a: Seq[Seq[Double]]) => {
         if (a.size == 0) {
           Seq[Double]()
         }
         else {
-          val r = new Array[Double](vectorSize)
+          val r = new Array[Double](_vectorSize)
           for (a1 <- a) {
             val b = a1.toList
             for (i <- 0 until b.size) {
@@ -75,7 +131,7 @@ class SQLWord2VecInPlace extends SQLAlg with Functions {
           r.toSeq
         }
       })
-      newDF = newDF.withColumn(inputCol, flatFeatureUdf(F.col(inputCol)))
+      newDF = newDF.withColumn($(inputCol), flatFeatureUdf(F.col($(inputCol))))
     }
     newDF
   }
@@ -192,6 +248,10 @@ class SQLWord2VecInPlace extends SQLAlg with Functions {
           UserDefinedFunction(func, ArrayType(ArrayType(DoubleType)), Some(Seq(StringType)))
       }
     }
+  }
+
+  override def explainParams(sparkSession: SparkSession): DataFrame = {
+    _explainParams(sparkSession)
   }
 
 

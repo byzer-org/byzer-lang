@@ -51,6 +51,21 @@ object HDFSOperator {
 
   }
 
+
+  def readAsInputStream(fileName: String): InputStream = {
+    val fs = FileSystem.get(new Configuration())
+    val src: Path = new Path(fileName)
+    var in: FSDataInputStream = null
+    try {
+      in = fs.open(src)
+    } catch {
+      case e: Exception =>
+        if (in != null) in.close()
+    }
+    return in
+  }
+
+
   def readBytes(fileName: String): Array[Byte] = {
     val fs = FileSystem.get(new Configuration())
     val src: Path = new Path(fileName)
@@ -219,6 +234,32 @@ object HDFSOperator {
       FileUtils.forceMkdir(new File(dir))
     }
     dir
+  }
+
+  def iteratorFiles(path: String, recursive: Boolean) = {
+    val fs = FileSystem.get(new Configuration())
+    val files = ArrayBuffer[String]()
+    _iteratorFiles(fs, path, files)
+    files
+  }
+
+  def _iteratorFiles(fs: FileSystem, path: String, files: ArrayBuffer[String]): Unit = {
+    val p = new Path(path)
+    val file = fs.getFileStatus(p)
+    if (fs.exists(p)) {
+
+      if (file.isFile) {
+        files += p.toString
+      }
+      else if (file.isDirectory) {
+        val fileStatusArr = fs.listStatus(p)
+        if (fileStatusArr != null && fileStatusArr.length > 0) {
+          for (tempFile <- fileStatusArr) {
+            _iteratorFiles(fs, tempFile.getPath.toString, files)
+          }
+        }
+      }
+    }
   }
 
 
