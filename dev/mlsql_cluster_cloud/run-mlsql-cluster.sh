@@ -75,6 +75,9 @@ export MLSQL_TAR="mlsql-spark_${MLSQL_SPARK_VERSION}-${MLSQL_VERSION}.tar.gz"
 export MLSQL_NAME="mlsql-spark_${MLSQL_SPARK_VERSION}-${MLSQL_VERSION}"
 export SCRIPT_FILE="/tmp/k.sh"
 
+export DRIVER_MEMORY=${DRIVER_MEMORY:-12G}
+export EXECUTOR_MEMORY=${EXECUTOR_MEMORY:-12G}
+
 if [[ -z "${OSS_AK}" ]];then
    export OSS_AK=${AK}
 fi
@@ -346,6 +349,8 @@ cd \$SPARK_HOME
 
 nohup ./bin/spark-submit --class streaming.core.StreamingApp \
         --jars \${JARS} \
+        --driver-memory   ${DRIVER_MEMORY}\
+        --executor-memory  ${EXECUTOR_MEMORY}\
         --master spark://${inter_ip}:7077 \
         --deploy-mode client \
         --name mlsql \
