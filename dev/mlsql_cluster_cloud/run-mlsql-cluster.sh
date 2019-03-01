@@ -78,6 +78,8 @@ export SCRIPT_FILE="/tmp/k.sh"
 export DRIVER_MEMORY=${DRIVER_MEMORY:-12G}
 export EXECUTOR_MEMORY=${EXECUTOR_MEMORY:-12G}
 
+export ENABLE_HIVE=${ENABLE_HIVE:-true}
+
 if [[ -z "${OSS_AK}" ]];then
    export OSS_AK=${AK}
 fi
@@ -399,7 +401,7 @@ nohup ./bin/spark-submit --class streaming.core.StreamingApp \
         -streaming.driver.port 9003   \
         -streaming.spark.service true \
         -streaming.thrift false \
-        -streaming.enableHiveSupport false > mlsql.log 2>&1 &
+        -streaming.enableHiveSupport ${ENABLE_HIVE} > mlsql.log 2>&1 &
 EOF
 
 pymlsql exec-shell --instance-id ${instance_id} \
