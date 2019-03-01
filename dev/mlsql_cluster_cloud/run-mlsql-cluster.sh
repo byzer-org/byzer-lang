@@ -248,6 +248,7 @@ export SECURITY_GROUP=${SECURITY_GROUP}
 export SLAVE_INSTANCE_TYPE=${SLAVE_INSTANCE_TYPE}
 export MLSQL_SPARK_VERSION=${MLSQL_SPARK_VERSION}
 export HDFS_TO_OSS_ENABLE=${HDFS_TO_OSS_ENABLE}
+export SCRIPT_FILE=${SCRIPT_FILE}
 
 pids=""
 for page in {1..${MLSQL_SLAVE_NUM}}
@@ -305,10 +306,18 @@ cat << EOF > ${SCRIPT_FILE}
 source activate mlsql-3.5
 cd /home/webuser
 
+
+export MLSQL_JAR_PATH=/home/webuser/${MLSQL_NAME}
+export instance_id=${instance_id}
+export public_ip=${public_ip}
+export inter_ip=${inter_ip}
+export master_hostname=${master_hostname}
+export MLSQL_KEY_PARE_NAME=${MLSQL_KEY_PARE_NAME}
 export AK=${AK}
 export AKS=${AKS}
-export MLSQL_KEY_PARE_NAME=${MLSQL_KEY_PARE_NAME}
-export MLSQL_JAR_PATH=/home/webuser/${MLSQL_NAME}
+export SECURITY_GROUP=${SECURITY_GROUP}
+export SLAVE_INSTANCE_TYPE=${SLAVE_INSTANCE_TYPE}
+export MLSQL_SPARK_VERSION=${MLSQL_SPARK_VERSION}
 export HDFS_TO_OSS_ENABLE=${HDFS_TO_OSS_ENABLE}
 
 pids=""
