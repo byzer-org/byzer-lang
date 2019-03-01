@@ -82,8 +82,10 @@ export ENABLE_HIVE=${ENABLE_HIVE:-false}
 export EXECUTOR_CORES=${EXECUTOR_CORES:-0}
 export EXECUTOR_CORES_CONFIG=""
 
+
 if [[ "$EXECUTOR_CORES" != "0" ]];then
-   export EXECUTOR_CORES_CONFIG="--executor-cores ${EXECUTOR_CORES}"
+   tt=$((${EXECUTOR_CORES}*${MLSQL_SLAVE_NUM}))
+   export EXECUTOR_CORES_CONFIG="--executor-cores ${EXECUTOR_CORES} --total-executor-cores ${tt}"
 fi
 
 if [[ -z "${OSS_AK}" ]];then
