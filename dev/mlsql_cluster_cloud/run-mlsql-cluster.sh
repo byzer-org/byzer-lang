@@ -172,8 +172,12 @@ export SPARK_HOME=/home/webuser/apps/spark-${MLSQL_SPARK_VERSION}
 mkdir -p ~/.ssh
 
 ## replace all jars
-rm \${SPARK_HOME}/hadoop-*.jar
-cp /home/webuser/third-party-jars/*  \${SPARK_HOME}/jars/
+if [[ "${HDFS_TO_OSS_ENABLE}" == "true" ]];then
+ cp /home/webuser/third-party-jars/core-site.xml \${SPARK_HOME}/conf/
+ rm \${SPARK_HOME}/jars/hadoop-*.jar
+ cp /home/webuser/third-party-jars/*  \${SPARK_HOME}/jars/
+fi
+cd \${SPARK_HOME}
 
 ./sbin/start-master.sh -h ${inter_ip}
 EOF
@@ -305,6 +309,7 @@ export AK=${AK}
 export AKS=${AKS}
 export MLSQL_KEY_PARE_NAME=${MLSQL_KEY_PARE_NAME}
 export MLSQL_JAR_PATH=/home/webuser/${MLSQL_NAME}
+export HDFS_TO_OSS_ENABLE=${HDFS_TO_OSS_ENABLE}
 
 pids=""
 
@@ -352,12 +357,6 @@ export MLSQL_HOME=\`pwd\`
 
 
 MAIN_JAR=\$(ls \${MLSQL_HOME}/libs|grep 'streamingpro-mlsql')
-
-if [[ "${HDFS_TO_OSS_ENABLE}" == "true" ]];then
- cp /home/webuser/third-party-jars/core-site.xml \${SPARK_HOME}/conf/
- rm \${SPARK_HOME}/jars/hadoop-*.jar
- cp /home/webuser/third-party-jars/*.jar \${SPARK_HOME}/jars
-fi
 
 JARS=\$(echo \${MLSQL_HOME}/libs/*.jar | tr ' ' ',')
 
