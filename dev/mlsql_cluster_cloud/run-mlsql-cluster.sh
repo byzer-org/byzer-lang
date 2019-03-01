@@ -334,7 +334,7 @@ do
      let "count+=1"
    fi
 done <<< "\$(cat mlsql.slaves)"
-
+                                                                                        ParallelCollectionRDD
 FAIL_NUM=0
 
 for job in \${pids[*]};
