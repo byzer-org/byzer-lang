@@ -119,20 +119,18 @@ master host_name: ${master_hostname}
 ---------------------------------------
 EOF
 
-echo "Start spark master"
+
+echo "Create .ssh directory for master"
 
 cat << EOF > ${SCRIPT_FILE}
 #!/usr/bin/env bash
 source activate mlsql-3.5
-cd /home/webuser/apps/spark-2.3
 mkdir -p ~/.ssh
-./sbin/start-master.sh -h ${inter_ip}
 EOF
 
 pymlsql exec-shell --instance-id ${instance_id} \
 --script-file ${SCRIPT_FILE} \
 --execute-user webuser
-
 
 echo "copy ssh file and script to master, so we can create/start slave in master"
 pymlsql copy-from-local --instance-id ${instance_id} --execute-user root \
@@ -163,6 +161,27 @@ if [[ ! -z "${MLSQL_THIRD_PARTY_JARS}" ]];then
     --source ${MLSQL_THIRD_PARTY_JARS} \
     --target /home/webuser
 fi
+
+
+echo "Start spark master"
+
+cat << EOF > ${SCRIPT_FILE}
+#!/usr/bin/env bash
+source activate mlsql-3.5
+export SPARK_HOME=/home/webuser/apps/spark-${MLSQL_SPARK_VERSION}
+mkdir -p ~/.ssh
+
+## replace all jars
+rm \${SPARK_HOME}/hadoop-*.jar
+cp /home/webuser/third-party-jars/*  \${SPARK_HOME}/jars/
+
+./sbin/start-master.sh -h ${inter_ip}
+EOF
+
+pymlsql exec-shell --instance-id ${instance_id} \
+--script-file ${SCRIPT_FILE} \
+--execute-user webuser
+
 
 echo "configure auth of the script"
 
@@ -359,7 +378,7 @@ nohup ./bin/spark-submit --class streaming.core.StreamingApp \
         --conf "spark.kryoserializer.buffer.max=1024m" \
         --conf "spark.serializer=org.apache.spark.serializer.KryoSerializer" \
         --conf "spark.scheduler.mode=FAIR" \
-        --conf "spark.executor.extraClassPath=\${SPARK_HOME}/conf/:/home/webuser/spark-jars/*:/home/webuser/\${MAIN_JAR}":/home/webuser/third-party-jars/* \
+        --conf "spark.executor.extraClassPath=.:\${SPARK_HOME}/conf/:/home/webuser/\${MAIN_JAR}" \
         \${MLSQL_HOME}/libs/\${MAIN_JAR}    \
         -streaming.name mlsql    \
         -streaming.platform spark   \
