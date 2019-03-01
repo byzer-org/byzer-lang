@@ -78,7 +78,13 @@ export SCRIPT_FILE="/tmp/k.sh"
 export DRIVER_MEMORY=${DRIVER_MEMORY:-12G}
 export EXECUTOR_MEMORY=${EXECUTOR_MEMORY:-12G}
 
-export ENABLE_HIVE=${ENABLE_HIVE:-true}
+export ENABLE_HIVE=${ENABLE_HIVE:-false}
+export EXECUTOR_CORES=${EXECUTOR_CORES:-0}
+export EXECUTOR_CORES_CONFIG=""
+
+if [[ "$EXECUTOR_CORES" != "0" ]];then
+   export EXECUTOR_CORES_CONFIG="--executor-cores ${EXECUTOR_CORES}"
+fi
 
 if [[ -z "${OSS_AK}" ]];then
    export OSS_AK=${AK}
@@ -386,7 +392,7 @@ nohup ./bin/spark-submit --class streaming.core.StreamingApp \
         --driver-memory   ${DRIVER_MEMORY} \
         --executor-memory  ${EXECUTOR_MEMORY} \
         --master spark://${inter_ip}:7077 \
-        --deploy-mode client \
+        --deploy-mode client ${EXECUTOR_CORES_CONFIG} \
         --name mlsql \
         --conf "spark.kryoserializer.buffer=256k" \
         --conf "spark.kryoserializer.buffer.max=1024m" \
