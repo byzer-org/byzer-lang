@@ -26,7 +26,9 @@ cat << EOF > ${SCRIPT_FILE}
 #!/usr/bin/env bash
 source activate mlsql-3.5
 export SPARK_HOME=/home/webuser/apps/spark-${MLSQL_SPARK_VERSION}
-
+mkdir -p /home/webuser/spark-jars/
+cp -r \${SPARK_HOME}/jars /home/webuser/spark-jars/
+rm /home/webuser/spark-jars/hadoop-*.jar
 cd \${SPARK_HOME}
 ./sbin/start-slave.sh spark://${inter_ip}:7077
 EOF
