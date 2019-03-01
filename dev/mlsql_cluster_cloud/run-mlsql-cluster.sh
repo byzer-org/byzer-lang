@@ -268,8 +268,9 @@ pymlsql exec-shell --instance-id ${instance_id} \
 --script-file ${SCRIPT_FILE} \
 --execute-user webuser
 
-echo "sleep 15 wait until the salves are up"
-sleep 15
+echo "sleep 5 wait until the slave instances are up"
+sleep 5
+
 
 echo "copy mlsql.slaves from master"
 pymlsql copy-to-local --instance-id ${instance_id} --execute-user root \
@@ -335,6 +336,8 @@ pymlsql exec-shell --instance-id ${instance_id} \
 --script-file ${SCRIPT_FILE} \
 --execute-user webuser
 
+echo "sleep 15 wait until the spark slave are up"
+sleep 15
 
 echo "submit MLSQL"
 
