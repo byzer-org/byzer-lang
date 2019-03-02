@@ -18,6 +18,8 @@
 
 package org.apache.spark
 
+import java.util.concurrent.atomic.AtomicInteger
+
 import net.csdn.common.reflect.ReflectHelper
 import org.apache.spark.scheduler.cluster.{CoarseGrainedSchedulerBackend, StandaloneSchedulerBackend}
 import org.apache.spark.scheduler.local.LocalSchedulerBackend
@@ -40,7 +42,7 @@ class SparkInstanceService(session: SparkSession) {
     }
     val totalCores = session.sparkContext.schedulerBackend match {
       case sb if sb.isInstanceOf[CoarseGrainedSchedulerBackend] =>
-        ReflectHelper.field(sb, "totalCoreCount").asInstanceOf[Int]
+        ReflectHelper.field(sb, "totalCoreCount").asInstanceOf[AtomicInteger].get()
       case sb if sb.isInstanceOf[LocalSchedulerBackend] =>
         java.lang.Runtime.getRuntime.availableProcessors
       case sb if sb.isInstanceOf[StandaloneSchedulerBackend] => -1

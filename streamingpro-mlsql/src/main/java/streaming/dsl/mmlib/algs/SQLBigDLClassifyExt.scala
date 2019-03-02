@@ -225,6 +225,7 @@ class SQLBigDLClassifyExt(override val uid: String) extends SQLAlg with MllibFun
       |The most powerful of this module is that you can define your model with code snippet in
       |Keras style.
       |
+      |```
       |and fitParam.0.code='''
       |                   def apply(params:Map[String,String])={
       |                        val model = Sequential()
@@ -237,6 +238,7 @@ class SQLBigDLClassifyExt(override val uid: String) extends SQLAlg with MllibFun
       |                        model.add(Dense(100, activation = "tanh").setName("fc1"))
       |                        model.add(Dense(params("classNum").toInt, activation = "softmax").setName("fc2"))
       |                    }
+      |```
       |
       |The `code` param is used to describe your model architecture.
       |The code example defines LeNet5 model.
@@ -255,6 +257,7 @@ class SQLBigDLClassifyExt(override val uid: String) extends SQLAlg with MllibFun
       |-- You can download the MNIST Data from [here](http://yann.lecun.com/exdb/mnist/). Unzip all the
       |-- files and put them in one folder(e.g. mnist).
       |
+      |```sql
       |set json = '''{}''';
       |load jsonStr.`json` as emptyData;
       |
@@ -291,6 +294,7 @@ class SQLBigDLClassifyExt(override val uid: String) extends SQLAlg with MllibFun
       |vec_argmax(mnistPredict(vec_dense(features))) as predict_label,
       |label from data
       |as output;
+      |```
     """.stripMargin)
 
   /*
@@ -346,6 +350,13 @@ class SQLBigDLClassifyExt(override val uid: String) extends SQLAlg with MllibFun
 
   final val optimizeMethod: Param[String] = new Param[String](this, "fitParam.[group].optimizeMethod",
     s"""${OptimizeParamExtractor.optimizeMethodCandidatesStr}""")
+
+
+  final val code: Param[String] = new Param[String](this, "fitParam.[group].code",
+    s"""Use scala to build your network""")
+
+  final val maxEpoch: Param[String] = new Param[String](this, "fitParam.[group].maxEpoch",
+    s"""maxEpoch""")
 
 }
 

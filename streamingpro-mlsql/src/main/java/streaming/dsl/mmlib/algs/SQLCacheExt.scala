@@ -88,5 +88,6 @@ class SQLCacheExt(override val uid: String) extends SQLAlg with WowParams {
   override def modelType: ModelType = ProcessType
 
   def this() = this(BaseParams.randomUID())
+  override def explainParams(sparkSession: SparkSession): DataFrame = _explainParams(sparkSession)
 
 }

@@ -18,11 +18,14 @@
 
 package streaming.core.datasource.impl
 
-import org.apache.spark.sql.{DataFrame, DataFrameReader, DataFrameWriter, Row}
-import streaming.core.datasource._
-import streaming.dsl.{ConnectMeta, DBMappingKey}
+import org.apache.spark.ml.param.Param
+import org.apache.spark.sql._
+import _root_.streaming.core.datasource._
+import _root_.streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
+import _root_.streaming.dsl.{ConnectMeta, DBMappingKey}
 
-class MLSQLMongo extends MLSQLSource with MLSQLSink with MLSQLSourceInfo with MLSQLRegistry {
+class MLSQLMongo (override val uid: String) extends MLSQLSource with MLSQLSink with MLSQLSourceInfo with MLSQLRegistry with WowParams {
+  def this() = this(BaseParams.randomUID())
 
 
   override def fullFormat: String = "com.mongodb.spark.sql"
@@ -98,4 +101,11 @@ class MLSQLMongo extends MLSQLSource with MLSQLSink with MLSQLSourceInfo with ML
 
     SourceInfo(shortFormat ,db ,_dbtable)
   }
+
+  override def explainParams(spark: SparkSession) = {
+    _explainParams(spark)
+  }
+
+  final val partitioner: Param[String] = new Param[String](this, "partitioner", "Optional. e.g. MongoPaginateBySizePartitioner")
+  final val uri: Param[String] = new Param[String](this, "partitioner", "Required. e.g. mongodb://127.0.0.1:27017/twitter")
 }

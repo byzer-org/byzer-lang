@@ -68,10 +68,25 @@ export MASTER_WITH_PUBLIC_IP=${MASTER_WITH_PUBLIC_IP:-true}
 export MLSQL_SLAVE_NUM=${MLSQL_SLAVE_NUM:-1}
 export PYMLSQL_VERSIOIN=${PYMLSQL_VERSIOIN:-1.1.6.3}
 export MLSQL_INIT_SSH_KEY=${MLSQL_INIT_SSH_KEY:-false}
+export PyMLSQL_DOWNLOAD=${PyMLSQL_DOWNLOAD:-git}
+export HDFS_TO_OSS_ENABLE=${HDFS_TO_OSS_ENABLE:-true}
 
 export MLSQL_TAR="mlsql-spark_${MLSQL_SPARK_VERSION}-${MLSQL_VERSION}.tar.gz"
 export MLSQL_NAME="mlsql-spark_${MLSQL_SPARK_VERSION}-${MLSQL_VERSION}"
 export SCRIPT_FILE="/tmp/k.sh"
+
+export DRIVER_MEMORY=${DRIVER_MEMORY:-12G}
+export EXECUTOR_MEMORY=${EXECUTOR_MEMORY:-12G}
+
+export ENABLE_HIVE=${ENABLE_HIVE:-false}
+export EXECUTOR_CORES=${EXECUTOR_CORES:-0}
+export EXECUTOR_CORES_CONFIG=""
+
+
+if [[ "$EXECUTOR_CORES" != "0" ]];then
+   tt=$((${EXECUTOR_CORES}*${MLSQL_SLAVE_NUM}))
+   export EXECUTOR_CORES_CONFIG="--executor-cores ${EXECUTOR_CORES} --total-executor-cores ${tt}"
+fi
 
 if [[ -z "${OSS_AK}" ]];then
    export OSS_AK=${AK}
@@ -114,20 +129,18 @@ master host_name: ${master_hostname}
 ---------------------------------------
 EOF
 
-echo "Start spark master"
+
+echo "Create .ssh directory for master"
 
 cat << EOF > ${SCRIPT_FILE}
 #!/usr/bin/env bash
 source activate mlsql-3.5
-cd /home/webuser/apps/spark-2.3
 mkdir -p ~/.ssh
-./sbin/start-master.sh -h ${inter_ip}
 EOF
 
 pymlsql exec-shell --instance-id ${instance_id} \
 --script-file ${SCRIPT_FILE} \
 --execute-user webuser
-
 
 echo "copy ssh file and script to master, so we can create/start slave in master"
 pymlsql copy-from-local --instance-id ${instance_id} --execute-user root \
@@ -141,6 +154,47 @@ do
     --source $file \
     --target /home/webuser
 done
+
+if [[ "${PyMLSQL_DOWNLOAD}" == "tar" ]];then
+    export PyMLSQL_DOWNLOAD_SOURCE=${PyMLSQL_DOWNLOAD_SOURCE:-/home/webuser/softwares}
+    pymlsql copy-from-local --instance-id ${instance_id} --execute-user root \
+    --source ${PyMLSQL_DOWNLOAD_SOURCE}/PyMLSQL.tar.gz \
+    --target /home/webuser
+fi
+
+
+if [[ ! -z "${MLSQL_THIRD_PARTY_JARS}" ]];then
+
+    echo "copy ${MLSQL_THIRD_PARTY_JARS} to master"
+
+    pymlsql copy-from-local --instance-id ${instance_id} --execute-user root \
+    --source ${MLSQL_THIRD_PARTY_JARS} \
+    --target /home/webuser
+fi
+
+
+echo "Start spark master"
+
+cat << EOF > ${SCRIPT_FILE}
+#!/usr/bin/env bash
+source activate mlsql-3.5
+export SPARK_HOME=/home/webuser/apps/spark-${MLSQL_SPARK_VERSION}
+mkdir -p ~/.ssh
+
+## replace all jars
+if [[ "${HDFS_TO_OSS_ENABLE}" == "true" ]];then
+ cp /home/webuser/third-party-jars/core-site.xml \${SPARK_HOME}/conf/
+ rm \${SPARK_HOME}/jars/hadoop-*.jar
+ cp /home/webuser/third-party-jars/*  \${SPARK_HOME}/jars/
+fi
+cd \${SPARK_HOME}
+
+./sbin/start-master.sh -h ${inter_ip}
+EOF
+
+pymlsql exec-shell --instance-id ${instance_id} \
+--script-file ${SCRIPT_FILE} \
+--execute-user webuser
 
 
 echo "configure auth of the script"
@@ -168,9 +222,14 @@ conda config --set show_channel_urls yes
 mkdir ~/.pip
 echo -e "[global]\ntrusted-host = mirrors.aliyun.com\nindex-url = https://mirrors.aliyun.com/pypi/simple" > ~/.pip/pip.conf
 
-if [[ -z "${PyMLSQL_PIP}" ]];then
+if [[ "${PyMLSQL_DOWNLOAD}" == "git" ]];then
     git clone https://github.com/allwefantasy/PyMLSQL.git
     cd PyMLSQL
+    rm -rf ./dist && pip uninstall -y pymlsql && python setup.py sdist bdist_wheel && cd ./dist/ && pip install pymlsql-${PYMLSQL_VERSIOIN}-py2.py3-none-any.whl && cd -
+elif [[ "${PyMLSQL_DOWNLOAD}" == "tar" ]];then
+    echo -e "[global]\ntrusted-host = mirrors.cloud.aliyuncs.com\nindex-url = https://mirrors.cloud.aliyuncs.com/pypi/simple" > ~/.pip/pip.conf
+    tar xzvf /home/webuser/PyMLSQL.tar.gz
+    cd  PyMLSQL
     rm -rf ./dist && pip uninstall -y pymlsql && python setup.py sdist bdist_wheel && cd ./dist/ && pip install pymlsql-${PYMLSQL_VERSIOIN}-py2.py3-none-any.whl && cd -
 else
     pip install pymlsql
@@ -197,6 +256,9 @@ export AK=${AK}
 export AKS=${AKS}
 export SECURITY_GROUP=${SECURITY_GROUP}
 export SLAVE_INSTANCE_TYPE=${SLAVE_INSTANCE_TYPE}
+export MLSQL_SPARK_VERSION=${MLSQL_SPARK_VERSION}
+export HDFS_TO_OSS_ENABLE=${HDFS_TO_OSS_ENABLE}
+export SCRIPT_FILE=${SCRIPT_FILE}
 
 pids=""
 for page in {1..${MLSQL_SLAVE_NUM}}
@@ -221,8 +283,9 @@ pymlsql exec-shell --instance-id ${instance_id} \
 --script-file ${SCRIPT_FILE} \
 --execute-user webuser
 
-echo "sleep 15 wait until the salves are up"
-sleep 15
+echo "sleep 5 wait until the slave instances are up"
+sleep 5
+
 
 echo "copy mlsql.slaves from master"
 pymlsql copy-to-local --instance-id ${instance_id} --execute-user root \
@@ -247,25 +310,26 @@ pymlsql exec-shell --instance-id ${instance_id} \
 --script-file ${SCRIPT_FILE} \
 --execute-user webuser
 
-if [[ ! -z "${MLSQL_THIRD_PARTY_JARS}" ]];then
-
-    echo "copy ${MLSQL_THIRD_PARTY_JARS} to master"
-
-    pymlsql copy-from-local --instance-id ${instance_id} --execute-user root \
-    --source ${MLSQL_THIRD_PARTY_JARS} \
-    --target /home/webuser/third-party-jars
-fi
-
 echo "copy main-jar and third-party-jars to slave"
 cat << EOF > ${SCRIPT_FILE}
 #!/usr/bin/env bash
 source activate mlsql-3.5
 cd /home/webuser
 
+
+export MLSQL_JAR_PATH=/home/webuser/${MLSQL_NAME}
+export instance_id=${instance_id}
+export public_ip=${public_ip}
+export inter_ip=${inter_ip}
+export master_hostname=${master_hostname}
+export MLSQL_KEY_PARE_NAME=${MLSQL_KEY_PARE_NAME}
 export AK=${AK}
 export AKS=${AKS}
-export MLSQL_KEY_PARE_NAME=${MLSQL_KEY_PARE_NAME}
-export MLSQL_JAR_PATH=/home/webuser/${MLSQL_NAME}
+export SECURITY_GROUP=${SECURITY_GROUP}
+export SLAVE_INSTANCE_TYPE=${SLAVE_INSTANCE_TYPE}
+export MLSQL_SPARK_VERSION=${MLSQL_SPARK_VERSION}
+export HDFS_TO_OSS_ENABLE=${HDFS_TO_OSS_ENABLE}
+export SCRIPT_FILE=${SCRIPT_FILE}
 
 pids=""
 
@@ -280,7 +344,7 @@ do
      let "count+=1"
    fi
 done <<< "\$(cat mlsql.slaves)"
-
+                                                                                        ParallelCollectionRDD
 FAIL_NUM=0
 
 for job in \${pids[*]};
@@ -297,6 +361,8 @@ pymlsql exec-shell --instance-id ${instance_id} \
 --script-file ${SCRIPT_FILE} \
 --execute-user webuser
 
+echo "sleep 15 wait until the spark slave are up"
+sleep 15
 
 echo "submit MLSQL"
 
@@ -308,26 +374,33 @@ cd ${MLSQL_NAME}
 export SPARK_HOME=/home/webuser/apps/spark-${MLSQL_SPARK_VERSION}
 export MLSQL_HOME=\`pwd\`
 
-JARS=\$(echo \${MLSQL_HOME}/libs/*.jar | tr ' ' ',')
 
-if [ -d "/home/webuser/third-party-jars" ]; then
-  JARS=\${JARS},\$(echo /home/webuser/third-party-jars/*.jar | tr ' ' ',')
-fi
 
 MAIN_JAR=\$(ls \${MLSQL_HOME}/libs|grep 'streamingpro-mlsql')
+
+JARS=\$(echo \${MLSQL_HOME}/libs/*.jar | tr ' ' ',')
+
+#if [ -d "/home/webuser/third-party-jars" ]; then
+#  JARS=\${JARS},\$(echo /home/webuser/third-party-jars/*.jar | tr ' ' ',')
+#fi
 echo \$JARS
 echo \${MAIN_JAR}
 cd \$SPARK_HOME
+
+
+
 nohup ./bin/spark-submit --class streaming.core.StreamingApp \
         --jars \${JARS} \
+        --driver-memory   ${DRIVER_MEMORY} \
+        --executor-memory  ${EXECUTOR_MEMORY} \
         --master spark://${inter_ip}:7077 \
-        --deploy-mode client \
+        --deploy-mode client ${EXECUTOR_CORES_CONFIG} \
         --name mlsql \
-        --conf "spark.kryoserializer.buffer=256k" \
-        --conf "spark.kryoserializer.buffer.max=1024m" \
+        --conf "spark.kryoserializer.buffer=4048k" \
+        --conf "spark.kryoserializer.buffer.max=2048m" \
         --conf "spark.serializer=org.apache.spark.serializer.KryoSerializer" \
         --conf "spark.scheduler.mode=FAIR" \
-        --conf "spark.executor.extraClassPath=\${SPARK_HOME}/conf/:\${SPARK_HOME}/jars/*:/home/webuser/\${MAIN_JAR}" \
+        --conf "spark.executor.extraClassPath=\${SPARK_HOME}/jars/*:.:\${SPARK_HOME}/conf/:/home/webuser/\${MAIN_JAR}" \
         \${MLSQL_HOME}/libs/\${MAIN_JAR}    \
         -streaming.name mlsql    \
         -streaming.platform spark   \
@@ -336,7 +409,7 @@ nohup ./bin/spark-submit --class streaming.core.StreamingApp \
         -streaming.driver.port 9003   \
         -streaming.spark.service true \
         -streaming.thrift false \
-        -streaming.enableHiveSupport false > mlsql.log 2>&1 &
+        -streaming.enableHiveSupport ${ENABLE_HIVE} > mlsql.log 2>&1 &
 EOF
 
 pymlsql exec-shell --instance-id ${instance_id} \

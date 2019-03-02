@@ -20,26 +20,43 @@ package streaming.dsl.mmlib.algs
 
 import org.apache.spark.ml.feature.{StringIndexer, StringIndexerModel}
 import org.apache.spark.ml.help.HSQLStringIndex
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.ml.param.Param
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.types.{ArrayType, StringType}
+import org.apache.spark.sql.{DataFrame, SparkSession, functions => F}
 import streaming.dsl.mmlib.SQLAlg
-import org.apache.spark.sql.{functions => F}
+import streaming.dsl.mmlib.algs.bigdl.BigDLFunctions
+import streaming.dsl.mmlib.algs.classfication.BaseClassification
+import streaming.dsl.mmlib.algs.param.BaseParams
 
 /**
   * Created by allwefantasy on 15/1/2018.
   */
-class SQLStringIndex extends SQLAlg with Functions {
+class SQLStringIndex(override val uid: String) extends SQLAlg with MllibFunctions with BigDLFunctions with BaseClassification {
+
+  def this() = this(BaseParams.randomUID())
 
   override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
-    require(params.contains("inputCol"), "inputCol is required")
-    val inputCol = params("inputCol")
+
+    params.get(inputCol.name).
+      map(m => set(inputCol, m)).
+      getOrElse {
+        require(params.contains("inputCol"), "inputCol is required")
+      }
+
+    params.get(outputCol.name).
+      map(m => set(outputCol, m)).
+      getOrElse {
+        set(outputCol, $(inputCol))
+      }
+
+
     var newDf = df
-    df.schema.filter(f => f.name == inputCol).head.dataType match {
+    df.schema.filter(f => f.name == $(inputCol)).head.dataType match {
       case ArrayType(StringType, _) =>
-        newDf = df.select(F.explode(F.col(inputCol)).as(inputCol))
+        newDf = df.select(F.explode(F.col($(inputCol))).as($(inputCol)))
       case StringType => // do nothing
-      case _ => throw new IllegalArgumentException(s"${params("inputCol")} should be arraytype or stringtype")
+      case _ => throw new IllegalArgumentException(s"${$(inputCol)} should be arraytype or stringtype")
     }
     val rfc = new StringIndexer()
     configureModel(rfc, params)
@@ -66,4 +83,17 @@ class SQLStringIndex extends SQLAlg with Functions {
   def internal_predict(sparkSession: SparkSession, _model: Any, name: String) = {
     HSQLStringIndex.internal_predict(sparkSession, _model, name)
   }
+
+
+  override def explainParams(sparkSession: SparkSession): DataFrame = {
+    _explainParams(sparkSession)
+  }
+
+  final val inputCol: Param[String] = new Param[String](this, "inputCol",
+    s"""inputCol""")
+
+  final val outputCol: Param[String] = new Param[String](this, "outputCol",
+    s"""outputCol""")
+
+
 }

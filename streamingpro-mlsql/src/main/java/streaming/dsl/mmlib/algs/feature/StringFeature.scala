@@ -18,23 +18,24 @@
 
 package streaming.dsl.mmlib.algs.feature
 
+import _root_.streaming.dsl.mmlib.algs.MetaConst._
 import _root_.streaming.dsl.mmlib.algs._
+import _root_.streaming.log.WowLog
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.ml.feature.NGram
 import org.apache.spark.ml.help.HSQLStringIndex
 import org.apache.spark.ml.linalg.{Vector, Vectors}
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{Row, functions => F, _}
-import _root_.streaming.dsl.mmlib.algs.MetaConst._
 
 import scala.collection.mutable.ArrayBuffer
 import scala.util.control.Breaks.{break, breakable}
 
 
 /**
- * Created by allwefantasy on 14/5/2018.
- */
-object StringFeature extends BaseFeatureFunctions {
+  * Created by allwefantasy on 14/5/2018.
+  */
+object StringFeature extends BaseFeatureFunctions with WowLog {
 
 
   def loadStopwords(df: DataFrame, stopWordsPaths: String) = {
@@ -122,6 +123,8 @@ object StringFeature extends BaseFeatureFunctions {
     //create uniq int for analysed token
     val tmpWords = df.sparkSession.createDataFrame(newRdd, StructType(Seq(StructField("words", StringType))))
     val wordCount = tmpWords.count()
+    format(s"TFIDF: total words in corpus: ${wordCount}")
+
 
     //represent content with sequence of number
     val si = new SQLStringIndex()
@@ -132,6 +135,8 @@ object StringFeature extends BaseFeatureFunctions {
 
     // keep word and index
     val wordToIndex = HSQLStringIndex.wordToIndex(df.sparkSession, siModel)
+
+    format(s"TFIDF: wordToIndex: ${wordToIndex.size}")
 
     val spark = df.sparkSession
     spark.createDataFrame(
@@ -145,7 +150,7 @@ object StringFeature extends BaseFeatureFunctions {
 
     if (outputWordAndIndex) {
       val res = wordToIndex.toSeq.sortBy(f => f._2).map(f => s"${f._1}:${f._2}").mkString("\n")
-      println(res)
+      format(res)
     }
 
     val funcMap = si.internal_predict(df.sparkSession, siModel, "wow")

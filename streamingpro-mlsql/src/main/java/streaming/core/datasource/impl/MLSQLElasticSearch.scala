@@ -18,12 +18,14 @@
 
 package streaming.core.datasource.impl
 
-import org.apache.spark.sql.{DataFrame, DataFrameReader, DataFrameWriter, Row}
-import streaming.core.datasource._
-import streaming.dsl.{ConnectMeta, DBMappingKey}
+import _root_.streaming.core.datasource._
+import _root_.streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
+import _root_.streaming.dsl.{ConnectMeta, DBMappingKey}
+import org.apache.spark.ml.param.Param
+import org.apache.spark.sql._
 
-class MLSQLElasticSearch extends MLSQLSource with MLSQLSink with MLSQLSourceInfo with MLSQLRegistry {
-
+class MLSQLElasticSearch(override val uid: String) extends MLSQLSource with MLSQLSink with MLSQLSourceInfo with MLSQLRegistry with WowParams {
+  def this() = this(BaseParams.randomUID())
 
   override def fullFormat: String = "org.elasticsearch.spark.sql"
 
@@ -77,27 +79,27 @@ class MLSQLElasticSearch extends MLSQLSource with MLSQLSink with MLSQLSourceInfo
   }
 
   override def sourceInfo(config: DataAuthConfig): SourceInfo = {
-    val Array(_dbname, _dbtable) =  if (config.path.contains(dbSplitter)) {
+    val Array(_dbname, _dbtable) = if (config.path.contains(dbSplitter)) {
       config.path.split(dbSplitter, 2)
-    }else{
-      Array("" ,config.path)
+    } else {
+      Array("", config.path)
     }
 
     var table = _dbtable
 
-    val esResource = if (config.config.contains("es.resource")){
+    val esResource = if (config.config.contains("es.resource")) {
       config.config.get("es.resource").get
         .takeWhile(_.toString != dbSplitter)
-    }else{
+    } else {
       val format = config.config.getOrElse("implClass", fullFormat)
       val dbMapping = ConnectMeta.options(DBMappingKey(format, _dbname))
-      if (dbMapping.isEmpty){
+      if (dbMapping.isEmpty) {
         _dbname
-      }else {
-        if (dbMapping.get.contains("es.resource")){
+      } else {
+        if (dbMapping.get.contains("es.resource")) {
           dbMapping.get("es.resource")
             .takeWhile(_.toString != dbSplitter)
-        }else {
+        } else {
           table = ""
           _dbname
         }
@@ -105,6 +107,12 @@ class MLSQLElasticSearch extends MLSQLSource with MLSQLSink with MLSQLSourceInfo
       }
     }
 
-    SourceInfo(shortFormat ,esResource ,table)
+    SourceInfo(shortFormat, esResource, table)
   }
+
+  override def explainParams(spark: SparkSession) = {
+    _explainParams(spark)
+  }
+
+  final val esNodes: Param[String] = new Param[String](this, "es.nodes", "required.")
 }

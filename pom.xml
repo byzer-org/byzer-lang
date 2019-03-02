@@ -77,6 +77,7 @@
 
         <serviceframework.version>2.0.0</serviceframework.version>
         <scope>provided</scope>
+        <hadoop-client-version>2.6.5</hadoop-client-version>
     </properties>
 
     <repositories>
@@ -94,6 +95,145 @@
     </repositories>
 
     <profiles>
+
+        <profile>
+            <id>oss-support</id>
+            <properties>
+                <hadoop-client-version>3.2.0</hadoop-client-version>
+            </properties>
+            <dependencies>
+                <dependency>
+                    <groupId>org.apache.hadoop</groupId>
+                    <artifactId>hadoop-aliyun</artifactId>
+                    <version>3.2.0</version>
+                    <exclusions>
+                        <exclusion>
+                            <groupId>org.eclipse.jetty</groupId>
+                            <artifactId>jetty-server</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>org.eclipse.jetty</groupId>
+                            <artifactId>jetty-io</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>org.eclipse.jetty</groupId>
+                            <artifactId>jetty-http</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>org.eclipse.jetty</groupId>
+                            <artifactId>jetty-util</artifactId>
+                        </exclusion>
+                    </exclusions>
+                    <scope>${scope}</scope>
+
+                </dependency>
+                <dependency>
+                    <groupId>org.eclipse.jetty</groupId>
+                    <artifactId>jetty-server</artifactId>
+                    <version>9.2.16.v20160414</version>
+                </dependency>
+                <dependency>
+                    <groupId>org.eclipse.jetty</groupId>
+                    <artifactId>jetty-io</artifactId>
+                    <version>9.2.16.v20160414</version>
+                </dependency>
+                <dependency>
+                    <groupId>org.eclipse.jetty</groupId>
+                    <artifactId>jetty-util</artifactId>
+                    <version>9.2.16.v20160414</version>
+                </dependency>
+                <dependency>
+                    <groupId>org.eclipse.jetty</groupId>
+                    <artifactId>jetty-http</artifactId>
+                    <version>9.2.16.v20160414</version>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.hadoop</groupId>
+                    <artifactId>hadoop-hdfs</artifactId>
+                    <version>${hadoop-client-version}</version>
+                    <scope>${scope}</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.hadoop</groupId>
+                    <artifactId>hadoop-hdfs-client</artifactId>
+                    <version>${hadoop-client-version}</version>
+                    <scope>${scope}</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.hadoop</groupId>
+                    <artifactId>hadoop-client</artifactId>
+                    <version>${hadoop-client-version}</version>
+                    <scope>${scope}</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.hadoop</groupId>
+                    <artifactId>hadoop-common</artifactId>
+                    <version>${hadoop-client-version}</version>
+                    <scope>${scope}</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.hadoop</groupId>
+                    <artifactId>hadoop-auth</artifactId>
+                    <version>${hadoop-client-version}</version>
+                    <scope>${scope}</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.hadoop</groupId>
+                    <artifactId>hadoop-annotations</artifactId>
+                    <version>${hadoop-client-version}</version>
+                    <scope>${scope}</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.hadoop</groupId>
+                    <artifactId>hadoop-yarn-api</artifactId>
+                    <version>${hadoop-client-version}</version>
+                    <scope>${scope}</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.hadoop</groupId>
+                    <artifactId>hadoop-yarn-client</artifactId>
+                    <version>${hadoop-client-version}</version>
+                    <scope>${scope}</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.hadoop</groupId>
+                    <artifactId>hadoop-yarn-common</artifactId>
+                    <version>${hadoop-client-version}</version>
+                    <scope>${scope}</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.hadoop</groupId>
+                    <artifactId>hadoop-yarn-server-common</artifactId>
+                    <version>${hadoop-client-version}</version>
+                    <scope>${scope}</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.hadoop</groupId>
+                    <artifactId>hadoop-mapreduce-client-app</artifactId>
+                    <version>${hadoop-client-version}</version>
+                    <scope>${scope}</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.hadoop</groupId>
+                    <artifactId>hadoop-mapreduce-client-common</artifactId>
+                    <version>${hadoop-client-version}</version>
+                    <scope>${scope}</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.hadoop</groupId>
+                    <artifactId>hadoop-mapreduce-client-jobclient</artifactId>
+                    <version>${hadoop-client-version}</version>
+                    <scope>${scope}</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.hadoop</groupId>
+                    <artifactId>hadoop-mapreduce-client-shuffle</artifactId>
+                    <version>${hadoop-client-version}</version>
+                    <scope>${scope}</scope>
+                </dependency>
+            </dependencies>
+        </profile>
+
         <profile>
             <id>release-sign-artifacts</id>
             <activation>
@@ -517,6 +657,11 @@
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
+            <version>${httpclient.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpmime</artifactId>
             <version>${httpclient.version}</version>
         </dependency>
         <dependency>

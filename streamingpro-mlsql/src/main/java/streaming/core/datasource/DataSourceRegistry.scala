@@ -32,7 +32,10 @@ object DataSourceRegistry extends Logging {
 
   def register(name: MLSQLDataSourceKey, obj: MLSQLDataSource) = {
     registry.put(name, obj)
+  }
 
+  def allSourceNames = {
+    registry.asScala.map(f => f._2.shortFormat).toSeq
   }
 
   def fetch(name: String, option: Map[String, String] = Map()): Option[MLSQLDataSource] = {
@@ -57,15 +60,17 @@ object DataSourceRegistry extends Logging {
 
   private def registerFromPackage(name: String) = {
     ClassPath.from(getClass.getClassLoader).getTopLevelClasses(name).asScala.foreach { clzz =>
-      val dataSource = Class.forName(clzz.getName).newInstance()
-      if (dataSource.isInstanceOf[MLSQLRegistry]) {
-        dataSource.asInstanceOf[MLSQLRegistry].register()
-      } else {
-        logWarning(
-          s"""
-             |${clzz.getName} does not implement MLSQLRegistry,
-             |we cannot register it automatically.
+      if (!clzz.getName.endsWith("MLSQLFileDataSource")) {
+        val dataSource = Class.forName(clzz.getName).newInstance()
+        if (dataSource.isInstanceOf[MLSQLRegistry]) {
+          dataSource.asInstanceOf[MLSQLRegistry].register()
+        } else {
+          logWarning(
+            s"""
+               |${clzz.getName} does not implement MLSQLRegistry,
+               |we cannot register it automatically.
          """.stripMargin)
+        }
       }
     }
   }

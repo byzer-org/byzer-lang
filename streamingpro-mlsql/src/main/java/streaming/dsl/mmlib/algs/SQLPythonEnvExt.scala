@@ -27,7 +27,7 @@ import org.apache.spark.sql.mlsql.session.MLSQLException
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import streaming.common.HDFSOperator
 import streaming.core.strategy.platform.{PlatformManager, SparkRuntime}
-import streaming.dsl.mmlib.SQLAlg
+import streaming.dsl.mmlib._
 import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
 import streaming.dsl.mmlib.algs.python.BasicCondaEnvManager
 
@@ -90,10 +90,34 @@ class SQLPythonEnvExt(override val uid: String) extends SQLAlg with WowParams {
 
   override def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = throw new RuntimeException("register is not support")
 
-  final val command: Param[String] = new Param[String](this, "command", "", isValid = (s: String) => {
+  final val command: Param[String] = new Param[String](this, "command", "create|remove", isValid = (s: String) => {
     s == "create" || s == "remove"
   })
 
-  final val condaYamlFilePath: Param[String] = new Param[String](this, "condaYamlFilePath", "")
-  final val condaFile: Param[String] = new Param[String](this, "condaFile", "")
+  final val condaYamlFilePath: Param[String] = new Param[String](this, "condaYamlFilePath", "the conda file path")
+  final val condaFile: Param[String] = new Param[String](this, "condaFile", "variable ref configured by set")
+
+  override def explainParams(sparkSession: SparkSession): DataFrame = _explainParams(sparkSession)
+
+  override def codeExample: Code = Code(SQLCode,
+    """
+      |```sql
+      |set dependencies='''
+      |name: tutorial4
+      |dependencies:
+      |  - python=3.6
+      |  - pip
+      |  - pip:
+      |    - --index-url https://mirrors.aliyun.com/pypi/simple/
+      |    - numpy==1.14.3
+      |    - kafka==1.3.5
+      |    - pyspark==2.3.2
+      |    - pandas==0.22.0
+      |''';
+      |
+      |load script.`dependencies` as dependencies;
+      |run command as PythonEnvExt.`/tmp/jack` where condaFile="dependencies" and command="create";
+      |```
+      |
+    """.stripMargin)
 }

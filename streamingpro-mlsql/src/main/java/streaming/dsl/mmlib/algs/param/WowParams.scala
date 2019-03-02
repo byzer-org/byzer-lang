@@ -46,3 +46,4 @@ trait WowParams extends Params {
   }
 
 }
+

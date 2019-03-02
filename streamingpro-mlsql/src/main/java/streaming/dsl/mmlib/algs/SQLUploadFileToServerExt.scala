@@ -18,18 +18,19 @@
 
 package streaming.dsl.mmlib.algs
 
-import java.net.URLEncoder
+import java.nio.charset.Charset
 
-import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.apache.http.client.fluent.Request
+import org.apache.http.entity.ContentType
+import org.apache.http.entity.mime.{HttpMultipartMode, MultipartEntityBuilder}
 import org.apache.spark.ml.param.Param
 import org.apache.spark.sql.expressions.UserDefinedFunction
-import org.apache.spark.sql.mlsql.session.MLSQLException
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import streaming.common.HDFSOperator
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
+import streaming.log.WowLog
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -37,7 +38,7 @@ import scala.collection.mutable.ArrayBuffer
   * 2019-02-18 WilliamZhu(allwefantasy@gmail.com)
   * run command DownloadExt.`` where from="" and to=""
   */
-class SQLDownloadExt(override val uid: String) extends SQLAlg with WowParams {
+class SQLUploadFileToServerExt(override val uid: String) extends SQLAlg with Functions with WowParams with WowLog {
 
 
   def evaluate(value: String) = {
@@ -64,52 +65,69 @@ class SQLDownloadExt(override val uid: String) extends SQLAlg with WowParams {
 
   override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
     val spark = df.sparkSession
-    params.get(from.name).map { s =>
-      set(from, s)
-      s
-    }.getOrElse {
-      throw new MLSQLException(s"${from.name} is required")
-    }
 
-    params.get(to.name).map { s =>
-      set(to, evaluate(s))
-      s
-    }.getOrElse {
-      throw new MLSQLException(s"${to.name} is required")
-    }
     val context = ScriptSQLExec.context()
-    val fromUrl = context.userDefinedParam.get("__default__fileserver_url__") match {
+    val uploadUrl = context.userDefinedParam.get("__default__fileserver_upload_url__") match {
       case Some(fileServer) => fileServer
       case None =>
-        require($(from).startsWith("http"), "")
-        $(from)
+        require($(to).startsWith("http://"), "")
+        $(to)
     }
 
+    params.get(tokenName.name).map { f =>
+      set(tokenName, f)
+      f
+    }.getOrElse {
+      set(tokenName, "")
+    }
 
-    val stream = Request.Get(fromUrl + s"?userName=${URLEncoder.encode(context.owner, "utf-8")}&fileName=${URLEncoder.encode($(from), "utf-8")}")
-      .connectTimeout(60 * 1000)
-      .socketTimeout(10 * 60 * 1000)
-      .execute().returnContent().asStream()
-    val tarIS = new TarArchiveInputStream(stream)
-    var downloadResultRes = ArrayBuffer[DownloadResult]()
-    try {
-      var entry = tarIS.getNextEntry
-      while (entry != null) {
-        if (tarIS.canReadEntryData(entry)) {
-          if(!entry.isDirectory){
-            val dir = entry.getName.split("/").filterNot(f => f.isEmpty).dropRight(1).mkString("/")
-            downloadResultRes += DownloadResult($(to) + "/" + dir + "/" + entry.getName.split("/").last)
-            HDFSOperator.saveStream($(to) + "/" + dir, entry.getName.split("/").last, tarIS)
-          }
-          entry = tarIS.getNextEntry
-        }
+    params.get(tokenValue.name).map { f =>
+      set(tokenValue, f)
+      f
+    }.getOrElse {
+      set(tokenValue, "")
+    }
+
+    def uploadFile(forUploadPath: String, fileName: String) = {
+      val inputStream = HDFSOperator.readAsInputStream(forUploadPath)
+      try {
+        val entity = MultipartEntityBuilder.create.
+          setMode(HttpMultipartMode.BROWSER_COMPATIBLE).
+          setCharset(Charset.forName("utf-8")).
+          addBinaryBody(fileName, inputStream, ContentType.MULTIPART_FORM_DATA, fileName).build
+        logInfo(format(s"upload file ${forUploadPath} to ${uploadUrl}"))
+        val downloadRes = Request.Post(uploadUrl).connectTimeout(60 * 1000)
+          .socketTimeout(10 * 60 * 1000).addHeader($(tokenName), $(tokenValue)).body(entity)
+          .execute().returnContent().asString()
+        downloadRes
+      } finally {
+        inputStream.close()
       }
-    } finally {
-      tarIS.close()
-      stream.close()
+
+
     }
+
+    def findSubDirectory(path: String, targetDir: String) = {
+      val pathChunks = path.split("/").filterNot(f => f.isEmpty)
+      pathChunks.drop(pathChunks.indexOf(targetDir)).mkString("/")
+    }
+
+    val targetDir = path.split("/").filterNot(f => f.isEmpty).last
+
+    var downloadResult = ArrayBuffer[UploadFileToServerRes]()
+    if (HDFSOperator.isDir(path)) {
+      val files = HDFSOperator.iteratorFiles(path, true)
+      files.foreach { file =>
+        downloadResult += UploadFileToServerRes(uploadFile(file, findSubDirectory(file, targetDir)), targetDir)
+      }
+    }
+
+    if (HDFSOperator.isFile(path)) {
+      downloadResult += UploadFileToServerRes(uploadFile(path, targetDir), targetDir)
+    }
+
     import spark.implicits._
-    spark.createDataset[DownloadResult](downloadResultRes).toDF()
+    spark.createDataset[UploadFileToServerRes](downloadResult).toDF()
   }
 
   override def batchPredict(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
@@ -121,9 +139,9 @@ class SQLDownloadExt(override val uid: String) extends SQLAlg with WowParams {
 
   override def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = throw new RuntimeException("register is not support")
 
-
-  final val from: Param[String] = new Param[String](this, "from", "the file(directory) name you have uploaded")
-  final val to: Param[String] = new Param[String](this, "to", "the path you want to save")
+  final val to: Param[String] = new Param[String](this, "to", "the http url you want to upload file")
+  final val tokenName: Param[String] = new Param[String](this, "tokenName", "the token upload server requires")
+  final val tokenValue: Param[String] = new Param[String](this, "tokenValue", "the token upload server requires")
 
 
   override def explainParams(sparkSession: SparkSession): DataFrame = {
@@ -132,4 +150,5 @@ class SQLDownloadExt(override val uid: String) extends SQLAlg with WowParams {
 
 }
 
-case class DownloadResult(hdfsPath: String)
+case class UploadFileToServerRes(response: String, dir: String)
+
