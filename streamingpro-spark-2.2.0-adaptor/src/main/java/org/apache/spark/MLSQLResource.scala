@@ -1,8 +1,7 @@
 package org.apache.spark
 
 import org.apache.spark.sql.{MLSQLUtils, SparkSession}
-import scala.collection.mutable.{Buffer, ListBuffer}
-import tech.mlsql.render.protocal.{MLSQLResourceRender, MLSQLScriptJob, MLSQLScriptJobGroup}
+import tech.mlsql.render.protocal.{MLSQLResourceRender, MLSQLScriptJob, MLSQLScriptJobGroup, MLSQLShufflePerfRender}
 
 /**
   * 2019-01-28 WilliamZhu(allwefantasy@gmail.com)
@@ -21,12 +20,48 @@ class MLSQLResource(spark: SparkSession, owner: String, getGroupId: String => St
       activeStages.map(f => listener.stageIdToData(f.stageId, f.attemptId).numActiveTasks).sum
     }
 
+    def getDiskBytesSpilled(stageIds: Set[Int]) = {
+      val (activeStages, completedStages, failedStages) = fetchStageByJob(stageIds)
+      activeStages.map(f => listener.stageIdToData(f.stageId, f.attemptId).diskBytesSpilled).sum
+    }
+
+    def getInputRecords(stageIds: Set[Int]) = {
+      val (activeStages, completedStages, failedStages) = fetchStageByJob(stageIds)
+      activeStages.map(f => listener.stageIdToData(f.stageId, f.attemptId).inputRecords).sum
+    }
+
+    def getMemoryBytesSpilled(stageIds: Set[Int]) = {
+      val (activeStages, completedStages, failedStages) = fetchStageByJob(stageIds)
+      activeStages.map(f => listener.stageIdToData(f.stageId, f.attemptId).memoryBytesSpilled).sum
+    }
+
     val currentJobGroupActiveTasks = if (jobGroupId == null) activeJobs.map { f =>
       getNumActiveTaskByJob(f._2.stageIds.toSet)
     }.sum
     else activeJobs.filter(f => f._2.jobGroup.get == finalJobGroupId).map { f =>
       getNumActiveTaskByJob(f._2.stageIds.toSet)
     }.sum
+
+
+    val currentDiskBytesSpilled = if (jobGroupId == null) activeJobs.map(f => getDiskBytesSpilled(f._2.stageIds.toSet)).sum
+    else activeJobs.filter(f => f._2.jobGroup.get == finalJobGroupId).map(getDiskBytesSpilled).sum
+
+    val currentInputRecords = if (jobGroupId == null) activeJobs.map { f =>
+      getInputRecords(f._2.stageIds.toSet)
+    }.sum
+    else activeJobs.filter(f => f._2.jobGroup.get == finalJobGroupId).map { f =>
+      getInputRecords(f._2.stageIds.toSet)
+    }.sum
+
+    val currentMemoryBytesSpilled = if (jobGroupId == null) activeJobs.map { f =>
+      getMemoryBytesSpilled(f._2.stageIds.toSet)
+    }.sum
+    else activeJobs.filter(f => f._2.jobGroup.get == finalJobGroupId).map { f =>
+      getMemoryBytesSpilled(f._2.stageIds.toSet)
+    }.sum
+
+    val shuffle = MLSQLShufflePerfRender(memoryBytesSpilled = currentMemoryBytesSpilled, diskBytesSpilled = currentDiskBytesSpilled, inputRecords = currentInputRecords)
+
 
     MLSQLResourceRender(
       currentJobGroupActiveTasks = currentJobGroupActiveTasks,
@@ -37,7 +72,11 @@ class MLSQLResource(spark: SparkSession, owner: String, getGroupId: String => St
       taskTime = executorList.map(_.duration).sum,
       gcTime = executorList.map(_.jvmGCTime).sum,
       activeExecutorNum = executorList.size,
-      totalCores = executorList.map(_.totalCores).sum
+      totalExecutorNum = listener.executorIdToBlockManagerId.size,
+      totalCores = executorList.map(_.totalCores).sum,
+      usedMemory = -1,
+      totalMemory = -1,
+      shuffleData = shuffle
     )
 
 
