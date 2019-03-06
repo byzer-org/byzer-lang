@@ -28,16 +28,15 @@ import net.csdn.common.path.Url
 import net.csdn.modules.http.RestRequest.Method._
 import net.csdn.modules.http.{ApplicationController, ViewType}
 import net.csdn.modules.transport.HttpTransportService
-import org.apache.spark.SparkInstanceService
+import org.apache.spark.{MLSQLConf, SparkInstanceService}
 import org.apache.spark.ps.cluster.Message
-import org.apache.spark.sql.{DataFrameWriter, Row, SaveMode, SparkSession}
+import org.apache.spark.sql._
 import org.joda.time.format.ISODateTimeFormat
-import streaming.common.JarUtil
-import streaming.core._
-import streaming.core.strategy.platform.{PlatformManager, SparkRuntime}
-import streaming.dsl.mmlib.algs.tf.cluster.{ClusterSpec, ClusterStatus, ExecutorInfo}
-import streaming.dsl.{MLSQLExecuteContext, ScriptSQLExec, ScriptSQLExecListener}
-
+import _root_.streaming.common.JarUtil
+import _root_.streaming.core._
+import _root_.streaming.core.strategy.platform.{PlatformManager, SparkRuntime}
+import _root_.streaming.dsl.mmlib.algs.tf.cluster.{ClusterSpec, ClusterStatus, ExecutorInfo}
+import _root_.streaming.dsl.{MLSQLExecuteContext, ScriptSQLExec, ScriptSQLExecListener}
 import scala.collection.JavaConversions._
 import scala.util.control.NonFatal
 
@@ -123,7 +122,11 @@ class RestController extends ApplicationController {
           ScriptSQLExec.parse(param("sql"), context, paramAsBoolean("skipInclude", false), paramAsBoolean("skipAuth", true))
           if (!silence) {
             outputResult = context.getLastSelectTable() match {
-              case Some(table) => "[" + sparkSession.sql(s"select * from $table limit " + paramAsInt("outputSize", 5000)).toJSON.collect().mkString(",") + "]"
+              case Some(table) =>
+                val scriptJsonStringResult = limitOrNot {
+                  sparkSession.sql(s"select * from $table limit " + paramAsInt("outputSize", 5000))
+                }.toJSON.collect().mkString(",")
+                "[" + scriptJsonStringResult + "]"
               case None => "[]"
             }
           }
@@ -217,7 +220,10 @@ class RestController extends ApplicationController {
     paramAsBoolean("async", false).toString match {
       case "true" if hasParam("callback") =>
         StreamingproJobManager.run(sparkSession, jobInfo, () => {
-          val dfWriter = sparkSession.sql(param("sql")).write.mode(SaveMode.Overwrite)
+          val dfWriter = limitOrNot(
+            sparkSession.sql(param("sql"))
+          ).write
+            .mode(SaveMode.Overwrite)
           _save(dfWriter)
           val htp = findService(classOf[HttpTransportService])
           import scala.collection.JavaConversions._
@@ -227,7 +233,10 @@ class RestController extends ApplicationController {
 
       case "false" if param("resultType", "") == "file" =>
         StreamingproJobManager.run(sparkSession, jobInfo, () => {
-          val dfWriter = sparkSession.sql(param("sql")).write.mode(SaveMode.Overwrite)
+          val dfWriter = limitOrNot(
+            sparkSession.sql(param("sql"))
+          ).write
+            .mode(SaveMode.Overwrite)
           _save(dfWriter)
           render(s"""/download?fileType=raw&file_suffix=${param("format", "csv")}&paths=$path""")
         })
@@ -236,7 +245,11 @@ class RestController extends ApplicationController {
         StreamingproJobManager.run(sparkSession, jobInfo, () => {
           var res = ""
           try {
-            res = sparkSession.sql(param("sql")).toJSON.collect().mkString(",")
+            res = limitOrNot {
+              sparkSession.sql(param("sql"))
+            }.toJSON
+              .collect()
+              .mkString(",")
           } catch {
             case e: Exception =>
               e.printStackTrace()
@@ -560,6 +573,20 @@ class RestController extends ApplicationController {
       val interceptor = Class.forName(jparams("streaming.rest.intercept.clzz").toString).newInstance()
       interceptor.asInstanceOf[RestInterceptor].before(request = request.httpServletRequest(), response = restResponse.httpServletResponse())
     }
+  }
+
+  private def limitOrNot[T](ds: Dataset[T], maxSize: Int = paramAsInt("maxResultSize", 1000)): Dataset[T] = {
+    var result = ds
+    if (ds.sparkSession.sparkContext.getConf.getBoolean(MLSQLConf.ENABLE_MAX_RESULT_SIZE.key, false)) {
+      val globalLimit = ds.sparkSession.sparkContext.getConf.getInt(
+        MLSQLConf.RESTFUL_API_MAX_RESULT_SIZE.key, -1)
+      if (globalLimit == -1) {
+        result = ds.limit(maxSize)
+      } else {
+        result = ds.limit(Math.min(globalLimit, maxSize))
+      }
+    }
+    result
   }
 
   // end --------------------------------------------------------
