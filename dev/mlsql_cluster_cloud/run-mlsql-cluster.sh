@@ -396,8 +396,8 @@ nohup ./bin/spark-submit --class streaming.core.StreamingApp \
         --master spark://${inter_ip}:7077 \
         --deploy-mode client ${EXECUTOR_CORES_CONFIG} \
         --name mlsql \
-        --conf "spark.kryoserializer.buffer=4048k" \
-        --conf "spark.kryoserializer.buffer.max=2048m" \
+        --conf "spark.kryoserializer.buffer=4m" \
+        --conf "spark.kryoserializer.buffer.max=2000m" \
         --conf "spark.serializer=org.apache.spark.serializer.KryoSerializer" \
         --conf "spark.scheduler.mode=FAIR" \
         --conf "spark.executor.extraClassPath=\${SPARK_HOME}/jars/*:.:\${SPARK_HOME}/conf/:/home/webuser/\${MAIN_JAR}" \

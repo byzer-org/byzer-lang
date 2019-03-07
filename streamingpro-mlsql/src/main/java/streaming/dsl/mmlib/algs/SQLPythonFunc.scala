@@ -18,16 +18,13 @@
 
 package streaming.dsl.mmlib.algs
 
-import java.nio.file.{Files, Paths}
+import java.nio.file.Paths
 import java.util.UUID
 
 import com.hortonworks.spark.sql.kafka08.KafkaOperator
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.util.{ExternalCommandRunner, WowMD5}
 import streaming.common.HDFSOperator
-import streaming.dsl.mmlib.algs.python.{MLFlow, PythonScript, Script}
-
-import scala.io.Source
+import streaming.dsl.mmlib.algs.python.{MLFlow, PythonScript}
 
 /**
   * Created by allwefantasy on 1/2/2018.
@@ -106,23 +103,23 @@ object SQLPythonFunc {
   // --  path related (local/hdfs)
 
   def getLocalTempModelPath(hdfsPath: String) = {
-    s"${getLocalBasePath}/models/${UUID.randomUUID().toString}"
+    s"${getLocalBasePath}/${UUID.randomUUID().toString}/models"
   }
 
   def localOutputPath(hdfsPath: String) = {
-    s"${getLocalBasePath}/output/${UUID.randomUUID().toString}"
+    s"${getLocalBasePath}/${UUID.randomUUID().toString}/output"
   }
 
   def getLocalTempDataPath(hdfsPath: String) = {
-    s"${getLocalBasePath}/data/${UUID.randomUUID().toString}"
+    s"${getLocalBasePath}/${UUID.randomUUID().toString}/data"
   }
 
   def getLocalRunPath(hdfsPath: String) = {
-    s"${getLocalBasePath}/mlsqlrun/${UUID.randomUUID().toString}"
+    s"${getLocalBasePath}/${UUID.randomUUID().toString}/mlsqlrun"
   }
 
   def getLocalTempResourcePath(hdfsPath: String, resourceName: String) = {
-    s"${getLocalBasePath}/resource/${UUID.randomUUID()}/${resourceName}"
+    s"${getLocalBasePath}/${UUID.randomUUID()}/resource/${resourceName}"
   }
 
   def getLocalBasePath = {

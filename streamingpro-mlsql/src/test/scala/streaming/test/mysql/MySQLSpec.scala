@@ -20,6 +20,7 @@ package streaming.test.mysql
 
 import org.apache.spark.streaming.BasicSparkOperation
 import org.scalatest.BeforeAndAfterAll
+import streaming.common.HDFSOperator
 import streaming.core.strategy.platform.SparkRuntime
 import streaming.core.{BasicMLSQLConfig, SpecFunctions}
 import streaming.dsl.ScriptSQLExec
@@ -89,7 +90,7 @@ class MySQLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLCo
            |save append tod_boss_dashboard_sheet_1
            |as jdbc.`tableau.tod_boss_dashboard_sheet_1`
            |;
-           |load jdbc.`tableau.tod_boss_dashboard_sheet_1` as tbs;
+           |load jdbc.`tableau.tod_boss_dashboard_sheet_1` where enableCacheToHDFS="false" as tbs;
          """.stripMargin, sq)
 
       assume(spark.sql("select * from tbs").toJSON.collect().size == 2)
@@ -115,7 +116,7 @@ class MySQLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLCo
            |save overwrite tod_boss_dashboard_sheet_1
            |as jdbc.`tableau.tod_boss_dashboard_sheet_2`
            |options truncate="false";
-           |load jdbc.`tableau.tod_boss_dashboard_sheet_2` as tbs;
+           |load jdbc.`tableau.tod_boss_dashboard_sheet_2` where enableCacheToHDFS="false" as tbs;
          """.stripMargin, sq)
 
       assume(spark.sql("select * from tbs").toJSON.collect().size == 1)
@@ -126,7 +127,7 @@ class MySQLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLCo
            |save append tod_boss_dashboard_sheet_1
            |as jdbc.`tableau.tod_boss_dashboard_sheet_2`
            |;
-           |load jdbc.`tableau.tod_boss_dashboard_sheet_2` as tbs;
+           |load jdbc.`tableau.tod_boss_dashboard_sheet_2` where enableCacheToHDFS="false" as tbs;
          """.stripMargin, sq)
 
       assume(spark.sql("select * from tbs").toJSON.collect().size == 2)
@@ -137,10 +138,59 @@ class MySQLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLCo
            |save overwrite tod_boss_dashboard_sheet_1
            |as jdbc.`tableau.tod_boss_dashboard_sheet_2` options truncate="true"
            |;
-           |load jdbc.`tableau.tod_boss_dashboard_sheet_2` as tbs;
+           |load jdbc.`tableau.tod_boss_dashboard_sheet_2` where enableCacheToHDFS="false" as  tbs;
          """.stripMargin, sq)
 
       assume(spark.sql("select * from tbs").toJSON.collect().size == 1)
+
+    }
+  }
+
+  "load with cache" should "work fine" in {
+
+    withBatchContext(setupBatchContext(batchParamsWithoutHive, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+      //执行sql
+      implicit val spark = runtime.sparkSession
+
+      //注册表连接
+      var sq = createSSEL
+      ScriptSQLExec.parse(connect_stat, sq)
+
+      sq = createSSEL
+      ScriptSQLExec.parse("select \"a\" as a,\"b\" as b\n,\"c\" as c\nas tod_boss_dashboard_sheet_1;", sq)
+
+      sq = createSSEL
+
+      val baseHome = "/tmp/william/tmp/_jdbc_cache_"
+      val mysql_wow_tod_boss_dashboard_sheet_2 = s"${baseHome}/mysql_wow_tod_boss_dashboard_sheet_2"
+      HDFSOperator.deleteDir(baseHome)
+      ScriptSQLExec.parse(
+        s"""
+           |save overwrite tod_boss_dashboard_sheet_1
+           |as jdbc.`tableau.tod_boss_dashboard_sheet_2`
+           |options truncate="false";
+           |load jdbc.`tableau.tod_boss_dashboard_sheet_2` as tbs;
+         """.stripMargin, sq)
+
+      assume(HDFSOperator.fileExists(mysql_wow_tod_boss_dashboard_sheet_2 + "/data"))
+
+      HDFSOperator.deleteDir(baseHome)
+
+      val threads = (0 until 10).map { i =>
+        new Thread(new Runnable {
+          override def run(): Unit = {
+            val sq = createSSEL
+            ScriptSQLExec.parse(
+              s"""
+                 |load jdbc.`tableau.tod_boss_dashboard_sheet_2` as tbs;
+         """.stripMargin, sq)
+          }
+
+        })
+      }
+      threads.foreach(f => f.start())
+      threads.foreach(f => f.join())
+      assume(spark.read.parquet(s"${mysql_wow_tod_boss_dashboard_sheet_2}/data").count() == 1)
 
     }
   }
@@ -164,7 +214,7 @@ class MySQLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLCo
            |save overwrite tod_boss_dashboard_sheet_1
            |as jdbc.`tableau.tod_boss_dashboard_sheet_2`
            |options truncate="false";
-           |load jdbc.`tableau.tod_boss_dashboard_sheet_2` as tbs;
+           |load jdbc.`tableau.tod_boss_dashboard_sheet_2` where enableCacheToHDFS="false" as tbs;
          """.stripMargin, sq)
 
       assume(spark.sql("select * from tbs").toJSON.collect().size == 1)

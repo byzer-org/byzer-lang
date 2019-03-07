@@ -51,6 +51,12 @@ object HDFSOperator {
 
   }
 
+  def getFileStatus(path: String) = {
+    val fs = FileSystem.get(new Configuration())
+    val file = fs.getFileStatus(new Path(path))
+    file
+  }
+
 
   def readAsInputStream(fileName: String): InputStream = {
     val fs = FileSystem.get(new Configuration())
@@ -146,6 +152,11 @@ object HDFSOperator {
 
   }
 
+  def ceateEmptyFile(path: String) = {
+    val fs = FileSystem.get(new Configuration())
+    val dos = fs.create(new Path(path))
+    dos.close()
+  }
 
   def saveFile(path: String, fileName: String, iterator: Iterator[(String, String)]) = {
 

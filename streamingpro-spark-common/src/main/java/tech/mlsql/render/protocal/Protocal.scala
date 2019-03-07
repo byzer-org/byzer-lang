@@ -36,5 +36,16 @@ case class MLSQLResourceRender(
                                 taskTime: Double,
                                 gcTime: Double,
                                 activeExecutorNum: Int,
-                                totalCores: Int
+                                totalExecutorNum: Int,
+                                totalCores: Int,
+                                usedMemory: Double,
+                                totalMemory: Double,
+                                shuffleData: MLSQLShufflePerfRender
                               )
+
+case class MLSQLShufflePerfRender(
+                                   memoryBytesSpilled: Long,
+                                   diskBytesSpilled: Long,
+                                   inputRecords: Long
+
+                                 )
