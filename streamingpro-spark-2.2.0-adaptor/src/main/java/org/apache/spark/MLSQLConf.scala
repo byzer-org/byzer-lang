@@ -186,6 +186,20 @@ object MLSQLConf {
       .timeConf(TimeUnit.SECONDS)
       .createWithDefault(TimeUnit.SECONDS.toSeconds(60L))
 
+  val ENABLE_MAX_RESULT_SIZE: ConfigEntry[Boolean] =
+    MLSQLConfigBuilder("spark.mlsql.enable.max.result.limit")
+      .doc("enable restful max result size limitation. when you enable this configuration." +
+        " you should pass `maxResultSize` for your rest request." +
+        " if not, you take only max 1000 record.")
+      .booleanConf
+      .createWithDefault(false)
+
+  val RESTFUL_API_MAX_RESULT_SIZE: ConfigEntry[Long] =
+    MLSQLConfigBuilder("spark.mlsql.restful.api.max.result.size")
+      .doc("the max size of restful api result.")
+      .longConf
+      .createWithDefault(1000)
+
   def getAllDefaults: Map[String, String] = {
     entries.entrySet().asScala.map { kv =>
       (kv.getKey, kv.getValue.defaultValueString)
