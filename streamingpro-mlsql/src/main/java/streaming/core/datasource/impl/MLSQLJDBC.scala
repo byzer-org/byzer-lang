@@ -102,9 +102,17 @@ class MLSQLJDBC(override val uid: String) extends MLSQLSource with MLSQLSink wit
         val home = if (context != null) context.home else ""
         val finalPath = s"${home}/tmp/_jdbc_cache_/${newtableName}"
 
+        try {
+          HDFSOperator.createDir(finalPath)
+        } catch {
+          case e: Exception =>
+        }
+
 
         def isExpire = {
-          HDFSOperator.fileExists(finalPath) && System.currentTimeMillis() - HDFSOperator.getFileStatus(finalPath).getModificationTime > $(cacheToHDFSExpireTime) * 1000
+          // we should check the data dir instead of the finalPath since the final path
+          // will be written with lock file which may make the modification time changed
+          HDFSOperator.fileExists(finalPath + "/data") && System.currentTimeMillis() - HDFSOperator.getFileStatus(finalPath + "/data").getModificationTime > $(cacheToHDFSExpireTime) * 1000
         }
 
         val hdfsLocker = new DistrLocker(finalPath)
