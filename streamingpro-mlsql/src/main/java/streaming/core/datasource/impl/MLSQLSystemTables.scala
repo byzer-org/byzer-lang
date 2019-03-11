@@ -1,10 +1,12 @@
 package streaming.core.datasource.impl
 
 import org.apache.spark.sql.{DataFrame, DataFrameReader}
+import streaming.common.ScalaEnumTool
 import streaming.core.StreamingproJobInfo
 import streaming.core.datasource._
 import streaming.core.datasource.util.MLSQLJobCollect
 import streaming.dsl.ScriptSQLExec
+import streaming.dsl.auth.{OperateType, TableType}
 
 /**
   * 2019-01-11 WilliamZhu(allwefantasy@gmail.com)
@@ -43,6 +45,13 @@ class MLSQLSystemTables extends MLSQLSource with MLSQLSourceInfo with MLSQLRegis
         val detail = jobCollect.jobDetail(jobGroupId)
         detail.activeJobs.map(_.numActiveTasks)
         spark.createDataset(Seq(jobCollect.resourceSummary(jobGroupId))).toDF()
+
+      case Array("tables", "tableTypes") =>
+        spark.createDataset(TableType.toList).toDF()
+
+      case Array("tables", "operateTypes") =>
+        val res = ScalaEnumTool.valueSymbols[OperateType.type].map(f => f.toString.split("\\s+").last.toLowerCase()).toSeq
+        spark.createDataset(res).toDF()
     }
 
   }

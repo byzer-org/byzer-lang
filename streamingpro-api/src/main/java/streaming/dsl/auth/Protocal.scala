@@ -58,12 +58,12 @@ object TableType {
   val HIVE = TableTypeMeta("hive", Set("hive"))
   val HBASE = TableTypeMeta("hbase", Set("hbase"))
   val HDFS = TableTypeMeta("hdfs", Set("parquet", "json", "csv", "image", "text", "xml"))
-  val HTTP = TableTypeMeta("hdfs", Set("http"))
+  val HTTP = TableTypeMeta("http", Set("http"))
   val JDBC = TableTypeMeta("jdbc", Set("jdbc"))
   val ES = TableTypeMeta("es", Set("es"))
   val MONGO = TableTypeMeta("mongo", Set("mongo"))
   val SOLR = TableTypeMeta("solr", Set("solr"))
-  val TEMP = TableTypeMeta("temp", Set("temp", "jsonStr", "script"))
+  val TEMP = TableTypeMeta("temp", Set("temp", "jsonStr", "script", "csvStr"))
   val API = TableTypeMeta("api", Set("mlsqlAPI", "mlsqlConf"))
   val WEB = TableTypeMeta("web", Set("crawlersql"))
   val GRAMMAR = TableTypeMeta("grammar", Set("grammar"))
@@ -71,6 +71,11 @@ object TableType {
   def from(str: String) = {
     List(HIVE, HBASE, HDFS, HTTP, JDBC, ES, MONGO, SOLR, TEMP, API, WEB, GRAMMAR).filter(f => f.includes.contains(str)).headOption
   }
+
+  def toList = {
+    List(HIVE, HBASE, HDFS, HTTP, JDBC, ES, MONGO, SOLR, TEMP, API, WEB, GRAMMAR).flatMap(f => f.includes.toSeq)
+  }
 }
+
 
 
