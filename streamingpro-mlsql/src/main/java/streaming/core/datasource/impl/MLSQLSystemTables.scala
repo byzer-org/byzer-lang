@@ -49,6 +49,9 @@ class MLSQLSystemTables extends MLSQLSource with MLSQLSourceInfo with MLSQLRegis
       case Array("tables", "tableTypes") =>
         spark.createDataset(TableType.toList).toDF()
 
+      case Array("tables", "sourceTypes") =>
+        spark.createDataset(SourceTypeRegistry.sources).toDF()
+
       case Array("tables", "operateTypes") =>
         val res = ScalaEnumTool.valueSymbols[OperateType.type].map(f => f.toString.split("\\s+").last.toLowerCase()).toSeq
         spark.createDataset(res).toDF()

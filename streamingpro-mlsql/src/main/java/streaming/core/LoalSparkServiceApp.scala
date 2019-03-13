@@ -30,7 +30,7 @@ object LocalSparkServiceApp {
       "-streaming.thrift", "false",
       "-streaming.platform", "spark",
       "-spark.mlsql.enable.max.result.limit", "true",
-      "-spark.mlsql.restful.api.max.result.size", "7",
+      //      "-spark.mlsql.restful.api.max.result.size", "7",
       //"-streaming.job.file.path", "classpath:///test/empty.json",
       "-streaming.spark.service", "true",
       "-streaming.job.cancel", "true",

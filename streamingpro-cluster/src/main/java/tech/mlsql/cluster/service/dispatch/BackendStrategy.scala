@@ -74,9 +74,18 @@ class JobNumAwareStrategy(tags: String) extends BackendStrategy with Logging {
     }
     val backend = backends.seq.map { b =>
       logDebug(s"visit backend: ${b.meta.getUrl} tags: ${b.meta.getTag}")
-      val res = b.instance.instanceResource(Map())
-      val resource = res.toBean[CSparkInstanceResource]().head
-      (resource.totalCores - resource.totalTasks, b)
+      var returnItem = (Long.MaxValue, b)
+      try {
+        val res = b.instance.instanceResource(Map())
+        if (res.getStatus == 200) {
+          val resource = res.toBean[CSparkInstanceResource]().head
+          returnItem = (resource.totalCores - resource.totalTasks, b)
+        }
+      } catch {
+        case e: Exception =>
+      }
+      returnItem
+
     }.sortBy(f => f._1).reverse.headOption.map(f => f._2.meta)
 
     BackendService.find(backend).map(f => Seq(f))

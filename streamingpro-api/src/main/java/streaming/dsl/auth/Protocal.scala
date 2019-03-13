@@ -54,6 +54,7 @@ object OperateType extends Enumeration {
   val EMPTY = Value("empty")
 }
 
+
 object TableType {
   val HIVE = TableTypeMeta("hive", Set("hive"))
   val HBASE = TableTypeMeta("hbase", Set("hbase"))
@@ -67,13 +68,14 @@ object TableType {
   val API = TableTypeMeta("api", Set("mlsqlAPI", "mlsqlConf"))
   val WEB = TableTypeMeta("web", Set("crawlersql"))
   val GRAMMAR = TableTypeMeta("grammar", Set("grammar"))
+  val SYSTEM = TableTypeMeta("system", Set("_mlsql_"))
 
   def from(str: String) = {
-    List(HIVE, HBASE, HDFS, HTTP, JDBC, ES, MONGO, SOLR, TEMP, API, WEB, GRAMMAR).filter(f => f.includes.contains(str)).headOption
+    List(HIVE, HBASE, HDFS, HTTP, JDBC, ES, MONGO, SOLR, TEMP, API, WEB, GRAMMAR, SYSTEM).filter(f => f.includes.contains(str)).headOption
   }
 
   def toList = {
-    List(HIVE, HBASE, HDFS, HTTP, JDBC, ES, MONGO, SOLR, TEMP, API, WEB, GRAMMAR).flatMap(f => f.includes.toSeq)
+    List(HIVE, HBASE, HDFS, HTTP, JDBC, ES, MONGO, SOLR, TEMP, API, WEB, GRAMMAR, SYSTEM).flatMap(f => f.includes.toSeq)
   }
 }
 

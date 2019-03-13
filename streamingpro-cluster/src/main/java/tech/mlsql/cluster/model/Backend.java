@@ -24,6 +24,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static net.csdn.common.collections.WowCollections.map;
+
 /**
  * 2018-12-04 WilliamZhu(allwefantasy@gmail.com)
  */
@@ -38,7 +40,7 @@ public class Backend extends Model {
             }
         });
 
-        Backend backend = create(newParams);
+        Backend backend = Backend.create(newParams);
         if (!params.containsKey("ecsResourcePoolId")) {
             backend.setEcsResourcePoolId(-1);
         } else {
@@ -52,6 +54,10 @@ public class Backend extends Model {
 
     public static Backend findById(int id) {
         return Backend.find(id);
+    }
+
+    public static Backend findByName(String name) {
+        return Backend.where(map("name", name)).singleFetch();
     }
 
     public static List<Backend> items() {
