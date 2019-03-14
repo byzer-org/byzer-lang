@@ -47,7 +47,7 @@ object ScriptSQLExec extends Logging with WowLog {
   def contextGetOrForTest(): MLSQLExecuteContext = {
     if (context() == null) {
       val exec = new ScriptSQLExecListener(null, "/tmp/william", Map())
-      setContext(new MLSQLExecuteContext("testUser", exec.pathPrefix(None), "", Map()))
+      setContext(new MLSQLExecuteContext(exec,"testUser", exec.pathPrefix(None), "", Map()))
     }
     context()
   }
@@ -99,6 +99,7 @@ object ScriptSQLExec extends Logging with WowLog {
       val tableAuth = Class.forName(context.userDefinedParam.getOrElse("__auth_client__",
         Dispatcher.contextParams("").getOrDefault("context.__auth_client__", "streaming.dsl.auth.meta.client.DefaultConsoleClient").toString))
         .newInstance().asInstanceOf[TableAuth]
+      sqel.setTableAuth(tableAuth)
       tableAuth.auth(authListener.tables().tables.toList)
     }
 
@@ -125,12 +126,20 @@ class ScriptSQLExecListener(val _sparkSession: SparkSession, val _defaultPathPre
   private val _env = new scala.collection.mutable.HashMap[String, String]
 
   private val lastSelectTable = new AtomicReference[String]()
+  private[this] var _tableAuth: AtomicReference[TableAuth] = new AtomicReference[TableAuth]()
 
   var grammarProcessListener: Option[GrammarProcessListener] = Some(new GrammarProcessListener(this))
   var includeProcessListner: Option[PreProcessIncludeListener] = None
   var setProcessListner: Option[PreProcessSetListener] = None
   var authProcessListner: Option[AuthProcessListener] = None
 
+  def setTableAuth(tableAuth: TableAuth): Unit = {
+    _tableAuth.set(tableAuth)
+  }
+
+  def getTableAuth: Option[TableAuth] = {
+    Option(_tableAuth.get())
+  }
 
   def setLastSelectTable(table: String) = {
     lastSelectTable.set(table)
@@ -210,6 +219,12 @@ class GrammarProcessListener(scriptSQLExecListener: ScriptSQLExecListener) exten
 }
 
 class AuthProcessListener(val listener: ScriptSQLExecListener) extends BaseParseListenerextends {
+
+  val ENABLE_RUNTIME_SELECT_AUTH = listener.sparkSession
+    .sparkContext
+    .getConf
+    .getBoolean("spark.mlsql.enable.runtime.select.auth", false)
+
   private val _tables = MLSQLTableSet(ArrayBuffer[MLSQLTable]())
 
   def addTable(table: MLSQLTable) = {
@@ -231,7 +246,7 @@ class AuthProcessListener(val listener: ScriptSQLExecListener) extends BaseParse
       case "load" =>
         new LoadAuth(this).auth(ctx)
 
-      case "select" =>
+      case "select" if ENABLE_RUNTIME_SELECT_AUTH =>
         new SelectAuth(this).auth(ctx)
 
       case "save" =>
@@ -325,7 +340,7 @@ object ConnectMeta {
   }
 }
 
-case class MLSQLExecuteContext(owner: String, home: String, groupId: String, userDefinedParam: Map[String, String] = Map())
+case class MLSQLExecuteContext(execListener: ScriptSQLExecListener, owner: String, home: String, groupId: String, userDefinedParam: Map[String, String] = Map())
 
 case class DBMappingKey(format: String, db: String)
 

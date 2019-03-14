@@ -16,27 +16,20 @@
  * limitations under the License.
  */
 
-package org.apache.spark.sql.execution
+package streaming.common
 
-import java.util.concurrent.atomic.AtomicReference
-
-import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.catalyst.TableIdentifier
-
-import scala.collection.mutable.ArrayBuffer
+import scala.reflect.runtime.universe._
 
 /**
-  * Created by allwefantasy on 11/9/2018.
+  * 2019-03-11 WilliamZhu(allwefantasy@gmail.com)
   */
-object MLSQLAuthParser {
-  val parser = new AtomicReference[WowSparkSqlParser]()
+object ScalaEnumTool {
 
-  def filterTables(sql: String, session: SparkSession) = {
-    val t = ArrayBuffer[TableIdentifier]()
-    lazy val parserInstance = new WowSparkSqlParser(session.sqlContext.conf)
-    parser.compareAndSet(null, parserInstance)
-    parser.get().tables(sql, t)
-    parser.get().columns(sql)
-    t
+  def valueSymbols[E <: Enumeration : TypeTag] = {
+
+    val valueType = typeOf[E#Value]
+    typeOf[E].members.filter(sym => !sym.isMethod &&
+      sym.typeSignature.baseType(valueType.typeSymbol) =:= valueType && ! sym.isType
+    )
   }
 }

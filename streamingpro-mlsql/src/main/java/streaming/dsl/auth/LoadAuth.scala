@@ -20,8 +20,8 @@ package streaming.dsl.auth
 
 import streaming.core.datasource.{DataAuthConfig, DataSourceRegistry, SourceInfo}
 import streaming.dsl.parser.DSLSQLParser._
-import streaming.dsl.{AuthProcessListener, DslTool}
 import streaming.dsl.template.TemplateMerge
+import streaming.dsl.{AuthProcessListener, DslTool, ScriptSQLExec}
 
 
 /**
@@ -63,12 +63,17 @@ class LoadAuth(authProcessListener: AuthProcessListener) extends MLSQLAuth with 
 
       MLSQLTable(Some(sourceInfo.db), Some(sourceInfo.table), OperateType.LOAD, Some(sourceInfo.sourceType), TableType.from(format).get)
     } getOrElse {
-      MLSQLTable(None, Some(cleanStr(path)), OperateType.LOAD, Some(format) ,TableType.from(format).get)
+
+      val finalPath = if (TableType.HDFS.includes.contains(format)) {
+        val context = ScriptSQLExec.contextGetOrForTest()
+        withPathPrefix(authProcessListener.listener.pathPrefix(Option(context.owner)), cleanStr(path))
+      } else cleanStr(path)
+      MLSQLTable(None, Some(cleanStr(finalPath)), OperateType.LOAD, Some(format), TableType.from(format).get)
     }
 
     authProcessListener.addTable(mLSQLTable)
 
-    authProcessListener.addTable(MLSQLTable(None, Some(cleanStr(tableName)) ,OperateType.LOAD , None, TableType.TEMP))
+    authProcessListener.addTable(MLSQLTable(None, Some(cleanStr(tableName)), OperateType.LOAD, None, TableType.TEMP))
     TableAuthResult.empty()
     //Class.forName(env.getOrElse("auth_client", "streaming.dsl.auth.meta.client.DefaultClient")).newInstance().asInstanceOf[TableAuth].auth(mLSQLTable)
   }
