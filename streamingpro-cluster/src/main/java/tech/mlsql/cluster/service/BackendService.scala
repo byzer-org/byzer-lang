@@ -37,13 +37,13 @@ import scala.collection.JavaConversions._
   * 2018-12-04 WilliamZhu(allwefantasy@gmail.com)
   */
 trait BackendService {
-  @At(path = Array("/run/script"), types = Array(GET, POST))
+  @At(path = Array("/run/script"), types = Array(POST))
   def runScript(@Param("sql") sql: String): HttpTransportService.SResponse
 
-  @At(path = Array("/run/script"), types = Array(GET, POST))
+  @At(path = Array("/run/script"), types = Array(POST))
   def runScript(params: Map[String, String]): HttpTransportService.SResponse
 
-  @At(path = Array("/run/sql"), types = Array(GET, POST))
+  @At(path = Array("/run/sql"), types = Array(POST))
   def runSQL(params: Map[String, String]): HttpTransportService.SResponse
 
   @At(path = Array("/instance/resource"), types = Array(GET, POST))

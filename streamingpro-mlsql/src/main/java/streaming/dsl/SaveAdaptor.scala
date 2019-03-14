@@ -116,7 +116,6 @@ class SaveAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
     }
 
     var streamQuery: StreamingQuery = null
-    option = option ++ Map("_filePath_" -> TemplateMerge.merge(withPathPrefix(scriptSQLExecListener.pathPrefix(owner), cleanStr(path)), scriptSQLExecListener.env().toMap))
     if (scriptSQLExecListener.env().contains("stream")) {
       streamQuery = new StreamSaveAdaptor(scriptSQLExecListener, option, oldDF, final_path, tableName, format, mode, partitionByCol.toArray).parse
     } else {

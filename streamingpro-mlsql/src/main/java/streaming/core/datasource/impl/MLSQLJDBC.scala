@@ -20,7 +20,7 @@ package streaming.core.datasource.impl
 
 import _root_.streaming.common.HDFSOperator
 import _root_.streaming.common.hdfs.lock.DistrLocker
-import _root_.streaming.core.datasource._
+import _root_.streaming.core.datasource.{SourceTypeRegistry, _}
 import _root_.streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
 import _root_.streaming.dsl.{ConnectMeta, DBMappingKey, ScriptSQLExec}
 import _root_.streaming.log.{Logging, WowLog}
@@ -222,8 +222,9 @@ class MLSQLJDBC(override val uid: String) extends MLSQLSource with MLSQLSink wit
 
     val dataSourceType = url.split(":")(1)
     val dbName = url.substring(url.lastIndexOf('/') + 1).takeWhile(_ != '?')
-
-    SourceInfo(dataSourceType, dbName, _dbtable)
+    val si = SourceInfo(dataSourceType, dbName, _dbtable)
+    SourceTypeRegistry.register(dataSourceType, si)
+    si
   }
 
   override def explainParams(spark: SparkSession) = {

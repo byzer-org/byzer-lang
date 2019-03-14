@@ -23,8 +23,11 @@ import net.csdn.modules.http.ApplicationController
 import net.csdn.modules.http.RestRequest.Method.{GET, POST}
 import net.liftweb.json.NoTypeHints
 import net.liftweb.{json => SJSon}
+import streaming.common.JSONTool
 import tech.mlsql.cluster.model.Backend
 import tech.mlsql.cluster.service.BackendService
+
+import scala.collection.JavaConverters._
 
 /**
   * 2018-12-05 WilliamZhu(allwefantasy@gmail.com)
@@ -60,9 +63,29 @@ class BackendController extends ApplicationController {
   @At(path = Array("/backend/add"), types = Array(GET, POST))
   def backendAdd = {
     List("url", "tag", "name").foreach(item => require(hasParam(item), s"${item} is required"))
-    Backend.newOne(params(), true)
+    if (Backend.findByName(param("name")) != null) {
+      render(400, s"the name ${param("name")} have be taken")
+    }
+    val newParams = params().asScala.filterNot(f => f._1.startsWith("context.") || f._1.startsWith("action")).toMap.asJava
+    Backend.newOne(newParams, true)
     BackendService.refreshCache
     render(map("msg", "success"))
+  }
+
+  @At(path = Array("/backend/list/names"), types = Array(GET, POST))
+  def backendListNames = {
+    import scala.collection.JavaConverters._
+    val res = param("names").split(",").map { f =>
+      Backend.findByName(f)
+    }.filterNot(f => f == null).toList.asJava
+
+    render(res)
+  }
+
+  @At(path = Array("/backend/name/check"), types = Array(GET, POST))
+  def backendNameCheck = {
+    val exists = Backend.findByName(param("name")) != null
+    scalaRender(200, Map("msg" -> exists))
   }
 
   @Action(
@@ -80,7 +103,7 @@ class BackendController extends ApplicationController {
   ))
   @At(path = Array("/backend/tags/update"), types = Array(GET, POST))
   def backendTagsUpdate = {
-    val backend = Backend.findById(paramAsInt("id"))
+    val backend = if (hasParam("id")) Backend.findById(paramAsInt("id")) else Backend.findByName(param("name"))
     if (param("merge", "overwrite") == "overwrite") {
       backend.attr("tag", param("tags"))
     } else {
@@ -105,7 +128,7 @@ class BackendController extends ApplicationController {
   ))
   @At(path = Array("/backend/remove"), types = Array(GET, POST))
   def backendRemove = {
-    val backend = Backend.findById(paramAsInt("id"))
+    val backend = if (hasParam("id")) Backend.findById(paramAsInt("id")) else Backend.findByName(param("name"))
     backend.delete()
     BackendService.refreshCache
     render(map("msg", "success"))
@@ -122,7 +145,11 @@ class BackendController extends ApplicationController {
   ))
   @At(path = Array("/backend/list"), types = Array(GET, POST))
   def backendList = {
-    render(Backend.items())
+    val items = Backend.items()
+    require(hasParam("tag"), "filter tag is required")
+    val tags = param("tag").split(",")
+    val res = items.asScala.filter(f => f.getTags.toSet.intersect(tags.toSet).size > 0).asJava
+    render(res)
   }
 
   @Action(
@@ -138,5 +165,9 @@ class BackendController extends ApplicationController {
   def activeBackend = {
     implicit val formats = SJSon.Serialization.formats(NoTypeHints)
     render(SJSon.Serialization.write(BackendService.activeBackend.map(f => (f._1.getName, f._2))))
+  }
+
+  def scalaRender(status: Int, obj: AnyRef) = {
+    render(status, JSONTool.toJsonStr(obj))
   }
 }

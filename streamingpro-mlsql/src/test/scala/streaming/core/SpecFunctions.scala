@@ -68,9 +68,9 @@ trait SpecFunctions {
     StreamingproJobManager.addJobManually(StreamingproJobInfo(
       "william", StreamingproJobType.SCRIPT, "", "", groupId, System.currentTimeMillis(), -1
     ))
-    ScriptSQLExec.setContext(new MLSQLExecuteContext("william", "/tmp/william", groupId, Map()))
     val context = new ScriptSQLExecListener(spark, defaultPathPrefix, Map())
     context.addEnv("HOME", context.pathPrefix(None))
+    ScriptSQLExec.setContext(new MLSQLExecuteContext(context, "william", "/tmp/william", groupId, Map()))
     context
   }
 
@@ -79,9 +79,9 @@ trait SpecFunctions {
     StreamingproJobManager.addJobManually(StreamingproJobInfo(
       "william", StreamingproJobType.SCRIPT, "", "", groupId, System.currentTimeMillis(), -1
     ))
-    ScriptSQLExec.setContext(new MLSQLExecuteContext("william", "/tmp/william", groupId, Map()))
     val context = new ScriptSQLExecListener(spark, "/tmp/william", Map())
     context.addEnv("HOME", context.pathPrefix(None))
+    ScriptSQLExec.setContext(new MLSQLExecuteContext(context, "william", "/tmp/william", groupId, Map()))
     context
   }
 

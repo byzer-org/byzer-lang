@@ -85,8 +85,14 @@ class SQLDownloadExt(override val uid: String) extends SQLAlg with WowParams {
         $(from)
     }
 
+    val auth_secret = context.userDefinedParam("__auth_secret__")
 
-    val stream = Request.Get(fromUrl + s"?userName=${URLEncoder.encode(context.owner, "utf-8")}&fileName=${URLEncoder.encode($(from), "utf-8")}")
+    def urlencode(name: String) = {
+      URLEncoder.encode(name, "utf-8")
+    }
+
+    val getUrl = fromUrl + s"?userName=${urlencode(context.owner)}&fileName=${urlencode($(from))}&auth_secret=${urlencode(auth_secret)}"
+    val stream = Request.Get(getUrl)
       .connectTimeout(60 * 1000)
       .socketTimeout(10 * 60 * 1000)
       .execute().returnContent().asStream()
@@ -96,7 +102,7 @@ class SQLDownloadExt(override val uid: String) extends SQLAlg with WowParams {
       var entry = tarIS.getNextEntry
       while (entry != null) {
         if (tarIS.canReadEntryData(entry)) {
-          if(!entry.isDirectory){
+          if (!entry.isDirectory) {
             val dir = entry.getName.split("/").filterNot(f => f.isEmpty).dropRight(1).mkString("/")
             downloadResultRes += DownloadResult($(to) + "/" + dir + "/" + entry.getName.split("/").last)
             HDFSOperator.saveStream($(to) + "/" + dir, entry.getName.split("/").last, tarIS)

@@ -89,19 +89,17 @@ class BatchLoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener,
       Seq.empty[String].toDF("name")
     }
 
-    // calculate resource real absolute path
-    val filePath = resourceRealPath(scriptSQLExecListener, resourceOwner, path)
-    val dsConf = DataSourceConfig(cleanStr(path), option ++ Map("_filePath_" -> filePath), Option(emptyDataFrame))
+    val dsConf = DataSourceConfig(cleanStr(path), option, Option(emptyDataFrame))
     var sourceInfo: Option[SourceInfo] = None
 
     DataSourceRegistry.fetch(format, option).map { datasource =>
       table = datasource.asInstanceOf[ {def load(reader: DataFrameReader, config: DataSourceConfig): DataFrame}].
         load(reader, dsConf)
-
       if (datasource.isInstanceOf[MLSQLSourceInfo]) {
         val authConf = DataAuthConfig(dsConf.path, dsConf.config)
         sourceInfo = Option(datasource.asInstanceOf[MLSQLSourceInfo].sourceInfo(authConf))
       }
+      table
     }.getOrElse {
       format match {
         case "crawlersql" =>
