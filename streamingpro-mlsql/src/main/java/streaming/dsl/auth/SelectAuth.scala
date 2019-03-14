@@ -18,16 +18,12 @@
 
 package streaming.dsl.auth
 
-import scala.collection.mutable
-
 import org.antlr.v4.runtime.misc.Interval
-import org.apache.spark.sql.catalyst.analysis.UnresolvedRelation
-import org.apache.spark.sql.catalyst.catalog.HiveTableRelation
 import org.apache.spark.sql.execution.MLSQLAuthParser
 import streaming.dsl.parser.DSLSQLLexer
 import streaming.dsl.parser.DSLSQLParser._
 import streaming.dsl.template.TemplateMerge
-import streaming.dsl.{AuthProcessListener, DslTool, ScriptSQLExecListener}
+import streaming.dsl.{AuthProcessListener, DslTool}
 
 
 /**
@@ -57,59 +53,26 @@ class SelectAuth(authProcessListener: AuthProcessListener) extends MLSQLAuth wit
 
     val tableRefs = MLSQLAuthParser.filterTables(sql, authProcessListener.listener.sparkSession)
 
-    var tables = Array.empty[MLSQLTable]
-    tableRefs.foreach { f =>
+    val tables = tableRefs.foreach { f =>
       f.database match {
         case Some(db) =>
           val exists = authProcessListener.withDBs.filter(m => f.table == m.table.get && db == m.db.get).size > 0
           if (!exists) {
-            tables +:= MLSQLTable(Some(db), Some(f.table) ,OperateType.SELECT , None, TableType.HIVE)
+            authProcessListener.addTable(MLSQLTable(Some(db), Some(f.table) ,OperateType.SELECT , None, TableType.HIVE))
           }
         case None =>
           val exists = authProcessListener.withoutDBs.filter(m => f.table == m.table.get).size > 0
           if (!exists) {
-            tables +:= MLSQLTable(Some("default"), Some(f.table) ,OperateType.SELECT , None, TableType.HIVE)
+            authProcessListener.addTable(MLSQLTable(Some("default"), Some(f.table) ,OperateType.SELECT , None, TableType.HIVE))
           }
       }
     }
 
     val exists = authProcessListener.withoutDBs.filter(m => tableName == m.table.get).size > 0
     if (!exists) {
-      tables +:= MLSQLTable(None, Some(tableName) ,OperateType.SELECT , None, TableType.TEMP)
+      authProcessListener.addTable(MLSQLTable(None, Some(tableName) ,OperateType.SELECT , None, TableType.TEMP))
     }
 
-    val df = authProcessListener.listener.sparkSession.sql(sql)
-    println("----final---")
-    var r = Array.empty[String]
-    df.queryExecution.logical.map {
-      case sp: UnresolvedRelation =>
-        r +:= sp.tableIdentifier.unquotedString.toLowerCase
-      case h: HiveTableRelation =>
-        println(s"xxxxxxxx: ${h.tableMeta.identifier}")
-
-      case _ =>
-    }
-    println(r.mkString(","))
-    var tableAndCols = mutable.HashMap.empty[String, mutable.HashSet[String]]
-    df.queryExecution.analyzed.map(lp => {
-      lp.output.map(o => {
-        val qualifier = o.qualifier.mkString(".")
-        if (r.contains(o.qualifier.mkString("."))) {
-          val value = tableAndCols.getOrElse(qualifier, mutable.HashSet.empty[String])
-          value.add(o.name)
-          tableAndCols.update(qualifier, value)
-        }
-      })
-    })
-    tableAndCols.foreach(println)
-    tables.foreach(table => {
-      tableAndCols.get(table.tableIdentifier)
-        .foreach(cols => {
-          authProcessListener.addTable(table.copy(columns = Option(cols.toSet)))
-        })
-    })
-
-    df.explain()
 
     TableAuthResult.empty()
 

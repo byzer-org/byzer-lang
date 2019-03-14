@@ -18,17 +18,15 @@
 
 package org.apache.spark.sql.execution
 
-import org.apache.spark.sql.catalyst.TableIdentifier
+import org.apache.spark.sql.catalyst.{TableIdentifier}
 import org.apache.spark.sql.catalyst.parser._
 import org.apache.spark.sql.catalyst.parser.SqlBaseParser._
 import org.apache.spark.sql.catalyst.plans.logical._
 import org.apache.spark.sql.catalyst.trees.Origin
 import org.apache.spark.sql.internal.{SQLConf, VariableSubstitution}
-import scala.collection.mutable.ArrayBuffer
 
-import org.apache.spark.sql.catalyst.analysis.{ResolvedStar, UnresolvedAttribute}
-import org.apache.spark.sql.catalyst.expressions.Expression
-import org.apache.spark.sql.types.StructType
+
+import scala.collection.mutable.ArrayBuffer
 
 /**
   * Concrete parser for Spark SQL statements.
@@ -56,20 +54,6 @@ class WowSparkSqlParser(conf: SQLConf) extends AbstractSqlParser {
     res
   }
 
-  def columns(sqlText: String): Unit = {
-    println(s"sql: [ $sqlText ]")
-    val res = parse(sqlText) { parser =>
-      astBuilder.visitExpression(parser.expression()) match {
-        case ua: UnresolvedAttribute =>
-//          println("xxxxxxx")
-//          println(ua.name)
-//          ua
-        case _ =>
-//          throw new RuntimeException
-      }
-    }
-  }
-
 }
 
 /**
@@ -81,22 +65,6 @@ class WowSparkSqlAstBuilder(conf: SQLConf) extends SparkSqlAstBuilder(conf) {
     TableHolder.tables.get() += ti
     ti
   }
-
-  override def visitExpression(ctx: ExpressionContext): AnyRef = {
-    val res = super.visitExpression(ctx)
-    println("yyyyyy")
-    println(res.getClass)
-    res match {
-//      case ua: UnresolvedAttribute =>
-//        println(ua.name)
-//        println(ua)
-      case e: ResolvedStar =>
-        println(e.expressions)
-      case _ =>
-    }
-    res
-  }
-
 }
 
 object TableHolder {

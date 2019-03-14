@@ -36,7 +36,6 @@ object MLSQLAuthParser {
     lazy val parserInstance = new WowSparkSqlParser(session.sqlContext.conf)
     parser.compareAndSet(null, parserInstance)
     parser.get().tables(sql, t)
-    parser.get().columns(sql)
     t
   }
 }

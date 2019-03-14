@@ -21,8 +21,9 @@ package streaming.dsl
 import scala.collection.mutable
 
 import org.antlr.v4.runtime.misc.Interval
+import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.catalyst.analysis.UnresolvedRelation
-import org.apache.spark.sql.catalyst.catalog.HiveTableRelation
+import streaming.dsl.auth.{MLSQLTable, OperateType, TableType}
 import streaming.dsl.parser.DSLSQLLexer
 import streaming.dsl.parser.DSLSQLParser.SqlContext
 import streaming.dsl.template.TemplateMerge
@@ -54,45 +55,52 @@ class SelectAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAda
 
     val df = scriptSQLExecListener.sparkSession.sql(sql)
 
-//    ScriptSQLExec._tableAuth.auth(authListener.tables().tables.toList)
-//    scriptSQLExecListener.getTableAuth.foreach(tableAuth => {
-      var r = Array.empty[String]
-      df.queryExecution.logical.map {
-        case sp: UnresolvedRelation =>
-          r +:= sp.tableIdentifier.unquotedString.toLowerCase
-        case h: HiveTableRelation =>
-          println(s"xxxxxxxx: ${h.tableMeta.identifier}")
-        case _ =>
-      }
-      println(r.mkString(","))
-      var tableAndCols = mutable.HashMap.empty[String, mutable.HashSet[String]]
-      df.queryExecution.analyzed.map(lp => {
-        lp.output.map(o => {
-          val qualifier = o.qualifier.mkString(".")
-          if (r.contains(o.qualifier.mkString("."))) {
-            val value = tableAndCols.getOrElse(qualifier, mutable.HashSet.empty[String])
-            value.add(o.name)
-            tableAndCols.update(qualifier, value)
-          }
-        })
-//      })
-      tableAndCols.foreach(println)
+    runtimeTableAuth(df)
 
-
-        println("===================")
-        r.distinct.map(t => {
-          val tt = scriptSQLExecListener.sparkSession.catalog.getTable(t)
-          println(tt)
-          println(tt.tableType)
-          println(tt.isTemporary)
-        })
-        println("===================")
-
-
-    })
-
-//    tableAuth.auth(authListener.tables().tables.toList)
     df.createOrReplaceTempView(tableName)
     scriptSQLExecListener.setLastSelectTable(tableName)
+  }
+
+  def runtimeTableAuth(df: DataFrame): Unit = {
+    // enable runtime select auth
+    if (ENABLE_RUNTIME_SELECT_AUTH) {
+      scriptSQLExecListener.getTableAuth.foreach(tableAuth => {
+        var r = Array.empty[String]
+        df.queryExecution.logical.map {
+          case sp: UnresolvedRelation =>
+            r +:= sp.tableIdentifier.unquotedString.toLowerCase
+          case _ =>
+        }
+        var tableAndCols = mutable.HashMap.empty[String, mutable.HashSet[String]]
+        df.queryExecution.analyzed.map(lp => {
+          lp.output.map(o => {
+            val qualifier = o.qualifier.mkString(".")
+            if (r.contains(o.qualifier.mkString("."))) {
+              val value = tableAndCols.getOrElse(qualifier, mutable.HashSet.empty[String])
+              value.add(o.name)
+              tableAndCols.update(qualifier, value)
+            }
+          })
+        })
+
+        var mlsqlTables = List.empty[MLSQLTable]
+
+        tableAndCols.foreach {
+          case (table, cols) =>
+            val stable = scriptSQLExecListener.sparkSession.catalog.getTable(table)
+            val db = Option(stable.database)
+            val tableStr = Option(stable.name)
+            val ttpe = if (stable.isTemporary) {
+              TableType.TEMP
+            } else {
+              TableType.HIVE
+            }
+            mlsqlTables ::= MLSQLTable(db, tableStr, Option(cols.toSet), OperateType.SELECT, None, ttpe)
+        }
+
+        tableAuth.auth(mlsqlTables)
+      })
+    }
+
   }
 }

@@ -246,7 +246,7 @@ class AuthProcessListener(val listener: ScriptSQLExecListener) extends BaseParse
       case "load" =>
         new LoadAuth(this).auth(ctx)
 
-      case "select" if ENABLE_RUNTIME_SELECT_AUTH =>
+      case "select" if !ENABLE_RUNTIME_SELECT_AUTH =>
         new SelectAuth(this).auth(ctx)
 
       case "save" =>
