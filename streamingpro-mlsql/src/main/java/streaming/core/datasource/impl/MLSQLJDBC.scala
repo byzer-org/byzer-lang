@@ -241,5 +241,5 @@ class MLSQLJDBC(override val uid: String) extends MLSQLSource with MLSQLSink wit
   final val waitCacheLockTime: LongParam = new LongParam(this, "waitCacheLockTime", "default 30m;unit seconds")
   final val cacheToHDFSExpireTime: LongParam = new LongParam(this, "cacheToHDFSExpireTime", "default 6h; unit seconds")
 
-
 }
+

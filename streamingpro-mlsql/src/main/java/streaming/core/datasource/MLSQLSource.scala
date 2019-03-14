@@ -19,6 +19,7 @@
 package streaming.core.datasource
 
 import org.apache.spark.sql._
+import _root_.streaming.dsl.MLSQLExecuteContext
 
 /**
   * 2018-12-20 WilliamZhu(allwefantasy@gmail.com)
@@ -35,8 +36,15 @@ trait MLSQLDataSource {
 
 }
 
-trait MLSQLSource extends MLSQLDataSource {
+trait MLSQLSource extends MLSQLDataSource with MLSQLSourceInfo {
   def load(reader: DataFrameReader, config: DataSourceConfig): DataFrame
+}
+
+trait RewriteableSource {
+  def rewrite(df: DataFrame,
+              config: DataSourceConfig,
+              sourceInfo: Option[SourceInfo],
+              context: MLSQLExecuteContext): DataFrame
 }
 
 trait MLSQLSink extends MLSQLDataSource {
