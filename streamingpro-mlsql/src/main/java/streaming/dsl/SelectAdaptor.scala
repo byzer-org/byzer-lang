@@ -18,7 +18,12 @@
 
 package streaming.dsl
 
+import scala.collection.mutable
+
 import org.antlr.v4.runtime.misc.Interval
+import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.catalyst.analysis.UnresolvedRelation
+import streaming.dsl.auth.{MLSQLTable, OperateType, TableType}
 import streaming.dsl.parser.DSLSQLLexer
 import streaming.dsl.parser.DSLSQLParser.SqlContext
 import streaming.dsl.template.TemplateMerge
@@ -28,6 +33,12 @@ import streaming.dsl.template.TemplateMerge
   * Created by allwefantasy on 27/8/2017.
   */
 class SelectAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdaptor {
+
+  val ENABLE_RUNTIME_SELECT_AUTH = scriptSQLExecListener.sparkSession
+    .sparkContext
+    .getConf
+    .getBoolean("spark.mlsql.enable.runtime.select.auth", false)
+
   override def parse(ctx: SqlContext): Unit = {
     val input = ctx.start.getTokenSource().asInstanceOf[DSLSQLLexer]._input
 
@@ -41,7 +52,55 @@ class SelectAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAda
     val chunks = wowText.split("\\s+")
     val tableName = chunks.last.replace(";", "")
     val sql = wowText.replaceAll(s"((?i)as)[\\s|\\n]+${tableName}", "")
-    scriptSQLExecListener.sparkSession.sql(sql).createOrReplaceTempView(tableName)
+
+    val df = scriptSQLExecListener.sparkSession.sql(sql)
+
+    runtimeTableAuth(df)
+
+    df.createOrReplaceTempView(tableName)
     scriptSQLExecListener.setLastSelectTable(tableName)
+  }
+
+  def runtimeTableAuth(df: DataFrame): Unit = {
+    // enable runtime select auth
+    if (ENABLE_RUNTIME_SELECT_AUTH) {
+      scriptSQLExecListener.getTableAuth.foreach(tableAuth => {
+        var r = Array.empty[String]
+        df.queryExecution.logical.map {
+          case sp: UnresolvedRelation =>
+            r +:= sp.tableIdentifier.unquotedString.toLowerCase
+          case _ =>
+        }
+        var tableAndCols = mutable.HashMap.empty[String, mutable.HashSet[String]]
+        df.queryExecution.analyzed.map(lp => {
+          lp.output.map(o => {
+            val qualifier = o.qualifier.mkString(".")
+            if (r.contains(o.qualifier.mkString("."))) {
+              val value = tableAndCols.getOrElse(qualifier, mutable.HashSet.empty[String])
+              value.add(o.name)
+              tableAndCols.update(qualifier, value)
+            }
+          })
+        })
+
+        var mlsqlTables = List.empty[MLSQLTable]
+
+        tableAndCols.foreach {
+          case (table, cols) =>
+            val stable = scriptSQLExecListener.sparkSession.catalog.getTable(table)
+            val db = Option(stable.database)
+            val tableStr = Option(stable.name)
+            val ttpe = if (stable.isTemporary) {
+              TableType.TEMP
+            } else {
+              TableType.HIVE
+            }
+            mlsqlTables ::= MLSQLTable(db, tableStr, Option(cols.toSet), OperateType.SELECT, None, ttpe)
+        }
+
+        tableAuth.auth(mlsqlTables)
+      })
+    }
+
   }
 }

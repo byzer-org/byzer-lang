@@ -23,7 +23,32 @@ import streaming.dsl.auth.OperateType.OperateType
 /**
   * Created by allwefantasy on 11/9/2018.
   */
-case class MLSQLTable(db: Option[String], table: Option[String], operateType: OperateType, sourceType: Option[String], tableType: TableTypeMeta)
+case class MLSQLTable(
+    db: Option[String],
+    table: Option[String],
+    columns: Option[Set[String]],
+    operateType: OperateType,
+    sourceType: Option[String],
+    tableType: TableTypeMeta) {
+  def tableIdentifier: String = {
+    if (db.isDefined && table.isDefined) {
+      s"${db.get}.${table.get}"
+    } else if (!db.isDefined && table.isDefined) {
+      table.get
+    } else {
+      ""
+    }
+  }
+}
+
+object MLSQLTable {
+  def apply(db: Option[String],
+            table: Option[String],
+            operateType: OperateType,
+            sourceType: Option[String],
+            tableType: TableTypeMeta): MLSQLTable =
+    new MLSQLTable(db, table, None, operateType, sourceType, tableType)
+}
 
 case class MLSQLTableSet(tables: Seq[MLSQLTable])
 
@@ -78,6 +103,3 @@ object TableType {
     List(HIVE, HBASE, HDFS, HTTP, JDBC, ES, MONGO, SOLR, TEMP, API, WEB, GRAMMAR, SYSTEM).flatMap(f => f.includes.toSeq)
   }
 }
-
-
-
