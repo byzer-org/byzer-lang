@@ -86,7 +86,13 @@ class SQLDownloadExt(override val uid: String) extends SQLAlg with WowParams {
     }
 
     val auth_secret = context.userDefinedParam("__auth_secret__")
-    val stream = Request.Get(fromUrl + s"?userName=${URLEncoder.encode(context.owner, "utf-8")}&fileName=${URLEncoder.encode($(from), "utf-8")}&auth_secret=${URLEncoder.encode(auth_secret, "utf-8")}")
+
+    def urlencode(name: String) = {
+      URLEncoder.encode(name, "utf-8")
+    }
+
+    val getUrl = fromUrl + s"?userName=${urlencode(context.owner)}&fileName=${urlencode($(from))}&auth_secret=${urlencode(auth_secret)}"
+    val stream = Request.Get(getUrl)
       .connectTimeout(60 * 1000)
       .socketTimeout(10 * 60 * 1000)
       .execute().returnContent().asStream()

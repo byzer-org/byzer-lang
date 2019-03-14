@@ -20,6 +20,11 @@ package streaming.rest
 
 import java.lang.reflect.Modifier
 
+import _root_.streaming.common.JarUtil
+import _root_.streaming.core._
+import _root_.streaming.core.strategy.platform.{PlatformManager, SparkRuntime}
+import _root_.streaming.dsl.mmlib.algs.tf.cluster.{ClusterSpec, ClusterStatus, ExecutorInfo}
+import _root_.streaming.dsl.{MLSQLExecuteContext, ScriptSQLExec, ScriptSQLExecListener}
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import net.csdn.annotation.rest.{At, _}
@@ -28,15 +33,11 @@ import net.csdn.common.path.Url
 import net.csdn.modules.http.RestRequest.Method._
 import net.csdn.modules.http.{ApplicationController, ViewType}
 import net.csdn.modules.transport.HttpTransportService
-import org.apache.spark.{MLSQLConf, SparkInstanceService}
 import org.apache.spark.ps.cluster.Message
 import org.apache.spark.sql._
+import org.apache.spark.{MLSQLConf, SparkInstanceService}
 import org.joda.time.format.ISODateTimeFormat
-import _root_.streaming.common.JarUtil
-import _root_.streaming.core._
-import _root_.streaming.core.strategy.platform.{PlatformManager, SparkRuntime}
-import _root_.streaming.dsl.mmlib.algs.tf.cluster.{ClusterSpec, ClusterStatus, ExecutorInfo}
-import _root_.streaming.dsl.{MLSQLExecuteContext, ScriptSQLExec, ScriptSQLExecListener}
+
 import scala.collection.JavaConversions._
 import scala.util.control.NonFatal
 
@@ -149,7 +150,7 @@ class RestController extends ApplicationController {
     val context = new ScriptSQLExecListener(sparkSession, defaultPathPrefix, allPathPrefix)
     val ownerOption = if (params.containsKey("owner")) Some(param("owner")) else None
     val userDefineParams = params.toMap.filter(f => f._1.startsWith("context.")).map(f => (f._1.substring("context.".length), f._2)).toMap
-    ScriptSQLExec.setContext(new MLSQLExecuteContext(param("owner"), context.pathPrefix(None), groupId, userDefineParams))
+    ScriptSQLExec.setContext(new MLSQLExecuteContext(context, param("owner"), context.pathPrefix(None), groupId, userDefineParams))
     context.addEnv("HOME", context.pathPrefix(None))
     context.addEnv("OWNER", ownerOption.getOrElse("anonymous"))
     context
