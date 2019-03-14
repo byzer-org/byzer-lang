@@ -20,7 +20,7 @@ package streaming.dsl
 
 import net.sf.json.JSONObject
 import org.apache.spark.sql.{DataFrame, DataFrameReader, functions => F}
-import streaming.core.datasource.{DataSourceConfig, DataSourceRegistry}
+import streaming.core.datasource._
 import streaming.dsl.load.batch.{AutoWorkflowSelfExplain, MLSQLAPIExplain, MLSQLConfExplain, ModelSelfExplain}
 import streaming.dsl.parser.DSLSQLParser._
 import streaming.dsl.template.TemplateMerge
@@ -84,14 +84,22 @@ class BatchLoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener,
     path = TemplateMerge.merge(path, scriptSQLExecListener.env().toMap)
     val resourceOwner = option.get("owner")
 
-    DataSourceRegistry.fetch(format, option).map { datasource =>
-      def emptyDataFrame = {
-        import sparkSession.implicits._
-        Seq.empty[String].toDF("name")
-      }
+    def emptyDataFrame = {
+      import sparkSession.implicits._
+      Seq.empty[String].toDF("name")
+    }
 
+    val dsConf = DataSourceConfig(cleanStr(path), option, Option(emptyDataFrame))
+    var sourceInfo: Option[SourceInfo] = None
+
+    DataSourceRegistry.fetch(format, option).map { datasource =>
       table = datasource.asInstanceOf[ {def load(reader: DataFrameReader, config: DataSourceConfig): DataFrame}].
-        load(reader, DataSourceConfig(cleanStr(path), option, Option(emptyDataFrame)))
+        load(reader, dsConf)
+      if (datasource.isInstanceOf[MLSQLSourceInfo]) {
+        val authConf = DataAuthConfig(dsConf.path, dsConf.config)
+        sourceInfo = Option(datasource.asInstanceOf[MLSQLSourceInfo].sourceInfo(authConf))
+      }
+      table
     }.getOrElse {
       format match {
         case "crawlersql" =>
@@ -142,8 +150,34 @@ class BatchLoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener,
       }
     }
 
+    table = rewriteOrNot(table, dsConf, sourceInfo, ScriptSQLExec.context())
 
     table.createOrReplaceTempView(tableName)
+  }
+
+  def rewriteOrNot(df: DataFrame,
+                   config: DataSourceConfig,
+                   sourceInfo: Option[SourceInfo],
+                   context: MLSQLExecuteContext): DataFrame = {
+    val rewrite = df.sparkSession
+      .sparkContext
+      .getConf
+      .getBoolean("spark.mlsql.enable.datasource.rewrite", false)
+
+    val implClass = df.sparkSession
+      .sparkContext
+      .getConf
+      .get("spark.mlsql.datasource.rewrite.implClass", "")
+
+    if (rewrite && implClass != "") {
+      val instance = Class.forName(implClass)
+      instance.newInstance()
+        .asInstanceOf[RewriteableSource]
+        .rewrite(df, config, sourceInfo, context)
+
+    } else {
+      df
+    }
   }
 }
 

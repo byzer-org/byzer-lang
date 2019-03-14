@@ -576,15 +576,39 @@ class RestController extends ApplicationController {
     }
   }
 
-  private def limitOrNot[T](ds: Dataset[T], maxSize: Int = paramAsInt("maxResultSize", 1000)): Dataset[T] = {
+  /**
+   * | enable limit | global | maxResultSize | condition                       | result           |
+   * | ------------ | ------ | ------------- | ------------------------------- | ---------------- |
+   * | true         | -1     | -1            | N/A                             | defualt = 1000   |
+   * | true         | -1     | Int           | N/A                             | ${maxResultSize} |
+   * | true         | Int    | -1            | Or ${maxResultSize} > ${global} | ${global}        |
+   * | true         | Int    | Int           | AND ${maxResultSize} < ${global}| ${maxResultSize} |
+   *
+   * when we enable result size limitation, the size of result should <= ${maxSize} <= ${global}
+   *
+   * @param ds
+   * @param maxSize
+   * @tparam T
+   * @return
+   */
+  private def limitOrNot[T](ds: Dataset[T], maxSize: Int = paramAsInt("maxResultSize", -1)): Dataset[T] = {
     var result = ds
+    val globalLimit = ds.sparkSession.sparkContext.getConf.getInt(
+      MLSQLConf.RESTFUL_API_MAX_RESULT_SIZE.key, -1
+    )
     if (ds.sparkSession.sparkContext.getConf.getBoolean(MLSQLConf.ENABLE_MAX_RESULT_SIZE.key, false)) {
-      val globalLimit = ds.sparkSession.sparkContext.getConf.getInt(
-        MLSQLConf.RESTFUL_API_MAX_RESULT_SIZE.key, -1)
       if (globalLimit == -1) {
-        result = ds.limit(maxSize)
+        if (maxSize == -1) {
+          result = ds.limit(1000)
+        } else {
+          result = ds.limit(maxSize)
+        }
       } else {
-        result = ds.limit(Math.min(globalLimit, maxSize))
+        if (maxSize == -1 || maxSize > globalLimit) {
+          result = ds.limit(globalLimit)
+        } else {
+          result = ds.limit(maxSize)
+        }
       }
     }
     result
