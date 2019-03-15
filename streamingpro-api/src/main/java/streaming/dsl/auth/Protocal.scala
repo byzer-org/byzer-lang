@@ -24,12 +24,12 @@ import streaming.dsl.auth.OperateType.OperateType
   * Created by allwefantasy on 11/9/2018.
   */
 case class MLSQLTable(
-    db: Option[String],
-    table: Option[String],
-    columns: Option[Set[String]],
-    operateType: OperateType,
-    sourceType: Option[String],
-    tableType: TableTypeMeta) {
+                       db: Option[String],
+                       table: Option[String],
+                       columns: Option[Set[String]],
+                       operateType: OperateType,
+                       sourceType: Option[String],
+                       tableType: TableTypeMeta) {
   def tableIdentifier: String = {
     if (db.isDefined && table.isDefined) {
       s"${db.get}.${table.get}"
@@ -87,19 +87,21 @@ object TableType {
   val HTTP = TableTypeMeta("http", Set("http"))
   val JDBC = TableTypeMeta("jdbc", Set("jdbc"))
   val ES = TableTypeMeta("es", Set("es"))
+  val REDIS = TableTypeMeta("redis", Set("redis"))
+  val KAFKA = TableTypeMeta("kafka", Set("kafka", "kafka8", "kafka9"))
   val MONGO = TableTypeMeta("mongo", Set("mongo"))
   val SOLR = TableTypeMeta("solr", Set("solr"))
-  val TEMP = TableTypeMeta("temp", Set("temp", "jsonStr", "script", "csvStr"))
+  val TEMP = TableTypeMeta("temp", Set("temp", "jsonStr", "script", "csvStr", "mockStream", "console"))
   val API = TableTypeMeta("api", Set("mlsqlAPI", "mlsqlConf"))
   val WEB = TableTypeMeta("web", Set("crawlersql"))
   val GRAMMAR = TableTypeMeta("grammar", Set("grammar"))
   val SYSTEM = TableTypeMeta("system", Set("_mlsql_", "model", "modelList", "modelParams", "modelExample", "modelExplain"))
 
   def from(str: String) = {
-    List(HIVE, HBASE, HDFS, HTTP, JDBC, ES, MONGO, SOLR, TEMP, API, WEB, GRAMMAR, SYSTEM).filter(f => f.includes.contains(str)).headOption
+    List(REDIS, HIVE, HBASE, HDFS, HTTP, JDBC, ES, MONGO, SOLR, TEMP, API, WEB, GRAMMAR, SYSTEM).filter(f => f.includes.contains(str)).headOption
   }
 
   def toList = {
-    List(HIVE, HBASE, HDFS, HTTP, JDBC, ES, MONGO, SOLR, TEMP, API, WEB, GRAMMAR, SYSTEM).flatMap(f => f.includes.toSeq)
+    List(REDIS, HIVE, HBASE, HDFS, HTTP, JDBC, ES, MONGO, SOLR, TEMP, API, WEB, GRAMMAR, SYSTEM).flatMap(f => f.includes.toSeq)
   }
 }
