@@ -79,6 +79,7 @@ class MLSQLElasticSearch(override val uid: String) extends MLSQLSource with MLSQ
   }
 
   override def sourceInfo(config: DataAuthConfig): SourceInfo = {
+
     val Array(_dbname, _dbtable) = if (config.path.contains(dbSplitter)) {
       config.path.split(dbSplitter, 2)
     } else {
@@ -86,28 +87,19 @@ class MLSQLElasticSearch(override val uid: String) extends MLSQLSource with MLSQ
     }
 
     var table = _dbtable
+    var dbName = _dbname
 
-    val esResource = if (config.config.contains("es.resource")) {
-      config.config.get("es.resource").get
-        .takeWhile(_.toString != dbSplitter)
-    } else {
-      val format = config.config.getOrElse("implClass", fullFormat)
-      val dbMapping = ConnectMeta.options(DBMappingKey(format, _dbname))
-      if (dbMapping.isEmpty) {
-        _dbname
-      } else {
-        if (dbMapping.get.contains("es.resource")) {
-          dbMapping.get("es.resource")
-            .takeWhile(_.toString != dbSplitter)
-        } else {
-          table = ""
-          _dbname
-        }
-
-      }
+    val newOptions = scala.collection.mutable.HashMap[String, String]() ++ config.config
+    ConnectMeta.options(DBMappingKey(shortFormat, _dbname)) match {
+      case Some(option) =>
+        newOptions ++= option
+      case None =>
+        dbName = ""
     }
 
-    SourceInfo(shortFormat, esResource, table)
+    newOptions.filter(f => f._1 == "es.resource").map { f => table == f._2 }
+
+    SourceInfo(shortFormat, dbName, table)
   }
 
   override def explainParams(spark: SparkSession) = {
