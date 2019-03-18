@@ -115,7 +115,8 @@ class RestController extends ApplicationController {
           } catch {
             case e: Exception =>
               e.printStackTrace()
-              htp.get(new Url(param("callback")), Map("stat" -> s"""failed"""))
+              val msg = if (paramAsBoolean("show_stack", false)) e.getStackTrace.map(f => f.toString).mkString("\n") else ""
+              htp.post(new Url(param("callback")), Map("stat" -> s"""failed""", "msg" -> (e.getMessage + "\n" + msg)))
           }
         })
       } else {
