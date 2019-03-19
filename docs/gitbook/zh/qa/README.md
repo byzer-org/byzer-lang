@@ -8,6 +8,7 @@
 * engine本身是个spark的app，里面提供的restful服务，那么这个服务可以是高可用的吗？
 *  权限管理  比如A,B,C 3张表  允许用户查询A表，BC两张不可查 这种授权是自己写client实现吗？
 * 如果udf的代码比较多，同时又import了很多第三方的jar包，怎么处理？
+* 哪里有MLSQL三套件的http接口文档
 
 
 
@@ -142,8 +143,11 @@ MLSQL Console已经实现了一个。你也可以参考它实现自己的。MLSQ
 MLSQL自身的项目已经非常庞大，理论上你UDF要的库，都有了。如果没有，你需要用--jars带上。某些场景可能还需要配置driver/executor classpath,不过最简单的方案是把你的jar包放到spark 发型包里。
 
 
+>  哪里有MLSQL三套件的http接口文档
 
+因为三者都是通过ServiceFramework框架实现的，所以他们都可以通过 http://ip:port/openapi/ui/spec/ 进行查看。下面是mlsql-engine的例子：
 
+![image.png](https://upload-images.jianshu.io/upload_images/1063603-9dca98aa4a411bc2.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 
 
