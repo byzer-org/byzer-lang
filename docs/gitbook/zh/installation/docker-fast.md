@@ -11,13 +11,12 @@
 https://hub.docker.com/r/techmlsql/mlsql/tags
 ```
 
-选择合适的版本，我们这里选择标签为 `spark_2.4-1.1.7`的版本。这个名字表示，这是基于spark 2.4(你可以体验最新的Spark内核),
-并且MLSQL版本为1.1.7正式版。
+选择合适的版本，我们这里选择标签为 `spark_2.4-${VERSION}`的版本。这个名字表示，这是基于spark 2.4(你可以体验最新的Spark内核).
 
 现在让我们run起来：
 
 ```shell
-docker run -p 9003:9003 techmlsql/mlsql:spark_2.4-1.1.7 
+docker run -p 9003:9003 techmlsql/mlsql:spark_2.4-${VERSION} 
 ```
 
 Ok, that's all.

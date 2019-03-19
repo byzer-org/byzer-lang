@@ -54,16 +54,21 @@ $SPARK_HOME/bin/spark-submit --class streaming.core.StreamingApp \
  MLSQL-Cluster 启动方式为：
  
  ```
- java -cp .:target/streamingpro-cluster-x.x.x-SNAPSHOT.jar \
- tech.mlsql.cluster.ProxyApplication \
- -config application.yml
+ #!/usr/bin/env bash
+ 
+ java -cp .:${MLSQL_CLUSTER_JAR} tech.mlsql.cluster.ProxyApplication \
+ -config ${MLSQL_CLUSTER_CONFIG_FILE}
  ```
  
  MLSQL-Console启动方位为： 
 
  ```
- java -cp .:target/mlsql-api-console-1.0-SNAPSHOT.jar tech.mlsql.MLSQLConsole \
- -mlsql_cluster_url http://127.0.0.1:9003 \
- -my_url http://127.0.0.1:9002 \
- -config /tmp/application.yml
+#!/usr/bin/env bash
+
+java -cp .:${MLSQL_CONSOLE_JAR} tech.mlsql.MLSQLConsole \
+-mlsql_cluster_url ${MLSQL_CLUSTER_URL} \
+-my_url ${MY_URL} \
+-user_home ${USER_HOME} \
+-enable_auth_center ${ENABLE_AUTH_CENTER:-false} \
+-config ${MLSQL_CONSOLE_CONFIG_FILE}
  ``` 

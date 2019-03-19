@@ -116,7 +116,7 @@ class SaveAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
     }
 
     var streamQuery: StreamingQuery = null
-    if (scriptSQLExecListener.env().contains("stream")) {
+    if (isStream) {
       streamQuery = new StreamSaveAdaptor(scriptSQLExecListener, option, oldDF, final_path, tableName, format, mode, partitionByCol.toArray).parse
     } else {
       new BatchSaveAdaptor(scriptSQLExecListener, option, oldDF, final_path, tableName, format, mode, partitionByCol.toArray).parse

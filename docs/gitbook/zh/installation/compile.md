@@ -57,7 +57,7 @@ target/streamingpro-cluster-${VERSION}.jar
 ```
 
 
-创建MySQL数据库,根据 `src/main/resources/db.sql `创建对应的库表。数据库名字为mslql_cluster.
+创建MySQL数据库,根据 `src/main/resources/db.sql `创建对应的库表。数据库名字为mlsql_cluster.
 
 现在，创建一个发行版：
 
@@ -101,7 +101,7 @@ export VERSION=1.2.0-SNAPSHOT
 target/mlsql-api-console-${VERSION}.jar
 ```
 
-3. 创建MySQL数据库,根据 `src/main/resources/db.sql `创建对应的库表。数据库名字为mslql_console.
+3. 创建MySQL数据库,根据 `src/main/resources/db.sql `创建对应的库表。数据库名字为mlsql_console.
 
 4. 创建发型包
 
@@ -150,4 +150,3 @@ npm run build
 rm -rf ${MLSQL_CONSOLE_HOME}/src/main/resources/streamingpro/assets/*
 cp -r build/* ${MLSQL_CONSOLE_HOME}/src/main/resources/streamingpro/assets/*
 ```
- 
