@@ -110,11 +110,13 @@ class RestController extends ApplicationController {
           try {
             val context = createScriptSQLExecListener(sparkSession, jobInfo.groupId)
             ScriptSQLExec.parse(param("sql"), context, paramAsBoolean("skipInclude", false), paramAsBoolean("skipAuth", true))
-            htp.get(new Url(param("callback")), Map("stat" -> s"""success"""))
+            outputResult = getScriptResult(context, sparkSession)
+            htp.post(new Url(param("callback")), Map("stat" -> s"""succeeded""", "res" -> outputResult))
           } catch {
             case e: Exception =>
               e.printStackTrace()
-              htp.get(new Url(param("callback")), Map("fail" -> s"""success"""))
+              val msg = if (paramAsBoolean("show_stack", false)) e.getStackTrace.map(f => f.toString).mkString("\n") else ""
+              htp.post(new Url(param("callback")), Map("stat" -> s"""failed""", "msg" -> (e.getMessage + "\n" + msg)))
           }
         })
       } else {
@@ -122,14 +124,7 @@ class RestController extends ApplicationController {
           val context = createScriptSQLExecListener(sparkSession, jobInfo.groupId)
           ScriptSQLExec.parse(param("sql"), context, paramAsBoolean("skipInclude", false), paramAsBoolean("skipAuth", true))
           if (!silence) {
-            outputResult = context.getLastSelectTable() match {
-              case Some(table) =>
-                val scriptJsonStringResult = limitOrNot {
-                  sparkSession.sql(s"select * from $table limit " + paramAsInt("outputSize", 5000))
-                }.toJSON.collect().mkString(",")
-                "[" + scriptJsonStringResult + "]"
-              case None => "[]"
-            }
+            outputResult = getScriptResult(context, sparkSession)
           }
         })
       }
@@ -142,6 +137,18 @@ class RestController extends ApplicationController {
     }
     render(outputResult)
   }
+
+  private def getScriptResult(context: ScriptSQLExecListener, sparkSession: SparkSession): String = {
+    context.getLastSelectTable() match {
+      case Some(table) =>
+        val scriptJsonStringResult = limitOrNot {
+          sparkSession.sql(s"select * from $table limit " + paramAsInt("outputSize", 5000))
+        }.toJSON.collect().mkString(",")
+        "[" + scriptJsonStringResult + "]"
+      case None => "[]"
+    }
+  }
+
 
   private def createScriptSQLExecListener(sparkSession: SparkSession, groupId: String) = {
 
