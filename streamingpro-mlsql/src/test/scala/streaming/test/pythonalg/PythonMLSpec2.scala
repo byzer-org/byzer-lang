@@ -180,8 +180,8 @@ class PythonMLSpec2 extends BasicSparkOperation with SpecFunctions with BasicMLS
       assert(res.length == 1)
       assert(res.head.getAs[String](0).contains("jack"))
 
-      sq = createSSEL(spark, "")
-      ScriptSQLExec.parse(ScriptCode._j2_PREDICT, sq)
+//      sq = createSSEL(spark, "")
+//      ScriptSQLExec.parse(ScriptCode._j2_PREDICT, sq)
     }
   }
 
