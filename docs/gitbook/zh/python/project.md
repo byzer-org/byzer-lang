@@ -30,7 +30,7 @@ entry_points:
     api_predict:        
         command: "python predict.py"
 ```
-MLProject 指定了项目名称以及conda.yamm描述文件。
+MLProject 指定了项目名称以及conda.yaml描述文件。
 同时指定了该项目的入口。
 
 一般我们会指定train/batch_predict/api_predict 其中的一项或者多项。当你有一个机器学习项目，并且需要部署成API服务的时候，才会需要三个入口都指定。
