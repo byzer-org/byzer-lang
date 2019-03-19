@@ -55,7 +55,7 @@ object SparkCoreVersion {
 
 object CarbonCoreVersion {
   def coreCompatibility(version: String, exactVersion: String) = {
-    val vs = Seq(Core_2_2_x, Core_2_3_2).map(f => f.coreVersion).toSet
+    val vs = Seq(Core_2_2_x, Core_2_3_1).map(f => f.coreVersion).toSet
     vs.contains(version) || vs.contains(exactVersion)
   }
 }
