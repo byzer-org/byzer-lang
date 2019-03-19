@@ -13,11 +13,31 @@ MLSQL Console提供了除交互界面以外，还有很多其他重要的意义�
 在1.2.0版本，我们也很在在乎如何让用户一键体验整个MLSQL生态。毕竟自己部署 MLSQL Console/Cluster/Engine 三套件还是有一定成本的。下面我们来看下具体怎么做：
 
 ## 说好的一键
-
-用户需要确保在Linux环境（Mac 也是Ok的），然后有docker环境即可。然后执行如下指令：
+在终端执行如下指令：
 
 ```shell
 bash <(curl http://download.mlsql.tech/scripts/run-all.sh)
+```
+注意事项:
+
+0. 用户需要确保在操作系统为Linux（Mac 也是Ok的），有docker环境即可。
+0. 请确保执行的电脑 9002,9003,8080三个端口没有占用
+1.  脚本执行，可以看到MySQL连接错误。这是脚本在等待MySQL启动后可用。不是错误，请放心。
+2. 如果docker镜像拉去缓慢，可以设置阿里云镜像。具体操作如下：
+
+```shell
+mkdir -p /etc/docker
+
+## 登录后阿里开发者帐户后，[https://cr.console.aliyun.com/#/accelerator](https://link.jianshu.com?t=https%3A%2F%2Fcr.console.aliyun.com%2F%23%2Faccelerator) 中查看你的您的专属加速器地址
+
+tee /etc/docker/daemon.json <<-'EOF'
+{
+  "registry-mirrors": ["https://[这里的加速地址要替换成你自己的，到阿里云控制台获取].mirror.aliyuncs.com"]
+}
+EOF
+
+systemctl daemon-reload
+systemctl restart docker
 ```
 
 接着 docker ps:
@@ -88,6 +108,5 @@ java -cp .:${MLSQL_CONSOLE_JAR} tech.mlsql.MLSQLConsole \
 -enable_auth_center ${ENABLE_AUTH_CENTER:-false} \
 -config ${MLSQL_CONSOLE_CONFIG_FILE}
 ```
-
 
 
