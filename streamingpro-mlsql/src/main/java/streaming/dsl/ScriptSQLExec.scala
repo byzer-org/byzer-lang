@@ -340,7 +340,7 @@ object ConnectMeta {
   }
 }
 
-case class MLSQLExecuteContext(execListener: ScriptSQLExecListener, owner: String, home: String, groupId: String, userDefinedParam: Map[String, String] = Map())
+case class MLSQLExecuteContext(@transient execListener: ScriptSQLExecListener, owner: String, home: String, groupId: String, userDefinedParam: Map[String, String] = Map())
 
 case class DBMappingKey(format: String, db: String)
 

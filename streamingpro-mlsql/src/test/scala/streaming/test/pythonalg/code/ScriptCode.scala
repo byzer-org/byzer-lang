@@ -216,6 +216,61 @@ object ScriptCode {
       |
     """.stripMargin
 
+  val _j2_PREDICT =
+    """
+      |set python1='''
+      |import os
+      |import warnings
+      |import sys
+      |
+      |import mlsql
+      |
+      |if __name__ == "__main__":
+      |    warnings.filterwarnings("ignore")
+      |
+      |    tempDataLocalPath = mlsql.internal_system_param["tempDataLocalPath"]
+      |
+      |    isp = mlsql.params()["internalSystemParam"]
+      |    tempModelLocalPath = isp["tempModelLocalPath"]
+      |    if not os.path.exists(tempModelLocalPath):
+      |        os.makedirs(tempModelLocalPath)
+      |    with open(tempModelLocalPath + "/result.txt", "w") as f:
+      |        f.write("jack")
+      |''';
+      |
+      |set dependencies='''
+      |name: tutorial
+      |dependencies:
+      |  - python=3.6
+      |  - pip:
+      |    - numpy==1.14.3
+      |    - kafka-python==1.4.3
+      |    - pyspark==2.3.2
+      |    - pandas==0.22.0
+      |    - scikit-learn==0.19.1
+      |    - scipy==1.1.0
+      |''';
+      |
+      |set modelPath="/tmp/jack2";
+      |
+      |set data='''
+      |{"jack":1}
+      |{"jack":2}
+      |{"jack":3}
+      |{"jack":4}
+      |{"jack":5}
+      |{"jack":6}
+      |''';
+      |
+      |load jsonStr.`data` as testData;
+      |load script.`python1` as python1;
+      |load script.`dependencies` as dependencies;
+      |run testData as PythonEnvExt.`/tmp/jack` where condaFile="dependencies" and command="create";
+      |
+      |register PythonAlg.`${modelPath}` as  wowPredict where entryPoint="python1";
+      |
+    """.stripMargin
+
   val train =
     """
       |load csv.`${projectPath}/wine-quality.csv`
