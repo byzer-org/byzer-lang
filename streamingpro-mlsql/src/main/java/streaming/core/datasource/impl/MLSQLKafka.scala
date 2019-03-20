@@ -13,11 +13,18 @@ class MLSQLKafka(override val uid: String) extends MLSQLBaseStreamSource with Wo
 
 
   override def load(reader: DataFrameReader, config: DataSourceConfig): DataFrame = {
+
+    def getSubscribe = {
+      if (shortFormat == "kafka8" || shortFormat == "kafka9") {
+        "topics"
+      } else "subscribe"
+    }
+
     // ignore the reader since this reader is not stream reader
     val streamReader = config.df.get.sparkSession.readStream
     val format = config.config.getOrElse("implClass", fullFormat)
     if (!config.path.isEmpty) {
-      streamReader.option("subscribe", config.path)
+      streamReader.option(getSubscribe, config.path)
     }
     streamReader.options(rewriteConfig(config.config)).format(format).load()
   }
@@ -39,7 +46,13 @@ class MLSQLKafka(override val uid: String) extends MLSQLBaseStreamSource with Wo
       "metadata.broker.list" -> config.config.getOrElse("metadata.broker.list", "kafka.bootstrap.servers")
     }
 
-    batchWriter.options(config.config).option("topic", config.path).
+    def getWriteTopic = {
+      if (shortFormat == "kafka8" || shortFormat == "kafka9") {
+        "topics"
+      } else "topic"
+    }
+
+    batchWriter.options(config.config).option(getWriteTopic, config.path).
       option(getKafkaBrokers._1, getKafkaBrokers._2).format(fullFormat).save()
 
   }

@@ -4,7 +4,7 @@ import java.util.concurrent.TimeUnit
 
 import org.apache.spark.sql.streaming.{DataStreamWriter, Trigger}
 import org.apache.spark.sql.{DataFrameWriter, Row}
-import streaming.dsl.{ConnectMeta, DBMappingKey, DslTool, ScriptSQLExec}
+import streaming.dsl.{DslTool, ScriptSQLExec}
 
 /**
   * 2019-03-20 WilliamZhu(allwefantasy@gmail.com)
@@ -25,46 +25,35 @@ abstract class MLSQLBaseStreamSource extends MLSQLSource with MLSQLSink with MLS
 
     val writer: DataStreamWriter[Row] = oldDF.writeStream
     var path = config.path
-    if (path.contains(".")) {
-      val Array(_dbname, _dbtable) = path.split("\\.", 2)
-      ConnectMeta.presentThenCall(DBMappingKey(shortFormat, _dbname), options => {
-        path = _dbtable
-        writer.options(options)
-      })
-    }
+
+    val Array(db, table) = parseRef(aliasFormat, path, (options: Map[String, String]) => {
+      writer.options(options)
+    })
+
+    path = table
 
     require(option.contains("checkpointLocation"), "checkpointLocation is required")
     require(option.contains("duration"), "duration is required")
     require(option.contains("mode"), "mode is required")
 
-    //    format match {
-    //      case "jdbc" => writer.format("org.apache.spark.sql.execution.streaming.JDBCSinkProvider")
-    //      /*
-    //      Supports variable in path:
-    //        save append post_parquet
-    //        as parquet.`/post/details/hp_stat_date=${date.toString("yyyy-MM-dd")}`
-    //       */
-    //      case "newParquet" => writer.format("org.apache.spark.sql.execution.streaming.newfile")
-    //      case _ => writer.format(option.getOrElse("implClass", format))
-    //    }
-
     if (option.contains("partitionByCol")) {
-      writer.partitionBy(option("partitionByCol").split(","): _*)
+      val cols = option("partitionByCol").split(",").filterNot(f => f.isEmpty)
+      if (cols.size != 0) {
+        writer.partitionBy(option("partitionByCol").split(","): _*)
+      }
       option -= "partitionByCol"
     }
 
     val duration = option("duration").toInt
     option -= "duration"
 
-    val checkpointLocation = option("checkpointLocation")
-    option -= "checkpointLocation"
 
     val mode = option("mode")
     option -= "mode"
 
     val format = config.config.getOrElse("implClass", fullFormat)
 
-    writer.format(format).outputMode(option("mode")).options(option)
+    writer.format(format).outputMode(mode).options(option)
 
     val dbtable = if (option.contains("dbtable")) option("dbtable") else path
 
@@ -76,7 +65,7 @@ abstract class MLSQLBaseStreamSource extends MLSQLSource with MLSQLSink with MLS
       case Some(name) => writer.queryName(name)
       case None =>
     }
-    writer.trigger(Trigger.ProcessingTime(option("duration").toInt, TimeUnit.SECONDS)).start()
+    writer.trigger(Trigger.ProcessingTime(duration, TimeUnit.SECONDS)).start()
   }
 
 

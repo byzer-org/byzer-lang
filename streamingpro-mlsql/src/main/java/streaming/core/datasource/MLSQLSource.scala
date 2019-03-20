@@ -34,6 +34,10 @@ trait MLSQLDataSource {
 
   def shortFormat: String
 
+  def aliasFormat: String = {
+    shortFormat
+  }
+
 }
 
 trait MLSQLSource extends MLSQLDataSource with MLSQLSourceInfo {

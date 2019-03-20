@@ -22,7 +22,7 @@ class MLSQLJSonStr(override val uid: String) extends MLSQLBaseFileSource with Wo
   }
 
   override def save(writer: DataFrameWriter[Row], config: DataSinkConfig): Unit = {
-    throw new RuntimeException(s"save is not supported in ${fullFormat}")
+    throw new RuntimeException(s"save is not supported in ${shortFormat}")
   }
 
   override def register(): Unit = {

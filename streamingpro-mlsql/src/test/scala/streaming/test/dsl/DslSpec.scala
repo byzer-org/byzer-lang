@@ -876,7 +876,7 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
         val ssel = createSSEL
         val mlsql =
           """
-            |load mlsqlAPI.`` as output;
+            |load _mlsql_.`api/list` as output;
           """.stripMargin
         ScriptSQLExec.parse(mlsql, ssel)
         spark.sql("select * from output").show()
@@ -894,7 +894,7 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
         val ssel = createSSEL
         val mlsql =
           """
-            |load mlsqlConf.`` as output;
+            |load _mlsql_.`api/list` as output;
           """.stripMargin
         ScriptSQLExec.parse(mlsql, ssel)
         spark.sql("select * from output").show()

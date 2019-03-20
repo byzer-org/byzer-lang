@@ -17,4 +17,6 @@ class MLSQLStreamJDBC(override val uid: String) extends MLSQLBaseStreamSource wi
   override def fullFormat: String = "org.apache.spark.sql.execution.streaming.JDBCSinkProvider"
 
   override def shortFormat: String = "streamJDBC"
+
+  override def aliasFormat: String = "jdbc"
 }

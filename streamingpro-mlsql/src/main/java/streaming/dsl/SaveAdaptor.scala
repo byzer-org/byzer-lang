@@ -108,15 +108,25 @@ class SaveAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
     if (option.contains("fileNum")) {
       oldDF = oldDF.repartition(option.getOrElse("fileNum", "").toString.toInt)
     }
-    val writer = oldDF.write
+    val writer = if (isStream) null else oldDF.write
 
     val saveRes = DataSourceRegistry.fetch(format, option).map { datasource =>
-      datasource.asInstanceOf[ {def save(writer: DataFrameWriter[Row], config: DataSinkConfig): Unit}].save(
+      val res = datasource.asInstanceOf[ {def save(writer: DataFrameWriter[Row], config: DataSinkConfig): Any}].save(
         writer,
         // here we should change final_path to path in future
         DataSinkConfig(path, option ++ Map("partitionByCol" -> partitionByCol.mkString(",")),
           mode, Option(oldDF)))
+      res
     }.getOrElse {
+
+      if (isStream) {
+        throw new RuntimeException(s"save is not support with ${format}  in stream mode")
+      }
+      if (partitionByCol.size != 0) {
+        writer.partitionBy(partitionByCol: _*)
+      }
+
+      writer.mode(mode)
 
       if (path == "-" || path.isEmpty) {
         writer.format(option.getOrElse("implClass", format)).save()
