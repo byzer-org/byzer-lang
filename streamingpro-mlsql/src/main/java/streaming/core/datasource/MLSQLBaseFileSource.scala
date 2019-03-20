@@ -19,7 +19,7 @@ abstract class MLSQLBaseFileSource extends MLSQLSource with MLSQLSink with MLSQL
   }
 
 
-  override def save(writer: DataFrameWriter[Row], config: DataSinkConfig): Unit = {
+  override def save(writer: DataFrameWriter[Row], config: DataSinkConfig): Any = {
     val context = ScriptSQLExec.contextGetOrForTest()
     val format = config.config.getOrElse("implClass", fullFormat)
     writer.options(rewriteConfig(config.config)).format(format).save(resourceRealPath(context.execListener, Option(context.owner), config.path))

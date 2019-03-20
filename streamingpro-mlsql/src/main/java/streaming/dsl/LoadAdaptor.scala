@@ -64,28 +64,20 @@ class LoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
     if (isStream) {
       scriptSQLExecListener.addEnv("stream", "true")
     }
+    new LoadPRocessing(scriptSQLExecListener, option, path, tableName, format).parse
 
-    def isStreamSource(name: String) = {
-      (TableType.KAFKA.includes ++ TableType.SOCKET.includes ++ List("mockStream")).contains(name)
-    }
-
-    if (isStream && (isStreamSource(format) || option.getOrElse("stream.source", "false").toBoolean)) {
-      new StreamLoadAdaptor(scriptSQLExecListener, option, path, tableName, format).parse
-    } else {
-      new BatchLoadAdaptor(scriptSQLExecListener, option, path, tableName, format).parse
-    }
     scriptSQLExecListener.setLastSelectTable(tableName)
 
   }
 }
 
 
-class BatchLoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener,
-                       option: Map[String, String],
-                       var path: String,
-                       tableName: String,
-                       format: String
-                      ) extends DslTool {
+class LoadPRocessing(scriptSQLExecListener: ScriptSQLExecListener,
+                     option: Map[String, String],
+                     var path: String,
+                     tableName: String,
+                     format: String
+                    ) extends DslTool {
   def parse = {
     var table: DataFrame = null
     val sparkSession = scriptSQLExecListener.sparkSession
@@ -128,6 +120,44 @@ class BatchLoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener,
 
     // In order to control the access of columns, we should rewrite the final sql (conver * to specify column names)
     table = rewriteOrNot(table, dsConf, sourceInfo, ScriptSQLExec.context())
+
+    def isStream = {
+      scriptSQLExecListener.env().contains("streamName")
+    }
+
+    def isStreamSource(name: String) = {
+      (TableType.KAFKA.includes ++ TableType.SOCKET.includes ++ List("mockStream")).contains(name)
+    }
+
+    if (isStream || isStreamSource(format)) {
+
+      def withWaterMark(table: DataFrame, option: Map[String, String]) = {
+        if (option.contains("eventTimeCol")) {
+          table.withWatermark(option("eventTimeCol"), option("delayThreshold"))
+        } else {
+          table
+        }
+
+      }
+
+      table = withWaterMark(table, option)
+
+      if (option.contains("valueSchema") && option.contains("valueFormat")) {
+        val kafkaFields = List("key", "partition", "offset", "timestamp", "timestampType", "topic")
+        val keepOriginalValue = if (option.getOrElse("keepValue", "false").toBoolean) List("value") else List()
+        val sourceSchema = new SourceSchema(option("valueSchema"))
+        val sourceParserInstance = SourceParser.getSourceParser(option("valueFormat"))
+
+        table = table.withColumn("kafkaValue", F.struct(
+          (kafkaFields ++ keepOriginalValue).map(F.col(_)): _*
+        )).selectExpr("CAST(value AS STRING) as tmpValue", "kafkaValue")
+          .select(sourceParserInstance.parse(F.col("tmpValue"), sourceSchema = sourceSchema, Map()).as("data"), F.col("kafkaValue"))
+          .select("data.*", "kafkaValue")
+      }
+
+      path = TemplateMerge.merge(path, scriptSQLExecListener.env().toMap)
+    }
+
     table.createOrReplaceTempView(tableName)
   }
 
@@ -157,66 +187,4 @@ class BatchLoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener,
   }
 }
 
-class StreamLoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener,
-                        option: Map[String, String],
-                        var path: String,
-                        tableName: String,
-                        format: String
-                       ) extends DslTool {
 
-  def withWaterMark(table: DataFrame, option: Map[String, String]) = {
-    if (option.contains("eventTimeCol")) {
-      table.withWatermark(option("eventTimeCol"), option("delayThreshold"))
-    } else {
-      table
-    }
-
-  }
-
-  def parse = {
-    var table: DataFrame = null
-    val reader = scriptSQLExecListener.sparkSession.readStream
-    val cPath = cleanStr(path)
-    format match {
-      case "kafka" | "socket" =>
-        if (!cPath.isEmpty) {
-          reader.option("subscribe", cPath)
-        }
-        table = reader.options(option).format(format).load()
-      case "kafka8" | "kafka9" =>
-        val format = "com.hortonworks.spark.sql.kafka08"
-        /*
-           kafka.bootstrap.servers
-           kafka.metadata.broker
-           startingoffset smallest
-         */
-        if (!cPath.isEmpty) {
-          reader.option("topics", cPath)
-        }
-        table = reader.format(format).options(option).load()
-      case "mockStream" =>
-        val format = "org.apache.spark.sql.execution.streaming.mock.MockStreamSourceProvider"
-        table = reader.format(format).options(option + ("path" -> cleanStr(path))).load()
-      case _ =>
-        val provider = option.getOrElse("provider", format)
-        table = reader.format(provider).options(option).load()
-    }
-    table = withWaterMark(table, option)
-
-    if (option.contains("valueSchema") && option.contains("valueFormat")) {
-      val kafkaFields = List("key", "partition", "offset", "timestamp", "timestampType", "topic")
-      val keepOriginalValue = if (option.getOrElse("keepValue", "false").toBoolean) List("value") else List()
-      val sourceSchema = new SourceSchema(option("valueSchema"))
-      val sourceParserInstance = SourceParser.getSourceParser(option("valueFormat"))
-
-      table = table.withColumn("kafkaValue", F.struct(
-        (kafkaFields ++ keepOriginalValue).map(F.col(_)): _*
-      )).selectExpr("CAST(value AS STRING) as tmpValue", "kafkaValue")
-        .select(sourceParserInstance.parse(F.col("tmpValue"), sourceSchema = sourceSchema, Map()).as("data"), F.col("kafkaValue"))
-        .select("data.*", "kafkaValue")
-    }
-
-    path = TemplateMerge.merge(path, scriptSQLExecListener.env().toMap)
-    table.createOrReplaceTempView(tableName)
-  }
-}

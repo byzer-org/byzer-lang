@@ -1,7 +1,8 @@
 package streaming.core.datasource.impl
 
-import org.apache.spark.sql.{DataFrame, DataFrameReader}
-import streaming.core.datasource.{DataSourceConfig, MLSQLBaseStreamSource}
+import org.apache.spark.sql.{DataFrame, DataFrameReader, DataFrameWriter, Row}
+import streaming.core.datasource.{DataSinkConfig, DataSourceConfig, MLSQLBaseStreamSource}
+import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
 
 /**
@@ -21,6 +22,27 @@ class MLSQLKafka(override val uid: String) extends MLSQLBaseStreamSource with Wo
     streamReader.options(rewriteConfig(config.config)).format(format).load()
   }
 
+  def isStream = {
+    val context = ScriptSQLExec.contextGetOrForTest()
+    context.execListener.env().contains("streamName")
+  }
+
+
+  override def save(batchWriter: DataFrameWriter[Row], config: DataSinkConfig): Any = {
+
+    if (isStream) {
+      return super.save(batchWriter, config)
+
+    }
+
+    def getKafkaBrokers = {
+      "metadata.broker.list" -> config.config.getOrElse("metadata.broker.list", "kafka.bootstrap.servers")
+    }
+
+    batchWriter.options(config.config).option("topic", config.path).
+      option(getKafkaBrokers._1, getKafkaBrokers._2).format(fullFormat).save()
+
+  }
 
   override def fullFormat: String = "kafka"
 

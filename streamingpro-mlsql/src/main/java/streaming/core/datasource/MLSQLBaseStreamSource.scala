@@ -16,14 +16,12 @@ abstract class MLSQLBaseStreamSource extends MLSQLSource with MLSQLSink with MLS
   }
 
 
-  override def save(batchWriter: DataFrameWriter[Row], config: DataSinkConfig): Unit = {
-    var oldDF = config.df.get
+  override def save(batchWriter: DataFrameWriter[Row], config: DataSinkConfig): Any = {
+    val oldDF = config.df.get
     var option = config.config
     if (option.contains("fileNum")) {
-      oldDF = oldDF.repartition(option.getOrElse("fileNum", "").toString.toInt)
       option -= "fileNum"
     }
-
 
     val writer: DataStreamWriter[Row] = oldDF.writeStream
     var path = config.path
