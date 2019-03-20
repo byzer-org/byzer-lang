@@ -18,10 +18,10 @@
 
 package streaming.dsl
 
-import net.sf.json.JSONObject
 import org.apache.spark.sql.{DataFrame, DataFrameReader, functions => F}
 import streaming.core.datasource._
-import streaming.dsl.load.batch.{AutoWorkflowSelfExplain, MLSQLAPIExplain, MLSQLConfExplain, ModelSelfExplain}
+import streaming.dsl.auth.TableType
+import streaming.dsl.load.batch.{AutoWorkflowSelfExplain, ModelSelfExplain}
 import streaming.dsl.parser.DSLSQLParser._
 import streaming.dsl.template.TemplateMerge
 import streaming.source.parser.{SourceParser, SourceSchema}
@@ -36,7 +36,6 @@ class LoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
   }
 
   override def parse(ctx: SqlContext): Unit = {
-    var table: DataFrame = null
     var format = ""
     var option = Map[String, String]()
     var path = ""
@@ -58,9 +57,19 @@ class LoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
       }
     }
 
+    def isStream = {
+      scriptSQLExecListener.env().contains("streamName")
+    }
 
-    if (format.startsWith("kafka") || format.startsWith("mockStream") || option.contains("stream.source")) {
+    if (isStream) {
       scriptSQLExecListener.addEnv("stream", "true")
+    }
+
+    def isStreamSource(name: String) = {
+      (TableType.KAFKA.includes ++ TableType.SOCKET.includes ++ List("mockStream")).contains(name)
+    }
+
+    if (isStream && (isStreamSource(format) || option.getOrElse("stream.source", "false").toBoolean)) {
       new StreamLoadAdaptor(scriptSQLExecListener, option, path, tableName, format).parse
     } else {
       new BatchLoadAdaptor(scriptSQLExecListener, option, path, tableName, format).parse
@@ -69,6 +78,7 @@ class LoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
 
   }
 }
+
 
 class BatchLoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener,
                        option: Map[String, String],
@@ -82,7 +92,6 @@ class BatchLoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener,
     val reader = scriptSQLExecListener.sparkSession.read
     reader.options(option)
     path = TemplateMerge.merge(path, scriptSQLExecListener.env().toMap)
-    val resourceOwner = option.get("owner")
 
     def emptyDataFrame = {
       import sparkSession.implicits._
@@ -95,63 +104,30 @@ class BatchLoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener,
     DataSourceRegistry.fetch(format, option).map { datasource =>
       table = datasource.asInstanceOf[ {def load(reader: DataFrameReader, config: DataSourceConfig): DataFrame}].
         load(reader, dsConf)
+
+      // extract source info if the datasource is  MLSQLSourceInfo
       if (datasource.isInstanceOf[MLSQLSourceInfo]) {
         val authConf = DataAuthConfig(dsConf.path, dsConf.config)
         sourceInfo = Option(datasource.asInstanceOf[MLSQLSourceInfo].sourceInfo(authConf))
       }
+
+      // return the load table
       table
     }.getOrElse {
-      format match {
-        case "crawlersql" =>
-          table = reader.option("path", cleanStr(path)).format("org.apache.spark.sql.execution.datasources.crawlersql").load()
-        case "image" =>
-          val resourcePath = resourceRealPath(scriptSQLExecListener, resourceOwner, path)
-          table = reader.option("path", resourcePath).format("streaming.dsl.mmlib.algs.processing.image").load()
-        case "jsonStr" =>
-          val items = cleanBlockStr(scriptSQLExecListener.env()(cleanStr(path))).split("\n")
-          import sparkSession.implicits._
-          table = reader.json(sparkSession.createDataset[String](items))
-        case "csvStr" =>
-          val items = cleanBlockStr(scriptSQLExecListener.env()(cleanStr(path))).split("\n")
-          import sparkSession.implicits._
-          table = reader.options(option).csv(sparkSession.createDataset[String](items))
-        case "script" =>
-          val items = List(cleanBlockStr(scriptSQLExecListener.env()(cleanStr(path)))).map { f =>
-            val obj = new JSONObject()
-            obj.put("content", f)
-            obj.toString()
-          }
-          import sparkSession.implicits._
-          table = reader.json(sparkSession.createDataset[String](items))
-        case "hive" =>
-          table = reader.table(cleanStr(path))
-        case "text" =>
-          val resourcePath = resourceRealPath(scriptSQLExecListener, resourceOwner, path)
-          table = reader.text(resourcePath.split(","): _*)
-        case "xml" =>
-          val resourcePath = resourceRealPath(scriptSQLExecListener, resourceOwner, path)
-          table = reader.option("path", resourcePath).format("com.databricks.spark.xml").load()
-        case "mlsqlAPI" =>
-          table = new MLSQLAPIExplain(sparkSession).explain
-        case "mlsqlConf" =>
-          table = new MLSQLConfExplain(sparkSession).explain
-        case _ =>
+      // calculate resource real absolute path
+      val resourcePath = resourceRealPath(scriptSQLExecListener, option.get("owner"), path)
 
-          // calculate resource real absolute path
-          val resourcePath = resourceRealPath(scriptSQLExecListener, resourceOwner, path)
+      table = ModelSelfExplain(format, cleanStr(path), option, sparkSession).isMatch.thenDo.orElse(() => {
 
-          table = ModelSelfExplain(format, cleanStr(path), option, sparkSession).isMatch.thenDo.orElse(() => {
+        AutoWorkflowSelfExplain(format, cleanStr(path), option, sparkSession).isMatch.thenDo().orElse(() => {
+          reader.format(format).load(resourcePath)
+        }).get()
 
-            AutoWorkflowSelfExplain(format, cleanStr(path), option, sparkSession).isMatch.thenDo().orElse(() => {
-              reader.format(format).load(resourcePath)
-            }).get()
-
-          }).get
-      }
+      }).get
     }
 
+    // In order to control the access of columns, we should rewrite the final sql (conver * to specify column names)
     table = rewriteOrNot(table, dsConf, sourceInfo, ScriptSQLExec.context())
-
     table.createOrReplaceTempView(tableName)
   }
 

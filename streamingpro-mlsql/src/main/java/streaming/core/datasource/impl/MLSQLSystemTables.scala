@@ -7,6 +7,7 @@ import streaming.core.datasource._
 import streaming.core.datasource.util.MLSQLJobCollect
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.auth.{OperateType, TableType}
+import streaming.dsl.load.batch.{MLSQLAPIExplain, MLSQLConfExplain}
 
 /**
   * 2019-01-11 WilliamZhu(allwefantasy@gmail.com)
@@ -55,6 +56,10 @@ class MLSQLSystemTables extends MLSQLSource with MLSQLSourceInfo with MLSQLRegis
       case Array("tables", "operateTypes") =>
         val res = ScalaEnumTool.valueSymbols[OperateType.type].map(f => f.toString.split("\\s+").last.toLowerCase()).toSeq
         spark.createDataset(res).toDF()
+      case Array("api", "list") =>
+        new MLSQLAPIExplain(spark).explain
+      case Array("conf", "list") =>
+        new MLSQLConfExplain(spark).explain
     }
 
   }

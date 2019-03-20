@@ -1,12 +1,13 @@
 package streaming.core.datasource.impl
 
 import org.apache.spark.ml.param.{DoubleParam, Param}
-import streaming.dsl.mmlib.algs.param.BaseParams
+import streaming.core.datasource.MLSQLBaseFileSource
+import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
 
 /**
   * 2019-02-19 WilliamZhu(allwefantasy@gmail.com)
   */
-class MLSQLXML(override val uid: String) extends MLSQLFileDataSource{
+class MLSQLXML(override val uid: String) extends MLSQLBaseFileSource with WowParams {
   def this() = this(BaseParams.randomUID())
 
   override def fullFormat: String = "com.databricks.spark.xml"
@@ -32,7 +33,4 @@ class MLSQLXML(override val uid: String) extends MLSQLFileDataSource{
 
   final val rootTag: Param[String] = new Param[String](this, "rootTag", "For write mode; Default is ROWS. the root tag of your xml files to treat as the root. For example, in this xml <books> <book><book> ...</books>, the appropriate value would be books.")
   final val compression: Param[String] = new Param[String](this, "compression", "For write mode; compression codec to use when saving to file. Should be the fully qualified name of a class implementing org.apache.hadoop.io.compress.CompressionCodec or one of case-insensitive shorten names (bzip2, gzip, lz4, and snappy). Defaults to no compression when a codec is not specified.")
-
-
-  override def rewriteConfig(config: Map[String, String]): Map[String, String] = return config
 }

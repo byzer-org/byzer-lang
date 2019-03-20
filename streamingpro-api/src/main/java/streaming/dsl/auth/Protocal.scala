@@ -89,6 +89,7 @@ object TableType {
   val ES = TableTypeMeta("es", Set("es"))
   val REDIS = TableTypeMeta("redis", Set("redis"))
   val KAFKA = TableTypeMeta("kafka", Set("kafka", "kafka8", "kafka9"))
+  val SOCKET = TableTypeMeta("socket", Set("socket"))
   val MONGO = TableTypeMeta("mongo", Set("mongo"))
   val SOLR = TableTypeMeta("solr", Set("solr"))
   val TEMP = TableTypeMeta("temp", Set("temp", "jsonStr", "script", "csvStr", "mockStream", "console"))
@@ -98,10 +99,10 @@ object TableType {
   val SYSTEM = TableTypeMeta("system", Set("_mlsql_", "model", "modelList", "modelParams", "modelExample", "modelExplain"))
 
   def from(str: String) = {
-    List(REDIS, HIVE, HBASE, HDFS, HTTP, JDBC, ES, MONGO, SOLR, TEMP, API, WEB, GRAMMAR, SYSTEM).filter(f => f.includes.contains(str)).headOption
+    List(SOCKET, REDIS, HIVE, HBASE, HDFS, HTTP, JDBC, ES, MONGO, SOLR, TEMP, API, WEB, GRAMMAR, SYSTEM).filter(f => f.includes.contains(str)).headOption
   }
 
   def toList = {
-    List(REDIS, HIVE, HBASE, HDFS, HTTP, JDBC, ES, MONGO, SOLR, TEMP, API, WEB, GRAMMAR, SYSTEM).flatMap(f => f.includes.toSeq)
+    List(SOCKET, REDIS, HIVE, HBASE, HDFS, HTTP, JDBC, ES, MONGO, SOLR, TEMP, API, WEB, GRAMMAR, SYSTEM).flatMap(f => f.includes.toSeq)
   }
 }
