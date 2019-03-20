@@ -89,7 +89,7 @@ as groupTable;
 
 ```sql
 save append groupTable
-as jdbc.`mydb.patient` 
+as streamJDBC.`mydb.patient` 
 options mode="update"
 -- call procedure 调用存储过程
 and `statement-0`="call test_proc(?,?,?)"
@@ -103,7 +103,7 @@ and checkpointLocation="/streamingpro-test/kafka/patient/mysql/update";
 select dt,addr,num, dt as dt1, addr as addr2 from groupTable as outputTable;
 
 save append outputTable  
-as jdbc.`mydb.patient` 
+as streamJDBC.`mydb.patient` 
 options mode="update"
 and `statement-0`="insert into patientUpdate(dt,addr,num) value(?,?,?) ON DUPLICATE KEY UPDATE dt=?,addr=?,num=?;"
 and duration="5"
