@@ -67,11 +67,13 @@ class LoadAuth(authProcessListener: AuthProcessListener) extends MLSQLAuth with 
     }
 
     val mLSQLTable = DataSourceRegistry.fetch(format, option).map { datasource =>
+
+      val operateType = if (option.contains("directQuery")) OperateType.DIRECT_QUERY else OperateType.LOAD
+
       val sourceInfo = datasource.asInstanceOf[ {def sourceInfo(config: DataAuthConfig): SourceInfo}].
         sourceInfo(DataAuthConfig(cleanStr(path), option))
 
-
-      MLSQLTable(Some(sourceInfo.db), Some(sourceInfo.table), OperateType.LOAD, Some(sourceInfo.sourceType), tableType)
+      MLSQLTable(Some(sourceInfo.db), Some(sourceInfo.table), operateType, Some(sourceInfo.sourceType), tableType)
     } getOrElse {
 
       val finalPath = if (TableType.HDFS.includes.contains(format)) {
