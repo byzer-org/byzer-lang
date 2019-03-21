@@ -47,7 +47,7 @@ object ScriptSQLExec extends Logging with WowLog {
   def contextGetOrForTest(): MLSQLExecuteContext = {
     if (context() == null) {
       val exec = new ScriptSQLExecListener(null, "/tmp/william", Map())
-      setContext(new MLSQLExecuteContext(exec,"testUser", exec.pathPrefix(None), "", Map()))
+      setContext(new MLSQLExecuteContext(exec, "testUser", exec.pathPrefix(None), "", Map()))
     }
     context()
   }
@@ -165,10 +165,12 @@ class ScriptSQLExecListener(val _sparkSession: SparkSession, val _defaultPathPre
       val pathPrefix = _allPathPrefix.get(owner.get)
       if (pathPrefix.isDefined && pathPrefix.get.endsWith("/")) {
         return pathPrefix.get
-      } else {
+      } else if (pathPrefix.isDefined && !pathPrefix.get.endsWith("/")) {
         return pathPrefix.get + "/"
       }
-    } else if (_defaultPathPrefix != null && _defaultPathPrefix.nonEmpty) {
+    }
+
+    if (_defaultPathPrefix != null && _defaultPathPrefix.nonEmpty) {
       if (_defaultPathPrefix.endsWith("/")) {
         return _defaultPathPrefix
       } else {
