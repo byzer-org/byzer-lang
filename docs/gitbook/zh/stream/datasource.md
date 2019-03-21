@@ -39,7 +39,7 @@ and password="----"
 as mysql1;
 
 save append table21  
-as jdbc.`mysql1.test1` 
+as streamJDBC.`mysql1.test1` 
 options mode="Complete"
 and `driver-statement-0`="create table  if not exists test1(k TEXT,c BIGINT)"
 and `statement-0`="insert into wow.test1(k,c) values(?,?)"
@@ -136,7 +136,7 @@ as table21;
 
 -- save the data to mysql.
 save append table21  
-as jdbc.`mysql1.test1` 
+as streamJDBC.`mysql1.test1` 
 options mode="Complete"
 and `driver-statement-0`="create table  if not exists test1(k TEXT,c BIGINT)"
 and `statement-0`="insert into wow.test1(k,c) values(?,?)"

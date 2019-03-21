@@ -106,4 +106,18 @@ trait DslTool {
                        path: String): String = {
     withPathPrefix(scriptSQLExecListener.pathPrefix(resourceOwner), cleanStr(path))
   }
+
+  def parseRef(format: String, path: String, callback: Map[String, String] => Unit) = {
+    var final_path = path
+    var db = ""
+    if (final_path.contains(".")) {
+      val Array(_dbname, _dbtable) = final_path.split("\\.", 2)
+      db = _dbname
+      ConnectMeta.presentThenCall(DBMappingKey(format, _dbname), options => {
+        final_path = _dbtable
+        callback(options)
+      })
+    }
+    Array(db, final_path)
+  }
 }

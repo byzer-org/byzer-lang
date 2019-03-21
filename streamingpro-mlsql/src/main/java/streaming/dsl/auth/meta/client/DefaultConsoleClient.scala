@@ -18,6 +18,9 @@
 
 package streaming.dsl.auth.meta.client
 
+import java.util.concurrent.atomic.AtomicReference
+
+import streaming.common.JSONTool
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.auth.{MLSQLTable, TableAuth, TableAuthResult}
 import streaming.log.{Logging, WowLog}
@@ -28,11 +31,21 @@ import streaming.log.{Logging, WowLog}
 class DefaultConsoleClient extends TableAuth with Logging with WowLog {
   override def auth(tables: List[MLSQLTable]): List[TableAuthResult] = {
     val owner = ScriptSQLExec.contextGetOrForTest().owner
-    logInfo(format(s"auth ${owner}  want access tables: ${tables.mkString(",")}"))
-    if (owner == "william"){
-      throw new RuntimeException("auth fail")
-    }else{
-      List(TableAuthResult(true ,""))
-    }
+    logInfo(format(s"auth ${owner}  want access tables: ${JSONTool.toJsonStr(tables)}"))
+    DefaultConsoleClient.set(tables)
+    List(TableAuthResult(true, ""))
+  }
+}
+
+// for testing only
+object DefaultConsoleClient {
+  private val value = new AtomicReference[List[MLSQLTable]]()
+
+  def set(tables: List[MLSQLTable]) = {
+    value.set(tables)
+  }
+
+  def get = {
+    value.get()
   }
 }

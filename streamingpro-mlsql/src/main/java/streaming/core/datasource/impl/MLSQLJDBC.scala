@@ -73,7 +73,13 @@ class MLSQLJDBC(override val uid: String) extends MLSQLSource with MLSQLSink wit
   def cacheTableInParquet(table: DataFrame, config: DataSourceConfig): DataFrame = {
     val sourceinfo = sourceInfo(DataAuthConfig(config.path, config.config))
     val sparkSession = table.sparkSession
-    if (sourceinfo.sourceType.toLowerCase() == "mysql") {
+
+    val enableCache = table.sparkSession
+      .sparkContext
+      .getConf
+      .getBoolean("spark.mlsql.enable.datasource.mysql.cache", false)
+
+    if (enableCache && sourceinfo.sourceType.toLowerCase() == "mysql") {
       config.config.get(enableCacheToHDFS.name).map { f =>
         set(enableCacheToHDFS, f.toBoolean)
         f.toBoolean
@@ -217,7 +223,16 @@ class MLSQLJDBC(override val uid: String) extends MLSQLSource with MLSQLSink wit
     } else {
       val format = config.config.getOrElse("implClass", fullFormat)
 
-      ConnectMeta.options(DBMappingKey(format, _dbname)).get("url")
+      ConnectMeta.options(DBMappingKey(format, _dbname)) match {
+        case Some(item) => item("url")
+        case None => throw new RuntimeException(
+          s"""
+             |format: ${format}
+             |ref:${_dbname}
+             |However ref is not found,
+             |Have you  set the connect statement properly?
+           """.stripMargin)
+      }
     }
 
     val dataSourceType = url.split(":")(1)
