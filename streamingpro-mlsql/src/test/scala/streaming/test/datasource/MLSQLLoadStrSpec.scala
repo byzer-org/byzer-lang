@@ -2,6 +2,7 @@ package streaming.test.datasource
 
 import org.apache.spark.streaming.BasicSparkOperation
 import org.scalatest.BeforeAndAfterAll
+import streaming.common.shell.ShellCommand
 import streaming.core.strategy.platform.SparkRuntime
 import streaming.core.{BasicMLSQLConfig, SpecFunctions}
 import streaming.dsl.ScriptSQLExec
@@ -11,6 +12,8 @@ import streaming.log.Logging
   * 2019-03-20 WilliamZhu(allwefantasy@gmail.com)
   */
 class MLSQLLoadStrSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConfig with BeforeAndAfterAll with Logging {
+
+
   "load jsonStr" should "[jsonStr] work fine" in {
 
     withBatchContext(setupBatchContext(batchParamsWithoutHive, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
@@ -78,7 +81,7 @@ class MLSQLLoadStrSpec extends BasicSparkOperation with SpecFunctions with Basic
 
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       implicit val spark = runtime.sparkSession
-
+      ShellCommand.exec("rm -rf /tmp/user/hive/warehouse/carbon_jack")
       var ssel = createSSEL
 
       ScriptSQLExec.parse(
@@ -92,8 +95,8 @@ class MLSQLLoadStrSpec extends BasicSparkOperation with SpecFunctions with Basic
       ScriptSQLExec.parse(
         """
           |load csvStr.`data` where header="true" as datasource;
-          |save overwrite datasource as hive.`default.jack`;
-          |load hive.`default.jack` as newTable;
+          |save overwrite datasource as hive.`default.carbon_jack`;
+          |load hive.`default.carbon_jack` as newTable;
           |select * from newTable as hiveOutput;
         """.stripMargin, ssel)
       assert(spark.sql("select * from hiveOutput").collect().map(f => f.getString(0)).head == "jack")

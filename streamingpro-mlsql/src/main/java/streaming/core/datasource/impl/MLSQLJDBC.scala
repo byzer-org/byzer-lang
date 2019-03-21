@@ -223,7 +223,16 @@ class MLSQLJDBC(override val uid: String) extends MLSQLSource with MLSQLSink wit
     } else {
       val format = config.config.getOrElse("implClass", fullFormat)
 
-      ConnectMeta.options(DBMappingKey(format, _dbname)).get("url")
+      ConnectMeta.options(DBMappingKey(format, _dbname)) match {
+        case Some(item) => item("url")
+        case None => throw new RuntimeException(
+          s"""
+             |format: ${format}
+             |ref:${_dbname}
+             |However ref is not found,
+             |Have you  set the connect statement properly?
+           """.stripMargin)
+      }
     }
 
     val dataSourceType = url.split(":")(1)

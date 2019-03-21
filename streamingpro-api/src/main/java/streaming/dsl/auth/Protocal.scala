@@ -97,12 +97,13 @@ object TableType {
   val WEB = TableTypeMeta("web", Set("crawlersql"))
   val GRAMMAR = TableTypeMeta("grammar", Set("grammar"))
   val SYSTEM = TableTypeMeta("system", Set("_mlsql_", "model", "modelList", "modelParams", "modelExample", "modelExplain"))
+  val UNKNOW = TableTypeMeta("unknow", Set("unknow"))
 
   def from(str: String) = {
-    List(SOCKET, REDIS, HIVE, HBASE, HDFS, HTTP, JDBC, ES, MONGO, SOLR, TEMP, API, WEB, GRAMMAR, SYSTEM).filter(f => f.includes.contains(str)).headOption
+    List(UNKNOW, KAFKA, SOCKET, REDIS, HIVE, HBASE, HDFS, HTTP, JDBC, ES, MONGO, SOLR, TEMP, API, WEB, GRAMMAR, SYSTEM).filter(f => f.includes.contains(str)).headOption
   }
 
   def toList = {
-    List(SOCKET, REDIS, HIVE, HBASE, HDFS, HTTP, JDBC, ES, MONGO, SOLR, TEMP, API, WEB, GRAMMAR, SYSTEM).flatMap(f => f.includes.toSeq)
+    List(UNKNOW, KAFKA, SOCKET, REDIS, HIVE, HBASE, HDFS, HTTP, JDBC, ES, MONGO, SOLR, TEMP, API, WEB, GRAMMAR, SYSTEM).flatMap(f => f.includes.toSeq)
   }
 }

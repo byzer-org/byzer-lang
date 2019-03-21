@@ -22,12 +22,13 @@ import streaming.core.datasource.{DataAuthConfig, DataSourceRegistry, SourceInfo
 import streaming.dsl.parser.DSLSQLParser._
 import streaming.dsl.template.TemplateMerge
 import streaming.dsl.{AuthProcessListener, DslTool, ScriptSQLExec}
+import streaming.log.{Logging, WowLog}
 
 
 /**
   * Created by allwefantasy on 11/9/2018.
   */
-class LoadAuth(authProcessListener: AuthProcessListener) extends MLSQLAuth with DslTool {
+class LoadAuth(authProcessListener: AuthProcessListener) extends MLSQLAuth with DslTool with Logging with WowLog {
   val env = authProcessListener.listener.env().toMap
 
   def evaluate(value: String) = {
@@ -57,18 +58,27 @@ class LoadAuth(authProcessListener: AuthProcessListener) extends MLSQLAuth with 
       }
     }
 
+    val tableType = TableType.from(format) match {
+      case Some(tt) => tt
+      case None =>
+        logWarning(wow_format(s"format ${format} is not supported yet by auth."))
+        TableType.UNKNOW
+
+    }
+
     val mLSQLTable = DataSourceRegistry.fetch(format, option).map { datasource =>
       val sourceInfo = datasource.asInstanceOf[ {def sourceInfo(config: DataAuthConfig): SourceInfo}].
         sourceInfo(DataAuthConfig(cleanStr(path), option))
 
-      MLSQLTable(Some(sourceInfo.db), Some(sourceInfo.table), OperateType.LOAD, Some(sourceInfo.sourceType), TableType.from(format).get)
+
+      MLSQLTable(Some(sourceInfo.db), Some(sourceInfo.table), OperateType.LOAD, Some(sourceInfo.sourceType), tableType)
     } getOrElse {
 
       val finalPath = if (TableType.HDFS.includes.contains(format)) {
         val context = ScriptSQLExec.contextGetOrForTest()
         withPathPrefix(authProcessListener.listener.pathPrefix(Option(context.owner)), cleanStr(path))
       } else cleanStr(path)
-      MLSQLTable(None, Some(cleanStr(finalPath)), OperateType.LOAD, Some(format), TableType.from(format).get)
+      MLSQLTable(None, Some(cleanStr(finalPath)), OperateType.LOAD, Some(format), tableType)
     }
 
     authProcessListener.addTable(mLSQLTable)
