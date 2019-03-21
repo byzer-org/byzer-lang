@@ -1,5 +1,6 @@
 package streaming.core.datasource.impl
 
+import org.apache.spark.ml.param.Param
 import org.apache.spark.sql.{DataFrame, DataFrameReader, DataFrameWriter, Row}
 import streaming.core.datasource.{DataSinkConfig, DataSourceConfig, MLSQLBaseStreamSource}
 import streaming.dsl.ScriptSQLExec
@@ -60,4 +61,9 @@ class MLSQLKafka(override val uid: String) extends MLSQLBaseStreamSource with Wo
   override def fullFormat: String = "kafka"
 
   override def shortFormat: String = "kafka"
+
+  final val kafkaBootstrapServers: Param[String] = new Param[String](this, "kafka.bootstrap.servers", "host1:port1,host2:port2")
+  final val startingOffsets: Param[String] = new Param[String](this, "startingOffsets", "only for 0.10.0 or higher;{\"topic1\":{\"0\":23,\"1\":-2},\"topic2\":{\"0\":-2}}")
+  final val endingOffsets: Param[String] = new Param[String](this, "startingOffsets", "only for 0.10.0 or higher;{\"topic1\":{\"0\":50,\"1\":-1},\"topic2\":{\"0\":-1}}")
+
 }
