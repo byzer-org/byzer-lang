@@ -92,12 +92,34 @@ class MLSQLElasticSearch(override val uid: String) extends MLSQLSource with MLSQ
     val newOptions = scala.collection.mutable.HashMap[String, String]() ++ config.config
     ConnectMeta.options(DBMappingKey(shortFormat, _dbname)) match {
       case Some(option) =>
-        newOptions ++= option
-      case None =>
         dbName = ""
+        newOptions ++= option
+
+        table.split(dbSplitter) match {
+          case Array(_db, _table) =>
+            dbName = _db
+            table = _table
+          case _ =>
+        }
+
+      case None =>
+      //dbName = ""
     }
 
-    newOptions.filter(f => f._1 == "es.resource").map { f => table == f._2 }
+
+    newOptions.filter(f => f._1 == "es.resource").map { f =>
+      if (f._2.contains(dbSplitter)) {
+        f._2.split(dbSplitter, 2) match {
+          case Array(_db, _table) =>
+            dbName = _db
+            table = _table
+          case Array(_db) =>
+            dbName = _db
+        }
+      } else {
+        dbName = f._2
+      }
+    }
 
     SourceInfo(shortFormat, dbName, table)
   }

@@ -85,7 +85,7 @@ object TableType {
   val HBASE = TableTypeMeta("hbase", Set("hbase"))
   val HDFS = TableTypeMeta("hdfs", Set("parquet", "json", "csv", "image", "text", "xml", "excel"))
   val HTTP = TableTypeMeta("http", Set("http"))
-  val JDBC = TableTypeMeta("jdbc", Set("jdbc"))
+  val JDBC = TableTypeMeta("jdbc", Set("jdbc", "streamJDBC"))
   val ES = TableTypeMeta("es", Set("es"))
   val REDIS = TableTypeMeta("redis", Set("redis"))
   val KAFKA = TableTypeMeta("kafka", Set("kafka", "kafka8", "kafka9"))
