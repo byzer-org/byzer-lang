@@ -71,6 +71,7 @@ object OperateType extends Enumeration {
   type OperateType = Value
   val SAVE = Value("save")
   val LOAD = Value("load")
+  val DIRECT_QUERY = Value("directQuery")
   val CREATE = Value("create")
   val DROP = Value("drop")
   val INSERT = Value("insert")

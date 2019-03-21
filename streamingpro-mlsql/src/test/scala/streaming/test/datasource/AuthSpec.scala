@@ -367,4 +367,32 @@ class AuthSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLCon
     }
 
   }
+
+  "auth directQuery" should "[directQuery] work fine" in {
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { implicit runtime: SparkRuntime =>
+      //执行sql
+      implicit val spark = runtime.sparkSession
+
+      val mlsql =
+        """
+          |connect jdbc where
+          |driver="com.mysql.jdbc.Driver"
+          |and url="jdbc:mysql://${mysql_pi_search_ip}:${mysql_pi_search_port}/white_db?${MYSQL_URL_PARAMS}"
+          |and user="${mysql_pi_search_user}"
+          |and password="${mysql_pi_search_password}"
+          |as white_db_ref;
+          |
+          |load jdbc.`white_db_ref.people` where directQuery='''
+          | select * from jack
+          |'''
+          |as people;
+        """.stripMargin
+      executeScript(mlsql)
+      val loadMLSQLTable = DefaultConsoleClient.get.filter(f => (f.tableType == TableType.JDBC && f.operateType == OperateType.DIRECT_QUERY))
+      assert(loadMLSQLTable.size == 1)
+      assert(loadMLSQLTable.head.table.get == "")
+      assert(loadMLSQLTable.head.db.get == "white_db")
+    }
+
+  }
 }
