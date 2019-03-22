@@ -44,7 +44,9 @@ class MLSQLResource(spark: SparkSession, owner: String, getGroupId: String => St
 
 
     val currentDiskBytesSpilled = if (jobGroupId == null) activeJobs.map(f => getDiskBytesSpilled(f._2.stageIds.toSet)).sum
-    else activeJobs.filter(f => f._2.jobGroup.get == finalJobGroupId).map(getDiskBytesSpilled).sum
+    else activeJobs.filter(f => f._2.jobGroup.get == finalJobGroupId).map { f =>
+      getDiskBytesSpilled(f._2.stageIds.toSet)
+    }.sum
 
     val currentInputRecords = if (jobGroupId == null) activeJobs.map { f =>
       getInputRecords(f._2.stageIds.toSet)
