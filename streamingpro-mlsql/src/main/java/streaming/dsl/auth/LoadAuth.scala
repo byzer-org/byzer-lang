@@ -75,10 +75,11 @@ class LoadAuth(authProcessListener: AuthProcessListener) extends MLSQLAuth with 
 
       MLSQLTable(Some(sourceInfo.db), Some(sourceInfo.table), operateType, Some(sourceInfo.sourceType), tableType)
     } getOrElse {
+      val context = ScriptSQLExec.contextGetOrForTest()
+      val owner = if (option.contains("owner")) option("owner") else context.owner
 
       val finalPath = if (TableType.HDFS.includes.contains(format)) {
-        val context = ScriptSQLExec.contextGetOrForTest()
-        withPathPrefix(authProcessListener.listener.pathPrefix(Option(context.owner)), cleanStr(path))
+        withPathPrefix(authProcessListener.listener.pathPrefix(Option(owner)), cleanStr(path))
       } else cleanStr(path)
       MLSQLTable(None, Some(cleanStr(finalPath)), OperateType.LOAD, Some(format), tableType)
     }
