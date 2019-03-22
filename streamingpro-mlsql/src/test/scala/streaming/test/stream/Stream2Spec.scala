@@ -127,7 +127,7 @@ class Stream2Spec extends BasicSparkOperation with SpecFunctions with BasicMLSQL
           |select cast(value as string) as k, 1 as c from table1 as resultDataTable;
           |
           |save append resultDataTable
-          |as jdbc.`wow_proxy.test1`
+          |as streamJDBC.`wow_proxy.test1`
           |options mode="Append"
           |and `driver-statement-0`='''
           |     CREATE TABLE IF NOT EXISTS test1

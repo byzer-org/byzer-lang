@@ -18,14 +18,17 @@
 
 package streaming.core.datasource.impl
 
-import org.apache.spark.ml.param.Param
-import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
-import org.apache.spark.sql._
-import _root_.streaming.core.datasource._
+import _root_.streaming.common.HDFSOperator
+import _root_.streaming.common.hdfs.lock.DistrLocker
+import _root_.streaming.core.datasource.{SourceTypeRegistry, _}
 import _root_.streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
-import _root_.streaming.dsl.{ConnectMeta, DBMappingKey}
+import _root_.streaming.dsl.{ConnectMeta, DBMappingKey, ScriptSQLExec}
+import _root_.streaming.log.{Logging, WowLog}
+import org.apache.spark.ml.param.{BooleanParam, LongParam, Param}
+import org.apache.spark.sql._
+import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
 
-class MLSQLJDBC(override val uid: String) extends MLSQLSource with MLSQLSink with MLSQLSourceInfo with MLSQLRegistry with WowParams {
+class MLSQLJDBC(override val uid: String) extends MLSQLSource with MLSQLSink with MLSQLSourceInfo with MLSQLRegistry with WowParams with Logging with WowLog {
   def this() = this(BaseParams.randomUID())
 
 
@@ -53,14 +56,103 @@ class MLSQLJDBC(override val uid: String) extends MLSQLSource with MLSQLSink wit
     //load configs should overwrite connect configs
     reader.options(config.config)
     reader.option("dbtable", dbtable)
+
+
     var table = reader.format(format).load(dbtable)
+
     val columns = table.columns
     val colNames = new Array[String](columns.length)
     for (i <- 0 to columns.length - 1) {
       val (dbtable, column) = parseTableAndColumnFromStr(columns(i))
       colNames(i) = column
     }
-    table.toDF(colNames: _*)
+    val newdf = table.toDF(colNames: _*)
+    cacheTableInParquet(newdf, config)
+  }
+
+  def cacheTableInParquet(table: DataFrame, config: DataSourceConfig): DataFrame = {
+    val sourceinfo = sourceInfo(DataAuthConfig(config.path, config.config))
+    val sparkSession = table.sparkSession
+
+    val enableCache = table.sparkSession
+      .sparkContext
+      .getConf
+      .getBoolean("spark.mlsql.enable.datasource.mysql.cache", false)
+
+    if (enableCache && sourceinfo.sourceType.toLowerCase() == "mysql") {
+      config.config.get(enableCacheToHDFS.name).map { f =>
+        set(enableCacheToHDFS, f.toBoolean)
+        f.toBoolean
+      }.getOrElse {
+        set(enableCacheToHDFS, true)
+      }
+
+      config.config.get(waitCacheLockTime.name).map { f =>
+        set(waitCacheLockTime, f.toLong)
+        f.toBoolean
+      }.getOrElse {
+        set(waitCacheLockTime, 60 * 60 * 3l)
+      }
+
+      config.config.get(cacheToHDFSExpireTime.name).map { f =>
+        set(cacheToHDFSExpireTime, f.toLong)
+        f.toBoolean
+      }.getOrElse {
+        set(cacheToHDFSExpireTime, 60 * 60 * 6l)
+      }
+
+      if ($(enableCacheToHDFS)) {
+        val newtableName = sourceinfo.sourceType.toLowerCase() + "_" + sourceinfo.db + "_" + sourceinfo.table
+
+        val context = ScriptSQLExec.context()
+        val home = if (context != null) context.home else ""
+        val finalPath = s"${home}/tmp/_jdbc_cache_/${newtableName}"
+
+        try {
+          HDFSOperator.createDir(finalPath)
+        } catch {
+          case e: Exception =>
+        }
+
+
+        def isExpire = {
+          // we should check the data dir instead of the finalPath since the final path
+          // will be written with lock file which may make the modification time changed
+          HDFSOperator.fileExists(finalPath + "/data") && System.currentTimeMillis() - HDFSOperator.getFileStatus(finalPath + "/data").getModificationTime > $(cacheToHDFSExpireTime) * 1000
+        }
+
+        val hdfsLocker = new DistrLocker(finalPath)
+        var newTable: DataFrame = null
+        try {
+          //create lock file
+          hdfsLocker.createLock
+          // try to fetch lock
+          if (!hdfsLocker.fetchLock()) {
+            // fail to fetch lock, then wait until other release the lock
+            logInfo(format(s"${finalPath} is locked by other service, wait and then use"))
+            hdfsLocker.releaseLock()
+            hdfsLocker.waitOtherLockToRelease($(waitCacheLockTime))
+            // try to read the file
+            newTable = sparkSession.read.parquet(finalPath + "/data")
+          } else {
+            // succesfully get the lock, then check the file if exists or isExpire
+            // if not exits or the table have expire, then remove it and create new one.
+            // finally release the lock
+            logInfo(format(s"${finalPath} is locked by this service and we will create the data if it not exists"))
+            if (!HDFSOperator.fileExists(finalPath + "/data") || isExpire) {
+              table.write.mode(SaveMode.Overwrite).save(finalPath + "/data")
+            }
+            newTable = sparkSession.read.parquet(finalPath + "/data")
+          }
+        } finally {
+          logInfo(format(s"${finalPath} is locked by other service, wait and then use"))
+          hdfsLocker.releaseLock()
+        }
+        return newTable
+
+      }
+    }
+    return table
   }
 
   override def save(writer: DataFrameWriter[Row], config: DataSinkConfig): Unit = {
@@ -131,13 +223,23 @@ class MLSQLJDBC(override val uid: String) extends MLSQLSource with MLSQLSink wit
     } else {
       val format = config.config.getOrElse("implClass", fullFormat)
 
-      ConnectMeta.options(DBMappingKey(format, _dbname)).get("url")
+      ConnectMeta.options(DBMappingKey(format, _dbname)) match {
+        case Some(item) => item("url")
+        case None => throw new RuntimeException(
+          s"""
+             |format: ${format}
+             |ref:${_dbname}
+             |However ref is not found,
+             |Have you  set the connect statement properly?
+           """.stripMargin)
+      }
     }
 
     val dataSourceType = url.split(":")(1)
     val dbName = url.substring(url.lastIndexOf('/') + 1).takeWhile(_ != '?')
-
-    SourceInfo(dataSourceType, dbName, _dbtable)
+    val si = SourceInfo(dataSourceType, dbName, _dbtable)
+    SourceTypeRegistry.register(dataSourceType, si)
+    si
   }
 
   override def explainParams(spark: SparkSession) = {
@@ -151,5 +253,9 @@ class MLSQLJDBC(override val uid: String) extends MLSQLSource with MLSQLSink wit
   final val partitionColumn: Param[String] = new Param[String](this, "partitionColumn", "These options must all be specified if any of them is specified. In addition, numPartitions must be specified. They describe how to partition the table when reading in parallel from multiple workers. partitionColumn must be a numeric, date, or timestamp column from the table in question. Notice that lowerBound and upperBound are just used to decide the partition stride, not for filtering the rows in table. So all rows in the table will be partitioned and returned. This option applies only to reading.")
   final val lowerBound: Param[String] = new Param[String](this, "lowerBound", "See partitionColumn")
   final val upperBound: Param[String] = new Param[String](this, "upperBound", "See partitionColumn")
+  final val enableCacheToHDFS: BooleanParam = new BooleanParam(this, "enableCacheToHDFS", "enabled by default in MySQL;The target path is ${HOME}/tmp/_jdbc_cache_")
+  final val waitCacheLockTime: LongParam = new LongParam(this, "waitCacheLockTime", "default 30m;unit seconds")
+  final val cacheToHDFSExpireTime: LongParam = new LongParam(this, "cacheToHDFSExpireTime", "default 6h; unit seconds")
 
 }
+

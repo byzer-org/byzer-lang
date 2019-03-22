@@ -8,23 +8,13 @@ import org.apache.spark.sql._
 /**
   * 2019-02-25 WilliamZhu(allwefantasy@gmail.com)
   */
-class MLSQLCSV(override val uid: String) extends MLSQLSource with MLSQLSink with MLSQLSourceInfo with MLSQLRegistry with WowParams {
+class MLSQLCSV(override val uid: String) extends MLSQLBaseFileSource with WowParams {
   def this() = this(BaseParams.randomUID())
 
   override def explainParams(spark: SparkSession) = {
     _explainParams(spark)
   }
 
-  override def load(reader: DataFrameReader, config: DataSourceConfig): DataFrame = {
-    val format = config.config.getOrElse("implClass", fullFormat)
-    reader.options(config.config).format(format).load(config.config("_filePath_"))
-  }
-
-
-  override def save(writer: DataFrameWriter[Row], config: DataSinkConfig): Unit = {
-    val format = config.config.getOrElse("implClass", fullFormat)
-    writer.options(config.config).format(format).save(config.config("_filePath_"))
-  }
 
   override def sourceInfo(config: DataAuthConfig): SourceInfo = {
     SourceInfo("file", "", config.path)

@@ -1,6 +1,7 @@
 package streaming.core.datasource.impl
 
 import _root_.streaming.core.datasource._
+import _root_.streaming.dsl.ScriptSQLExec
 import _root_.streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
 import org.apache.spark.ml.param.Param
 import org.apache.spark.sql._
@@ -8,25 +9,14 @@ import org.apache.spark.sql._
 /**
   * 2019-02-19 WilliamZhu(allwefantasy@gmail.com)
   */
-class MLSQLExcel(override val uid: String) extends MLSQLSource with MLSQLSink with MLSQLSourceInfo with MLSQLRegistry with WowParams {
+class MLSQLExcel(override val uid: String) extends MLSQLBaseFileSource with WowParams {
   def this() = this(BaseParams.randomUID())
 
-  override def load(reader: DataFrameReader, config: DataSourceConfig): DataFrame = {
-    val format = config.config.getOrElse("implClass", fullFormat)
-    reader.options(rewriteConfig(config.config)).format(format).load(config.config("_filePath_"))
+  override def sourceInfo(config: DataAuthConfig): SourceInfo = {
+    val context = ScriptSQLExec.contextGetOrForTest()
+    val owner = config.config.get("owner").getOrElse(context.owner)
+    SourceInfo(shortFormat, "", resourceRealPath(context.execListener, Option(owner), config.path))
   }
-
-  override def save(writer: DataFrameWriter[Row], config: DataSinkConfig): Unit = {
-    val format = config.config.getOrElse("implClass", fullFormat)
-
-    writer.options(rewriteConfig(config.config)).format(format).save(config.config("_filePath_"))
-  }
-
-  def rewriteConfig(config: Map[String, String]) = {
-    config ++ Map("useHeader" -> config.getOrElse("useHeader", "false"))
-  }
-
-  override def sourceInfo(config: DataAuthConfig): SourceInfo = SourceInfo(shortFormat, "", "")
 
   override def explainParams(spark: SparkSession) = {
     _explainParams(spark)

@@ -6,9 +6,10 @@ usage: package
 run package command based on different spark version.
 Inputs are specified with the following environment variables:
 
-MLSQL_SPARK_VERSION - the spark version, 2.2/2.3/2.4
-DRY_RUN true|false
-DISTRIBUTION true|false
+MLSQL_SPARK_VERSION - the spark version, 2.2/2.3/2.4 default 2.3
+DRY_RUN true|false               default false
+DISTRIBUTION true|false          default false
+DATASOURCE_INCLUDED true|false   default false
 EOF
   exit 1
 }
@@ -29,6 +30,7 @@ MLSQL_SPARK_VERSION=${MLSQL_SPARK_VERSION:-2.3}
 DRY_RUN=${DRY_RUN:-false}
 DISTRIBUTION=${DISTRIBUTION:-false}
 OSS_ENABLE=${OSS_ENABLE:-false}
+DATASOURCE_INCLUDED=${DATASOURCE_INCLUDED:-false}
 COMMAND=${COMMAND:-package}
 
 for env in MLSQL_SPARK_VERSION DRY_RUN DISTRIBUTION; do
@@ -80,6 +82,10 @@ fi
 
 if [[ "${OSS_ENABLE}" == "true" ]];then
    BASE_PROFILES="$BASE_PROFILES -Poss-support"
+fi
+
+if [[ "$DATASOURCE_INCLUDED" == "true" ]];then
+   BASE_PROFILES="$BASE_PROFILES -Punit-test"
 fi
 
 if [[ ${DRY_RUN} == "true" ]];then

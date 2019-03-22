@@ -171,7 +171,7 @@ class PythonMLSpec2 extends BasicSparkOperation with SpecFunctions with BasicMLS
       implicit val spark = runtime.sparkSession
       mockServer
       ShellCommand.exec("rm -rf /tmp/william/tmp/jack2")
-      val sq = createSSEL(spark, "")
+      var sq = createSSEL(spark, "")
       //train
       ScriptSQLExec.parse(ScriptCode._j2, sq)
 
@@ -180,6 +180,8 @@ class PythonMLSpec2 extends BasicSparkOperation with SpecFunctions with BasicMLS
       assert(res.length == 1)
       assert(res.head.getAs[String](0).contains("jack"))
 
+//      sq = createSSEL(spark, "")
+//      ScriptSQLExec.parse(ScriptCode._j2_PREDICT, sq)
     }
   }
 

@@ -151,7 +151,8 @@
             
     * [如何执行初始化脚本](application/README.md)            
         
-    * [管理多个MLSQL实例](cluster/README.md)        
+    * [管理多个MLSQL实例](cluster/README.md)
+    * [常见问题集锦](qa/README.md)        
         
 
 * 开发者指南
@@ -159,7 +160,9 @@
     * [如何参与开发]()
     * [开发者列表]() 
 
-* MLSQL实战            
+* MLSQL实战 
+    * [产品和运营如何利用MLSQL完成excel处理](action/mlsql-excel.md) 
+           
          
     
            

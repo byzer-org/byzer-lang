@@ -19,9 +19,8 @@
 package streaming.dsl
 
 import java.util.UUID
-import java.util.concurrent.TimeUnit
 
-import org.apache.spark.sql.streaming.{DataStreamWriter, StreamingQuery, Trigger}
+import org.apache.spark.sql.streaming.StreamingQuery
 import org.apache.spark.sql.{DataFrame, DataFrameWriter, Row, SaveMode}
 import streaming.core.datasource.{DataSinkConfig, DataSourceRegistry}
 import streaming.core.stream.MLSQLStreamManager
@@ -44,7 +43,6 @@ class SaveAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
 
     var oldDF: DataFrame = null
     var mode = SaveMode.ErrorIfExists
-    var final_path = ""
     var format = ""
     var option = Map[String, String]()
     var tableName = ""
@@ -65,17 +63,7 @@ class SaveAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
 
 
         case s: PathContext =>
-          path = cleanStr(s.getText)
-          format match {
-            case "hive" | "kafka8" | "kafka9" | "hbase" | "redis" | "es" | "jdbc" =>
-              final_path = cleanStr(s.getText)
-            case "parquet" | "json" | "csv" | "orc" =>
-              final_path = withPathPrefix(scriptSQLExecListener.pathPrefix(owner), cleanStr(s.getText))
-            case _ =>
-              final_path = cleanStr(s.getText)
-          }
-
-          final_path = TemplateMerge.merge(final_path, scriptSQLExecListener.env().toMap)
+          path = TemplateMerge.merge(cleanStr(s.getText), scriptSQLExecListener.env().toMap)
 
         case s: TableNameContext =>
           tableName = evaluate(s.getText)
@@ -116,11 +104,39 @@ class SaveAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
     }
 
     var streamQuery: StreamingQuery = null
-    option = option ++ Map("_filePath_" -> TemplateMerge.merge(withPathPrefix(scriptSQLExecListener.pathPrefix(owner), cleanStr(path)), scriptSQLExecListener.env().toMap))
-    if (scriptSQLExecListener.env().contains("stream")) {
-      streamQuery = new StreamSaveAdaptor(scriptSQLExecListener, option, oldDF, final_path, tableName, format, mode, partitionByCol.toArray).parse
-    } else {
-      new BatchSaveAdaptor(scriptSQLExecListener, option, oldDF, final_path, tableName, format, mode, partitionByCol.toArray).parse
+
+    if (option.contains("fileNum")) {
+      oldDF = oldDF.repartition(option.getOrElse("fileNum", "").toString.toInt)
+    }
+    val writer = if (isStream) null else oldDF.write
+
+    val saveRes = DataSourceRegistry.fetch(format, option).map { datasource =>
+      val res = datasource.asInstanceOf[ {def save(writer: DataFrameWriter[Row], config: DataSinkConfig): Any}].save(
+        writer,
+        // here we should change final_path to path in future
+        DataSinkConfig(path, option ++ Map("partitionByCol" -> partitionByCol.mkString(",")),
+          mode, Option(oldDF)))
+      res
+    }.getOrElse {
+
+      if (isStream) {
+        throw new RuntimeException(s"save is not support with ${format}  in stream mode")
+      }
+      if (partitionByCol.size != 0) {
+        writer.partitionBy(partitionByCol: _*)
+      }
+
+      writer.mode(mode)
+
+      if (path == "-" || path.isEmpty) {
+        writer.format(option.getOrElse("implClass", format)).save()
+      } else {
+        writer.format(option.getOrElse("implClass", format)).save(resourceRealPath(context.execListener, owner, path))
+      }
+    }
+
+    if (isStream) {
+      streamQuery = saveRes.asInstanceOf[StreamingQuery]
     }
 
     job = StreamingproJobManager.getJobInfo(context.groupId)
@@ -136,141 +152,5 @@ class SaveAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
     val outputTable = spark.createDataset(Seq(job))
     outputTable.createOrReplaceTempView(tempTable)
     scriptSQLExecListener.setLastSelectTable(tempTable)
-  }
-}
-
-class BatchSaveAdaptor(val scriptSQLExecListener: ScriptSQLExecListener,
-                       var option: Map[String, String],
-                       var oldDF: DataFrame,
-                       var final_path: String,
-                       var tableName: String,
-                       var format: String,
-                       var mode: SaveMode,
-                       var partitionByCol: Array[String]
-                      ) {
-  def parse = {
-
-    if (option.contains("fileNum")) {
-      oldDF = oldDF.repartition(option.getOrElse("fileNum", "").toString.toInt)
-    }
-    var writer = oldDF.write.mode(mode).partitionBy(partitionByCol: _*)
-
-    DataSourceRegistry.fetch(format, option).map { datasource =>
-      datasource.asInstanceOf[ {def save(writer: DataFrameWriter[Row], config: DataSinkConfig): Unit}].save(
-        writer,
-        // here we should change final_path to path in future
-        DataSinkConfig(final_path, option ++ Map("partitionByCol" -> partitionByCol.mkString(",")),
-          mode, Option(oldDF)))
-    }.getOrElse {
-
-      if (final_path.contains(".")) {
-        val Array(_dbname, _dbtable) = final_path.split("\\.", 2)
-        ConnectMeta.presentThenCall(DBMappingKey(format, _dbname), options => {
-          final_path = _dbtable
-          writer.options(options)
-        })
-      }
-
-      writer = writer.format(format).mode(mode).partitionBy(partitionByCol: _*).options(option)
-
-      def getKafkaBrokers = {
-        "metadata.broker.list" -> option.getOrElse("metadata.broker.list", "kafka.bootstrap.servers")
-      }
-
-      format match {
-        case "hive" =>
-          writer.format(option.getOrElse("file_format", "parquet"))
-          writer.saveAsTable(final_path)
-
-        case "kafka8" | "kafka9" =>
-
-          writer.option("topics", final_path).
-            option(getKafkaBrokers._1, getKafkaBrokers._2).
-            format("com.hortonworks.spark.sql.kafka08").save()
-
-        case "kafka" =>
-          writer.option("topic", final_path).
-            option(getKafkaBrokers._1, getKafkaBrokers._2).format("kafka").save()
-
-        case "redis" =>
-          writer.option("outputTableName", final_path).format(
-            option.getOrElse("implClass", "org.apache.spark.sql.execution.datasources.redis")).save()
-
-        case "carbondata" =>
-          if (final_path.contains("\\.")) {
-            val Array(_dbname, _dbtable) = final_path.split("\\.", 2)
-            writer.option("tableName", _dbtable).option("dbName", _dbname)
-          } else {
-            writer.option("tableName", final_path)
-          }
-
-          writer.format(option.getOrElse("implClass", "org.apache.spark.sql.CarbonSource")).save()
-        case _ =>
-          if (final_path == "-" || final_path.isEmpty) {
-            writer.format(option.getOrElse("implClass", format)).save()
-          } else {
-            writer.format(option.getOrElse("implClass", format)).save(final_path)
-          }
-
-      }
-    }
-
-  }
-}
-
-class StreamSaveAdaptor(val scriptSQLExecListener: ScriptSQLExecListener,
-                        var option: Map[String, String],
-                        var oldDF: DataFrame,
-                        var final_path: String,
-                        var tableName: String,
-                        var format: String,
-                        var mode: SaveMode,
-                        var partitionByCol: Array[String]
-                       ) {
-  def parse = {
-    if (option.contains("fileNum")) {
-      oldDF = oldDF.repartition(option.getOrElse("fileNum", "").toString.toInt)
-    }
-
-    var writer: DataStreamWriter[Row] = oldDF.writeStream
-
-    if (final_path.contains(".")) {
-      val Array(_dbname, _dbtable) = final_path.split("\\.", 2)
-      ConnectMeta.presentThenCall(DBMappingKey(format, _dbname), options => {
-        final_path = _dbtable
-        writer.options(options)
-      })
-    }
-
-
-    require(option.contains("checkpointLocation"), "checkpointLocation is required")
-    require(option.contains("duration"), "duration is required")
-    require(option.contains("mode"), "mode is required")
-
-    format match {
-      case "jdbc" => writer.format("org.apache.spark.sql.execution.streaming.JDBCSinkProvider")
-      /*
-      Supports variable in path:
-        save append post_parquet
-        as parquet.`/post/details/hp_stat_date=${date.toString("yyyy-MM-dd")}`
-       */
-      case "newParquet" => writer.format("org.apache.spark.sql.execution.streaming.newfile")
-      case _ => writer.format(option.getOrElse("implClass", format))
-    }
-
-    writer = writer.outputMode(option("mode")).
-      partitionBy(partitionByCol: _*).
-      options((option - "mode" - "duration"))
-
-    val dbtable = if (option.contains("dbtable")) option("dbtable") else final_path
-
-    if (dbtable != null && dbtable != "-") {
-      writer.option("path", dbtable)
-    }
-    scriptSQLExecListener.env().get("streamName") match {
-      case Some(name) => writer.queryName(name)
-      case None =>
-    }
-    writer.trigger(Trigger.ProcessingTime(option("duration").toInt, TimeUnit.SECONDS)).start()
   }
 }

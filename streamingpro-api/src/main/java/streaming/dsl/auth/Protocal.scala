@@ -23,7 +23,32 @@ import streaming.dsl.auth.OperateType.OperateType
 /**
   * Created by allwefantasy on 11/9/2018.
   */
-case class MLSQLTable(db: Option[String], table: Option[String], operateType: OperateType, sourceType: Option[String], tableType: TableTypeMeta)
+case class MLSQLTable(
+                       db: Option[String],
+                       table: Option[String],
+                       columns: Option[Set[String]],
+                       operateType: OperateType,
+                       sourceType: Option[String],
+                       tableType: TableTypeMeta) {
+  def tableIdentifier: String = {
+    if (db.isDefined && table.isDefined) {
+      s"${db.get}.${table.get}"
+    } else if (!db.isDefined && table.isDefined) {
+      table.get
+    } else {
+      ""
+    }
+  }
+}
+
+object MLSQLTable {
+  def apply(db: Option[String],
+            table: Option[String],
+            operateType: OperateType,
+            sourceType: Option[String],
+            tableType: TableTypeMeta): MLSQLTable =
+    new MLSQLTable(db, table, None, operateType, sourceType, tableType)
+}
 
 case class MLSQLTableSet(tables: Seq[MLSQLTable])
 
@@ -46,6 +71,7 @@ object OperateType extends Enumeration {
   type OperateType = Value
   val SAVE = Value("save")
   val LOAD = Value("load")
+  val DIRECT_QUERY = Value("directQuery")
   val CREATE = Value("create")
   val DROP = Value("drop")
   val INSERT = Value("insert")
@@ -54,23 +80,31 @@ object OperateType extends Enumeration {
   val EMPTY = Value("empty")
 }
 
+
 object TableType {
   val HIVE = TableTypeMeta("hive", Set("hive"))
   val HBASE = TableTypeMeta("hbase", Set("hbase"))
-  val HDFS = TableTypeMeta("hdfs", Set("parquet", "json", "csv", "image", "text", "xml"))
-  val HTTP = TableTypeMeta("hdfs", Set("http"))
-  val JDBC = TableTypeMeta("jdbc", Set("jdbc"))
+  val HDFS = TableTypeMeta("hdfs", Set("parquet", "json", "csv", "image", "text", "xml", "excel"))
+  val HTTP = TableTypeMeta("http", Set("http"))
+  val JDBC = TableTypeMeta("jdbc", Set("jdbc", "streamJDBC"))
   val ES = TableTypeMeta("es", Set("es"))
+  val REDIS = TableTypeMeta("redis", Set("redis"))
+  val KAFKA = TableTypeMeta("kafka", Set("kafka", "kafka8", "kafka9"))
+  val SOCKET = TableTypeMeta("socket", Set("socket"))
   val MONGO = TableTypeMeta("mongo", Set("mongo"))
   val SOLR = TableTypeMeta("solr", Set("solr"))
-  val TEMP = TableTypeMeta("temp", Set("temp", "jsonStr", "script"))
+  val TEMP = TableTypeMeta("temp", Set("temp", "jsonStr", "script", "csvStr", "mockStream", "console"))
   val API = TableTypeMeta("api", Set("mlsqlAPI", "mlsqlConf"))
   val WEB = TableTypeMeta("web", Set("crawlersql"))
   val GRAMMAR = TableTypeMeta("grammar", Set("grammar"))
+  val SYSTEM = TableTypeMeta("system", Set("_mlsql_", "model", "modelList", "modelParams", "modelExample", "modelExplain"))
+  val UNKNOW = TableTypeMeta("unknow", Set("unknow"))
 
   def from(str: String) = {
-    List(HIVE, HBASE, HDFS, HTTP, JDBC, ES, MONGO, SOLR, TEMP, API, WEB, GRAMMAR).filter(f => f.includes.contains(str)).headOption
+    List(UNKNOW, KAFKA, SOCKET, REDIS, HIVE, HBASE, HDFS, HTTP, JDBC, ES, MONGO, SOLR, TEMP, API, WEB, GRAMMAR, SYSTEM).filter(f => f.includes.contains(str)).headOption
+  }
+
+  def toList = {
+    List(UNKNOW, KAFKA, SOCKET, REDIS, HIVE, HBASE, HDFS, HTTP, JDBC, ES, MONGO, SOLR, TEMP, API, WEB, GRAMMAR, SYSTEM).flatMap(f => f.includes.toSeq)
   }
 }
-
-

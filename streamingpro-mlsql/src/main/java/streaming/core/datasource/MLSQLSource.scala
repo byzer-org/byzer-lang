@@ -18,6 +18,7 @@
 
 package streaming.core.datasource
 
+import _root_.streaming.dsl.MLSQLExecuteContext
 import org.apache.spark.sql._
 
 /**
@@ -33,14 +34,25 @@ trait MLSQLDataSource {
 
   def shortFormat: String
 
+  def aliasFormat: String = {
+    shortFormat
+  }
+
 }
 
-trait MLSQLSource extends MLSQLDataSource {
+trait MLSQLSource extends MLSQLDataSource with MLSQLSourceInfo {
   def load(reader: DataFrameReader, config: DataSourceConfig): DataFrame
 }
 
+trait RewriteableSource {
+  def rewrite(df: DataFrame,
+              config: DataSourceConfig,
+              sourceInfo: Option[SourceInfo],
+              context: MLSQLExecuteContext): DataFrame
+}
+
 trait MLSQLSink extends MLSQLDataSource {
-  def save(writer: DataFrameWriter[Row], config: DataSinkConfig): Unit
+  def save(writer: DataFrameWriter[Row], config: DataSinkConfig): Any
 }
 
 trait MLSQLDirectSource extends MLSQLDataSource {
@@ -48,7 +60,7 @@ trait MLSQLDirectSource extends MLSQLDataSource {
 }
 
 trait MLSQLDirectSink extends MLSQLDataSource {
-  def save(writer: DataFrameWriter[Row], config: DataSinkConfig): Unit
+  def save(writer: DataFrameWriter[Row], config: DataSinkConfig): Any
 }
 
 case class SourceInfo(sourceType: String, db: String, table: String)

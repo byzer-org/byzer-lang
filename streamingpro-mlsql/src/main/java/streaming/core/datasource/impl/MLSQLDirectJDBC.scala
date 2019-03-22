@@ -11,7 +11,7 @@ import scala.collection.JavaConverters._
 /**
   * 2018-12-21 WilliamZhu(allwefantasy@gmail.com)
   */
-class MLSQLDirectJDBC extends MLSQLDirectSource with MLSQLDirectSink with MLSQLRegistry {
+class MLSQLDirectJDBC extends MLSQLDirectSource with MLSQLDirectSink with MLSQLSourceInfo with MLSQLRegistry {
 
   override def fullFormat: String = "jdbc"
 
@@ -47,5 +47,37 @@ class MLSQLDirectJDBC extends MLSQLDirectSource with MLSQLDirectSink with MLSQLR
     DataSourceRegistry.register(MLSQLDataSourceKey(fullFormat, MLSQLDirectDataSourceType), this)
     DataSourceRegistry.register(MLSQLDataSourceKey(shortFormat, MLSQLDirectDataSourceType), this)
   }
+
+  def sourceInfo(config: DataAuthConfig): SourceInfo = {
+    val Array(_dbname, _dbtable) = if (config.path.contains(dbSplitter)) {
+      config.path.split(toSplit, 2)
+    } else {
+      Array("", config.path)
+    }
+
+    val url = if (config.config.contains("url")) {
+      config.config.get("url").get
+    } else {
+      val format = config.config.getOrElse("implClass", fullFormat)
+
+      ConnectMeta.options(DBMappingKey(format, _dbname)) match {
+        case Some(item) => item("url")
+        case None => throw new RuntimeException(
+          s"""
+             |format: ${format}
+             |ref:${_dbname}
+             |However ref is not found,
+             |Have you  set the connect statement properly?
+           """.stripMargin)
+      }
+    }
+
+    val dataSourceType = url.split(":")(1)
+    val dbName = url.substring(url.lastIndexOf('/') + 1).takeWhile(_ != '?')
+    val si = SourceInfo(dataSourceType, dbName, "")
+    SourceTypeRegistry.register(dataSourceType, si)
+    si
+  }
+
 
 }

@@ -144,15 +144,13 @@ mlsql.slaves
 mlsql.master
 
 dev/docker/*.jar
-dev/docker/*.sh
 dev/create-release/*.tar.gz
 dev/create-release/mlsql-spark*
 dev/docker/lib/
 streamingpro-cluster/dev/mlsql-cluster-docker/*.jar
-streamingpro-cluster/dev/mlsql-cluster-docker/*.sh
-streamingpro-cluster/dev/mlsql-cluster-docker/*.yml
 streamingpro-cluster/dev/mlsql-cluster-docker/*.tar.gz
 dev/sync-doc.sh
 docs/gitbook/zh/_book/
 contri/streamingpro-automl/logs/
 /tmp
+streamingpro-mlsql/src/main/java/streaming/core/WilliamLocalSparkServiceApp.scala

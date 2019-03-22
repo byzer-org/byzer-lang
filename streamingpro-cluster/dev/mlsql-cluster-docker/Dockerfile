@@ -19,7 +19,9 @@ RUN mkdir -p /home/deploy/mlsql-cluster
 
 WORKDIR /home/deploy/mlsql-cluster
 
-ENV MLSQL_CLUSTER_JAR=streamingpro-cluster-1.1.7-SNAPSHOT.jar
+ARG MLSQL_CLUSTER_JAR
+ENV MLSQL_CLUSTER_JAR=${MLSQL_CLUSTER_JAR}
+
 ENV MLSQL_CLUSTER_CONFIG_FILE="application.docker.yml"
 ADD ${MLSQL_CLUSTER_JAR} /home/deploy/mlsql-cluster/
 ADD ${MLSQL_CLUSTER_CONFIG_FILE} /home/deploy/mlsql-cluster/

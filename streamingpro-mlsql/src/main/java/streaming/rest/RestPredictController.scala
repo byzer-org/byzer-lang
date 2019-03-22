@@ -59,7 +59,7 @@ class RestPredictController extends ApplicationController {
 
   def createContext = {
     val userDefineParams = params.toMap.filter(f => f._1.startsWith("context.")).map(f => (f._1.substring("context.".length), f._2)).toMap
-    ScriptSQLExec.setContext(new MLSQLExecuteContext(param("owner"), "", "", userDefineParams))
+    ScriptSQLExec.setContext(new MLSQLExecuteContext(null,param("owner"), "", "", userDefineParams))
   }
 
   def getSQL = {

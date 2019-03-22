@@ -20,6 +20,11 @@ package streaming.rest
 
 import java.lang.reflect.Modifier
 
+import _root_.streaming.common.JarUtil
+import _root_.streaming.core._
+import _root_.streaming.core.strategy.platform.{PlatformManager, SparkRuntime}
+import _root_.streaming.dsl.mmlib.algs.tf.cluster.{ClusterSpec, ClusterStatus, ExecutorInfo}
+import _root_.streaming.dsl.{MLSQLExecuteContext, ScriptSQLExec, ScriptSQLExecListener}
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import net.csdn.annotation.rest.{At, _}
@@ -28,15 +33,10 @@ import net.csdn.common.path.Url
 import net.csdn.modules.http.RestRequest.Method._
 import net.csdn.modules.http.{ApplicationController, ViewType}
 import net.csdn.modules.transport.HttpTransportService
-import org.apache.spark.SparkInstanceService
 import org.apache.spark.ps.cluster.Message
-import org.apache.spark.sql.{DataFrameWriter, Row, SaveMode, SparkSession}
+import org.apache.spark.sql._
+import org.apache.spark.{MLSQLConf, SparkInstanceService}
 import org.joda.time.format.ISODateTimeFormat
-import streaming.common.JarUtil
-import streaming.core._
-import streaming.core.strategy.platform.{PlatformManager, SparkRuntime}
-import streaming.dsl.mmlib.algs.tf.cluster.{ClusterSpec, ClusterStatus, ExecutorInfo}
-import streaming.dsl.{MLSQLExecuteContext, ScriptSQLExec, ScriptSQLExecListener}
 
 import scala.collection.JavaConversions._
 import scala.util.control.NonFatal
@@ -110,11 +110,13 @@ class RestController extends ApplicationController {
           try {
             val context = createScriptSQLExecListener(sparkSession, jobInfo.groupId)
             ScriptSQLExec.parse(param("sql"), context, paramAsBoolean("skipInclude", false), paramAsBoolean("skipAuth", true))
-            htp.get(new Url(param("callback")), Map("stat" -> s"""success"""))
+            outputResult = getScriptResult(context, sparkSession)
+            htp.post(new Url(param("callback")), Map("stat" -> s"""succeeded""", "res" -> outputResult))
           } catch {
             case e: Exception =>
               e.printStackTrace()
-              htp.get(new Url(param("callback")), Map("fail" -> s"""success"""))
+              val msg = if (paramAsBoolean("show_stack", false)) e.getStackTrace.map(f => f.toString).mkString("\n") else ""
+              htp.post(new Url(param("callback")), Map("stat" -> s"""failed""", "msg" -> (e.getMessage + "\n" + msg)))
           }
         })
       } else {
@@ -122,10 +124,7 @@ class RestController extends ApplicationController {
           val context = createScriptSQLExecListener(sparkSession, jobInfo.groupId)
           ScriptSQLExec.parse(param("sql"), context, paramAsBoolean("skipInclude", false), paramAsBoolean("skipAuth", true))
           if (!silence) {
-            outputResult = context.getLastSelectTable() match {
-              case Some(table) => "[" + sparkSession.sql(s"select * from $table limit " + paramAsInt("outputSize", 5000)).toJSON.collect().mkString(",") + "]"
-              case None => "[]"
-            }
+            outputResult = getScriptResult(context, sparkSession)
           }
         })
       }
@@ -139,6 +138,18 @@ class RestController extends ApplicationController {
     render(outputResult)
   }
 
+  private def getScriptResult(context: ScriptSQLExecListener, sparkSession: SparkSession): String = {
+    context.getLastSelectTable() match {
+      case Some(table) =>
+        val scriptJsonStringResult = limitOrNot {
+          sparkSession.sql(s"select * from $table limit " + paramAsInt("outputSize", 5000))
+        }.toJSON.collect().mkString(",")
+        "[" + scriptJsonStringResult + "]"
+      case None => "[]"
+    }
+  }
+
+
   private def createScriptSQLExecListener(sparkSession: SparkSession, groupId: String) = {
 
     val allPathPrefix = fromJson(param("allPathPrefix", "{}"), classOf[Map[String, String]])
@@ -146,7 +157,7 @@ class RestController extends ApplicationController {
     val context = new ScriptSQLExecListener(sparkSession, defaultPathPrefix, allPathPrefix)
     val ownerOption = if (params.containsKey("owner")) Some(param("owner")) else None
     val userDefineParams = params.toMap.filter(f => f._1.startsWith("context.")).map(f => (f._1.substring("context.".length), f._2)).toMap
-    ScriptSQLExec.setContext(new MLSQLExecuteContext(param("owner"), context.pathPrefix(None), groupId, userDefineParams))
+    ScriptSQLExec.setContext(new MLSQLExecuteContext(context, param("owner"), context.pathPrefix(None), groupId, userDefineParams))
     context.addEnv("HOME", context.pathPrefix(None))
     context.addEnv("OWNER", ownerOption.getOrElse("anonymous"))
     context
@@ -217,7 +228,10 @@ class RestController extends ApplicationController {
     paramAsBoolean("async", false).toString match {
       case "true" if hasParam("callback") =>
         StreamingproJobManager.run(sparkSession, jobInfo, () => {
-          val dfWriter = sparkSession.sql(param("sql")).write.mode(SaveMode.Overwrite)
+          val dfWriter = limitOrNot(
+            sparkSession.sql(param("sql"))
+          ).write
+            .mode(SaveMode.Overwrite)
           _save(dfWriter)
           val htp = findService(classOf[HttpTransportService])
           import scala.collection.JavaConversions._
@@ -227,7 +241,10 @@ class RestController extends ApplicationController {
 
       case "false" if param("resultType", "") == "file" =>
         StreamingproJobManager.run(sparkSession, jobInfo, () => {
-          val dfWriter = sparkSession.sql(param("sql")).write.mode(SaveMode.Overwrite)
+          val dfWriter = limitOrNot(
+            sparkSession.sql(param("sql"))
+          ).write
+            .mode(SaveMode.Overwrite)
           _save(dfWriter)
           render(s"""/download?fileType=raw&file_suffix=${param("format", "csv")}&paths=$path""")
         })
@@ -236,7 +253,11 @@ class RestController extends ApplicationController {
         StreamingproJobManager.run(sparkSession, jobInfo, () => {
           var res = ""
           try {
-            res = sparkSession.sql(param("sql")).toJSON.collect().mkString(",")
+            res = limitOrNot {
+              sparkSession.sql(param("sql"))
+            }.toJSON
+              .collect()
+              .mkString(",")
           } catch {
             case e: Exception =>
               e.printStackTrace()
@@ -560,6 +581,44 @@ class RestController extends ApplicationController {
       val interceptor = Class.forName(jparams("streaming.rest.intercept.clzz").toString).newInstance()
       interceptor.asInstanceOf[RestInterceptor].before(request = request.httpServletRequest(), response = restResponse.httpServletResponse())
     }
+  }
+
+  /**
+   * | enable limit | global | maxResultSize | condition                       | result           |
+   * | ------------ | ------ | ------------- | ------------------------------- | ---------------- |
+   * | true         | -1     | -1            | N/A                             | defualt = 1000   |
+   * | true         | -1     | Int           | N/A                             | ${maxResultSize} |
+   * | true         | Int    | -1            | Or ${maxResultSize} > ${global} | ${global}        |
+   * | true         | Int    | Int           | AND ${maxResultSize} < ${global}| ${maxResultSize} |
+   *
+   * when we enable result size limitation, the size of result should <= ${maxSize} <= ${global}
+   *
+   * @param ds
+   * @param maxSize
+   * @tparam T
+   * @return
+   */
+  private def limitOrNot[T](ds: Dataset[T], maxSize: Int = paramAsInt("maxResultSize", -1)): Dataset[T] = {
+    var result = ds
+    val globalLimit = ds.sparkSession.sparkContext.getConf.getInt(
+      MLSQLConf.RESTFUL_API_MAX_RESULT_SIZE.key, -1
+    )
+    if (ds.sparkSession.sparkContext.getConf.getBoolean(MLSQLConf.ENABLE_MAX_RESULT_SIZE.key, false)) {
+      if (globalLimit == -1) {
+        if (maxSize == -1) {
+          result = ds.limit(1000)
+        } else {
+          result = ds.limit(maxSize)
+        }
+      } else {
+        if (maxSize == -1 || maxSize > globalLimit) {
+          result = ds.limit(globalLimit)
+        } else {
+          result = ds.limit(maxSize)
+        }
+      }
+    }
+    result
   }
 
   // end --------------------------------------------------------
