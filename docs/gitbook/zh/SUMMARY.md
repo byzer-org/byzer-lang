@@ -22,7 +22,7 @@
 ## TABLE OF CONTENTS
 
 * 概要
-    * [MSLQL简介](getting_started/README.md)
+    * [MSLQL简介](getting_started/READEME.md)
         * [MSLQL-Engine](getting_started/mlsql-engine.md)
         * [MLSQL-Cluster](getting_started/mlsql-cluster.md)
         * [MLSQL-Console](getting_started/mlsql-console.md)
@@ -30,10 +30,11 @@
 * 用户指南
     * [编译&运行&部署](installation/README.md)
         * [自助编译](installation/compile.md)
-        * [使用Docker](installation/docker.md)   
+        * [一件体验MLSQL套件](installation/docker.md)   
         * [如何运行](installation/run.md)
         * [启动参数说明](installation/startup-configuration.md)
-        * [使用docker快速体验](installation/docker-fast.md)
+        * [使用docker快速体验MLSQL-Engine](installation/docker-fast.md)
+        * [MLSQL IDE开发环境配置](installation/ide.md)
         
     * [数据源](datasource/README.md)      
         * [JDBC](datasource/jdbc.md)
@@ -141,6 +142,7 @@
         * [基于MLSQL爬虫系统的设计]()
     
     * [保障数据安全](security/README.md)
+        * [MLSQL 编译时权限控制](security/compile-auth.md)
         * [MLSQL统一授权体系设计原理](security/design.md)
         * [如何开发自定义授权规则](security/build.md)
         * [如何管理connect账号和密码](security/user_password.md)
@@ -152,11 +154,14 @@
     * [如何执行初始化脚本](application/README.md)            
         
     * [管理多个MLSQL实例](cluster/README.md)
+        * [MLSQL Cluster 路由策略](cluster/route.md)    
+    
     * [常见问题集锦](qa/README.md)        
         
 
 * 开发者指南
-    * [MLSQL-ET开发指南](develop/et.md)   
+    * [MLSQL-ET开发指南](develop/et.md) 
+    * [MLSQL数据源开发指南](develop/datasource.md)      
     * [如何参与开发]()
     * [开发者列表]() 
 
