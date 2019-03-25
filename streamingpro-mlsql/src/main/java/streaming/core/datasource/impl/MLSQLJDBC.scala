@@ -142,7 +142,24 @@ class MLSQLJDBC(override val uid: String) extends MLSQLSource with MLSQLSink wit
             if (!HDFSOperator.fileExists(finalPath + "/data") || isExpire) {
               table.write.mode(SaveMode.Overwrite).save(finalPath + "/data")
             }
-            newTable = sparkSession.read.parquet(finalPath + "/data")
+            try {
+              sparkSession.read.parquet(finalPath + "/data")
+            } catch {
+              case e: Exception =>
+                logInfo(format_exception(e))
+                table.write.mode(SaveMode.Overwrite).save(finalPath + "/data")
+            }
+
+            try {
+              newTable = sparkSession.read.parquet(finalPath + "/data")
+            } catch {
+              case e: Exception =>
+                logWarning(format(s"we try to cache table ${finalPath}, but it fails:"))
+                logInfo(format_exception(e))
+                newTable = table
+            }
+
+
           }
         } finally {
           logInfo(format(s"${finalPath} is locked by other service, wait and then use"))
