@@ -51,7 +51,20 @@ class BasicCondaEnvManager(options: Map[String, String]) extends Logging {
              |Ensure Conda is installed as per the instructions
              |at https://conda.io/docs/user-guide/install/index.html. You can
              |also configure MLSQL to look for a specific Conda executable
-             |by setting the MLFLOW_CONDA_HOME environment variable to the path of the Conda
+             |by setting the MLFLOW_CONDA_HOME environment variable in where clause of  train/run statement to the path of the Conda
+             |or configure it in environment.
+             |
+             |Here are how we get the conda home:
+             |
+             |def getCondaBinExecutable(executableName: String) = {
+             |    val condaHome = options.get(BasicCondaEnvManager.condaHomeKey) match {
+             |      case Some(home) => home
+             |      case None => System.getenv(BasicCondaEnvManager.condaHomeKey)
+             |    }
+             |    if (condaHome != null) {
+             |      s"$${condaHome}/bin/$${executableName}"
+             |    } else executableName
+             |  }
         """.stripMargin)
     }
     condaPath

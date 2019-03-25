@@ -65,6 +65,10 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
     sessionManager.closeSession(SessionIdentifier(owner))
   }
 
+  def getMLSQLSession(owner: String) = {
+    sessionManager.getSession(SessionIdentifier(owner))
+  }
+
   def operator = {
     new SparkRuntimeOperator(sparkSession)
   }
