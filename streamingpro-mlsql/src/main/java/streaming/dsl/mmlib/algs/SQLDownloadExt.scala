@@ -30,6 +30,7 @@ import streaming.common.HDFSOperator
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
+import streaming.log.{Logging, WowLog}
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -37,7 +38,7 @@ import scala.collection.mutable.ArrayBuffer
   * 2019-02-18 WilliamZhu(allwefantasy@gmail.com)
   * run command DownloadExt.`` where from="" and to=""
   */
-class SQLDownloadExt(override val uid: String) extends SQLAlg with WowParams {
+class SQLDownloadExt(override val uid: String) extends SQLAlg with Logging with WowLog with WowParams {
 
 
   def evaluate(value: String) = {
@@ -85,7 +86,12 @@ class SQLDownloadExt(override val uid: String) extends SQLAlg with WowParams {
         $(from)
     }
 
-    val auth_secret = context.userDefinedParam("__auth_secret__")
+    val auth_secret = context.userDefinedParam.get("__auth_secret__") match {
+      case Some(as) => as
+      case None =>
+        logWarning(format(s"DownloadExt  will visit ${fromUrl} file server without auth"))
+        ""
+    }
 
     def urlencode(name: String) = {
       URLEncoder.encode(name, "utf-8")
