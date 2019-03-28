@@ -44,6 +44,7 @@ object LocalSparkServiceApp {
       "-spark.serializer", "org.apache.spark.serializer.KryoSerializer",
       "-spark.sql.codegen.wholeStage", "true",
       "-spark.kryoserializer.buffer.max", "2000m",
+//      "-spark.mlsql.enable.runtime.select.auth", "true",
       "-streaming.udf.clzznames", "streaming.crawler.udf.Functions",
       "-streaming.driver.port", "9003",
       "-spark.files.maxPartitionBytes", "10485760",

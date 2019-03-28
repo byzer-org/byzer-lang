@@ -220,7 +220,7 @@ class GrammarProcessListener(scriptSQLExecListener: ScriptSQLExecListener) exten
   }
 }
 
-class AuthProcessListener(val listener: ScriptSQLExecListener) extends BaseParseListenerextends {
+class AuthProcessListener(val listener: ScriptSQLExecListener) extends BaseParseListenerextends with Logging {
 
   val ENABLE_RUNTIME_SELECT_AUTH = listener.sparkSession
     .sparkContext
@@ -248,9 +248,10 @@ class AuthProcessListener(val listener: ScriptSQLExecListener) extends BaseParse
       case "load" =>
         new LoadAuth(this).auth(ctx)
 
-      case "select" if !ENABLE_RUNTIME_SELECT_AUTH =>
-        new SelectAuth(this).auth(ctx)
-
+      case "select" =>
+        if (!ENABLE_RUNTIME_SELECT_AUTH) {
+          new SelectAuth(this).auth(ctx)
+        }
       case "save" =>
         new SaveAuth(this).auth(ctx)
 
@@ -272,6 +273,9 @@ class AuthProcessListener(val listener: ScriptSQLExecListener) extends BaseParse
       case "train" | "run" =>
 
       case "register" =>
+
+      case _ =>
+        logInfo(s"receive unknown grammar: [ ${ctx.getChild(0).getText.toLowerCase()} ].")
 
     }
   }
