@@ -382,14 +382,6 @@ object Functions {
     })
   }
 
-  def saveImage(uDFRegistration: UDFRegistration) = {
-    uDFRegistration.register("saveImage", (baseDir: String, fileName: String, buffer: Array[Byte]) => {
-      import streaming.common.HDFSOperator
-      HDFSOperator.saveBytesFile(baseDir, fileName, buffer)
-      baseDir + "/" + fileName
-    })
-  }
-
   def ngram(uDFRegistration: UDFRegistration) = {
     uDFRegistration.register("ngram", (words: Seq[String], n: Int) => {
       words.iterator.sliding(n).withPartial(false).map(_.mkString(" ")).toSeq
