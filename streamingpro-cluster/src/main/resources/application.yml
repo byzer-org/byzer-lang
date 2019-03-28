@@ -8,6 +8,7 @@ production:
       port: 3306
       database: streamingpro_cluster
       username: root
+      initialSize: 3
       password: mlsql
       disable: false
     mongodb:
