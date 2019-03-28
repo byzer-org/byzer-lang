@@ -42,7 +42,7 @@ class AllBackendsStrategy(tags: String) extends BackendStrategy {
   }
 }
 
-class ResourceAwareStrategy(tags: String) extends BackendStrategy {
+class JobNumAwareStrategy(tags: String) extends BackendStrategy {
   override def invoke(backends: Seq[BackendCache]): Option[Seq[BackendCache]] = {
     val tagSet = tags.split(",").toSet
     var nonActiveBackend = BackendService.nonActiveBackend
@@ -63,7 +63,7 @@ class ResourceAwareStrategy(tags: String) extends BackendStrategy {
   }
 }
 
-class JobNumAwareStrategy(tags: String) extends BackendStrategy with Logging {
+class ResourceAwareStrategy(tags: String) extends BackendStrategy with Logging {
   override def invoke(backends: Seq[BackendCache]): Option[Seq[BackendCache]] = {
 
     val tagSet = tags.split(",").toSet
