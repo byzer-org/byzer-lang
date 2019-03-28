@@ -9,6 +9,10 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
+    <properties>
+        <fastjson.version>1.2.7</fastjson.version>
+        <jedis.version>2.9.0</jedis.version>
+    </properties>
     <artifactId>streamingpro-flink</artifactId>
     <version>1.1.0-${flink.version}</version>
 
@@ -40,8 +44,20 @@
     </dependency>
 
     <dependency>
+        <groupId>com.alibaba</groupId>
+        <artifactId>fastjson</artifactId>
+        <version>${fastjson.version}</version>
+    </dependency>
+
+    <dependency>
+        <groupId>redis.clients</groupId>
+        <artifactId>jedis</artifactId>
+        <version>${jedis.version}</version>
+    </dependency>
+
+    <dependency>
         <groupId>org.apache.flink</groupId>
-        <artifactId>flink-connector-kafka-0.8_${scala.binary.version}</artifactId>
+        <artifactId>flink-connector-kafka_${scala.binary.version}</artifactId>
         <version>${flink.version}</version>
     </dependency>
 
@@ -91,7 +107,7 @@
                         <configuration>
                             <filters>
                                 <filter>
-                                    <artifact>*:*</artifact>
+                                   <!-- <artifact>*:*</artifact>-->
                                     <excludes>
                                         <exclude>META-INF/*.SF</exclude>
                                         <exclude>META-INF/*.DSA</exclude>
@@ -139,9 +155,9 @@
                             <execution>
                                 <id>make-assembly</id> <!-- this is used for inheritance merges -->
                                 <phase>package</phase> <!-- bind to the packaging phase -->
-                                <goals>
-                                    <goal>single</goal>
-                                </goals>
+                                <!-- <goals>
+                                     <goal>single</goal>
+                                 </goals>-->
                             </execution>
                         </executions>
                     </plugin>
@@ -152,19 +168,26 @@
     <build>
         <plugins>
             <plugin>
-                <groupId>org.scalatest</groupId>
-                <artifactId>scalatest-maven-plugin</artifactId>
-                <version>1.0</version>
-                <executions>
-                    <execution>
-                        <id>test</id>
-                        <goals>
-                            <goal>test</goal>
-                        </goals>
-                    </execution>
-                </executions>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.3</version>
                 <configuration>
-                    <argLine>-XX:MaxPermSize=128m</argLine>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <configuration>
+                    <descriptorRefs>
+                        <descriptorRef>jar-with-dependencies</descriptorRef>
+                    </descriptorRefs>
+                    <archive>
+                        <manifest>
+                            <!--<mainClass>cn.jpush.helper.protobuff.Event2Redis</mainClass>-->
+                            <addClasspath>true</addClasspath>
+                        </manifest>
+                    </archive>
                 </configuration>
             </plugin>
         </plugins>

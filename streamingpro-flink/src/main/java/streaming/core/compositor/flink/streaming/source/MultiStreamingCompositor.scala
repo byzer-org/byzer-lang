@@ -20,11 +20,13 @@ package streaming.core.compositor.flink.streaming.source
 
 import java.util
 import java.util.Properties
-
+import org.apache.flink.api.scala._
+import org.apache.flink.table.api.scala._
 import org.apache.flink.api.common.typeinfo.TypeInformation
-import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer08
+import org.apache.flink.streaming.connectors.kafka.{FlinkKafkaConsumer}
 import org.apache.flink.streaming.util.serialization.SimpleStringSchema
 import org.apache.flink.table.api.TableEnvironment
+import org.apache.flink.table.functions.{ScalarFunction, TableFunction, UserDefinedFunction}
 import org.apache.log4j.Logger
 import serviceframework.dispatcher.{Compositor, Processor, Strategy}
 import streaming.core.compositor.flink.streaming.CompositorHelper
@@ -64,6 +66,23 @@ class MultiStreamingCompositor[T] extends Compositor[T] with CompositorHelper {
     val env = runtime.runtime
     val tableEnv = TableEnvironment.getTableEnvironment(env)
 
+    _configParams.map{ p =>
+      p.get("udfs") match {
+        case None => {}
+        case Some(value) => {
+          value.asInstanceOf[util.List[util.Map[Any, Any]]]
+            .map(udfMap => {
+              udfMap.get("functionType").toString match {
+                case "scalaFunction" => {
+                  val function = Class.forName(udfMap.get("className").toString).asInstanceOf[ScalarFunction]
+                  tableEnv.registerFunction(udfMap.get("name").toString, function)
+                }
+                case _ =>
+              }
+            })
+        }
+      }
+    }
     params.put("tableEnv",tableEnv)
 
     val kafkaListStream = _configParams.map { p =>
@@ -77,17 +96,19 @@ class MultiStreamingCompositor[T] extends Compositor[T] with CompositorHelper {
           val properties = new Properties()
           properties.setProperty("zookeeper.connect", zk)
           properties.setProperty("group.id", groupId)
+          properties.putAll(getKafkaParams(p))
 
           implicit val typeInfo = TypeInformation.of(classOf[String])
-          val kafkaStream = env.addSource(new FlinkKafkaConsumer08[String](topics, new SimpleStringSchema(), properties))
+          val kafkaStream = env.addSource(new FlinkKafkaConsumer[String](topics, new SimpleStringSchema(), properties))
 
-          tableEnv.registerDataStream[String](p("outputTable").toString, kafkaStream)
+          tableEnv.registerDataStream[String](p("outputTable").toString, kafkaStream, 'message)
           kafkaStream
         case "socket" =>
           val socketStream = env.socketTextStream(
-            p.getOrElse("host","localhost").toString,
-            p.getOrElse("port","9000").toString.toInt,
-            '\n')
+              p.getOrElse("host","localhost").toString,
+              p.getOrElse("port","9000").toString.toInt,
+          '\n')
+//          logger.info(s"sucess binding socket host: $p.getOrElse('host","localhost").toString" )
           tableEnv.registerDataStream[String](p("outputTable").toString, socketStream)
           socketStream
         case _ =>

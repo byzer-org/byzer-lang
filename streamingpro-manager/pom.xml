@@ -91,9 +91,9 @@
 
     <dependencies>
         <dependency>
-            <groupId>tech.msql</groupId>
+            <groupId>tech.mlsql</groupId>
             <artifactId>streamingpro-common</artifactId>
-            <version>${project.version}</version>
+            <version>1.2.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.scala-lang</groupId>
@@ -124,7 +124,7 @@
             <groupId>org.scalatest</groupId>
             <artifactId>scalatest_${scala.binary.version}</artifactId>
             <version>3.0.0</version>
-            <scope>test</scope>
+            <scope>provided</scope>
         </dependency>
 
     </dependencies>

@@ -56,7 +56,7 @@ class SQLCompositor[T] extends Compositor[T] with CompositorHelper {
     val _outputTableName = outputTableName.get
 
     val tableEnv = params.get("tableEnv").asInstanceOf[TableEnvironment]
-    val newTable = tableEnv.sql(_sql)
+    val newTable = tableEnv.sqlQuery(_sql)
     tableEnv.registerTable(_outputTableName, newTable)
 
     middleResult

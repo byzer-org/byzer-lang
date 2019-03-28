@@ -18,6 +18,7 @@
 
 package streaming.core
 
+import java.io.{FileInputStream, FileReader}
 import java.util.{Map => JMap}
 
 import org.apache.http.client.fluent.Request
@@ -51,6 +52,20 @@ object Dispatcher {
           .connectTimeout(30000)
           .socketTimeout(30000)
           .execute().returnContent().asString();
+      } else if (jobFilePath.startsWith("file://")) {
+        val reader = new FileReader(jobFilePath)
+        try {
+          val buffer = Array[Char](100)
+          var position = -1
+          var jobConfigStrBuilder = new StringBuilder("")
+          while ((position = reader.read(buffer)) != -1) {
+            val str = new String(buffer, 0, position)
+            jobConfigStrBuilder.append(str)
+          }
+          jobConfigStr = jobConfigStrBuilder.toString()
+        } finally {
+          reader.close()
+        }
       }
       else {
         jobConfigStr = HDFSOperator.readFile(jobFilePath)

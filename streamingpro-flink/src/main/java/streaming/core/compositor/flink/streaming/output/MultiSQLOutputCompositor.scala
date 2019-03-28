@@ -23,12 +23,19 @@ import java.util
 import org.apache.flink.table.api.TableEnvironment
 import org.apache.flink.table.api.scala.StreamTableEnvironment
 import org.apache.flink.table.sinks.{ConsoleTableSink, CsvTableSink}
+import org.apache.flink.types.Row
 import org.apache.log4j.Logger
+import redis.clients.jedis.{HostAndPort, JedisCluster}
 import serviceframework.dispatcher.{Compositor, Processor, Strategy}
 import streaming.core.compositor.flink.streaming.CompositorHelper
 import streaming.core.strategy.ParamsValidator
+import org.apache.flink.table.api.scala._
+import org.apache.flink.api.scala._
+import org.apache.flink.streaming.api.functions.sink.SinkFunction
+import streaming.utils.CollectionUtils
 
 import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 
 /**
   * Created by allwefantasy on 20/3/2017.
@@ -44,8 +51,11 @@ class MultiSQLOutputCompositor[T] extends Compositor[T] with CompositorHelper wi
   }
 
 
+
+
   override def result(alg: util.List[Processor[T]], ref: util.List[Strategy[T]], middleResult: util.List[T], params: util.Map[Any, Any]): util.List[T] = {
     val tableEnv = params.get("tableEnv").asInstanceOf[TableEnvironment]
+
     _configParams.foreach { config =>
 
       val name = config.getOrElse("name", "").toString
@@ -62,12 +72,15 @@ class MultiSQLOutputCompositor[T] extends Compositor[T] with CompositorHelper wi
 
 
       val ste = tableEnv.asInstanceOf[StreamTableEnvironment]
+
       format match {
         case "csv" | "com.databricks.spark.csv" =>
           val csvTableSink = new CsvTableSink(_resource)
           ste.scan(tableName).writeToSink(csvTableSink)
         case "console" | "print" =>
           ste.scan(tableName).writeToSink(new ConsoleTableSink(showNum))
+        case "redis" =>
+          writeToRedis(ste, tableName, _cfg)
         case _ =>
       }
     }
@@ -77,6 +90,61 @@ class MultiSQLOutputCompositor[T] extends Compositor[T] with CompositorHelper wi
 
   override def valid(params: util.Map[Any, Any]): (Boolean, String) = {
     (true, "")
+  }
+
+
+
+  def writeToRedis(ste: StreamTableEnvironment, tableName: String, _cfg: Map[String, String]) = {
+    val redisHosts = _cfg.get("hosts").get.split(",").map(str => {
+      val host = str.split(":")(0)
+      val port = str.split(":")(1).toInt
+      new HostAndPort(host, port)
+    }).toSet.asJava
+      val timeout = _cfg.getOrElse("timeout", 10000).toString.toInt
+
+         val columnNameToIndex = CollectionUtils.list2Map(ste.scan(tableName).getSchema.getFieldNames)
+         ste.toAppendStream[Row](ste.scan(tableName)).addSink(new SinkFunction[Row] {
+           private var jedisCluster :JedisCluster = null
+
+           override def invoke(row: Row, context: SinkFunction.Context[_]): Unit = {
+              if(jedisCluster == null) {
+                this.synchronized {
+                  if (jedisCluster == null) {
+                    jedisCluster = new JedisCluster(redisHosts, timeout)
+                  }
+                }
+              }
+             _cfg("operators").asInstanceOf[util.List[util.Map[Any, Any]]].foreach(operator => {
+               operator("type") match {
+                 case "incrBy" =>
+                   val key = operator("key").toString
+                   val incrementValue = operator("incrementValue").toString
+                   val expire = operator.getOrElse("expire", "").toString
+                   val keyAttr = row.getField(columnNameToIndex(key)).toString
+                   val increValue = row.getField(columnNameToIndex(incrementValue)).toString.toLong
+                   jedisCluster.incrBy(keyAttr, increValue)
+                   if(expire != "") {
+                     jedisCluster.expire(keyAttr, expire.toInt)
+                   }
+                 case "zincrBy" =>
+                   val key = operator("key").toString
+                   val score = _cfg("score")
+                   val value = _cfg("value")
+                   val expire = _cfg.getOrElse("expire", "").toString
+                   val keyAttr = row.getField(columnNameToIndex(key)).toString
+                   val scoreAttr = row.getField(columnNameToIndex(score)).toString.toLong
+                   val valueAttr = row.getField(columnNameToIndex(value)).toString
+                   jedisCluster.zincrby(keyAttr, scoreAttr, valueAttr)
+                   if(expire != "") {
+                     jedisCluster.expire(keyAttr, expire.toInt)
+                   }
+               }
+
+             })
+           }
+
+         })
+
   }
 }
 

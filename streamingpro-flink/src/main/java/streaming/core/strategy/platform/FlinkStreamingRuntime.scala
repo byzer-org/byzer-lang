@@ -21,6 +21,7 @@ package streaming.core.strategy.platform
 import java.util.concurrent.atomic.AtomicReference
 import java.util.{Map => JMap}
 
+import org.apache.flink.streaming.api.CheckpointingMode
 import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
 
 /**
@@ -34,7 +35,9 @@ class FlinkStreamingRuntime(_params: JMap[Any, Any]) extends StreamingRuntime wi
   val runtime = createRuntime
 
   def createRuntime = {
-    StreamExecutionEnvironment.getExecutionEnvironment
+    val environment = StreamExecutionEnvironment.getExecutionEnvironment
+    environment.enableCheckpointing(_params.getOrDefault("checkpoint_interval", 1000).toString.toLong, CheckpointingMode.EXACTLY_ONCE)
+    environment
   }
 
   override def startRuntime: StreamingRuntime = {

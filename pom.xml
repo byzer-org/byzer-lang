@@ -41,6 +41,7 @@
         <module>streamingpro-jython</module>
         <module>streamingpro-api</module>
         <module>streamingpro-cluster</module>
+        <module>streamingpro-flink</module>
 
         <module>external/streamingpro-hbase</module>
         <module>external/streamingpro-redis</module>
@@ -62,7 +63,7 @@
         <spark.bigversion>2.2</spark.bigversion>
 
 
-        <flink.version>1.4.2</flink.version>
+        <flink.version>1.7.1</flink.version>
         <guava.version>16.0</guava.version>
         <httpclient.version>4.5.3</httpclient.version>
 
@@ -71,7 +72,7 @@
     </properties>
 
     <repositories>
-        <repository>
+        <!--<repository>
             <id>aliyun</id>
             <name>Nexus Release Repository</name>
             <url>http://maven.aliyun.com/nexus/content/groups/public</url>
@@ -81,7 +82,7 @@
             <snapshots>
                 <enabled>true</enabled>
             </snapshots>
-        </repository>
+        </repository>-->
     </repositories>
 
     <profiles>

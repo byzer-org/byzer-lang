@@ -87,6 +87,8 @@ class PlatformManager {
 
     val params = config.get()
 
+    logger.info("start config: " + params.getParamsMap)
+
     val lastStreamingRuntimeInfo = if (reRun) {
       val tempRuntime = PlatformManager.getRuntime
       tempRuntime.getClass.getMethod("clearLastInstantiatedContext").invoke(null)
