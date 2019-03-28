@@ -18,11 +18,13 @@
 
 package streaming.common
 
-import java.io.{FileSystem => _, _}
+import java.io.{BufferedReader, ByteArrayOutputStream, InputStream, InputStreamReader}
+import java.io.File
 
+import org.apache.hadoop.fs.FileSystem
 import org.apache.commons.io.FileUtils
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs._
+import org.apache.hadoop.fs.{Path,FSDataInputStream,FileStatus,FSDataOutputStream}
 import org.apache.hadoop.io.IOUtils
 
 import scala.collection.mutable.ArrayBuffer

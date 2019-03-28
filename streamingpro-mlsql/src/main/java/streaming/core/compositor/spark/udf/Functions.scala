@@ -23,8 +23,7 @@ import java.util.UUID
 import breeze.linalg.{DenseVector => BDV, SparseVector => BSV, Vector => BV}
 import org.apache.spark.ml.linalg.{DenseVector, Matrices, Matrix, SparseVector, Vector, Vectors}
 import org.apache.spark.mllib.linalg.{Vectors => OldVectors}
-import org.apache.spark.sql.{Row, UDFRegistration}
-import org.apache.spark.sql.types.StructType
+import org.apache.spark.sql.UDFRegistration
 import streaming.common.UnicodeUtils
 
 import scala.collection.JavaConversions._
@@ -382,7 +381,6 @@ object Functions {
       Matrices.dense(a.size, vectors.head.size, values)
     })
   }
-
 
   def ngram(uDFRegistration: UDFRegistration) = {
     uDFRegistration.register("ngram", (words: Seq[String], n: Int) => {
