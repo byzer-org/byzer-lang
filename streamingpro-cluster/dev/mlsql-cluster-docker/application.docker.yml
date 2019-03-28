@@ -9,6 +9,7 @@ production:
       database: mlsql_cluster
       username: root
       password: mlsql
+      initialSize: 3
       disable: false
     mongodb:
       disable: true
