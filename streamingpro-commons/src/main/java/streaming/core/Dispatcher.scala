@@ -53,14 +53,20 @@ object Dispatcher {
           .socketTimeout(30000)
           .execute().returnContent().asString();
       } else if (jobFilePath.startsWith("file://")) {
-        val reader = new FileReader(jobFilePath)
+        val reader = new FileReader(jobFilePath.substring("file://".length))
         try {
           val buffer = Array[Char](100)
           var position = -1
           var jobConfigStrBuilder = new StringBuilder("")
-          while ((position = reader.read(buffer)) != -1) {
-            val str = new String(buffer, 0, position)
-            jobConfigStrBuilder.append(str)
+          var flag = true
+          while (flag) {
+            position = reader.read(buffer)
+            if(position == -1) {
+              flag = false
+            } else {
+              val str = new String(buffer, 0, position)
+              jobConfigStrBuilder.append(str)
+            }
           }
           jobConfigStr = jobConfigStrBuilder.toString()
         } finally {

@@ -68,13 +68,13 @@ class MultiStreamingCompositor[T] extends Compositor[T] with CompositorHelper {
 
     _configParams.map{ p =>
       p.get("udfs") match {
-        case None => {}
-        case Some(value) => {
+        case null => {}
+        case value => {
           value.asInstanceOf[util.List[util.Map[Any, Any]]]
             .map(udfMap => {
               udfMap.get("functionType").toString match {
                 case "scalaFunction" => {
-                  val function = Class.forName(udfMap.get("className").toString).asInstanceOf[ScalarFunction]
+                  val function = Class.forName(udfMap.get("className").toString).newInstance().asInstanceOf[ScalarFunction]
                   tableEnv.registerFunction(udfMap.get("name").toString, function)
                 }
                 case _ =>
@@ -109,7 +109,7 @@ class MultiStreamingCompositor[T] extends Compositor[T] with CompositorHelper {
               p.getOrElse("port","9000").toString.toInt,
           '\n')
 //          logger.info(s"sucess binding socket host: $p.getOrElse('host","localhost").toString" )
-          tableEnv.registerDataStream[String](p("outputTable").toString, socketStream)
+          tableEnv.registerDataStream[String](p("outputTable").toString, socketStream, 'message)
           socketStream
         case _ =>
       }
