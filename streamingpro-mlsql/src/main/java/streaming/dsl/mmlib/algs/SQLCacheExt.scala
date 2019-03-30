@@ -72,7 +72,7 @@ class SQLCacheExt(override val uid: String) extends SQLAlg with WowParams {
       |SQLCacheExt is used to cache/uncache table.
       |
       |```sql
-      |run table CacheExt.`` where execute="cache" and isEager="true";
+      |run table as CacheExt.`` where execute="cache" and isEager="true";
       |```
       |
       |If you execute the upper command, then table will be cached immediately, othersise only the second time
@@ -81,7 +81,7 @@ class SQLCacheExt(override val uid: String) extends SQLAlg with WowParams {
       |To release the table , do like this:
       |
       |```sql
-      |run table CacheExt.`` where execute="uncache";
+      |run table as CacheExt.`` where execute="uncache";
       |```
     """.stripMargin)
 
