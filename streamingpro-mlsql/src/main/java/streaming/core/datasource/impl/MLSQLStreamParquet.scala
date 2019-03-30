@@ -22,4 +22,9 @@ class MLSQLStreamParquet(override val uid: String) extends MLSQLBaseStreamSource
   override def fullFormat: String = "org.apache.spark.sql.execution.streaming.newfile"
 
   override def shortFormat: String = "streamParquet"
+
+  override def resolvePath(path: String): String = {
+    val context = ScriptSQLExec.contextGetOrForTest()
+    resourceRealPath(context.execListener, Option(context.owner), path)
+  }
 }

@@ -24,7 +24,7 @@ abstract class MLSQLBaseStreamSource extends MLSQLSource with MLSQLSink with MLS
     }
 
     val writer: DataStreamWriter[Row] = oldDF.writeStream
-    var path = config.path
+    var path = resolvePath(config.path)
 
     val Array(db, table) = parseRef(aliasFormat, path, (options: Map[String, String]) => {
       writer.options(options)
@@ -52,8 +52,15 @@ abstract class MLSQLBaseStreamSource extends MLSQLSource with MLSQLSink with MLS
     option -= "mode"
 
     val format = config.config.getOrElse("implClass", fullFormat)
+    val context = ScriptSQLExec.contextGetOrForTest()
 
-    writer.format(format).outputMode(mode).options(option)
+    //make sure the checkpointLocation is append PREFIX
+    def rewriteOption = {
+      val ckPath = option("checkpointLocation")
+      option ++ Map("checkpointLocation" -> resourceRealPath(context.execListener, Option(context.owner), ckPath))
+    }
+
+    writer.format(format).outputMode(mode).options(rewriteOption)
 
     val dbtable = if (option.contains("dbtable")) option("dbtable") else path
 
@@ -61,7 +68,7 @@ abstract class MLSQLBaseStreamSource extends MLSQLSource with MLSQLSink with MLS
       writer.option("path", dbtable)
     }
 
-    ScriptSQLExec.contextGetOrForTest().execListener.env().get("streamName") match {
+    context.execListener.env().get("streamName") match {
       case Some(name) => writer.queryName(name)
       case None =>
     }
@@ -72,6 +79,10 @@ abstract class MLSQLBaseStreamSource extends MLSQLSource with MLSQLSink with MLS
   override def register(): Unit = {
     DataSourceRegistry.register(MLSQLDataSourceKey(fullFormat, MLSQLSparkDataSourceType), this)
     DataSourceRegistry.register(MLSQLDataSourceKey(shortFormat, MLSQLSparkDataSourceType), this)
+  }
+
+  def resolvePath(path: String) = {
+    path
   }
 
   override def sourceInfo(config: DataAuthConfig): SourceInfo = {
