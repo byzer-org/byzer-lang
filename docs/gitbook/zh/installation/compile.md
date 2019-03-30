@@ -22,7 +22,7 @@ export MLSQL_SPARK_VERSION=2.4
 streamingpro-mlsql/target/streamingpro-mlsql-spark_2.4-1.2.0-SNAPSHOT.jar
 ```
 
-大概280多M。 接着手动创建一个发型包：
+大概280多M。 接着手动创建一个发行包：
 
 ```
 export VERSION=1.2.0-SNAPSHOT
@@ -103,7 +103,7 @@ target/mlsql-api-console-${VERSION}.jar
 
 3. 创建MySQL数据库,根据 `src/main/resources/db.sql `创建对应的库表。数据库名字为mlsql_console.
 
-4. 创建发型包
+4. 创建发行包
 
 ```
 export VERSION=1.2.0-SNAPSHOT

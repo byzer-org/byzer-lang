@@ -23,7 +23,7 @@
 
 * 概要
     * [MSLQL简介](getting_started/READEME.md)
-        * [MSLQL-Engine](getting_started/mlsql-engine.md)
+        * [MLSQL-Engine](getting_started/mlsql-engine.md)
         * [MLSQL-Cluster](getting_started/mlsql-cluster.md)
         * [MLSQL-Console](getting_started/mlsql-console.md)
 
