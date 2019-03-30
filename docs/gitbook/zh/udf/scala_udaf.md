@@ -54,7 +54,8 @@ select a,plusFun(a) as res from dataTable group by a as output;
 
 ```sql
 set plusFun='''
-class Test{
+class A {
+
     def apply(a:Double,b:Double)={
        a + b
     }
@@ -63,15 +64,13 @@ class Test{
        s"hello: ${a}"
     }
 }
-    
 ''';
 
 
 load script.`plusFun` as scriptTable;
-register ScriptUDF.`scriptTable` as plusFun;
+register ScriptUDF.`scriptTable` as plusFun where methodName="apply" and className="A";
 register ScriptUDF.`scriptTable` as helloFun options
-methodName="hello"
-and className="Test";
+methodName="hello"  and className="A";
 
 
 -- using echoFun in SQL.
