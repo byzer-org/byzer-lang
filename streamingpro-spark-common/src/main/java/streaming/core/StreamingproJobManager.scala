@@ -38,6 +38,7 @@ object StreamingproJobManager {
   def shutdown = {
     _executor.shutdownNow()
     _jobManager.shutdown
+    _jobManager = null
   }
 
   def init(spark: SparkSession, initialDelay: Long = 30, checkTimeInterval: Long = 5) = {
@@ -51,7 +52,10 @@ object StreamingproJobManager {
   }
 
   def initForTest(spark: SparkSession, initialDelay: Long = 30, checkTimeInterval: Long = 5) = {
-    _jobManager = new StreamingproJobManager(spark, initialDelay, checkTimeInterval)
+    if (_jobManager == null) {
+      logger.info(s"JobCanceller Timer  started with initialDelay=${initialDelay} checkTimeInterval=${checkTimeInterval}")
+      _jobManager = new StreamingproJobManager(spark, initialDelay, checkTimeInterval)
+    }
   }
 
   def run(session: SparkSession, job: StreamingproJobInfo, f: () => Unit): Unit = {
@@ -139,7 +143,11 @@ class StreamingproJobManager(spark: SparkSession, initialDelay: Long, checkTimeI
     logger.info("JobCanceller Timer cancel job group " + groupId)
     val job = groupIdToStringproJobInfo.get(groupId)
     if (job != null && job.jobType == StreamingproJobType.STREAM) {
-      spark.streams.get(job.groupId).stop()
+      spark.streams.active.filter(f => f.id.toString == job.groupId).map(f => f.runId.toString).headOption match {
+        case Some(_) => spark.streams.get(job.groupId).stop()
+        case None => logger.warn(s"the stream job: ${job.groupId}, name:${job.jobName} is not in spark.streams.")
+      }
+
     } else {
       spark.sparkContext.cancelJobGroup(groupId)
     }

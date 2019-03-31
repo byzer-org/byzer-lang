@@ -21,22 +21,28 @@ package streaming.test.stream
 import org.apache.spark.streaming.BasicSparkOperation
 import org.scalatest.BeforeAndAfterAll
 import streaming.common.shell.ShellCommand
+import streaming.core._
 import streaming.core.strategy.platform.SparkRuntime
-import streaming.core.{BasicMLSQLConfig, SpecFunctions, StreamingproJobManager, StreamingproJobType}
 import streaming.dsl.ScriptSQLExec
 import streaming.log.Logging
 
 class Stream3Spec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConfig with BeforeAndAfterAll with Logging {
 
+
+  def executeScript(script: String)(implicit runtime: SparkRuntime) = {
+    implicit val spark = runtime.sparkSession
+    val ssel = createSSEL
+    ScriptSQLExec.parse(script, ssel, true, true, false)
+  }
+
   "manager stream jobs" should "work fine " in {
-    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { implicit runtime: SparkRuntime =>
       //执行sql
       implicit val spark = runtime.sparkSession
       // we suppose that if KAFKA_HOME is configured ,then there must be a kafka server exists
-      ShellCommand.execCmd("rm -rf /tmp/cpl3")
+      ShellCommand.execCmd("rm -rf /tmp/william/tmp/cpl3")
 
-      val ssel = createSSELWithJob(spark, "streamExample2", "jack")
-      ScriptSQLExec.parse(
+      executeScript(
         s"""
            |-- the stream name, should be uniq.
            |set streamName="streamExample";
@@ -66,28 +72,40 @@ class Stream3Spec extends BasicSparkOperation with SpecFunctions with BasicMLSQL
            |options mode="Append"
            |and duration="1"
            |and checkpointLocation="/tmp/cpl3";
-         """.stripMargin, ssel)
-      Thread.sleep(1000 * 15)
-      StreamingproJobManager.removeJobManually("jack")
-      assume(spark.streams.active.size > 0)
+         """.stripMargin)
+      // we do not add job mannually since once the job started, then the system will automatically update
+      // job information.
+      //addStreamJob(spark, "streamExample", "")
+      Thread.sleep(1000 * 10)
+      assert(spark.streams.active.size > 0)
       val streamQuery = spark.streams.active.head
       val streamJob = StreamingproJobManager.getJobInfo.filter(f => f._2.jobType == StreamingproJobType.STREAM).head
-      spark.streams.active.foreach(f => f.stop())
-      assume(streamJob._2.jobName == "streamExample")
-      assume(streamJob._2.groupId == streamQuery.id.toString)
+      assert(streamJob._2.jobName == "streamExample")
+      assert(streamJob._2.groupId == streamQuery.id.toString)
+
+      // kill the job
+      executeScript(
+        """
+          |run command as Kill.`streamExample`;
+        """.stripMargin)
+      Thread.sleep(1000 * 5)
+      assert(spark.streams.active.size == 0)
 
     }
+    //clear all  info in StreamingproJobManager
+    StreamingproJobManager.shutdown
   }
 
   "streamParquet" should "should resolve the path " in {
-    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { implicit runtime: SparkRuntime =>
       //执行sql
       implicit val spark = runtime.sparkSession
       // we suppose that if KAFKA_HOME is configured ,then there must be a kafka server exists
-      ShellCommand.execCmd("rm -rf /tmp/cpl3")
+      ShellCommand.execCmd("rm -rf /tmp/william/tmp/cpl3")
+      ShellCommand.execCmd("rm -rf /tmp/william/tmp/steamP")
 
-      val ssel = createSSELWithJob(spark, "streamExample2", "jack")
-      ScriptSQLExec.parse(
+
+      executeScript(
         s"""
            |-- the stream name, should be uniq.
            |set streamName="streamExample";
@@ -117,12 +135,13 @@ class Stream3Spec extends BasicSparkOperation with SpecFunctions with BasicMLSQL
            |options mode="Append"
            |and duration="1"
            |and checkpointLocation="/tmp/cpl3";
-         """.stripMargin, ssel)
+         """.stripMargin)
       Thread.sleep(1000 * 15)
       spark.streams.active.foreach(f => f.stop())
       val count = spark.sql("select * from parquet.`/tmp/william/tmp/steamP`").count()
       assert(count > 0)
-      ShellCommand.execCmd("rm -rf /tmp/william/tmp/steamP")
+      
+      StreamingproJobManager.shutdown
 
     }
   }
