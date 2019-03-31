@@ -35,7 +35,7 @@ class StreamSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
       //执行sql
       implicit val spark = runtime.sparkSession
       // we suppose that if KAFKA_HOME is configured ,then there must be a kafka server exists
-      ShellCommand.execCmd("rm -rf /tmp/cpl3")
+      ShellCommand.execCmd("rm -rf /tmp/william/tmp/cpl3")
 
       new Thread(new Runnable {
         override def run(): Unit = {

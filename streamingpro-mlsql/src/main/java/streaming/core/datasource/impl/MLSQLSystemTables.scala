@@ -1,5 +1,6 @@
 package streaming.core.datasource.impl
 
+import org.apache.spark.sql.mlsql.session.MLSQLException
 import org.apache.spark.sql.{DataFrame, DataFrameReader}
 import streaming.common.ScalaEnumTool
 import streaming.core.StreamingproJobInfo
@@ -20,7 +21,10 @@ class MLSQLSystemTables extends MLSQLSource with MLSQLSourceInfo with MLSQLRegis
     import spark.implicits._
 
     val jobCollect = new MLSQLJobCollect(spark, owner)
-    config.path.split("/") match {
+
+    val pathSplitter = "/"
+
+    config.path.stripPrefix(pathSplitter).stripSuffix(pathSplitter).split(pathSplitter) match {
       case Array("datasources") => {
         spark.createDataset(DataSourceRegistry.allSourceNames.toSet.toSeq ++ Seq(
           "parquet", "csv", "jsonStr", "csvStr", "json", "text", "orc", "kafka", "kafka8", "kafka9", "crawlersql", "image",
@@ -60,6 +64,13 @@ class MLSQLSystemTables extends MLSQLSource with MLSQLSourceInfo with MLSQLRegis
         new MLSQLAPIExplain(spark).explain
       case Array("conf", "list") =>
         new MLSQLConfExplain(spark).explain
+      case _ => throw new MLSQLException(
+        s"""
+           |path [${config.path}] is not found. please check the doc website for more details:
+           |http://docs.mlsql.tech/zh
+           |or
+           |http://docs.mlsql.tech/en
+         """.stripMargin)
     }
 
   }

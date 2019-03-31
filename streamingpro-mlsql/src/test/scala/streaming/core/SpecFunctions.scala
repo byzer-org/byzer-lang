@@ -85,6 +85,22 @@ trait SpecFunctions {
     context
   }
 
+  def addStreamJob(spark: SparkSession, jobName: String, grouId: String) = {
+    StreamingproJobManager.initForTest(spark)
+
+    StreamingproJobManager.addJobManually(StreamingproJobInfo(
+      owner = "william", jobType = StreamingproJobType.STREAM, jobName = jobName, "", groupId = grouId, -1, -1
+    ))
+  }
+
+  def addBatchJob(spark: SparkSession, jobName: String, grouId: String) = {
+    StreamingproJobManager.initForTest(spark)
+
+    StreamingproJobManager.addJobManually(StreamingproJobInfo(
+      owner = "william", jobType = StreamingproJobType.SCRIPT, jobName = jobName, "", groupId = grouId, -1, -1
+    ))
+  }
+
   def dropTables(tables: Seq[String])(implicit spark: SparkSession) = {
     try {
       tables.foreach { table =>
