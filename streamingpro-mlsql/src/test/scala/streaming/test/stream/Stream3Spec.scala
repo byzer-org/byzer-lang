@@ -45,7 +45,7 @@ class Stream3Spec extends BasicSparkOperation with SpecFunctions with BasicMLSQL
       executeScript(
         s"""
            |-- the stream name, should be uniq.
-           |set streamName="streamExample";
+           |set streamName="streamExample1";
            |
            |set data='''
            |{"key":"yes","value":"a,b,c","topic":"test","partition":0,"offset":0,"timestamp":"2008-01-24 18:01:01.001","timestampType":0}
@@ -80,13 +80,13 @@ class Stream3Spec extends BasicSparkOperation with SpecFunctions with BasicMLSQL
       assert(spark.streams.active.size > 0)
       val streamQuery = spark.streams.active.head
       val streamJob = StreamingproJobManager.getJobInfo.filter(f => f._2.jobType == StreamingproJobType.STREAM).head
-      assert(streamJob._2.jobName == "streamExample")
+      assert(streamJob._2.jobName == "streamExample1")
       assert(streamJob._2.groupId == streamQuery.id.toString)
 
       // kill the job
       executeScript(
         """
-          |run command as Kill.`streamExample`;
+          |run command as Kill.`streamExample1`;
         """.stripMargin)
       Thread.sleep(1000 * 5)
       assert(spark.streams.active.size == 0)
@@ -140,7 +140,7 @@ class Stream3Spec extends BasicSparkOperation with SpecFunctions with BasicMLSQL
       spark.streams.active.foreach(f => f.stop())
       val count = spark.sql("select * from parquet.`/tmp/william/tmp/steamP`").count()
       assert(count > 0)
-      
+
       StreamingproJobManager.shutdown
 
     }
