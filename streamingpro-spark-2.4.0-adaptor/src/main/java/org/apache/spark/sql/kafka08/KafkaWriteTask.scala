@@ -30,9 +30,9 @@ import org.apache.spark.sql.types.{BinaryType, StringType}
   * Created by allwefantasy on 3/7/2017.
   */
 class KafkaWriteTask(
-                                       producerConfiguration: ju.Map[String, Object],
-                                       inputSchema: Seq[Attribute],
-                                       topic: Option[String]) {
+                      producerConfiguration: ju.Map[String, Object],
+                      inputSchema: Seq[Attribute],
+                      topic: Option[String]) {
   // used to synchronize with Kafka callbacks
   @volatile private var failedWrite: Exception = null
   private val projection = createProjection
@@ -45,6 +45,7 @@ class KafkaWriteTask(
     val p = new Properties()
     p.putAll(producerConfiguration)
     producer = new Producer[Array[Byte], Array[Byte]](new ProducerConfig(p))
+
     while (iterator.hasNext && failedWrite == null) {
       val currentRow = iterator.next()
       val projectedRow = projection(currentRow)
