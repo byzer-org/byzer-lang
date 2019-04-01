@@ -17,6 +17,10 @@ object MLSQLStreamManager extends Logging with WowLog {
     store.put(job.groupId, job)
   }
 
+  def removeStore(groupId: String) = {
+    store.remove(groupId)
+  }
+
   def getJob(groupId: String) = {
     store.asScala.get(groupId)
   }
@@ -80,9 +84,11 @@ class MLSQLStreamingQueryListener extends StreamingQueryListener with Logging wi
   }
 
   override def onQueryTerminated(event: StreamingQueryListener.QueryTerminatedEvent): Unit = {
+    MLSQLStreamManager.removeStore(event.id.toString)
     StreamingproJobManager.getJobInfo.filter(f => f._2.jobType == StreamingproJobType.STREAM
       && f._2.groupId == event.id.toString).headOption match {
-      case Some(job) => StreamingproJobManager.removeJobManually(job._1)
+      case Some(job) =>
+        StreamingproJobManager.removeJobManually(job._1)
       case None =>
     }
   }
