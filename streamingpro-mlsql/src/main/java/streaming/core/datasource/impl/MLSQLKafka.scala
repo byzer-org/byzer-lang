@@ -1,6 +1,7 @@
 package streaming.core.datasource.impl
 
 import org.apache.spark.ml.param.Param
+import org.apache.spark.sql.mlsql.session.MLSQLException
 import org.apache.spark.sql.{DataFrame, DataFrameReader, DataFrameWriter, Row}
 import streaming.core.datasource.{DataSinkConfig, DataSourceConfig, MLSQLBaseStreamSource}
 import streaming.dsl.ScriptSQLExec
@@ -38,13 +39,14 @@ class MLSQLKafka(override val uid: String) extends MLSQLBaseStreamSource with Wo
 
   override def save(batchWriter: DataFrameWriter[Row], config: DataSinkConfig): Any = {
 
-    if (isStream) {
-      return super.save(batchWriter, config)
-
+    def getUrl = {
+      if (shortFormat == "kafka8" || shortFormat == "kafka9") {
+        "metadata.broker.list"
+      } else "kafka.bootstrap.servers"
     }
 
     def getKafkaBrokers = {
-      "metadata.broker.list" -> config.config.getOrElse("metadata.broker.list", "kafka.bootstrap.servers")
+      getUrl -> config.config.getOrElse("metadata.broker.list", config.config.get("kafka.bootstrap.servers").get)
     }
 
     def getWriteTopic = {
@@ -53,7 +55,18 @@ class MLSQLKafka(override val uid: String) extends MLSQLBaseStreamSource with Wo
       } else "topic"
     }
 
-    batchWriter.options(config.config).option(getWriteTopic, config.path).
+    if (getKafkaBrokers._2 == null || getKafkaBrokers._2.isEmpty) {
+      throw new MLSQLException("metadata.broker.list or kafka.bootstrap.servers are required")
+    }
+    if (isStream) {
+      return super.save(batchWriter, config.copy(config = ((config.config - "metadata.broker.list" - "kafka.bootstrap.servers") ++ Map(
+        getWriteTopic -> config.path,
+        getKafkaBrokers._1 -> getKafkaBrokers._2
+      ))))
+
+    }
+
+    batchWriter.options((config.config - "metadata.broker.list" - "kafka.bootstrap.servers")).option(getWriteTopic, config.path).
       option(getKafkaBrokers._1, getKafkaBrokers._2).format(fullFormat).save()
 
   }

@@ -26,11 +26,11 @@ import streaming.core.{BasicMLSQLConfig, SpecFunctions}
 import streaming.dsl.ScriptSQLExec
 import streaming.log.Logging
 
-class StreamSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConfig with BeforeAndAfterAll with Logging {
+class StreamKafka1_xSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConfig with BeforeAndAfterAll with Logging {
 
   val topic_name = "test_cool"
 
-  "kafka8/kafka9" should "kafka work fine on old version" in {
+  "kafka" should "kafka work fine on old version" in {
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
       implicit val spark = runtime.sparkSession
@@ -47,7 +47,7 @@ class StreamSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
                 s"""
                    |select "a" as value as tmp_table1;
                    |save append tmp_table1
-                   |as kafka8.`${topic_name}` where metadata.broker.list="127.0.0.1:9092";
+                   |as kafka.`${topic_name}` where metadata.broker.list="127.0.0.1:9092";
                   """.stripMargin, ssel)
             } catch {
               case e: Exception => print(e.getMessage)
@@ -64,7 +64,7 @@ class StreamSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
       ScriptSQLExec.parse(
         s"""
            |set streamName="streamExample";
-           |load kafka8.`${topic_name}` options kafka.bootstrap.servers="127.0.0.1:9092"
+           |load kafka.`${topic_name}` options kafka.bootstrap.servers="127.0.0.1:9092"
            |as table1;
            |
             |save append table1
@@ -79,7 +79,7 @@ class StreamSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
     }
   }
 
-  "kafka8/kafka9" should "kafka as sink" in {
+  "kafka" should "kafka as sink" in {
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
       implicit val spark = runtime.sparkSession
@@ -96,7 +96,7 @@ class StreamSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
                 s"""
                    |select "a" as value as tmp_table1;
                    |save append tmp_table1
-                   |as kafka8.`${topic_name}` where metadata.broker.list="127.0.0.1:9092";
+                   |as kafka.`${topic_name}` where metadata.broker.list="127.0.0.1:9092";
                   """.stripMargin, ssel)
             } catch {
               case e: Exception => print(e.getMessage)
@@ -115,16 +115,16 @@ class StreamSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
       ScriptSQLExec.parse(
         s"""
            |set streamName="streamExample";
-           |load kafka8.`${topic_name}` options kafka.bootstrap.servers="127.0.0.1:9092"
+           |load kafka.`${topic_name}` options kafka.bootstrap.servers="127.0.0.1:9092"
            |as table1;
            |
            |select cast(value as string) as value from table1 as table2;
            |
            |save append table2
-           |as kafka8.`${topic_name}_1`
+           |as kafka.`${topic_name}_1`
            |options mode="Append"
-           |and duration="2"
            |and kafka.bootstrap.servers="127.0.0.1:9092"
+           |and duration="2"
            |and checkpointLocation="/tmp/cpl3";
           """.stripMargin, ssel)
       Thread.sleep(1000 * 30)
@@ -133,7 +133,7 @@ class StreamSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
     }
   }
 
-  val kafkaServer = new streaming.test.servers.KafkaServer("0.9.0.1")
+  val kafkaServer = new streaming.test.servers.KafkaServer("1.1.1")
 
   override protected def beforeAll(): Unit = {
     kafkaServer.startServer
