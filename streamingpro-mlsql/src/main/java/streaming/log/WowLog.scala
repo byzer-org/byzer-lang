@@ -48,7 +48,7 @@ trait WowLog {
   def format_throwable(e: Throwable) = {
     (e.toString.split("\n") ++ e.getStackTrace.map(f => f.toString)).map(f => format(f)).toSeq.mkString("\n")
   }
-                            doc
+  
   def format_cause(e: Exception) = {
     var cause = e.asInstanceOf[Throwable]
     while (cause.getCause != null) {

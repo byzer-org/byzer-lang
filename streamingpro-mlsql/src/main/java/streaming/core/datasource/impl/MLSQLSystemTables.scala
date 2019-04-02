@@ -8,7 +8,7 @@ import streaming.core.datasource._
 import streaming.core.datasource.util.MLSQLJobCollect
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.auth.{OperateType, TableType}
-import streaming.dsl.load.batch.{MLSQLAPIExplain, MLSQLConfExplain}
+import streaming.dsl.load.batch.{LogTail, MLSQLAPIExplain, MLSQLConfExplain}
 
 /**
   * 2019-01-11 WilliamZhu(allwefantasy@gmail.com)
@@ -64,6 +64,10 @@ class MLSQLSystemTables extends MLSQLSource with MLSQLSourceInfo with MLSQLRegis
         new MLSQLAPIExplain(spark).explain
       case Array("conf", "list") =>
         new MLSQLConfExplain(spark).explain
+      case Array("log", offset) =>
+        val filePath = config.config.getOrElse("filePath", "")
+        val msgs = LogTail.log(owner, filePath, offset.toLong)
+        spark.createDataset(Seq(msgs)).toDF("offset", "value")
       case _ => throw new MLSQLException(
         s"""
            |path [${config.path}] is not found. please check the doc website for more details:

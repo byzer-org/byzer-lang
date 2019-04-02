@@ -15,7 +15,7 @@ class MLSQLConsoleClient extends TableAuth with Logging with WowLog {
     val context = ScriptSQLExec.contextGetOrForTest()
     val owner = context.owner
     val jsonTables = JSONTool.toJsonStr(tables)
-    logInfo(format(jsonTables))
+    logDebug(format(jsonTables))
     val authUrl = context.userDefinedParam("__auth_server_url__")
     val auth_secret = context.userDefinedParam("__auth_secret__")
     try {
