@@ -64,7 +64,7 @@ class MLSQLStreamingQueryListener extends StreamingQueryListener with Logging wi
                  |StreamingproJobManager:${job.jobName}
                  |Spark streams: ${name}
                  |Action: sync
-                 |Reason:: Job is not in StreamingProManager but in StreamingproJobManager.
+                 |Reason:: Job is not in StreamingproJobManager but in MLSQLStreamManager.
              """.stripMargin))
             StreamingproJobManager.addJobManually(job)
           case None =>

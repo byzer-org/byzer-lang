@@ -584,20 +584,20 @@ class RestController extends ApplicationController {
   }
 
   /**
-   * | enable limit | global | maxResultSize | condition                       | result           |
-   * | ------------ | ------ | ------------- | ------------------------------- | ---------------- |
-   * | true         | -1     | -1            | N/A                             | defualt = 1000   |
-   * | true         | -1     | Int           | N/A                             | ${maxResultSize} |
-   * | true         | Int    | -1            | Or ${maxResultSize} > ${global} | ${global}        |
-   * | true         | Int    | Int           | AND ${maxResultSize} < ${global}| ${maxResultSize} |
-   *
-   * when we enable result size limitation, the size of result should <= ${maxSize} <= ${global}
-   *
-   * @param ds
-   * @param maxSize
-   * @tparam T
-   * @return
-   */
+    * | enable limit | global | maxResultSize | condition                       | result           |
+    * | ------------ | ------ | ------------- | ------------------------------- | ---------------- |
+    * | true         | -1     | -1            | N/A                             | defualt = 1000   |
+    * | true         | -1     | Int           | N/A                             | ${maxResultSize} |
+    * | true         | Int    | -1            | Or ${maxResultSize} > ${global} | ${global}        |
+    * | true         | Int    | Int           | AND ${maxResultSize} < ${global}| ${maxResultSize} |
+    *
+    * when we enable result size limitation, the size of result should <= ${maxSize} <= ${global}
+    *
+    * @param ds
+    * @param maxSize
+    * @tparam T
+    * @return
+    */
   private def limitOrNot[T](ds: Dataset[T], maxSize: Int = paramAsInt("maxResultSize", -1)): Dataset[T] = {
     var result = ds
     val globalLimit = ds.sparkSession.sparkContext.getConf.getInt(

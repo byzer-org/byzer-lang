@@ -42,3 +42,4 @@ class MLSQLConfExplain(sparkSession: SparkSession) extends SelfExplain {
       )))
   }
 }
+
