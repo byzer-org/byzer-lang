@@ -42,7 +42,7 @@ class MLSQLConsoleClient extends TableAuth with Logging with WowLog {
       }
     } catch {
       case e: Exception if !e.isInstanceOf[RuntimeException] =>
-        throw new RuntimeException("Auth control center maybe down")
+        throw new RuntimeException("Auth control center maybe down", e)
     }
 
     List()

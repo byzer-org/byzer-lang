@@ -20,6 +20,8 @@ package streaming.log
 
 import streaming.dsl.ScriptSQLExec
 
+import scala.collection.mutable.ArrayBuffer
+
 /**
   * Created by allwefantasy on 4/9/2018.
   */
@@ -46,12 +48,22 @@ trait WowLog {
   def format_throwable(e: Throwable) = {
     (e.toString.split("\n") ++ e.getStackTrace.map(f => f.toString)).map(f => format(f)).toSeq.mkString("\n")
   }
-
+                            doc
   def format_cause(e: Exception) = {
     var cause = e.asInstanceOf[Throwable]
     while (cause.getCause != null) {
       cause = cause.getCause
     }
     format_throwable(cause)
+  }
+
+  def format_full_exception(buffer: ArrayBuffer[String], e: Exception) = {
+    var cause = e.asInstanceOf[Throwable]
+    buffer += format_throwable(cause)
+    while (cause.getCause != null) {
+      cause = cause.getCause
+      buffer += "caused by：\n" + format_throwable(cause)
+    }
+
   }
 }
