@@ -60,6 +60,14 @@ PythonEnvExt可以保证每个主机特定环境只会被创建一次。
 
 如果你没有使用本节介绍的ET PythonEnvExt 去管理和创建环境，而是在任务执行的时候去系统去创建环境，则很可能因为在特定服务器上并发创建环境而失败。
 
+注意: 如果运行时报`Could not find Conda executable at conda`等类似错误（一般发生在train/run方法）,需要在where条件中增加以下配置:
+
+```
+-- anaconda3为本地安装路径
+and systemParam.envs='''{"MLFLOW_CONDA_HOME":"/anaconda3"}''';
+```
+
+备注: 你可以通过`conda env list --json`命令查看创建的conda环境信息
 
 
 
