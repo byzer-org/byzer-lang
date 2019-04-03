@@ -15,11 +15,6 @@ class MLSQLCSV(override val uid: String) extends MLSQLBaseFileSource with WowPar
     _explainParams(spark)
   }
 
-
-  override def sourceInfo(config: DataAuthConfig): SourceInfo = {
-    SourceInfo("file", "", config.path)
-  }
-
   override def register(): Unit = {
     DataSourceRegistry.register(MLSQLDataSourceKey(fullFormat, MLSQLSparkDataSourceType), this)
     DataSourceRegistry.register(MLSQLDataSourceKey(shortFormat, MLSQLSparkDataSourceType), this)
