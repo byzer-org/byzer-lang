@@ -79,7 +79,9 @@ class Stream2Spec extends BasicSparkOperation with SpecFunctions with BasicMLSQL
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
       implicit val spark = runtime.sparkSession
-      ShellCommand.execCmd("rm -rf /tmp/cpl3")
+      ShellCommand.execCmd("rm -rf /tmp/william/tmp/cpl3")
+
+      val ssel = createSSEL
 
       val connect_stat =
         s"""
@@ -92,7 +94,7 @@ class Stream2Spec extends BasicSparkOperation with SpecFunctions with BasicMLSQL
            |as wow_proxy;
     """.stripMargin
 
-      ScriptSQLExec.parse(connect_stat, createSSEL)
+      ScriptSQLExec.parse(connect_stat, ssel)
 
       new Thread(new Runnable {
         override def run(): Unit = {
@@ -117,7 +119,6 @@ class Stream2Spec extends BasicSparkOperation with SpecFunctions with BasicMLSQL
         }
       }).start()
 
-      val ssel = createSSEL
       ScriptSQLExec.parse(
         """
           |set streamName="streamExample";

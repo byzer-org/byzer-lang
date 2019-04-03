@@ -13,32 +13,31 @@ import streaming.log.Logging
   */
 class MLSQLLoadStrSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConfig with BeforeAndAfterAll with Logging {
 
+  def executeScript(script: String)(implicit runtime: SparkRuntime) = {
+    implicit val spark = runtime.sparkSession
+    val ssel = createSSEL
+    ScriptSQLExec.parse(script, ssel, true, true, false)
+  }
 
   "load jsonStr" should "[jsonStr] work fine" in {
 
-    withBatchContext(setupBatchContext(batchParamsWithoutHive, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+    withBatchContext(setupBatchContext(batchParamsWithoutHive, "classpath:///test/empty.json")) { implicit runtime: SparkRuntime =>
       implicit val spark = runtime.sparkSession
 
-      var ssel = createSSEL
-
-      ScriptSQLExec.parse(
+      executeScript(
         """
           |set data='''
           |{"jack":"yes"}
           |''';
-        """.stripMargin, ssel)
-
-      ScriptSQLExec.parse(
-        """
           |load jsonStr.`data` as datasource;
-        """.stripMargin, ssel)
+        """.stripMargin)
       assert(spark.sql("select * from datasource").collect().map(f => f.getString(0)).head == "yes")
 
       val caught = intercept[RuntimeException] {
-        ScriptSQLExec.parse(
+        executeScript(
           """
             |save overwrite datasource as jsonStr.`/tmp/jack`;
-          """.stripMargin, ssel)
+          """.stripMargin)
       }
       assert(caught.getMessage == "save is not supported in jsonStr")
 
@@ -100,6 +99,43 @@ class MLSQLLoadStrSpec extends BasicSparkOperation with SpecFunctions with Basic
           |select * from newTable as hiveOutput;
         """.stripMargin, ssel)
       assert(spark.sql("select * from hiveOutput").collect().map(f => f.getString(0)).head == "jack")
+
+    }
+  }
+
+  "load csv/json" should "[csv/json] work fine" in {
+
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { implicit runtime: SparkRuntime =>
+      implicit val spark = runtime.sparkSession
+
+      executeScript(
+        """
+          |set data='''
+          |a,b,c
+          |jack,wow,wow2
+          |''';
+          |load csvStr.`data` where header="true" as datasource;
+          |save overwrite datasource as csv.`/tmp/jack`;
+          |load csv.`/tmp/jack` as newTable;
+          |select * from newTable as hiveOutput;
+        """.stripMargin)
+      assert(spark.sql("select * from hiveOutput").collect().map(f => f.getString(0)).head == "jack")
+      assert(spark.sql("select * from csv.`/tmp/william/tmp/jack`").collect().map(f => f.getString(0)).head == "jack")
+
+
+      executeScript(
+        """
+          |set data='''
+          |a,b,c
+          |jack,wow,wow2
+          |''';
+          |load csvStr.`data` where header="true" as datasource;
+          |save overwrite datasource as json.`/tmp/jack`;
+          |load json.`/tmp/jack` as newTable;
+          |select * from newTable as hiveOutput;
+        """.stripMargin)
+      assert(spark.sql("select * from hiveOutput").collect().map(f => f.getString(0)).head == "jack")
+      assert(spark.sql("select * from json.`/tmp/william/tmp/jack`").collect().map(f => f.getString(0)).head == "jack")
 
     }
   }
