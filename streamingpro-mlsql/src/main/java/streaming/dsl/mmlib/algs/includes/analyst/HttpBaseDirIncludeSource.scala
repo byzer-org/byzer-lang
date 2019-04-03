@@ -19,6 +19,7 @@
 package streaming.dsl.mmlib.algs.includes.analyst
 
 import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.mlsql.session.MLSQLException
 import streaming.crawler.HttpClientCrawler
 import streaming.dsl.{IncludeSource, ScriptSQLExec}
 import streaming.log.Logging
@@ -52,7 +53,15 @@ class HttpBaseDirIncludeSource extends IncludeSource with Logging {
     }
 
     logInfo(s"""HTTPIncludeSource URL: ${fetch_url}  PARAMS:${params.map(f => s"${f._1}=>${f._2}").mkString(";")}""")
-    HttpClientCrawler.requestByMethod(fetch_url, method, params.toMap)
+    val res = HttpClientCrawler.requestByMethod(fetch_url, method, params.toMap)
+    if (res == null) {
+      throw new MLSQLException(
+        s"""
+           |MLSQL engine fails to fetch script from ${fetch_url}.
+           |PARAMS:\n${params.map(f => s"${f._1}=>${f._2}").mkString("\n")}
+         """.stripMargin)
+    }
+    res
   }
 
   override def skipPathPrefix: Boolean = true
