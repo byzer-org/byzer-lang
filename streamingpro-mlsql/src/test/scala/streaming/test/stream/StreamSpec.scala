@@ -74,6 +74,7 @@ class StreamSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
            |and checkpointLocation="/tmp/cpl3";
           """.stripMargin, ssel)
       Thread.sleep(1000 * 30)
+
       assume(spark.streams.active.size > 0)
       spark.streams.active.foreach(f => f.stop())
     }

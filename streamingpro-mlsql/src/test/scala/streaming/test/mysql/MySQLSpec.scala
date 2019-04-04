@@ -148,10 +148,9 @@ class MySQLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLCo
 
   "load with cache" should "work fine" in {
 
-    withBatchContext(setupBatchContext(batchParamsWithoutHive, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+    withBatchContext(setupBatchContext(batchParamsWithoutHive ++ Array("-spark.mlsql.enable.datasource.mysql.cache", "true"), "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
       implicit val spark = runtime.sparkSession
-      spark.sparkContext.getConf.set("spark.mlsql.enable.datasource.mysql.cache", "true")
       //注册表连接
       var sq = createSSEL
       ScriptSQLExec.parse(connect_stat, sq)

@@ -23,10 +23,7 @@ class MLSQLSystemSpec extends BasicSparkOperation with SpecFunctions with BasicM
       implicit val spark = runtime.sparkSession
 
       mockServer
-
-      StreamingproJobManager.init(spark)
-
-
+      StreamingproJobManager.initForTest(spark)
       val t = new Thread(new Runnable {
         override def run(): Unit = {
           val controller = new BaseControllerTest()
@@ -52,7 +49,7 @@ class MLSQLSystemSpec extends BasicSparkOperation with SpecFunctions with BasicM
 
       controller.get("/run/script", WowCollections.map(
         "sql",
-        s"""select 1 as a as EMPTY_TABLE;run EMPTY_TABLE as MLSQLJobExt.`` where groupId="${groupId}"; """,
+        s"""run  command as Kill.`${groupId}`;""",
         "owner", "jack"
       ))
 
