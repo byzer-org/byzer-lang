@@ -1,0 +1,78 @@
+package tech.mlsql.test
+
+import java.nio.charset.Charset
+import java.util.UUID
+
+import net.sf.json.JSONObject
+import org.apache.http.client.fluent.{Form, Request}
+import org.apache.spark.streaming.BasicSparkOperation
+import org.scalatest.BeforeAndAfterAll
+import streaming.core.{BasicMLSQLConfig, SpecFunctions}
+
+/**
+  * 2019-04-08 WilliamZhu(allwefantasy@gmail.com)
+  */
+class ClientModeSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConfig with BeforeAndAfterAll {
+
+  def server = {
+    "http://127.0.0.1:9003/"
+  }
+
+  def runScript(mlsql: String, options: Map[String, String] = Map[String, String]()) = {
+    val finalOptions = Map(
+      "sessionPerUser" -> "true",
+      "owner" -> "william",
+      "jobName" -> UUID.randomUUID().toString,
+      "show_stack" -> "true",
+      "skipAuth" -> "true",
+      "sql" -> mlsql
+    ) ++ (options - "endpoint")
+
+    val endpoint = options.getOrElse("endpoint", "/run/script")
+
+
+    val formParams = Form.form()
+    finalOptions.foreach { tuple =>
+      formParams.add(tuple._1, tuple._2)
+    }
+
+    val res = Request.Post(s"${server}/${endpoint}").connectTimeout(60 * 60 * 1000)
+      .socketTimeout(60 * 60 * 1000).bodyForm(formParams.build())
+      .execute().returnContent().asString(Charset.forName("utf-8"))
+    res
+  }
+
+
+  "Rest API" should "show/kill jobs" in {
+    val jobName = "test1"
+    new Thread(new Runnable {
+      override def run(): Unit = {
+        runScript(
+          """
+            |select sleep(10000) as a as b;
+          """.stripMargin, Map("jobName" -> jobName))
+      }
+    }).start()
+
+    Thread.sleep(3000)
+
+    def getJobs = {
+      Request.Get(s"${server}/runningjobs").execute().returnContent().asString(Charset.forName("utf-8"))
+    }
+
+    var res = getJobs
+    JSONObject.fromObject(res).size() should be(1)
+
+    val killJobRes = runScript(s"run command as Kill.`${jobName}`;", Map("owner" -> "josh"))
+    assert(killJobRes.contains("You can not kill the job"))
+
+
+    Request.Post(s"${server}/killjob").bodyForm(Form.form().add("jobName", jobName).add("sessionPerUser", "true").build()).
+      execute().returnContent().asString(Charset.forName("utf-8"))
+
+    res = getJobs
+    JSONObject.fromObject(res).size() should be(0)
+
+
+  }
+}

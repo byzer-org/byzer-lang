@@ -18,8 +18,6 @@
 
 package streaming.test.rest
 
-import net.csdn.ServiceFramwork
-import net.csdn.bootstrap.Bootstrap
 import net.csdn.common.collections.WowCollections
 import net.csdn.junit.BaseControllerTest
 import org.apache.spark.streaming.BasicSparkOperation
