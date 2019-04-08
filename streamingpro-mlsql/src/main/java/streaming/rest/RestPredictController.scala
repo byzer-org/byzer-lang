@@ -47,11 +47,18 @@ class RestPredictController extends ApplicationController {
     render(200, res)
   }
 
+  def getSession = {
+    if (paramAsBoolean("sessionPerUser", false)) {
+      runtime.asInstanceOf[SparkRuntime].getSession(param("owner", "admin"))
+    } else {
+      runtime.asInstanceOf[SparkRuntime].sparkSession
+    }
+  }
 
   @At(path = Array("/compute"), types = Array(GET, POST))
   def compute = {
     intercept()
-    val sparkSession = runtime.asInstanceOf[SparkRuntime].sparkSession
+    val sparkSession = getSession
     val res = WowJsonInferSchema.toJson(sparkSession.sql(param("sql"))).mkString(",")
 
     render(200, res)
@@ -75,7 +82,7 @@ class RestPredictController extends ApplicationController {
   def vec2vecPredict = {
     //dense or sparse
     val vectorType = param("vecType", "dense")
-    val sparkSession = runtime.asInstanceOf[SparkRuntime].sparkSession
+    val sparkSession = getSession
     val vectors = JSONArray.fromObject(param("data", "[]")).map { f =>
 
       val vec = vectorType match {
@@ -99,7 +106,7 @@ class RestPredictController extends ApplicationController {
   }
 
   def row2vecPredict = {
-    val sparkSession = runtime.asInstanceOf[SparkRuntime].sparkSession
+    val sparkSession = getSession
     val strList = JSONArray.fromObject(param("data", "[]")).map(f => f.toString)
     val sql = getSQL
     val perRequestCoreNum = paramAsInt("perRequestCoreNum", 1)
@@ -111,7 +118,7 @@ class RestPredictController extends ApplicationController {
   }
 
   def string2vecPredict = {
-    val sparkSession = runtime.asInstanceOf[SparkRuntime].sparkSession
+    val sparkSession = getSession
     val strList = JSONArray.fromObject(param("data", "[]")).map(f => StringFeature(f.toString))
     val sql = getSQL
     val perRequestCoreNum = paramAsInt("perRequestCoreNum", 1)

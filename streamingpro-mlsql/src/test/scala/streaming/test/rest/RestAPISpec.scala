@@ -25,7 +25,8 @@ import net.csdn.junit.BaseControllerTest
 import org.apache.spark.streaming.BasicSparkOperation
 import org.scalatest.BeforeAndAfterAll
 import streaming.core.strategy.platform.SparkRuntime
-import streaming.core.{BasicMLSQLConfig, SpecFunctions, StreamingproJobManager}
+import streaming.core.{BasicMLSQLConfig, SpecFunctions}
+import tech.mlsql.job.JobManager
 
 /**
   * 2018-12-06 WilliamZhu(allwefantasy@gmail.com)
@@ -39,7 +40,7 @@ class RestAPISpec extends BasicSparkOperation with SpecFunctions with BasicMLSQL
       implicit val spark = runtime.sparkSession
       mockServer
 
-      StreamingproJobManager.init(spark)
+      JobManager.init(spark)
       val controller = new BaseControllerTest()
 
       val response = controller.get("/run/script", WowCollections.map(
@@ -47,7 +48,7 @@ class RestAPISpec extends BasicSparkOperation with SpecFunctions with BasicMLSQL
       ));
       assume(response.status() == 200)
       assume(response.originContent() == "[{\"a\":1}]")
-      StreamingproJobManager.shutdown
+      JobManager.shutdown
     }
   }
 
@@ -57,7 +58,7 @@ class RestAPISpec extends BasicSparkOperation with SpecFunctions with BasicMLSQL
       implicit val spark = runtime.sparkSession
       mockServer
 
-      StreamingproJobManager.init(spark)
+      JobManager.init(spark)
       val controller = new BaseControllerTest()
 
       val path = this.getClass().getClassLoader().getResource("").getPath()
@@ -70,7 +71,7 @@ class RestAPISpec extends BasicSparkOperation with SpecFunctions with BasicMLSQL
       ));
       assume(response.status() == 200)
       assume(response.originContent() == "[{\"a\":\"latincross\"}]")
-      StreamingproJobManager.shutdown
+      JobManager.shutdown
     }
   }
 }

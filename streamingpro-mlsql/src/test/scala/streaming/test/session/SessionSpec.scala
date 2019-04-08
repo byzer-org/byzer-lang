@@ -21,9 +21,11 @@ package streaming.test.session
 import org.apache.spark.sql.AnalysisException
 import org.apache.spark.sql.mlsql.session.SessionIdentifier
 import org.apache.spark.streaming.BasicSparkOperation
+import streaming.core.datasource.util.MLSQLJobCollect
 import streaming.core.strategy.platform.SparkRuntime
-import streaming.core.{BasicMLSQLConfig, SpecFunctions, StreamingproJobManager, StreamingproJobType}
+import streaming.core.{BasicMLSQLConfig, SpecFunctions}
 import streaming.dsl.ScriptSQLExec
+import tech.mlsql.job.{JobManager, MLSQLJobType}
 
 /**
   * Created by aston on 2018/11/2.
@@ -32,7 +34,12 @@ class SessionSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQL
 
   "session close" should "work fine" in {
     withBatchContext(setupBatchContext(batchParamsWithoutHive)) { runtime: SparkRuntime =>
-      StreamingproJobManager.init(runtime.sparkSession)
+      JobManager.init(runtime.sparkSession)
+
+      // clear all sessionState
+      runtime.sessionManager.stop()
+      runtime.sessionManager.start()
+
       runtime.getSession("latincross")
 
       assume(runtime.sessionManager.getOpenSessionCount == 1)
@@ -40,35 +47,46 @@ class SessionSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQL
       runtime.sessionManager.closeSession(SessionIdentifier("latincross"))
       assume(runtime.sessionManager.getOpenSessionCount == 0)
 
-      val jobInfo = StreamingproJobManager.getStreamingproJobInfo(
-        "latincross", StreamingproJobType.SCRIPT, "test", "select sleep(5000) as output;", -1L
+      val jobInfo = JobManager.getJobInfo(
+        "latincross", MLSQLJobType.SCRIPT, "test", "select sleep(5000) as output;", -1L
       )
 
-      StreamingproJobManager.asyncRun(runtime.getSession("latincross"), jobInfo, () => {
-        runtime.sparkSession.sql("select sleep(50000)").count()
+      JobManager.asyncRun(runtime.getSession("latincross"), jobInfo, () => {
+        runtime.getSession("latincross").sql("select sleep(50000)").count()
       })
 
       assume(runtime.sessionManager.getOpenSessionCount == 1)
 
       var counter = 0
-      while(counter < 30 && StreamingproJobManager.getJobInfo.size == 0){
+      while (counter < 30 && JobManager.getJobInfo.size == 0) {
         counter += 1
         Thread.sleep(1000)
       }
 
       assume(counter < 30)
+      val groupId = JobManager.getJobInfo.head._2.groupId
+      JobManager.killJob(runtime.getSession("latincross"), groupId)
 
-      StreamingproJobManager.killJob(StreamingproJobManager.getJobInfo.head._2.groupId)
+      // we should wait until the job really been killed
+      val session = runtime.getSession("latincross")
+      val jobCollect = new MLSQLJobCollect(session, "latincross")
+
+
+      counter = 0
+      while (counter < 30 && jobCollect.resourceSummary(groupId).activeTasks == 1) {
+        counter += 1
+        Thread.sleep(1000)
+      }
 
       runtime.sessionManager.closeSession(SessionIdentifier("latincross"))
       assume(runtime.sessionManager.getOpenSessionCount == 0)
-      StreamingproJobManager.shutdown
+      JobManager.shutdown
     }
   }
 
   "sessionPerUser mode create different temporary tables for different user." should "work fine" in {
     withBatchContext(setupBatchContext(batchParamsWithoutHive)) { runtime: SparkRuntime =>
-      StreamingproJobManager.init(runtime.sparkSession)
+      JobManager.init(runtime.sparkSession)
       val testUserA = "usera"
       val testUserB = "userb"
 
@@ -90,7 +108,7 @@ class SessionSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQL
       runtime.sparkSession.udf.register("test_udf", (arg: String) => {
         arg + "_append_string"
       })
-      StreamingproJobManager.init(runtime.sparkSession)
+      JobManager.init(runtime.sparkSession)
       val testUserA = "usera"
 
       val sessionA = runtime.getSession(testUserA)

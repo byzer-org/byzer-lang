@@ -31,10 +31,11 @@ import org.apache.spark.streaming.BasicSparkOperation
 import streaming.common.ScalaMethodMacros._
 import streaming.common.shell.ShellCommand
 import streaming.core.strategy.platform.SparkRuntime
-import streaming.core.{BasicMLSQLConfig, SpecFunctions, StreamingproJobManager}
+import streaming.core.{BasicMLSQLConfig, SpecFunctions}
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.template.TemplateMerge
 import streaming.test.pythonalg.code.ScriptCode
+import tech.mlsql.job.JobManager
 
 import scala.io.Source
 
@@ -108,7 +109,7 @@ class PythonMLSpec2 extends BasicSparkOperation with SpecFunctions with BasicMLS
 
       // api predict
       def request = {
-        StreamingproJobManager.init(spark)
+        JobManager.init(spark)
         val controller = new BaseControllerTest()
 
         val response = controller.get("/model/predict", WowCollections.map(
@@ -118,7 +119,7 @@ class PythonMLSpec2 extends BasicSparkOperation with SpecFunctions with BasicMLS
           "dataType", "row"
         ));
         assume(response.status() == 200)
-        StreamingproJobManager.shutdown
+        JobManager.shutdown
         JSONArray.fromObject(response.originContent())
       }
 

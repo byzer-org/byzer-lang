@@ -29,6 +29,7 @@ import org.apache.http.client.fluent.{Form, Request}
 import org.apache.http.util.EntityUtils
 import org.apache.spark.sql.SparkSession
 import streaming.dsl.{MLSQLExecuteContext, ScriptSQLExec, ScriptSQLExecListener}
+import tech.mlsql.job.{JobManager, MLSQLJobInfo, MLSQLJobType}
 
 /**
   * Created by allwefantasy on 28/4/2018.
@@ -64,9 +65,9 @@ trait SpecFunctions {
   }
 
   def createSSEL(implicit spark: SparkSession, defaultPathPrefix: String = "/tmp/william", groupId: String = "-") = {
-    StreamingproJobManager.initForTest(spark)
-    StreamingproJobManager.addJobManually(StreamingproJobInfo(
-      "william", StreamingproJobType.SCRIPT, "", "", groupId, System.currentTimeMillis(), -1
+    JobManager.initForTest(spark)
+    JobManager.addJobManually(MLSQLJobInfo(
+      "william", MLSQLJobType.SCRIPT, "", "", groupId, System.currentTimeMillis(), -1
     ))
     val context = new ScriptSQLExecListener(spark, defaultPathPrefix, Map())
     context.addEnv("HOME", context.pathPrefix(None))
@@ -75,9 +76,9 @@ trait SpecFunctions {
   }
 
   def createSSELWithJob(spark: SparkSession, jobName: String, groupId: String) = {
-    StreamingproJobManager.initForTest(spark)
-    StreamingproJobManager.addJobManually(StreamingproJobInfo(
-      "william", StreamingproJobType.SCRIPT, "", "", groupId, System.currentTimeMillis(), -1
+    JobManager.initForTest(spark)
+    JobManager.addJobManually(MLSQLJobInfo(
+      "william", MLSQLJobType.SCRIPT, "", "", groupId, System.currentTimeMillis(), -1
     ))
     val context = new ScriptSQLExecListener(spark, "/tmp/william", Map())
     context.addEnv("HOME", context.pathPrefix(None))
@@ -86,18 +87,18 @@ trait SpecFunctions {
   }
 
   def addStreamJob(spark: SparkSession, jobName: String, grouId: String) = {
-    StreamingproJobManager.initForTest(spark)
+    JobManager.initForTest(spark)
 
-    StreamingproJobManager.addJobManually(StreamingproJobInfo(
-      owner = "william", jobType = StreamingproJobType.STREAM, jobName = jobName, "", groupId = grouId, -1, -1
+    JobManager.addJobManually(MLSQLJobInfo(
+      owner = "william", jobType = MLSQLJobType.STREAM, jobName = jobName, "", groupId = grouId, -1, -1
     ))
   }
 
   def addBatchJob(spark: SparkSession, jobName: String, grouId: String) = {
-    StreamingproJobManager.initForTest(spark)
+    JobManager.initForTest(spark)
 
-    StreamingproJobManager.addJobManually(StreamingproJobInfo(
-      owner = "william", jobType = StreamingproJobType.SCRIPT, jobName = jobName, "", groupId = grouId, -1, -1
+    JobManager.addJobManually(MLSQLJobInfo(
+      owner = "william", jobType = MLSQLJobType.SCRIPT, jobName = jobName, "", groupId = grouId, -1, -1
     ))
   }
 

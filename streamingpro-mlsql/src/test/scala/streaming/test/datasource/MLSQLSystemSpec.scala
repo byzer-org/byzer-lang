@@ -6,8 +6,9 @@ import net.sf.json.{JSONArray, JSONObject}
 import org.apache.spark.streaming.BasicSparkOperation
 import org.scalatest.BeforeAndAfterAll
 import streaming.core.strategy.platform.SparkRuntime
-import streaming.core.{BasicMLSQLConfig, SpecFunctions, StreamingproJobManager}
+import streaming.core.{BasicMLSQLConfig, SpecFunctions}
 import streaming.log.Logging
+import tech.mlsql.job.JobManager
 
 import scala.collection.JavaConverters._
 
@@ -23,7 +24,7 @@ class MLSQLSystemSpec extends BasicSparkOperation with SpecFunctions with BasicM
       implicit val spark = runtime.sparkSession
 
       mockServer
-      StreamingproJobManager.initForTest(spark)
+      JobManager.initForTest(spark)
       val t = new Thread(new Runnable {
         override def run(): Unit = {
           val controller = new BaseControllerTest()
@@ -63,7 +64,7 @@ class MLSQLSystemSpec extends BasicSparkOperation with SpecFunctions with BasicM
       }
       assume(jobSize.length == 0)
 
-      StreamingproJobManager.shutdown
+      JobManager.shutdown
     }
   }
 

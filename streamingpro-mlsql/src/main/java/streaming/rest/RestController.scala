@@ -37,6 +37,7 @@ import org.apache.spark.ps.cluster.Message
 import org.apache.spark.sql._
 import org.apache.spark.{MLSQLConf, SparkInstanceService}
 import org.joda.time.format.ISODateTimeFormat
+import tech.mlsql.job.{JobManager, MLSQLJobInfo, MLSQLJobType}
 
 import scala.collection.JavaConversions._
 import scala.util.control.NonFatal
@@ -89,11 +90,7 @@ class RestController extends ApplicationController {
   def script = {
     setAccessControlAllowOrigin
     val silence = paramAsBoolean("silence", false)
-    val sparkSession = if (paramAsBoolean("sessionPerUser", false)) {
-      runtime.asInstanceOf[SparkRuntime].getSession(param("owner", "admin"))
-    } else {
-      runtime.asInstanceOf[SparkRuntime].sparkSession
-    }
+    val sparkSession = getSession
 
     val htp = findService(classOf[HttpTransportService])
     if (paramAsBoolean("async", false) && !params().containsKey("callback")) {
@@ -101,12 +98,12 @@ class RestController extends ApplicationController {
     }
     var outputResult: String = "[]"
     try {
-      val jobInfo = StreamingproJobManager.getStreamingproJobInfo(
-        param("owner"), param("jobType", StreamingproJobType.SCRIPT), param("jobName"), param("sql"),
+      val jobInfo = JobManager.getJobInfo(
+        param("owner"), param("jobType", MLSQLJobType.SCRIPT), param("jobName"), param("sql"),
         paramAsLong("timeout", -1L)
       )
       if (paramAsBoolean("async", false)) {
-        StreamingproJobManager.asyncRun(sparkSession, jobInfo, () => {
+        JobManager.asyncRun(sparkSession, jobInfo, () => {
           try {
             val context = createScriptSQLExecListener(sparkSession, jobInfo.groupId)
             ScriptSQLExec.parse(param("sql"), context, paramAsBoolean("skipInclude", false), paramAsBoolean("skipAuth", true))
@@ -120,7 +117,7 @@ class RestController extends ApplicationController {
           }
         })
       } else {
-        StreamingproJobManager.run(sparkSession, jobInfo, () => {
+        JobManager.run(sparkSession, jobInfo, () => {
           val context = createScriptSQLExecListener(sparkSession, jobInfo.groupId)
           ScriptSQLExec.parse(param("sql"), context, paramAsBoolean("skipInclude", false), paramAsBoolean("skipAuth", true))
           if (!silence) {
@@ -213,21 +210,20 @@ class RestController extends ApplicationController {
   // begin -------------------------------------------
   @At(path = Array("/run/sql"), types = Array(GET, POST))
   def ddlSql = {
-    val sparkRuntime = runtime.asInstanceOf[SparkRuntime]
-    val sparkSession = sparkRuntime.sparkSession
+    val sparkSession = getSession
     val path = param("path", "-")
     if (paramAsBoolean("async", false) && path == "-") {
       render(s"""path should not be empty""")
     }
 
-    val jobInfo = StreamingproJobManager.getStreamingproJobInfo(
-      param("owner"), StreamingproJobType.SQL, param("jobName"), param("sql"),
+    val jobInfo = JobManager.getJobInfo(
+      param("owner"), MLSQLJobType.SQL, param("jobName"), param("sql"),
       paramAsLong("timeout", 30000)
     )
 
     paramAsBoolean("async", false).toString match {
       case "true" if hasParam("callback") =>
-        StreamingproJobManager.run(sparkSession, jobInfo, () => {
+        JobManager.run(sparkSession, jobInfo, () => {
           val dfWriter = limitOrNot(
             sparkSession.sql(param("sql"))
           ).write
@@ -240,7 +236,7 @@ class RestController extends ApplicationController {
         render("[]")
 
       case "false" if param("resultType", "") == "file" =>
-        StreamingproJobManager.run(sparkSession, jobInfo, () => {
+        JobManager.run(sparkSession, jobInfo, () => {
           val dfWriter = limitOrNot(
             sparkSession.sql(param("sql"))
           ).write
@@ -250,7 +246,7 @@ class RestController extends ApplicationController {
         })
 
       case "false" if param("resultType", "") != "file" =>
-        StreamingproJobManager.run(sparkSession, jobInfo, () => {
+        JobManager.run(sparkSession, jobInfo, () => {
           var res = ""
           try {
             res = limitOrNot {
@@ -317,7 +313,7 @@ class RestController extends ApplicationController {
   @At(path = Array("/runningjobs"), types = Array(GET, POST))
   def getRunningJobGroup = {
     setAccessControlAllowOrigin
-    val infoMap = StreamingproJobManager.getJobInfo
+    val infoMap = JobManager.getJobInfo
     render(200, toJsonString(infoMap))
   }
 
@@ -333,9 +329,10 @@ class RestController extends ApplicationController {
   @At(path = Array("/stream/jobs/running"), types = Array(GET, POST))
   def streamRunningJobs = {
     setAccessControlAllowOrigin
-    val infoMap = runtime.asInstanceOf[SparkRuntime].sparkSession.streams.active.map { f =>
+    val sparkSession = getSession
+    val infoMap = sparkSession.streams.active.map { f =>
       val startTime = ISODateTimeFormat.dateTime().parseDateTime(f.lastProgress.timestamp).getMillis
-      StreamingproJobInfo(null, StreamingproJobType.STREAM, f.name, f.lastProgress.json, f.id + "", startTime, -1l)
+      MLSQLJobInfo(null, MLSQLJobType.STREAM, f.name, f.lastProgress.json, f.id + "", startTime, -1l)
     }
     render(200, toJsonString(infoMap))
   }
@@ -355,7 +352,7 @@ class RestController extends ApplicationController {
   def killStreamJob = {
     setAccessControlAllowOrigin
     val groupId = param("groupId")
-    runtime.asInstanceOf[SparkRuntime].sparkSession.streams.get(groupId).stop()
+    getSession.streams.get(groupId).stop()
     render(200, "{}")
   }
 
@@ -364,6 +361,15 @@ class RestController extends ApplicationController {
       restResponse.httpServletResponse().setHeader("Access-Control-Allow-Origin", "*")
     } catch {
       case e: RuntimeException =>
+    }
+  }
+
+
+  def getSession = {
+    if (paramAsBoolean("sessionPerUser", false)) {
+      runtime.asInstanceOf[SparkRuntime].getSession(param("owner", "admin"))
+    } else {
+      runtime.asInstanceOf[SparkRuntime].sparkSession
     }
   }
 
@@ -382,16 +388,17 @@ class RestController extends ApplicationController {
   @At(path = Array("/killjob"), types = Array(GET, POST))
   def killJob = {
     setAccessControlAllowOrigin
+    val sparkSession = getSession
     val groupId = param("groupId")
     if (groupId == null) {
       val jobName = param("jobName")
-      val groupIds = StreamingproJobManager.getJobInfo.filter(f => f._2.jobName == jobName).map(f => f._1)
+      val groupIds = JobManager.getJobInfo.filter(f => f._2.jobName == jobName).map(f => f._1)
       groupIds.headOption match {
-        case Some(groupId) => StreamingproJobManager.killJob(groupId)
+        case Some(groupId) => JobManager.killJob(sparkSession, groupId)
         case None =>
       }
     } else {
-      StreamingproJobManager.killJob(groupId)
+      JobManager.killJob(sparkSession, groupId)
     }
 
     render(200, "{}")
@@ -485,7 +492,7 @@ class RestController extends ApplicationController {
 
   @At(path = Array("/udf"), types = Array(GET, POST))
   def udf = {
-    val sparkSession = runtime.asInstanceOf[SparkRuntime].sparkSession
+    val sparkSession = getSession
     sparkSession.sparkContext.addJar(param("path"))
     try {
       val clzz = JarUtil.loadJar(param("path"), param("className"))
@@ -538,7 +545,7 @@ class RestController extends ApplicationController {
 
   @At(path = Array("/instance/resource"), types = Array(GET, POST))
   def instanceResource = {
-    val session = runtime.asInstanceOf[SparkRuntime].sparkSession
+    val session = getSession
     val resource = new SparkInstanceService(session).resources
     render(toJsonString(resource))
   }

@@ -22,9 +22,10 @@ import org.apache.spark.streaming.BasicSparkOperation
 import org.scalatest.BeforeAndAfterAll
 import streaming.common.shell.ShellCommand
 import streaming.core.strategy.platform.SparkRuntime
-import streaming.core.{BasicMLSQLConfig, SpecFunctions, StreamingproJobManager, StreamingproJobType}
+import streaming.core.{BasicMLSQLConfig, SpecFunctions}
 import streaming.dsl.ScriptSQLExec
 import streaming.log.Logging
+import tech.mlsql.job.{JobManager, MLSQLJobType}
 
 class StreamKafka1_xSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConfig with BeforeAndAfterAll with Logging {
   def executeScript(script: String)(implicit runtime: SparkRuntime) = {
@@ -192,7 +193,7 @@ class StreamKafka1_xSpec extends BasicSparkOperation with SpecFunctions with Bas
       Thread.sleep(1000 * 10)
       assert(spark.streams.active.size > 0)
       val streamQuery = spark.streams.active.head
-      val streamJob = StreamingproJobManager.getJobInfo.filter(f => f._2.jobType == StreamingproJobType.STREAM).head
+      val streamJob = JobManager.getJobInfo.filter(f => f._2.jobType == MLSQLJobType.STREAM).head
       assert(streamJob._2.jobName == "streamExample1")
       assert(streamJob._2.groupId == streamQuery.id.toString)
 
@@ -206,7 +207,7 @@ class StreamKafka1_xSpec extends BasicSparkOperation with SpecFunctions with Bas
 
     }
     //clear all  info in StreamingproJobManager
-    StreamingproJobManager.shutdown
+    JobManager.shutdown
   }
 
   val kafkaServer = new streaming.test.servers.KafkaServer("1.1.1")

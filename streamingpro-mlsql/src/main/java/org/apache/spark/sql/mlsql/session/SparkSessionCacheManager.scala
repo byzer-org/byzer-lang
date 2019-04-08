@@ -22,13 +22,14 @@ package org.apache.spark.sql.mlsql.session
   * Created by allwefantasy on 3/6/2018.
   */
 
-import java.util.concurrent.{ConcurrentHashMap, Executors, TimeUnit}
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.{ConcurrentHashMap, Executors, TimeUnit}
 
-import scala.collection.JavaConverters._
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import org.apache.spark.sql.SparkSession
 import streaming.log.Logging
+
+import scala.collection.JavaConverters._
 
 
 class SparkSessionCacheManager() extends Logging {
@@ -46,7 +47,7 @@ class SparkSessionCacheManager() extends Logging {
 
   def set(user: String, sparkSession: SparkSession): Unit = {
     userToSparkSession.put(user, (sparkSession, new AtomicInteger(1)))
-    userLatestVisit.put(user ,System.currentTimeMillis())
+    userLatestVisit.put(user, System.currentTimeMillis())
   }
 
   def getAndIncrease(user: String): Option[SparkSession] = {
@@ -71,7 +72,7 @@ class SparkSessionCacheManager() extends Logging {
   }
 
   def visit(user: String): Unit = {
-    userLatestVisit.put(user ,System.currentTimeMillis())
+    userLatestVisit.put(user, System.currentTimeMillis())
   }
 
   private[this] def removeSparkSession(user: String): Unit = {
@@ -82,11 +83,11 @@ class SparkSessionCacheManager() extends Logging {
     override def run(): Unit = {
       userToSparkSession.asScala.foreach {
         case (user, (_, times)) if times.get() > 0 => {
-          if (userLatestVisit.getOrDefault(user ,Long.MaxValue) + SparkSessionCacheManager.getExpireTimeout
-            > System.currentTimeMillis()){
+          if (userLatestVisit.getOrDefault(user, Long.MaxValue) + SparkSessionCacheManager.getExpireTimeout
+            > System.currentTimeMillis()) {
             log.debug(s"There are $times active connection(s) bound to the SparkSession instance" +
               s" of $user ")
-          }else{
+          } else {
             SparkSessionCacheManager.getSessionManager.closeSession(SessionIdentifier(user))
           }
         }
@@ -133,18 +134,20 @@ object SparkSessionCacheManager {
     sparkSessionCacheManager.start()
   }
 
-  def setSessionManager(manager: SessionManager): Unit ={
+  def setSessionManager(manager: SessionManager): Unit = {
     sessionManager = manager
   }
 
   def getSessionManager: SessionManager = sessionManager
 
+  def getSessionManagerOption: Option[SessionManager] = if (sessionManager == null) None else Some(sessionManager)
 
-  def setExpireTimeout(expire :Long): String ={
-    if(expire > EXPIRE_SMALL_TIMEOUT){
+
+  def setExpireTimeout(expire: Long): String = {
+    if (expire > EXPIRE_SMALL_TIMEOUT) {
       expireTimeout = expire
       s"set session expire success $expire"
-    }else{
+    } else {
       s"session expire must bigger than $EXPIRE_SMALL_TIMEOUT ,current is $expire"
     }
   }

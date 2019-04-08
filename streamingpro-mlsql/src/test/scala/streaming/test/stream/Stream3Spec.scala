@@ -25,6 +25,7 @@ import streaming.core._
 import streaming.core.strategy.platform.SparkRuntime
 import streaming.dsl.ScriptSQLExec
 import streaming.log.Logging
+import tech.mlsql.job.{JobManager, MLSQLJobType}
 
 class Stream3Spec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConfig with BeforeAndAfterAll with Logging {
 
@@ -79,7 +80,7 @@ class Stream3Spec extends BasicSparkOperation with SpecFunctions with BasicMLSQL
       Thread.sleep(1000 * 10)
       assert(spark.streams.active.size > 0)
       val streamQuery = spark.streams.active.head
-      val streamJob = StreamingproJobManager.getJobInfo.filter(f => f._2.jobType == StreamingproJobType.STREAM).head
+      val streamJob = JobManager.getJobInfo.filter(f => f._2.jobType == MLSQLJobType.STREAM).head
       assert(streamJob._2.jobName == "streamExample1")
       assert(streamJob._2.groupId == streamQuery.id.toString)
 
@@ -93,7 +94,7 @@ class Stream3Spec extends BasicSparkOperation with SpecFunctions with BasicMLSQL
 
     }
     //clear all  info in StreamingproJobManager
-    StreamingproJobManager.shutdown
+    JobManager.shutdown
   }
 
   "streamParquet" should "should resolve the path " in {
@@ -141,7 +142,7 @@ class Stream3Spec extends BasicSparkOperation with SpecFunctions with BasicMLSQL
       val count = spark.sql("select * from parquet.`/tmp/william/tmp/steamP`").count()
       assert(count > 0)
 
-      StreamingproJobManager.shutdown
+      JobManager.shutdown
 
     }
   }
