@@ -2,8 +2,8 @@ package streaming.core.stream
 
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.streaming.StreamingQueryListener
-import streaming.core.{StreamingproJobInfo, StreamingproJobManager, StreamingproJobType}
 import streaming.log.{Logging, WowLog}
+import tech.mlsql.job.{JobManager, MLSQLJobInfo, MLSQLJobType}
 
 import scala.collection.JavaConverters._
 
@@ -11,9 +11,9 @@ import scala.collection.JavaConverters._
   * 2019-01-21 WilliamZhu(allwefantasy@gmail.com)
   */
 object MLSQLStreamManager extends Logging with WowLog {
-  private val store = new java.util.concurrent.ConcurrentHashMap[String, StreamingproJobInfo]()
+  private val store = new java.util.concurrent.ConcurrentHashMap[String, MLSQLJobInfo]()
 
-  def addStore(job: StreamingproJobInfo) = {
+  def addStore(job: MLSQLJobInfo) = {
     store.put(job.groupId, job)
   }
 
@@ -40,19 +40,19 @@ class MLSQLStreamingQueryListener extends StreamingQueryListener with Logging wi
   def sync(name: String, id: String) = {
     // first we should check by name, since before the stream is really stared, we have record the name in
     // StreamingproJobManager
-    StreamingproJobManager.getJobInfo.filter(f => f._2.jobType == StreamingproJobType.STREAM
+    JobManager.getJobInfo.filter(f => f._2.jobType == MLSQLJobType.STREAM
       && (f._2.jobName == name)).headOption match {
       case Some(job) =>
         if (job._2.groupId != id) {
           logInfo(format(
             s"""
-               |StreamingproJobManager:${job._2.jobName}
+               |JobManager:${job._2.jobName}
                |Spark streams: ${name}
                |Action: sync
                |Reason:: Job is not synced before.
              """.stripMargin))
           //onQueryStarted is stared before we acquire info from StreamingQuery
-          StreamingproJobManager.addJobManually(job._2.copy(groupId = id))
+          JobManager.addJobManually(job._2.copy(groupId = id))
         }
       case None =>
         // we only care when stream is restore from ck without MLSQL instance restart
@@ -61,12 +61,12 @@ class MLSQLStreamingQueryListener extends StreamingQueryListener with Logging wi
           case Some(job) =>
             logInfo(format(
               s"""
-                 |StreamingproJobManager:${job.jobName}
+                 |JobManager:${job.jobName}
                  |Spark streams: ${name}
                  |Action: sync
-                 |Reason:: Job is not in StreamingproJobManager but in MLSQLStreamManager.
+                 |Reason:: Job is not in JobManager but in MLSQLStreamManager.
              """.stripMargin))
-            StreamingproJobManager.addJobManually(job)
+            JobManager.addJobManually(job)
           case None =>
             // this  should not happen,throw exception
             throw new RuntimeException(s"MLSQL have unsync stream: ${name}")
@@ -85,10 +85,10 @@ class MLSQLStreamingQueryListener extends StreamingQueryListener with Logging wi
 
   override def onQueryTerminated(event: StreamingQueryListener.QueryTerminatedEvent): Unit = {
     MLSQLStreamManager.removeStore(event.id.toString)
-    StreamingproJobManager.getJobInfo.filter(f => f._2.jobType == StreamingproJobType.STREAM
+    JobManager.getJobInfo.filter(f => f._2.jobType == MLSQLJobType.STREAM
       && f._2.groupId == event.id.toString).headOption match {
       case Some(job) =>
-        StreamingproJobManager.removeJobManually(job._1)
+        JobManager.removeJobManually(job._1)
       case None =>
     }
   }

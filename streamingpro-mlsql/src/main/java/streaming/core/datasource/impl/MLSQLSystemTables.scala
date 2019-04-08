@@ -3,12 +3,12 @@ package streaming.core.datasource.impl
 import org.apache.spark.sql.mlsql.session.MLSQLException
 import org.apache.spark.sql.{DataFrame, DataFrameReader}
 import streaming.common.ScalaEnumTool
-import streaming.core.StreamingproJobInfo
 import streaming.core.datasource._
 import streaming.core.datasource.util.MLSQLJobCollect
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.auth.{OperateType, TableType}
 import streaming.dsl.load.batch.{LogTail, MLSQLAPIExplain, MLSQLConfExplain}
+import tech.mlsql.job.MLSQLJobInfo
 
 /**
   * 2019-01-11 WilliamZhu(allwefantasy@gmail.com)
@@ -39,7 +39,7 @@ class MLSQLSystemTables extends MLSQLSource with MLSQLSourceInfo with MLSQLRegis
 
       }
       case Array("jobs") =>
-        spark.createDataset[StreamingproJobInfo](jobCollect.jobs).toDF()
+        spark.createDataset[MLSQLJobInfo](jobCollect.jobs).toDF()
       case Array("jobs", jobGroupId) =>
         spark.createDataset(Seq(jobCollect.jobDetail(jobGroupId))).toDF()
       case Array("progress", jobGroupId) =>

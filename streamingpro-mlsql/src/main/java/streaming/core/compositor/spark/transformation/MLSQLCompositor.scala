@@ -18,11 +18,13 @@
 
 package streaming.core.compositor.spark.transformation
 
-import _root_.streaming.core.{CompositorHelper, StreamingproJobManager, StreamingproJobType}
-import _root_.streaming.dsl.{ScriptSQLExec, ScriptSQLExecListener}
+import java.util
+
 import org.apache.log4j.Logger
 import serviceframework.dispatcher.{Compositor, Processor, Strategy}
-import java.util
+import streaming.core.CompositorHelper
+import streaming.dsl.{ScriptSQLExec, ScriptSQLExecListener}
+import tech.mlsql.job.{JobManager, MLSQLJobType}
 
 import scala.collection.JavaConversions._
 
@@ -47,20 +49,20 @@ class MLSQLCompositor[T] extends Compositor[T] with CompositorHelper {
 
 
   override def result(alg: util.List[Processor[T]], ref: util.List[Strategy[T]], middleResult: util.List[T], params: util.Map[Any, Any]): util.List[T] = {
-    StreamingproJobManager.init(sparkSession(params))
+    JobManager.init(sparkSession(params))
     require(sql.isDefined, "please set sql  by variable `sql` in config file")
 
     val _sql = translateSQL(sql.get, params)
 
-    val jobInfo = StreamingproJobManager.getStreamingproJobInfo(
-      "admin", StreamingproJobType.SCRIPT, "", _sql,
+    val jobInfo = JobManager.getJobInfo(
+      "admin", MLSQLJobType.SCRIPT, "", _sql,
       -1L
     )
-    StreamingproJobManager.run(sparkSession(params), jobInfo, () => {
+    JobManager.run(sparkSession(params), jobInfo, () => {
       val context = new ScriptSQLExecListener(sparkSession(params), "", Map())
       ScriptSQLExec.parse(_sql, context)
     })
-    StreamingproJobManager.shutdown
+    JobManager.shutdown
     if (middleResult == null) List() else middleResult
   }
 }

@@ -23,7 +23,6 @@ import java.util.concurrent.atomic.AtomicReference
 import java.util.{Map => JMap}
 
 import _root_.streaming.common.{NetUtils, ScalaObjectReflect}
-import _root_.streaming.core.StreamingproJobManager
 import _root_.streaming.core.message.MLSQLMessage
 import _root_.streaming.core.stream.MLSQLStreamManager
 import _root_.streaming.dsl.mmlib.algs.bigdl.WowLoggerFilter
@@ -35,6 +34,7 @@ import org.apache.spark.ps.local.LocalPSSchedulerBackend
 import org.apache.spark.sql.jdbc.{JdbcDialect, JdbcDialects}
 import org.apache.spark.sql.mlsql.session.{SessionIdentifier, SessionManager}
 import org.apache.spark.sql.{MLSQLUtils, SQLContext, SparkSession}
+import tech.mlsql.job.JobManager
 
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
@@ -164,7 +164,7 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
 
 
     if (MLSQLConf.MLSQL_SPARK_SERVICE.readFrom(configReader)) {
-      StreamingproJobManager.init(ss)
+      JobManager.init(ss)
     }
 
     // parameter server should be enabled by default
