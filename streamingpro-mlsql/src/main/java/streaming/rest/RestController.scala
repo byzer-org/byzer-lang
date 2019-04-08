@@ -373,6 +373,14 @@ class RestController extends ApplicationController {
     }
   }
 
+  def getSessionByOwner(owner: String) = {
+    if (paramAsBoolean("sessionPerUser", false)) {
+      runtime.asInstanceOf[SparkRuntime].getSession(owner)
+    } else {
+      runtime.asInstanceOf[SparkRuntime].sparkSession
+    }
+  }
+
   @Action(
     summary = "kill specific job", description = ""
   )
@@ -388,17 +396,20 @@ class RestController extends ApplicationController {
   @At(path = Array("/killjob"), types = Array(GET, POST))
   def killJob = {
     setAccessControlAllowOrigin
-    val sparkSession = getSession
+
     val groupId = param("groupId")
     if (groupId == null) {
       val jobName = param("jobName")
-      val groupIds = JobManager.getJobInfo.filter(f => f._2.jobName == jobName).map(f => f._1)
+      val groupIds = JobManager.getJobInfo.filter(f => f._2.jobName == jobName)
       groupIds.headOption match {
-        case Some(groupId) => JobManager.killJob(sparkSession, groupId)
+        case Some(item) => JobManager.killJob(getSessionByOwner(item._2.owner), item._2.groupId)
         case None =>
       }
     } else {
-      JobManager.killJob(sparkSession, groupId)
+      JobManager.getJobInfo.filter(f => f._2.groupId == groupId).headOption match {
+        case Some(item) => JobManager.killJob(getSessionByOwner(item._2.owner), item._2.groupId)
+        case None =>
+      }
     }
 
     render(200, "{}")

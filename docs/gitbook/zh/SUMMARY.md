@@ -23,7 +23,7 @@
 
 * 概要
     * [MSLQL简介](getting_started/READEME.md)
-        * [MSLQL-Engine](getting_started/mlsql-engine.md)
+        * [MLSQL-Engine](getting_started/mlsql-engine.md)
         * [MLSQL-Cluster](getting_started/mlsql-cluster.md)
         * [MLSQL-Console](getting_started/mlsql-console.md)
 
@@ -161,7 +161,8 @@
 
 * 开发者指南
     * [MLSQL-ET开发指南](develop/et.md) 
-    * [MLSQL数据源开发指南](develop/datasource.md)      
+    * [MLSQL数据源开发指南](develop/datasource.md)
+    * [Ambari HDP Spark多版本兼容](develop/ambari_multi_spark.md)
     * [如何参与开发]()
     * [开发者列表]() 
 

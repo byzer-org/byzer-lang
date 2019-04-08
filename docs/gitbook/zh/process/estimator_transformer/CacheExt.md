@@ -5,7 +5,7 @@
 具体使用方法如下：
 
 ```sql
-run table1 CacheExt.`` where execute="cache" and isEager="true";
+run table1 as CacheExt.`` where execute="cache" and isEager="true";
 ```
 
 其中isEager是指立马缓存么？ 否则只有后面出发一次，第二次才使用缓存结果。
@@ -14,5 +14,5 @@ run table1 CacheExt.`` where execute="cache" and isEager="true";
 
 
 ```sql
-run table1 CacheExt.`` where execute="uncache";
+run table1 as CacheExt.`` where execute="uncache";
 ```
