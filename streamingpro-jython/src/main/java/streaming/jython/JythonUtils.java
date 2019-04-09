@@ -19,11 +19,10 @@
 package streaming.jython;
 
 import org.python.core.*;
+import scala.collection.JavaConverters;
 import scala.collection.Seq;
 
 import java.util.*;
-
-import scala.collection.JavaConverters;
 
 /**
  * Created by allwefantasy on 28/8/2018.
@@ -124,6 +123,8 @@ public class JythonUtils {
             return new PyFloat((double) o);
         } else if (o instanceof Boolean) {
             return new PyBoolean((boolean) o);
+        } else if (o == null) {
+            return Py.None;
         } else if (o instanceof Character) {
             return Py.newStringOrUnicode(((Character) o).toString());
         } else if (o instanceof String) {
