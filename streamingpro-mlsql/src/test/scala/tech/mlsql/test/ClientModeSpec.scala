@@ -3,7 +3,7 @@ package tech.mlsql.test
 import java.nio.charset.Charset
 import java.util.UUID
 
-import net.sf.json.JSONObject
+import net.sf.json.{JSONArray, JSONObject}
 import org.apache.http.client.fluent.{Form, Request}
 import org.apache.spark.streaming.BasicSparkOperation
 import org.scalatest.BeforeAndAfterAll
@@ -45,15 +45,19 @@ class ClientModeSpec extends BasicSparkOperation with SpecFunctions with BasicML
 
   "Rest API" should "show/kill jobs" in {
     val jobName = "test1"
-    new Thread(new Runnable {
-      override def run(): Unit = {
-        runScript(
-          """
-            |select sleep(10000) as a as b;
-          """.stripMargin, Map("jobName" -> jobName))
-      }
-    }).start()
 
+    def runSyncJob(jobName: String) = {
+      new Thread(new Runnable {
+        override def run(): Unit = {
+          runScript(
+            """
+              |select sleep(60000) as a as b;
+            """.stripMargin, Map("jobName" -> jobName))
+        }
+      }).start()
+    }
+
+    runSyncJob(jobName)
     Thread.sleep(3000)
 
     def getJobs = {
@@ -73,6 +77,30 @@ class ClientModeSpec extends BasicSparkOperation with SpecFunctions with BasicML
     res = getJobs
     JSONObject.fromObject(res).size() should be(0)
 
+    Thread.sleep(2000)
+
+
+    runSyncJob(jobName + "_")
+    Thread.sleep(2000)
+
+    res = getJobs
+    JSONObject.fromObject(res).size() should be(1)
+    runScript(s"run command as Kill.`${jobName + "_"}`;", Map("owner" -> "william"))
+    res = getJobs
+
+    JSONObject.fromObject(res).size() should be(0)
+
+  }
+
+  def waitJobDone(groupId: String, maxSize: Int = 60) = {
+    var finish = false
+    var count = 0
+    while (finish && count < maxSize) {
+      val res = runScript(s"load _mlsql_.`jobs/${groupId}` as output;")
+      finish = JSONArray.fromObject(res).size() == 0
+      count += 1
+      Thread.sleep(1000)
+    }
 
   }
 }
