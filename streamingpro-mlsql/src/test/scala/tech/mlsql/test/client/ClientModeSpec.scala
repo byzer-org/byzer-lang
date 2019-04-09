@@ -1,4 +1,4 @@
-package tech.mlsql.test
+package tech.mlsql.test.client
 
 import java.nio.charset.Charset
 import java.util.UUID
