@@ -6,12 +6,13 @@ import streaming.core.datasource.util.MLSQLJobCollect
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
+import streaming.log.{Logging, WowLog}
 import tech.mlsql.job.JobManager
 
 /**
   * 2019-01-11 WilliamZhu(allwefantasy@gmail.com)
   */
-class SQLMLSQLJobExt(override val uid: String) extends SQLAlg with WowParams {
+class SQLMLSQLJobExt(override val uid: String) extends SQLAlg with WowParams with Logging with WowLog {
 
 
   def this() = this(BaseParams.randomUID())
@@ -21,8 +22,9 @@ class SQLMLSQLJobExt(override val uid: String) extends SQLAlg with WowParams {
     val groupId = new MLSQLJobCollect(spark, null).getGroupId(path)
     val owner = ScriptSQLExec.contextGetOrForTest().owner
 
-    val isOwnerTheSame = JobManager.getJobInfo.filter(f => f._2.groupId == groupId).filter(f => f._2.owner == owner) == 1
+    val isOwnerTheSame = JobManager.getJobInfo.filter(f => f._2.groupId == groupId).filter(f => f._2.owner == owner).size == 1
     if (!isOwnerTheSame) {
+      logWarning(format(s"You can not kill the job $path cause you are not the owner"))
       import df.sparkSession.implicits._
       return Seq(("", s"You can not kill the job $path cause you are not the owner")).toDF("param", "description")
     }
