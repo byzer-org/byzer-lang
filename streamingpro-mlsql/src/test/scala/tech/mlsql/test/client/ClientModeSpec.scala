@@ -103,4 +103,23 @@ class ClientModeSpec extends BasicSparkOperation with SpecFunctions with BasicML
     }
 
   }
+
+  "python udf" should "work fine with null" in {
+    val res = runScript(
+      """
+        |set convert_data='''
+        |
+        |def apply(self,m):
+        |    return "data:" + str(m)
+        |''';
+        |
+        |load script.`convert_data` as scriptTable;
+        |
+        |register ScriptUDF.`scriptTable` as convert_data
+        |options lang="python" and dataType="string";
+        |
+        |select convert_data(null) as a ,"c" as c as b;
+      """.stripMargin)
+    res should include("data:None")
+  }
 }

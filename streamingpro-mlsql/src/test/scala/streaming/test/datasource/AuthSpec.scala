@@ -143,7 +143,24 @@ class AuthSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLCon
 
       assert(tables.filter(f => f.tableType.name == "temp").size == 2)
 
+      executeScript(
+        """
+          |select * from k as tableNew;
+        """.stripMargin)
+      tables = DefaultConsoleClient.get
+      var tempTables = tables.filter(f => f.tableType.name == "hive")
+      assert(tempTables.size == 1)
 
+
+      runtime.sparkSession.sql("select 1 as a ").createOrReplaceTempView("k")
+      executeScript(
+        """
+          |select * from k as tableNew;
+        """.stripMargin)
+      tables = DefaultConsoleClient.get
+      tempTables = tables.filter(f => f.tableType.name == "temp")
+      assert(tempTables.size == 2)
+      assert(tempTables(0).tableType.name == "temp" && tempTables(0).table.get == "k")
     }
   }
 
