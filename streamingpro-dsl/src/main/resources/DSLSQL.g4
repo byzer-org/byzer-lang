@@ -26,7 +26,8 @@ sql
     | 'register' format '.' path 'as' functionName ('options'|'where')? expression? booleanExpression*
     | 'unregister' format '.' path ('options'|'where')? expression? booleanExpression*
     | 'include' format '.' path ('options'|'where')? expression? booleanExpression*
-    |  SIMPLE_COMMENT
+    | command (setValue|setKey)*
+    | SIMPLE_COMMENT
     ;
 
 overwrite
@@ -71,6 +72,10 @@ setValue
 
 setKey
     : qualifiedName
+    ;
+
+command
+    : '!' qualifiedName
     ;
 
 db

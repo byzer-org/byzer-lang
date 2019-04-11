@@ -20,6 +20,7 @@ package streaming.dsl
 
 import streaming.dsl.parser.DSLSQLParser._
 import streaming.dsl.template.TemplateMerge
+import tech.mlsql.dsl.adaptor.{PreProcessIncludeListener, SCType}
 
 /**
   * Created by allwefantasy on 12/1/2018.
@@ -27,7 +28,7 @@ import streaming.dsl.template.TemplateMerge
 class IncludeAdaptor(preProcessListener: PreProcessIncludeListener) extends DslAdaptor {
 
   def evaluate(value: String) = {
-    TemplateMerge.merge(value, preProcessListener.env().toMap)
+    TemplateMerge.merge(value, preProcessListener.scriptSQLExecListener.env().toMap)
   }
 
   override def parse(ctx: SqlContext): Unit = {
@@ -44,7 +45,7 @@ class IncludeAdaptor(preProcessListener: PreProcessIncludeListener) extends DslA
         case s: FormatContext =>
           format = s.getText
         case s: PathContext =>
-          path = TemplateMerge.merge(cleanStr(s.getText), preProcessListener.env().toMap)
+          path = TemplateMerge.merge(cleanStr(s.getText), preProcessListener.scriptSQLExecListener.env().toMap)
         case s: ExpressionContext =>
           option += (cleanStr(s.qualifiedName().getText) -> evaluate(getStrOrBlockStr(s)))
         case s: BooleanExpressionContext =>
@@ -54,12 +55,11 @@ class IncludeAdaptor(preProcessListener: PreProcessIncludeListener) extends DslA
     }
     val alg = IncludeAdaptor.findAlg(format, option)
     if (!alg.skipPathPrefix) {
-      path = withPathPrefix(preProcessListener.pathPrefix(None), path)
+      path = withPathPrefix(preProcessListener.scriptSQLExecListener.pathPrefix(None), path)
     }
 
-    val content = alg.fetchSource(preProcessListener.sparkSession, path, Map("format" -> format) ++ option)
-    val originIncludeText = currentText(ctx)
-    preProcessListener.addInclude(originIncludeText, content)
+    val content = alg.fetchSource(preProcessListener.scriptSQLExecListener.sparkSession, path, Map("format" -> format) ++ option)
+    preProcessListener.addStatement(content, SCType.Include)
   }
 }
 
