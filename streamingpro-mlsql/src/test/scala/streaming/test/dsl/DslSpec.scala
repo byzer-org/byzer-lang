@@ -24,8 +24,7 @@ import org.apache.spark.streaming.BasicSparkOperation
 import streaming.common.shell.ShellCommand
 import streaming.core.strategy.platform.SparkRuntime
 import streaming.core.{BasicMLSQLConfig, NotToRunTag, SpecFunctions}
-import streaming.dsl.auth.{OperateType, TableType}
-import streaming.dsl.{GrammarProcessListener, ScriptSQLExec}
+import streaming.dsl.{GrammarProcessListener, ScriptSQLExec, ScriptSQLExecListener}
 
 /**
   * Created by allwefantasy on 26/4/2018.
@@ -493,7 +492,7 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
       implicit val spark = runtime.sparkSession
 
       val ssel = createSSEL
-      val sq = new GrammarProcessListener(ssel)
+      val sq = new GrammarProcessListener()
       intercept[RuntimeException] {
         // Result type: IndexOutOfBoundsException
         ScriptSQLExec.parse("save jack append skone_task_log\nas parquet.`${data_monitor_skone_task_log_2_parquet_data_path}`\noptions mode = \"Append\"\nand duration = \"10\"\nand checkpointLocation = \"${data_monitor_skone_task_log_2_parquet_checkpoint_path}\"\npartitionBy hp_stat_date;", sq)
@@ -511,7 +510,7 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
       implicit val spark = runtime.sparkSession
 
       val ssel = createSSEL
-      val sq = new GrammarProcessListener(ssel)
+      val sq = new GrammarProcessListener()
       ScriptSQLExec.parse("load parquet.`/tmp/abc` as newtable;", sq)
     }
   }
@@ -606,6 +605,44 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
         spark.sql("select * from output").show()
 
     }
+  }
+
+  "Command" should "alias commnd work fine" in {
+
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) {
+      implicit runtime: SparkRuntime =>
+        implicit val spark = runtime.sparkSession
+
+        def compareDSL(command: String, targetStr: String) = {
+          val ssel = createSSEL
+          executeScript(
+            s"""
+               |set kill=''' run command as Kill.`{}` ''';
+               |
+              |${command};
+            """.stripMargin, ssel)
+          assert(ssel.preProcessListener.get.toScript == targetStr)
+        }
+
+        compareDSL("""!kill "jobId"""","""set kill=''' run command as Kill.`{}` '''; run command as Kill.`jobId` ;""")
+
+        compareDSL("""!kill jobId;""","""set kill=''' run command as Kill.`{}` '''; run command as Kill.`jobId` ;""")
+
+        compareDSL("""!kill '''jobId"'''""","""set kill=''' run command as Kill.`{}` '''; run command as Kill.`jobId"` ;""")
+
+
+    }
+  }
+
+  def executeScript(script: String)(implicit runtime: SparkRuntime) = {
+    implicit val spark = runtime.sparkSession
+    val ssel = createSSEL
+    ScriptSQLExec.parse(script, ssel, false, true, true)
+  }
+
+  def executeScript(script: String, ssel: ScriptSQLExecListener)(implicit runtime: SparkRuntime) = {
+    implicit val spark = runtime.sparkSession
+    ScriptSQLExec.parse(script, ssel, false, true, true)
   }
 
 }

@@ -18,17 +18,20 @@
 
 package streaming.parser.lisener
 
-import org.antlr.v4.runtime.tree.{ErrorNode, ParseTreeWalker, TerminalNode}
 import org.antlr.v4.runtime._
-import org.apache.spark.sql.SparkSession
-import streaming.dsl.parser.{DSLSQLLexer, DSLSQLListener, DSLSQLParser}
+import org.antlr.v4.runtime.tree.{ErrorNode, TerminalNode}
+import streaming.dsl.parser.DSLSQLListener
 import streaming.dsl.parser.DSLSQLParser._
-import streaming.log.{Logging, WowLog}
 
 /**
   * Created by allwefantasy on 11/9/2018.
   */
 abstract class BaseParseListenerextends extends DSLSQLListener {
+
+
+  override def enterCommand(ctx: CommandContext): Unit = {}
+
+  override def exitCommand(ctx: CommandContext): Unit = {}
 
   override def enterStatement(ctx: StatementContext): Unit = {}
 
@@ -125,5 +128,6 @@ abstract class BaseParseListenerextends extends DSLSQLListener {
   override def exitAsTableName(ctx: AsTableNameContext): Unit = {}
 
   override def enterColGroup(ctx: ColGroupContext): Unit = {}
+
   override def exitColGroup(ctx: ColGroupContext): Unit = {}
 }

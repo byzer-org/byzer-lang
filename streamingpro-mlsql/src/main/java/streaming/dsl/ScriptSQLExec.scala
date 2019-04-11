@@ -31,6 +31,9 @@ import streaming.dsl.parser.DSLSQLParser._
 import streaming.dsl.parser.{DSLSQLLexer, DSLSQLListener, DSLSQLParser}
 import streaming.log.{Logging, WowLog}
 import streaming.parser.lisener.BaseParseListenerextends
+import tech.mlsql.dsl.CommandCollection
+import tech.mlsql.dsl.adaptor.PreProcessIncludeListener
+import tech.mlsql.dsl.processor.PreProcessListener
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -65,34 +68,38 @@ object ScriptSQLExec extends Logging with WowLog {
 
   def parse(input: String, listener: DSLSQLListener, skipInclude: Boolean = true, skipAuth: Boolean = true, skipPhysicalJob: Boolean = false) = {
     //preprocess some statements e.g. include
+
     var wow = input
 
     var max_preprocess = 10
     var stop = false
 
+    val sqel = listener.asInstanceOf[ScriptSQLExecListener]
+    CommandCollection.fill(sqel)
     if (!skipInclude) {
-      val sqel = listener.asInstanceOf[ScriptSQLExecListener]
       while (!stop && max_preprocess > 0) {
-        val preProcessListener = new PreProcessIncludeListener(sqel._sparkSession, sqel._defaultPathPrefix, sqel._allPathPrefix)
+        val preProcessListener = new PreProcessIncludeListener(sqel)
         sqel.includeProcessListner = Some(preProcessListener)
         _parse(wow, preProcessListener)
-        val includes = preProcessListener.includes()
-        if (includes.size == 0) {
+
+        val newScript = preProcessListener.toScript
+        if (newScript == wow) {
           stop = true
         }
-        includes.foreach { f =>
-          wow = wow.replace(f._1, f._2.substring(0, f._2.lastIndexOf(";")))
-        }
+        wow = newScript
         max_preprocess -= 1
       }
     }
+
+    val preProcessListener = new PreProcessListener(sqel)
+    sqel.preProcessListener = Some(preProcessListener)
+    _parse(wow, preProcessListener)
+    wow = preProcessListener.toScript
+
+
     if (!skipAuth) {
-      val sqel = listener.asInstanceOf[ScriptSQLExecListener]
-      val setListener = new PreProcessSetListener(sqel._sparkSession, sqel._defaultPathPrefix, sqel._allPathPrefix)
-      sqel.setProcessListner = Some(setListener)
-      _parse(wow, setListener)
-      // setListener.env()
-      val authListener = new AuthProcessListener(setListener)
+
+      val authListener = new AuthProcessListener(sqel)
       sqel.authProcessListner = Some(authListener)
       _parse(wow, authListener)
 
@@ -128,9 +135,8 @@ class ScriptSQLExecListener(val _sparkSession: SparkSession, val _defaultPathPre
   private val lastSelectTable = new AtomicReference[String]()
   private[this] var _tableAuth: AtomicReference[TableAuth] = new AtomicReference[TableAuth]()
 
-  var grammarProcessListener: Option[GrammarProcessListener] = Some(new GrammarProcessListener(this))
   var includeProcessListner: Option[PreProcessIncludeListener] = None
-  var setProcessListner: Option[PreProcessSetListener] = None
+  var preProcessListener: Option[PreProcessListener] = None
   var authProcessListner: Option[AuthProcessListener] = None
 
   def setTableAuth(tableAuth: TableAuth): Unit = {
@@ -215,7 +221,11 @@ class ScriptSQLExecListener(val _sparkSession: SparkSession, val _defaultPathPre
 
 }
 
-class GrammarProcessListener(scriptSQLExecListener: ScriptSQLExecListener) extends BaseParseListenerextends {
+class GrammarProcessListener(_sparkSession: SparkSession, _defaultPathPrefix: String, _allPathPrefix: Map[String, String]) extends ScriptSQLExecListener(_sparkSession, _defaultPathPrefix, _allPathPrefix) {
+  def this() {
+    this(null, null, null)
+  }
+
   override def exitSql(ctx: SqlContext): Unit = {
   }
 }
@@ -282,47 +292,6 @@ class AuthProcessListener(val listener: ScriptSQLExecListener) extends BaseParse
 }
 
 
-class PreProcessSetListener(_sparkSession: SparkSession,
-                            _defaultPathPrefix: String,
-                            _allPathPrefix: Map[String, String])
-  extends ScriptSQLExecListener(_sparkSession, _defaultPathPrefix, _allPathPrefix) {
-
-  override def exitSql(ctx: SqlContext): Unit = {
-
-    ctx.getChild(0).getText.toLowerCase() match {
-      case "set" =>
-        new SetAdaptor(this).parse(ctx)
-      case _ =>
-    }
-
-  }
-}
-
-
-class PreProcessIncludeListener(_sparkSession: SparkSession,
-                                _defaultPathPrefix: String,
-                                _allPathPrefix: Map[String, String]) extends
-  ScriptSQLExecListener(_sparkSession, _defaultPathPrefix, _allPathPrefix) {
-  private val _includes = new scala.collection.mutable.HashMap[String, String]
-
-  def addInclude(k: String, v: String) = {
-    _includes(k) = v
-    this
-  }
-
-  def includes() = _includes
-
-  override def exitSql(ctx: SqlContext): Unit = {
-
-    ctx.getChild(0).getText.toLowerCase() match {
-      case "include" =>
-        new IncludeAdaptor(this).parse(ctx)
-      case _ =>
-    }
-
-  }
-}
-
 object ConnectMeta {
   //dbName -> (format->jdbc,url->....)
   private val dbMapping = new ConcurrentHashMap[DBMappingKey, Map[String, String]]()
@@ -349,6 +318,7 @@ object ConnectMeta {
 case class MLSQLExecuteContext(@transient execListener: ScriptSQLExecListener, owner: String, home: String, groupId: String, userDefinedParam: Map[String, String] = Map())
 
 case class DBMappingKey(format: String, db: String)
+
 
 
 
