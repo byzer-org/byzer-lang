@@ -8,5 +8,6 @@ import streaming.dsl.ScriptSQLExecListener
 object CommandCollection {
   def fill(context: ScriptSQLExecListener): Unit = {
     context.addEnv("desc", """run command as ShowTableExt.`{}`""")
+    context.addEnv("kill", """run command as Kill.`{}`""")
   }
 }
