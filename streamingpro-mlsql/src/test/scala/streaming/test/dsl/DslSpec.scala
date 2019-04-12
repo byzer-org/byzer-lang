@@ -20,11 +20,13 @@ package streaming.test.dsl
 
 import java.io.File
 
+import org.apache.spark.sql.catalyst.parser.ParseException
 import org.apache.spark.streaming.BasicSparkOperation
 import streaming.common.shell.ShellCommand
 import streaming.core.strategy.platform.SparkRuntime
 import streaming.core.{BasicMLSQLConfig, NotToRunTag, SpecFunctions}
-import streaming.dsl.{GrammarProcessListener, ScriptSQLExec, ScriptSQLExecListener}
+import streaming.dsl.{ScriptSQLExec, ScriptSQLExecListener}
+import tech.mlsql.dsl.processor.GrammarProcessListener
 
 /**
   * Created by allwefantasy on 26/4/2018.
@@ -492,7 +494,7 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
       implicit val spark = runtime.sparkSession
 
       val ssel = createSSEL
-      val sq = new GrammarProcessListener()
+      val sq = new GrammarProcessListener(ssel)
       intercept[RuntimeException] {
         // Result type: IndexOutOfBoundsException
         ScriptSQLExec.parse("save jack append skone_task_log\nas parquet.`${data_monitor_skone_task_log_2_parquet_data_path}`\noptions mode = \"Append\"\nand duration = \"10\"\nand checkpointLocation = \"${data_monitor_skone_task_log_2_parquet_checkpoint_path}\"\npartitionBy hp_stat_date;", sq)
@@ -510,7 +512,7 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
       implicit val spark = runtime.sparkSession
 
       val ssel = createSSEL
-      val sq = new GrammarProcessListener()
+      val sq = new GrammarProcessListener(ssel)
       ScriptSQLExec.parse("load parquet.`/tmp/abc` as newtable;", sq)
     }
   }
@@ -622,7 +624,7 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
                |
               |${command};
             """.stripMargin, ssel)
-          println(ssel.preProcessListener.get.toScript )
+          println(ssel.preProcessListener.get.toScript)
           assert(ssel.preProcessListener.get.toScript == targetStr)
         }
 
@@ -633,8 +635,41 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
         compareDSL("""!kill '''jobId"'''""","""set kill=''' run command as Kill.`{}` ''';set jobId="wow"; run command as Kill.`jobId"` ;""")
         compareDSL("""!kill '''${jobId}'''""","""set kill=''' run command as Kill.`{}` ''';set jobId="wow"; run command as Kill.`wow` ;""")
 
+        val ssel = createSSEL
+        executeScript(
+          s"""
+             |!show;
+            """.stripMargin, ssel)
+        ssel.preProcessListener.get.toScript should not include ("{}")
+
 
     }
+  }
+
+  "mlsql" should "valiate before really executed" in {
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) {
+      implicit runtime: SparkRuntime =>
+
+        assertThrows[ParseException] { // Result type: Assertion
+          executeScriptWithValidate(
+            """
+              |select a as b from table1 c m  as jack;
+            """.stripMargin)
+        }
+
+        val res = executeScriptWithValidate(
+          """
+            |select a as b from table1 as jack;
+          """.stripMargin)
+        assert(res != null)
+    }
+  }
+
+  def executeScriptWithValidate(script: String)(implicit runtime: SparkRuntime) = {
+    implicit val spark = runtime.sparkSession
+    val ssel = createSSEL
+    ScriptSQLExec.parse(script, ssel, false, true, true, skipGrammarValidate = false)
+    ssel
   }
 
   def executeScript(script: String)(implicit runtime: SparkRuntime) = {

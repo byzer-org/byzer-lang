@@ -33,9 +33,8 @@ import streaming.log.{Logging, WowLog}
 import streaming.parser.lisener.BaseParseListenerextends
 import tech.mlsql.dsl.CommandCollection
 import tech.mlsql.dsl.adaptor.PreProcessIncludeListener
-import tech.mlsql.dsl.processor.PreProcessListener
+import tech.mlsql.dsl.processor.{AuthProcessListener, GrammarProcessListener, PreProcessListener}
 
-import scala.collection.mutable.ArrayBuffer
 
 
 /**
@@ -66,7 +65,12 @@ object ScriptSQLExec extends Logging with WowLog {
   def unset = mlsqlExecuteContext.remove()
 
 
-  def parse(input: String, listener: DSLSQLListener, skipInclude: Boolean = true, skipAuth: Boolean = true, skipPhysicalJob: Boolean = false) = {
+  def parse(input: String, listener: DSLSQLListener,
+            skipInclude: Boolean = true,
+            skipAuth: Boolean = true,
+            skipPhysicalJob: Boolean = false,
+            skipGrammarValidate: Boolean = true
+           ) = {
     //preprocess some statements e.g. include
 
     var wow = input
@@ -95,7 +99,11 @@ object ScriptSQLExec extends Logging with WowLog {
     sqel.preProcessListener = Some(preProcessListener)
     _parse(wow, preProcessListener)
     wow = preProcessListener.toScript
-    
+
+    if (!skipGrammarValidate) {
+      _parse(wow, new GrammarProcessListener(sqel))
+    }
+
     if (!skipAuth) {
 
       val staticAuthImpl = sqel.sparkSession
@@ -229,75 +237,9 @@ class ScriptSQLExecListener(val _sparkSession: SparkSession, val _defaultPathPre
 
 }
 
-class GrammarProcessListener(_sparkSession: SparkSession, _defaultPathPrefix: String, _allPathPrefix: Map[String, String]) extends ScriptSQLExecListener(_sparkSession, _defaultPathPrefix, _allPathPrefix) {
-  def this() {
-    this(null, null, null)
-  }
 
-  override def exitSql(ctx: SqlContext): Unit = {
-  }
-}
 
-class AuthProcessListener(val listener: ScriptSQLExecListener) extends BaseParseListenerextends with Logging {
 
-  val ENABLE_RUNTIME_SELECT_AUTH = listener.sparkSession
-    .sparkContext
-    .getConf
-    .getBoolean("spark.mlsql.enable.runtime.select.auth", false)
-
-  private val _tables = MLSQLTableSet(ArrayBuffer[MLSQLTable]())
-
-  def addTable(table: MLSQLTable) = {
-    _tables.tables.asInstanceOf[ArrayBuffer[MLSQLTable]] += table
-  }
-
-  def withDBs = {
-    _tables.tables.filter(f => f.db.isDefined)
-  }
-
-  def withoutDBs = {
-    _tables.tables.filterNot(f => f.db.isDefined)
-  }
-
-  def tables() = _tables
-
-  override def exitSql(ctx: SqlContext): Unit = {
-    ctx.getChild(0).getText.toLowerCase() match {
-      case "load" =>
-        new LoadAuth(this).auth(ctx)
-
-      case "select" =>
-        if (!ENABLE_RUNTIME_SELECT_AUTH) {
-          new SelectAuth(this).auth(ctx)
-        }
-      case "save" =>
-        new SaveAuth(this).auth(ctx)
-
-      case "connect" =>
-        new ConnectAuth(this).auth(ctx)
-
-      case "create" =>
-        new CreateAuth(this).auth(ctx)
-      case "insert" =>
-        new InsertAuth(this).auth(ctx)
-      case "drop" =>
-        new DropAuth(this).auth(ctx)
-
-      case "refresh" =>
-
-      case "set" =>
-        new SetAuth(this).auth(ctx)
-
-      case "train" | "run" =>
-
-      case "register" =>
-
-      case _ =>
-        logInfo(s"receive unknown grammar: [ ${ctx.getChild(0).getText.toLowerCase()} ].")
-
-    }
-  }
-}
 
 
 object ConnectMeta {
