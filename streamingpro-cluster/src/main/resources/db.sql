@@ -37,3 +37,7 @@ CREATE TABLE elastic_monitor
   tag               text,
   PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+
+ALTER TABLE `backend` ADD INDEX `name` (`name`);
+ALTER TABLE `backend` ADD INDEX `tag` (`tag`);
