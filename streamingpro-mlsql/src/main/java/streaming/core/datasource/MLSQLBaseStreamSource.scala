@@ -15,7 +15,6 @@ abstract class MLSQLBaseStreamSource extends MLSQLSource with MLSQLSink with MLS
     config
   }
 
-
   override def save(batchWriter: DataFrameWriter[Row], config: DataSinkConfig): Any = {
     val oldDF = config.df.get
     var option = config.config
@@ -26,7 +25,7 @@ abstract class MLSQLBaseStreamSource extends MLSQLSource with MLSQLSink with MLS
     val writer: DataStreamWriter[Row] = oldDF.writeStream
     var path = resolvePath(config.path)
 
-    val Array(db, table) = parseRef(aliasFormat, path, (options: Map[String, String]) => {
+    val Array(db, table) = parseRef(aliasFormat, path, dbSplitter, (options: Map[String, String]) => {
       writer.options(options)
     })
 

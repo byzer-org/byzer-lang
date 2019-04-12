@@ -18,7 +18,7 @@ class MLSQLCarbondata(override val uid: String) extends MLSQLBaseFileSource with
 
 
   override def save(writer: DataFrameWriter[Row], config: DataSinkConfig): Unit = {
-    val Array(db, table) = parseRef(shortFormat, config.path, (options: Map[String, String]) => {
+    val Array(db, table) = parseRef(shortFormat, config.path, dbSplitter, (options: Map[String, String]) => {
       writer.options(options)
     })
 
@@ -33,7 +33,7 @@ class MLSQLCarbondata(override val uid: String) extends MLSQLBaseFileSource with
   }
 
   override def sourceInfo(config: DataAuthConfig): SourceInfo = {
-    val Array(db, table) = parseRef(shortFormat, config.path, (options: Map[String, String]) => {
+    val Array(db, table) = parseRef(shortFormat, config.path, dbSplitter, (options: Map[String, String]) => {
     })
     SourceInfo(shortFormat, db, table)
   }
