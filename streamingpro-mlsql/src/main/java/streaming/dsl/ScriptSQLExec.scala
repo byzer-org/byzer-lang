@@ -99,12 +99,21 @@ object ScriptSQLExec extends Logging with WowLog {
 
     if (!skipAuth) {
 
+      var staticAuthImpl = sqel.sparkSession
+        .sparkContext
+        .getConf
+        .getOption("spark.mlsql.auth.implClass")
+
       val authListener = new AuthProcessListener(sqel)
       sqel.authProcessListner = Some(authListener)
       _parse(wow, authListener)
 
-      val tableAuth = Class.forName(context.userDefinedParam.getOrElse("__auth_client__",
-        Dispatcher.contextParams("").getOrDefault("context.__auth_client__", "streaming.dsl.auth.meta.client.DefaultConsoleClient").toString))
+      val authImpl = staticAuthImpl match {
+        case Some(temp) => temp
+        case None => context.userDefinedParam.getOrElse("__auth_client__",
+          Dispatcher.contextParams("").getOrDefault("context.__auth_client__", "streaming.dsl.auth.meta.client.DefaultConsoleClient").toString)
+      }
+      val tableAuth = Class.forName(authImpl)
         .newInstance().asInstanceOf[TableAuth]
       sqel.setTableAuth(tableAuth)
       tableAuth.auth(authListener.tables().tables.toList)
