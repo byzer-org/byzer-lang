@@ -618,17 +618,20 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
           executeScript(
             s"""
                |set kill=''' run command as Kill.`{}` ''';
+               |set jobId="wow";
                |
               |${command};
             """.stripMargin, ssel)
+          println(ssel.preProcessListener.get.toScript )
           assert(ssel.preProcessListener.get.toScript == targetStr)
         }
 
-        compareDSL("""!kill "jobId"""","""set kill=''' run command as Kill.`{}` '''; run command as Kill.`jobId` ;""")
+        compareDSL("""!kill "jobId"""","""set kill=''' run command as Kill.`{}` ''';set jobId="wow"; run command as Kill.`jobId` ;""")
 
-        compareDSL("""!kill jobId;""","""set kill=''' run command as Kill.`{}` '''; run command as Kill.`jobId` ;""")
+        compareDSL("""!kill jobId;""","""set kill=''' run command as Kill.`{}` ''';set jobId="wow"; run command as Kill.`jobId` ;""")
 
-        compareDSL("""!kill '''jobId"'''""","""set kill=''' run command as Kill.`{}` '''; run command as Kill.`jobId"` ;""")
+        compareDSL("""!kill '''jobId"'''""","""set kill=''' run command as Kill.`{}` ''';set jobId="wow"; run command as Kill.`jobId"` ;""")
+        compareDSL("""!kill '''${jobId}'''""","""set kill=''' run command as Kill.`{}` ''';set jobId="wow"; run command as Kill.`wow` ;""")
 
 
     }

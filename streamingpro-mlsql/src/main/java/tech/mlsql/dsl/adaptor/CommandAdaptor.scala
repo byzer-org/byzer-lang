@@ -3,6 +3,7 @@ package tech.mlsql.dsl.adaptor
 import streaming.dsl.DslAdaptor
 import streaming.dsl.parser.DSLSQLParser
 import streaming.dsl.parser.DSLSQLParser._
+import streaming.dsl.template.TemplateMerge
 import tech.mlsql.dsl.processor.PreProcessListener
 
 import scala.collection.mutable.ArrayBuffer
@@ -11,6 +12,11 @@ import scala.collection.mutable.ArrayBuffer
   * 2019-04-11 WilliamZhu(allwefantasy@gmail.com)
   */
 class CommandAdaptor(preProcessListener: PreProcessListener) extends DslAdaptor {
+
+  def evaluate(str: String) = {
+    TemplateMerge.merge(str, preProcessListener.scriptSQLExecListener.env().toMap)
+  }
+
   override def parse(ctx: DSLSQLParser.SqlContext): Unit = {
     var command = ""
     var parameters = ArrayBuffer[String]()
@@ -20,7 +26,7 @@ class CommandAdaptor(preProcessListener: PreProcessListener) extends DslAdaptor 
           command = s.getText.substring(1)
         case s: SetValueContext =>
           var oringinalText = s.getText
-          parameters += cleanBlockStr(cleanStr(oringinalText))
+          parameters += cleanBlockStr(cleanStr(evaluate(oringinalText)))
         case s: SetKeyContext =>
           parameters += s.getText
         case _ =>
