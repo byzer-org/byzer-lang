@@ -154,3 +154,4 @@ docs/gitbook/zh/_book/
 contri/streamingpro-automl/logs/
 /tmp
 streamingpro-mlsql/src/main/java/streaming/core/WilliamLocalSparkServiceApp.scala
+streamingpro-api/spark-warehouse

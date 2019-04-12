@@ -99,7 +99,7 @@ object ScriptSQLExec extends Logging with WowLog {
 
     if (!skipAuth) {
 
-      var staticAuthImpl = sqel.sparkSession
+      val staticAuthImpl = sqel.sparkSession
         .sparkContext
         .getConf
         .getOption("spark.mlsql.auth.implClass")
