@@ -95,8 +95,7 @@ object ScriptSQLExec extends Logging with WowLog {
     sqel.preProcessListener = Some(preProcessListener)
     _parse(wow, preProcessListener)
     wow = preProcessListener.toScript
-
-
+    
     if (!skipAuth) {
 
       val staticAuthImpl = sqel.sparkSession
