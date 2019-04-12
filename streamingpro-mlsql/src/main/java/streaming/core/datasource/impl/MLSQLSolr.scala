@@ -20,9 +20,12 @@ package streaming.core.datasource.impl
 
 import org.apache.spark.sql.{DataFrame, DataFrameReader, DataFrameWriter, Row}
 import streaming.core.datasource._
-import streaming.dsl.{ConnectMeta, DBMappingKey}
+import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
+import streaming.dsl.ScriptSQLExec
 
-class MLSQLSolr extends MLSQLSource with MLSQLSink with MLSQLSourceInfo with MLSQLRegistry {
+class MLSQLSolr(override val uid: String) extends MLSQLBaseStreamSource with WowParams {
+
+  def this() = this(BaseParams.randomUID())
 
   override def fullFormat: String = "solr"
 
@@ -30,68 +33,45 @@ class MLSQLSolr extends MLSQLSource with MLSQLSink with MLSQLSourceInfo with MLS
 
   override def dbSplitter: String = "/"
 
-  override def load(reader: DataFrameReader, config: DataSourceConfig): DataFrame = {
-
-    var dbtable = config.path
-    // if contains splitter, then we will try to find dbname in dbMapping.
-    val format = config.config.getOrElse("implClass", fullFormat)
-    if (config.path.contains(dbSplitter)) {
-      val Array(_dbname, _dbtable) = config.path.split(dbSplitter, 2)
-
-      ConnectMeta.presentThenCall(DBMappingKey(format, _dbname), options => {
-        dbtable = _dbtable
-        reader.options(options)
-      })
-    }
-
-    //load configs should overwrite connect configs
-    reader.options(config.config)
-    reader.format(format).load(dbtable)
+  def isStream: Boolean = {
+    val context = ScriptSQLExec.contextGetOrForTest()
+    context.execListener.env().contains("streamName")
   }
 
-  override def save(writer: DataFrameWriter[Row], config: DataSinkConfig): Unit = {
-    var dbtable = config.path
+  override def load(reader: DataFrameReader, config: DataSourceConfig): DataFrame = {
+
     // if contains splitter, then we will try to find dbname in dbMapping.
+    parseRef(aliasFormat, config.path, dbSplitter, (options: Map[String, String]) => {
+      reader.options(options)
+    })
 
     val format = config.config.getOrElse("implClass", fullFormat)
-    if (config.path.contains(dbSplitter)) {
-      val Array(_dbname, _dbtable) = config.path.split(dbSplitter, 2)
-      ConnectMeta.presentThenCall(DBMappingKey(format, _dbname), (options) => {
-        dbtable = _dbtable
-        writer.options(options)
-      })
+    if (isStream) {
+      // ignore the reader since this reader is not stream reader
+      val streamReader = config.df.get.sparkSession.readStream
+      streamReader.options(config.config).format(format).load()
+    } else {
+      reader.options(config.config).format(format).load()
     }
-    writer.mode(config.mode)
-    //load configs should overwrite connect configs
-    writer.options(config.config)
-    config.config.get("partitionByCol").map { item =>
-      writer.partitionBy(item.split(","): _*)
+  }
+
+  override def save(batchWriter: DataFrameWriter[Row], config: DataSinkConfig): Any = {
+
+    // if contains splitter, then we will try to find dbname in dbMapping.
+    parseRef(aliasFormat, config.path, dbSplitter, (options: Map[String, String]) => {
+      batchWriter.options(options)
+    })
+
+    if (isStream) {
+      super.save(batchWriter, config)
+    }else{
+      batchWriter.options(config.config).format(fullFormat).save()
     }
-    writer.format(config.config.getOrElse("implClass", fullFormat)).save(dbtable)
   }
 
   override def register(): Unit = {
     DataSourceRegistry.register(MLSQLDataSourceKey(shortFormat, MLSQLSparkDataSourceType), this)
     DataSourceRegistry.register(MLSQLDataSourceKey(shortFormat, MLSQLSparkDataSourceType), this)
-  }
-
-  override def sourceInfo(config: DataAuthConfig): SourceInfo = {
-
-    val Array(_dbname, _dbtable) = if (config.path.contains(dbSplitter)) {
-      config.path.split(dbSplitter, 2)
-    } else {
-      Array("", config.path)
-    }
-
-    val db = if (config.config.contains("collection")) {
-      config.config.get("collection").get
-    } else {
-      val format = config.config.getOrElse("implClass", fullFormat)
-
-      ConnectMeta.options(DBMappingKey(format, _dbname)).get("collection")
-    }
-
-    SourceInfo(shortFormat, db, "")
   }
 
 }
