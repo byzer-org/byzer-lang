@@ -24,6 +24,7 @@ import org.apache.spark.SparkCoreVersion
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.parser.DSLSQLParser._
 import streaming.dsl.template.TemplateMerge
+import tech.mlsql.ets.register.ETRegister
 
 /**
   * Created by allwefantasy on 12/1/2018.
@@ -90,7 +91,7 @@ class TrainAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdap
 }
 
 object MLMapping {
-  val mapping = Map[String, String](
+  val mapping = ETRegister.mapping ++ Map[String, String](
     "Word2vec" -> "streaming.dsl.mmlib.algs.SQLWord2Vec",
     "NaiveBayes" -> "streaming.dsl.mmlib.algs.SQLNaiveBayes",
     "RandomForest" -> "streaming.dsl.mmlib.algs.SQLRandomForest",

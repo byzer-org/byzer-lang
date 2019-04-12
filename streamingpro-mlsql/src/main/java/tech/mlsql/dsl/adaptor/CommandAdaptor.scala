@@ -37,11 +37,20 @@ class CommandAdaptor(preProcessListener: PreProcessListener) extends DslAdaptor 
     var finalCommand = ArrayBuffer[Char]()
     val len = tempCommand.length
 
+    def fetchParam(index: Int) = {
+      if (index < parameters.length) {
+        parameters(index).toCharArray
+      } else {
+        Array[Char]()
+      }
+
+    }
+
     if (parameters.size > 0) {
       var count = 0
       (0 until len).foreach { i =>
         if (tempCommand(i) == '{' && i < (len - 1) && tempCommand(i + 1) == '}') {
-          finalCommand ++= parameters(count).toCharArray
+          finalCommand ++= fetchParam(count)
           count += 1
         } else if (i >= 1 && tempCommand(i - 1) == '{' && tempCommand(i) == '}') {
           //
