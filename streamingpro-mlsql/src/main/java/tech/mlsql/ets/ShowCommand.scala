@@ -23,32 +23,36 @@ class ShowCommand(override val uid: String) extends SQLAlg with Functions with W
       path.split("/").filterNot(f => f.isEmpty)
     }
 
+    def help = {
+      val context = ScriptSQLExec.contextGetOrForTest()
+      context.execListener.addEnv("__content__",
+        """
+          |command
+          |!show jobs;
+          |!show "jobs/[groupId]"
+          |!show datasources;
+          |!show "datasources/params/[datasource name]";
+          |!show resource;
+          |!show "resource/[groupId]";
+          |!show "progress/[groupId]";
+          |!show et;
+          |!show et [ETName];
+        """.stripMargin)
+
+      s"""
+         |set __content__='''
+         |${context.execListener.env()("__content__")}
+         |''';
+         |load csvStr.`__content__` where header="true" as __output__;
+         """.stripMargin
+    }
+
     val newPath = cleanPath
     val sql = newPath match {
       case Array("et", name) => s"load modelExample.`${name}` as __output__;"
       case Array("et") => s"load modelList.`` as __output__;"
-      case Array("commands") =>
-        val context = ScriptSQLExec.contextGetOrForTest()
-        context.execListener.addEnv("__content__",
-          """
-            |command
-            |!show jobs;
-            |!show "jobs/[groupId]"
-            |!show datasources;
-            |!show "datasources/params/[datasource name]";
-            |!show resource;
-            |!show "resource/[groupId]";
-            |!show "progress/[groupId]";
-            |!show et;
-            |!show et [ETName];
-          """.stripMargin)
-
-        s"""
-           |set __content__='''
-           |${context.execListener.env()("__content__")}
-           |''';
-           |load csvStr.`__content__` where header="true" as __output__;
-         """.stripMargin
+      case Array("commands") | Array() | Array("help") | Array("-help") =>
+        help
       case _ => s"load _mlsql_.`${newPath.mkString("/")}` as output;"
     }
     CommandCollection.evaluateMLSQL(df.sparkSession, sql)

@@ -23,7 +23,8 @@ import org.apache.spark.sql.execution.MLSQLAuthParser
 import streaming.dsl.parser.DSLSQLLexer
 import streaming.dsl.parser.DSLSQLParser._
 import streaming.dsl.template.TemplateMerge
-import streaming.dsl.{AuthProcessListener, DslTool}
+import streaming.dsl.DslTool
+import tech.mlsql.dsl.processor.AuthProcessListener
 
 
 /**

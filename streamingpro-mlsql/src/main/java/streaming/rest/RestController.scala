@@ -25,6 +25,7 @@ import _root_.streaming.core._
 import _root_.streaming.core.strategy.platform.{PlatformManager, SparkRuntime}
 import _root_.streaming.dsl.mmlib.algs.tf.cluster.{ClusterSpec, ClusterStatus, ExecutorInfo}
 import _root_.streaming.dsl.{MLSQLExecuteContext, ScriptSQLExec, ScriptSQLExecListener}
+import _root_.streaming.log.WowLog
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import net.csdn.annotation.rest.{At, _}
@@ -40,6 +41,7 @@ import org.joda.time.format.ISODateTimeFormat
 import tech.mlsql.job.{JobManager, MLSQLJobInfo, MLSQLJobType}
 
 import scala.collection.JavaConversions._
+import scala.collection.mutable.ArrayBuffer
 import scala.util.control.NonFatal
 
 /**
@@ -57,7 +59,7 @@ import scala.util.control.NonFatal
     """),
   servers = Array()
 )
-class RestController extends ApplicationController {
+class RestController extends ApplicationController with WowLog {
 
   // mlsql script execute api, support async and sysn
   // begin -------------------------------------------
@@ -79,7 +81,8 @@ class RestController extends ApplicationController {
     new Parameter(name = "async", required = false, description = "If set true ,please also provide a callback url use `callback` parameter and the job will run in background and the API will return.  default: false", `type` = "boolean", allowEmptyValue = false),
     new Parameter(name = "callback", required = false, description = "Used when async is set true. callback is a url. default: false", `type` = "string", allowEmptyValue = false),
     new Parameter(name = "skipInclude", required = false, description = "disable include statement. default: false", `type` = "boolean", allowEmptyValue = false),
-    new Parameter(name = "skipAuth", required = false, description = "disable table authorize . default: true", `type` = "boolean", allowEmptyValue = false)
+    new Parameter(name = "skipAuth", required = false, description = "disable table authorize . default: true", `type` = "boolean", allowEmptyValue = false),
+    new Parameter(name = "skipGrammarValidate", required = false, description = "validate mlsql grammar. default: true", `type` = "boolean", allowEmptyValue = false)
   ))
   @Responses(Array(
     new ApiResponse(responseCode = "200", description = "", content = new Content(mediaType = "application/json",
@@ -106,20 +109,34 @@ class RestController extends ApplicationController {
         JobManager.asyncRun(sparkSession, jobInfo, () => {
           try {
             val context = createScriptSQLExecListener(sparkSession, jobInfo.groupId)
-            ScriptSQLExec.parse(param("sql"), context, paramAsBoolean("skipInclude", false), paramAsBoolean("skipAuth", true))
+
+            ScriptSQLExec.parse(param("sql"), context,
+              skipInclude = paramAsBoolean("skipInclude", false),
+              skipAuth = paramAsBoolean("skipAuth", true),
+              skipPhysicalJob = paramAsBoolean("skipPhysicalJob", false),
+              skipGrammarValidate = paramAsBoolean("skipGrammarValidate", true))
+
             outputResult = getScriptResult(context, sparkSession)
             htp.post(new Url(param("callback")), Map("stat" -> s"""succeeded""", "res" -> outputResult))
           } catch {
             case e: Exception =>
               e.printStackTrace()
-              val msg = if (paramAsBoolean("show_stack", false)) e.getStackTrace.map(f => f.toString).mkString("\n") else ""
-              htp.post(new Url(param("callback")), Map("stat" -> s"""failed""", "msg" -> (e.getMessage + "\n" + msg)))
+              val msgBuffer = ArrayBuffer[String]()
+              if (paramAsBoolean("show_stack", false)) {
+                format_full_exception(msgBuffer, e)
+              }
+              htp.post(new Url(param("callback")), Map("stat" -> s"""failed""", "msg" -> (e.getMessage + "\n" + msgBuffer.mkString("\n"))))
           }
         })
       } else {
         JobManager.run(sparkSession, jobInfo, () => {
           val context = createScriptSQLExecListener(sparkSession, jobInfo.groupId)
-          ScriptSQLExec.parse(param("sql"), context, paramAsBoolean("skipInclude", false), paramAsBoolean("skipAuth", true))
+          ScriptSQLExec.parse(param("sql"), context,
+            skipInclude = paramAsBoolean("skipInclude", false),
+            skipAuth = paramAsBoolean("skipAuth", true),
+            skipPhysicalJob = paramAsBoolean("skipPhysicalJob", false),
+            skipGrammarValidate = paramAsBoolean("skipGrammarValidate", true)
+          )
           if (!silence) {
             outputResult = getScriptResult(context, sparkSession)
           }
@@ -129,8 +146,11 @@ class RestController extends ApplicationController {
     } catch {
       case e: Exception =>
         e.printStackTrace()
-        val msg = if (paramAsBoolean("show_stack", false)) e.getStackTrace.map(f => f.toString).mkString("\n") else ""
-        render(500, e.getMessage + "\n" + msg)
+        val msgBuffer = ArrayBuffer[String]()
+        if (paramAsBoolean("show_stack", false)) {
+          format_full_exception(msgBuffer, e)
+        }
+        render(500, e.getMessage + "\n" + msgBuffer.mkString("\n"))
     }
     render(outputResult)
   }

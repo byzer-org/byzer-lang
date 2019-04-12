@@ -25,7 +25,7 @@ class CommandAdaptor(preProcessListener: PreProcessListener) extends DslAdaptor 
         case s: CommandContext =>
           command = s.getText.substring(1)
         case s: SetValueContext =>
-          var oringinalText = s.getText
+          val oringinalText = s.getText
           parameters += cleanBlockStr(cleanStr(evaluate(oringinalText)))
         case s: SetKeyContext =>
           parameters += s.getText
@@ -46,20 +46,18 @@ class CommandAdaptor(preProcessListener: PreProcessListener) extends DslAdaptor 
 
     }
 
-    if (parameters.size > 0) {
-      var count = 0
-      (0 until len).foreach { i =>
-        if (tempCommand(i) == '{' && i < (len - 1) && tempCommand(i + 1) == '}') {
-          finalCommand ++= fetchParam(count)
-          count += 1
-        } else if (i >= 1 && tempCommand(i - 1) == '{' && tempCommand(i) == '}') {
-          //
-        }
-        else {
-          finalCommand += tempCommand(i)
-        }
-
+    var count = 0
+    (0 until len).foreach { i =>
+      if (tempCommand(i) == '{' && i < (len - 1) && tempCommand(i + 1) == '}') {
+        finalCommand ++= fetchParam(count)
+        count += 1
+      } else if (i >= 1 && tempCommand(i - 1) == '{' && tempCommand(i) == '}') {
+        //
       }
+      else {
+        finalCommand += tempCommand(i)
+      }
+
     }
 
     preProcessListener.addStatement(String.valueOf(finalCommand.toArray))
