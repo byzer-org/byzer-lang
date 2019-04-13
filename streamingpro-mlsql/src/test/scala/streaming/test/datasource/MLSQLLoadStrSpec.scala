@@ -81,6 +81,7 @@ class MLSQLLoadStrSpec extends BasicSparkOperation with SpecFunctions with Basic
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       implicit val spark = runtime.sparkSession
       ShellCommand.exec("rm -rf /tmp/user/hive/warehouse/carbon_jack")
+
       var ssel = createSSEL
 
       ScriptSQLExec.parse(
