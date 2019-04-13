@@ -21,7 +21,7 @@ package streaming.core.datasource.impl
 import org.apache.spark.sql.{DataFrame, DataFrameReader, DataFrameWriter, Row}
 import streaming.core.datasource._
 import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
-import streaming.dsl.ScriptSQLExec
+import streaming.dsl.{ConnectMeta, DBMappingKey, ScriptSQLExec}
 
 class MLSQLSolr(override val uid: String) extends MLSQLBaseStreamSource with WowParams {
 
@@ -67,6 +67,52 @@ class MLSQLSolr(override val uid: String) extends MLSQLBaseStreamSource with Wow
     }else{
       batchWriter.options(config.config).format(fullFormat).save()
     }
+  }
+
+  override def sourceInfo(config: DataAuthConfig): SourceInfo = {
+
+    val Array(_dbname, _dbtable) = if (config.path.contains(dbSplitter)) {
+      config.path.split(dbSplitter, 2)
+    } else {
+      Array("", config.path)
+    }
+
+    var table = _dbtable
+    var dbName = _dbname
+
+    val newOptions = scala.collection.mutable.HashMap[String, String]() ++ config.config
+    ConnectMeta.options(DBMappingKey(shortFormat, _dbname)) match {
+      case Some(option) =>
+        dbName = ""
+        newOptions ++= option
+
+        table.split(dbSplitter) match {
+          case Array(_db, _table) =>
+            dbName = _db
+            table = _table
+          case _ =>
+        }
+
+      case None =>
+      //dbName = ""
+    }
+
+
+    newOptions.filter(f => f._1 == "collection").map { f =>
+      if (f._2.contains(dbSplitter)) {
+        f._2.split(dbSplitter, 2) match {
+          case Array(_db, _table) =>
+            dbName = _db
+            table = _table
+          case Array(_db) =>
+            dbName = _db
+        }
+      } else {
+        dbName = f._2
+      }
+    }
+
+    SourceInfo(shortFormat, dbName, table)
   }
 
   override def register(): Unit = {
