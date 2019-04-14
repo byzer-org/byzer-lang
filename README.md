@@ -27,7 +27,7 @@ This guide document introduce [how to contribute to MLSQL](https://github.com/al
 
 ## Get PreBuild Distribution
 
-* The lasted version is MLSQL-v1.1.7.1
+* The lasted version is MLSQL v1.2.0
 * You can download from [MLSQL Website](http://download.mlsql.tech/)
 * Spark 2.2.0/2.3.2/2.4.0 are tested
 
