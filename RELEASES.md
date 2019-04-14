@@ -1,4 +1,4 @@
-MLSQL Version 1.2.0 (2019-04-11)
+MLSQL Version 1.2.0 (2019-04-14)
 ==========================
 
 MLSQL Language
@@ -17,7 +17,7 @@ Bug Fix
 New Features
 ----------
 
-- [Compile time auth/Select Statement runtime support](https://github.com/allwefantasy/streamingpro/pull/990)
+- [Compile time /Select Statement runtime auth support](https://github.com/allwefantasy/streamingpro/pull/990)
 - [UDF written by Java support](https://github.com/allwefantasy/streamingpro/pull/911)
 
 Break Features 
