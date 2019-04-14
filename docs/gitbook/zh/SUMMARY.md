@@ -95,6 +95,7 @@
         * [如何统一管理scala/python udf脚本](include/include_script.md)        
         * [如何统一管理中间表](include/table.md)
         * [如何开启include功能](include/enable.md)
+        * [定义自己的命令](include/commands.md)
         
     * [流式计算](stream/README.md)        
         * [数据源](stream/datasource.md)           

@@ -24,5 +24,5 @@ options soft_commit_secs = "1";
 ```
 
 在Solr里，数据连接引用和表之间的分隔符不是`.`,而是`/`。 这是因为Solr索引名允许带"."。
-所以Solr相关的参数可以参考驱动[官方文档](https://github.com/lucidworks/spark-solr)。
+所有Solr相关的参数可以参考驱动[官方文档](https://github.com/lucidworks/spark-solr)。
 
