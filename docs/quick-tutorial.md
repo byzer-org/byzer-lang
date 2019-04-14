@@ -3,7 +3,7 @@
 
 ### step1: 下载资源
 
-1. 到[release页面](https://github.com/allwefantasy/streamingpro/releases)下载最新jar包。
+1. 到[release页面](http://download.mlsql.tech)下载最新jar包。
 2. 下载一个[spark发行版](https://www.apache.org/dyn/closer.lua/spark/spark-2.2.0/spark-2.2.0-bin-hadoop2.7.tgz)。
 
 ### step2 解压进入spark home目录，启动服务

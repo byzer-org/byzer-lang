@@ -87,7 +87,7 @@ and password="----"
 as mysql1;
 -- Save the data to MYSQL
 save append table21
-as jdbc.`mysql1.test1`
+as streamJDBC.`mysql1.test1`
 options mode="append"
 and `driver-statement-0`="create table test1 if not exists........."
 -- executed in executor
@@ -104,7 +104,7 @@ and checkpointLocation="/tmp/cpl3";
 ```sql
 
 save append table
-as parquet.`/table/hp_stat_date=${pathDate.toString("yyyy-MM-dd")}`
+as streamParquet.`/table/hp_stat_date=${pathDate.toString("yyyy-MM-dd")}`
 options mode="Append"
 and duration="30"
 and checkpointLocation="/tmp/ckl1";
@@ -115,7 +115,7 @@ and checkpointLocation="/tmp/ckl1";
 ```sql
 
 save append table
-as parquet.`table`
+as streamParquet.`table`
 options mode="Append"
 and duration="10"
 and checkpointLocation="/tmp/ckl1"
