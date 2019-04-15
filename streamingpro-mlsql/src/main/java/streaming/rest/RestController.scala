@@ -18,9 +18,6 @@
 
 package streaming.rest
 
-import java.lang.reflect.Modifier
-
-import _root_.streaming.common.JarUtil
 import _root_.streaming.core._
 import _root_.streaming.core.strategy.platform.{PlatformManager, SparkRuntime}
 import _root_.streaming.dsl.mmlib.algs.tf.cluster.{ClusterSpec, ClusterStatus, ExecutorInfo}
@@ -37,8 +34,7 @@ import net.csdn.modules.transport.HttpTransportService
 import org.apache.spark.ps.cluster.Message
 import org.apache.spark.sql._
 import org.apache.spark.{MLSQLConf, SparkInstanceService}
-import org.joda.time.format.ISODateTimeFormat
-import tech.mlsql.job.{JobManager, MLSQLJobInfo, MLSQLJobType}
+import tech.mlsql.job.{JobManager, MLSQLJobType}
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable.ArrayBuffer
@@ -225,100 +221,6 @@ class RestController extends ApplicationController with WowLog {
 
   //end -------------------------------------------
 
-
-  // single spark sql support
-  // begin -------------------------------------------
-  @At(path = Array("/run/sql"), types = Array(GET, POST))
-  def ddlSql = {
-    val sparkSession = getSession
-    val path = param("path", "-")
-    if (paramAsBoolean("async", false) && path == "-") {
-      render(s"""path should not be empty""")
-    }
-
-    val jobInfo = JobManager.getJobInfo(
-      param("owner"), MLSQLJobType.SQL, param("jobName"), param("sql"),
-      paramAsLong("timeout", 30000)
-    )
-
-    paramAsBoolean("async", false).toString match {
-      case "true" if hasParam("callback") =>
-        JobManager.run(sparkSession, jobInfo, () => {
-          val dfWriter = limitOrNot(
-            sparkSession.sql(param("sql"))
-          ).write
-            .mode(SaveMode.Overwrite)
-          _save(dfWriter)
-          val htp = findService(classOf[HttpTransportService])
-          import scala.collection.JavaConversions._
-          htp.get(new Url(param("callback")), Map("url_path" -> s"""/download?fileType=raw&file_suffix=${param("format", "csv")}&paths=$path"""))
-        })
-        render("[]")
-
-      case "false" if param("resultType", "") == "file" =>
-        JobManager.run(sparkSession, jobInfo, () => {
-          val dfWriter = limitOrNot(
-            sparkSession.sql(param("sql"))
-          ).write
-            .mode(SaveMode.Overwrite)
-          _save(dfWriter)
-          render(s"""/download?fileType=raw&file_suffix=${param("format", "csv")}&paths=$path""")
-        })
-
-      case "false" if param("resultType", "") != "file" =>
-        JobManager.run(sparkSession, jobInfo, () => {
-          var res = ""
-          try {
-            res = limitOrNot {
-              sparkSession.sql(param("sql"))
-            }.toJSON
-              .collect()
-              .mkString(",")
-          } catch {
-            case e: Exception =>
-              e.printStackTrace()
-              val msg = if (paramAsBoolean("show_stack", false)) e.getStackTrace.map(f => f.toString).mkString("\n") else ""
-              render(500, e.getMessage + "\n" + msg)
-          }
-          render("[" + res + "]")
-        })
-    }
-  }
-
-
-  @At(path = Array("/runtime/spark/sql"), types = Array(GET, POST))
-  def sql = {
-    if (!runtime.isInstanceOf[SparkRuntime]) render(400, "only support spark application")
-    val sparkRuntime = runtime.asInstanceOf[SparkRuntime]
-    val sparkSession = sparkRuntime.sparkSession
-    val tableToPaths = params().filter(f => f._1.startsWith("tableName.")).map(table => (table._1.split("\\.").last, table._2))
-
-    tableToPaths.foreach { tableToPath =>
-      val tableName = tableToPath._1
-      val loaderClzz = params.filter(f => f._1 == s"loader_clzz.${tableName}").head
-      val newParams = params.filter(f => f._1.startsWith(s"loader_param.${tableName}.")).map { f =>
-        val coms = f._1.split("\\.")
-        val paramStr = coms.takeRight(coms.length - 2).mkString(".")
-        (paramStr, f._2)
-      }.toMap + loaderClzz
-
-      if (!sparkSession.catalog.tableExists(tableToPath._1) || paramAsBoolean("forceCreateTable", false)) {
-        sparkRuntime.operator.createTable(tableToPath._2, tableToPath._1, newParams)
-      }
-    }
-
-    val sql = if (param("sql").contains(" limit ")) param("sql") else param("sql") + " limit 1000"
-    val result = sparkRuntime.operator.runSQL(sql).mkString(",")
-
-    param("resultType", "json") match {
-      case "json" => render(200, "[" + result + "]", ViewType.json)
-      case _ => renderHtml(200, "/rest/sqlui-result.vm", WowCollections.map("feeds", result))
-    }
-  }
-
-  //end -------------------------------------------
-
-
   // job manager api
   // begin --------------------------------------------------------
   @Action(
@@ -335,45 +237,6 @@ class RestController extends ApplicationController with WowLog {
     setAccessControlAllowOrigin
     val infoMap = JobManager.getJobInfo
     render(200, toJsonString(infoMap))
-  }
-
-  @Action(
-    summary = "show all running stream jobs", description = ""
-  )
-  @Parameters(Array())
-  @Responses(Array(
-    new ApiResponse(responseCode = "200", description = "", content = new Content(mediaType = "application/json",
-      schema = new Schema(`type` = "string", format = """{}""", description = "")
-    ))
-  ))
-  @At(path = Array("/stream/jobs/running"), types = Array(GET, POST))
-  def streamRunningJobs = {
-    setAccessControlAllowOrigin
-    val sparkSession = getSession
-    val infoMap = sparkSession.streams.active.map { f =>
-      val startTime = ISODateTimeFormat.dateTime().parseDateTime(f.lastProgress.timestamp).getMillis
-      MLSQLJobInfo(null, MLSQLJobType.STREAM, f.name, f.lastProgress.json, f.id + "", startTime, -1l)
-    }
-    render(200, toJsonString(infoMap))
-  }
-
-  @Action(
-    summary = "kill specific stream job", description = ""
-  )
-  @Parameters(Array(
-    new Parameter(name = "groupId", required = false, description = "the job id", `type` = "string", allowEmptyValue = false)
-  ))
-  @Responses(Array(
-    new ApiResponse(responseCode = "200", description = "", content = new Content(mediaType = "application/json",
-      schema = new Schema(`type` = "string", format = """{}""", description = "")
-    ))
-  ))
-  @At(path = Array("/stream/jobs/kill"), types = Array(GET, POST))
-  def killStreamJob = {
-    setAccessControlAllowOrigin
-    val groupId = param("groupId")
-    getSession.streams.get(groupId).stop()
-    render(200, "{}")
   }
 
   def setAccessControlAllowOrigin = {
@@ -521,42 +384,12 @@ class RestController extends ApplicationController with WowLog {
 
   }
 
-  @At(path = Array("/udf"), types = Array(GET, POST))
-  def udf = {
-    val sparkSession = getSession
-    sparkSession.sparkContext.addJar(param("path"))
-    try {
-      val clzz = JarUtil.loadJar(param("path"), param("className"))
-      clzz.getMethods.foreach { f =>
-        try {
-          if (Modifier.isStatic(f.getModifiers)) {
-            f.invoke(null, sparkSession.udf)
-          }
-        } catch {
-          case e: Exception =>
-            logger.info(s"${f.getName} missing", e)
-        }
-      }
-
-    } catch {
-      case e: Exception =>
-        logger.error("udf register fail", e)
-        render(400, e.getCause)
-    }
-    render(200, "[]")
-  }
 
   @At(path = Array("/check"), types = Array(GET, POST))
   def check = {
     render(WowCollections.map())
   }
 
-  @At(path = Array("/test"), types = Array(GET, POST))
-  def test = {
-    val psDriverBackend = runtime.asInstanceOf[SparkRuntime].psDriverBackend
-    val res = psDriverBackend.psDriverRpcEndpointRef.ask[Boolean](Message.CopyModelToLocal(param("hdfs"), param("local")))
-    render(s"""{"msg":${res}""")
-  }
 
   @At(path = Array("/debug/executor/ping"), types = Array(GET, POST))
   def pingExecuotrs = {
