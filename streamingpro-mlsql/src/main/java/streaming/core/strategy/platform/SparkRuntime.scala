@@ -184,6 +184,16 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
     if (MLSQLConf.MLSQL_DISABLE_SPARK_LOG.readFrom(configReader)) {
       WowLoggerFilter.redirectSparkInfoLogs()
     }
+
+    if(MLSQLConf.MLSQL_CACHE_PASSIVE_AUTO_CLEANUP_ENABLE.readFrom(configReader)){
+      if (null == SQLTableCacheClean.cloneSparkSession) {
+        SQLTableCacheClean.cloneSparkSession = ss
+        SQLTableCacheClean.writeCleanUpDelay = MLSQLConf.MLSQL_CACHE_PASSIVE_AUTO_CLEANUP_DELAY.readFrom(configReader)
+        SQLTableCacheClean.cleanUpCycle = MLSQLConf.MLSQL_CACHE_PASSIVE_AUTO_CLEANUP_CYCLE.readFrom(configReader)
+        SQLTableCacheClean.start()
+      }
+    }
+
     show(params.asScala.map(kv => (kv._1.toString, kv._2.toString)).toMap)
     ss
   }

@@ -200,6 +200,24 @@ object MLSQLConf {
       .longConf
       .createWithDefault(1000)
 
+  val MLSQL_CACHE_PASSIVE_AUTO_CLEANUP_ENABLE: ConfigEntry[Boolean] =
+    MLSQLConfigBuilder("spark.mlsql.sql.cache.passive.cleanup.enable")
+      .doc("enable passive cleanup of mlsql cache.")
+      .booleanConf
+      .createWithDefault(true)
+
+  val MLSQL_CACHE_PASSIVE_AUTO_CLEANUP_DELAY: ConfigEntry[Long] =
+    MLSQLConfigBuilder("spark.mlsql.sql.cache.passive.cleanup.delay")
+      .doc("mlsql cache cleanup delay.")
+      .longConf
+      .createWithDefault(7200)
+
+  val MLSQL_CACHE_PASSIVE_AUTO_CLEANUP_CYCLE: ConfigEntry[Long] =
+    MLSQLConfigBuilder("spark.mlsql.sql.cache.passive.cleanup.cycle")
+      .doc("mlsql cache cleanup cycle.")
+      .longConf
+      .createWithDefault(1800)
+
   def getAllDefaults: Map[String, String] = {
     entries.entrySet().asScala.map { kv =>
       (kv.getKey, kv.getValue.defaultValueString)

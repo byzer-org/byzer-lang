@@ -46,6 +46,7 @@ class TrainAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdap
       ctx.getChild(tokenIndex) match {
         case s: TableNameContext =>
           tableName = evaluate(s.getText)
+          options += ("viewName" -> evaluate(s.getText))
         case s: FormatContext =>
           format = s.getText
         case s: PathContext =>

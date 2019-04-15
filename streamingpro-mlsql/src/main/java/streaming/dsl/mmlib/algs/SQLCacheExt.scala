@@ -22,6 +22,7 @@ import org.apache.spark.ml.param.{BooleanParam, Param}
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.mlsql.session.MLSQLException
 import org.apache.spark.sql.{DataFrame, SparkSession}
+import streaming.core.strategy.platform.SQLTableCacheClean
 import streaming.dsl.mmlib._
 import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
 
@@ -42,6 +43,8 @@ class SQLCacheExt(override val uid: String) extends SQLAlg with WowParams {
 
     if (exe == "cache") {
       df.persist()
+      val viewNameAlias = params.get(viewName.name).get
+      SQLTableCacheClean.cache.put(viewName.name + "_" + viewNameAlias, viewNameAlias)
     } else {
       df.unpersist()
     }
@@ -65,6 +68,8 @@ class SQLCacheExt(override val uid: String) extends SQLAlg with WowParams {
   })
 
   final val isEager: BooleanParam = new BooleanParam(this, "isEager", "if set true, execute computing right now, and cache the table")
+
+  final val viewName: Param[String] = new Param[String](this, "viewName", "if set true, execute computing right now, and cache the table")
 
 
   override def doc: Doc = Doc(MarkDownDoc,
