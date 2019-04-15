@@ -1,0 +1,106 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package streaming.dsl
+
+import _root_.streaming.dsl.parser.DSLSQLParser._
+import streaming.common.ShellCommand
+import streaming.dsl.template.TemplateMerge
+
+/**
+  * Created by allwefantasy on 27/8/2017.
+  */
+class SetAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdaptor {
+  override def parse(ctx: SqlContext): Unit = {
+    var key = ""
+    var value = ""
+    var command = ""
+    var original_command = ""
+    var option = Map[String, String]()
+    (0 to ctx.getChildCount() - 1).foreach { tokenIndex =>
+
+      ctx.getChild(tokenIndex) match {
+        case s: SetKeyContext =>
+          key = s.getText
+        case s: SetValueContext =>
+          original_command = s.getText
+          if (s.quotedIdentifier() != null && s.quotedIdentifier().BACKQUOTED_IDENTIFIER() != null) {
+            command = cleanStr(s.getText)
+          } else if (s.qualifiedName() != null && s.qualifiedName().identifier() != null) {
+            command = cleanStr(s.getText)
+          }
+          else {
+            command = original_command
+          }
+        case s: ExpressionContext =>
+          option += (cleanStr(s.qualifiedName().getText) -> getStrOrBlockStr(s))
+        case s: BooleanExpressionContext =>
+          option += (cleanStr(s.expression().qualifiedName().getText) -> getStrOrBlockStr(s.expression()))
+        case _ =>
+      }
+    }
+
+    def evaluate(str: String) = {
+      TemplateMerge.merge(str, scriptSQLExecListener.env().toMap)
+    }
+
+    var overwrite = true
+    option.get("type") match {
+      case Some("sql") =>
+
+        val resultHead = scriptSQLExecListener.sparkSession.sql(evaluate(command)).collect().headOption
+        if (resultHead.isDefined) {
+          value = resultHead.get.get(0).toString
+        }
+      case Some("shell") =>
+        value = ShellCommand.execSimpleCommand(evaluate(command)).trim
+      case Some("conf") =>
+        key match {
+          case "spark.scheduler.pool" =>
+            scriptSQLExecListener.sparkSession
+              .sqlContext
+              .sparkContext
+              .setLocalProperty(key, original_command)
+          case _ =>
+            scriptSQLExecListener.sparkSession.sql(s""" set ${key} = ${original_command} """)
+        }
+      case Some("defaultParam") =>
+        overwrite = false
+      case _ =>
+        value = cleanBlockStr(cleanStr(command))
+    }
+
+    if (!overwrite) {
+      if (!scriptSQLExecListener.env().contains(key)) {
+        scriptSQLExecListener.addEnv(key, value)
+      }
+    } else {
+      scriptSQLExecListener.addEnv(key, value)
+    }
+
+    scriptSQLExecListener.env().view.foreach {
+      case (k, v) =>
+        val mergedValue = TemplateMerge.merge(v, scriptSQLExecListener.env().toMap)
+        if (mergedValue != v) {
+          scriptSQLExecListener.addEnv(k, mergedValue)
+        }
+    }
+
+    scriptSQLExecListener.setLastSelectTable(null)
+  }
+}

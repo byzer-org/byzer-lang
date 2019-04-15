@@ -1,0 +1,54 @@
+{
+  "scalamaptojson": {
+    "desc": "测试",
+    "strategy": "spark",
+    "algorithm": [],
+    "ref": [
+    ],
+    "compositor": [
+      {
+        "name": "ss.sources",
+        "params": [
+          {
+            "format": "kafka9",
+            "outputTable": "test",
+            "kafka.bootstrap.servers": "127.0.0.1:9092",
+            "topics": "test",
+            "path": "-"
+          },
+          {
+            "format": "com.databricks.spark.csv",
+            "outputTable": "sample",
+            "header": "true",
+            "path": "/Users/allwefantasy/streamingpro/sample.csv"
+          }
+        ]
+      },
+      {
+        "name": "ss.sql",
+        "params": [
+          {
+            "sql": "select city as value from test left join sample on  CAST(test.value AS String) == sample.name",
+            "outputTableName": "test3"
+          }
+        ]
+      },
+      {
+        "name": "ss.outputs",
+        "params": [
+          {
+            "mode": "append",
+            "format": "kafka8",
+            "metadata.broker.list":"127.0.0.1:9092",
+            "topics":"test2",
+            "inputTableName": "test3",
+            "checkpoint":"/tmp/ss-kafka/",
+            "path": "/tmp/ss-kafka-data"
+          }
+        ]
+      }
+    ],
+    "configParams": {
+    }
+  }
+}

@@ -1,0 +1,36 @@
+<assembly>
+    <id>bin-${project.version}</id>
+    <formats>
+        <format>tgz</format>
+    </formats>
+    <moduleSets>
+        <moduleSet>
+
+            <!-- Enable access to all projects in the current multimodule build! -->
+            <useAllReactorProjects>true</useAllReactorProjects>
+
+            <!-- Now, select which projects to include in this module-set. -->
+            <includes>
+                <include>tech.msql:*</include>
+            </includes>
+            <!--<excludes>-->
+                <!--<exclude>tech.msql:streamingpro-manager</exclude>-->
+                <!--<exclude>tech.msql:streamingpro-dl4j</exclude>-->
+            <!--</excludes>-->
+            <binaries>
+                <outputDirectory>libs</outputDirectory>
+                <unpack>false</unpack>
+            </binaries>
+        </moduleSet>
+    </moduleSets>
+    <fileSets>
+        <fileSet>
+            <directory>${project.parent.basedir}/dev</directory>
+            <outputDirectory>.</outputDirectory>
+            <includes>
+                <include>start-local.sh</include>
+                <include>empty.json</include>
+            </includes>
+        </fileSet>
+    </fileSets>
+</assembly>

@@ -13,16 +13,21 @@ statement
 
 
 sql
-    : ('load'|'LOAD') format '.' path 'options'? expression? booleanExpression*  'as' tableName
-    | ('save'|'SAVE') (overwrite | append | errorIfExists |ignore)* tableName 'as' format '.' path 'options'? expression? booleanExpression* ('partitionBy' col)?
-    | ('select'|'SELECT') ~(';')* 'as' tableName
-    | ('insert'|'INSERT') ~(';')*
-    | ('create'|'CREATE') ~(';')*
-    | ('set'|'SET') ~(';')*
-    | ('connect'|'CONNECT') format 'where'? expression? booleanExpression* ('as' db)?
-    | ('train'|'TRAIN') tableName 'as' format '.' path 'where'? expression? booleanExpression*
-    | ('register'|'REGISTER') format '.' path 'as' functionName
-    |  SIMPLE_COMMENT
+    : 'load' format '.' path ('options'|'where')? expression? booleanExpression* 'as' tableName
+    | 'save' (overwrite | append | errorIfExists |ignore)* tableName 'as' format '.' path ('options'|'where')? expression? booleanExpression* (('partitionBy'|'partitionby') col? colGroup*)?
+    | 'select' ~(';')* 'as' tableName
+    | 'insert' ~(';')*
+    | 'create' ~(';')*
+    | 'drop' ~(';')*
+    | 'refresh' ~(';')*
+    | 'set' setKey '=' setValue ('options'|'where')? expression? booleanExpression*
+    | 'connect' format ('options'|'where')? expression? booleanExpression* ('as' db)?
+    | ('train'|'run'|'predict') tableName 'as' format '.' path ('options'|'where')? expression? booleanExpression* asTableName*
+    | 'register' format '.' path 'as' functionName ('options'|'where')? expression? booleanExpression*
+    | 'unregister' format '.' path ('options'|'where')? expression? booleanExpression*
+    | 'include' format '.' path ('options'|'where')? expression? booleanExpression*
+    | command (setValue|setKey)*
+    | SIMPLE_COMMENT
     ;
 
 overwrite
@@ -46,7 +51,7 @@ booleanExpression
     ;
 
 expression
-    : identifier '=' STRING
+    : qualifiedName '=' (STRING|BLOCK_STRING)
     ;
 
 ender
@@ -61,8 +66,24 @@ path
     : quotedIdentifier | identifier
     ;
 
+setValue
+    : qualifiedName | quotedIdentifier | STRING | BLOCK_STRING
+    ;
+
+setKey
+    : qualifiedName
+    ;
+
+command
+    : '!' qualifiedName
+    ;
+
 db
     :qualifiedName | identifier
+    ;
+
+asTableName
+    : 'as' tableName
     ;
 
 tableName
@@ -71,6 +92,10 @@ tableName
 
 functionName
     : identifier
+    ;
+
+colGroup
+    : ',' col
     ;
 
 col
@@ -98,6 +123,10 @@ quotedIdentifier
 STRING
     : '\'' ( ~('\''|'\\') | ('\\' .) )* '\''
     | '"' ( ~('"'|'\\') | ('\\' .) )* '"'
+    ;
+
+BLOCK_STRING
+    : '\'\'\'' ~[+] .*? '\'\'\''
     ;
 
 IDENTIFIER

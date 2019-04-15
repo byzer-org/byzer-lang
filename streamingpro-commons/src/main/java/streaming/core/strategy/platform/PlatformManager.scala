@@ -1,3 +1,21 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package streaming.core.strategy.platform
 
 import java.util.concurrent.atomic.{AtomicInteger, AtomicReference}
@@ -89,7 +107,6 @@ class PlatformManager {
       jobs = params.getParam("streaming.jobs").split(",")
 
 
-
     lastStreamingRuntimeInfo match {
       case Some(ssri) =>
         runtime.configureStreamingRuntimeInfo(ssri)
@@ -112,10 +129,21 @@ class PlatformManager {
     }
 
 
+    /*
+        Once streaming.mode.application.fails_all is set true,
+        Any job fails will result the others not be executed.
+     */
+    val failsAll = params.getBooleanParam("streaming.mode.application.fails_all", false)
+    StrategyDispatcher.throwsException = failsAll
+
     val jobCounter = new AtomicInteger(0)
     jobs.foreach {
       jobName =>
-
+        /*
+        todo: We should check if it runs on Yarn, it true, then
+              convert the exception to Yarn exception otherwise the
+              Yarn will show the status success even there are exceptions thrown
+         */
         dispatcher.dispatch(Dispatcher.contextParams(jobName))
         val index = jobCounter.get()
 
@@ -205,6 +233,8 @@ object PlatformManager {
 
   def SPARK = "spark"
 
+  def MLSQL = "mlsql"
+
   def FLINK_STREAMING = "flink_streaming"
 
   def platformNameMapping = Map[String, String](
@@ -212,7 +242,8 @@ object PlatformManager {
     SPAKR_STRUCTURED_STREAMING -> "streaming.core.strategy.platform.SparkStructuredStreamingRuntime",
     FLINK_STREAMING -> "streaming.core.strategy.platform.FlinkStreamingRuntime",
     SPAKR_STREAMING -> "streaming.core.strategy.platform.SparkStreamingRuntime",
-    SPARK -> "streaming.core.strategy.platform.SparkRuntime"
+    SPARK -> "streaming.core.strategy.platform.SparkRuntime",
+    MLSQL -> "streaming.core.strategy.platform.MLSQLRuntime"
   )
 
 }

@@ -2,18 +2,60 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>streaming.king</groupId>
+    <groupId>tech.mlsql</groupId>
     <artifactId>streamingpro</artifactId>
     <packaging>pom</packaging>
-    <version>1.0.0</version>
+    <version>1.3.0-SNAPSHOT</version>
+
+    <name>StreamingPro Parent POM</name>
+    <url>https://github.com/allwefantasy/streamingpro</url>
+    <description>With MLSQL,you can unifies big data and machine learning,one language, one platform.
+    </description>
+    <licenses>
+        <license>
+            <name>Apache 2.0 License</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.html</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+    <developers>
+        <developer>
+            <id>allwefantasy</id>
+            <name>ZhuHaiLin</name>
+            <email>allwefantasy@gmail.com</email>
+        </developer>
+        <developer>
+            <id>chenfu</id>
+            <name>Fu Chen</name>
+            <email>cfmcgrady@gmail.com</email>
+        </developer>
+    </developers>
+    <scm>
+        <connection>
+            scm:git:git@github.com:allwefantasy/streamingpro.git
+        </connection>
+        <developerConnection>
+            scm:git:git@github.com:allwefantasy/streamingpro.git
+        </developerConnection>
+        <url>https://github.com/allwefantasy/streamingpro</url>
+    </scm>
+    <issueManagement>
+        <url>https://github.com/allwefantasy/streamingpro/issues</url>
+    </issueManagement>
+
     <modules>
         <module>streamingpro-commons</module>
         <module>streamingpro-spark-common</module>
         <module>streamingpro-manager</module>
+        <module>streamingpro-jython</module>
         <module>streamingpro-api</module>
-        <module>streamingpro-hbase</module>
-        <module>streamingpro-redis</module>
-        <module>streamingpro-model</module>
+        <module>streamingpro-cluster</module>
+
+        <module>external/streamingpro-hbase</module>
+        <module>external/streamingpro-redis</module>
+        <module>contri/streamingpro-dl4j</module>
+        <module>contri/streamingpro-automl</module>
+        <module>contri/streamingpro-opencv</module>
     </modules>
 
     <properties>
@@ -25,14 +67,18 @@
         <spark.streaming.kafka.artifactId>spark-streaming-kafka-0-8_${scala.binary.version}
         </spark.streaming.kafka.artifactId>
         <spark.sql.kafka.artifactId>spark-sql-kafka-0-10_${scala.binary.version}</spark.sql.kafka.artifactId>
-        <spark.version>2.1.1</spark.version>
+        <spark.version>2.2.0</spark.version>
+        <spark.bigversion>2.2</spark.bigversion>
 
-        <flink.version>1.2.0</flink.version>
+
+        <flink.version>1.4.2</flink.version>
+        <guava.version>16.0</guava.version>
+        <httpclient.version>4.5.3</httpclient.version>
 
         <serviceframework.version>2.0.0</serviceframework.version>
         <scope>provided</scope>
+        <hadoop-client-version>2.6.5</hadoop-client-version>
     </properties>
-
 
     <repositories>
         <repository>
@@ -46,14 +92,186 @@
                 <enabled>true</enabled>
             </snapshots>
         </repository>
-        <repository>
-            <id>cloudera</id>
-            <url>https://repositonry.cloudera.com/artifactory/cloudera-repos/</url>
-        </repository>
     </repositories>
 
     <profiles>
 
+        <profile>
+            <id>oss-support</id>
+            <properties>
+                <hadoop-client-version>3.2.0</hadoop-client-version>
+            </properties>
+            <dependencies>
+                <dependency>
+                    <groupId>org.apache.hadoop</groupId>
+                    <artifactId>hadoop-aliyun</artifactId>
+                    <version>3.2.0</version>
+                    <exclusions>
+                        <exclusion>
+                            <groupId>org.eclipse.jetty</groupId>
+                            <artifactId>jetty-server</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>org.eclipse.jetty</groupId>
+                            <artifactId>jetty-io</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>org.eclipse.jetty</groupId>
+                            <artifactId>jetty-http</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>org.eclipse.jetty</groupId>
+                            <artifactId>jetty-util</artifactId>
+                        </exclusion>
+                    </exclusions>
+                    <scope>${scope}</scope>
+
+                </dependency>
+                <dependency>
+                    <groupId>org.eclipse.jetty</groupId>
+                    <artifactId>jetty-server</artifactId>
+                    <version>9.2.16.v20160414</version>
+                </dependency>
+                <dependency>
+                    <groupId>org.eclipse.jetty</groupId>
+                    <artifactId>jetty-io</artifactId>
+                    <version>9.2.16.v20160414</version>
+                </dependency>
+                <dependency>
+                    <groupId>org.eclipse.jetty</groupId>
+                    <artifactId>jetty-util</artifactId>
+                    <version>9.2.16.v20160414</version>
+                </dependency>
+                <dependency>
+                    <groupId>org.eclipse.jetty</groupId>
+                    <artifactId>jetty-http</artifactId>
+                    <version>9.2.16.v20160414</version>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.hadoop</groupId>
+                    <artifactId>hadoop-hdfs</artifactId>
+                    <version>${hadoop-client-version}</version>
+                    <scope>${scope}</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.hadoop</groupId>
+                    <artifactId>hadoop-hdfs-client</artifactId>
+                    <version>${hadoop-client-version}</version>
+                    <scope>${scope}</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.hadoop</groupId>
+                    <artifactId>hadoop-client</artifactId>
+                    <version>${hadoop-client-version}</version>
+                    <scope>${scope}</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.hadoop</groupId>
+                    <artifactId>hadoop-common</artifactId>
+                    <version>${hadoop-client-version}</version>
+                    <scope>${scope}</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.hadoop</groupId>
+                    <artifactId>hadoop-auth</artifactId>
+                    <version>${hadoop-client-version}</version>
+                    <scope>${scope}</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.hadoop</groupId>
+                    <artifactId>hadoop-annotations</artifactId>
+                    <version>${hadoop-client-version}</version>
+                    <scope>${scope}</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.hadoop</groupId>
+                    <artifactId>hadoop-yarn-api</artifactId>
+                    <version>${hadoop-client-version}</version>
+                    <scope>${scope}</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.hadoop</groupId>
+                    <artifactId>hadoop-yarn-client</artifactId>
+                    <version>${hadoop-client-version}</version>
+                    <scope>${scope}</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.hadoop</groupId>
+                    <artifactId>hadoop-yarn-common</artifactId>
+                    <version>${hadoop-client-version}</version>
+                    <scope>${scope}</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.hadoop</groupId>
+                    <artifactId>hadoop-yarn-server-common</artifactId>
+                    <version>${hadoop-client-version}</version>
+                    <scope>${scope}</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.hadoop</groupId>
+                    <artifactId>hadoop-mapreduce-client-app</artifactId>
+                    <version>${hadoop-client-version}</version>
+                    <scope>${scope}</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.hadoop</groupId>
+                    <artifactId>hadoop-mapreduce-client-common</artifactId>
+                    <version>${hadoop-client-version}</version>
+                    <scope>${scope}</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.hadoop</groupId>
+                    <artifactId>hadoop-mapreduce-client-jobclient</artifactId>
+                    <version>${hadoop-client-version}</version>
+                    <scope>${scope}</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.hadoop</groupId>
+                    <artifactId>hadoop-mapreduce-client-shuffle</artifactId>
+                    <version>${hadoop-client-version}</version>
+                    <scope>${scope}</scope>
+                </dependency>
+            </dependencies>
+        </profile>
+
+        <profile>
+            <id>release-sign-artifacts</id>
+            <activation>
+                <property>
+                    <name>performRelease</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>1.5</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <id>disable-java8-doclint</id>
+            <activation>
+                <jdk>[1.8,)</jdk>
+            </activation>
+            <properties>
+                <additionalparam>-Xdoclint:none</additionalparam>
+                <doclint>none</doclint>
+            </properties>
+        </profile>
         <profile>
             <id>scala-2.11</id>
             <properties>
@@ -66,6 +284,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-enforcer-plugin</artifactId>
+                        <version>3.0.0-M1</version>
                         <executions>
                             <execution>
                                 <id>enforce-versions</id>
@@ -87,6 +306,7 @@
                 </plugins>
             </build>
         </profile>
+
         <profile>
             <id>scala-2.10</id>
             <properties>
@@ -123,59 +343,21 @@
         </profile>
 
         <profile>
-            <id>spark-1.6.1</id>
-            <properties>
-                <spark.version>1.6.1</spark.version>
-                <hadoop-client-version>2.6.0</hadoop-client-version>
-                <spark.streaming.kafka.artifactId>spark-streaming-kafka_${scala.binary.version}
-                </spark.streaming.kafka.artifactId>
-                <spark.sql.kafka.artifactId>spark-streaming-kafka_${scala.binary.version}</spark.sql.kafka.artifactId>
-            </properties>
-            <modules>
-                <module>streamingpro-spark</module>
-            </modules>
-            <dependencies>
-                <dependency>
-                    <groupId>net.csdn</groupId>
-                    <artifactId>serviceframework-jetty-9-server</artifactId>
-                    <version>${serviceframework.version}</version>
-                </dependency>
-            </dependencies>
-        </profile>
-        <profile>
-            <id>spark-2.1.0</id>
-            <properties>
-                <spark.streaming.kafka.artifactId>spark-streaming-kafka-0-8_${scala.binary.version}
-                </spark.streaming.kafka.artifactId>
-                <spark.sql.kafka.artifactId>spark-sql-kafka-0-10_${scala.binary.version}</spark.sql.kafka.artifactId>
-                <spark.version>2.1.1</spark.version>
-                <hadoop-client-version>2.6.0</hadoop-client-version>
-            </properties>
-            <modules>
-                <module>streamingpro-dsl-legacy</module>
-                <module>streamingpro-spark-2.0</module>
-            </modules>
-            <dependencies>
-                <dependency>
-                    <groupId>net.csdn</groupId>
-                    <artifactId>serviceframework-jetty-9-server</artifactId>
-                    <version>${serviceframework.version}</version>
-                </dependency>
-            </dependencies>
-        </profile>
 
-        <profile>
             <id>spark-2.2.0</id>
             <properties>
                 <spark.streaming.kafka.artifactId>spark-streaming-kafka-0-8_${scala.binary.version}
                 </spark.streaming.kafka.artifactId>
                 <spark.sql.kafka.artifactId>spark-sql-kafka-0-10_${scala.binary.version}</spark.sql.kafka.artifactId>
                 <spark.version>2.2.0</spark.version>
-                <hadoop-client-version>2.6.0</hadoop-client-version>
+                <spark.bigversion>2.2</spark.bigversion>
+                <bigdl.spark.version.minor>2.2.0</bigdl.spark.version.minor>
             </properties>
             <modules>
+                <module>streamingpro-spark-2.2.0-adaptor</module>
                 <module>streamingpro-dsl-legacy</module>
-                <module>streamingpro-spark-2.0</module>
+                <module>streamingpro-mlsql</module>
+                <module>streamingpro-crawler</module>
             </modules>
             <dependencies>
                 <dependency>
@@ -236,12 +418,16 @@
                 <spark.streaming.kafka.artifactId>spark-streaming-kafka-0-8_${scala.binary.version}
                 </spark.streaming.kafka.artifactId>
                 <spark.sql.kafka.artifactId>spark-sql-kafka-0-10_${scala.binary.version}</spark.sql.kafka.artifactId>
-                <spark.version>2.3.0</spark.version>
-                <hadoop-client-version>2.6.5</hadoop-client-version>
+                <spark.version>2.3.2</spark.version>
+                <spark.bigversion>2.3</spark.bigversion>
+                <bigdl.spark.version.minor>2.3.1</bigdl.spark.version.minor>
             </properties>
             <modules>
+                <module>streamingpro-spark-2.3.0-adaptor</module>
                 <module>streamingpro-dsl</module>
-                <module>streamingpro-spark-2.0</module>
+                <module>streamingpro-mlsql</module>
+                <module>streamingpro-crawler</module>
+                <module>contri/streamingpro-xgboost</module>
             </modules>
             <dependencies>
                 <dependency>
@@ -296,7 +482,76 @@
         </profile>
 
         <profile>
-            <id>flink-1.2.0</id>
+            <id>spark-2.4.0</id>
+            <properties>
+                <spark.streaming.kafka.artifactId>spark-streaming-kafka-0-8_${scala.binary.version}
+                </spark.streaming.kafka.artifactId>
+                <spark.sql.kafka.artifactId>spark-sql-kafka-0-10_${scala.binary.version}</spark.sql.kafka.artifactId>
+                <spark.version>2.4.0</spark.version>
+                <spark.bigversion>2.4</spark.bigversion>
+                <bigdl.spark.version.minor>2.4.0</bigdl.spark.version.minor>
+            </properties>
+            <modules>
+                <module>streamingpro-spark-2.4.0-adaptor</module>
+                <module>streamingpro-dsl</module>
+                <module>streamingpro-mlsql</module>
+                <module>streamingpro-crawler</module>
+                <module>contri/streamingpro-xgboost</module>
+            </modules>
+            <dependencies>
+                <dependency>
+                    <groupId>javax.servlet</groupId>
+                    <artifactId>javax.servlet-api</artifactId>
+                    <version>3.1.0</version>
+                </dependency>
+                <dependency>
+                    <groupId>net.csdn</groupId>
+                    <artifactId>serviceframework-jetty-9-server</artifactId>
+                    <version>${serviceframework.version}</version>
+                    <exclusions>
+                        <!--<exclusion>-->
+                        <!--<groupId>org.eclipse.jetty</groupId>-->
+                        <!--<artifactId>jetty-server</artifactId>-->
+                        <!--</exclusion>-->
+                        <!--<exclusion>-->
+                        <!--<groupId>org.eclipse.jetty</groupId>-->
+                        <!--<artifactId>jetty-http</artifactId>-->
+                        <!--</exclusion>-->
+                        <!--<exclusion>-->
+                        <!--<groupId>org.eclipse.jetty</groupId>-->
+                        <!--<artifactId>jetty-io</artifactId>-->
+                        <!--</exclusion>-->
+                        <!--<exclusion>-->
+                        <!--<groupId>org.eclipse.jetty</groupId>-->
+                        <!--<artifactId>jetty-continuation</artifactId>-->
+                        <!--</exclusion>-->
+                        <!--<exclusion>-->
+                        <!--<groupId>org.eclipse.jetty</groupId>-->
+                        <!--<artifactId>jetty-util</artifactId>-->
+                        <!--</exclusion>-->
+                        <exclusion>
+                            <groupId>org.eclipse.jetty</groupId>
+                            <artifactId>jetty-servlet</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>junit</groupId>
+                            <artifactId>junit</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>org.scala-lang</groupId>
+                            <artifactId>jline</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>com.alibaba</groupId>
+                            <artifactId>dubbo</artifactId>
+                        </exclusion>
+                    </exclusions>
+                </dependency>
+            </dependencies>
+        </profile>
+
+        <profile>
+            <id>flink-1.4.2</id>
             <modules>
                 <module>streamingpro-flink</module>
             </modules>
@@ -308,7 +563,69 @@
                 </dependency>
             </dependencies>
         </profile>
+        <profile>
+            <id>antlr4.7.1-maven</id>
+            <modules>
+                <module>streamingpro-dsl</module>
+            </modules>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.antlr</groupId>
+                        <artifactId>antlr4-maven-plugin</artifactId>
+                        <version>4.7.1</version>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>antlr4</goal>
+                                </goals>
+                                <!--<phase>generate-sources</phase>-->
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <visitor>false</visitor>
+                            <sourceDirectory>src/main/resources</sourceDirectory>
+                            <outputDirectory>src/main/java/streaming/dsl/parser</outputDirectory>
+                        </configuration>
+                    </plugin>
 
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>antlr4.5.3-maven</id>
+            <modules>
+                <module>streamingpro-dsl-legacy</module>
+            </modules>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.antlr</groupId>
+                        <artifactId>antlr4-maven-plugin</artifactId>
+                        <version>4.5.3</version>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>antlr4</goal>
+                                </goals>
+                                <!--<phase>generate-sources</phase>-->
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <visitor>false</visitor>
+                            <sourceDirectory>../streamingpro-dsl/src/main/resources</sourceDirectory>
+                            <outputDirectory>src/main/java/streaming/dsl/parser</outputDirectory>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>assembly</id>
+            <modules>
+                <module>streamingpro-assembly</module>
+            </modules>
+        </profile>
     </profiles>
     <dependencies>
 
@@ -318,21 +635,41 @@
             <version>${scala.version}</version>
             <scope>${scope}</scope>
         </dependency>
-
-        <!--<dependency>-->
-        <!--<groupId>org.ansj</groupId>-->
-        <!--<artifactId>ansj_seg</artifactId>-->
-        <!--<version>5.0</version>-->
-        <!--<scope>system</scope>-->
-        <!--<systemPath>${project.basedir}/lib/ansj_seg-5.0.0-all-in-one.jar</systemPath>-->
-        <!--</dependency>-->
+        <dependency>
+            <groupId>org.scalatest</groupId>
+            <artifactId>scalatest_${scala.binary.version}</artifactId>
+            <version>3.0.3</version>
+            <scope>test</scope>
+        </dependency>
 
 
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>fluent-hc</artifactId>
-            <version>4.3.2</version>
+            <version>${httpclient.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.httpcomponents</groupId>
+                    <artifactId>httpclient</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>${httpclient.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpmime</artifactId>
+            <version>${httpclient.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-exec</artifactId>
+            <version>1.3</version>
+        </dependency>
+
         <dependency>
             <groupId>joda-time</groupId>
             <artifactId>joda-time</artifactId>
@@ -360,6 +697,12 @@
             <groupId>net.liftweb</groupId>
             <artifactId>lift-json_${scala.binary.version}</artifactId>
             <version>2.6.2</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.scala-lang</groupId>
+                    <artifactId>scala-compiler</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <dependency>
@@ -379,7 +722,24 @@
                     <groupId>com.alibaba</groupId>
                     <artifactId>dubbo</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>org.apache.httpcomponents</groupId>
+                    <artifactId>httpclient</artifactId>
+                </exclusion>
             </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>${guava.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.pegdown</groupId>
+            <artifactId>pegdown</artifactId>
+            <version>1.6.0</version>
+            <scope>test</scope>
         </dependency>
 
         <dependency>
@@ -433,6 +793,30 @@
                     <groupId>org.scala-lang</groupId>
                     <artifactId>jline</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>com.google.guava</groupId>
+                    <artifactId>guava</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.httpcomponents</groupId>
+                    <artifactId>httpclient</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>joda-time</groupId>
+                    <artifactId>joda-time</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.joda</groupId>
+                    <artifactId>joda-convert</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.javassist</groupId>
+                    <artifactId>javassist</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.json4s</groupId>
+                    <artifactId>json4s-jackson_2.11</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
 
@@ -476,13 +860,17 @@
             <version>5.1.22</version>
         </dependency>
 
-
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
             <version>1.7.5</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+            <version>1.7.5</version>
+        </dependency>
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
@@ -496,6 +884,7 @@
         </dependency>
 
     </dependencies>
+
     <build>
 
         <sourceDirectory>src/main/java/</sourceDirectory>
@@ -505,16 +894,19 @@
             </resource>
         </resources>
         <plugins>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.8.1</version>
+                <version>3.0.0-M1</version>
                 <configuration>
+                    <forkCount>1</forkCount>
+                    <reuseForks>true</reuseForks>
+                    <argLine>-Xmx4024m</argLine>
                     <includes>
                         <include>**/*.java</include>
                         <include>**/*.scala</include>
                     </includes>
-                    <skipTests>true</skipTests>
                 </configuration>
 
             </plugin>
@@ -549,19 +941,20 @@
                     </execution>
                 </executions>
             </plugin>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>2.3.2</version>
                 <configuration>
+                    <!--<compilerArgument>-parameters</compilerArgument>-->
                     <compilerArgument>-g</compilerArgument>
                     <verbose>true</verbose>
-                    <source>1.6</source>
-                    <target>1.6</target>
+                    <source>1.8</source>
+                    <target>1.8</target>
                 </configuration>
 
             </plugin>
-
 
             <!--   要将源码放上去，需要加入这个插件    -->
             <plugin>
@@ -579,7 +972,62 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.sonatype.plugins</groupId>
+                <artifactId>nexus-staging-maven-plugin</artifactId>
+                <version>1.6.7</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <serverId>sonatype-nexus-staging</serverId>
+                    <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+                    <autoReleaseAfterClose>true</autoReleaseAfterClose>
+                </configuration>
+            </plugin>
 
+            <plugin>
+                <groupId>org.scalatest</groupId>
+                <artifactId>scalatest-maven-plugin</artifactId>
+                <version>2.0.0</version>
+                <configuration>
+                    <tagsToExclude>streaming.core.NotToRunTag</tagsToExclude>
+                    <reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
+                    <junitxml>.</junitxml>
+                    <filereports>WDF TestSuite.txt</filereports>
+                    <htmlreporters>${project.build.directory}/html/scalatest</htmlreporters>
+                    <testFailureIgnore>false</testFailureIgnore>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>test</id>
+                        <goals>
+                            <goal>test</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
+    <distributionManagement>
+        <snapshotRepository>
+            <id>sonatype-nexus-snapshots</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+        <repository>
+            <id>sonatype-nexus-staging</id>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/
+            </url>
+        </repository>
+    </distributionManagement>
 </project>
