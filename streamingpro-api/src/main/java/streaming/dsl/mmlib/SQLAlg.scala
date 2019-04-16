@@ -49,6 +49,8 @@ trait SQLAlg extends Serializable {
 
   def skipPathPrefix: Boolean = false
 
+  def skipOriginalDFName: Boolean = true
+
   def modelType: ModelType = UndefinedType
 
   def doc: Doc = Doc(TextDoc, "")
