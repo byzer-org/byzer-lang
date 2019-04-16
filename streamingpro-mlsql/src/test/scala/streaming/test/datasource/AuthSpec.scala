@@ -412,4 +412,26 @@ class AuthSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLCon
     }
 
   }
+  "when table is valirable" should "still work in MLSQL auth" in {
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { implicit runtime: SparkRuntime =>
+      //执行sql
+      implicit val spark = runtime.sparkSession
+
+      val mlsql =
+        """
+          |set load_path = "test/t1";
+          |set tmp_table = "tt4";
+          |set tmp_table_1 = "tt4_1";
+          |set savePath = "download/123.csv";
+          |
+          |load csv.`${load_path}` options owner = "zhuml" and header="true" and delimiter="," as `${tmp_table}`;
+          |
+          |select * from `${tmp_table}` limit 50000 as `${tmp_table_1}`;
+        """.stripMargin
+      executeScript(mlsql)
+      val loadMLSQLTable = DefaultConsoleClient.get.filter(f => (f.tableType == TableType.TEMP && f.operateType == OperateType.LOAD))
+      assert(loadMLSQLTable.head.table.get == "tt4")
+
+    }
+  }
 }
