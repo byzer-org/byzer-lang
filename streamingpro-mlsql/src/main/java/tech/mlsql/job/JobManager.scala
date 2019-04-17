@@ -6,9 +6,11 @@ import java.util.concurrent.{ConcurrentHashMap, Executors, TimeUnit}
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.mlsql.session.{SessionIdentifier, SparkSessionCacheManager}
 import streaming.log.{Logging, WowLog}
+import tech.mlsql.job.JobListener.{JobFinishedEvent, JobStartedEvent}
 
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
+import scala.collection.mutable.ArrayBuffer
 
 /**
   * 2019-04-07 WilliamZhu(allwefantasy@gmail.com)
@@ -16,6 +18,15 @@ import scala.collection.JavaConverters._
 object JobManager extends Logging {
   private[this] var _jobManager: JobManager = _
   private[this] val _executor = Executors.newFixedThreadPool(100)
+  private[this] val _jobListeners = ArrayBuffer[JobListener]()
+
+  def addJobListener(listener: JobListener) = {
+    _jobListeners += listener
+  }
+
+  def removeJobListener(listener: JobListener) = {
+    _jobListeners -= listener
+  }
 
   def shutdown = {
     logInfo(s"JobManager is shutdown....")
@@ -43,6 +54,7 @@ object JobManager extends Logging {
 
   def run(session: SparkSession, job: MLSQLJobInfo, f: () => Unit): Unit = {
     try {
+      _jobListeners.foreach { f => f.onJobStarted(new JobStartedEvent(job.groupId)) }
       if (_jobManager == null) {
         f()
       } else {
@@ -50,6 +62,7 @@ object JobManager extends Logging {
         _jobManager.groupIdToMLSQLJobInfo.put(job.groupId, job)
         f()
       }
+      _jobListeners.foreach { f => f.onJobFinished(new JobFinishedEvent(job.groupId)) }
     } finally {
       handleJobDone(job.groupId)
       session.sparkContext.clearJobGroup()
@@ -60,14 +73,7 @@ object JobManager extends Logging {
     // TODO: (fchen) 改成callback
     _executor.execute(new Runnable {
       override def run(): Unit = {
-        try {
-          _jobManager.groupIdToMLSQLJobInfo.put(job.groupId, job)
-          session.sparkContext.setJobGroup(job.groupId, job.jobName, true)
-          f()
-        } finally {
-          handleJobDone(job.groupId)
-          session.sparkContext.clearJobGroup()
-        }
+        JobManager.run(session, job, f)
       }
     })
   }

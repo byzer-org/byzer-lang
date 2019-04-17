@@ -19,29 +19,37 @@
 package streaming.dsl.mmlib.algs
 
 import org.apache.spark.ml.param.{BooleanParam, Param}
+import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.mlsql.session.MLSQLException
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.{DataFrame, SparkExposure, SparkSession}
+import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib._
 import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
+
+import scala.collection.mutable.ArrayBuffer
 
 
 class SQLCacheExt(override val uid: String) extends SQLAlg with WowParams {
 
-  override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
+  override def train(_df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
 
+    val df = if (path.isEmpty) _df else _df.sparkSession.table(path)
     val exe = params.get(execute.name).getOrElse {
       "cache"
     }
-
+    val __dfname__ = params("__dfname__")
     val _isEager = params.get(isEager.name).map(f => f.toBoolean).getOrElse(false)
 
     if (!execute.isValid(exe)) {
       throw new MLSQLException(s"${execute.name} should be cache or uncache")
     }
 
+    val context = ScriptSQLExec.contextGetOrForTest()
+
     if (exe == "cache") {
       df.persist()
+      SQLCacheExt.addCache(TableCacheItem(context.groupId, context.owner, __dfname__, df.queryExecution.logical, System.currentTimeMillis()))
     } else {
       df.unpersist()
     }
@@ -51,6 +59,11 @@ class SQLCacheExt(override val uid: String) extends SQLAlg with WowParams {
     }
     df
   }
+
+
+  override def skipPathPrefix: Boolean = true
+
+  override def skipOriginalDFName: Boolean = false
 
   override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = {
     throw new RuntimeException("register is not support")
@@ -88,6 +101,30 @@ class SQLCacheExt(override val uid: String) extends SQLAlg with WowParams {
   override def modelType: ModelType = ProcessType
 
   def this() = this(BaseParams.randomUID())
+
   override def explainParams(sparkSession: SparkSession): DataFrame = _explainParams(sparkSession)
 
 }
+
+object SQLCacheExt {
+  val cache = new java.util.concurrent.ConcurrentHashMap[String, ArrayBuffer[TableCacheItem]]()
+
+  def addCache(tci: TableCacheItem) = {
+    synchronized {
+      val items = cache.getOrDefault(tci.groupId, ArrayBuffer[TableCacheItem]())
+      items += tci
+      cache.put(tci.groupId, items)
+    }
+  }
+
+  def cleanCache(session: SparkSession, groupId: String) = {
+    val items = cache.remove(groupId)
+    if (items != null) {
+      items.foreach { item =>
+        SparkExposure.cleanCache(session, item.planToCache)
+      }
+    }
+  }
+}
+
+case class TableCacheItem(groupId: String, owner: String, tableName: String, planToCache: LogicalPlan, cacheStartTime: Long)
