@@ -66,10 +66,11 @@ object JobManager extends Logging {
         _jobManager.groupIdToMLSQLJobInfo.put(job.groupId, job)
         f()
       }
-      _jobListeners.foreach { f => f.onJobFinished(new JobFinishedEvent(job.groupId)) }
+
     } finally {
       handleJobDone(job.groupId)
       session.sparkContext.clearJobGroup()
+      _jobListeners.foreach { f => f.onJobFinished(new JobFinishedEvent(job.groupId)) }
     }
   }
 
