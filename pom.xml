@@ -54,7 +54,6 @@
         <module>external/streamingpro-hbase</module>
         <module>external/streamingpro-redis</module>
         <module>contri/streamingpro-dl4j</module>
-        <module>contri/streamingpro-automl</module>
         <module>contri/streamingpro-opencv</module>
     </modules>
 
