@@ -36,6 +36,7 @@ import net.csdn.modules.http.{ApplicationController, ViewType}
 import net.csdn.modules.transport.HttpTransportService
 import org.apache.spark.ps.cluster.Message
 import org.apache.spark.sql._
+import org.apache.spark.sql.mlsql.session.MLSQLSparkSession
 import org.apache.spark.{MLSQLConf, SparkInstanceService}
 import org.joda.time.format.ISODateTimeFormat
 import tech.mlsql.job.{JobManager, MLSQLJobInfo, MLSQLJobType}
@@ -78,6 +79,7 @@ class RestController extends ApplicationController with WowLog {
     new Parameter(name = "timeout", required = false, description = "set timeout value for your job. default is -1 which means it is never timeout. millisecond", `type` = "int", allowEmptyValue = false),
     new Parameter(name = "silence", required = false, description = "the last sql in the script will return nothing. default: false", `type` = "boolean", allowEmptyValue = false),
     new Parameter(name = "sessionPerUser", required = false, description = "If set true, the owner will have their own session otherwise share the same. default: false", `type` = "boolean", allowEmptyValue = false),
+    new Parameter(name = "sessionPerRequest", required = false, description = "by default false", `type` = "boolean", allowEmptyValue = false),
     new Parameter(name = "async", required = false, description = "If set true ,please also provide a callback url use `callback` parameter and the job will run in background and the API will return.  default: false", `type` = "boolean", allowEmptyValue = false),
     new Parameter(name = "callback", required = false, description = "Used when async is set true. callback is a url. default: false", `type` = "string", allowEmptyValue = false),
     new Parameter(name = "skipInclude", required = false, description = "disable include statement. default: false", `type` = "boolean", allowEmptyValue = false),
@@ -386,10 +388,17 @@ class RestController extends ApplicationController with WowLog {
 
 
   def getSession = {
-    if (paramAsBoolean("sessionPerUser", false)) {
+
+    val session = if (paramAsBoolean("sessionPerUser", false)) {
       runtime.asInstanceOf[SparkRuntime].getSession(param("owner", "admin"))
     } else {
       runtime.asInstanceOf[SparkRuntime].sparkSession
+    }
+
+    if (paramAsBoolean("sessionPerRequest", false)) {
+      MLSQLSparkSession.cloneSession(session)
+    } else {
+      session
     }
   }
 
