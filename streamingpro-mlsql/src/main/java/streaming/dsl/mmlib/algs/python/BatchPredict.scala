@@ -147,7 +147,9 @@ class BatchPredict extends Logging with WowLog with Serializable {
         )
         res.foreach(f => logInfo(format(f)))
 
-        HDFSOperator.copyToHDFS(localOutputFileStr, outoutFile, cleanTarget = true, cleanSource = false)
+        HDFSOperator.deleteDir(outoutFile)
+        HDFSOperator.createDir(outoutFile)
+        HDFSOperator.copyToHDFS(localOutputFileStr, outoutFile, cleanTarget = false, cleanSource = false)
 
       } catch {
         case e: Exception =>
