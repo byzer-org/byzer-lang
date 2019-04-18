@@ -63,6 +63,9 @@ class BatchPredict extends Logging with WowLog with Serializable {
     val modelPath = modelMeta.modelEntityPaths.head
 
     val outoutFile = SQLPythonFunc.getAlgTmpPath(_path) + "/output"
+    HDFSOperator.deleteDir(outoutFile)
+    HDFSOperator.createDir(outoutFile)
+
 
     val trainParams = modelMeta.trainParams
     val appName = df.sparkSession.sparkContext.getConf.get("spark.app.name")
@@ -147,7 +150,7 @@ class BatchPredict extends Logging with WowLog with Serializable {
         )
         res.foreach(f => logInfo(format(f)))
 
-        HDFSOperator.copyToHDFS(localOutputFileStr, outoutFile, cleanTarget = true, cleanSource = false)
+        HDFSOperator.copyToHDFS(localOutputFileStr, outoutFile, cleanTarget = false, cleanSource = false)
 
       } catch {
         case e: Exception =>

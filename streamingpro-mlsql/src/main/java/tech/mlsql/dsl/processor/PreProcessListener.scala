@@ -3,6 +3,7 @@ package tech.mlsql.dsl.processor
 import streaming.dsl.parser.DSLSQLParser.SqlContext
 import streaming.dsl.{ScriptSQLExecListener, SetAdaptor}
 import streaming.parser.lisener.BaseParseListenerextends
+import tech.mlsql.Stage
 import tech.mlsql.dsl.adaptor.{CommandAdaptor, StatementAdaptor}
 
 import scala.collection.mutable.ArrayBuffer
@@ -29,7 +30,7 @@ class PreProcessListener(val scriptSQLExecListener: ScriptSQLExecListener) exten
       case item if item.startsWith("!") =>
         new CommandAdaptor(this).parse(ctx)
       case "set" => {
-        new SetAdaptor(scriptSQLExecListener).parse(ctx)
+        new SetAdaptor(scriptSQLExecListener, Stage.preProcess).parse(ctx)
         new StatementAdaptor(this).parse(ctx)
       }
       case _ => new StatementAdaptor(this).parse(ctx)
