@@ -18,13 +18,12 @@
 
 package org.apache.spark.sql.execution
 
-import org.apache.spark.sql.catalyst.{TableIdentifier}
+import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.catalyst.parser._
 import org.apache.spark.sql.catalyst.parser.SqlBaseParser._
 import org.apache.spark.sql.catalyst.plans.logical._
 import org.apache.spark.sql.catalyst.trees.Origin
 import org.apache.spark.sql.internal.{SQLConf, VariableSubstitution}
-
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -40,7 +39,7 @@ class WowSparkSqlParser(conf: SQLConf) extends AbstractSqlParser {
     super.parse(substitutor.substitute(command))(toResult)
   }
 
-  def tables(sqlText: String, t: ArrayBuffer[TableIdentifier]) = {
+  def tables(sqlText: String, t: ArrayBuffer[WowTableIdentifier]) = {
     TableHolder.tables.set(t)
     val res = parse(sqlText) { parser =>
       astBuilder.visitSingleStatement(parser.singleStatement()) match {
@@ -62,11 +61,22 @@ class WowSparkSqlParser(conf: SQLConf) extends AbstractSqlParser {
 class WowSparkSqlAstBuilder(conf: SQLConf) extends SparkSqlAstBuilder(conf) {
   override def visitTableIdentifier(ctx: TableIdentifierContext): TableIdentifier = {
     val ti = super.visitTableIdentifier(ctx)
-    TableHolder.tables.get() += ti
+
+    val ifInsert = ctx.parent.getChild(0).getText match {
+      case "insert" => Some("insert")
+      case _ => None
+    }
+
+    TableHolder.tables.get() += WowTableIdentifier(ti.table ,ti.database ,ifInsert)
     ti
   }
 }
 
 object TableHolder {
-  val tables: ThreadLocal[ArrayBuffer[TableIdentifier]] = new ThreadLocal[ArrayBuffer[TableIdentifier]]
+  val tables: ThreadLocal[ArrayBuffer[WowTableIdentifier]] = new ThreadLocal[ArrayBuffer[WowTableIdentifier]]
+}
+
+case class WowTableIdentifier(table: String, database: Option[String], operator: Option[String]) {
+  val identifier: String = table
+  def this(table: String) = this(table, None ,None)
 }
