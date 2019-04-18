@@ -17,9 +17,9 @@ object CommandCollection {
       !cache table1 application
       !uncache table1
      */
-    context.addEnv("cache", """ run command as CacheExt.`{}` where lifeTime="{}" """)
-    context.addEnv("unCache", """ run command as CacheExt.`{}` where execute="uncache" """)
-    context.addEnv("uncache", """ run command as CacheExt.`{}` where execute="uncache" """)
+    context.addEnv("cache", """ run {} as CacheExt.`` where lifeTime="{}" """)
+    context.addEnv("unCache", """ run {} as CacheExt.`` where execute="uncache" """)
+    context.addEnv("uncache", """ run {} as CacheExt.`` where execute="uncache" """)
 
     context.addEnv("show",
       """

@@ -26,6 +26,7 @@ import org.apache.spark.sql.{DataFrame, SparkExposure, SparkSession}
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib._
 import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
+import streaming.log.{Logging, WowLog}
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -56,7 +57,7 @@ class SQLCacheExt(override val uid: String) extends SQLAlg with WowParams {
     if (exe == "cache") {
       df.persist()
       SQLCacheExt.addCache(TableCacheItem(context.groupId, context.owner, __dfname__,
-        df.queryExecution.logical,
+        df.queryExecution.analyzed,
         _lifeTime,
         System.currentTimeMillis()))
     } else {
@@ -118,7 +119,7 @@ class SQLCacheExt(override val uid: String) extends SQLAlg with WowParams {
 
 }
 
-object SQLCacheExt {
+object SQLCacheExt extends Logging with WowLog {
   val cache = new java.util.concurrent.ConcurrentHashMap[String, ArrayBuffer[TableCacheItem]]()
 
 
@@ -135,6 +136,7 @@ object SQLCacheExt {
     if (items != null) {
       items.foreach { item =>
         if (item.lifeTime == CacheLifeTime.SCRIPT) {
+          logInfo(format(s"clean cache in ${groupId}: ${item.tableName}"))
           SparkExposure.cleanCache(session, item.planToCache)
         }
       }
