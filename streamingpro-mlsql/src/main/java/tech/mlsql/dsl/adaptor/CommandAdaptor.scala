@@ -1,5 +1,7 @@
 package tech.mlsql.dsl.adaptor
 
+import java.util.concurrent.atomic.AtomicInteger
+
 import streaming.dsl.DslAdaptor
 import streaming.dsl.parser.DSLSQLParser
 import streaming.dsl.parser.DSLSQLParser._
@@ -43,21 +45,53 @@ class CommandAdaptor(preProcessListener: PreProcessListener) extends DslAdaptor 
       } else {
         Array[Char]()
       }
-
     }
 
-    var count = 0
-    (0 until len).foreach { i =>
+
+    val posCount = new AtomicInteger(0)
+    val curPos = new AtomicInteger(0)
+
+    def positionReplace(i: Int): Boolean = {
       if (tempCommand(i) == '{' && i < (len - 1) && tempCommand(i + 1) == '}') {
-        finalCommand ++= fetchParam(count)
-        count += 1
-      } else if (i >= 1 && tempCommand(i - 1) == '{' && tempCommand(i) == '}') {
-        //
+        finalCommand ++= fetchParam(posCount.get())
+        curPos.set(i + 2)
+        posCount.addAndGet(1)
+        return true
       }
-      else {
-        finalCommand += tempCommand(i)
+      return false
+    }
+
+    def namedPositionReplace(i: Int): Boolean = {
+
+      if (tempCommand(i) != '{') return false
+
+      val startPos = i
+      var endPos = i
+
+
+      // now , we should process with greedy until we meet '}'
+      while (endPos < len - 1 && tempCommand(endPos) != '}') {
+        endPos += 1
       }
 
+      val shouldBeNumber = tempCommand.slice(startPos + 1, endPos).trim
+      val namedPos = Integer.parseInt(shouldBeNumber)
+      finalCommand ++= fetchParam(namedPos)
+      curPos.set(endPos + 1)
+      return true
+    }
+
+    (0 until len).foreach { i =>
+
+      if (curPos.get() > i) {
+      }
+      else if (positionReplace(i)) {
+      }
+      else if (namedPositionReplace(i)) {
+
+      } else {
+        finalCommand += tempCommand(i)
+      }
     }
 
     preProcessListener.addStatement(String.valueOf(finalCommand.toArray))
