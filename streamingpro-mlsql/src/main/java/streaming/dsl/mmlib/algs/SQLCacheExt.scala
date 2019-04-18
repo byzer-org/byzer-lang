@@ -19,29 +19,47 @@
 package streaming.dsl.mmlib.algs
 
 import org.apache.spark.ml.param.{BooleanParam, Param}
+import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.mlsql.session.MLSQLException
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.{DataFrame, SparkExposure, SparkSession}
+import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib._
 import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
+import streaming.log.{Logging, WowLog}
+
+import scala.collection.mutable.ArrayBuffer
 
 
 class SQLCacheExt(override val uid: String) extends SQLAlg with WowParams {
 
-  override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
+  override def train(_df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
 
+    val df = if (path.isEmpty) _df else _df.sparkSession.table(path)
     val exe = params.get(execute.name).getOrElse {
       "cache"
     }
 
+    val _lifeTime = CacheLifeTime.withName(params.get(lifeTime.name).getOrElse {
+      CacheLifeTime.SCRIPT.toString
+    })
+
+
+    val __dfname__ = params("__dfname__")
     val _isEager = params.get(isEager.name).map(f => f.toBoolean).getOrElse(false)
 
     if (!execute.isValid(exe)) {
       throw new MLSQLException(s"${execute.name} should be cache or uncache")
     }
 
+    val context = ScriptSQLExec.contextGetOrForTest()
+
     if (exe == "cache") {
       df.persist()
+      SQLCacheExt.addCache(TableCacheItem(context.groupId, context.owner, __dfname__,
+        df.queryExecution.analyzed,
+        _lifeTime,
+        System.currentTimeMillis()))
     } else {
       df.unpersist()
     }
@@ -51,6 +69,11 @@ class SQLCacheExt(override val uid: String) extends SQLAlg with WowParams {
     }
     df
   }
+
+
+  override def skipPathPrefix: Boolean = true
+
+  override def skipOriginalDFName: Boolean = false
 
   override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = {
     throw new RuntimeException("register is not support")
@@ -65,6 +88,9 @@ class SQLCacheExt(override val uid: String) extends SQLAlg with WowParams {
   })
 
   final val isEager: BooleanParam = new BooleanParam(this, "isEager", "if set true, execute computing right now, and cache the table")
+  final val lifeTime: Param[String] = new Param[String](this, "lifeTime", "script|session|application", isValid = (m: String) => {
+    m == "script" || m == "session" || m == "application"
+  })
 
 
   override def doc: Doc = Doc(MarkDownDoc,
@@ -88,6 +114,46 @@ class SQLCacheExt(override val uid: String) extends SQLAlg with WowParams {
   override def modelType: ModelType = ProcessType
 
   def this() = this(BaseParams.randomUID())
+
   override def explainParams(sparkSession: SparkSession): DataFrame = _explainParams(sparkSession)
 
 }
+
+object SQLCacheExt extends Logging with WowLog {
+  val cache = new java.util.concurrent.ConcurrentHashMap[String, ArrayBuffer[TableCacheItem]]()
+
+
+  def addCache(tci: TableCacheItem) = {
+    synchronized {
+      val items = cache.getOrDefault(tci.groupId, ArrayBuffer[TableCacheItem]())
+      items += tci
+      cache.put(tci.groupId, items)
+    }
+  }
+
+  def cleanCache(session: SparkSession, groupId: String) = {
+    val items = cache.remove(groupId)
+    if (items != null) {
+      items.foreach { item =>
+        if (item.lifeTime == CacheLifeTime.SCRIPT) {
+          logInfo(format(s"clean cache in ${groupId}: ${item.tableName}"))
+          SparkExposure.cleanCache(session, item.planToCache)
+        }
+      }
+    }
+  }
+}
+
+object CacheLifeTime extends Enumeration {
+  type lifetime = Value
+  val SCRIPT = Value("script")
+  val APPLICATION = Value("application")
+  val SESSION = Value("session")
+}
+
+case class TableCacheItem(groupId: String,
+                          owner: String,
+                          tableName: String,
+                          planToCache: LogicalPlan,
+                          lifeTime: CacheLifeTime.Value,
+                          cacheStartTime: Long)

@@ -6,9 +6,12 @@ import java.util.concurrent.{ConcurrentHashMap, Executors, TimeUnit}
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.mlsql.session.{SessionIdentifier, SparkSessionCacheManager}
 import streaming.log.{Logging, WowLog}
+import tech.mlsql.job.JobListener.{JobFinishedEvent, JobStartedEvent}
+import tech.mlsql.job.listeners.CleanCacheListener
 
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
+import scala.collection.mutable.ArrayBuffer
 
 /**
   * 2019-04-07 WilliamZhu(allwefantasy@gmail.com)
@@ -16,12 +19,22 @@ import scala.collection.JavaConverters._
 object JobManager extends Logging {
   private[this] var _jobManager: JobManager = _
   private[this] val _executor = Executors.newFixedThreadPool(100)
+  private[this] val _jobListeners = ArrayBuffer[JobListener]()
+
+  def addJobListener(listener: JobListener) = {
+    _jobListeners += listener
+  }
+
+  def removeJobListener(listener: JobListener) = {
+    _jobListeners -= listener
+  }
 
   def shutdown = {
     logInfo(s"JobManager is shutdown....")
     _executor.shutdownNow()
     _jobManager.shutdown
     _jobManager = null
+    _jobListeners.clear()
   }
 
   def init(spark: SparkSession, initialDelay: Long = 30, checkTimeInterval: Long = 5) = {
@@ -29,6 +42,7 @@ object JobManager extends Logging {
       if (_jobManager == null) {
         logInfo(s"JobManager started with initialDelay=${initialDelay} checkTimeInterval=${checkTimeInterval}")
         _jobManager = new JobManager(spark, initialDelay, checkTimeInterval)
+        _jobListeners += new CleanCacheListener
         _jobManager.run
       }
     }
@@ -38,11 +52,13 @@ object JobManager extends Logging {
     if (_jobManager == null) {
       logInfo(s"JobManager started with initialDelay=${initialDelay} checkTimeInterval=${checkTimeInterval}")
       _jobManager = new JobManager(spark, initialDelay, checkTimeInterval)
+      _jobListeners += new CleanCacheListener
     }
   }
 
   def run(session: SparkSession, job: MLSQLJobInfo, f: () => Unit): Unit = {
     try {
+      _jobListeners.foreach { f => f.onJobStarted(new JobStartedEvent(job.groupId)) }
       if (_jobManager == null) {
         f()
       } else {
@@ -50,9 +66,11 @@ object JobManager extends Logging {
         _jobManager.groupIdToMLSQLJobInfo.put(job.groupId, job)
         f()
       }
+
     } finally {
       handleJobDone(job.groupId)
       session.sparkContext.clearJobGroup()
+      _jobListeners.foreach { f => f.onJobFinished(new JobFinishedEvent(job.groupId)) }
     }
   }
 
@@ -60,14 +78,7 @@ object JobManager extends Logging {
     // TODO: (fchen) 改成callback
     _executor.execute(new Runnable {
       override def run(): Unit = {
-        try {
-          _jobManager.groupIdToMLSQLJobInfo.put(job.groupId, job)
-          session.sparkContext.setJobGroup(job.groupId, job.jobName, true)
-          f()
-        } finally {
-          handleJobDone(job.groupId)
-          session.sparkContext.clearJobGroup()
-        }
+        JobManager.run(session, job, f)
       }
     })
   }
