@@ -434,4 +434,22 @@ class AuthSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLCon
 
     }
   }
+
+  "auth distinguish select of insert " should "still work in MLSQL auth" in {
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { implicit runtime: SparkRuntime =>
+      //执行sql
+      implicit val spark = runtime.sparkSession
+
+      val mlsql =
+        """
+          |insert into a
+          |select * from b;
+        """.stripMargin
+      executeScript(mlsql)
+      val insert = DefaultConsoleClient.get.filter(f => (f.table.get == "a")).head.operateType
+      val select = DefaultConsoleClient.get.filter(f => (f.table.get == "b")).head.operateType
+      assert(insert == OperateType.INSERT)
+      assert(select == OperateType.SELECT)
+    }
+  }
 }
