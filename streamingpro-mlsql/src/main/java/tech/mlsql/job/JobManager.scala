@@ -7,6 +7,7 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.mlsql.session.{SessionIdentifier, SparkSessionCacheManager}
 import streaming.log.{Logging, WowLog}
 import tech.mlsql.job.JobListener.{JobFinishedEvent, JobStartedEvent}
+import tech.mlsql.job.listeners.CleanCacheListener
 
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
@@ -33,6 +34,7 @@ object JobManager extends Logging {
     _executor.shutdownNow()
     _jobManager.shutdown
     _jobManager = null
+    _jobListeners.clear()
   }
 
   def init(spark: SparkSession, initialDelay: Long = 30, checkTimeInterval: Long = 5) = {
@@ -40,6 +42,7 @@ object JobManager extends Logging {
       if (_jobManager == null) {
         logInfo(s"JobManager started with initialDelay=${initialDelay} checkTimeInterval=${checkTimeInterval}")
         _jobManager = new JobManager(spark, initialDelay, checkTimeInterval)
+        _jobListeners += new CleanCacheListener
         _jobManager.run
       }
     }
@@ -49,6 +52,7 @@ object JobManager extends Logging {
     if (_jobManager == null) {
       logInfo(s"JobManager started with initialDelay=${initialDelay} checkTimeInterval=${checkTimeInterval}")
       _jobManager = new JobManager(spark, initialDelay, checkTimeInterval)
+      _jobListeners += new CleanCacheListener
     }
   }
 
