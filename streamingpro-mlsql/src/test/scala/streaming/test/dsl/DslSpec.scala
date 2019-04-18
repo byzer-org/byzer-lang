@@ -646,6 +646,63 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
     }
   }
 
+
+  "Command" should "alias expand work fine" in {
+
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) {
+      implicit runtime: SparkRuntime =>
+        implicit val spark = runtime.sparkSession
+
+        def compareDSL(command: String, targetStr: String) = {
+          val ssel = createSSEL
+          executeScript(command, ssel)
+          println(ssel.preProcessListener.get.toScript)
+          assert(ssel.preProcessListener.get.toScript contains targetStr)
+        }
+
+        compareDSL(
+          """
+            |set vtest = '''
+            |run command VTest.`{}` where name="{}"
+            |''';
+            |!vtest wow jack;
+          """.stripMargin, "run command VTest.`wow` where name=\"jack\"")
+
+        compareDSL(
+          """
+            |set vtest = '''
+            |run command VTest.`{}` where name="{}"{}
+            |''';
+            |!vtest wow jack;
+          """.stripMargin, "run command VTest.`wow` where name=\"jack\"")
+
+        compareDSL(
+          """
+            |set vtest = '''
+            |run command VTest.`{1}` where name="{0}"
+            |''';
+            |!vtest wow jack;
+          """.stripMargin, "run command VTest.`jack` where name=\"wow\"")
+
+        compareDSL(
+          """
+            |set vtest = '''
+            |run command VTest.`{}` where name="{}"
+            |''';
+            |!vtest;
+          """.stripMargin, "run command VTest.`` where name=\"\"")
+
+        compareDSL(
+          """
+            |set vtest = '''
+            |run command VTest.`{}` where {1} name="{}"
+            |''';
+            |!vtest wow jack;
+          """.stripMargin, "run command VTest.`wow` where jack name=\"jack\"")
+
+    }
+  }
+
   "mlsql" should "valiate before really executed" in {
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) {
       implicit runtime: SparkRuntime =>
