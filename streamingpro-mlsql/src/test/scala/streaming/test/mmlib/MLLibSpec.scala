@@ -220,42 +220,6 @@ class MLLibSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLCo
       df.selectExpr("jack(features) as predict").show()
     }
   }
-  "AutoFeature" should "work fine" in {
-    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
-
-      val isCarbonLoaded = try {
-        Class.forName("org.apache.spark.sql.CarbonSource")
-        true
-      } catch {
-        case e: Exception =>
-          false
-      }
-
-      if (!isCarbonLoaded) {
-        // carbondata is not capable with automl. We should check this.
-        implicit val spark = runtime.sparkSession
-        ScriptSQLExec.contextGetOrForTest()
-
-        if (SparkCoreVersion.is_2_2_X()) {
-          val df = spark.read.format("csv").option("header", "true").option("inferSchema", "true").load("/tmp/william/titanic.csv")
-          val feature = new SQLAutoFeatureExt()
-          feature.train(df, "/tmp/model2", Map("labelCol" -> "Survived", "workflowName" -> "wow"))
-          feature.batchPredict(df, "/tmp/model2", Map("workflowName" -> "wow")).show()
-        }
-
-        if (SparkCoreVersion.is_2_2_X()) {
-          val df = spark.read.format("csv").option("header", "true").option("inferSchema", "true").load("/tmp/william/titanic.csv")
-          val feature = new SQLAutoFeatureExt()
-          feature.train(df, "/tmp/model2", Map(
-            "labelCol" -> "Survived",
-            "workflowName" -> "wow"
-          ))
-          feature.batchPredict(df, "/tmp/model2", Map("workflowName" -> "wow")).show()
-        }
-      }
-
-
-    }
-  }
+  
 
 }
