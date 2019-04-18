@@ -21,11 +21,12 @@ package streaming.dsl
 import _root_.streaming.dsl.parser.DSLSQLParser._
 import streaming.common.ShellCommand
 import streaming.dsl.template.TemplateMerge
+import tech.mlsql.Stage
 
 /**
   * Created by allwefantasy on 27/8/2017.
   */
-class SetAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdaptor {
+class SetAdaptor(scriptSQLExecListener: ScriptSQLExecListener, stage: Stage.stage = Stage.physical) extends DslAdaptor {
   override def parse(ctx: SqlContext): Unit = {
     var key = ""
     var value = ""
@@ -62,10 +63,13 @@ class SetAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapto
     var overwrite = true
     option.get("type") match {
       case Some("sql") =>
-
-        val resultHead = scriptSQLExecListener.sparkSession.sql(evaluate(command)).collect().headOption
-        if (resultHead.isDefined) {
-          value = resultHead.get.get(0).toString
+        if (stage == Stage.physical || (
+          option.get(SetMode.keyName).getOrElse(SetMode.runtime) == SetMode.compile && stage == Stage.preProcess
+          )) {
+          val resultHead = scriptSQLExecListener.sparkSession.sql(evaluate(command)).collect().headOption
+          if (resultHead.isDefined) {
+            value = resultHead.get.get(0).toString
+          }
         }
       case Some("shell") =>
         value = ShellCommand.execSimpleCommand(evaluate(command)).trim
@@ -103,4 +107,13 @@ class SetAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapto
 
     scriptSQLExecListener.setLastSelectTable(null)
   }
+}
+
+object SetMode extends Enumeration {
+  type mode = Value
+  val compile = Value("compile")
+  val runtime = Value("runtime")
+
+  def keyName = "mode"
+
 }

@@ -31,10 +31,10 @@ import streaming.dsl.parser.DSLSQLParser._
 import streaming.dsl.parser.{DSLSQLLexer, DSLSQLListener, DSLSQLParser}
 import streaming.log.{Logging, WowLog}
 import streaming.parser.lisener.BaseParseListenerextends
+import tech.mlsql.Stage
 import tech.mlsql.dsl.CommandCollection
 import tech.mlsql.dsl.adaptor.PreProcessIncludeListener
 import tech.mlsql.dsl.processor.{AuthProcessListener, GrammarProcessListener, PreProcessListener}
-
 
 
 /**
@@ -226,7 +226,7 @@ class ScriptSQLExecListener(val _sparkSession: SparkSession, val _defaultPathPre
       case "refresh" =>
         new RefreshAdaptor(this).parse(ctx)
       case "set" =>
-        new SetAdaptor(this).parse(ctx)
+        new SetAdaptor(this, Stage.physical).parse(ctx)
       case "train" | "run" | "predict" =>
         new TrainAdaptor(this).parse(ctx)
       case "register" =>
@@ -236,10 +236,6 @@ class ScriptSQLExecListener(val _sparkSession: SparkSession, val _defaultPathPre
   }
 
 }
-
-
-
-
 
 
 object ConnectMeta {
