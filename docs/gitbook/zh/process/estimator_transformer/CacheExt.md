@@ -5,14 +5,19 @@
 具体使用方法如下：
 
 ```sql
-run table1 as CacheExt.`` where execute="cache" and isEager="true";
+!cache tableName script;
 ```
 
-其中isEager是指立马缓存么？ 否则只有后面出发一次，第二次才使用缓存结果。
+这句话表示我们会缓存tableName，并且该缓存只会在脚本期内生效。第二参数可选值有：
 
-一定要注意的是，cache是需要手动释放的，释放方法如下：
+```
+script      脚本运行结束自动清理缓存 
+session     还没有实现  
+application 需要手动释放
+```
 
+手动清理缓存也比较简单
 
 ```sql
-run table1 as CacheExt.`` where execute="uncache";
+!uncache tableName;
 ```
