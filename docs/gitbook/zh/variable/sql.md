@@ -29,3 +29,42 @@ select "${welcome_msg}" as a as output;
 ```
 
 其实可以实现很多复杂场景的功能，大家可以根据自己的实际情况灵活使用。
+
+如果开启了权限验证，默认是会失败的，比如：
+
+```sql
+
+
+select 1 as a as table1;
+
+set abc=`select a from table1` where type="sql";
+
+select ${abc} from table1 as output;
+
+
+```
+
+因为默认权限验证是编译时完成，而在编译时，table1还不存在。这个时候你可以指定为运行时生效：
+
+```sql
+select 1 as a as table1;
+
+set abc=`select a from table1` where type="sql" and mode="runtime";
+
+select ${abc} from table1 as output;
+
+```
+
+这样就可以了。那会不会影响权限校验呢？ 比如这么用：
+
+
+```sql
+select 1 as a as table1;
+
+set abc=`select a from table1` where type="sql" and mode="runtime";
+
+select a from ${abc} as output;
+
+```
+因为 '${abc}' 编译时权限校验不会被evaluate,所以这个时候也通不过权限系统。
+
