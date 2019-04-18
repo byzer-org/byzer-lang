@@ -105,6 +105,10 @@ class PythonMLSpec2 extends BasicSparkOperation with SpecFunctions with BasicMLS
       val rowsNum = spark.sql(s"select * from ${table}").collect()
       assert(rowsNum.size > 0)
 
+      assert(new File(s"/tmp/${projectName}/tmp/output/").listFiles().toList.filter { f =>
+        f.getName.endsWith("-0.json")
+      }.size > 0)
+
       ScriptSQLExec.parse(TemplateMerge.merge(ScriptCode.apiPredict, config), sq)
 
       // api predict
@@ -181,8 +185,8 @@ class PythonMLSpec2 extends BasicSparkOperation with SpecFunctions with BasicMLS
       assert(res.length == 1)
       assert(res.head.getAs[String](0).contains("jack"))
 
-//      sq = createSSEL(spark, "")
-//      ScriptSQLExec.parse(ScriptCode._j2_PREDICT, sq)
+      //      sq = createSSEL(spark, "")
+      //      ScriptSQLExec.parse(ScriptCode._j2_PREDICT, sq)
     }
   }
 
