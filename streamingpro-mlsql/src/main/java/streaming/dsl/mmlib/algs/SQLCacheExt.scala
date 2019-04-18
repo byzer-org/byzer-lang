@@ -38,6 +38,12 @@ class SQLCacheExt(override val uid: String) extends SQLAlg with WowParams {
     val exe = params.get(execute.name).getOrElse {
       "cache"
     }
+
+    val _lifeTime = CacheLifeTime.withName(params.get(lifeTime.name).getOrElse {
+      CacheLifeTime.SCRIPT.toString
+    })
+
+
     val __dfname__ = params("__dfname__")
     val _isEager = params.get(isEager.name).map(f => f.toBoolean).getOrElse(false)
 
@@ -49,7 +55,10 @@ class SQLCacheExt(override val uid: String) extends SQLAlg with WowParams {
 
     if (exe == "cache") {
       df.persist()
-      SQLCacheExt.addCache(TableCacheItem(context.groupId, context.owner, __dfname__, df.queryExecution.logical, System.currentTimeMillis()))
+      SQLCacheExt.addCache(TableCacheItem(context.groupId, context.owner, __dfname__,
+        df.queryExecution.logical,
+        _lifeTime,
+        System.currentTimeMillis()))
     } else {
       df.unpersist()
     }
@@ -78,6 +87,9 @@ class SQLCacheExt(override val uid: String) extends SQLAlg with WowParams {
   })
 
   final val isEager: BooleanParam = new BooleanParam(this, "isEager", "if set true, execute computing right now, and cache the table")
+  final val lifeTime: Param[String] = new Param[String](this, "lifeTime", "script|session|application", isValid = (m: String) => {
+    m == "script" || m == "session" || m == "application"
+  })
 
 
   override def doc: Doc = Doc(MarkDownDoc,
@@ -109,6 +121,7 @@ class SQLCacheExt(override val uid: String) extends SQLAlg with WowParams {
 object SQLCacheExt {
   val cache = new java.util.concurrent.ConcurrentHashMap[String, ArrayBuffer[TableCacheItem]]()
 
+
   def addCache(tci: TableCacheItem) = {
     synchronized {
       val items = cache.getOrDefault(tci.groupId, ArrayBuffer[TableCacheItem]())
@@ -121,10 +134,24 @@ object SQLCacheExt {
     val items = cache.remove(groupId)
     if (items != null) {
       items.foreach { item =>
-        SparkExposure.cleanCache(session, item.planToCache)
+        if (item.lifeTime == CacheLifeTime.SCRIPT) {
+          SparkExposure.cleanCache(session, item.planToCache)
+        }
       }
     }
   }
 }
 
-case class TableCacheItem(groupId: String, owner: String, tableName: String, planToCache: LogicalPlan, cacheStartTime: Long)
+object CacheLifeTime extends Enumeration {
+  type lifetime = Value
+  val SCRIPT = Value("script")
+  val APPLICATION = Value("application")
+  val SESSION = Value("session")
+}
+
+case class TableCacheItem(groupId: String,
+                          owner: String,
+                          tableName: String,
+                          planToCache: LogicalPlan,
+                          lifeTime: CacheLifeTime.Value,
+                          cacheStartTime: Long)
