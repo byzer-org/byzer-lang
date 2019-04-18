@@ -21,7 +21,7 @@ package streaming.dsl
 import org.apache.spark.sql.{DataFrame, DataFrameReader, functions => F}
 import streaming.core.datasource._
 import streaming.dsl.auth.TableType
-import streaming.dsl.load.batch.{AutoWorkflowSelfExplain, ModelSelfExplain}
+import streaming.dsl.load.batch.ModelSelfExplain
 import streaming.dsl.parser.DSLSQLParser._
 import streaming.dsl.template.TemplateMerge
 import streaming.source.parser.{SourceParser, SourceSchema}
@@ -110,11 +110,7 @@ class LoadPRocessing(scriptSQLExecListener: ScriptSQLExecListener,
       val resourcePath = resourceRealPath(scriptSQLExecListener, option.get("owner"), path)
 
       table = ModelSelfExplain(format, cleanStr(path), option, sparkSession).isMatch.thenDo.orElse(() => {
-
-        AutoWorkflowSelfExplain(format, cleanStr(path), option, sparkSession).isMatch.thenDo().orElse(() => {
-          reader.format(format).load(resourcePath)
-        }).get()
-
+        reader.format(format).load(resourcePath)
       }).get
     }
 
