@@ -107,4 +107,8 @@ object MLSQLSparkSession extends Logging {
     userSparkContextBeingConstruct.remove(user)
   }
 
+  def cloneSession(session: SparkSession) = {
+    session.cloneSession()
+  }
+
 }
