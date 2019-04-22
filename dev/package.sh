@@ -41,7 +41,14 @@ for env in MLSQL_SPARK_VERSION DRY_RUN DISTRIBUTION; do
   fi
 done
 
-BASE_PROFILES="-Pscala-2.11 -Ponline -Phive-thrift-server -Pcarbondata  -Pcrawler"
+# before we compile and package, correct the version in MLSQLVersion
+#---------------------
+current_version=$(cat pom.xml|grep -e '<version>.*</version>' | head -n 1 | tail -n 1 | cut -d'>' -f2 | cut -d '<' -f1)
+MLSQL_VERSION_FILE="./streamingpro-mlsql/src/main/java/tech/mlsql/core/version/MLSQLVersion.scala"
+sed -i '' "s/MLSQL_VERSION_PLACEHOLDER/${current_version}/" ${MLSQL_VERSION_FILE}
+#---------------------
+
+BASE_PROFILES="-Pscala-2.11 -Ponline -Phive-thrift-server -Pcrawler"
 
 if [[ "$MLSQL_SPARK_VERSION" > "2.2" ]]; then
   BASE_PROFILES="$BASE_PROFILES -Pdsl -Pxgboost"

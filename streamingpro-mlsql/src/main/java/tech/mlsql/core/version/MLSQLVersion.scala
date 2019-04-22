@@ -5,6 +5,6 @@ package tech.mlsql.core.version
   */
 object MLSQLVersion {
   def version = {
-    "1.2.0-SNAPSHOT"
+    "1.3.0-SNAPSHOT"
   }
 }
