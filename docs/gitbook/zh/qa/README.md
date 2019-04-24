@@ -238,6 +238,18 @@ Error when remote search url: [http://....:9003/run/script]
 
 也就是访问Engine后端失败了。那这个时候可以回想下是不是这个URL地址确实是网络不通的。
 
+当然，这是第一个问题，还有一个问题是可能Engine端会提示class,method 等找不到或者不匹配。这个时候如果大家使用的是CDH/HDP
+的Spark发行版,建议切换到社区发行版。如果还有问题，按如下方式填写发到Issue上去。
+
+```
+spark版本    : CDH 6.1.1自带的 spark_2.4 版本
+mlsql编译版本:
+console: 1.2.0
+cluster: 1.2.0
+engine:  1.2.0_2.4 (_前为MLSQL版本， _后为对应的Spark编译版本)
+
+```
+
 
 
 

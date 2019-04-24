@@ -9,6 +9,7 @@ MLSQL supports the following statements:
 5. register 
 6. save    
 7. include
+8. !      --(macros)
 
 ### connect
 
@@ -496,4 +497,22 @@ the request behind will like this：
 ```
 curl -XGET 'http://abc.com?a=coo&b=wow&path=function.dir1.scriptfile1&projectName=analyser'
 ```
+
+### !
+
+We can convert a bunch of MLSQL script code to a special command, and you can use ! to execute the command. Here is the example:
+
+```
+set findEmailByName = '''
+-- notice that there are no semicolon in the end of this line. 
+select email from table1 where name="{}" 
+''';
+
+-- Execute it like a command.
+!findEmailByName "jack";
+```
+
+
+
+
 
