@@ -2,7 +2,7 @@ package streaming.core.datasource.impl
 
 import org.apache.spark.ml.param.Param
 import org.apache.spark.sql.mlsql.session.MLSQLException
-import org.apache.spark.sql.{DataFrameWriter, Row, SaveMode, functions => F}
+import org.apache.spark.sql.{DataFrameWriter, Row, SaveMode}
 import streaming.common.HDFSOperator
 import streaming.core.datasource._
 import streaming.dsl.ScriptSQLExec
@@ -48,9 +48,8 @@ class MLSQLImage(override val uid: String) extends MLSQLBaseFileSource with WowP
       HDFSOperator.saveBytesFile(baseDir, fileName, buffer)
       baseDir + "/" + fileName
     }
-    val saveImageUdf = F.udf(saveImage)
 
-    config.df.get.select(saveImageUdf(F.col(_fileName), F.col(_imageColumn))).count()
+    config.df.get.rdd.map(r => saveImage(r.getAs[String](_fileName), r.getAs[Array[Byte]](_imageColumn))).count()
   }
 
   override def fullFormat: String = "streaming.dsl.mmlib.algs.processing.image"
