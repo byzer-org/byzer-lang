@@ -18,8 +18,9 @@
 
 package streaming.jython;
 
-import org.python.core.PyInteger;
+import org.python.core.Py;
 import org.python.core.PyObject;
+import org.python.core.PyString;
 import org.python.util.PythonInterpreter;
 
 import java.util.Properties;
@@ -40,7 +41,8 @@ public class PythonInterp {
     }
 
     public static PyObject compilePython(String src, String methodName) {
-        pi.exec(src);
+        PyString code = Py.newStringUTF8(src);
+        pi.exec(code);
         return pi.get(methodName);
     }
 
