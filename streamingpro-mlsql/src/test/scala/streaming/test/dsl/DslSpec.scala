@@ -22,6 +22,7 @@ import java.io.File
 
 import org.apache.spark.sql.catalyst.parser.ParseException
 import org.apache.spark.streaming.BasicSparkOperation
+import streaming.common.PathFun
 import streaming.common.shell.ShellCommand
 import streaming.core.strategy.platform.SparkRuntime
 import streaming.core.{BasicMLSQLConfig, NotToRunTag, SpecFunctions}
@@ -720,6 +721,10 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
           """.stripMargin)
         assert(res != null)
     }
+  }
+
+  "path join " should "work fine" in {
+    assert("/jack/ow/ab/no.md" == PathFun.joinPath("/jack", "ow", "", "/ab/", "no.md"))
   }
 
   def executeScriptWithValidate(script: String)(implicit runtime: SparkRuntime) = {
