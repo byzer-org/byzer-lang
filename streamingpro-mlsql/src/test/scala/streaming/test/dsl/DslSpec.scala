@@ -725,6 +725,7 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
 
   "path join " should "work fine" in {
     assert("/jack/ow/ab/no.md" == PathFun.joinPath("/jack", "ow", "", "/ab/", "no.md"))
+    assert("/jack/ow/ab/no.md" == (PathFun("/jack") / "ow" / "" / "/ab/" / "no.md").toPath)
   }
 
   def executeScriptWithValidate(script: String)(implicit runtime: SparkRuntime) = {

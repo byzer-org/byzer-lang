@@ -8,13 +8,17 @@ import scala.collection.mutable.ArrayBuffer
 class PathFun(rootPath: String) {
   private val buffer = new ArrayBuffer[String]()
   buffer += rootPath.stripSuffix("/")
-
+  
   def add(path: String) = {
     val cleanPath = path.stripPrefix("/").stripSuffix("/")
     if (!cleanPath.isEmpty) {
       buffer += cleanPath
     }
     this
+  }
+
+  def /(path: String) = {
+    add(path)
   }
 
   def toPath = {
