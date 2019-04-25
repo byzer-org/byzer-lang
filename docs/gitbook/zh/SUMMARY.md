@@ -73,8 +73,7 @@
         * [租户主目录设置](multi_tenement/home.md)        
     
     * [创建UDF/UDAF](udf/README.md)
-        * [Python UDF](udf/python_udf.md)
-        * [Python UDAF](udf/python_udaf.md)
+        * [Python UDF](udf/python_udf.md)       
         * [Scala UDF](udf/scala_udf.md)
         * [Scala UDAF](udf/scala_udaf.md)
         * [Java UDF](udf/java_udf.md)

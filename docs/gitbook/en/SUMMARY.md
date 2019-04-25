@@ -23,8 +23,18 @@
         * [Change the partitions of table](guide/et/repartition_table.md)
         * [Send Email](guide/et/email.md)
     * [Task Management](guide/task/README.md)
-        * [Show running jobs](guide/et/jdbc.md)
-                
+        * [Show running jobs](guide/task/show_job.md)
+        * [Kill Job](guide/task/kill_job.md)
+    * [Multi-Tenant](guide/multi-tenant/README.md)    
+        * [Configure](guide/multi-tenant/conf.md)
+        * [User home](guide/multi-tenant/home.md)
+        
+    * [Create UDF/UDAF](guide/udf/README.md) 
+        * [Python UDF](guide/udf/python-udf.md) 
+        * [Scala UDF](guide/udf/scala-udf.md) 
+        * [Scala UDAF](guide/udf/scala-udaf.md)
+        * [JAVA UDF](guide/udf/java-udf.md)     
+                  
 * [API Docs](test2/a.md)
 * [More]()
 
