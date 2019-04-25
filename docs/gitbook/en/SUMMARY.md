@@ -16,8 +16,15 @@
         * [HBase](guide/datasource/hbase.md)
         * [Parquet/Json/Text/Xml/Csv](guide/datasource/file.md)
         * [jsonStr/script/mlsqlAPI/mlsqlConf](guide/datasource/mlsql_source.md)
-        
-        
+    * [Variable](guide/variable/README.md)    
+    * [Built-in ET](guide/et/README.md)
+        * [Query MySQL Directly](guide/et/jdbc.md)
+        * [Build Parent-Child Relationship](guide/et/child-parent.md)
+        * [Change the partitions of table](guide/et/repartition_table.md)
+        * [Send Email](guide/et/email.md)
+    * [Task Management](guide/task/README.md)
+        * [Show running jobs](guide/et/jdbc.md)
+                
 * [API Docs](test2/a.md)
 * [More]()
 
