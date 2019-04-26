@@ -59,7 +59,7 @@ class SparkDynamicControlExecutors(session: SparkSession) {
 
   private def changeExecutors(num: Int, timeout: Long, isAdd: Boolean, f: () => Unit) = {
     val currentSize = sparkInnerExecutors.executorDataMap.size
-    val targetSize = if (isAdd) currentSize + num else currentSize - num
+    val targetSize = if (isAdd) num else currentSize - num
     f()
     var count = 0
     var susscess = false
