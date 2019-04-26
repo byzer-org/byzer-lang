@@ -21,7 +21,7 @@ class SparkInnerExecutors(session: SparkSession) {
     executorAllocationClient match {
       case Some(eac) =>
         val item = eac.asInstanceOf[CoarseGrainedSchedulerBackend]
-        val field = CoarseGrainedSchedulerBackend.getClass.getDeclaredField("org$apache$spark$scheduler$cluster$CoarseGrainedSchedulerBackend$$executorDataMap")
+        val field = classOf[CoarseGrainedSchedulerBackend].getDeclaredField("org$apache$spark$scheduler$cluster$CoarseGrainedSchedulerBackend$$executorDataMap")
         field.setAccessible(true)
         val executors = field.get(item).asInstanceOf[Map[String, ExecutorData]]
         executors
