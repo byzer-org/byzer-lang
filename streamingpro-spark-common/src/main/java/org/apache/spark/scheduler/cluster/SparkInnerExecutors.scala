@@ -4,6 +4,8 @@ import org.apache.spark.ExecutorAllocationClient
 import org.apache.spark.scheduler.local.LocalSchedulerBackend
 import org.apache.spark.sql.SparkSession
 
+import scala.collection.mutable
+
 /**
   * 2019-04-26 WilliamZhu(allwefantasy@gmail.com)
   */
@@ -23,7 +25,7 @@ class SparkInnerExecutors(session: SparkSession) {
         val item = eac.asInstanceOf[CoarseGrainedSchedulerBackend]
         val field = classOf[CoarseGrainedSchedulerBackend].getDeclaredField("org$apache$spark$scheduler$cluster$CoarseGrainedSchedulerBackend$$executorDataMap")
         field.setAccessible(true)
-        val executors = field.get(item).asInstanceOf[Map[String, ExecutorData]]
+        val executors = field.get(item).asInstanceOf[mutable.Map[String, ExecutorData]]
         executors
       case None => Map[String, ExecutorData]()
     }
