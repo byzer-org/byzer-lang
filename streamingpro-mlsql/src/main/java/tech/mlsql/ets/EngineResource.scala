@@ -11,12 +11,13 @@ import streaming.dsl.auth._
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.Functions
 import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
+import streaming.log.{Logging, WowLog}
 
 
 /**
   * 2019-04-26 WilliamZhu(allwefantasy@gmail.com)
   */
-class EngineResource(override val uid: String) extends SQLAlg with Functions with WowParams {
+class EngineResource(override val uid: String) extends SQLAlg with Functions with WowParams with Logging with WowLog {
   def this() = this(BaseParams.randomUID())
 
   override def batchPredict(df: DataFrame, path: String, params: Map[String, String]): DataFrame = train(df, path, params)
@@ -72,21 +73,26 @@ class EngineResource(override val uid: String) extends SQLAlg with Functions wit
 
     parseAction(_action) match {
       case Action.+ | Action.ADD =>
+        logInfo(s"Adding cpus; currentExecutorNum:${currentExecutorNum} targetExecutorNum:${currentExecutorNum + executorsShouldAddOrRemove}")
         tooMuchWithOneTime(_cpus)
         resourceControl.requestTotalExecutors(currentExecutorNum + executorsShouldAddOrRemove, _timeout)
 
       case Action.- | Action.REMOVE =>
+        logInfo(s"Removing cpus; currentExecutorNum:${currentExecutorNum} targetExecutorNum:${currentExecutorNum - executorsShouldAddOrRemove}")
         tooMuchWithOneTime(_cpus)
         resourceControl.killExecutors(executorsShouldAddOrRemove, _timeout)
       case Action.SET =>
+
         val diff = executorsShouldAddOrRemove - currentExecutorNum
         if (diff < 0) {
           tooMuchWithOneTime(-diff)
+          logInfo(s"Removing cpus; currentExecutorNum:${currentExecutorNum} targetExecutorNum:${currentExecutorNum + diff}")
           resourceControl.killExecutors(-diff, _timeout)
         }
 
         if (diff > 0) {
           tooMuchWithOneTime(diff)
+          logInfo(s"Removing cpus; currentExecutorNum:${currentExecutorNum} targetExecutorNum:${executorsShouldAddOrRemove}")
           resourceControl.requestTotalExecutors(executorsShouldAddOrRemove, _timeout)
         }
     }
