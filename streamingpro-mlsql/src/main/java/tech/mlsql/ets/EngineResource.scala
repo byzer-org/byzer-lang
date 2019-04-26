@@ -67,6 +67,7 @@ class EngineResource(override val uid: String) extends SQLAlg with Functions wit
     }
 
     val executorsShouldAddOrRemove = Math.floor(_cpus / executorInfo.executorCores).toInt
+    val currentExecutorNum = executorInfo.executorDataMap.size
 
     parseAction(_action) match {
       case Action.+ | Action.ADD =>
@@ -74,6 +75,15 @@ class EngineResource(override val uid: String) extends SQLAlg with Functions wit
 
       case Action.- | Action.REMOVE =>
         resourceControl.killExecutors(executorsShouldAddOrRemove, _timeout)
+      case Action.SET =>
+        val diff = executorsShouldAddOrRemove - currentExecutorNum
+        if (diff < 0) {
+          resourceControl.killExecutors(-diff, _timeout)
+        }
+
+        if (diff > 0) {
+          resourceControl.requestExecutors(diff, _timeout)
+        }
     }
 
     import spark.implicits._
@@ -109,6 +119,7 @@ class EngineResource(override val uid: String) extends SQLAlg with Functions wit
     val REMOVE = Value("remove")
     val + = Value("+")
     val - = Value("-")
+    val SET = Value("set")
   }
 
 
