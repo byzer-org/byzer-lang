@@ -45,7 +45,7 @@ class EngineResource(override val uid: String) extends SQLAlg with Functions wit
     val _action = fetchParam(params, action, ParamConvertOption.nothing, ParamDefaultOption.required[String])
     val _cpus = parseCores(fetchParam[String](params, cpus, ParamConvertOption.nothing, ParamDefaultOption.required[String]))
     val _timeout = fetchParam[Int](params, timeout, ParamConvertOption.toInt, (_) => {
-      set(timeout, 30 * 1000)
+      set(timeout, 60 * 1000)
     })
 
     val context = ScriptSQLExec.contextGetOrForTest()

@@ -64,7 +64,8 @@ class SparkDynamicControlExecutors(session: SparkSession) {
     var count = 0
     var notSusscess = true
     while (notSusscess && count < timeout / 1000) {
-      notSusscess = (currentSize != targetSize)
+      val _currentSize = sparkInnerExecutors.executorDataMap.size
+      notSusscess = (_currentSize != targetSize)
       Thread.sleep(1000)
       count += 1
     }
