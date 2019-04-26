@@ -48,11 +48,6 @@ class EngineResource(override val uid: String) extends SQLAlg with Functions wit
       set(timeout, 30 * 1000)
     })
 
-    if (_cpus > 20) {
-      throw new MLSQLException("Too many cpus added at one time. Please add them with multi times.");
-    }
-
-
     val context = ScriptSQLExec.contextGetOrForTest()
     context.execListener.getTableAuth match {
       case Some(tableAuth) =>
@@ -69,19 +64,29 @@ class EngineResource(override val uid: String) extends SQLAlg with Functions wit
     val executorsShouldAddOrRemove = Math.floor(_cpus / executorInfo.executorCores).toInt
     val currentExecutorNum = executorInfo.executorDataMap.size
 
+    def tooMuchWithOneTime(cpus: Int) = {
+      if (cpus > 20) {
+        throw new MLSQLException("Too many cpus added at one time. Please add them with multi times.");
+      }
+    }
+
     parseAction(_action) match {
       case Action.+ | Action.ADD =>
+        tooMuchWithOneTime(_cpus)
         resourceControl.requestExecutors(executorsShouldAddOrRemove, _timeout)
 
       case Action.- | Action.REMOVE =>
+        tooMuchWithOneTime(_cpus)
         resourceControl.killExecutors(executorsShouldAddOrRemove, _timeout)
       case Action.SET =>
         val diff = executorsShouldAddOrRemove - currentExecutorNum
         if (diff < 0) {
+          tooMuchWithOneTime(-diff)
           resourceControl.killExecutors(-diff, _timeout)
         }
 
         if (diff > 0) {
+          tooMuchWithOneTime(diff)
           resourceControl.requestExecutors(diff, _timeout)
         }
     }
