@@ -33,7 +33,15 @@
         * [Python UDF](guide/udf/python-udf.md) 
         * [Scala UDF](guide/udf/scala-udf.md) 
         * [Scala UDAF](guide/udf/scala-udaf.md)
-        * [JAVA UDF](guide/udf/java-udf.md)     
+        * [JAVA UDF](guide/udf/java-udf.md)
+    
+    * [Built-in UDF](guide/system_udf/README.md)
+        * [Http UDF](guide/system_udf/http-udf.md)
+        * [Common UDF](guide/system_udf/http-udf.md)
+    
+    * [Python project](guide/python/README.md)
+        * [Project Standard](guide/python/project.md)
+        * [Python environment](guide/python/env.md)         
                   
 * [API Docs](test2/a.md)
 * [More]()
