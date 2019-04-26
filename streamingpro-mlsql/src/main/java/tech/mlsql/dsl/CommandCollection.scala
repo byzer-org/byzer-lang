@@ -20,6 +20,9 @@ object CommandCollection {
     context.addEnv("cache", """ run {} as CacheExt.`` where lifeTime="{}" """)
     context.addEnv("unCache", """ run {} as CacheExt.`` where execute="uncache" """)
     context.addEnv("uncache", """ run {} as CacheExt.`` where execute="uncache" """)
+    context.addEnv("createPythonEnv", """ run command as PythonEnvExt.`{}` where condaYamlFilePath="${HOME}/{}" and command="create"  """)
+    context.addEnv("removePythonEnv", """ run command as PythonEnvExt.`{}` where condaYamlFilePath="${HOME}/{}" and command="remove" """)
+    context.addEnv("resource",""" run command as EngineResource.`` where action="{0}" and cpus="{1}" """)
 
     context.addEnv("show",
       """

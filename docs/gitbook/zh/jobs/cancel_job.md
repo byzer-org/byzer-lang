@@ -5,7 +5,7 @@
 具体取消的方式为：
 
 ```sql
-!kill.`23`; 
+!kill 23; 
 ```
 
 > groupId,jobName 都可以做为任务的唯一标识

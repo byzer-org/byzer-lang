@@ -151,6 +151,7 @@ streamingpro-cluster/dev/mlsql-cluster-docker/*.jar
 streamingpro-cluster/dev/mlsql-cluster-docker/*.tar.gz
 dev/sync-doc.sh
 docs/gitbook/zh/_book/
+docs/gitbook/en/_book/
 contri/streamingpro-automl/logs/
 /tmp
 streamingpro-mlsql/src/main/java/streaming/core/WilliamLocalSparkServiceApp.scala

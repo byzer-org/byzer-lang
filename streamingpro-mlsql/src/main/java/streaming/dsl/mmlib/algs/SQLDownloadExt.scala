@@ -26,7 +26,7 @@ import org.apache.spark.ml.param.Param
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.mlsql.session.MLSQLException
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import streaming.common.HDFSOperator
+import streaming.common.{HDFSOperator, PathFun}
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
@@ -78,6 +78,8 @@ class SQLDownloadExt(override val uid: String) extends SQLAlg with Logging with 
     }.getOrElse {
       throw new MLSQLException(s"${to.name} is required")
     }
+
+    val originalTo = params(to.name)
     val context = ScriptSQLExec.context()
     val fromUrl = context.userDefinedParam.get("__default__fileserver_url__") match {
       case Some(fileServer) => fileServer
@@ -110,7 +112,7 @@ class SQLDownloadExt(override val uid: String) extends SQLAlg with Logging with 
         if (tarIS.canReadEntryData(entry)) {
           if (!entry.isDirectory) {
             val dir = entry.getName.split("/").filterNot(f => f.isEmpty).dropRight(1).mkString("/")
-            downloadResultRes += DownloadResult($(to) + "/" + dir + "/" + entry.getName.split("/").last)
+            downloadResultRes += DownloadResult(PathFun(originalTo).add(dir).add(entry.getName.split("/").last).toPath)
             HDFSOperator.saveStream($(to) + "/" + dir, entry.getName.split("/").last, tarIS)
           }
           entry = tarIS.getNextEntry

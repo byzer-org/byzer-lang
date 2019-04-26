@@ -11,7 +11,6 @@ import scala.collection.mutable.{Buffer, ListBuffer}
   */
 class MLSQLResource(spark: SparkSession, owner: String, getGroupId: String => String) {
 
-
   def resourceSummary(jobGroupId: String) = {
     val store = MLSQLUtils.getAppStatusStore(spark)
     val executorList = store.executorList(true)

@@ -7,7 +7,8 @@ object ETRegister {
   private def wow(name: String) = name -> ("tech.mlsql.ets." + name)
 
   val mapping = Map[String, String](
-    wow("ShowCommand")
+    wow("ShowCommand"),
+    wow("EngineResource")
   )
 
 }
