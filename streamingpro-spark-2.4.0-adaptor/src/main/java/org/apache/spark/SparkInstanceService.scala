@@ -49,6 +49,7 @@ class SparkInstanceService(session: SparkSession) {
     }
     SparkInstanceResource(totalCores.toLong, totalTasks, totalUsedMemory, totalMemory)
   }
+  
 }
 
 case class SparkInstanceResource(totalCores: Long, totalTasks: Long, totalUsedMemory: Long, totalMemory: Long)

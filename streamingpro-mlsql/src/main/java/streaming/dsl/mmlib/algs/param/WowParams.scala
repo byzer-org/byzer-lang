@@ -19,6 +19,7 @@
 package streaming.dsl.mmlib.algs.param
 
 import org.apache.spark.ml.param.{Param, ParamMap, Params}
+import org.apache.spark.sql.mlsql.session.MLSQLException
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
 import org.apache.spark.sql.{Row, SparkSession}
 
@@ -43,6 +44,30 @@ trait WowParams extends Params {
 
     val rfcParams2 = this.params.map(this.explainParam).map(f => Row.fromSeq(f.split(":", 2)))
     sparkSession.createDataFrame(sparkSession.sparkContext.parallelize(rfcParams2, 1), StructType(Seq(StructField("param", StringType), StructField("description", StringType))))
+  }
+
+  def fetchParam[T](params: Map[String, String], param: Param[T], convert: (String) => T,
+                    callback: Param[T] => Unit) = {
+    params.get(param.name).map { item =>
+      set(param, convert(item))
+    }.getOrElse {
+      callback(param)
+    }
+    $(param)
+  }
+
+  object ParamDefaultOption {
+    def required[T](param: Param[T]): Unit = {
+      throw new MLSQLException(s"${param.name} is required")
+    }
+  }
+
+  object ParamConvertOption {
+    def toInt(a: String): Int = {
+      a.toInt
+    }
+
+    def nothing(a: String) = a
   }
 
 }

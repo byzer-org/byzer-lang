@@ -75,6 +75,7 @@ object OperateType extends Enumeration {
   val CREATE = Value("create")
   val DROP = Value("drop")
   val INSERT = Value("insert")
+  //val UPDATE = Value("update")
   val SELECT = Value("select")
   val SET = Value("set")
   val EMPTY = Value("empty")
