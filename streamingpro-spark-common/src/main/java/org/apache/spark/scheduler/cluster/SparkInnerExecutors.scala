@@ -57,19 +57,19 @@ case class ResourceStatus(totalCores: Int, totalMemory: Long, executorNum: Int)
 class SparkDynamicControlExecutors(session: SparkSession) {
   private[this] val sparkInnerExecutors = new SparkInnerExecutors(session)
 
-  private def changeExecutors(num: Int, timeout: Long, f: () => Unit) = {
+  private def changeExecutors(num: Int, timeout: Long, isAdd: Boolean, f: () => Unit) = {
     val currentSize = sparkInnerExecutors.executorDataMap.size
-    val targetSize = currentSize + num
+    val targetSize = if (isAdd) currentSize + num else currentSize - num
     f()
     var count = 0
-    var notSusscess = true
-    while (notSusscess && count < timeout / 1000) {
+    var susscess = false
+    while (!susscess && count < timeout / 1000) {
       val _currentSize = sparkInnerExecutors.executorDataMap.size
-      notSusscess = (_currentSize != targetSize)
+      susscess = (_currentSize == targetSize)
       Thread.sleep(1000)
       count += 1
     }
-    if (count > timeout / 1000) {
+    if (count >= timeout / 1000) {
       throw new RuntimeException(
         s"""
            |Resource Info:
@@ -84,14 +84,14 @@ class SparkDynamicControlExecutors(session: SparkSession) {
   }
 
   def requestExecutors(num: Int, timeout: Long) = {
-    changeExecutors(num, timeout, () => {
+    changeExecutors(num, timeout, true, () => {
       session.sparkContext.requestExecutors(num)
     })
   }
 
   def killExecutors(num: Int, timeout: Long) = {
     val items = sparkInnerExecutors.executorDataMap.keys.take(num)
-    changeExecutors(num, timeout, () => {
+    changeExecutors(num, timeout, false, () => {
       session.sparkContext.killExecutors(items.toSeq)
     })
 
