@@ -1,6 +1,5 @@
 package org.apache.spark.scheduler.cluster
 
-import net.csdn.common.reflect.ReflectHelper
 import org.apache.spark.ExecutorAllocationClient
 import org.apache.spark.scheduler.local.LocalSchedulerBackend
 import org.apache.spark.sql.SparkSession
@@ -22,7 +21,9 @@ class SparkInnerExecutors(session: SparkSession) {
     executorAllocationClient match {
       case Some(eac) =>
         val item = eac.asInstanceOf[CoarseGrainedSchedulerBackend]
-        val executors = ReflectHelper.field(item, "executorDataMap").asInstanceOf[Map[String, ExecutorData]]
+        val field = CoarseGrainedSchedulerBackend.getClass.getDeclaredField("executorDataMap")
+        field.setAccessible(true)
+        val executors = field.get(item).asInstanceOf[Map[String, ExecutorData]]
         executors
       case None => Map[String, ExecutorData]()
     }

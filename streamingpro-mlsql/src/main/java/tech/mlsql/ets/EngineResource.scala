@@ -2,7 +2,7 @@ package tech.mlsql.ets
 
 import org.apache.spark.SparkConf
 import org.apache.spark.ml.param.Param
-import org.apache.spark.scheduler.cluster.{ResourceStatus, SparkDynamicControlExecutors, SparkInnerExecutors}
+import org.apache.spark.scheduler.cluster._
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.mlsql.session.MLSQLException
 import org.apache.spark.sql.{DataFrame, SparkSession}
@@ -128,3 +128,4 @@ class EngineResource(override val uid: String) extends SQLAlg with Functions wit
   final val timeout: Param[Int] = new Param[Int](this, "timeout", "")
 
 }
+
