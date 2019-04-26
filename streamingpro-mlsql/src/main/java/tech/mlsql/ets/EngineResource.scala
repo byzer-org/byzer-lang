@@ -73,11 +73,11 @@ class EngineResource(override val uid: String) extends SQLAlg with Functions wit
     parseAction(_action) match {
       case Action.+ | Action.ADD =>
         tooMuchWithOneTime(_cpus)
-        resourceControl.requestExecutors(executorsShouldAddOrRemove, _timeout)
+        resourceControl.requestTotalExecutors(currentExecutorNum + executorsShouldAddOrRemove, _timeout)
 
       case Action.- | Action.REMOVE =>
         tooMuchWithOneTime(_cpus)
-        resourceControl.killExecutors(executorsShouldAddOrRemove, _timeout)
+        resourceControl.killExecutors(currentExecutorNum + executorsShouldAddOrRemove, _timeout)
       case Action.SET =>
         val diff = executorsShouldAddOrRemove - currentExecutorNum
         if (diff < 0) {
@@ -87,7 +87,7 @@ class EngineResource(override val uid: String) extends SQLAlg with Functions wit
 
         if (diff > 0) {
           tooMuchWithOneTime(diff)
-          resourceControl.requestExecutors(diff, _timeout)
+          resourceControl.requestTotalExecutors(executorsShouldAddOrRemove, _timeout)
         }
     }
 

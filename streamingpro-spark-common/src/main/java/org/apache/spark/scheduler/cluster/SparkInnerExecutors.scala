@@ -83,9 +83,9 @@ class SparkDynamicControlExecutors(session: SparkSession) {
     }
   }
 
-  def requestExecutors(num: Int, timeout: Long) = {
+  def requestTotalExecutors(num: Int, timeout: Long) = {
     changeExecutors(num, timeout, true, () => {
-      session.sparkContext.requestExecutors(num)
+      session.sparkContext.requestTotalExecutors(num, 0, Map.empty)
     })
   }
 
