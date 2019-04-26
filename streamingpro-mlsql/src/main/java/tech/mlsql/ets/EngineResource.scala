@@ -77,7 +77,7 @@ class EngineResource(override val uid: String) extends SQLAlg with Functions wit
 
       case Action.- | Action.REMOVE =>
         tooMuchWithOneTime(_cpus)
-        resourceControl.killExecutors(currentExecutorNum + executorsShouldAddOrRemove, _timeout)
+        resourceControl.killExecutors(executorsShouldAddOrRemove, _timeout)
       case Action.SET =>
         val diff = executorsShouldAddOrRemove - currentExecutorNum
         if (diff < 0) {
