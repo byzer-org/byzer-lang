@@ -43,9 +43,30 @@ done
 
 # before we compile and package, correct the version in MLSQLVersion
 #---------------------
+
+unameOut="$(uname -s)"
+case "${unameOut}" in
+    Linux*)     machine=Linux;;
+    Darwin*)    machine=Mac;;
+    CYGWIN*)    machine=Cygwin;;
+    MINGW*)     machine=MinGw;;
+    *)          machine="UNKNOWN:${unameOut}"
+esac
+echo ${machine}
+
 current_version=$(cat pom.xml|grep -e '<version>.*</version>' | head -n 1 | tail -n 1 | cut -d'>' -f2 | cut -d '<' -f1)
 MLSQL_VERSION_FILE="./streamingpro-mlsql/src/main/java/tech/mlsql/core/version/MLSQLVersion.scala"
-sed -i '' "s/MLSQL_VERSION_PLACEHOLDER/${current_version}/" ${MLSQL_VERSION_FILE}
+
+if [[ "${machine}" == "Linux" ]]
+then
+    sed -i "s/MLSQL_VERSION_PLACEHOLDER/${current_version}/" ${MLSQL_VERSION_FILE}
+elif [[ "${machine}" == "Mac" ]]
+then
+    sed -i '' "s/MLSQL_VERSION_PLACEHOLDER/${current_version}/" ${MLSQL_VERSION_FILE}
+else
+ echo "Windows  is not supported yet"
+ exit 0
+fi
 #---------------------
 
 BASE_PROFILES="-Pscala-2.11 -Ponline -Phive-thrift-server -Pcrawler"

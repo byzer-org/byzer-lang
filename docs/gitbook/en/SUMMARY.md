@@ -25,6 +25,8 @@
     * [Task Management](guide/task/README.md)
         * [Show running jobs](guide/task/show_job.md)
         * [Kill Job](guide/task/kill_job.md)
+    * [Resource Management](guide/resource/README.md)
+            * [Add/Remove/Set resrouce](guide/resource/resource.md)                
     * [Multi-Tenant](guide/multi-tenant/README.md)    
         * [Configure](guide/multi-tenant/conf.md)
         * [User home](guide/multi-tenant/home.md)
@@ -41,7 +43,14 @@
     
     * [Python project](guide/python/README.md)
         * [Project Standard](guide/python/project.md)
-        * [Python environment](guide/python/env.md)         
+        * [Python environment](guide/python/env.md)
+        * [Run python project in distribute](guide/python/distribute-python.md)
+    
+    * [流式计算](guide/stream/README.md)        
+        * [Source/Sink](guide/stream/datasource.md)           
+        * [Convert JSON/CSV to table row](guide/stream/data_convert.md)
+        * [window/watermark的使用](guide/stream/window_wartermark.md) 
+        * [如何使用MLSQL流式更新MySQL数据](guide/stream/stream_mysql_update.md)                 
                   
 * [API Docs](test2/a.md)
 * [More]()
