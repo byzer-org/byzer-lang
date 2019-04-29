@@ -250,6 +250,10 @@ class RestController extends ApplicationController with WowLog {
   }
 
 
+  /*
+      Notice that JobManager also needs to get spark session. When we change here, please
+      be careful and do not break the JobManager.
+  */
   def getSession = {
 
     val session = if (paramAsBoolean("sessionPerUser", false)) {
