@@ -75,7 +75,7 @@ object OperateType extends Enumeration {
   val CREATE = Value("create")
   val DROP = Value("drop")
   val INSERT = Value("insert")
-  //val UPDATE = Value("update")
+  val UPDATE = Value("update")
   val SELECT = Value("select")
   val SET = Value("set")
   val EMPTY = Value("empty")
@@ -85,7 +85,7 @@ object OperateType extends Enumeration {
 object TableType {
   val HIVE = TableTypeMeta("hive", Set("hive"))
   val HBASE = TableTypeMeta("hbase", Set("hbase"))
-  val HDFS = TableTypeMeta("hdfs", Set("parquet", "json", "csv", "image", "text", "xml", "excel", "libsvm"))
+  val HDFS = TableTypeMeta("hdfs", Set("parquet", "json", "csv", "image", "text", "xml", "excel", "libsvm", "delta", "rate"))
   val HTTP = TableTypeMeta("http", Set("http"))
   val JDBC = TableTypeMeta("jdbc", Set("jdbc", "streamJDBC"))
   val ES = TableTypeMeta("es", Set("es"))

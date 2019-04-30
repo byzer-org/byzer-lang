@@ -54,7 +54,7 @@ object WowJsonInferSchema {
       input => rawParser.parse(input, createParser, UTF8String.fromString),
       parsedOptions.parseMode,
       schema,
-      parsedOptions.columnNameOfCorruptRecord, false)
+      parsedOptions.columnNameOfCorruptRecord)
     val parsed = json.map { row =>
       parser.parse(row).next()
     }

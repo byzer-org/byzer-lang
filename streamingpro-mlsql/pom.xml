@@ -203,17 +203,6 @@
         </profile>
 
         <profile>
-            <id>automl</id>
-            <dependencies>
-                <dependency>
-                    <groupId>tech.mlsql</groupId>
-                    <artifactId>streamingpro-automl</artifactId>
-                    <version>${project.parent.version}</version>
-                </dependency>
-            </dependencies>
-        </profile>
-
-        <profile>
             <id>unit-test</id>
 
             <dependencies>
