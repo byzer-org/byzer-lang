@@ -27,6 +27,7 @@ cd $SELF
 cd ..
 
 MLSQL_SPARK_VERSION=${MLSQL_SPARK_VERSION:-2.3}
+SCALA_VERSION=${SCALA_VERSION:-2.11}
 DRY_RUN=${DRY_RUN:-false}
 DISTRIBUTION=${DISTRIBUTION:-false}
 OSS_ENABLE=${OSS_ENABLE:-false}
@@ -69,7 +70,7 @@ else
 fi
 #---------------------
 
-BASE_PROFILES="-Pscala-2.11 -Ponline -Phive-thrift-server -Pcrawler"
+BASE_PROFILES="-Pscala-${SCALA_VERSION} -Ponline -Phive-thrift-server -Pcrawler"
 
 if [[ "$MLSQL_SPARK_VERSION" > "2.2" ]]; then
   BASE_PROFILES="$BASE_PROFILES -Pdsl -Pxgboost"

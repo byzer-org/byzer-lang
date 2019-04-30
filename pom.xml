@@ -294,7 +294,7 @@
                                     <rules>
                                         <bannedDependencies>
                                             <excludes combine.children="append">
-                                                <exclude>*:*_2.10</exclude>
+                                                <exclude>*:*_2.12</exclude>
                                             </excludes>
                                         </bannedDependencies>
                                     </rules>
@@ -307,11 +307,11 @@
         </profile>
 
         <profile>
-            <id>scala-2.10</id>
+            <id>scala-2.12</id>
             <properties>
-                <scala.version>2.10.3</scala.version>
-                <scala.binary.version>2.10</scala.binary.version>
-                <scala.jline.version>2.10.3</scala.jline.version>
+                <scala.version>2.12.8</scala.version>
+                <scala.binary.version>2.12</scala.binary.version>
+                <scala.jline.version>2.12.8</scala.jline.version>
             </properties>
             <build>
                 <plugins>
@@ -480,13 +480,14 @@
             </dependencies>
         </profile>
 
+
         <profile>
             <id>spark-2.4.0</id>
             <properties>
                 <spark.streaming.kafka.artifactId>spark-streaming-kafka-0-8_${scala.binary.version}
                 </spark.streaming.kafka.artifactId>
                 <spark.sql.kafka.artifactId>spark-sql-kafka-0-10_${scala.binary.version}</spark.sql.kafka.artifactId>
-                <spark.version>2.4.0</spark.version>
+                <spark.version>2.4.2</spark.version>
                 <spark.bigversion>2.4</spark.bigversion>
                 <bigdl.spark.version.minor>2.4.0</bigdl.spark.version.minor>
             </properties>
@@ -545,6 +546,11 @@
                             <artifactId>dubbo</artifactId>
                         </exclusion>
                     </exclusions>
+                </dependency>
+                <dependency>
+                    <groupId>io.delta</groupId>
+                    <artifactId>delta-core_${scala.binary.version}</artifactId>
+                    <version>0.1.0</version>
                 </dependency>
             </dependencies>
         </profile>
@@ -814,7 +820,7 @@
                 </exclusion>
                 <exclusion>
                     <groupId>org.json4s</groupId>
-                    <artifactId>json4s-jackson_2.11</artifactId>
+                    <artifactId>json4s-jackson_${scala.binary.version}</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>

@@ -126,6 +126,11 @@ class JobManager(_spark: SparkSession, initialDelay: Long, checkTimeInterval: Lo
         groupIdToMLSQLJobInfo.foreach { f =>
           val elapseTime = System.currentTimeMillis() - f._2.startTime
           if (f._2.timeout > 0 && elapseTime >= f._2.timeout) {
+
+            // At rest controller, we will clone the session,and this clone session is not
+            // saved in  SparkSessionCacheManager. But this do no harm to this scheduler,
+            // since cancel job depends `groupId` and sparkContext. The exception is stream job (which is connected with spark session),
+            // however, the stream job will not use `clone spark session`
             val tempSession = SparkSessionCacheManager.getSessionManagerOption match {
               case Some(sessionManager) =>
                 sessionManager.getSessionOption(SessionIdentifier(f._2.owner))

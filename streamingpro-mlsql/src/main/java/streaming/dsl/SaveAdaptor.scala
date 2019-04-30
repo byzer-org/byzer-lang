@@ -55,12 +55,6 @@ class SaveAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
       ctx.getChild(tokenIndex) match {
         case s: FormatContext =>
           format = s.getText
-          format match {
-            case "hive" =>
-            case _ =>
-              format = s.getText
-          }
-
 
         case s: PathContext =>
           path = TemplateMerge.merge(cleanStr(s.getText), scriptSQLExecListener.env().toMap)

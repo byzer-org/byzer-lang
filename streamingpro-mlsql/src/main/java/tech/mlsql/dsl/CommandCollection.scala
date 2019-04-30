@@ -10,7 +10,7 @@ object CommandCollection {
   def fill(context: ScriptSQLExecListener): Unit = {
     context.addEnv("desc", """run command as ShowTableExt.`{}`""")
     context.addEnv("kill", """run command as Kill.`{}`""")
-    context.addEnv("jdbc", """ run command as JDBC.`` where `driver-statement-0`='''{}''' """)
+    context.addEnv("jdbc", """ run command as JDBC.`{}` where `driver-statement-0`='''{}''' """)
 
     /*
       -- !cache table1 eagerly with script lifetime

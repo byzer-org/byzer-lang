@@ -23,7 +23,10 @@ abstract class MLSQLBaseStreamSource extends MLSQLSource with MLSQLSink with MLS
     }
 
     val writer: DataStreamWriter[Row] = oldDF.writeStream
-    var path = resolvePath(config.path)
+
+    val context = ScriptSQLExec.contextGetOrForTest()
+    val owner = config.config.get("owner").getOrElse(context.owner)
+    var path = resolvePath(config.path, owner)
 
     val Array(db, table) = parseRef(aliasFormat, path, dbSplitter, (options: Map[String, String]) => {
       writer.options(options)
@@ -51,7 +54,6 @@ abstract class MLSQLBaseStreamSource extends MLSQLSource with MLSQLSink with MLS
     option -= "mode"
 
     val format = config.config.getOrElse("implClass", fullFormat)
-    val context = ScriptSQLExec.contextGetOrForTest()
 
     //make sure the checkpointLocation is append PREFIX
     def rewriteOption = {
@@ -80,7 +82,7 @@ abstract class MLSQLBaseStreamSource extends MLSQLSource with MLSQLSink with MLS
     DataSourceRegistry.register(MLSQLDataSourceKey(shortFormat, MLSQLSparkDataSourceType), this)
   }
 
-  def resolvePath(path: String) = {
+  def resolvePath(path: String, owner: String) = {
     path
   }
 
