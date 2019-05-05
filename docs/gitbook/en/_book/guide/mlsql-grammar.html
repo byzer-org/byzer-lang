@@ -1,0 +1,1628 @@
+
+<!DOCTYPE HTML>
+<html lang="" >
+    <head>
+        <meta charset="UTF-8">
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <title>MLSQL Grammar · GitBook</title>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="description" content="">
+        <meta name="generator" content="GitBook 3.2.3">
+        
+        
+        
+    
+    <link rel="stylesheet" href="../gitbook/style.css">
+
+    
+            
+                
+                <link rel="stylesheet" href="../gitbook/gitbook-plugin-highlight/website.css">
+                
+            
+                
+                <link rel="stylesheet" href="../gitbook/gitbook-plugin-search/search.css">
+                
+            
+                
+                <link rel="stylesheet" href="../gitbook/gitbook-plugin-fontsettings/website.css">
+                
+            
+        
+
+    
+
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+
+        
+    
+    
+    <meta name="HandheldFriendly" content="true"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../gitbook/images/apple-touch-icon-precomposed-152.png">
+    <link rel="shortcut icon" href="../gitbook/images/favicon.ico" type="image/x-icon">
+
+    
+    <link rel="next" href="datasource/" />
+    
+    
+    <link rel="prev" href="../installation/intellij.html" />
+    
+
+    </head>
+    <body>
+        
+<div class="book">
+    <div class="book-summary">
+        
+            
+<div id="book-search-input" role="search">
+    <input type="text" placeholder="Type to search" />
+</div>
+
+            
+                <nav role="navigation">
+                
+
+
+<ul class="summary">
+    
+    
+
+    
+
+    
+        
+        
+    
+        <li class="chapter " data-level="1.1" data-path="../">
+            
+                <a href="../">
+            
+                    
+                    Overview
+            
+                </a>
+            
+
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.1.1" data-path="overviews/mlsql-stack.html">
+            
+                <a href="overviews/mlsql-stack.html">
+            
+                    
+                    MLSQL Stack
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2" data-path="../test1/a.md">
+            
+                <span>
+            
+                    
+                    User Guide
+            
+                </a>
+            
+
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.2.1" data-path="../installation/">
+            
+                <a href="../installation/">
+            
+                    
+                    Compile&Run&Deploy
+            
+                </a>
+            
+
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.2.1.1" data-path="../installation/install.html">
+            
+                <a href="../installation/install.html">
+            
+                    
+                    Compile&Run&Deploy
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.1.2" data-path="../installation/docker.html">
+            
+                <a href="../installation/docker.html">
+            
+                    
+                    Docker
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.1.3" data-path="../installation/engine-conf.html">
+            
+                <a href="../installation/engine-conf.html">
+            
+                    
+                    MLSQL Engine Start Configruatioin
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.1.4" data-path="../installation/intellij.html">
+            
+                <a href="../installation/intellij.html">
+            
+                    
+                    Setup MLSQL Engine in Intellij Idea
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter active" data-level="1.2.2" data-path="mlsql-grammar.html">
+            
+                <a href="mlsql-grammar.html">
+            
+                    
+                    MLSQL Grammar
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.3" data-path="datasource/">
+            
+                <a href="datasource/">
+            
+                    
+                    Data Source
+            
+                </a>
+            
+
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.2.3.1" data-path="datasource/jdbc.html">
+            
+                <a href="datasource/jdbc.html">
+            
+                    
+                    JDBC
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.3.2" data-path="datasource/elasticsearch.html">
+            
+                <a href="datasource/elasticsearch.html">
+            
+                    
+                    Elasticsearch
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.3.3" data-path="datasource/mongodb.html">
+            
+                <a href="datasource/mongodb.html">
+            
+                    
+                    MongoDB
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.3.4" data-path="datasource/hbase.html">
+            
+                <a href="datasource/hbase.html">
+            
+                    
+                    HBase
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.3.5" data-path="datasource/file.html">
+            
+                <a href="datasource/file.html">
+            
+                    
+                    Parquet/Json/Text/Xml/Csv
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.3.6" data-path="datasource/mlsql_source.html">
+            
+                <a href="datasource/mlsql_source.html">
+            
+                    
+                    jsonStr/script/mlsqlAPI/mlsqlConf
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.4" data-path="variable/">
+            
+                <a href="variable/">
+            
+                    
+                    Variable
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.5" data-path="et/">
+            
+                <a href="et/">
+            
+                    
+                    Built-in ET
+            
+                </a>
+            
+
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.2.5.1" data-path="et/jdbc.html">
+            
+                <a href="et/jdbc.html">
+            
+                    
+                    Query MySQL Directly
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.5.2" data-path="et/child-parent.html">
+            
+                <a href="et/child-parent.html">
+            
+                    
+                    Build Parent-Child Relationship
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.5.3" data-path="et/repartition_table.html">
+            
+                <a href="et/repartition_table.html">
+            
+                    
+                    Change the partitions of table
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.5.4" data-path="et/email.html">
+            
+                <a href="et/email.html">
+            
+                    
+                    Send Email
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.6" data-path="task/">
+            
+                <a href="task/">
+            
+                    
+                    Task Management
+            
+                </a>
+            
+
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.2.6.1" data-path="task/show_job.html">
+            
+                <a href="task/show_job.html">
+            
+                    
+                    Show running jobs
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.6.2" data-path="task/kill_job.html">
+            
+                <a href="task/kill_job.html">
+            
+                    
+                    Kill Job
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.7" data-path="resource/">
+            
+                <a href="resource/">
+            
+                    
+                    Resource Management
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.8" data-path="multi-tenant/">
+            
+                <a href="multi-tenant/">
+            
+                    
+                    Multi-Tenant
+            
+                </a>
+            
+
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.2.8.1" data-path="multi-tenant/conf.html">
+            
+                <a href="multi-tenant/conf.html">
+            
+                    
+                    Configure
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.8.2" data-path="multi-tenant/home.html">
+            
+                <a href="multi-tenant/home.html">
+            
+                    
+                    User home
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.9" data-path="udf/">
+            
+                <a href="udf/">
+            
+                    
+                    Create UDF/UDAF
+            
+                </a>
+            
+
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.2.9.1" data-path="udf/python-udf.html">
+            
+                <a href="udf/python-udf.html">
+            
+                    
+                    Python UDF
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.9.2" data-path="udf/scala-udf.html">
+            
+                <a href="udf/scala-udf.html">
+            
+                    
+                    Scala UDF
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.9.3" data-path="udf/scala-udaf.html">
+            
+                <a href="udf/scala-udaf.html">
+            
+                    
+                    Scala UDAF
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.9.4" data-path="udf/java-udf.html">
+            
+                <a href="udf/java-udf.html">
+            
+                    
+                    JAVA UDF
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.10" data-path="system_udf/">
+            
+                <a href="system_udf/">
+            
+                    
+                    Built-in UDF
+            
+                </a>
+            
+
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.2.10.1" data-path="system_udf/http-udf.html">
+            
+                <a href="system_udf/http-udf.html">
+            
+                    
+                    Http UDF
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.10.2" data-path="system_udf/http-udf.html">
+            
+                <a href="system_udf/http-udf.html">
+            
+                    
+                    Common UDF
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.11" data-path="python/">
+            
+                <a href="python/">
+            
+                    
+                    Python project
+            
+                </a>
+            
+
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.2.11.1" data-path="python/project.html">
+            
+                <a href="python/project.html">
+            
+                    
+                    Project Standard
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.11.2" data-path="python/env.html">
+            
+                <a href="python/env.html">
+            
+                    
+                    Python environment
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.11.3" data-path="python/distribute-python.html">
+            
+                <a href="python/distribute-python.html">
+            
+                    
+                    Run python project in distribute
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.12" data-path="stream/">
+            
+                <a href="stream/">
+            
+                    
+                    Stream
+            
+                </a>
+            
+
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.2.12.1" data-path="stream/datasource.html">
+            
+                <a href="stream/datasource.html">
+            
+                    
+                    Source/Sink
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.12.2" data-path="stream/data_convert.html">
+            
+                <a href="stream/data_convert.html">
+            
+                    
+                    Convert JSON/CSV to table row
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.12.3" data-path="stream/window_wartermark.html">
+            
+                <a href="stream/window_wartermark.html">
+            
+                    
+                    window/watermark
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.12.4" data-path="stream/stream_mysql_update.html">
+            
+                <a href="stream/stream_mysql_update.html">
+            
+                    
+                    Update MySQL in stream job
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.13" data-path="feature/">
+            
+                <a href="feature/">
+            
+                    
+                    Processing
+            
+                </a>
+            
+
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.2.13.1" data-path="feature/TfIdfInPlace.html">
+            
+                <a href="feature/TfIdfInPlace.html">
+            
+                    
+                    TfIdfInPlace
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.13.2" data-path="feature/Word2VecInPlace.html">
+            
+                <a href="feature/Word2VecInPlace.html">
+            
+                    
+                    Word2VecInPlace
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.13.3" data-path="feature/ScalerInPlace.html">
+            
+                <a href="feature/ScalerInPlace.html">
+            
+                    
+                    ScalerInPlace
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.13.4" data-path="feature/NormalizeInPlace.html">
+            
+                <a href="feature/NormalizeInPlace.html">
+            
+                    
+                    NormalizeInPlace
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.13.5" >
+            
+                <span>
+            
+                    
+                    Discretizer
+            
+                </span>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.13.6" >
+            
+                <span>
+            
+                    
+                    Bucketizer
+            
+                </span>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.13.7" >
+            
+                <span>
+            
+                    
+                    Quantile
+            
+                </span>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.13.8" data-path="feature/VecMapInPlace.html">
+            
+                <a href="feature/VecMapInPlace.html">
+            
+                    
+                    VecMapInPlace
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.13.9" data-path="feature/RateSampler.html">
+            
+                <a href="feature/RateSampler.html">
+            
+                    
+                    RateSampler
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.13.10" data-path="feature/RowMatrix.html">
+            
+                <a href="feature/RowMatrix.html">
+            
+                    
+                    RowMatrix
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.13.11" data-path="feature/CommunityBasedSimilarityInPlace.html">
+            
+                <a href="feature/CommunityBasedSimilarityInPlace.html">
+            
+                    
+                    CommunityBasedSimilarityInPlace
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.13.12" data-path="feature/Word2ArrayInPlace.html">
+            
+                <a href="feature/Word2ArrayInPlace.html">
+            
+                    
+                    Word2ArrayInPlace
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.14" >
+            
+                <span>
+            
+                    
+                    Algorithms
+            
+                </span>
+            
+
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.2.14.1" >
+            
+                <span>
+            
+                    
+                    Machine Learning
+            
+                </span>
+            
+
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.2.14.1.1" data-path="feature/RandomForest.html">
+            
+                <a href="feature/RandomForest.html">
+            
+                    
+                    RandomForest
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.14.1.2" data-path="feature/NaiveBayes.html">
+            
+                <a href="feature/NaiveBayes.html">
+            
+                    
+                    NaiveBayes
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.14.1.3" data-path="feature/ALS.html">
+            
+                <a href="feature/ALS.html">
+            
+                    
+                    ALS
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.14.1.4" data-path="feature/GBTRegressor.html">
+            
+                <a href="feature/GBTRegressor.html">
+            
+                    
+                    GBTRegressor
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.14.1.5" data-path="feature/LDA.html">
+            
+                <a href="feature/LDA.html">
+            
+                    
+                    LDA
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.14.1.6" data-path="feature/KMeans.html">
+            
+                <a href="feature/KMeans.html">
+            
+                    
+                    KMeans
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.14.1.7" data-path="feature/FPGrowth.html">
+            
+                <a href="feature/FPGrowth.html">
+            
+                    
+                    FPGrowth
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.14.1.8" data-path="feature/PageRank.html">
+            
+                <a href="feature/PageRank.html">
+            
+                    
+                    PageRank
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.14.1.9" data-path="feature/LogisticRegressor.html">
+            
+                <a href="feature/LogisticRegressor.html">
+            
+                    
+                    LogisticRegressor
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.14.2" >
+            
+                <span>
+            
+                    
+                    Deep Learning
+            
+                </span>
+            
+
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.2.14.2.1" >
+            
+                <a target="_blank" href="https://gist.github.com/allwefantasy/59d1f89026d8049e23f182c7d1de2870">
+            
+                    
+                    BigDLClassify
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+
+    
+        
+        <li class="divider"></li>
+        
+        
+    
+        <li class="chapter " data-level="2.1" data-path="../test2/a.md">
+            
+                <span>
+            
+                    
+                    API Docs
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="2.2" >
+            
+                <span>
+            
+                    
+                    More
+            
+                </span>
+            
+
+            
+        </li>
+    
+
+    
+
+    <li class="divider"></li>
+
+    <li>
+        <a href="https://www.gitbook.com" target="blank" class="gitbook-link">
+            Published with GitBook
+        </a>
+    </li>
+</ul>
+
+
+                </nav>
+            
+        
+    </div>
+
+    <div class="book-body">
+        
+            <div class="body-inner">
+                
+                    
+
+<div class="book-header" role="navigation">
+    
+
+    <!-- Title -->
+    <h1>
+        <i class="fa fa-circle-o-notch fa-spin"></i>
+        <a href=".." >MLSQL Grammar</a>
+    </h1>
+</div>
+
+
+
+
+                    <div class="page-wrapper" tabindex="-1" role="main">
+                        <div class="page-inner">
+                            
+<div id="book-search-results">
+    <div class="search-noresults">
+    
+                                <section class="normal markdown-section">
+                                
+                                <h2 id="mlsql-grammar">MLSQL Grammar</h2>
+<p>MLSQL supports the following statements:</p>
+<ol>
+<li>connect  </li>
+<li>set    </li>
+<li>select </li>
+<li>train/predict/run</li>
+<li>register </li>
+<li>save    </li>
+<li>include</li>
+<li>!      --(macros)</li>
+</ol>
+<h3 id="connect">connect</h3>
+<p>The connect statement is used to connect the external storage engines ie. MySQL, ElasticSearch etc. with options.</p>
+<p>Connect Syntax:</p>
+<pre><code>(&apos;connect&apos;|&apos;CONNECT&apos;) format 
+&apos;where&apos;? expression? booleanExpression* (&apos;as&apos; db)?
+</code></pre><p>Here, <code>format</code> is the name of the target storage engine you want to connect.<br><code>expression</code> and  <code>booleanExpression</code> are used to provide extra information such as username and password such that MLSQL can connect to the target. Finally, the <code>db</code> is an alias to this connection.</p>
+<p>Demo:</p>
+<pre><code class="lang-sql">connect jdbc where  
+<span class="hljs-keyword">truncate</span>=<span class="hljs-string">&quot;true&quot;</span>
+<span class="hljs-keyword">and</span> driver=<span class="hljs-string">&quot;com.mysql.jdbc.Driver&quot;</span>
+<span class="hljs-keyword">and</span> <span class="hljs-keyword">url</span>=<span class="hljs-string">&quot;jdbc:mysql://127.0.0.1:3306/....&quot;</span>
+<span class="hljs-keyword">and</span> driver=<span class="hljs-string">&quot;com.mysql.jdbc.Driver&quot;</span>
+<span class="hljs-keyword">and</span> <span class="hljs-keyword">user</span>=<span class="hljs-string">&quot;...&quot;</span>
+<span class="hljs-keyword">and</span> <span class="hljs-keyword">password</span>=<span class="hljs-string">&quot;....&quot;</span>
+<span class="hljs-keyword">as</span> mysql<span class="hljs-number">-1</span>;
+
+<span class="hljs-comment">-- then you can operate mysql-1 without any extra information</span>
+<span class="hljs-keyword">load</span> jdbc.<span class="hljs-string">`mysql-1.table1`</span> <span class="hljs-keyword">as</span> table1;
+<span class="hljs-keyword">select</span> * <span class="hljs-keyword">from</span> table1 <span class="hljs-keyword">as</span> <span class="hljs-keyword">output</span>;
+
+<span class="hljs-comment">-- of course, you can operate mysql without connect statement. </span>
+<span class="hljs-keyword">load</span> jdbc.<span class="hljs-string">`mysql-1.table1`</span> options
+<span class="hljs-keyword">and</span> driver=<span class="hljs-string">&quot;com.mysql.jdbc.Driver&quot;</span>
+<span class="hljs-keyword">and</span> <span class="hljs-keyword">url</span>=<span class="hljs-string">&quot;jdbc:mysql://127.0.0.1:3306/....&quot;</span>
+<span class="hljs-keyword">and</span> driver=<span class="hljs-string">&quot;com.mysql.jdbc.Driver&quot;</span>
+<span class="hljs-keyword">and</span> <span class="hljs-keyword">user</span>=<span class="hljs-string">&quot;...&quot;</span>
+<span class="hljs-keyword">and</span> <span class="hljs-keyword">password</span>=<span class="hljs-string">&quot;....&quot;</span>
+<span class="hljs-keyword">as</span> table1;
+</code></pre>
+<p>This example demonstrates how convenient it is to integrate with the third-party storage engine.</p>
+<h3 id="load">load</h3>
+<p><img src="https://github.com/allwefantasy/streamingpro/raw/master/images/WX20181113-144350.png" alt=""></p>
+<p>In MLSQL, you can load almost anything as a table. The load syntax is as follows:</p>
+<pre><code>(&apos;load&apos;|&apos;LOAD&apos;) format &apos;.&apos; path &apos;options&apos;? expression? booleanExpression*  &apos;as&apos; tableName
+</code></pre><p>Example:</p>
+<pre><code class="lang-sql"><span class="hljs-keyword">load</span> csv.<span class="hljs-string">`/tmp/abc.csv`</span> <span class="hljs-keyword">as</span> table1;
+</code></pre>
+<p>Here are the format we build-in support:</p>
+<ol>
+<li>csv</li>
+<li>parquet</li>
+<li>orc</li>
+<li>jdbc  </li>
+<li>es (requires elasticsearch-hadoop jar) </li>
+<li>hbase (requires streamingpro-hbase jar)</li>
+<li>redis (requires streamingpro-redis jar)</li>
+<li>kafka/kafka8/kafka9(stream program)</li>
+<li>crawlersql</li>
+<li>image</li>
+<li>jsonStr</li>
+<li>mockStream (stream program)</li>
+<li>jdbc (stream program)</li>
+<li>newParquet(stream program)</li>
+</ol>
+<p>We will show you how to use jsonStr:</p>
+<pre><code class="lang-sql"><span class="hljs-keyword">set</span> <span class="hljs-keyword">data</span>=<span class="hljs-string">&apos;&apos;&apos;
+{&quot;key&quot;:&quot;yes&quot;,&quot;value&quot;:&quot;no&quot;,&quot;topic&quot;:&quot;test&quot;,&quot;partition&quot;:0,&quot;offset&quot;:0,&quot;timestamp&quot;:&quot;2008-01-24 18:01:01.001&quot;,&quot;timestampType&quot;:0}
+{&quot;key&quot;:&quot;yes&quot;,&quot;value&quot;:&quot;no&quot;,&quot;topic&quot;:&quot;test&quot;,&quot;partition&quot;:0,&quot;offset&quot;:1,&quot;timestamp&quot;:&quot;2008-01-24 18:01:01.002&quot;,&quot;timestampType&quot;:0}
+{&quot;key&quot;:&quot;yes&quot;,&quot;value&quot;:&quot;no&quot;,&quot;topic&quot;:&quot;test&quot;,&quot;partition&quot;:0,&quot;offset&quot;:2,&quot;timestamp&quot;:&quot;2008-01-24 18:01:01.003&quot;,&quot;timestampType&quot;:0}
+{&quot;key&quot;:&quot;yes&quot;,&quot;value&quot;:&quot;no&quot;,&quot;topic&quot;:&quot;test&quot;,&quot;partition&quot;:0,&quot;offset&quot;:3,&quot;timestamp&quot;:&quot;2008-01-24 18:01:01.003&quot;,&quot;timestampType&quot;:0}
+{&quot;key&quot;:&quot;yes&quot;,&quot;value&quot;:&quot;no&quot;,&quot;topic&quot;:&quot;test&quot;,&quot;partition&quot;:0,&quot;offset&quot;:4,&quot;timestamp&quot;:&quot;2008-01-24 18:01:01.003&quot;,&quot;timestampType&quot;:0}
+{&quot;key&quot;:&quot;yes&quot;,&quot;value&quot;:&quot;no&quot;,&quot;topic&quot;:&quot;test&quot;,&quot;partition&quot;:0,&quot;offset&quot;:5,&quot;timestamp&quot;:&quot;2008-01-24 18:01:01.003&quot;,&quot;timestampType&quot;:0}
+&apos;&apos;&apos;</span>;
+
+<span class="hljs-comment">-- load json string in set statement as table.</span>
+<span class="hljs-keyword">load</span> jsonStr.<span class="hljs-string">`data`</span> <span class="hljs-keyword">as</span> datasource;
+
+<span class="hljs-keyword">select</span> * <span class="hljs-keyword">from</span> datasource <span class="hljs-keyword">as</span> <span class="hljs-keyword">output</span>;
+</code></pre>
+<p>mockStream format is applied in stream program, it makes stream application is easy to test:</p>
+<pre><code class="lang-sql">
+<span class="hljs-comment">-- stream name</span>
+<span class="hljs-keyword">set</span> streamName=<span class="hljs-string">&quot;streamExample&quot;</span>;
+
+<span class="hljs-keyword">set</span> <span class="hljs-keyword">data</span>=<span class="hljs-string">&apos;&apos;&apos;
+{&quot;key&quot;:&quot;yes&quot;,&quot;value&quot;:&quot;no&quot;,&quot;topic&quot;:&quot;test&quot;,&quot;partition&quot;:0,&quot;offset&quot;:0,&quot;timestamp&quot;:&quot;2008-01-24 18:01:01.001&quot;,&quot;timestampType&quot;:0}
+{&quot;key&quot;:&quot;yes&quot;,&quot;value&quot;:&quot;no&quot;,&quot;topic&quot;:&quot;test&quot;,&quot;partition&quot;:0,&quot;offset&quot;:1,&quot;timestamp&quot;:&quot;2008-01-24 18:01:01.002&quot;,&quot;timestampType&quot;:0}
+{&quot;key&quot;:&quot;yes&quot;,&quot;value&quot;:&quot;no&quot;,&quot;topic&quot;:&quot;test&quot;,&quot;partition&quot;:0,&quot;offset&quot;:2,&quot;timestamp&quot;:&quot;2008-01-24 18:01:01.003&quot;,&quot;timestampType&quot;:0}
+{&quot;key&quot;:&quot;yes&quot;,&quot;value&quot;:&quot;no&quot;,&quot;topic&quot;:&quot;test&quot;,&quot;partition&quot;:0,&quot;offset&quot;:3,&quot;timestamp&quot;:&quot;2008-01-24 18:01:01.003&quot;,&quot;timestampType&quot;:0}
+{&quot;key&quot;:&quot;yes&quot;,&quot;value&quot;:&quot;no&quot;,&quot;topic&quot;:&quot;test&quot;,&quot;partition&quot;:0,&quot;offset&quot;:4,&quot;timestamp&quot;:&quot;2008-01-24 18:01:01.003&quot;,&quot;timestampType&quot;:0}
+{&quot;key&quot;:&quot;yes&quot;,&quot;value&quot;:&quot;no&quot;,&quot;topic&quot;:&quot;test&quot;,&quot;partition&quot;:0,&quot;offset&quot;:5,&quot;timestamp&quot;:&quot;2008-01-24 18:01:01.003&quot;,&quot;timestampType&quot;:0}
+&apos;&apos;&apos;</span>;
+
+<span class="hljs-comment">-- load json string in set statement as table.</span>
+<span class="hljs-keyword">load</span> jsonStr.<span class="hljs-string">`data`</span> <span class="hljs-keyword">as</span> datasource;
+
+<span class="hljs-comment">-- convert the table as stream source</span>
+<span class="hljs-keyword">load</span> mockStream.<span class="hljs-string">`datasource`</span> options 
+<span class="hljs-comment">-- mockStream will fetch data with the number 0-2 from datasource&#xFF0C;according to the offset.</span>
+stepSizeRange=<span class="hljs-string">&quot;0-3&quot;</span>
+<span class="hljs-keyword">as</span> newkafkatable1;
+</code></pre>
+<p>Load statement  also supports helping user find the doc about Estimator/Transformer in MLSQL:</p>
+<pre><code>-- check available params of module
+load modelParams.`RandomForest`
+as output;
+
+-- check the doc and example of module
+load modelExample.`RandomForest`
+as output;
+
+-- check the params of model
+load modelExplain.`/tmp/model` where
+alg=&quot;RandomForest&quot; as outout;
+</code></pre><p>Here are some load file examples:</p>
+<pre><code class="lang-sql"><span class="hljs-comment">-- raw text without schema</span>
+<span class="hljs-keyword">load</span> <span class="hljs-built_in">text</span>.<span class="hljs-string">`/Users/allwefantasy/CSDNWorkSpace/tmtagsHistory`</span>
+<span class="hljs-keyword">as</span> table1;
+
+<span class="hljs-keyword">load</span> hive.<span class="hljs-string">`db.table`</span> <span class="hljs-keyword">as</span> table1;
+
+<span class="hljs-keyword">load</span> parquet.<span class="hljs-string">`path`</span> <span class="hljs-keyword">as</span>  table1;
+
+<span class="hljs-keyword">load</span> csv.<span class="hljs-string">`path`</span> <span class="hljs-keyword">where</span>
+header=&#x201C;<span class="hljs-literal">true</span>&#x201D;
+<span class="hljs-keyword">and</span> interSchema=&#x201C;<span class="hljs-literal">true</span>&#x201D;
+<span class="hljs-keyword">as</span> table1;
+
+<span class="hljs-keyword">load</span> <span class="hljs-keyword">json</span>.<span class="hljs-string">`path`</span> <span class="hljs-keyword">as</span> table1;
+</code></pre>
+<p>Crawler example:</p>
+<pre><code>load crawlersql.`https://www.csdn.net/nav/ai`
+options matchXPath=&quot;//ul[@id=&apos;feedlist_id&apos;]//div[@class=&apos;title&apos;]//a/@href&quot;
+and fetchType=&quot;list&quot;
+and `page.type`=&quot;scroll&quot;
+and `page.num`=&quot;10&quot;
+and `page.flag`=&quot;feedlist_id&quot;
+as aritle_url_table_source;
+</code></pre><p>ES Example:</p>
+<pre><code>connect es where `es.nodes`=&#x201C;esnode1&quot;
+and `es.net.http.auth.user`=&quot;&quot;
+and `es.net.http.auth.pass`=&quot;&quot;
+as es1;
+
+load es.`es1.pi_top/dxy` as es_pi_top;
+</code></pre><p>HBase Example:</p>
+<pre><code>load hbase.`wq_tmp_test1`
+options rowkey=&quot;id&quot;
+and zk=&quot;---&quot;
+and inputTableName=&quot;wq_tmp_test1&quot;
+and field.type.filed1=&quot;FloatType&quot;
+and field.type.filed2=&quot;TimestampType&quot;
+and field.type.filed3=&quot;BinaryType&quot;
+as testhbase
+;
+</code></pre><h3 id="select">select</h3>
+<p>The select statement is used to select data from table loaded by load statement. 
+You do not need to load the Hive table, which you can use select to query directly.</p>
+<p>Select syntax:</p>
+<pre><code>(&apos;select&apos;|&apos;SELECT&apos;) ~(&apos;;&apos;)* &apos;as&apos; tableName
+</code></pre><p>Select statement is a standard spark SQL statement except that it ends with <code>as tableName</code> suffix. This means any select statement will return a table as a result.</p>
+<p>Example:</p>
+<pre><code class="lang-sql"><span class="hljs-keyword">select</span> a.column1 <span class="hljs-keyword">from</span> 
+(<span class="hljs-keyword">select</span> column1 <span class="hljs-keyword">from</span> table1) a <span class="hljs-keyword">left</span> <span class="hljs-keyword">join</span> b <span class="hljs-keyword">on</span> a.column1=b.column2 
+<span class="hljs-keyword">as</span> newtable1;
+</code></pre>
+<p>This statement looks complex. However, if you remove the &quot;as newtable1&quot;, you will find that it&apos;s a standard SQL.
+In MSLQL, select is good at processing data. There is also another statement train that is more powerful than select in data processing data. We will introduce it in the next section. </p>
+<h3 id="trainpredictrun">train/predict/run</h3>
+<p><img src="https://github.com/allwefantasy/streamingpro/raw/master/images/WX20181111-201226@2x.png" alt=""></p>
+<p>Train statement provides you not only the ability to process data but also train any machine learning algorithms. MLSQL has many modules implemented which can be used in the train statement.  </p>
+<p>Train syntax: </p>
+<pre><code>(&apos;train&apos;|&apos;TRAIN&apos;) tableName &apos;as&apos; format &apos;.&apos; path &apos;where&apos;? expression? booleanExpression*
+</code></pre><p>Example:</p>
+<pre><code class="lang-sql"><span class="hljs-keyword">load</span> libsvm.<span class="hljs-string">`/spark-2.2.0-bin-hadoop2.7/data/mllib/sample_libsvm_data.txt`</span> <span class="hljs-keyword">as</span> <span class="hljs-keyword">data</span>;
+train data as RandomForest.`/tmp/model` 
+where maxDepth=&quot;3&quot;;
+</code></pre>
+<p>MLSQL loads libsvm data from the HDFS/Local File System, and then train it with RandomForest in Spark MLLib.
+Finally the model would be saved in the directory <code>/tmp/model</code>.</p>
+<p>Here is another example showing how to process data:</p>
+<pre><code class="lang-sql"><span class="hljs-keyword">load</span> parquet.<span class="hljs-string">`/tmp/data`</span>
+<span class="hljs-keyword">as</span> orginal_text_corpus;
+
+<span class="hljs-comment">-- convert text to wordembbeding presentation</span>
+train orginal_text_corpus as Word2VecInPlace.`/tmp/word2vecinplace`
+<span class="hljs-comment">-- inputColumn</span>
+where inputCol=&quot;content&quot;
+<span class="hljs-comment">-- stopwords</span>
+and stopWordPath=&quot;/tmp/tfidf/stopwords&quot;
+<span class="hljs-comment">-- flatt hresult</span>
+and resultFeature=&quot;flat&quot;;
+</code></pre>
+<p>You can find the converting result in <code>/tmp/word2vecinplace/data</code>. Let me show you how to do this:</p>
+<pre><code class="lang-sql"><span class="hljs-keyword">load</span> parquet.<span class="hljs-string">`/tmp/word2vecinplace/data`</span> <span class="hljs-keyword">as</span> converting_result;
+<span class="hljs-keyword">select</span> * <span class="hljs-keyword">from</span> converting_result <span class="hljs-keyword">as</span> <span class="hljs-keyword">output</span>;
+</code></pre>
+<p>You can also get predict function from <code>/tmp/word2vecinplace</code>(We will discuss the register statement later):</p>
+<pre><code class="lang-sql">register Word2VecInPlace.`/tmp/word2vecinplace` as word2vec;
+<span class="hljs-keyword">select</span> word2vec(<span class="hljs-keyword">content</span>) <span class="hljs-keyword">from</span> sometable <span class="hljs-keyword">as</span> <span class="hljs-keyword">output</span>;
+</code></pre>
+<p>We have so many modules can be used in train statement is wait to you to dig. <a href="https://github.com/allwefantasy/streamingpro/blob/master/docs/en/mlsql-build-in-algorithms.md" target="_blank">Using Build-in Algorithms</a></p>
+<p><code>predict</code> and <code>run</code> statement have the same syntax with train. run is used when you just want to transform data. predict is used to transform data with model trained before.</p>
+<pre><code class="lang-sql">predict orginal_text_corpus as Word2VecInPlace.`/tmp/word2vecinplace` as output;
+</code></pre>
+<h3 id="register">register</h3>
+<p><img src="https://github.com/allwefantasy/streamingpro/raw/master/images/WX20181113-144806.png" alt="">
+<img src="https://github.com/allwefantasy/streamingpro/raw/master/images/WX20181113-144817.png" alt=""></p>
+<p>Register statement is often used together with train statement. Train statement provides a model, and Register statement create a function from the model.</p>
+<p>Register syntax: </p>
+<pre><code>(&apos;register&apos;|&apos;REGISTER&apos;) format &apos;.&apos; path &apos;as&apos; functionName &apos;options&apos;? expression? booleanExpression*
+</code></pre><p>Example:</p>
+<pre><code class="lang-sql"><span class="hljs-keyword">load</span> libsvm.<span class="hljs-string">`/spark-2.2.0-bin-hadoop2.7/data/mllib/sample_libsvm_data.txt`</span> <span class="hljs-keyword">as</span> <span class="hljs-keyword">data</span>;
+
+train data as RandomForest.`/tmp/model` 
+where maxDepth=&quot;3&quot;;
+
+register RandomForest.`/tmp/model` as rf_predict;
+<span class="hljs-keyword">select</span> rf_predict(feature) <span class="hljs-keyword">from</span> <span class="hljs-keyword">data</span> <span class="hljs-keyword">as</span> <span class="hljs-keyword">output</span>;
+</code></pre>
+<p>Register statement is also can be used to register UDF.</p>
+<p>Here is one python example:</p>
+<pre><code class="lang-sql">register ScriptUDF.`` as echoFun options
+and lang=&quot;python&quot;
+and dataType=&quot;map(string,string)&quot;
+and code=&apos;&apos;&apos;
+
+def apply(self,m):
+    return m
+
+&apos;&apos;&apos;
+;
+
+<span class="hljs-keyword">select</span> echoFun(<span class="hljs-keyword">map</span>(&#x201C;a&#x201D;,&#x201D;b&#x201D;) ) <span class="hljs-keyword">as</span> res <span class="hljs-keyword">as</span> <span class="hljs-keyword">output</span>;
+</code></pre>
+<p>More detail please refer <a href="https://github.com/allwefantasy/streamingpro/blob/master/docs/en/mlsql-script-support.md" target="_blank">here</a></p>
+<p>Register can convert things like follow to UDF&#xFF1A;</p>
+<ol>
+<li>Scala snippet</li>
+<li>Python snippet</li>
+<li>The model generated by train statement</li>
+</ol>
+<h3 id="save">save</h3>
+<p>Save is used to write table to any storage. </p>
+<p>Save syntax: </p>
+<pre><code>(&apos;save&apos;|&apos;SAVE&apos;) (overwrite | append | errorIfExists | ignore)* tableName &apos;as&apos; format &apos;.&apos; path &apos;options&apos;? expression? booleanExpression* (&apos;partitionBy&apos; col)?
+</code></pre><p>Example:</p>
+<pre><code class="lang-sql">save overwrite table1 as csv.`/tmp/data` options
+header=&quot;true&quot;;
+</code></pre>
+<p>MLSQL will save table1 to <code>/tmp/data</code> in csv format. It also keeps the header in csv using the option <code>header=&quot;true&quot;</code>.</p>
+<h3 id="set">set</h3>
+<p>Set statement is used for variable declarations.</p>
+<p>Set syntax:</p>
+<pre><code>(&apos;set&apos;|&apos;SET&apos;) setKey &apos;=&apos; setValue &apos;options&apos;? expression? booleanExpression*
+</code></pre><p>Example:</p>
+<pre><code class="lang-sql">-- here we set a xx variable.
+set  xx = `select unix_timestamp()` options type = &quot;sql&quot; ;
+
+-- set variable with multi lines
+set xx = &apos;&apos;&apos;
+sentence1
+sentence2
+sentence3
+&apos;&apos;&apos;;
+
+-- you can use it in select statement with `${}` format.
+select &apos;${xx}&apos; as t as tm;
+
+-- you can also use it in the save statement
+save overwrite tm as parquet.`hp_stae=${xx}`;
+</code></pre>
+<p>set supports three types:</p>
+<ol>
+<li>sql  </li>
+<li>shell </li>
+<li>conf</li>
+</ol>
+<p>SQL and Shell mean that MLSQL will translate the statement with sql/shell interpreter, while conf means MLSQL will just treat it as string.</p>
+<p>Here are some examples may help you to understand how to use set statement:</p>
+<pre><code class="lang-sql"><span class="hljs-comment">-- sql type also support variable evaluation.</span>
+<span class="hljs-keyword">set</span> end_ts = <span class="hljs-string">&quot;2018-08-22 16:12:00&quot;</span>;
+
+<span class="hljs-keyword">set</span> end_ut = <span class="hljs-string">`SELECT unix_timestamp(&apos;${end_ts}&apos;, &apos;yyyy-MM-dd HH:mm:ss&apos;) * 1000`</span> 
+options <span class="hljs-keyword">type</span>=<span class="hljs-string">&quot;sql&quot;</span>;
+<span class="hljs-keyword">set</span> start_ut = <span class="hljs-string">`SELECT (unix_timestamp(&apos;${end_ts}&apos;, &apos;yyyy-MM-dd HH:mm:ss&apos;) - 30 * 60) * 1000`</span> 
+options <span class="hljs-keyword">type</span>=<span class="hljs-string">&quot;sql&quot;</span>;
+
+<span class="hljs-keyword">select</span> <span class="hljs-string">&quot;${start_ut}&quot;</span> <span class="hljs-keyword">as</span> a, <span class="hljs-string">&quot;${end_ut}&quot;</span> <span class="hljs-keyword">as</span> tt <span class="hljs-keyword">as</span> <span class="hljs-keyword">output</span>;
+
+<span class="hljs-comment">-- multi line set statment also supports</span>
+<span class="hljs-comment">-- date is a build-in variable so you can easyly get a formatted date.</span>
+<span class="hljs-keyword">set</span> jack=<span class="hljs-string">&apos;&apos;&apos;
+ hello today is:${date.toString(&quot;yyyyMMdd&quot;)}
+&apos;&apos;&apos;</span>;
+
+<span class="hljs-comment">-- conf</span>
+<span class="hljs-keyword">set</span> hive.exec.dynamic.<span class="hljs-keyword">partition</span>.<span class="hljs-keyword">mode</span>=nonstrict  options <span class="hljs-keyword">type</span> = <span class="hljs-string">&quot;conf&quot;</span> ;
+
+<span class="hljs-comment">--  shell</span>
+
+<span class="hljs-keyword">set</span> t = <span class="hljs-string">`date`</span>  options <span class="hljs-keyword">type</span> = <span class="hljs-string">&quot;shell&quot;</span>;
+</code></pre>
+<h3 id="include">include</h3>
+<p>Suppose you have file <code>/tmp/a.mlsql</code> contains:</p>
+<pre><code class="lang-sql"><span class="hljs-comment">--&#x52A0;&#x8F7D;&#x811A;&#x672C;</span>
+<span class="hljs-keyword">load</span> script.<span class="hljs-string">`plusFun`</span> <span class="hljs-keyword">as</span> scriptTable;
+<span class="hljs-comment">--&#x6CE8;&#x518C;&#x4E3A;UDF&#x51FD;&#x6570; &#x540D;&#x79F0;&#x4E3A;plusFun</span>
+register ScalaScriptUDF.`scriptTable` as plusFun options
+className=&quot;PlusFun&quot;
+and methodName=&quot;plusFun&quot;
+;
+
+<span class="hljs-comment">-- &#x4F7F;&#x7528;plusFun</span>
+<span class="hljs-keyword">select</span> plusFun(<span class="hljs-number">1</span>,<span class="hljs-number">1</span>) <span class="hljs-keyword">as</span> res <span class="hljs-keyword">as</span> <span class="hljs-keyword">output</span>;
+</code></pre>
+<p>Then you can include this file in your MLSQL script.</p>
+<pre><code class="lang-sql"><span class="hljs-comment">-- &#x586B;&#x5199;script&#x811A;&#x672C;</span>
+<span class="hljs-keyword">set</span> plusFun=<span class="hljs-string">&apos;&apos;&apos;
+class PlusFun{
+  def plusFun(a:Double,b:Double)={
+   a + b
+  }
+}
+include hdfs.`/tmp/a.sql`;
+&apos;&apos;&apos;</span>;
+</code></pre>
+<p>Include also supports http protocol.  Do like this:</p>
+<pre><code class="lang-sql">include http.`http://abc.com` options 
+`param.a`=&quot;coo&quot; 
+and `param.b`=&quot;wow&quot;;
+and method=&quot;GET&quot;
+</code></pre>
+<p>when option starts with &quot;param.&quot; ,then this parameter will be send to the request address. Here is the real request:</p>
+<pre><code>curl -XGET &apos;http://abc.com?a=coo&amp;b=wow&apos;
+</code></pre><p>If you send request to StreamingPro server with parameters like this:</p>
+<pre><code>context.__default__include_fetch_url__=http://abc.com
+context.__default__include_project_name__=analyser....
+</code></pre><p>Include http source will use  <code>context.__default__include_fetch_url__</code> as the target url, so you can use include like follow:</p>
+<pre><code>include http.`function.dir1.scriptfile1` ;
+</code></pre><p>the request behind will like this&#xFF1A;</p>
+<pre><code>curl -XGET &apos;http://abc.com?a=coo&amp;b=wow&amp;path=function.dir1.scriptfile1&amp;projectName=analyser&apos;
+</code></pre><h3 id="">!</h3>
+<p>We can convert a bunch of MLSQL script code to a special command, and you can use ! to execute the command. Here is the example:</p>
+<pre><code>set findEmailByName = &apos;&apos;&apos;
+-- notice that there are no semicolon in the end of this line. 
+select email from table1 where name=&quot;{}&quot; 
+&apos;&apos;&apos;;
+
+-- Execute it like a command.
+!findEmailByName &quot;jack&quot;;
+</code></pre>
+                                
+                                </section>
+                            
+    </div>
+    <div class="search-results">
+        <div class="has-results">
+            
+            <h1 class="search-results-title"><span class='search-results-count'></span> results matching "<span class='search-query'></span>"</h1>
+            <ul class="search-results-list"></ul>
+            
+        </div>
+        <div class="no-results">
+            
+            <h1 class="search-results-title">No results matching "<span class='search-query'></span>"</h1>
+            
+        </div>
+    </div>
+</div>
+
+                        </div>
+                    </div>
+                
+            </div>
+
+            
+                
+                <a href="../installation/intellij.html" class="navigation navigation-prev " aria-label="Previous page: Setup MLSQL Engine in Intellij Idea">
+                    <i class="fa fa-angle-left"></i>
+                </a>
+                
+                
+                <a href="datasource/" class="navigation navigation-next " aria-label="Next page: Data Source">
+                    <i class="fa fa-angle-right"></i>
+                </a>
+                
+            
+        
+    </div>
+
+    <script>
+        var gitbook = gitbook || [];
+        gitbook.push(function() {
+            gitbook.page.hasChanged({"page":{"title":"MLSQL Grammar","level":"1.2.2","depth":2,"next":{"title":"Data Source","level":"1.2.3","depth":2,"path":"guide/datasource/README.md","ref":"guide/datasource/README.md","articles":[{"title":"JDBC","level":"1.2.3.1","depth":3,"path":"guide/datasource/jdbc.md","ref":"guide/datasource/jdbc.md","articles":[]},{"title":"Elasticsearch","level":"1.2.3.2","depth":3,"path":"guide/datasource/elasticsearch.md","ref":"guide/datasource/elasticsearch.md","articles":[]},{"title":"MongoDB","level":"1.2.3.3","depth":3,"path":"guide/datasource/mongodb.md","ref":"guide/datasource/mongodb.md","articles":[]},{"title":"HBase","level":"1.2.3.4","depth":3,"path":"guide/datasource/hbase.md","ref":"guide/datasource/hbase.md","articles":[]},{"title":"Parquet/Json/Text/Xml/Csv","level":"1.2.3.5","depth":3,"path":"guide/datasource/file.md","ref":"guide/datasource/file.md","articles":[]},{"title":"jsonStr/script/mlsqlAPI/mlsqlConf","level":"1.2.3.6","depth":3,"path":"guide/datasource/mlsql_source.md","ref":"guide/datasource/mlsql_source.md","articles":[]}]},"previous":{"title":"Setup MLSQL Engine in Intellij Idea","level":"1.2.1.4","depth":3,"path":"installation/intellij.md","ref":"installation/intellij.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":[],"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"guide/mlsql-grammar.md","mtime":"2019-05-01T07:55:50.775Z","type":"markdown"},"gitbook":{"version":"3.2.3","time":"2019-05-01T14:13:29.862Z"},"basePath":"..","book":{"language":""}});
+        });
+    </script>
+</div>
+
+        
+    <script src="../gitbook/gitbook.js"></script>
+    <script src="../gitbook/theme.js"></script>
+    
+        
+        <script src="../gitbook/gitbook-plugin-search/search-engine.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-search/search.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-lunr/lunr.min.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-lunr/search-lunr.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-sharing/buttons.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-fontsettings/fontsettings.js"></script>
+        
+    
+
+    </body>
+</html>
+

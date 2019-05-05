@@ -1,0 +1,1355 @@
+
+<!DOCTYPE HTML>
+<html lang="" >
+    <head>
+        <meta charset="UTF-8">
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <title>Update MySQL in stream job · GitBook</title>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="description" content="">
+        <meta name="generator" content="GitBook 3.2.3">
+        
+        
+        
+    
+    <link rel="stylesheet" href="../../gitbook/style.css">
+
+    
+            
+                
+                <link rel="stylesheet" href="../../gitbook/gitbook-plugin-highlight/website.css">
+                
+            
+                
+                <link rel="stylesheet" href="../../gitbook/gitbook-plugin-search/search.css">
+                
+            
+                
+                <link rel="stylesheet" href="../../gitbook/gitbook-plugin-fontsettings/website.css">
+                
+            
+        
+
+    
+
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+
+        
+    
+    
+    <meta name="HandheldFriendly" content="true"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../../gitbook/images/apple-touch-icon-precomposed-152.png">
+    <link rel="shortcut icon" href="../../gitbook/images/favicon.ico" type="image/x-icon">
+
+    
+    <link rel="next" href="../feature/" />
+    
+    
+    <link rel="prev" href="window_wartermark.html" />
+    
+
+    </head>
+    <body>
+        
+<div class="book">
+    <div class="book-summary">
+        
+            
+<div id="book-search-input" role="search">
+    <input type="text" placeholder="Type to search" />
+</div>
+
+            
+                <nav role="navigation">
+                
+
+
+<ul class="summary">
+    
+    
+
+    
+
+    
+        
+        
+    
+        <li class="chapter " data-level="1.1" data-path="../../">
+            
+                <a href="../../">
+            
+                    
+                    Overview
+            
+                </a>
+            
+
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.1.1" data-path="../overviews/mlsql-stack.html">
+            
+                <a href="../overviews/mlsql-stack.html">
+            
+                    
+                    MLSQL Stack
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2" data-path="../../test1/a.md">
+            
+                <span>
+            
+                    
+                    User Guide
+            
+                </a>
+            
+
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.2.1" data-path="../../installation/">
+            
+                <a href="../../installation/">
+            
+                    
+                    Compile&Run&Deploy
+            
+                </a>
+            
+
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.2.1.1" data-path="../../installation/install.html">
+            
+                <a href="../../installation/install.html">
+            
+                    
+                    Compile&Run&Deploy
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.1.2" data-path="../../installation/docker.html">
+            
+                <a href="../../installation/docker.html">
+            
+                    
+                    Docker
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.1.3" data-path="../../installation/engine-conf.html">
+            
+                <a href="../../installation/engine-conf.html">
+            
+                    
+                    MLSQL Engine Start Configruatioin
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.1.4" data-path="../../installation/intellij.html">
+            
+                <a href="../../installation/intellij.html">
+            
+                    
+                    Setup MLSQL Engine in Intellij Idea
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.2" data-path="../mlsql-grammar.html">
+            
+                <a href="../mlsql-grammar.html">
+            
+                    
+                    MLSQL Grammar
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.3" data-path="../datasource/">
+            
+                <a href="../datasource/">
+            
+                    
+                    Data Source
+            
+                </a>
+            
+
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.2.3.1" data-path="../datasource/jdbc.html">
+            
+                <a href="../datasource/jdbc.html">
+            
+                    
+                    JDBC
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.3.2" data-path="../datasource/elasticsearch.html">
+            
+                <a href="../datasource/elasticsearch.html">
+            
+                    
+                    Elasticsearch
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.3.3" data-path="../datasource/mongodb.html">
+            
+                <a href="../datasource/mongodb.html">
+            
+                    
+                    MongoDB
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.3.4" data-path="../datasource/hbase.html">
+            
+                <a href="../datasource/hbase.html">
+            
+                    
+                    HBase
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.3.5" data-path="../datasource/file.html">
+            
+                <a href="../datasource/file.html">
+            
+                    
+                    Parquet/Json/Text/Xml/Csv
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.3.6" data-path="../datasource/mlsql_source.html">
+            
+                <a href="../datasource/mlsql_source.html">
+            
+                    
+                    jsonStr/script/mlsqlAPI/mlsqlConf
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.4" data-path="../variable/">
+            
+                <a href="../variable/">
+            
+                    
+                    Variable
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.5" data-path="../et/">
+            
+                <a href="../et/">
+            
+                    
+                    Built-in ET
+            
+                </a>
+            
+
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.2.5.1" data-path="../et/jdbc.html">
+            
+                <a href="../et/jdbc.html">
+            
+                    
+                    Query MySQL Directly
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.5.2" data-path="../et/child-parent.html">
+            
+                <a href="../et/child-parent.html">
+            
+                    
+                    Build Parent-Child Relationship
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.5.3" data-path="../et/repartition_table.html">
+            
+                <a href="../et/repartition_table.html">
+            
+                    
+                    Change the partitions of table
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.5.4" data-path="../et/email.html">
+            
+                <a href="../et/email.html">
+            
+                    
+                    Send Email
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.6" data-path="../task/">
+            
+                <a href="../task/">
+            
+                    
+                    Task Management
+            
+                </a>
+            
+
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.2.6.1" data-path="../task/show_job.html">
+            
+                <a href="../task/show_job.html">
+            
+                    
+                    Show running jobs
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.6.2" data-path="../task/kill_job.html">
+            
+                <a href="../task/kill_job.html">
+            
+                    
+                    Kill Job
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.7" data-path="../resource/">
+            
+                <a href="../resource/">
+            
+                    
+                    Resource Management
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.8" data-path="../multi-tenant/">
+            
+                <a href="../multi-tenant/">
+            
+                    
+                    Multi-Tenant
+            
+                </a>
+            
+
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.2.8.1" data-path="../multi-tenant/conf.html">
+            
+                <a href="../multi-tenant/conf.html">
+            
+                    
+                    Configure
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.8.2" data-path="../multi-tenant/home.html">
+            
+                <a href="../multi-tenant/home.html">
+            
+                    
+                    User home
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.9" data-path="../udf/">
+            
+                <a href="../udf/">
+            
+                    
+                    Create UDF/UDAF
+            
+                </a>
+            
+
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.2.9.1" data-path="../udf/python-udf.html">
+            
+                <a href="../udf/python-udf.html">
+            
+                    
+                    Python UDF
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.9.2" data-path="../udf/scala-udf.html">
+            
+                <a href="../udf/scala-udf.html">
+            
+                    
+                    Scala UDF
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.9.3" data-path="../udf/scala-udaf.html">
+            
+                <a href="../udf/scala-udaf.html">
+            
+                    
+                    Scala UDAF
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.9.4" data-path="../udf/java-udf.html">
+            
+                <a href="../udf/java-udf.html">
+            
+                    
+                    JAVA UDF
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.10" data-path="../system_udf/">
+            
+                <a href="../system_udf/">
+            
+                    
+                    Built-in UDF
+            
+                </a>
+            
+
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.2.10.1" data-path="../system_udf/http-udf.html">
+            
+                <a href="../system_udf/http-udf.html">
+            
+                    
+                    Http UDF
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.10.2" data-path="../system_udf/http-udf.html">
+            
+                <a href="../system_udf/http-udf.html">
+            
+                    
+                    Common UDF
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.11" data-path="../python/">
+            
+                <a href="../python/">
+            
+                    
+                    Python project
+            
+                </a>
+            
+
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.2.11.1" data-path="../python/project.html">
+            
+                <a href="../python/project.html">
+            
+                    
+                    Project Standard
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.11.2" data-path="../python/env.html">
+            
+                <a href="../python/env.html">
+            
+                    
+                    Python environment
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.11.3" data-path="../python/distribute-python.html">
+            
+                <a href="../python/distribute-python.html">
+            
+                    
+                    Run python project in distribute
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.12" data-path="./">
+            
+                <a href="./">
+            
+                    
+                    Stream
+            
+                </a>
+            
+
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.2.12.1" data-path="datasource.html">
+            
+                <a href="datasource.html">
+            
+                    
+                    Source/Sink
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.12.2" data-path="data_convert.html">
+            
+                <a href="data_convert.html">
+            
+                    
+                    Convert JSON/CSV to table row
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.12.3" data-path="window_wartermark.html">
+            
+                <a href="window_wartermark.html">
+            
+                    
+                    window/watermark
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter active" data-level="1.2.12.4" data-path="stream_mysql_update.html">
+            
+                <a href="stream_mysql_update.html">
+            
+                    
+                    Update MySQL in stream job
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.13" data-path="../feature/">
+            
+                <a href="../feature/">
+            
+                    
+                    Processing
+            
+                </a>
+            
+
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.2.13.1" data-path="../feature/TfIdfInPlace.html">
+            
+                <a href="../feature/TfIdfInPlace.html">
+            
+                    
+                    TfIdfInPlace
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.13.2" data-path="../feature/Word2VecInPlace.html">
+            
+                <a href="../feature/Word2VecInPlace.html">
+            
+                    
+                    Word2VecInPlace
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.13.3" data-path="../feature/ScalerInPlace.html">
+            
+                <a href="../feature/ScalerInPlace.html">
+            
+                    
+                    ScalerInPlace
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.13.4" data-path="../feature/NormalizeInPlace.html">
+            
+                <a href="../feature/NormalizeInPlace.html">
+            
+                    
+                    NormalizeInPlace
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.13.5" >
+            
+                <span>
+            
+                    
+                    Discretizer
+            
+                </span>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.13.6" >
+            
+                <span>
+            
+                    
+                    Bucketizer
+            
+                </span>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.13.7" >
+            
+                <span>
+            
+                    
+                    Quantile
+            
+                </span>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.13.8" data-path="../feature/VecMapInPlace.html">
+            
+                <a href="../feature/VecMapInPlace.html">
+            
+                    
+                    VecMapInPlace
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.13.9" data-path="../feature/RateSampler.html">
+            
+                <a href="../feature/RateSampler.html">
+            
+                    
+                    RateSampler
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.13.10" data-path="../feature/RowMatrix.html">
+            
+                <a href="../feature/RowMatrix.html">
+            
+                    
+                    RowMatrix
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.13.11" data-path="../feature/CommunityBasedSimilarityInPlace.html">
+            
+                <a href="../feature/CommunityBasedSimilarityInPlace.html">
+            
+                    
+                    CommunityBasedSimilarityInPlace
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.13.12" data-path="../feature/Word2ArrayInPlace.html">
+            
+                <a href="../feature/Word2ArrayInPlace.html">
+            
+                    
+                    Word2ArrayInPlace
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.14" >
+            
+                <span>
+            
+                    
+                    Algorithms
+            
+                </span>
+            
+
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.2.14.1" >
+            
+                <span>
+            
+                    
+                    Machine Learning
+            
+                </span>
+            
+
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.2.14.1.1" data-path="../feature/RandomForest.html">
+            
+                <a href="../feature/RandomForest.html">
+            
+                    
+                    RandomForest
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.14.1.2" data-path="../feature/NaiveBayes.html">
+            
+                <a href="../feature/NaiveBayes.html">
+            
+                    
+                    NaiveBayes
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.14.1.3" data-path="../feature/ALS.html">
+            
+                <a href="../feature/ALS.html">
+            
+                    
+                    ALS
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.14.1.4" data-path="../feature/GBTRegressor.html">
+            
+                <a href="../feature/GBTRegressor.html">
+            
+                    
+                    GBTRegressor
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.14.1.5" data-path="../feature/LDA.html">
+            
+                <a href="../feature/LDA.html">
+            
+                    
+                    LDA
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.14.1.6" data-path="../feature/KMeans.html">
+            
+                <a href="../feature/KMeans.html">
+            
+                    
+                    KMeans
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.14.1.7" data-path="../feature/FPGrowth.html">
+            
+                <a href="../feature/FPGrowth.html">
+            
+                    
+                    FPGrowth
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.14.1.8" data-path="../feature/PageRank.html">
+            
+                <a href="../feature/PageRank.html">
+            
+                    
+                    PageRank
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.14.1.9" data-path="../feature/LogisticRegressor.html">
+            
+                <a href="../feature/LogisticRegressor.html">
+            
+                    
+                    LogisticRegressor
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.14.2" >
+            
+                <span>
+            
+                    
+                    Deep Learning
+            
+                </span>
+            
+
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.2.14.2.1" >
+            
+                <a target="_blank" href="https://gist.github.com/allwefantasy/59d1f89026d8049e23f182c7d1de2870">
+            
+                    
+                    BigDLClassify
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+
+    
+        
+        <li class="divider"></li>
+        
+        
+    
+        <li class="chapter " data-level="2.1" data-path="../../test2/a.md">
+            
+                <span>
+            
+                    
+                    API Docs
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="2.2" >
+            
+                <span>
+            
+                    
+                    More
+            
+                </span>
+            
+
+            
+        </li>
+    
+
+    
+
+    <li class="divider"></li>
+
+    <li>
+        <a href="https://www.gitbook.com" target="blank" class="gitbook-link">
+            Published with GitBook
+        </a>
+    </li>
+</ul>
+
+
+                </nav>
+            
+        
+    </div>
+
+    <div class="book-body">
+        
+            <div class="body-inner">
+                
+                    
+
+<div class="book-header" role="navigation">
+    
+
+    <!-- Title -->
+    <h1>
+        <i class="fa fa-circle-o-notch fa-spin"></i>
+        <a href="../.." >Update MySQL in stream job</a>
+    </h1>
+</div>
+
+
+
+
+                    <div class="page-wrapper" tabindex="-1" role="main">
+                        <div class="page-inner">
+                            
+<div id="book-search-results">
+    <div class="search-noresults">
+    
+                                <section class="normal markdown-section">
+                                
+                                <h1 id="update-mysql-in-stream-job">Update MySQL in stream job</h1>
+<p>The example from<a href="https://github.com/allwefantasy/streamingpro/issues/919" target="_blank">Issue-919</a>.</p>
+<h2 id="background">Background</h2>
+<p>Suppose we have a patient topic in Kafka, the schema like follow:</p>
+<ul>
+<li>name,string</li>
+<li>age,integer</li>
+<li>addr,string (means the province the patient from)</li>
+<li>arriveTime,long (timestamp in miliseconds)</li>
+</ul>
+<p>The addr,arriveTime will be combined as the final uniq key, this means ,if they exists,
+we will update them, otherwise inert new record.</p>
+<h2 id="to-finish-this-job">To finish this job</h2>
+<p>load the patient topic as a table.</p>
+<pre><code class="lang-sql"><span class="hljs-keyword">set</span> streamName=<span class="hljs-string">&quot;test_patient_count_update&quot;</span>;
+
+<span class="hljs-keyword">load</span> kafka.<span class="hljs-string">`patient`</span> options
+<span class="hljs-string">`kafka.bootstrap.servers`</span>=<span class="hljs-string">&quot;dn3:9092&quot;</span>
+<span class="hljs-keyword">and</span> <span class="hljs-string">`valueFormat`</span>=<span class="hljs-string">&quot;json&quot;</span>
+<span class="hljs-keyword">and</span> <span class="hljs-string">`valueSchema`</span>=<span class="hljs-string">&quot;st(field(name,string),field(age,integer),field(addr,string),field(arriveTime,string))&quot;</span>
+<span class="hljs-keyword">as</span> patientKafkaData;
+</code></pre>
+<p>The data format is json in kafka, we hope expand the table, so we use &#x6240;&#x4EE5;&#x914D;&#x7F6E;&#x4E86;valueFormat and valueSchema
+to do this.</p>
+<p>You might notice that the sink is MySQL, so we should connect it first:</p>
+<pre><code class="lang-sql">connect jdbc where
+url=&quot;jdbc:mysql://dn1:3306/streamingpro-cluster?characterEncoding=utf8&amp;zeroDateTimeBehavior=convertToNull&quot;
+and driver=&quot;com.mysql.jdbc.Driver&quot;
+and user=&quot;XXX&quot;
+and password=&quot;XXXXX&quot;
+as mydb;
+</code></pre>
+<p>The first way is use procedure:</p>
+<pre><code>set procStr=&apos;&apos;&apos;
+CREATE DEFINER=`app`@`%` PROCEDURE `test_proc`(in `dt` date,in `addr` VARCHAR(100),in `num` BIGINT)
+begin 
+    DECLARE cnt bigint;
+    select p.num into cnt from patientUpdate p where p.dt=`dt` and p.addr=`addr`;
+    if ISNULL(CNT) then 
+        INSERT into patientUpdate(dt,addr,num) values(`dt`,`addr`,`num`);
+    else 
+        update patientUpdate p set p.num=`num` where p.dt=`dt` and p.addr=`addr`;
+    end if;
+end
+&apos;&apos;&apos; ;
+
+-- create table and procedure &#x521B;&#x5EFA;table&#x548C;&#x5B58;&#x50A8;&#x8FC7;&#x7A0B;
+select 1 as a as FAKE_TABLE;
+run FAKE_TABLE as JDBC.`mydb` where 
+`driver-statement-0`=&quot;create table  if not exists patientUpdate(dt date,addr varchar(100),num BIGINT)&quot;
+and 
+`driver-statement-1`=&quot;DROP PROCEDURE IF EXISTS test_proc;&quot;
+and
+`driver-statement-2`=&quot;${procStr}&quot;
+</code></pre><p>and transform the data</p>
+<pre><code>select name,addr,cast(from_unixtime(arriveTime/1000) as date) as dt from patientKafkaData as patient;
+
+select dt,addr,count(*) as num from patient
+group by dt,addr
+as groupTable;
+</code></pre><p>finally call procedure:</p>
+<pre><code class="lang-sql">save append groupTable
+as streamJDBC.`mydb.patient` 
+options mode=&quot;<span class="hljs-keyword">update</span><span class="hljs-string">&quot;
+-- call procedure &#x8C03;&#x7528;&#x5B58;&#x50A8;&#x8FC7;&#x7A0B;
+and `statement-0`=&quot;</span><span class="hljs-keyword">call</span> test_proc(?,?,?)<span class="hljs-string">&quot;
+and duration=&quot;</span><span class="hljs-number">5</span><span class="hljs-string">&quot;
+and checkpointLocation=&quot;</span>/streamingpro-<span class="hljs-keyword">test</span>/kafka/patient/mysql/<span class="hljs-keyword">update</span><span class="hljs-string">&quot;;
+</span></code></pre>
+<p>But procedure is not a good choice, we can do it with other way:</p>
+<pre><code>select dt,addr,num, dt as dt1, addr as addr2 from groupTable as outputTable;
+
+save append outputTable  
+as streamJDBC.`mydb.patient` 
+options mode=&quot;update&quot;
+and `statement-0`=&quot;insert into patientUpdate(dt,addr,num) value(?,?,?) ON DUPLICATE KEY UPDATE dt=?,addr=?,num=?;&quot;
+and duration=&quot;5&quot;
+and checkpointLocation=&quot;/streamingpro-test/kafka/patient/mysql/update&quot;;
+</code></pre><p>We use <code>ON DUPLICATE KEY UPDATE</code> to achieve upsert semantic. Notice that <code>?</code> in SQL is
+position parameter. You should convert you data with the same order.</p>
+
+                                
+                                </section>
+                            
+    </div>
+    <div class="search-results">
+        <div class="has-results">
+            
+            <h1 class="search-results-title"><span class='search-results-count'></span> results matching "<span class='search-query'></span>"</h1>
+            <ul class="search-results-list"></ul>
+            
+        </div>
+        <div class="no-results">
+            
+            <h1 class="search-results-title">No results matching "<span class='search-query'></span>"</h1>
+            
+        </div>
+    </div>
+</div>
+
+                        </div>
+                    </div>
+                
+            </div>
+
+            
+                
+                <a href="window_wartermark.html" class="navigation navigation-prev " aria-label="Previous page: window/watermark">
+                    <i class="fa fa-angle-left"></i>
+                </a>
+                
+                
+                <a href="../feature/" class="navigation navigation-next " aria-label="Next page: Processing">
+                    <i class="fa fa-angle-right"></i>
+                </a>
+                
+            
+        
+    </div>
+
+    <script>
+        var gitbook = gitbook || [];
+        gitbook.push(function() {
+            gitbook.page.hasChanged({"page":{"title":"Update MySQL in stream job","level":"1.2.12.4","depth":3,"next":{"title":"Processing","level":"1.2.13","depth":2,"path":"guide/feature/README.md","ref":"guide/feature/README.md","articles":[{"title":"TfIdfInPlace","level":"1.2.13.1","depth":3,"path":"guide/feature/TfIdfInPlace.md","ref":"guide/feature/TfIdfInPlace.md","articles":[]},{"title":"Word2VecInPlace","level":"1.2.13.2","depth":3,"path":"guide/feature/Word2VecInPlace.md","ref":"guide/feature/Word2VecInPlace.md","articles":[]},{"title":"ScalerInPlace","level":"1.2.13.3","depth":3,"path":"guide/feature/ScalerInPlace.md","ref":"guide/feature/ScalerInPlace.md","articles":[]},{"title":"NormalizeInPlace","level":"1.2.13.4","depth":3,"path":"guide/feature/NormalizeInPlace.md","ref":"guide/feature/NormalizeInPlace.md","articles":[]},{"title":"Discretizer","level":"1.2.13.5","depth":3,"ref":"","articles":[]},{"title":"Bucketizer","level":"1.2.13.6","depth":3,"ref":"","articles":[]},{"title":"Quantile","level":"1.2.13.7","depth":3,"ref":"","articles":[]},{"title":"VecMapInPlace","level":"1.2.13.8","depth":3,"path":"guide/feature/VecMapInPlace.md","ref":"guide/feature/VecMapInPlace.md","articles":[]},{"title":"RateSampler","level":"1.2.13.9","depth":3,"path":"guide/feature/RateSampler.md","ref":"guide/feature/RateSampler.md","articles":[]},{"title":"RowMatrix","level":"1.2.13.10","depth":3,"path":"guide/feature/RowMatrix.md","ref":"guide/feature/RowMatrix.md","articles":[]},{"title":"CommunityBasedSimilarityInPlace","level":"1.2.13.11","depth":3,"path":"guide/feature/CommunityBasedSimilarityInPlace.md","ref":"guide/feature/CommunityBasedSimilarityInPlace.md","articles":[]},{"title":"Word2ArrayInPlace","level":"1.2.13.12","depth":3,"path":"guide/feature/Word2ArrayInPlace.md","ref":"guide/feature/Word2ArrayInPlace.md","articles":[]}]},"previous":{"title":"window/watermark","level":"1.2.12.3","depth":3,"path":"guide/stream/window_wartermark.md","ref":"guide/stream/window_wartermark.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":[],"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"guide/stream/stream_mysql_update.md","mtime":"2019-05-01T08:07:17.076Z","type":"markdown"},"gitbook":{"version":"3.2.3","time":"2019-05-01T14:13:29.862Z"},"basePath":"../..","book":{"language":""}});
+        });
+    </script>
+</div>
+
+        
+    <script src="../../gitbook/gitbook.js"></script>
+    <script src="../../gitbook/theme.js"></script>
+    
+        
+        <script src="../../gitbook/gitbook-plugin-search/search-engine.js"></script>
+        
+    
+        
+        <script src="../../gitbook/gitbook-plugin-search/search.js"></script>
+        
+    
+        
+        <script src="../../gitbook/gitbook-plugin-lunr/lunr.min.js"></script>
+        
+    
+        
+        <script src="../../gitbook/gitbook-plugin-lunr/search-lunr.js"></script>
+        
+    
+        
+        <script src="../../gitbook/gitbook-plugin-sharing/buttons.js"></script>
+        
+    
+        
+        <script src="../../gitbook/gitbook-plugin-fontsettings/fontsettings.js"></script>
+        
+    
+
+    </body>
+</html>
+

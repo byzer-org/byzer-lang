@@ -1,0 +1,1381 @@
+
+<!DOCTYPE HTML>
+<html lang="" >
+    <head>
+        <meta charset="UTF-8">
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <title>Compile&Run&Deploy · GitBook</title>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="description" content="">
+        <meta name="generator" content="GitBook 3.2.3">
+        
+        
+        
+    
+    <link rel="stylesheet" href="../gitbook/style.css">
+
+    
+            
+                
+                <link rel="stylesheet" href="../gitbook/gitbook-plugin-highlight/website.css">
+                
+            
+                
+                <link rel="stylesheet" href="../gitbook/gitbook-plugin-search/search.css">
+                
+            
+                
+                <link rel="stylesheet" href="../gitbook/gitbook-plugin-fontsettings/website.css">
+                
+            
+        
+
+    
+
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+
+        
+    
+    
+    <meta name="HandheldFriendly" content="true"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../gitbook/images/apple-touch-icon-precomposed-152.png">
+    <link rel="shortcut icon" href="../gitbook/images/favicon.ico" type="image/x-icon">
+
+    
+    <link rel="next" href="docker.html" />
+    
+    
+    <link rel="prev" href="./" />
+    
+
+    </head>
+    <body>
+        
+<div class="book">
+    <div class="book-summary">
+        
+            
+<div id="book-search-input" role="search">
+    <input type="text" placeholder="Type to search" />
+</div>
+
+            
+                <nav role="navigation">
+                
+
+
+<ul class="summary">
+    
+    
+
+    
+
+    
+        
+        
+    
+        <li class="chapter " data-level="1.1" data-path="../">
+            
+                <a href="../">
+            
+                    
+                    Overview
+            
+                </a>
+            
+
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.1.1" data-path="../guide/overviews/mlsql-stack.html">
+            
+                <a href="../guide/overviews/mlsql-stack.html">
+            
+                    
+                    MLSQL Stack
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2" data-path="../test1/a.md">
+            
+                <span>
+            
+                    
+                    User Guide
+            
+                </a>
+            
+
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.2.1" data-path="./">
+            
+                <a href="./">
+            
+                    
+                    Compile&Run&Deploy
+            
+                </a>
+            
+
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter active" data-level="1.2.1.1" data-path="install.html">
+            
+                <a href="install.html">
+            
+                    
+                    Compile&Run&Deploy
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.1.2" data-path="docker.html">
+            
+                <a href="docker.html">
+            
+                    
+                    Docker
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.1.3" data-path="engine-conf.html">
+            
+                <a href="engine-conf.html">
+            
+                    
+                    MLSQL Engine Start Configruatioin
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.1.4" data-path="intellij.html">
+            
+                <a href="intellij.html">
+            
+                    
+                    Setup MLSQL Engine in Intellij Idea
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.2" data-path="../guide/mlsql-grammar.html">
+            
+                <a href="../guide/mlsql-grammar.html">
+            
+                    
+                    MLSQL Grammar
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.3" data-path="../guide/datasource/">
+            
+                <a href="../guide/datasource/">
+            
+                    
+                    Data Source
+            
+                </a>
+            
+
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.2.3.1" data-path="../guide/datasource/jdbc.html">
+            
+                <a href="../guide/datasource/jdbc.html">
+            
+                    
+                    JDBC
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.3.2" data-path="../guide/datasource/elasticsearch.html">
+            
+                <a href="../guide/datasource/elasticsearch.html">
+            
+                    
+                    Elasticsearch
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.3.3" data-path="../guide/datasource/mongodb.html">
+            
+                <a href="../guide/datasource/mongodb.html">
+            
+                    
+                    MongoDB
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.3.4" data-path="../guide/datasource/hbase.html">
+            
+                <a href="../guide/datasource/hbase.html">
+            
+                    
+                    HBase
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.3.5" data-path="../guide/datasource/file.html">
+            
+                <a href="../guide/datasource/file.html">
+            
+                    
+                    Parquet/Json/Text/Xml/Csv
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.3.6" data-path="../guide/datasource/mlsql_source.html">
+            
+                <a href="../guide/datasource/mlsql_source.html">
+            
+                    
+                    jsonStr/script/mlsqlAPI/mlsqlConf
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.4" data-path="../guide/variable/">
+            
+                <a href="../guide/variable/">
+            
+                    
+                    Variable
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.5" data-path="../guide/et/">
+            
+                <a href="../guide/et/">
+            
+                    
+                    Built-in ET
+            
+                </a>
+            
+
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.2.5.1" data-path="../guide/et/jdbc.html">
+            
+                <a href="../guide/et/jdbc.html">
+            
+                    
+                    Query MySQL Directly
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.5.2" data-path="../guide/et/child-parent.html">
+            
+                <a href="../guide/et/child-parent.html">
+            
+                    
+                    Build Parent-Child Relationship
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.5.3" data-path="../guide/et/repartition_table.html">
+            
+                <a href="../guide/et/repartition_table.html">
+            
+                    
+                    Change the partitions of table
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.5.4" data-path="../guide/et/email.html">
+            
+                <a href="../guide/et/email.html">
+            
+                    
+                    Send Email
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.6" data-path="../guide/task/">
+            
+                <a href="../guide/task/">
+            
+                    
+                    Task Management
+            
+                </a>
+            
+
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.2.6.1" data-path="../guide/task/show_job.html">
+            
+                <a href="../guide/task/show_job.html">
+            
+                    
+                    Show running jobs
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.6.2" data-path="../guide/task/kill_job.html">
+            
+                <a href="../guide/task/kill_job.html">
+            
+                    
+                    Kill Job
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.7" data-path="../guide/resource/">
+            
+                <a href="../guide/resource/">
+            
+                    
+                    Resource Management
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.8" data-path="../guide/multi-tenant/">
+            
+                <a href="../guide/multi-tenant/">
+            
+                    
+                    Multi-Tenant
+            
+                </a>
+            
+
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.2.8.1" data-path="../guide/multi-tenant/conf.html">
+            
+                <a href="../guide/multi-tenant/conf.html">
+            
+                    
+                    Configure
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.8.2" data-path="../guide/multi-tenant/home.html">
+            
+                <a href="../guide/multi-tenant/home.html">
+            
+                    
+                    User home
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.9" data-path="../guide/udf/">
+            
+                <a href="../guide/udf/">
+            
+                    
+                    Create UDF/UDAF
+            
+                </a>
+            
+
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.2.9.1" data-path="../guide/udf/python-udf.html">
+            
+                <a href="../guide/udf/python-udf.html">
+            
+                    
+                    Python UDF
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.9.2" data-path="../guide/udf/scala-udf.html">
+            
+                <a href="../guide/udf/scala-udf.html">
+            
+                    
+                    Scala UDF
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.9.3" data-path="../guide/udf/scala-udaf.html">
+            
+                <a href="../guide/udf/scala-udaf.html">
+            
+                    
+                    Scala UDAF
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.9.4" data-path="../guide/udf/java-udf.html">
+            
+                <a href="../guide/udf/java-udf.html">
+            
+                    
+                    JAVA UDF
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.10" data-path="../guide/system_udf/">
+            
+                <a href="../guide/system_udf/">
+            
+                    
+                    Built-in UDF
+            
+                </a>
+            
+
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.2.10.1" data-path="../guide/system_udf/http-udf.html">
+            
+                <a href="../guide/system_udf/http-udf.html">
+            
+                    
+                    Http UDF
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.10.2" data-path="../guide/system_udf/http-udf.html">
+            
+                <a href="../guide/system_udf/http-udf.html">
+            
+                    
+                    Common UDF
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.11" data-path="../guide/python/">
+            
+                <a href="../guide/python/">
+            
+                    
+                    Python project
+            
+                </a>
+            
+
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.2.11.1" data-path="../guide/python/project.html">
+            
+                <a href="../guide/python/project.html">
+            
+                    
+                    Project Standard
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.11.2" data-path="../guide/python/env.html">
+            
+                <a href="../guide/python/env.html">
+            
+                    
+                    Python environment
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.11.3" data-path="../guide/python/distribute-python.html">
+            
+                <a href="../guide/python/distribute-python.html">
+            
+                    
+                    Run python project in distribute
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.12" data-path="../guide/stream/">
+            
+                <a href="../guide/stream/">
+            
+                    
+                    Stream
+            
+                </a>
+            
+
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.2.12.1" data-path="../guide/stream/datasource.html">
+            
+                <a href="../guide/stream/datasource.html">
+            
+                    
+                    Source/Sink
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.12.2" data-path="../guide/stream/data_convert.html">
+            
+                <a href="../guide/stream/data_convert.html">
+            
+                    
+                    Convert JSON/CSV to table row
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.12.3" data-path="../guide/stream/window_wartermark.html">
+            
+                <a href="../guide/stream/window_wartermark.html">
+            
+                    
+                    window/watermark
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.12.4" data-path="../guide/stream/stream_mysql_update.html">
+            
+                <a href="../guide/stream/stream_mysql_update.html">
+            
+                    
+                    Update MySQL in stream job
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.13" data-path="../guide/feature/">
+            
+                <a href="../guide/feature/">
+            
+                    
+                    Processing
+            
+                </a>
+            
+
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.2.13.1" data-path="../guide/feature/TfIdfInPlace.html">
+            
+                <a href="../guide/feature/TfIdfInPlace.html">
+            
+                    
+                    TfIdfInPlace
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.13.2" data-path="../guide/feature/Word2VecInPlace.html">
+            
+                <a href="../guide/feature/Word2VecInPlace.html">
+            
+                    
+                    Word2VecInPlace
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.13.3" data-path="../guide/feature/ScalerInPlace.html">
+            
+                <a href="../guide/feature/ScalerInPlace.html">
+            
+                    
+                    ScalerInPlace
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.13.4" data-path="../guide/feature/NormalizeInPlace.html">
+            
+                <a href="../guide/feature/NormalizeInPlace.html">
+            
+                    
+                    NormalizeInPlace
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.13.5" >
+            
+                <span>
+            
+                    
+                    Discretizer
+            
+                </span>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.13.6" >
+            
+                <span>
+            
+                    
+                    Bucketizer
+            
+                </span>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.13.7" >
+            
+                <span>
+            
+                    
+                    Quantile
+            
+                </span>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.13.8" data-path="../guide/feature/VecMapInPlace.html">
+            
+                <a href="../guide/feature/VecMapInPlace.html">
+            
+                    
+                    VecMapInPlace
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.13.9" data-path="../guide/feature/RateSampler.html">
+            
+                <a href="../guide/feature/RateSampler.html">
+            
+                    
+                    RateSampler
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.13.10" data-path="../guide/feature/RowMatrix.html">
+            
+                <a href="../guide/feature/RowMatrix.html">
+            
+                    
+                    RowMatrix
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.13.11" data-path="../guide/feature/CommunityBasedSimilarityInPlace.html">
+            
+                <a href="../guide/feature/CommunityBasedSimilarityInPlace.html">
+            
+                    
+                    CommunityBasedSimilarityInPlace
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.13.12" data-path="../guide/feature/Word2ArrayInPlace.html">
+            
+                <a href="../guide/feature/Word2ArrayInPlace.html">
+            
+                    
+                    Word2ArrayInPlace
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.14" >
+            
+                <span>
+            
+                    
+                    Algorithms
+            
+                </span>
+            
+
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.2.14.1" >
+            
+                <span>
+            
+                    
+                    Machine Learning
+            
+                </span>
+            
+
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.2.14.1.1" data-path="../guide/feature/RandomForest.html">
+            
+                <a href="../guide/feature/RandomForest.html">
+            
+                    
+                    RandomForest
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.14.1.2" data-path="../guide/feature/NaiveBayes.html">
+            
+                <a href="../guide/feature/NaiveBayes.html">
+            
+                    
+                    NaiveBayes
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.14.1.3" data-path="../guide/feature/ALS.html">
+            
+                <a href="../guide/feature/ALS.html">
+            
+                    
+                    ALS
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.14.1.4" data-path="../guide/feature/GBTRegressor.html">
+            
+                <a href="../guide/feature/GBTRegressor.html">
+            
+                    
+                    GBTRegressor
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.14.1.5" data-path="../guide/feature/LDA.html">
+            
+                <a href="../guide/feature/LDA.html">
+            
+                    
+                    LDA
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.14.1.6" data-path="../guide/feature/KMeans.html">
+            
+                <a href="../guide/feature/KMeans.html">
+            
+                    
+                    KMeans
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.14.1.7" data-path="../guide/feature/FPGrowth.html">
+            
+                <a href="../guide/feature/FPGrowth.html">
+            
+                    
+                    FPGrowth
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.14.1.8" data-path="../guide/feature/PageRank.html">
+            
+                <a href="../guide/feature/PageRank.html">
+            
+                    
+                    PageRank
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.14.1.9" data-path="../guide/feature/LogisticRegressor.html">
+            
+                <a href="../guide/feature/LogisticRegressor.html">
+            
+                    
+                    LogisticRegressor
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.14.2" >
+            
+                <span>
+            
+                    
+                    Deep Learning
+            
+                </span>
+            
+
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.2.14.2.1" >
+            
+                <a target="_blank" href="https://gist.github.com/allwefantasy/59d1f89026d8049e23f182c7d1de2870">
+            
+                    
+                    BigDLClassify
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+
+    
+        
+        <li class="divider"></li>
+        
+        
+    
+        <li class="chapter " data-level="2.1" data-path="../test2/a.md">
+            
+                <span>
+            
+                    
+                    API Docs
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="2.2" >
+            
+                <span>
+            
+                    
+                    More
+            
+                </span>
+            
+
+            
+        </li>
+    
+
+    
+
+    <li class="divider"></li>
+
+    <li>
+        <a href="https://www.gitbook.com" target="blank" class="gitbook-link">
+            Published with GitBook
+        </a>
+    </li>
+</ul>
+
+
+                </nav>
+            
+        
+    </div>
+
+    <div class="book-body">
+        
+            <div class="body-inner">
+                
+                    
+
+<div class="book-header" role="navigation">
+    
+
+    <!-- Title -->
+    <h1>
+        <i class="fa fa-circle-o-notch fa-spin"></i>
+        <a href=".." >Compile&Run&Deploy</a>
+    </h1>
+</div>
+
+
+
+
+                    <div class="page-wrapper" tabindex="-1" role="main">
+                        <div class="page-inner">
+                            
+<div id="book-search-results">
+    <div class="search-noresults">
+    
+                                <section class="normal markdown-section">
+                                
+                                <h1 id="build-mlsql-stack-manually">Build MLSQL Stack Manually</h1>
+<h2 id="mlsql-engine">MLSQL-Engine</h2>
+<ol>
+<li>clone </li>
+</ol>
+<pre><code>git clone git@github.com:allwefantasy/streamingpro.git
+</code></pre><ol>
+<li>compile</li>
+</ol>
+<pre><code>cd streamingpro
+export MLSQL_SPARK_VERSION=2.4
+./dev/package.sh
+</code></pre><p>After the compiling, you will find a jar in this place:</p>
+<pre><code>streamingpro-mlsql/target/streamingpro-mlsql-spark_2.4-1.2.0-SNAPSHOT.jar
+</code></pre><p>The size of jar is almost 200+m. Now, create a release:</p>
+<pre><code>export VERSION=1.2.0-SNAPSHOT
+mkdir -p /tmp/mlsql-server/libs
+cp  streamingpro-mlsql/target/streamingpro-mlsql-spark_2.4-${VERSION}.jar /tmp/mlsql-server/libs
+cp dev/start-local.sh /tmp/mlsql-server
+cd /tmp/mlsql-server
+
+export SPARK_HOME=~/Softwares/spark-2.4.0-bin-hadoop2.7
+./start-local.sh
+</code></pre><p>Done&#xFF01;Now you can access <code>127.0.0.1:9003</code>; </p>
+<h2 id="mlsql-cluster">MLSQL Cluster</h2>
+<p>Since cluster and engine are in the same project. So just use the directory 
+cloned in preview steps:</p>
+<pre><code>cd streamingpro
+export MLSQL_CLUSTER_VERSION=${MLSQL_CLUSTER_VERSION:-1.2.0-SNAPSHOT}
+mvn -DskipTests -Pcluster-shade -am -pl streamingpro-cluster clean package
+cd streamingpro-cluster/
+</code></pre><p>After compiling, you will found jar file like this&#xFF1A;</p>
+<pre><code>export VERSION=1.2.0-SNAPSHOT
+target/streamingpro-cluster-${VERSION}.jar
+</code></pre><p>Cluster/Console are both depends MySQL.  We should create mysql db according to the file in 
+ <code>src/main/resources/db.sql</code>. Suppose the db name is mlsql_cluster.</p>
+<p>Now, create a release&#xFF1A;</p>
+<pre><code># make sure you are in  streamingpro-cluster
+#cd streamingpro-cluster/
+export VERSION=1.2.0-SNAPSHOT
+mkdir -p /tmp/mlsql-cluster/
+cp  target/streamingpro-cluster-${VERSION}.jar /tmp/mlsql-cluster/
+cp dev/mlsql-cluster-docker/start.sh  /tmp/mlsql-cluster
+
+##modify the mysql configuration in  application.docker.yml, e.g. db name and password 
+cp dev/mlsql-cluster-docker/application.docker.yml  /tmp/mlsql-cluster
+cd  /tmp/mlsql-cluster
+
+export MLSQL_CLUSTER_CONFIG_FILE=application.docker.yml
+export MLSQL_CLUSTER_JAR=streamingpro-cluster-${VERSION}.jar
+./start.sh
+</code></pre><p>Try to visit <code>127.0.0.1:8080</code> to check it&apos;s ok.</p>
+<h2 id="mlsql-console">MLSQL-Console</h2>
+<ol>
+<li>Clone </li>
+</ol>
+<pre><code>git clone  git@github.com:allwefantasy/mlsql-api-console.git
+</code></pre><ol>
+<li>Compile</li>
+</ol>
+<pre><code>mvn clean package -Pshade
+</code></pre><p>Again, check the jar is whether exists:</p>
+<pre><code>export VERSION=1.2.0-SNAPSHOT
+target/mlsql-api-console-${VERSION}.jar
+</code></pre><p>3.We should create mysql db according to the file in 
+ <code>src/main/resources/db.sql</code>. Suppose the db name is mlsql_console.</p>
+<ol>
+<li>Create a release:</li>
+</ol>
+<pre><code>export VERSION=1.2.0-SNAPSHOT
+cd mlsql-api-console
+mkdir -p /tmp/mlsql-console/
+cp target/mlsql-api-console-${VERSION}.jar /tmp/mlsql-console/
+cp  dev/docker/start.sh  /tmp/mlsql-console/
+## change the configuration of db e.g. address,dbname, password
+cp dev/docker/application.docker.yml   /tmp/mlsql-console/
+
+cd /tmp/mlsql-console/
+
+export MLSQL_CONSOLE_JAR=&quot;mlsql-api-console-${VERSION}.jar&quot;
+export MLSQL_CLUSTER_URL=http://127.0.0.1:8080
+export MY_URL=http://127.0.0.1:9002
+## If you are using macos, please use path like /Users/mlsql
+export USER_HOME=/home/users 
+## disable auth
+export ENABLE_AUTH_CENTER=false 
+export MLSQL_CONSOLE_CONFIG_FILE=application.docker.yml
+./start.sh
+</code></pre><p>Now try to visit <code>127.0.0.1:9002</code> to check the installation is ok.</p>
+<h2 id="if-you-want-to-compile-the-react-project-used-in-mlsql-console">If You want to compile the React project used in MLSQL Console</h2>
+<ol>
+<li>clone </li>
+</ol>
+<pre><code>git clone  git@github.com:allwefantasy/mlsql-web-console.git
+</code></pre><ol>
+<li>install and build</li>
+</ol>
+<pre><code>npm install
+npm run build
+</code></pre><ol>
+<li>Copy all the built files to MLSQL Console</li>
+</ol>
+<pre><code>rm -rf ${MLSQL_CONSOLE_HOME}/src/main/resources/streamingpro/assets/*
+cp -r build/* ${MLSQL_CONSOLE_HOME}/src/main/resources/streamingpro/assets/*
+</code></pre><h2 id="download-from-pre-build-releases">Download from Pre-Build releases</h2>
+<p>Go to these website&#xFF1A; <a href="http://download.mlsql.tech/" target="_blank">http://download.mlsql.tech</a></p>
+
+                                
+                                </section>
+                            
+    </div>
+    <div class="search-results">
+        <div class="has-results">
+            
+            <h1 class="search-results-title"><span class='search-results-count'></span> results matching "<span class='search-query'></span>"</h1>
+            <ul class="search-results-list"></ul>
+            
+        </div>
+        <div class="no-results">
+            
+            <h1 class="search-results-title">No results matching "<span class='search-query'></span>"</h1>
+            
+        </div>
+    </div>
+</div>
+
+                        </div>
+                    </div>
+                
+            </div>
+
+            
+                
+                <a href="./" class="navigation navigation-prev " aria-label="Previous page: Compile&Run&Deploy">
+                    <i class="fa fa-angle-left"></i>
+                </a>
+                
+                
+                <a href="docker.html" class="navigation navigation-next " aria-label="Next page: Docker">
+                    <i class="fa fa-angle-right"></i>
+                </a>
+                
+            
+        
+    </div>
+
+    <script>
+        var gitbook = gitbook || [];
+        gitbook.push(function() {
+            gitbook.page.hasChanged({"page":{"title":"Compile&Run&Deploy","level":"1.2.1.1","depth":3,"next":{"title":"Docker","level":"1.2.1.2","depth":3,"path":"installation/docker.md","ref":"installation/docker.md","articles":[]},"previous":{"title":"Compile&Run&Deploy","level":"1.2.1","depth":2,"path":"installation/README.md","ref":"installation/README.md","articles":[{"title":"Compile&Run&Deploy","level":"1.2.1.1","depth":3,"path":"installation/install.md","ref":"installation/install.md","articles":[]},{"title":"Docker","level":"1.2.1.2","depth":3,"path":"installation/docker.md","ref":"installation/docker.md","articles":[]},{"title":"MLSQL Engine Start Configruatioin","level":"1.2.1.3","depth":3,"path":"installation/engine-conf.md","ref":"installation/engine-conf.md","articles":[]},{"title":"Setup MLSQL Engine in Intellij Idea","level":"1.2.1.4","depth":3,"path":"installation/intellij.md","ref":"installation/intellij.md","articles":[]}]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":[],"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"installation/install.md","mtime":"2019-05-01T07:55:50.791Z","type":"markdown"},"gitbook":{"version":"3.2.3","time":"2019-05-01T14:13:29.862Z"},"basePath":"..","book":{"language":""}});
+        });
+    </script>
+</div>
+
+        
+    <script src="../gitbook/gitbook.js"></script>
+    <script src="../gitbook/theme.js"></script>
+    
+        
+        <script src="../gitbook/gitbook-plugin-search/search-engine.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-search/search.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-lunr/lunr.min.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-lunr/search-lunr.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-sharing/buttons.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-fontsettings/fontsettings.js"></script>
+        
+    
+
+    </body>
+</html>
+
