@@ -28,11 +28,16 @@ abstract class MLSQLBaseStreamSource extends MLSQLSource with MLSQLSink with MLS
     val owner = config.config.get("owner").getOrElse(context.owner)
     var path = resolvePath(config.path, owner)
 
+    var pathIsDBAndTable = false
     val Array(db, table) = parseRef(aliasFormat, path, dbSplitter, (options: Map[String, String]) => {
       writer.options(options)
+      pathIsDBAndTable = true
     })
 
-    path = table
+    if (pathIsDBAndTable) {
+      path = table
+    }
+
 
     require(option.contains("checkpointLocation"), "checkpointLocation is required")
     require(option.contains("duration"), "duration is required")
