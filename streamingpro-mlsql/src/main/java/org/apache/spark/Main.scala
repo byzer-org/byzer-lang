@@ -33,9 +33,12 @@ object Main {
     //
     val a = new A()
 
-    println(ScalaReflect(a).method[A]("a").invoke("jack"))
+    println(ScalaReflect.fromInstance[A](a).method("a").invoke("jack"))
+    println(ScalaReflect.fromObject[A]().method("b").invoke())
+    println(ScalaReflect.fromObjectStr("org.apache.spark.A").method("b").invoke())
 
-    println(ScalaReflect().module[A.type]("b").invoke())
+    println(ScalaReflect.fromInstance[A](a).field("jack").invoke("^^^"))
+    println(ScalaReflect.fromInstance[A](a).method("a").invoke("jack"))
 
 
   }

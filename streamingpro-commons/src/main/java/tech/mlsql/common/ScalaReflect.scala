@@ -1,63 +1,107 @@
 package tech.mlsql.common
 
+import scala.reflect.ClassTag
 import scala.reflect.runtime.{universe => ru}
 
 /**
   * 2019-05-01 WilliamZhu(allwefantasy@gmail.com)
   */
-class ScalaReflect(obj: Any) {
 
-  def this() = {
-    this(null)
-  }
-
-  private def mirror = {
-    ru.runtimeMirror(classOf[ScalaReflect].getClassLoader)
-  }
-
-  def toClass = {
-    val classMirror = mirror.reflectClass(mirror.staticClass(obj.asInstanceOf[String]))
-    //ru.typeOf[classMirror.type].decl(ru.termNames.CONSTRUCTOR).asMethod
-  }
-
-  def method[T](name: String) = {
-    val x = mirror.reflect(obj)
-    val y = x.symbol.typeSignature.member(ru.TermName(name))
-    new ScalaMethodReflect(x, y.asMethod)
-  }
-
-  def module[T: ru.TypeTag](name: String) = {
-    val x = mirror.reflectModule(ru.typeOf[T].termSymbol.asModule)
-    val y = x.symbol.typeSignature.member(ru.TermName(name))
-    new ScalaModuleReflect(x, y.asMethod)
-  }
-
-}
+class ScalaReflect {}
 
 object ScalaReflect {
+  private def mirror = {
+    ru.runtimeMirror(getClass.getClassLoader)
+  }
 
-  def apply[T](obj: T): ScalaReflect = new ScalaReflect(obj)
+  def fromInstance[T: ClassTag](obj: T) = {
+    val x = mirror.reflect[T](obj)
+    new ScalaMethodReflect(x)
+  }
 
-  def apply[T](): ScalaReflect = new ScalaReflect()
+  def fromObject[T: ru.TypeTag]() = {
+    new ScalaModuleReflect(ru.typeOf[T].typeSymbol.companion.asModule)
+  }
+
+  def fromObjectStr(str: String) = {
+    val module = mirror.staticModule(str)
+    new ScalaModuleReflect(module)
+  }
 
   //def getClass[T: ru.TypeTag](obj: T) = ru.typeTag[T].tpe.typeSymbol.asClass
 
 
 }
 
-class ScalaModuleReflect(x: ru.ModuleMirror, y: ru.MethodSymbol) {
+class ScalaModuleReflect(x: ru.ModuleSymbol) {
+
+  private var methodName: Option[ru.MethodSymbol] = None
+  private var fieldName: Option[ru.TermSymbol] = None
+
+  def method(name: String) = {
+    methodName = Option(x.typeSignature.member(ru.TermName(name)).asMethod)
+    this
+  }
+
+  def field(name: String) = {
+    fieldName = Option(x.typeSignature.member(ru.TermName(name)).asTerm)
+    this
+  }
+
   private def mirror = {
     ru.runtimeMirror(getClass.getClassLoader)
   }
 
   def invoke(objs: Any*) = {
-    val instance = x.instance
-    mirror.reflect(instance).reflectMethod(y.asMethod)(objs)
+
+    if (methodName.isDefined) {
+      val instance = mirror.reflectModule(x).instance
+      mirror.reflect(instance).reflectMethod(methodName.get.asMethod)(objs)
+    } else if (fieldName.isDefined) {
+      val instance = mirror.reflectModule(x).instance
+      val fieldMirror = mirror.reflect(instance).reflectField(fieldName.get)
+      if (objs.size > 0) {
+        fieldMirror.set(objs.toSeq(0))
+      }
+      fieldMirror.get
+
+    } else {
+      throw new IllegalArgumentException("Can not invoke `invoke` without call method or field function")
+    }
+
   }
 }
 
-class ScalaMethodReflect(x: ru.InstanceMirror, y: ru.MethodSymbol) {
+class ScalaMethodReflect(x: ru.InstanceMirror) {
+
+  private var methodName: Option[ru.MethodSymbol] = None
+  private var fieldName: Option[ru.TermSymbol] = None
+
+  def method(name: String) = {
+    methodName = Option(x.symbol.typeSignature.member(ru.TermName(name)).asMethod)
+    this
+  }
+
+  def field(name: String) = {
+    fieldName = Option(x.symbol.typeSignature.member(ru.TermName(name)).asTerm)
+    this
+  }
+
   def invoke(objs: Any*) = {
-    x.reflectMethod(y.asMethod)(objs: _*)
+
+    if (methodName.isDefined) {
+      x.reflectMethod(methodName.get.asMethod)(objs: _*)
+    } else if (fieldName.isDefined) {
+      val fieldMirror = x.reflectField(fieldName.get)
+      if (objs.size > 0) {
+        fieldMirror.set(objs.toSeq(0))
+      }
+      fieldMirror.get
+
+    } else {
+      throw new IllegalArgumentException("Can not invoke `invoke` without call method or field function")
+    }
+
+
   }
 }
