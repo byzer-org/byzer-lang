@@ -64,7 +64,7 @@ class SetAdaptor(scriptSQLExecListener: ScriptSQLExecListener, stage: Stage.stag
     option.get("type") match {
       case Some("sql") =>
         if (stage == Stage.physical || (
-          option.get(SetMode.keyName).getOrElse(SetMode.runtime) == SetMode.compile && stage == Stage.preProcess
+          SetMode.withName(option.get(SetMode.keyName).getOrElse(SetMode.runtime.toString)) == SetMode.compile && stage == Stage.preProcess
           )) {
           val resultHead = scriptSQLExecListener.sparkSession.sql(evaluate(command)).collect().headOption
           if (resultHead.isDefined) {
