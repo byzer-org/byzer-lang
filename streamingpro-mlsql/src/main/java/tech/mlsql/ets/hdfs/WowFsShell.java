@@ -46,7 +46,7 @@ public class WowFsShell extends Configured implements Tool {
     private static final int MAX_LINE_WIDTH = 80;
 
     private FileSystem fs;
-    private String basePath;
+    protected String basePath;
 
     protected CommandFactory commandFactory;
 
@@ -109,10 +109,14 @@ public class WowFsShell extends Configured implements Tool {
         getConf().setQuietMode(true);
         if (commandFactory == null) {
             commandFactory = new WowCommandFactory(getConf());
-            commandFactory.addObject(new WowFsShell.Help(getConf(), out, error), "-help");
-            commandFactory.addObject(new WowFsShell.Usage(getConf(), out, error), "-usage");
+            commandFactory.addObject(new WowFsShell.Help(getConf(), basePath, out, error), "-help");
+            commandFactory.addObject(new WowFsShell.Usage(getConf(), basePath, out, error), "-usage");
             commandFactory.addObject(new WowLs(getConf(), basePath, out, error), "-ls");
-            commandFactory.addObject(new WowLs.Lsr(getConf(),basePath, out, error), "-lsr");
+            commandFactory.addObject(new WowLs.Lsr(getConf(), basePath, out, error), "-lsr");
+            commandFactory.addObject(new WowDelete.Rm(getConf(), basePath, out, error), "-rm");
+            commandFactory.addObject(new WowDelete.Rmdir(getConf(), basePath, out, error), "-rmdir");
+            commandFactory.addObject(new WowDelete.Rmr(getConf(), basePath, out, error), "-rmr");
+
         }
     }
 
@@ -131,10 +135,8 @@ public class WowFsShell extends Configured implements Tool {
                         "is specified.";
 
 
-        public Usage(Configuration conf, PrintStream out, PrintStream error) {
-            super(conf);
-            this.out = out;
-            this.err = error;
+        public Usage(Configuration conf, String basePath, PrintStream out, PrintStream error) {
+            super(conf, basePath, out, error);
         }
 
         @Override
@@ -157,10 +159,8 @@ public class WowFsShell extends Configured implements Tool {
                 "Displays help for given command or all commands if none " +
                         "is specified.";
 
-        public Help(Configuration conf, PrintStream out, PrintStream error) {
-            super(conf);
-            this.out = out;
-            this.err = error;
+        public Help(Configuration conf, String basePath, PrintStream out, PrintStream error) {
+            super(conf, basePath, out, error);
         }
 
         @Override

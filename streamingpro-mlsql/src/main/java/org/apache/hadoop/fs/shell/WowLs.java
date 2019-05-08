@@ -3,7 +3,6 @@ package org.apache.hadoop.fs.shell;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.util.StringUtils;
-import streaming.common.PathFun;
 
 import java.io.IOException;
 import java.io.PrintStream;
@@ -15,15 +14,6 @@ import java.util.LinkedList;
  * 2019-05-07 WilliamZhu(allwefantasy@gmail.com)
  */
 public class WowLs extends WowFsCommand {
-
-    private String basePath;
-
-    public WowLs(Configuration conf, String basePath, PrintStream out, PrintStream error) {
-        super(conf);
-        this.out = out;
-        this.err = error;
-        this.basePath = basePath;
-    }
 
     public static final String NAME = "ls";
     public static final String USAGE = "[-d] [-h] [-R] [<path> ...]";
@@ -49,6 +39,10 @@ public class WowLs extends WowFsCommand {
 
     protected boolean humanReadable = false;
 
+    public WowLs(Configuration conf, String basePath, PrintStream out, PrintStream error) {
+        super(conf, basePath, out, error);
+    }
+
     protected String formatSize(long size) {
         return humanReadable
                 ? StringUtils.TraditionalBinaryPrefix.long2String(size, "", 1)
@@ -64,12 +58,7 @@ public class WowLs extends WowFsCommand {
         setRecursive(cf.getOpt("R") && dirRecurse);
         humanReadable = cf.getOpt("h");
 
-        LinkedList<String> temp = new LinkedList<String>();
-        for (String arg : args) {
-            temp.add(new PathFun(this.basePath).add(arg).toPath());
-        }
-        args.clear();
-        args.addAll(temp);
+        redefineBaseDir(args);
         if (args.isEmpty()) args.add(this.basePath);
     }
 
@@ -150,6 +139,7 @@ public class WowLs extends WowFsCommand {
         public Lsr(Configuration conf, String basePath, PrintStream out, PrintStream error) {
             super(conf, basePath, out, error);
         }
+
 
         @Override
         protected void processOptions(LinkedList<String> args)

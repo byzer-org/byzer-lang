@@ -22,8 +22,11 @@ import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.classification.InterfaceStability;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
+import streaming.common.PathFun;
 
 import java.io.IOException;
+import java.io.PrintStream;
+import java.util.LinkedList;
 
 /**
  * Base class for all "hadoop fs" commands
@@ -46,12 +49,6 @@ abstract public class WowFsCommand extends Command {
         factory.registerCommands(WowLs.class);
     }
 
-    protected WowFsCommand() {
-    }
-
-    protected WowFsCommand(Configuration conf) {
-        super(conf);
-    }
 
     // historical abstract method in Command
     @Override
@@ -64,6 +61,31 @@ abstract public class WowFsCommand extends Command {
     @Override
     protected void run(Path path) throws IOException {
         throw new RuntimeException("not supposed to get here");
+    }
+
+    protected String basePath;
+
+    public WowFsCommand(Configuration conf, String basePath, PrintStream out, PrintStream error) {
+        super(conf);
+        this.out = out;
+        this.err = error;
+        this.basePath = basePath;
+    }
+
+    public void redefineBaseDir(LinkedList<String> args) {
+        LinkedList<String> temp = new LinkedList<>();
+        for (String arg : args) {
+            if (arg.contains("..") || arg.contains(".")) {
+                throw new RuntimeException("path should not contains .. or .");
+            }
+            temp.add(new PathFun(this.basePath).add(arg).toPath());
+        }
+        args.clear();
+        args.addAll(temp);
+    }
+
+    public String cleanPath(String path) {
+        return path.substring(this.basePath.length() - 1);
     }
 
     /**
