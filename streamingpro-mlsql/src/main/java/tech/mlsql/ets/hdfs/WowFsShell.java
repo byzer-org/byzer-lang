@@ -116,6 +116,11 @@ public class WowFsShell extends Configured implements Tool {
             commandFactory.addObject(new WowDelete.Rm(getConf(), basePath, out, error), "-rm");
             commandFactory.addObject(new WowDelete.Rmdir(getConf(), basePath, out, error), "-rmdir");
             commandFactory.addObject(new WowDelete.Rmr(getConf(), basePath, out, error), "-rmr");
+            commandFactory.addObject(new WowMoveCommands.Rename(getConf(), basePath, out, error), "-mv");
+            commandFactory.addObject(new WowMkdir(getConf(), basePath, out, error), "-mkdir");
+            commandFactory.addObject(new WowCopyCommands.Merge(getConf(), basePath, out, error), "-getmerge");
+            commandFactory.addObject(new WowCopyCommands.Cp(getConf(), basePath, out, error), "-cp");
+            commandFactory.addObject(new WowCount(getConf(), basePath, out, error), "-count");
 
         }
     }
