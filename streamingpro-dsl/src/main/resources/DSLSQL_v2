@@ -13,26 +13,25 @@ statement
 
 
 sql
-    : LOAD format '.' path where? expression? booleanExpression* as tableName
-    | SAVE (overwrite | append | errorIfExists |ignore)* tableName as format '.' path where? expression? booleanExpression* (PARTITIONBY col? colGroup*)?
-    | SELECT ~(';')* as tableName
+    : LOAD format '.' path whereExpressions? booleanExpression* AS tableName
+    | SAVE saveMode* tableName AS format '.' path whereExpressions? (PARTITIONBY col? colGroup*)?
+    | SELECT ~(';')* AS tableName
     | INSERT ~(';')*
     | CREATE ~(';')*
     | DROP ~(';')*
     | REFRESH ~(';')*
     | SET setKey '=' setValue where? expression? booleanExpression*
-    | CONNECT format where? expression? booleanExpression* (as db)?
-    | (TRAIN|RUN|PREDICT) tableName (as|into) format '.' path where? expression? booleanExpression* asTableName*
-    | REGISTER format '.' path as functionName where? expression? booleanExpression*
-    | UNREGISTER format '.' path where? expression? booleanExpression*
-    | INCLUDE format '.' path where? expression? booleanExpression*
-    | EXECUTE_COMMAND (commandValue|rawCommandValue)*
+    | CONNECT format where? expression? booleanExpression* (AS db)?
+    | (TRAIN|RUN|PREDICT) tableName AS format '.' path whereExpressions? asTableName*
+    | REGISTER format '.' path AS functionName whereExpressions?
+    | UNREGISTER format '.' path whereExpressions?
+    | INCLUDE format '.' path whereExpressions?
+    | EXECUTE_COMMAND (setValue|setKey|commandValue)*
     | SIMPLE_COMMENT
     ;
 
 //keywords
 AS: 'as';
-INTO: 'into';
 LOAD: 'load';
 SAVE: 'save';
 SELECT: 'select';
@@ -57,31 +56,12 @@ ERRORIfExists:'errorIfExists';
 IGNORE:'ignore';
 
 
-as: AS;
-into: INTO;
-
 saveMode: (OVERWRITE|APPEND|ERRORIfExists|IGNORE);
 
 where: OPTIONS|WHERE;
 
 whereExpressions: where expression? booleanExpression*;
 
-
-overwrite
-    : 'overwrite'
-    ;
-
-append
-    : 'append'
-    ;
-
-errorIfExists
-    : 'errorIfExists'
-    ;
-
-ignore
-    : 'ignore'
-    ;
 
 booleanExpression
     : 'and' expression
@@ -103,10 +83,6 @@ path
     : quotedIdentifier | identifier
     ;
 
-commandValue: quotedIdentifier | STRING | BLOCK_STRING;
-rawCommandValue: (identifier | '-' | '/' | '>' | '<' | '.' | '~')+ ;
-
-
 setValue
     : qualifiedName | quotedIdentifier | STRING | BLOCK_STRING
     ;
@@ -115,12 +91,22 @@ setKey
     : qualifiedName
     ;
 
+command
+    : EXECUTE_COMMAND
+    ;
+
+
+commandValue
+    : (LETTER | DIGIT | '_' | '-' | '/' | '>' | '<' | '.' | '~')+
+    ;
+
+
 db
     :qualifiedName | identifier
     ;
 
 asTableName
-    : 'as' tableName
+    : AS tableName
     ;
 
 tableName
@@ -157,6 +143,14 @@ quotedIdentifier
     ;
 
 
+
+EXECUTE_COMMAND
+    : EXECUTE_TOKEN (LETTER | DIGIT | '_')+
+    ;
+
+
+EXECUTE_TOKEN: '!';
+
 STRING
     : '\'' ( ~('\''|'\\') | ('\\' .) )* '\''
     | '"' ( ~('"'|'\\') | ('\\' .) )* '"'
@@ -181,13 +175,6 @@ fragment DIGIT
 fragment LETTER
     : [a-zA-Z]
     ;
-
-EXECUTE_COMMAND
-    : EXECUTE_TOKEN (LETTER | DIGIT | '_')+
-    ;
-
-
-EXECUTE_TOKEN: '!';
 
 SIMPLE_COMMENT
     : '--' ~[\r\n]* '\r'? '\n'? -> channel(HIDDEN)

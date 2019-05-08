@@ -23,6 +23,7 @@ object CommandCollection {
     context.addEnv("createPythonEnv", """ run command as PythonEnvExt.`{}` where condaYamlFilePath="${HOME}/{}" and command="create"  """)
     context.addEnv("removePythonEnv", """ run command as PythonEnvExt.`{}` where condaYamlFilePath="${HOME}/{}" and command="remove" """)
     context.addEnv("resource",""" run command as EngineResource.`` where action="{0}" and cpus="{1}" """)
+    context.addEnv("hdfs",""" run command as HDFSCommand.`` where parameters='''{:all}''' """)
 
     context.addEnv("show",
       """

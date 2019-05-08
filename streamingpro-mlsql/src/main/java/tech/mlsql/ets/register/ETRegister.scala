@@ -8,7 +8,8 @@ object ETRegister {
 
   val mapping = Map[String, String](
     wow("ShowCommand"),
-    wow("EngineResource")
+    wow("EngineResource"),
+    wow("HDFSCommand")
   )
 
 }

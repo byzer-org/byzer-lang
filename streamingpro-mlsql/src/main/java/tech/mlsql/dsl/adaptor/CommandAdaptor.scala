@@ -2,6 +2,7 @@ package tech.mlsql.dsl.adaptor
 
 import java.util.concurrent.atomic.AtomicInteger
 
+import streaming.common.JSONTool
 import streaming.dsl.DslAdaptor
 import streaming.dsl.parser.DSLSQLParser
 import streaming.dsl.parser.DSLSQLParser._
@@ -22,15 +23,32 @@ class CommandAdaptor(preProcessListener: PreProcessListener) extends DslAdaptor 
   override def parse(ctx: DSLSQLParser.SqlContext): Unit = {
     var command = ""
     var parameters = ArrayBuffer[String]()
+    command = ctx.getChild(0).getText.substring(1)
+
+
     (0 to ctx.getChildCount() - 1).foreach { tokenIndex =>
       ctx.getChild(tokenIndex) match {
-        case s: CommandContext =>
-          command = s.getText.substring(1)
-        case s: SetValueContext =>
+        case s: CommandValueContext =>
           val oringinalText = s.getText
           parameters += cleanBlockStr(cleanStr(evaluate(oringinalText)))
-        case s: SetKeyContext =>
-          parameters += s.getText
+        case s: RawCommandValueContext =>
+          val box = ArrayBuffer[String]()
+          var prePos = 0
+          (0 to s.getChildCount() - 1).foreach { itokenIndex =>
+            val child = s.getChild(itokenIndex)
+            if (itokenIndex == 0 || (child.getSourceInterval.a - prePos == 1)) {
+              box += child.getText
+            } else {
+              parameters += box.mkString("")
+              box.clear()
+              box += child.getText
+            }
+            prePos = child.getSourceInterval.b
+          }
+
+          parameters += box.mkString("")
+          box.clear()
+
         case _ =>
       }
     }
@@ -81,18 +99,27 @@ class CommandAdaptor(preProcessListener: PreProcessListener) extends DslAdaptor 
       return true
     }
 
-    (0 until len).foreach { i =>
+    def textEvaluate = {
+      (0 until len).foreach { i =>
 
-      if (curPos.get() > i) {
-      }
-      else if (positionReplace(i)) {
-      }
-      else if (namedPositionReplace(i)) {
+        if (curPos.get() > i) {
+        }
+        else if (positionReplace(i)) {
+        }
+        else if (namedPositionReplace(i)) {
 
-      } else {
-        finalCommand += tempCommand(i)
+        } else {
+          finalCommand += tempCommand(i)
+        }
       }
     }
+
+    if (tempCommand.contains("{:all}")) {
+      finalCommand ++= tempCommand.replace("{:all}", JSONTool.toJsonStr(parameters)).toCharArray
+    } else {
+      textEvaluate
+    }
+
 
     preProcessListener.addStatement(String.valueOf(finalCommand.toArray))
 

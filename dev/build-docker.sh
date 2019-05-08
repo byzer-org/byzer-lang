@@ -4,7 +4,7 @@ SELF=$(cd $(dirname $0) && pwd)
 cd $SELF
 
 RELEASE=${RELEASE:-false}
-MLSQL_VERSION=${MLSQL_VERSION:-1.2.0-SNAPSHOT}
+MLSQL_VERSION=${MLSQL_VERSION:-1.3.0-SNAPSHOT}
 
 if [[ "${RELEASE}" != "true" ]];then
    cd ..
@@ -17,7 +17,7 @@ if [[ "${RELEASE}" != "true" ]];then
    fi
 
    export MLSQL_SPARK_VERSION=${MLSQL_SPARK_VERSION:-2.4}
-   export SPARK_VERSION=${SPARK_VERSION:-2.4.1}
+   export SPARK_VERSION=${SPARK_VERSION:-2.4.2}
    export MLSQL_DISTRIBUTIOIN_URL="streamingpro-mlsql-spark_${MLSQL_SPARK_VERSION}-${MLSQL_VERSION}.jar"
    export DISTRIBUTION=${MLSQL_SPARK_VERSION:-false}
 
