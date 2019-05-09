@@ -19,9 +19,9 @@
 package streaming.dsl.auth
 
 import streaming.core.datasource.{DataAuthConfig, DataSourceRegistry, SourceInfo}
-import streaming.dsl.DslTool
 import streaming.dsl.parser.DSLSQLParser._
 import streaming.dsl.template.TemplateMerge
+import streaming.dsl.{DslTool, ScriptSQLExec}
 import streaming.log.{Logging, WowLog}
 import tech.mlsql.dsl.processor.AuthProcessListener
 
@@ -51,7 +51,7 @@ class SaveAuth(authProcessListener: AuthProcessListener) extends MLSQLAuth with 
       ctx.getChild(tokenIndex) match {
         case s: FormatContext =>
           format = s.getText
-          
+
         case s: PathContext =>
           path = TemplateMerge.merge(cleanStr(s.getText), env)
 
@@ -82,10 +82,14 @@ class SaveAuth(authProcessListener: AuthProcessListener) extends MLSQLAuth with 
     } getOrElse {
       format match {
         case "hive" =>
-          val Array(db, table) = final_path.split("\\.")
+          val Array(db, table) = final_path.split("\\.") match {
+            case Array(db, table) => Array(db, table)
+            case Array(table) => Array("default", table)
+          }
           MLSQLTable(Some(db), Some(table), OperateType.SAVE, Some(format), TableType.HIVE)
         case _ =>
-          MLSQLTable(None, Some(final_path), OperateType.SAVE, Some(format), TableType.from(format).get)
+          val context = ScriptSQLExec.contextGetOrForTest()
+          MLSQLTable(None, Some(resourceRealPath(context.execListener, owner, path)), OperateType.SAVE, Some(format), TableType.from(format).get)
       }
     }
 

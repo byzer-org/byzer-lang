@@ -39,7 +39,7 @@ class SQLTfIdf extends SQLAlg with Functions {
     configureModel(rfc, params)
     rfc.setOutputCol("__SQLTfIdf__")
     val featurizedData = rfc.transform(df)
-    rfc.getBinary
+    
     val idf = new IDF()
     configureModel(idf, params)
     idf.setInputCol("__SQLTfIdf__")

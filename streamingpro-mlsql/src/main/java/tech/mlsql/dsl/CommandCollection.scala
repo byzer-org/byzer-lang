@@ -24,6 +24,10 @@ object CommandCollection {
     context.addEnv("hdfs",""" run command as HDFSCommand.`` where parameters='''{:all}''' """)
     context.addEnv("fs",""" run command as HDFSCommand.`` where parameters='''{:all}''' """)
 
+    context.addEnv("split",""" run {0} as RateSampler.`` where labelCol="{2}" and sampleRate="{4}" as {6} """)
+
+    context.addEnv("saveUploadFileToHome",""" run command as DownloadExt.`` where from="{}" and to="{}" """)
+
     context.addEnv("show",
       """
         |run command as ShowCommand.`{}/{}/{}/{}/{}/{}/{}/{}/{}/{}/{}/{}`

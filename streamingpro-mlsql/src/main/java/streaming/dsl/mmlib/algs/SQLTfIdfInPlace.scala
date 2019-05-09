@@ -22,7 +22,7 @@ import org.apache.spark.ml.linalg.SQLDataTypes._
 import org.apache.spark.ml.param.{DoubleParam, Param}
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.types._
-import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession}
+import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import streaming.core.shared.SharedObjManager
 import streaming.dsl.mmlib.algs.MetaConst._
 import streaming.dsl.mmlib.algs.classfication.BaseClassification
@@ -41,7 +41,6 @@ class SQLTfIdfInPlace(override val uid: String) extends SQLAlg with MllibFunctio
 
   override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
     val newDF = interval_train(df, params + ("path" -> path))
-    newDF.write.mode(SaveMode.Overwrite).parquet(getDataPath(path))
     newDF
   }
 
