@@ -61,7 +61,8 @@ class AuthProcessListener(val listener: ScriptSQLExecListener) extends BaseParse
       case "set" =>
         new SetAuth(this).auth(ctx)
 
-      case "train" | "run" =>
+      case "train" | "run" | "predict" =>
+        new TrainAuth(this).auth(ctx)
 
       case "register" =>
 

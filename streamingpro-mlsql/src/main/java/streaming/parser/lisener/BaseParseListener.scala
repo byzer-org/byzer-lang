@@ -28,10 +28,103 @@ import streaming.dsl.parser.DSLSQLParser._
   */
 abstract class BaseParseListenerextends extends DSLSQLListener {
 
+  /**
+    * Enter a parse tree produced by {@link DSLSQLParser#rawCommandValue}.
+    *
+    * @param ctx the parse tree
+    */
+  override def enterRawCommandValue(ctx: RawCommandValueContext): Unit = {}
 
-  override def enterCommand(ctx: CommandContext): Unit = {}
+  /**
+    * Exit a parse tree produced by {@link DSLSQLParser#rawCommandValue}.
+    *
+    * @param ctx the parse tree
+    */
+  override def exitRawCommandValue(ctx: RawCommandValueContext): Unit = {}
 
-  override def exitCommand(ctx: CommandContext): Unit = {}
+  /**
+    * Enter a parse tree produced by {@link DSLSQLParser#as}.
+    *
+    * @param ctx the parse tree
+    */
+  override def enterAs(ctx: AsContext): Unit = {}
+
+  /**
+    * Exit a parse tree produced by {@link DSLSQLParser#as}.
+    *
+    * @param ctx the parse tree
+    */
+  override def exitAs(ctx: AsContext): Unit = {}
+
+  /**
+    * Enter a parse tree produced by {@link DSLSQLParser#into}.
+    *
+    * @param ctx the parse tree
+    */
+  override def enterInto(ctx: IntoContext): Unit = {}
+
+  /**
+    * Exit a parse tree produced by {@link DSLSQLParser#into}.
+    *
+    * @param ctx the parse tree
+    */
+  override def exitInto(ctx: IntoContext): Unit = {}
+
+  /**
+    * Enter a parse tree produced by {@link DSLSQLParser#saveMode}.
+    *
+    * @param ctx the parse tree
+    */
+  override def enterSaveMode(ctx: SaveModeContext): Unit = {}
+
+  /**
+    * Exit a parse tree produced by {@link DSLSQLParser#saveMode}.
+    *
+    * @param ctx the parse tree
+    */
+  override def exitSaveMode(ctx: SaveModeContext): Unit = {}
+
+  /**
+    * Enter a parse tree produced by {@link DSLSQLParser#where}.
+    *
+    * @param ctx the parse tree
+    */
+  override def enterWhere(ctx: WhereContext): Unit = {}
+
+  /**
+    * Exit a parse tree produced by {@link DSLSQLParser#where}.
+    *
+    * @param ctx the parse tree
+    */
+  override def exitWhere(ctx: WhereContext): Unit = {}
+
+  /**
+    * Enter a parse tree produced by {@link DSLSQLParser#whereExpressions}.
+    *
+    * @param ctx the parse tree
+    */
+  override def enterWhereExpressions(ctx: WhereExpressionsContext): Unit = {}
+
+  /**
+    * Exit a parse tree produced by {@link DSLSQLParser#whereExpressions}.
+    *
+    * @param ctx the parse tree
+    */
+  override def exitWhereExpressions(ctx: WhereExpressionsContext): Unit = {}
+
+  /**
+    * Enter a parse tree produced by {@link DSLSQLParser#commandValue}.
+    *
+    * @param ctx the parse tree
+    */
+  override def enterCommandValue(ctx: CommandValueContext): Unit = {}
+
+  /**
+    * Exit a parse tree produced by {@link DSLSQLParser#commandValue}.
+    *
+    * @param ctx the parse tree
+    */
+  override def exitCommandValue(ctx: CommandValueContext): Unit = {}
 
   override def enterStatement(ctx: StatementContext): Unit = {}
 

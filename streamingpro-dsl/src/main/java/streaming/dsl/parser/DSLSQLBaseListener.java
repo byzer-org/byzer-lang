@@ -42,6 +42,66 @@ public class DSLSQLBaseListener implements DSLSQLListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
+	@Override public void enterAs(DSLSQLParser.AsContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitAs(DSLSQLParser.AsContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterInto(DSLSQLParser.IntoContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitInto(DSLSQLParser.IntoContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterSaveMode(DSLSQLParser.SaveModeContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitSaveMode(DSLSQLParser.SaveModeContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterWhere(DSLSQLParser.WhereContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitWhere(DSLSQLParser.WhereContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterWhereExpressions(DSLSQLParser.WhereExpressionsContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitWhereExpressions(DSLSQLParser.WhereExpressionsContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
 	@Override public void enterOverwrite(DSLSQLParser.OverwriteContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -150,6 +210,30 @@ public class DSLSQLBaseListener implements DSLSQLListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
+	@Override public void enterCommandValue(DSLSQLParser.CommandValueContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitCommandValue(DSLSQLParser.CommandValueContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterRawCommandValue(DSLSQLParser.RawCommandValueContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitRawCommandValue(DSLSQLParser.RawCommandValueContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
 	@Override public void enterSetValue(DSLSQLParser.SetValueContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -169,18 +253,6 @@ public class DSLSQLBaseListener implements DSLSQLListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitSetKey(DSLSQLParser.SetKeyContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void enterCommand(DSLSQLParser.CommandContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitCommand(DSLSQLParser.CommandContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
