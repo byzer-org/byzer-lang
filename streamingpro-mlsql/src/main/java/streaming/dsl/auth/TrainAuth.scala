@@ -41,7 +41,7 @@ class TrainAuth(authProcessListener: AuthProcessListener) extends MLSQLAuth with
       authProcessListener.addTable(MLSQLTable(Some("default"), Some(tableName), None, OperateType.SELECT, None, TableType.HIVE))
     }
 
-    if (!isTempTable(asTableName)) {
+    if (!asTableName.isEmpty && !isTempTable(asTableName)) {
       authProcessListener.addTable(MLSQLTable(None, Some(asTableName), None, OperateType.LOAD, None, TableType.TEMP))
     }
 
