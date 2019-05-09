@@ -20,7 +20,7 @@ package streaming.dsl.mmlib.algs.feature
 
 import _root_.streaming.dsl.mmlib.algs.MetaConst._
 import _root_.streaming.dsl.mmlib.algs._
-import _root_.streaming.log.WowLog
+import _root_.streaming.log.{Logging, WowLog}
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.ml.feature.NGram
 import org.apache.spark.ml.help.HSQLStringIndex
@@ -35,7 +35,7 @@ import scala.util.control.Breaks.{break, breakable}
 /**
   * Created by allwefantasy on 14/5/2018.
   */
-object StringFeature extends BaseFeatureFunctions with WowLog {
+object StringFeature extends BaseFeatureFunctions with Logging with WowLog {
 
 
   def loadStopwords(df: DataFrame, stopWordsPaths: String) = {
@@ -87,6 +87,7 @@ object StringFeature extends BaseFeatureFunctions with WowLog {
     (priorityWords, priorityFunc)
   }
 
+
   def analysisWords(df: DataFrame, metaPath: String, dicPaths: String, inputCol: String,
                     stopwordsBr: Broadcast[Set[String]],
                     nGrams: Seq[Int],
@@ -94,7 +95,14 @@ object StringFeature extends BaseFeatureFunctions with WowLog {
                     split: String,
                     wordsArray: Array[String] = Array[String]()
                    ) = {
-    var newDF = new SQLTokenAnalysis().internal_train(df, Map("dic.paths" -> dicPaths, "inputCol" -> inputCol, "ignoreNature" -> "true", "wordsArray" -> wordsArray.mkString(","), "split" -> split))
+    val config = Map("dic.paths" -> dicPaths, "inputCol" -> inputCol, "ignoreNature" -> "true", "wordsArray" -> wordsArray.mkString(","), "split" -> split)
+    logInfo(format(s"[TFIDF] analysis content with configuration ${config.map(f => s"${f._1}->${f._2}").mkString(" ; ")}"))
+    var newDF = new SQLTokenAnalysis().internal_train(df, config)
+
+    logInfo(format(s"[TFIDF] save analysis content to ${ANALYSYS_WORDS_PATH(metaPath, inputCol)}"))
+    newDF.write.mode(SaveMode.Overwrite).parquet(ANALYSYS_WORDS_PATH(metaPath, inputCol))
+    newDF = newDF.sparkSession.read.parquet(ANALYSYS_WORDS_PATH(metaPath, inputCol))
+
     val filterStopWordFunc = F.udf((a: Seq[String]) => {
       a.filterNot(stopwordsBr.value.contains(_))
     })
@@ -109,6 +117,8 @@ object StringFeature extends BaseFeatureFunctions with WowLog {
     val mergeFunc = F.udf((a: Seq[String], b: Seq[String]) => {
       a ++ b
     })
+
+    logInfo(format(s"[TFIDF] building ngram with fields ${ngramfields.mkString(",")}"))
     ngramfields.foreach { newField =>
       newDF = newDF.withColumn(inputCol, mergeFunc(F.col(inputCol), F.col(newField))).drop(newField)
     }
@@ -121,12 +131,14 @@ object StringFeature extends BaseFeatureFunctions with WowLog {
     )
 
     //create uniq int for analysed token
+    logInfo(format(s"[TFIDF] preapre to compute how many words in corpus"))
     val tmpWords = df.sparkSession.createDataFrame(newRdd, StructType(Seq(StructField("words", StringType))))
     val wordCount = tmpWords.count()
-    format(s"TFIDF: total words in corpus: ${wordCount}")
+    logInfo(format(s"[TFIDF] total words in corpus: ${wordCount}"))
 
 
     //represent content with sequence of number
+    logInfo(format(s"[TFIDF] convert all word to a number"))
     val si = new SQLStringIndex()
     si.train(tmpWords, WORD_INDEX_PATH(metaPath, inputCol), Map("inputCol" -> "words"))
 
@@ -136,7 +148,9 @@ object StringFeature extends BaseFeatureFunctions with WowLog {
     // keep word and index
     val wordToIndex = HSQLStringIndex.wordToIndex(df.sparkSession, siModel)
 
-    format(s"TFIDF: wordToIndex: ${wordToIndex.size}")
+    logInfo(format(s"[TFIDF] wordToIndex: ${wordToIndex.size}"))
+
+    logInfo(format(s"[TFIDF] save word to index mapping to ${WORD_INDEX_PATH(metaPath, inputCol)}"))
 
     val spark = df.sparkSession
     spark.createDataFrame(
@@ -150,9 +164,9 @@ object StringFeature extends BaseFeatureFunctions with WowLog {
 
     if (outputWordAndIndex) {
       val res = wordToIndex.toSeq.sortBy(f => f._2).map(f => s"${f._1}:${f._2}").mkString("\n")
-      format(res)
+      logInfo(format(res))
     }
-
+    logInfo(format(s"[TFIDF] convert all word to number"))
     val funcMap = si.internal_predict(df.sparkSession, siModel, "wow")
     val predictFunc = funcMap("wow_array").asInstanceOf[(Seq[String]) => Array[Int]]
     val udfPredictFunc = F.udf(predictFunc)
@@ -173,7 +187,9 @@ object StringFeature extends BaseFeatureFunctions with WowLog {
            ) = {
 
     //check stopwords dic is whether configured
-
+    if (stopWordsPaths != null && !stopWordsPaths.isEmpty) {
+      logInfo(format(s"[TFIDF] load stopwords from ${stopWordsPaths} "))
+    }
     val stopwords = loadStopwords(df, stopWordsPaths)
     val stopwordsBr = df.sparkSession.sparkContext.broadcast(stopwords)
 
@@ -182,14 +198,17 @@ object StringFeature extends BaseFeatureFunctions with WowLog {
     val spark = df.sparkSession
 
     //tfidf feature
+    val tfIDFconfig = Map("inputCol" -> inputCol, "numFeatures" -> wordCount.toString, "binary" -> "true")
+    logInfo(format(s"[TFIDF] run tf/idf estimator with follow configuration ${tfIDFconfig.map(s => s"${s._1}->${s._2}").mkString(" ; ")} "))
     val tfidf = new SQLTfIdf()
-    tfidf.train(newDF, TF_IDF_PATH(metaPath, inputCol), Map("inputCol" -> inputCol, "numFeatures" -> wordCount.toString, "binary" -> "true"))
+    tfidf.train(newDF, TF_IDF_PATH(metaPath, inputCol), tfIDFconfig)
     val tfidfModel = tfidf.load(df.sparkSession, TF_IDF_PATH(metaPath, inputCol), Map())
     val tfidfFunc = tfidf.internal_predict(df.sparkSession, tfidfModel, "wow")("wow")
     val tfidfUDFFunc = F.udf(tfidfFunc)
     newDF = replaceColumn(newDF, inputCol, tfidfUDFFunc)
 
     //enhance
+    logInfo(format(s"[TFIDF] enhance priorityWords"))
     val predictSingleWordFunc = funcMap("wow").asInstanceOf[(String) => Int]
     val (priorityWords, priorityFunc) = loadPriorityWords(newDF, priorityDicPaths, priority, predictSingleWordFunc)
     newDF = replaceColumn(newDF, inputCol, F.udf(priorityFunc))

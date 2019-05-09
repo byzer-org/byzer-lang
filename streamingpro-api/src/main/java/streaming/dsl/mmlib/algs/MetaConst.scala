@@ -28,6 +28,8 @@ object MetaConst {
 
   def WORD_INDEX_PATH(path: String, col: String) = s"$path/columns/$col/wordIndex"
 
+  def ANALYSYS_WORDS_PATH(path: String, col: String) = s"$path/columns/$col/analysiswords"
+
   def OUTLIER_VALUE_PATH(path: String, col: String) = s"$path/columns/$col/outlierValues"
 
   def MIN_MAX_PATH(path: String, col: String) = s"$path/columns/$col/minMax"
@@ -40,7 +42,7 @@ object MetaConst {
 
   def PARAMS_PATH(path: String, col: String) = s"$path/params"
 
-  def WORDS_PATH(path:String) = s"$path/words"
+  def WORDS_PATH(path: String) = s"$path/words"
 
   def getDataPath(path: String) = {
     s"${path.stripSuffix("/")}/data"
