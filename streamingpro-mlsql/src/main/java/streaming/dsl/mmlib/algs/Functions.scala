@@ -47,6 +47,7 @@ import scala.collection.mutable.ArrayBuffer
   */
 trait Functions extends SQlBaseFunc with Logging with WowLog with Serializable {
 
+
   def pythonCheckRequirements(df: DataFrame) = {
     val conf: SparkConf = df.sparkSession.sparkContext.getConf
     val master = conf.get("spark.master", "")
@@ -61,6 +62,11 @@ trait Functions extends SQlBaseFunc with Logging with WowLog with Serializable {
   def emptyDataFrame()(implicit df: DataFrame) = {
     import df.sparkSession.implicits._
     Seq.empty[String].toDF("name")
+  }
+
+  def emptyDataFrame(spark: SparkSession, name: String) = {
+    import spark.implicits._
+    Seq.empty[String].toDF(name)
   }
 
   def sampleUnbalanceWithMultiModel(df: DataFrame, path: String, params: Map[String, String], train: (DataFrame, Int) => Unit) = {
@@ -283,6 +289,7 @@ trait Functions extends SQlBaseFunc with Logging with WowLog with Serializable {
       logInfo(format(s"[training] [alg=${alg.getClass.getName}] [keepVersion=${keepVersion}]"))
 
       var status = "success"
+      var info = ""
       val modelTrainStartTime = System.currentTimeMillis()
       val modelPath = SQLPythonFunc.getAlgModelPath(path, keepVersion) + "/" + modelIndex
       var scores: List[MetricValue] = List()
@@ -295,7 +302,8 @@ trait Functions extends SQlBaseFunc with Logging with WowLog with Serializable {
         }]"))
       } catch {
         case e: Exception =>
-          logInfo(format_exception(e))
+          info = format_exception(e)
+          logInfo(info)
           status = "fail"
       }
       val modelTrainEndTime = System.currentTimeMillis()
@@ -303,7 +311,16 @@ trait Functions extends SQlBaseFunc with Logging with WowLog with Serializable {
       //        throw new RuntimeException(s"Fail to train als model: ${modelIndex}; All will fails")
       //      }
       val metrics = scores.map(score => Row.fromSeq(Seq(score.name, score.value))).toArray
-      Row.fromSeq(Seq(modelPath, modelIndex, alg.getClass.getName, metrics, status, modelTrainStartTime, modelTrainEndTime, fitParam))
+      Row.fromSeq(Seq(
+        modelPath.substring(path.length),
+        modelIndex,
+        alg.getClass.getName,
+        metrics,
+        status,
+        info,
+        modelTrainStartTime,
+        modelTrainEndTime,
+        fitParam))
     }
     var fitParam = arrayParamsWithIndex("fitParam", params)
 
@@ -327,6 +344,7 @@ trait Functions extends SQlBaseFunc with Logging with WowLog with Serializable {
       )))),
 
       StructField("status", StringType),
+      StructField("info", StringType),
       StructField("startTime", LongType),
       StructField("endTime", LongType),
       StructField("trainParams", MapType(StringType, StringType))

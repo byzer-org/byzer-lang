@@ -17,7 +17,7 @@ if [[ "${RELEASE}" != "true" ]];then
    fi
 
    export MLSQL_SPARK_VERSION=${MLSQL_SPARK_VERSION:-2.4}
-   export SPARK_VERSION=${SPARK_VERSION:-2.4.2}
+   export SPARK_VERSION=${SPARK_VERSION:-2.4.3}
    export MLSQL_DISTRIBUTIOIN_URL="streamingpro-mlsql-spark_${MLSQL_SPARK_VERSION}-${MLSQL_VERSION}.jar"
    export DISTRIBUTION=${MLSQL_SPARK_VERSION:-false}
 
@@ -29,7 +29,7 @@ if [[ "${RELEASE}" != "true" ]];then
 else
    export MLSQL_VERSION=${MLSQL_VERSION:-1.1.7}
    export MLSQL_SPARK_VERSION=2.4
-   export SPARK_VERSION=2.4.1
+   export SPARK_VERSION=2.4.3
    docker build --build-arg  MLSQL_VERSION=${MLSQL_VERSION} --build-arg SPARK_VERSION=${SPARK_VERSION} --build-arg MLSQL_SPARK_VERSION=${MLSQL_SPARK_VERSION} -t mlsql:${MLSQL_SPARK_VERSION}-${MLSQL_VERSION} ./docker
 
    export MLSQL_SPARK_VERSION=2.3
