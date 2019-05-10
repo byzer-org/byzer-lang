@@ -20,7 +20,9 @@ package streaming.dsl.mmlib.algs
 
 import java.net.URLEncoder
 
+import net.csdn.common.reflect.ReflectHelper
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
+import org.apache.http.HttpResponse
 import org.apache.http.client.fluent.Request
 import org.apache.spark.ml.param.Param
 import org.apache.spark.sql.expressions.UserDefinedFunction
@@ -99,12 +101,18 @@ class SQLDownloadExt(override val uid: String) extends SQLAlg with Logging with 
       URLEncoder.encode(name, "utf-8")
     }
 
+    logInfo(format(s"download file from src:${$(from)} to dst:${$(to)}"))
+
     val getUrl = fromUrl + s"?userName=${urlencode(context.owner)}&fileName=${urlencode($(from))}&auth_secret=${urlencode(auth_secret)}"
-    val stream = Request.Get(getUrl)
+
+    val response = Request.Get(getUrl)
       .connectTimeout(60 * 1000)
       .socketTimeout(10 * 60 * 1000)
-      .execute().returnContent().asStream()
+      .execute()
+    // Since response always consume the inputstream and return new stream, this will cost too much memory.
+    val stream = ReflectHelper.field(response, "response").asInstanceOf[HttpResponse].getEntity.getContent
     val tarIS = new TarArchiveInputStream(stream)
+
     var downloadResultRes = ArrayBuffer[DownloadResult]()
     try {
       var entry = tarIS.getNextEntry
@@ -113,6 +121,7 @@ class SQLDownloadExt(override val uid: String) extends SQLAlg with Logging with 
           if (!entry.isDirectory) {
             val dir = entry.getName.split("/").filterNot(f => f.isEmpty).dropRight(1).mkString("/")
             downloadResultRes += DownloadResult(PathFun(originalTo).add(dir).add(entry.getName.split("/").last).toPath)
+            logInfo(format(s"extracting ${downloadResultRes.last.hdfsPath}"))
             HDFSOperator.saveStream($(to) + "/" + dir, entry.getName.split("/").last, tarIS)
           }
           entry = tarIS.getNextEntry

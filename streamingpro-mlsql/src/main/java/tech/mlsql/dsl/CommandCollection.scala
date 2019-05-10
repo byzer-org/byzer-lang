@@ -21,8 +21,14 @@ object CommandCollection {
 
     context.addEnv("resource",""" run command as EngineResource.`` where action="{0}" and cpus="{1}" """)
 
+    context.addEnv("model",""" run command as ModelCommand.`{1}` where action="{0}" """)
+
     context.addEnv("hdfs",""" run command as HDFSCommand.`` where parameters='''{:all}''' """)
     context.addEnv("fs",""" run command as HDFSCommand.`` where parameters='''{:all}''' """)
+
+    context.addEnv("split",""" run {0} as RateSampler.`` where labelCol="{2}" and sampleRate="{4}" as {6} """)
+
+    context.addEnv("saveUploadFileToHome",""" run command as DownloadExt.`` where from="{}" and to="{}" """)
 
     context.addEnv("show",
       """

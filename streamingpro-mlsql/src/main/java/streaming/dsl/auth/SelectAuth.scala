@@ -58,7 +58,7 @@ class SelectAuth(authProcessListener: AuthProcessListener) extends MLSQLAuth wit
 
     val tableRefs = MLSQLAuthParser.filterTables(sql, authProcessListener.listener.sparkSession)
 
-    val tables = tableRefs.foreach { f =>
+    tableRefs.foreach { f =>
       f.database match {
         case Some(db) =>
           val exists = authProcessListener.withDBs.filter(m => f.table == m.table.get && db == m.db.get).size > 0

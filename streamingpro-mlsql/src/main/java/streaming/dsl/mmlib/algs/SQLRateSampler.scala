@@ -19,9 +19,10 @@
 package streaming.dsl.mmlib.algs
 
 import org.apache.spark.Partitioner
-import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession, functions => F}
 import org.apache.spark.sql.expressions.UserDefinedFunction
+import org.apache.spark.sql.mlsql.session.MLSQLException
 import org.apache.spark.sql.types.{IntegerType, StructField, StructType}
+import org.apache.spark.sql.{DataFrame, Row, SparkSession, functions => F}
 import streaming.dsl.mmlib.SQLAlg
 
 /**
@@ -38,6 +39,7 @@ class SQLRateSampler extends SQLAlg with Functions {
         case a: Double => a.asInstanceOf[Double].toInt
         case a: Float => a.asInstanceOf[Float].toInt
         case a: Long => a.asInstanceOf[Long].toInt
+        case _ => throw new MLSQLException("The type of labelCol should be int/double/float/long")
       }
     }
 
@@ -133,8 +135,7 @@ class SQLRateSampler extends SQLAlg with Functions {
 
   override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
     val newDF = internal_train(df, params)
-    newDF.write.mode(SaveMode.Overwrite).parquet(path)
-    emptyDataFrame()(df)
+    newDF
   }
 
   override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = ???

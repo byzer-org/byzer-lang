@@ -10,7 +10,8 @@ object ETRegister {
     wow("ShowCommand"),
     wow("EngineResource"),
     wow("HDFSCommand"),
-    wow("NothingET")
+    wow("NothingET"),
+    wow("ModelCommand")
   )
 
 }
