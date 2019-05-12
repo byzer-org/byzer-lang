@@ -119,6 +119,17 @@ object Functions {
     })
   }
 
+  def vec_range(uDFRegistration: UDFRegistration) = {
+    uDFRegistration.register("vec_range", (vec: Vector, inds: Seq[Int]) => {
+      assert(inds.size == 2)
+      vec match {
+        case features: DenseVector => Vectors.dense(features.toArray.slice(inds(0), inds(1)))
+        case features: SparseVector => FVectors.range(features, inds.toArray)
+      }
+    })
+  }
+
+
   /*
     1 - x.dot(y)/(x.norm(2)*y.norm(2))
    */

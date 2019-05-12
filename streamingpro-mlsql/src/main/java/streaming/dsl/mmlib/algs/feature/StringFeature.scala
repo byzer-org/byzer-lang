@@ -198,7 +198,7 @@ object StringFeature extends BaseFeatureFunctions with Logging with WowLog {
     val spark = df.sparkSession
 
     //tfidf feature
-    val tfIDFconfig = Map("inputCol" -> inputCol, "numFeatures" -> wordCount.toString, "binary" -> "true")
+    val tfIDFconfig = Map("inputCol" -> inputCol, "numFeatures" -> wordCount.toString, "binary" -> "false")
     logInfo(format(s"[TFIDF] run tf/idf estimator with follow configuration ${tfIDFconfig.map(s => s"${s._1}->${s._2}").mkString(" ; ")} "))
     val tfidf = new SQLTfIdf()
     tfidf.train(newDF, TF_IDF_PATH(metaPath, inputCol), tfIDFconfig)

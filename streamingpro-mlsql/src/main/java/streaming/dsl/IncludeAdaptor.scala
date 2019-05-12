@@ -67,6 +67,7 @@ object IncludeAdaptor {
   val mapping = Map[String, String](
     "hdfs" -> "streaming.dsl.mmlib.algs.includes.HDFSIncludeSource",
     "http" -> "streaming.dsl.mmlib.algs.includes.HTTPIncludeSource",
+    "store" -> "tech.mlsql.dsl.includes.StoreIncludeSource",
 
     "function" -> "streaming.dsl.mmlib.algs.includes.analyst.HttpBaseDirIncludeSource",
     "view" -> "streaming.dsl.mmlib.algs.includes.analyst.HttpBaseDirIncludeSource",
