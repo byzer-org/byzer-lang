@@ -70,4 +70,15 @@ object FVectors {
     }.unzip
     new SparseVector(selectedIndices.length, sliceInds.toArray, sliceVals.toArray)
   }
+
+  def range(vector: SparseVector, range: Array[Int]): SparseVector = {
+    val start = range(0)
+    val end = range(1)
+
+    val (sliceVals, sliceInds) = vector.values.zip(vector.indices).filter { d =>
+      val (v, i) = d
+      i < end && i >= start
+    }.unzip
+    new SparseVector(end - start, sliceInds.toArray, sliceVals.toArray)
+  }
 }
