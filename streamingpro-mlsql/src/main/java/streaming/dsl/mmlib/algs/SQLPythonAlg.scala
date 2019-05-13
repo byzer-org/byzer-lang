@@ -49,6 +49,7 @@ class SQLPythonAlg(override val uid: String) extends SQLAlg with Functions with 
     if (get(scripts).isDefined) {
       val autoCreateMLproject = new AutoCreateMLproject($(scripts), $(condaFile), $(entryPoint), $(batchPredictEntryPoint), $(apiPredictEntryPoint))
       val projectPath = autoCreateMLproject.saveProject(df.sparkSession, path)
+
       newParams = params
       newParams += ("enableDataLocal" -> "true")
       newParams += ("pythonScriptPath" -> projectPath)
