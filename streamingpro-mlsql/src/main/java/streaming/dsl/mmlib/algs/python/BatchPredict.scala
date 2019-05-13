@@ -127,7 +127,7 @@ class BatchPredict extends Logging with WowLog with Serializable {
       val taskDirectory = localPathConfig.localRunPath + "/" + projectName
 
       SQLPythonAlg.downloadPythonProject(taskDirectory, Option(pythonProject.get.filePath))
-
+      var message = ""
       val runner = new PythonProjectExecuteRunner(
         taskDirectory = taskDirectory,
         keepLocalDirectory = keepLocalDirectory,
@@ -154,8 +154,8 @@ class BatchPredict extends Logging with WowLog with Serializable {
 
       } catch {
         case e: Exception =>
-          logError(format_cause(e))
-          e.printStackTrace()
+          val info = format_cause(e)
+          logError(info)
           trainFailFlag = true
       } finally {
         FileUtils.deleteDirectory(new File(localModelPath))
