@@ -116,7 +116,7 @@ object MLProject {
   }
 }
 
-class AutoCreateMLproject(scripts: String, condaFile: String, entryPoint: String) {
+class AutoCreateMLproject(scripts: String, condaFile: String, entryPoint: String, batchPredictEntryPoint: String = "py_batch_predict", apiPredictEntryPoint: String = "py_predict") {
 
   def projectName = "mlsql-python-project"
 
@@ -146,8 +146,10 @@ class AutoCreateMLproject(scripts: String, condaFile: String, entryPoint: String
        |  main:
        |    train:
        |        command: "python ${entryPoint}.py"
-       |    batchPredict:
-       |        command: "python ${entryPoint}.py"
+       |    batch_predict:
+       |        command: "python ${batchPredictEntryPoint}.py"
+       |    api_predict:
+       |        command: "python ${apiPredictEntryPoint}.py"
      """.stripMargin
   }
 }

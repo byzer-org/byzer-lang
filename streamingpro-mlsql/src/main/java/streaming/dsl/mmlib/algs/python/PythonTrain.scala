@@ -459,6 +459,7 @@ class PythonTrain extends Functions with Serializable {
       val modelTrainStartTime = System.currentTimeMillis()
 
       var score = 0.0
+      var message = ""
       var trainFailFlag = false
       val runner = new PythonProjectExecuteRunner(
         taskDirectory = taskDirectory,
@@ -466,7 +467,9 @@ class PythonTrain extends Functions with Serializable {
         envVars = envs,
         logCallback = (msg) => {
           ScriptSQLExec.setContextIfNotPresent(mlsqlContext)
-          logInfo(format(msg))
+          val info = format(msg)
+          logInfo(info)
+          message += info
         }
       )
       try {
@@ -488,13 +491,14 @@ class PythonTrain extends Functions with Serializable {
 
         val scores = res.map { f =>
           logInfo(format(f))
+          message += f
           filterScore(f)
         }.toSeq
         score = if (scores.size > 0) scores.head else 0d
       } catch {
         case e: Exception =>
-          logError(format_cause(e))
-          e.printStackTrace()
+          message += format_cause(e)
+          logError(message)
           trainFailFlag = true
       }
 
@@ -519,14 +523,14 @@ class PythonTrain extends Functions with Serializable {
           trainFailFlag = true
       } finally {
         // delete local model
-        FileUtils.forceDelete(new File(tempModelLocalPath))
+        FileUtils.deleteQuietly(new File(tempModelLocalPath))
         // delete local data
         if (!keepLocalDirectory) {
-          FileUtils.forceDelete(new File(tempDataLocalPathWithAlgSuffix))
+          FileUtils.deleteQuietly(new File(tempDataLocalPathWithAlgSuffix))
         }
         // delete resource
         resourceParams.foreach { rp =>
-          FileUtils.forceDelete(new File(rp._2))
+          FileUtils.deleteQuietly(new File(rp._2))
         }
       }
       val status = if (trainFailFlag) "fail" else "success"
@@ -536,6 +540,7 @@ class PythonTrain extends Functions with Serializable {
         pythonProject.get.fileName,
         score,
         status,
+        message,
         modelTrainStartTime,
         modelTrainEndTime,
         f,

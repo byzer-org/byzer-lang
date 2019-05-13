@@ -19,7 +19,6 @@
 package streaming.dsl.mmlib.algs.param
 
 import org.apache.spark.ml.param.{BooleanParam, Param}
-import org.apache.spark.sql.mlsql.session.MLSQLException
 
 /**
   * Created by allwefantasy on 28/9/2018.
@@ -64,6 +63,12 @@ trait SQLPythonAlgParams extends BaseParams {
   final val entryPoint: Param[String] = new Param(this, "entryPoint",
     "")
 
+  final val batchPredictEntryPoint: Param[String] = new Param(this, "batchPredictEntryPoint",
+    "")
+
+  final val apiPredictEntryPoint: Param[String] = new Param(this, "apiPredictEntryPoint",
+    "")
+
   final val condaFile: Param[String] = new Param(this, "condaFile",
     "")
 
@@ -82,11 +87,25 @@ trait SQLPythonAlgParams extends BaseParams {
     }.getOrElse {
     }
 
+    params.get(batchPredictEntryPoint.name).map { item =>
+      set(batchPredictEntryPoint, item)
+      item
+    }.getOrElse {
+      set(batchPredictEntryPoint, "py_batch_predict")
+    }
+
+    params.get(apiPredictEntryPoint.name).map { item =>
+      set(apiPredictEntryPoint, item)
+      item
+    }.getOrElse {
+      set(apiPredictEntryPoint, "py_predict")
+    }
+
     params.get(condaFile.name).map { item =>
       set(condaFile, item)
       item
     }.getOrElse {
-      
+
     }
   }
 

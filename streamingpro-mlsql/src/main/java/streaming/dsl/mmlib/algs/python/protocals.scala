@@ -136,6 +136,7 @@ object PythonTrainingResultSchema {
     StructField("score", DoubleType),
 
     StructField("status", StringType),
+    StructField("message", StringType),
     StructField("startTime", LongType),
     StructField("endTime", LongType),
     StructField("trainParams", MapType(StringType, StringType)),

@@ -47,14 +47,19 @@ class SQLPythonAlg(override val uid: String) extends SQLAlg with Functions with 
     autoConfigureAutoCreateProjectParams(params)
     var newParams = params
     if (get(scripts).isDefined) {
-      val autoCreateMLproject = new AutoCreateMLproject($(scripts), $(condaFile), $(entryPoint))
+      val autoCreateMLproject = new AutoCreateMLproject($(scripts), $(condaFile), $(entryPoint), $(batchPredictEntryPoint), $(apiPredictEntryPoint))
       val projectPath = autoCreateMLproject.saveProject(df.sparkSession, path)
       newParams = params
       newParams += ("enableDataLocal" -> "true")
       newParams += ("pythonScriptPath" -> projectPath)
       newParams += ("pythonDescPath" -> projectPath)
     }
-    new PythonTrain().train(df, path, newParams)
+    if (!params.contains("generateProjectOnly") || !params("generateProjectOnly").toBoolean) {
+      new PythonTrain().train(df, path, newParams)
+    } else {
+      emptyDataFrame(df.sparkSession, "value")
+    }
+
   }
 
   override def load(sparkSession: SparkSession, _path: String, params: Map[String, String]): Any = {
