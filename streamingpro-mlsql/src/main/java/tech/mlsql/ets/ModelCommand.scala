@@ -24,27 +24,40 @@ class ModelCommand(override val uid: String) extends SQLAlg with MllibFunctions 
 
     val paths = HDFSOperator.listFiles(path).map(file => PathFun(path).add(file.getPath.getName).toPath)
 
-    if (paths.isEmpty) return emptyDataFrame(spark, "value")
+    def isModelPath = {
 
-    val keepVersion = paths.head.split("/").last.startsWith("_model_")
+      !paths.isEmpty && (paths.filter(f => f.split("/").last.startsWith("_model_")).size > 0 ||
+        (paths.filter(f => f.split("/").last == "model").size > 0 &&
+          paths.filter(f => f.split("/").last == "meta").size > 0))
+    }
+
+    def not_model_path = {
+      import spark.implicits._
+      Seq(s"$path is not a model path").toDF("value")
+    }
+
+    if (!isModelPath) return not_model_path
+
+    var modelPaths = paths.filter(f => f.split("/").last.startsWith("_model_"))
+    val keepVersion = modelPaths.size > 0
 
 
-    def getModelMetaData(spark: SparkSession, path: String): DataFrame = {
-      if (keepVersion) {
-        val metaDataPath = PathFun(path).add("meta").add("0").toPath
-        if (HDFSOperator.fileExists(metaDataPath)) {
-          return spark.read.parquet(metaDataPath)
-        }
+    def getModelMetaData(spark: SparkSession, path: String): Option[DataFrame] = {
+      val metaDataPath = PathFun(path).add("meta").add("0").toPath
+      if (HDFSOperator.fileExists(metaDataPath) && HDFSOperator.listFiles(metaDataPath).
+        filter(f => f.getPath.getName.endsWith(".parquet")).size > 0) {
+        return Option(spark.read.parquet(metaDataPath))
       }
-      return emptyDataFrame(spark, "value")
+      return None
     }
 
     val context = ScriptSQLExec.contextGetOrForTest()
     params.get(action.name) match {
       case Some("history") =>
-        val model = paths.sortBy(metaPath => metaPath).reverse.map { metaPath =>
-          formatOutputWithMultiColumns(path.substring(context.home.length), getModelMetaData(spark, metaPath))
-        }.reduce(_ union _)
+        modelPaths = if (keepVersion) modelPaths else Seq(path)
+        val model = modelPaths.sortBy(metaPath => metaPath).reverse.map { metaPath =>
+          (path.substring(context.home.length), getModelMetaData(spark, metaPath))
+        }.filter(f => f._2.isDefined).map(f => formatOutputWithMultiColumns(f._1, f._2.get)).reduce(_ union _)
         model.orderBy(F.desc("modelPath"))
       case _ => throw new MLSQLException("no command found")
     }

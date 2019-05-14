@@ -344,7 +344,7 @@ trait Functions extends SQlBaseFunc with Logging with WowLog with Serializable {
       )))),
 
       StructField("status", StringType),
-      StructField("info", StringType),
+      StructField("message", StringType),
       StructField("startTime", LongType),
       StructField("endTime", LongType),
       StructField("trainParams", MapType(StringType, StringType))

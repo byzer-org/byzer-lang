@@ -85,7 +85,7 @@ trait MllibFunctions extends Logging with WowLog with Serializable {
       withColumn("endTime", formatDate(F.col("endTime"))).
       withColumn("alg", formatAlg(F.col("alg"))).
       withColumn("modelPath", formatPath(F.col("modelPath"))).
-      withColumn("info", formatInfo(F.col("info")))
+      withColumn("message", formatInfo(F.col("message")))
 
     resDF
 

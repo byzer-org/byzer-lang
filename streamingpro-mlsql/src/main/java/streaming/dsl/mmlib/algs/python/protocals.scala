@@ -134,7 +134,10 @@ object PythonTrainingResultSchema {
     StructField("algIndex", IntegerType),
     StructField("alg", StringType),
     StructField("score", DoubleType),
-
+    StructField("metrics", ArrayType(StructType(Seq(
+      StructField(name = "name", dataType = StringType),
+      StructField(name = "value", dataType = DoubleType)
+    )))),
     StructField("status", StringType),
     StructField("message", StringType),
     StructField("startTime", LongType),
