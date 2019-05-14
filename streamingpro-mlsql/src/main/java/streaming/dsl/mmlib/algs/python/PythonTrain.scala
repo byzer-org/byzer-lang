@@ -469,7 +469,7 @@ class PythonTrain extends Functions with Serializable {
           ScriptSQLExec.setContextIfNotPresent(mlsqlContext)
           val info = format(msg)
           logInfo(info)
-          message += info
+          message += (info + "\n")
         }
       )
       try {

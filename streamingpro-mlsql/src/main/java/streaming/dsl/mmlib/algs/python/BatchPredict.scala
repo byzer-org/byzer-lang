@@ -134,7 +134,9 @@ class BatchPredict extends Logging with WowLog with Serializable {
         envVars = envs,
         logCallback = (msg) => {
           ScriptSQLExec.setContextIfNotPresent(mlsqlContext)
-          logInfo(format(msg))
+          val info = format(msg)
+          logInfo(info)
+          message += (info + "\n")
         }
       )
       var trainFailFlag = false
