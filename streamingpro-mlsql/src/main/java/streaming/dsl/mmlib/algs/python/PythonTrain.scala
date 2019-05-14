@@ -534,11 +534,15 @@ class PythonTrain extends Functions with Serializable {
         }
       }
       val status = if (trainFailFlag) "fail" else "success"
+
+      val metrics = Seq(Row.fromSeq(Seq("validateScore", score)))
+
       Row.fromSeq(Seq(
         modelHDFSPath,
         algIndex,
         pythonProject.get.fileName,
         score,
+        metrics,
         status,
         message,
         modelTrainStartTime,
@@ -548,7 +552,9 @@ class PythonTrain extends Functions with Serializable {
       ))
     }
 
-    df.sparkSession.createDataFrame(wowRDD, PythonTrainingResultSchema.algSchema).write.mode(SaveMode.Overwrite).parquet(SQLPythonFunc.getAlgMetalPath(path, keepVersion) + "/0")
+    df.sparkSession.createDataFrame(wowRDD, PythonTrainingResultSchema.algSchema).write.
+      mode(SaveMode.Overwrite).
+      parquet(SQLPythonFunc.getAlgMetalPath(path, keepVersion) + "/0")
 
     val tempRDD = df.sparkSession.sparkContext.parallelize(Seq(Seq(
       Map(
