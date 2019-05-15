@@ -78,17 +78,20 @@ class TrainAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdap
       options = options ++ Map("__dfname__" -> tableName)
     }
 
-    val isTrain = ETMethod.withName(ctx.getChild(0).getText) match {
+    val firstKeywordInStatement = ctx.getChild(0).getText
+
+    val isTrain = ETMethod.withName(firstKeywordInStatement) match {
       case ETMethod.PREDICT => false
       case ETMethod.RUN => true
       case ETMethod.TRAIN => true
     }
 
-    if(!skipAuth() && sqlAlg.isInstanceOf[ETAuth]){
-      val etMethod = if(isTrain) ETMethod.TRAIN else ETMethod.PREDICT
-      sqlAlg.asInstanceOf[ETAuth].auth(etMethod ,options)
+    if (!skipAuth() && sqlAlg.isInstanceOf[ETAuth]) {
+      sqlAlg.asInstanceOf[ETAuth].auth(ETMethod.withName(firstKeywordInStatement), options)
     }
 
+    // RUN and TRAIN are the same. TRAIN is normally used for algorithm.
+    // RUN is used for other situation.
     val newdf = if (isTrain) {
       sqlAlg.train(df, path, options)
     } else {
@@ -100,9 +103,9 @@ class TrainAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdap
     scriptSQLExecListener.setLastSelectTable(tempTable)
   }
 
-  def skipAuth() :Boolean = {
+  def skipAuth(): Boolean = {
     scriptSQLExecListener.env()
-      .getOrElse("SKIP_AUTH" ,"true")
+      .getOrElse("SKIP_AUTH", "true")
       .toBoolean
   }
 }
