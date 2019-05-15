@@ -13,7 +13,6 @@ import streaming.dsl.mmlib.algs.Functions
 import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
 import streaming.log.{Logging, WowLog}
 import tech.mlsql.dsl.auth.ETAuth
-import tech.mlsql.dsl.auth.dsl.mmlib.ETMethod
 import tech.mlsql.dsl.auth.dsl.mmlib.ETMethod._
 
 
@@ -128,25 +127,22 @@ class EngineResource(override val uid: String) extends SQLAlg with ETAuth with F
   final val cpus: Param[String] = new Param[String](this, "cpus", "")
   final val timeout: Param[Int] = new Param[Int](this, "timeout", "")
 
-  override def auth(etMethod :ETMethod, params: Map[String, String]): List[TableAuthResult] = {
-    val vtable = etMethod match {
-      case ETMethod.TRAIN => Some(MLSQLTable(
-        Option(DB_DEFAULT.MLSQL_SYSTEM.toString),
-        Option("__resource_allocate__"),
-        OperateType.INSERT,
-        Option("_mlsql_"),
-        TableType.SYSTEM))
-      case _ => None
+  override def auth(etMethod: ETMethod, params: Map[String, String]): List[TableAuthResult] = {
+
+    val vtable = MLSQLTable(
+      Option(DB_DEFAULT.MLSQL_SYSTEM.toString),
+      Option("__resource_allocate__"),
+      OperateType.INSERT,
+      Option("_mlsql_"),
+      TableType.SYSTEM)
+
+    val context = ScriptSQLExec.contextGetOrForTest()
+    context.execListener.getTableAuth match {
+      case Some(tableAuth) =>
+        tableAuth.auth(List(vtable))
+      case None => List(TableAuthResult(true, ""))
     }
-    vtable match {
-      case Some(vtable) =>
-        val context = ScriptSQLExec.contextGetOrForTest()
-        context.execListener.getTableAuth match {
-          case Some(tableAuth) =>
-            tableAuth.auth(List(vtable))
-          case None => List(TableAuthResult(true, ""))
-        }
-    }
+
   }
 
 }
