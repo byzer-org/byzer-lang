@@ -9,8 +9,8 @@ MLSQL is a Language which is the superset of SQL and  a distributed compute engi
 
 Find more examples on [our user guide](http://docs.mlsql.tech/en).
 
-[中文文档](http://docs.mlsql.tech/zh)
-[English Docs](http://docs.mlsql.tech/en)
+1. [中文文档](http://docs.mlsql.tech/zh)
+2. [English Docs](http://docs.mlsql.tech/en)
 
 ## Fork and Contribute
 
