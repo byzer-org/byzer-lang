@@ -24,6 +24,8 @@ import org.apache.spark.SparkCoreVersion
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.parser.DSLSQLParser._
 import streaming.dsl.template.TemplateMerge
+import tech.mlsql.dsl.auth.ETAuth
+import tech.mlsql.dsl.auth.dsl.mmlib.ETMethod
 import tech.mlsql.ets.register.ETRegister
 
 /**
@@ -76,10 +78,15 @@ class TrainAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdap
       options = options ++ Map("__dfname__" -> tableName)
     }
 
-    val isTrain = ctx.getChild(0).getText match {
-      case "predict" => false
-      case "run" => true
-      case "train" => true
+    val isTrain = ETMethod.withName(ctx.getChild(0).getText) match {
+      case ETMethod.PREDICT => false
+      case ETMethod.RUN => true
+      case ETMethod.TRAIN => true
+    }
+
+    if(!skipAuth() && sqlAlg.isInstanceOf[ETAuth]){
+      val etMethod = if(isTrain) ETMethod.TRAIN else ETMethod.PREDICT
+      sqlAlg.asInstanceOf[ETAuth].auth(etMethod ,options)
     }
 
     val newdf = if (isTrain) {
@@ -91,6 +98,12 @@ class TrainAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdap
     val tempTable = if (asTableName.isEmpty) UUID.randomUUID().toString.replace("-", "") else asTableName
     newdf.createOrReplaceTempView(tempTable)
     scriptSQLExecListener.setLastSelectTable(tempTable)
+  }
+
+  def skipAuth() :Boolean = {
+    scriptSQLExecListener.env()
+      .getOrElse("SKIP_AUTH" ,"true")
+      .toBoolean
   }
 }
 
