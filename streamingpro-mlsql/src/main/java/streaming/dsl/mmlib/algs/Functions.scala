@@ -35,7 +35,7 @@ import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession, functions => F}
 import org.apache.spark.util.{ObjPickle, WowXORShiftRandom}
 import org.apache.spark.{MLSQLConf, Partitioner, SparkConf}
-import streaming.common.HDFSOperator
+import streaming.common.{HDFSOperator, PathFun}
 import streaming.core.message.MLSQLMessage
 import streaming.core.strategy.platform.{PlatformManager, SparkRuntime}
 import streaming.log.{Logging, WowLog}
@@ -46,8 +46,7 @@ import scala.collection.mutable.ArrayBuffer
   * Created by allwefantasy on 13/1/2018.
   */
 trait Functions extends SQlBaseFunc with Logging with WowLog with Serializable {
-
-
+  
   def pythonCheckRequirements(df: DataFrame) = {
     val conf: SparkConf = df.sparkSession.sparkContext.getConf
     val master = conf.get("spark.master", "")

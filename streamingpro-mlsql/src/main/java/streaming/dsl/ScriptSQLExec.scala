@@ -231,6 +231,7 @@ class ScriptSQLExecListener(val _sparkSession: SparkSession, val _defaultPathPre
         new TrainAdaptor(this).parse(ctx)
       case "register" =>
         new RegisterAdaptor(this).parse(ctx)
+      case _ => throw new RuntimeException(s"Unknow statment:${ctx.getText}")
     }
 
   }

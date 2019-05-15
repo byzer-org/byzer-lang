@@ -9,12 +9,13 @@ import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.param.BaseParams
 import streaming.dsl.mmlib.algs.{Functions, MllibFunctions}
+import tech.mlsql.ets.alg.BaseAlg
 
 
 /**
   * 2019-05-10 WilliamZhu(allwefantasy@gmail.com)
   */
-class ModelCommand(override val uid: String) extends SQLAlg with MllibFunctions with Functions with BaseParams {
+class ModelCommand(override val uid: String) extends SQLAlg with MllibFunctions with Functions with BaseAlg with BaseParams {
   def this() = this(BaseParams.randomUID())
 
   override def batchPredict(df: DataFrame, path: String, params: Map[String, String]): DataFrame = train(df, path, params)
@@ -22,21 +23,9 @@ class ModelCommand(override val uid: String) extends SQLAlg with MllibFunctions 
   override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
     val spark = df.sparkSession
 
+    if (!isModelPath(path)) throw new MLSQLException(s"$path is not a validate model path")
+
     val paths = HDFSOperator.listFiles(path).map(file => PathFun(path).add(file.getPath.getName).toPath)
-
-    def isModelPath = {
-
-      !paths.isEmpty && (paths.filter(f => f.split("/").last.startsWith("_model_")).size > 0 ||
-        (paths.filter(f => f.split("/").last == "model").size > 0 &&
-          paths.filter(f => f.split("/").last == "meta").size > 0))
-    }
-
-    def not_model_path = {
-      import spark.implicits._
-      Seq(s"$path is not a model path").toDF("value")
-    }
-
-    if (!isModelPath) return not_model_path
 
     var modelPaths = paths.filter(f => f.split("/").last.startsWith("_model_"))
     val keepVersion = modelPaths.size > 0
