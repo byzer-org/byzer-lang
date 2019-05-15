@@ -85,8 +85,8 @@ class TrainAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdap
     }
 
     if(!skipAuth() && sqlAlg.isInstanceOf[ETAuth]){
-      val mode = if(isTrain) ETMethod.TRAIN else ETMethod.PREDICT
-      sqlAlg.asInstanceOf[ETAuth].auth(mode ,options)
+      val etMethod = if(isTrain) ETMethod.TRAIN else ETMethod.PREDICT
+      sqlAlg.asInstanceOf[ETAuth].auth(etMethod ,options)
     }
 
     val newdf = if (isTrain) {
