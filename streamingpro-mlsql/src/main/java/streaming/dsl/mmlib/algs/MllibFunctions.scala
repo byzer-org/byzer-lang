@@ -18,16 +18,18 @@
 
 package streaming.dsl.mmlib.algs
 
+import org.apache.spark.sql.mlsql.session.MLSQLException
 import org.apache.spark.sql.types.{MapType, StringType, StructField, StructType}
 import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession, functions => F}
 import org.joda.time.DateTime
 import streaming.common.PathFun
 import streaming.log.{Logging, WowLog}
+import tech.mlsql.ets.alg.BaseAlg
 
 /**
   * Created by allwefantasy on 25/7/2018.
   */
-trait MllibFunctions extends Logging with WowLog with Serializable {
+trait MllibFunctions extends BaseAlg with Logging with WowLog with Serializable {
 
   def formatOutput(newDF: DataFrame) = {
     val schema = newDF.schema
@@ -92,6 +94,9 @@ trait MllibFunctions extends Logging with WowLog with Serializable {
   }
 
   def mllibModelAndMetaPath(path: String, params: Map[String, String], sparkSession: SparkSession) = {
+
+    if (!isModelPath(path)) throw new MLSQLException(s"$path is not a validate model path")
+
     val maxVersion = SQLPythonFunc.getModelVersion(path)
     var algIndex = params.get("algIndex").map(f => f.toInt)
 

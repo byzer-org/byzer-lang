@@ -54,6 +54,7 @@ class HttpBaseDirIncludeSource extends IncludeSource with Logging {
 
     logInfo(s"""HTTPIncludeSource URL: ${fetch_url}  PARAMS:${params.map(f => s"${f._1}=>${f._2}").mkString(";")}""")
     val res = HttpClientCrawler.requestByMethod(fetch_url, method, params.toMap)
+
     if (res == null) {
       throw new MLSQLException(
         s"""
