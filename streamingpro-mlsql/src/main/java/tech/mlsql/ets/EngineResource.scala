@@ -12,12 +12,13 @@ import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.Functions
 import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
 import streaming.log.{Logging, WowLog}
+import tech.mlsql.dsl.auth.ETAuth
 
 
 /**
   * 2019-04-26 WilliamZhu(allwefantasy@gmail.com)
   */
-class EngineResource(override val uid: String) extends SQLAlg with Functions with WowParams with Logging with WowLog {
+class EngineResource(override val uid: String) extends SQLAlg with ETAuth with Functions with WowParams with Logging with WowLog {
   def this() = this(BaseParams.randomUID())
 
   override def batchPredict(df: DataFrame, path: String, params: Map[String, String]): DataFrame = train(df, path, params)
@@ -48,19 +49,6 @@ class EngineResource(override val uid: String) extends SQLAlg with Functions wit
     val _timeout = fetchParam[Int](params, timeout, ParamConvertOption.toInt, (_) => {
       set(timeout, 60 * 1000)
     })
-
-    val context = ScriptSQLExec.contextGetOrForTest()
-    context.execListener.getTableAuth match {
-      case Some(tableAuth) =>
-        val vtable = MLSQLTable(
-          Option(DB_DEFAULT.MLSQL_SYSTEM.toString),
-          Option("__resource_allocate__"),
-          OperateType.INSERT,
-          Option("_mlsql_"),
-          TableType.SYSTEM)
-        tableAuth.auth(List(vtable))
-      case None =>
-    }
 
     val executorsShouldAddOrRemove = Math.floor(_cpus / executorInfo.executorCores).toInt
     val currentExecutorNum = executorInfo.executorDataMap.size
@@ -137,6 +125,27 @@ class EngineResource(override val uid: String) extends SQLAlg with Functions wit
   final val action: Param[String] = new Param[String](this, "action", "")
   final val cpus: Param[String] = new Param[String](this, "cpus", "")
   final val timeout: Param[Int] = new Param[Int](this, "timeout", "")
+
+  override def auth(mode: String, params: Map[String, String]): List[TableAuthResult] = {
+    val vtable = mode match {
+      case "train" => Some(MLSQLTable(
+        Option(DB_DEFAULT.MLSQL_SYSTEM.toString),
+        Option("__resource_allocate__"),
+        OperateType.INSERT,
+        Option("_mlsql_"),
+        TableType.SYSTEM))
+      case _ => None
+    }
+    vtable match {
+      case Some(vtable) =>
+        val context = ScriptSQLExec.contextGetOrForTest()
+        context.execListener.getTableAuth match {
+          case Some(tableAuth) =>
+            tableAuth.auth(List(vtable))
+          case None => List(TableAuthResult(true, ""))
+        }
+    }
+  }
 
 }
 

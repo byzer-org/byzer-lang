@@ -24,6 +24,7 @@ import org.apache.spark.SparkCoreVersion
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.parser.DSLSQLParser._
 import streaming.dsl.template.TemplateMerge
+import tech.mlsql.dsl.auth.ETAuth
 import tech.mlsql.ets.register.ETRegister
 
 /**
@@ -76,6 +77,10 @@ class TrainAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdap
       options = options ++ Map("__dfname__" -> tableName)
     }
 
+    if(!skipAuth() && sqlAlg.isInstanceOf[ETAuth]){
+      sqlAlg.asInstanceOf[ETAuth].auth("train" ,options)
+    }
+
     val isTrain = ctx.getChild(0).getText match {
       case "predict" => false
       case "run" => true
@@ -91,6 +96,12 @@ class TrainAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdap
     val tempTable = if (asTableName.isEmpty) UUID.randomUUID().toString.replace("-", "") else asTableName
     newdf.createOrReplaceTempView(tempTable)
     scriptSQLExecListener.setLastSelectTable(tempTable)
+  }
+
+  def skipAuth() :Boolean = {
+    val context = ScriptSQLExec.contextGetOrForTest()
+    context.userDefinedParam.getOrElse("skipAuth" ,"false")
+      .toBoolean
   }
 }
 
