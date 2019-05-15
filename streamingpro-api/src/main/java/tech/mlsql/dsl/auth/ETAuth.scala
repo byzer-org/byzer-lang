@@ -19,9 +19,10 @@
 package tech.mlsql.dsl.auth
 
 import streaming.dsl.auth.TableAuthResult
+import tech.mlsql.dsl.auth.dsl.mmlib.ETMethod.ETMethod
 /**
   * Created by aston on 19/5/2019.
   */
 trait ETAuth {
-  def auth(mode :String ,params:Map[String,String]): List[TableAuthResult]
+  def auth(etMethod :ETMethod,params:Map[String,String]): List[TableAuthResult]
 }

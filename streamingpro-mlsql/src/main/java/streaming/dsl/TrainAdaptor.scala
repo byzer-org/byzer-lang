@@ -25,6 +25,7 @@ import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.parser.DSLSQLParser._
 import streaming.dsl.template.TemplateMerge
 import tech.mlsql.dsl.auth.ETAuth
+import tech.mlsql.dsl.auth.dsl.mmlib.ETMethod
 import tech.mlsql.ets.register.ETRegister
 
 /**
@@ -77,14 +78,15 @@ class TrainAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdap
       options = options ++ Map("__dfname__" -> tableName)
     }
 
-    if(!skipAuth() && sqlAlg.isInstanceOf[ETAuth]){
-      sqlAlg.asInstanceOf[ETAuth].auth("train" ,options)
+    val isTrain = ETMethod.withName(ctx.getChild(0).getText) match {
+      case ETMethod.PREDICT => false
+      case ETMethod.RUN => true
+      case ETMethod.TRAIN => true
     }
 
-    val isTrain = ctx.getChild(0).getText match {
-      case "predict" => false
-      case "run" => true
-      case "train" => true
+    if(!skipAuth() && sqlAlg.isInstanceOf[ETAuth]){
+      val mode = if(isTrain) ETMethod.TRAIN else ETMethod.PREDICT
+      sqlAlg.asInstanceOf[ETAuth].auth(mode ,options)
     }
 
     val newdf = if (isTrain) {
@@ -99,8 +101,8 @@ class TrainAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdap
   }
 
   def skipAuth() :Boolean = {
-    val context = ScriptSQLExec.contextGetOrForTest()
-    context.userDefinedParam.getOrElse("skipAuth" ,"false")
+    scriptSQLExecListener.env()
+      .getOrElse("SKIP_AUTH" ,"true")
       .toBoolean
   }
 }
