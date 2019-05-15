@@ -19,6 +19,7 @@
 package tech.mlsql.ets.hdfs;
 
 import org.apache.commons.lang.WordUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -95,7 +96,12 @@ public class WowFsShell extends Configured implements Tool {
      */
     public WowFsShell(Configuration conf, String basePath) {
         super(conf);
-        this.basePath = basePath;
+        if(!StringUtils.isBlank(basePath)) {
+            this.basePath = basePath;
+        } else {
+            this.basePath = "/";
+        }
+
     }
 
     protected FileSystem getFS() throws IOException {

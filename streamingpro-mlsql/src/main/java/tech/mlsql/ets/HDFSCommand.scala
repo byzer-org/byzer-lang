@@ -36,9 +36,13 @@ class HDFSCommand(override val uid: String) extends SQLAlg with Functions with W
     finally {
       fsShell.close()
     }
-
     import spark.implicits._
-    spark.createDataset[String](Seq(output)).toDF("fileSystem")
+    if (args.contains("-F")) {
+      val ds = spark.createDataset(output.split("\n").toSeq)
+      spark.read.json(ds)
+    } else {
+      spark.createDataset[String](Seq(output)).toDF("fileSystem")
+    }
   }
 
 

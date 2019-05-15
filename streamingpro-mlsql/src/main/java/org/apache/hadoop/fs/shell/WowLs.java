@@ -1,5 +1,6 @@
 package org.apache.hadoop.fs.shell;
 
+import com.google.gson.Gson;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.util.StringUtils;
@@ -8,7 +9,9 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Map;
 
 /**
  * 2019-05-07 WilliamZhu(allwefantasy@gmail.com)
@@ -16,7 +19,7 @@ import java.util.LinkedList;
 public class WowLs extends WowFsCommand {
 
     public static final String NAME = "ls";
-    public static final String USAGE = "[-d] [-h] [-R] [<path> ...]";
+    public static final String USAGE = "[-d] [-h] [-R] [-F] [<path> ...]";
     public static final String DESCRIPTION =
             "List the contents that match the specified file pattern. If " +
                     "path is not specified, the contents of /user/<currentUser> " +
@@ -27,7 +30,8 @@ public class WowLs extends WowFsCommand {
                     "-d:  Directories are listed as plain files.\n" +
                     "-h:  Formats the sizes of files in a human-readable fashion " +
                     "rather than a number of bytes.\n" +
-                    "-R:  Recursively list the contents of directories.";
+                    "-R:  Recursively list the contents of directories." +
+                    "-F:  Formats the result as json";
 
 
     protected static final SimpleDateFormat dateFormat =
@@ -38,6 +42,8 @@ public class WowLs extends WowFsCommand {
     protected boolean dirRecurse;
 
     protected boolean humanReadable = false;
+
+    protected boolean format = false;
 
     public WowLs(Configuration conf, String basePath, PrintStream out, PrintStream error) {
         super(conf, basePath, out, error);
@@ -52,11 +58,12 @@ public class WowLs extends WowFsCommand {
     @Override
     protected void processOptions(LinkedList<String> args)
             throws IOException {
-        CommandFormat cf = new CommandFormat(0, Integer.MAX_VALUE, "d", "h", "R");
+        CommandFormat cf = new CommandFormat(0, Integer.MAX_VALUE, "d", "h", "R", "F");
         cf.parse(args);
         dirRecurse = !cf.getOpt("d");
         setRecursive(cf.getOpt("R") && dirRecurse);
         humanReadable = cf.getOpt("h");
+        format = cf.getOpt("F");
 
         redefineBaseDir(args);
         if (args.isEmpty()) args.add(this.basePath);
@@ -75,7 +82,7 @@ public class WowLs extends WowFsCommand {
     @Override
     protected void processPaths(PathData parent, PathData... items)
             throws IOException {
-        if (parent != null && !isRecursive() && items.length != 0) {
+        if (!format && parent != null && !isRecursive() && items.length != 0) {
             out.println("Found " + items.length + " items");
         }
         adjustColumnWidths(items);
@@ -85,16 +92,34 @@ public class WowLs extends WowFsCommand {
     @Override
     protected void processPath(PathData item) throws IOException {
         FileStatus stat = item.stat;
+        String itemLength = formatSize(stat.getLen());
+        String itemModificationTime = dateFormat.format(new Date(stat.getModificationTime()));
+        String itemPath = item.toString().substring(this.basePath.length() - 1);
+        String itemName = item.path.getName();
         String line = String.format(lineFormat,
                 (stat.isDirectory() ? "d" : "-"),
                 stat.getPermission() + (stat.getPermission().getAclBit() ? "+" : " "),
                 (stat.isFile() ? stat.getReplication() : "-"),
                 stat.getOwner(),
                 stat.getGroup(),
-                formatSize(stat.getLen()),
-                dateFormat.format(new Date(stat.getModificationTime())),
-                item.toString().substring(this.basePath.length() - 1)
+                itemLength,
+                itemModificationTime,
+                itemPath,
+                itemName
         );
+        if (format) {
+            Map lineMap = new HashMap<String, Object>();
+            String[] ss = line.split("\\s+");
+            lineMap.put("permission", ss[0]);
+            lineMap.put("replication", ss[1]);
+            lineMap.put("owner", ss[2]);
+            lineMap.put("group", ss[3]);
+            lineMap.put("length", itemLength);
+            lineMap.put("modification_time", itemModificationTime);
+            lineMap.put("path", itemPath);
+            lineMap.put("name", itemName);
+            line = new Gson().toJson(lineMap);
+        }
         out.println(line);
     }
 
@@ -121,7 +146,7 @@ public class WowLs extends WowFsCommand {
         fmt.append((maxOwner > 0) ? "%-" + maxOwner + "s " : "%s");
         fmt.append((maxGroup > 0) ? "%-" + maxGroup + "s " : "%s");
         fmt.append("%" + maxLen + "s ");
-        fmt.append("%s %s"); // mod time & path
+        fmt.append("%s %s %s"); // mod time & path & name
         lineFormat = fmt.toString();
     }
 
