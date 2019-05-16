@@ -63,13 +63,20 @@ class SetAdaptor(scriptSQLExecListener: ScriptSQLExecListener, stage: Stage.stag
     var overwrite = true
     option.get("type") match {
       case Some("sql") =>
-        if (stage == Stage.physical || (
-          SetMode.withName(option.get(SetMode.keyName).getOrElse(SetMode.runtime.toString)) == SetMode.compile && stage == Stage.preProcess
-          )) {
-          val resultHead = scriptSQLExecListener.sparkSession.sql(evaluate(command)).collect().headOption
-          if (resultHead.isDefined) {
-            value = resultHead.get.get(0).toString
+        val mode = SetMode.withName(option.get(SetMode.keyName).getOrElse(SetMode.runtime.toString))
+        if (!(stage == Stage.physical && mode == SetMode.compile)){
+          if (stage == Stage.physical || (mode == SetMode.compile && stage == Stage.preProcess)) {
+            val df = scriptSQLExecListener.sparkSession.sql(evaluate(command))
+
+            new SelectAdaptor(scriptSQLExecListener).runtimeTableAuth(df)
+
+            val resultHead = df.collect().headOption
+            if (resultHead.isDefined) {
+              value = resultHead.get.get(0).toString
+            }
           }
+        }else{
+          overwrite = false
         }
       case Some("shell") =>
         value = ShellCommand.execSimpleCommand(evaluate(command)).trim
