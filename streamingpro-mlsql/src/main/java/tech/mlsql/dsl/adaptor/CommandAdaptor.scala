@@ -97,7 +97,13 @@ class CommandAdaptor(preProcessListener: PreProcessListener) extends DslAdaptor 
       }
 
       val shouldBeNumber = tempCommand.slice(startPos + 1, endPos).trim
-      val namedPos = Integer.parseInt(shouldBeNumber)
+      val namedPos = try {
+        Integer.parseInt(shouldBeNumber)
+      } catch {
+        case e:Exception =>
+          return false
+      }
+
       finalCommand ++= fetchParam(namedPos)
       curPos.set(endPos + 1)
       return true
