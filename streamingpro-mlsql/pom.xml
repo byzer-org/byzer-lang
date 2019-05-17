@@ -424,9 +424,9 @@
                     <version>${project.parent.version}</version>
                 </dependency>
                 <dependency>
-                    <groupId>com.intel.analytics.bigdl</groupId>
-                    <artifactId>bigdl-SPARK_2.3</artifactId>
-                    <version>0.6.0</version>
+                        <groupId>com.intel.analytics.bigdl</groupId>
+                        <artifactId>bigdl-SPARK_2.4</artifactId>
+                        <version>0.8.0</version>
                     <exclusions>
                         <exclusion>
                             <groupId>com.google.guava</groupId>

@@ -10,7 +10,7 @@ object LogTail {
 
   def log(owner: String, filePath: String, offset: Long, size: Int = 1024 * 1024 - 1) = {
     val (newOffset, msg, fileSize) = ShellCommand.progress(filePath, offset, size)
-    val newMsg = msg.split("\n").filter(f => f.contains(s"[owner] [${owner}]"))
+    val newMsg = msg.split("\n").filter(f => f.contains(s"[owner] [${owner}]")||f.contains("DistriOptimizer$: ["))
     LogMsg(newOffset, newMsg)
   }
 }
