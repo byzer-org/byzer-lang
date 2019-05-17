@@ -60,7 +60,7 @@ class SetAdaptor(scriptSQLExecListener: ScriptSQLExecListener, stage: Stage.stag
       TemplateMerge.merge(str, scriptSQLExecListener.env().toMap)
     }
 
-    def doRealJob(command :String): String ={
+    def doRealJob(command: String): String = {
       val df = scriptSQLExecListener.sparkSession.sql(evaluate(command))
 
       new SelectAdaptor(scriptSQLExecListener).runtimeTableAuth(df)
@@ -68,7 +68,7 @@ class SetAdaptor(scriptSQLExecListener: ScriptSQLExecListener, stage: Stage.stag
       val resultHead = df.collect().headOption
       if (resultHead.isDefined) {
         resultHead.get.get(0).toString
-      }else {
+      } else {
         ""
       }
     }
@@ -76,14 +76,19 @@ class SetAdaptor(scriptSQLExecListener: ScriptSQLExecListener, stage: Stage.stag
     var overwrite = true
     option.get("type") match {
       case Some("sql") =>
+        // If we set mode compile, and then we should avoid the sql executed in
+        // both preProcess and physical stage.
         val mode = SetMode.withName(option.get(SetMode.keyName).getOrElse(SetMode.runtime.toString))
-        if (mode == SetMode.compile && stage == Stage.preProcess){
+        if (mode == SetMode.compile && stage == Stage.preProcess) {
           value = doRealJob(command)
         }
-        if (mode == SetMode.runtime && stage == Stage.physical){
+        if (mode == SetMode.runtime && stage == Stage.physical) {
           value = doRealJob(command)
         }
-        if (stage == Stage.physical && mode == SetMode.compile){
+        // When the mode is compile, we should set  overwrite to false
+        // to make sure the value (empty) will not overwrite the value computed
+        // in stage preProcess
+        if (mode == SetMode.compile && stage == Stage.physical) {
           overwrite = false
         }
 
