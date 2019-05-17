@@ -83,7 +83,7 @@ class SetAdaptor(scriptSQLExecListener: ScriptSQLExecListener, stage: Stage.stag
         if (mode == SetMode.runtime && stage == Stage.physical){
           value = doRealJob(command)
         }
-        if (!(stage == Stage.physical && mode == SetMode.compile)){
+        if (stage == Stage.physical && mode == SetMode.compile){
           overwrite = false
         }
 
