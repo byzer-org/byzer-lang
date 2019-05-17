@@ -60,24 +60,33 @@ class SetAdaptor(scriptSQLExecListener: ScriptSQLExecListener, stage: Stage.stag
       TemplateMerge.merge(str, scriptSQLExecListener.env().toMap)
     }
 
+    def doRealJob(command :String): String ={
+      val df = scriptSQLExecListener.sparkSession.sql(evaluate(command))
+
+      new SelectAdaptor(scriptSQLExecListener).runtimeTableAuth(df)
+
+      val resultHead = df.collect().headOption
+      if (resultHead.isDefined) {
+        resultHead.get.get(0).toString
+      }else {
+        ""
+      }
+    }
+
     var overwrite = true
     option.get("type") match {
       case Some("sql") =>
         val mode = SetMode.withName(option.get(SetMode.keyName).getOrElse(SetMode.runtime.toString))
+        if (mode == SetMode.compile && stage == Stage.preProcess){
+          value = doRealJob(command)
+        }
+        if (mode == SetMode.runtime && stage == Stage.physical){
+          value = doRealJob(command)
+        }
         if (!(stage == Stage.physical && mode == SetMode.compile)){
-          if (stage == Stage.physical || (mode == SetMode.compile && stage == Stage.preProcess)) {
-            val df = scriptSQLExecListener.sparkSession.sql(evaluate(command))
-
-            new SelectAdaptor(scriptSQLExecListener).runtimeTableAuth(df)
-
-            val resultHead = df.collect().headOption
-            if (resultHead.isDefined) {
-              value = resultHead.get.get(0).toString
-            }
-          }
-        }else{
           overwrite = false
         }
+
       case Some("shell") =>
         value = ShellCommand.execSimpleCommand(evaluate(command)).trim
       case Some("conf") =>
