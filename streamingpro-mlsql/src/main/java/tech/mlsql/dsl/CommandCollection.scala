@@ -33,6 +33,8 @@ object CommandCollection {
 
     context.addEnv("saveUploadFileToHome",""" run command as DownloadExt.`` where from="{}" and to="{}" """)
 
+    context.addEnv("withWartermark",""" register WaterMarkInPlace.`` where inputTable="{}" and eventTimeCol="{}" and delayThreshold="{}" """)
+
     context.addEnv("show",
       """
         |run command as ShowCommand.`{}/{}/{}/{}/{}/{}/{}/{}/{}/{}/{}/{}`

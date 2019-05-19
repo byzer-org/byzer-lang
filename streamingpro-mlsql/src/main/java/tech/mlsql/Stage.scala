@@ -9,4 +9,5 @@ object Stage extends Enumeration {
   val preProcess = Value("preProcess")
   val auth = Value("auth")
   val physical = Value("physical")
+  val grammar = Value("grammar")
 }

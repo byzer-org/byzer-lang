@@ -1,6 +1,6 @@
 package tech.mlsql.job
 
-import java.util.concurrent.atomic.AtomicInteger
+import java.util.UUID
 import java.util.concurrent.{ConcurrentHashMap, Executors, TimeUnit}
 
 import org.apache.spark.sql.SparkSession
@@ -89,7 +89,7 @@ object JobManager extends Logging {
                  jobContent: String,
                  timeout: Long): MLSQLJobInfo = {
     val startTime = System.currentTimeMillis()
-    val groupId = _jobManager.nextGroupId.incrementAndGet().toString
+    val groupId = _jobManager.nextGroupId
     MLSQLJobInfo(owner, jobType, jobName, jobContent, groupId, startTime, timeout)
   }
 
@@ -116,7 +116,8 @@ object JobManager extends Logging {
 
 class JobManager(_spark: SparkSession, initialDelay: Long, checkTimeInterval: Long) extends Logging with WowLog {
   val groupIdToMLSQLJobInfo = new ConcurrentHashMap[String, MLSQLJobInfo]()
-  val nextGroupId = new AtomicInteger(0)
+
+  def nextGroupId = UUID.randomUUID().toString
 
   val executor = Executors.newSingleThreadScheduledExecutor()
 
