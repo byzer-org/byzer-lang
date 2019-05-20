@@ -79,6 +79,12 @@ object OperateType extends Enumeration {
   val SELECT = Value("select")
   val SET = Value("set")
   val EMPTY = Value("empty")
+
+  def toList = {
+    List(SAVE.toString, LOAD.toString, DIRECT_QUERY.toString,
+      CREATE.toString, DROP.toString, INSERT.toString, UPDATE.toString,
+      SELECT.toString, SET.toString, EMPTY.toString)
+  }
 }
 
 
@@ -106,6 +112,6 @@ object TableType {
   }
 
   def toList = {
-    List(UNKNOW, KAFKA, SOCKET, REDIS, HIVE, HBASE, HDFS, HTTP, JDBC, ES, MONGO, SOLR, TEMP, API, WEB, GRAMMAR, SYSTEM).flatMap(f => f.includes.toSeq)
+    List(UNKNOW, KAFKA, SOCKET, REDIS, HIVE, HBASE, HDFS, HTTP, JDBC, ES, MONGO, SOLR, TEMP, API, WEB, GRAMMAR, SYSTEM).map(f => f.name)
   }
 }

@@ -68,16 +68,16 @@ class LoadAuth(authProcessListener: AuthProcessListener) extends MLSQLAuth with 
 
     }
 
-    val mLSQLTable = DataSourceRegistry.fetch(format, option).map { datasource =>
+    val mLSQLTables = DataSourceRegistry.fetch(format, option).map { datasource =>
 
       val operateType = if (option.contains("directQuery")) OperateType.DIRECT_QUERY else OperateType.LOAD
       val sourceInfo = datasource.asInstanceOf[ {def sourceInfo(config: DataAuthConfig): SourceInfo}].
         sourceInfo(DataAuthConfig(cleanStr(path), option))
 
       if (datasource.isInstanceOf[DatasourceAuth]) {
-        None
+        Option(datasource.asInstanceOf[DatasourceAuth].auth(cleanStr(path), option))
       } else {
-        Option(MLSQLTable(Some(sourceInfo.db), Some(sourceInfo.table), operateType, Some(sourceInfo.sourceType), tableType))
+        Option(List(MLSQLTable(Some(sourceInfo.db), Some(sourceInfo.table), operateType, Some(sourceInfo.sourceType), tableType)))
       }
     } getOrElse {
       val context = ScriptSQLExec.contextGetOrForTest()
@@ -86,10 +86,12 @@ class LoadAuth(authProcessListener: AuthProcessListener) extends MLSQLAuth with 
       val finalPath = if (TableType.HDFS.includes.contains(format)) {
         withPathPrefix(authProcessListener.listener.pathPrefix(Option(owner)), cleanStr(path))
       } else cleanStr(path)
-      Option(MLSQLTable(None, Some(cleanStr(finalPath)), OperateType.LOAD, Some(format), tableType))
+      Option(List(MLSQLTable(None, Some(cleanStr(finalPath)), OperateType.LOAD, Some(format), tableType)))
     }
 
-    mLSQLTable.foreach(authProcessListener.addTable(_))
+    mLSQLTables.foreach { tables =>
+      tables.foreach(authProcessListener.addTable(_))
+    }
 
     authProcessListener.addTable(MLSQLTable(None, Some(cleanStr(tableName)), OperateType.LOAD, None, TableType.TEMP))
     TableAuthResult.empty()
