@@ -48,7 +48,7 @@ class MLSQLSparkSession(userName: String, conf: Map[String, String]) extends Log
         throw new MLSQLException(s"A partially constructed SparkContext for [$userName] " +
           s"has last more than ${checkRound * interval} seconds")
       }
-      log.info(s"A partially constructed SparkContext for [$userName], $checkRound times countdown.")
+      logInfo(s"A partially constructed SparkContext for [$userName], $checkRound times countdown.")
     }
 
     SparkSessionCacheManager.get.getAndIncrease(userName) match {
@@ -63,7 +63,7 @@ class MLSQLSparkSession(userName: String, conf: Map[String, String]) extends Log
 
 
   private[this] def create(sessionConf: Map[String, String]): Unit = {
-    log.info(s"--------- Create new SparkSession for $userName ----------")
+    logInfo(s"--------- Create new SparkSession for $userName ----------")
     try {
       _sparkSession = PlatformManager.getRuntime.asInstanceOf[SparkRuntime].sparkSession.cloneSession()
       SparkSessionCacheManager.get.set(userName, _sparkSession)

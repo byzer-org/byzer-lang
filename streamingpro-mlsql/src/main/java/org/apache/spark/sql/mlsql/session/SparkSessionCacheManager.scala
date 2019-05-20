@@ -32,7 +32,7 @@ import streaming.log.Logging
 import scala.collection.JavaConverters._
 
 
-class SparkSessionCacheManager() extends Logging {
+class SparkSessionCacheManager extends Logging {
   private val cacheManager =
     Executors.newSingleThreadScheduledExecutor(
       new ThreadFactoryBuilder()
@@ -52,10 +52,10 @@ class SparkSessionCacheManager() extends Logging {
   def getAndIncrease(user: String): Option[SparkSession] = {
     Some(userToSparkSession.get(user)) match {
       case Some((ss, times)) if !ss.sparkContext.isStopped =>
-        log.info(s"SparkSession for [$user] is reused for ${times.incrementAndGet()} times.")
+        logInfo(s"SparkSession for [$user] is reused for ${times.incrementAndGet()} times.")
         Some(ss)
       case _ =>
-        log.info(s"SparkSession for [$user] isn't cached, will create a new one.")
+        logInfo(s"SparkSession for [$user] isn't cached, will create a new one.")
         None
     }
   }
@@ -74,7 +74,7 @@ class SparkSessionCacheManager() extends Logging {
     override def run(): Unit = {
       userToSparkSession.asScala.foreach {
         case (user, (session, _)) if userLatestVisit.get(user) + idleTimeout <= System.currentTimeMillis() =>
-          log.info(s"Stopping idle SparkSession for user [$user].")
+          logInfo(s"Stopping idle SparkSession for user [$user].")
           closeSession(user)
         case _ =>
       }
@@ -82,16 +82,16 @@ class SparkSessionCacheManager() extends Logging {
   }
 
   /**
-    * Periodically close idle SparkSessions in 'spark.kyuubi.session.clean.interval(default 5min)'
+    * Periodically close idle SparkSessions 
     */
   def start(): Unit = {
     // at least 1 minutes
-    log.info(s"Scheduling SparkSession cache cleaning every 60 seconds")
+    logInfo(s"Scheduling SparkSession cache cleaning every 60 seconds")
     cacheManager.scheduleAtFixedRate(sessionCleaner, 60, 60, TimeUnit.SECONDS)
   }
 
   def stop(): Unit = {
-    log.info("Stopping SparkSession Cache Manager")
+    logInfo("Stopping SparkSession Cache Manager")
     cacheManager.shutdown()
     userToSparkSession.asScala.values.foreach { kv => kv._1.stop() }
     userToSparkSession.clear()
