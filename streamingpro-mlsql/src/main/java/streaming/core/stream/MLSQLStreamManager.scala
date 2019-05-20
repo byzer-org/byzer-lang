@@ -2,6 +2,7 @@ package streaming.core.stream
 
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.streaming.StreamingQueryListener
+import streaming.dsl.ScriptSQLExec
 import streaming.log.{Logging, WowLog}
 import tech.mlsql.job.{JobManager, MLSQLJobInfo, MLSQLJobType}
 
