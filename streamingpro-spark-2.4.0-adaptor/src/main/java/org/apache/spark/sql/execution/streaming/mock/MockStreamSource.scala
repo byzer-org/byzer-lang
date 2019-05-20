@@ -24,15 +24,15 @@ import java.util.concurrent.atomic.AtomicLong
 
 import org.apache.kafka.common.TopicPartition
 import org.apache.spark.internal.Logging
-import org.apache.spark.sql.{DataFrame, SQLContext}
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.util.DateTimeUtils
 import org.apache.spark.sql.execution.streaming.{Offset, SerializedOffset, Source}
 import org.apache.spark.sql.sources.{DataSourceRegister, StreamSourceProvider}
 import org.apache.spark.sql.types._
+import org.apache.spark.sql.{DataFrame, SQLContext}
 import org.apache.spark.unsafe.types.UTF8String
 import org.joda.time.DateTime
-import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
+import org.joda.time.format.DateTimeFormat
 
 import scala.util.Random
 
@@ -56,7 +56,12 @@ class MockStreamSource(
     val stepSizeRange = sourceOptions.getOrElse("stepSizeRange", "0-3")
     val Array(start, end) = stepSizeRange.split("\\-")
     val stepSize = Random.nextInt(end.toInt - start.toInt + 2)
+    val maxSize = sourceOptions.getOrElse("maxSize", "-1").toInt
+    if (maxSize != -1 && counter.get() > maxSize) {
+      counter.set(0)
+    }
     counter.incrementAndGet()
+
     Some(new MockSourceOffset(Map(
       new TopicPartition("test", 0) -> counter.addAndGet(stepSize)
     )))
@@ -86,7 +91,7 @@ class MockStreamSource(
         DateTimeUtils.fromJavaTimestamp(new java.sql.Timestamp(timestamp.getMillis)),
         f.getLong(dSchema.fieldIndex("timestampType")).toInt)
     }
-    sqlContext.internalCreateDataFrame(rdd, schema,isStreaming = true)
+    sqlContext.internalCreateDataFrame(rdd, schema, isStreaming = true)
   }
 
   override def stop(): Unit = {

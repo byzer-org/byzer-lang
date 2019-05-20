@@ -23,6 +23,7 @@ import streaming.dsl.parser.DSLSQLParser._
 import streaming.dsl.template.TemplateMerge
 import streaming.dsl.{DslTool, ScriptSQLExec}
 import streaming.log.{Logging, WowLog}
+import tech.mlsql.dsl.auth.DatasourceAuth
 import tech.mlsql.dsl.processor.AuthProcessListener
 
 
@@ -67,14 +68,17 @@ class LoadAuth(authProcessListener: AuthProcessListener) extends MLSQLAuth with 
 
     }
 
-    val mLSQLTable = DataSourceRegistry.fetch(format, option).map { datasource =>
+    val mLSQLTables = DataSourceRegistry.fetch(format, option).map { datasource =>
 
       val operateType = if (option.contains("directQuery")) OperateType.DIRECT_QUERY else OperateType.LOAD
-
       val sourceInfo = datasource.asInstanceOf[ {def sourceInfo(config: DataAuthConfig): SourceInfo}].
         sourceInfo(DataAuthConfig(cleanStr(path), option))
 
-      MLSQLTable(Some(sourceInfo.db), Some(sourceInfo.table), operateType, Some(sourceInfo.sourceType), tableType)
+      if (datasource.isInstanceOf[DatasourceAuth]) {
+        Option(datasource.asInstanceOf[DatasourceAuth].auth(cleanStr(path), option))
+      } else {
+        Option(List(MLSQLTable(Some(sourceInfo.db), Some(sourceInfo.table), operateType, Some(sourceInfo.sourceType), tableType)))
+      }
     } getOrElse {
       val context = ScriptSQLExec.contextGetOrForTest()
       val owner = if (option.contains("owner")) option("owner") else context.owner
@@ -82,10 +86,12 @@ class LoadAuth(authProcessListener: AuthProcessListener) extends MLSQLAuth with 
       val finalPath = if (TableType.HDFS.includes.contains(format)) {
         withPathPrefix(authProcessListener.listener.pathPrefix(Option(owner)), cleanStr(path))
       } else cleanStr(path)
-      MLSQLTable(None, Some(cleanStr(finalPath)), OperateType.LOAD, Some(format), tableType)
+      Option(List(MLSQLTable(None, Some(cleanStr(finalPath)), OperateType.LOAD, Some(format), tableType)))
     }
 
-    authProcessListener.addTable(mLSQLTable)
+    mLSQLTables.foreach { tables =>
+      tables.foreach(authProcessListener.addTable(_))
+    }
 
     authProcessListener.addTable(MLSQLTable(None, Some(cleanStr(tableName)), OperateType.LOAD, None, TableType.TEMP))
     TableAuthResult.empty()

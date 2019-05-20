@@ -25,6 +25,7 @@ import streaming.dsl.load.batch.ModelSelfExplain
 import streaming.dsl.parser.DSLSQLParser._
 import streaming.dsl.template.TemplateMerge
 import streaming.source.parser.{SourceParser, SourceSchema}
+import tech.mlsql.dsl.auth.DatasourceAuth
 
 /**
   * Created by allwefantasy on 27/8/2017.
@@ -102,7 +103,9 @@ class LoadPRocessing(scriptSQLExecListener: ScriptSQLExecListener,
         val authConf = DataAuthConfig(dsConf.path, dsConf.config)
         sourceInfo = Option(datasource.asInstanceOf[MLSQLSourceInfo].sourceInfo(authConf))
       }
-
+      if (datasource.isInstanceOf[DatasourceAuth]) {
+        datasource.asInstanceOf[DatasourceAuth].auth(dsConf.path, dsConf.config)
+      }
       // return the load table
       table
     }.getOrElse {
