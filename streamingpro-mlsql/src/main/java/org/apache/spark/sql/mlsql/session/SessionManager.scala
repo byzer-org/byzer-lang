@@ -58,7 +58,7 @@ class SessionManager(rootSparkSession: SparkSession) extends Logging {
       withImpersonation,
       this, opManager
     )
-    log.info(s"Opening session for $username")
+    logInfo(s"Opening session for $username")
     session.open(sessionConf)
 
     identifierToSession.put(SessionIdentifier(username), session)
@@ -97,7 +97,7 @@ class SessionManager(rootSparkSession: SparkSession) extends Logging {
       session.close()
     } else {
       SparkSessionCacheManager.get.visit(sessionIdentifier.owner)
-      log.info(s"Session can't close ,$runningJobCnt jobs are running")
+      logInfo(s"Session can't close ,$runningJobCnt jobs are running")
     }
   }
 
