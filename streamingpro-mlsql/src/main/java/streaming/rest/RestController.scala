@@ -33,7 +33,7 @@ import net.csdn.modules.http.{ApplicationController, ViewType}
 import net.csdn.modules.transport.HttpTransportService
 import org.apache.spark.ps.cluster.Message
 import org.apache.spark.sql._
-import org.apache.spark.sql.mlsql.session.MLSQLSparkSession
+import org.apache.spark.sql.mlsql.session.{MLSQLSparkSession, SparkSessionCacheManager}
 import org.apache.spark.{MLSQLConf, SparkInstanceService}
 import tech.mlsql.job.{JobManager, MLSQLJobType}
 
@@ -149,6 +149,8 @@ class RestController extends ApplicationController with WowLog {
           format_full_exception(msgBuffer, e)
         }
         render(500, e.getMessage + "\n" + msgBuffer.mkString("\n"))
+    } finally {
+      cleanActiveSessionInSpark
     }
     render(outputResult)
   }
@@ -173,7 +175,7 @@ class RestController extends ApplicationController with WowLog {
     val ownerOption = if (params.containsKey("owner")) Some(param("owner")) else None
     var userDefineParams = params.toMap.filter(f => f._1.startsWith("context.")).map(f => (f._1.substring("context.".length), f._2))
     ScriptSQLExec.setContext(new MLSQLExecuteContext(context, param("owner"), context.pathPrefix(None), groupId, userDefineParams))
-    context.addEnv("SKIP_AUTH", param("skipAuth","true"))
+    context.addEnv("SKIP_AUTH", param("skipAuth", "true"))
     context.addEnv("HOME", context.pathPrefix(None))
     context.addEnv("OWNER", ownerOption.getOrElse("anonymous"))
     context
@@ -278,6 +280,11 @@ class RestController extends ApplicationController with WowLog {
     }
   }
 
+  def cleanActiveSessionInSpark = {
+    ScriptSQLExec.unset
+    SparkSession.clearActiveSession()
+  }
+
   @Action(
     summary = "kill specific job", description = ""
   )
@@ -308,7 +315,7 @@ class RestController extends ApplicationController with WowLog {
         case None =>
       }
     }
-
+    cleanActiveSessionInSpark
     render(200, "{}")
   }
 
@@ -330,7 +337,8 @@ class RestController extends ApplicationController with WowLog {
     require(hasParam("owner"), "owner is should be set ")
     if (paramAsBoolean("sessionPerUser", false)) {
       val sparkRuntime = runtime.asInstanceOf[SparkRuntime]
-      sparkRuntime.closeSession(param("owner", "admin"))
+      SparkSessionCacheManager.get.closeSession(param("owner", ""))
+      cleanActiveSessionInSpark
       render(200, toJsonString(Map("msg" -> "success")))
     } else {
       render(400, toJsonString(Map("msg" -> "please make sure sessionPerUser is set to true")))
@@ -425,6 +433,7 @@ class RestController extends ApplicationController with WowLog {
   def instanceResource = {
     val session = getSession
     val resource = new SparkInstanceService(session).resources
+    cleanActiveSessionInSpark
     render(toJsonString(resource))
   }
 

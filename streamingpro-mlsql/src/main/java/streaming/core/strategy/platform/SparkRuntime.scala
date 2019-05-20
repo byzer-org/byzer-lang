@@ -61,10 +61,6 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
     sessionManager.getSession(SessionIdentifier(owner)).sparkSession
   }
 
-  def closeSession(owner: String) = {
-    sessionManager.closeSession(SessionIdentifier(owner))
-  }
-
   def getMLSQLSession(owner: String) = {
     sessionManager.getSession(SessionIdentifier(owner))
   }
@@ -203,6 +199,7 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
   def createTables = {
     sparkSession.sql("select 1 as a").createOrReplaceTempView("command")
   }
+
   createTables
 
   def registerJdbcDialect(dialect: JdbcDialect) = {

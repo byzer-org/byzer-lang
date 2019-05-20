@@ -41,7 +41,6 @@ class SparkSessionCacheManager() extends Logging {
   private[this] val userToSparkSession =
     new ConcurrentHashMap[String, (SparkSession, AtomicInteger)]
 
-  private[this] val userLatestLogout = new ConcurrentHashMap[String, Long]
   private[this] val userLatestVisit = new ConcurrentHashMap[String, Long]
   private[this] val idleTimeout = 60 * 1000
 
@@ -61,41 +60,22 @@ class SparkSessionCacheManager() extends Logging {
     }
   }
 
-  def decrease(user: String): Unit = {
-    Some(userToSparkSession.get(user)) match {
-      case Some((ss, times)) if !ss.sparkContext.isStopped =>
-        userLatestLogout.put(user, System.currentTimeMillis())
-        log.info(s"SparkSession for [$user] is reused for ${times.decrementAndGet()} times.")
-      case _ =>
-        log.warn(s"SparkSession for [$user] was not found in the cache.")
-    }
-  }
 
   def visit(user: String): Unit = {
     userLatestVisit.put(user, System.currentTimeMillis())
   }
 
-  private[this] def removeSparkSession(user: String): Unit = {
+  def closeSession(user: String): Unit = {
+    SparkSessionCacheManager.getSessionManager.closeSession(SessionIdentifier(user))
     userToSparkSession.remove(user)
   }
 
   private[this] val sessionCleaner = new Runnable {
     override def run(): Unit = {
       userToSparkSession.asScala.foreach {
-        case (user, (_, times)) if times.get() > 0 => {
-          if (userLatestVisit.getOrDefault(user, Long.MaxValue) + SparkSessionCacheManager.getExpireTimeout
-            > System.currentTimeMillis()) {
-            log.debug(s"There are $times active connection(s) bound to the SparkSession instance" +
-              s" of $user ")
-          } else {
-            SparkSessionCacheManager.getSessionManager.closeSession(SessionIdentifier(user))
-          }
-        }
-        case (user, (_, _)) if !userLatestLogout.containsKey(user) =>
-        case (user, (session, _))
-          if userLatestLogout.get(user) + idleTimeout <= System.currentTimeMillis() =>
+        case (user, (session, _)) if userLatestVisit.get(user) + idleTimeout <= System.currentTimeMillis() =>
           log.info(s"Stopping idle SparkSession for user [$user].")
-          removeSparkSession(user)
+          closeSession(user)
         case _ =>
       }
     }

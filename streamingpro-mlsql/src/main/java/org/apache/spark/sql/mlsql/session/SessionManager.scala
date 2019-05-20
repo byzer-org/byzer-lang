@@ -94,8 +94,6 @@ class SessionManager(rootSparkSession: SparkSession) extends Logging {
       if (session == null) {
         throw new MLSQLException(s"Session $sessionIdentifier does not exist!")
       }
-      val sessionUser = session.getUserName
-      SparkSessionCacheManager.get.decrease(sessionUser)
       session.close()
     } else {
       SparkSessionCacheManager.get.visit(sessionIdentifier.owner)

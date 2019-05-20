@@ -73,7 +73,13 @@ select * from test1 where a = "b"
 select * from newtable;
 ```
 
-这种情况要求加载的数据集不能太大。
+这种情况要求加载的数据集不能太大。 如果你希望对这个语句也进行权限控制，如果是到表级别，那么只要系统开启授权即可。
+如果是需要控制到列，那么启动时需要添加如下参数：
+
+```
+--conf "spark.mlsql.enable.runtime.directQuery.auth=true" 
+```
+
 
 ## 保存更新数据
 
