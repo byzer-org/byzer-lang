@@ -13,7 +13,7 @@ import scala.collection.mutable.ArrayBuffer
 object MLSQLDFParser {
 
 
-  def collectField(buffer: ArrayBuffer[AttributeReference], o: Expression): Unit = {
+  private def collectField(buffer: ArrayBuffer[AttributeReference], o: Expression): Unit = {
     if (o.isInstanceOf[UnaryExpression]) {
       collectField(buffer, o.asInstanceOf[UnaryExpression].child)
     } else if (o.isInstanceOf[AttributeReference]) {
@@ -39,7 +39,6 @@ object MLSQLDFParser {
     def addColumn(o: Attribute) = {
       var qualifier = o.qualifier.mkString(".")
       qualifier = mapping.getOrElse(qualifier, qualifier)
-      println(s"column ${qualifier} ${o.name}")
       if (r.contains(qualifier)) {
         val value = tableAndCols.getOrElse(qualifier, mutable.HashSet.empty[String])
         value.add(o.name)
@@ -47,6 +46,7 @@ object MLSQLDFParser {
       }
     }
 
+    // TODO: we should combine these two steps into one step
     // first we collect all alias names
     df.queryExecution.analyzed.map(lp => {
       lp match {
