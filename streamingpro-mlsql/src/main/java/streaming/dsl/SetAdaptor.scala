@@ -106,6 +106,7 @@ class SetAdaptor(scriptSQLExecListener: ScriptSQLExecListener, stage: Stage.stag
         }
       case Some("defaultParam") =>
         overwrite = false
+        value = cleanBlockStr(cleanStr(command))
       case _ =>
         value = cleanBlockStr(cleanStr(command))
     }
