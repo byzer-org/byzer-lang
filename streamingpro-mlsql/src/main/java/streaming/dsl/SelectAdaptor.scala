@@ -20,11 +20,11 @@ package streaming.dsl
 
 import org.antlr.v4.runtime.misc.Interval
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.catalyst.plans.logical.MLSQLDFParser
 import streaming.dsl.auth.{MLSQLTable, OperateType, TableType}
 import streaming.dsl.parser.DSLSQLLexer
 import streaming.dsl.parser.DSLSQLParser.SqlContext
 import streaming.dsl.template.TemplateMerge
-import tech.mlsql.sql.MLSQLDFParser
 
 
 /**

@@ -1,6 +1,7 @@
 package streaming.core.datasource.impl
 
 import net.sf.json.JSONObject
+import org.apache.spark.sql.catalyst.plans.logical.MLSQLDFParser
 import org.apache.spark.sql.execution.MLSQLAuthParser
 import org.apache.spark.sql.mlsql.session.{MLSQLException, MLSQLSparkSession}
 import org.apache.spark.sql.{DataFrame, DataFrameReader, DataFrameWriter, Row}
@@ -10,7 +11,7 @@ import streaming.dsl.{ConnectMeta, DBMappingKey, ScriptSQLExec}
 import streaming.log.{Logging, WowLog}
 import tech.mlsql.Stage
 import tech.mlsql.dsl.auth.DatasourceAuth
-import tech.mlsql.sql.{MLSQLDFParser, MLSQLSparkConf}
+import tech.mlsql.sql.MLSQLSparkConf
 
 import scala.collection.JavaConverters._
 
