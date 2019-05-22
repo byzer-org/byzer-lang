@@ -1,23 +1,24 @@
 # 如何缓存表
 
-缓存表的场景是存在的，比如我们要把一张表存储到多个数据源，或者说我希望缓存一张表给流计算join,这个时候就可以把表缓存住。
+Spark有一个很酷的功能，就是cache,允许你把计算结果分布式缓存起来，但存在需要手动释放的问题。
+MLSQL认为要解决这个问题，需要将缓存的生命周期进行划分：
 
-具体使用方法如下：
+1. script
+2. session
+3. application
 
-```sql
-!cache tableName script;
-```
-
-这句话表示我们会缓存tableName，并且该缓存只会在脚本期内生效。第二参数可选值有：
-
-```
-script      脚本运行结束自动清理缓存 
-session     还没有实现  
-application 需要手动释放
-```
-
-手动清理缓存也比较简单
+默认缓存的生命周期是script。随着业务复杂度提高，一个脚本其实会比较复杂，在脚本中我们存在反复使用原始表或者中间表临时表的情况，这个时候我们可以通过cache实现原始表被缓存，中间表只需计算一次，然后脚本一旦执行完毕，就会自动释放。使用方式也极度简单：
 
 ```sql
-!uncache tableName;
+select 1 as a as table1;
+!cache table1 script;
+select * from table1 as output;
 ```
+
+session级别暂时还没有实现。applicaton级别则是和MLSQL Engine的生命周期保持一致。需要手动释放：
+
+```sql
+!uncache table1;
+```
+
+表缓存功能极大的方便了用户使用cache。对于内存无法放下的数据，系统会自动将多出来的部分缓存到磁盘。

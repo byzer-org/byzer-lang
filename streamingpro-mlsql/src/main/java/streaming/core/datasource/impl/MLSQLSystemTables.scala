@@ -2,7 +2,6 @@ package streaming.core.datasource.impl
 
 import org.apache.spark.sql.mlsql.session.MLSQLException
 import org.apache.spark.sql.{DataFrame, DataFrameReader}
-import streaming.common.ScalaEnumTool
 import streaming.core.datasource._
 import streaming.core.datasource.util.MLSQLJobCollect
 import streaming.dsl.ScriptSQLExec
@@ -58,7 +57,7 @@ class MLSQLSystemTables extends MLSQLSource with MLSQLSourceInfo with MLSQLRegis
         spark.createDataset(SourceTypeRegistry.sources).toDF()
 
       case Array("tables", "operateTypes") =>
-        val res = ScalaEnumTool.valueSymbols[OperateType.type].map(f => f.toString.split("\\s+").last.toLowerCase()).toSeq
+        val res = OperateType.toList
         spark.createDataset(res).toDF()
       case Array("api", "list") =>
         new MLSQLAPIExplain(spark).explain

@@ -58,7 +58,7 @@ class SessionManager(rootSparkSession: SparkSession) extends Logging {
       withImpersonation,
       this, opManager
     )
-    log.info(s"Opening session for $username")
+    logInfo(s"Opening session for $username")
     session.open(sessionConf)
 
     identifierToSession.put(SessionIdentifier(username), session)
@@ -94,12 +94,10 @@ class SessionManager(rootSparkSession: SparkSession) extends Logging {
       if (session == null) {
         throw new MLSQLException(s"Session $sessionIdentifier does not exist!")
       }
-      val sessionUser = session.getUserName
-      SparkSessionCacheManager.get.decrease(sessionUser)
       session.close()
     } else {
       SparkSessionCacheManager.get.visit(sessionIdentifier.owner)
-      log.info(s"Session can't close ,$runningJobCnt jobs are running")
+      logInfo(s"Session can't close ,$runningJobCnt jobs are running")
     }
   }
 

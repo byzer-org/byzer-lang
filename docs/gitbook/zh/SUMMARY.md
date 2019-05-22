@@ -67,10 +67,12 @@
     * [任务/资源管理](jobs/README.md)
         * [查看正在任务列表](jobs/list_jobs.md)
         * [取消正在运行任务](jobs/cancel_job.md)
+        * [动态添加/删除资源](jobs/dynamic_resource.md)
     
     * [多租户](multi_tenement/README.md)
         * [多租户相关参数](multi_tenement/conf.md)
-        * [租户主目录设置](multi_tenement/home.md)        
+        * [租户主目录设置](multi_tenement/home.md)
+        * [租户主目录查看与管理](multi_tenement/home_fs.md)        
     
     * [创建UDF/UDAF](udf/README.md)
         * [Python UDF](udf/python_udf.md)       

@@ -19,9 +19,9 @@
 package streaming.dsl.mmlib.algs.bigdl
 
 import com.intel.analytics.bigdl.dlframes.{DLClassifier, DLModel}
-import org.apache.spark.sql.{DataFrame, Row, SaveMode}
 import org.apache.spark.sql.types._
-import streaming.common.{HDFSOperator, ScalaObjectReflect}
+import org.apache.spark.sql.{DataFrame, Row, SaveMode}
+import streaming.common.HDFSOperator
 import streaming.common.ScalaMethodMacros._
 import streaming.dsl.mmlib.algs._
 import streaming.log.{Logging, WowLog}
@@ -37,6 +37,7 @@ trait BigDLFunctions extends Functions with Logging with WowLog with Serializabl
     val keepVersion = params.getOrElse("keepVersion", "true").toBoolean
 
     val mf = (trainData: DataFrame, fitParam: Map[String, String], modelIndex: Int) => {
+      var message = ""
       require(fitParam.contains("classNum"), "classNum is required")
       require(fitParam.contains("featureSize"), "featureSize is required")
 
@@ -63,12 +64,19 @@ trait BigDLFunctions extends Functions with Logging with WowLog with Serializabl
         }]"))
       } catch {
         case e: Exception =>
-          logInfo(format_exception(e))
+          message = format_exception(e)
+          logInfo(message)
           status = "fail"
       }
       val modelTrainEndTime = System.currentTimeMillis()
       val metrics = scores.map(score => Row.fromSeq(Seq(score.name, score.value))).toArray
-      Row.fromSeq(Seq(modelPath, modelIndex, alg.getClass.getName, metrics, status, modelTrainStartTime, modelTrainEndTime, fitParam))
+      Row.fromSeq(Seq(modelPath, modelIndex,
+        alg.getClass.getName,
+        metrics, status,
+        message,
+        modelTrainStartTime,
+        modelTrainEndTime,
+        fitParam))
     }
     var fitParam = arrayParamsWithIndex("fitParam", params)
     if (fitParam.size == 0) {
@@ -91,6 +99,7 @@ trait BigDLFunctions extends Functions with Logging with WowLog with Serializabl
       )))),
 
       StructField("status", StringType),
+      StructField("message", StringType),
       StructField("startTime", LongType),
       StructField("endTime", LongType),
       StructField("trainParams", MapType(StringType, StringType))

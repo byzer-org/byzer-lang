@@ -21,7 +21,6 @@ package org.apache.spark.sql.execution
 import java.util.concurrent.atomic.AtomicReference
 
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.catalyst.TableIdentifier
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -38,4 +37,5 @@ object MLSQLAuthParser {
     parser.get().tables(sql, t)
     t
   }
+
 }

@@ -35,7 +35,7 @@
         * [Python UDF](guide/udf/python-udf.md) 
         * [Scala UDF](guide/udf/scala-udf.md) 
         * [Scala UDAF](guide/udf/scala-udaf.md)
-        * [JAVA UDF](guide/udf/java-udf.md)
+        * [Java UDF](guide/udf/java-udf.md)
     
     * [Built-in UDF](guide/system_udf/README.md)
         * [Http UDF](guide/system_udf/http-udf.md)
@@ -46,11 +46,11 @@
         * [Python environment](guide/python/env.md)
         * [Run python project in distribute](guide/python/distribute-python.md)
     
-    * [流式计算](guide/stream/README.md)        
+    * [Stream](guide/stream/README.md)        
         * [Source/Sink](guide/stream/datasource.md)           
         * [Convert JSON/CSV to table row](guide/stream/data_convert.md)
-        * [window/watermark的使用](guide/stream/window_wartermark.md) 
-        * [如何使用MLSQL流式更新MySQL数据](guide/stream/stream_mysql_update.md)                 
+        * [window/watermark](guide/stream/window_wartermark.md) 
+        * [How to update MySQL with MLSQL stream](guide/stream/stream_mysql_update.md)                        
                   
 * [API Docs](test2/a.md)
 * [More]()

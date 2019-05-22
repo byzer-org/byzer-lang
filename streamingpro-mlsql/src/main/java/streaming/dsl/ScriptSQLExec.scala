@@ -81,6 +81,7 @@ object ScriptSQLExec extends Logging with WowLog {
     val sqel = listener.asInstanceOf[ScriptSQLExecListener]
     CommandCollection.fill(sqel)
     if (!skipInclude) {
+      sqel.setStage(Stage.include)
       while (!stop && max_preprocess > 0) {
         val preProcessListener = new PreProcessIncludeListener(sqel)
         sqel.includeProcessListner = Some(preProcessListener)
@@ -97,15 +98,16 @@ object ScriptSQLExec extends Logging with WowLog {
 
     val preProcessListener = new PreProcessListener(sqel)
     sqel.preProcessListener = Some(preProcessListener)
+    sqel.setStage(Stage.preProcess)
     _parse(wow, preProcessListener)
     wow = preProcessListener.toScript
 
     if (!skipGrammarValidate) {
+      sqel.setStage(Stage.grammar)
       _parse(wow, new GrammarProcessListener(sqel))
     }
 
     if (!skipAuth) {
-
       val staticAuthImpl = sqel.sparkSession
         .sparkContext
         .getConf
@@ -113,6 +115,7 @@ object ScriptSQLExec extends Logging with WowLog {
 
       val authListener = new AuthProcessListener(sqel)
       sqel.authProcessListner = Some(authListener)
+      sqel.setStage(Stage.auth)
       _parse(wow, authListener)
 
       val authImpl = staticAuthImpl match {
@@ -127,6 +130,7 @@ object ScriptSQLExec extends Logging with WowLog {
     }
 
     if (!skipPhysicalJob) {
+      sqel.setStage(Stage.physical)
       _parse(wow, listener)
     }
   }
@@ -154,6 +158,16 @@ class ScriptSQLExecListener(val _sparkSession: SparkSession, val _defaultPathPre
   var includeProcessListner: Option[PreProcessIncludeListener] = None
   var preProcessListener: Option[PreProcessListener] = None
   var authProcessListner: Option[AuthProcessListener] = None
+
+  private var stage: Option[Stage.stage] = None
+
+  def setStage(_stage: Stage.stage) = {
+    stage = Option(_stage)
+  }
+
+  def getStage = {
+    stage
+  }
 
   def setTableAuth(tableAuth: TableAuth): Unit = {
     _tableAuth.set(tableAuth)
@@ -262,7 +276,11 @@ object ConnectMeta {
   }
 }
 
-case class MLSQLExecuteContext(@transient execListener: ScriptSQLExecListener, owner: String, home: String, groupId: String, userDefinedParam: Map[String, String] = Map())
+case class MLSQLExecuteContext(@transient execListener: ScriptSQLExecListener,
+                               owner: String,
+                               home: String,
+                               groupId: String,
+                               userDefinedParam: Map[String, String] = Map())
 
 case class DBMappingKey(format: String, db: String)
 
