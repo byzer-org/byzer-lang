@@ -38,7 +38,13 @@ object MLSQLDFParser {
 
     def addColumn(o: Attribute) = {
       var qualifier = o.qualifier.mkString(".")
-      qualifier = mapping.getOrElse(qualifier, qualifier)
+
+      var counter = 10
+      while (mapping.contains(qualifier) && counter > 0) {
+        qualifier = mapping(qualifier)
+        counter += 1
+      }
+
       if (r.contains(qualifier)) {
         val value = tableAndCols.getOrElse(qualifier, mutable.HashSet.empty[String])
         value.add(o.name)
