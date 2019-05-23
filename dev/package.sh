@@ -73,9 +73,9 @@ fi
 BASE_PROFILES="-Pscala-${SCALA_VERSION} -Ponline -Phive-thrift-server -Pcrawler"
 
 if [[ "$MLSQL_SPARK_VERSION" > "2.2" ]]; then
-  BASE_PROFILES="$BASE_PROFILES -Pdsl -Pxgboost"
+  BASE_PROFILES="$BASE_PROFILES  -Pxgboost"
 else
-  BASE_PROFILES="$BASE_PROFILES -Pdsl-legacy"
+  BASE_PROFILES="$BASE_PROFILES"
 fi
 
 BASE_PROFILES="$BASE_PROFILES -Pspark-$MLSQL_SPARK_VERSION.0 -Pstreamingpro-spark-$MLSQL_SPARK_VERSION.0-adaptor"
