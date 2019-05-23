@@ -30,7 +30,7 @@ This guide document introduce [how to contribute to MLSQL](https://github.com/al
 
 * The lasted version is MLSQL v1.2.0
 * You can download from [MLSQL Website](http://download.mlsql.tech/)
-* Spark 2.2.0/2.3.2/2.4.3 are tested
+* Spark 2.3.2/2.4.3 are tested
 
 
 Run PreBuild Distribution:
