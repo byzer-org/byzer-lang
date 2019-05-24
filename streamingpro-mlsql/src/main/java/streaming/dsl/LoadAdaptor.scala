@@ -26,6 +26,7 @@ import streaming.dsl.parser.DSLSQLParser._
 import streaming.dsl.template.TemplateMerge
 import streaming.source.parser.{SourceParser, SourceSchema}
 import tech.mlsql.dsl.auth.DatasourceAuth
+import tech.mlsql.sql.MLSQLSparkConf
 
 /**
   * Created by allwefantasy on 27/8/2017.
@@ -164,15 +165,9 @@ class LoadPRocessing(scriptSQLExecListener: ScriptSQLExecListener,
                    config: DataSourceConfig,
                    sourceInfo: Option[SourceInfo],
                    context: MLSQLExecuteContext): DataFrame = {
-    val rewrite = df.sparkSession
-      .sparkContext
-      .getConf
-      .getBoolean("spark.mlsql.enable.datasource.rewrite", false)
+    val rewrite = MLSQLSparkConf.runtimeLoadRewrite
 
-    val implClass = df.sparkSession
-      .sparkContext
-      .getConf
-      .get("spark.mlsql.datasource.rewrite.implClass", "")
+    val implClass = MLSQLSparkConf.runtimeLoadRewriteImpl
 
     if (rewrite && implClass != "") {
       val instance = Class.forName(implClass)
