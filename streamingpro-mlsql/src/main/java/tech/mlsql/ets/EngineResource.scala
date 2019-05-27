@@ -127,7 +127,7 @@ class EngineResource(override val uid: String) extends SQLAlg with ETAuth with F
   final val cpus: Param[String] = new Param[String](this, "cpus", "")
   final val timeout: Param[Int] = new Param[Int](this, "timeout", "")
 
-  override def auth(etMethod: ETMethod, params: Map[String, String]): List[TableAuthResult] = {
+  override def auth(etMethod: ETMethod ,path :String, params: Map[String, String]): List[TableAuthResult] = {
 
     val vtable = MLSQLTable(
       Option(DB_DEFAULT.MLSQL_SYSTEM.toString),
