@@ -25,6 +25,7 @@ import org.antlr.v4.runtime._
 import org.antlr.v4.runtime.tree.ParseTreeWalker
 import org.apache.spark.MLSQLSyntaxErrorListener
 import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.mlsql.session.MLSQLException
 import streaming.core.Dispatcher
 import streaming.dsl.auth._
 import streaming.dsl.parser.DSLSQLParser._
