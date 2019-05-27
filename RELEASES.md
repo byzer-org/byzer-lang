@@ -1,3 +1,22 @@
+MLSQL Version 1.3.0 (2019-06-xx)
+==========================
+
+Break Features 
+--------
+
+- Remove Spark 2.2.x support
+
+New Features
+--------
+
+- Dynamic increase/decrease MLSQL Engine Resource
+- table cache 
+- sessionPerRequest
+- directQuery Auth
+- set statement sql auth
+
+
+
 MLSQL Version 1.2.0 (2019-04-14)
 ==========================
 

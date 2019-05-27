@@ -25,17 +25,13 @@ import streaming.dsl.auth.{MLSQLTable, OperateType, TableType}
 import streaming.dsl.parser.DSLSQLLexer
 import streaming.dsl.parser.DSLSQLParser.SqlContext
 import streaming.dsl.template.TemplateMerge
+import tech.mlsql.sql.MLSQLSparkConf
 
 
 /**
   * Created by allwefantasy on 27/8/2017.
   */
 class SelectAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdaptor {
-
-  val ENABLE_RUNTIME_SELECT_AUTH = scriptSQLExecListener.sparkSession
-    .sparkContext
-    .getConf
-    .getBoolean("spark.mlsql.enable.runtime.select.auth", false)
 
   override def parse(ctx: SqlContext): Unit = {
     val input = ctx.start.getTokenSource().asInstanceOf[DSLSQLLexer]._input
@@ -61,7 +57,7 @@ class SelectAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAda
 
   def runtimeTableAuth(df: DataFrame): Unit = {
     // enable runtime select auth
-    if (ENABLE_RUNTIME_SELECT_AUTH) {
+    if (MLSQLSparkConf.runtimeSelectAuth) {
       scriptSQLExecListener.getTableAuth.foreach(tableAuth => {
 
         val tableAndCols = MLSQLDFParser.extractTableWithColumns(df)
