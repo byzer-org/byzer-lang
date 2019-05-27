@@ -30,7 +30,7 @@
 * 用户指南
     * [编译&运行&部署](installation/README.md)
         * [自助编译](installation/compile.md)
-        * [一件体验MLSQL套件](installation/docker.md)   
+        * [一键体验MLSQL套件](installation/docker.md)   
         * [如何运行](installation/run.md)
         * [启动参数说明](installation/startup-configuration.md)
         * [使用docker快速体验MLSQL-Engine](installation/docker-fast.md)
