@@ -77,6 +77,7 @@ object DataSourceRegistry extends Logging {
 
   registerFromPackage("streaming.core.datasource.impl")
   registerFromPackage("streaming.contri.datasource.impl")
+  registerFromPackage("tech.mlsql.datasource.impl")
 }
 
 trait MLSQLRegistry {

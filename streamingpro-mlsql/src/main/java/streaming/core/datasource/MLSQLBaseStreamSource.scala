@@ -66,7 +66,10 @@ abstract class MLSQLBaseStreamSource extends MLSQLSource with MLSQLSink with MLS
       option ++ Map("checkpointLocation" -> resourceRealPath(context.execListener, Option(context.owner), ckPath))
     }
 
-    writer.format(format).outputMode(mode).options(rewriteOption)
+    if (!skipFormat) {
+      writer.format(format)
+    }
+    writer.outputMode(mode).options(rewriteOption)
 
     val dbtable = if (option.contains("dbtable")) option("dbtable") else path
 
@@ -78,7 +81,18 @@ abstract class MLSQLBaseStreamSource extends MLSQLSource with MLSQLSink with MLS
       case Some(name) => writer.queryName(name)
       case None =>
     }
+
+    foreachBatchCallback(writer, option)
+
     writer.trigger(Trigger.ProcessingTime(duration, TimeUnit.SECONDS)).start()
+  }
+
+  def foreachBatchCallback(dataStreamWriter: DataStreamWriter[Row], options: Map[String, String]): Unit = {
+    //do nothing by default
+  }
+
+  def skipFormat: Boolean = {
+    false
   }
 
 

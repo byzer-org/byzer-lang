@@ -90,6 +90,7 @@ object OperateType extends Enumeration {
 
 object TableType {
   val HIVE = TableTypeMeta("hive", Set("hive"))
+  val CUSTOME = TableTypeMeta("custom", Set("custom"))
   val HBASE = TableTypeMeta("hbase", Set("hbase"))
   val HDFS = TableTypeMeta("hdfs", Set("parquet", "json", "csv", "image", "text", "xml", "excel", "libsvm", "delta", "rate"))
   val HTTP = TableTypeMeta("http", Set("http"))
@@ -108,10 +109,10 @@ object TableType {
   val UNKNOW = TableTypeMeta("unknow", Set("unknow"))
 
   def from(str: String) = {
-    List(UNKNOW, KAFKA, SOCKET, REDIS, HIVE, HBASE, HDFS, HTTP, JDBC, ES, MONGO, SOLR, TEMP, API, WEB, GRAMMAR, SYSTEM).filter(f => f.includes.contains(str)).headOption
+    List(UNKNOW, KAFKA, SOCKET, REDIS, HIVE, HBASE, HDFS, HTTP, JDBC, ES, MONGO, SOLR, TEMP, API, WEB, GRAMMAR, SYSTEM, CUSTOME).filter(f => f.includes.contains(str)).headOption
   }
 
   def toList = {
-    List(UNKNOW, KAFKA, SOCKET, REDIS, HIVE, HBASE, HDFS, HTTP, JDBC, ES, MONGO, SOLR, TEMP, API, WEB, GRAMMAR, SYSTEM).map(f => f.name)
+    List(UNKNOW, KAFKA, SOCKET, REDIS, HIVE, HBASE, HDFS, HTTP, JDBC, ES, MONGO, SOLR, TEMP, API, WEB, GRAMMAR, SYSTEM, CUSTOME).map(f => f.name)
   }
 }
