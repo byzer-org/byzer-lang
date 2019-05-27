@@ -1,5 +1,6 @@
 package streaming.test.datasource
 
+import com.alibaba.druid.util.JdbcConstants
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.catalyst.plans.logical.MLSQLDFParser
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
@@ -12,6 +13,7 @@ import streaming.dsl.auth.meta.client.DefaultConsoleClient
 import streaming.dsl.auth.{OperateType, TableType}
 import streaming.log.Logging
 import streaming.test.datasource.help.MLSQLTableEnhancer._
+import tech.mlsql.sql.MLSQLSQLParser
 
 import scala.collection.mutable
 
@@ -489,5 +491,19 @@ class AuthSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLCon
         assert(tables("test1") == Set("k", "m"))
       }
     }
+  }
+
+  "auth compile" should "columns auth should work" in {
+
+      val sql =
+        """
+          |select * from (select length(a),a as jack,a,concat(a,a) as k from abc) t LEFT JOIN test1 as tt
+          |ON t.a = tt.k
+        """.stripMargin
+
+    val tables = MLSQLSQLParser.extractTableWithColumns(JdbcConstants.MYSQL ,sql
+      ,List("create table abc(a varchar ,b varchar)" ,"create table test1(k varchar ,m varchar)"))
+        assert(tables("abc") == Set("a"))
+        assert(tables("test1") == Set("k", "m"))
   }
 }
