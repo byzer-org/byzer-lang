@@ -42,7 +42,7 @@ class SparkSessionCacheManager extends Logging {
     new ConcurrentHashMap[String, (SparkSession, AtomicInteger)]
 
   private[this] val userLatestVisit = new ConcurrentHashMap[String, Long]
-  private[this] val idleTimeout = 60 * 1000
+
 
   def set(user: String, sparkSession: SparkSession): Unit = {
     userToSparkSession.put(user, (sparkSession, new AtomicInteger(1)))
@@ -73,7 +73,7 @@ class SparkSessionCacheManager extends Logging {
   private[this] val sessionCleaner = new Runnable {
     override def run(): Unit = {
       userToSparkSession.asScala.foreach {
-        case (user, (session, _)) if userLatestVisit.get(user) + idleTimeout <= System.currentTimeMillis() =>
+        case (user, (session, _)) if userLatestVisit.get(user) + SparkSessionCacheManager.getExpireTimeout <= System.currentTimeMillis() =>
           logInfo(s"Stopping idle SparkSession for user [$user].")
           closeSession(user)
         case _ =>

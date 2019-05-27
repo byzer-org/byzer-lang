@@ -83,7 +83,7 @@ class SaveAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
     }
 
     def isStream = {
-      scriptSQLExecListener.env().contains("stream")
+      MLSQLStreamManager.isStream
     }
 
     val spark = oldDF.sparkSession
