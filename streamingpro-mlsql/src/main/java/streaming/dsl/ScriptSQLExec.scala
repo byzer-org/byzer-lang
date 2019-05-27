@@ -48,6 +48,7 @@ object ScriptSQLExec extends Logging with WowLog {
 
   def contextGetOrForTest(): MLSQLExecuteContext = {
     if (context() == null) {
+      logError("If this is not unit test, then it may be  something wrong. context should not be null")
       val exec = new ScriptSQLExecListener(null, "/tmp/william", Map())
       setContext(new MLSQLExecuteContext(exec, "testUser", exec.pathPrefix(None), "", Map()))
     }
@@ -160,6 +161,24 @@ class ScriptSQLExecListener(val _sparkSession: SparkSession, val _defaultPathPre
   var authProcessListner: Option[AuthProcessListener] = None
 
   private var stage: Option[Stage.stage] = None
+
+
+  def clone(sparkSession: SparkSession): ScriptSQLExecListener = {
+    val ssel = new ScriptSQLExecListener(sparkSession, _defaultPathPrefix, _allPathPrefix)
+    _env.foreach { case (a, b) => ssel.addEnv(a, b) }
+    if (getStage.isDefined) {
+      ssel.setStage(getStage.get)
+    }
+    if (getTableAuth.isDefined) {
+      setTableAuth(getTableAuth.get)
+    }
+
+    ssel.includeProcessListner = includeProcessListner
+    ssel.preProcessListener = preProcessListener
+    ssel.authProcessListner = authProcessListner
+
+    ssel
+  }
 
   def setStage(_stage: Stage.stage) = {
     stage = Option(_stage)

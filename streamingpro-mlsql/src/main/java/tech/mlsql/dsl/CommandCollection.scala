@@ -34,6 +34,12 @@ object CommandCollection {
     context.addEnv("saveUploadFileToHome",""" run command as DownloadExt.`` where from="{}" and to="{}" """)
 
     context.addEnv("withWartermark",""" register WaterMarkInPlace.`` where inputTable="{}" and eventTimeCol="{}" and delayThreshold="{}" """)
+    // !callback post http://127.0.0.1:9002/jack when "started,progress,terminated"
+    context.addEnv("callback",
+      """ run command as  MLSQLEventCommand.`` where
+        |      eventName="{3}"
+        |      and handleHttpUrl="{1}"
+        |      and method="{0}" """.stripMargin)
 
     context.addEnv("show",
       """

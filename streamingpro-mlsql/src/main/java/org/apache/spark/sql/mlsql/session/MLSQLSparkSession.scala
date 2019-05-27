@@ -23,6 +23,7 @@ import java.lang.reflect.UndeclaredThrowableException
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
 import streaming.core.strategy.platform.{PlatformManager, SparkRuntime}
+import streaming.core.stream.MLSQLStreamManager
 import streaming.log.Logging
 
 import scala.collection.mutable.{HashSet => MHSet}
@@ -59,6 +60,7 @@ class MLSQLSparkSession(userName: String, conf: Map[String, String]) extends Log
         notifyAll()
         create(sessionConf)
     }
+    MLSQLStreamManager.start(_sparkSession)
   }
 
 
