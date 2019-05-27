@@ -2,6 +2,7 @@ package tech.mlsql.dsl.adaptor
 
 import java.util.concurrent.atomic.AtomicInteger
 
+import org.apache.spark.sql.mlsql.session.MLSQLException
 import streaming.common.JSONTool
 import streaming.dsl.DslAdaptor
 import streaming.dsl.parser.DSLSQLParser
@@ -53,7 +54,11 @@ class CommandAdaptor(preProcessListener: PreProcessListener) extends DslAdaptor 
       }
     }
     val env = preProcessListener.scriptSQLExecListener.env()
-    val tempCommand = env(command)
+    val tempCommand = try env(command) catch {
+      case e: java.util.NoSuchElementException =>
+        throw new MLSQLException(s"Command `${command}` is not found.")
+      case e: Exception => throw e
+    }
     var finalCommand = ArrayBuffer[Char]()
     val len = tempCommand.length
 
@@ -100,7 +105,7 @@ class CommandAdaptor(preProcessListener: PreProcessListener) extends DslAdaptor 
       val namedPos = try {
         Integer.parseInt(shouldBeNumber)
       } catch {
-        case e:Exception =>
+        case e: Exception =>
           return false
       }
 
