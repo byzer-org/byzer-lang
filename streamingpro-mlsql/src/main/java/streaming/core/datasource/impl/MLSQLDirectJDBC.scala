@@ -1,5 +1,6 @@
 package streaming.core.datasource.impl
 
+import com.alibaba.druid.util.JdbcConstants
 import net.sf.json.JSONObject
 import org.apache.spark.sql.catalyst.plans.logical.MLSQLDFParser
 import org.apache.spark.sql.execution.MLSQLAuthParser
@@ -11,7 +12,7 @@ import streaming.dsl.{ConnectMeta, DBMappingKey, ScriptSQLExec}
 import streaming.log.{Logging, WowLog}
 import tech.mlsql.Stage
 import tech.mlsql.dsl.auth.DatasourceAuth
-import tech.mlsql.sql.MLSQLSparkConf
+import tech.mlsql.sql.{MLSQLSQLParser, MLSQLSparkConf}
 
 import scala.collection.JavaConverters._
 
@@ -130,19 +131,22 @@ class MLSQLDirectJDBC extends MLSQLDirectSource with MLSQLDirectSink with MLSQLS
         throw new MLSQLException("JDBC direct query should not allow using db prefix. Please just use table")
       }
     }
-    if (!isSkipAuth && context.execListener.getStage.get == Stage.auth && !MLSQLSparkConf.runtimeDirectQueryAuth) {
 
-      // generate all tables
-      tableRefs.map { tableIdentify =>
-        MLSQLTable(Some(tableIdentify.database.getOrElse(si.db)), Some(tableIdentify.table),
-          OperateType.DIRECT_QUERY,
-          Some(si.sourceType), TableType.JDBC)
-      }.foreach { mlsqlTable =>
-        context.execListener.authProcessListner match {
-          case Some(authProcessListener) =>
-            authProcessListener.addTable(mlsqlTable)
-          case None =>
-        }
+    if (!isSkipAuth && context.execListener.getStage.get == Stage.auth && !MLSQLSparkConf.runtimeDirectQueryAuth) {
+      val _params = loadConfigFromExternal(params, path)
+      val tableList = tableRefs.map(_.identifier).toList
+      val tableColsMap = JDBCUtils.queryTableWithColumnsInDriver(_params ,tableList)
+      val createSqlList = JDBCUtils.tableColumnsToCreateSql(tableColsMap)
+      val tableAndCols = MLSQLSQLParser.extractTableWithColumns(si.sourceType ,sql ,createSqlList)
+      var mlsqlTables = List.empty[MLSQLTable]
+
+      tableAndCols.foreach {
+        case (table, cols) =>
+          mlsqlTables ::= MLSQLTable(Option(si.db), Option(table), Option(cols.toSet), OperateType.DIRECT_QUERY, Option(si.sourceType), TableType.JDBC)
+      }
+      context.execListener.getTableAuth.foreach { tableAuth =>
+        println(mlsqlTables)
+        tableAuth.auth(mlsqlTables)
       }
     }
 

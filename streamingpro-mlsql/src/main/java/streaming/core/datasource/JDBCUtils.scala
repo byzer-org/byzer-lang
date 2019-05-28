@@ -55,4 +55,43 @@ object JDBCUtils {
     }
 
   }
+
+  def queryTableWithColumnsInDriver(options: Map[String, String] ,tableList: List[String]) = {
+    val tableAndCols = mutable.HashMap.empty[String, mutable.HashMap[String ,String]]
+    val driver = options("driver")
+    val url = options("url")
+    Class.forName(driver)
+    val connection = java.sql.DriverManager.getConnection(url, options("user"), options("password"))
+    try {
+      val dbMetaData = connection.getMetaData()
+      tableList.foreach(table => {
+        val rs = dbMetaData.getColumns(null, null, table, "%")
+        val value = tableAndCols.getOrElse(table, mutable.HashMap.empty[String ,String])
+
+        while(rs.next()){
+          value += (rs.getString("COLUMN_NAME") -> rs.getString("TYPE_NAME"))
+        }
+
+        tableAndCols.update(table, value)
+        rs.close()
+      })
+
+    } finally {
+      if (connection != null)
+        connection.close()
+    }
+    tableAndCols
+  }
+
+  def tableColumnsToCreateSql(tableClos: mutable.HashMap[String, mutable.HashMap[String, String]]) = {
+    val createSqlList = mutable.ArrayBuffer.empty[String]
+    tableClos.foreach(table => {
+      var createSql = "create table " + table._1 + " (" +
+        table._2.map(m => m._1 + " " + m._2)
+          .mkString(",") +
+        " )"
+      createSqlList += createSql
+    })
+    createSqlList.toList
+  }
 }

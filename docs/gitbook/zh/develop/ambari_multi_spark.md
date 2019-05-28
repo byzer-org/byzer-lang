@@ -1,8 +1,6 @@
 ## Ambari hdp Spark多版本兼容
 
-本示例基于`ambari 2.6.0.3`，集成`spark2.2.2`，其他的版本思路类似，目前`spark2.3`经测试也是没问题的。
-
-本示例基于`ambari hdp-2.6.0.3`（`spark2.1.0`），集成`spark2.2.2`，其他的版本思路类似（`spark2.3`经测试也是没问题的）
+本示例基于`ambari hdp-2.6.0.3`（`spark2.1.0`），集成`spark2.2.2`，其他的版本思路类似（`spark2.3`、`spark2.4`经测试也是没问题的）
 
 
 1. 下载`spark-2.2.2-bin-hadoop2.7.tgz`,并解压到放到任意目录;
@@ -80,7 +78,7 @@
 	cp /usr/hdp/2.6.0.3-8/hadoop-yarn/hadoop-yarn-server-common-2.7.3.2.6.0.3-8.jar .
 	cp /usr/hdp/2.6.0.3-8/hadoop/hadoop-common-2.7.3.2.6.0.3-8.jar .
 	cp /usr/hdp/2.6.0.3-8/hadoop/hadoop-auth-2.7.3.2.6.0.3-8.jar .
-
+或者
 	cp /usr/hdp/current/spark2-client/jars/hadoop-yarn-api-2.7.3.2.6.0.3-8.jar .
 	cp /usr/hdp/current/spark2-client/jars/hadoop-yarn-client-2.7.3.2.6.0.3-8.jar .
 	cp /usr/hdp/current/spark2-client/jars/hadoop-yarn-common-2.7.3.2.6.0.3-8.jar .

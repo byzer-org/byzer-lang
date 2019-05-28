@@ -87,7 +87,7 @@ class TrainAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdap
     }
 
     if (!skipAuth() && sqlAlg.isInstanceOf[ETAuth]) {
-      sqlAlg.asInstanceOf[ETAuth].auth(ETMethod.withName(firstKeywordInStatement), options)
+      sqlAlg.asInstanceOf[ETAuth].auth(ETMethod.withName(firstKeywordInStatement) ,path , options)
     }
 
     // RUN and TRAIN are the same. TRAIN is normally used for algorithm.

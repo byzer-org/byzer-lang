@@ -78,7 +78,7 @@ export MLSQL_CLUSTER_JAR=streamingpro-cluster-${VERSION}.jar
 ./start.sh
 ```
 
-这个时候查看 127.0.0.1:8080是否可以访问。
+这个时候查看127.0.0.1:8080/backend/active是否可以访问（返回{}）。
 
 ## MLSQL-Console
 
