@@ -88,6 +88,9 @@ class MLSQLProxyController extends ApplicationController {
     }
 
     if (res.size == 1) {
+      if (!res(0).isDefined) {
+        render(500,"""{"msg":"No response from backend. Make sure all engines configured properly"}""")
+      }
       if (res(0).get.getStatus == 200) {
         res(0).get.jsonStr match {
           case Some(i) => render(i)
