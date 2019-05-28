@@ -52,7 +52,7 @@ class LoadAuth(authProcessListener: AuthProcessListener) extends MLSQLAuth with 
         case s: BooleanExpressionContext =>
           option += (cleanStr(s.expression().qualifiedName().getText) -> evaluate(getStrOrBlockStr(s.expression())))
         case s: PathContext =>
-          path = s.getText
+          path = evaluate(s.getText)
 
         case s: TableNameContext =>
           tableName = evaluate(s.getText)
