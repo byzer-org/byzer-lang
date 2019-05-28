@@ -205,6 +205,7 @@ class PythonTrain extends Functions with Serializable {
       val modelTrainStartTime = System.currentTimeMillis()
 
       var score = 0.0
+      var message = ""
       var trainFailFlag = false
       val runner = new PythonProjectExecuteRunner(
         taskDirectory = taskDirectory,
@@ -212,7 +213,9 @@ class PythonTrain extends Functions with Serializable {
         envVars = envs,
         logCallback = (msg) => {
           ScriptSQLExec.setContextIfNotPresent(mlsqlContext)
-          logInfo(format(msg))
+          val info = format(msg)
+          logInfo(info)
+          message += (info + "\n")
         }
       )
       try {
@@ -234,13 +237,14 @@ class PythonTrain extends Functions with Serializable {
 
         val scores = res.map { f =>
           logInfo(format(f))
+          message += f
           filterScore(f)
         }.toSeq
         score = if (scores.size > 0) scores.head else 0d
       } catch {
         case e: Exception =>
-          logError(format_cause(e))
-          e.printStackTrace()
+          message += format_cause(e)
+          logError(message)
           trainFailFlag = true
       }
 
@@ -280,13 +284,16 @@ class PythonTrain extends Functions with Serializable {
           FileUtils.deleteQuietly(new File(tempDataLocalPathWithAlgSuffix))
         }
       }
+      val metrics = Seq(Row.fromSeq(Seq("validateScore", score)))
       val status = if (trainFailFlag) "fail" else "success"
       val row = Row.fromSeq(Seq(
         modelHDFSPath,
         algIndex,
         pythonProject.get.fileName,
         score,
+        metrics,
         status,
+        message,
         modelTrainStartTime,
         modelTrainEndTime,
         fitParam,
