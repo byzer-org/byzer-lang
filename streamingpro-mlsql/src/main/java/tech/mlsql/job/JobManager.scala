@@ -5,7 +5,6 @@ import java.util.concurrent.{ConcurrentHashMap, Executors, TimeUnit}
 
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.mlsql.session.{SessionIdentifier, SparkSessionCacheManager}
-import streaming.dsl.ScriptSQLExec
 import streaming.log.{Logging, WowLog}
 import tech.mlsql.job.JobListener.{JobFinishedEvent, JobStartedEvent}
 import tech.mlsql.job.listeners.CleanCacheListener
@@ -126,20 +125,24 @@ class JobManager(_spark: SparkSession, initialDelay: Long, checkTimeInterval: Lo
     executor.scheduleWithFixedDelay(new Runnable {
       override def run(): Unit = {
         groupIdToMLSQLJobInfo.foreach { f =>
-          val elapseTime = System.currentTimeMillis() - f._2.startTime
-          if (f._2.timeout > 0 && elapseTime >= f._2.timeout) {
+          try {
+            val elapseTime = System.currentTimeMillis() - f._2.startTime
+            if (f._2.timeout > 0 && elapseTime >= f._2.timeout) {
 
-            // At rest controller, we will clone the session,and this clone session is not
-            // saved in  SparkSessionCacheManager. But this do no harm to this scheduler,
-            // since cancel job depends `groupId` and sparkContext. The exception is stream job (which is connected with spark session),
-            // however, the stream job will not use `clone spark session`
-            val tempSession = SparkSessionCacheManager.getSessionManagerOption match {
-              case Some(sessionManager) =>
-                sessionManager.getSessionOption(SessionIdentifier(f._2.owner))
-              case None => None
+              // At rest controller, we will clone the session,and this clone session is not
+              // saved in  SparkSessionCacheManager. But this do no harm to this scheduler,
+              // since cancel job depends `groupId` and sparkContext. The exception is stream job (which is connected with spark session),
+              // however, the stream job will not use `clone spark session`
+              val tempSession = SparkSessionCacheManager.getSessionManagerOption match {
+                case Some(sessionManager) =>
+                  sessionManager.getSessionOption(SessionIdentifier(f._2.owner))
+                case None => None
+              }
+              val session = tempSession.map(f => f.sparkSession).getOrElse(_spark)
+              cancelJobGroup(session, f._1)
             }
-            val session = tempSession.map(f => f.sparkSession).getOrElse(_spark)
-            cancelJobGroup(session, f._1)
+          } catch {
+            case e: Exception => logError(format(s"Kill job ${f._1} fails"), e)
           }
         }
       }
