@@ -50,7 +50,9 @@
         * [Source/Sink](guide/stream/datasource.md)           
         * [Convert JSON/CSV to table row](guide/stream/data_convert.md)
         * [window/watermark](guide/stream/window_wartermark.md) 
-        * [How to update MySQL with MLSQL stream](guide/stream/stream_mysql_update.md)                        
+        * [How to update MySQL with MLSQL stream](guide/stream/stream_mysql_update.md)
+        * [Stream Callback Support](guide/stream/callback.md)
+        * [Stream Sub Batch Query Support](guide/stream/subquery.md)                        
                   
 * [API Docs](test2/a.md)
 * [More]()
