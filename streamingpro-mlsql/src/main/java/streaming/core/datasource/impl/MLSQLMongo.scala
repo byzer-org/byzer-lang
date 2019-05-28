@@ -89,15 +89,25 @@ class MLSQLMongo (override val uid: String) extends MLSQLSource with MLSQLSink w
       Array("" ,config.path)
     }
 
-    val uri = if (config.config.contains("uri")){
-      config.config.get("uri").get
+    var db = ""
+
+    if(config.config.contains("spark.mongodb.input.database")){
+      db = config.config.get("spark.mongodb.input.database").get
+    }else if (config.config.contains("spark.mongodb.output.database")){
+      db = config.config.get("spark.mongodb.output.database").get
+    }else if(config.config.contains("database")){
+      db = config.config.get("database").get
     }else{
-      val format = config.config.getOrElse("implClass", fullFormat)
+      val uri = if (config.config.contains("uri")){
+        config.config.get("uri").get
+      }else{
+        val format = config.config.getOrElse("implClass", fullFormat)
 
-      ConnectMeta.options(DBMappingKey(format, _dbname)).get("uri")
+        ConnectMeta.options(DBMappingKey(format, _dbname)).get("uri")
+      }
+
+      db = uri.substring(uri.lastIndexOf('/') + 1).takeWhile(_ != '?')
     }
-
-    val db = uri.substring(uri.lastIndexOf('/') + 1).takeWhile(_ != '?')
 
     SourceInfo(shortFormat ,db ,_dbtable)
   }
