@@ -137,7 +137,7 @@ class MLSQLDirectJDBC extends MLSQLDirectSource with MLSQLDirectSink with MLSQLS
       val tableList = tableRefs.map(_.identifier).toList
       val tableColsMap = JDBCUtils.queryTableWithColumnsInDriver(_params ,tableList)
       val createSqlList = JDBCUtils.tableColumnsToCreateSql(tableColsMap)
-      val tableAndCols = MLSQLSQLParser.extractTableWithColumns(JdbcConstants.MYSQL ,sql ,createSqlList)
+      val tableAndCols = MLSQLSQLParser.extractTableWithColumns(si.sourceType ,sql ,createSqlList)
       var mlsqlTables = List.empty[MLSQLTable]
 
       tableAndCols.foreach {
