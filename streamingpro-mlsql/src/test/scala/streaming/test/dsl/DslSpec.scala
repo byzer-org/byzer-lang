@@ -532,14 +532,6 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
       spark.sql("select * from output").show()
       ScriptSQLExec.parse("""load model.`example` where alg="RandomForest" as output;""", ssel)
       spark.sql("select * from output").show()
-
-      ScriptSQLExec.parse("load workflow.`list` as output;", ssel)
-      spark.sql("select * from output").show()
-      ScriptSQLExec.parse("load workflow.`` as output;", ssel)
-      spark.sql("select * from output").show()
-
-      ScriptSQLExec.parse("load workflow.`types` as output;", ssel)
-      spark.sql("select * from output").show()
     }
   }
 
