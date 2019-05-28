@@ -54,7 +54,7 @@ class MLSQLSparkSession(userName: String, conf: Map[String, String]) extends Log
 
     SparkSessionCacheManager.get.getAndIncrease(userName) match {
       case Some(ss) =>
-        _sparkSession = ss.cloneSession()
+        _sparkSession = ss
       case _ =>
         MLSQLSparkSession.setPartiallyConstructed(userName)
         notifyAll()
