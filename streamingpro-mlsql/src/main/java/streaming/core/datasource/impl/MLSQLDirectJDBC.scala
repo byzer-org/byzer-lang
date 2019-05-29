@@ -47,20 +47,18 @@ class MLSQLDirectJDBC extends MLSQLDirectSource with MLSQLDirectSink with MLSQLS
 
 
   override def load(reader: DataFrameReader, config: DataSourceConfig): DataFrame = {
-    var _params = config.config
-    val path = config.path
-    if (path.contains(".")) {
-      val Array(db, table) = path.split("\\.", 2)
-      ConnectMeta.presentThenCall(DBMappingKey("jdbc", db), options => {
-        options.foreach { item =>
-          _params += (item._1 -> item._2)
-        }
+    val format = config.config.getOrElse("implClass", fullFormat)
+    if (config.path.contains(dbSplitter)) {
+      val Array(_dbname, _dbtable) = config.path.split(toSplit, 2)
+      ConnectMeta.presentThenCall(DBMappingKey(format, _dbname), options => {
+        reader.options(options)
       })
     }
-    val res = JDBCUtils.executeQueryInDriver(_params ++ Map("driver-statement-query" -> config.config("directQuery")))
-    val spark = config.df.get.sparkSession
-    val rdd = spark.sparkContext.parallelize(res.map(item => JSONObject.fromObject(item.asJava).toString()))
-    spark.read.json(rdd)
+    //load configs should overwrite connect configs
+    reader.options(config.config)
+    reader.option("query" ,config.config("directQuery"))
+
+    reader.format(format).load()
   }
 
   override def save(writer: DataFrameWriter[Row], config: DataSinkConfig): Unit = {
