@@ -25,9 +25,9 @@ ENV TINI_VERSION v0.16.1
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /usr/bin/tini
 RUN chmod +x /usr/bin/tini
 
-RUN conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/free/
-RUN conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main/
-RUN conda config --set show_channel_urls yes
+#RUN conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/free/
+#RUN conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main/
+#RUN conda config --set show_channel_urls yes
 
 RUN mkdir ~/.pip
 
@@ -71,6 +71,7 @@ ENV SPARK_HOME /work/spark-${SPARK_VERSION}-bin-hadoop2.7
 RUN mkdir -p /home/deploy
 RUN mkdir -p /home/deploy/mlsql
 RUN mkdir -p /home/deploy/mlsql-console
+RUN mkdir -p /tmp/__mlsql__/logs
 
 RUN mkdir -p /home/deploy/mlsql/libs
 ENV MLSQL_DISTRIBUTIOIN_URL="streamingpro-mlsql-spark_${MLSQL_SPARK_VERSION}-${MLSQL_VERSION}.jar"
@@ -78,6 +79,7 @@ ADD  ${MLSQL_DISTRIBUTIOIN_URL} /home/deploy/mlsql/libs
 ADD  lib/ansj_seg-5.1.6.jar /home/deploy/mlsql/libs
 ADD  lib/nlp-lang-1.7.8.jar /home/deploy/mlsql/libs
 ADD  start-local.sh /home/deploy/mlsql
+ADD  log4j.properties /work/${FILENAME}/conf
 WORKDIR /home/deploy/mlsql
 
 #ENTRYPOINT [ "/usr/bin/tini", "--" ]

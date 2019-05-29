@@ -1,80 +1,59 @@
 package streaming.core.datasource
 
 import java.io.File
-import java.net.{URL, URLClassLoader, URLEncoder}
+import java.net.{URL, URLClassLoader}
 import java.nio.file.Files
 
-import net.csdn.ServiceFramwork
-import net.csdn.common.path.Url
-import net.csdn.modules.http.RestRequest
-import net.csdn.modules.transport.HttpTransportService
-import net.sf.json.{JSONArray, JSONObject}
-import org.apache.http.client.fluent.Request
+import org.apache.http.client.fluent.{Form, Request}
+import streaming.common.{JSONTool, PathFun}
 import streaming.dsl.ScriptSQLExec
-
-import scala.collection.JavaConverters._
+import streaming.log.{Logging, WowLog}
 
 /**
   * 2019-01-14 WilliamZhu(allwefantasy@gmail.com)
   */
-class DataSourceRepository(url: String) {
-  def httpClient = ServiceFramwork.injector.getInstance[HttpTransportService](classOf[HttpTransportService])
+class DataSourceRepository(url: String) extends Logging with WowLog {
+
 
   //"http://respository.datasource.mlsql.tech"
   def getOrDefaultUrl = {
     if (url == null || url.isEmpty) {
       val context = ScriptSQLExec.contextGetOrForTest()
-      require(context.userDefinedParam.contains("__datasource_repository_url__"), "context.__datasource_repository_url__ should be configure if you want use connect DataSourceRepository")
-      context.userDefinedParam.get("__datasource_repository_url__")
+      context.userDefinedParam.getOrElse("__datasource_repository_url__", "http://datasource.repository.mlsql.tech")
     } else {
       url
     }
   }
 
-  def listCommand = {
-    val res = httpClient.http(new Url(s"${getOrDefaultUrl}/jar/manager/source/mapper"), "{}", RestRequest.Method.POST)
-
-    JSONObject.fromObject(res.getContent).asScala.flatMap { kv =>
-      kv._2.asInstanceOf[JSONArray].asScala.map { _item =>
-        val item = _item.asInstanceOf[JSONObject]
-        item.put("name", kv._1)
-        val temp = new JSONArray()
-        temp.add(item)
-        val versionList = versionCommand(temp)
-        val versionArray = new JSONArray
-        versionList.foreach { v => versionArray.add(v) }
-        item.put("versions", versionArray)
-        item.toString
-      }
-    }.toSeq
+  def versionCommand(name: String, sparkV: String) = {
+    val res = Request.Post(s"${getOrDefaultUrl}/repo/versions").connectTimeout(60 * 1000)
+      .socketTimeout(10 * 60 * 1000).bodyForm(Form.form().add("name", name).
+      add("scalaV", "2.11").add("sparkV", sparkV).build()
+    ).execute().returnContent().asString()
+    JSONTool.parseJson[List[String]](res)
   }
 
-  def versionCommand(items: JSONArray) = {
-    val request = new JSONArray
-    items.asScala.map { _item =>
-      val item = _item.asInstanceOf[JSONObject]
-      val json = new JSONObject()
-      json.put("jarname", item.getString("groupid") + "/" + item.getString("artifactId"))
-      request.add(json)
-    }
-
-    val res = httpClient.http(new Url(s"${getOrDefaultUrl}/jar/manager/versions"), request.toString(), RestRequest.Method.POST)
-    JSONArray.fromObject(res.getContent).get(0).asInstanceOf[JSONObject].asScala.map { kv =>
-      val version = kv._1.asInstanceOf[String].split("/").last
-      version
-    }.toSeq
+  def list() = {
+    val res = Request.Get(s"${getOrDefaultUrl}/repo/list").connectTimeout(60 * 1000)
+      .socketTimeout(10 * 60 * 1000).execute().returnContent().asString()
+    JSONTool.parseJson[List[String]](res)
   }
 
-  def addCommand(format: String, groupid: String, artifactId: String, version: String) = {
-    val url = s"http://central.maven.org/maven2/${groupid.replaceAll("\\.", "/")}/${artifactId}/${version}"
+  def addCommand(name: String, version: String, sparkV: String, scalaV: String = "2.11") = {
+
     // fileName format e.g es, mongodb
-    val finalUrl = s"${getOrDefaultUrl}/jar/manager/http?fileName=${URLEncoder.encode(artifactId, "utf-8")}&url=${URLEncoder.encode(url, "utf-8")}"
-    val inputStream = Request.Get(finalUrl).execute().returnContent().asStream()
+    logInfo(s"downloading ${name} from ${getOrDefaultUrl}")
+    val response = Request.Post(s"${getOrDefaultUrl}/repo/download").connectTimeout(60 * 1000)
+      .socketTimeout(10 * 60 * 1000).bodyForm(Form.form().add("name", name).
+      add("scalaV", scalaV).add("sparkV", sparkV).add("version", version).build()).execute().returnResponse()
+    var fieldValue = response.getFirstHeader("Content-Disposition").getValue
+    val inputStream = response.getEntity.getContent
+    fieldValue = fieldValue.substring(fieldValue.indexOf("filename=\"") + 10, fieldValue.length() - 1);
     val tmpLocation = new File("./dataousrce_upjars")
     if (!tmpLocation.exists()) {
       tmpLocation.mkdirs()
     }
-    val jarFile = new File(tmpLocation.getPath + s"/${artifactId}-${version}.jar")
+    val jarFile = new File(PathFun(tmpLocation.getPath).add(fieldValue).toPath)
     if (!jarFile.exists()) {
       Files.copy(inputStream, jarFile.toPath)
     } else {

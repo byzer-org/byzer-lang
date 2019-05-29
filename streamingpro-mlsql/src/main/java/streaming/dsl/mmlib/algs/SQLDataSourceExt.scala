@@ -2,6 +2,7 @@ package streaming.dsl.mmlib.algs
 
 import org.apache.spark.ml.param.Param
 import org.apache.spark.sql.expressions.UserDefinedFunction
+import org.apache.spark.sql.mlsql.session.MLSQLException
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import streaming.core.datasource.DataSourceRepository
 import streaming.dsl.mmlib.SQLAlg
@@ -14,6 +15,9 @@ import streaming.log.{Logging, WowLog}
 class SQLDataSourceExt(override val uid: String) extends SQLAlg with WowParams with Logging with WowLog {
 
 
+  override def skipPathPrefix: Boolean = true
+
+  // path: es
   override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
 
     params.get(command.name).map { item =>
@@ -27,32 +31,41 @@ class SQLDataSourceExt(override val uid: String) extends SQLAlg with WowParams w
       set(repository, item)
       item
     }
+
+    params.get(sparkV.name).map { item =>
+      set(sparkV, item)
+      item
+    }.getOrElse {
+      throw new MLSQLException("please set spark version")
+    }
+
+    params.get(scalaV.name).map { item =>
+      set(scalaV, item)
+      item
+    }.getOrElse {
+      set(scalaV, "2.11")
+    }
+
     val rep = if (isDefined(repository)) $(repository) else ""
     val dataSourceRepository = new DataSourceRepository(rep)
 
     val spark = df.sparkSession
     import spark.implicits._
     $(command) match {
-      case "list" =>
-        spark.read.json(spark.createDataset(dataSourceRepository.listCommand))
+      case "list" => spark.createDataset[String](dataSourceRepository.list()).toDF("value")
+      case "version" =>
+        val res = dataSourceRepository.versionCommand(path, $(sparkV))
+        spark.createDataset[String](res).toDF("value")
       case "add" =>
-        if (!path.contains("/")) {
-          //          spark.table(path).collect().map{row=>
-          //             row.get()
-          //
-          //          }
-          Seq[Seq[String]](Seq()).toDF("desc")
-        } else {
-          val Array(dsFormat, groupid, artifactId, version) = path.split("/")
-          val url = dataSourceRepository.addCommand(dsFormat, groupid, artifactId, version)
-          val logMsg = format(s"Datasource is loading jar from ${url}")
-          logInfo(logMsg)
-          dataSourceRepository.loadJarInDriver(url)
-          spark.sparkContext.addJar(url)
+        val Array(name, version) = path.split("/")
+        val url = dataSourceRepository.addCommand(name, version, $(sparkV), $(scalaV))
+        val logMsg = format(s"Datasource is loading jar from ${url}")
+        logInfo(logMsg)
+        dataSourceRepository.loadJarInDriver(url)
+        spark.sparkContext.addJar(url)
 
-          //FileUtils.deleteQuietly(new File(url))
-          Seq[Seq[String]](Seq(logMsg)).toDF("desc")
-        }
+        //FileUtils.deleteQuietly(new File(url))
+        Seq[Seq[String]](Seq(logMsg)).toDF("desc")
 
     }
   }
@@ -75,6 +88,8 @@ class SQLDataSourceExt(override val uid: String) extends SQLAlg with WowParams w
   })
 
   final val repository: Param[String] = new Param[String](this, "repository", "repository url")
+  final val sparkV: Param[String] = new Param[String](this, "sparkV", "2.3/2.4")
+  final val scalaV: Param[String] = new Param[String](this, "scalaV", "2.11/2.12")
 
   def this() = this(BaseParams.randomUID())
 }
