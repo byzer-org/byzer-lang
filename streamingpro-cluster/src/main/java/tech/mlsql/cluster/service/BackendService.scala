@@ -120,6 +120,7 @@ object BackendService {
           val counter = active_task_meta.get(ins.meta)
           try {
             counter.incrementAndGet()
+            logger.info(s"Visit backend tagged with ${tags}. Finally we found ${ins.meta.getUrl} with tags:${ins.meta.getTags.mkString(",")}")
             Option(f(ins.instance))
           } finally {
             counter.decrementAndGet()

@@ -28,6 +28,8 @@ $SPARK_HOME/bin/spark-submit --class streaming.core.StreamingApp \
         ${MLSQL_HOME}/libs/${MAIN_JAR}    \
         -streaming.name mlsql    \
         -streaming.platform spark   \
+        -streaming.ps.enable true \
+        -streaming.udf.clzznames "streaming.crawler.udf.Functions" \
         -streaming.rest true   \
         -streaming.driver.port 9003   \
         -streaming.spark.service true \
