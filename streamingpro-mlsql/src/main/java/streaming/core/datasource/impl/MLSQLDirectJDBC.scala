@@ -1,5 +1,7 @@
 package streaming.core.datasource.impl
 
+import java.util.Properties
+
 import com.alibaba.druid.util.JdbcConstants
 import net.sf.json.JSONObject
 import org.apache.spark.sql.catalyst.plans.logical.MLSQLDFParser
@@ -48,17 +50,30 @@ class MLSQLDirectJDBC extends MLSQLDirectSource with MLSQLDirectSink with MLSQLS
 
   override def load(reader: DataFrameReader, config: DataSourceConfig): DataFrame = {
     val format = config.config.getOrElse("implClass", fullFormat)
+    var url = config.config.get("url")
     if (config.path.contains(dbSplitter)) {
       val Array(_dbname, _dbtable) = config.path.split(toSplit, 2)
       ConnectMeta.presentThenCall(DBMappingKey(format, _dbname), options => {
         reader.options(options)
+        url = options.get("url")
       })
     }
+
     //load configs should overwrite connect configs
     reader.options(config.config)
-    reader.option("query" ,config.config("directQuery"))
 
-    reader.format(format).load()
+    if (config.config.contains("prePtnArray")){
+      val prePtn = config.config.get("prePtnArray").get
+        .split(config.config.getOrElse("prePtnDelimiter" ,","))
+
+      val dbtable = "(" + config.config("directQuery") + ") as temp"
+
+      reader.jdbc(url.get, dbtable, prePtn, new Properties())
+    }else{
+      reader.option("query" ,config.config("directQuery"))
+
+      reader.format(format).load()
+    }
   }
 
   override def save(writer: DataFrameWriter[Row], config: DataSinkConfig): Unit = {
