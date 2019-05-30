@@ -75,6 +75,15 @@ case class InsertHBaseRelation(
     if (parameters.containsKey("zk") || parameters.containsKey("hbase.zookeeper.quorum")) {
       hc.set("hbase.zookeeper.quorum", parameters.getOrElse("zk", parameters.getOrElse("hbase.zookeeper.quorum", "127.0.0.1:2181")))
     }
+
+    if (parameters.containsKey("znode")) {
+      hc.set("zookeeper.znode.parent", parameters.get("znode").get)
+    }
+
+    if (parameters.containsKey("rootdir")) {
+      hc.set("hbase.rootdir", parameters.get("rootdir").get)
+    }
+
     new SerializableConfiguration(hc)
   }
 
@@ -200,6 +209,15 @@ case class HBaseRelation(
     if (parameters.containsKey("zk") || parameters.containsKey("hbase.zookeeper.quorum")) {
       hc.set("hbase.zookeeper.quorum", parameters.getOrElse("zk", parameters.getOrElse("hbase.zookeeper.quorum", "127.0.0.1:2181")))
     }
+
+    if (parameters.containsKey("znode")) {
+      hc.set("zookeeper.znode.parent", parameters.get("znode").get)
+    }
+
+    if (parameters.containsKey("rootdir")) {
+      hc.set("hbase.rootdir", parameters.get("rootdir").get)
+    }
+
     hc.set(TableInputFormat.INPUT_TABLE, parameters("inputTableName"))
     new SerializableConfiguration(hc)
   }
