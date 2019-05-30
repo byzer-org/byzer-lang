@@ -17,7 +17,7 @@ MAIN_JAR=$(ls ${MLSQL_HOME}/libs|grep 'streamingpro-mlsql')
 export DRIVER_MEMORY=${DRIVER_MEMORY:-2g}
 $SPARK_HOME/bin/spark-submit --class streaming.core.StreamingApp \
         --driver-memory ${DRIVER_MEMORY} \
-        --jars ${JARS} \                         
+        --jars ${JARS} \
         --master local[*] \
         --name mlsql \
         --conf "spark.driver.extraJavaOptions"="-DREALTIME_LOG_HOME=/tmp/__mlsql__/logs" \
