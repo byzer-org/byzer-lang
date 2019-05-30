@@ -79,7 +79,7 @@ ADD  ${MLSQL_DISTRIBUTIOIN_URL} /home/deploy/mlsql/libs
 ADD  lib/ansj_seg-5.1.6.jar /home/deploy/mlsql/libs
 ADD  lib/nlp-lang-1.7.8.jar /home/deploy/mlsql/libs
 ADD  start-local.sh /home/deploy/mlsql
-ADD  log4j.properties /work/${FILENAME}/conf
+ADD  log4j.properties ${SPARK_HOME}/conf
 WORKDIR /home/deploy/mlsql
 
 #ENTRYPOINT [ "/usr/bin/tini", "--" ]
