@@ -5,6 +5,7 @@ import java.util.concurrent.{ConcurrentHashMap, Executors, TimeUnit}
 
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.mlsql.session.{SessionIdentifier, SparkSessionCacheManager}
+import streaming.dsl.ScriptSQLExec
 import streaming.log.{Logging, WowLog}
 import tech.mlsql.job.JobListener.{JobFinishedEvent, JobStartedEvent}
 import tech.mlsql.job.listeners.CleanCacheListener
@@ -57,6 +58,9 @@ object JobManager extends Logging {
   }
 
   def run(session: SparkSession, job: MLSQLJobInfo, f: () => Unit): Unit = {
+
+    val context = ScriptSQLExec.contextGetOrForTest()
+    context.execListener.addJobProgressListener(new DefaultMLSQLJobProgressListener())
     try {
       _jobListeners.foreach { f => f.onJobStarted(new JobStartedEvent(job.groupId)) }
       if (_jobManager == null) {
@@ -76,8 +80,10 @@ object JobManager extends Logging {
 
   def asyncRun(session: SparkSession, job: MLSQLJobInfo, f: () => Unit) = {
     // TODO: (fchen) 改成callback
+    val context = ScriptSQLExec.contextGetOrForTest()
     _executor.execute(new Runnable {
       override def run(): Unit = {
+        ScriptSQLExec.setContext(context)
         JobManager.run(session, job, f)
       }
     })
@@ -90,7 +96,7 @@ object JobManager extends Logging {
                  timeout: Long): MLSQLJobInfo = {
     val startTime = System.currentTimeMillis()
     val groupId = _jobManager.nextGroupId
-    MLSQLJobInfo(owner, jobType, jobName, jobContent, groupId, startTime, timeout)
+    MLSQLJobInfo(owner, jobType, jobName, jobContent, groupId, new MLSQLJobProgress(0, 0), startTime, timeout)
   }
 
   def getJobInfo: Map[String, MLSQLJobInfo] =
@@ -116,6 +122,7 @@ object JobManager extends Logging {
 
 class JobManager(_spark: SparkSession, initialDelay: Long, checkTimeInterval: Long) extends Logging with WowLog {
   val groupIdToMLSQLJobInfo = new ConcurrentHashMap[String, MLSQLJobInfo]()
+
 
   def nextGroupId = UUID.randomUUID().toString
 
@@ -175,12 +182,80 @@ case object MLSQLJobType {
   val STREAM = "stream"
 }
 
+trait MLSQLJobProgressListener {
+  def before(name: String, sql: String): Unit
+
+  def after(name: String, sql: String): Unit
+}
+
+class DefaultMLSQLJobProgressListener extends MLSQLJobProgressListener with Logging with WowLog {
+
+  val actionSet = Set("save", "insert", "train", "run", "predict")
+  var counter = 0
+
+  override def before(name: String, sql: String): Unit = {
+    counter += 1
+    val context = ScriptSQLExec.contextGetOrForTest()
+    val job = JobManager.getJobInfo.filter(f => f._1 == context.groupId).head._2
+    // only save/insert will trigger execution
+
+    def getHead(str: String) = {
+      str.trim.toLowerCase().split("\\s+").head
+    }
+
+    val statements = context.execListener.preProcessListener.get.statements
+
+    val actions = statements.filter { statement =>
+      actionSet.contains(getHead(statement))
+    }
+
+    var finalSize = actions.size
+    if (!actionSet.contains(getHead(statements.last))) {
+      finalSize += 1
+    }
+    var shouldLog = false
+
+    if (actionSet.contains(name)) {
+      job.progress.increment
+      job.progress.script = sql
+      shouldLog = true
+    }
+    job.progress.totalJob = finalSize
+
+    if (counter == statements.size && !actionSet.contains(name)) {
+      job.progress.currentJobIndex = job.progress.totalJob
+      job.progress.script = sql
+      shouldLog = true
+    }
+    if (shouldLog) {
+      logInfo(format(s"Total jobs: ${job.progress.totalJob} current job:${job.progress.currentJobIndex} job script:${job.progress.script} "))
+    }
+
+
+  }
+
+  override def after(name: String, sql: String): Unit = {
+
+  }
+}
+
+
 case class MLSQLJobInfo(
                          owner: String,
                          jobType: String,
                          jobName: String,
                          jobContent: String,
                          groupId: String,
+                         progress: MLSQLJobProgress,
                          startTime: Long,
                          timeout: Long
                        )
+
+case class MLSQLJobProgress(var totalJob: Long = 0, var currentJobIndex: Long = 0, var script: String = "") {
+  def increment = currentJobIndex += 1
+
+  def setTotal(total: Long) = {
+    totalJob = total
+  }
+}
+

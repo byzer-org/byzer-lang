@@ -10,10 +10,9 @@ import tech.mlsql.MLSQLEnvKey
 object LogTail {
 
   def log(owner: String, _filePath: String, offset: Long, size: Int = 1024 * 1024 - 1) = {
-    System.getenv("real_time_log")
     val filePath = s"${MLSQLEnvKey.realTimeLogHome}/mlsql_engine.log"
     val (newOffset, msg, fileSize) = ShellCommand.progress(filePath, offset, size)
-    val newMsg = msg.split("\n").filter(f => f.contains(s"[owner] [${owner}]") || f.contains("DistriOptimizer$: ["))
+    val newMsg = msg.split("\n").filter(f => (f.contains(s"[owner] [${owner}]") || f.contains("DistriOptimizer$: [")) && !f.contains("load _mlsql_.`"))
     LogMsg(newOffset, newMsg)
   }
 }

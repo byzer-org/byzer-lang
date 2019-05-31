@@ -10,8 +10,10 @@ object MLSQLEnvKey {
   // then we will skip size limit in RestController and to avoid executing in executor
   val CONTEXT_SYSTEM_TABLE = "context_system_table"
 
+  val CONTEXT_STATEMENT_NUM = "context_statement_num"
+
   def realTimeLogHome = {
-    val item = System.getenv(REALTIME_LOG_HOME)
+    val item = System.getProperty(REALTIME_LOG_HOME)
     if (item == null) "/tmp/__mlsql__/logs"
     else item
   }
