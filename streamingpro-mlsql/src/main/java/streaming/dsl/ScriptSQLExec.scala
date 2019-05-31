@@ -22,10 +22,10 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicReference
 
 import org.antlr.v4.runtime._
+import org.antlr.v4.runtime.misc.Interval
 import org.antlr.v4.runtime.tree.ParseTreeWalker
 import org.apache.spark.MLSQLSyntaxErrorListener
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.mlsql.session.MLSQLException
 import streaming.core.Dispatcher
 import streaming.dsl.auth._
 import streaming.dsl.parser.DSLSQLParser._
@@ -36,6 +36,9 @@ import tech.mlsql.Stage
 import tech.mlsql.dsl.CommandCollection
 import tech.mlsql.dsl.adaptor.PreProcessIncludeListener
 import tech.mlsql.dsl.processor.{AuthProcessListener, GrammarProcessListener, PreProcessListener}
+import tech.mlsql.job.MLSQLJobProgressListener
+
+import scala.collection.mutable.ArrayBuffer
 
 
 /**
@@ -154,8 +157,15 @@ class ScriptSQLExecListener(val _sparkSession: SparkSession, val _defaultPathPre
 
   private val _env = new scala.collection.mutable.HashMap[String, String]
 
+  private[this] val _jobListeners = ArrayBuffer[MLSQLJobProgressListener]()
+
   private val lastSelectTable = new AtomicReference[String]()
   private[this] var _tableAuth: AtomicReference[TableAuth] = new AtomicReference[TableAuth]()
+
+  def addJobProgressListener(l: MLSQLJobProgressListener) = {
+    _jobListeners += l
+    this
+  }
 
   var includeProcessListner: Option[PreProcessIncludeListener] = None
   var preProcessListener: Option[PreProcessListener] = None
@@ -239,7 +249,28 @@ class ScriptSQLExecListener(val _sparkSession: SparkSession, val _defaultPathPre
 
   override def exitSql(ctx: SqlContext): Unit = {
 
-    ctx.getChild(0).getText.toLowerCase() match {
+    def getText = {
+      val input = ctx.start.getTokenSource().asInstanceOf[DSLSQLLexer]._input
+
+      val start = ctx.start.getStartIndex()
+      val stop = ctx.stop.getStopIndex()
+      val interval = new Interval(start, stop)
+      input.getText(interval)
+    }
+
+    def before(clzz: String) = {
+      _jobListeners.foreach(_.before(clzz, getText))
+    }
+
+    def after(clzz: String) = {
+      _jobListeners.foreach(_.after(clzz, getText))
+    }
+
+
+    val PREFIX = ctx.getChild(0).getText.toLowerCase()
+
+    before(PREFIX)
+    PREFIX match {
       case "load" =>
         new LoadAdaptor(this).parse(ctx)
 
@@ -265,8 +296,9 @@ class ScriptSQLExecListener(val _sparkSession: SparkSession, val _defaultPathPre
         new TrainAdaptor(this).parse(ctx)
       case "register" =>
         new RegisterAdaptor(this).parse(ctx)
-      case _ => throw new RuntimeException(s"Unknow statment:${ctx.getText}")
+      case _ => throw new RuntimeException(s"Unknow statement:${ctx.getText}")
     }
+    after(PREFIX)
 
   }
 

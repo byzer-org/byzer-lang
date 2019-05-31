@@ -3,8 +3,8 @@ package tech.mlsql.dsl.processor
 import streaming.dsl.parser.DSLSQLParser.SqlContext
 import streaming.dsl.{ScriptSQLExecListener, SetAdaptor}
 import streaming.parser.lisener.BaseParseListenerextends
-import tech.mlsql.Stage
 import tech.mlsql.dsl.adaptor.{CommandAdaptor, StatementAdaptor}
+import tech.mlsql.{MLSQLEnvKey, Stage}
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -16,7 +16,12 @@ class PreProcessListener(val scriptSQLExecListener: ScriptSQLExecListener) exten
   private val _statements = new ArrayBuffer[String]()
 
   def toScript = {
+    scriptSQLExecListener.addEnv(MLSQLEnvKey.CONTEXT_STATEMENT_NUM, _statements.length.toString)
     _statements.mkString(";") + ";"
+  }
+
+  def statements = {
+    _statements
   }
 
   def addStatement(v: String) = {
