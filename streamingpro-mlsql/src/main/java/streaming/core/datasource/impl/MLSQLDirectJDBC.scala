@@ -151,15 +151,15 @@ class MLSQLDirectJDBC extends MLSQLDirectSource with MLSQLDirectSink with MLSQLS
       val tableColsMap = JDBCUtils.queryTableWithColumnsInDriver(_params ,tableList)
       val createSqlList = JDBCUtils.tableColumnsToCreateSql(tableColsMap)
       val tableAndCols = MLSQLSQLParser.extractTableWithColumns(si.sourceType ,sql ,createSqlList)
-      var mlsqlTables = List.empty[MLSQLTable]
 
-      tableAndCols.foreach {
-        case (table, cols) =>
-          mlsqlTables ::= MLSQLTable(Option(si.db), Option(table), Option(cols.toSet), OperateType.DIRECT_QUERY, Option(si.sourceType), TableType.JDBC)
-      }
-      context.execListener.getTableAuth.foreach { tableAuth =>
-        println(mlsqlTables)
-        tableAuth.auth(mlsqlTables)
+      tableAndCols.map { tc =>
+          MLSQLTable(Option(si.db), Option(tc._1), Option(tc._2.toSet), OperateType.DIRECT_QUERY, Option(si.sourceType), TableType.JDBC)
+      }.foreach { mlsqlTable =>
+        context.execListener.authProcessListner match {
+          case Some(authProcessListener) =>
+            authProcessListener.addTable(mlsqlTable)
+          case None =>
+        }
       }
     }
 
