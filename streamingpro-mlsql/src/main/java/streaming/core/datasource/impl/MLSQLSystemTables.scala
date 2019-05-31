@@ -7,6 +7,7 @@ import streaming.core.datasource.util.MLSQLJobCollect
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.auth.{OperateType, TableType}
 import streaming.dsl.load.batch.{LogTail, MLSQLAPIExplain, MLSQLConfExplain}
+import tech.mlsql.MLSQLEnvKey
 import tech.mlsql.job.MLSQLJobInfo
 
 /**
@@ -15,7 +16,9 @@ import tech.mlsql.job.MLSQLJobInfo
 class MLSQLSystemTables extends MLSQLSource with MLSQLSourceInfo with MLSQLRegistry {
 
   override def load(reader: DataFrameReader, config: DataSourceConfig): DataFrame = {
-    val owner = ScriptSQLExec.contextGetOrForTest().owner
+    val context = ScriptSQLExec.contextGetOrForTest();
+    val owner = context.owner
+    context.execListener.addEnv(MLSQLEnvKey.CONTEXT_SYSTEM_TABLE, "true")
     val spark = config.df.get.sparkSession
     import spark.implicits._
 

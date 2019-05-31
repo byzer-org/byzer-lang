@@ -33,8 +33,10 @@ import net.csdn.modules.http.{ApplicationController, ViewType}
 import net.csdn.modules.transport.HttpTransportService
 import org.apache.spark.ps.cluster.Message
 import org.apache.spark.sql._
+import org.apache.spark.sql.execution.datasources.json.WowJsonInferSchema
 import org.apache.spark.sql.mlsql.session.{MLSQLSparkSession, SparkSessionCacheManager}
 import org.apache.spark.{MLSQLConf, SparkInstanceService}
+import tech.mlsql.MLSQLEnvKey
 import tech.mlsql.job.{JobManager, MLSQLJobType}
 
 import scala.collection.JavaConversions._
@@ -158,10 +160,14 @@ class RestController extends ApplicationController with WowLog {
   private def getScriptResult(context: ScriptSQLExecListener, sparkSession: SparkSession): String = {
     context.getLastSelectTable() match {
       case Some(table) =>
-        val scriptJsonStringResult = limitOrNot {
-          sparkSession.sql(s"select * from $table limit " + paramAsInt("outputSize", 5000))
-        }.toJSON.collect().mkString(",")
-        "[" + scriptJsonStringResult + "]"
+        if (context.env().getOrElse(MLSQLEnvKey.CONTEXT_SYSTEM_TABLE, "false").toBoolean) {
+          "[" + WowJsonInferSchema.toJson(sparkSession.table(table)).mkString(",") + "]"
+        } else {
+          val scriptJsonStringResult = limitOrNot {
+            sparkSession.sql(s"select * from $table limit " + paramAsInt("outputSize", 5000))
+          }.toJSON.collect().mkString(",")
+          "[" + scriptJsonStringResult + "]"
+        }
       case None => "[]"
     }
   }
@@ -385,7 +391,6 @@ class RestController extends ApplicationController with WowLog {
   }
 
   //end -------------------------------------------
-
 
 
   @At(path = Array("/check"), types = Array(GET, POST))
