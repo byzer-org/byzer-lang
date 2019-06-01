@@ -8,7 +8,7 @@ import org.apache.spark.sql.mlsql.session.{SessionIdentifier, SparkSessionCacheM
 import streaming.dsl.ScriptSQLExec
 import streaming.log.{Logging, WowLog}
 import tech.mlsql.job.JobListener.{JobFinishedEvent, JobStartedEvent}
-import tech.mlsql.job.listeners.CleanCacheListener
+import tech.mlsql.job.listeners.{CleanCacheListener, EngineMDCLogListener}
 
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
@@ -44,6 +44,7 @@ object JobManager extends Logging {
         logInfo(s"JobManager started with initialDelay=${initialDelay} checkTimeInterval=${checkTimeInterval}")
         _jobManager = new JobManager(spark, initialDelay, checkTimeInterval)
         _jobListeners += new CleanCacheListener
+        _jobListeners += new EngineMDCLogListener
         _jobManager.run
       }
     }
