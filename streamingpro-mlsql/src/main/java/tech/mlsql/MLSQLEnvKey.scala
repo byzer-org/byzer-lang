@@ -12,6 +12,8 @@ object MLSQLEnvKey {
 
   val CONTEXT_STATEMENT_NUM = "context_statement_num"
 
+  val REQUEST_CONTEXT_ENABLE_SPARK_LOG = "enableSparkLog"
+
   def realTimeLogHome = {
     val item = System.getProperty(REALTIME_LOG_HOME)
     if (item == null) "/tmp/__mlsql__/logs"
