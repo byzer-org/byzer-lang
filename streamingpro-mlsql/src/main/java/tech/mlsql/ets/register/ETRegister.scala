@@ -1,6 +1,5 @@
 package tech.mlsql.ets.register
 
-import tech.mlsql.ets.MLSQLEventCommand
 
 /**
   * 2019-04-12 WilliamZhu(allwefantasy@gmail.com)
@@ -14,7 +13,8 @@ object ETRegister {
     wow("HDFSCommand"),
     wow("NothingET"),
     wow("ModelCommand"),
-    wow("MLSQLEventCommand")
+    wow("MLSQLEventCommand"),
+    wow("KafkaCommand")
   )
 
 }

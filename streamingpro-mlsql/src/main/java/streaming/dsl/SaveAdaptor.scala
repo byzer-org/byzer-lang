@@ -105,10 +105,14 @@ class SaveAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
     val writer = if (isStream) null else oldDF.write
 
     val saveRes = DataSourceRegistry.fetch(format, option).map { datasource =>
+      val newOption = if (partitionByCol.size > 0) {
+        option ++ Map("partitionByCol" -> partitionByCol.mkString(","))
+      } else option
+
       val res = datasource.asInstanceOf[ {def save(writer: DataFrameWriter[Row], config: DataSinkConfig): Any}].save(
         writer,
         // here we should change final_path to path in future
-        DataSinkConfig(path, option ++ Map("partitionByCol" -> partitionByCol.mkString(",")),
+        DataSinkConfig(path, newOption,
           mode, Option(oldDF)))
       res
     }.getOrElse {
