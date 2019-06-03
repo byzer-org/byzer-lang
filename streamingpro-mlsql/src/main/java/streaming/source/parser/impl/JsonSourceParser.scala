@@ -18,8 +18,8 @@
 
 package streaming.source.parser.impl
 
-import org.apache.spark.sql.{Column, Row, WowJsonToStructs}
-import org.apache.spark.sql.types.DataType
+import org.apache.spark.sql.types.StructType
+import org.apache.spark.sql.{Column, WowJsonToStructs}
 import streaming.source.parser.{SourceParser, SourceSchema}
 
 /**
@@ -28,5 +28,9 @@ import streaming.source.parser.{SourceParser, SourceSchema}
 class JsonSourceParser extends SourceParser {
   override def parse(column: Column, sourceSchema: SourceSchema, options: Map[String, String]): Column = {
     withExpr(new WowJsonToStructs(sourceSchema.schema, options, column.expr))
+  }
+
+  def parseRaw(column: Column, schema: StructType, options: Map[String, String]): Column = {
+    withExpr(new WowJsonToStructs(schema, options, column.expr))
   }
 }

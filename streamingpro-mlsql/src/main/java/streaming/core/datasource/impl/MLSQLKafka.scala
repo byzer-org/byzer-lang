@@ -1,10 +1,10 @@
 package streaming.core.datasource.impl
 
 import org.apache.spark.ml.param.Param
-import org.apache.spark.sql.{DataFrame, DataFrameReader, DataFrameWriter, Row}
-import streaming.core.datasource.{DataSinkConfig, DataSourceConfig, MLSQLBaseStreamSource}
-import streaming.dsl.ScriptSQLExec
-import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
+import org.apache.spark.sql._
+import _root_.streaming.core.datasource.{DataSinkConfig, DataSourceConfig, MLSQLBaseStreamSource}
+import _root_.streaming.dsl.ScriptSQLExec
+import _root_.streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
 
 /**
   * 2019-03-20 WilliamZhu(allwefantasy@gmail.com)
@@ -78,7 +78,6 @@ class MLSQLKafka(override val uid: String) extends MLSQLBaseStreamSource with Wo
       return super.save(batchWriter, config.copy(config = rewriteKafkaConfig(config.config, getWriteTopic, getSaveUrl, config.path)))
 
     }
-
     batchWriter.options(rewriteKafkaConfig(config.config, getWriteTopic, getSaveUrl, config.path)).format(fullFormat).save()
 
   }
