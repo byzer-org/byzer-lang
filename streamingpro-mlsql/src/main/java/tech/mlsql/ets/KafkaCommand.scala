@@ -10,17 +10,20 @@ import org.apache.spark.sql.types.{DataType, StructType}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.unsafe.types.UTF8String
 import streaming.dsl.ScriptSQLExec
+import streaming.dsl.auth._
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.Functions
 import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
 import tech.mlsql.MLSQLEnvKey
+import tech.mlsql.dsl.auth.ETAuth
+import tech.mlsql.dsl.auth.dsl.mmlib.ETMethod.ETMethod
 
 import scala.util.Try
 
 /**
   * 2019-06-03 WilliamZhu(allwefantasy@gmail.com)
   */
-class KafkaCommand(override val uid: String) extends SQLAlg with Functions with WowParams {
+class KafkaCommand(override val uid: String) extends SQLAlg with ETAuth with Functions with WowParams {
   def this() = this(BaseParams.randomUID())
 
   override def batchPredict(df: DataFrame, path: String, params: Map[String, String]): DataFrame = train(df, path, params)
@@ -49,6 +52,7 @@ class KafkaCommand(override val uid: String) extends SQLAlg with Functions with 
       .as[(String, String)]
 
     val context = ScriptSQLExec.contextGetOrForTest()
+    val sampleNum = params.getOrElse("sampleNum", "100").toLong
 
     def inferSchema = {
       val data = res.collect().map(f => UTF8String.fromString(f._2)).toSeq
@@ -59,7 +63,7 @@ class KafkaCommand(override val uid: String) extends SQLAlg with Functions with 
     }
 
     action match {
-      case "sampleData" => res.toDF()
+      case "sampleData" => res.limit(sampleNum.toInt).toDF()
       case "schemaInfer" =>
         Seq(Seq(inferSchema)).toDF("value")
       case "registerSchema" =>
@@ -89,5 +93,21 @@ class KafkaCommand(override val uid: String) extends SQLAlg with Functions with 
 
   override def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = {
     throw new MLSQLException(s"${getClass.getName} not support register ")
+  }
+
+  override def auth(etMethod: ETMethod, path: String, params: Map[String, String]): List[TableAuthResult] = {
+    val vtable = MLSQLTable(
+      None,
+      Option(params("subscribe")),
+      OperateType.LOAD,
+      Option("kafka"),
+      TableType.KAFKA)
+
+    val context = ScriptSQLExec.contextGetOrForTest()
+    context.execListener.getTableAuth match {
+      case Some(tableAuth) =>
+        tableAuth.auth(List(vtable))
+      case None => List(TableAuthResult(true, ""))
+    }
   }
 }

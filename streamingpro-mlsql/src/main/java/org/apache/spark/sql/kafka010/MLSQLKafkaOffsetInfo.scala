@@ -28,38 +28,36 @@ object MLSQLKafkaOffsetInfo extends Logging with WowLog {
       parameters,
       driverGroupIdPrefix = s"$uniqueGroupId-driver")
 
-    // Leverage the KafkaReader to obtain the relevant partition offsets
-    // we always get the LatestOffsetRangeLimit
-    val untilPartitionOffsets = {
-      try {
-        getPartitionOffsets(kafkaOffsetReader, LatestOffsetRangeLimit)
-      } finally {
-        kafkaOffsetReader.close()
-      }
-    }
-
-    def reportDataLoss(message: String): Unit = {
-      if (params.getOrElse("failOnDataLoss", "true").toBoolean) {
-        throw new IllegalStateException(message + s". $INSTRUCTION_FOR_FAIL_ON_DATA_LOSS_TRUE")
-      } else {
-        logWarning(message + s". $INSTRUCTION_FOR_FAIL_ON_DATA_LOSS_FALSE")
-      }
-    }
-
-
     var newUntilPartitionOffsets: KafkaSourceOffset = null
     var newStartPartitionOffsets: KafkaSourceOffset = null
 
-    val wow = new UninterruptibleThread(new Runnable {
-      override def run(): Unit = {
-        newUntilPartitionOffsets = kafkaOffsetReader.fetchSpecificOffsets(untilPartitionOffsets, reportDataLoss)
-        val sampleNum = params.getOrElse("sampleNum", "100").toLong
-        val startPartitionOffsets = newUntilPartitionOffsets.partitionToOffsets.map { f => (f._1, f._2 - sampleNum) }
-        newStartPartitionOffsets = kafkaOffsetReader.fetchSpecificOffsets(startPartitionOffsets, reportDataLoss)
+    try {
+      // Leverage the KafkaReader to obtain the relevant partition offsets
+      // we always get the LatestOffsetRangeLimit
+      val untilPartitionOffsets = getPartitionOffsets(kafkaOffsetReader, LatestOffsetRangeLimit)
+
+      def reportDataLoss(message: String): Unit = {
+        if (params.getOrElse("failOnDataLoss", "true").toBoolean) {
+          throw new IllegalStateException(message + s". $INSTRUCTION_FOR_FAIL_ON_DATA_LOSS_TRUE")
+        } else {
+          logWarning(message + s". $INSTRUCTION_FOR_FAIL_ON_DATA_LOSS_FALSE")
+        }
       }
-    }, UUID.randomUUID() + "-driver-fetch-untilPartitionOffsets")
-    wow.start()
-    wow.join()
+
+      val wow = new UninterruptibleThread(new Runnable {
+        override def run(): Unit = {
+          newUntilPartitionOffsets = kafkaOffsetReader.fetchSpecificOffsets(untilPartitionOffsets, reportDataLoss)
+          val sampleNum = params.getOrElse("sampleNum", "100").toLong
+          val startPartitionOffsets = newUntilPartitionOffsets.partitionToOffsets.map { f => (f._1, f._2 - sampleNum) }
+          newStartPartitionOffsets = kafkaOffsetReader.fetchSpecificOffsets(startPartitionOffsets, reportDataLoss)
+        }
+      }, UUID.randomUUID() + "-driver-fetch-untilPartitionOffsets")
+      wow.start()
+      wow.join()
+    } finally {
+      kafkaOffsetReader.close()
+    }
+
 
     (newStartPartitionOffsets, newUntilPartitionOffsets)
 
