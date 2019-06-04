@@ -30,6 +30,8 @@ import org.apache.spark.sql.sources.{BaseRelation, CreatableRelationProvider, Da
 import org.apache.spark.sql.streaming.OutputMode
 import org.apache.spark.sql.types.StructType
 
+import scala.collection.JavaConversions._
+
 
 case class MLSQLConsoleRelation(override val sqlContext: SQLContext, data: DataFrame)
   extends BaseRelation {
@@ -44,14 +46,15 @@ class MLSQLConsoleSinkProvider extends DataSourceV2
   val context = ScriptSQLExec.contextGetOrForTest()
 
 
-
   override def createStreamWriter(
                                    queryId: String,
                                    schema: StructType,
                                    mode: OutputMode,
                                    options: DataSourceOptions): StreamWriter = {
     ScriptSQLExec.setContext(context)
-    new MLSQLConsoleWriter(schema, options)
+    val newMaps = options.asMap().toMap ++ Map("LogPrefix" -> s"[owner] [${context.owner}] [groupId] [${context.groupId}]")
+    val newOptions = new DataSourceOptions(newMaps)
+    new MLSQLConsoleWriter(schema, newOptions)
   }
 
   def createRelation(
