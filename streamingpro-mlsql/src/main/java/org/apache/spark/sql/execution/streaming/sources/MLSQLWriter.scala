@@ -24,7 +24,7 @@ import org.apache.spark.sql.sources.v2.writer.streaming.StreamWriter
 import org.apache.spark.sql.sources.v2.writer.{DataWriterFactory, WriterCommitMessage}
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.{DFVisitor, Dataset, SparkSession}
-import streaming.log.{Logging, WowLog}
+import streaming.log.{Logging,WowLog}
 
 /** Common methods used to create writes for the the console sink */
 class MLSQLConsoleWriter(schema: StructType, options: DataSourceOptions)
