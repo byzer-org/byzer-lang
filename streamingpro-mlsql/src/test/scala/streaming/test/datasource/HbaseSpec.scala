@@ -54,6 +54,25 @@ class HbaseSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLCo
            |
          """.stripMargin, sq)
       assume(spark.sql("select * from mlsql_example where rowkey='2' ").collect().last.get(0) == "2")
+
+      ScriptSQLExec.parse(
+        s"""
+           |
+           |connect hbase where `zk`="127.0.0.1:2181"
+           |and `tsSuffix`="_ts"
+           |and `family`="cf" as hbase_conn;
+           |
+           |select 'a' as id, 1 as ck, 1552419324001 as ck_ts as test ;
+           |save overwrite test
+           |as hbase.`hbase_conn:mlsql_example`
+           |options  rowkey="id";
+           |
+           |load hbase.`hbase_conn:mlsql_example`
+           |options `field.type.ck`="IntegerType"
+           |as testhbase;
+         """.stripMargin, sq)
+      assume(spark.sql("select get_json_object(content,'$.cf:ck_ts') ts from testhbase where rowkey='a' ")
+        .collect().last.get(0) == "1552419324001")
     }
   }
 

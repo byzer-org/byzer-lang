@@ -1,5 +1,7 @@
 package streaming.core.datasource.impl
 
+import java.util.Properties
+
 import com.alibaba.druid.util.JdbcConstants
 import net.sf.json.JSONObject
 import org.apache.spark.sql.catalyst.plans.logical.MLSQLDFParser
@@ -47,20 +49,31 @@ class MLSQLDirectJDBC extends MLSQLDirectSource with MLSQLDirectSink with MLSQLS
 
 
   override def load(reader: DataFrameReader, config: DataSourceConfig): DataFrame = {
-    var _params = config.config
-    val path = config.path
-    if (path.contains(".")) {
-      val Array(db, table) = path.split("\\.", 2)
-      ConnectMeta.presentThenCall(DBMappingKey("jdbc", db), options => {
-        options.foreach { item =>
-          _params += (item._1 -> item._2)
-        }
+    val format = config.config.getOrElse("implClass", fullFormat)
+    var url = config.config.get("url")
+    if (config.path.contains(dbSplitter)) {
+      val Array(_dbname, _dbtable) = config.path.split(toSplit, 2)
+      ConnectMeta.presentThenCall(DBMappingKey(format, _dbname), options => {
+        reader.options(options)
+        url = options.get("url")
       })
     }
-    val res = JDBCUtils.executeQueryInDriver(_params ++ Map("driver-statement-query" -> config.config("directQuery")))
-    val spark = config.df.get.sparkSession
-    val rdd = spark.sparkContext.parallelize(res.map(item => JSONObject.fromObject(item.asJava).toString()))
-    spark.read.json(rdd)
+
+    //load configs should overwrite connect configs
+    reader.options(config.config)
+
+    if (config.config.contains("prePtnArray")){
+      val prePtn = config.config.get("prePtnArray").get
+        .split(config.config.getOrElse("prePtnDelimiter" ,","))
+
+      val dbtable = "(" + config.config("directQuery") + ") as temp"
+
+      reader.jdbc(url.get, dbtable, prePtn, new Properties())
+    }else{
+      reader.option("query" ,config.config("directQuery"))
+
+      reader.format(format).load()
+    }
   }
 
   override def save(writer: DataFrameWriter[Row], config: DataSinkConfig): Unit = {
@@ -138,15 +151,15 @@ class MLSQLDirectJDBC extends MLSQLDirectSource with MLSQLDirectSink with MLSQLS
       val tableColsMap = JDBCUtils.queryTableWithColumnsInDriver(_params ,tableList)
       val createSqlList = JDBCUtils.tableColumnsToCreateSql(tableColsMap)
       val tableAndCols = MLSQLSQLParser.extractTableWithColumns(si.sourceType ,sql ,createSqlList)
-      var mlsqlTables = List.empty[MLSQLTable]
 
-      tableAndCols.foreach {
-        case (table, cols) =>
-          mlsqlTables ::= MLSQLTable(Option(si.db), Option(table), Option(cols.toSet), OperateType.DIRECT_QUERY, Option(si.sourceType), TableType.JDBC)
-      }
-      context.execListener.getTableAuth.foreach { tableAuth =>
-        println(mlsqlTables)
-        tableAuth.auth(mlsqlTables)
+      tableAndCols.map { tc =>
+          MLSQLTable(Option(si.db), Option(tc._1), Option(tc._2.toSet), OperateType.DIRECT_QUERY, Option(si.sourceType), TableType.JDBC)
+      }.foreach { mlsqlTable =>
+        context.execListener.authProcessListner match {
+          case Some(authProcessListener) =>
+            authProcessListener.addTable(mlsqlTable)
+          case None =>
+        }
       }
     }
 

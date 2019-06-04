@@ -20,7 +20,8 @@ package org.apache.spark.sql.execution.datasources.hbase
 
 import java.sql.Timestamp
 
-import org.apache.hadoop.hbase.{HBaseConfiguration, HColumnDescriptor, HTableDescriptor, TableName}
+import org.apache.commons.lang3.StringUtils
+import org.apache.hadoop.hbase._
 import org.apache.hadoop.hbase.client.{ConnectionFactory, Put, Result}
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable
 import org.apache.hadoop.hbase.mapreduce.{TableInputFormat, TableOutputFormat}
@@ -75,6 +76,15 @@ case class InsertHBaseRelation(
     if (parameters.containsKey("zk") || parameters.containsKey("hbase.zookeeper.quorum")) {
       hc.set("hbase.zookeeper.quorum", parameters.getOrElse("zk", parameters.getOrElse("hbase.zookeeper.quorum", "127.0.0.1:2181")))
     }
+
+    if (parameters.containsKey("znode")) {
+      hc.set("zookeeper.znode.parent", parameters.get("znode").get)
+    }
+
+    if (parameters.containsKey("rootdir")) {
+      hc.set("hbase.rootdir", parameters.get("rootdir").get)
+    }
+
     new SerializableConfiguration(hc)
   }
 
@@ -135,10 +145,15 @@ case class InsertHBaseRelation(
 
     val fields = data.schema.toArray
     val rowkeyIndex = fields.zipWithIndex.filter(f => f._1.name == rowkey).head._2
-    val otherFields = fields.zipWithIndex.filter(f => f._1.name != rowkey)
+    var otherFields = fields.zipWithIndex.filter(f => f._1.name != rowkey)
 
     val rdd = data.rdd //df.queryExecution.toRdd
     val f = family
+
+    val tsSuffix = parameters.get("tsSuffix") match {
+      case Some(tsSuffix) => otherFields = otherFields.filter(f => !f._1.name.endsWith(tsSuffix));tsSuffix
+      case _ => ""
+    }
 
     def convertToPut(row: Row) = {
 
@@ -146,15 +161,6 @@ case class InsertHBaseRelation(
       otherFields.foreach { field =>
         if (row.get(field._2) != null) {
           val st = field._1
-          val datatype = if (parameters.contains(s"field.type.${st.name}")) {
-            //StringType
-            val name = parameters(s"field.type.${st.name}")
-            name match {
-              case "StringType" => DataTypes.StringType
-              case "BinaryType" => DataTypes.BinaryType
-              case _ => DataTypes.StringType
-            }
-          } else st.dataType
           val c = st.dataType match {
             case StringType => Bytes.toBytes(row.getString(field._2))
             case FloatType => Bytes.toBytes(row.getFloat(field._2))
@@ -170,9 +176,12 @@ case class InsertHBaseRelation(
             case _ => Bytes.toBytes(row.getString(field._2))
           }
 
-
-
-          put.addColumn(Bytes.toBytes(f), Bytes.toBytes(field._1.name), c)
+          val tsField = field._1.name + tsSuffix
+          if(StringUtils.isNoneBlank(tsSuffix) && row.schema.fieldNames.contains(tsField)){
+            put.addColumn(Bytes.toBytes(f), Bytes.toBytes(field._1.name) ,row.getAs[Long](tsField), c)
+          }else{
+            put.addColumn(Bytes.toBytes(f), Bytes.toBytes(field._1.name), c)
+          }
         }
       }
       (new ImmutableBytesWritable, put)
@@ -200,6 +209,15 @@ case class HBaseRelation(
     if (parameters.containsKey("zk") || parameters.containsKey("hbase.zookeeper.quorum")) {
       hc.set("hbase.zookeeper.quorum", parameters.getOrElse("zk", parameters.getOrElse("hbase.zookeeper.quorum", "127.0.0.1:2181")))
     }
+
+    if (parameters.containsKey("znode")) {
+      hc.set("zookeeper.znode.parent", parameters.get("znode").get)
+    }
+
+    if (parameters.containsKey("rootdir")) {
+      hc.set("hbase.rootdir", parameters.get("rootdir").get)
+    }
+
     hc.set(TableInputFormat.INPUT_TABLE, parameters("inputTableName"))
     new SerializableConfiguration(hc)
   }
@@ -208,6 +226,8 @@ case class HBaseRelation(
 
   def buildScan(): RDD[Row] = {
 
+    val tsSuffix = parameters.getOrElse("tsSuffix" ,"_ts")
+    val family = parameters.getOrElse("family" ,"")
     val hBaseRDD = sqlContext.sparkContext.newAPIHadoopRDD(hbaseConf, classOf[TableInputFormat], classOf[ImmutableBytesWritable], classOf[Result])
       .map { line =>
         val rowKey = Bytes.toString(line._2.getRow)
@@ -215,34 +235,41 @@ case class HBaseRelation(
         import net.liftweb.{json => SJSon}
         implicit val formats = SJSon.Serialization.formats(SJSon.NoTypeHints)
 
-        val content = line._2.getMap.navigableKeySet().flatMap { f =>
-          line._2.getFamilyMap(f).map { c =>
-
-            val columnName = Bytes.toString(f) + ":" + Bytes.toString(c._1)
+        val content = line._2.rawCells().flatMap{ cell=>
+          val f = new String(CellUtil.cloneFamily(cell))
+          if ((StringUtils.isNotBlank(family) && family.equals(f))
+            || StringUtils.isBlank(family)){
+            val columnName = new String(CellUtil.cloneQualifier(cell))
+            val fullColumnName = f + ":" + columnName
             parameters.get("field.type." + columnName) match {
               case Some(i) =>
                 val value = i match {
-                  case "LongType" => Bytes.toLong(c._2)
-                  case "FloatType" => Bytes.toFloat(c._2)
-                  case "DoubleType" => Bytes.toDouble(c._2)
-                  case "IntegerType" => Bytes.toInt(c._2)
-                  case "BooleanType" => Bytes.toBoolean(c._2)
-                  case "BinaryType" => c._2
-                  case "TimestampType" => new Timestamp(Bytes.toLong(c._2))
-                  case "DateType" => new java.sql.Date(Bytes.toLong(c._2))
-                  case _ => Bytes.toString(c._2)
+                  case "LongType" => Bytes.toLong(CellUtil.cloneValue(cell))
+                  case "FloatType" => Bytes.toFloat(CellUtil.cloneValue(cell))
+                  case "DoubleType" => Bytes.toDouble(CellUtil.cloneValue(cell))
+                  case "IntegerType" => Bytes.toInt(CellUtil.cloneValue(cell))
+                  case "BooleanType" => Bytes.toBoolean(CellUtil.cloneValue(cell))
+                  case "BinaryType" => CellUtil.cloneValue(cell)
+                  case "TimestampType" => new Timestamp(Bytes.toLong(CellUtil.cloneValue(cell)))
+                  case "DateType" => new java.sql.Date(Bytes.toLong(CellUtil.cloneValue(cell)))
+                  case _ => Bytes.toString(CellUtil.cloneValue(cell))
                 }
-                (columnName, value)
-              case None => (columnName, Bytes.toString(c._2))
+                (fullColumnName, value) :: (fullColumnName + tsSuffix , cell.getTimestamp) :: Nil
+              case None => (fullColumnName, Bytes.toString(CellUtil.cloneValue(cell))) :: (fullColumnName + tsSuffix , cell.getTimestamp) :: Nil
             }
-
+          }else{
+            Nil
           }
         }.toMap
 
-        val contentStr = SJSon.Serialization.write(content)
+        if (content.size > 0){
+          val contentStr = SJSon.Serialization.write(content)
 
-        Row.fromSeq(Seq(UTF8String.fromString(rowKey), UTF8String.fromString(contentStr)))
-      }
+          Row.fromSeq(Seq(UTF8String.fromString(rowKey), UTF8String.fromString(contentStr)))
+        }else{
+          null
+        }
+      }.filter(_ != null)
     hBaseRDD
   }
 

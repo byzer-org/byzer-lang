@@ -194,6 +194,12 @@ class AuthSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLCon
           |
           |save overwrite test_table as mongo.`mongo_instance/cool_2` where
           |    partitioner="MongoPaginateBySizePartitioner";
+          |
+          |load mongo.`cool_10` where
+          |    partitioner="MongoPaginateBySizePartitioner"
+          |and uri="mongodb://127.0.0.1:27017/twitter_1"
+          |and database="twitter_10"
+          |as test_table_3;
         """.stripMargin
       executeScript(mlsql)
       var tables = DefaultConsoleClient.get
@@ -202,9 +208,9 @@ class AuthSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLCon
         .filter(f => (f.tableType == TableType.MONGO && f.operateType == OperateType.LOAD))
 
       var table = loadMLSQLTable.map(f => f.table.get).toSet
-      assume(table == Set("cool", "cool_1"))
+      assume(table == Set("cool", "cool_1", "cool_10"))
       var db = loadMLSQLTable.map(f => f.db.get).toSet
-      assume(db == Set("twitter", "twitter_1"))
+      assume(db == Set("twitter", "twitter_1", "twitter_10"))
       var sourceType = loadMLSQLTable.map(f => f.sourceType.get).toSet
       assume(sourceType == Set("mongo"))
 

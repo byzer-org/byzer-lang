@@ -18,6 +18,8 @@
 
 package streaming.core.datasource.impl
 
+import java.util.Properties
+
 import _root_.streaming.common.HDFSOperator
 import _root_.streaming.common.hdfs.lock.DistrLocker
 import _root_.streaming.core.datasource.{SourceTypeRegistry, _}
@@ -46,19 +48,28 @@ class MLSQLJDBC(override val uid: String) extends MLSQLSource with MLSQLSink wit
     // otherwize we will do nothing since elasticsearch use something like index/type
     // it will do no harm.
     val format = config.config.getOrElse("implClass", fullFormat)
+    var url = config.config.get("url")
     if (config.path.contains(dbSplitter)) {
       val Array(_dbname, _dbtable) = config.path.split(toSplit, 2)
       ConnectMeta.presentThenCall(DBMappingKey(format, _dbname), options => {
         dbtable = _dbtable
         reader.options(options)
+        url = options.get("url")
       })
     }
     //load configs should overwrite connect configs
     reader.options(config.config)
-    reader.option("dbtable", dbtable)
 
+    val table = if (config.config.contains("prePtnArray")){
+      val prePtn = config.config.get("prePtnArray").get
+        .split(config.config.getOrElse("prePtnDelimiter" ,","))
 
-    var table = reader.format(format).load(dbtable)
+      reader.jdbc(url.get, dbtable, prePtn, new Properties())
+    }else{
+      reader.option("dbtable", dbtable)
+
+      reader.format(format).load()
+    }
 
     val columns = table.columns
     val colNames = new Array[String](columns.length)

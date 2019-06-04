@@ -32,5 +32,28 @@ select '2' as rowkey, 'insert test data' as name as insert_table;
 save insert_table as hbase.`hbase1:mlsql_example`;
 ```
 
+MLSQL内置参数：
+
+| Property Name  |  Meaning |
+|---|---|
+| tsSuffix |通过列名加这个后缀覆盖hbase value的timestamp|
+|namespace|hbase命名空间|
+| family |hbase列族，load的时候如果family=""，查询所有列族|
+| field.type.ck |此示例为把ck字段设置为指定类型（LongType、FloatType、DoubleType、IntegerType、BooleanType、BinaryType、TimestampType、DateType），默认无StringType。|
+```
+connect hbase where `zk`="127.0.0.1:2181"
+and `tsSuffix`="_ts"
+and `family`="cf" as hbase_conn;
+
+select 'a' as id, 1 as ck, 1552419324001 as ck_ts as test ;
+save overwrite test
+as hbase.`hbase_conn:mlsql_example`
+options  rowkey="id";
+
+load hbase.`hbase_conn:mlsql_example`
+options `field.type.ck`="IntegerType"
+as testhbase;
+```
+
 在HBase里，数据连接引用和表之间的分隔符不是`.`,而是`:`。
 
