@@ -24,11 +24,11 @@ import org.apache.spark.sql.sources.v2.writer.streaming.StreamWriter
 import org.apache.spark.sql.sources.v2.writer.{DataWriterFactory, WriterCommitMessage}
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.{DFVisitor, Dataset, SparkSession}
-import streaming.log.{Logging,WowLog}
+import streaming.log.Logging
 
 /** Common methods used to create writes for the the console sink */
 class MLSQLConsoleWriter(schema: StructType, options: DataSourceOptions)
-  extends StreamWriter with Logging with WowLog {
+  extends StreamWriter with Logging {
 
   // Number of rows to display, by default 20 rows
   protected val numRowsToShow = options.getInt("numRows", 20)
@@ -68,6 +68,13 @@ class MLSQLConsoleWriter(schema: StructType, options: DataSourceOptions)
     value.split("\n").foreach { line =>
       logInfo(format(line))
     }
+  }
+
+  def format(str: String) = {
+    val prefix = if (options.get("LogPrefix").isPresent) {
+      options.get("LogPrefix").get()
+    } else ""
+    s"${prefix} ${str}"
   }
 
   override def toString(): String = {
