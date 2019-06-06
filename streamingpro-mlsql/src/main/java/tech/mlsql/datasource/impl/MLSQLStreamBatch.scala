@@ -3,9 +3,9 @@ package tech.mlsql.datasource.impl
 import org.apache.spark.sql.streaming.{DataStreamWriter, MLSQLForeachBatchRunner}
 import org.apache.spark.sql.{DataFrame, DataFrameReader, Row, SparkSession}
 import streaming.core.datasource.{DataSourceConfig, MLSQLBaseStreamSource}
+import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
-import streaming.dsl.{MLSQLExecuteContext, ScriptSQLExec}
-import tech.mlsql.job.{JobManager, MLSQLJobType}
+import tech.mlsql.ets.ScriptRunner
 
 /**
   * 2019-05-26 WilliamZhu(allwefantasy@gmail.com)
@@ -22,21 +22,8 @@ class MLSQLStreamBatch(override val uid: String) extends MLSQLBaseStreamSource w
     if (options.contains("code") && options.contains("sourceTable")) {
       val context = ScriptSQLExec.contextGetOrForTest()
       MLSQLForeachBatchRunner.run(dataStreamWriter, options("sourceTable"), (batchId: Long, sparkSessionForStream: SparkSession) => {
-
-        val ssel = context.execListener.clone(sparkSessionForStream)
-
-
-        val jobInfo = JobManager.getJobInfo(context.owner, MLSQLJobType.SCRIPT, context.groupId, options("code"), -1l)
-        jobInfo.copy(jobName = jobInfo.jobName + ":" + jobInfo.groupId)
-        
-        JobManager.run(sparkSessionForStream, jobInfo, () => {
-          val newContext = new MLSQLExecuteContext(ssel, context.owner, context.home, jobInfo.groupId, context.userDefinedParam)
-          ScriptSQLExec.setContext(newContext)
-          //clear any env from parent
-          val skipAuth = newContext.execListener.env().getOrElse("SKIP_AUTH", "false").toBoolean
-          newContext.execListener.env().clear()
-          ScriptSQLExec.parse(options("code"), newContext.execListener, false, skipAuth, false, false)
-        })
+        ScriptSQLExec.setContext(context)
+        ScriptRunner.run(options("code"), Option(sparkSessionForStream), false, false)
       })
     }
   }
