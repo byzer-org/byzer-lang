@@ -15,6 +15,20 @@ import streaming.common.PathFun
 
 import scala.collection.mutable.ArrayBuffer
 
+/**
+  *
+  * CompactTableInDelta is used to compaction small files to big files.
+  * This class requires the delta table should satisfied the following requirements:
+  *
+  * 1. There are at least one checkpoint have been generated.
+  * 2. The target delta table should be written by SaveMode.Append(Batch) or OutputMode.Append(Stream)
+  *
+  *
+  * @param deltaLog
+  * @param options
+  * @param partitionColumns
+  * @param configuration
+  */
 case class CompactTableInDelta(
                                 deltaLog: DeltaLog,
                                 options: DeltaOptions,
@@ -31,12 +45,14 @@ case class CompactTableInDelta(
 
     val (items, targetVersion, commitSuccess) = _run(sparkSession)
     if (commitSuccess) {
-      // trigger cleanup deltaLog
+      // cleanup deltaLog, so once optimized, we can not traval to the version
+      // before targetVersion because the data have been deleted
       recordDeltaOperation(deltaLog, "delta.log.compact.cleanup") {
         doLogCleanup(targetVersion)
       }
 
       // now we can really delete all files.
+      // Notice this is not a recovery operation.
       recordDeltaOperation(deltaLog, "delta.data.compact.cleanup") {
         doRemoveFileCleanup(items)
       }
@@ -55,6 +71,12 @@ case class CompactTableInDelta(
 
 
     var success = false
+
+    // The transaction should not take too long, so we should generated
+    // the new files firstly, and then try to start a transaction and commit,
+    // once fails, try again until compactRetryTimesForLock times.
+    // In the transaction, we only commit some infromations(AddFiles/RemoveFiles)
+    // So it will not affect the other program to write data.
     val (actions, version) = optimize(sparkSession, false)
 
     while (!success && compactRetryTimesForLock > 0) {
@@ -226,6 +248,7 @@ case class CompactTableInDelta(
           metadata.partitionColumns, snapshot.allFiles.toDF(), predicates).as[AddFile]
     }
 
+
     val filesShouldBeOptimized = filterFiles
       .map(addFile => PrefixAddFile(extractPathPrefix(addFile.path), addFile))
       .groupBy("prefix").agg(F.collect_list("addFile").as("addFiles")).as[PrefixAddFileList]
@@ -262,7 +285,7 @@ case class CompactTableInDelta(
           committer = committer,
           outputSpec = outputSpec,
           hadoopConf = spark.sessionState.newHadoopConfWithOptions(metadata.configuration),
-          partitionColumns = Seq(),
+          partitionColumns = Seq(), // Here, we directly write into this outputPath without partition
           bucketSpec = None,
           statsTrackers = Nil,
           options = Map.empty)
@@ -275,18 +298,25 @@ case class CompactTableInDelta(
       val tempFiles = fileList.addFiles.map { addFile =>
         new Path(deltaLog.dataPath, addFile.path).toString
       }
-      // if the file num is smaller then we need, skip
+      // if the file num is smaller then we need, skip and do nothing
       if (tempFiles.length >= compactNumFilePerDir) {
 
+        // If the code goes here, means the size of `fileList.addFiles`
+        // is larger then 0. We can get the first element and get the file prefix
+        // and partitionValues. In the next step when we reconstruct AddFiles, we need them.
         val prefix = extractPathPrefix(fileList.addFiles.head.path)
         val partitionValues = fileList.addFiles.head.partitionValues
 
+        // Using spark datasource API directly,
+        // is there any other ways?
         val df = sparkSession.read.parquet(tempFiles: _*)
           .repartition(compactNumFilePerDir)
 
         val filePath = if (prefix.isEmpty) deltaLog.dataPath
         else new Path(deltaLog.dataPath, prefix)
 
+        // Path in AddFile/RemoveFile should be relative path, and if the prefix
+        // is empty, the path will starts with "/" and we should use `stripPrefix` to remove it.
         newFiles ++= writeFiles(filePath, df, Some(options), false).map { addFile =>
           addFile.copy(path = PathFun(prefix).add(addFile.path).toPath.stripPrefix("/"), partitionValues = partitionValues)
         }
