@@ -271,12 +271,15 @@ case class CompactTableInDelta(
     }
 
     filesShouldBeOptimized.foreach { fileList =>
-      val prefix = extractPathPrefix(fileList.addFiles.head.path)
       val tempFiles = fileList.addFiles.map { addFile =>
         new Path(deltaLog.dataPath, addFile.path).toString
       }
       // if the file num is smaller then we need, skip
       if (tempFiles.length >= compactNumFilePerDir) {
+
+        val prefix = extractPathPrefix(fileList.addFiles.head.path)
+        val partitionValues = fileList.addFiles.head.partitionValues
+
         val df = sparkSession.read.parquet(tempFiles: _*)
           .repartition(compactNumFilePerDir)
 
@@ -284,7 +287,7 @@ case class CompactTableInDelta(
         else new Path(deltaLog.dataPath, prefix)
 
         newFiles ++= writeFiles(filePath, df, Some(options), false).map { addFile =>
-          addFile.copy(path = PathFun(prefix).add(addFile.path).toPath)
+          addFile.copy(path = PathFun(prefix).add(addFile.path).toPath, partitionValues = partitionValues)
         }
         deletedFiles ++= fileList.addFiles.map(_.remove)
       }
