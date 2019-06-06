@@ -35,6 +35,8 @@ object CommandCollection {
 
     context.addEnv("withWartermark",""" register WaterMarkInPlace.`` where inputTable="{}" and eventTimeCol="{}" and delayThreshold="{}" """)
 
+    context.addEnv("delta","""run command as DeltaCompactionCommandWrapper.`` where parameters='''{:all}'''""")
+
     context.addEnv("kafkaTool",
       """ run command as KafkaCommand.`kafka` where
         |action="{0}"

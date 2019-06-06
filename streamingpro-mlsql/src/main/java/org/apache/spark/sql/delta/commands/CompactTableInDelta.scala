@@ -9,8 +9,9 @@ import org.apache.spark.sql.delta.{DeltaConcurrentModificationException, _}
 import org.apache.spark.sql.execution.command.RunnableCommand
 import org.apache.spark.sql.execution.datasources.FileFormatWriter
 import org.apache.spark.sql.execution.{QueryExecution, SQLExecution}
-import org.apache.spark.sql.types.StructType
+import org.apache.spark.sql.mlsql.session.MLSQLException
 import org.apache.spark.sql.{Dataset, Row, SparkSession, functions => F}
+import streaming.common.PathFun
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -185,8 +186,16 @@ case class CompactTableInDelta(
 
     if (readVersion < 0) {
       // Initialize the log path
-      deltaLog.fs.mkdirs(deltaLog.logPath)
+      DeltaErrors.notADeltaTableException("compact", new DeltaTableIdentifier(Option(deltaLog.dataPath.toString), None))
     }
+
+    val latestCheckpoint = deltaLog.lastCheckpoint
+    if (latestCheckpoint.isEmpty) throw new MLSQLException(
+      s"""
+         |Compact delta log in ${deltaLog.dataPath.toString} should at least:
+         |- have a checkpoint file after it
+         |- be earlier than `targetVersion`
+       """.stripMargin)
 
     /**
       * No matter the table is a partition table or not,
@@ -204,7 +213,7 @@ case class CompactTableInDelta(
     val deletedFiles = ArrayBuffer[RemoveFile]()
 
     // find all files before this version
-    val snapshot = deltaLog.getSnapshotAt(version, None, None)
+    val snapshot = deltaLog.getSnapshotAt(version, None)
 
     // here may cost huge memory in driver if people do not optimize their tables frequently,
     // we should optimize it in future
@@ -224,17 +233,14 @@ case class CompactTableInDelta(
     val compactNumFilePerDir = configuration.get(COMPACT_NUM_FILE_PER_DIR)
       .map(f => f.toInt).getOrElse(1)
 
-    def writeFiles(
-                    data: Dataset[_],
-                    writeOptions: Option[DeltaOptions],
-                    isOptimize: Boolean): Seq[AddFile] = {
+    def writeFiles(outputPath: Path,
+                   data: Dataset[_],
+                   writeOptions: Option[DeltaOptions],
+                   isOptimize: Boolean): Seq[AddFile] = {
       val spark = data.sparkSession
-      val partitionSchema = metadata.partitionSchema
-      val outputPath = deltaLog.dataPath
 
       val (queryExecution, output) = normalizeData(metadata, data, metadata.partitionColumns)
-      val partitioningColumns =
-        getPartitioningColumns(partitionSchema, output, output.length < data.schema.size)
+
 
       val committer = getCommitter(outputPath)
 
@@ -255,7 +261,7 @@ case class CompactTableInDelta(
           committer = committer,
           outputSpec = outputSpec,
           hadoopConf = spark.sessionState.newHadoopConfWithOptions(metadata.configuration),
-          partitionColumns = partitioningColumns,
+          partitionColumns = Seq(),
           bucketSpec = None,
           statsTrackers = Nil,
           options = Map.empty)
@@ -265,6 +271,7 @@ case class CompactTableInDelta(
     }
 
     filesShouldBeOptimized.foreach { fileList =>
+      val prefix = extractPathPrefix(fileList.addFiles.head.path)
       val tempFiles = fileList.addFiles.map { addFile =>
         new Path(deltaLog.dataPath, addFile.path).toString
       }
@@ -273,7 +280,12 @@ case class CompactTableInDelta(
         val df = sparkSession.read.parquet(tempFiles: _*)
           .repartition(compactNumFilePerDir)
 
-        newFiles ++= writeFiles(df, Some(options), false)
+        val filePath = if (prefix.isEmpty) deltaLog.dataPath
+        else new Path(deltaLog.dataPath, prefix)
+
+        newFiles ++= writeFiles(filePath, df, Some(options), false).map { addFile =>
+          addFile.copy(path = PathFun(prefix).add(addFile.path).toPath)
+        }
         deletedFiles ++= fileList.addFiles.map(_.remove)
       }
     }
@@ -298,22 +310,6 @@ case class CompactTableInDelta(
     queryExecution -> cleanedData.queryExecution.analyzed.output
   }
 
-  protected def getPartitioningColumns(
-                                        partitionSchema: StructType,
-                                        output: Seq[Attribute],
-                                        colsDropped: Boolean): Seq[Attribute] = {
-    val partitionColumns: Seq[Attribute] = partitionSchema.map { col =>
-      // schema is already normalized, therefore we can do an equality check
-      output.find(f => f.name == col.name)
-        .getOrElse {
-          throw DeltaErrors.partitionColumnNotFoundException(col.name, output)
-        }
-    }
-    if (partitionColumns.nonEmpty && partitionColumns.length == output.length) {
-      throw DeltaErrors.nonPartitionColumnAbsentException(colsDropped)
-    }
-    partitionColumns
-  }
 
   protected def getCommitter(outputPath: Path): DelayedCommitProtocol =
     new DelayedCommitProtocol("delta", outputPath.toString, None)

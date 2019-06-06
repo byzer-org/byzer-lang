@@ -14,7 +14,9 @@ object ETRegister {
     wow("NothingET"),
     wow("ModelCommand"),
     wow("MLSQLEventCommand"),
-    wow("KafkaCommand")
+    wow("KafkaCommand"),
+    wow("DeltaCompactionCommand"),
+    wow("DeltaCompactionCommandWrapper")
   )
 
 }
