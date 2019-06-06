@@ -38,16 +38,20 @@ class DeltaCompactionCommandWrapper(override val uid: String) extends SQLAlg wit
       """.stripMargin
 
         val runInBackGround = command.last == "background"
+
+        var df: DataFrame = null
         if (runInBackGround) {
           ScriptRunner.runAsync(
             code, Option(spark), false, false)
         } else {
-          ScriptRunner.run(
-            code, Option(spark), true, false)
+          df = ScriptRunner.run(
+            code, Option(spark), true, false).get
         }
 
-        val msg = if (runInBackGround) s"Compact ${path} in background" else s"Compact ${path} successfully"
-        spark.createDataset[String](Seq(msg)).toDF("value")
+        if (runInBackGround) spark.createDataset[String](Seq(s"Compact ${path} in background")).toDF("value") else {
+          df
+        }
+
 
       case Seq("history", dataPath, _*) =>
         val deltaLog = DeltaLog.forTable(spark, PathFun(path).add(dataPath).toPath)

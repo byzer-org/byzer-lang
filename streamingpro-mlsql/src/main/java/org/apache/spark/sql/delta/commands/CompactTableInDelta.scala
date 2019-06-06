@@ -43,8 +43,9 @@ case class CompactTableInDelta(
     } else {
       rollback(items)
     }
-
-    Seq[Row]()
+    if (!commitSuccess) Seq[Row]() else {
+      items.map(f => Row.fromSeq(Seq(f.json)))
+    }
   }
 
   protected def _run(sparkSession: SparkSession): (Seq[Action], Long, Boolean) = {
@@ -287,7 +288,7 @@ case class CompactTableInDelta(
         else new Path(deltaLog.dataPath, prefix)
 
         newFiles ++= writeFiles(filePath, df, Some(options), false).map { addFile =>
-          addFile.copy(path = PathFun(prefix).add(addFile.path).toPath, partitionValues = partitionValues)
+          addFile.copy(path = PathFun(prefix).add(addFile.path).toPath.stripPrefix("/"), partitionValues = partitionValues)
         }
         deletedFiles ++= fileList.addFiles.map(_.remove)
       }
