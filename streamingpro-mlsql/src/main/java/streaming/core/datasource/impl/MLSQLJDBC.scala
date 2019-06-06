@@ -29,6 +29,7 @@ import _root_.streaming.log.{Logging, WowLog}
 import org.apache.spark.ml.param.{BooleanParam, LongParam, Param}
 import org.apache.spark.sql._
 import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
+import tech.mlsql.common.ScalaReflect
 
 class MLSQLJDBC(override val uid: String) extends MLSQLSource with MLSQLSink with MLSQLSourceInfo with MLSQLRegistry with WowParams with Logging with WowLog {
   def this() = this(BaseParams.randomUID())
@@ -205,9 +206,9 @@ class MLSQLJDBC(override val uid: String) extends MLSQLSource with MLSQLSink wit
 
     config.config.get("idCol").map { item =>
       import org.apache.spark.sql.jdbc.DataFrameWriterExtensions._
-      val extraOptionsField = writer.getClass.getDeclaredField("extraOptions")
-      extraOptionsField.setAccessible(true)
-      val extraOptions = extraOptionsField.get(writer).asInstanceOf[scala.collection.mutable.HashMap[String, String]]
+      val extraOptions = ScalaReflect.fromInstance[DataFrameWriter[Row]](writer)
+        .method("extraOptions").invoke()
+        .asInstanceOf[scala.collection.mutable.HashMap[String, String]]
       val jdbcOptions = new JDBCOptions(extraOptions.toMap + ("dbtable" -> dbtable))
       writer.upsert(Option(item), jdbcOptions, config.df.get)
     }.getOrElse {
