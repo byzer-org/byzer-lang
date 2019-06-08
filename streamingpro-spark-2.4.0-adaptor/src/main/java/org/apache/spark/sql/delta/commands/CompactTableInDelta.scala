@@ -9,7 +9,6 @@ import org.apache.spark.sql.delta.{DeltaConcurrentModificationException, _}
 import org.apache.spark.sql.execution.command.RunnableCommand
 import org.apache.spark.sql.execution.datasources.FileFormatWriter
 import org.apache.spark.sql.execution.{QueryExecution, SQLExecution}
-import org.apache.spark.sql.mlsql.session.MLSQLException
 import org.apache.spark.sql.{Dataset, Row, SparkSession, functions => F}
 import streaming.common.PathFun
 
@@ -213,7 +212,7 @@ case class CompactTableInDelta(
     }
 
     val latestCheckpoint = deltaLog.lastCheckpoint
-    if (latestCheckpoint.isEmpty) throw new MLSQLException(
+    if (latestCheckpoint.isEmpty) throw new RuntimeException(
       s"""
          |Compact delta log in ${deltaLog.dataPath.toString} should at least:
          |- have a checkpoint file after it
