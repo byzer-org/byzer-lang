@@ -1,5 +1,6 @@
 package tech.mlsql.ets
 
+import org.apache.spark.SparkCoreVersion
 import org.apache.spark.ml.param.Param
 import org.apache.spark.sql.delta.actions.{Action, AddFile, RemoveFile}
 import org.apache.spark.sql.delta.commands.CompactTableInDelta
@@ -7,9 +8,9 @@ import org.apache.spark.sql.delta.{DeltaLog, DeltaOptions}
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.mlsql.session.MLSQLException
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.Functions
 import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
+import streaming.dsl.mmlib.{Core_2_3_x, SQLAlg}
 
 /**
   * 2019-06-06 WilliamZhu(allwefantasy@gmail.com)
@@ -21,6 +22,11 @@ class DeltaCompactionCommand(override val uid: String) extends SQLAlg with Funct
   override def batchPredict(df: DataFrame, path: String, params: Map[String, String]): DataFrame = train(df, path, params)
 
   override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
+
+    require(SparkCoreVersion.version > Core_2_3_x.coreVersion,
+      s"Spark ${SparkCoreVersion.exactVersion} not support delta"
+    )
+
     val spark = df.sparkSession
 
     params.get(compactVersion.name).map { p =>
