@@ -46,6 +46,10 @@ object SparkCoreVersion {
     exactVersion == Core_2_3_2.coreVersion
   }
 
+  def is_2_3_X() = {
+    version == Core_2_3_x.coreVersion
+  }
+
   def is_2_4_X() = {
     version == Core_2_4_x.coreVersion
   }
