@@ -483,6 +483,12 @@
                     <groupId>io.delta</groupId>
                     <artifactId>delta-core_${scala.binary.version}</artifactId>
                     <version>0.1.0</version>
+                    <exclusions>
+                        <exclusion>
+                            <groupId>org.scala-lang</groupId>
+                            <artifactId>scala-library</artifactId>
+                        </exclusion>
+                    </exclusions>
                 </dependency>
             </dependencies>
         </profile>
