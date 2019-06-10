@@ -11,7 +11,7 @@ import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
 class MLSQLDelta(override val uid: String) extends MLSQLBaseFileSource with WowParams {
   def this() = this(BaseParams.randomUID())
 
-  override def fullFormat: String = "org.apache.spark.sql.delta.sources.DeltaDataSource"
+  override def fullFormat: String = "org.apache.spark.sql.delta.sources.MLSQLDeltaDataSource"
 
   override def shortFormat: String = "delta"
 
@@ -46,7 +46,7 @@ class MLSQLRate(override val uid: String) extends MLSQLBaseStreamSource with Wow
     SourceInfo(shortFormat, "", resourceRealPath(context.execListener, Option(owner), config.path))
   }
 
-  override def fullFormat: String = "org.apache.spark.sql.delta.sources.DeltaDataSource"
+  override def fullFormat: String = "org.apache.spark.sql.delta.sources.MLSQLDeltaDataSource"
 
   override def shortFormat: String = "rate"
 
