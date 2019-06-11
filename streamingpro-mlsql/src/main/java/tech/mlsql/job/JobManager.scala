@@ -169,7 +169,13 @@ class JobManager(_spark: SparkSession, initialDelay: Long, checkTimeInterval: Lo
     } else {
       spark.sparkContext.cancelJobGroup(groupId)
     }
-    groupIdToMLSQLJobInfo.remove(groupId)
+
+    if (job != null && !ignoreStreamJob && job.jobType == MLSQLJobType.STREAM) {
+
+    } else {
+      groupIdToMLSQLJobInfo.remove(groupId)
+    }
+
   }
 
   def shutdown = {
