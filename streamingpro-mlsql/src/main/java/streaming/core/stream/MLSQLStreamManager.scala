@@ -199,7 +199,7 @@ class MLSQLStreamingQueryListener extends StreamingQueryListener with Logging wi
 
     MLSQLStreamManager.removeStore(id)
     JobManager.getJobInfo.filter(f => f._2.jobType == MLSQLJobType.STREAM
-      && f._2.groupId == event.id.toString).headOption match {
+      && f._2.groupId == id).headOption match {
       case Some(job) =>
         JobManager.removeJobManually(job._1)
       case None =>

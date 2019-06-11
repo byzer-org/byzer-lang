@@ -163,12 +163,18 @@ class JobManager(_spark: SparkSession, initialDelay: Long, checkTimeInterval: Lo
 
     val notKillStreamJob = job != null && ignoreStreamJob && job.jobType == MLSQLJobType.STREAM
 
+    // when we try to kill stream job, we do not need to remove it from  groupIdToMLSQLJobInfo here.
+    // This is because once we kill the stream job successfully,
+    // then the MLSQLExternalStreamListener.onQueryTerminated will be invoked and remove it from  groupIdToMLSQLJobInfo.
+    // If we now remove it from JobManager.groupIdToMLSQLJobInfo, and finally the stream job is not killed, then
+    // the state of JobManager.groupIdToMLSQLJobInfo is not consistent with spark streams.
     def killStreamJob = {
       spark.streams.active.filter(f => f.id.toString == job.groupId).map(f => f.runId.toString).headOption match {
-        case Some(_) => spark.streams.get(job.groupId).stop()
+        case Some(_) =>
+          logInfo(format(s"Try to kill stream job: ${job.groupId}, name:${job.jobName} "))
+          spark.streams.get(job.groupId).stop()
         case None => logWarning(format(s"the stream job: ${job.groupId}, name:${job.jobName} is not in spark.streams."))
       }
-      groupIdToMLSQLJobInfo.remove(groupId)
     }
 
     def killBatchJob = {
