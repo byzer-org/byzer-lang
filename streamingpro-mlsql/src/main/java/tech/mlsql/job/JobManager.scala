@@ -147,7 +147,7 @@ class JobManager(_spark: SparkSession, initialDelay: Long, checkTimeInterval: Lo
                 case None => None
               }
               val session = tempSession.map(f => f.sparkSession).getOrElse(_spark)
-              cancelJobGroup(session, f._1)
+              cancelJobGroup(session, f._1, true)
             }
           } catch {
             case e: Exception => logError(format(s"Kill job ${f._1} fails"), e)
@@ -157,10 +157,10 @@ class JobManager(_spark: SparkSession, initialDelay: Long, checkTimeInterval: Lo
     }, initialDelay, checkTimeInterval, TimeUnit.SECONDS)
   }
 
-  def cancelJobGroup(spark: SparkSession, groupId: String): Unit = {
+  def cancelJobGroup(spark: SparkSession, groupId: String, ignoreStreamJob: Boolean = false): Unit = {
     logInfo(format("JobManager Timer cancel job group " + groupId))
     val job = groupIdToMLSQLJobInfo.get(groupId)
-    if (job != null && job.jobType == MLSQLJobType.STREAM) {
+    if (job != null && !ignoreStreamJob && job.jobType == MLSQLJobType.STREAM) {
       spark.streams.active.filter(f => f.id.toString == job.groupId).map(f => f.runId.toString).headOption match {
         case Some(_) => spark.streams.get(job.groupId).stop()
         case None => logWarning(format(s"the stream job: ${job.groupId}, name:${job.jobName} is not in spark.streams."))
