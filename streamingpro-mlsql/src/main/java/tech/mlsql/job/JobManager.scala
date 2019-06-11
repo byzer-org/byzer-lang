@@ -160,16 +160,27 @@ class JobManager(_spark: SparkSession, initialDelay: Long, checkTimeInterval: Lo
   def cancelJobGroup(spark: SparkSession, groupId: String, ignoreStreamJob: Boolean = false): Unit = {
     logInfo(format("JobManager Timer cancel job group " + groupId))
     val job = groupIdToMLSQLJobInfo.get(groupId)
-    if (job != null && !ignoreStreamJob && job.jobType == MLSQLJobType.STREAM) {
+
+    val notKillStreamJob = job != null && ignoreStreamJob && job.jobType == MLSQLJobType.STREAM
+
+    def killStreamJob = {
       spark.streams.active.filter(f => f.id.toString == job.groupId).map(f => f.runId.toString).headOption match {
         case Some(_) => spark.streams.get(job.groupId).stop()
         case None => logWarning(format(s"the stream job: ${job.groupId}, name:${job.jobName} is not in spark.streams."))
       }
-
-    } else {
-      spark.sparkContext.cancelJobGroup(groupId)
+      groupIdToMLSQLJobInfo.remove(groupId)
     }
-    groupIdToMLSQLJobInfo.remove(groupId)
+
+    def killBatchJob = {
+      spark.sparkContext.cancelJobGroup(groupId)
+      groupIdToMLSQLJobInfo.remove(groupId)
+    }
+
+    if (!notKillStreamJob) {
+      killStreamJob
+    } else {
+      killBatchJob
+    }
   }
 
   def shutdown = {

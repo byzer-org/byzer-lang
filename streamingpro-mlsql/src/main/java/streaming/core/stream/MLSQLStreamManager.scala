@@ -104,18 +104,6 @@ class MLSQLExternalStreamListener(val item: MLSQLStreamListenerItem) extends Log
   }
 
   private def _send(newParams: Map[String, String]) = {
-    //    val request = if (item.method.toLowerCase() == "get")
-    //      Request.Get(item.handleHttpUrl) else {
-    //
-    //      val innerRequest = Request.Post(item.handleHttpUrl)
-    //      val formBuilder = Form.form()
-    //      (item.params ++ newParams).foreach { case (k, v) =>
-    //        formBuilder.add(k, v)
-    //      }
-    //      innerRequest.bodyForm(formBuilder.build())
-    //    }
-    //    request.connectTimeout(connectTimeout).socketTimeout(socketTimeout)
-    //    request.execute().returnContent().asString()
     HttpClientCrawler.requestByMethod(item.handleHttpUrl, item.method, item.params ++ newParams)
   }
 }
@@ -138,6 +126,7 @@ class MLSQLStreamingQueryListener extends StreamingQueryListener with Logging wi
                |Reason:: Job is not synced before.
              """.stripMargin))
           //onQueryStarted is stared before we acquire info from StreamingQuery
+          JobManager.removeJobManually(job._2.groupId)
           JobManager.addJobManually(job._2.copy(groupId = id))
         }
       case None =>
