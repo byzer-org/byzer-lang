@@ -39,10 +39,7 @@ object CommandCollection {
 
     context.addEnv("kafkaTool",
       """ run command as KafkaCommand.`kafka` where
-        |action="{0}"
-        |and subscribe="{5}"
-        |and sampleNum="{1}"
-        |and kafka.bootstrap.servers="{4}" """.stripMargin)
+        |parameters='''{:all}''' """.stripMargin)
 
     // !callback post http://127.0.0.1:9002/jack when "started,progress,terminated"
     context.addEnv("callback",
