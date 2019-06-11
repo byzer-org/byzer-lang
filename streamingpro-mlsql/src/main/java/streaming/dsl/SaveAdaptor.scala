@@ -139,8 +139,8 @@ class SaveAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
 
     job = JobManager.getJobInfo(context.groupId)
     if (streamQuery != null) {
-      //here we do not need to clean the original groupId, since the StreamingproJobManager.handleJobDone(job.groupId)
-      // will handle this. Also, if this is stream job, so it should be remove by the StreamManager if it fails
+      // Todo:Notice that sometimes the MLSQLStreamingQueryListener.onQueryStarted will be executed before this code,
+      //  and this may cause some issues. We may try to fix this in future.
       JobManager.removeJobManually(job.groupId)
       job = job.copy(groupId = streamQuery.id.toString)
       JobManager.addJobManually(job)
