@@ -76,8 +76,6 @@ class SetAdaptor(scriptSQLExecListener: ScriptSQLExecListener, stage: Stage.stag
     var overwrite = true
     option.get("type") match {
       case Some("sql") =>
-        //Stage.preProcess and SetMode.compile is false ,keep param original sample.
-        value = "${" + key + "}"
         // If we set mode compile, and then we should avoid the sql executed in
         // both preProcess and physical stage.
         val mode = SetMode.withName(option.get(SetMode.keyName).getOrElse(SetMode.runtime.toString))
