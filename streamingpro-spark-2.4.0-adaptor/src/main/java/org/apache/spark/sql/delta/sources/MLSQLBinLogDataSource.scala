@@ -1,77 +1,130 @@
 package org.apache.spark.sql.delta.sources
 
-import com.github.shyiko.mysql.binlog.BinaryLogClient
-import com.github.shyiko.mysql.binlog.event.Event
-import com.github.shyiko.mysql.binlog.event.EventType._
-import com.github.shyiko.mysql.binlog.event.deserialization.EventDeserializer
-import org.apache.spark.sql.execution.streaming.{Offset, Source}
+import java.net.Socket
+import java.util.concurrent.atomic.AtomicBoolean
+
+import org.apache.spark.SparkEnv
+import org.apache.spark.internal.Logging
+import org.apache.spark.sql.catalyst.InternalRow
+import org.apache.spark.sql.delta.sources.mysql.binlog._
+import org.apache.spark.sql.execution.streaming.{LongOffset, Offset, Source}
 import org.apache.spark.sql.sources.{DataSourceRegister, StreamSourceProvider}
-import org.apache.spark.sql.types.StructType
+import org.apache.spark.sql.types.{StringType, StructField, StructType}
 import org.apache.spark.sql.{DataFrame, SQLContext, SparkSession}
 
 /**
-  * 2019-06-11 WilliamZhu(allwefantasy@gmail.com)
+  * This Datasource is used to consume MySQL binlog. Not support MariaDB yet because the connector we are using is
+  * lack of the ability.
+  * If you want to use this to upsert delta table, please set MySQL binlog_row_image to full so we can get the complete
+  * record after updating.
   */
 class MLSQLBinLogDataSource extends StreamSourceProvider with DataSourceRegister {
   override def sourceSchema(sqlContext: SQLContext, schema: Option[StructType], providerName: String, parameters: Map[String, String]): (String, StructType) = ???
 
+  /**
+    * First, we will launch a task to
+    *    1. start binglog client and setup a queue (where we put the binlog event)
+    *    2. start a new socket the the executor where the task runs on, and return the connection message.
+    * Second, Launch the MLSQLBinLogSource to consume the events:
+    *    3. MLSQLBinLogSource get the host/port message and connect it to fetch the data.
+    *    4. For now ,we will not support continue streaming.
+    */
   override def createSource(sqlContext: SQLContext, metadataPath: String, schema: Option[StructType], providerName: String, parameters: Map[String, String]): Source = {
-    val client = new BinaryLogClient("hostname", 3306, "username", "password")
-    val eventDeserializer = new EventDeserializer()
-    eventDeserializer.setCompatibilityMode(
-      EventDeserializer.CompatibilityMode.DATE_AND_TIME_AS_LONG,
-      EventDeserializer.CompatibilityMode.CHAR_AND_BINARY_AS_BYTE_ARRAY
-    )
-    client.setEventDeserializer(eventDeserializer)
 
-    client.registerEventListener(new BinaryLogClient.EventListener() {
-      def onEvent(event: Event): Unit = {
-        val eventType = event.getHeader
-        eventType match {
-          case TABLE_MAP =>
-            val tableMapEventData = event.getData
-          // handle tableMapEventData (contains mapping between *RowsEventData::tableId and table name
-          // that can be used (together with https://github.com/shyiko/mysql-binlog-connector-java/issues/24#issuecomment-43747417)
-          // to map column names to the values)
+    val spark = sqlContext.sparkSession
 
-          case PRE_GA_WRITE_ROWS =>
-          case WRITE_ROWS =>
-          case EXT_WRITE_ROWS =>
-            val writeRowsEventData = event.getData
-          // handle writeRowsEventData (generated when someone INSERTs data)
+    val bingLogHost = parameters("bingLogHost")
+    val bingLogPort = parameters("bingLogPort").toInt
+    val bingLogName = parameters.getOrElse("bingLogName", BinLogSocketServerInExecutor.FILE_NAME_NOT_SET)
 
-          case PRE_GA_UPDATE_ROWS =>
-          case UPDATE_ROWS =>
-          case EXT_UPDATE_ROWS =>
-            val updateRowsEventData = event.getData
-          // handle updateRowsEventData (generated when someone UPDATEs data)
-          // THIS IS THE EVENT your are looking for
+    val executorBinlogServer = spark.sparkContext.parallelize(Seq("launch-binlog-socket-server")).map { item =>
+      val executorBinlogServer = new BinLogSocketServerInExecutor()
+      SocketServerInExecutor.addNewBinlogServer(MySQLBinlogServer(bingLogHost, bingLogPort, bingLogName), executorBinlogServer)
+      ExecutorBinlogServer(executorBinlogServer.host, executorBinlogServer.port, bingLogName)
+    }.collect().head
 
-          case PRE_GA_DELETE_ROWS =>
-          case DELETE_ROWS =>
-          case EXT_DELETE_ROWS =>
-            val deleteRowsEventData = event.getData
-          // handle deleteRowsEventData (generated when someone DELETEs data)
-
-          case _ =>
-        }
-      }
-    })
-    client.connect()
-    MLSQLBinLogSource(client,sqlContext.sparkSession,Map())
+    MLSQLBinLogSource(executorBinlogServer, sqlContext.sparkSession, Map())
   }
 
   override def shortName(): String = "mysql-binglog"
 }
 
-case class MLSQLBinLogSource( client:BinaryLogClient,
-                              spark: SparkSession, parameters: Map[String, String]
-                            ) extends Source {
-  override def schema: StructType = ???
+/**
+  * This implementation will not work in production. We should do more thing on
+  * something like fault recovery.
+  *
+  * @param executorBinlogServer
+  * @param spark
+  * @param parameters
+  */
+case class MLSQLBinLogSource(executorBinlogServer: ExecutorBinlogServer,
+                             spark: SparkSession, parameters: Map[String, String]
+                            ) extends Source with Logging {
 
-  override def getOffset: Option[Offset] = ???
+  private val initialized: AtomicBoolean = new AtomicBoolean(false)
 
-  override def getBatch(start: Option[Offset], end: Offset): DataFrame = ???
+  private var socket: Socket = null
 
-  override def stop(): Unit = ???
+  private val sparkEnv = SparkEnv.get
+
+  private def initialize(): Unit = synchronized {
+    socket = new Socket(executorBinlogServer.host, executorBinlogServer.port)
+  }
+
+  override def schema: StructType = {
+    StructType(Seq(StructField("value", StringType)))
+  }
+
+  override def getOffset: Option[Offset] = {
+    synchronized {
+      if (initialized.compareAndSet(false, true)) {
+        initialize()
+      }
+    }
+    Option(LongOffset(0))
+  }
+
+  override def getBatch(start: Option[Offset], end: Offset): DataFrame = {
+    val rdd = spark.sparkContext.parallelize(Seq("fetch-bing-log")).mapPartitions { iter =>
+      val consumer = ExecutorBinlogServerConsumerCache.acquire(executorBinlogServer)
+      consumer.fetchData(start.get, end).toIterator
+    }.map { cr =>
+      InternalRow(cr)
+    }
+    spark.sqlContext.internalCreateDataFrame(rdd.setName("mysql-bin-log"), schema, isStreaming = true)
+  }
+
+  override def stop(): Unit = {
+    socket.close()
+  }
 }
+
+
+case class ExecutorInternalBinlogConsumer(executorBinlogServer: ExecutorBinlogServer) extends BinLogSocketServerSerDer {
+  val socket = new Socket(executorBinlogServer.host, executorBinlogServer.port)
+  @volatile var inUse = true
+  @volatile var markedForClose = false
+
+  def fetchData(start: Offset, end: Offset) = {
+    sendRequest(socket.getOutputStream, RequestData(
+      executorBinlogServer.fileName,
+      start.asInstanceOf[LongOffset].offset,
+      end.asInstanceOf[LongOffset].offset))
+    val response = readResponse(socket.getInputStream)
+    response.asInstanceOf[DataResponse].data
+  }
+
+  def close = {
+    socket.close()
+  }
+}
+
+
+
+
+
+
+
+
+
+
