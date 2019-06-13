@@ -31,7 +31,7 @@ class CommandAdaptor(preProcessListener: PreProcessListener) extends DslAdaptor 
       ctx.getChild(tokenIndex) match {
         case s: CommandValueContext =>
           val oringinalText = s.getText
-          parameters += cleanBlockStr(cleanStr(evaluate(oringinalText)))
+          parameters += cleanBlockStr(cleanStr(oringinalText))
         case s: RawCommandValueContext =>
           val box = ArrayBuffer[String]()
           var prePos = 0
