@@ -116,7 +116,7 @@ trait BinLogSocketServerSerDer {
     val dOut = new DataOutputStream(out)
     dOut.writeUTF(response.json)
     dOut.flush()
-  }
+  } 
 
   def readResponse(in: InputStream) = {
     val dIn = new DataInputStream(in)

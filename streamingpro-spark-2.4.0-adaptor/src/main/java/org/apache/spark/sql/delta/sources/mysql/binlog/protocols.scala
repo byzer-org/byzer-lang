@@ -4,13 +4,33 @@ import com.github.shyiko.mysql.binlog.event.Event
 import org.apache.spark.sql.delta.util.JsonUtils
 
 
+object BinlogOffset {
+  def fromOffset(recordOffset: Long) = {
+    val item = recordOffset.toString
+    val len = item.length
+    val fileId = item.substring(0, len - 13).toLong
+    val pos = item.substring(len - 13).toLong
+    BinlogOffset(fileId, pos)
+  }
+
+  def toFileName(prefix: String, fileId: Long) = {
+    s"${prefix}.${"%06d".format(fileId)}"
+  }
+
+  def fromFileAndPos(filename: String, pos: Long) = {
+    BinlogOffset(filename.split("\\.").last.toLong, pos)
+  }
+}
+
+case class BinlogOffset(fileId: Long, pos: Long) {
+  def offset = (fileId.toString + "%013d".format(pos)).toLong
+}
+
 case class MySQLBinlogServer(host: String, port: Int, fileName: String)
 
 case class ExecutorBinlogServer(host: String, port: Int, fileName: String)
 
-case class RawBinlogEvent(event: Event, binlogFilename: String)
-
-case class MySQLConnectionInfo(host: String, port: Int, userName: String, password: String)
+case class MySQLConnectionInfo(host: String, port: Int, userName: String, password: String, binlogFileName: Option[String], recordPos: Option[Long])
 
 case class TableInfoCacheKey(uuidPrefix: String, databaseName: String, tableName: String, tableId: Long)
 
@@ -40,7 +60,7 @@ case class BinlogSocketResponse(offsetResponse: OffsetResponse = null,
   }
 }
 
-case class OffsetResponse(currentBinlogFile: String, currentBinlogPosition: Long, currentOffset: Long) extends Response {
+case class OffsetResponse(currentOffset: Long) extends Response {
   override def wrap: BinlogSocketResponse = BinlogSocketResponse(offsetResponse = this)
 }
 
