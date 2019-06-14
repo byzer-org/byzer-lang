@@ -39,6 +39,8 @@ class ShowCommand(override val uid: String) extends SQLAlg with Functions with W
           |!show et [ETName];
           |!show functions;
           |!show function [functionName];
+          |!show tables;
+          |!show tables from [database];
         """.stripMargin)
 
       s"""
@@ -55,6 +57,10 @@ class ShowCommand(override val uid: String) extends SQLAlg with Functions with W
       case Array("et") => s"load modelList.`` as __output__;"
       case Array("functions") => s"run command as ShowFunctionsExt.``;"
       case Array("function", name) => s"run command as ShowFunctionsExt.`${name}`;"
+      case Array("tables") => s"run command as ShowTablesExt.``;"
+      case Array("tables" ,"named" ,aliasName) => s"run command as ShowTablesExt.`` as ${aliasName};"
+      case Array("tables" ,"from" ,name) => s"run command as ShowTablesExt.`${name}`;"
+      case Array("tables" ,"from" ,name ,"named" ,aliasName) => s"run command as ShowTablesExt.`` as ${aliasName};"
       case Array("commands") | Array() | Array("help") | Array("-help") =>
         help
       case _ => s"load _mlsql_.`${newPath.mkString("/")}` as output;"
