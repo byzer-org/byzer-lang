@@ -9,6 +9,16 @@ public class RawBinlogEvent {
     private String binlogFilename;
     private Long pos;
 
+    public TableInfo getTableInfo() {
+        return tableInfo;
+    }
+
+    public void setTableInfo(TableInfo tableInfo) {
+        this.tableInfo = tableInfo;
+    }
+
+    private TableInfo tableInfo;
+
     public String getEventType() {
         return eventType;
     }
@@ -28,11 +38,12 @@ public class RawBinlogEvent {
     }
 
 
-    public RawBinlogEvent(Event event, String binlogFilename, String eventType, long pos) {
+    public RawBinlogEvent(Event event, TableInfo tableInfo, String binlogFilename, String eventType, long pos) {
         this.event = event;
         this.binlogFilename = binlogFilename;
         this.pos = pos;
         this.eventType = eventType;
+        this.tableInfo = tableInfo;
     }
 
     public Long getTimestamp() {

@@ -7,25 +7,13 @@ import java.io.Serializable;
  */
 public class MySQLCDCUtils {
 
-    public static Object getWritableObject(Integer type, Serializable value) {
+    public static Object getWritableObject(Serializable value) {
         if (value == null) {
             return null;
         }
-        if (type == null) {
-            if (value instanceof byte[]) {
-                return new String((byte[]) value);
-            } else if (value instanceof Number) {
-                return value;
-            }
-        } else if (value instanceof Number) {
-            return value;
-        } else {
-            if (value instanceof byte[]) {
-                return new String((byte[]) value);
-            } else {
-                return value.toString();
-            }
+        if (value instanceof byte[]) {
+            return new String((byte[]) value);
         }
-        return null;
+        return value;
     }
 }

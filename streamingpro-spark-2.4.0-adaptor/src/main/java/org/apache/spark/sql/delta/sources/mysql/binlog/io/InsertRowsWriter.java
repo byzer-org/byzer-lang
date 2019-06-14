@@ -1,7 +1,7 @@
 package org.apache.spark.sql.delta.sources.mysql.binlog.io;
 
 
-import com.github.shyiko.mysql.binlog.event.UpdateRowsEventData;
+import com.github.shyiko.mysql.binlog.event.WriteRowsEventData;
 import org.apache.spark.sql.delta.sources.mysql.binlog.MySQLCDCUtils;
 import org.apache.spark.sql.delta.sources.mysql.binlog.RawBinlogEvent;
 import org.apache.spark.sql.delta.sources.mysql.binlog.TableInfo;
@@ -12,17 +12,16 @@ import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
-import java.util.Map;
 
-public class UpdateRowsWriter extends AbstractEventWriter {
+public class InsertRowsWriter extends AbstractEventWriter {
 
 
     @Override
     public List<String> writeEvent(RawBinlogEvent event) {
-        UpdateRowsEventData data = event.getEvent().getData();
+        WriteRowsEventData data = event.getEvent().getData();
         List<String> items = new ArrayList<>();
 
-        for (Map.Entry<Serializable[], Serializable[]> row : data.getRows()) {
+        for (Serializable[] row : data.getRows()) {
             try {
                 StringWriter writer = new StringWriter();
                 startJson(writer, event);
@@ -37,7 +36,7 @@ public class UpdateRowsWriter extends AbstractEventWriter {
         return items;
     }
 
-    protected void writeRow(TableInfo tableInfo, Map.Entry<Serializable[], Serializable[]> row, BitSet includedColumns) throws IOException {
+    protected void writeRow(TableInfo tableInfo, Serializable[] row, BitSet includedColumns) throws IOException {
 
         jsonGenerator.writeArrayFieldStart("rows");
         int i = includedColumns.nextSetBit(0);
@@ -46,9 +45,9 @@ public class UpdateRowsWriter extends AbstractEventWriter {
             jsonGenerator.writeNumberField("id", i + 1);
             String columnName = new SchemaTool(tableInfo.getSchema()).getColumnNameByIndex(i);
 
-            Serializable[] newRow = row.getValue();
-            if (newRow != null) {
-                jsonGenerator.writeObjectField(columnName, MySQLCDCUtils.getWritableObject(newRow[i]));
+
+            if (row[i] != null) {
+                jsonGenerator.writeObjectField(columnName, MySQLCDCUtils.getWritableObject(row[i]));
             }
 
             jsonGenerator.writeEndObject();

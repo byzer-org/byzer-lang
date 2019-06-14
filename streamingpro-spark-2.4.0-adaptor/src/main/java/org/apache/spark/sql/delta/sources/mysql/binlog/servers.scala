@@ -4,11 +4,11 @@ import java.io.{DataInputStream, DataOutputStream, InputStream, OutputStream}
 import java.net.{InetAddress, ServerSocket, Socket}
 import java.util.concurrent.Executors
 
-import org.apache.spark.{SparkEnv, SparkException, TaskContext}
 import org.apache.spark.internal.Logging
 import org.apache.spark.network.util.JavaUtils
 import org.apache.spark.sql.delta.sources.ExecutorInternalBinlogConsumer
 import org.apache.spark.sql.delta.util.JsonUtils
+import org.apache.spark.{SparkEnv, SparkException, TaskContext}
 
 
 object SocketServerInExecutor extends Logging {
@@ -70,9 +70,12 @@ object SocketServerInExecutor extends Logging {
                   }
                 }
               })
+            } catch {
+              case e: Exception => logError("", e)
             }
-            JavaUtils.closeQuietly(serverSocket)
+
           }
+          JavaUtils.closeQuietly(serverSocket)
         }
         catch {
           case e: Exception => logError("", e)
@@ -94,11 +97,6 @@ abstract class SocketServerInExecutor[T](threadName: String) {
   def handleConnection(sock: Socket): T
 }
 
-
-object BinLogSocketServerInExecutor {
-  val FILE_NAME_NOT_SET = "file_name_not_set"
-}
-
 trait BinLogSocketServerSerDer {
   def readRequest(in: InputStream) = {
     val dIn = new DataInputStream(in)
@@ -116,7 +114,7 @@ trait BinLogSocketServerSerDer {
     val dOut = new DataOutputStream(out)
     dOut.writeUTF(response.json)
     dOut.flush()
-  } 
+  }
 
   def readResponse(in: InputStream) = {
     val dIn = new DataInputStream(in)

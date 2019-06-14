@@ -19,11 +19,14 @@ import org.apache.spark.sql.{DataFrame, SQLContext, SparkSession}
   * record after updating.
   */
 class MLSQLBinLogDataSource extends StreamSourceProvider with DataSourceRegister {
-  override def sourceSchema(sqlContext: SQLContext, schema: Option[StructType], providerName: String, parameters: Map[String, String]): (String, StructType) = ???
+  override def sourceSchema(sqlContext: SQLContext,
+                            schema: Option[StructType],
+                            providerName: String,
+                            parameters: Map[String, String]): (String, StructType) = ???
 
   /**
     * First, we will launch a task to
-    *    1. start binglog client and setup a queue (where we put the binlog event)
+    *    1. start binlog client and setup a queue (where we put the binlog event)
     *    2. start a new socket the the executor where the task runs on, and return the connection message.
     * Second, Launch the MLSQLBinLogSource to consume the events:
     *    3. MLSQLBinLogSource get the host/port message and connect it to fetch the data.
@@ -35,11 +38,21 @@ class MLSQLBinLogDataSource extends StreamSourceProvider with DataSourceRegister
 
     val bingLogHost = parameters("bingLogHost")
     val bingLogPort = parameters("bingLogPort").toInt
+    val bingLogUserName = parameters("bingLogUserName")
+    val bingLogPassword = parameters("bingLogPassword")
     val bingLogName = parameters.getOrElse("bingLogName", BinLogSocketServerInExecutor.FILE_NAME_NOT_SET)
 
     val executorBinlogServer = spark.sparkContext.parallelize(Seq("launch-binlog-socket-server")).map { item =>
       val executorBinlogServer = new BinLogSocketServerInExecutor()
-      SocketServerInExecutor.addNewBinlogServer(MySQLBinlogServer(bingLogHost, bingLogPort, bingLogName), executorBinlogServer)
+
+      executorBinlogServer.connectMySQL(MySQLConnectionInfo(bingLogHost,
+        bingLogPort,
+        bingLogUserName,
+        bingLogPassword, None, None))
+
+      SocketServerInExecutor.addNewBinlogServer(
+        MySQLBinlogServer(bingLogHost, bingLogPort, bingLogName),
+        executorBinlogServer)
       ExecutorBinlogServer(executorBinlogServer.host, executorBinlogServer.port, bingLogName)
     }.collect().head
 

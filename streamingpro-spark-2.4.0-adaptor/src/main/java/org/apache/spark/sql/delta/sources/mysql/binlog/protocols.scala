@@ -1,7 +1,7 @@
 package org.apache.spark.sql.delta.sources.mysql.binlog
 
-import com.github.shyiko.mysql.binlog.event.Event
 import org.apache.spark.sql.delta.util.JsonUtils
+import org.apache.spark.sql.types.StructType
 
 
 object BinlogOffset {
@@ -30,9 +30,14 @@ case class MySQLBinlogServer(host: String, port: Int, fileName: String)
 
 case class ExecutorBinlogServer(host: String, port: Int, fileName: String)
 
-case class MySQLConnectionInfo(host: String, port: Int, userName: String, password: String, binlogFileName: Option[String], recordPos: Option[Long])
+case class MySQLConnectionInfo(host: String, port: Int, userName: String, password: String,
+                               binlogFileName: Option[String],
+                               recordPos: Option[Long],
+                               databaseNamePattern: Option[String] = None,
+                               tableNamePattern: Option[String] = None
+                              )
 
-case class TableInfoCacheKey(uuidPrefix: String, databaseName: String, tableName: String, tableId: Long)
+case class TableInfoCacheKey(databaseName: String, tableName: String, tableId: Long)
 
 // protocols
 sealed trait Request {
