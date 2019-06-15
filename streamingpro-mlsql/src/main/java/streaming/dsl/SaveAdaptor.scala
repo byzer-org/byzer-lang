@@ -142,10 +142,11 @@ class SaveAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
       // Todo:Notice that sometimes the MLSQLStreamingQueryListener.onQueryStarted will be executed before this code,
       //  and this may cause some issues. We may try to fix this in future.
       JobManager.removeJobManually(job.groupId)
-      if (!JobManager.getJobInfo.contains(streamQuery.id.toString)) {
-        job = job.copy(groupId = streamQuery.id.toString)
-        JobManager.addJobManually(job)
+      val realGroupId = streamQuery.id.toString
+      if (!JobManager.getJobInfo.contains(realGroupId)) {
+        JobManager.addJobManually(job.copy(groupId = realGroupId))
       }
+      job = JobManager.getJobInfo(realGroupId)
       MLSQLStreamManager.addStore(job)
     }
 
