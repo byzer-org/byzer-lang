@@ -1,6 +1,8 @@
 package org.apache.spark.sql.delta.sources.mysql.binlog
 
+import java.io.{DataInputStream, DataOutputStream}
 import java.net.Socket
+import java.util
 import java.util.concurrent.{ConcurrentHashMap, LinkedBlockingQueue}
 import java.util.regex.Pattern
 
@@ -8,6 +10,7 @@ import com.github.shyiko.mysql.binlog.BinaryLogClient
 import com.github.shyiko.mysql.binlog.event.EventType._
 import com.github.shyiko.mysql.binlog.event._
 import com.github.shyiko.mysql.binlog.event.deserialization.EventDeserializer
+import org.apache.spark.internal.Logging
 import org.apache.spark.sql.delta.sources.mysql.binlog.io.{DeleteRowsWriter, EventInfo, InsertRowsWriter, UpdateRowsWriter}
 import org.apache.spark.sql.execution.datasources.jdbc.{JDBCOptions, JDBCRDD}
 import org.apache.spark.sql.types.StructType
@@ -20,7 +23,7 @@ import scala.collection.mutable.ArrayBuffer
   */
 class BinLogSocketServerInExecutor
   extends SocketServerInExecutor[Array[Byte]]("binlog-socket-server-in-executor")
-    with BinLogSocketServerSerDer {
+    with BinLogSocketServerSerDer with Logging {
 
   private var connectThread: Thread = null
 
@@ -57,7 +60,9 @@ class BinLogSocketServerInExecutor
     val client = new BinaryLogClient(connect.host, connect.port, connect.userName, connect.password)
 
     connect.binlogFileName match {
-      case Some(filename) => client.setBinlogFilename(filename)
+      case Some(filename) =>
+        client.setBinlogFilename(filename)
+        currentBinlogFile = filename
       case _ =>
     }
 
@@ -83,13 +88,13 @@ class BinLogSocketServerInExecutor
         if (eventType != ROTATE && eventType != FORMAT_DESCRIPTION) {
           currentBinlogPosition = header.getPosition
         }
-
+        
         eventType match {
           case TABLE_MAP =>
             val data = event.getData[TableMapEventData]()
             skipTable = databaseNamePattern
               .map(_.matcher(data.getDatabase).matches())
-              .getOrElse(false) || tableNamePattern
+              .getOrElse(false) && tableNamePattern
               .map(_.matcher(data.getTable).matches())
               .getOrElse(false)
 
@@ -100,6 +105,7 @@ class BinLogSocketServerInExecutor
                 val tableSchemaInfo = loadSchemaInfo(connect, cacheKey)
                 val currentTableRef = new TableInfo(cacheKey.databaseName, cacheKey.tableName, cacheKey.tableId, tableSchemaInfo.json)
                 tableInfoCache.put(cacheKey, currentTableRef)
+                currentTable = currentTableRef
               }
 
             } else currentTable = null
@@ -184,27 +190,40 @@ class BinLogSocketServerInExecutor
       case "update" => updateRowsWriter
       case "delete" => deleteRowsWriter
     }
-    writer.writeEvent(rawBinlogEvent)
+
+    val jsonList = try {
+      writer.writeEvent(rawBinlogEvent)
+    } catch {
+      case e: Exception =>
+        logError("", e)
+        new util.ArrayList[String]()
+    }
+    jsonList
   }
 
   def handleConnection(socket: Socket): Array[Byte] = {
     socket.setKeepAlive(true)
+    val dIn = new DataInputStream(socket.getInputStream)
+    val dOut = new DataOutputStream(socket.getOutputStream)
     while (true) {
-      readRequest(socket.getInputStream) match {
+      readRequest(dIn) match {
         case request: RequestOffset =>
-          sendResponse(socket.getOutputStream, OffsetResponse(BinlogOffset.fromFileAndPos(currentBinlogFile, currentBinlogPosition + 1).offset))
+          sendResponse(dOut, OffsetResponse(BinlogOffset.fromFileAndPos(currentBinlogFile, currentBinlogPosition + 1).offset))
         case request: RequestData =>
           val start = request.startOffset
           val end = request.endOffset
-          var item: RawBinlogEvent = new RawBinlogEvent(null, null, "", null, 4)
+          var item: RawBinlogEvent = queue.poll()
           val res = ArrayBuffer[String]()
-          while (item != null && toOffset(item) >= start && toOffset(item) < end) {
-            item = queue.poll()
-            if (item != null) {
+          try {
+            while (item != null && toOffset(item) >= start && toOffset(item) < end) {
               res ++= convertRawBinlogEventRecord(item).asScala
+              item = queue.poll()
             }
+          } catch {
+            case e: Exception =>
+              logError("", e)
           }
-          sendResponse(socket.getOutputStream, DataResponse(res.toList))
+          sendResponse(dOut, DataResponse(res.toList))
       }
     }
     Array()

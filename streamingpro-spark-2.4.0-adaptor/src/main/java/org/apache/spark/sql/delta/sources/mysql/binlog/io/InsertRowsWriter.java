@@ -40,19 +40,17 @@ public class InsertRowsWriter extends AbstractEventWriter {
 
         jsonGenerator.writeArrayFieldStart("rows");
         int i = includedColumns.nextSetBit(0);
+        jsonGenerator.writeStartObject();
         while (i != -1) {
-            jsonGenerator.writeStartObject();
-            jsonGenerator.writeNumberField("id", i + 1);
+
             String columnName = new SchemaTool(tableInfo.getSchema()).getColumnNameByIndex(i);
-
-
             if (row[i] != null) {
                 jsonGenerator.writeObjectField(columnName, MySQLCDCUtils.getWritableObject(row[i]));
             }
-
-            jsonGenerator.writeEndObject();
+            
             i = includedColumns.nextSetBit(i + 1);
         }
+        jsonGenerator.writeEndObject();
         jsonGenerator.writeEndArray();
     }
 }

@@ -25,9 +25,9 @@ case class BinlogOffset(fileId: Long, pos: Long) {
   def offset = (fileId.toString + "%013d".format(pos)).toLong
 }
 
-case class MySQLBinlogServer(host: String, port: Int, fileName: Option[String])
+case class MySQLBinlogServer(host: String, port: Int)
 
-case class ExecutorBinlogServer(host: String, port: Int, fileName: Option[String])
+case class ExecutorBinlogServer(host: String, port: Int)
 
 case class MySQLConnectionInfo(host: String, port: Int, userName: String, password: String,
                                binlogFileName: Option[String],

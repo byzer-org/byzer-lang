@@ -1,7 +1,8 @@
 package org.apache.spark.sql.delta.sources.mysql.binlog
 
-import java.io.{DataInputStream, DataOutputStream, InputStream, OutputStream}
+import java.io.{DataInputStream, DataOutputStream}
 import java.net.{InetAddress, ServerSocket, Socket}
+import java.nio.charset.StandardCharsets
 import java.util.concurrent.Executors
 
 import org.apache.spark.internal.Logging
@@ -44,11 +45,17 @@ object SocketServerInExecutor extends Logging {
     (serverSocket, host, serverSocket.getLocalPort)
   }
 
+
   def setupMultiConnectionServer(threadName: String)
                                 (func: Socket => Unit): (ServerSocket, String, Int) = {
 
 
-    val host = SparkEnv.get.rpcEnv.address.host
+    val host = if (SparkEnv.get == null) {
+      //When SparkEnv.get is test, it may a test
+      "127.0.0.1"
+    } else {
+      SparkEnv.get.rpcEnv.address.host
+    }
     val serverSocket: ServerSocket = new ServerSocket(0, 1, InetAddress.getByName(host))
     // Close the socket if no connection in 1 hour seconds
     serverSocket.setSoTimeout(1000 * 60 * 60)
@@ -64,6 +71,7 @@ object SocketServerInExecutor extends Logging {
               threadPool.submit(new Runnable {
                 override def run(): Unit = {
                   try {
+                    logInfo("Received connection from" + socket)
                     func(socket)
                   } finally {
                     JavaUtils.closeQuietly(socket)
@@ -98,37 +106,33 @@ abstract class SocketServerInExecutor[T](threadName: String) {
 }
 
 trait BinLogSocketServerSerDer {
-  def readRequest(in: InputStream) = {
-    val dIn = new DataInputStream(in)
-    while (dIn.available() <= 0) {
-      Thread.sleep(10)
-    }
-    val request = JsonUtils.fromJson[BinlogSocketRequest](dIn.readUTF()).unwrap
-    println("readRequest:" + request)
-    request
+  def readRequest(dIn: DataInputStream) = {
+    val length = dIn.readInt()
+    val bytes = new Array[Byte](length)
+    dIn.read(bytes, 0, length)
+    val response = JsonUtils.fromJson[BinlogSocketRequest](new String(bytes, StandardCharsets.UTF_8)).unwrap
+    response
   }
 
-  def sendRequest(out: OutputStream, request: Request) = {
-    println("sendRequest:" + request.json)
-    val dOut = new DataOutputStream(out)
-    dOut.writeUTF(request.json)
+  def sendRequest(dOut: DataOutputStream, request: Request) = {
+    val bytes = request.json.getBytes(StandardCharsets.UTF_8)
+    dOut.writeInt(bytes.length)
+    dOut.write(bytes)
     dOut.flush()
   }
 
-  def sendResponse(out: OutputStream, response: Response) = {
-    println("sendResponse:" + response.json)
-    val dOut = new DataOutputStream(out)
-    dOut.writeUTF(response.json)
+  def sendResponse(dOut: DataOutputStream, response: Response) = {
+    val bytes = response.json.getBytes(StandardCharsets.UTF_8)
+    dOut.writeInt(bytes.length)
+    dOut.write(bytes)
     dOut.flush()
   }
 
-  def readResponse(in: InputStream) = {
-    val dIn = new DataInputStream(in)
-    while (dIn.available() <= 0) {
-      Thread.sleep(10)
-    }
-    val response = JsonUtils.fromJson[BinlogSocketResponse](dIn.readUTF()).unwrap
-    println("readResponse:" + response)
+  def readResponse(dIn: DataInputStream) = {
+    val length = dIn.readInt()
+    val bytes = new Array[Byte](length)
+    dIn.read(bytes, 0, length)
+    val response = JsonUtils.fromJson[BinlogSocketResponse](new String(bytes, StandardCharsets.UTF_8)).unwrap
     response
   }
 }

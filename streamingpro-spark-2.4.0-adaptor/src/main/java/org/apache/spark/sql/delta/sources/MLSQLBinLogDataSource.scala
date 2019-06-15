@@ -14,6 +14,7 @@ import org.apache.spark.sql.execution.streaming._
 import org.apache.spark.sql.sources.{DataSourceRegister, StreamSourceProvider}
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
 import org.apache.spark.sql.{DataFrame, SQLContext, SparkSession}
+import org.apache.spark.unsafe.types.UTF8String
 
 /**
   * This Datasource is used to consume MySQL binlog. Not support MariaDB yet because the connector we are using is
@@ -48,7 +49,7 @@ class MLSQLBinLogDataSource extends StreamSourceProvider with DataSourceRegister
     val bingLogPort = parameters("port").toInt
     val bingLogUserName = parameters("userName")
     val bingLogPassword = parameters("password")
-    val bingLogName = parameters.get("bingLogName")
+    val bingLogNamePrefix = parameters.get("bingLogNamePrefix")
 
     val databaseNamePattern = parameters.get("databaseNamePattern")
     val tableNamePattern = parameters.get("tableNamePattern")
@@ -56,6 +57,12 @@ class MLSQLBinLogDataSource extends StreamSourceProvider with DataSourceRegister
     val metadataPath = parameters.getOrElse("metadataPath", "offsets")
     val startingOffsets = parameters.get("startingOffsets").map(f => LongOffset(f.toLong))
 
+    assert(startingOffsets.isDefined == bingLogNamePrefix.isDefined,
+      "startingOffsets and bingLogNamePrefix should exists together ")
+
+    val startOffsetInFile = startingOffsets.map(f => BinlogOffset.fromOffset(f.offset))
+    val binlogFilename = startOffsetInFile.map(f => BinlogOffset.toFileName(bingLogNamePrefix.get, f.fileId))
+    val binlogPos = startOffsetInFile.map(_.pos)
 
     val executorBinlogServer = spark.sparkContext.parallelize(Seq("launch-binlog-socket-server")).map { item =>
       val executorBinlogServer = new BinLogSocketServerInExecutor()
@@ -63,13 +70,13 @@ class MLSQLBinLogDataSource extends StreamSourceProvider with DataSourceRegister
       executorBinlogServer.connectMySQL(MySQLConnectionInfo(
         bingLogHost, bingLogPort,
         bingLogUserName, bingLogPassword,
-        None, None,
+        binlogFilename, binlogPos,
         databaseNamePattern, tableNamePattern))
 
       SocketServerInExecutor.addNewBinlogServer(
-        MySQLBinlogServer(bingLogHost, bingLogPort, bingLogName),
+        MySQLBinlogServer(bingLogHost, bingLogPort),
         executorBinlogServer)
-      ExecutorBinlogServer(executorBinlogServer.host, executorBinlogServer.port, bingLogName)
+      ExecutorBinlogServer(executorBinlogServer.host, executorBinlogServer.port)
     }.collect().head
 
     MLSQLBinLogSource(executorBinlogServer, sqlContext.sparkSession, metadataPath, startingOffsets, parameters)
@@ -98,6 +105,8 @@ case class MLSQLBinLogSource(executorBinlogServer: ExecutorBinlogServer,
   private val initialized: AtomicBoolean = new AtomicBoolean(false)
 
   private var socket: Socket = null
+  private var dIn: DataInputStream = null
+  private var dOut: DataOutputStream = null
 
   private val sparkEnv = SparkEnv.get
 
@@ -105,6 +114,8 @@ case class MLSQLBinLogSource(executorBinlogServer: ExecutorBinlogServer,
 
   private def initialize(): Unit = synchronized {
     socket = new Socket(executorBinlogServer.host, executorBinlogServer.port)
+    dIn = new DataInputStream(socket.getInputStream)
+    dOut = new DataOutputStream(socket.getOutputStream)
   }
 
   override def schema: StructType = {
@@ -157,8 +168,8 @@ case class MLSQLBinLogSource(executorBinlogServer: ExecutorBinlogServer,
   }
 
   def getLatestOffset = {
-    sendRequest(socket.getOutputStream, RequestOffset())
-    val response = readResponse(socket.getInputStream).asInstanceOf[OffsetResponse]
+    sendRequest(dOut, RequestOffset())
+    val response = readResponse(dIn).asInstanceOf[OffsetResponse]
     LongOffset(response.currentOffset)
   }
 
@@ -174,6 +185,11 @@ case class MLSQLBinLogSource(executorBinlogServer: ExecutorBinlogServer,
   }
 
   override def getBatch(start: Option[Offset], end: Offset): DataFrame = {
+    synchronized {
+      if (initialized.compareAndSet(false, true)) {
+        initialize()
+      }
+    }
 
     initialPartitionOffsets
 
@@ -204,7 +220,7 @@ case class MLSQLBinLogSource(executorBinlogServer: ExecutorBinlogServer,
       val consumer = ExecutorBinlogServerConsumerCache.acquire(executorBinlogServerCopy)
       consumer.fetchData(fromPartitionOffsets.get, untilPartitionOffsets.get).toIterator
     }.map { cr =>
-      InternalRow(cr)
+      InternalRow(UTF8String.fromString(cr))
     }
     spark.sqlContext.internalCreateDataFrame(rdd.setName("mysql-bin-log"), schema, isStreaming = true)
   }
@@ -217,14 +233,16 @@ case class MLSQLBinLogSource(executorBinlogServer: ExecutorBinlogServer,
 
 case class ExecutorInternalBinlogConsumer(executorBinlogServer: ExecutorBinlogServer) extends BinLogSocketServerSerDer {
   val socket = new Socket(executorBinlogServer.host, executorBinlogServer.port)
+  val dIn = new DataInputStream(socket.getInputStream)
+  val dOut = new DataOutputStream(socket.getOutputStream)
   @volatile var inUse = true
   @volatile var markedForClose = false
 
   def fetchData(start: LongOffset, end: LongOffset) = {
-    sendRequest(socket.getOutputStream, RequestData(
+    sendRequest(dOut, RequestData(
       start.offset,
       end.offset))
-    val response = readResponse(socket.getInputStream)
+    val response = readResponse(dIn)
     response.asInstanceOf[DataResponse].data
   }
 

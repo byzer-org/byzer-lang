@@ -41,19 +41,17 @@ public class UpdateRowsWriter extends AbstractEventWriter {
 
         jsonGenerator.writeArrayFieldStart("rows");
         int i = includedColumns.nextSetBit(0);
-        while (i != -1) {
-            jsonGenerator.writeStartObject();
-            jsonGenerator.writeNumberField("id", i + 1);
-            String columnName = new SchemaTool(tableInfo.getSchema()).getColumnNameByIndex(i);
+        jsonGenerator.writeStartObject();
 
+        while (i != -1) {
+            String columnName = new SchemaTool(tableInfo.getSchema()).getColumnNameByIndex(i);
             Serializable[] newRow = row.getValue();
             if (newRow != null) {
                 jsonGenerator.writeObjectField(columnName, MySQLCDCUtils.getWritableObject(newRow[i]));
             }
-
-            jsonGenerator.writeEndObject();
             i = includedColumns.nextSetBit(i + 1);
         }
+        jsonGenerator.writeEndObject();
         jsonGenerator.writeEndArray();
     }
 }
