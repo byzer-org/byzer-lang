@@ -100,17 +100,23 @@ abstract class SocketServerInExecutor[T](threadName: String) {
 trait BinLogSocketServerSerDer {
   def readRequest(in: InputStream) = {
     val dIn = new DataInputStream(in)
+    while (dIn.available() <= 0) {
+      Thread.sleep(10)
+    }
     val request = JsonUtils.fromJson[BinlogSocketRequest](dIn.readUTF()).unwrap
+    println("readRequest:" + request)
     request
   }
 
   def sendRequest(out: OutputStream, request: Request) = {
+    println("sendRequest:" + request.json)
     val dOut = new DataOutputStream(out)
     dOut.writeUTF(request.json)
     dOut.flush()
   }
 
   def sendResponse(out: OutputStream, response: Response) = {
+    println("sendResponse:" + response.json)
     val dOut = new DataOutputStream(out)
     dOut.writeUTF(response.json)
     dOut.flush()
@@ -118,14 +124,18 @@ trait BinLogSocketServerSerDer {
 
   def readResponse(in: InputStream) = {
     val dIn = new DataInputStream(in)
-    val request = JsonUtils.fromJson[BinlogSocketResponse](dIn.readUTF()).unwrap
-    request
+    while (dIn.available() <= 0) {
+      Thread.sleep(10)
+    }
+    val response = JsonUtils.fromJson[BinlogSocketResponse](dIn.readUTF()).unwrap
+    println("readResponse:" + response)
+    response
   }
 }
 
 object ExecutorBinlogServerConsumerCache extends Logging {
 
-  private case class CacheKey(host: String, port: Int, binlogFilename: String)
+  private case class CacheKey(host: String, port: Int)
 
   private lazy val cache = {
     val conf = SparkEnv.get.conf
@@ -162,7 +172,7 @@ object ExecutorBinlogServerConsumerCache extends Logging {
   }
 
   def acquire(executorBinlogServer: ExecutorBinlogServer): ExecutorInternalBinlogConsumer = synchronized {
-    val key = new CacheKey(executorBinlogServer.host, executorBinlogServer.port, executorBinlogServer.fileName)
+    val key = new CacheKey(executorBinlogServer.host, executorBinlogServer.port)
     val existingInternalConsumer = cache.get(key)
 
     lazy val newInternalConsumer = new ExecutorInternalBinlogConsumer(executorBinlogServer)
@@ -203,8 +213,7 @@ object ExecutorBinlogServerConsumerCache extends Logging {
 
       // Clear the consumer from the cache if this is indeed the consumer present in the cache
       val key = new CacheKey(intConsumer.executorBinlogServer.host,
-        intConsumer.executorBinlogServer.port,
-        intConsumer.executorBinlogServer.fileName)
+        intConsumer.executorBinlogServer.port)
 
       val cachedIntConsumer = cache.get(key)
       if (intConsumer.eq(cachedIntConsumer)) {

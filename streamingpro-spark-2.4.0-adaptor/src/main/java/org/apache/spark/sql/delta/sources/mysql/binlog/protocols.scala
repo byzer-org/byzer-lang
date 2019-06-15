@@ -1,7 +1,6 @@
 package org.apache.spark.sql.delta.sources.mysql.binlog
 
 import org.apache.spark.sql.delta.util.JsonUtils
-import org.apache.spark.sql.types.StructType
 
 
 object BinlogOffset {
@@ -26,9 +25,9 @@ case class BinlogOffset(fileId: Long, pos: Long) {
   def offset = (fileId.toString + "%013d".format(pos)).toLong
 }
 
-case class MySQLBinlogServer(host: String, port: Int, fileName: String)
+case class MySQLBinlogServer(host: String, port: Int, fileName: Option[String])
 
-case class ExecutorBinlogServer(host: String, port: Int, fileName: String)
+case class ExecutorBinlogServer(host: String, port: Int, fileName: Option[String])
 
 case class MySQLConnectionInfo(host: String, port: Int, userName: String, password: String,
                                binlogFileName: Option[String],
@@ -73,11 +72,11 @@ case class DataResponse(data: List[String]) extends Response {
   override def wrap: BinlogSocketResponse = BinlogSocketResponse(dataResponse = this)
 }
 
-case class RequestData(currentBinlogFile: String, startOffset: Long, endOffset: Long) extends Request {
+case class RequestData(startOffset: Long, endOffset: Long) extends Request {
   override def wrap: BinlogSocketRequest = BinlogSocketRequest(requestData = this)
 }
 
-case class RequestOffset(currentBinlogFile: String) extends Request {
+case class RequestOffset() extends Request {
   override def wrap: BinlogSocketRequest = BinlogSocketRequest(requestOffset = this)
 }
 
