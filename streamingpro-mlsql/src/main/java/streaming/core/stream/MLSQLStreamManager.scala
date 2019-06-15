@@ -126,7 +126,6 @@ class MLSQLStreamingQueryListener extends StreamingQueryListener with Logging wi
                |Reason:: Job is not synced before.
              """.stripMargin))
           //onQueryStarted is stared before we acquire info from StreamingQuery
-          JobManager.removeJobManually(job._2.groupId)
           JobManager.addJobManually(job._2.copy(groupId = id))
         }
       case None =>
