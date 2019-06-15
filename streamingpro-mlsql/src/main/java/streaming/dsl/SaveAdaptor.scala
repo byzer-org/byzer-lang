@@ -136,7 +136,7 @@ class SaveAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
     if (isStream) {
       streamQuery = saveRes.asInstanceOf[StreamingQuery]
     }
-      .equals(g)
+
     job = JobManager.getJobInfo(context.groupId)
     if (streamQuery != null) {
       // Todo:Notice that sometimes the MLSQLStreamingQueryListener.onQueryStarted will be executed before this code,
