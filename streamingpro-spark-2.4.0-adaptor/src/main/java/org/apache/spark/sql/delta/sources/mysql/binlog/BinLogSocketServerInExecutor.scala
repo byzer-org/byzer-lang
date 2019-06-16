@@ -244,7 +244,10 @@ class BinLogSocketServerInExecutor[T](taskContextRef: AtomicReference[T])
 
     while (true) {
       readRequest(dIn) match {
-        case request: RequestOffset =>
+        case _: RequestQueueSize => {
+          sendResponse(dOut, QueueSizeResponse(queue.size()))
+        }
+        case _: RequestOffset =>
           sendResponse(dOut, OffsetResponse(BinlogOffset.fromFileAndPos(currentBinlogFile, currentBinlogPosition + 1).offset))
         case request: RequestData =>
           val start = request.startOffset

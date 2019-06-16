@@ -7,7 +7,6 @@ import java.util.UUID
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicReference}
 
 import org.apache.commons.io.IOUtils
-import org.apache.spark.SparkEnv
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.delta.sources.mysql.binlog._
@@ -16,6 +15,8 @@ import org.apache.spark.sql.sources.{DataSourceRegister, StreamSourceProvider}
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
 import org.apache.spark.sql.{DataFrame, SQLContext, SparkSession}
 import org.apache.spark.unsafe.types.UTF8String
+import org.apache.spark.util.{TaskCompletionListener, TaskFailureListener}
+import org.apache.spark.{SparkEnv, TaskContext}
 
 /**
   * This Datasource is used to consume MySQL binlog. Not support MariaDB yet because the connector we are using is
@@ -77,8 +78,22 @@ class MLSQLBinLogDataSource extends StreamSourceProvider with DataSourceRegister
       spark.sparkContext.setJobGroup(UUID.randomUUID().toString, s"binlog server (${bingLogHost}:${bingLogPort})", true)
       spark.sparkContext.parallelize(Seq("launch-binlog-socket-server")).map { item =>
 
-        val taskContextRef: AtomicReference[Boolean] = new AtomicReference[Boolean]()
-        taskContextRef.set(true)
+        val taskContextRef: AtomicReference[TaskContext] = new AtomicReference[TaskContext]()
+        taskContextRef.set(TaskContext.get())
+
+        TaskContext.get().addTaskFailureListener(new TaskFailureListener {
+          override def onTaskFailure(context: TaskContext, error: Throwable): Unit = {
+            // this will make sure BinLogSocketServerInExecutor close the server
+            taskContextRef.set(null)
+          }
+        })
+
+        TaskContext.get().addTaskCompletionListener(new TaskCompletionListener {
+          override def onTaskCompletion(context: TaskContext): Unit = {
+            taskContextRef.set(null)
+          }
+        })
+
         val executorBinlogServer = new BinLogSocketServerInExecutor(taskContextRef)
 
         val socket = new Socket(tempSocketServerHost, tempSocketServerPort)

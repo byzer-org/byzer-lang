@@ -52,16 +52,24 @@ sealed trait Response {
 }
 
 case class BinlogSocketResponse(offsetResponse: OffsetResponse = null,
-                                dataResponse: DataResponse = null) {
+                                dataResponse: DataResponse = null,
+                                queueSizeResponse: QueueSizeResponse = null
+                               ) {
   def unwrap: Response = {
     if (offsetResponse != null) {
       offsetResponse
     } else if (dataResponse != null) {
       dataResponse
+    } else if (queueSizeResponse != null) {
+      queueSizeResponse
     } else {
       null
     }
   }
+}
+
+case class QueueSizeResponse(size: Long) extends Response {
+  override def wrap: BinlogSocketResponse = BinlogSocketResponse(queueSizeResponse = this)
 }
 
 case class ReportBinlogSocketServerHostAndPort(host: String, port: Int) extends Request {
@@ -84,9 +92,14 @@ case class RequestOffset() extends Request {
   override def wrap: BinlogSocketRequest = BinlogSocketRequest(requestOffset = this)
 }
 
+case class RequestQueueSize() extends Request {
+  override def wrap: BinlogSocketRequest = BinlogSocketRequest(requestQueueSize = this)
+}
+
 case class BinlogSocketRequest(
                                 requestData: RequestData = null,
                                 requestOffset: RequestOffset = null,
+                                requestQueueSize: RequestQueueSize = null,
                                 reportBinlogSocketServerHostAndPort: ReportBinlogSocketServerHostAndPort = null
                               ) {
   def unwrap: Request = {
@@ -94,6 +107,8 @@ case class BinlogSocketRequest(
       requestData
     } else if (requestOffset != null) {
       requestOffset
+    } else if (requestQueueSize != null) {
+      requestQueueSize
     } else if (reportBinlogSocketServerHostAndPort != null) {
       reportBinlogSocketServerHostAndPort
     } else {

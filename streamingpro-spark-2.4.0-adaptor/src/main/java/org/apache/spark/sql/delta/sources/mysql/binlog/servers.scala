@@ -48,7 +48,7 @@ object SocketServerInExecutor extends Logging {
 
 
   def setupMultiConnectionServer[T](taskContextRef: AtomicReference[T], threadName: String)
-                                   (func: Socket => Unit): (ServerSocket, String, Int) = {
+                                   (func: Socket => Unit)(completeCallback: () => Unit): (ServerSocket, String, Int) = {
 
 
     val host = if (SparkEnv.get == null) {
@@ -88,6 +88,7 @@ object SocketServerInExecutor extends Logging {
               }
             })
           }
+          completeCallback()
           JavaUtils.closeQuietly(serverSocket)
         }
         catch {
@@ -105,9 +106,13 @@ abstract class SocketServerInExecutor[T](taskContextRef: AtomicReference[T], thr
 
   val (server, host, port) = SocketServerInExecutor.setupMultiConnectionServer(taskContextRef, threadName) { sock =>
     handleConnection(sock)
-  }
+  }(() => {
+    close
+  })
 
   def handleConnection(sock: Socket): Unit
+
+  def close: Unit
 }
 
 
