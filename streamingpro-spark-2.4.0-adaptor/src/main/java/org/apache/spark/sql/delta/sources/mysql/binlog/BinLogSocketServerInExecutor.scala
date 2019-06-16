@@ -3,6 +3,7 @@ package org.apache.spark.sql.delta.sources.mysql.binlog
 import java.io.{DataInputStream, DataOutputStream}
 import java.net.Socket
 import java.util
+import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.{ConcurrentHashMap, LinkedBlockingQueue}
 import java.util.regex.Pattern
 
@@ -21,11 +22,13 @@ import scala.collection.mutable.ArrayBuffer
 /**
   * 2019-06-13 WilliamZhu(allwefantasy@gmail.com)
   */
-class BinLogSocketServerInExecutor
-  extends SocketServerInExecutor[Array[Byte]]("binlog-socket-server-in-executor")
+class BinLogSocketServerInExecutor[T](taskContextRef: AtomicReference[T])
+  extends SocketServerInExecutor[T](taskContextRef, "binlog-socket-server-in-executor")
     with BinLogSocketServerSerDer with Logging {
 
   private var connectThread: Thread = null
+
+  private var binaryLogClient: BinaryLogClient = null
 
   private var currentBinlogFile: String = null
 
@@ -57,17 +60,17 @@ class BinLogSocketServerInExecutor
   }
 
   private def _connectMySQL(connect: MySQLConnectionInfo) = {
-    val client = new BinaryLogClient(connect.host, connect.port, connect.userName, connect.password)
+    binaryLogClient = new BinaryLogClient(connect.host, connect.port, connect.userName, connect.password)
 
     connect.binlogFileName match {
       case Some(filename) =>
-        client.setBinlogFilename(filename)
+        binaryLogClient.setBinlogFilename(filename)
         currentBinlogFile = filename
       case _ =>
     }
 
     connect.recordPos match {
-      case Some(recordPos) => client.setBinlogPosition(recordPos)
+      case Some(recordPos) => binaryLogClient.setBinlogPosition(recordPos)
       case _ =>
     }
 
@@ -76,19 +79,19 @@ class BinLogSocketServerInExecutor
       EventDeserializer.CompatibilityMode.DATE_AND_TIME_AS_LONG,
       EventDeserializer.CompatibilityMode.CHAR_AND_BINARY_AS_BYTE_ARRAY
     )
-    client.setEventDeserializer(eventDeserializer)
+    binaryLogClient.setEventDeserializer(eventDeserializer)
 
 
 
     //for now, we only care insert/update/delete three kinds of event
-    client.registerEventListener(new BinaryLogClient.EventListener() {
+    binaryLogClient.registerEventListener(new BinaryLogClient.EventListener() {
       def onEvent(event: Event): Unit = {
         val header = event.getHeader[EventHeaderV4]()
         val eventType = header.getEventType
         if (eventType != ROTATE && eventType != FORMAT_DESCRIPTION) {
           currentBinlogPosition = header.getPosition
         }
-        
+
         eventType match {
           case TABLE_MAP =>
             val data = event.getData[TableMapEventData]()
@@ -113,14 +116,14 @@ class BinLogSocketServerInExecutor
           case PRE_GA_WRITE_ROWS =>
           case WRITE_ROWS =>
           case EXT_WRITE_ROWS =>
-            if (!skipTable) addRecord(event, client.getBinlogFilename, EventInfo.INSERT_EVENT)
+            if (!skipTable) addRecord(event, binaryLogClient.getBinlogFilename, EventInfo.INSERT_EVENT)
 
 
           case PRE_GA_UPDATE_ROWS =>
           case UPDATE_ROWS =>
           case EXT_UPDATE_ROWS =>
             if (!skipTable) {
-              addRecord(event, client.getBinlogFilename, EventInfo.UPDATE_EVENT)
+              addRecord(event, binaryLogClient.getBinlogFilename, EventInfo.UPDATE_EVENT)
             }
 
 
@@ -128,7 +131,7 @@ class BinLogSocketServerInExecutor
           case DELETE_ROWS =>
           case EXT_DELETE_ROWS =>
             if (!skipTable) {
-              addRecord(event, client.getBinlogFilename, EventInfo.DELETE_EVENT)
+              addRecord(event, binaryLogClient.getBinlogFilename, EventInfo.DELETE_EVENT)
             }
 
 
@@ -142,7 +145,7 @@ class BinLogSocketServerInExecutor
       }
     })
 
-    client.connect()
+    binaryLogClient.connect()
   }
 
   def loadSchemaInfo(connectionInfo: MySQLConnectionInfo, table: TableInfoCacheKey): StructType = {
@@ -157,27 +160,31 @@ class BinLogSocketServerInExecutor
     schema
   }
 
-  def connectMySQL(connect: MySQLConnectionInfo) = {
+  def connectMySQL(connect: MySQLConnectionInfo, async: Boolean = true) = {
 
     databaseNamePattern = connect.databaseNamePattern.map(Pattern.compile)
 
     tableNamePattern = connect.tableNamePattern.map(Pattern.compile)
+    if (async) {
+      connectThread = new Thread(s"connect mysql(${connect.host}, ${connect.port}) ") {
+        setDaemon(true)
 
-    connectThread = new Thread(s"connect mysql(${connect.host}, ${connect.port}) ") {
-      setDaemon(true)
+        override def run(): Unit = {
+          try {
+            // todo: should be able to reattempt, because when MySQL is busy, it's hard to connect
+            _connectMySQL(connect)
+          } catch {
+            case e: Exception =>
+              throw e
+          }
 
-      override def run(): Unit = {
-        try {
-          // todo: should be able to reattempt, because when MySQL is busy, it's hard to connect
-          _connectMySQL(connect)
-        } catch {
-          case e: Exception =>
-            throw e
         }
-
       }
+      connectThread.start()
+    } else {
+      _connectMySQL(connect)
     }
-    connectThread.start()
+
   }
 
   private def toOffset(rawBinlogEvent: RawBinlogEvent) = {
@@ -201,10 +208,40 @@ class BinLogSocketServerInExecutor
     jsonList
   }
 
-  def handleConnection(socket: Socket): Array[Byte] = {
+  def tryWithoutException(fun: () => Unit) = {
+    try {
+      fun()
+    } catch {
+      case e: Exception =>
+    }
+  }
+
+  def close() = {
+
+    if (binaryLogClient != null) {
+      tryWithoutException(() => {
+        binaryLogClient.disconnect()
+      })
+    }
+
+    if (server != null) {
+      tryWithoutException(() => {
+        server.close()
+      })
+    }
+
+    tryWithoutException(() => {
+      queue.clear()
+    })
+
+
+  }
+
+  def handleConnection(socket: Socket): Unit = {
     socket.setKeepAlive(true)
     val dIn = new DataInputStream(socket.getInputStream)
     val dOut = new DataOutputStream(socket.getOutputStream)
+
     while (true) {
       readRequest(dIn) match {
         case request: RequestOffset =>
@@ -226,7 +263,7 @@ class BinLogSocketServerInExecutor
           sendResponse(dOut, DataResponse(res.toList))
       }
     }
-    Array()
+
   }
 }
 

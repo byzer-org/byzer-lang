@@ -4,20 +4,21 @@ import java.io.{DataInputStream, DataOutputStream}
 import java.net.{InetAddress, ServerSocket, Socket}
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicReference
 
 import org.apache.spark.internal.Logging
 import org.apache.spark.network.util.JavaUtils
 import org.apache.spark.sql.delta.sources.ExecutorInternalBinlogConsumer
 import org.apache.spark.sql.delta.util.JsonUtils
-import org.apache.spark.{SparkEnv, SparkException, TaskContext}
+import org.apache.spark.{SparkEnv, SparkException}
 
 
 object SocketServerInExecutor extends Logging {
 
-  private val binlogServerHolder = new java.util.concurrent.ConcurrentHashMap[MySQLBinlogServer, BinLogSocketServerInExecutor]()
+  private val binlogServerHolder = new java.util.concurrent.ConcurrentHashMap[MySQLBinlogServer, BinLogSocketServerInExecutor[_]]()
   val threadPool = Executors.newFixedThreadPool(100)
 
-  def addNewBinlogServer(a: MySQLBinlogServer, b: BinLogSocketServerInExecutor) = {
+  def addNewBinlogServer(a: MySQLBinlogServer, b: BinLogSocketServerInExecutor[_]) = {
     binlogServerHolder.put(a, b)
   }
 
@@ -25,8 +26,8 @@ object SocketServerInExecutor extends Logging {
                               (func: Socket => Unit): (ServerSocket, String, Int) = {
     val host = SparkEnv.get.rpcEnv.address.host
     val serverSocket: ServerSocket = new ServerSocket(0, 1, InetAddress.getByName(host))
-    // Close the socket if no connection in 1 hour seconds
-    serverSocket.setSoTimeout(1000 * 60 * 60)
+    // Close the socket if no connection in 5 min
+    serverSocket.setSoTimeout(1000 * 60 * 5)
     new Thread(threadName) {
       setDaemon(true)
 
@@ -46,42 +47,46 @@ object SocketServerInExecutor extends Logging {
   }
 
 
-  def setupMultiConnectionServer(threadName: String)
-                                (func: Socket => Unit): (ServerSocket, String, Int) = {
+  def setupMultiConnectionServer[T](taskContextRef: AtomicReference[T], threadName: String)
+                                   (func: Socket => Unit): (ServerSocket, String, Int) = {
 
 
     val host = if (SparkEnv.get == null) {
-      //When SparkEnv.get is test, it may a test
+      //When SparkEnv.get is null, the program may run in a test
+      //So return local address would be ok.
       "127.0.0.1"
     } else {
       SparkEnv.get.rpcEnv.address.host
     }
     val serverSocket: ServerSocket = new ServerSocket(0, 1, InetAddress.getByName(host))
-    // Close the socket if no connection in 1 hour seconds
-    serverSocket.setSoTimeout(1000 * 60 * 60)
+    // throw exception if  the socket server have no connection in 5 min
+    // then we will close the serverSocket
+    serverSocket.setSoTimeout(1000 * 60 * 5)
 
     new Thread(threadName) {
       setDaemon(true)
 
       override def run(): Unit = {
         try {
-          while (true) {
-            try {
-              val socket = serverSocket.accept()
-              threadPool.submit(new Runnable {
-                override def run(): Unit = {
-                  try {
-                    logInfo("Received connection from" + socket)
-                    func(socket)
-                  } finally {
-                    JavaUtils.closeQuietly(socket)
-                  }
+          /**
+            * Since we will start this BinLogSocketServerInExecutor in spark task, so when we kill the task,
+            * The taskContext should also be null
+            */
+          while (taskContextRef.get() != null) {
+            val socket = serverSocket.accept()
+            threadPool.submit(new Runnable {
+              override def run(): Unit = {
+                try {
+                  logInfo("Received connection from" + socket)
+                  func(socket)
+                } catch {
+                  case e: Exception =>
+                    logError(s"The server ${serverSocket} is closing the socket ${socket} connection", e)
+                } finally {
+                  JavaUtils.closeQuietly(socket)
                 }
-              })
-            } catch {
-              case e: Exception => logError("", e)
-            }
-
+              }
+            })
           }
           JavaUtils.closeQuietly(serverSocket)
         }
@@ -96,20 +101,21 @@ object SocketServerInExecutor extends Logging {
   }
 }
 
-abstract class SocketServerInExecutor[T](threadName: String) {
+abstract class SocketServerInExecutor[T](taskContextRef: AtomicReference[T], threadName: String) {
 
-  val (server, host, port) = SocketServerInExecutor.setupMultiConnectionServer(threadName) { sock =>
+  val (server, host, port) = SocketServerInExecutor.setupMultiConnectionServer(taskContextRef, threadName) { sock =>
     handleConnection(sock)
   }
 
-  def handleConnection(sock: Socket): T
+  def handleConnection(sock: Socket): Unit
 }
+
 
 trait BinLogSocketServerSerDer {
   def readRequest(dIn: DataInputStream) = {
     val length = dIn.readInt()
     val bytes = new Array[Byte](length)
-    dIn.read(bytes, 0, length)
+    dIn.readFully(bytes, 0, length)
     val response = JsonUtils.fromJson[BinlogSocketRequest](new String(bytes, StandardCharsets.UTF_8)).unwrap
     response
   }
@@ -131,7 +137,7 @@ trait BinLogSocketServerSerDer {
   def readResponse(dIn: DataInputStream) = {
     val length = dIn.readInt()
     val bytes = new Array[Byte](length)
-    dIn.read(bytes, 0, length)
+    dIn.readFully(bytes, 0, length)
     val response = JsonUtils.fromJson[BinlogSocketResponse](new String(bytes, StandardCharsets.UTF_8)).unwrap
     response
   }
@@ -181,21 +187,7 @@ object ExecutorBinlogServerConsumerCache extends Logging {
 
     lazy val newInternalConsumer = new ExecutorInternalBinlogConsumer(executorBinlogServer)
 
-    if (TaskContext.get != null && TaskContext.get.attemptNumber >= 1) {
-      // If this is reattempt at running the task, then invalidate cached consumer if any and
-      // start with a new one.
-      if (existingInternalConsumer != null) {
-        // Consumer exists in cache. If its in use, mark it for closing later, or close it now.
-        if (existingInternalConsumer.inUse) {
-          existingInternalConsumer.markedForClose = true
-        } else {
-          existingInternalConsumer.close
-        }
-      }
-      cache.remove(key) // Invalidate the cache in any case
-      newInternalConsumer
-
-    } else if (existingInternalConsumer == null) {
+    if (existingInternalConsumer == null) {
       // If consumer is not already cached, then put a new in the cache and return it
       cache.put(key, newInternalConsumer)
       newInternalConsumer.inUse = true
@@ -212,7 +204,7 @@ object ExecutorBinlogServerConsumerCache extends Logging {
     }
   }
 
-  private def release(intConsumer: ExecutorInternalBinlogConsumer): Unit = {
+  def release(intConsumer: ExecutorInternalBinlogConsumer): Unit = {
     synchronized {
 
       // Clear the consumer from the cache if this is indeed the consumer present in the cache

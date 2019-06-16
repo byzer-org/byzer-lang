@@ -3,7 +3,8 @@ package org.apache.spark.sql.delta.sources
 import java.io._
 import java.net.Socket
 import java.nio.charset.StandardCharsets
-import java.util.concurrent.atomic.AtomicBoolean
+import java.util.UUID
+import java.util.concurrent.atomic.{AtomicBoolean, AtomicReference}
 
 import org.apache.commons.io.IOUtils
 import org.apache.spark.SparkEnv
@@ -23,6 +24,8 @@ import org.apache.spark.unsafe.types.UTF8String
   * record after updating.
   */
 class MLSQLBinLogDataSource extends StreamSourceProvider with DataSourceRegister {
+
+
   override def sourceSchema(sqlContext: SQLContext,
                             schema: Option[StructType],
                             providerName: String,
@@ -64,21 +67,61 @@ class MLSQLBinLogDataSource extends StreamSourceProvider with DataSourceRegister
     val binlogFilename = startOffsetInFile.map(f => BinlogOffset.toFileName(bingLogNamePrefix.get, f.fileId))
     val binlogPos = startOffsetInFile.map(_.pos)
 
-    val executorBinlogServer = spark.sparkContext.parallelize(Seq("launch-binlog-socket-server")).map { item =>
-      val executorBinlogServer = new BinLogSocketServerInExecutor()
+    val executorBinlogServerInfoRef = new AtomicReference[ReportBinlogSocketServerHostAndPort]()
+    val tempSocketServerInDriver = new TempSocketServerInDriver(executorBinlogServerInfoRef)
 
-      executorBinlogServer.connectMySQL(MySQLConnectionInfo(
-        bingLogHost, bingLogPort,
-        bingLogUserName, bingLogPassword,
-        binlogFilename, binlogPos,
-        databaseNamePattern, tableNamePattern))
+    val tempSocketServerHost = tempSocketServerInDriver.host
+    val tempSocketServerPort = tempSocketServerInDriver.port
 
-      SocketServerInExecutor.addNewBinlogServer(
-        MySQLBinlogServer(bingLogHost, bingLogPort),
-        executorBinlogServer)
-      ExecutorBinlogServer(executorBinlogServer.host, executorBinlogServer.port)
-    }.collect().head
+    def launchBinlogServer = {
+      spark.sparkContext.setJobGroup(UUID.randomUUID().toString, s"binlog server (${bingLogHost}:${bingLogPort})", true)
+      spark.sparkContext.parallelize(Seq("launch-binlog-socket-server")).map { item =>
 
+        val taskContextRef: AtomicReference[Boolean] = new AtomicReference[Boolean]()
+        taskContextRef.set(true)
+        val executorBinlogServer = new BinLogSocketServerInExecutor(taskContextRef)
+
+        val socket = new Socket(tempSocketServerHost, tempSocketServerPort)
+        val dout = new DataOutputStream(socket.getOutputStream)
+        val bytes = ReportBinlogSocketServerHostAndPort(executorBinlogServer.host, executorBinlogServer.port).json.getBytes(StandardCharsets.UTF_8)
+        dout.writeInt(bytes.length)
+        dout.write(bytes)
+        dout.flush()
+        socket.close()
+
+        SocketServerInExecutor.addNewBinlogServer(
+          MySQLBinlogServer(bingLogHost, bingLogPort),
+          executorBinlogServer)
+
+        executorBinlogServer.connectMySQL(MySQLConnectionInfo(
+          bingLogHost, bingLogPort,
+          bingLogUserName, bingLogPassword,
+          binlogFilename, binlogPos,
+          databaseNamePattern, tableNamePattern), async = false)
+
+        ExecutorBinlogServer(executorBinlogServer.host, executorBinlogServer.port)
+      }.collect()
+    }
+
+    new Thread("launch-binlog-socket-server-in-spark-job") {
+      setDaemon(true)
+
+      override def run(): Unit = {
+        launchBinlogServer
+      }
+    }.start()
+
+    var count = 60
+    var executorBinlogServer: ExecutorBinlogServer = null
+    while (executorBinlogServerInfoRef.get() == null) {
+      Thread.sleep(1000)
+      count -= 1
+    }
+    if (executorBinlogServerInfoRef.get() == null) {
+      throw new RuntimeException("start BinLogSocketServerInExecutor fail")
+    }
+    val report = executorBinlogServerInfoRef.get()
+    executorBinlogServer = ExecutorBinlogServer(report.host, report.port)
     MLSQLBinLogSource(executorBinlogServer, sqlContext.sparkSession, metadataPath, startingOffsets, parameters)
   }
 
@@ -239,11 +282,15 @@ case class ExecutorInternalBinlogConsumer(executorBinlogServer: ExecutorBinlogSe
   @volatile var markedForClose = false
 
   def fetchData(start: LongOffset, end: LongOffset) = {
-    sendRequest(dOut, RequestData(
-      start.offset,
-      end.offset))
-    val response = readResponse(dIn)
-    response.asInstanceOf[DataResponse].data
+    try {
+      sendRequest(dOut, RequestData(
+        start.offset,
+        end.offset))
+      val response = readResponse(dIn)
+      response.asInstanceOf[DataResponse].data
+    } finally {
+      ExecutorBinlogServerConsumerCache.release(this)
+    }
   }
 
   def close = {

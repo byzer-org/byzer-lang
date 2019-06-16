@@ -2,6 +2,7 @@ package tech.mlsql.test.binlogserver
 
 import java.io.{DataInputStream, DataOutputStream}
 import java.net.Socket
+import java.util.concurrent.atomic.AtomicReference
 
 import org.apache.spark.sql.delta.sources.mysql.binlog._
 import org.apache.spark.sql.execution.streaming.LongOffset
@@ -31,8 +32,9 @@ class BinlogSuite extends FunSuite with BinLogSocketServerSerDer {
 
     val metadataPath = parameters.getOrElse("metadataPath", "offsets")
     val startingOffsets = parameters.get("startingOffsets").map(f => LongOffset(f.toLong))
-
-    val executorBinlogServer = new BinLogSocketServerInExecutor()
+    val taskContextRef = new AtomicReference[Boolean]()
+    taskContextRef.set(true)
+    val executorBinlogServer = new BinLogSocketServerInExecutor(taskContextRef)
 
     executorBinlogServer.connectMySQL(MySQLConnectionInfo(
       bingLogHost, bingLogPort,

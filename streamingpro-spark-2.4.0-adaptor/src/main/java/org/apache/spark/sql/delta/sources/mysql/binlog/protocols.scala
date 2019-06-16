@@ -64,6 +64,10 @@ case class BinlogSocketResponse(offsetResponse: OffsetResponse = null,
   }
 }
 
+case class ReportBinlogSocketServerHostAndPort(host: String, port: Int) extends Request {
+  override def wrap: BinlogSocketRequest = BinlogSocketRequest(reportBinlogSocketServerHostAndPort = this)
+}
+
 case class OffsetResponse(currentOffset: Long) extends Response {
   override def wrap: BinlogSocketResponse = BinlogSocketResponse(offsetResponse = this)
 }
@@ -82,12 +86,16 @@ case class RequestOffset() extends Request {
 
 case class BinlogSocketRequest(
                                 requestData: RequestData = null,
-                                requestOffset: RequestOffset = null) {
+                                requestOffset: RequestOffset = null,
+                                reportBinlogSocketServerHostAndPort: ReportBinlogSocketServerHostAndPort = null
+                              ) {
   def unwrap: Request = {
     if (requestData != null) {
       requestData
     } else if (requestOffset != null) {
       requestOffset
+    } else if (reportBinlogSocketServerHostAndPort != null) {
+      reportBinlogSocketServerHostAndPort
     } else {
       null
     }
