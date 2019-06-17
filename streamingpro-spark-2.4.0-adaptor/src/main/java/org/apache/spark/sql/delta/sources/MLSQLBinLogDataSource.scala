@@ -63,8 +63,8 @@ class MLSQLBinLogDataSource extends StreamSourceProvider with DataSourceRegister
 
     startingOffsets match {
       case Some(value) =>
-        assert(value.offset.toString.length >= 17, "The startingOffsets is combined at least 17 numbers. " +
-          "The first six is fileId, the left 16 is file line number.")
+        assert(value.offset.toString.length >= 14, "The startingOffsets is combined at least 14 numbers. " +
+          "The first six numbers are fileId, the left thirteen numbers are file line number.")
       case None =>
     }
 
