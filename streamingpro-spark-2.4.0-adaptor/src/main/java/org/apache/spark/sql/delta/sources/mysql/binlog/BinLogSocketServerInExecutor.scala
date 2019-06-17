@@ -3,7 +3,7 @@ package org.apache.spark.sql.delta.sources.mysql.binlog
 import java.io.{DataInputStream, DataOutputStream}
 import java.net.Socket
 import java.util
-import java.util.concurrent.atomic.{AtomicBoolean, AtomicReference}
+import java.util.concurrent.atomic.{AtomicBoolean, AtomicLong, AtomicReference}
 import java.util.concurrent.{ConcurrentHashMap, LinkedBlockingQueue}
 import java.util.regex.Pattern
 
@@ -38,11 +38,19 @@ class BinLogSocketServerInExecutor[T](taskContextRef: AtomicReference[T])
 
   private var databaseNamePattern: Option[Pattern] = None
   private var tableNamePattern: Option[Pattern] = None
+
+  private var maxBinlogQueueSize: Long = 0l
+
+  private var connect: MySQLConnectionInfo = null
+
   @volatile private var skipTable = false
   @volatile private var currentTable: TableInfo = _
   @volatile private var markClose: AtomicBoolean = new AtomicBoolean(false)
+  @volatile private var markPause: AtomicBoolean = new AtomicBoolean(false)
 
   private val connections = new ArrayBuffer[Socket]()
+
+  private val currentQueueSize = new AtomicLong(0)
 
   val updateRowsWriter = new UpdateRowsWriter()
   val deleteRowsWriter = new DeleteRowsWriter()
@@ -50,6 +58,10 @@ class BinLogSocketServerInExecutor[T](taskContextRef: AtomicReference[T])
 
   def isClosed = {
     markClose.get()
+  }
+
+  def setMaxBinlogQueueSize(value: Long) = {
+    this.maxBinlogQueueSize = value
   }
 
   private val tableInfoCache = new ConcurrentHashMap[TableInfoCacheKey, TableInfo]()
@@ -62,6 +74,12 @@ class BinLogSocketServerInExecutor[T](taskContextRef: AtomicReference[T])
 
   def addRecord(event: Event, binLogFilename: String, eventType: String) = {
     assertTable
+    if (currentQueueSize.get() > maxBinlogQueueSize && !markPause.get()) {
+      pause
+    } else if (currentQueueSize.get() < maxBinlogQueueSize / 2 && markPause.get()) {
+      resume
+    }
+    currentQueueSize.incrementAndGet()
     queue.offer(new RawBinlogEvent(event, currentTable, binLogFilename, eventType, currentBinlogPosition))
   }
 
@@ -166,8 +184,8 @@ class BinLogSocketServerInExecutor[T](taskContextRef: AtomicReference[T])
     schema
   }
 
-  def connectMySQL(connect: MySQLConnectionInfo, async: Boolean = true) = {
-
+  def connectMySQL(_connect: MySQLConnectionInfo, async: Boolean = true) = {
+    connect = _connect
     databaseNamePattern = connect.databaseNamePattern.map(Pattern.compile)
 
     tableNamePattern = connect.tableNamePattern.map(Pattern.compile)
@@ -219,6 +237,36 @@ class BinLogSocketServerInExecutor[T](taskContextRef: AtomicReference[T])
       fun()
     } catch {
       case e: Exception =>
+    }
+  }
+
+  def pause = {
+    if (markPause.compareAndSet(false, true)) {
+      if (binaryLogClient != null) {
+        tryWithoutException(() => {
+          binaryLogClient.disconnect()
+        })
+      }
+    }
+  }
+
+  def resume = {
+    if (markPause.compareAndSet(true, false)) {
+      connectThread = new Thread(s"connect mysql(${connect.host}, ${connect.port}) ") {
+        setDaemon(true)
+
+        override def run(): Unit = {
+          try {
+            // todo: should be able to reattempt, because when MySQL is busy, it's hard to connect
+            binaryLogClient.connect()
+          } catch {
+            case e: Exception =>
+              throw e
+          }
+
+        }
+      }
+      connectThread.start()
     }
   }
 
@@ -278,6 +326,7 @@ class BinLogSocketServerInExecutor[T](taskContextRef: AtomicReference[T])
             while (item != null && toOffset(item) >= start && toOffset(item) < end) {
               res ++= convertRawBinlogEventRecord(item).asScala
               item = queue.poll()
+              currentQueueSize.decrementAndGet()
             }
           } catch {
             case e: Exception =>

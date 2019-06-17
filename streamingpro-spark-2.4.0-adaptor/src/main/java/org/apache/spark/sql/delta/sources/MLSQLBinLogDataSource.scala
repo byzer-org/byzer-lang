@@ -61,6 +61,13 @@ class MLSQLBinLogDataSource extends StreamSourceProvider with DataSourceRegister
     val metadataPath = parameters.getOrElse("metadataPath", "offsets")
     val startingOffsets = parameters.get("startingOffsets").map(f => LongOffset(f.toLong))
 
+    startingOffsets match {
+      case Some(value) =>
+        assert(value.offset.toString.length >= 17, "The startingOffsets is combined at least 17 numbers. " +
+          "The first six is fileId, the left 16 is file line number.")
+      case None =>
+    }
+
     assert(startingOffsets.isDefined == bingLogNamePrefix.isDefined,
       "startingOffsets and bingLogNamePrefix should exists together ")
 
@@ -74,7 +81,10 @@ class MLSQLBinLogDataSource extends StreamSourceProvider with DataSourceRegister
     val tempSocketServerHost = tempSocketServerInDriver.host
     val tempSocketServerPort = tempSocketServerInDriver.port
 
-    val maxBinlogQueueSize = parameters.getOrElse("maxBinlogQueueSize", "500000")
+    // We will buffer the binlog in Executor, if the buffer is greater then maxBinlogQueueSize, just
+    // pause the MySQL binlog consumer, and stop put more data into buffer.
+    // When the buffer is maxBinlogQueueSize/2 ,resume the binlog consumer
+    val maxBinlogQueueSize = parameters.getOrElse("maxBinlogQueueSize", "500000").toLong
 
     val binlogServerId = UUID.randomUUID().toString
 
@@ -86,6 +96,7 @@ class MLSQLBinLogDataSource extends StreamSourceProvider with DataSourceRegister
         taskContextRef.set(TaskContext.get())
 
         val executorBinlogServer = new BinLogSocketServerInExecutor(taskContextRef)
+        executorBinlogServer.setMaxBinlogQueueSize(maxBinlogQueueSize)
 
         def sendStopBinlogServerRequest = {
           // send signal to stop server
