@@ -28,6 +28,22 @@ public abstract class AbstractEventWriter {
         } else {
             jsonGenerator.writeNumberField("timestamp", event.getTimestamp());
         }
+
+        if (event.getTableInfo() != null) {
+            String db = event.getTableInfo().getDatabaseName();
+            String tableName = event.getTableInfo().getTableName();
+            String schema = event.getTableInfo().getSchema();
+
+            jsonGenerator.writeStringField("databaseName", db);
+            jsonGenerator.writeStringField("tableName", tableName);
+            jsonGenerator.writeStringField("schema", schema);
+        } else {
+            jsonGenerator.writeNullField("databaseName");
+            jsonGenerator.writeNullField("tableName");
+            jsonGenerator.writeNullField("schema");
+        }
+
+
     }
 
     protected void endJson() throws IOException {
