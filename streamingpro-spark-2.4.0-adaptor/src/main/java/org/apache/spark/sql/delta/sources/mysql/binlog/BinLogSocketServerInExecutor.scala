@@ -3,7 +3,7 @@ package org.apache.spark.sql.delta.sources.mysql.binlog
 import java.io.{DataInputStream, DataOutputStream}
 import java.net.Socket
 import java.util
-import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.atomic.{AtomicBoolean, AtomicReference}
 import java.util.concurrent.{ConcurrentHashMap, LinkedBlockingQueue}
 import java.util.regex.Pattern
 
@@ -40,11 +40,17 @@ class BinLogSocketServerInExecutor[T](taskContextRef: AtomicReference[T])
   private var tableNamePattern: Option[Pattern] = None
   @volatile private var skipTable = false
   @volatile private var currentTable: TableInfo = _
+  @volatile private var markClose: AtomicBoolean = new AtomicBoolean(false)
+
+  private val connections = new ArrayBuffer[Socket]()
 
   val updateRowsWriter = new UpdateRowsWriter()
   val deleteRowsWriter = new DeleteRowsWriter()
   val insertRowsWriter = new InsertRowsWriter()
 
+  def isClosed = {
+    markClose.get()
+  }
 
   private val tableInfoCache = new ConcurrentHashMap[TableInfoCacheKey, TableInfo]()
 
@@ -216,34 +222,48 @@ class BinLogSocketServerInExecutor[T](taskContextRef: AtomicReference[T])
     }
   }
 
-  def close() = {
+  override def close() = {
+    // make sure we only close once
+    if (markClose.compareAndSet(false, true)) {
+      logInfo(s"Shutdown ${server}. This may caused by the task is killed.")
 
-    if (binaryLogClient != null) {
+      connections.foreach { socket =>
+        tryWithoutException(() => {
+          socket.close()
+        })
+      }
+      connections.clear()
+
+      if (binaryLogClient != null) {
+        tryWithoutException(() => {
+          binaryLogClient.disconnect()
+        })
+      }
+
+      if (server != null) {
+        tryWithoutException(() => {
+          server.close()
+        })
+      }
+
       tryWithoutException(() => {
-        binaryLogClient.disconnect()
+        queue.clear()
       })
+
+
     }
-
-    if (server != null) {
-      tryWithoutException(() => {
-        server.close()
-      })
-    }
-
-    tryWithoutException(() => {
-      queue.clear()
-    })
-
-
   }
 
   def handleConnection(socket: Socket): Unit = {
+    connections += socket
     socket.setKeepAlive(true)
     val dIn = new DataInputStream(socket.getInputStream)
     val dOut = new DataOutputStream(socket.getOutputStream)
 
     while (true) {
       readRequest(dIn) match {
+        case _: ShutdownBinlogServer =>
+          close()
         case _: RequestQueueSize => {
           sendResponse(dOut, QueueSizeResponse(queue.size()))
         }

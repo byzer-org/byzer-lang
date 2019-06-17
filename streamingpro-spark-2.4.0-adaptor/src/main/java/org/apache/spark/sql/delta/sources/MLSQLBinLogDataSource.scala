@@ -74,34 +74,48 @@ class MLSQLBinLogDataSource extends StreamSourceProvider with DataSourceRegister
     val tempSocketServerHost = tempSocketServerInDriver.host
     val tempSocketServerPort = tempSocketServerInDriver.port
 
+    val maxBinlogQueueSize = parameters.getOrElse("maxBinlogQueueSize", "500000")
+
+    val binlogServerId = UUID.randomUUID().toString
+
     def launchBinlogServer = {
-      spark.sparkContext.setJobGroup(UUID.randomUUID().toString, s"binlog server (${bingLogHost}:${bingLogPort})", true)
+      spark.sparkContext.setJobGroup(binlogServerId, s"binlog server (${bingLogHost}:${bingLogPort})", true)
       spark.sparkContext.parallelize(Seq("launch-binlog-socket-server")).map { item =>
 
         val taskContextRef: AtomicReference[TaskContext] = new AtomicReference[TaskContext]()
         taskContextRef.set(TaskContext.get())
 
+        val executorBinlogServer = new BinLogSocketServerInExecutor(taskContextRef)
+
+        def sendStopBinlogServerRequest = {
+          // send signal to stop server
+          val socket2 = new Socket(executorBinlogServer.host, executorBinlogServer.port)
+          val dout2 = new DataOutputStream(socket2.getOutputStream)
+          BinLogSocketServerCommand.sendRequest(dout2,
+            ShutdownBinlogServer())
+          socket2.close()
+        }
+
         TaskContext.get().addTaskFailureListener(new TaskFailureListener {
           override def onTaskFailure(context: TaskContext, error: Throwable): Unit = {
-            // this will make sure BinLogSocketServerInExecutor close the server
             taskContextRef.set(null)
+            sendStopBinlogServerRequest
+
           }
         })
 
         TaskContext.get().addTaskCompletionListener(new TaskCompletionListener {
           override def onTaskCompletion(context: TaskContext): Unit = {
             taskContextRef.set(null)
+            sendStopBinlogServerRequest
           }
         })
 
-        val executorBinlogServer = new BinLogSocketServerInExecutor(taskContextRef)
 
         val socket = new Socket(tempSocketServerHost, tempSocketServerPort)
         val dout = new DataOutputStream(socket.getOutputStream)
-        val bytes = ReportBinlogSocketServerHostAndPort(executorBinlogServer.host, executorBinlogServer.port).json.getBytes(StandardCharsets.UTF_8)
-        dout.writeInt(bytes.length)
-        dout.write(bytes)
-        dout.flush()
+        BinLogSocketServerCommand.sendRequest(dout,
+          ReportBinlogSocketServerHostAndPort(executorBinlogServer.host, executorBinlogServer.port))
         socket.close()
 
         SocketServerInExecutor.addNewBinlogServer(
@@ -112,7 +126,11 @@ class MLSQLBinLogDataSource extends StreamSourceProvider with DataSourceRegister
           bingLogHost, bingLogPort,
           bingLogUserName, bingLogPassword,
           binlogFilename, binlogPos,
-          databaseNamePattern, tableNamePattern), async = false)
+          databaseNamePattern, tableNamePattern), async = true)
+
+        while (!TaskContext.get().isInterrupted() && !executorBinlogServer.isClosed) {
+          Thread.sleep(1000)
+        }
 
         ExecutorBinlogServer(executorBinlogServer.host, executorBinlogServer.port)
       }.collect()
@@ -137,7 +155,7 @@ class MLSQLBinLogDataSource extends StreamSourceProvider with DataSourceRegister
     }
     val report = executorBinlogServerInfoRef.get()
     executorBinlogServer = ExecutorBinlogServer(report.host, report.port)
-    MLSQLBinLogSource(executorBinlogServer, sqlContext.sparkSession, metadataPath, startingOffsets, parameters)
+    MLSQLBinLogSource(executorBinlogServer, sqlContext.sparkSession, metadataPath, startingOffsets, parameters ++ Map("binlogServerId" -> binlogServerId))
   }
 
   override def shortName(): String = "mysql-binglog"
@@ -284,7 +302,18 @@ case class MLSQLBinLogSource(executorBinlogServer: ExecutorBinlogServer,
   }
 
   override def stop(): Unit = {
-    socket.close()
+    // when the structure streaming is stopped(caused by  exception or manually killed),
+    // we should make sure the binlog server is also killed.
+    // here we use the binlogServerId as the spark job group id, and so we can cancel it.
+    // Also notice that we should close the socket which we use to fetch the offset.
+    try {
+      spark.sparkContext.cancelJobGroup(parameters("binlogServerId"))
+      socket.close()
+    } catch {
+      case e: Exception =>
+        logError("", e)
+    }
+
   }
 }
 

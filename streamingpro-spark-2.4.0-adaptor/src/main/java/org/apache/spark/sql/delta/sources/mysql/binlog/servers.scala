@@ -148,6 +148,10 @@ trait BinLogSocketServerSerDer {
   }
 }
 
+object BinLogSocketServerCommand extends BinLogSocketServerSerDer {
+
+}
+
 object ExecutorBinlogServerConsumerCache extends Logging {
 
   private case class CacheKey(host: String, port: Int)
