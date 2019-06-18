@@ -119,11 +119,11 @@ class BinLogSocketServerInExecutor[T](taskContextRef: AtomicReference[T])
         eventType match {
           case TABLE_MAP =>
             val data = event.getData[TableMapEventData]()
-            skipTable = databaseNamePattern
+            skipTable = !(databaseNamePattern
               .map(_.matcher(data.getDatabase).matches())
               .getOrElse(false) && tableNamePattern
               .map(_.matcher(data.getTable).matches())
-              .getOrElse(false)
+              .getOrElse(false))
 
             if (!skipTable) {
               val cacheKey = new TableInfoCacheKey(data.getDatabase, data.getTable, data.getTableId)

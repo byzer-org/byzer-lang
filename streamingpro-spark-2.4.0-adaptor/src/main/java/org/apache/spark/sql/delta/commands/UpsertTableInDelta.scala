@@ -83,7 +83,9 @@ case class UpsertTableInDelta(_data: Dataset[_],
 
   def upsert(txn: OptimisticTransaction, sparkSession: SparkSession): Seq[Action] = {
 
-    val isDelete = configuration.getOrElse("operation", "upsert") == "delete"
+    val isDelete = configuration
+      .getOrElse(UpsertTableInDelta.OPERATION_TYPE,
+        UpsertTableInDelta.OPERATION_TYPE_UPSERT) == UpsertTableInDelta.OPERATION_TYPE_DELETE
 
     // if _data is stream dataframe, we should convert it to normal
     // dataframe and so we can join it later
@@ -198,6 +200,9 @@ object UpsertTableInDelta {
   val ID_COLS = "idCols"
   val BATCH_ID = "batchId"
   val FILE_NAME = "__fileName__"
+  val OPERATION_TYPE = "operation"
+  val OPERATION_TYPE_UPSERT = "upsert"
+  val OPERATION_TYPE_DELETE = "delete"
 }
 
 

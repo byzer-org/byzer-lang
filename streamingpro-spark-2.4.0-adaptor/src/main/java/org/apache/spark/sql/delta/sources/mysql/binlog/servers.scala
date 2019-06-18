@@ -61,7 +61,7 @@ object SocketServerInExecutor extends Logging {
     val serverSocket: ServerSocket = new ServerSocket(0, 1, InetAddress.getByName(host))
     // throw exception if  the socket server have no connection in 5 min
     // then we will close the serverSocket
-    serverSocket.setSoTimeout(1000 * 60 * 5)
+    //serverSocket.setSoTimeout(1000 * 60 * 5)
 
     new Thread(threadName) {
       setDaemon(true)
