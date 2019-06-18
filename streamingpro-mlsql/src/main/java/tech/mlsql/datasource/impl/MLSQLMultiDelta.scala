@@ -35,7 +35,6 @@ class MLSQLMultiDelta(override val uid: String) extends MLSQLBaseStreamSource wi
     val context = ScriptSQLExec.contextGetOrForTest()
     val filePath = resourceRealPath(context.execListener, Option(context.owner), config.path)
     val newConfig = config.copy(
-      path = config.path.split("\\{db\\}").head + MLSQLMultiDeltaOptions.META_KEY,
       config = Map("path" -> config.path, "__path__" -> filePath) ++ config.config)
 
 
@@ -46,116 +45,122 @@ class MLSQLMultiDelta(override val uid: String) extends MLSQLBaseStreamSource wi
 
   override def foreachBatchCallback(dataStreamWriter: DataStreamWriter[Row], options: Map[String, String]): Unit = {
     dataStreamWriter.foreachBatch { (ds, batchId) =>
-      val idCols = options("idCols").split(",").toSeq
+      // Notice that for now, ds is not really can be re-consumed. This means we should cache it
+      ds.cache()
+      try {
+        val originalLogPath = options("__path__").split("\\{db\\}").head + MLSQLMultiDeltaOptions.META_KEY
+        ds.write.format("org.apache.spark.sql.delta.sources.MLSQLDeltaDataSource").mode(SaveMode.Append).save(originalLogPath)
 
-      def _getInfoFromMeta(record: JSONObject, key: String) = {
-        record.getJSONObject(MLSQLMultiDeltaOptions.META_KEY).getString(key)
-      }
+        val idCols = options("idCols").split(",").toSeq
 
-      def getDatabaseNameFromMeta(record: JSONObject) = {
-        _getInfoFromMeta(record, "databaseName")
-      }
-
-      def getTableNameNameFromMeta(record: JSONObject) = {
-        _getInfoFromMeta(record, "tableName")
-      }
-
-      def getschemaNameFromMeta(record: JSONObject) = {
-        _getInfoFromMeta(record, "schema")
-      }
-
-      val spark = ds.sparkSession
-      import spark.implicits._
-      val dataSet = ds.rdd.flatMap { row =>
-        val value = row.getString(0)
-        val wow = JSONObject.fromObject(value)
-        val rows = wow.remove("rows")
-        rows.asInstanceOf[JSONArray].asScala.map { record =>
-          record.asInstanceOf[JSONObject].put(MLSQLMultiDeltaOptions.META_KEY, wow)
-          record.asInstanceOf[JSONObject]
+        def _getInfoFromMeta(record: JSONObject, key: String) = {
+          record.getJSONObject(MLSQLMultiDeltaOptions.META_KEY).getString(key)
         }
-      }
 
-      val tableToId = dataSet.map { record =>
-        TableMetaInfo(getDatabaseNameFromMeta(record), getTableNameNameFromMeta(record), getschemaNameFromMeta(record))
-      }.distinct().collect().zipWithIndex.toMap
+        def getDatabaseNameFromMeta(record: JSONObject) = {
+          _getInfoFromMeta(record, "databaseName")
+        }
 
-      val finalDataSet = dataSet.map { record =>
-        val idColKey = idCols.map { idCol =>
-          record.get(idCol).toString
-        }.mkString("")
-        val key = Md5.md5Hash(record.getString("databaseName") + "_" + record.getString("tableName") + "_" + idColKey)
-        (key, record)
-      }.groupBy(_._1).map { f => f._2.map(f => f._2) }.map { records =>
-        // we get the same record operations, and sort by timestamp, get the last operation
-        val items = records.toSeq.sortBy(record => record.getJSONObject(MLSQLMultiDeltaOptions.META_KEY).getLong("timestamp"))
-        items.last
-      }
+        def getTableNameNameFromMeta(record: JSONObject) = {
+          _getInfoFromMeta(record, "tableName")
+        }
 
-      finalDataSet.cache()
+        def getschemaNameFromMeta(record: JSONObject) = {
+          _getInfoFromMeta(record, "schema")
+        }
 
-      def saveToSink(targetRDD: RDD[JSONObject], operate: String) = {
-        tableToId.map { case (table, index) =>
-          val tempRDD = targetRDD.filter(record => record.getString("databaseName") == table.db && record.getString("tableName") == table.table).map { record =>
-            record.remove(MLSQLMultiDeltaOptions.META_KEY)
-            record.toString
+        val spark = ds.sparkSession
+        import spark.implicits._
+        val dataSet = ds.rdd.flatMap { row =>
+          val value = row.getString(0)
+          val wow = JSONObject.fromObject(value)
+          val rows = wow.remove("rows")
+          rows.asInstanceOf[JSONArray].asScala.map { record =>
+            record.asInstanceOf[JSONObject].put(MLSQLMultiDeltaOptions.META_KEY, wow)
+            record.asInstanceOf[JSONObject]
           }
+        }
 
-          def deserializeSchema(json: String): StructType = {
-            Try(DataType.fromJson(json)).getOrElse(LegacyTypeStringParser.parse(json)) match {
-              case t: StructType => t
-              case _ => throw new RuntimeException(s"Failed parsing StructType: $json")
+        val finalDataSet = dataSet.map { record =>
+          val idColKey = idCols.map { idCol =>
+            record.get(idCol).toString
+          }.mkString("")
+          val key = Md5.md5Hash(getDatabaseNameFromMeta(record) + "_" + getTableNameNameFromMeta(record) + "_" + idColKey)
+          (key, record.toString)
+        }.groupBy(_._1).map { f => f._2.map(m => JSONObject.fromObject(m._2)) }.map { records =>
+          // we get the same record operations, and sort by timestamp, get the last operation
+          val items = records.toSeq.sortBy(record => record.getJSONObject(MLSQLMultiDeltaOptions.META_KEY).getLong("timestamp"))
+          println(items.last)
+          items.last
+        }
+
+        val tableToId = finalDataSet.map { record =>
+          TableMetaInfo(getDatabaseNameFromMeta(record), getTableNameNameFromMeta(record), getschemaNameFromMeta(record))
+        }.distinct().collect().zipWithIndex.toMap
+
+        def saveToSink(targetRDD: RDD[JSONObject], operate: String) = {
+          tableToId.map { case (table, index) =>
+            val tempRDD = targetRDD.filter(record => getDatabaseNameFromMeta(record) == table.db && getTableNameNameFromMeta(record) == table.table).map { record =>
+              record.remove(MLSQLMultiDeltaOptions.META_KEY)
+              record.toString
             }
-          }
 
-          val sourceSchema = deserializeSchema(table.schema)
-          val sourceParserInstance = new JsonSourceParser()
+            def deserializeSchema(json: String): StructType = {
+              Try(DataType.fromJson(json)).getOrElse(LegacyTypeStringParser.parse(json)) match {
+                case t: StructType => t
+                case _ => throw new RuntimeException(s"Failed parsing StructType: $json")
+              }
+            }
 
-          val deleteDF = spark.createDataset[String](tempRDD).toDF("value").select(sourceParserInstance.parseRaw(F.col("value"), sourceSchema, Map()).as("data"))
-            .select("data.*")
-          val path = options("__path__")
-          val tablePath = path.replace("{db}", table.db).replace("{table}", table.table)
-          val deltaLog = DeltaLog.forTable(spark, tablePath)
+            val sourceSchema = deserializeSchema(table.schema)
+            val sourceParserInstance = new JsonSourceParser()
 
-          val metadata = deltaLog.snapshot.metadata
-          val readVersion = deltaLog.snapshot.version
-          val isInitial = readVersion < 0
-          if (isInitial) {
-            throw new RuntimeException(s"${tablePath} is not initialed")
-          }
+            val deleteDF = spark.createDataset[String](tempRDD).toDF("value").select(sourceParserInstance.parseRaw(F.col("value"), sourceSchema, Map()).as("data"))
+              .select("data.*")
+            val path = options("__path__")
+            val tablePath = path.replace("{db}", table.db).replace("{table}", table.table)
+            val deltaLog = DeltaLog.forTable(spark, tablePath)
 
-          val upsertTableInDelta = new UpsertTableInDelta(deleteDF,
-            Some(SaveMode.Append),
-            None,
-            deltaLog,
-            options = new DeltaOptions(Map[String, String](), ds.sparkSession.sessionState.conf),
-            partitionColumns = Seq(),
-            configuration = Map(
-              UpsertTableInDelta.OPERATION_TYPE -> operate,
-              UpsertTableInDelta.ID_COLS -> idCols.mkString(",")
+            val metadata = deltaLog.snapshot.metadata
+            val readVersion = deltaLog.snapshot.version
+            val isInitial = readVersion < 0
+            if (isInitial) {
+              throw new RuntimeException(s"${tablePath} is not initialed")
+            }
+
+            val upsertTableInDelta = new UpsertTableInDelta(deleteDF,
+              Some(SaveMode.Append),
+              None,
+              deltaLog,
+              options = new DeltaOptions(Map[String, String](), ds.sparkSession.sessionState.conf),
+              partitionColumns = Seq(),
+              configuration = Map(
+                UpsertTableInDelta.OPERATION_TYPE -> operate,
+                UpsertTableInDelta.ID_COLS -> idCols.mkString(",")
+              )
             )
-          )
-          upsertTableInDelta.run(spark)
+            upsertTableInDelta.run(spark)
 
+          }
         }
+
+        // filter upsert
+        val upsertRDD = finalDataSet.filter { record =>
+          val meta = record.getJSONObject(MLSQLMultiDeltaOptions.META_KEY)
+          meta.getString("type") != "delete"
+        }
+        saveToSink(upsertRDD, UpsertTableInDelta.OPERATION_TYPE_UPSERT)
+
+        // filter delete
+
+        val deleteRDD = finalDataSet.filter { record =>
+          val meta = record.getJSONObject(MLSQLMultiDeltaOptions.META_KEY)
+          meta.getString("type") == "delete"
+        }
+        saveToSink(deleteRDD, UpsertTableInDelta.OPERATION_TYPE_DELETE)
+      } finally {
+        ds.unpersist()
       }
-
-      // filter upsert
-      val upsertRDD = finalDataSet.filter { record =>
-        val meta = record.getJSONObject(MLSQLMultiDeltaOptions.META_KEY)
-        meta.getString("type") != "delete"
-      }
-      saveToSink(upsertRDD, UpsertTableInDelta.OPERATION_TYPE_UPSERT)
-
-      // filter delete
-
-      val deleteRDD = finalDataSet.filter { record =>
-        val meta = record.getJSONObject(MLSQLMultiDeltaOptions.META_KEY)
-        meta.getString("type") == "delete"
-      }
-      saveToSink(deleteRDD, UpsertTableInDelta.OPERATION_TYPE_DELETE)
-
-
     }
   }
 
