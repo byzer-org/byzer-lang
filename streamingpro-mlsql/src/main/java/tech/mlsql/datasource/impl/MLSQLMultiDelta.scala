@@ -35,7 +35,7 @@ class MLSQLMultiDelta(override val uid: String) extends MLSQLBaseStreamSource wi
     val context = ScriptSQLExec.contextGetOrForTest()
     val filePath = resourceRealPath(context.execListener, Option(context.owner), config.path)
     val newConfig = config.copy(
-      config = Map("path" -> config.path, "__path__" -> filePath) ++ config.config)
+      config = Map("path" -> config.path, MLSQLMultiDeltaOptions.FULL_PATH_KEY -> filePath) ++ config.config)
 
 
     return super.save(batchWriter, newConfig)
@@ -48,10 +48,15 @@ class MLSQLMultiDelta(override val uid: String) extends MLSQLBaseStreamSource wi
       // Notice that for now, ds is not really can be re-consumed. This means we should cache it
       ds.cache()
       try {
-        val originalLogPath = options("__path__").split("\\{db\\}").head + MLSQLMultiDeltaOptions.META_KEY
-        ds.write.format("org.apache.spark.sql.delta.sources.MLSQLDeltaDataSource").mode(SaveMode.Append).save(originalLogPath)
+        val originalLogPath = options(MLSQLMultiDeltaOptions.FULL_PATH_KEY).split("\\{db\\}").head + MLSQLMultiDeltaOptions.META_KEY
+        if (options.getOrElse(MLSQLMultiDeltaOptions.KEEP_BINLOG_IN_META, "false").toBoolean) {
+          ds.write.format("org.apache.spark.sql.delta.sources.MLSQLDeltaDataSource").mode(SaveMode.Append).save(originalLogPath)
+        } else {
+          // do cache
+          ds.count()
+        }
 
-        val idCols = options("idCols").split(",").toSeq
+        val idCols = options(UpsertTableInDelta.ID_COLS).split(",").toSeq
 
         def _getInfoFromMeta(record: JSONObject, key: String) = {
           record.getJSONObject(MLSQLMultiDeltaOptions.META_KEY).getString(key)
@@ -90,7 +95,6 @@ class MLSQLMultiDelta(override val uid: String) extends MLSQLBaseStreamSource wi
         }.groupBy(_._1).map { f => f._2.map(m => JSONObject.fromObject(m._2)) }.map { records =>
           // we get the same record operations, and sort by timestamp, get the last operation
           val items = records.toSeq.sortBy(record => record.getJSONObject(MLSQLMultiDeltaOptions.META_KEY).getLong("timestamp"))
-          println(items.last)
           items.last
         }
 
@@ -117,11 +121,10 @@ class MLSQLMultiDelta(override val uid: String) extends MLSQLBaseStreamSource wi
 
             val deleteDF = spark.createDataset[String](tempRDD).toDF("value").select(sourceParserInstance.parseRaw(F.col("value"), sourceSchema, Map()).as("data"))
               .select("data.*")
-            val path = options("__path__")
+            val path = options(MLSQLMultiDeltaOptions.FULL_PATH_KEY)
             val tablePath = path.replace("{db}", table.db).replace("{table}", table.table)
             val deltaLog = DeltaLog.forTable(spark, tablePath)
 
-            val metadata = deltaLog.snapshot.metadata
             val readVersion = deltaLog.snapshot.version
             val isInitial = readVersion < 0
             if (isInitial) {
