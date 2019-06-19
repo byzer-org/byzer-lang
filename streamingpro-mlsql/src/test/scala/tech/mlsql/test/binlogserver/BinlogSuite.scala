@@ -154,6 +154,30 @@ class BinlogSuite extends BaseBinlogTest with BinLogSocketServerSerDer {
           CheckAnswerRowsByFunc(rows => {
             assert(rows.size == 1)
             assert(rows(0).getString(0).contains("jack2"))
+          }, true),
+          TriggerData(source, () => {
+            addData(
+              """
+                |update script_file set name="jack3" where name="jack2"
+              """.stripMargin)
+            Thread.sleep(5 * 1000)
+          }),
+          AdvanceManualClock(5 * 1000),
+          CheckAnswerRowsByFunc(rows => {
+            assert(rows.size == 1)
+            assert(rows(0).getString(0).contains("jack3"))
+          }, true),
+          TriggerData(source, () => {
+            addData(
+              """
+                |delete from script_file where name="jack3"
+              """.stripMargin)
+            Thread.sleep(5 * 1000)
+          }),
+          AdvanceManualClock(5 * 1000),
+          CheckAnswerRowsByFunc(rows => {
+            assert(rows.size == 1)
+            assert(rows(0).getString(0).contains("jack3"))
           }, true)
         )
 
