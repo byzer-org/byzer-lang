@@ -5,7 +5,6 @@ import java.sql.{SQLException, Statement}
 import java.util.TimeZone
 
 import org.apache.spark.SparkCoreVersion
-import org.apache.spark.sql.SaveMode
 import org.apache.spark.sql.catalyst.expressions.AttributeReference
 import org.apache.spark.sql.delta.sources.MLSQLBinLogDataSource
 import org.apache.spark.sql.delta.sources.mysql.binlog._
@@ -13,6 +12,7 @@ import org.apache.spark.sql.execution.streaming._
 import org.apache.spark.sql.streaming._
 import org.apache.spark.sql.streaming.util.StreamManualClock
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
+import org.apache.spark.sql.{DataSetHelper, SaveMode}
 import org.scalatest.time.SpanSugar._
 import tech.mlsql.common.ScalaReflect
 
@@ -20,7 +20,7 @@ import tech.mlsql.common.ScalaReflect
   * 2019-06-15 WilliamZhu(allwefantasy@gmail.com)
   */
 
-trait BaseBinlogTest extends WowStreamTest {
+trait BaseBinlogTest extends StreamTest {
 
   override val streamingTimeout = 1800.seconds
 
@@ -139,7 +139,7 @@ class BinlogSuite extends BaseBinlogTest with BinLogSocketServerSerDer {
         ))
         val attributes = ScalaReflect.fromInstance[StructType](source.schema).method("toAttributes").invoke().asInstanceOf[Seq[AttributeReference]]
         val logicalPlan = StreamingExecutionRelation(source, attributes)(sqlContext.sparkSession)
-        val df = toDf(logicalPlan)
+        val df = DataSetHelper.create(spark, logicalPlan)
 
         testStream(df, OutputMode.Append())(StartStream(Trigger.ProcessingTime("5 seconds"), new StreamManualClock),
           AdvanceManualClock(5 * 1000),
