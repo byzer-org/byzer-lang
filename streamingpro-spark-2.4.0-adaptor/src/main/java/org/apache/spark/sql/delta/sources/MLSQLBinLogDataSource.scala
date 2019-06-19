@@ -58,7 +58,6 @@ class MLSQLBinLogDataSource extends StreamSourceProvider with DataSourceRegister
     val databaseNamePattern = parameters.get("databaseNamePattern")
     val tableNamePattern = parameters.get("tableNamePattern")
 
-    val metadataPath = parameters.getOrElse("metadataPath", "offsets")
     val startingOffsets = parameters.get("startingOffsets").map(f => LongOffset(f.toLong))
 
     startingOffsets match {
@@ -212,7 +211,8 @@ case class MLSQLBinLogSource(executorBinlogServer: ExecutorBinlogServer,
 
   private lazy val initialPartitionOffsets = {
     val sqlContext = spark.sqlContext
-    val metadataLog = new HDFSMetadataLog[LongOffset](sqlContext.sparkSession, metadataPath) {
+    val offsetMetadataPath = metadataPath + "/binlog-offsets"
+    val metadataLog = new HDFSMetadataLog[LongOffset](sqlContext.sparkSession, offsetMetadataPath) {
       override def serialize(metadata: LongOffset, out: OutputStream): Unit = {
         out.write(0) // A zero byte is written to support Spark 2.1.0 (SPARK-19517)
         val writer = new BufferedWriter(new OutputStreamWriter(out, StandardCharsets.UTF_8))
