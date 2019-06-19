@@ -116,6 +116,15 @@ class BinlogSuite extends BaseBinlogTest with BinLogSocketServerSerDer {
     }
   }
 
+  def addData(sql: String) = {
+    master.execute(new MySQLConnection.Callback[Statement]() {
+      @throws[SQLException]
+      override def execute(statement: Statement): Unit = {
+        statement.execute(sql)
+      }
+    })
+  }
+
   abstract case class TriggerData(source: Source) extends AddData {
 
   }
@@ -124,15 +133,6 @@ class BinlogSuite extends BaseBinlogTest with BinLogSocketServerSerDer {
     failAfter(streamingTimeout) {
       withTempDirs { (outputDir, checkpointDir) =>
 
-        def addData(sql: String) = {
-          master.execute(new MySQLConnection.Callback[Statement]() {
-            @throws[SQLException]
-            override def execute(statement: Statement): Unit = {
-              statement.execute(sql)
-            }
-          })
-        }
-
         val source = new MLSQLBinLogDataSource().createSource(spark.sqlContext, checkpointDir.getCanonicalPath, Some(StructType(Seq(StructField("value", StringType)))), "binlog", parameters ++ Map(
           "databaseNamePattern" -> "mbcj_test",
           "tableNamePattern" -> "script_file"
@@ -140,7 +140,7 @@ class BinlogSuite extends BaseBinlogTest with BinLogSocketServerSerDer {
         val attributes = ScalaReflect.fromInstance[StructType](source.schema).method("toAttributes").invoke().asInstanceOf[Seq[AttributeReference]]
         val logicalPlan = StreamingExecutionRelation(source, attributes)(sqlContext.sparkSession)
         val df = DataSetHelper.create(spark, logicalPlan)
-
+        var offset = 0l
         testStream(df, OutputMode.Append())(StartStream(Trigger.ProcessingTime("5 seconds"), new StreamManualClock),
           AdvanceManualClock(5 * 1000),
           TriggerData(source, () => {
@@ -159,6 +159,7 @@ class BinlogSuite extends BaseBinlogTest with BinLogSocketServerSerDer {
             assert(rows(0).getString(0).contains("jack2"))
           }, true),
           TriggerData(source, () => {
+            offset = source.getOffset.get.asInstanceOf[LongOffset].offset
             addData(
               """
                 |update script_file set name="jack3" where name="jack2"
@@ -187,6 +188,5 @@ class BinlogSuite extends BaseBinlogTest with BinLogSocketServerSerDer {
       }
     }
   }
-
 
 }

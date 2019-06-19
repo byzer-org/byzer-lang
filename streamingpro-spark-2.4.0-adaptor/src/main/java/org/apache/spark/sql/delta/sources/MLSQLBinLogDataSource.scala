@@ -17,6 +17,7 @@ import org.apache.spark.sql.{DataFrame, SQLContext, SparkSession}
 import org.apache.spark.unsafe.types.UTF8String
 import org.apache.spark.util.{TaskCompletionListener, TaskFailureListener}
 import org.apache.spark.{SparkEnv, TaskContext}
+import streaming.common.{HDFSOperator, PathFun}
 
 /**
   * This Datasource is used to consume MySQL binlog. Not support MariaDB yet because the connector we are using is
@@ -67,10 +68,35 @@ class MLSQLBinLogDataSource extends StreamSourceProvider with DataSourceRegister
       case None =>
     }
 
-    assert(startingOffsets.isDefined == bingLogNamePrefix.isDefined,
-      "startingOffsets and bingLogNamePrefix should exists together ")
+    def getOffsetFromCk = {
+      val offsetPath = PathFun(metadataPath.stripSuffix("/").split("/").
+        dropRight(2).mkString("/")).
+        add("offsets").
+        toPath
 
-    val startOffsetInFile = startingOffsets.map(f => BinlogOffset.fromOffset(f.offset))
+      val lastFile = HDFSOperator.listFiles(offsetPath)
+        .filterNot(_.getPath.getName.endsWith(".tmp.crc"))
+        .map { fileName =>
+          (fileName.getPath.getName.split("/").last.toInt, fileName.getPath)
+        }
+        .sortBy(f => f._1).last._2
+
+      val content = HDFSOperator.readFile(lastFile.toString)
+      content.split("\n").last.toLong
+    }
+
+    val offsetFromCk = try {
+      Option(LongOffset(getOffsetFromCk))
+    } catch {
+      case e: Exception => None
+    }
+
+    val finalStartingOffsets = if (offsetFromCk.isDefined) offsetFromCk else startingOffsets
+
+    assert(finalStartingOffsets.isDefined == bingLogNamePrefix.isDefined,
+      "startingOffsets(or Checkpoint have offset files) and bingLogNamePrefix should exists together ")
+
+    val startOffsetInFile = finalStartingOffsets.map(f => BinlogOffset.fromOffset(f.offset))
     val binlogFilename = startOffsetInFile.map(f => BinlogOffset.toFileName(bingLogNamePrefix.get, f.fileId))
     val binlogPos = startOffsetInFile.map(_.pos)
 
@@ -165,7 +191,7 @@ class MLSQLBinLogDataSource extends StreamSourceProvider with DataSourceRegister
     }
     val report = executorBinlogServerInfoRef.get()
     executorBinlogServer = ExecutorBinlogServer(report.host, report.port)
-    MLSQLBinLogSource(executorBinlogServer, sqlContext.sparkSession, metadataPath, startingOffsets, parameters ++ Map("binlogServerId" -> binlogServerId))
+    MLSQLBinLogSource(executorBinlogServer, sqlContext.sparkSession, metadataPath, finalStartingOffsets, parameters ++ Map("binlogServerId" -> binlogServerId))
   }
 
   override def shortName(): String = "mysql-binglog"
@@ -296,8 +322,8 @@ case class MLSQLBinLogSource(executorBinlogServer: ExecutorBinlogServer,
         spark.sqlContext.sparkContext.emptyRDD[InternalRow].setName("empty"), schema, isStreaming = true)
     }
 
-    // in case that we restore from the recovery, then we lose the start.
-    // People can specify the startingOffset manually.
+    // once we have changed checkpoint path, then we can start from provided starting offset.
+    // In normal case, we will recover the start from checkpoint offset directory
     val fromPartitionOffsets = start match {
       case Some(prevBatchEndOffset) =>
         LongOffset.convert(prevBatchEndOffset)
