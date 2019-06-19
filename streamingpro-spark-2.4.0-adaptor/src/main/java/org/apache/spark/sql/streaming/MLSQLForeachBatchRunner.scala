@@ -1,6 +1,6 @@
 package org.apache.spark.sql.streaming
 
-import org.apache.spark.sql.{Row, SparkSession}
+import org.apache.spark.sql.{Dataset, Row, SparkSession}
 
 /**
   * 2019-05-26 WilliamZhu(allwefantasy@gmail.com)
@@ -10,6 +10,12 @@ object MLSQLForeachBatchRunner {
     dataStreamWriter.foreachBatch { (dataBatch, batchId) =>
       dataBatch.createOrReplaceTempView(outputName)
       callback(batchId, dataBatch.sparkSession)
+    }
+  }
+
+  def run(dataStreamWriter: DataStreamWriter[Row], callback: (Dataset[Row], Long) => Unit): Unit = {
+    dataStreamWriter.foreachBatch { (dataBatch, batchId) =>
+      callback(dataBatch, batchId)
     }
   }
 }
