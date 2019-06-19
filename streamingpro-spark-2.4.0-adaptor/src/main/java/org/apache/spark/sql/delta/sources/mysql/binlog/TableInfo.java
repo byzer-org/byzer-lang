@@ -1,9 +1,11 @@
 package org.apache.spark.sql.delta.sources.mysql.binlog;
 
+import java.io.Serializable;
+
 /**
  * 2019-06-14 WilliamZhu(allwefantasy@gmail.com)
  */
-public class TableInfo {
+public class TableInfo implements Serializable {
 
     private String databaseName;
     private String tableName;

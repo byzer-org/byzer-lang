@@ -3,7 +3,9 @@ package org.apache.spark.sql.delta.sources.mysql.binlog;
 import com.github.shyiko.mysql.binlog.event.Event;
 import com.github.shyiko.mysql.binlog.event.EventHeaderV4;
 
-public class RawBinlogEvent {
+import java.io.Serializable;
+
+public class RawBinlogEvent implements Serializable {
 
     private Event event;
     private String binlogFilename;

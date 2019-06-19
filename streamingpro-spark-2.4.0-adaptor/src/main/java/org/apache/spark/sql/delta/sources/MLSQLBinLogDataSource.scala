@@ -15,7 +15,7 @@ import org.apache.spark.sql.sources.{DataSourceRegister, StreamSourceProvider}
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
 import org.apache.spark.sql.{DataFrame, SQLContext, SparkSession}
 import org.apache.spark.unsafe.types.UTF8String
-import org.apache.spark.util.{TaskCompletionListener, TaskFailureListener}
+import org.apache.spark.util.{SerializableConfiguration, TaskCompletionListener, TaskFailureListener}
 import org.apache.spark.{SparkEnv, TaskContext}
 import streaming.common.{HDFSOperator, PathFun}
 
@@ -68,9 +68,11 @@ class MLSQLBinLogDataSource extends StreamSourceProvider with DataSourceRegister
       case None =>
     }
 
+    val checkPointDir = metadataPath.stripSuffix("/").split("/").
+      dropRight(2).mkString("/")
+
     def getOffsetFromCk = {
-      val offsetPath = PathFun(metadataPath.stripSuffix("/").split("/").
-        dropRight(2).mkString("/")).
+      val offsetPath = PathFun(checkPointDir).
         add("offsets").
         toPath
 
@@ -113,14 +115,17 @@ class MLSQLBinLogDataSource extends StreamSourceProvider with DataSourceRegister
 
     val binlogServerId = UUID.randomUUID().toString
 
+    val hadoopConfig = spark.sparkContext.hadoopConfiguration
+    val broadcastedHadoopConf = new SerializableConfiguration(hadoopConfig)
+
     def launchBinlogServer = {
       spark.sparkContext.setJobGroup(binlogServerId, s"binlog server (${bingLogHost}:${bingLogPort})", true)
-      spark.sparkContext.parallelize(Seq("launch-binlog-socket-server")).map { item =>
+      spark.sparkContext.parallelize(Seq("launch-binlog-socket-server"), 1).map { item =>
 
         val taskContextRef: AtomicReference[TaskContext] = new AtomicReference[TaskContext]()
         taskContextRef.set(TaskContext.get())
 
-        val executorBinlogServer = new BinLogSocketServerInExecutor(taskContextRef)
+        val executorBinlogServer = new BinLogSocketServerInExecutor(taskContextRef, checkPointDir, broadcastedHadoopConf.value)
         executorBinlogServer.setMaxBinlogQueueSize(maxBinlogQueueSize)
 
         def sendStopBinlogServerRequest = {
@@ -333,7 +338,7 @@ case class MLSQLBinLogSource(executorBinlogServer: ExecutorBinlogServer,
 
     val executorBinlogServerCopy = executorBinlogServer.copy()
 
-    val rdd = spark.sparkContext.parallelize(Seq("fetch-bing-log")).mapPartitions { iter =>
+    val rdd = spark.sparkContext.parallelize(Seq("fetch-bing-log"), 1).mapPartitions { iter =>
       val consumer = ExecutorBinlogServerConsumerCache.acquire(executorBinlogServerCopy)
       consumer.fetchData(fromPartitionOffsets.get, untilPartitionOffsets.get).toIterator
     }.map { cr =>
