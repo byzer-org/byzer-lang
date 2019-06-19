@@ -5,7 +5,7 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.catalyst.parser.LegacyTypeStringParser
 import org.apache.spark.sql.delta.commands.UpsertTableInDelta
 import org.apache.spark.sql.delta.{DeltaLog, DeltaOptions}
-import org.apache.spark.sql.streaming.DataStreamWriter
+import org.apache.spark.sql.streaming.{DataStreamWriter, MLSQLForeachBatchRunner}
 import org.apache.spark.sql.types.{DataType, StructType}
 import org.apache.spark.sql.{DataFrame, DataFrameReader, DataFrameWriter, Row, SaveMode, functions => F}
 import streaming.common.Md5
@@ -44,7 +44,9 @@ class MLSQLMultiDelta(override val uid: String) extends MLSQLBaseStreamSource wi
 
 
   override def foreachBatchCallback(dataStreamWriter: DataStreamWriter[Row], options: Map[String, String]): Unit = {
-    dataStreamWriter.foreachBatch { (ds, batchId) =>
+
+    MLSQLForeachBatchRunner.run(dataStreamWriter, (ds, batchId) => {
+
       // Notice that for now, ds is not really can be re-consumed. This means we should cache it
       ds.cache()
       try {
@@ -164,7 +166,7 @@ class MLSQLMultiDelta(override val uid: String) extends MLSQLBaseStreamSource wi
       } finally {
         ds.unpersist()
       }
-    }
+    })
   }
 
   override def resolvePath(path: String, owner: String): String = {
