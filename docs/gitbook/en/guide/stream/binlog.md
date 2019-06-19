@@ -42,9 +42,11 @@ If you want to make the startingOffsets take effect, then you should set a new `
 binlogRate will execute upsert/delete on records according to the idCols. If you just want to save the original binlog, 
 use rate instead of binlogRate.
 
-## Limitation for this version
+## Requirement
 0. Enable binlog and set `binlog_format=Row` in my.cnf
+
+## Limitation
 1. Only update/delete/insert are supported.
-2. Once the Stream fails, At least once guarantee
+2. At least once guarantee
              
  
