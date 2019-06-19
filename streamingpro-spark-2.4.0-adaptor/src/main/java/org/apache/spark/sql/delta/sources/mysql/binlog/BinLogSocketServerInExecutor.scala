@@ -320,6 +320,20 @@ class BinLogSocketServerInExecutor[T](taskContextRef: AtomicReference[T])
         case request: RequestData =>
           val start = request.startOffset
           val end = request.endOffset
+
+          // this is used to get all data in queue.
+          // normally for test
+          if (start == -1 && end == -1) {
+            val res = ArrayBuffer[String]()
+            val iter = queue.iterator()
+
+            while (iter.hasNext) {
+              res ++= convertRawBinlogEventRecord(iter.next()).asScala
+            }
+            sendResponse(dOut, DataResponse(res.toList))
+            return
+          }
+
           var item: RawBinlogEvent = queue.poll()
           val res = ArrayBuffer[String]()
           try {

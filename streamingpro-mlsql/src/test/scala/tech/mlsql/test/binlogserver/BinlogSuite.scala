@@ -5,16 +5,21 @@ import java.sql.{SQLException, Statement}
 import java.util.TimeZone
 
 import org.apache.spark.sql.SaveMode
+import org.apache.spark.sql.catalyst.expressions.AttributeReference
+import org.apache.spark.sql.delta.sources.MLSQLBinLogDataSource
 import org.apache.spark.sql.delta.sources.mysql.binlog._
-import org.apache.spark.sql.execution.streaming.{LongOffset, SerializedOffset}
-import org.apache.spark.sql.streaming.{OutputMode, StreamTest}
+import org.apache.spark.sql.execution.streaming._
+import org.apache.spark.sql.streaming._
+import org.apache.spark.sql.streaming.util.StreamManualClock
+import org.apache.spark.sql.types.{StringType, StructField, StructType}
 import org.scalatest.time.SpanSugar._
+import tech.mlsql.common.ScalaReflect
 
 /**
   * 2019-06-15 WilliamZhu(allwefantasy@gmail.com)
   */
 
-trait BaseBinlogTest extends StreamTest {
+trait BaseBinlogTest extends WowStreamTest {
 
   override val streamingTimeout = 1800.seconds
 
@@ -93,46 +98,65 @@ trait BaseBinlogTest extends StreamTest {
 
 }
 
+
 class BinlogSuite extends BaseBinlogTest with BinLogSocketServerSerDer {
 
+  object TriggerData {
+    def apply(source: Source, f: () => Unit) = {
+      new TriggerData(source) {
+        override def addData(query: Option[StreamExecution]): (BaseStreamingSource, Offset) = {
+          f()
+          (source, source.getOffset.get)
+        }
+      }
+    }
+  }
+
+  abstract case class TriggerData(source: Source) extends AddData {
+
+  }
+
   test("read binlog and write original log to delta table") {
+
     failAfter(streamingTimeout) {
       withTempDirs { (outputDir, checkpointDir) =>
 
-        val df = spark.readStream.format("org.apache.spark.sql.delta.sources.MLSQLBinLogDataSource")
-          .options(parameters)
-          .option("metadataPath", s"${checkpointDir.getCanonicalPath}/binlog-offsets")
-          .option("databaseNamePattern", "mbcj_test")
-          .option("tableNamePattern", "script_file")
-          .load()
-        val query = df.writeStream
-          .option("checkpointLocation", checkpointDir.getCanonicalPath)
-          .outputMode(OutputMode.Append())
-          .format(delta)
-          .start(outputDir.getCanonicalPath)
-
-        try {
+        def addData(sql: String) = {
           master.execute(new MySQLConnection.Callback[Statement]() {
             @throws[SQLException]
             override def execute(statement: Statement): Unit = {
-              statement.execute(
-                """
-                  |insert into script_file (name,has_caret) values ("jack2",1)
-                """.stripMargin)
+              statement.execute(sql)
             }
           })
-          query.processAllAvailable()
-          val startOffset = LongOffset(SerializedOffset(query.lastProgress.sources.head.startOffset))
-          val endOffset = LongOffset(SerializedOffset(query.lastProgress.sources.head.endOffset))
-          
-
-          spark.read.format(delta).load(outputDir.getCanonicalPath).createOrReplaceTempView("table1")
-          val table1 = spark.sql(""" select * from table1""")
-          assert(table1.count() == 1)
-
-        } finally {
-          query.stop()
         }
+
+        val source = new MLSQLBinLogDataSource().createSource(spark.sqlContext, checkpointDir.getCanonicalPath, Some(StructType(Seq(StructField("value", StringType)))), "binlog", parameters ++ Map(
+          "databaseNamePattern" -> "mbcj_test",
+          "tableNamePattern" -> "script_file"
+        ))
+        val attributes = ScalaReflect.fromInstance[StructType](source.schema).method("toAttributes").invoke().asInstanceOf[Seq[AttributeReference]]
+        val logicalPlan = StreamingExecutionRelation(source, attributes)(sqlContext.sparkSession)
+        val df = toDf(logicalPlan)
+
+        testStream(df, OutputMode.Append())(StartStream(Trigger.ProcessingTime("5 seconds"), new StreamManualClock),
+          AdvanceManualClock(5 * 1000),
+          TriggerData(source, () => {
+            addData(
+              """
+                |insert into script_file (name,has_caret) values ("jack2",1)
+              """.stripMargin)
+            // make sure MySQL binlog can be consumed into queue, and the lastest offset will not change again
+            // otherwize the CheckNewAnswerRows will block
+            //
+            Thread.sleep(5 * 1000)
+          }),
+          AdvanceManualClock(5 * 1000),
+          CheckAnswerRowsByFunc(rows => {
+            assert(rows.size == 1)
+            assert(rows(0).getString(0).contains("jack2"))
+          }, true)
+        )
+
       }
     }
   }

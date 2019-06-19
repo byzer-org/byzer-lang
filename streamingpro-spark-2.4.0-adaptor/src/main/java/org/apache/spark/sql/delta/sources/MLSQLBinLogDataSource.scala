@@ -208,6 +208,10 @@ case class MLSQLBinLogSource(executorBinlogServer: ExecutorBinlogServer,
     StructType(Seq(StructField("value", StringType)))
   }
 
+  def request(req: Request) = {
+    sendRequest(dOut, req)
+    readResponse(dIn)
+  }
 
   private lazy val initialPartitionOffsets = {
     val sqlContext = spark.sqlContext
