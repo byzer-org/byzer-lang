@@ -3,18 +3,22 @@ package org.apache.spark.sql.delta.sources.mysql.binlog
 import java.io.{DataInputStream, DataOutputStream}
 import java.net.Socket
 import java.util
+import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicLong, AtomicReference}
-import java.util.concurrent.{ConcurrentHashMap, LinkedBlockingQueue}
 import java.util.regex.Pattern
 
 import com.github.shyiko.mysql.binlog.BinaryLogClient
 import com.github.shyiko.mysql.binlog.event.EventType._
 import com.github.shyiko.mysql.binlog.event._
 import com.github.shyiko.mysql.binlog.event.deserialization.EventDeserializer
+import org.apache.hadoop.conf.Configuration
+import org.apache.spark.SparkEnv
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.delta.sources.mysql.binlog.io.{DeleteRowsWriter, EventInfo, InsertRowsWriter, UpdateRowsWriter}
 import org.apache.spark.sql.execution.datasources.jdbc.{JDBCOptions, JDBCRDD}
 import org.apache.spark.sql.types.StructType
+import org.apache.spark.streaming.BinlogWriteAheadLog
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable.ArrayBuffer
@@ -22,7 +26,8 @@ import scala.collection.mutable.ArrayBuffer
 /**
   * 2019-06-13 WilliamZhu(allwefantasy@gmail.com)
   */
-class BinLogSocketServerInExecutor[T](taskContextRef: AtomicReference[T])
+class BinLogSocketServerInExecutor[T](taskContextRef: AtomicReference[T], checkpointDir: String,
+                                      hadoopConf: Configuration, isWriteAheadStorage: Boolean = true)
   extends SocketServerInExecutor[T](taskContextRef, "binlog-socket-server-in-executor")
     with BinLogSocketServerSerDer with Logging {
 
@@ -34,7 +39,13 @@ class BinLogSocketServerInExecutor[T](taskContextRef: AtomicReference[T])
 
   private var currentBinlogPosition: Long = 4
 
-  private val queue = new LinkedBlockingQueue[RawBinlogEvent]()
+  private val queue = new util.ArrayDeque[RawBinlogEvent]()
+  private val writeAheadLog = {
+    val sparkEnv = SparkEnv.get
+    val tmp = new BinlogWriteAheadLog(UUID.randomUUID().toString, sparkEnv.serializerManager, sparkEnv.conf, hadoopConf, checkpointDir)
+    tmp.cleanupOldBlocks(System.currentTimeMillis(), true)
+    tmp
+  }
 
   private var databaseNamePattern: Option[Pattern] = None
   private var tableNamePattern: Option[Pattern] = None
@@ -42,6 +53,9 @@ class BinLogSocketServerInExecutor[T](taskContextRef: AtomicReference[T])
   private var maxBinlogQueueSize: Long = 0l
 
   private var connect: MySQLConnectionInfo = null
+
+  private var aheadLogBuffer = ArrayBuffer[RawBinlogEvent]()
+
 
   @volatile private var skipTable = false
   @volatile private var currentTable: TableInfo = _
@@ -72,15 +86,38 @@ class BinLogSocketServerInExecutor[T](taskContextRef: AtomicReference[T])
     }
   }
 
+  def flushAheadLog = {
+    synchronized {
+      writeAheadLog.write(aheadLogBuffer)
+      aheadLogBuffer.clear()
+    }
+
+  }
+
   def addRecord(event: Event, binLogFilename: String, eventType: String) = {
     assertTable
-    if (currentQueueSize.get() > maxBinlogQueueSize && !markPause.get()) {
-      pause
-    } else if (currentQueueSize.get() < maxBinlogQueueSize / 2 && markPause.get()) {
-      resume
+    val item = new RawBinlogEvent(event, currentTable, binLogFilename, eventType, currentBinlogPosition)
+    if (isWriteAheadStorage) {
+      if (aheadLogBuffer.size >= 1000) {
+        flushAheadLog
+        //clean data before one hour
+        writeAheadLog.cleanupOldBlocks(System.currentTimeMillis() - 1000 * 60 * 60)
+      }
     }
-    currentQueueSize.incrementAndGet()
-    queue.offer(new RawBinlogEvent(event, currentTable, binLogFilename, eventType, currentBinlogPosition))
+
+    if (isWriteAheadStorage) {
+      aheadLogBuffer += item
+    }
+
+    if (!isWriteAheadStorage) {
+      if (currentQueueSize.get() > maxBinlogQueueSize && !markPause.get()) {
+        pause
+      } else if (currentQueueSize.get() < maxBinlogQueueSize / 2 && markPause.get()) {
+        resume
+      }
+      currentQueueSize.incrementAndGet()
+      queue.offer(item)
+    }
   }
 
   private def _connectMySQL(connect: MySQLConnectionInfo) = {
@@ -298,6 +335,10 @@ class BinLogSocketServerInExecutor[T](taskContextRef: AtomicReference[T])
         queue.clear()
       })
 
+      tryWithoutException(() => {
+        writeAheadLog.stop()
+      })
+
 
     }
   }
@@ -321,27 +362,27 @@ class BinLogSocketServerInExecutor[T](taskContextRef: AtomicReference[T])
           val start = request.startOffset
           val end = request.endOffset
 
-          // this is used to get all data in queue.
-          // normally for test
-          if (start == -1 && end == -1) {
-            val res = ArrayBuffer[String]()
-            val iter = queue.iterator()
-
-            while (iter.hasNext) {
-              res ++= convertRawBinlogEventRecord(iter.next()).asScala
-            }
-            sendResponse(dOut, DataResponse(res.toList))
-            return
-          }
-
-          var item: RawBinlogEvent = queue.poll()
           val res = ArrayBuffer[String]()
           try {
-            while (item != null && toOffset(item) >= start && toOffset(item) < end) {
-              res ++= convertRawBinlogEventRecord(item).asScala
-              item = queue.poll()
-              currentQueueSize.decrementAndGet()
+
+            if (isWriteAheadStorage) {
+              flushAheadLog
+              writeAheadLog.read((records) => {
+                records.foreach { record =>
+                  if (toOffset(record) >= start && toOffset(record) < end) {
+                    res ++= convertRawBinlogEventRecord(record).asScala
+                  }
+                }
+              })
+            } else {
+              var item: RawBinlogEvent = queue.poll()
+              while (item != null && toOffset(item) >= start && toOffset(item) < end) {
+                res ++= convertRawBinlogEventRecord(item).asScala
+                item = queue.poll()
+                currentQueueSize.decrementAndGet()
+              }
             }
+
           } catch {
             case e: Exception =>
               logError("", e)

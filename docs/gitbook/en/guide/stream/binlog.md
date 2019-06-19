@@ -46,15 +46,5 @@ use rate instead of binlogRate.
 0. Enable binlog and set `binlog_format=Row` in my.cnf
 1. Only update/delete/insert are supported.
 2. Once the Stream fails, At least once guarantee
-3. The table loaded as binlog format only can be saved by one `save` statement. 
-4. Once the save task fails and retry, it may lost data.
-5. When the computation/sink is too slow, the buffer which we keep raw binlog in executor, is greater then maxBinlogQueueSize,
-   then we pause the MySQL binlog consumer, and stop put more data into buffer. When the buffer is maxBinlogQueueSize/2 ,
-   resume the binlog consumer
-   
-The 3,4 limitation is caused by we consume MySQL binlog and put them in executor queue(memory), and the other executor will
-take the data from queue, and the queue will not keep the data have been taken. So once the take/save task fails and try again, they will
-get nothing.       
-
              
  
