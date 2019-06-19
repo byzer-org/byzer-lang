@@ -4,6 +4,7 @@ import java.io.File
 import java.sql.{SQLException, Statement}
 import java.util.TimeZone
 
+import org.apache.spark.SparkCoreVersion
 import org.apache.spark.sql.SaveMode
 import org.apache.spark.sql.catalyst.expressions.AttributeReference
 import org.apache.spark.sql.delta.sources.MLSQLBinLogDataSource
@@ -24,6 +25,9 @@ trait BaseBinlogTest extends WowStreamTest {
   override val streamingTimeout = 1800.seconds
 
   def withTempDirs(f: (File, File) => Unit): Unit = {
+    if (SparkCoreVersion.is_2_3_X()) {
+      return
+    }
     withTempDir { file1 =>
       withTempDir { file2 =>
         f(file1, file2)
@@ -117,7 +121,6 @@ class BinlogSuite extends BaseBinlogTest with BinLogSocketServerSerDer {
   }
 
   test("read binlog and write original log to delta table") {
-
     failAfter(streamingTimeout) {
       withTempDirs { (outputDir, checkpointDir) =>
 
