@@ -18,6 +18,7 @@
 
 package streaming.dsl.mmlib.algs
 
+import org.apache.spark.MLSQLConf
 import org.apache.spark.ml.param.Param
 import org.apache.spark.ps.cluster.Message
 import org.apache.spark.ps.cluster.Message.CreateOrRemovePythonCondaEnvResponse
@@ -39,6 +40,7 @@ class SQLPythonEnvExt(override val uid: String) extends SQLAlg with WowParams {
   def this() = this(BaseParams.randomUID())
 
   override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
+
     val spark = df.sparkSession
 
     params.get(command.name).map { s =>
@@ -74,7 +76,22 @@ class SQLPythonEnvExt(override val uid: String) extends SQLAlg with WowParams {
       val psDriverBackend = PlatformManager.getRuntime.asInstanceOf[SparkRuntime].localSchedulerBackend
       psDriverBackend.localEndpoint.askSync[CreateOrRemovePythonCondaEnvResponse](remoteCommand, PSDriverEndpoint.MLSQL_DEFAULT_RPC_TIMEOUT(spark.sparkContext.getConf))
     } else {
-      val psDriverBackend = PlatformManager.getRuntime.asInstanceOf[SparkRuntime].psDriverBackend
+      val runtime = PlatformManager.getRuntime.asInstanceOf[SparkRuntime]
+      assert(MLSQLConf.MLSQL_CLUSTER_PS_ENABLE.readFrom(runtime.configReader),
+        """
+          |Please make sure `-streaming.ps.cluster.enable ` set true and
+          |make the mlsql main jar available in executor classpath. You can do like this(yarn mode):
+          |
+          |--jars ./libs/mlsql-spark_2.x-x.x.x.jar
+          |--conf "spark.executor.extraClassPath=mlsql-spark_2.x-x.x.x.jar"
+          |
+          |If you deploy as Standalone mode, please send the  mlsql-spark_2.x-x.x.x.jar to every node, and configure like
+          |following:
+          |
+          |--conf "spark.executor.extraClassPath= THE FULL PATH OF mlsql-spark_2.x-x.x.x.jar"
+          |
+        """.stripMargin)
+      val psDriverBackend = runtime.psDriverBackend
       psDriverBackend.psDriverRpcEndpointRef.askSync[CreateOrRemovePythonCondaEnvResponse](remoteCommand, PSDriverEndpoint.MLSQL_DEFAULT_RPC_TIMEOUT(spark.sparkContext.getConf))
     }
     import spark.implicits._

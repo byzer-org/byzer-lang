@@ -52,7 +52,8 @@
         * [window/watermark](guide/stream/window_wartermark.md) 
         * [How to update MySQL with MLSQL stream](guide/stream/stream_mysql_update.md)
         * [Stream Callback Support](guide/stream/callback.md)
-        * [Stream Sub Batch Query Support](guide/stream/subquery.md)                        
+        * [Stream Sub Batch Query Support](guide/stream/subquery.md)
+        * [Binlog Source](guide/stream/binlog.md)                        
                   
 * [API Docs](test2/a.md)
 * [More]()
