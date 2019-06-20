@@ -55,12 +55,12 @@ class InsertAuth(authProcessListener: AuthProcessListener) extends MLSQLAuth wit
     val tables = tableRefs.foreach { f =>
       f.database match {
         case Some(db) =>
-          val exists = authProcessListener.withDBs.filter(m => f.table == m.table.get && db == m.db.get).size > 0
+          val operateType = f.operator match {
+            case Some(operator) => OperateType.INSERT
+            case None => OperateType.SELECT
+          }
+          val exists = authProcessListener.withDBs.filter(m => f.table == m.table.get && db == m.db.get  && operateType == m.operateType).size > 0
           if (!exists) {
-            val operateType = f.operator match {
-              case Some(operator) => OperateType.INSERT
-              case None => OperateType.SELECT
-            }
             authProcessListener.addTable(MLSQLTable(Some(db), Some(f.table) ,operateType , None, TableType.HIVE))
           }
         case None =>
