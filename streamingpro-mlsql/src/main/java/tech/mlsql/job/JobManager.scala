@@ -160,9 +160,7 @@ class JobManager(_spark: SparkSession, initialDelay: Long, checkTimeInterval: Lo
   def cancelJobGroup(spark: SparkSession, groupId: String, ignoreStreamJob: Boolean = false): Unit = {
     logInfo(format("JobManager Timer cancel job group " + groupId))
     val job = groupIdToMLSQLJobInfo.get(groupId)
-
-    val notKillStreamJob = job != null && ignoreStreamJob && job.jobType == MLSQLJobType.STREAM
-
+    
     // when we try to kill stream job, we do not need to remove it from  groupIdToMLSQLJobInfo here.
     // This is because once we kill the stream job successfully,
     // then the MLSQLExternalStreamListener.onQueryTerminated will be invoked and remove it from  groupIdToMLSQLJobInfo.
@@ -182,9 +180,11 @@ class JobManager(_spark: SparkSession, initialDelay: Long, checkTimeInterval: Lo
       groupIdToMLSQLJobInfo.remove(groupId)
     }
 
-    if (!notKillStreamJob) {
+    if (job != null && !ignoreStreamJob && job.jobType == MLSQLJobType.STREAM) {
       killStreamJob
-    } else {
+    }
+
+    if (job.jobType != MLSQLJobType.STREAM) {
       killBatchJob
     }
   }
