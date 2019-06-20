@@ -341,7 +341,6 @@
 
         </profile>
 
-        
 
         <profile>
             <id>spark-2.3.0</id>
@@ -480,8 +479,8 @@
                     </exclusions>
                 </dependency>
                 <dependency>
-                    <groupId>io.delta</groupId>
-                    <artifactId>delta-core_${scala.binary.version}</artifactId>
+                    <groupId>tech.mlsql</groupId>
+                    <artifactId>delta-plus_${scala.binary.version}</artifactId>
                     <version>0.1.0</version>
                     <exclusions>
                         <exclusion>
