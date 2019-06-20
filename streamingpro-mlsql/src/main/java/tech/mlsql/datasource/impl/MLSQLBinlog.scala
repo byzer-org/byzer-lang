@@ -23,7 +23,7 @@ class MLSQLBinlog(override val uid: String) extends MLSQLBaseStreamSource with W
     streamReader.options(rewriteConfig(parameters)).format(fullFormat).load()
   }
 
-  override def fullFormat: String = "org.apache.spark.sql.delta.sources.MLSQLBinLogDataSource"
+  override def fullFormat: String = "org.apache.spark.sql.mlsql.sources.MLSQLBinLogDataSource"
 
   override def shortFormat: String = "binlog"
 

@@ -14,12 +14,13 @@ import scala.collection.mutable.ArrayBuffer
 
 /**
   *
-  * CompactTableInDelta is used to compaction small files to big files.
+  * CompactTableInDelta is used to compact small files into big files.
   * This class requires the delta table should satisfied the following requirements:
   *
-  * 1. There are at least one checkpoint have been generated.
-  * 2. The target delta table should be written by SaveMode.Append(Batch) or OutputMode.Append(Stream)
-  *
+  * 1. There is at least one checkpoint have been generated.
+  * 2. The target delta table should be written
+  *    by SaveMode.Append(Batch) or OutputMode.Append(Stream)
+  * 3. The target delta table should not operated by upsert/delete action.
   *
   * @param deltaLog
   * @param options
