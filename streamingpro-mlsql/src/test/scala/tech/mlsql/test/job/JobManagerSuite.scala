@@ -12,15 +12,6 @@ import tech.mlsql.job.JobManager
   */
 class JobManagerSuite extends BasicSparkOperation with SpecFunctions with BasicMLSQLConfig {
 
-  def waitJobStarted(groupId: String, timeoutSec: Long = 10) = {
-    var count = timeoutSec
-    while (JobManager.getJobInfo.filter(f => f._1 == groupId) == 0 && count > 0) {
-      Thread.sleep(1000)
-      count -= 1
-    }
-    count > 0
-  }
-
 
   "Job manager" should "kill batch job/stream successfully" in {
     withContext(setupBatchContext(batchParamsWithoutHive)) { runtime: SparkRuntime =>
@@ -39,22 +30,15 @@ class JobManagerSuite extends BasicSparkOperation with SpecFunctions with BasicM
 
       assert(JobManager.getJobInfo.size > 0)
 
-      def checkJob(groupId: String) = {
-        val items = executeCode(runtime,
-          """
-            |!show jobs;
-          """.stripMargin)
-        items.filter(r => r.getAs[String]("groupId") == groupId).length == 1
-      }
 
-      assert(checkJob(groupId))
+      assert(checkJob(runtime, groupId))
 
       executeCode(runtime,
         s"""
            |!kill ${groupId};
         """.stripMargin)
       Thread.sleep(2000)
-      assert(!checkJob(groupId))
+      assert(!checkJob(runtime, groupId))
 
       // start a stream job and then kill it
       val groupRef2 = new AtomicReference[String]()
@@ -66,7 +50,7 @@ class JobManagerSuite extends BasicSparkOperation with SpecFunctions with BasicM
            |!kill ${groupRef2.get()};
         """.stripMargin)
       Thread.sleep(2000)
-      assert(!checkJob(groupRef2.get()))
+      assert(!checkJob(runtime, groupRef2.get()))
     }
   }
 }

@@ -38,6 +38,22 @@ import tech.mlsql.job.{JobManager, MLSQLJobInfo, MLSQLJobProgress, MLSQLJobType}
   */
 trait BasicSparkOperation extends FlatSpec with Matchers {
 
+  def waitJobStarted(groupId: String, timeoutSec: Long = 10) = {
+    var count = timeoutSec
+    while (JobManager.getJobInfo.filter(f => f._1 == groupId) == 0 && count > 0) {
+      Thread.sleep(1000)
+      count -= 1
+    }
+    count > 0
+  }
+
+  def checkJob(runtime: SparkRuntime, groupId: String) = {
+    val items = executeCode(runtime,
+      """
+        |!show jobs;
+      """.stripMargin)
+    items.filter(r => r.getAs[String]("groupId") == groupId).length == 1
+  }
 
   def getSessionByOwner(runtime: SparkRuntime, owner: String) = {
     runtime.asInstanceOf[SparkRuntime].getSession(owner)
