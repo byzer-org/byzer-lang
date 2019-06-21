@@ -23,7 +23,7 @@ class MLSQLStreamBatch(override val uid: String) extends MLSQLBaseStreamSource w
       val context = ScriptSQLExec.contextGetOrForTest()
       MLSQLForeachBatchRunner.run(dataStreamWriter, options("sourceTable"), (batchId: Long, sparkSessionForStream: SparkSession) => {
         ScriptSQLExec.setContext(context)
-        ScriptRunner.run(options("code"), Option(sparkSessionForStream), false, false)
+        ScriptRunner.rubSubJob(options("code"), (df) => {}, Option(sparkSessionForStream), false, false)
       })
     }
   }
