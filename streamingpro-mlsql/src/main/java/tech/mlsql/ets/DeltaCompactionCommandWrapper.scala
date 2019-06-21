@@ -47,11 +47,11 @@ class DeltaCompactionCommandWrapper(override val uid: String) extends SQLAlg wit
 
         var df: DataFrame = null
         if (runInBackGround) {
-          ScriptRunner.runAsync(
-            code, Option(spark), false, false)
+          ScriptRunner.runSubJobAsync(
+            code, (df) => {}, Option(spark), false, false)
         } else {
-          df = ScriptRunner.run(
-            code, Option(spark), true, false).get
+          df = ScriptRunner.rubSubJob(
+            code, (df) => {}, Option(spark), true, false).get
         }
 
         if (runInBackGround) spark.createDataset[String](Seq(s"Compact ${path} in background")).toDF("value") else {
