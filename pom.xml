@@ -484,8 +484,8 @@
                     <version>0.1.0</version>
                     <exclusions>
                         <exclusion>
-                            <groupId>org.scala-lang</groupId>
-                            <artifactId>scala-library</artifactId>
+                            <groupId>tech.mlsql</groupId>
+                            <artifactId>streamingpro-common</artifactId>
                         </exclusion>
                     </exclusions>
                 </dependency>

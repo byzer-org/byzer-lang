@@ -38,14 +38,44 @@ import tech.mlsql.job.{JobManager, MLSQLJobInfo, MLSQLJobProgress, MLSQLJobType}
   */
 trait BasicSparkOperation extends FlatSpec with Matchers {
 
+  def waitJobStarted(groupId: String, timeoutSec: Long = 10) = {
+    var count = timeoutSec
+    while (JobManager.getJobInfo.filter(f => f._1 == groupId) == 0 && count > 0) {
+      Thread.sleep(1000)
+      count -= 1
+    }
+    count > 0
+  }
+
+  def waitWithCondition(shouldWait: () => Boolean, timeoutSec: Long = 10) = {
+    var count = timeoutSec
+    while (shouldWait() && count > 0) {
+      Thread.sleep(1000)
+      count -= 1
+    }
+    count > 0
+  }
+
+  def checkJob(runtime: SparkRuntime, groupId: String) = {
+    val items = executeCode(runtime,
+      """
+        |!show jobs;
+      """.stripMargin)
+    items.filter(r => r.getAs[String]("groupId") == groupId).length == 1
+  }
 
   def getSessionByOwner(runtime: SparkRuntime, owner: String) = {
     runtime.asInstanceOf[SparkRuntime].getSession(owner)
   }
 
+  def getSession(runtime: SparkRuntime) = {
+    runtime.asInstanceOf[SparkRuntime].getSession("william")
+  }
+
   def autoGenerateContext(runtime: SparkRuntime, name: String = "william", groupId: String = UUID.randomUUID().toString, userDefinedParams: Map[String, String] = Map()) = {
     val exec = new ScriptSQLExecListener(getSessionByOwner(runtime, name), s"/tmp/${name}", Map())
     val context = MLSQLExecuteContext(exec, name, s"/tmp/${name}", groupId, userDefinedParams)
+    context.execListener.addEnv("SKIP_AUTH", "true")
     ScriptSQLExec.setContext(context)
   }
 
@@ -75,8 +105,7 @@ trait BasicSparkOperation extends FlatSpec with Matchers {
     None
   }
 
-  def executeCode(runtime: SparkRuntime, code: String, async: Boolean = false) = {
-    JobManager.initForTest(runtime.sparkSession)
+  def executeCode(runtime: SparkRuntime, code: String) = {
     autoGenerateContext(runtime)
     val jobInfo = createJobInfoFromExistGroupId(code)
     val holder = new AtomicReference[Array[Row]]()
@@ -107,6 +136,7 @@ trait BasicSparkOperation extends FlatSpec with Matchers {
         PlatformManager.clear
         runtime.destroyRuntime(false, true)
         val db = new File("./metastore_db")
+        FileUtils.deleteQuietly(new File("/tmp/william"))
         if (db.exists()) {
           FileUtils.deleteDirectory(db)
         }

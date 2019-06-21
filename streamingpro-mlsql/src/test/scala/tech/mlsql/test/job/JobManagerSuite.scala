@@ -6,13 +6,15 @@ import org.apache.spark.streaming.BasicSparkOperation
 import streaming.core.strategy.platform.SparkRuntime
 import streaming.core.{BasicMLSQLConfig, SpecFunctions}
 import tech.mlsql.job.JobManager
+import tech.mlsql.test.JobManagerSuiteData
 
 /**
   * 2019-06-21 WilliamZhu(allwefantasy@gmail.com)
   */
 class JobManagerSuite extends BasicSparkOperation with SpecFunctions with BasicMLSQLConfig {
 
-  "Job manager" should "kill job successfully" in {
+
+  "Job manager" should "kill batch job/stream successfully" in {
     withContext(setupBatchContext(batchParamsWithoutHive)) { runtime: SparkRuntime =>
       val groupRef = new AtomicReference[String]()
       executeCodeWithGroupIdAsync(runtime, groupRef,
@@ -26,27 +28,32 @@ class JobManagerSuite extends BasicSparkOperation with SpecFunctions with BasicM
         count -= 1
       }
       val groupId = groupRef.get()
-      println(JobManager.getJobInfo.toList)
-      println(groupId)
+
       assert(JobManager.getJobInfo.size > 0)
 
-      def checkJob(groupId: String) = {
-        val items = executeCode(runtime,
-          """
-            |!show jobs;
-          """.stripMargin)
-        items.filter(r => r.getAs[String]("groupId") == groupId).length == 1
-      }
 
-      assert(checkJob(groupId))
+      assert(checkJob(runtime, groupId))
 
       executeCode(runtime,
         s"""
            |!kill ${groupId};
         """.stripMargin)
       Thread.sleep(2000)
-      assert(!checkJob(groupId))
+      assert(!checkJob(runtime, groupId))
 
+      // start a stream job and then kill it
+      val groupRef2 = new AtomicReference[String]()
+      executeCodeWithGroupId(runtime, groupRef2, JobManagerSuiteData.streamCode)
+      assert(waitJobStarted(groupRef2.get()))
+
+      executeCode(runtime,
+        s"""
+           |!kill ${groupRef2.get()};
+        """.stripMargin)
+      Thread.sleep(2000)
+      assert(!checkJob(runtime, groupRef2.get()))
     }
   }
 }
+
+
