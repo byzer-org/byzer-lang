@@ -107,6 +107,7 @@ trait BasicSparkOperation extends FlatSpec with Matchers {
         PlatformManager.clear
         runtime.destroyRuntime(false, true)
         val db = new File("./metastore_db")
+        FileUtils.deleteQuietly(new File("/tmp/william"))
         if (db.exists()) {
           FileUtils.deleteDirectory(db)
         }

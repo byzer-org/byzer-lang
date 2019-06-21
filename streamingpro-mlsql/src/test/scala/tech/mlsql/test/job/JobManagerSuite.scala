@@ -21,6 +21,7 @@ class JobManagerSuite extends BasicSparkOperation with SpecFunctions with BasicM
     count > 0
   }
 
+
   "Job manager" should "kill batch job/stream successfully" in {
     withContext(setupBatchContext(batchParamsWithoutHive)) { runtime: SparkRuntime =>
       val groupRef = new AtomicReference[String]()
