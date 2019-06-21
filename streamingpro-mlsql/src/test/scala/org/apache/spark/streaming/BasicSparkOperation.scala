@@ -75,7 +75,7 @@ trait BasicSparkOperation extends FlatSpec with Matchers {
     None
   }
 
-  def executeCode(runtime: SparkRuntime, code: String, async: Boolean = false) = {
+  def executeCode(runtime: SparkRuntime, code: String) = {
     JobManager.initForTest(runtime.sparkSession)
     autoGenerateContext(runtime)
     val jobInfo = createJobInfoFromExistGroupId(code)
