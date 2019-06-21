@@ -47,6 +47,15 @@ trait BasicSparkOperation extends FlatSpec with Matchers {
     count > 0
   }
 
+  def waitWithCondition(shouldWait: () => Boolean, timeoutSec: Long = 10) = {
+    var count = timeoutSec
+    while (shouldWait() && count > 0) {
+      Thread.sleep(1000)
+      count -= 1
+    }
+    count > 0
+  }
+
   def checkJob(runtime: SparkRuntime, groupId: String) = {
     val items = executeCode(runtime,
       """
@@ -59,9 +68,14 @@ trait BasicSparkOperation extends FlatSpec with Matchers {
     runtime.asInstanceOf[SparkRuntime].getSession(owner)
   }
 
+  def getSession(runtime: SparkRuntime) = {
+    runtime.asInstanceOf[SparkRuntime].getSession("william")
+  }
+
   def autoGenerateContext(runtime: SparkRuntime, name: String = "william", groupId: String = UUID.randomUUID().toString, userDefinedParams: Map[String, String] = Map()) = {
     val exec = new ScriptSQLExecListener(getSessionByOwner(runtime, name), s"/tmp/${name}", Map())
     val context = MLSQLExecuteContext(exec, name, s"/tmp/${name}", groupId, userDefinedParams)
+    context.execListener.addEnv("SKIP_AUTH", "true")
     ScriptSQLExec.setContext(context)
   }
 
@@ -92,7 +106,6 @@ trait BasicSparkOperation extends FlatSpec with Matchers {
   }
 
   def executeCode(runtime: SparkRuntime, code: String) = {
-    JobManager.initForTest(runtime.sparkSession)
     autoGenerateContext(runtime)
     val jobInfo = createJobInfoFromExistGroupId(code)
     val holder = new AtomicReference[Array[Row]]()
