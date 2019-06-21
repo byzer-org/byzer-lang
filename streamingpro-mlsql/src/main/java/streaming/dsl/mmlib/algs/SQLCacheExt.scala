@@ -40,9 +40,10 @@ class SQLCacheExt(override val uid: String) extends SQLAlg with WowParams {
       "cache"
     }
 
-    val _lifeTime = CacheLifeTime.withName(params.get(lifeTime.name).getOrElse {
-      CacheLifeTime.SCRIPT.toString
-    })
+    var _lifeTime = CacheLifeTime.SCRIPT
+    if (lifeTime.isValid(params.get(lifeTime.name).get)) {
+      _lifeTime = CacheLifeTime.withName(params.get(lifeTime.name).get)
+    }
 
 
     val __dfname__ = params("__dfname__")
