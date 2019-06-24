@@ -35,7 +35,7 @@ class StreamSubBatchQuerySuite extends BasicSparkOperation with SpecFunctions wi
             |load delta.`/tmp/jack` as table1;
           """.stripMargin)
         res != null && res.size > 0
-      })
+      }, 30)
 
       assert(res)
 
