@@ -147,8 +147,6 @@ object UpsertUtils extends Logging {
         if (rowCount > 0) {
           stmt.executeBatch()
         }
-      } catch {
-        case jdbce: BatchUpdateException => jdbce.getNextException().printStackTrace()
       } finally {
         stmt.close()
       }
