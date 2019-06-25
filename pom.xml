@@ -435,6 +435,12 @@
                     <artifactId>javax.servlet-api</artifactId>
                     <version>3.1.0</version>
                 </dependency>
+
+                <dependency>
+                    <groupId>tech.mlsql</groupId>
+                    <artifactId>spark-adhoc-kafka_2.11</artifactId>
+                    <version>0.1.0</version>
+                </dependency>
                 <dependency>
                     <groupId>net.csdn</groupId>
                     <artifactId>serviceframework-jetty-9-server</artifactId>
