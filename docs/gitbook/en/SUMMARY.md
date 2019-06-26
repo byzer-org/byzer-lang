@@ -17,6 +17,7 @@
         * [Parquet/Json/Text/Xml/Csv](guide/datasource/file.md)
         * [jsonStr/script/mlsqlAPI/mlsqlConf](guide/datasource/mlsql_source.md)
         * [Delta Plus](guide/datasource/delta_plus.md)
+        * [AdHoc Kafka](guide/datasource/adhoc_kafka.md)
     * [Variable](guide/variable/README.md)    
     * [Built-in ET](guide/et/README.md)
         * [Query MySQL Directly](guide/et/jdbc.md)
