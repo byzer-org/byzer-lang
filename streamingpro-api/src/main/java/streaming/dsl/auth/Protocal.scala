@@ -98,7 +98,7 @@ object TableType {
   val JDBC = TableTypeMeta("jdbc", Set("jdbc", "streamJDBC"))
   val ES = TableTypeMeta("es", Set("es"))
   val REDIS = TableTypeMeta("redis", Set("redis"))
-  val KAFKA = TableTypeMeta("kafka", Set("kafka", "kafka8", "kafka9"))
+  val KAFKA = TableTypeMeta("kafka", Set("kafka", "kafka8", "kafka9", "adHocKafka"))
   val SOCKET = TableTypeMeta("socket", Set("socket"))
   val MONGO = TableTypeMeta("mongo", Set("mongo"))
   val SOLR = TableTypeMeta("solr", Set("solr", "streamSolr"))
