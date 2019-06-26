@@ -58,7 +58,8 @@
         * [Stream Sub Batch Query Support](guide/stream/subquery.md)
         * [Binlog Source](guide/stream/binlog.md)
         * [Stream schema infer](guide/stream/infer_schema.md)
-        * [Kafka tool](guide/stream/kafka_tool.md)                        
+        * [Kafka tool](guide/stream/kafka_tool.md)
+    * [Access Control](guide/access-control/README.md)                            
                   
 * [API Docs](test2/a.md)
 * [More]()
