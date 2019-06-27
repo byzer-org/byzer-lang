@@ -9,7 +9,7 @@ Break Features
 New Features
 --------
 
-- [Dynamically increase/decrease engine resource](http://docs.mlsql.tech/en/guide/et/child-parent.md)
+- [Dynamically increase/decrease engine resource](http://docs.mlsql.tech/en/guide/et/resource.md)
 - [Table cache](http://docs.mlsql.tech/en/guide/et/CacheExt.md) 
 - sessionPerRequest
 - directQuery Auth
@@ -19,7 +19,8 @@ New Features
 - [MySQL Binlog datasource](http://docs.mlsql.tech/en/guide/stream/binlog.html)
 - [Delta plus](http://docs.mlsql.tech/en/guide/datasource/delta_plus.md)
 - [Stream schema infer](http://docs.mlsql.tech/en/guide/stream/infer_schema.md)
-- [Kafka tool](http://docs.mlsql.tech/en/guide/stream/kafka_tool.md) 
+- [Kafka tool](http://docs.mlsql.tech/en/guide/stream/kafka_tool.md)
+- Script execution progress 
 
 
 

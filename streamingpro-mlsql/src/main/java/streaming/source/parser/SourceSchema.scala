@@ -18,14 +18,13 @@
 
 package streaming.source.parser
 
-import org.apache.spark.sql.types.WowStructType
-import streaming.parser.SparkTypePaser
+import tech.mlsql.schema.parser.SparkSimpleSchemaParser
 
 /**
   * Created by allwefantasy on 14/9/2018.
   */
 case class SourceSchema(_schemaStr: String) {
-  private val sparkSchema = SparkTypePaser.cleanSparkSchema(SparkTypePaser.toSparkSchema(_schemaStr).asInstanceOf[WowStructType])
+  private val sparkSchema = SparkSimpleSchemaParser.parse(_schemaStr)
 
   def schema = sparkSchema
 

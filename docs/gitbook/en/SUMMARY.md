@@ -17,6 +17,7 @@
         * [Parquet/Json/Text/Xml/Csv](guide/datasource/file.md)
         * [jsonStr/script/mlsqlAPI/mlsqlConf](guide/datasource/mlsql_source.md)
         * [Delta Plus](guide/datasource/delta_plus.md)
+        * [AdHoc Kafka](guide/datasource/adhoc_kafka.md)
     * [Variable](guide/variable/README.md)    
     * [Built-in ET](guide/et/README.md)
         * [Query MySQL Directly](guide/et/jdbc.md)
@@ -57,7 +58,8 @@
         * [Stream Sub Batch Query Support](guide/stream/subquery.md)
         * [Binlog Source](guide/stream/binlog.md)
         * [Stream schema infer](guide/stream/infer_schema.md)
-        * [Kafka tool](guide/stream/kafka_tool.md)                        
+        * [Kafka tool](guide/stream/kafka_tool.md)
+    * [Access Control](guide/access-control/README.md)                            
                   
 * [API Docs](test2/a.md)
 * [More]()
