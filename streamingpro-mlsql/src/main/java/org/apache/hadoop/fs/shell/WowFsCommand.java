@@ -75,8 +75,11 @@ abstract public class WowFsCommand extends Command {
     public void redefineBaseDir(LinkedList<String> args) {
         LinkedList<String> temp = new LinkedList<>();
         for (String arg : args) {
-            if (arg.contains("..") || arg.contains(".")) {
-                throw new RuntimeException("path should not contains .. or .");
+            String[] paths = arg.split("/");
+            for (String path : paths) {
+                if (path.trim().equals("..")) {
+                    throw new RuntimeException("path should not contains ..");
+                }
             }
             temp.add(new PathFun(this.basePath).add(arg).toPath());
         }
