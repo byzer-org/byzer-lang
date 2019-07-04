@@ -21,26 +21,18 @@ will upload the result to HDFS automatically.
 If you runs on yarn mode, please make sure you start the MLSQL Engine with follow configuration:
 
 ```
+
 -streaming.ps.cluster.enable  should be  enabled.
 
 Please make sure
-you have the uber-jar of mlsql placed in
-1. --jars
-2. --conf "spark.executor.extraClassPath=[your jar name in jars]"
+1. you have the uber-jar of mlsql placed in --jars
+2. Put mlsql-ps-service_xxx_2.11-xxx.jar to $SPARK_HOME/libs 
 
-for exmaple:
-
---jars ./streamingpro-mlsql-spark_2.x-x.x.x-SNAPSHOT.jar
---conf "spark.executor.extraClassPath=streamingpro-mlsql-spark_2.x-x.x.x-SNAPSHOT.jar"
+More detail about [mlsql-ps-service](https://github.com/allwefantasy/mlsql-ps-service)
 
 Otherwise the executor will
 fail to start and the whole application will fails.
-```
 
-If you runs on  Standalone, please send the MLSQL jar to every node and then configure:
-
-```
---conf "spark.executor.extraClassPath=[MLSQL jar path]"
 ```
 
 ## Steps
