@@ -2,6 +2,9 @@
 
 MLSQL is a Language which is the superset of SQL and  a distributed compute engine based on Spark. 
 
+## Official WebSite
+
+[http://www.mlsql.tech](http://www.mlsql.tech)
 
 ## Usage:
 
@@ -54,7 +57,7 @@ git clone https://github.com/allwefantasy/streamingpro .
 cd streamingpro
 
 ## configure build envs
-export MLSQL_SPARK_VERSIOIN=2.3
+export MLSQL_SPARK_VERSIOIN=2.4
 export DRY_RUN=false 
 export DISTRIBUTION=false
 
