@@ -20,12 +20,12 @@ class StreamSubBatchQuerySuite extends BasicSparkOperation with SpecFunctions wi
     withContext(setupBatchContext(batchParamsWithoutHive)) { runtime: SparkRuntime =>
       val groupRef2 = new AtomicReference[String]()
       val spark = getSession(runtime)
-      executeCodeWithGroupId(runtime, groupRef2, StreamSubBatchQuerySuiteData.streamCode(
+      executeStreamCode(runtime, StreamSubBatchQuerySuiteData.streamCode(
         """
           |select count(*) as c from jack as newjack;
           |save append newjack as delta.`/tmp/jack`;
         """.stripMargin))
-      assert(waitJobStarted(groupRef2.get()))
+      assert(waitJobStartedByName("streamExample"))
       val file = new File(ScriptSQLExec.context().home + "/tmp/jack")
       FileUtils.forceMkdir(file)
 

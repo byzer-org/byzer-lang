@@ -35,6 +35,7 @@ import streaming.parser.lisener.BaseParseListenerextends
 import tech.mlsql.Stage
 import tech.mlsql.dsl.CommandCollection
 import tech.mlsql.dsl.adaptor.PreProcessIncludeListener
+import tech.mlsql.dsl.parser.MLSQLErrorStrategy
 import tech.mlsql.dsl.processor.{AuthProcessListener, GrammarProcessListener, PreProcessListener}
 import tech.mlsql.job.MLSQLJobProgressListener
 
@@ -145,6 +146,7 @@ object ScriptSQLExec extends Logging with WowLog {
     val tokens = new CommonTokenStream(loadLexer)
     val parser = new DSLSQLParser(tokens)
 
+    parser.setErrorHandler(new MLSQLErrorStrategy)
     parser.addErrorListener(new MLSQLSyntaxErrorListener())
 
     val stat = parser.statement()

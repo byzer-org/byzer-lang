@@ -53,7 +53,13 @@ object ScriptRunner {
       val skipAuth = newContext.execListener.env().getOrElse("SKIP_AUTH", "false").toBoolean
       ScriptSQLExec.parse(code, newContext.execListener, false, skipAuth, false, false)
       context.execListener.getLastSelectTable() match {
-        case Some(tableName) => if (spark.catalog.tableExists(tableName)) Option(spark.table(tableName)) else None
+        case Some(tableName) =>
+          if (spark.catalog.tableExists(tableName)) {
+            val df = spark.table(tableName)
+            fetchResult(df)
+            Option(df)
+          }
+          else None
         case None => None
         case None => None
       }
@@ -68,7 +74,15 @@ object ScriptRunner {
     jobInfo.copy(jobName = jobInfo.jobName + ":" + jobInfo.groupId)
     _run(code, context, jobInfo, finalSpark, fetchResult, reuseContext, reuseExecListenerEnv)
     context.execListener.getLastSelectTable() match {
-      case Some(tableName) => if (finalSpark.catalog.tableExists(tableName)) Option(finalSpark.table(tableName)) else None
+      case Some(tableName) =>
+        if (finalSpark.catalog.tableExists(tableName))
+          if (finalSpark.catalog.tableExists(tableName)) {
+            val df = finalSpark.table(tableName)
+            fetchResult(df)
+            Option(df)
+          }
+          else None
+        else None
       case None => None
     }
   }
