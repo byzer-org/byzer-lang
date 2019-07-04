@@ -47,6 +47,15 @@ trait BasicSparkOperation extends FlatSpec with Matchers {
     count > 0
   }
 
+  def waitJobStartedByName(jobName: String, timeoutSec: Long = 10) = {
+    var count = timeoutSec
+    while (JobManager.getJobInfo.filter(f => f._2.jobName == jobName) == 0 && count > 0) {
+      Thread.sleep(1000)
+      count -= 1
+    }
+    count > 0
+  }
+
   def waitWithCondition(shouldWait: () => Boolean, timeoutSec: Long = 10) = {
     var count = timeoutSec
     while (shouldWait() && count > 0) {
@@ -88,6 +97,16 @@ trait BasicSparkOperation extends FlatSpec with Matchers {
   def executeCodeWithGroupId(runtime: SparkRuntime, groupId: AtomicReference[String], code: String) = {
     autoGenerateContext(runtime)
     groupId.set(ScriptSQLExec.context().groupId)
+    val jobInfo = createJobInfoFromExistGroupId(code)
+    val holder = new AtomicReference[Array[Row]]()
+    ScriptRunner.runJob(code, jobInfo, (df) => {
+      holder.set(df.take(100))
+    })
+    holder.get()
+  }
+
+  def executeStreamCode(runtime: SparkRuntime, code: String) = {
+    autoGenerateContext(runtime)
     val jobInfo = createJobInfoFromExistGroupId(code)
     val holder = new AtomicReference[Array[Row]]()
     ScriptRunner.runJob(code, jobInfo, (df) => {
