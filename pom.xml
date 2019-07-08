@@ -50,7 +50,7 @@
         <module>streamingpro-jython</module>
         <module>streamingpro-api</module>
         <module>streamingpro-cluster</module>
-        
+
         <module>external/streamingpro-redis</module>
         <module>contri/streamingpro-dl4j</module>
         <module>contri/streamingpro-opencv</module>
@@ -148,12 +148,6 @@
                 <dependency>
                     <groupId>org.apache.hadoop</groupId>
                     <artifactId>hadoop-hdfs</artifactId>
-                    <version>${hadoop-client-version}</version>
-                    <scope>${scope}</scope>
-                </dependency>
-                <dependency>
-                    <groupId>org.apache.hadoop</groupId>
-                    <artifactId>hadoop-hdfs-client</artifactId>
                     <version>${hadoop-client-version}</version>
                     <scope>${scope}</scope>
                 </dependency>
