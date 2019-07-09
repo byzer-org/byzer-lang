@@ -1,9 +1,5 @@
 package streaming.test.datasource
 
-import com.alibaba.druid.util.JdbcConstants
-import org.apache.spark.sql.Row
-import org.apache.spark.sql.catalyst.plans.logical.MLSQLDFParser
-import org.apache.spark.sql.types.{StringType, StructField, StructType}
 import org.apache.spark.streaming.BasicSparkOperation
 import org.scalatest.BeforeAndAfterAll
 import streaming.core.strategy.platform.SparkRuntime
@@ -13,9 +9,6 @@ import streaming.dsl.auth.meta.client.DefaultConsoleClient
 import streaming.dsl.auth.{OperateType, TableType}
 import streaming.log.Logging
 import streaming.test.datasource.help.MLSQLTableEnhancer._
-import tech.mlsql.sql.MLSQLSQLParser
-
-import scala.collection.mutable
 
 /**
   * 2019-03-20 WilliamZhu(allwefantasy@gmail.com)
@@ -398,7 +391,7 @@ class AuthSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLCon
 
   }
 
-  
+
   "when table is valirable" should "still work in MLSQL auth" in {
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { implicit runtime: SparkRuntime =>
       //执行sql
@@ -440,50 +433,5 @@ class AuthSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLCon
     }
   }
 
-  "auth" should "columns auth should work" in {
-    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { implicit runtime: SparkRuntime =>
-      //执行sql
-      implicit val spark = runtime.sparkSession
 
-      spark.createDataFrame(spark.sparkContext.parallelize(Seq(Row.fromSeq(Seq("a", "b")))), StructType(Seq(
-        StructField("a", StringType),
-        StructField("b", StringType)
-      ))).createOrReplaceTempView("abc")
-
-      spark.createDataFrame(spark.sparkContext.parallelize(Seq(Row.fromSeq(Seq("a", "b")))), StructType(Seq(
-        StructField("k", StringType),
-        StructField("m", StringType)
-      ))).createOrReplaceTempView("test1")
-
-      def sql(sql: String)(f: (mutable.HashMap[String, mutable.HashSet[String]]) => Unit) = {
-        val df = spark.sql(sql)
-
-        val tables = MLSQLDFParser.extractTableWithColumns(df)
-        f(tables)
-      }
-
-      sql(
-        """
-          |select * from (select length(a),a as jack,a,concat(a,a) as k from abc) t LEFT JOIN test1 as tt
-          |ON t.a = tt.k
-        """.stripMargin) { tables =>
-        assert(tables("abc") == Set("a"))
-        assert(tables("test1") == Set("k", "m"))
-      }
-    }
-  }
-
-  "auth compile" should "columns auth should work" in {
-
-      val sql =
-        """
-          |select * from (select length(a),a as jack,a,concat(a,a) as k from abc) t LEFT JOIN test1 as tt
-          |ON t.a = tt.k
-        """.stripMargin
-
-    val tables = MLSQLSQLParser.extractTableWithColumns(JdbcConstants.MYSQL ,sql
-      ,List("create table abc(a varchar ,b varchar)" ,"create table test1(k varchar ,m varchar)"))
-        assert(tables("abc") == Set("a"))
-        assert(tables("test1") == Set("k", "m"))
-  }
 }
