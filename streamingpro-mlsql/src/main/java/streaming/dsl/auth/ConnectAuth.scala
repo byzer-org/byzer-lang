@@ -46,9 +46,9 @@ class ConnectAuth(authProcessListener: AuthProcessListener) extends MLSQLAuth wi
           option += ("format" -> s.getText)
 
         case s: ExpressionContext =>
-          option += (cleanStr(s.qualifiedName().getText) -> getStrOrBlockStr(s))
+          option += (cleanStr(s.qualifiedName().getText) -> evaluate(getStrOrBlockStr(s)))
         case s: BooleanExpressionContext =>
-          option += (cleanStr(s.expression().qualifiedName().getText) -> getStrOrBlockStr(s.expression()))
+          option += (cleanStr(s.expression().qualifiedName().getText) -> evaluate(getStrOrBlockStr(s.expression())))
 
         case s: DbContext =>
           DataSourceRegistry.findAllNames(format).map { names =>
