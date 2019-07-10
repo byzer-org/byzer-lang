@@ -110,6 +110,39 @@ class AuthSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLCon
     }
   }
 
+  "mysql variable auth" should "[mysql] work fine" in {
+
+    withBatchContext(setupBatchContext(batchParamsWithoutHive, "classpath:///test/empty.json")) { implicit runtime: SparkRuntime =>
+      val spark = runtime.sparkSession
+
+      executeScript(
+        """
+          |set url = "jdbc:mysql://${mysql_pi_search_ip}:${mysql_pi_search_port}/white_db?${MYSQL_URL_PARAMS}";
+          |set user = "${mysql_pi_search_user}";
+          |set password="${mysql_pi_search_password}";
+          |connect jdbc where
+          |driver="com.mysql.jdbc.Driver"
+          |and url="${url}"
+          |and user="${user}"
+          |and password="${password}"
+          |as white_db_ref;
+          |
+          |load jdbc.`white_db_ref.people`
+          |as people;
+          |
+          |save append people as jdbc.`white_db_ref.spam_inf` ;
+          |
+        """.stripMargin)
+      val tables = DefaultConsoleClient.get
+      assert(tables.size == 6)
+
+      val jdbcTable = tables.filter(f => f.isSourceTypeOf("mysql") && f.operateType == OperateType.LOAD).head
+      assert(jdbcTable.db.get == "white_db")
+      assert(jdbcTable.table.get == "people")
+      assert(jdbcTable.sourceType.get == "mysql")
+
+    }
+  }
 
   "hive auth" should "[hive] work fine" in {
 
