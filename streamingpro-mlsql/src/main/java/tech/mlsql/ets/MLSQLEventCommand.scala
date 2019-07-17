@@ -37,10 +37,10 @@ class MLSQLEventCommand(override val uid: String) extends SQLAlg with Functions 
 
       val eventNames = params.getOrElse("eventName", s"${MLSQLStreamEventName.started.toString},${MLSQLStreamEventName.progress.toString},${MLSQLStreamEventName.terminated.toString}").
         split(",").filterNot(_.isEmpty)
-
+      val associationId = UUID.randomUUID().toString
       eventNames.foreach { eventName =>
         MLSQLStreamManager.addListener(context.owner,
-          MLSQLStreamListenerItem(UUID.randomUUID().toString,context.owner, streamName, MLSQLStreamEventName.withName(eventName),
+          MLSQLStreamListenerItem(associationId,context.owner, streamName, MLSQLStreamEventName.withName(eventName),
             params(MLSQLEventCommand.handleHttpUrl), params(MLSQLEventCommand.method), handleParams))
       }
 
