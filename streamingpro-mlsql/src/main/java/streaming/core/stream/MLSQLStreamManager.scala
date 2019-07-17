@@ -44,11 +44,10 @@ object MLSQLStreamManager extends Logging with WowLog {
 
   def removeListener(uuid: String) = {
     _listenerStore.asScala.foreach { items =>
-      items._2.filter(f => f.item.uuid == uuid).map(
-        removeItem => {
-          items._2.remove(items._2.indexOf(removeItem))
-        }
-      )
+      items._2.filter(f => f.item.uuid == uuid).headOption match {
+        case Some(removeItem) => items._2.remove(items._2.indexOf(removeItem))
+        case None =>
+      }
     }
   }
 
