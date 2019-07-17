@@ -21,6 +21,9 @@ object MLSQLStreamManager extends Logging with WowLog {
   private val store = new java.util.concurrent.ConcurrentHashMap[String, MLSQLJobInfo]()
   private val _listenerStore = new java.util.concurrent.ConcurrentHashMap[String, ArrayBuffer[MLSQLExternalStreamListener]]()
 
+    def listeners() = {
+    _listenerStore
+  }
 
   def runEvent(eventName: MLSQLStreamEventName.eventName, streamName: String, callback: (MLSQLExternalStreamListener) => Unit) = {
     _listenerStore.asScala.foreach { case (user, items) =>
@@ -187,11 +190,12 @@ class MLSQLStreamingQueryListener extends StreamingQueryListener with Logging wi
     getJob(id).headOption match {
       case Some(job) =>
         MLSQLStreamManager.runEvent(MLSQLStreamEventName.terminated, job.jobName, p => {
-          uuids += p.item.uuid
           p.send(Map("streamName" -> job.jobName, "jsonContent" -> "{}"))
         })
+        MLSQLStreamManager.listeners().get(job.owner).filter(p => p.item.streamName == job.jobName).map(
+          f => uuids += f.item.uuid
+        )
       case None => logError(format(s"Stream job [${id}] is terminated. But we can not found it in JobManager."))
-
     }
 
     uuids.foreach(MLSQLStreamManager.removeListener)

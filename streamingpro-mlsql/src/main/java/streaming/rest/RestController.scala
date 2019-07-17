@@ -422,8 +422,7 @@ class RestController extends ApplicationController with WowLog {
   }
 
   //end -------------------------------------------
-
-
+ 
   // help method
   // begin --------------------------------------------------------
   def runtime = PlatformManager.getRuntime
