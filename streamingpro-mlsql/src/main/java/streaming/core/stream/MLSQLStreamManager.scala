@@ -21,6 +21,9 @@ object MLSQLStreamManager extends Logging with WowLog {
   private val store = new java.util.concurrent.ConcurrentHashMap[String, MLSQLJobInfo]()
   private val _listenerStore = new java.util.concurrent.ConcurrentHashMap[String, ArrayBuffer[MLSQLExternalStreamListener]]()
 
+  def listener() = {
+    _listenerStore
+  }
 
   def runEvent(eventName: MLSQLStreamEventName.eventName, streamName: String, callback: (MLSQLExternalStreamListener) => Unit) = {
     _listenerStore.asScala.foreach { case (user, items) =>
@@ -41,10 +44,11 @@ object MLSQLStreamManager extends Logging with WowLog {
 
   def removeListener(uuid: String) = {
     _listenerStore.asScala.foreach { items =>
-      items._2.filter(f => f.item.uuid == uuid).headOption match {
-        case Some(removeItem) => items._2.remove(items._2.indexOf(removeItem))
-        case None =>
-      }
+      items._2.filter(f => f.item.uuid == uuid).map(
+        removeItem => {
+          items._2.remove(items._2.indexOf(removeItem))
+        }
+      )
     }
   }
 
