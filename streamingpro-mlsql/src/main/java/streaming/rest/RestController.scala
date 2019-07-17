@@ -23,7 +23,6 @@ import _root_.streaming.core.strategy.platform.{PlatformManager, SparkRuntime}
 import _root_.streaming.dsl.mmlib.algs.tf.cluster.{ClusterSpec, ClusterStatus, ExecutorInfo}
 import _root_.streaming.dsl.{MLSQLExecuteContext, ScriptSQLExec, ScriptSQLExecListener}
 import _root_.streaming.log.WowLog
-import _root_.streaming.core.stream.MLSQLStreamManager
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import net.csdn.annotation.rest.{At, _}
@@ -423,13 +422,7 @@ class RestController extends ApplicationController with WowLog {
   }
 
   //end -------------------------------------------
-
-  @At(path = Array("/listener/list"), types = Array(GET, POST))
-  def listeners = {
-    render(toJsonString(MLSQLStreamManager.listener()))
-  }
-
-
+ 
   // help method
   // begin --------------------------------------------------------
   def runtime = PlatformManager.getRuntime
