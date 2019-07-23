@@ -65,9 +65,15 @@ class SparkSessionCacheManager extends Logging {
     userLatestVisit.put(user, System.currentTimeMillis())
   }
 
-  def closeSession(user: String): Unit = {
-    SparkSessionCacheManager.getSessionManager.closeSession(SessionIdentifier(user))
-    userToSparkSession.remove(user)
+  def closeSession(user: String, forceClose: Boolean = false): Unit = {
+    // if the session have stream job, we should not close the session.
+    val spark = SparkSessionCacheManager.getSessionManager.getSession(SessionIdentifier(user)).sparkSession
+    if (spark.streams.active.length == 0 || forceClose) {
+      SparkSessionCacheManager.getSessionManager.closeSession(SessionIdentifier(user))
+      userToSparkSession.remove(user)
+    } else {
+      logWarning(s"SparkSession for user [$user] have active stream jobs, we will not remove it.")
+    }
   }
 
   private[this] val sessionCleaner = new Runnable {

@@ -29,7 +29,7 @@ import org.apache.http.client.fluent.{Form, Request}
 import org.apache.http.util.EntityUtils
 import org.apache.spark.sql.SparkSession
 import streaming.dsl.{MLSQLExecuteContext, ScriptSQLExec, ScriptSQLExecListener}
-import tech.mlsql.job.{JobManager, MLSQLJobInfo, MLSQLJobType}
+import tech.mlsql.job.{JobManager, MLSQLJobInfo, MLSQLJobProgress, MLSQLJobType}
 
 /**
   * Created by allwefantasy on 28/4/2018.
@@ -67,7 +67,7 @@ trait SpecFunctions {
   def createSSEL(implicit spark: SparkSession, defaultPathPrefix: String = "/tmp/william", groupId: String = "-") = {
     JobManager.initForTest(spark)
     JobManager.addJobManually(MLSQLJobInfo(
-      "william", MLSQLJobType.SCRIPT, "", "", groupId, System.currentTimeMillis(), -1
+      "william", MLSQLJobType.SCRIPT, "", "", groupId, new MLSQLJobProgress(), System.currentTimeMillis(), -1
     ))
     val context = new ScriptSQLExecListener(spark, defaultPathPrefix, Map())
     context.addEnv("HOME", context.pathPrefix(None))
@@ -78,7 +78,7 @@ trait SpecFunctions {
   def createSSELWithJob(spark: SparkSession, jobName: String, groupId: String) = {
     JobManager.initForTest(spark)
     JobManager.addJobManually(MLSQLJobInfo(
-      "william", MLSQLJobType.SCRIPT, "", "", groupId, System.currentTimeMillis(), -1
+      "william", MLSQLJobType.SCRIPT, "", "", groupId, new MLSQLJobProgress(), System.currentTimeMillis(), -1
     ))
     val context = new ScriptSQLExecListener(spark, "/tmp/william", Map())
     context.addEnv("HOME", context.pathPrefix(None))
@@ -90,7 +90,7 @@ trait SpecFunctions {
     JobManager.initForTest(spark)
 
     JobManager.addJobManually(MLSQLJobInfo(
-      owner = "william", jobType = MLSQLJobType.STREAM, jobName = jobName, "", groupId = grouId, -1, -1
+      owner = "william", jobType = MLSQLJobType.STREAM, jobName = jobName, "", groupId = grouId, new MLSQLJobProgress(), -1, -1
     ))
   }
 
@@ -98,7 +98,7 @@ trait SpecFunctions {
     JobManager.initForTest(spark)
 
     JobManager.addJobManually(MLSQLJobInfo(
-      owner = "william", jobType = MLSQLJobType.SCRIPT, jobName = jobName, "", groupId = grouId, -1, -1
+      owner = "william", jobType = MLSQLJobType.SCRIPT, jobName = jobName, "", groupId = grouId, new MLSQLJobProgress(), -1, -1
     ))
   }
 

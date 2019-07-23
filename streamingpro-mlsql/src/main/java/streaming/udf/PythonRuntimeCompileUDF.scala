@@ -25,7 +25,7 @@ import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib.algs.ScriptUDFCacheKey
 import streaming.jython.{JythonUtils, PythonInterp}
 import streaming.log.Logging
-import streaming.parser.SparkTypePaser
+import tech.mlsql.schema.parser.SparkSimpleSchemaParser
 
 /**
   * Created by fchen on 2018/11/14.
@@ -34,7 +34,7 @@ object PythonRuntimeCompileUDF extends RuntimeCompileUDF with Logging {
 
 
   override def returnType(scriptCacheKey: ScriptUDFCacheKey): Option[DataType] = {
-    Option(SparkTypePaser.toSparkType(scriptCacheKey.dataType))
+    Option(SparkSimpleSchemaParser.parse(scriptCacheKey.dataType))
   }
 
 

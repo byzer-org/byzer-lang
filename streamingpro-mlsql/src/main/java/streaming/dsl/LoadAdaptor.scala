@@ -18,15 +18,21 @@
 
 package streaming.dsl
 
+import org.apache.spark.sql.catalyst.parser.LegacyTypeStringParser
+import org.apache.spark.sql.types.{DataType, StructType}
 import org.apache.spark.sql.{DataFrame, DataFrameReader, functions => F}
 import streaming.core.datasource._
 import streaming.dsl.auth.TableType
 import streaming.dsl.load.batch.ModelSelfExplain
 import streaming.dsl.parser.DSLSQLParser._
 import streaming.dsl.template.TemplateMerge
+import streaming.source.parser.impl.JsonSourceParser
 import streaming.source.parser.{SourceParser, SourceSchema}
+import tech.mlsql.MLSQLEnvKey
 import tech.mlsql.dsl.auth.DatasourceAuth
 import tech.mlsql.sql.MLSQLSparkConf
+
+import scala.util.Try
 
 /**
   * Created by allwefantasy on 27/8/2017.
@@ -142,6 +148,14 @@ class LoadPRocessing(scriptSQLExecListener: ScriptSQLExecListener,
 
       table = withWaterMark(table, option)
 
+      def deserializeSchema(json: String): StructType = {
+        Try(DataType.fromJson(json)).getOrElse(LegacyTypeStringParser.parse(json)) match {
+          case t: StructType => t
+          case _ => throw new RuntimeException(s"Failed parsing StructType: $json")
+        }
+      }
+
+
       if (option.contains("valueSchema") && option.contains("valueFormat")) {
         val kafkaFields = List("key", "partition", "offset", "timestamp", "timestampType", "topic")
         val keepOriginalValue = if (option.getOrElse("keepValue", "false").toBoolean) List("value") else List()
@@ -154,6 +168,28 @@ class LoadPRocessing(scriptSQLExecListener: ScriptSQLExecListener,
           .select(sourceParserInstance.parse(F.col("tmpValue"), sourceSchema = sourceSchema, Map()).as("data"), F.col("kafkaValue"))
           .select("data.*", "kafkaValue")
       }
+
+      if (!option.contains("valueSchema") && !option.contains("valueFormat")) {
+        val context = ScriptSQLExec.contextGetOrForTest()
+
+        val kafkaSchemaOpt = context.execListener.env().get(MLSQLEnvKey.CONTEXT_KAFKA_SCHEMA)
+        kafkaSchemaOpt match {
+          case Some(schema) =>
+
+            val kafkaFields = List("key", "partition", "offset", "timestamp", "timestampType", "topic")
+            val keepOriginalValue = if (option.getOrElse("keepValue", "false").toBoolean) List("value") else List()
+            val sourceSchema = deserializeSchema(schema)
+            val sourceParserInstance = new JsonSourceParser()
+
+            table = table.withColumn("kafkaValue", F.struct(
+              (kafkaFields ++ keepOriginalValue).map(F.col(_)): _*
+            )).selectExpr("CAST(value AS STRING) as tmpValue", "kafkaValue")
+              .select(sourceParserInstance.parseRaw(F.col("tmpValue"), sourceSchema, Map()).as("data"), F.col("kafkaValue"))
+              .select("data.*", "kafkaValue")
+          case None =>
+        }
+      }
+
 
       path = TemplateMerge.merge(path, scriptSQLExecListener.env().toMap)
     }

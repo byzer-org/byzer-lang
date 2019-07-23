@@ -104,7 +104,7 @@ object BackendService {
 
 
   def execute(f: BackendService => HttpTransportService.SResponse, tags: String, proxyStrategy: String) = {
-    val items = backendMetaCache.get(backend_meta_key)
+    var items = backendMetaCache.get(backend_meta_key)
 
     val chooseProxy = proxyStrategy match {
       case "ResourceAwareStrategy" => new ResourceAwareStrategy(tags)
@@ -112,7 +112,19 @@ object BackendService {
       case "AllBackendsStrategy" => new AllBackendsStrategy(tags)
       case _ => new ResourceAwareStrategy(tags)
     }
-    val backendCache = chooseProxy.invoke(items)
+    var backendCache = chooseProxy.invoke(items)
+
+    /*
+        If we can not found backend with specified tags, then
+        it maybe caused by cache. Clean it and try again
+     */
+    if (!backendCache.isDefined) {
+      refreshCache
+      items = backendMetaCache.get(backend_meta_key)
+    }
+
+    backendCache = chooseProxy.invoke(items)
+
     backendCache match {
       case Some(items) =>
         items.seq.map { ins =>

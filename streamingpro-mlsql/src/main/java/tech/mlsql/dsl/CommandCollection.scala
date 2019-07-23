@@ -34,6 +34,13 @@ object CommandCollection {
     context.addEnv("saveUploadFileToHome",""" run command as DownloadExt.`` where from="{}" and to="{}" """)
 
     context.addEnv("withWartermark",""" register WaterMarkInPlace.`` where inputTable="{}" and eventTimeCol="{}" and delayThreshold="{}" """)
+
+    context.addEnv("delta","""run command as DeltaCompactionCommandWrapper.`` where parameters='''{:all}'''""")
+
+    context.addEnv("kafkaTool",
+      """ run command as KafkaCommand.`kafka` where
+        |parameters='''{:all}''' """.stripMargin)
+
     // !callback post http://127.0.0.1:9002/jack when "started,progress,terminated"
     context.addEnv("callback",
       """ run command as  MLSQLEventCommand.`` where

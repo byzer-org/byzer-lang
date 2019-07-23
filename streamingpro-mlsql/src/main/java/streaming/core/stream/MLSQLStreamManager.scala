@@ -21,6 +21,9 @@ object MLSQLStreamManager extends Logging with WowLog {
   private val store = new java.util.concurrent.ConcurrentHashMap[String, MLSQLJobInfo]()
   private val _listenerStore = new java.util.concurrent.ConcurrentHashMap[String, ArrayBuffer[MLSQLExternalStreamListener]]()
 
+    def listeners() = {
+    _listenerStore
+  }
 
   def runEvent(eventName: MLSQLStreamEventName.eventName, streamName: String, callback: (MLSQLExternalStreamListener) => Unit) = {
     _listenerStore.asScala.foreach { case (user, items) =>
@@ -104,18 +107,6 @@ class MLSQLExternalStreamListener(val item: MLSQLStreamListenerItem) extends Log
   }
 
   private def _send(newParams: Map[String, String]) = {
-    //    val request = if (item.method.toLowerCase() == "get")
-    //      Request.Get(item.handleHttpUrl) else {
-    //
-    //      val innerRequest = Request.Post(item.handleHttpUrl)
-    //      val formBuilder = Form.form()
-    //      (item.params ++ newParams).foreach { case (k, v) =>
-    //        formBuilder.add(k, v)
-    //      }
-    //      innerRequest.bodyForm(formBuilder.build())
-    //    }
-    //    request.connectTimeout(connectTimeout).socketTimeout(socketTimeout)
-    //    request.execute().returnContent().asString()
     HttpClientCrawler.requestByMethod(item.handleHttpUrl, item.method, item.params ++ newParams)
   }
 }
@@ -199,18 +190,19 @@ class MLSQLStreamingQueryListener extends StreamingQueryListener with Logging wi
     getJob(id).headOption match {
       case Some(job) =>
         MLSQLStreamManager.runEvent(MLSQLStreamEventName.terminated, job.jobName, p => {
-          uuids += p.item.uuid
           p.send(Map("streamName" -> job.jobName, "jsonContent" -> "{}"))
         })
+        MLSQLStreamManager.listeners().get(job.owner).filter(p => p.item.streamName == job.jobName).map(
+          f => uuids += f.item.uuid
+        )
       case None => logError(format(s"Stream job [${id}] is terminated. But we can not found it in JobManager."))
-
     }
 
     uuids.foreach(MLSQLStreamManager.removeListener)
 
     MLSQLStreamManager.removeStore(id)
     JobManager.getJobInfo.filter(f => f._2.jobType == MLSQLJobType.STREAM
-      && f._2.groupId == event.id.toString).headOption match {
+      && f._2.groupId == id).headOption match {
       case Some(job) =>
         JobManager.removeJobManually(job._1)
       case None =>

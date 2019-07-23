@@ -117,5 +117,5 @@ class MLSQLMongo (override val uid: String) extends MLSQLSource with MLSQLSink w
   }
 
   final val partitioner: Param[String] = new Param[String](this, "partitioner", "Optional. e.g. MongoPaginateBySizePartitioner")
-  final val uri: Param[String] = new Param[String](this, "partitioner", "Required. e.g. mongodb://127.0.0.1:27017/twitter")
+  final val uri: Param[String] = new Param[String](this, "uri", "Required. e.g. mongodb://127.0.0.1:27017/twitter")
 }

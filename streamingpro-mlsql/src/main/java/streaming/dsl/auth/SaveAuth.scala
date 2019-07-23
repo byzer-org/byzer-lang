@@ -78,7 +78,7 @@ class SaveAuth(authProcessListener: AuthProcessListener) extends MLSQLAuth with 
     val mLSQLTable = DataSourceRegistry.fetch(format, option).map { datasource =>
       val sourceInfo = datasource.asInstanceOf[ {def sourceInfo(config: DataAuthConfig): SourceInfo}].
         sourceInfo(DataAuthConfig(path, option))
-      MLSQLTable(Some(sourceInfo.db), Some(sourceInfo.table), OperateType.SAVE, Some(sourceInfo.sourceType), TableType.from(format).get)
+      MLSQLTable(Some(sourceInfo.db), Some(sourceInfo.table), OperateType.SAVE, Some(sourceInfo.sourceType), tableType)
     } getOrElse {
       format match {
         case "hive" =>
@@ -89,7 +89,7 @@ class SaveAuth(authProcessListener: AuthProcessListener) extends MLSQLAuth with 
           MLSQLTable(Some(db), Some(table), OperateType.SAVE, Some(format), TableType.HIVE)
         case _ =>
           val context = ScriptSQLExec.contextGetOrForTest()
-          MLSQLTable(None, Some(resourceRealPath(context.execListener, owner, path)), OperateType.SAVE, Some(format), TableType.from(format).get)
+          MLSQLTable(None, Some(resourceRealPath(context.execListener, owner, path)), OperateType.SAVE, Some(format), tableType)
       }
     }
 

@@ -105,11 +105,10 @@ class RestController extends ApplicationController with WowLog {
         param("owner"), param("jobType", MLSQLJobType.SCRIPT), param("jobName"), param("sql"),
         paramAsLong("timeout", -1L)
       )
+      val context = createScriptSQLExecListener(sparkSession, jobInfo.groupId)
       if (paramAsBoolean("async", false)) {
         JobManager.asyncRun(sparkSession, jobInfo, () => {
           try {
-            val context = createScriptSQLExecListener(sparkSession, jobInfo.groupId)
-
             ScriptSQLExec.parse(param("sql"), context,
               skipInclude = paramAsBoolean("skipInclude", false),
               skipAuth = paramAsBoolean("skipAuth", true),
@@ -130,7 +129,6 @@ class RestController extends ApplicationController with WowLog {
         })
       } else {
         JobManager.run(sparkSession, jobInfo, () => {
-          val context = createScriptSQLExecListener(sparkSession, jobInfo.groupId)
           ScriptSQLExec.parse(param("sql"), context,
             skipInclude = paramAsBoolean("skipInclude", false),
             skipAuth = paramAsBoolean("skipAuth", true),
@@ -424,8 +422,7 @@ class RestController extends ApplicationController with WowLog {
   }
 
   //end -------------------------------------------
-
-
+ 
   // help method
   // begin --------------------------------------------------------
   def runtime = PlatformManager.getRuntime

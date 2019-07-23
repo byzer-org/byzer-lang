@@ -1,10 +1,10 @@
 package streaming.core.datasource.impl
 
 import org.apache.spark.ml.param.Param
-import org.apache.spark.sql.{DataFrame, DataFrameReader, DataFrameWriter, Row}
-import streaming.core.datasource.{DataSinkConfig, DataSourceConfig, MLSQLBaseStreamSource}
-import streaming.dsl.ScriptSQLExec
-import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
+import org.apache.spark.sql._
+import _root_.streaming.core.datasource.{DataSinkConfig, DataSourceConfig, MLSQLBaseStreamSource}
+import _root_.streaming.dsl.ScriptSQLExec
+import _root_.streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
 
 /**
   * 2019-03-20 WilliamZhu(allwefantasy@gmail.com)
@@ -78,7 +78,6 @@ class MLSQLKafka(override val uid: String) extends MLSQLBaseStreamSource with Wo
       return super.save(batchWriter, config.copy(config = rewriteKafkaConfig(config.config, getWriteTopic, getSaveUrl, config.path)))
 
     }
-
     batchWriter.options(rewriteKafkaConfig(config.config, getWriteTopic, getSaveUrl, config.path)).format(fullFormat).save()
 
   }
@@ -89,6 +88,6 @@ class MLSQLKafka(override val uid: String) extends MLSQLBaseStreamSource with Wo
 
   final val kafkaBootstrapServers: Param[String] = new Param[String](this, "kafka.bootstrap.servers", "host1:port1,host2:port2")
   final val startingOffsets: Param[String] = new Param[String](this, "startingOffsets", "only for 0.10.0 or higher;{\"topic1\":{\"0\":23,\"1\":-2},\"topic2\":{\"0\":-2}}")
-  final val endingOffsets: Param[String] = new Param[String](this, "startingOffsets", "only for 0.10.0 or higher;{\"topic1\":{\"0\":50,\"1\":-1},\"topic2\":{\"0\":-1}}")
+  final val endingOffsets: Param[String] = new Param[String](this, "endingOffsets", "only for 0.10.0 or higher;{\"topic1\":{\"0\":50,\"1\":-1},\"topic2\":{\"0\":-1}}")
 
 }

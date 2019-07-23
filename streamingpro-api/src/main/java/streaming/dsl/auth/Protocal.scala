@@ -91,17 +91,18 @@ object OperateType extends Enumeration {
 object TableType {
   val HIVE = TableTypeMeta("hive", Set("hive"))
   val CUSTOME = TableTypeMeta("custom", Set("custom"))
+  val BINLOG = TableTypeMeta("binlog", Set("binlog"))
   val HBASE = TableTypeMeta("hbase", Set("hbase"))
-  val HDFS = TableTypeMeta("hdfs", Set("parquet", "json", "csv", "image", "text", "xml", "excel", "libsvm", "delta", "rate", "streamParquet"))
+  val HDFS = TableTypeMeta("hdfs", Set("parquet", "binlogRate", "json", "csv", "image", "text", "xml", "excel", "libsvm", "delta", "rate", "streamParquet"))
   val HTTP = TableTypeMeta("http", Set("http"))
   val JDBC = TableTypeMeta("jdbc", Set("jdbc", "streamJDBC"))
   val ES = TableTypeMeta("es", Set("es"))
   val REDIS = TableTypeMeta("redis", Set("redis"))
-  val KAFKA = TableTypeMeta("kafka", Set("kafka", "kafka8", "kafka9"))
+  val KAFKA = TableTypeMeta("kafka", Set("kafka", "kafka8", "kafka9", "adHocKafka"))
   val SOCKET = TableTypeMeta("socket", Set("socket"))
   val MONGO = TableTypeMeta("mongo", Set("mongo"))
   val SOLR = TableTypeMeta("solr", Set("solr", "streamSolr"))
-  val TEMP = TableTypeMeta("temp", Set("temp", "jsonStr", "script", "csvStr", "mockStream", "console"))
+  val TEMP = TableTypeMeta("temp", Set("temp", "jsonStr", "script", "csvStr", "mockStream", "console", "webConsole"))
   val API = TableTypeMeta("api", Set("mlsqlAPI", "mlsqlConf"))
   val WEB = TableTypeMeta("web", Set("crawlersql"))
   val GRAMMAR = TableTypeMeta("grammar", Set("grammar"))
@@ -109,10 +110,10 @@ object TableType {
   val UNKNOW = TableTypeMeta("unknow", Set("unknow"))
 
   def from(str: String) = {
-    List(UNKNOW, KAFKA, SOCKET, REDIS, HIVE, HBASE, HDFS, HTTP, JDBC, ES, MONGO, SOLR, TEMP, API, WEB, GRAMMAR, SYSTEM, CUSTOME).filter(f => f.includes.contains(str)).headOption
+    List(BINLOG, UNKNOW, KAFKA, SOCKET, REDIS, HIVE, HBASE, HDFS, HTTP, JDBC, ES, MONGO, SOLR, TEMP, API, WEB, GRAMMAR, SYSTEM, CUSTOME).filter(f => f.includes.contains(str)).headOption
   }
 
   def toList = {
-    List(UNKNOW, KAFKA, SOCKET, REDIS, HIVE, HBASE, HDFS, HTTP, JDBC, ES, MONGO, SOLR, TEMP, API, WEB, GRAMMAR, SYSTEM, CUSTOME).map(f => f.name)
+    List(BINLOG, UNKNOW, KAFKA, SOCKET, REDIS, HIVE, HBASE, HDFS, HTTP, JDBC, ES, MONGO, SOLR, TEMP, API, WEB, GRAMMAR, SYSTEM, CUSTOME).map(f => f.name)
   }
 }

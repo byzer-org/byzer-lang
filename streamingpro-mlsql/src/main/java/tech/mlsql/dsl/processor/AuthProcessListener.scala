@@ -1,10 +1,11 @@
 package tech.mlsql.dsl.processor
 
-import streaming.dsl.ScriptSQLExecListener
 import streaming.dsl.auth._
 import streaming.dsl.parser.DSLSQLParser.SqlContext
+import streaming.dsl.{ScriptSQLExecListener, SetAdaptor}
 import streaming.log.Logging
 import streaming.parser.lisener.BaseParseListenerextends
+import tech.mlsql.Stage
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -59,6 +60,7 @@ class AuthProcessListener(val listener: ScriptSQLExecListener) extends BaseParse
       case "refresh" =>
 
       case "set" =>
+        new SetAdaptor(listener, Stage.auth).parse(ctx)
         new SetAuth(this).auth(ctx)
 
       case "train" | "run" | "predict" =>

@@ -105,10 +105,14 @@ class SaveAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
     val writer = if (isStream) null else oldDF.write
 
     val saveRes = DataSourceRegistry.fetch(format, option).map { datasource =>
+      val newOption = if (partitionByCol.size > 0) {
+        option ++ Map("partitionByCol" -> partitionByCol.mkString(","))
+      } else option
+
       val res = datasource.asInstanceOf[ {def save(writer: DataFrameWriter[Row], config: DataSinkConfig): Any}].save(
         writer,
         // here we should change final_path to path in future
-        DataSinkConfig(path, option ++ Map("partitionByCol" -> partitionByCol.mkString(",")),
+        DataSinkConfig(path, newOption,
           mode, Option(oldDF)))
       res
     }.getOrElse {
@@ -135,10 +139,14 @@ class SaveAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
 
     job = JobManager.getJobInfo(context.groupId)
     if (streamQuery != null) {
-      //here we do not need to clean the original groupId, since the StreamingproJobManager.handleJobDone(job.groupId)
-      // will handle this. Also, if this is stream job, so it should be remove by the StreamManager if it fails
-      job = job.copy(groupId = streamQuery.id.toString)
-      JobManager.addJobManually(job)
+      // Todo:Notice that sometimes the MLSQLStreamingQueryListener.onQueryStarted will be executed before this code,
+      //  and this may cause some issues. We may try to fix this in future.
+      JobManager.removeJobManually(job.groupId)
+      val realGroupId = streamQuery.id.toString
+      if (!JobManager.getJobInfo.contains(realGroupId)) {
+        JobManager.addJobManually(job.copy(groupId = realGroupId))
+      }
+      job = JobManager.getJobInfo(realGroupId)
       MLSQLStreamManager.addStore(job)
     }
 

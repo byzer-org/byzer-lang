@@ -99,6 +99,9 @@ class MLSQLElasticSearch(override val uid: String) extends MLSQLSource with MLSQ
           case Array(_db, _table) =>
             dbName = _db
             table = _table
+          case Array(_db) =>
+            dbName = _db
+            table = ""
           case _ =>
         }
 

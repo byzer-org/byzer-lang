@@ -5,7 +5,7 @@
     <parent>
         <artifactId>streamingpro</artifactId>
         <groupId>tech.mlsql</groupId>
-        <version>1.3.0-SNAPSHOT</version>
+        <version>1.4.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -24,6 +24,11 @@
             <version>${project.parent.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>tech.mlsql</groupId>
+            <artifactId>mlsql-ps-service_2.4.3_${scala.binary.version}</artifactId>
+            <version>1.3.3</version>
+        </dependency>
 
         <dependency>
             <groupId>org.apache.spark</groupId>
@@ -69,6 +74,22 @@
             <groupId>javax.mail</groupId>
             <artifactId>mail</artifactId>
             <version>1.4.7</version>
+        </dependency>
+
+        <dependency>
+            <groupId>tech.mlsql</groupId>
+            <artifactId>spark-binlog_${scala.binary.version}</artifactId>
+            <version>0.1.0</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>tech.mlsql</groupId>
+                    <artifactId>streamingpro-spark-common</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>tech.mlsql</groupId>
+                    <artifactId>streamingpro-common</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
     </dependencies>
 </project>

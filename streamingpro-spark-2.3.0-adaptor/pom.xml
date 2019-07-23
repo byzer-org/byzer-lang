@@ -5,7 +5,7 @@
     <parent>
         <artifactId>streamingpro</artifactId>
         <groupId>tech.mlsql</groupId>
-        <version>1.3.0-SNAPSHOT</version>
+        <version>1.4.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -21,6 +21,12 @@
             <groupId>tech.mlsql</groupId>
             <artifactId>streamingpro-common</artifactId>
             <version>${project.parent.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>tech.mlsql</groupId>
+            <artifactId>mlsql-ps-service_2.3.2_${scala.binary.version}</artifactId>
+            <version>1.3.3</version>
         </dependency>
 
         <dependency>
@@ -67,6 +73,11 @@
             <groupId>javax.mail</groupId>
             <artifactId>mail</artifactId>
             <version>1.4.7</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.shyiko</groupId>
+            <artifactId>mysql-binlog-connector-java</artifactId>
+            <version>0.18.1</version>
         </dependency>
     </dependencies>
 </project>

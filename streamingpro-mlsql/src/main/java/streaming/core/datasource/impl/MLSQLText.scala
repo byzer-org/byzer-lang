@@ -1,5 +1,6 @@
 package streaming.core.datasource.impl
 
+import org.apache.spark.ml.param.Param
 import org.apache.spark.sql.{DataFrame, DataFrameReader, DataFrameWriter, Row}
 import streaming.core.datasource._
 import streaming.dsl.ScriptSQLExec
@@ -44,4 +45,7 @@ class MLSQLText(override val uid: String) extends MLSQLBaseFileSource with WowPa
   override def fullFormat: String = "text"
 
   override def shortFormat: String = fullFormat
+
+  final val wholetext: Param[Boolean] = new Param[Boolean](this, "wholetext", "`wholetext` (default `false`): If true, read a file as a single row and not split by \"\\n\".")
+  final val lineSep: Param[String] = new Param[String](this, "lineSep", "`(default covers all `\\r`, `\\r\\n` and `\\n`): defines the line separator\n   * that should be used for parsing.")
 }

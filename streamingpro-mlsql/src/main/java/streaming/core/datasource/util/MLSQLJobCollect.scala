@@ -5,7 +5,6 @@ import org.apache.spark.sql.SparkSession
 import tech.mlsql.job.JobManager
 
 
-
 /**
   * 2019-01-22 WilliamZhu(allwefantasy@gmail.com)
   */
@@ -15,6 +14,12 @@ class MLSQLJobCollect(spark: SparkSession, owner: String) {
   def jobs = {
     val infoMap = JobManager.getJobInfo
     val data = infoMap.toSeq.map(_._2).filter(_.owner == owner)
+    data
+  }
+
+  def getJob(jobName: String) = {
+    val infoMap = JobManager.getJobInfo
+    val data = infoMap.toSeq.map(_._2).filter(_.owner == owner).filter(_.groupId == getGroupId(jobName))
     data
   }
 

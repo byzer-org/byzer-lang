@@ -20,14 +20,10 @@
 -streaming.ps.cluster.enable  should be  enabled.
 
 Please make sure
-you have the uber-jar of mlsql placed in
-1. --jars
-2. --conf "spark.executor.extraClassPath=[your jar name in jars]"
+1. you have the uber-jar of mlsql placed in --jars
+2. Put mlsql-ps-service_xxx_2.11-xxx.jar to $SPARK_HOME/libs 
 
-for exmaple:
-
---jars ./streamingpro-mlsql-spark_2.x-x.x.x-SNAPSHOT.jar
---conf "spark.executor.extraClassPath=streamingpro-mlsql-spark_2.x-x.x.x-SNAPSHOT.jar"
+More detail about [mlsql-ps-service](https://github.com/allwefantasy/mlsql-ps-service)
 
 Otherwise the executor will
 fail to start and the whole application will fails.
@@ -36,11 +32,7 @@ fail to start and the whole application will fails.
 
 否则会出现不可预料错误。
 
-如果你是在Standalone模式下使用，请将MLSQL Uber Jar 发送到各个节点上，然后配置
 
-```
---conf "spark.executor.extraClassPath=[MLSQL jar包完整路径]"
-```
 
 ## 使用步骤
 
