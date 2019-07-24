@@ -62,7 +62,7 @@ class MLSQLDirectJDBC extends MLSQLDirectSource with MLSQLDirectSink with MLSQLS
     //load configs should overwrite connect configs
     reader.options(config.config)
 
-    val dbtable = "(" + config.config("directQuery") + ") as temp"
+    val dbtable = "(" + config.config("directQuery") + ") temp"
 
     if (config.config.contains("prePtnArray")){
       val prePtn = config.config.get("prePtnArray").get
