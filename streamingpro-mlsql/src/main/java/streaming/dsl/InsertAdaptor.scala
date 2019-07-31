@@ -28,13 +28,19 @@ import streaming.dsl.template.TemplateMerge
   * Created by allwefantasy on 27/8/2017.
   */
 class InsertAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdaptor {
-  override def parse(ctx: SqlContext): Unit = {
+
+  def analyze(ctx: SqlContext): InsertStatement = {
     val input = ctx.start.getTokenSource().asInstanceOf[DSLSQLLexer]._input
     val start = ctx.start.getStartIndex()
     val stop = ctx.stop.getStopIndex()
     val interval = new Interval(start, stop)
     val originalText = input.getText(interval)
     val sql = TemplateMerge.merge(originalText, scriptSQLExecListener.env().toMap)
+    InsertStatement(originalText, sql)
+  }
+
+  override def parse(ctx: SqlContext): Unit = {
+    val InsertStatement(originalText, sql) = analyze(ctx)
     if (SparkCoreVersion.is_2_2_X()) {
       scriptSQLExecListener.sparkSession.sql(sql).count()
     } else {
@@ -44,3 +50,5 @@ class InsertAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAda
     scriptSQLExecListener.setLastSelectTable(null)
   }
 }
+
+case class InsertStatement(raw: String, sql: String)

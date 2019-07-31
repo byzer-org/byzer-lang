@@ -33,7 +33,7 @@ import tech.mlsql.sql.MLSQLSparkConf
   */
 class SelectAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdaptor {
 
-  override def parse(ctx: SqlContext): Unit = {
+  def analyze(ctx: SqlContext): SelectStatement = {
     val input = ctx.start.getTokenSource().asInstanceOf[DSLSQLLexer]._input
 
     val start = ctx.start.getStartIndex()
@@ -46,6 +46,14 @@ class SelectAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAda
     val chunks = wowText.split("\\s+")
     val tableName = chunks.last.replace(";", "")
     val sql = wowText.replaceAll(s"((?i)as)[\\s|\\n]+${tableName}", "")
+
+    SelectStatement(originalText, sql, tableName)
+
+  }
+
+  override def parse(ctx: SqlContext): Unit = {
+
+    val SelectStatement(originalText, sql, tableName) = analyze(ctx)
 
     val df = scriptSQLExecListener.sparkSession.sql(sql)
 
@@ -82,3 +90,5 @@ class SelectAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAda
 
   }
 }
+
+case class SelectStatement(raw: String, sql: String, tableName: String)

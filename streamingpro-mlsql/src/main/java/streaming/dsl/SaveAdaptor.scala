@@ -39,16 +39,12 @@ class SaveAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
     TemplateMerge.merge(value, scriptSQLExecListener.env().toMap)
   }
 
-  override def parse(ctx: SqlContext): Unit = {
-
-    var oldDF: DataFrame = null
+  def analyze(ctx: SqlContext): SaveStatement = {
     var mode = SaveMode.ErrorIfExists
     var format = ""
     var option = Map[String, String]()
     var tableName = ""
     var partitionByCol = ArrayBuffer[String]()
-
-    val owner = option.get("owner")
     var path = ""
 
     (0 to ctx.getChildCount() - 1).foreach { tokenIndex =>
@@ -61,7 +57,7 @@ class SaveAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
 
         case s: TableNameContext =>
           tableName = evaluate(s.getText)
-          oldDF = scriptSQLExecListener.sparkSession.table(tableName)
+
         case s: OverwriteContext =>
           mode = SaveMode.Overwrite
         case s: AppendContext =>
@@ -81,6 +77,16 @@ class SaveAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
         case _ =>
       }
     }
+    SaveStatement(currentText(ctx), tableName, format, path, option, mode.toString, partitionByCol.toList)
+  }
+
+  override def parse(ctx: SqlContext): Unit = {
+
+
+    val SaveStatement(_, tableName, format, path, option, _mode, partitionByCol) = analyze(ctx)
+    val owner = option.get("owner")
+    val mode = SaveMode.valueOf(_mode)
+    var oldDF: DataFrame = scriptSQLExecListener.sparkSession.table(tableName)
 
     def isStream = {
       MLSQLStreamManager.isStream
@@ -156,3 +162,5 @@ class SaveAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
     scriptSQLExecListener.setLastSelectTable(tempTable)
   }
 }
+
+case class SaveStatement(raw: String, inputTableName: String, format: String, path: String, option: Map[String, String] = Map(), mode: String, partitionByCol: List[String])

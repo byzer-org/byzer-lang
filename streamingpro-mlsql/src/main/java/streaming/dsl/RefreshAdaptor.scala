@@ -27,14 +27,22 @@ import streaming.dsl.template.TemplateMerge
   * Created by allwefantasy on 27/8/2017.
   */
 class RefreshAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdaptor {
-  override def parse(ctx: SqlContext): Unit = {
+
+  def analyze(ctx: SqlContext): RefreshStatement = {
     val input = ctx.start.getTokenSource().asInstanceOf[DSLSQLLexer]._input
     val start = ctx.start.getStartIndex()
     val stop = ctx.stop.getStopIndex()
     val interval = new Interval(start, stop)
     val originalText = input.getText(interval)
     val sql = TemplateMerge.merge(originalText, scriptSQLExecListener.env().toMap)
+    RefreshStatement(originalText, sql)
+  }
+
+  override def parse(ctx: SqlContext): Unit = {
+    val RefreshStatement(originalText, sql) = analyze(ctx)
     scriptSQLExecListener.sparkSession.sql(sql).count()
     scriptSQLExecListener.setLastSelectTable(null)
   }
 }
+
+case class RefreshStatement(raw: String, sql: String)

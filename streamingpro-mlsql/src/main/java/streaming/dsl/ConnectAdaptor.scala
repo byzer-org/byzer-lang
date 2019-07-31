@@ -31,6 +31,27 @@ class ConnectAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAd
     TemplateMerge.merge(value, scriptSQLExecListener.env().toMap)
   }
 
+  def analyze(ctx: SqlContext): ConnectStatement = {
+    var option = Map[String, String]()
+    var format = ""
+
+    (0 to ctx.getChildCount() - 1).foreach { tokenIndex =>
+      ctx.getChild(tokenIndex) match {
+        case s: FormatContext =>
+          format = s.getText
+          option += ("format" -> format)
+
+        case s: ExpressionContext =>
+          option += (cleanStr(s.qualifiedName().getText) -> evaluate(getStrOrBlockStr(s)))
+        case s: BooleanExpressionContext =>
+          option += (cleanStr(s.expression().qualifiedName().getText) -> evaluate(getStrOrBlockStr(s.expression())))
+        case _ =>
+
+      }
+    }
+    ConnectStatement(currentText(ctx), format, option)
+  }
+
   override def parse(ctx: SqlContext): Unit = {
 
     var option = Map[String, String]()
@@ -59,3 +80,5 @@ class ConnectAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAd
     scriptSQLExecListener.setLastSelectTable(null)
   }
 }
+
+case class ConnectStatement(raw: String, format: String, option: Map[String, String])
