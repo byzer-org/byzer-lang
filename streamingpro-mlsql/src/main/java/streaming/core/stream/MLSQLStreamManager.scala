@@ -192,9 +192,11 @@ class MLSQLStreamingQueryListener extends StreamingQueryListener with Logging wi
         MLSQLStreamManager.runEvent(MLSQLStreamEventName.terminated, job.jobName, p => {
           p.send(Map("streamName" -> job.jobName, "jsonContent" -> "{}"))
         })
-        MLSQLStreamManager.listeners().get(job.owner).filter(p => p.item.streamName == job.jobName).map(
-          f => uuids += f.item.uuid
-        )
+        MLSQLStreamManager.listeners().asScala.get(job.owner).map { items =>
+          items.filter(p => p.item.streamName == job.jobName).map(
+            f => uuids += f.item.uuid
+          )
+        }
       case None => logError(format(s"Stream job [${id}] is terminated. But we can not found it in JobManager."))
     }
 
