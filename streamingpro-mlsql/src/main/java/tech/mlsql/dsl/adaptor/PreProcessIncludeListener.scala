@@ -1,7 +1,7 @@
 package tech.mlsql.dsl.adaptor
 
+import streaming.dsl.ScriptSQLExecListener
 import streaming.dsl.parser.DSLSQLParser.SqlContext
-import streaming.dsl.{IncludeAdaptor, ScriptSQLExecListener}
 import streaming.parser.lisener.BaseParseListenerextends
 
 import scala.collection.mutable.ArrayBuffer

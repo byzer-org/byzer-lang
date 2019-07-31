@@ -16,9 +16,10 @@
  * limitations under the License.
  */
 
-package streaming.dsl
+package tech.mlsql.dsl.adaptor
 
 import streaming.core.datasource.DataSourceRegistry
+import streaming.dsl.{ConnectMeta, DBMappingKey, ScriptSQLExecListener}
 import streaming.dsl.parser.DSLSQLParser._
 import streaming.dsl.template.TemplateMerge
 

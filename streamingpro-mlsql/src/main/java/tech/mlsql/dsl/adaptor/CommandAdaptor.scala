@@ -4,7 +4,6 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import org.apache.spark.sql.mlsql.session.MLSQLException
 import streaming.common.JSONTool
-import streaming.dsl.DslAdaptor
 import streaming.dsl.parser.DSLSQLParser
 import streaming.dsl.parser.DSLSQLParser._
 import streaming.dsl.template.TemplateMerge

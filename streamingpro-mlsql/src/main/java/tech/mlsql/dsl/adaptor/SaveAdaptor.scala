@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package streaming.dsl
+package tech.mlsql.dsl.adaptor
 
 import java.util.UUID
 
@@ -26,6 +26,7 @@ import streaming.core.datasource.{DataSinkConfig, DataSourceRegistry}
 import streaming.core.stream.MLSQLStreamManager
 import streaming.dsl.parser.DSLSQLParser._
 import streaming.dsl.template.TemplateMerge
+import streaming.dsl.{ScriptSQLExec, ScriptSQLExecListener}
 import tech.mlsql.job.{JobManager, MLSQLJobType}
 
 import scala.collection.mutable.ArrayBuffer

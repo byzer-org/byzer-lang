@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package streaming.dsl
+package tech.mlsql.dsl.adaptor
 
 import org.apache.spark.sql.catalyst.parser.LegacyTypeStringParser
 import org.apache.spark.sql.types.{DataType, StructType}
@@ -26,6 +26,7 @@ import streaming.dsl.auth.TableType
 import streaming.dsl.load.batch.ModelSelfExplain
 import streaming.dsl.parser.DSLSQLParser._
 import streaming.dsl.template.TemplateMerge
+import streaming.dsl.{MLSQLExecuteContext, ScriptSQLExec, ScriptSQLExecListener}
 import streaming.source.parser.impl.JsonSourceParser
 import streaming.source.parser.{SourceParser, SourceSchema}
 import tech.mlsql.MLSQLEnvKey

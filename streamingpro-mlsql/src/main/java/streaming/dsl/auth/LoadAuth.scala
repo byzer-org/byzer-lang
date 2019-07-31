@@ -21,8 +21,9 @@ package streaming.dsl.auth
 import streaming.core.datasource.{DataAuthConfig, DataSourceRegistry, SourceInfo}
 import streaming.dsl.parser.DSLSQLParser._
 import streaming.dsl.template.TemplateMerge
-import streaming.dsl.{DslTool, ScriptSQLExec}
+import streaming.dsl.ScriptSQLExec
 import streaming.log.{Logging, WowLog}
+import tech.mlsql.dsl.adaptor.DslTool
 import tech.mlsql.dsl.auth.DatasourceAuth
 import tech.mlsql.dsl.processor.AuthProcessListener
 
