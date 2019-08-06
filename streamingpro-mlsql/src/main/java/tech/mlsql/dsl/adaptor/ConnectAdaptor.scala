@@ -16,9 +16,10 @@
  * limitations under the License.
  */
 
-package streaming.dsl
+package tech.mlsql.dsl.adaptor
 
 import streaming.core.datasource.DataSourceRegistry
+import streaming.dsl.{ConnectMeta, DBMappingKey, ScriptSQLExecListener}
 import streaming.dsl.parser.DSLSQLParser._
 import streaming.dsl.template.TemplateMerge
 
@@ -29,6 +30,27 @@ class ConnectAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAd
 
   def evaluate(value: String) = {
     TemplateMerge.merge(value, scriptSQLExecListener.env().toMap)
+  }
+
+  def analyze(ctx: SqlContext): ConnectStatement = {
+    var option = Map[String, String]()
+    var format = ""
+
+    (0 to ctx.getChildCount() - 1).foreach { tokenIndex =>
+      ctx.getChild(tokenIndex) match {
+        case s: FormatContext =>
+          format = s.getText
+          option += ("format" -> format)
+
+        case s: ExpressionContext =>
+          option += (cleanStr(s.qualifiedName().getText) -> evaluate(getStrOrBlockStr(s)))
+        case s: BooleanExpressionContext =>
+          option += (cleanStr(s.expression().qualifiedName().getText) -> evaluate(getStrOrBlockStr(s.expression())))
+        case _ =>
+
+      }
+    }
+    ConnectStatement(currentText(ctx), format, option)
   }
 
   override def parse(ctx: SqlContext): Unit = {
@@ -59,3 +81,5 @@ class ConnectAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAd
     scriptSQLExecListener.setLastSelectTable(null)
   }
 }
+
+case class ConnectStatement(raw: String, format: String, option: Map[String, String])

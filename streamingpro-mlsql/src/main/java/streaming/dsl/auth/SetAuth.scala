@@ -20,7 +20,7 @@ package streaming.dsl.auth
 
 import streaming.dsl.parser.DSLSQLParser._
 import streaming.dsl.template.TemplateMerge
-import streaming.dsl.DslTool
+import tech.mlsql.dsl.adaptor.DslTool
 import tech.mlsql.dsl.processor.AuthProcessListener
 
 

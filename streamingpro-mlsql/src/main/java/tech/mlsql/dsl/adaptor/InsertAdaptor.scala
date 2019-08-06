@@ -16,9 +16,11 @@
  * limitations under the License.
  */
 
-package streaming.dsl
+package tech.mlsql.dsl.adaptor
 
 import org.antlr.v4.runtime.misc.Interval
+import org.apache.spark.SparkCoreVersion
+import streaming.dsl.ScriptSQLExecListener
 import streaming.dsl.parser.DSLSQLLexer
 import streaming.dsl.parser.DSLSQLParser.SqlContext
 import streaming.dsl.template.TemplateMerge
@@ -26,15 +28,28 @@ import streaming.dsl.template.TemplateMerge
 /**
   * Created by allwefantasy on 27/8/2017.
   */
-class DropAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdaptor {
-  override def parse(ctx: SqlContext): Unit = {
+class InsertAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdaptor {
+
+  def analyze(ctx: SqlContext): InsertStatement = {
     val input = ctx.start.getTokenSource().asInstanceOf[DSLSQLLexer]._input
     val start = ctx.start.getStartIndex()
     val stop = ctx.stop.getStopIndex()
     val interval = new Interval(start, stop)
     val originalText = input.getText(interval)
     val sql = TemplateMerge.merge(originalText, scriptSQLExecListener.env().toMap)
-    scriptSQLExecListener.sparkSession.sql(sql).count()
+    InsertStatement(originalText, sql)
+  }
+
+  override def parse(ctx: SqlContext): Unit = {
+    val InsertStatement(originalText, sql) = analyze(ctx)
+    if (SparkCoreVersion.is_2_2_X()) {
+      scriptSQLExecListener.sparkSession.sql(sql).count()
+    } else {
+      scriptSQLExecListener.sparkSession.sql(sql)
+    }
+
     scriptSQLExecListener.setLastSelectTable(null)
   }
 }
+
+case class InsertStatement(raw: String, sql: String)

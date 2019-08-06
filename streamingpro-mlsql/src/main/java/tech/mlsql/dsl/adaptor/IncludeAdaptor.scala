@@ -16,11 +16,11 @@
  * limitations under the License.
  */
 
-package streaming.dsl
+package tech.mlsql.dsl.adaptor
 
+import streaming.dsl.IncludeSource
 import streaming.dsl.parser.DSLSQLParser._
 import streaming.dsl.template.TemplateMerge
-import tech.mlsql.dsl.adaptor.{PreProcessIncludeListener, SCType}
 
 /**
   * Created by allwefantasy on 12/1/2018.
@@ -31,7 +31,7 @@ class IncludeAdaptor(preProcessListener: PreProcessIncludeListener) extends DslA
     TemplateMerge.merge(value, preProcessListener.scriptSQLExecListener.env().toMap)
   }
 
-  override def parse(ctx: SqlContext): Unit = {
+  def analyze(ctx: SqlContext): IncludeStatement = {
     var functionName = ""
     var format = ""
     var path = ""
@@ -53,6 +53,12 @@ class IncludeAdaptor(preProcessListener: PreProcessIncludeListener) extends DslA
         case _ =>
       }
     }
+    IncludeStatement(currentText(ctx), format, path, option)
+  }
+
+  override def parse(ctx: SqlContext): Unit = {
+    val IncludeStatement(_, format, _path, option) = analyze(ctx)
+    var path = _path
     val alg = IncludeAdaptor.findAlg(format, option)
     if (!alg.skipPathPrefix) {
       path = withPathPrefix(preProcessListener.scriptSQLExecListener.pathPrefix(None), path)
@@ -87,4 +93,6 @@ object IncludeAdaptor {
   }
 
 }
+
+case class IncludeStatement(raw: String, format: String, path: String, option: Map[String, String])
 

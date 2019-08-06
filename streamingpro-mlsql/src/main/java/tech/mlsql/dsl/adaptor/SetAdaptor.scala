@@ -16,10 +16,11 @@
  * limitations under the License.
  */
 
-package streaming.dsl
+package tech.mlsql.dsl.adaptor
 
 import _root_.streaming.dsl.parser.DSLSQLParser._
 import streaming.common.ShellCommand
+import streaming.dsl.ScriptSQLExecListener
 import streaming.dsl.template.TemplateMerge
 import tech.mlsql.Stage
 
@@ -27,7 +28,7 @@ import tech.mlsql.Stage
   * Created by allwefantasy on 27/8/2017.
   */
 class SetAdaptor(scriptSQLExecListener: ScriptSQLExecListener, stage: Stage.stage = Stage.physical) extends DslAdaptor {
-  override def parse(ctx: SqlContext): Unit = {
+  def analyze(ctx: SqlContext): SetStatement = {
     var key = ""
     var value = ""
     var command = ""
@@ -55,6 +56,12 @@ class SetAdaptor(scriptSQLExecListener: ScriptSQLExecListener, stage: Stage.stag
         case _ =>
       }
     }
+    SetStatement(currentText(ctx), key, command, original_command, option, option.getOrElse("type", ""))
+  }
+
+  override def parse(ctx: SqlContext): Unit = {
+    val SetStatement(_, key, command, original_command, option, mode) = analyze(ctx)
+    var value = ""
 
     def evaluate(str: String) = {
       TemplateMerge.merge(str, scriptSQLExecListener.env().toMap)
@@ -139,3 +146,5 @@ object SetMode extends Enumeration {
   def keyName = "mode"
 
 }
+
+case class SetStatement(raw: String, key: String, command: String, original_command: String, option: Map[String, String], mode: String)

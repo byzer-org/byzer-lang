@@ -16,10 +16,11 @@
  * limitations under the License.
  */
 
-package streaming.dsl
+package tech.mlsql.dsl.adaptor
 
 import java.util.UUID
 
+import streaming.dsl.ScriptSQLExecListener
 import streaming.dsl.parser.DSLSQLParser._
 import streaming.dsl.template.TemplateMerge
 
@@ -32,12 +33,12 @@ class RegisterAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslA
     TemplateMerge.merge(value, scriptSQLExecListener.env().toMap)
   }
 
-  override def parse(ctx: SqlContext): Unit = {
+  def analyze(ctx: SqlContext): RegisterStatement = {
     var functionName = ""
     var format = ""
     var path = ""
     var option = Map[String, String]()
-    val resourceOwner = option.get("owner")
+
     (0 to ctx.getChildCount() - 1).foreach { tokenIndex =>
 
       ctx.getChild(tokenIndex) match {
@@ -54,6 +55,13 @@ class RegisterAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslA
         case _ =>
       }
     }
+    RegisterStatement(currentText(ctx), format, path, option, functionName)
+  }
+
+  override def parse(ctx: SqlContext): Unit = {
+    val RegisterStatement(_, format, _path, option, functionName) = analyze(ctx)
+    val resourceOwner = option.get("owner")
+    var path = _path
     val alg = MLMapping.findAlg(format)
     if (!alg.skipPathPrefix) {
       path = resourceRealPath(scriptSQLExecListener, resourceOwner, path)
@@ -70,5 +78,7 @@ class RegisterAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslA
     scriptSQLExecListener.setLastSelectTable(tempTable)
   }
 }
+
+case class RegisterStatement(raw: String, format: String, path: String, option: Map[String, String], functionName: String)
 
 

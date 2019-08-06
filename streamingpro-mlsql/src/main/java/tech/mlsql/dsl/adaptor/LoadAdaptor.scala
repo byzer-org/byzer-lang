@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package streaming.dsl
+package tech.mlsql.dsl.adaptor
 
 import org.apache.spark.sql.catalyst.parser.LegacyTypeStringParser
 import org.apache.spark.sql.types.{DataType, StructType}
@@ -26,6 +26,7 @@ import streaming.dsl.auth.TableType
 import streaming.dsl.load.batch.ModelSelfExplain
 import streaming.dsl.parser.DSLSQLParser._
 import streaming.dsl.template.TemplateMerge
+import streaming.dsl.{MLSQLExecuteContext, ScriptSQLExec, ScriptSQLExecListener}
 import streaming.source.parser.impl.JsonSourceParser
 import streaming.source.parser.{SourceParser, SourceSchema}
 import tech.mlsql.MLSQLEnvKey
@@ -43,7 +44,7 @@ class LoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
     TemplateMerge.merge(value, scriptSQLExecListener.env().toMap)
   }
 
-  override def parse(ctx: SqlContext): Unit = {
+  def analyze(ctx: SqlContext): LoadStatement = {
     var format = ""
     var option = Map[String, String]()
     var path = ""
@@ -64,6 +65,11 @@ class LoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
         case _ =>
       }
     }
+    LoadStatement(currentText(ctx), format, path, option, tableName)
+  }
+
+  override def parse(ctx: SqlContext): Unit = {
+    val LoadStatement(_, format, path, option, tableName) = analyze(ctx)
 
     def isStream = {
       scriptSQLExecListener.env().contains("streamName")
@@ -79,6 +85,7 @@ class LoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
   }
 }
 
+case class LoadStatement(raw: String, format: String, path: String, option: Map[String, String] = Map[String, String](), tableName: String)
 
 class LoadPRocessing(scriptSQLExecListener: ScriptSQLExecListener,
                      option: Map[String, String],

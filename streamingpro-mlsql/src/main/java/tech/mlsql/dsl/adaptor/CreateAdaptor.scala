@@ -16,9 +16,10 @@
  * limitations under the License.
  */
 
-package streaming.dsl
+package tech.mlsql.dsl.adaptor
 
 import org.antlr.v4.runtime.misc.Interval
+import streaming.dsl.ScriptSQLExecListener
 import streaming.dsl.parser.DSLSQLLexer
 import streaming.dsl.parser.DSLSQLParser.SqlContext
 import streaming.dsl.template.TemplateMerge
@@ -26,15 +27,22 @@ import streaming.dsl.template.TemplateMerge
 /**
   * Created by allwefantasy on 27/8/2017.
   */
-class RefreshAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdaptor {
-  override def parse(ctx: SqlContext): Unit = {
+class CreateAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdaptor {
+  def analyze(ctx: SqlContext): CreateStatement = {
     val input = ctx.start.getTokenSource().asInstanceOf[DSLSQLLexer]._input
     val start = ctx.start.getStartIndex()
     val stop = ctx.stop.getStopIndex()
     val interval = new Interval(start, stop)
     val originalText = input.getText(interval)
     val sql = TemplateMerge.merge(originalText, scriptSQLExecListener.env().toMap)
+    CreateStatement(originalText, sql)
+  }
+
+  override def parse(ctx: SqlContext): Unit = {
+    val CreateStatement(originalText, sql) = analyze(ctx)
     scriptSQLExecListener.sparkSession.sql(sql).count()
     scriptSQLExecListener.setLastSelectTable(null)
   }
 }
+
+case class CreateStatement(raw: String, sql: String)

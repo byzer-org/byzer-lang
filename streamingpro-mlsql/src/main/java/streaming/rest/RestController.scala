@@ -18,6 +18,7 @@
 
 package streaming.rest
 
+import _root_.streaming.common.JSONTool
 import _root_.streaming.core._
 import _root_.streaming.core.strategy.platform.{PlatformManager, SparkRuntime}
 import _root_.streaming.dsl.mmlib.algs.tf.cluster.{ClusterSpec, ClusterStatus, ExecutorInfo}
@@ -106,39 +107,59 @@ class RestController extends ApplicationController with WowLog {
         paramAsLong("timeout", -1L)
       )
       val context = createScriptSQLExecListener(sparkSession, jobInfo.groupId)
-      if (paramAsBoolean("async", false)) {
-        JobManager.asyncRun(sparkSession, jobInfo, () => {
-          try {
+      def query = {
+        if (paramAsBoolean("async", false)) {
+          JobManager.asyncRun(sparkSession, jobInfo, () => {
+            try {
+              ScriptSQLExec.parse(param("sql"), context,
+                skipInclude = paramAsBoolean("skipInclude", false),
+                skipAuth = paramAsBoolean("skipAuth", true),
+                skipPhysicalJob = paramAsBoolean("skipPhysicalJob", false),
+                skipGrammarValidate = paramAsBoolean("skipGrammarValidate", true))
+
+              outputResult = getScriptResult(context, sparkSession)
+              htp.post(new Url(param("callback")), Map("stat" -> s"""succeeded""", "res" -> outputResult))
+            } catch {
+              case e: Exception =>
+                e.printStackTrace()
+                val msgBuffer = ArrayBuffer[String]()
+                if (paramAsBoolean("show_stack", false)) {
+                  format_full_exception(msgBuffer, e)
+                }
+                htp.post(new Url(param("callback")), Map("stat" -> s"""failed""", "msg" -> (e.getMessage + "\n" + msgBuffer.mkString("\n"))))
+            }
+          })
+        } else {
+          JobManager.run(sparkSession, jobInfo, () => {
             ScriptSQLExec.parse(param("sql"), context,
               skipInclude = paramAsBoolean("skipInclude", false),
               skipAuth = paramAsBoolean("skipAuth", true),
               skipPhysicalJob = paramAsBoolean("skipPhysicalJob", false),
-              skipGrammarValidate = paramAsBoolean("skipGrammarValidate", true))
+              skipGrammarValidate = paramAsBoolean("skipGrammarValidate", true)
+            )
+            if (!silence) {
+              outputResult = getScriptResult(context, sparkSession)
+            }
+          })
+        }
+      }
 
-            outputResult = getScriptResult(context, sparkSession)
-            htp.post(new Url(param("callback")), Map("stat" -> s"""succeeded""", "res" -> outputResult))
-          } catch {
-            case e: Exception =>
-              e.printStackTrace()
-              val msgBuffer = ArrayBuffer[String]()
-              if (paramAsBoolean("show_stack", false)) {
-                format_full_exception(msgBuffer, e)
-              }
-              htp.post(new Url(param("callback")), Map("stat" -> s"""failed""", "msg" -> (e.getMessage + "\n" + msgBuffer.mkString("\n"))))
-          }
-        })
-      } else {
-        JobManager.run(sparkSession, jobInfo, () => {
-          ScriptSQLExec.parse(param("sql"), context,
-            skipInclude = paramAsBoolean("skipInclude", false),
-            skipAuth = paramAsBoolean("skipAuth", true),
-            skipPhysicalJob = paramAsBoolean("skipPhysicalJob", false),
-            skipGrammarValidate = paramAsBoolean("skipGrammarValidate", true)
-          )
-          if (!silence) {
-            outputResult = getScriptResult(context, sparkSession)
-          }
-        })
+      def analyze = {
+        ScriptSQLExec.parse(param("sql"), context,
+          skipInclude = false,
+          skipAuth = true,
+          skipPhysicalJob = true,
+          skipGrammarValidate = true)
+        context.preProcessListener.map(f => JSONTool.toJsonStr(f.analyzedStatements.map(_.unwrap))) match {
+          case Some(i) => outputResult = i
+          case None =>
+        }
+      }
+
+      params.getOrDefault("executeMode", "query") match {
+        case "query" => query
+        case "analyze" => analyze
+        case _ => query
       }
 
     } catch {

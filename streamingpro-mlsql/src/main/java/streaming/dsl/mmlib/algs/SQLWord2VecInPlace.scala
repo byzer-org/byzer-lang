@@ -97,10 +97,10 @@ class SQLWord2VecInPlace(override val uid: String) extends SQLAlg with MllibFunc
 
     params.get(split.name).
       map(m => set(split, m)).getOrElse {
-      set(split, "")
+      set(split, null)
     }
 
-    require($(inputCol) == null || $(inputCol).isEmpty, "inputCol is required when use SQLWord2VecInPlace")
+    require($(inputCol) != null && $(inputCol).nonEmpty, "inputCol is required when use SQLWord2VecInPlace")
     val metaPath = getMetaPath(params("path"))
     // keep params
     saveTraningParams(df.sparkSession, params, metaPath)

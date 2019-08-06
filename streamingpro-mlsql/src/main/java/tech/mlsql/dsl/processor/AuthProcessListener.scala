@@ -1,11 +1,12 @@
 package tech.mlsql.dsl.processor
 
+import streaming.dsl.ScriptSQLExecListener
 import streaming.dsl.auth._
 import streaming.dsl.parser.DSLSQLParser.SqlContext
-import streaming.dsl.{ScriptSQLExecListener, SetAdaptor}
 import streaming.log.Logging
 import streaming.parser.lisener.BaseParseListenerextends
 import tech.mlsql.Stage
+import tech.mlsql.dsl.adaptor.SetAdaptor
 
 import scala.collection.mutable.ArrayBuffer
 

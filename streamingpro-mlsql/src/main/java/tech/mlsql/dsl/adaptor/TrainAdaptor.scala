@@ -16,11 +16,12 @@
  * limitations under the License.
  */
 
-package streaming.dsl
+package tech.mlsql.dsl.adaptor
 
 import java.util.UUID
 
 import org.apache.spark.SparkCoreVersion
+import streaming.dsl.ScriptSQLExecListener
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.parser.DSLSQLParser._
 import streaming.dsl.template.TemplateMerge
@@ -37,12 +38,12 @@ class TrainAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdap
     TemplateMerge.merge(value, scriptSQLExecListener.env().toMap)
   }
 
-  override def parse(ctx: SqlContext): Unit = {
+  def analyze(ctx: SqlContext): TrainStatement = {
     var tableName = ""
     var format = ""
     var path = ""
     var options = Map[String, String]()
-    val owner = options.get("owner")
+
     var asTableName = ""
     (0 to ctx.getChildCount() - 1).foreach { tokenIndex =>
       ctx.getChild(tokenIndex) match {
@@ -62,6 +63,14 @@ class TrainAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdap
         case _ =>
       }
     }
+    TrainStatement(currentText(ctx), tableName, format, path, options, asTableName)
+  }
+
+  override def parse(ctx: SqlContext): Unit = {
+    val TrainStatement(_, tableName, format, _path, _options, asTableName) = analyze(ctx)
+    var path = _path
+    var options = _options
+    val owner = options.get("owner")
     val df = scriptSQLExecListener.sparkSession.table(tableName)
     val sqlAlg = MLMapping.findAlg(format)
     //2.3.1
@@ -87,7 +96,7 @@ class TrainAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdap
     }
 
     if (!skipAuth() && sqlAlg.isInstanceOf[ETAuth]) {
-      sqlAlg.asInstanceOf[ETAuth].auth(ETMethod.withName(firstKeywordInStatement) ,path , options)
+      sqlAlg.asInstanceOf[ETAuth].auth(ETMethod.withName(firstKeywordInStatement), path, options)
     }
 
     // RUN and TRAIN are the same. TRAIN is normally used for algorithm.
@@ -178,3 +187,5 @@ object MLMapping {
     }
   }
 }
+
+case class TrainStatement(raw: String, inputTableName: String, etName: String, path: String, option: Map[String, String], outputTableName: String)

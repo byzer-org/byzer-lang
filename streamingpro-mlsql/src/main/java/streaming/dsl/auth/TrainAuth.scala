@@ -1,9 +1,9 @@
 package streaming.dsl.auth
 
-import streaming.dsl.DslTool
 import streaming.dsl.parser.DSLSQLParser._
 import streaming.dsl.template.TemplateMerge
 import streaming.log.{Logging, WowLog}
+import tech.mlsql.dsl.adaptor.DslTool
 import tech.mlsql.dsl.processor.AuthProcessListener
 
 /**

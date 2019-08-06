@@ -4,7 +4,6 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import org.apache.spark.sql.mlsql.session.MLSQLException
 import streaming.common.JSONTool
-import streaming.dsl.DslAdaptor
 import streaming.dsl.parser.DSLSQLParser
 import streaming.dsl.parser.DSLSQLParser._
 import streaming.dsl.template.TemplateMerge
@@ -21,7 +20,7 @@ class CommandAdaptor(preProcessListener: PreProcessListener) extends DslAdaptor 
     TemplateMerge.merge(str, preProcessListener.scriptSQLExecListener.env().toMap)
   }
 
-  override def parse(ctx: DSLSQLParser.SqlContext): Unit = {
+  def analyze(ctx: SqlContext): CommandStatement = {
     var command = ""
     var parameters = ArrayBuffer[String]()
     command = ctx.getChild(0).getText.substring(1)
@@ -53,6 +52,13 @@ class CommandAdaptor(preProcessListener: PreProcessListener) extends DslAdaptor 
         case _ =>
       }
     }
+    CommandStatement(currentText(ctx), command, parameters.toList)
+  }
+
+  override def parse(ctx: DSLSQLParser.SqlContext): Unit = {
+    val CommandStatement(_, _command, _parameters) = analyze(ctx)
+    val command = _command
+    val parameters = new ArrayBuffer[String]() ++ _parameters
     val env = preProcessListener.scriptSQLExecListener.env()
     val tempCommand = try env(command) catch {
       case e: java.util.NoSuchElementException =>
@@ -135,8 +141,9 @@ class CommandAdaptor(preProcessListener: PreProcessListener) extends DslAdaptor 
       textEvaluate
     }
 
-
     preProcessListener.addStatement(String.valueOf(finalCommand.toArray))
 
   }
 }
+
+case class CommandStatement(raw: String, command: String, parameters: List[String])
