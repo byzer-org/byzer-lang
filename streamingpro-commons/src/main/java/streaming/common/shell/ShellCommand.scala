@@ -30,6 +30,7 @@ import scala.sys.process.{ProcessLogger, _}
   * Created by allwefantasy on 12/7/2017.
   */
 object ShellCommand extends TFileWriter with Logging {
+
   val logger = Loggers.getLogger(classOf[ShellCommand])
 
   def exec(shellStr: String): String = {
