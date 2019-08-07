@@ -87,7 +87,13 @@ class BasicCondaEnvManager(options: Map[String, String]) extends Logging {
             ShellCommand.execCmd(s"${condaPath} env create -n $projectEnvName --file $tempFile")
           } catch {
             case e: Exception =>
-              removeEnv(condaEnvPath)
+              // try to remove the partial created env.
+              try {
+                removeEnv(condaEnvPath)
+              } catch {
+                case e1: Exception => // do nothing.
+              }
+
               throw e
           }
           finally {

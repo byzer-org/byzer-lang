@@ -72,6 +72,11 @@
 
             </exclusions>
         </dependency>
+        <dependency>
+            <groupId>com.lihaoyi</groupId>
+            <artifactId>os-lib_${scala.binary.version}</artifactId>
+            <version>0.2.9</version>
+        </dependency>
     </dependencies>
 
 

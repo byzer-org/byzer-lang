@@ -1,77 +1,84 @@
 # How to run in docker
 
 
-
-Run this command in your terminal：
+Run the following in your terminal：
 
 ```shell
 bash <(curl http://download.mlsql.tech/scripts/run-all.sh)
 ```
 
+or in case it just does not work, try this way:
+
+```
+wget http://download.mlsql.tech/scripts/run-all.sh
+chmod u+x run-all.sh
+./run-all.sh
+```
+
 Notices:
 
-0. Your system should be Linux/Mac OS, and have docker installed. 
-0. 9002,9003,8080,3306 should be not taken by other programs.
-1. If there are some MySQL errors, ignore them, the script is checking when the mysql is ready.
+0. macOs,Linux with docker pre installed。
+1. Make sure 9002,9003,8080,3306 are not taken.
+2. The script will check MySQL is ready. Please ignore the Mysql error message.
 
-
-Using `docker ps` to check the result:
+docker ps:
 
 ![image.png](http://docs.mlsql.tech/upload_images/1063603-004da41021835b54.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
-All docker containers are up.
+All related containers are started.
 
-## Register/Login
+## Quick configuration tutorial
 
-Visit  `http://127.0.0.1:9002`(only chrome browser is tested):
-
+Register in http://127.0.0.1:9002. Only Gmail supported.
 
 ![image.png](http://docs.mlsql.tech/upload_images/1063603-5dbdcd1e735e9681.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
-Join a team/role is required to use the console. You can create your own team/role.
+The main page will show after you registry. Click the Team tab.
 
-![image.png](http://docs.mlsql.tech/upload_images/1063603-164c90c01d45a255.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![image.png](http://docs.mlsql.tech/upload_images/WX20190807-095256.png)
 
-First, create a team.
+You will see a quick configuration navigator:
 
-![image.png](http://docs.mlsql.tech/upload_images/1063603-b3bf4a420a3c854f.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![image.png](http://docs.mlsql.tech/upload_images/WX20190807-095357.png)
 
-And the console will show you the result.
-
-![image.png](http://docs.mlsql.tech/upload_images/1063603-f03b4786fc18fd28.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
-
-You need to refresh manually, otherwize some panel may not been refreshed in time.
-Pull the page and find the Role panel:
+Type any team name you want：
 
 
-![image.png](http://docs.mlsql.tech/upload_images/1063603-f713d028577a6703.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![image.png](http://docs.mlsql.tech/upload_images/WX20190807-095440.png) 
 
-Put you in the admin role:
+Select the team name you created in preview step, and create a new role fort it:
 
-![image.png](http://docs.mlsql.tech/upload_images/1063603-f5067df22572e2e4.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![image.png](http://docs.mlsql.tech/upload_images/WX20190807-095542.png)
 
-Click the Cluster menu,add the backend manually:
+Invite yourself to team1/admin, click next step:
 
-![image.png](http://docs.mlsql.tech/upload_images/1063603-c5ca9f01a051aa6b.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![image.png](http://docs.mlsql.tech/upload_images/WX20190807-095644.png)
 
-The server name should like above exactly.
+Add MLSQL engine for you role. Please make sure the url must be the same with me： mlsql-server:9003. 
+click next step：
 
-Cause one user can have many roles, you should bind a default role:
+![image.png](http://docs.mlsql.tech/upload_images/WX20190807-095834.png)
 
-![image.png](http://docs.mlsql.tech/upload_images/1063603-7ee9b2b8d5e7b753.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+Set the engine as the default engine for your role：
 
-Since every input have the auto-suggession, do not be worry.
+![image.png](http://docs.mlsql.tech/upload_images/WX20190807-095955.png)
 
-Now, feel free to use the console:
+Done!
 
-![image.png](http://docs.mlsql.tech/upload_images/1063603-a52f103ec5c8d0b7.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![image.png](http://docs.mlsql.tech/upload_images/WX20190807-100026.png)
 
-Drag the blue block to the eidtor, the first time to do this, it's a little slow:
+Return to the main page and try to run show jobs command. It will take a while 
+since it's the first time to execute command.
 
+![image.png](http://docs.mlsql.tech/upload_images/WX20190807-100144.png)
 
-![image.png](http://docs.mlsql.tech/upload_images/1063603-2be788e177ffccb5.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+More mlsql code example，please login in try.mlsql.tech with the following user/password:
 
-Done.
+```
+account:  demo@gmail.com
+password: 123456
+```
+
 
 ## Notice
 We disable the table auth by default since when this is opened which will make you not easy to use.
