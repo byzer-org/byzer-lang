@@ -1,15 +1,27 @@
 ## 命令
+
 在终端执行如下指令：
 
 ```shell
 bash <(curl http://download.mlsql.tech/scripts/run-all.sh)
 ```
+
+或者
+
+```
+wget http://download.mlsql.tech/scripts/run-all.sh
+chmod u+x run-all.sh
+./run-all.sh
+```
+
 注意事项:
 
 0. 用户需要确保在操作系统为Linux（Mac 也是Ok的），有docker环境即可。
-0. 请确保执行的电脑 9002,9003,8080三个端口没有占用
-1.  脚本执行，可以看到MySQL连接错误。这是脚本在等待MySQL启动后可用。不是错误，请放心。
-2. 如果docker镜像拉去缓慢，可以设置阿里云镜像。具体操作如下：
+1. 请确保执行的电脑 9002,9003,8080,3306四个端口没有占用
+2. 脚本执行，可以看到MySQL连接错误。这是脚本在检测MySQL启动后是否可用。不是错误，请放心。
+
+
+如果docker镜像拉去缓慢，可以设置阿里云镜像。具体操作如下：
 
 ```shell
 mkdir -p /etc/docker
@@ -32,54 +44,56 @@ systemctl restart docker
 
 可以看到相关容器都启动了。
 
-## 登录注册
+## 快速配置向导
 
-访问 http://127.0.0.1:9002 :
-
+访问 http://127.0.0.1:9002 进行注册。只支持Gmail邮箱。
 
 ![image.png](http://docs.mlsql.tech/upload_images/1063603-5dbdcd1e735e9681.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
-因为在MLSQL Console中，任何用户在使用控制台的时候，必须先自己创建team/role 或者加入到别人的team/role之后才能连接到真正的后端执行操作。所以这个时候你需要自己到Team标签页进行设置。
+进入后看到如下界面,点击Team:
 
-![image.png](http://docs.mlsql.tech/upload_images/1063603-164c90c01d45a255.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![image.png](http://docs.mlsql.tech/upload_images/WX20190807-095256.png)
 
-第一次进来，会提示你没有配置后端。第一步先创建一个团队。
+可以见到一个快速设置页：
 
-![image.png](http://docs.mlsql.tech/upload_images/1063603-b3bf4a420a3c854f.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![image.png](http://docs.mlsql.tech/upload_images/WX20190807-095357.png)
 
-完成会进行相应提示：
+随便填入一个team名称，点击下一步：
 
-![image.png](http://docs.mlsql.tech/upload_images/1063603-f03b4786fc18fd28.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
-这个时候你需要切换下标签，比如切到demo或者team里（或者刷新），不然后面有部分板块没有得到及时更新。在team标签我们继续往下拉找到创建Role板块：
+![image.png](http://docs.mlsql.tech/upload_images/WX20190807-095440.png)
 
-![image.png](http://docs.mlsql.tech/upload_images/1063603-f713d028577a6703.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+选中刚才建立的team,然后设置一个角色，下一步
 
-接着把自己放到admin角色里：
+![image.png](http://docs.mlsql.tech/upload_images/WX20190807-095542.png)
 
-![image.png](http://docs.mlsql.tech/upload_images/1063603-f5067df22572e2e4.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+把自己邀请到team1/admin里，下一步：
 
-现在，我么只要给角色添加一个后端即可（点击左侧Cluster标签页）：
+![image.png](http://docs.mlsql.tech/upload_images/WX20190807-095644.png)
 
-![image.png](http://docs.mlsql.tech/upload_images/1063603-c5ca9f01a051aa6b.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+开始给team和role添加后端engine,这里url 一定要 填写： mlsql-server:9003. 因为我使用了docker网络。点击下一步：
 
-Server地址一定要和我一样。
+![image.png](http://docs.mlsql.tech/upload_images/WX20190807-095834.png)
 
-因为一个用户可能有多个角色，所以可能有多组服务器，我们需要固定一组，通过左侧面板可以完成最后一步设置：
+将刚才的添加的engine设置为默认的engine,点击下一步：
 
-![image.png](http://docs.mlsql.tech/upload_images/1063603-7ee9b2b8d5e7b753.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![image.png](http://docs.mlsql.tech/upload_images/WX20190807-095955.png)
 
-大部分输入框都有提示，大家不用担心。
+完成。
 
-现在，可以开始试用Console了。
+![image.png](http://docs.mlsql.tech/upload_images/WX20190807-100026.png)
 
-![image.png](http://docs.mlsql.tech/upload_images/1063603-a52f103ec5c8d0b7.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+这个时候返回主界面，然后执行一个命令看是否都联通了(第一次运行会比较久)：
 
-拖拽蓝色框到编辑区里，然后点击运行，第一次会有点慢。
+![image.png](http://docs.mlsql.tech/upload_images/WX20190807-100144.png)
 
-![image.png](http://docs.mlsql.tech/upload_images/1063603-2be788e177ffccb5.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+大工告成。如果你想要看更多示例，请登录 try.mlsql.tech,然后用一下用户名登录查看：
 
-搞定。
+```
+account:  demo@gmail.com
+password: 123456
+```
+
 
 ## 结束语
 在docker里我们默认关闭了表权限校验，否则使用时，使用jdbc等各种数据的时候，都需要添加权限，比较繁琐。打开的方式是在mlsql-console 进行docker run的时候 加上-e ENABLE_AUTH_CENTER=true 即可。参看启动脚本 start.sh:
