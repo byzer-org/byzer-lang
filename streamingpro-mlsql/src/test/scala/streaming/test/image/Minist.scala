@@ -34,7 +34,7 @@ object Minist extends Logging {
   val testLabels = "t10k-labels-idx1-ubyte.gz"
 
   def download(fileName: String, path: String) = {
-    val url = s"http://yann.lecun.com/exdb/mnist/${fileName}"
+    val url = s"http://docs.mlsql.tech/upload_images/${fileName}"
     var res = ShellCommand.exec(s"cd $path;wget $url")
     logInfo(res)
     res = ShellCommand.exec(s"cd $path; gzip -d $fileName")
