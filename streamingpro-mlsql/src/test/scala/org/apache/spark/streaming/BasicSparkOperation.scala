@@ -24,7 +24,7 @@ import java.util.concurrent.atomic.AtomicReference
 
 import net.csdn.common.reflect.ReflectHelper
 import org.apache.commons.io.FileUtils
-import org.apache.spark.sql.Row
+import org.apache.spark.sql.{DataFrame, Row}
 import org.scalatest.{FlatSpec, Matchers}
 import serviceframework.dispatcher.{Compositor, StrategyDispatcher}
 import streaming.common.ParamsUtil
@@ -133,6 +133,12 @@ trait BasicSparkOperation extends FlatSpec with Matchers {
     })
     holder.get()
 
+  }
+
+  def executeCodeWithCallback(runtime: SparkRuntime, code: String, f: DataFrame => Unit) = {
+    autoGenerateContext(runtime)
+    val jobInfo = createJobInfoFromExistGroupId(code)
+    ScriptRunner.runJob(code, jobInfo, f)
   }
 
   def executeCodeAsync(runtime: SparkRuntime, code: String, async: Boolean = false): Option[Array[Row]] = {
