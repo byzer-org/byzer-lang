@@ -47,7 +47,9 @@ class PreProcessListener(val scriptSQLExecListener: ScriptSQLExecListener) exten
         new StatementAdaptor(this, (raw) => {}).parse(ctx)
       case "set" => {
         new SetAdaptor(scriptSQLExecListener, Stage.preProcess).parse(ctx)
-        new StatementAdaptor(this, (raw) => {}).parse(ctx)
+        new StatementAdaptor(this, (raw) => {
+          addStatement(raw)
+        }).parse(ctx)
       }
       case _ => new StatementAdaptor(this, (raw) => {
         addStatement(raw)

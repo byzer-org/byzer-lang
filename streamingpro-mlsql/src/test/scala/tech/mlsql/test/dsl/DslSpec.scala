@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package streaming.test.dsl
+package tech.mlsql.test.dsl
 
 import java.io.File
 
@@ -623,7 +623,7 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
 
         compareDSL("""!kill "jobId"""","""set kill=''' run command as Kill.`{}` ''';set jobId="wow"; run command as Kill.`jobId` ;""")
 
-        compareDSL("""!kill jobId;""","""set kill=''' run command as Kill.`{}` ''';set jobId="wow"; run command as Kill.`jobId` ;""")
+        compareDSL("""!kill jobId""","""set kill=''' run command as Kill.`{}` ''';set jobId="wow"; run command as Kill.`jobId` ;""")
 
         compareDSL("""!kill '''jobId"'''""","""set kill=''' run command as Kill.`{}` ''';set jobId="wow"; run command as Kill.`jobId"` ;""")
         compareDSL("""!kill '''${jobId}'''""","""set kill=''' run command as Kill.`{}` ''';set jobId="wow"; run command as Kill.`wow` ;""")

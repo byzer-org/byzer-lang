@@ -156,3 +156,4 @@ contri/streamingpro-automl/logs/
 /tmp
 streamingpro-mlsql/src/main/java/streaming/core/WilliamLocalSparkServiceApp.scala
 streamingpro-api/spark-warehouse
+streamingpro-jython/logs/

@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package streaming.test.dsl
+package tech.mlsql.test.dsl
 
 import java.util
 
