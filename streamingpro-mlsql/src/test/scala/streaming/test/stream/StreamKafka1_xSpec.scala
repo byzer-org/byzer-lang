@@ -204,6 +204,7 @@ class StreamKafka1_xSpec extends BasicSparkOperation with SpecFunctions with Bas
         """.stripMargin)
       Thread.sleep(1000 * 5)
       assert(spark.streams.active.size == 0)
+      spark.streams.active.foreach(f => f.stop())
 
     }
     //clear all  info in StreamingproJobManager

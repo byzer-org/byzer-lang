@@ -154,6 +154,7 @@ class Stream2Spec extends BasicSparkOperation with SpecFunctions with BasicMLSQL
       val df = spark.sql("select * from output")
       df.show()
       assume(df.count() > 0)
+      spark.streams.active.foreach(f => f.stop())
 
     }
   }
