@@ -34,6 +34,36 @@ import tech.mlsql.dsl.processor.GrammarProcessListener
   */
 class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConfig {
 
+  "#1184" should "single quote should be escaped in reference" in {
+
+    withContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+      val res = executeCode(runtime,
+        """
+          |set a='jack';
+          |select "${a}" as c  as output;
+          |
+        """.stripMargin)
+      assert(res.head.getString(0) == "jack")
+    }
+  }
+
+  "set statement evaluate path in train statement" should "work fine" in {
+
+    withContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+      executeCode(runtime,
+        """
+          |set a='jack';
+          |set word2vecPath="/tmp/wo";
+          |select "${a}" as c  as data;
+          |train data as Word2VecInPlace.`${word2vecPath}` where
+          |inputCol="c";
+          |
+        """.stripMargin)
+      val file = new File(ScriptSQLExec.context().home + "/tmp/wo")
+      assert(file.exists())
+      file.delete()
+    }
+  }
 
   "set grammar" should "work fine" in {
 

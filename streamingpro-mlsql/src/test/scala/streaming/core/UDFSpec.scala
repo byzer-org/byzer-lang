@@ -18,12 +18,9 @@
 
 package streaming.core
 
-import java.io.File
-
 import net.sf.json.JSONObject
 import org.apache.spark.streaming.BasicSparkOperation
 import streaming.core.strategy.platform.SparkRuntime
-import streaming.dsl.ScriptSQLExec
 
 /**
   * Created by allwefantasy on 26/4/2018.
@@ -40,7 +37,7 @@ class UDFSpec extends BasicSparkOperation with SpecFunctions {
   )
 
 
-  "keepChinese" should "work fine" taggedAs (NotToRunTag) in {
+  "keepChinese" should "work fine" in {
 
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql

@@ -1,6 +1,7 @@
 ## MLSQL
 
-MLSQL is a Language which is the superset of SQL and  a distributed compute engine based on Spark. 
+MLSQL is a SQL-Based language, and it's also a distributed compute engine based on Spark. 
+The design goal of the MLSQL is to unify Big Data and Machine Learning, one language, one platform.
 
 ## Official WebSite
 
@@ -11,19 +12,6 @@ Find more examples on [our user guide](http://docs.mlsql.tech/en).
 
 1. [中文文档](http://docs.mlsql.tech/zh)
 2. [English Docs](http://docs.mlsql.tech/en)
-
-## Fork and Contribute
-
-If you are planning to contribute to this repository, we first request you to create an issue at [our Issue page](https://github.com/allwefantasy/streamingpro/issues)
-even if the topic is not related to source code itself (e.g., documentation, new idea and proposal).
-
-This is an active open source project for everyone,
-and we are always open to people who want to use this system or contribute to it.
-This guide document introduce [how to contribute to MLSQL](https://github.com/allwefantasy/streamingpro/blob/master/docs/docv2/contribute/contribute.md).
-
-## RoadMap
-
-1. [Versioning Policy](https://github.com/allwefantasy/streamingpro/blob/master/docs/docv2/contribute/release.md)
 
 
 ## Get PreBuild Distribution
@@ -47,7 +35,6 @@ export SPARK_HOME="....." ; ./start-local.sh
 
 ## Build Distribution
 
-
 ```shell
 # clone project
 git clone https://github.com/allwefantasy/streamingpro .
@@ -61,6 +48,20 @@ export DISTRIBUTION=false
 ## build  
 ./dev/package.sh
 ```
+
+## Fork and Contribute
+
+If you are planning to contribute to this repository, we first request you to create an issue at [our Issue page](https://github.com/allwefantasy/streamingpro/issues)
+even if the topic is not related to source code itself (e.g., documentation, new idea and proposal).
+
+This is an active open source project for everyone,
+and we are always open to people who want to use this system or contribute to it.
+This guide document introduce [how to contribute to MLSQL](https://github.com/allwefantasy/streamingpro/blob/master/docs/docv2/contribute/contribute.md).
+
+## RoadMap
+
+1. [Versioning Policy](https://github.com/allwefantasy/streamingpro/blob/master/docs/docv2/contribute/release.md)
+
 
 ## Contributors
 
