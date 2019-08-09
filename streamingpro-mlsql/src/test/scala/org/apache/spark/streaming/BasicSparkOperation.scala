@@ -135,6 +135,14 @@ trait BasicSparkOperation extends FlatSpec with Matchers {
 
   }
 
+  def executeCodeWithoutPhysicalStage(runtime: SparkRuntime, code: String) = {
+    autoGenerateContext(runtime)
+    val jobInfo = createJobInfoFromExistGroupId(code)
+    ScriptSQLExec.context().execListener.addEnv("SKIP_PHYSICAL", "true")
+    ScriptRunner.runJob(code, jobInfo, (df) => {})
+    ScriptSQLExec.context().execListener.preProcessListener.get
+  }
+
   def executeCodeWithCallback(runtime: SparkRuntime, code: String, f: DataFrame => Unit) = {
     autoGenerateContext(runtime)
     val jobInfo = createJobInfoFromExistGroupId(code)

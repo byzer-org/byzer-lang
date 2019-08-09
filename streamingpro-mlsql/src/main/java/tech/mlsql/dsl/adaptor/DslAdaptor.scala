@@ -42,10 +42,11 @@ trait DslTool {
   }
 
   def cleanStr(str: String) = {
-    if (str.startsWith("`") || str.startsWith("\""))
+    if (str.startsWith("`") || str.startsWith("\"") || (str.startsWith("'") && !str.startsWith("'''")))
       str.substring(1, str.length - 1)
     else str
   }
+
 
   def cleanBlockStr(str: String) = {
     if (str.startsWith("'''") && str.endsWith("'''"))

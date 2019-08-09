@@ -26,7 +26,9 @@ import streaming.core.{BasicMLSQLConfig, SpecFunctions}
 import streaming.dsl.ScriptSQLExec
 
 class Stream2Spec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConfig with BeforeAndAfterAll {
+
   val topic_name = "test_cool"
+
   "kafka" should "work fine on spark" in {
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
