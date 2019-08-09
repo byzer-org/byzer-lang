@@ -49,10 +49,8 @@
         <module>streamingpro-jython</module>
         <module>streamingpro-api</module>
         <module>streamingpro-cluster</module>
-
-        <module>external/streamingpro-redis</module>
-        <module>contri/streamingpro-dl4j</module>
-        <module>contri/streamingpro-opencv</module>
+        <!--<module>contri/streamingpro-dl4j</module>-->
+        <!--<module>contri/streamingpro-opencv</module>-->
     </modules>
 
     <properties>
