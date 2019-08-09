@@ -501,7 +501,7 @@ class PythonTrain extends Functions with Serializable {
           message += f
           filterScore(f)
         }.toSeq
-        score = if (scores.size > 0) scores.filter(f => f > 0.0).headOption.getOrElse(0d) else 0d
+        score = scores.headOption.getOrElse(0d)
       } catch {
         case e: Exception =>
           message += format_cause(e)
