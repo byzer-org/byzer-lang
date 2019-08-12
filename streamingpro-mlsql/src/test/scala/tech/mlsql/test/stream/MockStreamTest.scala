@@ -16,7 +16,7 @@ import tech.mlsql.common.ScalaReflect
   * 2019-08-12 WilliamZhu(allwefantasy@gmail.com)
   */
 class MockStreamTest extends StreamTest {
-  override val streamingTimeout = 60.seconds
+  override val streamingTimeout = 6000.seconds
 
   def withTempDirs(f: (File, File) => Unit): Unit = {
     withTempDir { file1 =>
@@ -72,18 +72,22 @@ class MockStreamTest extends StreamTest {
         val df = DataSetHelper.create(spark, logicalPlan)
         testStream(df, OutputMode.Append())(
           StartStream(Trigger.ProcessingTime("5 seconds"), new StreamManualClock),
-          TriggerData(source, () => {}),
           AdvanceManualClock(5 * 1000),
           CheckAnswerRowsByFunc(rows => {
             assert(rows.size < 4)
           }, true),
-          TriggerData(source, () => {}),
           AdvanceManualClock(5 * 1000),
           CheckAnswerRowsByFunc(rows => {
             assert(rows.size < 4)
           }, true),
-          TriggerData(source, () => {}),
-          AdvanceManualClock(5 * 1000)
+          AdvanceManualClock(5 * 1000),
+          CheckAnswerRowsByFunc(rows => {
+            assert(rows.size < 4)
+          }, true),
+          AdvanceManualClock(5 * 1000),
+          CheckAnswerRowsByFunc(rows => {
+            assert(rows.size < 4)
+          }, true)
 
         )
 
