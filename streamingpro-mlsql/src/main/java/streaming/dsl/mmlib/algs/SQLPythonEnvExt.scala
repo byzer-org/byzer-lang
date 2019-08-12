@@ -26,11 +26,11 @@ import org.apache.spark.scheduler.cluster.PSDriverEndpoint
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.mlsql.session.MLSQLException
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import streaming.common.HDFSOperator
 import streaming.core.strategy.platform.{PlatformManager, SparkRuntime}
 import streaming.dsl.mmlib._
 import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
-import streaming.dsl.mmlib.algs.python.BasicCondaEnvManager
+import tech.mlsql.common.utils.env.python.BasicCondaEnvManager
+import tech.mlsql.common.utils.hdfs.HDFSOperator
 
 /**
   * 2019-01-16 WilliamZhu(allwefantasy@gmail.com)

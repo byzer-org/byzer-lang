@@ -35,10 +35,11 @@ import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession, functions => F}
 import org.apache.spark.util.{ObjPickle, WowXORShiftRandom}
 import org.apache.spark.{MLSQLConf, Partitioner, SparkConf}
-import streaming.common.{HDFSOperator, PathFun}
 import streaming.core.message.MLSQLMessage
 import streaming.core.strategy.platform.{PlatformManager, SparkRuntime}
-import streaming.log.{Logging, WowLog}
+import streaming.log.WowLog
+import tech.mlsql.common.utils.hdfs.HDFSOperator
+import tech.mlsql.common.utils.log.Logging
 
 import scala.collection.mutable.ArrayBuffer
 

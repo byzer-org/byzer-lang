@@ -19,18 +19,18 @@
 package streaming.dsl.mmlib.algs.python
 
 import org.apache.spark.sql.SparkSession
-import streaming.common.PathFun
 import streaming.dsl.mmlib.algs.MetaConst
 import streaming.dsl.mmlib.algs.SQLPythonFunc._
-import streaming.log.{Logging, WowLog}
+import streaming.log.WowLog
+import tech.mlsql.common.utils.log.Logging
+import tech.mlsql.common.utils.path.PathFun
 
 class ModelMetaManager(sparkSession: SparkSession, _path: String, params: Map[String, String]) extends Logging with WowLog {
 
   val wowMetas = sparkSession.read.parquet(metaPath + "/1").collect()
-  
+
   val _trainParams = trainParams
   val isAutoGenerate = _trainParams.contains("entryPoint") && _trainParams.contains("scripts")
-
 
 
   def loadMetaAndModel(localPathConfig: LocalPathConfig, modelHDFSToLocalPath: Map[String, String]) = {

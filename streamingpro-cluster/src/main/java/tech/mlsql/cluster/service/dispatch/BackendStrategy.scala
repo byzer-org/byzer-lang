@@ -18,9 +18,9 @@
 
 package tech.mlsql.cluster.service.dispatch
 
-import streaming.log.Logging
 import tech.mlsql.cluster.service.BackendService.mapSResponseToObject
 import tech.mlsql.cluster.service.{BackendCache, BackendService}
+import tech.mlsql.common.utils.log.Logging
 
 /**
   * 2018-12-04 WilliamZhu(allwefantasy@gmail.com)

@@ -3,10 +3,10 @@ package tech.mlsql.dsl.adaptor
 import java.util.concurrent.atomic.AtomicInteger
 
 import org.apache.spark.sql.mlsql.session.MLSQLException
-import streaming.common.JSONTool
 import streaming.dsl.parser.DSLSQLParser
 import streaming.dsl.parser.DSLSQLParser._
 import streaming.dsl.template.TemplateMerge
+import tech.mlsql.common.utils.serder.json.JSONTool
 import tech.mlsql.dsl.processor.PreProcessListener
 
 import scala.collection.mutable.ArrayBuffer

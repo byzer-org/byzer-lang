@@ -18,13 +18,12 @@
 
 package streaming.udf
 
-import java.util.UUID
-
 import org.apache.spark.sql.catalyst.ScalaReflection
 import org.apache.spark.sql.types.DataType
-import streaming.common.{Md5, SourceCodeCompiler}
 import streaming.dsl.mmlib.algs.ScriptUDFCacheKey
-import streaming.log.Logging
+import tech.mlsql.common.utils.Md5
+import tech.mlsql.common.utils.lang.sc.SourceCodeCompiler
+import tech.mlsql.common.utils.log.Logging
 
 import scala.reflect.runtime.universe._
 import scala.tools.reflect.ToolBox

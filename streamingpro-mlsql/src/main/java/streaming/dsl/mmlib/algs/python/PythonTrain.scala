@@ -29,11 +29,13 @@ import org.apache.spark.sql.mlsql.session.MLSQLException
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Row, SaveMode}
 import org.apache.spark.util._
-import streaming.common.ScalaMethodMacros._
-import streaming.common.{HDFSOperator, NetUtils}
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib.algs.SQLPythonFunc._
 import streaming.dsl.mmlib.algs.{Functions, SQLPythonAlg, SQLPythonFunc}
+import tech.mlsql.common.utils.env.python.BasicCondaEnvManager
+import tech.mlsql.common.utils.hdfs.HDFSOperator
+import tech.mlsql.common.utils.network.NetUtils
+import tech.mlsql.common.utils.lang.sc.ScalaMethodMacros._
 
 import scala.collection.JavaConverters._
 

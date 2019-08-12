@@ -57,8 +57,8 @@
         </dependency>
         <dependency>
             <groupId>tech.mlsql</groupId>
-            <artifactId>streamingpro-jython</artifactId>
-            <version>${project.parent.version}</version>
+            <artifactId>common-utils_${scala.binary.version}</artifactId>
+            <version>0.1.4</version>
         </dependency>
         <dependency>
             <groupId>com.101tec</groupId>

@@ -5,9 +5,11 @@ import java.net.{URL, URLClassLoader}
 import java.nio.file.Files
 
 import org.apache.http.client.fluent.{Form, Request}
-import streaming.common.{JSONTool, PathFun}
 import streaming.dsl.ScriptSQLExec
-import streaming.log.{Logging, WowLog}
+import streaming.log.WowLog
+import tech.mlsql.common.utils.log.Logging
+import tech.mlsql.common.utils.path.PathFun
+import tech.mlsql.common.utils.serder.json.JSONTool
 
 /**
   * 2019-01-14 WilliamZhu(allwefantasy@gmail.com)

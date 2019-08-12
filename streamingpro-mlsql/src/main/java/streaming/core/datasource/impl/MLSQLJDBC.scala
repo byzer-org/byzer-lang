@@ -20,16 +20,16 @@ package streaming.core.datasource.impl
 
 import java.util.Properties
 
-import _root_.streaming.common.HDFSOperator
-import _root_.streaming.common.hdfs.lock.DistrLocker
 import _root_.streaming.core.datasource.{SourceTypeRegistry, _}
 import _root_.streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
 import _root_.streaming.dsl.{ConnectMeta, DBMappingKey, ScriptSQLExec}
-import _root_.streaming.log.{Logging, WowLog}
+import _root_.streaming.log.WowLog
 import org.apache.spark.ml.param.{BooleanParam, LongParam, Param}
 import org.apache.spark.sql._
 import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
 import tech.mlsql.common.ScalaReflect
+import tech.mlsql.common.utils.hdfs.{DistrLocker, HDFSOperator}
+import tech.mlsql.common.utils.log.Logging
 
 class MLSQLJDBC(override val uid: String) extends MLSQLSource with MLSQLSink with MLSQLSourceInfo with MLSQLRegistry with WowParams with Logging with WowLog {
   def this() = this(BaseParams.randomUID())

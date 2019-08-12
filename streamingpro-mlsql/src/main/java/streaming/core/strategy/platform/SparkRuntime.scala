@@ -22,11 +22,9 @@ import java.lang.reflect.Modifier
 import java.util.concurrent.atomic.AtomicReference
 import java.util.{Map => JMap}
 
-import _root_.streaming.common.{NetUtils, ScalaObjectReflect}
 import _root_.streaming.core.message.MLSQLMessage
 import _root_.streaming.core.stream.MLSQLStreamManager
 import _root_.streaming.dsl.mmlib.algs.bigdl.WowLoggerFilter
-import _root_.streaming.log.Logging
 import net.csdn.common.reflect.ReflectHelper
 import org.apache.spark._
 import org.apache.spark.ps.cluster.PSDriverBackend
@@ -34,7 +32,10 @@ import org.apache.spark.ps.local.LocalPSSchedulerBackend
 import org.apache.spark.sql.jdbc.{JdbcDialect, JdbcDialects}
 import org.apache.spark.sql.mlsql.session.{SessionIdentifier, SessionManager}
 import org.apache.spark.sql.{MLSQLUtils, SQLContext, SparkSession}
+import tech.mlsql.common.utils.log.Logging
+import tech.mlsql.common.utils.network.NetUtils
 import tech.mlsql.job.JobManager
+import tech.mlsql.tool.ScalaObjectReflect
 
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._

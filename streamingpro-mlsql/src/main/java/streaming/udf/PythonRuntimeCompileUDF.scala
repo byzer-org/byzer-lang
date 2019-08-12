@@ -20,11 +20,11 @@ package streaming.udf
 
 import org.apache.spark.sql.types.DataType
 import org.python.core.{PyFunction, PyMethod, PyObject, PyTableCode}
-import streaming.common.Md5
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib.algs.ScriptUDFCacheKey
-import streaming.jython.{JythonUtils, PythonInterp}
-import streaming.log.Logging
+import tech.mlsql.common.utils.Md5
+import tech.mlsql.common.utils.lang.py.{JythonUtils, PythonInterp}
+import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.schema.parser.SparkSimpleSchemaParser
 
 /**

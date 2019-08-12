@@ -26,7 +26,8 @@ import org.apache.spark.sql.{DataFrame, SparkExposure, SparkSession}
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib._
 import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
-import streaming.log.{Logging, WowLog}
+import streaming.log.WowLog
+import tech.mlsql.common.utils.log.Logging
 
 import scala.collection.mutable.ArrayBuffer
 

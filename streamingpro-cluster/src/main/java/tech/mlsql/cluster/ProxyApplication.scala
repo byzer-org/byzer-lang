@@ -20,9 +20,9 @@ package tech.mlsql.cluster
 
 import net.csdn.ServiceFramwork
 import net.csdn.bootstrap.Application
-import streaming.common.ParamsUtil
 import tech.mlsql.cluster.commands.Command
 import tech.mlsql.cluster.service.elastic_resource.AllocateService
+import tech.mlsql.common.utils.shell.command.ParamsUtil
 
 
 /**

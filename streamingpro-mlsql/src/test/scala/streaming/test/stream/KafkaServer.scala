@@ -18,8 +18,8 @@
 
 package streaming.test.stream
 
-import streaming.common.shell.ShellCommand
-import streaming.log.Logging
+import tech.mlsql.common.utils.log.Logging
+import tech.mlsql.common.utils.shell.ShellCommand
 
 /**
   * 2018-12-11 WilliamZhu(allwefantasy@gmail.com)

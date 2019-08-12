@@ -21,9 +21,7 @@ package streaming.test.mmlib
 import java.io.File
 
 import org.apache.spark.SparkCoreVersion
-import org.apache.spark.sql.types.IntegerType
 import org.apache.spark.streaming.BasicSparkOperation
-import streaming.common.ShellCommand
 import streaming.core.pojo.Rating
 import streaming.core.strategy.platform.SparkRuntime
 import streaming.core.{BasicMLSQLConfig, SpecFunctions}
@@ -220,6 +218,6 @@ class MLLibSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLCo
       df.selectExpr("jack(features) as predict").show()
     }
   }
-  
+
 
 }

@@ -18,7 +18,6 @@
 
 package streaming.rest
 
-import _root_.streaming.common.JSONTool
 import _root_.streaming.core._
 import _root_.streaming.core.strategy.platform.{PlatformManager, SparkRuntime}
 import _root_.streaming.dsl.mmlib.algs.tf.cluster.{ClusterSpec, ClusterStatus, ExecutorInfo}
@@ -38,6 +37,7 @@ import org.apache.spark.sql.execution.datasources.json.WowJsonInferSchema
 import org.apache.spark.sql.mlsql.session.{MLSQLSparkSession, SparkSessionCacheManager}
 import org.apache.spark.{MLSQLConf, SparkInstanceService}
 import tech.mlsql.MLSQLEnvKey
+import tech.mlsql.common.utils.serder.json.JSONTool
 import tech.mlsql.job.{JobManager, MLSQLJobType}
 
 import scala.collection.JavaConversions._

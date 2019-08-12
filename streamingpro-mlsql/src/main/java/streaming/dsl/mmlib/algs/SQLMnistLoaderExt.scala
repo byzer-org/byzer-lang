@@ -30,9 +30,9 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.mlsql.session.MLSQLException
-import streaming.common.HDFSOperator
 import streaming.dsl.mmlib.{AlgType, ModelType, ProcessType, SQLAlg}
 import streaming.dsl.mmlib.algs.param.BaseParams
+import tech.mlsql.common.utils.hdfs.HDFSOperator
 
 class SQLMnistLoaderExt(override val uid: String) extends SQLAlg with BaseParams {
 

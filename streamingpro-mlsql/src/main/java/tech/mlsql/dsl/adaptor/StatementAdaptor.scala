@@ -1,9 +1,8 @@
 package tech.mlsql.dsl.adaptor
 
-import streaming.common.JSONTool
-import streaming.dsl._
 import streaming.dsl.parser.DSLSQLParser
 import tech.mlsql.Stage
+import tech.mlsql.common.utils.serder.json.JSONTool
 import tech.mlsql.dsl.processor.PreProcessListener
 
 /**

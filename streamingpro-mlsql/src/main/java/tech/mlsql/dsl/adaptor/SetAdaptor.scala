@@ -19,10 +19,10 @@
 package tech.mlsql.dsl.adaptor
 
 import _root_.streaming.dsl.parser.DSLSQLParser._
-import streaming.common.ShellCommand
 import streaming.dsl.ScriptSQLExecListener
 import streaming.dsl.template.TemplateMerge
 import tech.mlsql.Stage
+import tech.mlsql.common.utils.shell.ShellCommand
 
 /**
   * Created by allwefantasy on 27/8/2017.
@@ -100,7 +100,7 @@ class SetAdaptor(scriptSQLExecListener: ScriptSQLExecListener, stage: Stage.stag
         }
 
       case Some("shell") =>
-        value = ShellCommand.execSimpleCommand(evaluate(command)).trim
+        value = ShellCommand.execCmd(evaluate(command)).trim
       case Some("conf") =>
         key match {
           case "spark.scheduler.pool" =>

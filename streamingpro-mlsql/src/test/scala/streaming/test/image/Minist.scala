@@ -21,12 +21,13 @@ package streaming.test.image
 import java.io.File
 
 import org.apache.commons.io.FileUtils
-import streaming.common.shell.ShellCommand
-import streaming.log.Logging
+import tech.mlsql.common.utils.log.Logging
+import tech.mlsql.common.utils.shell.ShellCommand
 
 /**
   * 2018-11-29 WilliamZhu(allwefantasy@gmail.com)
   */
+
 object Minist extends Logging {
   val trainImages = "train-images-idx3-ubyte.gz"
   val trainLabels = "train-labels-idx1-ubyte.gz"

@@ -24,9 +24,9 @@ import org.apache.hadoop.fs.FileSystem
 import org.apache.hadoop.security.UserGroupInformation
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import org.apache.spark.{MLSQLSparkConst, SparkConf}
+import tech.mlsql.common.utils.log.Logging
 
 import scala.collection.mutable.{HashSet => MHSet}
-import streaming.log.Logging
 
 
 /**

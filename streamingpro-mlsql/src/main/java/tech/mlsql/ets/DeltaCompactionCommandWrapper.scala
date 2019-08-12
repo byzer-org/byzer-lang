@@ -6,10 +6,11 @@ import org.apache.spark.sql.delta.actions.CommitInfo
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.mlsql.session.MLSQLException
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import streaming.common.{JSONTool, PathFun}
 import streaming.dsl.mmlib.algs.Functions
 import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
 import streaming.dsl.mmlib.{Core_2_3_x, SQLAlg}
+import tech.mlsql.common.utils.path.PathFun
+import tech.mlsql.common.utils.serder.json.JSONTool
 
 /**
   * 2019-06-06 WilliamZhu(allwefantasy@gmail.com)

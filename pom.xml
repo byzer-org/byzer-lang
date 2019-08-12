@@ -46,11 +46,8 @@
     <modules>
         <module>streamingpro-commons</module>
         <module>streamingpro-spark-common</module>
-        <module>streamingpro-jython</module>
         <module>streamingpro-api</module>
         <module>streamingpro-cluster</module>
-        <!--<module>contri/streamingpro-dl4j</module>-->
-        <!--<module>contri/streamingpro-opencv</module>-->
     </modules>
 
     <properties>

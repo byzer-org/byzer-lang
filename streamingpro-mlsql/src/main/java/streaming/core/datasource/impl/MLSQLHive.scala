@@ -3,7 +3,8 @@ package streaming.core.datasource.impl
 import org.apache.spark.sql.{DataFrame, DataFrameReader, DataFrameWriter, Row}
 import streaming.core.datasource._
 import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
-import streaming.log.{Logging, WowLog}
+import streaming.log.WowLog
+import tech.mlsql.common.utils.log.Logging
 
 /**
   * 2019-03-20 WilliamZhu(allwefantasy@gmail.com)

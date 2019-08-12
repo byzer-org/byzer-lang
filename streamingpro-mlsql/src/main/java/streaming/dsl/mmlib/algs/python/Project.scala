@@ -24,8 +24,10 @@ import java.util.UUID
 import net.csdn.common.settings.{ImmutableSettings, Settings}
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.mlsql.session.MLSQLException
-import streaming.common.HDFSOperator
-import streaming.log.{Logging, WowLog}
+import streaming.log.WowLog
+import tech.mlsql.common.utils.env.python.BasicCondaEnvManager
+import tech.mlsql.common.utils.hdfs.HDFSOperator
+import tech.mlsql.common.utils.log.Logging
 
 object PythonAlgProject extends Logging with WowLog {
 

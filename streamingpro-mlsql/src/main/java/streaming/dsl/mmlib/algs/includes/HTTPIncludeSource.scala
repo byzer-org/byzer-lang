@@ -22,7 +22,7 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.mlsql.session.MLSQLException
 import streaming.crawler.HttpClientCrawler
 import streaming.dsl.{IncludeSource, ScriptSQLExec}
-import streaming.log.Logging
+import tech.mlsql.common.utils.log.Logging
 
 /**
   * Created by allwefantasy on 30/8/2018.

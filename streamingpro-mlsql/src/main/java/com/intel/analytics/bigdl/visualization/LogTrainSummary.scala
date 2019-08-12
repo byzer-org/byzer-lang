@@ -18,7 +18,9 @@
 
 package com.intel.analytics.bigdl.visualization
 
-import streaming.log.{Logging, WowLog}
+import streaming.log.WowLog
+import tech.mlsql.common.utils.log.Logging
+
 
 class LogTrainSummary(logDir: String,
                       appName: String) extends TrainSummary(logDir, appName) with Logging with WowLog {

@@ -23,9 +23,9 @@ import net.csdn.modules.http.ApplicationController
 import net.csdn.modules.http.RestRequest.Method.{GET, POST}
 import net.liftweb.json.NoTypeHints
 import net.liftweb.{json => SJSon}
-import streaming.common.JSONTool
 import tech.mlsql.cluster.model.Backend
 import tech.mlsql.cluster.service.BackendService
+import tech.mlsql.common.utils.serder.json.JSONTool
 
 import scala.collection.JavaConverters._
 
