@@ -27,7 +27,7 @@ import _root_.streaming.log.WowLog
 import org.apache.spark.ml.param.{BooleanParam, LongParam, Param}
 import org.apache.spark.sql._
 import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
-import tech.mlsql.common.ScalaReflect
+import tech.mlsql.common.utils.lang.sc.ScalaReflect
 import tech.mlsql.common.utils.hdfs.{DistrLocker, HDFSOperator}
 import tech.mlsql.common.utils.log.Logging
 
