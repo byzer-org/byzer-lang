@@ -4,10 +4,10 @@ import java.util.concurrent.Executors
 
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.streaming.StreamingQueryListener
-import streaming.crawler.HttpClientCrawler
 import streaming.dsl.ScriptSQLExec
 import streaming.log.WowLog
 import tech.mlsql.common.utils.log.Logging
+import tech.mlsql.crawler.HttpClientCrawler
 import tech.mlsql.job.{JobManager, MLSQLJobInfo, MLSQLJobType}
 
 import scala.collection.JavaConverters._

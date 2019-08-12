@@ -32,7 +32,6 @@ trait BasicMLSQLConfig {
     "-streaming.enableHiveSupport", "true",
     "-streaming.hive.javax.jdo.option.ConnectionURL", s"jdbc:derby:;databaseName=metastore_db/${UUID.randomUUID().toString};create=true",
     "-streaming.spark.service", "false",
-    "-streaming.udf.clzznames", "streaming.crawler.udf.Functions",
     "-streaming.unittest", "true"
   )
 

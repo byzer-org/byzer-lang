@@ -20,9 +20,9 @@ package streaming.dsl.mmlib.algs.includes.analyst
 
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.mlsql.session.MLSQLException
-import streaming.crawler.HttpClientCrawler
 import streaming.dsl.{IncludeSource, ScriptSQLExec}
 import tech.mlsql.common.utils.log.Logging
+import tech.mlsql.crawler.HttpClientCrawler
 
 /**
   * Created by allwefantasy on 4/9/2018.

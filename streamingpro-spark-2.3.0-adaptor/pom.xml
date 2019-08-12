@@ -13,13 +13,13 @@
     <dependencies>
         <dependency>
             <groupId>tech.mlsql</groupId>
-            <artifactId>streamingpro-spark-common</artifactId>
+            <artifactId>streamingpro-spark-common-2.3_${scala.binary.version}</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
 
         <dependency>
             <groupId>tech.mlsql</groupId>
-            <artifactId>streamingpro-common</artifactId>
+            <artifactId>streamingpro-common-2.3_${scala.binary.version}</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
 
