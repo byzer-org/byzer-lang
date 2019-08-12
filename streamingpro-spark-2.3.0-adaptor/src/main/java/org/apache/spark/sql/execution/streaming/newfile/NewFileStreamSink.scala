@@ -24,7 +24,6 @@ import org.apache.spark.internal.io.FileCommitProtocol
 import org.apache.spark.sql.execution.datasources.{BasicWriteJobStatsTracker, FileFormat, FileFormatWriter, WriteJobStatsTracker}
 import org.apache.spark.sql.execution.streaming.{FileStreamSink, FileStreamSinkLog, ManifestFileCommitProtocol, Sink}
 import org.apache.spark.sql.{SparkSession, _}
-import _root_.streaming.common.RenderEngine
 import org.apache.hadoop.conf.Configuration
 import org.apache.spark.sql.catalyst.catalog.BucketSpec
 import org.apache.spark.sql.catalyst.expressions.Attribute
@@ -32,6 +31,7 @@ import org.apache.spark.sql.execution.SparkPlan
 import org.apache.spark.sql.execution.datasources.FileFormatWriter.OutputSpec
 import org.apache.spark.util.SerializableConfiguration
 import org.joda.time.DateTime
+import tech.mlsql.common.utils.evaluate.RenderEngine
 
 class NewFileStreamSink(
                          sparkSession: SparkSession,

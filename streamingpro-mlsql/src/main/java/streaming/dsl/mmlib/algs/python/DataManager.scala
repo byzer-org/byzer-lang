@@ -21,7 +21,8 @@ package streaming.dsl.mmlib.algs.python
 import org.apache.spark.sql.{DataFrame, SaveMode}
 import org.apache.spark.util.ObjPickle
 import streaming.dsl.mmlib.algs.SQLPythonFunc
-import streaming.log.{Logging, WowLog}
+import streaming.log.WowLog
+import tech.mlsql.common.utils.log.Logging
 
 class DataManager(df: DataFrame, path: String, params: Map[String, String]) extends Logging with WowLog {
 

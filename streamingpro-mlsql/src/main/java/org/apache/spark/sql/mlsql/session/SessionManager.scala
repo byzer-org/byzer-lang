@@ -21,7 +21,7 @@ package org.apache.spark.sql.mlsql.session
 import java.util.concurrent.ConcurrentHashMap
 
 import org.apache.spark.sql.SparkSession
-import streaming.log.Logging
+import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.job.JobManager
 
 /**

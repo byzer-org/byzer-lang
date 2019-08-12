@@ -20,13 +20,14 @@ package streaming.dsl.mmlib.algs.feature
 
 import _root_.streaming.dsl.mmlib.algs.MetaConst._
 import _root_.streaming.dsl.mmlib.algs._
-import _root_.streaming.log.{Logging, WowLog}
+import _root_.streaming.log.WowLog
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.ml.feature.NGram
 import org.apache.spark.ml.help.HSQLStringIndex
 import org.apache.spark.ml.linalg.{Vector, Vectors}
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{Row, functions => F, _}
+import tech.mlsql.common.utils.log.Logging
 
 import scala.collection.mutable.ArrayBuffer
 import scala.util.control.Breaks.{break, breakable}

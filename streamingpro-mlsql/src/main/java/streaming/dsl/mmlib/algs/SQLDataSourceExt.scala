@@ -7,7 +7,8 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 import streaming.core.datasource.DataSourceRepository
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
-import streaming.log.{Logging, WowLog}
+import streaming.log.WowLog
+import tech.mlsql.common.utils.log.Logging
 
 /**
   * 2019-01-14 WilliamZhu(allwefantasy@gmail.com)

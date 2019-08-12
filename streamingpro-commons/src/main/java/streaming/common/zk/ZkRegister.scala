@@ -24,11 +24,11 @@ import net.csdn.common.network.NetworkUtils.StackType
 import net.csdn.common.settings.ImmutableSettings
 import net.csdn.common.settings.ImmutableSettings._
 import org.I0Itec.zkclient.IZkDataListener
-import streaming.common.ParamsUtil
+import tech.mlsql.common.utils.shell.command.ParamsUtil
 
 /**
- * 8/3/16 WilliamZhu(allwefantasy@gmail.com)
- */
+  * 8/3/16 WilliamZhu(allwefantasy@gmail.com)
+  */
 object ZkRegister {
   val logger = Loggers.getLogger(classOf[ZkRegister])
 

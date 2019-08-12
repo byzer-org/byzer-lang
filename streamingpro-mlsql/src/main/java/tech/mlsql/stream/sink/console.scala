@@ -21,7 +21,7 @@ package tech.mlsql.stream.sink
   */
 
 import streaming.dsl.ScriptSQLExec
-import streaming.log.{Logging, WowLog}
+import streaming.log.WowLog
 import org.apache.spark.sql._
 import org.apache.spark.sql.execution.streaming.sources.MLSQLConsoleWriter
 import org.apache.spark.sql.sources.v2.writer.streaming.StreamWriter
@@ -29,6 +29,7 @@ import org.apache.spark.sql.sources.v2.{DataSourceOptions, DataSourceV2, StreamW
 import org.apache.spark.sql.sources.{BaseRelation, CreatableRelationProvider, DataSourceRegister}
 import org.apache.spark.sql.streaming.OutputMode
 import org.apache.spark.sql.types.StructType
+import tech.mlsql.common.utils.log.Logging
 
 import scala.collection.JavaConversions._
 

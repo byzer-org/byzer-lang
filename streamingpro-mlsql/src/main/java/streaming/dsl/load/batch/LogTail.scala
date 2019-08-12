@@ -3,8 +3,8 @@ package streaming.dsl.load.batch
 import java.util
 import java.util.regex.Pattern
 
-import streaming.common.shell.ShellCommand
 import tech.mlsql.MLSQLEnvKey
+import tech.mlsql.common.utils.shell.ShellCommand
 
 import scala.collection.JavaConverters._
 

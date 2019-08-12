@@ -70,10 +70,10 @@ else
 fi
 #---------------------
 
-BASE_PROFILES="-Pscala-${SCALA_VERSION} -Ponline -Phive-thrift-server -Pcrawler"
+BASE_PROFILES="-Pscala-${SCALA_VERSION} -Ponline -Phive-thrift-server "
 
 if [[ "$MLSQL_SPARK_VERSION" > "2.2" ]]; then
-  BASE_PROFILES="$BASE_PROFILES  -Pxgboost"
+  BASE_PROFILES="$BASE_PROFILES"
 else
   BASE_PROFILES="$BASE_PROFILES"
 fi

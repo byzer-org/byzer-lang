@@ -21,9 +21,9 @@ package tech.mlsql.cluster.service.elastic_resource
 import java.util.concurrent.{Executors, TimeUnit}
 import java.util.logging.Logger
 
-import streaming.log.Logging
 import tech.mlsql.cluster.ProxyApplication
 import tech.mlsql.cluster.model.ElasticMonitor
+import tech.mlsql.common.utils.log.Logging
 
 import scala.collection.JavaConverters._
 

@@ -20,10 +20,11 @@ package streaming.dsl.auth.meta.client
 
 import java.util.concurrent.atomic.AtomicReference
 
-import streaming.common.JSONTool
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.auth.{MLSQLTable, TableAuth, TableAuthResult}
-import streaming.log.{Logging, WowLog}
+import streaming.log.WowLog
+import tech.mlsql.common.utils.log.Logging
+import tech.mlsql.common.utils.serder.json.JSONTool
 
 /**
   * Created by allwefantasy on 11/9/2018.

@@ -22,11 +22,11 @@ import java.io.File
 
 import org.apache.spark.sql.catalyst.parser.ParseException
 import org.apache.spark.streaming.BasicSparkOperation
-import streaming.common.PathFun
-import streaming.common.shell.ShellCommand
 import streaming.core.strategy.platform.SparkRuntime
 import streaming.core.{BasicMLSQLConfig, NotToRunTag, SpecFunctions}
 import streaming.dsl.{ScriptSQLExec, ScriptSQLExecListener}
+import tech.mlsql.common.utils.path.PathFun
+import tech.mlsql.common.utils.shell.ShellCommand
 import tech.mlsql.dsl.processor.GrammarProcessListener
 
 /**

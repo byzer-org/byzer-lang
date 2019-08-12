@@ -22,8 +22,9 @@ import org.apache.spark.sql.mlsql.session.MLSQLException
 import org.apache.spark.sql.types.{MapType, StringType, StructField, StructType}
 import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession, functions => F}
 import org.joda.time.DateTime
-import streaming.common.PathFun
-import streaming.log.{Logging, WowLog}
+import streaming.log.WowLog
+import tech.mlsql.common.utils.log.Logging
+import tech.mlsql.common.utils.path.PathFun
 import tech.mlsql.ets.alg.BaseAlg
 
 /**

@@ -27,9 +27,9 @@ import org.apache.commons.io.FileUtils
 import org.apache.spark.sql.{DataFrame, Row}
 import org.scalatest.{FlatSpec, Matchers}
 import serviceframework.dispatcher.{Compositor, StrategyDispatcher}
-import streaming.common.ParamsUtil
 import streaming.core.strategy.platform.{PlatformManager, SparkRuntime}
 import streaming.dsl.{MLSQLExecuteContext, ScriptSQLExec, ScriptSQLExecListener}
+import tech.mlsql.common.utils.shell.command.ParamsUtil
 import tech.mlsql.ets.ScriptRunner
 import tech.mlsql.job.{JobManager, MLSQLJobInfo, MLSQLJobProgress, MLSQLJobType}
 

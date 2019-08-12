@@ -9,7 +9,7 @@ import org.apache.spark.sql.sources.v2.writer.streaming.StreamWriter
 import org.apache.spark.sql.sources.v2.writer.{DataWriterFactory, WriterCommitMessage}
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.{DFVisitor, Row, SparkSession}
-import streaming.log.Logging
+import tech.mlsql.common.utils.log.Logging
 
 import scala.collection.JavaConverters._
 

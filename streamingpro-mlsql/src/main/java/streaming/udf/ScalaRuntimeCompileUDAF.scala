@@ -22,9 +22,9 @@ import org.apache.spark.sql.Row
 import org.apache.spark.sql.expressions.{MutableAggregationBuffer, UserDefinedAggregateFunction}
 import org.apache.spark.sql.types.{DataType, StructType}
 import org.python.antlr.ast.ClassDef
-import streaming.common.SourceCodeCompiler
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib.algs.ScriptUDFCacheKey
+import tech.mlsql.common.utils.lang.sc.SourceCodeCompiler
 
 import scala.reflect.ClassTag
 
@@ -44,7 +44,7 @@ object ScalaRuntimeCompileUDAF extends RuntimeCompileUDAF with ScalaCompileUtils
     }
     checkResult
   }
-  
+
 
   /**
     * compile the source code.

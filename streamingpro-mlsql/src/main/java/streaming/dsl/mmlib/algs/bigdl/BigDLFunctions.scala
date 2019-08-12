@@ -21,10 +21,11 @@ package streaming.dsl.mmlib.algs.bigdl
 import com.intel.analytics.bigdl.dlframes.{DLClassifier, DLModel}
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Row, SaveMode}
-import streaming.common.HDFSOperator
-import streaming.common.ScalaMethodMacros._
+import tech.mlsql.common.utils.lang.sc.ScalaMethodMacros._
 import streaming.dsl.mmlib.algs._
-import streaming.log.{Logging, WowLog}
+import streaming.log.WowLog
+import tech.mlsql.common.utils.hdfs.HDFSOperator
+import tech.mlsql.common.utils.log.Logging
 
 
 trait BigDLFunctions extends Functions with Logging with WowLog with Serializable {

@@ -37,7 +37,9 @@ import org.apache.spark.util.{PredictTaskContext, PythonProjectExecuteRunner, Ve
 import org.apache.spark.{APIDeployPythonRunnerEnv, SparkCoreVersion}
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib.algs.{Functions, SQLPythonAlg}
-import streaming.log.{Logging, WowLog}
+import streaming.log.WowLog
+import tech.mlsql.common.utils.env.python.BasicCondaEnvManager
+import tech.mlsql.common.utils.log.Logging
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable.ArrayBuffer

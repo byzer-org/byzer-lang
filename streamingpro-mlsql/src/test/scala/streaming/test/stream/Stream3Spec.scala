@@ -20,11 +20,11 @@ package streaming.test.stream
 
 import org.apache.spark.streaming.BasicSparkOperation
 import org.scalatest.BeforeAndAfterAll
-import streaming.common.shell.ShellCommand
 import streaming.core._
 import streaming.core.strategy.platform.SparkRuntime
 import streaming.dsl.ScriptSQLExec
-import streaming.log.Logging
+import tech.mlsql.common.utils.log.Logging
+import tech.mlsql.common.utils.shell.ShellCommand
 import tech.mlsql.job.{JobManager, MLSQLJobType}
 
 class Stream3Spec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConfig with BeforeAndAfterAll with Logging {

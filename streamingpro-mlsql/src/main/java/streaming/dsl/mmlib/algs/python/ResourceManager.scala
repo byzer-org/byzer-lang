@@ -19,9 +19,10 @@
 package streaming.dsl.mmlib.algs.python
 
 import org.apache.spark.sql.SparkSession
-import streaming.common.HDFSOperator
 import streaming.dsl.mmlib.algs.{Functions, SQLPythonAlg, SQLPythonFunc}
-import streaming.log.{Logging, WowLog}
+import streaming.log.WowLog
+import tech.mlsql.common.utils.hdfs.HDFSOperator
+import tech.mlsql.common.utils.log.Logging
 
 class ResourceManager(params: Map[String, String]) extends Logging with WowLog {
   def loadResourceInTrain = {

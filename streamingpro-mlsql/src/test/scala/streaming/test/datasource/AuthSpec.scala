@@ -7,8 +7,8 @@ import streaming.core.{BasicMLSQLConfig, SpecFunctions}
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.auth.meta.client.DefaultConsoleClient
 import streaming.dsl.auth.{OperateType, TableType}
-import streaming.log.Logging
 import streaming.test.datasource.help.MLSQLTableEnhancer._
+import tech.mlsql.common.utils.log.Logging
 
 /**
   * 2019-03-20 WilliamZhu(allwefantasy@gmail.com)

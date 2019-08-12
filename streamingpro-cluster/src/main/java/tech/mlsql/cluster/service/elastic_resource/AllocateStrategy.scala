@@ -18,10 +18,10 @@
 
 package tech.mlsql.cluster.service.elastic_resource
 
-import streaming.log.Logging
 import tech.mlsql.cluster.model.{Backend, EcsResourcePool, ElasticMonitor}
 import tech.mlsql.cluster.service.BackendService
 import tech.mlsql.cluster.service.elastic_resource.local.LocalDeployInstance
+import tech.mlsql.common.utils.log.Logging
 
 import scala.collection.JavaConverters._
 

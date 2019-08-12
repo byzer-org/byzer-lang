@@ -20,11 +20,11 @@ package streaming.test.mysql
 
 import org.apache.spark.streaming.BasicSparkOperation
 import org.scalatest.BeforeAndAfterAll
-import streaming.common.HDFSOperator
 import streaming.core.strategy.platform.SparkRuntime
 import streaming.core.{BasicMLSQLConfig, SpecFunctions}
 import streaming.dsl.ScriptSQLExec
-import streaming.log.Logging
+import tech.mlsql.common.utils.hdfs.HDFSOperator
+import tech.mlsql.common.utils.log.Logging
 
 /**
   * Created by allwefantasy on 12/9/2018.

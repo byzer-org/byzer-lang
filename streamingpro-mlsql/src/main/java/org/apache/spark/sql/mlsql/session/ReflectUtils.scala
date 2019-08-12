@@ -18,7 +18,8 @@
 
 package org.apache.spark.sql.mlsql.session
 
-import streaming.log.Logging
+import tech.mlsql.common.utils.log.Logging
+
 import scala.util.{Failure, Success, Try}
 /**
   * Created by allwefantasy on 3/6/2018.

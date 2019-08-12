@@ -20,8 +20,8 @@ package streaming.test.servers
 
 import java.util.UUID
 
-import streaming.common.shell.ShellCommand
-import streaming.log.Logging
+import tech.mlsql.common.utils.log.Logging
+import tech.mlsql.common.utils.shell.ShellCommand
 
 trait WowBaseTestServer extends Logging {
   val COMPOSE_FILE_DIR = "/tmp/__mlsql__/test/compose_file/"

@@ -24,7 +24,7 @@ import org.apache.spark.sql.types.{DataType, StructType}
 import org.python.core.{Py, PyObject}
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib.algs.ScriptUDFCacheKey
-import streaming.jython.{JythonUtils, PythonInterp}
+import tech.mlsql.common.utils.lang.py.{JythonUtils, PythonInterp}
 
 /**
   * Created by fchen on 2018/11/15.

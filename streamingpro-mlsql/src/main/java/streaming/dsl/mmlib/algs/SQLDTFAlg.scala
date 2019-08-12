@@ -40,13 +40,14 @@ import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession, functions =
 import org.apache.spark.util.ObjPickle._
 import org.apache.spark.util.VectorSerDer._
 import org.apache.spark.util.{ExternalCommandRunner, ObjPickle, TaskContextUtil, VectorSerDer}
-import streaming.common.{HDFSOperator, NetUtils}
 import streaming.core.strategy.platform.{PlatformManager, SparkRuntime}
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.SQLPythonFunc._
 import streaming.dsl.mmlib.algs.tf.cluster.{ClusterSpec, ClusterStatus}
-import scala.collection.mutable
+import tech.mlsql.common.utils.hdfs.HDFSOperator
+import tech.mlsql.common.utils.network.NetUtils
 
+import scala.collection.mutable
 import scala.collection.JavaConverters._
 
 /**

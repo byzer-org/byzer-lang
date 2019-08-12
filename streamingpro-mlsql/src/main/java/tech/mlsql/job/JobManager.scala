@@ -6,7 +6,8 @@ import java.util.concurrent.{ConcurrentHashMap, Executors, TimeUnit}
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.mlsql.session.{SessionIdentifier, SparkSessionCacheManager}
 import streaming.dsl.ScriptSQLExec
-import streaming.log.{Logging, WowLog}
+import streaming.log.WowLog
+import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.job.JobListener.{JobFinishedEvent, JobStartedEvent}
 import tech.mlsql.job.listeners.{CleanCacheListener, EngineMDCLogListener}
 

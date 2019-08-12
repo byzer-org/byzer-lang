@@ -19,13 +19,13 @@
 package streaming.test.carbondata
 
 import net.sf.json.JSONObject
-import org.apache.spark.{CarbonCoreVersion, SparkCoreVersion}
 import org.apache.spark.streaming.BasicSparkOperation
-import streaming.common.shell.ShellCommand
+import org.apache.spark.{CarbonCoreVersion, SparkCoreVersion}
 import streaming.core.strategy.platform.SparkRuntime
-import streaming.core.{BasicMLSQLConfig, NotToRunTag, SpecFunctions}
+import streaming.core.{BasicMLSQLConfig, SpecFunctions}
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.template.TemplateMerge
+import tech.mlsql.common.utils.shell.ShellCommand
 
 /**
   * Created by allwefantasy on 12/9/2018.

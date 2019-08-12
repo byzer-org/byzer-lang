@@ -3,10 +3,10 @@ package streaming.core.datasource.impl
 import org.apache.spark.ml.param.Param
 import org.apache.spark.sql.mlsql.session.MLSQLException
 import org.apache.spark.sql.{DataFrameWriter, Row, SaveMode}
-import streaming.common.HDFSOperator
 import streaming.core.datasource._
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
+import tech.mlsql.common.utils.hdfs.HDFSOperator
 
 /**
   * 2019-03-20 WilliamZhu(allwefantasy@gmail.com)
@@ -44,7 +44,6 @@ class MLSQLImage(override val uid: String) extends MLSQLBaseFileSource with WowP
     val _imageColumn = $(imageColumn)
 
     val saveImage = (fileName: String, buffer: Array[Byte]) => {
-      import streaming.common.HDFSOperator
       HDFSOperator.saveBytesFile(baseDir, fileName, buffer)
       baseDir + "/" + fileName
     }

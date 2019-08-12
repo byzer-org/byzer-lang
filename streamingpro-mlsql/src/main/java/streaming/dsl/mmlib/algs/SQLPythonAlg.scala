@@ -25,12 +25,13 @@ import org.apache.spark.ps.cluster.Message
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.mlsql.session.MLSQLException
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
-import streaming.common.HDFSOperator
 import streaming.core.strategy.platform.{PlatformManager, SparkRuntime}
 import streaming.dsl.mmlib._
 import streaming.dsl.mmlib.algs.param.{BaseParams, SQLPythonAlgParams}
 import streaming.dsl.mmlib.algs.python._
-import streaming.log.{Logging, WowLog}
+import streaming.log.WowLog
+import tech.mlsql.common.utils.hdfs.HDFSOperator
+import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.ets.alg.BaseAlg
 
 import scala.collection.JavaConverters._
