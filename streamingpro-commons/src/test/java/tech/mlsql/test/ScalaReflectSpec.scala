@@ -1,7 +1,7 @@
 package tech.mlsql.test
 
 import org.scalatest.{FlatSpec, Matchers}
-import tech.mlsql.common.ScalaReflect
+import tech.mlsql.common.utils.lang.sc.ScalaReflect
 
 trait A1 {
 

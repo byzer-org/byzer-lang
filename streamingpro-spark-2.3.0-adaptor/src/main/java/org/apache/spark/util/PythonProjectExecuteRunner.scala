@@ -21,15 +21,14 @@ package org.apache.spark.util
 import java.io._
 import java.util.concurrent.atomic.AtomicReference
 
+import org.apache.spark.SparkEnv
 import org.apache.spark.api.python.WowPythonRunner
-import org.apache.spark.{SparkEnv, TaskContext}
 import org.apache.spark.sql.types.DataType
 import org.apache.spark.util.ObjPickle.pickle
-import streaming.log.Logging
+import tech.mlsql.common.utils.log.Logging
 
-import scala.collection.mutable.ArrayBuffer
-import scala.io.Source
 import scala.collection.JavaConverters._
+import scala.io.Source
 
 class PythonProjectExecuteRunner(taskDirectory: String,
                                  keepLocalDirectory: Boolean,

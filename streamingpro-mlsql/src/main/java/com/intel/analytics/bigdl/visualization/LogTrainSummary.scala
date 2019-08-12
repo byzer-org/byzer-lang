@@ -18,8 +18,8 @@
 
 package com.intel.analytics.bigdl.visualization
 
+import org.apache.spark.internal.Logging
 import streaming.log.WowLog
-import tech.mlsql.common.utils.log.Logging
 
 
 class LogTrainSummary(logDir: String,
