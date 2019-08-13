@@ -10,7 +10,7 @@ import org.apache.spark.sql.streaming.util.StreamManualClock
 import org.apache.spark.sql.streaming.{OutputMode, StreamTest, Trigger}
 import org.apache.spark.sql.types.StructType
 import org.scalatest.time.SpanSugar._
-import tech.mlsql.common.ScalaReflect
+import tech.mlsql.common.utils.lang.sc.ScalaReflect
 
 /**
   * 2019-08-12 WilliamZhu(allwefantasy@gmail.com)
