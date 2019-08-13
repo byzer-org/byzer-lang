@@ -371,12 +371,19 @@ class AuthSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLCon
           |    namespace="test_ns"
           |and zk="127.0.0.1:2181" as hbase_instance;
           |
+          |connect hbase where
+          |and zk="127.0.0.1:2181" as hbase_instance2;
+          |
           |load hbase.`hbase_instance:test_tb` options
           |family="cf"
           |as test_table;
           |
           |load hbase.`test_ns_1:test_tb_1`
           |options zk="127.0.0.1:2181"
+          |and family="cf"
+          |as output1;
+          |
+          |load hbase.`hbase_instance2:test_ns_1:test_tb_2`
           |and family="cf"
           |as output1;
           |
@@ -391,7 +398,7 @@ class AuthSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLCon
       val loadMLSQLTable = tables.filter(f => (f.tableType == TableType.HBASE && f.operateType == OperateType.LOAD))
 
       var table = loadMLSQLTable.map(f => f.table.get).toSet
-      assume(table == Set("test_tb", "test_tb_1"))
+      assume(table == Set("test_tb", "test_tb_1", "test_tb_2"))
       var db = loadMLSQLTable.map(f => f.db.get).toSet
       assume(db == Set("test_ns", "test_ns_1"))
       var sourceType = loadMLSQLTable.map(f => f.sourceType.get).toSet
@@ -408,6 +415,7 @@ class AuthSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLCon
     }
 
   }
+  
   "auth-set-statement" should "work fine" in {
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { implicit runtime: SparkRuntime =>
       //执行sql
