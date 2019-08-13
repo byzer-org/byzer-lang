@@ -70,6 +70,8 @@
         <serviceframework.version>2.0.0</serviceframework.version>
         <scope>provided</scope>
         <hadoop-client-version>2.6.5</hadoop-client-version>
+
+        <common-utils-version>0.1.5</common-utils-version>
     </properties>
 
     <repositories>
