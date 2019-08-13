@@ -58,7 +58,7 @@
         <dependency>
             <groupId>tech.mlsql</groupId>
             <artifactId>common-utils_${scala.binary.version}</artifactId>
-            <version>0.1.4</version>
+            <version>${common-utils-version}</version>
         </dependency>
         <dependency>
             <groupId>com.101tec</groupId>
