@@ -17,20 +17,18 @@
   under the License.
 -->
 
-# Summary
+# MLSQL Stack 手册
 
-## TABLE OF CONTENTS
+## 目录
 
 * 概要
-    * [MSLQL简介](getting_started/READEME.md)
-        * [MLSQL-Engine](getting_started/mlsql-engine.md)
-        * [MLSQL-Cluster](getting_started/mlsql-cluster.md)
-        * [MLSQL-Console](getting_started/mlsql-console.md)
+    * [MSLQL简介](getting_started/READEME.md)        
 
 * 用户指南
     * [编译&运行&部署](installation/README.md)
-        * [自助编译](installation/compile.md)
-        * [一键体验MLSQL套件](installation/docker.md)   
+        * [使用Docker安装体验](installation/docker.md)
+        * [登录我们的体验站点](installation/trymlsql.md)
+        * [自助编译](installation/compile.md)           
         * [如何运行](installation/run.md)
         * [启动参数说明](installation/startup-configuration.md)
         * [使用docker快速体验MLSQL-Engine](installation/docker-fast.md)

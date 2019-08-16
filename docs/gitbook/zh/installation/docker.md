@@ -1,4 +1,4 @@
-## 命令
+## 使用Docker安装体验
 
 在终端执行如下指令：
 
@@ -6,7 +6,7 @@
 bash <(curl http://download.mlsql.tech/scripts/run-all.sh)
 ```
 
-或者
+如果上述运行方式有问题的话，您还可以尝试如下方式：
 
 ```
 wget http://download.mlsql.tech/scripts/run-all.sh
@@ -16,9 +16,9 @@ chmod u+x run-all.sh
 
 注意事项:
 
-0. 用户需要确保在操作系统为Linux（Mac 也是Ok的），有docker环境即可。
-1. 请确保执行的电脑 9002,9003,8080,3306四个端口没有占用
-2. 脚本执行，可以看到MySQL连接错误。这是脚本在检测MySQL启动后是否可用。不是错误，请放心。
+0. Linux/MacOS,需要有Docker环境
+1. 系统会检测 9002,9003,8080,3306四个端口是否被占用
+2. 如果看到MySQL连接错误。这是脚本在检测MySQL启动后何时可用。不是错误，请放心。
 
 
 如果docker镜像拉去缓慢，可以设置阿里云镜像。具体操作如下：
@@ -38,13 +38,15 @@ systemctl daemon-reload
 systemctl restart docker
 ```
 
-接着 docker ps:
+执行时间取决于你的下载速度。安装完毕后，你可以通过docker ps 常看运行的Docker容器。
 
 ![image.png](http://docs.mlsql.tech/upload_images/1063603-004da41021835b54.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
-可以看到相关容器都启动了。
 
 ## 快速配置向导
+
+在能够进入控制台使用前，你需要进行一些配置，请按照如下方式进行配置。
+
 
 访问 http://127.0.0.1:9002 进行注册。只支持Gmail邮箱。
 
@@ -96,7 +98,9 @@ password: 123456
 
 
 ## 结束语
-在docker里我们默认关闭了表权限校验，否则使用时，使用jdbc等各种数据的时候，都需要添加权限，比较繁琐。打开的方式是在mlsql-console 进行docker run的时候 加上-e ENABLE_AUTH_CENTER=true 即可。参看启动脚本 start.sh:
+在docker里我们默认关闭了表权限校验，否则使用时，使用jdbc等各种数据的时候，都需要添加权限，比较繁琐。
+用户也可以修改run-all.sh脚本。
+在启动MLSQL Console的时候，加上-e ENABLE_AUTH_CENTER=true 即可。
 
 ```shell
 #!/usr/bin/env bash
@@ -108,6 +112,7 @@ java -cp .:${MLSQL_CONSOLE_JAR} tech.mlsql.MLSQLConsole \
 -enable_auth_center ${ENABLE_AUTH_CENTER:-false} \
 -config ${MLSQL_CONSOLE_CONFIG_FILE}
 ```
+
 ## ChatRoom
 ![image](http://upload-images.jianshu.io/upload_images/1063603-f32dd474770fe70d.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/160) 
 ![image](http://upload-images.jianshu.io/upload_images/1063603-27e80786d337fc7d.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/160)
