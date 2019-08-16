@@ -87,10 +87,60 @@ class PythonCommand(override val uid: String) extends SQLAlg with Functions with
 
         ""
       }.collect()
+      try {
+        tempServer._server.close()
+      } catch {
+        case e: Exception => e.printStackTrace()
+      }
+
     }
 
     val envSession = new SetSession(spark, context.owner)
     val command = JSONTool.parseJson[List[String]](params("parameters")).toArray
+
+    def execute(code: String, table: Option[String]) = {
+      val connect = PythonServerHolder.fetch(context.owner).get
+      envSession.fetchPythonEnv match {
+        case None => throw new MLSQLException(
+          """
+            |Env schema and PYTHON_ENV should be set, e.g.
+            |
+            |1. schema=st(field(a,integer),field(b,integer));
+            |2. PYTHON_ENV=source activate streamingpro-spark-2.4.x
+            |
+            |Or if you do not use conda, please you can set like this:
+            |
+            |PYTHON_ENV=echo yes
+          """.stripMargin)
+        case Some(i) =>
+      }
+      val envs = envSession.fetchPythonEnv.get.collect().map(f => (f.k, f.v)).toMap
+
+      def request = {
+        // send signal to stop server
+        val client = new SocketServerSerDer[PythonSocketRequest, PythonSocketResponse]() {}
+        val socket2 = new Socket(connect.host, connect.port)
+        val dout2 = new DataOutputStream(socket2.getOutputStream)
+        val din2 = new DataInputStream(socket2.getInputStream)
+
+        client.sendRequest(dout2,
+          ExecuteCode(code, envs - "schema", envs("schema")))
+        val res = client.readResponse(din2).asInstanceOf[ExecuteResult]
+        socket2.close()
+        res
+      }
+
+      val res = request
+      val df = if (res.ok) {
+        val schema = SparkSimpleSchemaParser.parse(envs("schema")).asInstanceOf[StructType]
+        spark.createDataFrame(spark.sparkContext.parallelize(request.a.map { item => Row.fromSeq(item) }), schema)
+      } else {
+        throw new MLSQLException(request.a.map { item => item.headOption.getOrElse("") }.mkString("\n"))
+      }
+      table.map(df.createOrReplaceTempView(_))
+      df
+    }
+
     val newdf = command match {
       case Array("start") =>
         if (!PythonServerHolder.fetch(context.owner).isDefined) {
@@ -128,40 +178,11 @@ class PythonCommand(override val uid: String) extends SQLAlg with Functions with
         envSession.set(k, v, Map(SetSession.__MLSQL_CL__ -> SetSession.PYTHON_ENV_CL))
         envSession.fetchPythonEnv.get.toDF()
 
-      case Array(code) =>
-        val connect = PythonServerHolder.fetch(context.owner).get
-        envSession.fetchPythonEnv match {
-          case None => throw new MLSQLException(
-            """
-              |Env schema and PYTHON_ENV should be set, e.g.
-              |
-              |1. schema=st(field(a,integer),field(b,integer));
-              |2. PYTHON_ENV=source activate streamingpro-spark-2.4.x
-              |
-              |Or if you do not use conda, please you can set like this:
-              |
-              |PYTHON_ENV=echo yes
-            """.stripMargin)
-          case Some(i) =>
-        }
-        val envs = envSession.fetchPythonEnv.get.collect().map(f => (f.k, f.v)).toMap
+      case Array(code, "named", tableName) =>
+        execute(code, Option(tableName))
+      case Array(code) => execute(code, None)
 
-        def request = {
-          // send signal to stop server
-          val client = new SocketServerSerDer[PythonSocketRequest, PythonSocketResponse]() {}
-          val socket2 = new Socket(connect.host, connect.port)
-          val dout2 = new DataOutputStream(socket2.getOutputStream)
-          val din2 = new DataInputStream(socket2.getInputStream)
 
-          client.sendRequest(dout2,
-            ExecuteCode(code, envs - "schema", envs("schema")))
-          val res = client.readResponse(din2).asInstanceOf[ExecuteResult]
-          socket2.close()
-          res
-        }
-
-        val schema = SparkSimpleSchemaParser.parse(envs("schema")).asInstanceOf[StructType]
-        spark.createDataFrame(spark.sparkContext.parallelize(request.a.map { item => Row.fromSeq(item) }), schema)
     }
     newdf
   }

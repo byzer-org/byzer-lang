@@ -73,16 +73,33 @@ class PythonServer[T](taskContextRef: AtomicReference[T])
             val items = columnarBatchIter.flatMap { batch =>
               batch.rowIterator.asScala
             }.map(f => f.copy().toSeq(outputSchema))
-            client.sendResponse(dOut, ExecuteResult(items.toSeq))
+            client.sendResponse(dOut, ExecuteResult(true, items.toSeq))
             javaConext.markComplete
             javaConext.close
           } catch {
             case e: Exception =>
-              client.sendResponse(dOut, ExecuteResult(Seq()))
-              e.printStackTrace()
+              val buffer = ArrayBuffer[String]()
+              format_full_exception(buffer, e, true)
+              client.sendResponse(dOut, ExecuteResult(false, buffer.map(Seq(_))))
+
           }
 
       }
+    }
+
+    def format_throwable(e: Throwable, skipPrefix: Boolean = false) = {
+      (e.toString.split("\n") ++ e.getStackTrace.map(f => f.toString)).map(f => f).toSeq.mkString("\n")
+    }
+
+
+    def format_full_exception(buffer: ArrayBuffer[String], e: Exception, skipPrefix: Boolean = true) = {
+      var cause = e.asInstanceOf[Throwable]
+      buffer += format_throwable(cause, skipPrefix)
+      while (cause.getCause != null) {
+        cause = cause.getCause
+        buffer += "caused by：\n" + format_throwable(cause, skipPrefix)
+      }
+
     }
 
   }
@@ -114,7 +131,7 @@ case class ExecuteCode(code: String, envs: Map[String, String], schema: String) 
   override def wrap: PythonSocketRequest = PythonSocketRequest(executeCode = this)
 }
 
-case class ExecuteResult(a: Seq[Seq[Any]]) extends Response[PythonSocketResponse] {
+case class ExecuteResult(ok: Boolean, a: Seq[Seq[Any]]) extends Response[PythonSocketResponse] {
   override def wrap: PythonSocketResponse = PythonSocketResponse(executeResult = this)
 }
 
