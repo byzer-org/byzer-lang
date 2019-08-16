@@ -61,27 +61,27 @@ class PythonServer[T](taskContextRef: AtomicReference[T])
           val newIter = Seq().map { irow =>
             enconder.toRow(irow)
           }.iterator
-          val arrowRunner = new ArrowPythonRunner(
-            Seq(ChainedPythonFunctions(Seq(PythonFunction(
-              """
-                |import pandas as pd
-                |import numpy as np
-                |for item in data_manager.fetch_once():
-                |    print(item)
-                |df = pd.DataFrame({'AAA': [4, 5, 6, 7],'BBB': [10, 20, 30, 40],'CCC': [100, 50, -30, -50]})
-                |data_manager.set_output([[df['AAA'],df['BBB']]])
-              """.stripMargin, envs4j, "python", "3.6")))), dataSchema,
-            "GMT", Map()
-          )
+          try {
+            val arrowRunner = new ArrowPythonRunner(
+              Seq(ChainedPythonFunctions(Seq(PythonFunction(
+                code, envs4j, "python", "3.6")))), dataSchema,
+              "GMT", Map()
+            )
 
-          val commonTaskContext = new AppContextImpl(javaConext, arrowRunner)
-          val columnarBatchIter = arrowRunner.compute(Iterator(newIter), TaskContext.getPartitionId(), commonTaskContext)
-          val items = columnarBatchIter.flatMap { batch =>
-            batch.rowIterator.asScala
-          }.map(f => f.copy().toSeq(outputSchema))
-          client.sendResponse(dOut, ExecuteResult(items.toSeq))
-          javaConext.markComplete
-          javaConext.close
+            val commonTaskContext = new AppContextImpl(javaConext, arrowRunner)
+            val columnarBatchIter = arrowRunner.compute(Iterator(newIter), TaskContext.getPartitionId(), commonTaskContext)
+            val items = columnarBatchIter.flatMap { batch =>
+              batch.rowIterator.asScala
+            }.map(f => f.copy().toSeq(outputSchema))
+            client.sendResponse(dOut, ExecuteResult(items.toSeq))
+            javaConext.markComplete
+            javaConext.close
+          } catch {
+            case e: Exception =>
+              client.sendResponse(dOut, ExecuteResult(Seq()))
+              e.printStackTrace()
+          }
+
       }
     }
 

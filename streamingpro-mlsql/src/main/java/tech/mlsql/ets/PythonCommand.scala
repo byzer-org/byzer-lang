@@ -15,11 +15,11 @@ import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.Functions
 import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
-import tech.mlsql.common.utils.Md5
 import tech.mlsql.common.utils.distribute.socket.server.{ReportHostAndPort, SocketServerInExecutor, SocketServerSerDer, TempSocketServerInDriver}
 import tech.mlsql.common.utils.serder.json.JSONTool
 import tech.mlsql.ets.python._
 import tech.mlsql.schema.parser.SparkSimpleSchemaParser
+import tech.mlsql.session.SetSession
 
 /**
   * 2019-08-16 WilliamZhu(allwefantasy@gmail.com)
@@ -89,11 +89,7 @@ class PythonCommand(override val uid: String) extends SQLAlg with Functions with
       }.collect()
     }
 
-    def envTableName = {
-      Md5.md5Hash(context.owner)
-    }
-
-    import spark.implicits._
+    val envSession = new SetSession(spark, context.owner)
     val command = JSONTool.parseJson[List[String]](params("parameters")).toArray
     val newdf = command match {
       case Array("start") =>
@@ -123,26 +119,32 @@ class PythonCommand(override val uid: String) extends SQLAlg with Functions with
 
       case Array("close") =>
 
-        spark.catalog.dropTempView(envTableName)
         PythonServerHolder.close(context.owner)
 
         emptyDataFrame(spark, "value")
 
       case Array("env", kv) => // !python env a=b
-        addItemToTable(spark, envTableName, kv)
-        spark.table(envTableName)
+        val Array(k, v) = kv.split("=", 2)
+        envSession.set(k, v, Map(SetSession.__MLSQL_CL__ -> SetSession.PYTHON_ENV_CL))
+        envSession.fetchPythonEnv.get.toDF()
 
       case Array(code) =>
         val connect = PythonServerHolder.fetch(context.owner).get
-
-        def getEnvs = {
-          if (spark.catalog.tableExists(envTableName)) {
-            spark.table(envTableName).as[String].collect().toSeq.map(f => f.split("=")).map(a => (a(0), a(1))).toMap
-          } else Map[String, String]()
-
+        envSession.fetchPythonEnv match {
+          case None => throw new MLSQLException(
+            """
+              |Env schema and PYTHON_ENV should be set, e.g.
+              |
+              |1. schema=st(field(a,integer),field(b,integer));
+              |2. PYTHON_ENV=source activate streamingpro-spark-2.4.x
+              |
+              |Or if you do not use conda, please you can set like this:
+              |
+              |PYTHON_ENV=echo yes
+            """.stripMargin)
+          case Some(i) =>
         }
-
-        val envs = getEnvs
+        val envs = envSession.fetchPythonEnv.get.collect().map(f => (f.k, f.v)).toMap
 
         def request = {
           // send signal to stop server
@@ -150,7 +152,6 @@ class PythonCommand(override val uid: String) extends SQLAlg with Functions with
           val socket2 = new Socket(connect.host, connect.port)
           val dout2 = new DataOutputStream(socket2.getOutputStream)
           val din2 = new DataInputStream(socket2.getInputStream)
-
 
           client.sendRequest(dout2,
             ExecuteCode(code, envs - "schema", envs("schema")))
@@ -165,17 +166,6 @@ class PythonCommand(override val uid: String) extends SQLAlg with Functions with
     newdf
   }
 
-
-  def addItemToTable(spark: SparkSession, table: String, item: String) = {
-    import spark.implicits._
-    if (spark.catalog.tableExists(table)) {
-      spark.createDataset[String](spark.table(table).as[String].collect().toSeq ++ Seq(item)).toDF("value").
-        createOrReplaceTempView(table)
-    } else {
-      spark.createDataset[String](Seq(item)).toDF("value").
-        createOrReplaceTempView(table)
-    }
-  }
 
   override def batchPredict(df: DataFrame, path: String, params: Map[String, String]): DataFrame = train(df, path, params)
 
