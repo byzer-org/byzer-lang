@@ -48,8 +48,8 @@ class PythonServer[T](taskContextRef: AtomicReference[T])
         case _: ShutDownPythonServer =>
           close()
         case _: StartPythonServer =>
-        case ExecuteCode(code, envs, schema) =>
-          val outputSchema = SparkSimpleSchemaParser.parse(schema).asInstanceOf[StructType]
+        case ExecuteCode(code, envs, conf, timezoneID) =>
+          val outputSchema = SparkSimpleSchemaParser.parse(conf("schema")).asInstanceOf[StructType]
           val javaConext = new JavaContext
 
           val envs4j = new util.HashMap[String, String]()
@@ -65,7 +65,7 @@ class PythonServer[T](taskContextRef: AtomicReference[T])
             val arrowRunner = new ArrowPythonRunner(
               Seq(ChainedPythonFunctions(Seq(PythonFunction(
                 code, envs4j, "python", "3.6")))), dataSchema,
-              "GMT", Map()
+              timezoneID, conf
             )
 
             val commonTaskContext = new AppContextImpl(javaConext, arrowRunner)
@@ -127,7 +127,7 @@ case class ShutDownPythonServer() extends Request[PythonSocketRequest] {
   override def wrap: PythonSocketRequest = PythonSocketRequest(shutDownPythonServer = this)
 }
 
-case class ExecuteCode(code: String, envs: Map[String, String], schema: String) extends Request[PythonSocketRequest] {
+case class ExecuteCode(code: String, envs: Map[String, String], conf: Map[String, String], timezoneID: String) extends Request[PythonSocketRequest] {
   override def wrap: PythonSocketRequest = PythonSocketRequest(executeCode = this)
 }
 

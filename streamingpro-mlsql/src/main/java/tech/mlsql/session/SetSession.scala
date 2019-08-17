@@ -46,6 +46,12 @@ class SetSession(spark: SparkSession, owner: String) {
     })
   }
 
+  def fetchPythonRunnerConf = {
+    filterEnvTable((item) => {
+      item.config(SetSession.__MLSQL_CL__) == SetSession.PYTHON_RUNNER_CONF_CL
+    })
+  }
+
   def fetchSetStatement = {
     filterEnvTable((item) => {
       item.config(SetSession.__MLSQL_CL__) == SetSession.SET_STATEMENT_CL
@@ -65,6 +71,7 @@ class SetSession(spark: SparkSession, owner: String) {
 
 object SetSession {
   val PYTHON_ENV_CL = "python_env_cl"
+  val PYTHON_RUNNER_CONF_CL = "python_runner_conf_cl"
   val SET_STATEMENT_CL = "set_statement_cl"
   val __MLSQL_CL__ = "__mlsql_cl__"
 }

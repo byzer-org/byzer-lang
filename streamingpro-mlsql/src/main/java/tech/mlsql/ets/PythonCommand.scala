@@ -5,21 +5,27 @@ import java.net.Socket
 import java.util
 import java.util.concurrent.atomic.AtomicReference
 
+import org.apache.spark.sql.catalyst.encoders.RowEncoder
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.mlsql.session.MLSQLException
 import org.apache.spark.sql.types.StructType
-import org.apache.spark.sql.{DataFrame, Row, SparkSession}
+import org.apache.spark.sql.{DataFrame, Row, SparkSession, SparkUtils}
 import org.apache.spark.util.{TaskCompletionListener, TaskFailureListener}
 import org.apache.spark.{MLSQLSparkUtils, TaskContext}
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.Functions
 import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
+import tech.mlsql.arrow.python.ispark.SparkContextImp
+import tech.mlsql.arrow.python.runner.{ArrowPythonRunner, ChainedPythonFunctions, PythonConf, PythonFunction}
 import tech.mlsql.common.utils.distribute.socket.server.{ReportHostAndPort, SocketServerInExecutor, SocketServerSerDer, TempSocketServerInDriver}
+import tech.mlsql.common.utils.lang.sc.ScalaMethodMacros
 import tech.mlsql.common.utils.serder.json.JSONTool
 import tech.mlsql.ets.python._
 import tech.mlsql.schema.parser.SparkSimpleSchemaParser
 import tech.mlsql.session.SetSession
+
+import scala.collection.mutable.ArrayBuffer
 
 /**
   * 2019-08-16 WilliamZhu(allwefantasy@gmail.com)
@@ -40,6 +46,7 @@ class PythonCommand(override val uid: String) extends SQLAlg with Functions with
     val tempSocketServerHost = tempServer._host
     val tempSocketServerPort = tempServer._port
 
+    val timezoneID = spark.sessionState.conf.sessionLocalTimeZone
 
     def launchPythonServer = {
       val serverId = "python-runner-${UUID.randomUUID().toString}"
@@ -100,21 +107,17 @@ class PythonCommand(override val uid: String) extends SQLAlg with Functions with
 
     def execute(code: String, table: Option[String]) = {
       val connect = PythonServerHolder.fetch(context.owner).get
-      envSession.fetchPythonEnv match {
-        case None => throw new MLSQLException(
-          """
-            |Env schema and PYTHON_ENV should be set, e.g.
-            |
-            |1. schema=st(field(a,integer),field(b,integer));
-            |2. PYTHON_ENV=source activate streamingpro-spark-2.4.x
-            |
-            |Or if you do not use conda, please you can set like this:
-            |
-            |PYTHON_ENV=echo yes
-          """.stripMargin)
-        case Some(i) =>
-      }
-      val envs = envSession.fetchPythonEnv.get.collect().map(f => (f.k, f.v)).toMap
+      val runnerConf = getSchemaAndConf(envSession)
+
+      // 1. make sure we are in interactive mode
+      // 2. make sure the user is configured so every one has his own python worker
+      val envs = Map(
+        ScalaMethodMacros.str(PythonConf.PY_EXECUTE_USER) -> context.owner,
+        ScalaMethodMacros.str(PythonConf.PY_INTERACTIVE) -> "yes",
+        ScalaMethodMacros.str(PythonConf.PYTHON_ENV) -> "echo ok"
+      ) ++
+        envSession.fetchPythonEnv.get.collect().map(f => (f.k, f.v)).toMap
+
 
       def request = {
         // send signal to stop server
@@ -124,7 +127,7 @@ class PythonCommand(override val uid: String) extends SQLAlg with Functions with
         val din2 = new DataInputStream(socket2.getInputStream)
 
         client.sendRequest(dout2,
-          ExecuteCode(code, envs - "schema", envs("schema")))
+          ExecuteCode(code, envs, runnerConf, timezoneID))
         val res = client.readResponse(din2).asInstanceOf[ExecuteResult]
         socket2.close()
         res
@@ -132,10 +135,11 @@ class PythonCommand(override val uid: String) extends SQLAlg with Functions with
 
       val res = request
       val df = if (res.ok) {
-        val schema = SparkSimpleSchemaParser.parse(envs("schema")).asInstanceOf[StructType]
+        val schema = SparkSimpleSchemaParser.parse(runnerConf("schema")).asInstanceOf[StructType]
         spark.createDataFrame(spark.sparkContext.parallelize(request.a.map { item => Row.fromSeq(item) }), schema)
       } else {
-        throw new MLSQLException(request.a.map { item => item.headOption.getOrElse("") }.mkString("\n"))
+        val e = new MLSQLException(request.a.map { item => item.headOption.getOrElse("") }.mkString("\n"))
+        recognizeError(e)
       }
       table.map(df.createOrReplaceTempView(_))
       df
@@ -178,8 +182,22 @@ class PythonCommand(override val uid: String) extends SQLAlg with Functions with
         envSession.set(k, v, Map(SetSession.__MLSQL_CL__ -> SetSession.PYTHON_ENV_CL))
         envSession.fetchPythonEnv.get.toDF()
 
+      case Array("conf", kv) => // !python env a=b
+        val Array(k, v) = kv.split("=", 2)
+        envSession.set(k, v, Map(SetSession.__MLSQL_CL__ -> SetSession.PYTHON_RUNNER_CONF_CL))
+        envSession.fetchPythonRunnerConf.get.toDF()
+
       case Array(code, "named", tableName) =>
         execute(code, Option(tableName))
+
+      case Array("on", tableName, code) =>
+        distribute_execute(spark, code, tableName)
+
+      case Array("on", tableName, code, "named", targetTable) =>
+        val resDf = distribute_execute(spark, code, tableName)
+        resDf.createOrReplaceTempView(targetTable)
+        resDf
+
       case Array(code) => execute(code, None)
 
 
@@ -187,6 +205,92 @@ class PythonCommand(override val uid: String) extends SQLAlg with Functions with
     newdf
   }
 
+  private def getSchemaAndConf(envSession: SetSession) = {
+    def error = {
+      throw new MLSQLException(
+        """
+          |Using `!python conf` to specify the python return value format is required.
+          |Do like following:
+          |
+          |```
+          |!python conf "schema=st(field(a,integer),field(b,integer))"
+          |```
+        """.stripMargin)
+    }
+
+    val runnerConf = envSession.fetchPythonRunnerConf match {
+      case Some(conf) =>
+        val temp = conf.collect().map(f => (f.k, f.v)).toMap
+        if (!temp.contains("schema")) {
+          error
+        }
+        temp
+      case None => error
+    }
+    runnerConf
+  }
+
+  private def distribute_execute(session: SparkSession, code: String, sourceTable: String) = {
+    import scala.collection.JavaConverters._
+    val context = ScriptSQLExec.context()
+    val envSession = new SetSession(session, context.owner)
+    val envs = Map(
+      ScalaMethodMacros.str(PythonConf.PY_EXECUTE_USER) -> context.owner,
+      ScalaMethodMacros.str(PythonConf.PYTHON_ENV) -> "echo ok"
+    ) ++
+      envSession.fetchPythonEnv.get.collect().map(f => (f.k, f.v)).toMap
+
+    val runnerConf = getSchemaAndConf(envSession)
+
+    val targetSchema = SparkSimpleSchemaParser.parse(runnerConf("schema")).asInstanceOf[StructType]
+
+    val timezoneID = session.sessionState.conf.sessionLocalTimeZone
+    val df = session.table(sourceTable)
+    val sourceSchema = df.schema
+    try {
+    val data = df.rdd.mapPartitions { iter =>
+      val encoder = RowEncoder.apply(sourceSchema).resolveAndBind()
+      val envs4j = new util.HashMap[String, String]()
+      envs.foreach(f => envs4j.put(f._1, f._2))
+
+      val batch = new ArrowPythonRunner(
+        Seq(ChainedPythonFunctions(Seq(PythonFunction(
+          code, envs4j, "python", "3.6")))), sourceSchema,
+        timezoneID, runnerConf
+      )
+
+      val newIter = iter.map { irow =>
+        encoder.toRow(irow)
+      }
+      val commonTaskContext = new SparkContextImp(TaskContext.get(), batch)
+      val columnarBatchIter = batch.compute(Iterator(newIter), TaskContext.getPartitionId(), commonTaskContext)
+      columnarBatchIter.flatMap { batch =>
+        batch.rowIterator.asScala
+      }
+    }
+
+      SparkUtils.internalCreateDataFrame(session, data, targetSchema, false)
+    } catch {
+      case e: Exception =>
+        recognizeError(e)
+    }
+
+
+  }
+
+  private def recognizeError(e: Exception) = {
+    val buffer = ArrayBuffer[String]()
+    format_full_exception(buffer, e, true)
+    val typeError = buffer.filter(f => f.contains("Previous exception in task: null") ).filter(_.contains("org.apache.spark.sql.vectorized.ArrowColumnVector$ArrowVectorAccessor")).size > 0
+    if (typeError) {
+      throw new MLSQLException(
+        """
+          |We can not reconstruct data from Python.
+          |Try to use !python conf "schema=" change your schema.
+        """.stripMargin, e)
+    }
+    throw e
+  }
 
   override def batchPredict(df: DataFrame, path: String, params: Map[String, String]): DataFrame = train(df, path, params)
 
