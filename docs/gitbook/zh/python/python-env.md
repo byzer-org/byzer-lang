@@ -12,7 +12,7 @@
 ```sql
 ......
 
-run fakeTable as PythonEnvExt.`/tmp/jack` where condaFile="dependencies" and command="create";
+run command as PythonEnvExt.`/tmp/jack` where condaFile="dependencies" and command="create";
 ......
 
 ```

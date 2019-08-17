@@ -37,6 +37,8 @@ object CommandCollection {
 
     context.addEnv("delta","""run command as DeltaCompactionCommandWrapper.`` where parameters='''{:all}'''""")
 
+    context.addEnv("python","""run command as PythonCommand.`` where parameters='''{:all}'''""")
+
     context.addEnv("kafkaTool",
       """ run command as KafkaCommand.`kafka` where
         |parameters='''{:all}''' """.stripMargin)

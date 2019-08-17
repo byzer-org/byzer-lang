@@ -413,7 +413,11 @@
         </profile>
     </profiles>
     <dependencies>
-
+        <dependency>
+            <groupId>tech.mlsql</groupId>
+            <artifactId>pyjava-${spark.bigversion}_${scala.binary.version}</artifactId>
+            <version>${pyjava-version}</version>
+        </dependency>
         <dependency>
             <groupId>org.jsoup</groupId>
             <artifactId>jsoup</artifactId>
