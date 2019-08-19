@@ -16,7 +16,6 @@ import org.apache.spark.{MLSQLSparkUtils, TaskContext}
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.SQLPythonFunc._
 import streaming.dsl.mmlib.algs.{Functions, SQLPythonFunc}
-import tech.mlsql.common.utils.distribute.socket.server.ReportHostAndPort
 import tech.mlsql.common.utils.hdfs.HDFSOperator
 import tech.mlsql.common.utils.network.NetUtils
 import tech.mlsql.ets.tensorflow.servers._
@@ -30,29 +29,17 @@ class DistributedTensorflow extends SQLAlg with Functions {
     // We start a temp driver server, so the workers can connect it.
     // It will be used to coordinate the ps workers.
 
-    val hostAndPortContext = new AtomicReference[ReportHostAndPort]()
-    val tempServer = new TFDriver[ReportHostAndPort](hostAndPortContext) {
+    val tfDriver = new TFDriver[String](new AtomicReference[String]("")) {
       override def host: String = MLSQLSparkUtils.rpcEnv().address.host
     }
 
-    val tempSocketServerHost = tempServer._host
-    val tempSocketServerPort = tempServer._port
+    val tempSocketServerHost = tfDriver._host
+    val tempSocketServerPort = tfDriver._port
 
 
     val keepVersion = params.getOrElse("keepVersion", "true").toBoolean
 
     val enableDataLocal = params.getOrElse("enableDataLocal", "false").toBoolean
-
-    var kafkaParam = mapParams("kafkaParam", params)
-
-    require(kafkaParam.size > 0, "kafkaParam should be configured")
-
-    var stopFlagNum = -1
-    if (!enableDataLocal) {
-      val (_kafkaParam, _newRDD) = writeKafka(df, path, params)
-      stopFlagNum = _newRDD.getNumPartitions
-      kafkaParam = _kafkaParam
-    }
 
     val systemParam = mapParams("systemParam", params)
     val fitParam = arrayParamsWithIndex("fitParam", params)
@@ -136,10 +123,8 @@ class DistributedTensorflow extends SQLAlg with Functions {
 
       val port = holdPort.getLocalPort
 
-      val taskContextRef: AtomicReference[TaskContext] = new AtomicReference[TaskContext]()
-      taskContextRef.set(TaskContext.get())
-      val tfWorker = new TFWorker(taskContextRef)
 
+      val tfClient = new TFClient()
       val socket = new Socket(tempSocketServerHost, tempSocketServerPort)
       val driverOutputStream = new DataOutputStream(socket.getOutputStream)
       val driverInputStream = new DataInputStream(socket.getInputStream)
@@ -147,18 +132,18 @@ class DistributedTensorflow extends SQLAlg with Functions {
 
       // here we should report to driver
       def reportToMaster() = {
-        tfWorker.client.sendRequest(driverOutputStream, ReportToMasterRequest(tfWorker._host, port, jobName, taskIndex, isPs))
-        tfWorker.client.readResponse(driverInputStream).asInstanceOf[ReportToMasterResponse]
+        tfClient.sendRequest(driverOutputStream, ReportToMasterRequest(MLSQLSparkUtils.rpcEnv().address.host, port, jobName, taskIndex, isPs))
+        tfClient.readResponse(driverInputStream).asInstanceOf[ReportToMasterResponse]
       }
 
       reportToMaster()
 
       def fetchClusterSpec(): ClusterSpecResponse = {
-        tfWorker.client.sendRequest(driverOutputStream, ClusterSpecRequest())
-        tfWorker.client.readResponse(driverInputStream).asInstanceOf[ClusterSpecResponse]
+        tfClient.sendRequest(driverOutputStream, ClusterSpecRequest())
+        tfClient.readResponse(driverInputStream).asInstanceOf[ClusterSpecResponse]
       }
 
-      // wait until all workers have been registered
+      // wait until all worker/ps have been registered
       var waitCount = 0
       val maxWaitCount = 100
       var noWait = false
@@ -166,7 +151,21 @@ class DistributedTensorflow extends SQLAlg with Functions {
       while (!noWait && waitCount < maxWaitCount) {
         val response = fetchClusterSpec()
         val totalRegistered = response.workerTasks.size + response.psTasks.size
-        logInfo(s"Waiting all worker/ps started. Wait times: ${waitCount} times. Already registered tf worker/ps: ${totalRegistered}")
+        logInfo(
+          s"""
+             |
+             |----------------------------------
+             |Waiting all worker/ps started
+             |__________________________________
+             |Wait times: ${waitCount} times.
+             |Target: ${LIMIT}
+             |totalRegistered: ${totalRegistered}
+             |
+             |PS: ${response.ps}
+             |Workers: ${response.workers}
+             |
+             |
+           """.stripMargin)
         if (totalRegistered == LIMIT) {
           clusterSpecRef.set(response)
           noWait = true
@@ -185,7 +184,16 @@ class DistributedTensorflow extends SQLAlg with Functions {
       clusterSpecJson.put("worker", clusterSpec.workers.asJava)
       clusterSpecJson.put("ps", clusterSpec.ps.asJava)
 
-      println(clusterSpecJson.toString)
+      def reportSuccess = {
+        tfClient.sendRequest(driverOutputStream, JobStatusRequest(jobName, taskIndex, true, true))
+        tfClient.readResponse(driverInputStream).asInstanceOf[JobStatusResponse]
+      }
+
+      def reportFail = {
+        tfClient.sendRequest(driverOutputStream, JobStatusRequest(jobName, taskIndex, true, false))
+        tfClient.readResponse(driverInputStream).asInstanceOf[JobStatusResponse]
+      }
+
 
       var tempDataLocalPathWithAlgSuffix = tempDataLocalPath
 
@@ -193,8 +201,8 @@ class DistributedTensorflow extends SQLAlg with Functions {
       if (!isPs && enableDataLocal) {
         val partitionDataInHDFS = tfDataMap(algIndex)
         tempDataLocalPathWithAlgSuffix = tempDataLocalPathWithAlgSuffix + "/" + algIndex
-        println(s"Copy HDFS ${partitionDataInHDFS} to local ${tempDataLocalPathWithAlgSuffix} ")
-        recordSingleLineLog(kafkaParam, s"Copy HDFS ${partitionDataInHDFS} to local ${tempDataLocalPathWithAlgSuffix} ")
+        logInfo(s"Copy HDFS ${partitionDataInHDFS} to local ${tempDataLocalPathWithAlgSuffix} ")
+        logInfo(s"Copy HDFS ${partitionDataInHDFS} to local ${tempDataLocalPathWithAlgSuffix} ")
         HDFSOperator.copyToLocalFile(tempLocalPath = tempDataLocalPathWithAlgSuffix + "/" + partitionDataInHDFS.split("/").last, path = partitionDataInHDFS, true)
       }
 
@@ -211,10 +219,9 @@ class DistributedTensorflow extends SQLAlg with Functions {
         resources.foreach {
           case (resourceName, resourcePath) =>
             val tempResourceLocalPath = SQLPythonFunc.getLocalTempResourcePath(resourcePath, resourceName)
-            recordSingleLineLog(kafkaParam, s"resource paramter found,system will load resource ${resourcePath} in ${tempResourceLocalPath} in executor.")
+            logInfo(s"resource paramter found,system will load resource ${resourcePath} in ${tempResourceLocalPath} in executor.")
             HDFSOperator.copyToLocalFile(tempResourceLocalPath, resourcePath, true)
             resourceParams += (resourceName -> tempResourceLocalPath)
-            recordSingleLineLog(kafkaParam, s"resource loaded.")
         }
       }
 
@@ -226,11 +233,8 @@ class DistributedTensorflow extends SQLAlg with Functions {
 
       paramMap.put("fitParam", item)
 
-      val kafkaP = kafkaParam + ("group_id" -> (kafkaParam("group_id") + "_" + algIndex))
-      paramMap.put("kafkaParam", kafkaP.asJava)
 
       val internalSystemParam = Map(
-        "stopFlagNum" -> stopFlagNum,
         "tempModelLocalPath" -> tempModelLocalPath,
         "tempDataLocalPath" -> tempDataLocalPathWithAlgSuffix,
         "resource" -> resourceParams.asJava,
@@ -252,7 +256,6 @@ class DistributedTensorflow extends SQLAlg with Functions {
       var trainFailFlag = false
 
       NetUtils.releasePort(holdPort)
-
       if (!isPs) {
         try {
 
@@ -262,14 +265,15 @@ class DistributedTensorflow extends SQLAlg with Functions {
             schema = MapType(StringType, MapType(StringType, StringType)),
             scriptContent = pythonScript.fileContent,
             scriptName = pythonScript.fileName,
-            recordLog = SQLPythonFunc.recordAnyLog(kafkaParam),
+            recordLog = SQLPythonFunc.recordAnyLog(Map()),
             modelPath = path, validateData = rowsBr.value
           )
 
-          score = recordUserLog(algIndex, pythonScript, kafkaParam, res)
+          score = recordUserLog(algIndex, pythonScript, Map(), res)
         } catch {
           case e: Exception =>
             e.printStackTrace()
+            reportFail
             trainFailFlag = true
         }
       } else {
@@ -290,14 +294,15 @@ class DistributedTensorflow extends SQLAlg with Functions {
                 schema = MapType(StringType, MapType(StringType, StringType)),
                 scriptContent = pythonScript.fileContent,
                 scriptName = pythonScript.fileName,
-                recordLog = SQLPythonFunc.recordAnyLog(kafkaParam),
+                recordLog = SQLPythonFunc.recordAnyLog(Map()),
                 modelPath = path, validateData = rowsBr.value
               )
               pythonWorker.set(res.asInstanceOf[ {def getWorker: Process}].getWorker)
-              score = recordUserLog(algIndex, pythonScript, kafkaParam, res)
+              score = recordUserLog(algIndex, pythonScript, Map(), res)
             } catch {
               case e: Exception =>
                 e.printStackTrace()
+                reportFail
                 trainFailFlag = true
             }
           }
@@ -305,29 +310,11 @@ class DistributedTensorflow extends SQLAlg with Functions {
         pythonPSThread.setDaemon(true)
         pythonPSThread.start()
 
-
-        //        val pythonPSMonitorThread = new Thread(new Runnable {
-        //          override def run(): Unit = {
-        //            while (!context.isInterrupted && !context.isCompleted) {
-        //              Thread.sleep(2000)
-        //            }
-        //            if (context.isCompleted || context.isInterrupted()) {
-        //              try {
-        //                pythonWorker.get().destroy()
-        //              } catch {
-        //                case e: Exception =>
-        //              }
-        //            }
-        //          }
-        //        })
-        //        pythonPSMonitorThread.setDaemon(true)
-        //        pythonPSMonitorThread.start()
-
         var shouldWait = true
 
         def fetchClusterStatusFromMaster = {
-          tfWorker.client.sendRequest(driverOutputStream, JobStatusRequest(jobName, taskIndex, true))
-          tfWorker.client.readResponse(driverInputStream).asInstanceOf[JobStatusResponse]
+          tfClient.sendRequest(driverOutputStream, JobStatusRequest(jobName, taskIndex, false, false))
+          tfClient.readResponse(driverInputStream).asInstanceOf[JobStatusResponse]
         }
 
         // PS should wait until
@@ -335,7 +322,7 @@ class DistributedTensorflow extends SQLAlg with Functions {
         // PS python worker use thread.join to keep it alive .
         while (shouldWait) {
           val response = fetchClusterStatusFromMaster
-          val workSize = response.jobStatus.filter(f => f.done && !f.isPs)
+          val workSize = response.jobStatus.filter(f => f.done && !f.isPs).size
           if (workSize == clusterSpec.workers.size) {
             shouldWait = false
           }
@@ -345,7 +332,12 @@ class DistributedTensorflow extends SQLAlg with Functions {
             case e: Exception =>
               shouldWait = false
           }
-          println(s"check worker finish size. targetSize:${clusterSpec.workers.size} vs ${workSize}")
+          logInfo(
+            s"""
+               |PS check worker is all finished.
+               |targetSize:  ${clusterSpec.workers.size}
+               |currentSize: ${workSize}
+            """.stripMargin)
         }
         pythonWorker.get().destroy()
         pythonPSThread.interrupt()
@@ -354,8 +346,7 @@ class DistributedTensorflow extends SQLAlg with Functions {
       val modelTrainEndTime = System.currentTimeMillis()
       if (!isPs) {
         if (!trainFailFlag) {
-          tfWorker.client.sendRequest(driverOutputStream, JobStatusRequest(jobName, taskIndex, true))
-          tfWorker.client.readResponse(driverInputStream).asInstanceOf[JobStatusResponse]
+          reportSuccess
         }
         val modelTrainEndTime = System.currentTimeMillis()
 
@@ -375,6 +366,7 @@ class DistributedTensorflow extends SQLAlg with Functions {
 
         } catch {
           case e: Exception =>
+            reportFail
             trainFailFlag = true
         } finally {
           // delete local model
@@ -382,6 +374,7 @@ class DistributedTensorflow extends SQLAlg with Functions {
           // delete local data
           FileUtils.deleteDirectory(new File(tempDataLocalPathWithAlgSuffix))
           FileUtils.deleteDirectory(new File(checkpointDir))
+          socket.close()
         }
         val status = if (trainFailFlag) "fail" else "success"
         Row.fromSeq(Seq(modelHDFSPath, algIndex, pythonScript.fileName, score, status, modelTrainStartTime, modelTrainEndTime, f))
@@ -414,6 +407,7 @@ class DistributedTensorflow extends SQLAlg with Functions {
       write.
       mode(SaveMode.Overwrite).
       parquet(SQLPythonFunc.getAlgMetalPath(path, keepVersion) + "/1")
+    tfDriver.close()
     emptyDataFrame()(df)
 
   }
