@@ -112,7 +112,3 @@ java -cp .:${MLSQL_CONSOLE_JAR} tech.mlsql.MLSQLConsole \
 -enable_auth_center ${ENABLE_AUTH_CENTER:-false} \
 -config ${MLSQL_CONSOLE_CONFIG_FILE}
 ```
-
-## ChatRoom
-![image](http://upload-images.jianshu.io/upload_images/1063603-f32dd474770fe70d.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/160) 
-![image](http://upload-images.jianshu.io/upload_images/1063603-27e80786d337fc7d.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/160)

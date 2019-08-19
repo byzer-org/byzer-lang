@@ -237,6 +237,18 @@ set hello=`select 1 as foo ` where type="sql" and mode="runtime";
 编译期我们不会运行这个set语句。
 
 
+## 内置变量
+
+MLSQL 提供了一些内置变量，看下面的代码：
+
+```sql
+set jack='''
+ hello today is:${date.toString("yyyyMMdd")}
+''';
+```
+
+date是内置的，你可以用他实现丰富的日期处理。
+
 ## 回顾
 
 这个章节有点复杂，原因是因为set语法的灵活性已经功能很强大。但是用户只要掌握基本用法已经足够满足需求了。
