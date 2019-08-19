@@ -1,60 +1,43 @@
-/*
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+package tech.mlsql.ets.tensorflow
 
-package streaming.dsl.mmlib.algs
-
-import java.io.File
-import java.nio.file.{Files, Paths}
+import java.io.{DataInputStream, DataOutputStream, File}
+import java.net.Socket
 import java.util
 import java.util.UUID
-import java.util.concurrent.atomic.{AtomicBoolean, AtomicReference}
+import java.util.concurrent.atomic.AtomicReference
 
-import net.sf.json.{JSONArray, JSONObject}
+import net.sf.json.JSONObject
 import org.apache.commons.io.FileUtils
-import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.{FileSystem, Path}
-import org.apache.http.client.fluent.{Form, Request}
-import org.apache.spark.{TaskContext, TaskContextImpl}
-import org.apache.spark.api.python.WowPythonRunner
-import org.apache.spark.ml.linalg.SQLDataTypes._
-import org.apache.spark.sql.catalyst.InternalRow
-import org.apache.spark.sql.catalyst.util.ArrayBasedMapData
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.types._
-import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession, functions => F}
-import org.apache.spark.util.ObjPickle._
-import org.apache.spark.util.VectorSerDer._
-import org.apache.spark.util.{ExternalCommandRunner, ObjPickle, TaskContextUtil, VectorSerDer}
-import streaming.core.strategy.platform.{PlatformManager, SparkRuntime}
+import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession}
+import org.apache.spark.util.{ExternalCommandRunner, ObjPickle, TaskContextUtil}
+import org.apache.spark.{MLSQLSparkUtils, TaskContext}
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.SQLPythonFunc._
-import streaming.dsl.mmlib.algs.tf.cluster.{ClusterSpec, ClusterStatus}
+import streaming.dsl.mmlib.algs.{Functions, SQLPythonFunc}
+import tech.mlsql.common.utils.distribute.socket.server.ReportHostAndPort
 import tech.mlsql.common.utils.hdfs.HDFSOperator
 import tech.mlsql.common.utils.network.NetUtils
+import tech.mlsql.ets.tensorflow.servers._
 
-import scala.collection.mutable
 import scala.collection.JavaConverters._
+import scala.collection.mutable
 
-/**
-  * Created by allwefantasy on 5/2/2018.
-  */
-class SQLDTFAlg extends SQLAlg with Functions {
+class DistributedTensorflow extends SQLAlg with Functions {
   override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
+
+    // We start a temp driver server, so the workers can connect it.
+    // It will be used to coordinate the ps workers.
+
+    val hostAndPortContext = new AtomicReference[ReportHostAndPort]()
+    val tempServer = new TFDriver[ReportHostAndPort](hostAndPortContext) {
+      override def host: String = MLSQLSparkUtils.rpcEnv().address.host
+    }
+
+    val tempSocketServerHost = tempServer._host
+    val tempSocketServerPort = tempServer._port
+
 
     val keepVersion = params.getOrElse("keepVersion", "true").toBoolean
 
@@ -125,10 +108,8 @@ class SQLDTFAlg extends SQLAlg with Functions {
     incrementVersion(path, keepVersion)
 
     // create a new cluster name for tensorflow
-    val clusterUuid = UUID.randomUUID().toString
-    val driverHost = NetUtils.getHost
+
     val LIMIT = fitParam.length
-    val driverPort = PlatformManager.getRuntime.asInstanceOf[SparkRuntime].params.getOrDefault("streaming.driver.port", "9003").toString.toInt
 
     val wowRDD = fitParamRDD.map { paramAndIndex =>
       val f = paramAndIndex._2
@@ -145,9 +126,9 @@ class SQLDTFAlg extends SQLAlg with Functions {
       roleSpec.put("jobName", jobName)
       roleSpec.put("taskIndex", taskIndex)
 
-
-      val host = NetUtils.getHost
-      val holdPort = NetUtils.availableAndReturn(ClusterSpec.MIN_PORT_NUMBER, ClusterSpec.MAX_PORT_NUMBER)
+      val MIN_PORT_NUMBER = 2221
+      val MAX_PORT_NUMBER = 6666
+      val holdPort = NetUtils.availableAndReturn(MIN_PORT_NUMBER, MAX_PORT_NUMBER)
 
       if (holdPort == null) {
         throw new RuntimeException(s"Fail to create tensorflow cluster, maybe executor cannot bind port ")
@@ -155,39 +136,39 @@ class SQLDTFAlg extends SQLAlg with Functions {
 
       val port = holdPort.getLocalPort
 
-      def reportToMaster(path: String = "/cluster/register") = {
-        Request.Post(s"http://${driverHost}:${driverPort}${path}").bodyForm(Form.form().add("cluster", clusterUuid).
-          add("hostAndPort", s"${host}:${port}")
-          .add("jobName", f("jobName"))
-          .add("taskIndex", f("taskIndex"))
-          .build())
-          .execute().returnContent().asString()
-      }
+      val taskContextRef: AtomicReference[TaskContext] = new AtomicReference[TaskContext]()
+      taskContextRef.set(TaskContext.get())
+      val tfWorker = new TFWorker(taskContextRef)
 
-      def fetchClusterFromMaster = {
-        Request.Get(s"http://${driverHost}:${driverPort}/cluster?cluster=${clusterUuid}")
-          .execute().returnContent().asString()
-      }
+      val socket = new Socket(tempSocketServerHost, tempSocketServerPort)
+      val driverOutputStream = new DataOutputStream(socket.getOutputStream)
+      val driverInputStream = new DataInputStream(socket.getInputStream)
 
-      def getHostAndPortFromJson(infos: JSONArray, t: String) = {
-        infos.asScala.map(f => f.asInstanceOf[JSONObject]).filter(f => f.getString("jobName") == t).map(f => s"${f.getString("host")}:${f.getInt("port")}")
-      }
 
       // here we should report to driver
+      def reportToMaster() = {
+        tfWorker.client.sendRequest(driverOutputStream, ReportToMasterRequest(tfWorker._host, port, jobName, taskIndex, isPs))
+        tfWorker.client.readResponse(driverInputStream).asInstanceOf[ReportToMasterResponse]
+      }
+
       reportToMaster()
+
+      def fetchClusterSpec(): ClusterSpecResponse = {
+        tfWorker.client.sendRequest(driverOutputStream, ClusterSpecRequest())
+        tfWorker.client.readResponse(driverInputStream).asInstanceOf[ClusterSpecResponse]
+      }
+
       // wait until all workers have been registered
       var waitCount = 0
       val maxWaitCount = 100
       var noWait = false
-      val clusterSpecRef = new AtomicReference[ClusterSpec]()
+      val clusterSpecRef = new AtomicReference[ClusterSpecResponse]()
       while (!noWait && waitCount < maxWaitCount) {
-        val response = fetchClusterFromMaster
-        val infos = JSONArray.fromObject(response)
-        println(s"Waiting all worker/ps started. Wait times: ${waitCount} times. Already registered tf worker/ps: ${infos.size()}")
-        if (infos.size == LIMIT) {
-          val workerList = getHostAndPortFromJson(infos, "worker")
-          val psList = getHostAndPortFromJson(infos, "ps")
-          clusterSpecRef.set(new ClusterSpec(workerList.toList, psList.toList))
+        val response = fetchClusterSpec()
+        val totalRegistered = response.workerTasks.size + response.psTasks.size
+        logInfo(s"Waiting all worker/ps started. Wait times: ${waitCount} times. Already registered tf worker/ps: ${totalRegistered}")
+        if (totalRegistered == LIMIT) {
+          clusterSpecRef.set(response)
           noWait = true
         } else {
           Thread.sleep(5000)
@@ -195,16 +176,13 @@ class SQLDTFAlg extends SQLAlg with Functions {
         }
       }
 
-      NetUtils.releasePort(holdPort)
       if (clusterSpecRef.get() == null) {
-        throw new RuntimeException(s"Fail to create tensorflow cluster, this maybe caused by  executor cannot connect driver at ${driverHost}:${driverPort}")
+        throw new RuntimeException(s"Fail to create tensorflow cluster, this maybe caused by  executor cannot connect driver at ${tempSocketServerHost}:${tempSocketServerPort}")
       }
 
       val clusterSpec = clusterSpecRef.get()
-
-
       val clusterSpecJson = new JSONObject()
-      clusterSpecJson.put("worker", clusterSpec.worker.asJava)
+      clusterSpecJson.put("worker", clusterSpec.workers.asJava)
       clusterSpecJson.put("ps", clusterSpec.ps.asJava)
 
       println(clusterSpecJson.toString)
@@ -272,6 +250,8 @@ class SQLDTFAlg extends SQLAlg with Functions {
 
       var score = 0.0
       var trainFailFlag = false
+
+      NetUtils.releasePort(holdPort)
 
       if (!isPs) {
         try {
@@ -346,8 +326,8 @@ class SQLDTFAlg extends SQLAlg with Functions {
         var shouldWait = true
 
         def fetchClusterStatusFromMaster = {
-          Request.Get(s"http://${driverHost}:${driverPort}/cluster/worker/finish?cluster=${clusterUuid}")
-            .execute().returnContent().asString()
+          tfWorker.client.sendRequest(driverOutputStream, JobStatusRequest(jobName, taskIndex, true))
+          tfWorker.client.readResponse(driverInputStream).asInstanceOf[JobStatusResponse]
         }
 
         // PS should wait until
@@ -355,7 +335,8 @@ class SQLDTFAlg extends SQLAlg with Functions {
         // PS python worker use thread.join to keep it alive .
         while (shouldWait) {
           val response = fetchClusterStatusFromMaster
-          if (response.toInt == clusterSpec.worker.size) {
+          val workSize = response.jobStatus.filter(f => f.done && !f.isPs)
+          if (workSize == clusterSpec.workers.size) {
             shouldWait = false
           }
           try {
@@ -364,7 +345,7 @@ class SQLDTFAlg extends SQLAlg with Functions {
             case e: Exception =>
               shouldWait = false
           }
-          println(s"check worker finish size. targetSize:${clusterSpec.worker.size} vs ${response.toInt}")
+          println(s"check worker finish size. targetSize:${clusterSpec.workers.size} vs ${workSize}")
         }
         pythonWorker.get().destroy()
         pythonPSThread.interrupt()
@@ -373,7 +354,8 @@ class SQLDTFAlg extends SQLAlg with Functions {
       val modelTrainEndTime = System.currentTimeMillis()
       if (!isPs) {
         if (!trainFailFlag) {
-          reportToMaster("/cluster/worker/status")
+          tfWorker.client.sendRequest(driverOutputStream, JobStatusRequest(jobName, taskIndex, true))
+          tfWorker.client.readResponse(driverInputStream).asInstanceOf[JobStatusResponse]
         }
         val modelTrainEndTime = System.currentTimeMillis()
 
