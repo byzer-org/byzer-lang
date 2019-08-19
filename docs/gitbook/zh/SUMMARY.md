@@ -28,12 +28,9 @@
     * [编译&运行&部署](installation/README.md)
         * [使用Docker安装体验](installation/docker.md)
         * [登录我们的体验站点](installation/trymlsql.md)
-        * [自助编译](installation/compile.md)           
-        * [如何运行](installation/run.md)
-        * [启动参数说明](installation/startup-configuration.md)
-        * [使用docker快速体验MLSQL-Engine](installation/docker-fast.md)
-        * [MLSQL IDE开发环境配置](installation/ide.md)
-        
+        * [下载预编译的安装包](installation/downloa_prebuild_package.md)
+        * [自助下载源码编译打包](installation/compile.md)
+    * [MLSQL语法指南](grammar/README.md)                                       
     * [数据源](datasource/README.md)      
         * [JDBC](datasource/jdbc.md)
         * [ElasticSearch](datasource/es.md)
@@ -160,6 +157,9 @@
         
 
 * 开发者指南
+    * [自己写脚本启动MLSQL Engine](installation/run.md)
+        * [启动参数说明](installation/startup-configuration.md)       
+        * [MLSQL IDE开发环境配置](installation/ide.md)
     * [MLSQL-ET开发指南](develop/et.md) 
     * [MLSQL数据源开发指南](develop/datasource.md)
     * [Ambari HDP Spark多版本兼容](develop/ambari_multi_spark.md)

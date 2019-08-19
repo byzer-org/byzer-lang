@@ -1,6 +1,8 @@
-# 自助编译打包
+# 自助下载源码编译打包
 
-## MLSQL-Engine
+因为MLSQL Stack包含三个部件，所以为了运行起一个完整的Stack,您需要编译三个项目
+
+## MLSQL Engine
 
 1. clone项目
 
@@ -16,16 +18,16 @@ export MLSQL_SPARK_VERSION=2.4
 ./dev/package.sh
 ```
 
-你会在如下目录发现一个jar包：
+你会在如下目录发现一个jar包(注意，需要把x.x.x替换为实际的版本,后续相同)：
 
 ```
-streamingpro-mlsql/target/streamingpro-mlsql-spark_2.4-1.2.0-SNAPSHOT.jar
+streamingpro-mlsql/target/streamingpro-mlsql-spark_2.4-x.x.x-SNAPSHOT.jar
 ```
 
 大概280多M。 接着手动创建一个发行包：
 
 ```
-export VERSION=1.2.0-SNAPSHOT
+export VERSION=x.x.x-SNAPSHOT
 mkdir -p /tmp/mlsql-server/libs
 cp  streamingpro-mlsql/target/streamingpro-mlsql-spark_2.4-${VERSION}.jar /tmp/mlsql-server/libs
 cp dev/start-local.sh /tmp/mlsql-server
@@ -44,7 +46,7 @@ cluster 和engine在同一个项目里。
 
 ```
 cd streamingpro
-export MLSQL_CLUSTER_VERSION=${MLSQL_CLUSTER_VERSION:-1.2.0-SNAPSHOT}
+export MLSQL_CLUSTER_VERSION=${MLSQL_CLUSTER_VERSION:-x.x.x-SNAPSHOT}
 mvn -DskipTests -Pcluster-shade -am -pl streamingpro-cluster clean package
 cd streamingpro-cluster/
 ```
@@ -52,7 +54,7 @@ cd streamingpro-cluster/
 编译完成后，在target 目录会有如下文件：
 
 ```
-export VERSION=1.2.0-SNAPSHOT
+export VERSION=-2.4_2.11-x.x.x-SNAPSHOT
 target/streamingpro-cluster-${VERSION}.jar
 ```
 
@@ -64,7 +66,7 @@ target/streamingpro-cluster-${VERSION}.jar
 ```
 # make sure you are in  streamingpro-cluster
 #cd streamingpro-cluster/
-export VERSION=1.2.0-SNAPSHOT
+export VERSION=-2.4_2.11-x.x.x-SNAPSHOT
 mkdir -p /tmp/mlsql-cluster/
 cp  target/streamingpro-cluster-${VERSION}.jar /tmp/mlsql-cluster/
 cp dev/mlsql-cluster-docker/start.sh  /tmp/mlsql-cluster
@@ -78,9 +80,9 @@ export MLSQL_CLUSTER_JAR=streamingpro-cluster-${VERSION}.jar
 ./start.sh
 ```
 
-这个时候查看127.0.0.1:8080/backend/active是否可以访问（返回{}）。
+这个时候查看127.0.0.1:8080/backend/active是否可以访问，如果成功则会返回{}。
 
-## MLSQL-Console
+## MLSQL Console
 
 1. 下载项目
 
@@ -97,7 +99,7 @@ mvn clean package -Pshade
 这个时候在target目录有个文件：
 
 ```
-export VERSION=1.2.0-SNAPSHOT
+export VERSION=x.x.x-SNAPSHOT
 target/mlsql-api-console-${VERSION}.jar
 ```
 
@@ -106,7 +108,7 @@ target/mlsql-api-console-${VERSION}.jar
 4. 创建发行包
 
 ```
-export VERSION=1.2.0-SNAPSHOT
+export VERSION=x.x.x-SNAPSHOT
 cd mlsql-api-console
 mkdir -p /tmp/mlsql-console/
 cp target/mlsql-api-console-${VERSION}.jar /tmp/mlsql-console/
