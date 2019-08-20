@@ -95,5 +95,30 @@ and systemParam.envs='''{"MLFLOW_CONDA_HOME":"/anaconda3"}''';
 
 备注: 你可以通过`conda env list --json`命令查看创建的conda环境信息
 
+## 获取环境名称
+
+如果你只是希望看某个环境的名称，你可以用下面的代码来实现。
+
+```sql
+set dependencies='''
+name: tutorial4
+dependencies:
+  - python=3.6
+  - pip
+  - pip:
+    - --index-url https://mirrors.aliyun.com/pypi/simple/
+    - numpy==1.14.3
+    - kafka==1.3.5
+    - pyspark==2.3.2
+    - pandas==0.22.0
+''';
+
+load script.`dependencies` as dependencies;
+
+run command as PythonEnvExt.`/tmp/jack` where condaFile="dependencies" and command="name";
+```
+
+将command设置为 name即可。
+
 
 
