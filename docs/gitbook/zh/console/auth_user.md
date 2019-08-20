@@ -119,11 +119,11 @@ Error:
 
 为了能够访问该表，首先，你要将该表添加到Team里：
 
-WX20190819-184416.png)
+![](https://upload-images.jianshu.io/upload_images/WX20190819-184416.png)
 
 接着添加到对应的Role里，这个时候你还需要选择需要对这个表进行什么操作。我这里选择了load权限。
 
-WX20190819-184458.png)
+![](https://upload-images.jianshu.io/upload_images/WX20190819-184458.png)
 
 现在，就可以访问该表了。
 

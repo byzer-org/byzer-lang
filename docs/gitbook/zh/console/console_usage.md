@@ -4,10 +4,10 @@ MLSQL 目前已经初步有一套Web Console 供使用。界面相对来说也�
 
 ## 工作区介绍 
 
-![](http://docs.mlsql.tech/upload_images/upload_images/1063603-ad4b2e91807adf66.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1000)
+![](http://docs.mlsql.tech/upload_images/1063603-ad4b2e91807adf66.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1000)
 
 
-![](http://docs.mlsql.tech/upload_images/upload_images/1063603-906e3cbed89a5828.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1000)
+![](http://docs.mlsql.tech/upload_images/1063603-906e3cbed89a5828.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1000)
 
 下面简单介绍下各个工作区：
 

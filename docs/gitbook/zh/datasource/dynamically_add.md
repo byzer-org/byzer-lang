@@ -3,44 +3,45 @@
 我们启动MLSQL-Engine之后，会发现，哦，忘了添加MongoDB依赖了。这个时候无法通过MLSQL语言访问MongoDB。
 MLSQL支持数据源中心的概念，可以动态添加需要的依赖。
 
-过滤出mongodb数据源：
+通过如下脚本查看目前支持的可动态添加的数据源：
 
 ```sql
-select 1 as a as fakeTable;
-set repository="http://datasource.repository.mlsql.tech";
-
-run fakeTable as DataSourceExt.`` where repository="${repository}" and command="list" as datasource;
-select * from datasource where name="mongo" as output;
+run command as DataSourceExt.`` 
+where command="list" 
+and sparkV="2.4" 
+and scalaV="2.11"
+as datasource;
 ```
 
-在结果里，我们会看到对于MongoDB而言有两个jar包依赖，一个是spark驱动，一个是原生的driver驱动。
-右侧里面罗列了所有可选版本。
+用户需要指定spark的版本以及scala的版本。目前sparkV有两个可选值：2.3/2.4, scalaV为 2.11.
 
-接着，我们分别根据前面的信息，把两个jar包都加上：
+接着我们根据名字找到所有可用版本，这里我们以ES为例子：
 
 ```sql
-run fakeTable as DataSourceExt.`mongo/org.mongodb/mongo-java-driver/3.9.0` where repository="${repository}" and command="add";
-run fakeTable as DataSourceExt.`mongo/org.mongodb.spark/mongo-spark-connector_2.11/2.4.0` where repository="${repository}" and command="add";
+run command as DataSourceExt.`es` 
+where command="version" and sparkV="2.4" and scalaV="2.11"
+as datasource;
 ```
 
-这个时候，相应的jar包会被添加到driver/executor端，接着你就可以操作MongoDB了，比如：
+
+我们选择最新的7.3.0版本的ES,然后按如下指令进行动态添加：
 
 ```sql
-set data='''
-{"jack":"cool"}
-''';
-
-load jsonStr.`data` as data1;
-
-save overwrite data1 as mongo.`twitter/cool` where
-    partitioner="MongoPaginateBySizePartitioner"
-and uri="mongodb://127.0.0.1:27017/twitter";
-
-load mongo.`twitter/cool` where
-    partitioner="MongoPaginateBySizePartitioner"
-and uri="mongodb://127.0.0.1:27017/twitter"
-as table1;
-select * from table1 as output1;
+run command as DataSourceExt.`es/7.3.0` 
+where command="add" and sparkV="2.4" and scalaV="2.11"
+as datasource;
 ```
- 
+
+添加完毕后会显示如下结果：
+
+```
+desc
+
+Datasource is loading jar from ./dataousrce_upjars/elasticsearch-spark-20_2.11-7.3.0.jar"]
+```
+
+现在，你可以使用最新的ES驱动加载和存储ES了。
+
+我们后续会努力添加更多的数据源支持。
+
 
