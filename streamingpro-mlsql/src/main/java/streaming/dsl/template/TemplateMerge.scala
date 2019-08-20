@@ -19,7 +19,8 @@
 package streaming.dsl.template
 
 import org.joda.time.DateTime
-import streaming.common.RenderEngine
+import tech.mlsql.common.utils.evaluate.RenderEngine
+
 
 /**
   * Created by allwefantasy on 29/3/2018.

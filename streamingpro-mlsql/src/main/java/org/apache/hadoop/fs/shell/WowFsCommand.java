@@ -22,7 +22,7 @@ import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.classification.InterfaceStability;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
-import streaming.common.PathFun;
+import tech.mlsql.common.utils.path.PathFun;
 
 import java.io.IOException;
 import java.io.PrintStream;

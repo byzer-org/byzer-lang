@@ -9,7 +9,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>streamingpro-dsl</artifactId>
+    <artifactId>streamingpro-dsl-${spark.bigversion}_${scala.binary.version}</artifactId>
     <dependencies>
         <dependency>
             <groupId>org.antlr</groupId>

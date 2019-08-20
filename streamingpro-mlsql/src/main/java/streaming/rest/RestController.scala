@@ -20,7 +20,6 @@ package streaming.rest
 
 import _root_.streaming.core._
 import _root_.streaming.core.strategy.platform.{PlatformManager, SparkRuntime}
-import _root_.streaming.dsl.mmlib.algs.tf.cluster.{ClusterSpec, ClusterStatus, ExecutorInfo}
 import _root_.streaming.dsl.{MLSQLExecuteContext, ScriptSQLExec, ScriptSQLExecListener}
 import _root_.streaming.log.WowLog
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -28,8 +27,8 @@ import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import net.csdn.annotation.rest.{At, _}
 import net.csdn.common.collections.WowCollections
 import net.csdn.common.path.Url
+import net.csdn.modules.http.ApplicationController
 import net.csdn.modules.http.RestRequest.Method._
-import net.csdn.modules.http.{ApplicationController, ViewType}
 import net.csdn.modules.transport.HttpTransportService
 import org.apache.spark.ps.cluster.Message
 import org.apache.spark.sql._
@@ -37,6 +36,7 @@ import org.apache.spark.sql.execution.datasources.json.WowJsonInferSchema
 import org.apache.spark.sql.mlsql.session.{MLSQLSparkSession, SparkSessionCacheManager}
 import org.apache.spark.{MLSQLConf, SparkInstanceService}
 import tech.mlsql.MLSQLEnvKey
+import tech.mlsql.common.utils.serder.json.JSONTool
 import tech.mlsql.job.{JobManager, MLSQLJobType}
 
 import scala.collection.JavaConversions._
@@ -106,39 +106,60 @@ class RestController extends ApplicationController with WowLog {
         paramAsLong("timeout", -1L)
       )
       val context = createScriptSQLExecListener(sparkSession, jobInfo.groupId)
-      if (paramAsBoolean("async", false)) {
-        JobManager.asyncRun(sparkSession, jobInfo, () => {
-          try {
+
+      def query = {
+        if (paramAsBoolean("async", false)) {
+          JobManager.asyncRun(sparkSession, jobInfo, () => {
+            try {
+              ScriptSQLExec.parse(param("sql"), context,
+                skipInclude = paramAsBoolean("skipInclude", false),
+                skipAuth = paramAsBoolean("skipAuth", true),
+                skipPhysicalJob = paramAsBoolean("skipPhysicalJob", false),
+                skipGrammarValidate = paramAsBoolean("skipGrammarValidate", true))
+
+              outputResult = getScriptResult(context, sparkSession)
+              htp.post(new Url(param("callback")), Map("stat" -> s"""succeeded""", "res" -> outputResult))
+            } catch {
+              case e: Exception =>
+                e.printStackTrace()
+                val msgBuffer = ArrayBuffer[String]()
+                if (paramAsBoolean("show_stack", false)) {
+                  format_full_exception(msgBuffer, e)
+                }
+                htp.post(new Url(param("callback")), Map("stat" -> s"""failed""", "msg" -> (e.getMessage + "\n" + msgBuffer.mkString("\n"))))
+            }
+          })
+        } else {
+          JobManager.run(sparkSession, jobInfo, () => {
             ScriptSQLExec.parse(param("sql"), context,
               skipInclude = paramAsBoolean("skipInclude", false),
               skipAuth = paramAsBoolean("skipAuth", true),
               skipPhysicalJob = paramAsBoolean("skipPhysicalJob", false),
-              skipGrammarValidate = paramAsBoolean("skipGrammarValidate", true))
+              skipGrammarValidate = paramAsBoolean("skipGrammarValidate", true)
+            )
+            if (!silence) {
+              outputResult = getScriptResult(context, sparkSession)
+            }
+          })
+        }
+      }
 
-            outputResult = getScriptResult(context, sparkSession)
-            htp.post(new Url(param("callback")), Map("stat" -> s"""succeeded""", "res" -> outputResult))
-          } catch {
-            case e: Exception =>
-              e.printStackTrace()
-              val msgBuffer = ArrayBuffer[String]()
-              if (paramAsBoolean("show_stack", false)) {
-                format_full_exception(msgBuffer, e)
-              }
-              htp.post(new Url(param("callback")), Map("stat" -> s"""failed""", "msg" -> (e.getMessage + "\n" + msgBuffer.mkString("\n"))))
-          }
-        })
-      } else {
-        JobManager.run(sparkSession, jobInfo, () => {
-          ScriptSQLExec.parse(param("sql"), context,
-            skipInclude = paramAsBoolean("skipInclude", false),
-            skipAuth = paramAsBoolean("skipAuth", true),
-            skipPhysicalJob = paramAsBoolean("skipPhysicalJob", false),
-            skipGrammarValidate = paramAsBoolean("skipGrammarValidate", true)
-          )
-          if (!silence) {
-            outputResult = getScriptResult(context, sparkSession)
-          }
-        })
+      def analyze = {
+        ScriptSQLExec.parse(param("sql"), context,
+          skipInclude = false,
+          skipAuth = true,
+          skipPhysicalJob = true,
+          skipGrammarValidate = true)
+        context.preProcessListener.map(f => JSONTool.toJsonStr(f.analyzedStatements.map(_.unwrap))) match {
+          case Some(i) => outputResult = i
+          case None =>
+        }
+      }
+
+      params.getOrDefault("executeMode", "query") match {
+        case "query" => query
+        case "analyze" => analyze
+        case _ => query
       }
 
     } catch {
@@ -353,44 +374,6 @@ class RestController extends ApplicationController with WowLog {
   // end --------------------------------------------------------
 
 
-  // tensorflow cluster driver api
-  // begin -------------------------------------------
-  @At(path = Array("/cluster/register"), types = Array(GET, POST))
-  def registerCluster = {
-    val Array(host, port) = param("hostAndPort").split(":")
-    val jobName = param("jobName")
-    val taskIndex = param("taskIndex").toInt
-    ClusterSpec.addJob(param("cluster"), ExecutorInfo(host, port.toInt, jobName, taskIndex))
-    render(200, "{}")
-  }
-
-  // when tensorflow cluster is started ,
-  // once the worker finish, it will report to this api
-  @At(path = Array("/cluster/worker/status"), types = Array(GET, POST))
-  def clusterWorkerStatus = {
-    val Array(host, port) = param("hostAndPort").split(":")
-    val jobName = param("jobName")
-    val taskIndex = param("taskIndex").toInt
-    ClusterStatus.count(param("cluster"), ExecutorInfo(host, port.toInt, jobName, taskIndex))
-    render(200, "{}")
-  }
-
-  // the ps in tensorlfow cluster will check worker status,
-  // once all workers finish, then it will kill ps
-  @At(path = Array("/cluster/worker/finish"), types = Array(GET, POST))
-  def clusterWorkerFinish = {
-    val workerFinish = ClusterStatus.count(param("cluster"))
-    render(200, workerFinish + "")
-  }
-
-  @At(path = Array("/cluster"), types = Array(GET))
-  def cluster = {
-    render(200, toJsonString(ClusterSpec.clusterSpec(param("cluster"))), ViewType.string)
-  }
-
-  //end -------------------------------------------
-
-
   @At(path = Array("/check"), types = Array(GET, POST))
   def check = {
     render(WowCollections.map())
@@ -422,7 +405,7 @@ class RestController extends ApplicationController with WowLog {
   }
 
   //end -------------------------------------------
- 
+
   // help method
   // begin --------------------------------------------------------
   def runtime = PlatformManager.getRuntime

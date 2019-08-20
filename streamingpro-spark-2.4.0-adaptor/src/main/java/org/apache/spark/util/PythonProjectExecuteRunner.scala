@@ -25,7 +25,7 @@ import org.apache.spark.api.python.WowPythonRunner
 import org.apache.spark.{SparkEnv, TaskContext}
 import org.apache.spark.sql.types.DataType
 import org.apache.spark.util.ObjPickle.pickle
-import streaming.log.Logging
+import tech.mlsql.common.utils.log.Logging
 
 import scala.collection.mutable.ArrayBuffer
 import scala.io.Source

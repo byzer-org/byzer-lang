@@ -22,7 +22,7 @@ import java.sql.Timestamp
 
 import org.apache.spark.sql.execution.streaming.MemoryStream
 import org.apache.spark.sql.streaming.StreamingQuery
-import streaming.log.Logging
+import tech.mlsql.common.utils.log.Logging
 
 /**
   * Created by allwefantasy on 17/5/2018.

@@ -26,7 +26,7 @@ import kafka.common.TopicAndPartition
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.spark.streaming.kafka.OffsetRange
 import org.apache.spark.streaming.{SparkStreamingOperator, StreamingContext, Time}
-import streaming.common.HDFSOperator
+import tech.mlsql.common.utils.hdfs.HDFSOperator
 
 
 /**

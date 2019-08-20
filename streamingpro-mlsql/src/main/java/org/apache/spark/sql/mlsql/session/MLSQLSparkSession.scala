@@ -24,7 +24,7 @@ import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
 import streaming.core.strategy.platform.{PlatformManager, SparkRuntime}
 import streaming.core.stream.MLSQLStreamManager
-import streaming.log.Logging
+import tech.mlsql.common.utils.log.Logging
 
 import scala.collection.mutable.{HashSet => MHSet}
 

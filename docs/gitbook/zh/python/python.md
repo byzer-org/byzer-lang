@@ -2,30 +2,6 @@
 
 什么场景需要单实例运行Python项目呢？ 算法。部分算法只能单机，比如Sklearn。这个时候我们就需要某个Python进程能够拿到所有数据并且进行处理了。
 
-## 前提条件
-
-如果MLSQL运行在Local模式下，你只要确保conda环境有即可。如果你需要yarn环境下使用，请确保每个节点都安装有conda,并且
-确保启动脚本中按如下要求进行设置：
-
-
-```
-
--streaming.ps.cluster.enable  should be  enabled.
-
-Please make sure
-1. you have the uber-jar of mlsql placed in --jars
-2. Put mlsql-ps-service_xxx_2.11-xxx.jar to $SPARK_HOME/libs 
-
-More detail about [mlsql-ps-service](https://github.com/allwefantasy/mlsql-ps-service)
-
-Otherwise the executor will
-fail to start and the whole application will fails.
-
-```
-
-否则会出现不可预料错误。
-
-
 ## 案例场景
 
 假设你有个python项目叫pj1, 你需要按前面章节的要求添加MLproject 和 conda.yaml文件。接着你需要上传这个项目到hdfs上。

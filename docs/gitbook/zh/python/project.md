@@ -1,7 +1,11 @@
-# Python项目规范
+# Python项目
 
-MLSQL对Python项目具有极低的侵入性，你只要额外增加两个问题就可以让一个标准的python程序变成MLSQL可识别的Python项目。
-我们有一个如下的示例项目：
+MLSQL除了支持前面提到的脚本处理，还支持复杂的Python项目。为了让MLSQL能够识别出你的项目，需要有两个额外的描述文件：
+
+1. MLproject
+2. conda.yaml 
+
+一个比较典型的目录结构如下：
 
 ```
 examples/sklearn_elasticnet_wine/
@@ -12,9 +16,9 @@ examples/sklearn_elasticnet_wine/
 ├── train.py
 ```
 
-里面有两个文件，MLproject和 conda.yaml 是需要额外提供的。
+## MLProject
 
-MLProject文件内容：
+一个典型的MLProject文件是这样的：
 
 ```yaml
 name: tutorial
@@ -30,6 +34,7 @@ entry_points:
     api_predict:        
         command: "python predict.py"
 ```
+
 MLProject 指定了项目名称以及conda.yaml描述文件。
 同时指定了该项目的入口。
 
@@ -38,7 +43,9 @@ MLProject 指定了项目名称以及conda.yaml描述文件。
 
 所以MLProject其实是一个描述文件，指明在什么场景跑什么脚本。
 
-第二个是conda.yaml文件：
+## conda.yaml
+
+我们其实在前面已经见过，这个是一个标准的conda环境描述文件。
 
 ```
 name: tutorial
@@ -53,4 +60,13 @@ dependencies:
     - pandas==0.22.0
 ```
 
-描述每个人物需要依赖的环境。
+
+## 如何使用
+
+通常而言，conda.yaml文件的环境需要事先通过使用PythonEnvExt来进行创建，否则可能存在并发环境创建而导致失败。
+对于一个Python的项目使用，我们有两种使用场景：
+
+1. 分布式运行这个Python项目，主要用于数据处理。
+2. 将数据全部放到一个节点上，然后使用该Python项目进行处理。通常用于模型构建。
+
+我们在下面的文章中，会分成两个部分来进行阐述。

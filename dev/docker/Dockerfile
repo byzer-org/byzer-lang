@@ -52,6 +52,7 @@ ENV MAVEN_CONFIG "$USER_HOME_DIR/.m2"
 ARG SPARK_VERSION
 ARG MLSQL_SPARK_VERSION
 ARG MLSQL_VERSION
+ARG SCALA_VERSION
 
 ENV URL_BASE http://www.apache.org/dyn/closer.cgi/
 ENV FILENAME spark-${SPARK_VERSION}-bin-hadoop2.7.tgz
@@ -74,7 +75,7 @@ RUN mkdir -p /home/deploy/mlsql-console
 RUN mkdir -p /tmp/__mlsql__/logs
 
 RUN mkdir -p /home/deploy/mlsql/libs
-ENV MLSQL_DISTRIBUTIOIN_URL="streamingpro-mlsql-spark_${MLSQL_SPARK_VERSION}-${MLSQL_VERSION}.jar"
+ENV MLSQL_DISTRIBUTIOIN_URL="streamingpro-mlsql-spark_${MLSQL_SPARK_VERSION}_${SCALA_VERSION}-${MLSQL_VERSION}.jar"
 ADD  ${MLSQL_DISTRIBUTIOIN_URL} /home/deploy/mlsql/libs
 ADD  lib/ansj_seg-5.1.6.jar /home/deploy/mlsql/libs
 ADD  lib/nlp-lang-1.7.8.jar /home/deploy/mlsql/libs

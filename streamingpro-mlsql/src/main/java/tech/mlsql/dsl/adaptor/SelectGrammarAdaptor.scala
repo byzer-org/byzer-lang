@@ -1,7 +1,6 @@
 package tech.mlsql.dsl.adaptor
 
 import org.antlr.v4.runtime.misc.Interval
-import streaming.dsl.DslAdaptor
 import streaming.dsl.parser.{DSLSQLLexer, DSLSQLParser}
 import streaming.dsl.template.TemplateMerge
 import tech.mlsql.dsl.processor.GrammarProcessListener

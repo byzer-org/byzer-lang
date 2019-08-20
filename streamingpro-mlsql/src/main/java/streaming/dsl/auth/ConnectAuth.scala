@@ -22,6 +22,7 @@ import streaming.core.datasource.DataSourceRegistry
 import streaming.dsl._
 import streaming.dsl.parser.DSLSQLParser._
 import streaming.dsl.template.TemplateMerge
+import tech.mlsql.dsl.adaptor.DslTool
 import tech.mlsql.dsl.processor.AuthProcessListener
 
 /**

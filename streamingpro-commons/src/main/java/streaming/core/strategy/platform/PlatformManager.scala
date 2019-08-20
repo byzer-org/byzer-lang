@@ -19,16 +19,16 @@
 package streaming.core.strategy.platform
 
 import java.util.concurrent.atomic.{AtomicInteger, AtomicReference}
-import java.util.{List => JList, Map => JMap}
+import java.util.{Map => JMap}
 
 import net.csdn.ServiceFramwork
 import net.csdn.bootstrap.Application
 import net.csdn.common.logging.Loggers
 import serviceframework.dispatcher.StrategyDispatcher
-import streaming.common.ParamsUtil
 import streaming.common.zk.{ZKClient, ZkRegister}
-import streaming.core.{Dispatcher, StreamingApp}
 import streaming.core.strategy.JobStrategy
+import streaming.core.{Dispatcher, StreamingApp}
+import tech.mlsql.common.utils.shell.command.ParamsUtil
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable.ArrayBuffer

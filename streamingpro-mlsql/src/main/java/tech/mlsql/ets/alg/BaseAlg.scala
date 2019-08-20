@@ -1,6 +1,8 @@
 package tech.mlsql.ets.alg
 
-import streaming.common.{HDFSOperator, PathFun}
+import tech.mlsql.common.utils.hdfs.HDFSOperator
+import tech.mlsql.common.utils.path.PathFun
+
 
 /**
   * 2019-05-15 WilliamZhu(allwefantasy@gmail.com)

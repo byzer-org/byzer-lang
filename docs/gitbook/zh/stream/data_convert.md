@@ -1,8 +1,46 @@
-# 如何将Kafka中JSON/CSV转化为表
+# 自动将Kafka中的JSON数据展开为表
 
 在大多数系统里，Kafka的value都是json格式的，当然也有其他格式。这里我们会重点介绍如何使用MLSQL自动将json/csv展开成
 表，方便后续操作。
 
+
+## 自动推测（目前只支持json）
+
+```sql
+-- the stream name, should be uniq.
+set streamName="kafkaStreamExample";
+
+-- sample 2 records and infer the schema from kafka server "127.0.0.1:9092" and the
+-- topic is wow.
+-- Make sure this statement is placed before the load statement.
+!kafkaTool registerSchema 2 records from "127.0.0.1:9092" wow;
+
+-- convert table as stream source
+load kafka.`wow` options 
+kafka.bootstrap.servers="127.0.0.1:9092"
+as newkafkatable1;
+
+-- aggregation 
+select *  from newkafkatable1
+as table21;
+
+-- output the the result to console.
+save append table21  
+as rate.`/tmp/delta/wow-0` 
+options mode="Append"
+and duration="5"
+and checkpointLocation="/tmp/s-cpl4";
+```
+
+核心是下面这一句：
+
+```sql
+!kafkaTool registerSchema 2 records from "127.0.0.1:9092" wow;
+```
+
+系统会自动采集最新的两条Kafka数据，然后对数据进行schema推测，最后应用于流式程序里。
+
+## 手动指定
 
 我们先看如下一段代码：
 

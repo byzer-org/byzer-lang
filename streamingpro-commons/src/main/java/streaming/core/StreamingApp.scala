@@ -18,8 +18,8 @@
 
 package streaming.core
 
-import streaming.common.ParamsUtil
 import streaming.core.strategy.platform.PlatformManager
+import tech.mlsql.common.utils.shell.command.ParamsUtil
 
 
 object StreamingApp {

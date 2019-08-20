@@ -119,7 +119,7 @@ class JDBCSink(_options: Map[String, String]) extends Sink with Logging {
       override def close(errorOrNull: Throwable): Unit = {
         if (connection != null) {
           try {
-            sqlArray.map(_.execute()).size
+            sqlArray.map(_.executeBatch()).size
             connection.commit()
           } catch {
             case e: Exception =>

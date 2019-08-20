@@ -20,7 +20,8 @@ package streaming.dsl.mmlib.algs.python
 
 import org.apache.spark.sql.SparkSession
 import streaming.dsl.mmlib.algs.SQLPythonAlg
-import streaming.log.{Logging, WowLog}
+import streaming.log.WowLog
+import tech.mlsql.common.utils.log.Logging
 
 import scala.collection.JavaConverters._
 

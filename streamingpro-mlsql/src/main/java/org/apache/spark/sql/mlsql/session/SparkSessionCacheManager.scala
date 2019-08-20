@@ -27,7 +27,7 @@ import java.util.concurrent.{ConcurrentHashMap, Executors, TimeUnit}
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import org.apache.spark.sql.SparkSession
-import streaming.log.Logging
+import tech.mlsql.common.utils.log.Logging
 
 import scala.collection.JavaConverters._
 

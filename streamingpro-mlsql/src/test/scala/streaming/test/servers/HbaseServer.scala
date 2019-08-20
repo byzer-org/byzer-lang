@@ -27,7 +27,7 @@ class HbaseServer(version: String) extends WowBaseTestServer {
 
   override def composeYaml: String =
     s"""
-       |version: '2.1'
+       |version: '2'
        |services:
        |  hbase:
        |    image: harisekhon/hbase:${version}

@@ -24,12 +24,12 @@ import java.util.concurrent.atomic.AtomicReference
 
 import net.csdn.common.reflect.ReflectHelper
 import org.apache.commons.io.FileUtils
-import org.apache.spark.sql.Row
+import org.apache.spark.sql.{DataFrame, Row}
 import org.scalatest.{FlatSpec, Matchers}
 import serviceframework.dispatcher.{Compositor, StrategyDispatcher}
-import streaming.common.ParamsUtil
 import streaming.core.strategy.platform.{PlatformManager, SparkRuntime}
 import streaming.dsl.{MLSQLExecuteContext, ScriptSQLExec, ScriptSQLExecListener}
+import tech.mlsql.common.utils.shell.command.ParamsUtil
 import tech.mlsql.ets.ScriptRunner
 import tech.mlsql.job.{JobManager, MLSQLJobInfo, MLSQLJobProgress, MLSQLJobType}
 
@@ -133,6 +133,20 @@ trait BasicSparkOperation extends FlatSpec with Matchers {
     })
     holder.get()
 
+  }
+
+  def executeCodeWithoutPhysicalStage(runtime: SparkRuntime, code: String) = {
+    autoGenerateContext(runtime)
+    val jobInfo = createJobInfoFromExistGroupId(code)
+    ScriptSQLExec.context().execListener.addEnv("SKIP_PHYSICAL", "true")
+    ScriptRunner.runJob(code, jobInfo, (df) => {})
+    ScriptSQLExec.context().execListener.preProcessListener.get
+  }
+
+  def executeCodeWithCallback(runtime: SparkRuntime, code: String, f: DataFrame => Unit) = {
+    autoGenerateContext(runtime)
+    val jobInfo = createJobInfoFromExistGroupId(code)
+    ScriptRunner.runJob(code, jobInfo, f)
   }
 
   def executeCodeAsync(runtime: SparkRuntime, code: String, async: Boolean = false): Option[Array[Row]] = {

@@ -3,9 +3,9 @@ package tech.mlsql.dsl.includes
 import org.apache.http.client.fluent.Request
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.mlsql.session.MLSQLException
-import streaming.common.PathFun
 import streaming.dsl.IncludeSource
-import streaming.log.Logging
+import tech.mlsql.common.utils.log.Logging
+import tech.mlsql.common.utils.path.PathFun
 
 /**
   * 2019-05-12 WilliamZhu(allwefantasy@gmail.com)

@@ -26,11 +26,13 @@ import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.execution.datasources.json.WowJsonInferSchema
 import org.apache.spark.sql.types.{MapType, StringType}
 import org.apache.spark.util.PythonProjectExecuteRunner
-import streaming.common.HDFSOperator
-import streaming.common.ScalaMethodMacros.str
+import tech.mlsql.common.utils.lang.sc.ScalaMethodMacros.str
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib.algs.{Functions, SQLPythonAlg, SQLPythonFunc}
-import streaming.log.{Logging, WowLog}
+import streaming.log.WowLog
+import tech.mlsql.common.utils.env.python.BasicCondaEnvManager
+import tech.mlsql.common.utils.hdfs.HDFSOperator
+import tech.mlsql.common.utils.log.Logging
 
 import scala.collection.JavaConverters._
 

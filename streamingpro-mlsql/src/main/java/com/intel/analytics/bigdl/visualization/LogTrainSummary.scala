@@ -18,7 +18,9 @@
 
 package com.intel.analytics.bigdl.visualization
 
-import streaming.log.{Logging, WowLog}
+import org.apache.spark.internal.Logging
+import streaming.log.WowLog
+
 
 class LogTrainSummary(logDir: String,
                       appName: String) extends TrainSummary(logDir, appName) with Logging with WowLog {

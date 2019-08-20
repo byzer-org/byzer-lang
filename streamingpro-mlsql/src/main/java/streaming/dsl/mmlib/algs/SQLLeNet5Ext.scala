@@ -27,13 +27,13 @@ import com.intel.analytics.bigdl.utils.Engine
 import net.sf.json.JSONArray
 import org.apache.spark.ml.linalg.SQLDataTypes.VectorType
 import org.apache.spark.ml.linalg.{Vector, Vectors}
-import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession}
 import org.apache.spark.sql.expressions.UserDefinedFunction
-import streaming.common.HDFSOperator
+import org.apache.spark.sql.{DataFrame, SparkSession}
 import streaming.dsl.mmlib._
+import streaming.dsl.mmlib.algs.bigdl.BigDLFunctions
 import streaming.dsl.mmlib.algs.classfication.BaseClassification
 import streaming.dsl.mmlib.algs.param.BaseParams
-import streaming.dsl.mmlib.algs.bigdl.BigDLFunctions
+import tech.mlsql.common.utils.hdfs.HDFSOperator
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable.ArrayBuffer

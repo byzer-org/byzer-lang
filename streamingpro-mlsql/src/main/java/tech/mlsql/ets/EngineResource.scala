@@ -11,7 +11,8 @@ import streaming.dsl.auth._
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.Functions
 import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
-import streaming.log.{Logging, WowLog}
+import streaming.log.WowLog
+import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.dsl.auth.ETAuth
 import tech.mlsql.dsl.auth.dsl.mmlib.ETMethod._
 
@@ -127,7 +128,7 @@ class EngineResource(override val uid: String) extends SQLAlg with ETAuth with F
   final val cpus: Param[String] = new Param[String](this, "cpus", "")
   final val timeout: Param[Int] = new Param[Int](this, "timeout", "")
 
-  override def auth(etMethod: ETMethod ,path :String, params: Map[String, String]): List[TableAuthResult] = {
+  override def auth(etMethod: ETMethod, path: String, params: Map[String, String]): List[TableAuthResult] = {
 
     val vtable = MLSQLTable(
       Option(DB_DEFAULT.MLSQL_SYSTEM.toString),

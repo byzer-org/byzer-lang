@@ -4,9 +4,10 @@ import java.util.concurrent.Executors
 
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.streaming.StreamingQueryListener
-import streaming.crawler.HttpClientCrawler
 import streaming.dsl.ScriptSQLExec
-import streaming.log.{Logging, WowLog}
+import streaming.log.WowLog
+import tech.mlsql.common.utils.log.Logging
+import tech.mlsql.crawler.HttpClientCrawler
 import tech.mlsql.job.{JobManager, MLSQLJobInfo, MLSQLJobType}
 
 import scala.collection.JavaConverters._
@@ -21,7 +22,7 @@ object MLSQLStreamManager extends Logging with WowLog {
   private val store = new java.util.concurrent.ConcurrentHashMap[String, MLSQLJobInfo]()
   private val _listenerStore = new java.util.concurrent.ConcurrentHashMap[String, ArrayBuffer[MLSQLExternalStreamListener]]()
 
-    def listeners() = {
+  def listeners() = {
     _listenerStore
   }
 
@@ -192,9 +193,11 @@ class MLSQLStreamingQueryListener extends StreamingQueryListener with Logging wi
         MLSQLStreamManager.runEvent(MLSQLStreamEventName.terminated, job.jobName, p => {
           p.send(Map("streamName" -> job.jobName, "jsonContent" -> "{}"))
         })
-        MLSQLStreamManager.listeners().get(job.owner).filter(p => p.item.streamName == job.jobName).map(
-          f => uuids += f.item.uuid
-        )
+        MLSQLStreamManager.listeners().asScala.get(job.owner).map { items =>
+          items.filter(p => p.item.streamName == job.jobName).map(
+            f => uuids += f.item.uuid
+          )
+        }
       case None => logError(format(s"Stream job [${id}] is terminated. But we can not found it in JobManager."))
     }
 

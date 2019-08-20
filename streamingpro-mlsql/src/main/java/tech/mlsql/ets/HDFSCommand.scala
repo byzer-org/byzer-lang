@@ -4,10 +4,10 @@ import org.apache.hadoop.util.ToolRunner
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.mlsql.session.MLSQLException
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import streaming.common.JSONTool
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.Functions
 import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
+import tech.mlsql.common.utils.serder.json.JSONTool
 import tech.mlsql.ets.hdfs.WowFsShell
 
 /**

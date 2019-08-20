@@ -22,8 +22,9 @@ import java.util.{Map => JMap}
 
 import org.apache.http.client.fluent.Request
 import serviceframework.dispatcher.StrategyDispatcher
-import streaming.common.{DefaultShortNameMapping, HDFSOperator}
+import streaming.common.DefaultShortNameMapping
 import streaming.core.strategy.platform.{PlatformManager, StreamingRuntime}
+import tech.mlsql.common.utils.hdfs.HDFSOperator
 
 import scala.collection.JavaConversions._
 

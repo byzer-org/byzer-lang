@@ -4,7 +4,8 @@ import java.util.concurrent.TimeUnit
 
 import org.apache.spark.sql.streaming.{DataStreamWriter, Trigger}
 import org.apache.spark.sql.{DataFrameWriter, Row}
-import streaming.dsl.{DslTool, ScriptSQLExec}
+import streaming.dsl.ScriptSQLExec
+import tech.mlsql.dsl.adaptor.DslTool
 
 /**
   * 2019-03-20 WilliamZhu(allwefantasy@gmail.com)

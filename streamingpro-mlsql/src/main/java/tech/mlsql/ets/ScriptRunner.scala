@@ -51,7 +51,8 @@ object ScriptRunner {
         newContext
       } else context
       val skipAuth = newContext.execListener.env().getOrElse("SKIP_AUTH", "false").toBoolean
-      ScriptSQLExec.parse(code, newContext.execListener, false, skipAuth, false, false)
+      val skipPhysical = newContext.execListener.env().getOrElse("SKIP_PHYSICAL", "false").toBoolean
+      ScriptSQLExec.parse(code, newContext.execListener, false, skipAuth, skipPhysical, false)
       context.execListener.getLastSelectTable() match {
         case Some(tableName) =>
           if (spark.catalog.tableExists(tableName)) {
@@ -60,7 +61,6 @@ object ScriptRunner {
             Option(df)
           }
           else None
-        case None => None
         case None => None
       }
     })

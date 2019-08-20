@@ -7,7 +7,7 @@ import org.apache.spark.streaming.BasicSparkOperation
 import org.scalatest.BeforeAndAfterAll
 import streaming.core.strategy.platform.SparkRuntime
 import streaming.core.{BasicMLSQLConfig, SpecFunctions}
-import streaming.log.Logging
+import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.job.JobManager
 
 import scala.collection.JavaConverters._
