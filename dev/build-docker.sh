@@ -18,14 +18,15 @@ if [[ "${RELEASE}" != "true" ]];then
 
    export MLSQL_SPARK_VERSION=${MLSQL_SPARK_VERSION:-2.4}
    export SPARK_VERSION=${SPARK_VERSION:-2.4.3}
-   export MLSQL_DISTRIBUTIOIN_URL="streamingpro-mlsql-spark_${MLSQL_SPARK_VERSION}-${MLSQL_VERSION}.jar"
+   export SCALA_VERSION=${SCALA_VERSION:-2.11}
+   export MLSQL_DISTRIBUTIOIN_URL="streamingpro-mlsql-spark_${MLSQL_SPARK_VERSION}_2.11-${MLSQL_VERSION}.jar"
    export DISTRIBUTION=${MLSQL_SPARK_VERSION:-false}
 
    ./dev/package.sh
-   cp streamingpro-mlsql/target/streamingpro-mlsql-spark_${MLSQL_SPARK_VERSION}-${MLSQL_VERSION}.jar ./dev/docker
+   cp streamingpro-mlsql/target/streamingpro-mlsql-spark_${MLSQL_SPARK_VERSION}_${SCALA_VERSION}-${MLSQL_VERSION}.jar ./dev/docker
 
    cd $SELF
-   docker build --build-arg  MLSQL_VERSION=${MLSQL_VERSION} --build-arg SPARK_VERSION=${SPARK_VERSION} --build-arg MLSQL_SPARK_VERSION=${MLSQL_SPARK_VERSION} -t mlsql:${MLSQL_SPARK_VERSION}-${MLSQL_VERSION} ./docker
+   docker build --build-arg SCALA_VERSION=${SCALA_VERSION} --build-arg  MLSQL_VERSION=${MLSQL_VERSION} --build-arg SPARK_VERSION=${SPARK_VERSION} --build-arg MLSQL_SPARK_VERSION=${MLSQL_SPARK_VERSION} -t mlsql:${MLSQL_SPARK_VERSION}-${MLSQL_VERSION} ./docker
 else
    export MLSQL_VERSION=${MLSQL_VERSION:-1.1.7}
    export MLSQL_SPARK_VERSION=2.4

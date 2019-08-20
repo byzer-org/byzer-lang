@@ -1,75 +1,45 @@
-/*
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+package tech.mlsql.ets.tensorflow
 
-package streaming.dsl.mmlib.algs
-
-import java.io.File
-import java.nio.file.{Files, Paths}
+import java.io.{DataInputStream, DataOutputStream, File}
+import java.net.Socket
 import java.util
 import java.util.UUID
-import java.util.concurrent.atomic.{AtomicBoolean, AtomicReference}
+import java.util.concurrent.atomic.AtomicReference
 
-import net.sf.json.{JSONArray, JSONObject}
+import net.sf.json.JSONObject
 import org.apache.commons.io.FileUtils
-import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.{FileSystem, Path}
-import org.apache.http.client.fluent.{Form, Request}
-import org.apache.spark.{TaskContext, TaskContextImpl}
-import org.apache.spark.api.python.WowPythonRunner
-import org.apache.spark.ml.linalg.SQLDataTypes._
-import org.apache.spark.sql.catalyst.InternalRow
-import org.apache.spark.sql.catalyst.util.ArrayBasedMapData
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.types._
-import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession, functions => F}
-import org.apache.spark.util.ObjPickle._
-import org.apache.spark.util.VectorSerDer._
-import org.apache.spark.util.{ExternalCommandRunner, ObjPickle, TaskContextUtil, VectorSerDer}
-import streaming.core.strategy.platform.{PlatformManager, SparkRuntime}
+import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession}
+import org.apache.spark.util.{ExternalCommandRunner, ObjPickle, TaskContextUtil}
+import org.apache.spark.{MLSQLSparkUtils, TaskContext}
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.SQLPythonFunc._
-import streaming.dsl.mmlib.algs.tf.cluster.{ClusterSpec, ClusterStatus}
+import streaming.dsl.mmlib.algs.{Functions, SQLPythonFunc}
 import tech.mlsql.common.utils.hdfs.HDFSOperator
 import tech.mlsql.common.utils.network.NetUtils
+import tech.mlsql.ets.tensorflow.servers._
 
-import scala.collection.mutable
 import scala.collection.JavaConverters._
+import scala.collection.mutable
 
-/**
-  * Created by allwefantasy on 5/2/2018.
-  */
-class SQLDTFAlg extends SQLAlg with Functions {
+class DistributedTensorflow extends SQLAlg with Functions {
   override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
+
+    // We start a temp driver server, so the workers can connect it.
+    // It will be used to coordinate the ps workers.
+
+    val tfDriver = new TFDriver[String](new AtomicReference[String]("")) {
+      override def host: String = MLSQLSparkUtils.rpcEnv().address.host
+    }
+
+    val tempSocketServerHost = tfDriver._host
+    val tempSocketServerPort = tfDriver._port
+
 
     val keepVersion = params.getOrElse("keepVersion", "true").toBoolean
 
     val enableDataLocal = params.getOrElse("enableDataLocal", "false").toBoolean
-
-    var kafkaParam = mapParams("kafkaParam", params)
-
-    require(kafkaParam.size > 0, "kafkaParam should be configured")
-
-    var stopFlagNum = -1
-    if (!enableDataLocal) {
-      val (_kafkaParam, _newRDD) = writeKafka(df, path, params)
-      stopFlagNum = _newRDD.getNumPartitions
-      kafkaParam = _kafkaParam
-    }
 
     val systemParam = mapParams("systemParam", params)
     val fitParam = arrayParamsWithIndex("fitParam", params)
@@ -125,10 +95,8 @@ class SQLDTFAlg extends SQLAlg with Functions {
     incrementVersion(path, keepVersion)
 
     // create a new cluster name for tensorflow
-    val clusterUuid = UUID.randomUUID().toString
-    val driverHost = NetUtils.getHost
+
     val LIMIT = fitParam.length
-    val driverPort = PlatformManager.getRuntime.asInstanceOf[SparkRuntime].params.getOrDefault("streaming.driver.port", "9003").toString.toInt
 
     val wowRDD = fitParamRDD.map { paramAndIndex =>
       val f = paramAndIndex._2
@@ -145,9 +113,9 @@ class SQLDTFAlg extends SQLAlg with Functions {
       roleSpec.put("jobName", jobName)
       roleSpec.put("taskIndex", taskIndex)
 
-
-      val host = NetUtils.getHost
-      val holdPort = NetUtils.availableAndReturn(ClusterSpec.MIN_PORT_NUMBER, ClusterSpec.MAX_PORT_NUMBER)
+      val MIN_PORT_NUMBER = 2221
+      val MAX_PORT_NUMBER = 6666
+      val holdPort = NetUtils.availableAndReturn(MIN_PORT_NUMBER, MAX_PORT_NUMBER)
 
       if (holdPort == null) {
         throw new RuntimeException(s"Fail to create tensorflow cluster, maybe executor cannot bind port ")
@@ -155,39 +123,51 @@ class SQLDTFAlg extends SQLAlg with Functions {
 
       val port = holdPort.getLocalPort
 
-      def reportToMaster(path: String = "/cluster/register") = {
-        Request.Post(s"http://${driverHost}:${driverPort}${path}").bodyForm(Form.form().add("cluster", clusterUuid).
-          add("hostAndPort", s"${host}:${port}")
-          .add("jobName", f("jobName"))
-          .add("taskIndex", f("taskIndex"))
-          .build())
-          .execute().returnContent().asString()
-      }
 
-      def fetchClusterFromMaster = {
-        Request.Get(s"http://${driverHost}:${driverPort}/cluster?cluster=${clusterUuid}")
-          .execute().returnContent().asString()
-      }
+      val tfClient = new TFClient()
+      val socket = new Socket(tempSocketServerHost, tempSocketServerPort)
+      val driverOutputStream = new DataOutputStream(socket.getOutputStream)
+      val driverInputStream = new DataInputStream(socket.getInputStream)
 
-      def getHostAndPortFromJson(infos: JSONArray, t: String) = {
-        infos.asScala.map(f => f.asInstanceOf[JSONObject]).filter(f => f.getString("jobName") == t).map(f => s"${f.getString("host")}:${f.getInt("port")}")
-      }
 
       // here we should report to driver
+      def reportToMaster() = {
+        tfClient.sendRequest(driverOutputStream, ReportToMasterRequest(MLSQLSparkUtils.rpcEnv().address.host, port, jobName, taskIndex, isPs))
+        tfClient.readResponse(driverInputStream).asInstanceOf[ReportToMasterResponse]
+      }
+
       reportToMaster()
-      // wait until all workers have been registered
+
+      def fetchClusterSpec(): ClusterSpecResponse = {
+        tfClient.sendRequest(driverOutputStream, ClusterSpecRequest())
+        tfClient.readResponse(driverInputStream).asInstanceOf[ClusterSpecResponse]
+      }
+
+      // wait until all worker/ps have been registered
       var waitCount = 0
       val maxWaitCount = 100
       var noWait = false
-      val clusterSpecRef = new AtomicReference[ClusterSpec]()
+      val clusterSpecRef = new AtomicReference[ClusterSpecResponse]()
       while (!noWait && waitCount < maxWaitCount) {
-        val response = fetchClusterFromMaster
-        val infos = JSONArray.fromObject(response)
-        println(s"Waiting all worker/ps started. Wait times: ${waitCount} times. Already registered tf worker/ps: ${infos.size()}")
-        if (infos.size == LIMIT) {
-          val workerList = getHostAndPortFromJson(infos, "worker")
-          val psList = getHostAndPortFromJson(infos, "ps")
-          clusterSpecRef.set(new ClusterSpec(workerList.toList, psList.toList))
+        val response = fetchClusterSpec()
+        val totalRegistered = response.workerTasks.size + response.psTasks.size
+        logInfo(
+          s"""
+             |
+             |----------------------------------
+             |Waiting all worker/ps started
+             |__________________________________
+             |Wait times: ${waitCount} times.
+             |Target: ${LIMIT}
+             |totalRegistered: ${totalRegistered}
+             |
+             |PS: ${response.ps}
+             |Workers: ${response.workers}
+             |
+             |
+           """.stripMargin)
+        if (totalRegistered == LIMIT) {
+          clusterSpecRef.set(response)
           noWait = true
         } else {
           Thread.sleep(5000)
@@ -195,19 +175,25 @@ class SQLDTFAlg extends SQLAlg with Functions {
         }
       }
 
-      NetUtils.releasePort(holdPort)
       if (clusterSpecRef.get() == null) {
-        throw new RuntimeException(s"Fail to create tensorflow cluster, this maybe caused by  executor cannot connect driver at ${driverHost}:${driverPort}")
+        throw new RuntimeException(s"Fail to create tensorflow cluster, this maybe caused by  executor cannot connect driver at ${tempSocketServerHost}:${tempSocketServerPort}")
       }
 
       val clusterSpec = clusterSpecRef.get()
-
-
       val clusterSpecJson = new JSONObject()
-      clusterSpecJson.put("worker", clusterSpec.worker.asJava)
+      clusterSpecJson.put("worker", clusterSpec.workers.asJava)
       clusterSpecJson.put("ps", clusterSpec.ps.asJava)
 
-      println(clusterSpecJson.toString)
+      def reportSuccess = {
+        tfClient.sendRequest(driverOutputStream, JobStatusRequest(jobName, taskIndex, true, true))
+        tfClient.readResponse(driverInputStream).asInstanceOf[JobStatusResponse]
+      }
+
+      def reportFail = {
+        tfClient.sendRequest(driverOutputStream, JobStatusRequest(jobName, taskIndex, true, false))
+        tfClient.readResponse(driverInputStream).asInstanceOf[JobStatusResponse]
+      }
+
 
       var tempDataLocalPathWithAlgSuffix = tempDataLocalPath
 
@@ -215,8 +201,8 @@ class SQLDTFAlg extends SQLAlg with Functions {
       if (!isPs && enableDataLocal) {
         val partitionDataInHDFS = tfDataMap(algIndex)
         tempDataLocalPathWithAlgSuffix = tempDataLocalPathWithAlgSuffix + "/" + algIndex
-        println(s"Copy HDFS ${partitionDataInHDFS} to local ${tempDataLocalPathWithAlgSuffix} ")
-        recordSingleLineLog(kafkaParam, s"Copy HDFS ${partitionDataInHDFS} to local ${tempDataLocalPathWithAlgSuffix} ")
+        logInfo(s"Copy HDFS ${partitionDataInHDFS} to local ${tempDataLocalPathWithAlgSuffix} ")
+        logInfo(s"Copy HDFS ${partitionDataInHDFS} to local ${tempDataLocalPathWithAlgSuffix} ")
         HDFSOperator.copyToLocalFile(tempLocalPath = tempDataLocalPathWithAlgSuffix + "/" + partitionDataInHDFS.split("/").last, path = partitionDataInHDFS, true)
       }
 
@@ -233,10 +219,9 @@ class SQLDTFAlg extends SQLAlg with Functions {
         resources.foreach {
           case (resourceName, resourcePath) =>
             val tempResourceLocalPath = SQLPythonFunc.getLocalTempResourcePath(resourcePath, resourceName)
-            recordSingleLineLog(kafkaParam, s"resource paramter found,system will load resource ${resourcePath} in ${tempResourceLocalPath} in executor.")
+            logInfo(s"resource paramter found,system will load resource ${resourcePath} in ${tempResourceLocalPath} in executor.")
             HDFSOperator.copyToLocalFile(tempResourceLocalPath, resourcePath, true)
             resourceParams += (resourceName -> tempResourceLocalPath)
-            recordSingleLineLog(kafkaParam, s"resource loaded.")
         }
       }
 
@@ -248,11 +233,8 @@ class SQLDTFAlg extends SQLAlg with Functions {
 
       paramMap.put("fitParam", item)
 
-      val kafkaP = kafkaParam + ("group_id" -> (kafkaParam("group_id") + "_" + algIndex))
-      paramMap.put("kafkaParam", kafkaP.asJava)
 
       val internalSystemParam = Map(
-        "stopFlagNum" -> stopFlagNum,
         "tempModelLocalPath" -> tempModelLocalPath,
         "tempDataLocalPath" -> tempDataLocalPathWithAlgSuffix,
         "resource" -> resourceParams.asJava,
@@ -273,6 +255,7 @@ class SQLDTFAlg extends SQLAlg with Functions {
       var score = 0.0
       var trainFailFlag = false
 
+      NetUtils.releasePort(holdPort)
       if (!isPs) {
         try {
 
@@ -282,14 +265,15 @@ class SQLDTFAlg extends SQLAlg with Functions {
             schema = MapType(StringType, MapType(StringType, StringType)),
             scriptContent = pythonScript.fileContent,
             scriptName = pythonScript.fileName,
-            recordLog = SQLPythonFunc.recordAnyLog(kafkaParam),
+            recordLog = SQLPythonFunc.recordAnyLog(Map()),
             modelPath = path, validateData = rowsBr.value
           )
 
-          score = recordUserLog(algIndex, pythonScript, kafkaParam, res)
+          score = recordUserLog(algIndex, pythonScript, Map(), res)
         } catch {
           case e: Exception =>
             e.printStackTrace()
+            reportFail
             trainFailFlag = true
         }
       } else {
@@ -310,14 +294,15 @@ class SQLDTFAlg extends SQLAlg with Functions {
                 schema = MapType(StringType, MapType(StringType, StringType)),
                 scriptContent = pythonScript.fileContent,
                 scriptName = pythonScript.fileName,
-                recordLog = SQLPythonFunc.recordAnyLog(kafkaParam),
+                recordLog = SQLPythonFunc.recordAnyLog(Map()),
                 modelPath = path, validateData = rowsBr.value
               )
               pythonWorker.set(res.asInstanceOf[ {def getWorker: Process}].getWorker)
-              score = recordUserLog(algIndex, pythonScript, kafkaParam, res)
+              score = recordUserLog(algIndex, pythonScript, Map(), res)
             } catch {
               case e: Exception =>
                 e.printStackTrace()
+                reportFail
                 trainFailFlag = true
             }
           }
@@ -325,29 +310,11 @@ class SQLDTFAlg extends SQLAlg with Functions {
         pythonPSThread.setDaemon(true)
         pythonPSThread.start()
 
-
-        //        val pythonPSMonitorThread = new Thread(new Runnable {
-        //          override def run(): Unit = {
-        //            while (!context.isInterrupted && !context.isCompleted) {
-        //              Thread.sleep(2000)
-        //            }
-        //            if (context.isCompleted || context.isInterrupted()) {
-        //              try {
-        //                pythonWorker.get().destroy()
-        //              } catch {
-        //                case e: Exception =>
-        //              }
-        //            }
-        //          }
-        //        })
-        //        pythonPSMonitorThread.setDaemon(true)
-        //        pythonPSMonitorThread.start()
-
         var shouldWait = true
 
         def fetchClusterStatusFromMaster = {
-          Request.Get(s"http://${driverHost}:${driverPort}/cluster/worker/finish?cluster=${clusterUuid}")
-            .execute().returnContent().asString()
+          tfClient.sendRequest(driverOutputStream, JobStatusRequest(jobName, taskIndex, false, false))
+          tfClient.readResponse(driverInputStream).asInstanceOf[JobStatusResponse]
         }
 
         // PS should wait until
@@ -355,7 +322,8 @@ class SQLDTFAlg extends SQLAlg with Functions {
         // PS python worker use thread.join to keep it alive .
         while (shouldWait) {
           val response = fetchClusterStatusFromMaster
-          if (response.toInt == clusterSpec.worker.size) {
+          val workSize = response.jobStatus.filter(f => f.done && !f.isPs).size
+          if (workSize == clusterSpec.workers.size) {
             shouldWait = false
           }
           try {
@@ -364,7 +332,12 @@ class SQLDTFAlg extends SQLAlg with Functions {
             case e: Exception =>
               shouldWait = false
           }
-          println(s"check worker finish size. targetSize:${clusterSpec.worker.size} vs ${response.toInt}")
+          logInfo(
+            s"""
+               |PS check worker is all finished.
+               |targetSize:  ${clusterSpec.workers.size}
+               |currentSize: ${workSize}
+            """.stripMargin)
         }
         pythonWorker.get().destroy()
         pythonPSThread.interrupt()
@@ -373,7 +346,7 @@ class SQLDTFAlg extends SQLAlg with Functions {
       val modelTrainEndTime = System.currentTimeMillis()
       if (!isPs) {
         if (!trainFailFlag) {
-          reportToMaster("/cluster/worker/status")
+          reportSuccess
         }
         val modelTrainEndTime = System.currentTimeMillis()
 
@@ -393,6 +366,7 @@ class SQLDTFAlg extends SQLAlg with Functions {
 
         } catch {
           case e: Exception =>
+            reportFail
             trainFailFlag = true
         } finally {
           // delete local model
@@ -400,6 +374,7 @@ class SQLDTFAlg extends SQLAlg with Functions {
           // delete local data
           FileUtils.deleteDirectory(new File(tempDataLocalPathWithAlgSuffix))
           FileUtils.deleteDirectory(new File(checkpointDir))
+          socket.close()
         }
         val status = if (trainFailFlag) "fail" else "success"
         Row.fromSeq(Seq(modelHDFSPath, algIndex, pythonScript.fileName, score, status, modelTrainStartTime, modelTrainEndTime, f))
@@ -432,6 +407,7 @@ class SQLDTFAlg extends SQLAlg with Functions {
       write.
       mode(SaveMode.Overwrite).
       parquet(SQLPythonFunc.getAlgMetalPath(path, keepVersion) + "/1")
+    tfDriver.close()
     emptyDataFrame()(df)
 
   }

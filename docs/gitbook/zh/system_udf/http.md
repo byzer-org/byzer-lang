@@ -1,11 +1,5 @@
 # http 请求
 
-注：使用如下功能需要在启动脚本里包含如下配置：
-  
-```
-  -streaming.udf.clzznames streaming.crawler.udf.Functions
-```
-
 
 http请求可以让MLSQL脚本变得更加强大，因为这可以集合所有内部或者外部API来完成某项工作。
 MLSQL提供了一个支持较为全面http请求函数。
