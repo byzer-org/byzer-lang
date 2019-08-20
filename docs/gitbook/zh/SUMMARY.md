@@ -74,7 +74,7 @@
        * [如何发送邮件](process/estimator_transformer/SendMessage.md) 
     * [如何缓存表](process/estimator_transformer/CacheExt.md)                                       
     * [Python支持](python/README.md)
-        * [Python环境](python/python-env.md)
+        * [Python环境](python/python-env.md)        
         * [交互式Python](python/interactive.md)
         * [使用Python处理MLSQL中的表](python/table.md)
         * [Python项目](python/project.md)                

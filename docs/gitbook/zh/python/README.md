@@ -7,5 +7,6 @@ MLSQL对Python的支持是全方位而且非常强大。并且，我们这正在
 2. 支持交互式Python，类似于Zeppelin或者Jupeter
 3. 支持使用在Python中自己处理MLSQL的表（分区），比如使用Pandas等。
 4. 支持简单的Python UDF,参看我们之前对Python UDF的支持。
+5. 支持Python项目，并且我们制定了一定的规范，可以执行复杂的算法训练操作。
 
 在本章节，我们会详细介绍这些功能特性。 

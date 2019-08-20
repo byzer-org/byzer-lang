@@ -2,6 +2,12 @@
 
 在前面章节，我们提到了可以交互式使用python。但是因为他本身不是分布式的，所以性能会比较差。我们还提供了专门使用Python处理MLSQL中表的能力。
 
+> 使用前，请先在环境中安装pyjava. 尝试使用 pip install pyjava命令。
+> pyjava会提供一个叫data_manager的变量，方便接受和返回数据给MLSQL主程序。
+> 主要有两个方法：
+>    获取数据， data_manager.fetch_once(), 返回一个迭代器，注意，该方法只能调用一次。
+>    设置返回数据， data_manager.set_output(value) value格式必须是 [[pandas.serial,pandas.serial,...]]
+
 第一步，我们模拟一张表：
 
 ```sql
