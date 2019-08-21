@@ -64,4 +64,19 @@ data_manager.set_output([[df['AAA'],df['BBB']]])
 -- !python close;
 ```
 
+## 关于交互式Python的一些原理
+
+当用户使用 `!python start;` 我们会调度处一个task在某个executor节点启动它，然后和driver建立socket通讯。在用户显式关掉它之前，
+他是一个常驻的python worker. 我们可以通过如下方式限制Worker的大小。
+
+```sql
+!python conf "py_executor_memory=600";
+```
+
+上面的例子表示我们会限制Python的worker内存大小不超过600m.
+
+值得注意的是，无论`!python env`还是`!python conf`都是session级别有效的。这意味着一旦设置之后，会影响当前用户后续所有的操作。
+
+
+
 

@@ -18,57 +18,36 @@
 
 package streaming.log
 
-import streaming.dsl.ScriptSQLExec
-
 import scala.collection.mutable.ArrayBuffer
 
 /**
   * Created by allwefantasy on 4/9/2018.
   */
 trait WowLog {
+
+  import tech.mlsql.log.LogUtils
+
   def format(msg: String, skipPrefix: Boolean = false) = {
-    if (skipPrefix) {
-      msg
-    } else {
-      if (ScriptSQLExec.context() != null) {
-        val context = ScriptSQLExec.context()
-        s"""[owner] [${context.owner}] [groupId] [${context.groupId}] $msg"""
-      } else {
-        s"""[owner] [null] [groupId] [null] $msg"""
-      }
-    }
-
-
+    LogUtils.format(msg, skipPrefix)
   }
 
   def wow_format(msg: String) = {
-    format(msg)
-
+    LogUtils.format(msg)
   }
 
   def format_exception(e: Exception) = {
-    (e.toString.split("\n") ++ e.getStackTrace.map(f => f.toString)).map(f => format(f)).toSeq.mkString("\n")
+    LogUtils.format_exception(e)
   }
 
   def format_throwable(e: Throwable, skipPrefix: Boolean = false) = {
-    (e.toString.split("\n") ++ e.getStackTrace.map(f => f.toString)).map(f => format(f,skipPrefix)).toSeq.mkString("\n")
+    LogUtils.format_throwable(e, skipPrefix)
   }
 
   def format_cause(e: Exception) = {
-    var cause = e.asInstanceOf[Throwable]
-    while (cause.getCause != null) {
-      cause = cause.getCause
-    }
-    format_throwable(cause)
+    LogUtils.format_cause(e)
   }
 
   def format_full_exception(buffer: ArrayBuffer[String], e: Exception, skipPrefix: Boolean = true) = {
-    var cause = e.asInstanceOf[Throwable]
-    buffer += format_throwable(cause,skipPrefix)
-    while (cause.getCause != null) {
-      cause = cause.getCause
-      buffer += "caused by：\n" + format_throwable(cause,skipPrefix)
-    }
-
+    LogUtils.format_full_exception(buffer, e, skipPrefix)
   }
 }
