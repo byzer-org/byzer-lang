@@ -55,6 +55,55 @@ data_manager.set_output([[df['AAA'],df['BBB']]])
 select * from mlsql_temp_table2 as output;
 ```
 
+如果我么从data_manager.fetch_once()得到的结果集非常大，没办法放到内存中怎么办？ 可以分批次写，比如每循环100条，构成一个pd,然后将pd案列转化为一个
+pd.serial list,多次则用yield 形成一个generator,最后将generator设置给 output即可。 一个示意代码如下：
+
+```python
+buffer = []
+
+dm = data_manager
+
+def gen():
+    for item in dm.fetch_once():
+        buffer.append(item)        
+        if len(buffer)==100:
+            yield convert_buffer_to_pd_pd_serial_list
+        .....
+
+# convert_buffer_to_pd_pd_serial_list 将buffer专户类似[df['AAA'],df['BBB']]结构    
+data_manager.set_output(gen())
+```
+
+因为 generator是lazy的，所以其实每次我们都是处理一小批数据，然后写入到输出流里。
+
+为了让大家看的更清楚，我手动构建了一个generator,大家可以看看格式要求：
+
+```sql
+select 1 as a as table1;
+
+!python env "PYTHON_ENV=source activate streamingpro-spark-2.4.x";
+!python conf "schema=st(field(a,long),field(b,long))";
+
+!python on table1 '''
+import pandas as pd
+import numpy as np
+
+for item in data_manager.fetch_once():
+      print(item)
+      
+df = pd.DataFrame({'AAA': [4, 5, 6, 8],'BBB': [10, 20, 30, 40],'CCC': [100, 50, -30, -50]})
+
+def wow(df):
+   yield [df['AAA'],df['BBB']]
+   yield [df['CCC'],df['CCC']]
+   
+data_manager.set_output(wow(df))
+
+''' named mlsql_temp_table2;
+
+select * from mlsql_temp_table2 as output;
+```
+
 值得注意的是：
 
 1. 我们可以通过data_manager.fetch_once 获取table1里的数据，通过data_manager.set_output 返回数据。这期间会有多个python进程，每个python进程
