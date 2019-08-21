@@ -35,7 +35,7 @@ load parquet.`/tmp/tfidfinplace/data` as lwys_corpus_with_featurize;
 
 经过上面的处理，我们看看结果:
 
-![](/zh/image/WX20190112-134603@2x.png)
+![](http://docs.mlsql.tech/upload_images/WX20190112-134603@2x.png)
 
 我们会发现content已经被数字化了，里面有type,size,indices,values等四个字段。这是向量稀疏化表示的一种方式。
 

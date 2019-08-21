@@ -21,12 +21,15 @@ chmod u+x run-all.sh
 2. 如果看到MySQL连接错误。这是脚本在检测MySQL启动后何时可用。不是错误，请放心。
 
 
-如果docker镜像拉去缓慢，可以设置阿里云镜像。具体操作如下：
+如果docker镜像拉去缓慢，可以设置阿里云镜像。首先去阿里云开通镜像服务，然后进入
+https://cr.console.aliyun.com/cn-hangzhou/instances/mirrors 页面，里面会教你做镜像加速。
+
+具体操作如下：
 
 ```shell
 mkdir -p /etc/docker
-
-## 登录后阿里开发者帐户后，[https://cr.console.aliyun.com/#/accelerator](https://link.jianshu.com?t=https%3A%2F%2Fcr.console.aliyun.com%2F%23%2Faccelerator) 中查看你的您的专属加速器地址
+## 登录后阿里开发者帐户后，
+## 在https://cr.console.aliyun.com/cn-hangzhou/instances/mirrors 中查看你的您的专属加速器地址
 
 tee /etc/docker/daemon.json <<-'EOF'
 {

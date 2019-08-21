@@ -1,6 +1,6 @@
 # Python环境管理
 
-在不同场景，不同项目中，甚至不同的脚本中，我们都可能需要不同的Python环境依赖。
+在不同场景，不同项目，甚至不同的脚本中，我们都可能需要不同的Python环境依赖。
 MLSQL通过Conda很好的解决了这个问题，你只要描述你需要的依赖是什么，然后系统会自动创建相应的环境给你运行。
 
 但是，在一个分布式环境里，创建和管理环境有其难点。因为Conda自身无法阻止多个任务并发的创建同一个名字的环境，
@@ -10,7 +10,7 @@ MLSQL通过Conda很好的解决了这个问题，你只要描述你需要的依�
 2. 多个Executor在一个主机上，可能会同时需要创建多个相同的环境。
 3. 多个属于不同MLSQL-Engine实例的Executor在相同的主机上，可能会需要同时创建多个相同的环境。
 
-为了解决这个问题，我们提供了一个Spark插件来帮助完成环境管理的问题，我们看看这个先决条件：
+为了解决这个问题，我们提供了一套机制来帮助完成环境管理的问题，我们看看这个先决条件：
 
 ## 前提条件
 
@@ -37,6 +37,10 @@ fail to start and the whole application will fails.
 注意，如果你用ROOT权限安装conda,请确保你运行的MLSQL有权限使用conda(譬如创建新环境等等)
 
 否则会出现不可预料错误。
+
+## 注意事项
+
+请在使用任何Python功能之前，都优先使用这个章节介绍的方式提前创建好环境。
 
 
 ## 创建环境
@@ -120,5 +124,39 @@ run command as PythonEnvExt.`/tmp/jack` where condaFile="dependencies" and comma
 
 将command设置为 name即可。
 
+## 小技巧
+
+用户可以事先给集群创建几个环境，然后将依赖的文本暴露出来。比如管理者创建一个脚本env1.mlsql
+
+```sql
+set env1='''
+name: tutorial4
+dependencies:
+  - python=3.6
+  - pip
+  - pip:
+    - --index-url https://mirrors.aliyun.com/pypi/simple/
+    - numpy==1.14.3
+    - kafka==1.3.5
+    - pyspark==2.3.2
+    - pandas==0.22.0
+''';
+load script.`env1` as env1;
+```
+
+使用者可以Include这个脚本：
+
+```sql
+include [projet].`env1.mlsql`;
+
+run newdata as PythonParallelExt.`${modelPath}`
+and scripts="pythonScript" 
+and entryPoint="pythonScript"
+and partitionKey="hp_date"
+and condaFile="env1";
+
+```
+
+这样，系统会自动复用已经创建好的环境，迅速而有效。如果每个人都去创建环境，会变得多而难于管理。
 
 

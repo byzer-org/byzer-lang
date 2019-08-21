@@ -1,6 +1,7 @@
 #如何高效AdHoc查询Kafka
 
-虽然Kafka是一个流式数据源，但是将其作为普通的数据源进行AdHoc查询，性能也是比较客观的。本章节我们会介绍如何用MLSQL AdHoc查询Kafka.
+虽然Kafka是一个流式数据源，但是将其作为普通的数据源进行AdHoc查询，性能也是比较可观的。
+本章节我们会介绍如何用MLSQL AdHoc查询Kafka.
 
 ## 基本用法
 
