@@ -144,6 +144,21 @@ save append tmp_article_table as jdbc.`db_1.test1`;
 
 这段语句，我们先删除test1,然后创建test1,最后使用save语句把进行数据结果的保存。
 
+## 如何执行Upsert语义(目前只支持MySQL)
+
+要让MLSQL在保存数据时执行Upsert语义的话，你只需要提供提供idCol字段即可。下面是一个简单的例子：
+
+```sql
+save append tmp_article_table as jdbc.`db_1.test1`
+where idCol="a,b,c";
+```
+
+MLSQL内部使用了MySQL的duplicate key语法，所以用户需要对应的数据库表确实有重复联合主键的约束。那如果没有实现在数据库层面定义联合约束主键呢？
+结果会是数据不断增加，而没有执行update操作。
+
+idCol的作用有两个，一个是标记，标记数据需要执行Upsert操作，第二个是确定需要的更新字段，因为主键自身的字段是不需要更新的。MLSQL会将表所有的字段减去
+idCol定义的字段，得到需要更新的字段。
+
 ## 如何将流式数据写入MySQL
 
 下面有个非常简单的例子：

@@ -16,6 +16,7 @@ import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.Functions
 import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
+import tech.mlsql.arrow.python.PythonWorkerFactory
 import tech.mlsql.arrow.python.ispark.SparkContextImp
 import tech.mlsql.arrow.python.runner.{ArrowPythonRunner, ChainedPythonFunctions, PythonConf, PythonFunction}
 import tech.mlsql.common.utils.distribute.socket.server.{ReportHostAndPort, SocketServerInExecutor, SocketServerSerDer, TempSocketServerInDriver}
@@ -107,14 +108,14 @@ class PythonCommand(override val uid: String) extends SQLAlg with Functions with
 
     def execute(code: String, table: Option[String]) = {
       val connect = PythonServerHolder.fetch(context.owner).get
-      val runnerConf = getSchemaAndConf(envSession)
+      val runnerConf = getSchemaAndConf(envSession) ++ configureLogConf
 
       // 1. make sure we are in interactive mode
       // 2. make sure the user is configured so every one has his own python worker
       val envs = Map(
         ScalaMethodMacros.str(PythonConf.PY_EXECUTE_USER) -> context.owner,
         ScalaMethodMacros.str(PythonConf.PY_INTERACTIVE) -> "yes",
-        ScalaMethodMacros.str(PythonConf.PYTHON_ENV) -> "echo ok"
+        ScalaMethodMacros.str(PythonConf.PYTHON_ENV) -> ":"
       ) ++
         envSession.fetchPythonEnv.get.collect().map(f => (f.k, f.v)).toMap
 
@@ -240,7 +241,7 @@ class PythonCommand(override val uid: String) extends SQLAlg with Functions with
     ) ++
       envSession.fetchPythonEnv.get.collect().map(f => (f.k, f.v)).toMap
 
-    val runnerConf = getSchemaAndConf(envSession)
+    val runnerConf = getSchemaAndConf(envSession) ++ configureLogConf
 
     val targetSchema = SparkSimpleSchemaParser.parse(runnerConf("schema")).asInstanceOf[StructType]
 
@@ -248,26 +249,26 @@ class PythonCommand(override val uid: String) extends SQLAlg with Functions with
     val df = session.table(sourceTable)
     val sourceSchema = df.schema
     try {
-    val data = df.rdd.mapPartitions { iter =>
-      val encoder = RowEncoder.apply(sourceSchema).resolveAndBind()
-      val envs4j = new util.HashMap[String, String]()
-      envs.foreach(f => envs4j.put(f._1, f._2))
+      val data = df.rdd.mapPartitions { iter =>
+        val encoder = RowEncoder.apply(sourceSchema).resolveAndBind()
+        val envs4j = new util.HashMap[String, String]()
+        envs.foreach(f => envs4j.put(f._1, f._2))
 
-      val batch = new ArrowPythonRunner(
-        Seq(ChainedPythonFunctions(Seq(PythonFunction(
-          code, envs4j, "python", "3.6")))), sourceSchema,
-        timezoneID, runnerConf
-      )
+        val batch = new ArrowPythonRunner(
+          Seq(ChainedPythonFunctions(Seq(PythonFunction(
+            code, envs4j, "python", "3.6")))), sourceSchema,
+          timezoneID, runnerConf
+        )
 
-      val newIter = iter.map { irow =>
-        encoder.toRow(irow)
+        val newIter = iter.map { irow =>
+          encoder.toRow(irow)
+        }
+        val commonTaskContext = new SparkContextImp(TaskContext.get(), batch)
+        val columnarBatchIter = batch.compute(Iterator(newIter), TaskContext.getPartitionId(), commonTaskContext)
+        columnarBatchIter.flatMap { batch =>
+          batch.rowIterator.asScala
+        }
       }
-      val commonTaskContext = new SparkContextImp(TaskContext.get(), batch)
-      val columnarBatchIter = batch.compute(Iterator(newIter), TaskContext.getPartitionId(), commonTaskContext)
-      columnarBatchIter.flatMap { batch =>
-        batch.rowIterator.asScala
-      }
-    }
 
       SparkUtils.internalCreateDataFrame(session, data, targetSchema, false)
     } catch {
@@ -278,10 +279,26 @@ class PythonCommand(override val uid: String) extends SQLAlg with Functions with
 
   }
 
+  /**
+    *
+    * Here we should give mlsql log server information to the conf which
+    * will be configured by ArrowPythonRunner
+    */
+  private def configureLogConf() = {
+    val context = ScriptSQLExec.context()
+    val conf = context.execListener.sparkSession.sqlContext.getAllConfs
+    conf.filter(f => f._1.startsWith("spark.mlsql.log.driver")) ++
+      Map(
+        PythonWorkerFactory.Tool.REDIRECT_IMPL -> "tech.mlsql.log.RedirectStreamsToSocketServer",
+        ScalaMethodMacros.str(PythonConf.PY_EXECUTE_USER) -> context.owner,
+        "groupId" -> context.groupId
+      )
+  }
+
   private def recognizeError(e: Exception) = {
     val buffer = ArrayBuffer[String]()
     format_full_exception(buffer, e, true)
-    val typeError = buffer.filter(f => f.contains("Previous exception in task: null") ).filter(_.contains("org.apache.spark.sql.vectorized.ArrowColumnVector$ArrowVectorAccessor")).size > 0
+    val typeError = buffer.filter(f => f.contains("Previous exception in task: null")).filter(_.contains("org.apache.spark.sql.vectorized.ArrowColumnVector$ArrowVectorAccessor")).size > 0
     if (typeError) {
       throw new MLSQLException(
         """

@@ -2,6 +2,12 @@
 
 在前面章节，我们提到了可以交互式使用python。但是因为他本身不是分布式的，所以性能会比较差。我们还提供了专门使用Python处理MLSQL中表的能力。
 
+> 使用前，请先在环境中安装pyjava. 尝试使用 pip install pyjava命令。
+> pyjava会提供一个叫data_manager的变量，方便接受和返回数据给MLSQL主程序。
+> 主要有两个方法：
+>    获取数据， data_manager.fetch_once(), 返回一个迭代器，注意，该方法只能调用一次。
+>    设置返回数据， data_manager.set_output(value) value格式必须是 [[pandas.serial,pandas.serial,...]]
+
 第一步，我们模拟一张表：
 
 ```sql
@@ -12,7 +18,12 @@ select 1 as a as table1;
 
 ```sql
 !python env "PYTHON_ENV=source activate streamingpro-spark-2.4.x";
-!python conf "schema=st(field(a,integer),field(b,integer))";
+!python conf "schema=st(field(a,long),field(b,long))";
+```
+在上面的的代码中，我选择使用一个叫`streamingpro-spark-2.4.x`的conda虚拟环境。如果不使用虚拟环境，则可设置为`:`,这样：
+
+```sql
+!python env "PYTHON_ENV=:";
 ```
 
 第三步，书写Python代码：
@@ -50,3 +61,15 @@ select * from mlsql_temp_table2 as output;
 只处理其中一部分数据。也就是数据其实是分布式处理的，大家不要以为是在一个进程里。
 2. 很多莫名其妙的错误都是因为schema描述错误，大家需要谨慎。
 3. 返回的格式必须是[[pd.serial1,pd.serial2....]] 格式。 
+
+## 关于使用Python处理MLSQL表的一些原理
+
+当我们使用Python处理一张表的数据时，我们会在表分区的节点启动相应的Python Workers,并且我们会一直复用他们。
+对于这些Python Workers，我们可以通过如下方式限制Worker的大小。
+
+```sql
+!python conf "py_executor_memory=600";
+```
+
+上面的例子表示我们会限制Python的worker内存大小不超过600m.
+值得注意的是，无论`!python env`还是`!python conf`都是session级别有效的。这意味着一旦设置之后，会影响当前用户后续所有的操作。
