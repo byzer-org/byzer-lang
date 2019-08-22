@@ -109,7 +109,7 @@ select * from mlsql_temp_table2 as output;
 1. 我们可以通过data_manager.fetch_once 获取table1里的数据，通过data_manager.set_output 返回数据。这期间会有多个python进程，每个python进程
 只处理其中一部分数据。也就是数据其实是分布式处理的，大家不要以为是在一个进程里。
 2. 很多莫名其妙的错误都是因为schema描述错误，大家需要谨慎。
-3. 返回的格式必须是[[pd.serial1,pd.serial2....]] 格式。 
+3. 返回的格式必须是[[pd.serial1,pd.serial2....]] 格式,每个pd.serial1代表数据的一列，一个或者多个[pd.serial1,pd.serial2....]构成一个完整的数据集。
 
 ## 关于使用Python处理MLSQL表的一些原理
 
