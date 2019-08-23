@@ -24,7 +24,8 @@
             "mlsql": [
               "select 'a' as a as table1;"
             ],
-            "owner": "william"
+            "owner": "william",
+            "home":"/tmp/william"
           }
         ]
       }
@@ -34,6 +35,8 @@
   }
 }
 ```
+简单说明下，`"name": "init",` 表示要执行初始化动作，mlsql则表示内部应该为mlsql脚本代码。 owner表示当前初始化时以什么用户执行，
+home表示当前用户的主目录.
 
 当系统启动时，会自动执行这一条MLSQL语句。
 
@@ -61,7 +64,8 @@ select 'a' as a as table1;
             "mlsql": [
               "include Init.`init.mlsql`;"
             ],
-            "owner": "william"
+            "owner": "william",
+            "home":"/tmp/william"
           }
         ]
       }
@@ -90,7 +94,8 @@ select 'a' as a as table1;
             "mlsql": [
               "include hdfs.`/tmp/init.mlsql`;"
             ],
-            "owner": "william"
+            "owner": "william",
+            "home":"/tmp/william"
           }
         ]
       }
@@ -100,5 +105,6 @@ select 'a' as a as table1;
   }
 }
 ```
+指的注意的是,因为设置了主目录，include实际加载的目录会是 `/tmp/william/tmp/init.mlsql`。
 
-大家可参看 [Include语法](http://docs.mlsql.tech/zh/grammar/include.html) 获得更多信息。
+关于include衣服啊，大家可参看 文档[Include语法](http://docs.mlsql.tech/zh/grammar/include.html) 获得更多信息。

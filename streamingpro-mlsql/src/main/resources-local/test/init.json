@@ -9,8 +9,8 @@
         "name": "init",
         "params": [
           {
-            "sql": [
-              "select 'a' as a as table1;"
+            "mlsql": [
+              "include hdfs.`/tmp/init.mlsql`;"
             ],
             "owner": "william"
           }

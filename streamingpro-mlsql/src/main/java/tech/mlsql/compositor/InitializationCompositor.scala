@@ -44,6 +44,13 @@ class InitializationCompositor[T] extends Compositor[T] with CompositorHelper {
     }
   }
 
+  def home = {
+    _configParams.get(0).get("home") match {
+      case a: String => Some(a)
+      case _ => None
+    }
+  }
+
   def setUpSession(owner: String) = {
     if (owner != "admin")
       PlatformManager.getRuntime.asInstanceOf[SparkRuntime].getSession(owner)
@@ -51,7 +58,7 @@ class InitializationCompositor[T] extends Compositor[T] with CompositorHelper {
   }
 
   def setUpScriptSQLExecListener(owner: String, sparkSession: SparkSession, groupId: String) = {
-    val context = new ScriptSQLExecListener(sparkSession, "", Map[String, String]())
+    val context = new ScriptSQLExecListener(sparkSession, "", Map[String, String](owner -> home.getOrElse("")))
     ScriptSQLExec.setContext(new MLSQLExecuteContext(context, owner, context.pathPrefix(None), groupId, Map()))
     context.addEnv("SKIP_AUTH", "true")
     context.addEnv("HOME", context.pathPrefix(None))
