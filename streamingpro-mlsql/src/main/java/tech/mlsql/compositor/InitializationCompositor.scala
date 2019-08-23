@@ -30,7 +30,7 @@ class InitializationCompositor[T] extends Compositor[T] with CompositorHelper {
   }
 
   def sql = {
-    _configParams.get(0).get("sql") match {
+    _configParams.get(0).get("mlsql") match {
       case a: util.List[_] => Some(a.mkString(" "))
       case a: String => Some(a)
       case _ => None
