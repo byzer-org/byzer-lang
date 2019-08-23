@@ -44,7 +44,18 @@ trait BasicMLSQLConfig {
     "-streaming.spark.service", "false",
     "-streaming.unittest", "true"
   )
-  
+
+  def batchParamsWithJsonFile(name: String) = Array(
+    "-streaming.master", "local[*]",
+    "-streaming.name", "unit-test",
+    "-streaming.rest", "false",
+    "-streaming.platform", "spark",
+    "-streaming.enableHiveSupport", "false",
+    "-streaming.spark.service", "false",
+    "-streaming.unittest", "true",
+    "-streaming.job.file.path", s"classpath:///test/${name}.json"
+  )
+
 
   def batchParamsWithAPI = Array(
     "-streaming.master", "local[*]",
@@ -69,7 +80,7 @@ trait BasicMLSQLConfig {
     "-streaming.unittest", "true",
     "-streaming.enableCarbonDataSupport", "true",
     "-streaming.carbondata.store", "/tmp/carbondata/store",
-    "-streaming.carbondata.meta", "/tmp/carbondata/meta" 
+    "-streaming.carbondata.meta", "/tmp/carbondata/meta"
   )
 
   def mlsqlParams = Array(

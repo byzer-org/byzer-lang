@@ -54,6 +54,12 @@ class JobManagerSuite extends BasicSparkOperation with SpecFunctions with BasicM
       assert(!checkJob(runtime, groupRef2.get()))
     }
   }
+
+//  "Job manager" should "init job" in {
+  //    withContext(setupBatchContext(batchParamsWithJsonFile("init"))) { runtime: SparkRuntime =>
+  //      executeCode(runtime, "select * from table1 as output;")
+  //    }
+  //  }
 }
 
 

@@ -1,18 +1,18 @@
 {
-  "mlsql": {
-    "desc": "测试",
+  "init": {
+    "desc": "初始化脚本",
     "strategy": "spark",
     "algorithm": [],
     "ref": [],
     "compositor": [
       {
-        "name": "batch.mlsql",
+        "name": "init",
         "params": [
           {
             "sql": [
-              "select 'a' as a as table1;",
-              "save overwrite table1 as parquet.`/tmp/kk`;"
-            ]
+              "select 'a' as a as table1;"
+            ],
+            "owner": "william"
           }
         ]
       }
