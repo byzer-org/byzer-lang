@@ -73,7 +73,7 @@
 
         <common-utils-version>0.1.6</common-utils-version>
         <mlsql-ps-service-version>1.3.5</mlsql-ps-service-version>
-        <pyjava-version>0.1.1</pyjava-version>
+        <pyjava-version>0.1.2</pyjava-version>
     </properties>
 
     <repositories>

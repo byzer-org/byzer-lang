@@ -19,11 +19,14 @@
 package streaming.dsl.mmlib.algs.param
 
 import org.apache.spark.ml.param.{BooleanParam, Param}
+import org.apache.spark.sql.DataFrame
+import streaming.dsl.mmlib.algs.Functions
+import streaming.dsl.mmlib.algs.python.{AutoCreateMLproject, PythonAlgProject}
 
 /**
   * Created by allwefantasy on 28/9/2018.
   */
-trait SQLPythonAlgParams extends BaseParams {
+trait SQLPythonAlgParams extends BaseParams with Functions {
 
   final val enableDataLocal: BooleanParam = new BooleanParam(this, "enableDataLocal",
     "Save prepared data to HDFS and then copy them to local")
@@ -107,6 +110,23 @@ trait SQLPythonAlgParams extends BaseParams {
     }.getOrElse {
 
     }
+  }
+
+  def setupProject(df: DataFrame, path: String, _params: Map[String, String]) = {
+    pythonCheckRequirements(df)
+    autoConfigureAutoCreateProjectParams(_params)
+    var newParams = _params
+    if (get(scripts).isDefined) {
+      val autoCreateMLproject = new AutoCreateMLproject($(scripts), $(condaFile), $(entryPoint), $(batchPredictEntryPoint), $(apiPredictEntryPoint))
+      val projectPath = autoCreateMLproject.saveProject(df.sparkSession, path)
+
+      newParams = _params
+      newParams += ("enableDataLocal" -> "true")
+      newParams += ("pythonScriptPath" -> projectPath)
+      newParams += ("pythonDescPath" -> projectPath)
+    }
+    val pythonProject = PythonAlgProject.loadProject(newParams, df.sparkSession)
+    (pythonProject.get, newParams)
   }
 
 }

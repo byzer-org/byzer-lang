@@ -105,6 +105,6 @@ select 'a' as a as table1;
   }
 }
 ```
-指的注意的是,因为设置了主目录，include实际加载的目录会是 `/tmp/william/tmp/init.mlsql`。
+值得注意的是,因为设置了主目录，include实际加载的目录会是 `/tmp/william/tmp/init.mlsql`。
 
-关于include衣服啊，大家可参看 文档[Include语法](http://docs.mlsql.tech/zh/grammar/include.html) 获得更多信息。
+关于include语法，大家可参看 文档[Include语法](http://docs.mlsql.tech/zh/grammar/include.html) 获得更多信息。

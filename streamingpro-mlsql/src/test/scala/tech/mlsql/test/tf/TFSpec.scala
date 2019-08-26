@@ -22,7 +22,7 @@ class TFSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConfi
     getHome + "examples/tf"
   }
 
-  "Job manager" should "kill batch job/stream successfully" in {
+  "tf" should "spec" in {
     withContext(setupBatchContext(batchParamsWithoutHive)) { runtime: SparkRuntime =>
       copySampleLibsvmData
       val source = Source.fromFile(new File(getExampleProject + "/tf_demo.py")).getLines().mkString("\n")
