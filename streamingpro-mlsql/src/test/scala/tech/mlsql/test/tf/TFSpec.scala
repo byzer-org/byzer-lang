@@ -40,18 +40,8 @@ class TFSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConfi
          |where
          |pythonScriptPath="${scriptPath}"
          |and  keepVersion="true"
-         |
-         |and  enableDataLocal="true"
-         |and  dataLocalFormat="json"
-         |
-         |and  `fitParam.0.jobName`="worker"
-         |and  `fitParam.0.taskIndex`="0"
-         |
-         |and  `fitParam.1.jobName`="worker"
-         |and  `fitParam.1.taskIndex`="1"
-         |
-         |and  `fitParam.2.jobName`="ps"
-         |and  `fitParam.2.taskIndex`="0"
+         |and `fitParam.0.psNum`="1"
+         |and PYTHON_ENV="source activate streamingpro-spark-2.4.x"
          |;
     """.stripMargin
   }

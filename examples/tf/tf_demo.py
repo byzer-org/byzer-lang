@@ -1,31 +1,23 @@
+import json
 import os
 import tensorflow as tf
-import json
+from pyjava.api.mlsql import PythonProjectContext
 from tensorflow.contrib.learn.python.learn.datasets.mnist import read_data_sets
 
-import mlsql
+context = PythonProjectContext()
+context.read_params_once()
 
-
-def param(key, value):
-    if key in mlsql.fit_param:
-        res = mlsql.fit_param[key]
-    else:
-        res = value
-    return res
-
-
-jobName = param("jobName", "worker")
-taskIndex = int(param("taskIndex", "0"))
-clusterSpec = json.loads(mlsql.internal_system_param["clusterSpec"])
-checkpoint_dir = mlsql.internal_system_param["checkpointDir"]
+roleSpec = json.loads(context.conf["roleSpec"])
+jobName = roleSpec["jobName"]
+taskIndex = int(roleSpec["taskIndex"])
+clusterSpec = json.loads(context.conf["clusterSpec"])
+checkpoint_dir = "/tmp/example"
 
 if not os.path.exists(checkpoint_dir):
     os.makedirs(checkpoint_dir)
 
-
-print(mlsql.internal_system_param["clusterSpec"])
-print(jobName)
-print(taskIndex)
+print("------jobName: %s  taskIndex:%s-----" % (jobName, str(taskIndex)))
+print(clusterSpec)
 
 
 def model(images):
@@ -98,5 +90,6 @@ def run():
                                                feed_dict={images: img_batch, labels: label_batch})
                     if step % 100 == 0:
                         print("Train step %d, loss: %f" % (step, ls))
+
 
 run()

@@ -13,16 +13,14 @@ import org.apache.spark.{MLSQLSparkUtils, TaskContext}
 import streaming.core.datasource.util.MLSQLJobCollect
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib.SQLAlg
-import streaming.dsl.mmlib.algs.SQLPythonFunc._
 import streaming.dsl.mmlib.algs.param.{BaseParams, SQLPythonAlgParams}
 import streaming.dsl.mmlib.algs.{Functions, SQLPythonFunc}
 import tech.mlsql.arrow.python.runner.{PythonConf, PythonProjectRunner}
-import tech.mlsql.common.utils.cluster.ml.{JobStatusRequest, MLDriver, MLWorkerProxy, ReportToMasterRequest}
+import tech.mlsql.common.utils.cluster.ml._
 import tech.mlsql.common.utils.hdfs.HDFSOperator
 import tech.mlsql.common.utils.lang.sc.ScalaMethodMacros
+import tech.mlsql.common.utils.serder.json.JSONTool
 import tech.mlsql.ets.ml.cluster.{DataManager, LocalDirectoryManager, LocalPathRes, PortManager}
-
-import scala.collection.JavaConverters._
 
 class DistributedTensorflow(override val uid: String) extends SQLAlg with SQLPythonAlgParams with Functions {
   def this() = this(BaseParams.randomUID())
@@ -42,7 +40,7 @@ class DistributedTensorflow(override val uid: String) extends SQLAlg with SQLPyt
     }
 
 
-    incrementVersion(path, keepVersion)
+    SQLPythonFunc.incrementVersion(path, keepVersion)
 
     val workerTargetSize = df.rdd.partitions.size
     // start ps
@@ -67,88 +65,101 @@ class DistributedTensorflow(override val uid: String) extends SQLAlg with SQLPyt
     val tempSocketServerHost = mlDriver._host
     val tempSocketServerPort = mlDriver._port
 
+    val pythonProjectPath = pythonProject.filePath
+    val projectName = pythonProject.projectName
+    val projectTargetFileName = pythonProject.fileName
+    val projectType = pythonProject.scriptType
+
+    val envCommand = params.get(ScalaMethodMacros.str(PythonConf.PYTHON_ENV)).getOrElse(":")
+    val paramCommand = params.get("PYTHON_PARAMETERS").getOrElse("")
+
+    def startPs = {
+      ScriptSQLExec.setContext(context)
+      val fitParamRDD = df.sparkSession.sparkContext.parallelize((0 until psNum).map(i => i), psNum)
+      fitParamRDD.map { case algIndex =>
+        val jobName = "worker"
+        val taskIndex = algIndex
+        val roleSpec = new JSONObject()
+        roleSpec.put("jobName", "ps")
+        roleSpec.put("taskIndex", taskIndex)
+
+        val hostPort = PortManager.preTaken
+        val port = PortManager.getPort(hostPort)
+        val workerProxy: MLWorkerProxy = new MLWorkerProxy(tempSocketServerHost, tempSocketServerPort) {
+          override def workerTaskName(): WorkerInfo => String = {
+            (f: WorkerInfo) => s"/job:worker/task:${f.taskIndex}"
+          }
+
+          override def parameterServerTaskName(): WorkerInfo => String = {
+            (f: WorkerInfo) => s"/job:ps/task:${f.taskIndex}"
+          }
+        }
+        workerProxy.reportToMaster(ReportToMasterRequest(MLSQLSparkUtils.rpcEnv().address.host, port, jobName, taskIndex, isPs = true))
+        workerProxy.waitOthers(psTargetSize + workerTargetSize)
+        PortManager.releasePreTaken(hostPort)
+
+        val clusterSpec = workerProxy.fetchClusterSpec()
+        val clusterSpecMap = Map("worker" -> clusterSpec.workers.map(f => s"${f.host}:${f.port}"),
+          "ps" -> clusterSpec.parameterServers.map(f => s"${f.host}:${f.port}"))
+
+        val paramMap = fitParam ++ Map(
+          "clusterSpec" -> JSONTool.toJsonStr(clusterSpecMap),
+          "roleSpec" -> roleSpec.toString()
+        )
+
+        val command = Seq("bash", "-c", envCommand + s" &&  python ${paramCommand} ${projectTargetFileName}")
+
+        val taskDirectory = LocalDirectoryManager.setUpTaskDirectory(projectName)
+
+        val pythonWorker = new AtomicReference[Process]()
+        val context = TaskContext.get()
+
+        // notice: I still get no way how to destroy the ps python worker
+        // when spark existed unexpectedly.
+        // we have handle the situation eg. task is cancel or
+        val pythonPSThread = new Thread(new Runnable {
+          override def run(): Unit = {
+            TaskContextUtil.setContext(context)
+            try {
+              LocalDirectoryManager.downloadProject(taskDirectory, Option(pythonProjectPath), projectType)
+              val runner = new PythonProjectRunner(taskDirectory, Map())
+              val res = runner.run(command, paramMap)
+              res.foreach(println)
+            } catch {
+              case e: Exception =>
+                e.printStackTrace()
+
+            }
+          }
+        })
+        pythonPSThread.setDaemon(true)
+        pythonPSThread.start()
+
+        workerProxy.waitDoneOrFail(clusterSpec.workers.size, JobStatusRequest(jobName, taskIndex, false, false))
+        workerProxy.reportSuccess(JobStatusRequest(jobName, taskIndex, true, true))
+        pythonWorker.get().destroy()
+        pythonPSThread.interrupt()
+        workerProxy.close
+        Iterator()
+      }.count()
+    }
+
     val pSThread = new Thread(new Runnable {
       override def run(): Unit = {
-        ScriptSQLExec.setContext(context)
-        val fitParamRDD = df.sparkSession.sparkContext.parallelize((0 until psNum).map(i => i), psNum)
-        fitParamRDD.map { algIndex =>
-
-          val jobName = "worker"
-          val taskIndex = algIndex
-          val roleSpec = new JSONObject()
-          roleSpec.put("jobName", "worker")
-          roleSpec.put("taskIndex", algIndex)
-
-          val hostPort = PortManager.preTaken
-          val port = PortManager.getPort(hostPort)
-          val proxy = new MLWorkerProxy(tempSocketServerHost, tempSocketServerPort)
-          proxy.reportToMaster(ReportToMasterRequest(MLSQLSparkUtils.rpcEnv().address.host, port, jobName, taskIndex, isPs = true))
-          proxy.waitOthers(psTargetSize + workerTargetSize)
-          PortManager.releasePreTaken(hostPort)
-
-          val clusterSpec = proxy.fetchClusterSpec()
-          val clusterSpecJson = new JSONObject()
-          clusterSpecJson.put("worker", clusterSpec.workers.asJava)
-          clusterSpecJson.put("ps", clusterSpec.parameterServers.asJava)
-
-          val tempModelLocalPath = s"${LocalDirectoryManager.localModelPath}/${algIndex}"
-          val paramMap = fitParam ++ Map(
-            "tempModelLocalPath" -> tempModelLocalPath,
-            "clusterSpec" -> clusterSpecJson.toString(),
-            "roleSpec" -> roleSpec.toString(),
-          )
-
-
-          val envCommand = params.get(ScalaMethodMacros.str(PythonConf.PYTHON_ENV)).getOrElse("")
-          val paramCommand = params.get("PYTHON_PARAMETERS").getOrElse("")
-          val command = Seq("bash", "-c", envCommand + s" &&  python ${paramCommand} ${pythonProject.fileName}")
-
-          val taskDirectory = LocalDirectoryManager.setUpTaskDirectory(pythonProject.projectName)
-
-          val pythonWorker = new AtomicReference[Process]()
-          val context = TaskContext.get()
-
-          // notice: I still get no way how to destroy the ps python worker
-          // when spark existed unexpectedly.
-          // we have handle the situation eg. task is cancel or
-          val pythonPSThread = new Thread(new Runnable {
-            override def run(): Unit = {
-              TaskContextUtil.setContext(context)
-              try {
-                val runner = new PythonProjectRunner(taskDirectory, Map())
-                val res = runner.run(command, paramMap)
-                pythonWorker.set(res.asInstanceOf[ {def getWorker: Process}].getWorker)
-                res.foreach(println)
-              } catch {
-                case e: Exception =>
-                  e.printStackTrace()
-                  proxy.reportFails(JobStatusRequest(jobName, taskIndex, true, false))
-              }
-            }
-          })
-          pythonPSThread.setDaemon(true)
-          pythonPSThread.start()
-
-          proxy.waitDoneOrFail(clusterSpec.workers.size, JobStatusRequest(jobName, taskIndex, false, false))
-
-          pythonWorker.get().destroy()
-          pythonPSThread.interrupt()
-          proxy.close
-          Iterator()
-        }.count()
-
+        startPs
       }
     })
 
     pSThread.setDaemon(true)
     pSThread.start()
 
-
     // start workers
     val sourceSchema = df.schema
-
+    val sessionLocalTimeZone = df.sparkSession.sessionState.conf.sessionLocalTimeZone
+    val fileFormat = params.getOrElse("fileFormat", "json")
     df.rdd.mapPartitionsWithIndex { case (algIndex, iter) =>
-      val LocalPathRes(dataFilePath, localPathConfig) = DataManager.setupData(iter, sourceSchema, algIndex)
+
+      val LocalPathRes(dataFilePath, localPathConfig) = DataManager.setupData(iter, sourceSchema, sessionLocalTimeZone, algIndex, fileFormat)
 
       val tempModelLocalPath = s"${localPathConfig.localModelPath}/${algIndex}"
 
@@ -156,38 +167,51 @@ class DistributedTensorflow(override val uid: String) extends SQLAlg with SQLPyt
       val taskIndex = algIndex
       val roleSpec = new JSONObject()
       roleSpec.put("jobName", "worker")
-      roleSpec.put("taskIndex", algIndex)
+      roleSpec.put("taskIndex", taskIndex)
 
 
       val hostPort = PortManager.preTaken
       val port = PortManager.getPort(hostPort)
-      val proxy = new MLWorkerProxy(tempSocketServerHost, tempSocketServerPort)
-      proxy.reportToMaster(ReportToMasterRequest(MLSQLSparkUtils.rpcEnv().address.host, port, jobName, taskIndex, false))
-      proxy.waitOthers(workerTargetSize)
+      val workerProxy = new MLWorkerProxy(tempSocketServerHost, tempSocketServerPort) {
+        override def workerTaskName(): WorkerInfo => String = {
+          (f: WorkerInfo) => s"/job:worker/task:${f.taskIndex}"
+        }
+
+        override def parameterServerTaskName(): WorkerInfo => String = {
+          (f: WorkerInfo) => s"/job:ps/task:${f.taskIndex}"
+        }
+      }
+      workerProxy.reportToMaster(ReportToMasterRequest(MLSQLSparkUtils.rpcEnv().address.host, port, jobName, taskIndex, false))
+      workerProxy.waitOthers(workerTargetSize + psTargetSize)
 
       PortManager.releasePreTaken(hostPort)
-      val clusterSpec = proxy.fetchClusterSpec()
-      val clusterSpecJson = new JSONObject()
-      clusterSpecJson.put("worker", clusterSpec.workers.asJava)
-      clusterSpecJson.put("ps", clusterSpec.parameterServers.asJava)
+      val clusterSpec = workerProxy.fetchClusterSpec()
+
+      val clusterSpecMap = Map("worker" -> clusterSpec.workers.map(f => s"${f.host}:${f.port}"),
+        "ps" -> clusterSpec.parameterServers.map(f => s"${f.host}:${f.port}"))
 
       val paramMap = fitParam ++ Map(
         "tempModelLocalPath" -> tempModelLocalPath,
         "tempDataLocalPath" -> dataFilePath,
-        "clusterSpec" -> clusterSpecJson.toString(),
-        "roleSpec" -> roleSpec.toString(),
+        "clusterSpec" -> JSONTool.toJsonStr(clusterSpecMap),
+        "roleSpec" -> roleSpec.toString()
       )
 
-      val envCommand = params.get(ScalaMethodMacros.str(PythonConf.PYTHON_ENV)).getOrElse("")
-      val paramCommand = params.get("PYTHON_PARAMETERS").getOrElse("")
-      val command = Seq("bash", "-c", envCommand + s" &&  python ${paramCommand} ${pythonProject.fileName}")
+      val command = Seq("bash", "-c", envCommand + s" &&  python ${paramCommand} ${projectTargetFileName}")
 
-      val taskDirectory = LocalDirectoryManager.setUpTaskDirectory(pythonProject.projectName)
-      val runner = new PythonProjectRunner(taskDirectory, Map())
-      val res = runner.run(command, paramMap)
-      res.foreach(println)
+      val taskDirectory = LocalDirectoryManager.setUpTaskDirectory(projectName)
+      LocalDirectoryManager.downloadProject(taskDirectory, Option(pythonProjectPath), projectType)
 
-      proxy.reportSuccess(JobStatusRequest(jobName, taskIndex, true, true))
+      try {
+        val runner = new PythonProjectRunner(taskDirectory, Map())
+        val res = runner.run(command, paramMap)
+        res.foreach(println)
+        workerProxy.reportSuccess(JobStatusRequest(jobName, taskIndex, true, true))
+      } catch {
+        case e: Exception =>
+          logError(s"Fail to run ${jobName}:${taskIndex} ", e)
+          workerProxy.reportFails(JobStatusRequest(jobName, taskIndex, true, false))
+      }
 
       val modelHDFSPath = SQLPythonFunc.getAlgModelPath(path, keepVersion) + "/" + algIndex
       try {
@@ -208,9 +232,9 @@ class DistributedTensorflow(override val uid: String) extends SQLAlg with SQLPyt
         // delete local data
         FileUtils.deleteDirectory(new File(localPathConfig.localDataPath))
       }
-      proxy.close
+      workerProxy.close
       Iterator()
-    }
+    }.count()
     mlDriver.close()
     emptyDataFrame()(df)
 

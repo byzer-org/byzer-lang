@@ -11,14 +11,18 @@ import org.apache.spark.sql.types.StructType
 import streaming.dsl.mmlib.algs.python.LocalPathConfig
 import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.common.utils.path.PathFun
-import tech.mlsql.ets.tensorflow.files.ParquetOutputWriter
+import tech.mlsql.ets.tensorflow.files.{JsonOutputWriter, ParquetOutputWriter}
 import tech.mlsql.log.LogUtils
 
 /**
   * 2019-08-26 WilliamZhu(allwefantasy@gmail.com)
   */
 object DataManager extends Logging {
-  def setupData(iter: Iterator[Row], sourceSchema: StructType, algIndex: Int) = {
+  def setupData(iter: Iterator[Row],
+                sourceSchema: StructType,
+                sessionLocalTimeZone: String,
+                algIndex: Int,
+                fileType: String) = {
     val encoder = RowEncoder.apply(sourceSchema).resolveAndBind()
     val localPathConfig = LocalPathConfig.buildFromParams(null)
     var tempDataLocalPathWithAlgSuffix = localPathConfig.localDataPath
@@ -29,7 +33,11 @@ object DataManager extends Logging {
       FileUtils.forceMkdir(new File(tempDataLocalPathWithAlgSuffix))
     }
     val localFile = PathFun(tempDataLocalPathWithAlgSuffix).add(UUID.randomUUID().toString + ".snappy.parquet").toPath
-    val localFileWriter = new ParquetOutputWriter(localFile, new Configuration())
+    val localFileWriter = fileType match {
+      case "parquet" => new ParquetOutputWriter(localFile, new Configuration())
+      case "json" => new JsonOutputWriter(localFile, sourceSchema, sessionLocalTimeZone)
+    }
+
     try {
       iter.foreach { row =>
         localFileWriter.write(encoder.toRow(row))
@@ -41,7 +49,6 @@ object DataManager extends Logging {
   }
 
 
-
 }
 
-case class LocalPathRes(localDataFile:String, localPathConfig: LocalPathConfig)
+case class LocalPathRes(localDataFile: String, localPathConfig: LocalPathConfig)
