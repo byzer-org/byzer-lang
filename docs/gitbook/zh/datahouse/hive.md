@@ -15,7 +15,7 @@ save overwrite table1 as hive.`db.table1`;
 如果需要分区，则使用
 
 ```
-save overwrite table1 as hive.`db.table1` partition by col1;
+save overwrite table1 as hive.`db.table1` partitionby col1;
 ```
 
 我们也可以使用JDBC访问hive,具体做法如下：

@@ -75,9 +75,9 @@ class MLProject(val projectDir: String, project: Settings, options: Map[String, 
     s"source ${activatePath} ${condaEnvName} && ${command(commandType)}"
   }
 
-  def entryPointCommandWithConda(commandType: String) = {
+  def entryPointCommandWithConda(commandType: String, envName: Option[String] = None) = {
     val condaEnvManager = new BasicCondaEnvManager(options)
-    val condaEnvName = condaEnvManager.getOrCreateCondaEnv(Option(projectDir + s"/${MLProject.DEFAULT_CONDA_ENV_NAME}"))
+    val condaEnvName = envName.getOrElse(condaEnvManager.getOrCreateCondaEnv(Option(projectDir + s"/${MLProject.DEFAULT_CONDA_ENV_NAME}")))
     val entryPointCommandWithConda = commandWithConda(
       condaEnvManager.getCondaBinExecutable("activate"),
       condaEnvName, commandType

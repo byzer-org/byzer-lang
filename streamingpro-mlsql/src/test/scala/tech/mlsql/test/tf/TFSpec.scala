@@ -22,12 +22,13 @@ class TFSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConfi
     getHome + "examples/tf"
   }
 
-  "Job manager" should "kill batch job/stream successfully" in {
+  "tf" should "spec" in {
     withContext(setupBatchContext(batchParamsWithoutHive)) { runtime: SparkRuntime =>
       copySampleLibsvmData
       val source = Source.fromFile(new File(getExampleProject + "/tf_demo.py")).getLines().mkString("\n")
       writeStringToFile("/tmp/william/tmp/tf/tf_demo.py", source)
       executeCode(runtime, TFExmaple.code("/tmp/tf/tf_demo/model", "/tmp/william/tmp/tf/tf_demo.py"))
+      println()
     }
   }
 
@@ -36,22 +37,12 @@ class TFSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConfi
       s"""
          |load libsvm.`sample_libsvm_data.txt` as data;
          |
-         |train data as DistributedTensorflow.`${modePath}`
+         |train data as DTF.`${modePath}`
          |where
          |pythonScriptPath="${scriptPath}"
          |and  keepVersion="true"
-         |
-         |and  enableDataLocal="true"
-         |and  dataLocalFormat="json"
-         |
-         |and  `fitParam.0.jobName`="worker"
-         |and  `fitParam.0.taskIndex`="0"
-         |
-         |and  `fitParam.1.jobName`="worker"
-         |and  `fitParam.1.taskIndex`="1"
-         |
-         |and  `fitParam.2.jobName`="ps"
-         |and  `fitParam.2.taskIndex`="0"
+         |and `fitParam.0.psNum`="1"
+         |and PYTHON_ENV="streamingpro-spark-2.4.x"
          |;
     """.stripMargin
   }
