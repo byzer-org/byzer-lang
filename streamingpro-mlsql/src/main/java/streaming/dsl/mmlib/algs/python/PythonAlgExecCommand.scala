@@ -27,11 +27,11 @@ class PythonAlgExecCommand(pythonScript: PythonScript,
                            envs: Map[String, String]
                           ) {
 
-  def generateCommand(commandType: String) = {
+  def generateCommand(commandType: String, envName: Option[String]=None) = {
     pythonScript.scriptType match {
       case MLFlow =>
         val project = MLProject.loadProject(pythonScript.filePath, envs)
-        Seq("bash", "-c", project.entryPointCommandWithConda(commandType))
+        Seq("bash", "-c", project.entryPointCommandWithConda(commandType, envName))
 
       case _ =>
         Seq(pythonConfig.map(_.pythonPath).getOrElse(

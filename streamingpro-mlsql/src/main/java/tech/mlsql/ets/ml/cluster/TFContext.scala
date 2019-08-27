@@ -34,14 +34,19 @@ class TFContext(val driverHost: DriverHost, val currentRole: CurrentRole) {
     * more good way to solve this
     */
   def killPython(pro: Process) = {
-    //kill -- -42
-    val pid = getPidOfProcess(pro)
-    if (pid == -1) {
-      pro.destroyForcibly()
-    } else {
-      val subpid = os.proc("pgrep", "-P", pid).call(check = false).out.lines.head
-      os.proc("kill", subpid).call(check = false)
+    try {
+      //kill -- -42
+      val pid = getPidOfProcess(pro)
+      if (pid == -1) {
+        pro.destroyForcibly()
+      } else {
+        val subpid = os.proc("pgrep", "-P", pid).call(check = false).out.lines.head
+        os.proc("kill", subpid).call(check = false)
+      }
+    } catch {
+      case e: Exception =>
     }
+
 
   }
 

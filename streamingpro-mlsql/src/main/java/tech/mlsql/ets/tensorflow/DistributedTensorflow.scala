@@ -14,6 +14,7 @@ import streaming.core.datasource.util.MLSQLJobCollect
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.param.{BaseParams, SQLPythonAlgParams}
+import streaming.dsl.mmlib.algs.python.{MLProject, PythonAlgExecCommand}
 import streaming.dsl.mmlib.algs.{Functions, SQLPythonFunc}
 import tech.mlsql.arrow.python.PythonWorkerFactory
 import tech.mlsql.arrow.python.runner.{PythonConf, PythonProjectRunner}
@@ -87,6 +88,9 @@ class DistributedTensorflow(override val uid: String) extends SQLAlg with SQLPyt
     val envCommand = params.get(ScalaMethodMacros.str(PythonConf.PYTHON_ENV)).getOrElse(":")
     val paramCommand = params.get("PYTHON_PARAMETERS").getOrElse("")
 
+    val command = new PythonAlgExecCommand(pythonProject, None, None, Map()).
+      generateCommand(MLProject.train_command, Option(envCommand))
+
     def startPs = {
       ScriptSQLExec.setContext(context)
       val fitParamRDD = df.sparkSession.sparkContext.parallelize((0 until psNum).map(i => i), psNum)
@@ -113,7 +117,8 @@ class DistributedTensorflow(override val uid: String) extends SQLAlg with SQLPyt
           "roleSpec" -> tfContext.createRoleSpec
         )
 
-        val command = Seq("bash", "-c", envCommand + s" &&  python ${paramCommand} ${projectTargetFileName} ps ${tfContext.currentRole.taskIndex}")
+        //val command = Seq("bash", "-c", envCommand + s" &&  python ${paramCommand} ${projectTargetFileName} ps ${tfContext.currentRole.taskIndex}")
+
 
         val taskDirectory = LocalDirectoryManager.setUpTaskDirectory(projectName)
 
@@ -216,7 +221,7 @@ class DistributedTensorflow(override val uid: String) extends SQLAlg with SQLPyt
         "roleSpec" -> tfContext.createRoleSpec
       )
 
-      val command = Seq("bash", "-c", envCommand + s" &&  python ${paramCommand} ${projectTargetFileName} worker ${tfContext.currentRole.taskIndex}")
+      //val command = Seq("bash", "-c", envCommand + s" &&  python ${paramCommand} ${projectTargetFileName} worker ${tfContext.currentRole.taskIndex}")
 
       val taskDirectory = LocalDirectoryManager.setUpTaskDirectory(projectName)
       LocalDirectoryManager.downloadProject(taskDirectory, Option(pythonProjectPath), projectType)
@@ -270,9 +275,15 @@ class DistributedTensorflow(override val uid: String) extends SQLAlg with SQLPyt
       Iterator()
     }.count()
     pSThread.join()
-    mlDriver.close()
-    emptyDataFrame()(df)
 
+    val tfContext = new TFContext(DriverHost(tempSocketServerHost, tempSocketServerPort), CurrentRole("worker", -1))
+    val res = tfContext.workerProxy.fetchClusterSpec()
+
+    import df.sparkSession.implicits._
+    val newDF = df.sparkSession.createDataset(res.workers ++ res.parameterServers).toDF()
+    tfContext.close
+    mlDriver.close()
+    newDF
   }
 
   override def load(sparkSession: SparkSession, _path: String, params: Map[String, String]): Any = {

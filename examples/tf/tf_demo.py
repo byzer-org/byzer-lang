@@ -14,15 +14,13 @@ roleSpec = json.loads(context.conf["roleSpec"])
 jobName = roleSpec["jobName"]
 taskIndex = int(roleSpec["taskIndex"])
 clusterSpec = json.loads(context.conf["clusterSpec"])
-checkpoint_dir = "/tmp/example"
+checkpoint_dir = context.output_model_dir()
 
 if not os.path.exists(checkpoint_dir):
     os.makedirs(checkpoint_dir)
 
 print("------jobName: %s  taskIndex:%s-----" % (jobName, str(taskIndex)))
 print(clusterSpec)
-
-
 
 
 def model(images):
@@ -99,7 +97,6 @@ def run():
                                                feed_dict={images: img_batch, labels: label_batch})
                     print("Train step %d, loss: %f" % (step, ls))
                     sys.stdout.flush()
-
 
 
 run()
