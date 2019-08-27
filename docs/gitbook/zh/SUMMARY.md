@@ -80,6 +80,7 @@
         * [Python项目](python/project.md)                
         * [分布式运行Python项目](python/distribute-python.md)
         * [单实例运行Python项目](python/python.md)
+        * [TensorFlow 集群模式](python/dtf.md)
         * [如何附带资源文件](python/resource.md)      
     * [MLSQL使用小技巧](include/README.md)    
         * [如何执行初始化脚本](include/init.md)    

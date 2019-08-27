@@ -37,12 +37,12 @@ class TFSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConfi
       s"""
          |load libsvm.`sample_libsvm_data.txt` as data;
          |
-         |train data as DistributedTensorflow.`${modePath}`
+         |train data as DTF.`${modePath}`
          |where
          |pythonScriptPath="${scriptPath}"
          |and  keepVersion="true"
          |and `fitParam.0.psNum`="1"
-         |and PYTHON_ENV="source activate streamingpro-spark-2.4.x"
+         |and PYTHON_ENV="streamingpro-spark-2.4.x"
          |;
     """.stripMargin
   }

@@ -1,3 +1,11 @@
+# TensorFlow 集群模式
+
+MLSQL 初步支持TF集群。主要是包装TF原生的Cluster模式。
+
+首先按集群模式写好脚本py_train.mlsql：
+
+```python
+set py_train='''
 import json
 import os
 import sys
@@ -101,3 +109,82 @@ def run():
 
 
 run()
+
+
+''';
+
+load script.`py_train` as py_train;
+```
+
+代码很简答，我们通过引入pyjava相关的类，获得一个context:
+
+```python
+context = PythonProjectContext()
+context.read_params_once()
+```
+
+接着读取所有配置参数，这样你可以拿到，数据目录：
+
+```python
+with open(context.input_data_dir()) as f:
+            for item in f.readlines():
+                print(item)
+```
+
+以及训练好的模型要放到`context.output_model_dir()`. 其他的都是标准的TF Cluster写法。
+
+定义conda文件，如果你事先创建了环境，可以直接设置为空py_env.mlsql：
+
+```sql
+set py_env='''
+''';
+load script.`py_env` as py_env;
+```
+
+现在，我们可以运行了：
+
+```sql
+select 1 as a as data;
+
+include demo.`tf.py_train.mlsql`;
+include store1.`alg.python.text_classify.py_env.mlsql`;
+
+train data as DTF.`/tmp/tf/model`
+where scripts="py_train"
+and entryPoint="py_train"
+and condaFile="py_env"
+and  keepVersion="true"
+and `fitParam.0.psNum`="1"
+and PYTHON_ENV="streamingpro-spark-2.4.x";
+```
+
+这会让MLSQL启动一个worker， 一个ps进行训练。 worker数量取决于数据的分区数。ps的数量则取决于`fitParam.0.psNum` 参数的配置。
+PYTHON_ENV 允许你指定环境。
+
+点击运行，系统会将脚本所有信息实时输出
+
+```
+INFO DriverLogServer: [owner] [allwefantasy@gmail.com] [groupId] [3dc017e2-0a13-4eff-8534-628c381a5171] Train step 1995, loss: 0.127047
+19/08/27 15:08:40  INFO DriverLogServer: [owner] [allwefantasy@gmail.com] [groupId] [3dc017e2-0a13-4eff-8534-628c381a5171] Train step 1996, loss: 0.161283
+19/08/27 15:08:40  INFO DriverLogServer: [owner] [allwefantasy@gmail.com] [groupId] [3dc017e2-0a13-4eff-8534-628c381a5171] Train step 1996, loss: 0.107826
+19/08/27 15:08:40  INFO DriverLogServer: [owner] [allwefantasy@gmail.com] [groupId] [3dc017e2-0a13-4eff-8534-628c381a5171] Train step 1997, loss: 0.176538
+19/08/27 15:08:40  INFO DriverLogServer: [owner] [allwefantasy@gmail.com] [groupId] [3dc017e2-0a13-4eff-8534-628c381a5171] Train step 1997, loss: 0.053615
+19/08/27 15:08:40  INFO DriverLogServer: [owner] [allwefantasy@gmail.com] [groupId] [3dc017e2-0a13-4eff-8534-628c381a5171] Train step 1998, loss: 0.025230
+19/08/27 15:08:40  INFO DriverLogServer: [owner] [allwefantasy@gmail.com] [groupId] [3dc017e2-0a13-4eff-8534-628c381a5171] Train step 1998, loss: 0.100496
+19/08/27 15:08:40  INFO DriverLogServer: [owner] [allwefantasy@gmail.com] [groupId] [3dc017e2-0a13-4eff-8534-628c381a5171] Train step 1999, loss: 0.101606
+19/08/27 15:08:40  INFO DriverLogServer: [owner] [allwefantasy@gmail.com] [groupId] [3dc017e2-0a13-4eff-8534-628c381a5171] Train step 1999, loss: 0.436057
+19/08/27 15:10:40  INFO DriverLogServer: [owner] [allwefantasy@gmail.com] [groupId] [3dc017e2-0a13-4eff-8534-628c381a5171] 2019-08-27 15:10:40.986701: I tensorflow/core/distributed_runtime/worker.cc:199] Cancellation requested for RunGraph.
+19/08/27 15:10:58  INFO DriverLogServer: [owner] [allwefantasy@gmail.com] [groupId] [3dc017e2-0a13-4eff-8534-628c381a5171] bash: line 1: 55593 Terminated: 15
+```
+
+最后的返回结果：
+
+```
+host            port    jobName taskIndex  isPs    done      success
+192.168.204.142	2222	worker	0	       false   true	     true
+192.168.204.142	2221	ps	    0	       true	   true	     true
+```
+
+我们可以看到所有节点的情况。有任何一个节点success不为true,则表示训练失败。
+
+Tensorflow的Cluster我们还在持续完善。目前调度还不够完善，可能多个节点会跑在一台服务器上，对于使用了GPU的机器就显得不够友好了。
