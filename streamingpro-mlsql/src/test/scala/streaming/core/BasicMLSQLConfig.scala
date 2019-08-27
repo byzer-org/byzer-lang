@@ -45,6 +45,8 @@ trait BasicMLSQLConfig {
     "-streaming.unittest", "true"
   )
 
+
+
   def batchParamsWithJsonFile(name: String) = Array(
     "-streaming.master", "local[*]",
     "-streaming.name", "unit-test",

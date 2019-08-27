@@ -3,24 +3,25 @@ package tech.mlsql.ets.tensorflow
 import java.io.File
 import java.util.concurrent.atomic.AtomicReference
 
-import net.sf.json.JSONObject
 import org.apache.commons.io.FileUtils
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.mlsql.session.MLSQLException
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import org.apache.spark.util.TaskContextUtil
+import org.apache.spark.util.{TaskCompletionListener, TaskContextUtil}
 import org.apache.spark.{MLSQLSparkUtils, TaskContext}
+import os.SubProcess
 import streaming.core.datasource.util.MLSQLJobCollect
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.param.{BaseParams, SQLPythonAlgParams}
 import streaming.dsl.mmlib.algs.{Functions, SQLPythonFunc}
+import tech.mlsql.arrow.python.PythonWorkerFactory
 import tech.mlsql.arrow.python.runner.{PythonConf, PythonProjectRunner}
 import tech.mlsql.common.utils.cluster.ml._
 import tech.mlsql.common.utils.hdfs.HDFSOperator
 import tech.mlsql.common.utils.lang.sc.ScalaMethodMacros
-import tech.mlsql.common.utils.serder.json.JSONTool
-import tech.mlsql.ets.ml.cluster.{DataManager, LocalDirectoryManager, LocalPathRes, PortManager}
+import tech.mlsql.ets.ml.cluster._
+import tech.mlsql.log.WriteLog
 
 class DistributedTensorflow(override val uid: String) extends SQLAlg with SQLPythonAlgParams with Functions {
   def this() = this(BaseParams.randomUID())
@@ -62,6 +63,19 @@ class DistributedTensorflow(override val uid: String) extends SQLAlg with SQLPyt
       override def host: String = MLSQLSparkUtils.rpcEnv().address.host
     }
 
+    def configureLogConf() = {
+      val context = ScriptSQLExec.context()
+      val conf = context.execListener.sparkSession.sqlContext.getAllConfs
+      conf.filter(f => f._1.startsWith("spark.mlsql.log.driver")) ++
+        Map(
+          PythonWorkerFactory.Tool.REDIRECT_IMPL -> "tech.mlsql.log.RedirectStreamsToSocketServer",
+          ScalaMethodMacros.str(PythonConf.PY_EXECUTE_USER) -> context.owner,
+          "groupId" -> context.groupId
+        )
+    }
+
+    val logConf = configureLogConf()
+
     val tempSocketServerHost = mlDriver._host
     val tempSocketServerPort = mlDriver._port
 
@@ -77,69 +91,85 @@ class DistributedTensorflow(override val uid: String) extends SQLAlg with SQLPyt
       ScriptSQLExec.setContext(context)
       val fitParamRDD = df.sparkSession.sparkContext.parallelize((0 until psNum).map(i => i), psNum)
       fitParamRDD.map { case algIndex =>
-        val jobName = "worker"
-        val taskIndex = algIndex
-        val roleSpec = new JSONObject()
-        roleSpec.put("jobName", "ps")
-        roleSpec.put("taskIndex", taskIndex)
+        val tfContext = new TFContext(DriverHost(tempSocketServerHost, tempSocketServerPort), CurrentRole("ps", algIndex))
+        tfContext.assertCommand
 
         val hostPort = PortManager.preTaken
         val port = PortManager.getPort(hostPort)
-        val workerProxy: MLWorkerProxy = new MLWorkerProxy(tempSocketServerHost, tempSocketServerPort) {
-          override def workerTaskName(): WorkerInfo => String = {
-            (f: WorkerInfo) => s"/job:worker/task:${f.taskIndex}"
-          }
 
-          override def parameterServerTaskName(): WorkerInfo => String = {
-            (f: WorkerInfo) => s"/job:ps/task:${f.taskIndex}"
-          }
-        }
-        workerProxy.reportToMaster(ReportToMasterRequest(MLSQLSparkUtils.rpcEnv().address.host, port, jobName, taskIndex, isPs = true))
+        val workerProxy: MLWorkerProxy = tfContext.workerProxy
+
+        workerProxy.reportToMaster(ReportToMasterRequest(MLSQLSparkUtils.rpcEnv().address.host, port,
+          tfContext.currentRole.jobName,
+          tfContext.currentRole.taskIndex,
+          tfContext.isPs))
+
         workerProxy.waitOthers(psTargetSize + workerTargetSize)
+
         PortManager.releasePreTaken(hostPort)
 
-        val clusterSpec = workerProxy.fetchClusterSpec()
-        val clusterSpecMap = Map("worker" -> clusterSpec.workers.map(f => s"${f.host}:${f.port}"),
-          "ps" -> clusterSpec.parameterServers.map(f => s"${f.host}:${f.port}"))
-
         val paramMap = fitParam ++ Map(
-          "clusterSpec" -> JSONTool.toJsonStr(clusterSpecMap),
-          "roleSpec" -> roleSpec.toString()
+          "clusterSpec" -> tfContext.createClusterSpec,
+          "roleSpec" -> tfContext.createRoleSpec
         )
 
-        val command = Seq("bash", "-c", envCommand + s" &&  python ${paramCommand} ${projectTargetFileName}")
+        val command = Seq("bash", "-c", envCommand + s" &&  python ${paramCommand} ${projectTargetFileName} ps ${tfContext.currentRole.taskIndex}")
 
         val taskDirectory = LocalDirectoryManager.setUpTaskDirectory(projectName)
 
-        val pythonWorker = new AtomicReference[Process]()
         val context = TaskContext.get()
 
         // notice: I still get no way how to destroy the ps python worker
         // when spark existed unexpectedly.
         // we have handle the situation eg. task is cancel or
+        val processRef = new AtomicReference[SubProcess]()
+        val flag = new AtomicReference[String]("normal")
+
+        TaskContext.get().addTaskCompletionListener(new TaskCompletionListener {
+          override def onTaskCompletion(context: TaskContext): Unit = {
+            if (context.isInterrupted()) {
+              if (processRef.get() != null) {
+                tfContext.killPython(processRef.get.wrapped)
+              }
+            }
+          }
+        })
+
         val pythonPSThread = new Thread(new Runnable {
           override def run(): Unit = {
             TaskContextUtil.setContext(context)
             try {
               LocalDirectoryManager.downloadProject(taskDirectory, Option(pythonProjectPath), projectType)
               val runner = new PythonProjectRunner(taskDirectory, Map())
-              val res = runner.run(command, paramMap)
-              res.foreach(println)
+              val res = runner.run(command, paramMap ++ logConf)
+              processRef.set(runner.getPythonProcess.get)
+              WriteLog.write(res, logConf, false)
             } catch {
               case e: Exception =>
-                e.printStackTrace()
-
+                if (flag.get() != "kill-python") {
+                  if (processRef.get() != null) {
+                    tfContext.reportFails
+                    tfContext.killPython(processRef.get().wrapped)
+                    tfContext.close
+                    throw e
+                  }
+                }
             }
           }
         })
+
         pythonPSThread.setDaemon(true)
         pythonPSThread.start()
 
-        workerProxy.waitDoneOrFail(clusterSpec.workers.size, JobStatusRequest(jobName, taskIndex, false, false))
-        workerProxy.reportSuccess(JobStatusRequest(jobName, taskIndex, true, true))
-        pythonWorker.get().destroy()
+        tfContext.waitDoneOrFail
+        tfContext.reportSuccess
         pythonPSThread.interrupt()
-        workerProxy.close
+        if (processRef.get() != null) {
+          val temp = processRef.get()
+          flag.set("kill-python")
+          tfContext.killPython(processRef.get().wrapped)
+        }
+        tfContext.close
         Iterator()
       }.count()
     }
@@ -160,57 +190,62 @@ class DistributedTensorflow(override val uid: String) extends SQLAlg with SQLPyt
     df.rdd.mapPartitionsWithIndex { case (algIndex, iter) =>
 
       val LocalPathRes(dataFilePath, localPathConfig) = DataManager.setupData(iter, sourceSchema, sessionLocalTimeZone, algIndex, fileFormat)
-
       val tempModelLocalPath = s"${localPathConfig.localModelPath}/${algIndex}"
 
-      val jobName = "worker"
-      val taskIndex = algIndex
-      val roleSpec = new JSONObject()
-      roleSpec.put("jobName", "worker")
-      roleSpec.put("taskIndex", taskIndex)
-
+      val tfContext = new TFContext(DriverHost(tempSocketServerHost, tempSocketServerPort), CurrentRole("worker", algIndex))
+      tfContext.assertCommand
 
       val hostPort = PortManager.preTaken
       val port = PortManager.getPort(hostPort)
-      val workerProxy = new MLWorkerProxy(tempSocketServerHost, tempSocketServerPort) {
-        override def workerTaskName(): WorkerInfo => String = {
-          (f: WorkerInfo) => s"/job:worker/task:${f.taskIndex}"
-        }
+      val workerProxy = tfContext.workerProxy
 
-        override def parameterServerTaskName(): WorkerInfo => String = {
-          (f: WorkerInfo) => s"/job:ps/task:${f.taskIndex}"
-        }
-      }
-      workerProxy.reportToMaster(ReportToMasterRequest(MLSQLSparkUtils.rpcEnv().address.host, port, jobName, taskIndex, false))
-      workerProxy.waitOthers(workerTargetSize + psTargetSize)
+      workerProxy.reportToMaster(ReportToMasterRequest(MLSQLSparkUtils.rpcEnv().address.host, port,
+        tfContext.currentRole.jobName,
+        tfContext.currentRole.taskIndex,
+        tfContext.isPs))
+
+      workerProxy.waitOthers(psTargetSize + workerTargetSize)
 
       PortManager.releasePreTaken(hostPort)
-      val clusterSpec = workerProxy.fetchClusterSpec()
 
-      val clusterSpecMap = Map("worker" -> clusterSpec.workers.map(f => s"${f.host}:${f.port}"),
-        "ps" -> clusterSpec.parameterServers.map(f => s"${f.host}:${f.port}"))
 
       val paramMap = fitParam ++ Map(
         "tempModelLocalPath" -> tempModelLocalPath,
         "tempDataLocalPath" -> dataFilePath,
-        "clusterSpec" -> JSONTool.toJsonStr(clusterSpecMap),
-        "roleSpec" -> roleSpec.toString()
+        "clusterSpec" -> tfContext.createClusterSpec,
+        "roleSpec" -> tfContext.createRoleSpec
       )
 
-      val command = Seq("bash", "-c", envCommand + s" &&  python ${paramCommand} ${projectTargetFileName}")
+      val command = Seq("bash", "-c", envCommand + s" &&  python ${paramCommand} ${projectTargetFileName} worker ${tfContext.currentRole.taskIndex}")
 
       val taskDirectory = LocalDirectoryManager.setUpTaskDirectory(projectName)
       LocalDirectoryManager.downloadProject(taskDirectory, Option(pythonProjectPath), projectType)
 
+      val processRef = new AtomicReference[SubProcess]()
+
+      TaskContext.get().addTaskCompletionListener(new TaskCompletionListener {
+        override def onTaskCompletion(context: TaskContext): Unit = {
+          if (context.isInterrupted()) {
+            if (processRef.get() != null) {
+              tfContext.killPython(processRef.get.wrapped)
+            }
+          }
+        }
+      })
+
       try {
         val runner = new PythonProjectRunner(taskDirectory, Map())
-        val res = runner.run(command, paramMap)
-        res.foreach(println)
-        workerProxy.reportSuccess(JobStatusRequest(jobName, taskIndex, true, true))
+        val res = runner.run(command, paramMap ++ logConf)
+        processRef.set(runner.getPythonProcess.get)
+        WriteLog.write(res, logConf, false)
+        logInfo(s"report worker ${tfContext.currentRole.taskIndex} success")
+        tfContext.reportSuccess
       } catch {
         case e: Exception =>
-          logError(s"Fail to run ${jobName}:${taskIndex} ", e)
-          workerProxy.reportFails(JobStatusRequest(jobName, taskIndex, true, false))
+          logError(s"Fail to run ${tfContext.currentRole.jobName}:${tfContext.currentRole.taskIndex} ", e)
+          tfContext.reportFails
+          tfContext.close
+          throw e
       }
 
       val modelHDFSPath = SQLPythonFunc.getAlgModelPath(path, keepVersion) + "/" + algIndex
@@ -222,7 +257,6 @@ class DistributedTensorflow(override val uid: String) extends SQLAlg with SQLPyt
         if (new File(tempModelLocalPath).exists()) {
           HDFSOperator.copyToHDFS(tempModelLocalPath, modelHDFSPath, true, false)
         }
-
       } catch {
         case e: Exception =>
           e.printStackTrace()
@@ -232,9 +266,10 @@ class DistributedTensorflow(override val uid: String) extends SQLAlg with SQLPyt
         // delete local data
         FileUtils.deleteDirectory(new File(localPathConfig.localDataPath))
       }
-      workerProxy.close
+      tfContext.close
       Iterator()
     }.count()
+    pSThread.join()
     mlDriver.close()
     emptyDataFrame()(df)
 

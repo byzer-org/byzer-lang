@@ -1,8 +1,11 @@
 import json
 import os
+import sys
+
 import tensorflow as tf
-from pyjava.api.mlsql import PythonProjectContext
 from tensorflow.contrib.learn.python.learn.datasets.mnist import read_data_sets
+
+from pyjava.api.mlsql import PythonProjectContext
 
 context = PythonProjectContext()
 context.read_params_once()
@@ -18,6 +21,8 @@ if not os.path.exists(checkpoint_dir):
 
 print("------jobName: %s  taskIndex:%s-----" % (jobName, str(taskIndex)))
 print(clusterSpec)
+
+
 
 
 def model(images):
@@ -39,6 +44,9 @@ def run():
     if jobName == "ps":
         server.join()  # ps hosts only join
     elif jobName == "worker":
+        with open(context.input_data_dir()) as f:
+            for item in f.readlines():
+                print(item)
         # workers perform the operation
         # ps_strategy = tf.contrib.training.GreedyLoadBalancingStrategy(FLAGS.num_ps)
 
@@ -48,7 +56,8 @@ def run():
         with tf.device(tf.train.replica_device_setter(worker_device="/job:worker/task:%d" % (taskIndex),
                                                       cluster=cluster)):
             # load mnist dataset
-            mnist = read_data_sets("./dataset", one_hot=True)
+            print("image dir:%s" % context.input_data_dir())
+            mnist = read_data_sets("./dataset", one_hot=True, source_url="http://docs.mlsql.tech/upload_images/")
 
             # the model
             images = tf.placeholder(tf.float32, [None, 784])
@@ -88,8 +97,9 @@ def run():
                     img_batch, label_batch = mnist.train.next_batch(32)
                     _, ls, step = mon_sess.run([train_op, loss, global_step],
                                                feed_dict={images: img_batch, labels: label_batch})
-                    if step % 100 == 0:
-                        print("Train step %d, loss: %f" % (step, ls))
+                    print("Train step %d, loss: %f" % (step, ls))
+                    sys.stdout.flush()
+
 
 
 run()

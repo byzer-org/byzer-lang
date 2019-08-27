@@ -39,6 +39,12 @@ class RedirectLogThread(
   setDaemon(true)
 
   override def run() {
+    WriteLog.write(scala.io.Source.fromInputStream(in).getLines(), conf, propagateEof)
+  }
+}
+
+object WriteLog {
+  def write(in: Iterator[String], conf: Map[String, String], propagateEof: Boolean = false) = {
     scala.util.control.Exception.ignoring(classOf[IOException]) {
       val host = conf("spark.mlsql.log.driver.host")
       val port = conf("spark.mlsql.log.driver.port")
@@ -49,7 +55,7 @@ class RedirectLogThread(
 
       Utils.tryWithSafeFinally {
         val dOut = new DataOutputStream(socket.getOutputStream)
-        scala.io.Source.fromInputStream(in).getLines().foreach { line =>
+        in.foreach { line =>
           val client = new DriverLogClient()
           client.sendRequest(dOut, SendLog(token, LogUtils.formatWithOwner(line, owner, groupId)))
         }

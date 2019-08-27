@@ -32,10 +32,10 @@ object DataManager extends Logging {
     if (!new File(tempDataLocalPathWithAlgSuffix).exists()) {
       FileUtils.forceMkdir(new File(tempDataLocalPathWithAlgSuffix))
     }
-    val localFile = PathFun(tempDataLocalPathWithAlgSuffix).add(UUID.randomUUID().toString + ".snappy.parquet").toPath
-    val localFileWriter = fileType match {
-      case "parquet" => new ParquetOutputWriter(localFile, new Configuration())
-      case "json" => new JsonOutputWriter(localFile, sourceSchema, sessionLocalTimeZone)
+    val localFilePrefix = PathFun(tempDataLocalPathWithAlgSuffix).add(UUID.randomUUID().toString).toPath
+    val (localFile, localFileWriter) = fileType match {
+      case "parquet" => (localFilePrefix + ".snappy.parquet", new ParquetOutputWriter(localFilePrefix + ".snappy.parquet", new Configuration()))
+      case "json" => (localFilePrefix + ".json", new JsonOutputWriter(localFilePrefix + ".json", sourceSchema, sessionLocalTimeZone))
     }
 
     try {
