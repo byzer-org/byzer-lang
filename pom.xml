@@ -71,9 +71,11 @@
         <scope>provided</scope>
         <hadoop-client-version>2.6.5</hadoop-client-version>
 
-        <common-utils-version>0.1.6</common-utils-version>
+        <common-utils-version>0.1.8</common-utils-version>
         <mlsql-ps-service-version>1.3.5</mlsql-ps-service-version>
-        <pyjava-version>0.1.2</pyjava-version>
+        <pyjava-version>0.2.0</pyjava-version>
+        <delta-plus-version>0.1.1</delta-plus-version>
+        <spark-binlog-version>0.1.3</spark-binlog-version>
     </properties>
 
     <repositories>
@@ -478,11 +480,15 @@
                 <dependency>
                     <groupId>tech.mlsql</groupId>
                     <artifactId>delta-plus_${scala.binary.version}</artifactId>
-                    <version>0.1.1</version>
+                    <version>${delta-plus-version}</version>
                     <exclusions>
                         <exclusion>
                             <groupId>tech.mlsql</groupId>
                             <artifactId>streamingpro-common</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>tech.mlsql</groupId>
+                            <artifactId>common-utils_${scala.binary.version}</artifactId>
                         </exclusion>
                     </exclusions>
                 </dependency>

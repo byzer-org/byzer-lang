@@ -79,7 +79,7 @@
         <dependency>
             <groupId>tech.mlsql</groupId>
             <artifactId>spark-binlog_${scala.binary.version}</artifactId>
-            <version>0.1.1</version>
+            <version>${spark-binlog-version}</version>
             <exclusions>
                 <exclusion>
                     <groupId>tech.mlsql</groupId>
@@ -88,6 +88,10 @@
                 <exclusion>
                     <groupId>tech.mlsql</groupId>
                     <artifactId>streamingpro-common</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>tech.mlsql</groupId>
+                    <artifactId>common-utils_${scala.binary.version}</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
