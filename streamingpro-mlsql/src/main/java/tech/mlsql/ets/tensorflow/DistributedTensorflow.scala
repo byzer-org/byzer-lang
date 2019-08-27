@@ -41,6 +41,7 @@ class DistributedTensorflow(override val uid: String) extends SQLAlg with SQLPyt
         throw new MLSQLException("fitParam only support one group")
     }
 
+    val chiefIndex = fitParam.getOrElse("chiefIndex", "0").toInt
 
     SQLPythonFunc.incrementVersion(path, keepVersion)
 
@@ -259,7 +260,7 @@ class DistributedTensorflow(override val uid: String) extends SQLAlg with SQLPyt
         if (!keepVersion) {
           HDFSOperator.deleteDir(modelHDFSPath)
         }
-        if (new File(tempModelLocalPath).exists()) {
+        if (new File(tempModelLocalPath).exists() && chiefIndex == tfContext.currentRole.taskIndex) {
           HDFSOperator.copyToHDFS(tempModelLocalPath, modelHDFSPath, true, false)
         }
       } catch {
