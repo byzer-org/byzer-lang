@@ -20,6 +20,8 @@ class MLSQLHive(override val uid: String) extends MLSQLSource with MLSQLSink wit
   override def save(writer: DataFrameWriter[Row], config: DataSinkConfig): Unit = {
     writer.format(config.config.getOrElse("file_format", "parquet"))
     val options = config.config - "file_format" - "implClass"
+    config.config.get("partitionByCol").map(partitionColumn => partitionColumn.split(",").filterNot(_.isEmpty)).filterNot(_.length==0)
+      .map(partitionColumns =>writer.partitionBy(partitionColumns: _*))
     writer.options(options).mode(config.mode).saveAsTable(config.path)
   }
 
