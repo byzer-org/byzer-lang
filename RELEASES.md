@@ -3,8 +3,7 @@ MLSQL Version 1.4.0 (2019-09-xx)
 
 MLSQL Language
 --------
-
-None 
+- [MLSQL Analyzer](http://docs.mlsql.tech/zh/grammar/analyze.md) 
 
 Bug Fix
 ---------
@@ -14,23 +13,23 @@ Bug Fix
 
 New Features
 ----------
+- Python 
+    - [Tensorflow Cluster](http://docs.mlsql.tech/zh/python/dtf.html)
+    - [Python Interactive Command](http://docs.mlsql.tech/zh/python/interactive.html)
+    - [Python Table Processing](http://docs.mlsql.tech/zh/python/table.html)
 
-- [Tensorflow Cluster](http://docs.mlsql.tech/zh/python/dtf.html)
-- [Python Interactive Command](http://docs.mlsql.tech/zh/python/interactive.html)
-- [Python Table Processing](http://docs.mlsql.tech/zh/python/table.html)
-- [MLSQL Analyzer](http://docs.mlsql.tech/zh/python/table.html)
 
 
 Break Features 
 --------
 
-- Use streamJDBC instead of JDBC in stream sink.
+- Remove 
 
 
 Components
 --------
 
-- [MLSQL Console](https://github.com/allwefantasy/mlsql-api-console) can be used with MLSQL Engine.
+- [PyJava](https://github.com/allwefantasy/pyjava) is an ongoing effort towards bringing the data exchanging ability between Java/Scala and Python.
 
 
 Plan of next release.
