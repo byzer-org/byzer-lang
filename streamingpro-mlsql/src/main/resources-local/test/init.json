@@ -1,0 +1,23 @@
+{
+  "init": {
+    "desc": "初始化脚本",
+    "strategy": "spark",
+    "algorithm": [],
+    "ref": [],
+    "compositor": [
+      {
+        "name": "init",
+        "params": [
+          {
+            "mlsql": [
+              "include hdfs.`/tmp/init.mlsql`;"
+            ],
+            "owner": "william"
+          }
+        ]
+      }
+    ],
+    "configParams": {
+    }
+  }
+}

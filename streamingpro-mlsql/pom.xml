@@ -417,6 +417,12 @@
             <groupId>tech.mlsql</groupId>
             <artifactId>pyjava-${spark.bigversion}_${scala.binary.version}</artifactId>
             <version>${pyjava-version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>tech.mlsql</groupId>
+                    <artifactId>common-utils_${scala.binary.version}</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.jsoup</groupId>
@@ -475,6 +481,12 @@
             <groupId>tech.mlsql</groupId>
             <artifactId>streamingpro-api-${spark.bigversion}_${scala.binary.version}</artifactId>
             <version>${project.parent.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>tech.mlsql</groupId>
+            <artifactId>common-utils_${scala.binary.version}</artifactId>
+            <version>${common-utils-version}</version>
         </dependency>
 
         <dependency>

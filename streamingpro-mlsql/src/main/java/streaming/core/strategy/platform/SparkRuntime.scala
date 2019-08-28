@@ -120,7 +120,8 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
     /**
       * start a log server ,so the executor can send log to driver and the driver will log them into log files.
       */
-    if (MLSQLConf.MLSQL_SPARK_SERVICE.readFrom(configReader)) {
+    if (MLSQLConf.MLSQL_SPARK_SERVICE.readFrom(configReader) ||
+      params.getOrDefault("streaming.unittest", "false").toString.toBoolean) {
       val token = UUID.randomUUID().toString
       driverLogServer = new DriverLogServer[String](new AtomicReference[String](token))
       conf.set("spark.mlsql.log.driver.host", driverLogServer._host)
