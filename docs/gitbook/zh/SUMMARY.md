@@ -39,6 +39,7 @@
         * [Save语法](grammar/save.md)
         * [宏语法](grammar/macro.md)
         * [Include语法](grammar/include.md)
+        * [MLSQL语法解析接口](grammar/analyze.md)
     * [MLSQL Console使用指南](console/README.md)
         * [用户界面介绍](console/console_usage.md)
         * [权限和用户管理](console/auth_user.md)

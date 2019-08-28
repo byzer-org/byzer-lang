@@ -1,3 +1,55 @@
+MLSQL Version 1.4.0 (2019-09-xx)
+==========================
+
+MLSQL Language
+--------
+
+None 
+
+Bug Fix
+---------
+
+- [PR-1011 Jython udf do not support null parameter](https://github.com/allwefantasy/streamingpro/pull/1011)
+
+
+New Features
+----------
+
+- [Tensorflow Cluster](http://docs.mlsql.tech/zh/python/dtf.html)
+- [Python Interactive Command](http://docs.mlsql.tech/zh/python/interactive.html)
+- [Python Table Processing](http://docs.mlsql.tech/zh/python/table.html)
+- [MLSQL Analyzer](http://docs.mlsql.tech/zh/python/table.html)
+
+
+Break Features 
+--------
+
+- Use streamJDBC instead of JDBC in stream sink.
+
+
+Components
+--------
+
+- [MLSQL Console](https://github.com/allwefantasy/mlsql-api-console) can be used with MLSQL Engine.
+
+
+Plan of next release.
+-------
+
+- API `/stream/jobs/kill` and `/stream/jobs/running`,`/run/sql` will be removed in next release.
+
+Docs Link
+--------
+
+- [MLSQL-1.4.0](http://docs.mlsql.tech/v1.4.0/zh/) 
+
+Download Link
+---------
+
+- [MLSQL-1.4.0](http://download.mlsql.tech/1.4.0/)
+
+
+
 MLSQL Version 1.3.0 (2019-06-xx)
 ==========================
 

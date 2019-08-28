@@ -73,6 +73,7 @@ class RestController extends ApplicationController with WowLog {
         "default: admin. Please set this owner properly.",
       `type` = "boolean", allowEmptyValue = false),
     new Parameter(name = "jobType", required = false, description = "script|stream|sql; default is script", `type` = "string", allowEmptyValue = false),
+    new Parameter(name = "executeMode", required = false, description = "query|analyze; default is query", `type` = "string", allowEmptyValue = false),
     new Parameter(name = "jobName", required = false, description = "give the job you submit a name. uuid is ok.", `type` = "string", allowEmptyValue = false),
     new Parameter(name = "timeout", required = false, description = "set timeout value for your job. default is -1 which means it is never timeout. millisecond", `type` = "int", allowEmptyValue = false),
     new Parameter(name = "silence", required = false, description = "the last sql in the script will return nothing. default: false", `type` = "boolean", allowEmptyValue = false),
