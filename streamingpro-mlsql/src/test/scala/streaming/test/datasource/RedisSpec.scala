@@ -5,7 +5,7 @@ import org.scalatest.BeforeAndAfterAll
 import streaming.core.strategy.platform.SparkRuntime
 import streaming.core.{BasicMLSQLConfig, SpecFunctions}
 import streaming.dsl.ScriptSQLExec
-import streaming.log.Logging
+import tech.mlsql.common.utils.log.Logging
 
 /**
   * 2019-01-10 WilliamZhu(allwefantasy@gmail.com)

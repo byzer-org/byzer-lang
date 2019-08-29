@@ -19,7 +19,7 @@
 package streaming.common
 
 import net.csdn.modules.http.PortGenerator
-import streaming.common.ParamsHelper._
+import tech.mlsql.common.utils.shell.command.ParamsHelper._
 import streaming.core.strategy.platform.PlatformManager
 
 /**

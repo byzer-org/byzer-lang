@@ -18,10 +18,11 @@
 
 package streaming.dsl.load.batch
 
-import streaming.dsl.MLMapping
-import org.apache.spark.sql.{DataFrame, Row, SparkSession}
-import org.apache.spark.sql.types.{StringType, StructField, StructType}
 import com.google.common.reflect.ClassPath
+import org.apache.spark.sql.types.{StringType, StructField, StructType}
+import org.apache.spark.sql.{DataFrame, Row, SparkSession}
+import tech.mlsql.dsl.adaptor.MLMapping
+
 import scala.collection.JavaConversions._
 
 /**

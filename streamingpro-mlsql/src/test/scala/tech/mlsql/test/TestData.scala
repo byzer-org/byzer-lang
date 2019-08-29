@@ -13,6 +13,7 @@ object TestData {
       |{"key":"yes","value":"no","topic":"test","partition":0,"offset":4,"timestamp":"2008-01-24 18:01:01.003","timestampType":0}
       |{"key":"yes","value":"no","topic":"test","partition":0,"offset":5,"timestamp":"2008-01-24 18:01:01.003","timestampType":0}
     """.stripMargin
+
 }
 
 object StreamSubBatchQuerySuiteData {

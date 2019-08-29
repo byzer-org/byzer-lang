@@ -21,13 +21,13 @@ package streaming.test.processing
 import net.sf.json.JSONObject
 import org.apache.spark.ml.linalg.Vector
 import org.apache.spark.sql.types._
-import org.apache.spark.sql.{Row, SaveMode}
+import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession}
 import org.apache.spark.streaming.BasicSparkOperation
 import streaming.core.shared.SharedObjManager
 import streaming.core.strategy.platform.SparkRuntime
-import streaming.core.{BasicMLSQLConfig, NotToRunTag, SpecFunctions}
+import streaming.core.{BasicMLSQLConfig, SpecFunctions}
 import streaming.dsl.ScriptSQLExec
-import streaming.dsl.mmlib.algs.feature.{DiscretizerIntFeature, DoubleFeature, StringFeature}
+import streaming.dsl.mmlib.algs.feature.StringFeature
 import streaming.dsl.mmlib.algs.{SQLCommunityBasedSimilarityInPlace, SQLCorpusExplainInPlace, SQLVecMapInPlace}
 import streaming.dsl.template.TemplateMerge
 
@@ -229,26 +229,9 @@ class TextSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLCon
     }
   }
 
-  "SQLSampler" should "work fine" in {
-
-    val queryNameSeq = Seq("sql-sampler", "sql-sampler_splitWithSubLabel")
-    queryNameSeq.foreach(name => {
-      withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
-        //执行sql
-        implicit val spark = runtime.sparkSession
-        val sq = createSSEL
-        ScriptSQLExec.parse(loadSQLScriptStr(name), sq)
-        var df = spark.sql("select count(*) as num,__split__ as rate from sample_data group by __split__ ")
-        assume(df.count() == 3)
-        df = spark.sql("select label,__split__,count(__split__) as rate from sample_data  group by label,__split__ order by label,__split__,rate")
-        df.show(10000)
-      }
-    })
-
-  }
 
   "SQLTfIdfInPlace" should "work fine" in {
-    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+    withContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       analyzerContext(() => {
         //执行sql
         implicit val spark = runtime.sparkSession
@@ -264,17 +247,43 @@ class TextSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLCon
         writeStringToFile("/tmp/tfidf/dics", List("天才").mkString("\n"))
         writeStringToFile("/tmp/tfidf/prioritywords", List("天才").mkString("\n"))
 
-        val sq = createSSEL
-        ScriptSQLExec.parse(loadSQLScriptStr("tfidfplace"), sq)
+        var newSession = spark
+        executeCodeWithCallback(runtime,
+          """
+            |load parquet.`/tmp/tfidf/df`
+            |as orginal_text_corpus;
+            |
+            |-- 把文本字段转化为tf/idf向量,可以自定义词典
+            |train orginal_text_corpus as TfIdfInPlace.`/tmp/tfidfinplace`
+            |where inputCol="content"
+            |-- 分词相关配置
+            |and ignoreNature="true"
+            |-- 停用词路径
+            |and stopWordPath="/tmp/tfidf/stopwords"
+            |-- 高权重词路径
+            |and priorityDicPath="/tmp/tfidf/prioritywords"
+            |and dicPaths="/tmp/tfidf/dics"
+            |-- 高权重词加权倍数
+            |and priority="5.0"
+            |and nGrams="2"
+            |-- and split=""
+            |as result;
+            |
+            |register TfIdfInPlace.`/tmp/tfidfinplace` as jack;
+            |select * from result as output;
+          """.stripMargin, (df: DataFrame) => {
+            df.write.mode(SaveMode.Overwrite).parquet("/tmp/william/tmp/tfidfinplace/data")
+            newSession = df.sparkSession
+          })
+
         SharedObjManager.clear
         // we should make sure train vector and predict vector the same
-        val trainVector = spark.sql("select * from parquet.`/tmp/william/tmp/tfidfinplace/data`").toJSON.collect()
+        val trainVector = newSession.sql("select * from parquet.`/tmp/william/tmp/tfidfinplace/data`").toJSON.collect()
         trainVector.foreach {
           f => println(f)
         }
-        val predictVector = spark.sql("select jack(content) as content from orginal_text_corpus").toJSON.collect()
+        val predictVector = newSession.sql("select jack(content) as content from orginal_text_corpus").toJSON.collect()
         predictVector.foreach { f =>
-          println(f)
           assume(trainVector.contains(f))
         }
       })
@@ -282,88 +291,60 @@ class TextSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLCon
     }
   }
 
-  "SQLWord2VecInPlace" should "work fine" in {
-    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
-      //执行sql
+  //  "SQLWord2VecInPlace" should "work fine" in {
+  //    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+  //      //执行sql
+  //
+  //      analyzerContext(() => {
+  //        val resultFeatures = Seq("index", "merge", "flat", "")
+  //        for (resultFeature <- resultFeatures) {
+  //          implicit val spark = runtime.sparkSession
+  //          delDir("/tmp/william/tmp/word2vecinplace")
+  //          delDir("/tmp/william/tmp/tfidf")
+  //          val raw = Seq("我是天才，你呢", "你真的很棒", "天才你好")
+  //          val dataRDD = spark.sparkContext.parallelize(raw).map { f =>
+  //            Row.fromSeq(Seq(f))
+  //          }
+  //          val df = spark.createDataFrame(dataRDD,
+  //            StructType(Seq(StructField("content", StringType))))
+  //
+  //          df.write.mode(SaveMode.Overwrite).parquet("/tmp/william/tmp/tfidf/df")
+  //
+  //          writeStringToFile("/tmp/tfidf/stopwords", List("你").mkString("\n"))
+  //          writeStringToFile("/tmp/tfidf/prioritywords", List("天才").mkString("\n"))
+  //          val sq = createSSEL
+  //          ScriptSQLExec.parse(TemplateMerge.merge(
+  //            """
+  //              |load parquet.`/tmp/tfidf/df`
+  //              |as orginal_text_corpus;
+  //              |
+  //              |-- 把文本字段转化为tf/idf向量,可以自定义词典
+  //              |train orginal_text_corpus as Word2VecInPlace.`/tmp/word2vecinplace`
+  //              |where inputCol="content"
+  //              |-- 分词相关配置
+  //              |and ignoreNature="true"
+  //              |-- 停用词路径
+  //              |and stopWordPath="/tmp/tfidf/stopwords"
+  //              |and resultFeature="${resultFeature}"
+  //              |and minCount="${minCount}"
+  //              |;
+  //              |
+  //              |register Word2VecInPlace.`/tmp/word2vecinplace` as jack;
+  //            """.stripMargin,
+  //            Map("resultFeature" -> resultFeature, "minCount" -> "1")), sq)
+  //          // we should make sure train vector and predict vector the same
+  //          val trainVector = spark.sql("select * from parquet.`/tmp/william/tmp/word2vecinplace/data`").toJSON.collect()
+  //          val predictVector = spark.sql("select jack(content) as content from orginal_text_corpus").toJSON.collect()
+  //
+  //          println("resultFeature:" + resultFeature)
+  //          predictVector.foreach { f =>
+  //            assume(trainVector.contains(f))
+  //          }
+  //        }
+  //      })
+  //    }
+  //  }
 
-      analyzerContext(() => {
-        val wordvecPaths = Seq("/Users/zml/mlsql/word2vec", "")
-        val resultFeatures = Seq("index", "merge", "flat", "")
-        for (wordvecPath <- wordvecPaths) {
-          for (resultFeature <- resultFeatures) {
-            implicit val spark = runtime.sparkSession
-            delDir("/tmp/william/tmp/word2vecinplace")
-            delDir("/tmp/william/tmp/tfidf")
-            val raw = Seq("我是天才，你呢", "你真的很棒", "天才你好")
-            val dataRDD = spark.sparkContext.parallelize(raw).map { f =>
-              Row.fromSeq(Seq(f))
-            }
-            val df = spark.createDataFrame(dataRDD,
-              StructType(Seq(StructField("content", StringType))))
-
-            df.write.mode(SaveMode.Overwrite).parquet("/tmp/william/tmp/tfidf/df")
-
-            writeStringToFile("/tmp/tfidf/stopwords", List("你").mkString("\n"))
-            writeStringToFile("/tmp/tfidf/prioritywords", List("天才").mkString("\n"))
-            val sq = createSSEL
-            ScriptSQLExec.parse(TemplateMerge.merge(loadSQLScriptStr("word2vecplace"),
-              Map("wordvecPaths" -> wordvecPath, "resultFeature" -> resultFeature, "minCount" -> "1")), sq)
-            // we should make sure train vector and predict vector the same
-            val trainVector = spark.sql("select * from parquet.`/tmp/william/tmp/word2vecinplace/data`").toJSON.collect()
-            val predictVector = spark.sql("select jack(content) as content from orginal_text_corpus").toJSON.collect()
-            println("wordvecPath:" + wordvecPath)
-            println("resultFeature:" + resultFeature)
-            predictVector.foreach { f =>
-              assume(trainVector.contains(f))
-            }
-          }
-        }
-      })
-    }
-  }
-
-  "SQLWord2VecInPlaceMinCount" should "work fine" in {
-    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
-      analyzerContext(() => {
-        val resultFeatures = Seq("flat", "merge", "index", "")
-        val minCounts = Seq("1", "2")
-        for (resultFeature <- resultFeatures) {
-          val wordCount = Array(0, 0)
-          var i = 0
-          for (minCount <- minCounts) {
-            implicit val spark = runtime.sparkSession
-            delDir("/tmp/william/tmp/word2vecinplace")
-            delDir("/tmp/william/tmp/tfidf")
-            val raw = Seq("我是天才，你呢", "你真的很棒", "天才你好")
-            val dataRDD = spark.sparkContext.parallelize(raw).map { f =>
-              Row.fromSeq(Seq(f))
-            }
-            val df = spark.createDataFrame(dataRDD,
-              StructType(Seq(StructField("content", StringType))))
-
-            df.write.mode(SaveMode.Overwrite).parquet("/tmp/william/tmp/tfidf/df")
-
-            writeStringToFile("/tmp/tfidf/stopwords", List("你").mkString("\n"))
-            writeStringToFile("/tmp/tfidf/prioritywords", List("天才").mkString("\n"))
-            val sq = createSSEL
-            ScriptSQLExec.parse(TemplateMerge.merge(loadSQLScriptStr("word2vecplace"),
-              Map("wordvecPaths" -> "", "resultFeature" -> resultFeature, "minCount" -> minCount)), sq)
-            // we should make sure train vector and predict vector the same
-            val trainVector = spark.sql("select * from parquet.`/tmp/william/tmp/word2vecinplace/data`").toJSON.collect()
-            val predictVector = spark.sql("select jack(content) as content from orginal_text_corpus").toJSON.collect()
-            predictVector.foreach { f =>
-              assume(trainVector.contains(f))
-            }
-            val countVector = spark.sql("select count(*) as a from parquet.`/tmp/william/tmp/word2vecinplace/meta/columns/content/word2vec/data`").toJSON.collect()
-            wordCount(i) = JSONObject.fromObject(countVector(0)).get("a").toString.toInt
-            i = i + 1
-          }
-          println("resultFeature:" + resultFeature)
-          assume(wordCount(0) > wordCount(1))
-        }
-      })
-    }
-  }
 
   "SQLWord2VecInPlaceSplit" should "work fine" in {
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
@@ -444,7 +425,7 @@ class TextSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLCon
 
 
   "SQLScalerInPlace" should "work fine" in {
-    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+    withContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
       implicit val spark = runtime.sparkSession
       val dataRDD = spark.sparkContext.parallelize(Seq(
@@ -462,11 +443,26 @@ class TextSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLCon
         )))
       df.createOrReplaceTempView("orginal_text_corpus")
 
-      val sq = createSSEL
-      ScriptSQLExec.parse(loadSQLScriptStr("scaleplace"), sq)
+      var newSession = spark
+      executeCodeWithCallback(runtime,
+        """
+          |-- 把文本字段转化为tf/idf向量,可以自定义词典
+          |train orginal_text_corpus as ScalerInPlace.`/tmp/scaler`
+          |where inputCols="a,b"
+          |-- 使用是什么缩放方法
+          |and scaleMethod="min-max"
+          |-- 是否自动修正异常值
+          |and removeOutlierValue="false"
+          |;
+          |
+          |register ScalerInPlace.`/tmp/scaler` as jack;
+        """.stripMargin, (df: DataFrame) => {
+          newSession = df.sparkSession
+        })
+
       // we should make sure train vector and predict vector the same
-      val trainVector = spark.sql("select * from parquet.`/tmp/william/tmp/scaler/data`").toJSON.collect()
-      val predictVector = spark.sql("select jack(array(a,b))[0] a,jack(array(a,b))[1] b, c from orginal_text_corpus").toJSON.collect()
+      val trainVector = newSession.sql("select * from parquet.`/tmp/william/tmp/scaler/data`").toJSON.collect()
+      val predictVector = newSession.sql("select jack(array(a,b))[0] a,jack(array(a,b))[1] b, c from orginal_text_corpus").toJSON.collect()
       predictVector.foreach(println(_))
       trainVector.foreach(println(_))
       predictVector.foreach { f =>
@@ -477,7 +473,7 @@ class TextSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLCon
   }
 
   "SQLNormalizeInPlace" should "work fine" in {
-    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+    withContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
       implicit val spark = runtime.sparkSession
       val dataRDD = spark.sparkContext.parallelize(Seq(
@@ -496,7 +492,7 @@ class TextSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLCon
       df.createOrReplaceTempView("orginal_text_corpus")
 
 
-      def validate = {
+      def validate(spark:SparkSession) = {
         val trainVector = spark.sql("select * from parquet.`/tmp/william/tmp/scaler2/data`").toJSON.collect()
         val predictVector = spark.sql("select jack(array(a,b))[0] a,jack(array(a,b))[1] b, c from orginal_text_corpus").toJSON.collect()
         predictVector.foreach(println(_))
@@ -506,14 +502,33 @@ class TextSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLCon
         }
       }
 
-      var sq = createSSEL
-      ScriptSQLExec.parse(TemplateMerge.merge(loadSQLScriptStr("normalizeplace"), Map("method" -> "standard")), sq)
-      // we should make sure train vector and predict vector the same
-      validate
+      val code =
+        """
+          |-- 把文本字段转化为tf/idf向量,可以自定义词典
+          |train orginal_text_corpus as NormalizeInPlace.`/tmp/scaler2`
+          |where inputCols="a,b"
+          |-- 使用是什么缩放方法
+          |and method="${method}"
+          |-- 是否自动修正异常值
+          |and removeOutlierValue="false"
+          |;
+          |
+          |register NormalizeInPlace.`/tmp/scaler2` as jack;
+        """.stripMargin
+      var session = spark
+      executeCodeWithCallback(runtime, TemplateMerge.merge(code, Map("method" -> "standard"))
+        , (df: DataFrame) => {
+          session = df.sparkSession
+        })
 
-      sq = createSSEL
-      ScriptSQLExec.parse(TemplateMerge.merge(loadSQLScriptStr("normalizeplace"), Map("method" -> "p-norm")), sq)
-      validate
+      // we should make sure train vector and predict vector the same
+      validate(session)
+
+      executeCodeWithCallback(runtime, TemplateMerge.merge(code, Map("method" -> "p-norm"))
+        , (df: DataFrame) => {
+          session = df.sparkSession
+        })
+      validate(session)
     }
   }
 

@@ -1,7 +1,8 @@
 package streaming.core.datasource
 
 import org.apache.spark.sql.{DataFrame, DataFrameReader, DataFrameWriter, Row}
-import streaming.dsl.{DslTool, ScriptSQLExec}
+import streaming.dsl.ScriptSQLExec
+import tech.mlsql.dsl.adaptor.DslTool
 
 /**
   * 2019-03-19 WilliamZhu(allwefantasy@gmail.com)

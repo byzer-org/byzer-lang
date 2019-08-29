@@ -20,13 +20,11 @@ package streaming.core.strategy.platform
 
 import java.lang.reflect.Modifier
 import java.util.concurrent.atomic.AtomicReference
-import java.util.{Map => JMap}
+import java.util.{UUID, Map => JMap}
 
-import _root_.streaming.common.{NetUtils, ScalaObjectReflect}
 import _root_.streaming.core.message.MLSQLMessage
 import _root_.streaming.core.stream.MLSQLStreamManager
 import _root_.streaming.dsl.mmlib.algs.bigdl.WowLoggerFilter
-import _root_.streaming.log.Logging
 import net.csdn.common.reflect.ReflectHelper
 import org.apache.spark._
 import org.apache.spark.ps.cluster.PSDriverBackend
@@ -34,7 +32,11 @@ import org.apache.spark.ps.local.LocalPSSchedulerBackend
 import org.apache.spark.sql.jdbc.{JdbcDialect, JdbcDialects}
 import org.apache.spark.sql.mlsql.session.{SessionIdentifier, SessionManager}
 import org.apache.spark.sql.{MLSQLUtils, SQLContext, SparkSession}
+import tech.mlsql.common.utils.log.Logging
+import tech.mlsql.common.utils.network.NetUtils
 import tech.mlsql.job.JobManager
+import tech.mlsql.log.DriverLogServer
+import tech.mlsql.tool.ScalaObjectReflect
 
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
@@ -53,6 +55,8 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
   var psDriverBackend: PSDriverBackend = null
 
   var sparkSession: SparkSession = createRuntime
+
+  var driverLogServer: DriverLogServer[String] = null
 
   var sessionManager = new SessionManager(sparkSession)
   sessionManager.start()
@@ -113,8 +117,18 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
       conf.set(MLSQLConf.MLSQL_CLUSTER_PS_DRIVER_PORT.key, port.toString)
     }
 
+    /**
+      * start a log server ,so the executor can send log to driver and the driver will log them into log files.
+      */
+    if (MLSQLConf.MLSQL_SPARK_SERVICE.readFrom(configReader) ||
+      params.getOrDefault("streaming.unittest", "false").toString.toBoolean) {
+      val token = UUID.randomUUID().toString
+      driverLogServer = new DriverLogServer[String](new AtomicReference[String](token))
+      conf.set("spark.mlsql.log.driver.host", driverLogServer._host)
+      conf.set("spark.mlsql.log.driver.port", driverLogServer._port.toString)
+      conf.set("spark.mlsql.log.driver.token", token)
+    }
 
-    //    SQLDL4J.tm = SQLDL4J.init(isLocalMaster(conf))
 
     val sparkSession = SparkSession.builder().config(conf)
 
@@ -187,6 +201,7 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
   params.put("_session_", sparkSession)
 
   registerUDF("streaming.core.compositor.spark.udf.Functions")
+  registerUDF("tech.mlsql.crawler.udf.Functions")
 
   if (params.containsKey(MLSQLConf.MLSQL_UDF_CLZZNAMES.key)) {
     MLSQLConf.MLSQL_UDF_CLZZNAMES.readFrom(configReader).get.split(",").foreach { clzz =>

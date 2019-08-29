@@ -4,11 +4,12 @@ import org.apache.spark.ml.param.Param
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.mlsql.session.MLSQLException
 import org.apache.spark.sql.{DataFrame, SparkSession, functions => F}
-import streaming.common.{HDFSOperator, PathFun}
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.param.BaseParams
 import streaming.dsl.mmlib.algs.{Functions, MllibFunctions}
+import tech.mlsql.common.utils.hdfs.HDFSOperator
+import tech.mlsql.common.utils.path.PathFun
 import tech.mlsql.ets.alg.BaseAlg
 
 

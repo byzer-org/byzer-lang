@@ -26,11 +26,11 @@ import org.apache.spark.scheduler.cluster.PSDriverEndpoint
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.mlsql.session.MLSQLException
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import streaming.common.HDFSOperator
 import streaming.core.strategy.platform.{PlatformManager, SparkRuntime}
 import streaming.dsl.mmlib._
 import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
-import streaming.dsl.mmlib.algs.python.BasicCondaEnvManager
+import tech.mlsql.common.utils.env.python.BasicCondaEnvManager
+import tech.mlsql.common.utils.hdfs.HDFSOperator
 
 /**
   * 2019-01-16 WilliamZhu(allwefantasy@gmail.com)
@@ -65,6 +65,15 @@ class SQLPythonEnvExt(override val uid: String) extends SQLAlg with WowParams {
 
     }
 
+    if ($(command) == "name") {
+      import spark.implicits._
+      val appName = df.sparkSession.sparkContext.getConf.get("spark.app.name")
+      val envs = Map(BasicCondaEnvManager.MLSQL_INSTNANCE_NAME_KEY -> appName)
+      val envManager = new BasicCondaEnvManager(envs)
+      val projectEnvName = envManager.getCondaEnvName(Option($(condaYamlFilePath)))
+      return spark.createDataset[String](Seq(projectEnvName)).toDF()
+    }
+
     val wowCommand = $(command) match {
       case "create" => Message.AddEnvCommand
       case "remove" => Message.RemoveEnvCommand
@@ -79,17 +88,17 @@ class SQLPythonEnvExt(override val uid: String) extends SQLAlg with WowParams {
       val runtime = PlatformManager.getRuntime.asInstanceOf[SparkRuntime]
       assert(MLSQLConf.MLSQL_CLUSTER_PS_ENABLE.readFrom(runtime.configReader),
         """
-          |Please make sure `-streaming.ps.cluster.enable ` set true and
-          |make the mlsql main jar available in executor classpath. You can do like this(yarn mode):
+          |-streaming.ps.cluster.enable  should be  true.
           |
-          |--jars ./libs/mlsql-spark_2.x-x.x.x.jar
-          |--conf "spark.executor.extraClassPath=mlsql-spark_2.x-x.x.x.jar"
+          |Please make sure
           |
-          |If you deploy as Standalone mode, please send the  mlsql-spark_2.x-x.x.x.jar to every node, and configure like
-          |following:
+          |1. you have the uber-jar of mlsql placed in --jars
+          |2. Put mlsql-ps-service_xxx_2.11-xxx.jar to $SPARK_HOME/libs
           |
-          |--conf "spark.executor.extraClassPath= THE FULL PATH OF mlsql-spark_2.x-x.x.x.jar"
+          |You can download mlsql-ps-service_xxx_2.11-xxx.jar from http://download.mlsql.tech/1.4.0-SNAPSHOT/mlsql-ps-services/
           |
+          |Otherwise the executor will
+          |fail to start and the whole application will fails.
         """.stripMargin)
       val psDriverBackend = runtime.psDriverBackend
       psDriverBackend.psDriverRpcEndpointRef.askSync[CreateOrRemovePythonCondaEnvResponse](remoteCommand, PSDriverEndpoint.MLSQL_DEFAULT_RPC_TIMEOUT(spark.sparkContext.getConf))
@@ -108,7 +117,7 @@ class SQLPythonEnvExt(override val uid: String) extends SQLAlg with WowParams {
   override def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = throw new RuntimeException("register is not support")
 
   final val command: Param[String] = new Param[String](this, "command", "create|remove", isValid = (s: String) => {
-    s == "create" || s == "remove"
+    s == "create" || s == "remove" || s == "name"
   })
 
   final val condaYamlFilePath: Param[String] = new Param[String](this, "condaYamlFilePath", "the conda file path")

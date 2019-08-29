@@ -77,6 +77,8 @@ class DefaultShortNameMapping extends ShortNameMapping {
     "ss.sql" -> "streaming.core.compositor.spark.ss.transformation.SQLCompositor",
     "ss.outputs" -> "streaming.core.compositor.spark.ss.output.MultiSQLOutputCompositor",
 
+    "init" -> "tech.mlsql.compositor.InitializationCompositor",
+
     "flink.sources" -> "streaming.core.compositor.flink.streaming.source.MultiStreamingCompositor",
     "flink.sql" -> "streaming.core.compositor.flink.streaming.transformation.SQLCompositor",
     "flink.outputs" -> "streaming.core.compositor.flink.streaming.output.MultiSQLOutputCompositor"

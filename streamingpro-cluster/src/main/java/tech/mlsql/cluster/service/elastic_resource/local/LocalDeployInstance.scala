@@ -19,9 +19,9 @@
 package tech.mlsql.cluster.service.elastic_resource.local
 
 import net.sf.json.JSONObject
-import streaming.common.shell.ShellCommand
-import streaming.log.Logging
 import tech.mlsql.cluster.model.{Backend, EcsResourcePool}
+import tech.mlsql.common.utils.log.Logging
+import tech.mlsql.common.utils.shell.ShellCommand
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable.ArrayBuffer

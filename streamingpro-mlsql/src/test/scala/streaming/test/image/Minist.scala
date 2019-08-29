@@ -21,12 +21,13 @@ package streaming.test.image
 import java.io.File
 
 import org.apache.commons.io.FileUtils
-import streaming.common.shell.ShellCommand
-import streaming.log.Logging
+import tech.mlsql.common.utils.log.Logging
+import tech.mlsql.common.utils.shell.ShellCommand
 
 /**
   * 2018-11-29 WilliamZhu(allwefantasy@gmail.com)
   */
+
 object Minist extends Logging {
   val trainImages = "train-images-idx3-ubyte.gz"
   val trainLabels = "train-labels-idx1-ubyte.gz"
@@ -34,7 +35,7 @@ object Minist extends Logging {
   val testLabels = "t10k-labels-idx1-ubyte.gz"
 
   def download(fileName: String, path: String) = {
-    val url = s"http://yann.lecun.com/exdb/mnist/${fileName}"
+    val url = s"http://docs.mlsql.tech/upload_images/${fileName}"
     var res = ShellCommand.exec(s"cd $path;wget $url")
     logInfo(res)
     res = ShellCommand.exec(s"cd $path; gzip -d $fileName")

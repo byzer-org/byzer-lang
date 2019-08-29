@@ -9,7 +9,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>streamingpro-cluster</artifactId>
+    <artifactId>streamingpro-cluster-${spark.bigversion}_${scala.binary.version}</artifactId>
     <profiles>
         <profile>
             <id>cluster-shade</id>
@@ -47,7 +47,7 @@
     <dependencies>
         <dependency>
             <groupId>tech.mlsql</groupId>
-            <artifactId>streamingpro-common</artifactId>
+            <artifactId>streamingpro-common-${spark.bigversion}_${scala.binary.version}</artifactId>
             <version>${project.parent.version}</version>
             <exclusions>
                 <exclusion>

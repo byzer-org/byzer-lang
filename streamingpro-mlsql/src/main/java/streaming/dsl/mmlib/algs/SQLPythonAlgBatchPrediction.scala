@@ -27,16 +27,14 @@ import java.util.UUID
 import org.apache.commons.io.FileUtils
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
-
 import org.apache.spark.sql.execution.datasources.json.WowJsonInferSchema
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, SparkSession}
-
-import org.apache.spark.util.{ExternalCommandRunner}
-import streaming.common.HDFSOperator
+import org.apache.spark.util.ExternalCommandRunner
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.SQLPythonFunc._
+import tech.mlsql.common.utils.hdfs.HDFSOperator
 
 import scala.collection.JavaConverters._
 

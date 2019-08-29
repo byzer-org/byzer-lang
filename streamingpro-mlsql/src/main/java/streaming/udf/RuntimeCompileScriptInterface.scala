@@ -20,7 +20,8 @@ package streaming.udf
 
 import com.google.common.cache.{CacheBuilder, CacheLoader}
 import streaming.dsl.mmlib.algs.ScriptUDFCacheKey
-import streaming.log.Logging
+import tech.mlsql.common.utils.log.Logging
+
 import scala.collection.mutable.HashMap
 
 /**

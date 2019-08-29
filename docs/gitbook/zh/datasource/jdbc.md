@@ -131,13 +131,10 @@ save overwrite ....
 ```
 
 
-如果你希望创建表，然后再写入表，那么你可以使用JDBC Transformer,
+如果你希望先创建表，然后再写入表，那么你可以使用ET JDBC,该ET本质上是在Driver端执行各种操作指令的。
 
 ```
---创建一张无意义的表，因为语法需要
-select 1 as a as FAKE_TABLE;
-
-run FAKE_TABLE as JDBC.`db_1` where 
+run command as JDBC.`db_1` where 
 driver-statement-0="drop table test1"
 and driver-statement-1="create table test1.....";
 
@@ -146,6 +143,43 @@ save append tmp_article_table as jdbc.`db_1.test1`;
 
 
 这段语句，我们先删除test1,然后创建test1,最后使用save语句把进行数据结果的保存。
+
+## 如何执行Upsert语义(目前只支持MySQL)
+
+要让MLSQL在保存数据时执行Upsert语义的话，你只需要提供提供idCol字段即可。下面是一个简单的例子：
+
+```sql
+save append tmp_article_table as jdbc.`db_1.test1`
+where idCol="a,b,c";
+```
+
+MLSQL内部使用了MySQL的duplicate key语法，所以用户需要对应的数据库表确实有重复联合主键的约束。那如果没有实现在数据库层面定义联合约束主键呢？
+结果会是数据不断增加，而没有执行update操作。
+
+idCol的作用有两个，一个是标记，标记数据需要执行Upsert操作，第二个是确定需要的更新字段，因为主键自身的字段是不需要更新的。MLSQL会将表所有的字段减去
+idCol定义的字段，得到需要更新的字段。
+
+## 如何将流式数据写入MySQL
+
+下面有个非常简单的例子：
+
+```
+set streamName="mysql-test";
+
+.......
+
+save append table21  
+as streamJDBC.`mysql1.test1` 
+options mode="Complete"
+and `driver-statement-0`="create table  if not exists test1(k TEXT,c BIGINT)"
+and `statement-0`="insert into wow.test1(k,c) values(?,?)"
+and duration="3"
+and checkpointLocation="/tmp/cpl3";
+```
+
+我们使用streamJDBC数据源可以完成将数据写入到MySQL中。driver-statement-0 在整个运行期间只会执行一次。statement-0
+则会针对每条记录执行。 insert语句中的占位符顺序需要和table21中的列顺序保持一致。
+
 
 
 

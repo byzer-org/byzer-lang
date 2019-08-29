@@ -28,12 +28,15 @@ Please make sure
 1. you have the uber-jar of mlsql placed in --jars
 2. Put mlsql-ps-service_xxx_2.11-xxx.jar to $SPARK_HOME/libs 
 
-More detail about [mlsql-ps-service](https://github.com/allwefantasy/mlsql-ps-service)
+You can download mlsql-ps-service_xxx_2.11-xxx.jar from http://download.mlsql.tech/1.4.0-SNAPSHOT/mlsql-ps-services/
 
 Otherwise the executor will
 fail to start and the whole application will fails.
 
 ```
+
+Notice that if you install conda with root, please make sure the user runs MLSQL have
+the privilege to write conda(e.g. create new env.)   
 
 ## Steps
 

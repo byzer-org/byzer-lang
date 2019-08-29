@@ -23,8 +23,8 @@ import java.util.UUID
 
 import com.hortonworks.spark.sql.kafka08.KafkaOperator
 import org.apache.spark.sql.SparkSession
-import streaming.common.HDFSOperator
 import streaming.dsl.mmlib.algs.python.{MLFlow, PythonScript}
+import tech.mlsql.common.utils.hdfs.HDFSOperator
 
 /**
   * Created by allwefantasy on 1/2/2018.

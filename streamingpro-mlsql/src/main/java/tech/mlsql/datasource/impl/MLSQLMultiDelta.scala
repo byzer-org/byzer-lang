@@ -8,11 +8,11 @@ import org.apache.spark.sql.delta.{DeltaLog, DeltaOptions}
 import org.apache.spark.sql.streaming.{DataStreamWriter, MLSQLForeachBatchRunner}
 import org.apache.spark.sql.types.{DataType, StructType}
 import org.apache.spark.sql.{DataFrame, DataFrameReader, DataFrameWriter, Row, SaveMode, functions => F}
-import streaming.common.Md5
 import streaming.core.datasource._
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
 import streaming.source.parser.impl.JsonSourceParser
+import tech.mlsql.common.utils.Md5
 import tech.mlsql.datasource.{MLSQLMultiDeltaOptions, TableMetaInfo}
 
 import scala.collection.JavaConverters._

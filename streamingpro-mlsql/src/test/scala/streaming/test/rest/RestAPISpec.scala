@@ -29,47 +29,47 @@ import tech.mlsql.job.JobManager
 /**
   * 2018-12-06 WilliamZhu(allwefantasy@gmail.com)
   */
-class RestAPISpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConfig with BeforeAndAfterAll {
-
-
-  "/run/script" should "work fine" in {
-    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
-      //执行sql
-      implicit val spark = runtime.sparkSession
-      mockServer
-
-      JobManager.init(spark)
-      val controller = new BaseControllerTest()
-
-      val response = controller.get("/run/script", WowCollections.map(
-        "sql", "select 1 as a as t;"
-      ));
-      assume(response.status() == 200)
-      assume(response.originContent() == "[{\"a\":1}]")
-      JobManager.shutdown
-    }
-  }
-
-  "/run/script auth" should "work fine" in {
-    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
-      //执行sql
-      implicit val spark = runtime.sparkSession
-      mockServer
-
-      JobManager.init(spark)
-      val controller = new BaseControllerTest()
-
-      val path = this.getClass().getClassLoader().getResource("").getPath()
-        .replace("test-" ,"")
-
-      val response = controller.get("/run/script", WowCollections.map(
-        "sql", s"include hdfs.`${path}/test/include-set.txt` ;select '$${xx}' as a as t;"
-        ,"skipAuth" ,"false"
-        ,"owner" ,"latincross"
-      ));
-      assume(response.status() == 200)
-      assume(response.originContent() == "[{\"a\":\"latincross\"}]")
-      JobManager.shutdown
-    }
-  }
-}
+//class RestAPISpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConfig with BeforeAndAfterAll {
+//
+//
+//  "/run/script" should "work fine" in {
+//    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+//      //执行sql
+//      implicit val spark = runtime.sparkSession
+//      mockServer
+//
+//      JobManager.init(spark)
+//      val controller = new BaseControllerTest()
+//
+//      val response = controller.get("/run/script", WowCollections.map(
+//        "sql", "select 1 as a as t;"
+//      ));
+//      assume(response.status() == 200)
+//      assume(response.originContent() == "[{\"a\":1}]")
+//      JobManager.shutdown
+//    }
+//  }
+//
+//  "/run/script auth" should "work fine" in {
+//    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+//      //执行sql
+//      implicit val spark = runtime.sparkSession
+//      mockServer
+//
+//      JobManager.init(spark)
+//      val controller = new BaseControllerTest()
+//
+//      val path = this.getClass().getClassLoader().getResource("").getPath()
+//        .replace("test-" ,"")
+//
+//      val response = controller.get("/run/script", WowCollections.map(
+//        "sql", s"include hdfs.`${path}/test/include-set.txt` ;select '$${xx}' as a as t;"
+//        ,"skipAuth" ,"false"
+//        ,"owner" ,"latincross"
+//      ));
+//      assume(response.status() == 200)
+//      assume(response.originContent() == "[{\"a\":\"latincross\"}]")
+//      JobManager.shutdown
+//    }
+//  }
+//}

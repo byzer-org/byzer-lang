@@ -27,11 +27,12 @@ import org.apache.spark.ml.param.{IntParam, Param}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.mlsql.session.MLSQLException
-import streaming.common.{ScriptCacheKey, SourceCodeCompiler}
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib._
 import streaming.dsl.mmlib.algs.param.BaseParams
-import streaming.log.{Logging, WowLog}
+import streaming.log.WowLog
+import tech.mlsql.common.utils.lang.sc.{ScriptCacheKey, SourceCodeCompiler}
+import tech.mlsql.common.utils.log.Logging
 
 
 class SQLImageLoaderExt(override val uid: String) extends SQLAlg with BaseParams with Logging with WowLog {

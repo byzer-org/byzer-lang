@@ -18,7 +18,8 @@
 
 package streaming.dsl.mmlib.algs
 
-import org.apache.spark.ml.classification.{RandomForestClassificationModel, RandomForestClassifier}
+import streaming.dsl.mmlib.algs.regression.BaseRegression
+import streaming.dsl.mmlib.algs.param.BaseParams
 import org.apache.spark.ml.linalg.SQLDataTypes._
 import org.apache.spark.ml.linalg.Vector
 import org.apache.spark.ml.regression.{GBTRegressionModel, GBTRegressor}
@@ -30,14 +31,46 @@ import org.apache.spark.sql.types.DoubleType
 /**
   * Created by allwefantasy on 13/1/2018.
   */
-class SQLGBTRegressor extends SQLAlg with Functions {
+class SQLGBTRegressor(override val uid: String) extends SQLAlg with Functions with MllibFunctions with BaseRegression {
+  def this() = this(BaseParams.randomUID())
 
   override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
-    val rfc = new GBTRegressor()
-    configureModel(rfc, params)
-    val model = rfc.fit(df)
-    model.write.overwrite().save(path)
-    emptyDataFrame()(df)
+
+    val keepVersion = params.getOrElse("keepVersion", "true").toBoolean
+    setKeepVersion(keepVersion)
+
+    val evaluateTable = params.get("evaluateTable")
+    setEvaluateTable(evaluateTable.getOrElse("None"))
+
+
+    SQLPythonFunc.incrementVersion(path, keepVersion)
+    val spark = df.sparkSession
+
+    trainModelsWithMultiParamGroup[GBTRegressionModel](df, path, params, () => {
+      new GBTRegressor()
+    }, (_model, fitParam) => {
+      evaluateTable match {
+        case Some(etable) =>
+          val model = _model.asInstanceOf[GBTRegressionModel]
+          val evaluateTableDF = spark.table(etable)
+          val predictions = model.transform(evaluateTableDF)
+          regressionEvaluate(predictions, evaluator => {
+            evaluator.setLabelCol(fitParam.getOrElse("labelCol", "label"))
+            evaluator.setPredictionCol("prediction")
+          })
+
+        case None => List()
+      }
+    }
+    )
+
+    formatOutput(getModelMetaData(spark, path))
+  }
+
+  override def explainParams(sparkSession: SparkSession): DataFrame = {
+    _explainParams(sparkSession, () => {
+      new GBTRegressor()
+    })
   }
 
   override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = {

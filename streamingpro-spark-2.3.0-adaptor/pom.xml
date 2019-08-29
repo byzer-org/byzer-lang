@@ -9,24 +9,24 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>streamingpro-spark-2.3.0-adaptor</artifactId>
+    <artifactId>streamingpro-spark-2.3.0-adaptor_${scala.binary.version}</artifactId>
     <dependencies>
         <dependency>
             <groupId>tech.mlsql</groupId>
-            <artifactId>streamingpro-spark-common</artifactId>
+            <artifactId>streamingpro-spark-common-2.3_${scala.binary.version}</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
 
         <dependency>
             <groupId>tech.mlsql</groupId>
-            <artifactId>streamingpro-common</artifactId>
+            <artifactId>streamingpro-common-2.3_${scala.binary.version}</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
 
         <dependency>
             <groupId>tech.mlsql</groupId>
             <artifactId>mlsql-ps-service_2.3.2_${scala.binary.version}</artifactId>
-            <version>1.3.3</version>
+            <version>${mlsql-ps-service-version}</version>
         </dependency>
 
         <dependency>

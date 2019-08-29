@@ -24,7 +24,7 @@ import java.util.concurrent.atomic.AtomicReference
 import org.apache.spark.sql.types._
 import org.apache.spark.util.ObjPickle._
 import org.apache.spark.{SparkEnv, TaskContext}
-import streaming.log.Logging
+import tech.mlsql.common.utils.log.Logging
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable.ArrayBuffer

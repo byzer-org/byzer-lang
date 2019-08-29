@@ -1,9 +1,10 @@
 # 编译&运行&部署
 
-MLSQL-Engine/MLSQL-Cluster 位于同一个项目中。我们提供了如下几种部署方式：
+我们提供了多种方式让您便捷的体验MLSQL Stack的强大功能。这包括：
 
-1. Docker
-2. 编译打包脚本
-3. 通过控制台云端部署
+1. 使用Docker安装体验
+2. 登录我们的体验站点：http://try.mlsql.tech. 在此网站，你也可以获得很多示例脚本。
+3. 从[官方下载站点](http://download.mlsql.tech) 下载预编译的安装包
+4. 自助下载源码编译打包 
 
-我们也可以从[download.mlsql.tech](http://download.mlsql.tech)获取预编译安装包。 
+接下来，我们针对上面的四种方式，一一进行讲解。 

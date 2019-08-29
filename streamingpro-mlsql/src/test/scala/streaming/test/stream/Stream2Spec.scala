@@ -20,13 +20,15 @@ package streaming.test.stream
 
 import org.apache.spark.streaming.BasicSparkOperation
 import org.scalatest.BeforeAndAfterAll
-import streaming.common.shell.ShellCommand
 import streaming.core.strategy.platform.SparkRuntime
 import streaming.core.{BasicMLSQLConfig, SpecFunctions}
 import streaming.dsl.ScriptSQLExec
+import tech.mlsql.common.utils.shell.ShellCommand
 
 class Stream2Spec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConfig with BeforeAndAfterAll {
+
   val topic_name = "test_cool"
+
   "kafka" should "work fine on spark" in {
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
       //执行sql
@@ -154,6 +156,7 @@ class Stream2Spec extends BasicSparkOperation with SpecFunctions with BasicMLSQL
       val df = spark.sql("select * from output")
       df.show()
       assume(df.count() > 0)
+      spark.streams.active.foreach(f => f.stop())
 
     }
   }

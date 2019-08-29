@@ -15,7 +15,7 @@ select 1 as a as table1;
 select * from table1 as output;
 ```
 
-session级别暂时还没有实现。applicaton级别则是和MLSQL Engine的生命周期保持一致。需要手动释放：
+session级别暂时还没有实现。application级别则是和MLSQL Engine的生命周期保持一致。需要手动释放：
 
 ```sql
 !uncache table1;

@@ -11,8 +11,9 @@ import org.apache.spark.sql.{DataFrame, DataFrameReader, DataFrameWriter, Row}
 import streaming.core.datasource._
 import streaming.dsl.auth.{MLSQLTable, OperateType, TableType}
 import streaming.dsl.{ConnectMeta, DBMappingKey, ScriptSQLExec}
-import streaming.log.{Logging, WowLog}
+import streaming.log.WowLog
 import tech.mlsql.Stage
+import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.dsl.auth.DatasourceAuth
 import tech.mlsql.sql.{MLSQLSQLParser, MLSQLSparkConf}
 

@@ -18,7 +18,7 @@
 
 package org.apache.spark.sql.mlsql.session
 
-import streaming.log.Logging
+import tech.mlsql.common.utils.log.Logging
 
 
 /**

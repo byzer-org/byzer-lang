@@ -110,28 +110,33 @@ class MLSQLHbase(override val uid: String) extends MLSQLSource with MLSQLSink wi
   }
 
   override def sourceInfo(config: DataAuthConfig): SourceInfo = {
-    val Array(_dbname, _dbtable) = if (config.path.contains(dbSplitter)) {
-      config.path.split(dbSplitter, 2)
-    } else {
-      Array("", config.path)
-    }
-
-    var namespace = _dbname
-
-    if (config.config.contains("namespace")) {
-      namespace = config.config.get("namespace").get
-    } else {
-      if (_dbname != "") {
-        val format = config.config.getOrElse("implClass", fullFormat)
-        ConnectMeta.presentThenCall(DBMappingKey(format, _dbname), options => {
-          if (options.contains("namespace")) {
-            namespace = options.get("namespace").get
+    val format = config.config.getOrElse("implClass", fullFormat)
+    val Array(connect, namespace, table) = if (config.path.contains(dbSplitter)) {
+      config.path.split(dbSplitter) match {
+        case Array(connect, namespace, table) => Array(connect, namespace, table)
+        case Array(connectOrNameSpace, table) =>
+          ConnectMeta.presentThenCall(DBMappingKey(format, connectOrNameSpace), (op) => {}) match {
+            case Some(i) => Array(connectOrNameSpace, "", table)
+            case None => Array("", connectOrNameSpace, table)
           }
-        })
+        case Array(connect, namespace, table, _*) => Array(connect, namespace, table)
       }
+    } else {
+      Array("", "", config.path)
     }
 
-    SourceInfo(shortFormat, namespace, _dbtable)
+
+    var finalNameSpace = config.config.getOrElse("namespace", namespace)
+
+    ConnectMeta.presentThenCall(DBMappingKey(format, connect), (options) => {
+      if (options.contains("namespace")) {
+        finalNameSpace = options.get("namespace").get
+      }
+
+    })
+
+
+    SourceInfo(shortFormat, finalNameSpace, table)
   }
 
   override def explainParams(spark: SparkSession) = {

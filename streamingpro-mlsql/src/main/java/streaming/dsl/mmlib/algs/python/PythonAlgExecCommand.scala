@@ -27,17 +27,25 @@ class PythonAlgExecCommand(pythonScript: PythonScript,
                            envs: Map[String, String]
                           ) {
 
-  def generateCommand(commandType: String) = {
+  def generateCommand(commandType: String, envName: Option[String] = None) = {
     pythonScript.scriptType match {
       case MLFlow =>
         val project = MLProject.loadProject(pythonScript.filePath, envs)
-        Seq("bash", "-c", project.entryPointCommandWithConda(commandType))
+        Seq("bash", "-c", project.entryPointCommandWithConda(commandType, envName))
 
       case _ =>
-        Seq(pythonConfig.map(_.pythonPath).getOrElse(
-          throw new IllegalArgumentException("pythonPath should be configured"))) ++
-          pythonConfig.map(_.pythonParam).getOrElse(Seq()) ++
-          Seq(pythonScript.fileName)
+
+        envName match {
+          case Some(name) =>
+            Seq("bash", "-c", s"source activate ${name} && python ${pythonScript.fileName}")
+          case None =>
+            Seq(pythonConfig.map(_.pythonPath).getOrElse(
+              throw new IllegalArgumentException("pythonPath should be configured"))) ++
+              pythonConfig.map(_.pythonParam).getOrElse(Seq()) ++
+              Seq(pythonScript.fileName)
+        }
+
+
     }
   }
 

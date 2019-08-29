@@ -85,6 +85,12 @@ object WowJsonInferSchema {
     gen.close()
 
   }
+  def getJsonGen(rowSchema: StructType, sessionLocalTimeZone: String) = {
+    val writer = new CharArrayWriter()
+    val gen = new JacksonGenerator(rowSchema, writer,
+      new JSONOptions(Map.empty[String, String], sessionLocalTimeZone))
+    (gen, writer)
+  }
 
   def toJson(dataSet: DataFrame) = {
     val rowSchema = dataSet.schema

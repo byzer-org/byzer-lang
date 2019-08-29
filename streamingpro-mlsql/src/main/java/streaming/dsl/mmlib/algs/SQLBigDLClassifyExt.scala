@@ -34,12 +34,13 @@ import org.apache.spark.ml.linalg.{Vector, Vectors}
 import org.apache.spark.ml.param.Param
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import streaming.common.{HDFSOperator, ScriptCacheKey, SourceCodeCompiler}
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib._
 import streaming.dsl.mmlib.algs.bigdl._
 import streaming.dsl.mmlib.algs.classfication.BaseClassification
 import streaming.dsl.mmlib.algs.param.BaseParams
+import tech.mlsql.common.utils.hdfs.HDFSOperator
+import tech.mlsql.common.utils.lang.sc.{ScriptCacheKey, SourceCodeCompiler}
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable.ArrayBuffer
