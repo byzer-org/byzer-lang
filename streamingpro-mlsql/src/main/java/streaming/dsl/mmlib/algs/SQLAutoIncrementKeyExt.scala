@@ -6,7 +6,7 @@ import org.apache.spark.sql.types.{LongType, StructField, StructType}
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import streaming.dsl.mmlib.SQLAlg
 
-class SQLIncreExt extends SQLAlg{
+class SQLAutoIncrementKeyExt extends SQLAlg{
   override def train(df: DataFrame, path: String, params: Map[String, String]):DataFrame ={
   val schema:StructType = df.schema.add(StructField("id",LongType))
   val dfRDD: RDD[(Row, Long)] = df.rdd.zipWithUniqueId()
