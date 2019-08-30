@@ -35,56 +35,48 @@ Now our goal is:
 
 
 ## Task 1
+There are four steps:
+1. Upload the excel document and download it to your workspace to get the operation path.
+2. Take the table name after loading excel file.
+3. Using SQL to manipulate Excel data.
+4. Use SQL to generate icons
 
-我们大致会分成四个步骤：
+Specific steps:
 
-1. 将excel文档上传，上传完成后下载到自己的工作区得到操作路径
-2. 加载excel文件，然后给他们取表名
-3. 使用SQL对这些excel进行数据操作
-4. 使用SQL生成图标
-
-下面我们看下具体步骤：
-
-###  Step1:上传文件
-
-打开操作界面的 Tools/Dashboard,然后拖拽excel-example（目录里包含了两个示例excel）到上传区进行上传操作：
-
+###  Step1:Upload files
+Open the Tools / Dashboard, then drag and drop excel-example (the directory contains two excel examples) to upload in the upload area:
 ![image.png](https://upload-images.jianshu.io/upload_images/1063603-d4d47c0c84fff34f.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
-上传成功后，拖拽Quick Menu/Download uploaded file到编辑区：
-
+After uploading, drag and drop Quick Menu/Download uploaded file to edit area:
 ![image.png](https://upload-images.jianshu.io/upload_images/1063603-d03b9fe04355e4b6.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
-输入上传的文件夹名以及要保存的目录。点击Ok，系统会自动生成语句，点击运行，系统会显示文件下载的实际目录：
-
+Enter the folder name and the directory you want to save. Click Ok, the system will automatically generate statements, click run, the system will show the actual directory of file downloads:
 ![image.png](https://upload-images.jianshu.io/upload_images/1063603-f7ef38eb5e7e3f4e.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
-到此为止，我们的文件在远程服务器的路径为：
+So far, the paths of files on remote servers are:
 
 ```
 /tmp/excel-example/triage-patient.xlsx
 /tmp/excel-example/master-email.xlsx
 ```
 
-我们后面的步骤会用到。
-
-### Step2: 加载Excel并且查看
-接着我们要加载我们的excel，把它们转化为SQL能操作的表。拖拽 Load data到编辑区：
-
+### Step2: Load Excel and view
+Then load excel and transform it into a table that SQL can operate. Drag "Load data" to the editing area:
 ![image.png](https://upload-images.jianshu.io/upload_images/1063603-98c548a326a37454.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
-填写路径以及表名。表名随意，只要你自己记得就行。点击Ok，那么就能生成对应的语句了。
-同理完成另外一个脚本的处理。
+Fill in the path and the table name (the name is optional). Click Ok to generate the corresponding statement.
+Similarly, complete the processing of another script.
 
-这个时候你已经可以通过表名来查看内容了:
+By this time, you can view the content through the table name:
 
 ![image.png](https://upload-images.jianshu.io/upload_images/1063603-a486d5b7368e9e85.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
-excel里的内容能够被正确的展示。
+Excel data can be displayed correctly.
 
-### Step3: 对数据做预处理
-现在我们开始用SQL绘图，我们需要的是折线图，横坐标是date, 纵坐标是patientNum两条曲线，分别是眼科和皮肤科。眼科对应的patientNum我们取名叫y1,皮肤科对应的patientNum叫y2。为了方便，我们先把把皮肤科的都过滤出来，然后y1设置为0,y2设置为实际的病人数，
-同理眼科，然后把这些数据放到一起，最后的SQL大致如下：
+### Step3: Data preprocessing
+           
+Then we use SQL to draw a polyline map, the abscissa is date, and the ordinate is PatientNum's two curves, which correspond to ophthalmology and dermatology respectively. The corresponding patientNum in ophthalmology is called y1, while the corresponding patientNum in dermatology is called y2. For convenience, first filter dermatological data, then set Y1 to 0, Y2 to the actual number of patients.
+Similarly, ophthalmic data were processed. Then put these data together and the final SQL is roughly as follows:
 
 ```
 select date  as x, 0 as y1, patientNum as y2 from triagePatient where triage="皮肤科"
@@ -93,8 +85,7 @@ select date  as x, patientNum as y1, 0 as y2 from triagePatient where triage="�
 as tempTable;
 ```
 
-### Step4: 生成图表并分析
-
+### Step4: Generate charts and analysis
 ```sql
 select x,sum(y1) as `眼科`,sum(y2) as `皮肤科`, 
 -- 告诉系统需要生成图表
@@ -103,38 +94,37 @@ from tempTable where x is not null group by x order by x asc
 as finalTable;
 ```
 
-为了展示出图，横坐标名字一定要为x,然后通过dash参数告诉系统使用什么图做展示。这里是折线图，写line就好。最后的SQL大概是如下的：
-
+In order to show the graph, the abscissa name must be x, and then the dash parameter tells the system what graph to use for display. The legend is a line chart. The final SQL is probably as follows:
 ![image.png](https://upload-images.jianshu.io/upload_images/1063603-0c0d1b7ace2909ae.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
-我们点击运行，运行的结果如下：
+Click to run and the results are as follows:
 
 ![image.png](https://upload-images.jianshu.io/upload_images/1063603-8940cbefc9f48cb9.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
-点击 Tools/Dashboard 查看图标：
+Click Tools/Dashboard to see the icon:
 
 ![image.png](https://upload-images.jianshu.io/upload_images/1063603-778c4038efc64fe9.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
-可以看到 两者差异还是非常大的，而且皮肤科还有数据缺失。
+It can be concluded that the difference between them is very large, and there are still missing data in Department of dermatology.
 
 ![image.png](https://upload-images.jianshu.io/upload_images/1063603-fad260b994b3b063.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
-## 任务二
+## Task 2
 
-因为我们已经做完了文件上传和加载excel文件等，所以任务二里，我们只要做数据预处理和生成图标即可。
+Since we have finished uploading and loading files, task 2 only needs to do data preprocessing and generate icons.
 
-### Step1: 数据预处理
-那么现在，第一个任务已经做好了，我们接着做第二任务，第二个任务核心就是要关联两张表,
-这可以用Join语法：
+### Step1: Data preprocessing
+The core of the second task is to associate two tables.
+Join grammar is used here:
 
 ```sql
 select tp.*,me.email from triagePatient as tp  left join masterEmail as me on tp.master==me.master
 as triagePatientWithEmail;
 ```
 
-### Step2: 生成图表并做分析
+### Step2: Generate charts and analysis
 
-这样我们得到了一张新表，该表有email字段了。接着我们根据用户进行聚合：
+Get a new table with an email field, and aggregate according to the user:
 
 ```sql
 select first(email) as x, 
@@ -146,38 +136,36 @@ order by patientEveryDay desc
 as output;
 ```
 
-我们用email做横坐标，然后平均病人数作为纵坐标的值，同时使用柱状图：
+A graph drawn with a histogram, e-mail as abscissa and the average number of patients as ordinate
 
 ![image.png](https://upload-images.jianshu.io/upload_images/1063603-637bcd5598fa686f.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
-可以看到 jack@hotmail的科室日均接诊量遥遥领先。
+The results showed that the average daily visits of "jack@hotmail" department were far ahead.
 
-##  任务三：保存和下载包含email的新表为excel文件
 
-最后我们希望把triagePatientWithEmail表保存下来，然后下载到自己的电脑上。拖拽
-Save data到编辑区，打开对话框，选择excel格式，然后将triagePatientWithEmail 表保存到/tmp/triagePatientWithEmail.xlsx 文件：
+##  Task 3：Save and download include email data as Excel file
+           
+Finally, save the triagePatientWithEmail table and download it to your computer. Drag and drop "Save data" to the editing area, open the dialog box, select excel format, and save the triagePatientWithEmail table to / TMP / triagePatientWithEmail. xlsx:
 
 ![image.png](https://upload-images.jianshu.io/upload_images/1063603-e1676154ed18233d.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
-点击ok后自动生成语句，然后点击运行,结果显示保存完毕。我们可以用前面查看excel的方法加载他：
-
+Click OK to automatically generate statements, click run, and display the saved results.
 
 ![image.png](https://upload-images.jianshu.io/upload_images/1063603-16ad7aabe0b55209.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
-很完美。然后我们现在要下载他，拖拽
+It's perfect. Then we download and drag it now.
+
 ![image.png](https://upload-images.jianshu.io/upload_images/1063603-f0e0800e53569366.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
-到编辑区，然后填写路径：
+Fill the path in the editing area:
 
 ![image.png](https://upload-images.jianshu.io/upload_images/1063603-d8a48875f679a162.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
-点击Ok,会打开新标签页进行下载。
-
-## 完整脚本
-最后完整脚本如下：
-
+Click Ok to open a new tab for download.
+## Complete script
+ 
 ```sql
---------------------------------------------------------------------------------
+-- -----------------------------------------------------------------------------
 -- 数据描述：
 --
 -- 我们有两个excel文件，第一个文件是每个科室每天接收的病人，并且有这个科室的负责人。
@@ -186,7 +174,7 @@ Save data到编辑区，打开对话框，选择excel格式，然后将triagePat
 -- 需求描述：
 -- 1. 我们希望看到科室每天接收到的人的一个时间分布图。
 -- 2. 日均接收用户最高的科室负责人的email
---------------------------------------------------------------------------------
+-- ------------------------------------------------------------------------------
 
 -- 需求一
 
