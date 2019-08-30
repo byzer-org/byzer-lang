@@ -1,29 +1,24 @@
 package streaming.dsl.mmlib.algs
 
-import java.sql.Connection
+import java.sql.{Connection, SQLException}
 
 import org.apache.spark.ml.param.Param
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.mlsql.session.MLSQLException
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import streaming.dsl.{ConnectMeta, DBMappingKey, ScriptSQLExec}
 import org.apache.spark.sql.types._
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
 import tech.mlsql.job.JobManager
 
-class SQLUpdatExt(override val uid: String) extends SQLAlg with WowParams{
+class SQLJDBCUpdatExt(override val uid: String) extends SQLAlg with WowParams{
   def this() = this(BaseParams.randomUID())
 
   override def train(df: DataFrame, path: String, params: Map[String, String]):DataFrame={
-    var flag = false
     params.get(keyCol.name).
       map(m => set(keyCol, m)).getOrElse {
       throw new MLSQLException("keyCol is required")
-    }
-    params.get(whereCol.name).
-      map(m => set(whereCol, m)).getOrElse {
-      1==1
     }
 
     var _params = params
@@ -70,7 +65,7 @@ class SQLUpdatExt(override val uid: String) extends SQLAlg with WowParams{
       else whereTemp+=" and "+x+"=?"
     })
 
-    sql=sql+setTemp+whereTemp+" and "+params.get(whereCol.name).getOrElse()
+    sql=sql+setTemp+whereTemp+" and "+params.get(whereCol.name).getOrElse("1=1")
 
     var df_change = df
     for (colName <- columns) {
@@ -83,10 +78,10 @@ class SQLUpdatExt(override val uid: String) extends SQLAlg with WowParams{
       }
       df_change = df_change.withColumn(colName, df_change(colName).cast(columnSchema(0).dataType))
     }
-
     df_change.foreachPartition(f => {
        val connection = ConnectDB(_params)
        val stmt = connection.prepareStatement(sql)
+       connection.setAutoCommit(false)
       while (f.hasNext) {
         val row = f.next()
         var order = 0;
@@ -122,19 +117,24 @@ class SQLUpdatExt(override val uid: String) extends SQLAlg with WowParams{
       }
       try{
         stmt.executeBatch()
+        connection.commit()
       }catch{
-        case ex: Exception => {
+        case ex: SQLException => {
+          connection.rollback()
           ex.printStackTrace()
+          throw new IllegalArgumentException("update exception")
         }
       } finally {
         stmt.close()
         connection.close()
       }
     })
+
     import df.sparkSession.implicits._
     val context = ScriptSQLExec.context()
     val job = JobManager.getJobInfo(context.groupId)
     df.sparkSession.createDataset(Seq(job)).toDF()
+
   }
 
   def ConnectDB(options: Map[String, String]):Connection = {
