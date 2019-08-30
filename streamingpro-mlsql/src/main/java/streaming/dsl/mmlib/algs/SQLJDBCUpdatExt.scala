@@ -122,7 +122,7 @@ class SQLJDBCUpdatExt(override val uid: String) extends SQLAlg with WowParams{
         case ex: SQLException => {
           connection.rollback()
           ex.printStackTrace()
-          throw new IllegalArgumentException("update exception")
+          throw new SQLException("Update Exception")
         }
       } finally {
         stmt.close()
