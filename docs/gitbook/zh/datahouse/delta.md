@@ -1,6 +1,12 @@
 #Delta加载和存储以及流式支持
 
-Delta本质就是HDFS上一个目录。这就意味着你可以在自己的主目录里欢快的玩耍。
+Delta本质就是HDFS上一个目录。这就意味着你可以在自己的主目录里欢快的玩耍。我们会分如下几个部分介绍Delta的使用：
+
+1. 基本使用
+2. Upsert语义的支持
+3. 流式更新支持 
+4. 小文件合并
+5. 同时加载多版本数据为一个表
 
 ## 基本使用
 
@@ -179,3 +185,20 @@ and checkpointLocation="/tmp/rate-1" partitionBy key;
 ![](http://docs.mlsql.tech/upload_images/1063603-ba9292b2146633f1.png)
 
 我们删除了16个文件，生成了两个新文件。另外在compaction的时候，并不影响读和写。所以是非常有用的。
+
+# 同时加载多版本数据为一个表
+
+Delta支持多版本，我们也可以一次性加载一个范围内的版本，比如下面的例子，我们说，将[12-14) 的版本的数据按
+一个表的方式加载。接着用户可以比如可以按id做group by，在一行得到多个版本的数据。 
+
+```sql
+set a="b"; 
+
+load delta.`/tmp/delta/rate-3-table` where 
+startingVersion="12"
+and endingVersion="14"
+as table1;
+
+select __delta_version__, collect_list(key), from table1 group by __delta_version__,key 
+as table2;
+```

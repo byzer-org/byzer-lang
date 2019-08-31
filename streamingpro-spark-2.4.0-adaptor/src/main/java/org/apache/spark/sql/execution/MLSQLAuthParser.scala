@@ -37,5 +37,4 @@ object MLSQLAuthParser {
     parser.get().tables(sql, t)
     t
   }
-
 }
