@@ -2,10 +2,12 @@ package streaming.core.datasource.impl
 
 import java.util.Properties
 
+import com.alibaba.druid.sql.SQLUtils
+import com.alibaba.druid.sql.repository.SchemaRepository
+import com.alibaba.druid.sql.visitor.SchemaStatVisitor
 import com.alibaba.druid.util.JdbcConstants
-import net.sf.json.JSONObject
 import org.apache.spark.sql.catalyst.plans.logical.MLSQLDFParser
-import org.apache.spark.sql.execution.MLSQLAuthParser
+import org.apache.spark.sql.execution.WowTableIdentifier
 import org.apache.spark.sql.mlsql.session.{MLSQLException, MLSQLSparkSession}
 import org.apache.spark.sql.{DataFrame, DataFrameReader, DataFrameWriter, Row}
 import streaming.core.datasource._
@@ -65,13 +67,13 @@ class MLSQLDirectJDBC extends MLSQLDirectSource with MLSQLDirectSink with MLSQLS
 
     val dbtable = "(" + config.config("directQuery") + ") temp"
 
-    if (config.config.contains("prePtnArray")){
+    if (config.config.contains("prePtnArray")) {
       val prePtn = config.config.get("prePtnArray").get
-        .split(config.config.getOrElse("prePtnDelimiter" ,","))
+        .split(config.config.getOrElse("prePtnDelimiter", ","))
 
       reader.jdbc(url.get, dbtable, prePtn, new Properties())
-    }else{
-      reader.option("dbtable" ,dbtable)
+    } else {
+      reader.option("dbtable", dbtable)
 
       reader.format(format).load()
     }
@@ -118,6 +120,25 @@ class MLSQLDirectJDBC extends MLSQLDirectSource with MLSQLDirectSink with MLSQLS
     si
   }
 
+  // this function depends on druid, so we can
+  // fix chinese tablename since in spark parser it's not supported
+  //MLSQLAuthParser.filterTables(sql, context.execListener.sparkSession)
+  def extractTablesFromSQL(sql: String, dbType: String = JdbcConstants.MYSQL) = {
+    val repository = new SchemaRepository(dbType)
+    repository.console(sql)
+    val stmt = SQLUtils.parseSingleStatement(sql, dbType)
+    val visitor = new SchemaStatVisitor()
+    stmt.accept(visitor)
+    visitor.getTables().asScala.map { f =>
+      val dbAndTable = f._1.getName
+      if (dbAndTable.contains(".")) {
+        val Array(db, table) = dbAndTable.split("\\.", 2)
+        WowTableIdentifier(table, Option(db), None)
+      } else WowTableIdentifier(dbAndTable, None, None)
+    }.toList
+
+  }
+
   override def auth(path: String, params: Map[String, String]): List[MLSQLTable] = {
     val si = this.sourceInfo(DataAuthConfig(path, params))
 
@@ -125,14 +146,15 @@ class MLSQLDirectJDBC extends MLSQLDirectSource with MLSQLDirectSink with MLSQLS
 
     // we should auth all tables in direct query
     val sql = params("directQuery")
+    val dbType = params.getOrElse("dbType", JdbcConstants.MYSQL)
     // first, only select supports
     if (!sql.trim.toLowerCase.startsWith("select ")) {
       throw new MLSQLException("JDBC direct query only support select statement")
     }
     logInfo("Auth direct query tables.... ")
-    //second, we should extract all tables from the sql
 
-    val tableRefs = MLSQLAuthParser.filterTables(sql, context.execListener.sparkSession)
+    //second, we should extract all tables from the sql
+    val tableRefs = extractTablesFromSQL(sql, dbType)
 
     def isSkipAuth = {
       context.execListener.env()
@@ -148,13 +170,13 @@ class MLSQLDirectJDBC extends MLSQLDirectSource with MLSQLDirectSink with MLSQLS
 
     if (!isSkipAuth && context.execListener.getStage.get == Stage.auth && !MLSQLSparkConf.runtimeDirectQueryAuth) {
       val _params = loadConfigFromExternal(params, path)
-      val tableList = tableRefs.map(_.identifier).toList
-      val tableColsMap = JDBCUtils.queryTableWithColumnsInDriver(_params ,tableList)
+      val tableList = tableRefs.map(_.identifier)
+      val tableColsMap = JDBCUtils.queryTableWithColumnsInDriver(_params, tableList)
       val createSqlList = JDBCUtils.tableColumnsToCreateSql(tableColsMap)
-      val tableAndCols = MLSQLSQLParser.extractTableWithColumns(si.sourceType ,sql ,createSqlList)
+      val tableAndCols = MLSQLSQLParser.extractTableWithColumns(si.sourceType, sql, createSqlList)
 
       tableAndCols.map { tc =>
-          MLSQLTable(Option(si.db), Option(tc._1), Option(tc._2.toSet), OperateType.DIRECT_QUERY, Option(si.sourceType), TableType.JDBC)
+        MLSQLTable(Option(si.db), Option(tc._1), Option(tc._2.toSet), OperateType.DIRECT_QUERY, Option(si.sourceType), TableType.JDBC)
       }.foreach { mlsqlTable =>
         context.execListener.authProcessListner match {
           case Some(authProcessListener) =>

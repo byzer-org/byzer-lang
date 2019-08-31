@@ -131,7 +131,7 @@
         * [取消正在运行任务](jobs/cancel_job.md)
         * [动态添加/删除资源](jobs/dynamic_resource.md)    
     * [保障数据安全](security/README.md)
-        * [MLSQL 编译时权限控制](security/compile-auth.md)
+        * [MLSQL 语言级别权限控制](security/compile-auth.md)
         * [MLSQL统一授权体系设计原理](security/design.md)
         * [如何开发自定义授权规则](security/build.md)
         * [如何管理connect账号和密码](security/user_password.md)    

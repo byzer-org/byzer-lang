@@ -8,7 +8,9 @@ MLSQL Language
 Bug Fix
 ---------
 
-- [PR-1011 Jython udf do not support null parameter](https://github.com/allwefantasy/streamingpro/pull/1011)
+- When extracting HBase namespace, it returns ref instead of real namespace.  
+- When using ET JDBC to update MySQL, Losing data will happens.   
+ 
 
 
 New Features
@@ -23,19 +25,24 @@ New Features
 Break Features 
 --------
 
-- Remove 
+- Remove streamingpro-opencv, streamingpro-dl4j, streamingpro-automl
+- Merge streamingpro-crawler into stremingpro-mlsql
+- `/stream/jobs/kill` and `/stream/jobs/running`,`/run/sql` are removed
 
 
 Components
 --------
 
 - [PyJava](https://github.com/allwefantasy/pyjava) is an ongoing effort towards bringing the data exchanging ability between Java/Scala and Python.
-
+- MLSQL Console supports pyechars render.  
 
 Plan of next release.
 -------
 
-- API `/stream/jobs/kill` and `/stream/jobs/running`,`/run/sql` will be removed in next release.
+- MLSQL Console will support notebook style
+- MLSQL Console will support using component to build script
+- Python support should be more robust
+- Delta Catalog 
 
 Docs Link
 --------

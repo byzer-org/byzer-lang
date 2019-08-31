@@ -1,5 +1,7 @@
 package streaming.dsl.auth.meta.client
 
+import java.nio.charset.Charset
+
 import org.apache.http.client.fluent.{Form, Request}
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.auth.{MLSQLTable, TableAuth, TableAuthResult}
@@ -20,10 +22,13 @@ class MLSQLConsoleClient extends TableAuth with Logging with WowLog {
     val authUrl = context.userDefinedParam("__auth_server_url__")
     val auth_secret = context.userDefinedParam("__auth_secret__")
     try {
-      val returnJson = Request.Post(authUrl).bodyForm(Form.form().add("tables", jsonTables).
-        add("owner", owner).add("home", context.home).add("auth_secret", auth_secret)
-        .build())
+
+      val returnJson = Request.Post(authUrl).
+        bodyForm(Form.form().add("tables", jsonTables).
+          add("owner", owner).add("home", context.home).add("auth_secret", auth_secret)
+          .build(), Charset.forName("utf8"))
         .execute().returnContent().asString()
+
       val res = JSONTool.parseJson[List[Boolean]](returnJson)
       val falseIndex = res.indexOf(false)
       if (falseIndex != -1) {
