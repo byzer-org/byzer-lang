@@ -34,6 +34,7 @@ import org.apache.spark.sql.mlsql.session.{SessionIdentifier, SessionManager}
 import org.apache.spark.sql.{MLSQLUtils, SQLContext, SparkSession}
 import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.common.utils.network.NetUtils
+import tech.mlsql.datalake.DataLake
 import tech.mlsql.job.JobManager
 import tech.mlsql.log.DriverLogServer
 import tech.mlsql.tool.ScalaObjectReflect
@@ -127,6 +128,10 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
       conf.set("spark.mlsql.log.driver.host", driverLogServer._host)
       conf.set("spark.mlsql.log.driver.port", driverLogServer._port.toString)
       conf.set("spark.mlsql.log.driver.token", token)
+    }
+
+    if (params.containsKey(DataLake.USER_KEY)) {
+      conf.set(DataLake.RUNTIME_KEY, params.get(DataLake.USER_KEY).toString)
     }
 
 
