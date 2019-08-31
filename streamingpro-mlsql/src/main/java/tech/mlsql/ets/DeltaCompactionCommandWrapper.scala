@@ -69,8 +69,7 @@ class DeltaCompactionCommandWrapper(override val uid: String) extends SQLAlg wit
       case Seq("show", "tables") =>
         val dataLake = new DataLake(spark)
         if (!dataLake.isEnable) {
-          import spark.implicits._
-          Seq.empty[String].toDF("name")
+          throw new MLSQLException("datalake mode is not enabled.")
         } else {
           spark.createDataset(dataLake.listTables).toDF()
         }

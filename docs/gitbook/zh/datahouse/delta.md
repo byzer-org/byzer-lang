@@ -40,13 +40,13 @@ load delta.`/tmp/delta/table10` as output;
 
 ## 按数据库表模式使用
 
-很多用户并不希望使用路径，他们希望能够想hive一样统一使用。MLSQL对此也提供了支持。在Engine启动时，加上参数
+很多用户并不希望使用路径，他们希望能够像使用hive那样使用数据湖。MLSQL对此也提供了支持。在Engine启动时，加上参数
 
 ```
 -streaming.datalake.path /tmp/datahouse
 ```
 
-系统便会按数据湖模式运行。此时用户不能使用自己写路径了，而是需要按db.table的模式使用。
+系统便会按数据湖模式运行。此时用户不能自己写路径了，而是需要按db.table的模式使用。
 
 
 加载数据湖表：
