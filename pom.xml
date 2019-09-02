@@ -349,7 +349,6 @@
                 <module>streamingpro-spark-2.3.0-adaptor</module>
                 <module>streamingpro-dsl</module>
                 <module>streamingpro-mlsql</module>
-                <module>streamingpro-crawler</module>
                 <module>contri/streamingpro-xgboost</module>
             </modules>
             <dependencies>
@@ -419,7 +418,6 @@
                 <module>streamingpro-spark-2.4.0-adaptor</module>
                 <module>streamingpro-dsl</module>
                 <module>streamingpro-mlsql</module>
-                <module>streamingpro-crawler</module>
                 <module>contri/streamingpro-xgboost</module>
             </modules>
             <dependencies>
