@@ -43,6 +43,7 @@
     * [MLSQL Console使用指南](console/README.md)
         * [用户界面介绍](console/console_usage.md)
         * [权限和用户管理](console/auth_user.md)
+        * [Notebook交互模式](console/notebook.md)
     * [MLSQL Engine多租户支持](multi_tenement/README.md)
         * [多租户相关参数](multi_tenement/conf.md)
         * [租户主目录设置](multi_tenement/home.md)
