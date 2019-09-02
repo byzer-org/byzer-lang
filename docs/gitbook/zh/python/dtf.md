@@ -116,14 +116,18 @@ run()
 load script.`py_train` as py_train;
 ```
 
-代码很简答，我们通过引入pyjava相关的类，获得一个context:
+代码比较简单，是标准的TF Cluster模式的写法，区分了ps/worker.
+这里，为了和MLSQL进行交互，我们需要引入pyjava相关的类，获得一个context，
+具体做法如下：
+
 
 ```python
 context = PythonProjectContext()
 context.read_params_once()
 ```
 
-接着读取所有配置参数，这样你可以拿到，数据目录：
+然后调用一次（只允许一次）获得所有的参数。现在你可以拿到MLSQL给你准备好的数据目录，默认是json格式，
+我这里只是简单的将结果打印出来。
 
 ```python
 with open(context.input_data_dir()) as f:
@@ -131,7 +135,8 @@ with open(context.input_data_dir()) as f:
                 print(item)
 ```
 
-以及训练好的模型要放到`context.output_model_dir()`. 其他的都是标准的TF Cluster写法。
+以及模型目录，模型目录是你可以将你训练好的模型要放到`context.output_model_dir()`中，之后
+MLSQL会自动同步到HDFS上.
 
 定义conda文件，如果你事先创建了环境，可以直接设置为空py_env.mlsql：
 
@@ -154,6 +159,7 @@ where scripts="py_train"
 and entryPoint="py_train"
 and condaFile="py_env"
 and  keepVersion="true"
+and fitParam.0.fileFormat="json" -- 还可以是parquet
 and `fitParam.0.psNum`="1"
 and PYTHON_ENV="streamingpro-spark-2.4.x";
 ```
@@ -188,3 +194,4 @@ host            port    jobName taskIndex  isPs    done      success
 我们可以看到所有节点的情况。有任何一个节点success不为true,则表示训练失败。
 
 Tensorflow的Cluster我们还在持续完善。目前调度还不够完善，可能多个节点会跑在一台服务器上，对于使用了GPU的机器就显得不够友好了。
+
