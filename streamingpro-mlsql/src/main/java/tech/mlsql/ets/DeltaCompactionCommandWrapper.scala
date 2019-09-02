@@ -11,6 +11,7 @@ import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
 import streaming.dsl.mmlib.{Core_2_3_x, SQLAlg}
 import tech.mlsql.common.utils.path.PathFun
 import tech.mlsql.common.utils.serder.json.JSONTool
+import tech.mlsql.datalake.DataLake
 
 /**
   * 2019-06-06 WilliamZhu(allwefantasy@gmail.com)
@@ -65,6 +66,14 @@ class DeltaCompactionCommandWrapper(override val uid: String) extends SQLAlg wit
         val history = deltaLog.history.getHistory(Option(1000))
         spark.createDataset[CommitInfo](history).toDF()
 
+      case Seq("show", "tables") =>
+        val dataLake = new DataLake(spark)
+        if (!dataLake.isEnable) {
+          throw new MLSQLException("datalake mode is not enabled.")
+        } else {
+          spark.createDataset(dataLake.listTables).toDF()
+        }
+
       case Seq("help", _ *) =>
         spark.createDataset[String](Seq(
           """
@@ -73,6 +82,7 @@ class DeltaCompactionCommandWrapper(override val uid: String) extends SQLAlg wit
             |`in background` is optional, and the other parameters is required.
             |
             |!delta history [tablePath];
+            |!delta show tables;
           """.stripMargin)).toDF("value")
       case _ => throw new MLSQLException(
         """

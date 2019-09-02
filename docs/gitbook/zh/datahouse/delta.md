@@ -1,6 +1,13 @@
 #Delta加载和存储以及流式支持
 
-Delta本质就是HDFS上一个目录。这就意味着你可以在自己的主目录里欢快的玩耍。
+Delta本质就是HDFS上一个目录。这就意味着你可以在自己的主目录里欢快的玩耍。我们会分如下几个部分介绍Delta的使用：
+
+1. 基本使用
+2. 按数据库表模式使用
+3. Upsert语义的支持
+4. 流式更新支持 
+5. 小文件合并
+6. 同时加载多版本数据为一个表
 
 ## 基本使用
 
@@ -29,6 +36,45 @@ save append orginal_text_corpus as delta.`/tmp/delta/table10`;
 
 ```sql
 load delta.`/tmp/delta/table10` as output;
+```
+
+## 按数据库表模式使用
+
+很多用户并不希望使用路径，他们希望能够像使用hive那样使用数据湖。MLSQL对此也提供了支持。在Engine启动时，加上参数
+
+```
+-streaming.datalake.path /tmp/datahouse
+```
+
+系统便会按数据湖模式运行。此时用户不能自己写路径了，而是需要按db.table的模式使用。
+
+
+加载数据湖表：
+
+```sql
+load delta.`public.table1` as table1;
+```
+
+保存数据库湖表：
+
+```sql
+save append table1  
+as delta.`public.table1`
+partitionBy col1;
+```
+
+如果你开启了权限验证 ，并且使用MLSQL Console时，那么需要按如下方式配置权限：
+
+![](http://docs.mlsql.tech/upload_images/WX20190831-113125@2x.png)
+
+![](http://docs.mlsql.tech/upload_images/WX20190831-113136@2x.png)
+
+如果是流式，delta换成rate.从权限上看，我们依然是按路径进行授权的。但是在MLSQL中，用户看到的是库和表。
+
+你可以使用下列命令查看所有的数据库和表：
+
+```sql
+!delta show tables;
 ```
 
 ## Upsert语义的支持
@@ -179,3 +225,20 @@ and checkpointLocation="/tmp/rate-1" partitionBy key;
 ![](http://docs.mlsql.tech/upload_images/1063603-ba9292b2146633f1.png)
 
 我们删除了16个文件，生成了两个新文件。另外在compaction的时候，并不影响读和写。所以是非常有用的。
+
+# 同时加载多版本数据为一个表
+
+Delta支持多版本，我们也可以一次性加载一个范围内的版本，比如下面的例子，我们说，将[12-14) 的版本的数据按
+一个表的方式加载。接着用户可以比如可以按id做group by，在一行得到多个版本的数据。 
+
+```sql
+set a="b"; 
+
+load delta.`/tmp/delta/rate-3-table` where 
+startingVersion="12"
+and endingVersion="14"
+as table1;
+
+select __delta_version__, collect_list(key), from table1 group by __delta_version__,key 
+as table2;
+```
