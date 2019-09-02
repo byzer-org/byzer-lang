@@ -9,7 +9,8 @@ Bug Fix
 ---------
 
 - When extracting HBase namespace, it returns ref instead of real namespace.  
-- When using ET JDBC to update MySQL, Losing data will happens.   
+- When using ET JDBC to update MySQL, Losing data will happens. 
+- more......  
  
 
 
@@ -17,11 +18,14 @@ New Features
 ----------
 - Python 
     - [Tensorflow Cluster](http://docs.mlsql.tech/zh/python/dtf.html)
-    - [Python Interactive Command](http://docs.mlsql.tech/zh/python/interactive.html)
-    - [Python Table Processing](http://docs.mlsql.tech/zh/python/table.html)
-
-
-
+    - [Python Interactive Mode](http://docs.mlsql.tech/zh/python/interactive.html)
+    - [Python Table Mode](http://docs.mlsql.tech/zh/python/table.html)
+- Batch
+    - [AdHoc Kakfa](http://docs.mlsql.tech/zh/stream/query_kafka.html)
+- Stream
+    - [Kafka Schema Infer](http://docs.mlsql.tech/zh/stream/data_convert.html)
+    - [Kafka tools](http://docs.mlsql.tech/zh/stream/kakfa_tool.html)    
+                               
 Break Features 
 --------
 
@@ -34,15 +38,13 @@ Components
 --------
 
 - [PyJava](https://github.com/allwefantasy/pyjava) is an ongoing effort towards bringing the data exchanging ability between Java/Scala and Python.
-- MLSQL Console supports pyechars render.  
+-  MLSQL Console supports pyechars render.
+- [MLSQL Console supports notebook mode](http://docs.mlsql.tech/zh/console/notebook.html)  
 
 Plan of next release.
 -------
-
-- MLSQL Console will support notebook style
-- MLSQL Console will support using component to build script
 - Python support should be more robust
-- Delta Catalog 
+ 
 
 Docs Link
 --------
