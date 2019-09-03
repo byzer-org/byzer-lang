@@ -5,7 +5,7 @@
     <groupId>tech.mlsql</groupId>
     <artifactId>streamingpro</artifactId>
     <packaging>pom</packaging>
-    <version>1.4.0-SNAPSHOT</version>
+    <version>1.5.0-SNAPSHOT</version>
 
     <name>StreamingPro Parent POM</name>
     <url>https://github.com/allwefantasy/streamingpro</url>
@@ -20,14 +20,9 @@
     </licenses>
     <developers>
         <developer>
-            <id>allwefantasy</id>
-            <name>ZhuHaiLin</name>
-            <email>allwefantasy@gmail.com</email>
-        </developer>
-        <developer>
-            <id>chenfu</id>
-            <name>Fu Chen</name>
-            <email>cfmcgrady@gmail.com</email>
+            <id>tech.mlsql</id>
+            <name>mlsql-dev-team</name>
+            <email>dev.mlsql.tech@outlook.com</email>
         </developer>
     </developers>
     <scm>
