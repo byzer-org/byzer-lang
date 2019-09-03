@@ -1,7 +1,7 @@
 #How to load and save delta
 #How to use delta in streaming applications
 
-The essence of Delta is a directory in HDFS, it means you can do anything as you want.
+The essence of Delta is a directory in HDFS.
 
 ## Fundamental operations
 
@@ -34,7 +34,7 @@ load delta.`/tmp/delta/table10` as output;
 
 ## Support for Upsert semantic
 
-Delta supports Upsert operations for data, related semantic: update if exists, insert if not exists.
+Delta supports Upsert operations for data, semantic: update if exists, insert if not exists.
 
 We've saved several data before, now run these commands:
 
@@ -50,18 +50,18 @@ as delta.`/tmp/delta/table10`
 and idCols="id";
 ```
 
-Data has been updated successfully.
+Data is been updated successfully.
 
 ![](http://docs.mlsql.tech/upload_images/WX20190819-192447.png)
 
 
 ## Streaming update support
 
-We will write streaming codes here simply, and don't focus too much on details, we will elaborate streaming coding in following chapater.
+We will show an example of streaming codes here, and don't focus too much on details, we will elaborate streaming coding in following chapters.
 
 To finish this example, you need to start Kafka which's version must be higher than 0.10.0.
 
-Firstly, we need to write some data into Kafka through MLSQL:
+Firstly, write some data into Kafka through MLSQL:
 
 ```sql
 set abc='''
@@ -101,7 +101,7 @@ and duration="5"
 and checkpointLocation="/tmp/s-cpl6";
 ```
 
-We set x and y as primary keys, then check the data：
+set x and y as primary keys, then check the data：
 
 ```sql
 load delta.`/tmp/delta/wow-0` as show_table1;
@@ -110,7 +110,7 @@ select * from show_table1 where x=100 and z=204 as output;
 
 ## compaction for small files
 
-MLSQL is strict about small files in Delta, must be with append mode.MLSQL only compact small files that has not been updated.
+MLSQL is strict about small files in Delta, must be with append mode. MLSQL only compact small files that has not been updated.
 
 Let's mock some data on Kafka:
 
@@ -152,17 +152,17 @@ and checkpointLocation="/tmp/rate-1" partitionBy key;
 ```
 Attention, the rate here is in the streaming of Delta.
 
-Now we use !delta to check the version:
+Now use !delta to check the version:
 
 ```sql
 !delta history /tmp/delta/rate-2-table;
 ```
 
-Ouput：
+Output：
 
 ![](http://docs.mlsql.tech/upload_images/1063603-e43fba9ba7a22149.png)
 
-Then we can compact data which's version is less than we get previously:
+Then compact data which's version is less than we get before:
 
 ```
 !delta compact /tmp/delta/rate-2-table 8 1;
