@@ -20,14 +20,9 @@
     </licenses>
     <developers>
         <developer>
-            <id>allwefantasy</id>
-            <name>ZhuHaiLin</name>
-            <email>allwefantasy@gmail.com</email>
-        </developer>
-        <developer>
-            <id>chenfu</id>
-            <name>Fu Chen</name>
-            <email>cfmcgrady@gmail.com</email>
+            <id>tech.mlsql</id>
+            <name>mlsql-dev-team</name>
+            <email>dev.mlsql.tech@outlook.com</email>
         </developer>
     </developers>
     <scm>
