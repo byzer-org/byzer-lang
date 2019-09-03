@@ -1,4 +1,5 @@
-#Load and save as Delta, streaming support
+#How to load and save delta
+#How to use delta in streaming applications
 
 The essence of Delta is a directory in HDFS, it means you can do anything as you want.
 
