@@ -1,0 +1,18 @@
+# 如何集成调度
+
+调度对于ETL任务来说非常重要。MLSQL Stack目前并没有提供一个官方的调度，同时也没有集成
+第三方到Console端。我们正在积极的处理这件事情，希望提供一个常见的第三方调度的支持。在此之前，
+用户可以使用第三方调度如[Easy Scheduler](https://analysys.github.io/easyscheduler_docs_cn/),
+然后在它提供的交互界面设置你的定时任务。
+
+## 直观的解决方案
+
+MLSQL的分布式运行环境 MLSQL Engine提供了http接口供用户传递脚本调用。所以比较直观的做法如下：
+
+1. 通过shell脚本，比如使用CURL来获取脚本内容，并且提交给MLSQL Engine.
+2. 开发一个Java Proxy,可以通过该Proxy获取脚本内容并且通过该Proxy将内容提交给MLSQL Engine执行。
+
+## 异步还是同步？
+
+当你使用shell或者Java Proxy的时候，任务提交给Engine的时候，应该是异步还是同步呢？我们建议同步，
+并且设置一定的超时时间。这样，调度程序可以检查到必要的错误。
