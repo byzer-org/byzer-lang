@@ -1,6 +1,6 @@
 # MLSQL Stack Gitbook
 
-这是关于MLSQL的中文官方文档。英文文档我们也在同步撰写中，你可以通过访问[该链接](https://docs.mlsql.tech/en/)获得英文版信息。
+这是关于MLSQL的中文官方文档。英文文档我们也在同步撰写中，你可以通过访问[English Version](https://docs.mlsql.tech/en/)获得英文版信息。
 
 对于不同版本的文档，可以通过添加修改URL网址来获取，譬如1.4.0版本对应的地址为：https://docs.mlsql.tech/v1.4.0/zh/
 ，如果是英文，只需要将最后的zh换成en即可。
