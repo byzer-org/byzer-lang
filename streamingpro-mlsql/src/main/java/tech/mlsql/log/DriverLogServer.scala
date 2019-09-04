@@ -7,6 +7,7 @@ import java.util.concurrent.atomic.{AtomicBoolean, AtomicReference}
 import org.apache.spark.internal.Logging
 import org.apache.spark.{MLSQLSparkUtils, SparkEnv}
 import tech.mlsql.common.utils.distribute.socket.server.{Request, Response, SocketServerInExecutor, SocketServerSerDer}
+import tech.mlsql.common.utils.network.NetUtils
 
 /**
   * 2019-08-21 WilliamZhu(allwefantasy@gmail.com)
@@ -48,7 +49,8 @@ class DriverLogServer[T](taskContextRef: AtomicReference[T]) extends SocketServe
       //So return local address would be ok.
       "127.0.0.1"
     } else {
-      MLSQLSparkUtils.rpcEnv().address.host
+      if (MLSQLSparkUtils.rpcEnv().address == null) NetUtils.getHost
+      else MLSQLSparkUtils.rpcEnv().address.host
     }
   }
 }

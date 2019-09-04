@@ -12,6 +12,7 @@ import org.apache.spark.{MLSQLSparkUtils, SparkEnv, TaskContext}
 import tech.mlsql.arrow.python.iapp.{AppContextImpl, JavaContext}
 import tech.mlsql.arrow.python.runner.{ArrowPythonRunner, ChainedPythonFunctions, PythonFunction}
 import tech.mlsql.common.utils.distribute.socket.server.{Request, Response, SocketServerInExecutor, SocketServerSerDer}
+import tech.mlsql.common.utils.network.NetUtils
 import tech.mlsql.schema.parser.SparkSimpleSchemaParser
 
 import scala.collection.JavaConverters._
@@ -110,7 +111,8 @@ class PythonServer[T](taskContextRef: AtomicReference[T])
       //So return local address would be ok.
       "127.0.0.1"
     } else {
-      MLSQLSparkUtils.rpcEnv().address.host
+      val hostName = tech.mlsql.common.utils.network.SparkExecutorInfo.getInstance.hostname
+      if (hostName == null) NetUtils.getHost else hostName
     }
   }
 
