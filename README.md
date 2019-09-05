@@ -16,7 +16,7 @@ Find more examples on [our user guide](http://docs.mlsql.tech/en).
 
 ## Get PreBuild Distribution
 
-* The lasted version is MLSQL v1.3.0
+* The lasted version is MLSQL v1.4.0
 * You can download from [MLSQL Website](http://download.mlsql.tech/)
 * Spark 2.3.2/2.4.3 are tested
 
@@ -77,6 +77,8 @@ This guide document introduce [how to contribute to MLSQL](https://github.com/al
 * zhuohuwu0603
 * liyubin117
 * 9bbword
+* Slash-Wong/523935329#qq.com
+* anan0120/158989903#qq.com
 
 
 ----------
