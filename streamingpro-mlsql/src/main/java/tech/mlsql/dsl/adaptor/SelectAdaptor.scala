@@ -21,7 +21,7 @@ package tech.mlsql.dsl.adaptor
 import org.antlr.v4.runtime.misc.Interval
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.catalyst.plans.logical.MLSQLDFParser
-import streaming.dsl.ScriptSQLExecListener
+import streaming.dsl.{ParameterScope, ScriptSQLExecListener}
 import streaming.dsl.auth.{MLSQLTable, OperateType, TableType}
 import streaming.dsl.parser.DSLSQLLexer
 import streaming.dsl.parser.DSLSQLParser.SqlContext
@@ -42,7 +42,12 @@ class SelectAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAda
     val interval = new Interval(start, stop)
     val originalText = input.getText(interval)
 
-    val wowText = TemplateMerge.merge(originalText, scriptSQLExecListener.env().toMap)
+    val envScope = scriptSQLExecListener.envScope
+      .filter(_._2.scope == ParameterScope.VISIBLE)
+      .mapValues(_.value)
+      .toMap
+
+    val wowText = TemplateMerge.merge(originalText, envScope)
 
     val chunks = wowText.split("\\s+")
     val tableName = chunks.last.replace(";", "")

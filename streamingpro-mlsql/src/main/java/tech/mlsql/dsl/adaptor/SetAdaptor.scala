@@ -19,7 +19,7 @@
 package tech.mlsql.dsl.adaptor
 
 import _root_.streaming.dsl.parser.DSLSQLParser._
-import streaming.dsl.ScriptSQLExecListener
+import streaming.dsl.{Parameter, ParameterScope, ScriptSQLExecListener}
 import streaming.dsl.template.TemplateMerge
 import tech.mlsql.Stage
 import tech.mlsql.common.utils.shell.ShellCommand
@@ -118,12 +118,19 @@ class SetAdaptor(scriptSQLExecListener: ScriptSQLExecListener, stage: Stage.stag
         value = cleanBlockStr(cleanStr(command))
     }
 
+    val parameter = option.get("scope") match {
+      case Some("private") => Parameter(value ,ParameterScope.UNVISIBLE)
+      case _ => Parameter(value ,ParameterScope.VISIBLE)
+    }
+
     if (!overwrite) {
       if (!scriptSQLExecListener.env().contains(key)) {
         scriptSQLExecListener.addEnv(key, value)
+        scriptSQLExecListener.addEnvScpoe(key, parameter)
       }
     } else {
       scriptSQLExecListener.addEnv(key, value)
+      scriptSQLExecListener.addEnvScpoe(key, parameter)
     }
 
     scriptSQLExecListener.env().view.foreach {

@@ -24,7 +24,7 @@ import org.apache.spark.sql.catalyst.parser.ParseException
 import org.apache.spark.streaming.BasicSparkOperation
 import streaming.core.strategy.platform.SparkRuntime
 import streaming.core.{BasicMLSQLConfig, NotToRunTag, SpecFunctions}
-import streaming.dsl.{ScriptSQLExec, ScriptSQLExecListener}
+import streaming.dsl.{Parameter, ParameterScope, ScriptSQLExec, ScriptSQLExecListener}
 import tech.mlsql.common.utils.path.PathFun
 import tech.mlsql.common.utils.shell.ShellCommand
 import tech.mlsql.dsl.processor.GrammarProcessListener
@@ -98,6 +98,24 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
       sq = createSSEL
       ScriptSQLExec.parse(""" set b = "${a}/b"; set a = "valuea";  """, sq)
       assert(sq.env()("b") == "valuea/b")
+
+    }
+  }
+
+  "set scope" should "work fine" in {
+
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+      implicit val spark = runtime.sparkSession
+
+      var sq = createSSEL
+      ScriptSQLExec.parse(""" set pwd = "mlsql" options scope="private";select "${pwd}" value as t;""", sq)
+      var res = spark.sql("select value from t").collect().head.get(0)
+      assert(res == "")
+
+      sq = createSSEL
+      ScriptSQLExec.parse(""" set pwd = "mlsql" options scope="public";select "${pwd}" value as t;""", sq)
+      res = spark.sql("select value from t").collect().head.get(0)
+      assert(res == "mlsql")
 
     }
   }
