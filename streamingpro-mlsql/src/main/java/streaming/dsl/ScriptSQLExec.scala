@@ -27,7 +27,6 @@ import org.antlr.v4.runtime.tree.ParseTreeWalker
 import org.apache.spark.MLSQLSyntaxErrorListener
 import org.apache.spark.sql.SparkSession
 import streaming.core.Dispatcher
-import streaming.dsl.ParameterScope.ParameterScope
 import streaming.dsl.auth._
 import streaming.dsl.parser.DSLSQLParser._
 import streaming.dsl.parser.{DSLSQLLexer, DSLSQLListener, DSLSQLParser}
@@ -39,6 +38,7 @@ import tech.mlsql.dsl.CommandCollection
 import tech.mlsql.dsl.adaptor._
 import tech.mlsql.dsl.parser.MLSQLErrorStrategy
 import tech.mlsql.dsl.processor.{AuthProcessListener, GrammarProcessListener, PreProcessListener}
+import tech.mlsql.dsl.scope.SetScopeParameter
 import tech.mlsql.job.MLSQLJobProgressListener
 
 import scala.collection.mutable.ArrayBuffer
@@ -161,7 +161,7 @@ class ScriptSQLExecListener(val _sparkSession: SparkSession, val _defaultPathPre
 
   private val _env = new scala.collection.mutable.HashMap[String, String]
 
-  private val _env_scope = new scala.collection.mutable.HashMap[String, Parameter]
+  private val _env_scope = new scala.collection.mutable.HashMap[String, SetScopeParameter]
 
   private[this] val _jobListeners = ArrayBuffer[MLSQLJobProgressListener]()
 
@@ -230,7 +230,7 @@ class ScriptSQLExecListener(val _sparkSession: SparkSession, val _defaultPathPre
 
   def env() = _env
 
-  def addEnvScpoe(k: String, v: Parameter) = {
+  def addEnvScpoe(k: String, v: SetScopeParameter) = {
     _env_scope(k) = v
     this
   }
@@ -349,15 +349,6 @@ case class MLSQLExecuteContext(@transient execListener: ScriptSQLExecListener,
                                userDefinedParam: Map[String, String] = Map())
 
 case class DBMappingKey(format: String, db: String)
-
-case class Parameter(value: String ,scope: ParameterScope)
-
-object ParameterScope extends Enumeration {
-  type ParameterScope = Value
-  val UNVISIBLE = Value("unvisible")
-  val VISIBLE = Value("visible")
-}
-
 
 
 

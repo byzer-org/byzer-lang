@@ -21,11 +21,12 @@ package tech.mlsql.dsl.adaptor
 import org.antlr.v4.runtime.misc.Interval
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.catalyst.plans.logical.MLSQLDFParser
-import streaming.dsl.{ParameterScope, ScriptSQLExecListener}
+import streaming.dsl.ScriptSQLExecListener
 import streaming.dsl.auth.{MLSQLTable, OperateType, TableType}
 import streaming.dsl.parser.DSLSQLLexer
 import streaming.dsl.parser.DSLSQLParser.SqlContext
 import streaming.dsl.template.TemplateMerge
+import tech.mlsql.dsl.scope.ParameterScope
 import tech.mlsql.sql.MLSQLSparkConf
 
 
@@ -43,7 +44,7 @@ class SelectAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAda
     val originalText = input.getText(interval)
 
     val envScope = scriptSQLExecListener.envScope
-      .filter(_._2.scope == ParameterScope.VISIBLE)
+      .filter(!_._2.scope.contains(ParameterScope.UN_SELECT))
       .mapValues(_.value)
       .toMap
 

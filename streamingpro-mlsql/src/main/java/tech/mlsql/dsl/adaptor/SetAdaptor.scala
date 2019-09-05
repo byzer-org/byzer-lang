@@ -19,10 +19,14 @@
 package tech.mlsql.dsl.adaptor
 
 import _root_.streaming.dsl.parser.DSLSQLParser._
-import streaming.dsl.{Parameter, ParameterScope, ScriptSQLExecListener}
+import streaming.dsl.ScriptSQLExecListener
 import streaming.dsl.template.TemplateMerge
 import tech.mlsql.Stage
 import tech.mlsql.common.utils.shell.ShellCommand
+import tech.mlsql.dsl.scope.ParameterScope.ParameterScope
+import tech.mlsql.dsl.scope.{ParameterScope, SetScopeParameter}
+
+import scala.collection.mutable
 
 /**
   * Created by allwefantasy on 27/8/2017.
@@ -118,19 +122,27 @@ class SetAdaptor(scriptSQLExecListener: ScriptSQLExecListener, stage: Stage.stag
         value = cleanBlockStr(cleanStr(command))
     }
 
-    val parameter = option.get("scope") match {
-      case Some("private") => Parameter(value ,ParameterScope.UNVISIBLE)
-      case _ => Parameter(value ,ParameterScope.VISIBLE)
-    }
+    val scope = option.getOrElse("scope" ,"all").split(",")
+    val scopeParameter = scope.foldLeft(mutable.Set[ParameterScope]())((x ,y) => {
+      y match {
+        case "un_select" => x.add(ParameterScope.UN_SELECT)
+        case _ =>
+      }
+      x
+    })
+
+     if(scopeParameter.size == 0){
+       scopeParameter.add(ParameterScope.ALL)
+     }
 
     if (!overwrite) {
       if (!scriptSQLExecListener.env().contains(key)) {
         scriptSQLExecListener.addEnv(key, value)
-        scriptSQLExecListener.addEnvScpoe(key, parameter)
+        scriptSQLExecListener.addEnvScpoe(key, SetScopeParameter(value ,scopeParameter))
       }
     } else {
       scriptSQLExecListener.addEnv(key, value)
-      scriptSQLExecListener.addEnvScpoe(key, parameter)
+      scriptSQLExecListener.addEnvScpoe(key, SetScopeParameter(value ,scopeParameter))
     }
 
     scriptSQLExecListener.env().view.foreach {
