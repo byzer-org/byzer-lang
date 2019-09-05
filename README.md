@@ -77,6 +77,8 @@ This guide document introduce [how to contribute to MLSQL](https://github.com/al
 * zhuohuwu0603
 * liyubin117
 * 9bbword
+* Slash-Wong/523935329#qq.com
+* anan0120/158989903#qq.com
 
 
 ----------
