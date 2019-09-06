@@ -38,6 +38,7 @@ import tech.mlsql.dsl.CommandCollection
 import tech.mlsql.dsl.adaptor._
 import tech.mlsql.dsl.parser.MLSQLErrorStrategy
 import tech.mlsql.dsl.processor.{AuthProcessListener, GrammarProcessListener, PreProcessListener}
+import tech.mlsql.dsl.scope.SetScopeParameter
 import tech.mlsql.job.MLSQLJobProgressListener
 
 import scala.collection.mutable.ArrayBuffer
@@ -160,6 +161,8 @@ class ScriptSQLExecListener(val _sparkSession: SparkSession, val _defaultPathPre
 
   private val _env = new scala.collection.mutable.HashMap[String, String]
 
+  private val _env_scope = new scala.collection.mutable.HashMap[String, SetScopeParameter]
+
   private[this] val _jobListeners = ArrayBuffer[MLSQLJobProgressListener]()
 
   private val lastSelectTable = new AtomicReference[String]()
@@ -180,6 +183,7 @@ class ScriptSQLExecListener(val _sparkSession: SparkSession, val _defaultPathPre
   def clone(sparkSession: SparkSession): ScriptSQLExecListener = {
     val ssel = new ScriptSQLExecListener(sparkSession, _defaultPathPrefix, _allPathPrefix)
     _env.foreach { case (a, b) => ssel.addEnv(a, b) }
+    _env_scope.foreach { case (a, b) => ssel.addEnvScpoe(a, b) }
     if (getStage.isDefined) {
       ssel.setStage(getStage.get)
     }
@@ -225,6 +229,13 @@ class ScriptSQLExecListener(val _sparkSession: SparkSession, val _defaultPathPre
   }
 
   def env() = _env
+
+  def addEnvScpoe(k: String, v: SetScopeParameter) = {
+    _env_scope(k) = v
+    this
+  }
+
+  def envScope() = _env_scope
 
   def sparkSession = _sparkSession
 
@@ -338,8 +349,6 @@ case class MLSQLExecuteContext(@transient execListener: ScriptSQLExecListener,
                                userDefinedParam: Map[String, String] = Map())
 
 case class DBMappingKey(format: String, db: String)
-
-
 
 
 

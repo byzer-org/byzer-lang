@@ -102,6 +102,24 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
     }
   }
 
+  "set scope" should "work fine" in {
+
+    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
+      implicit val spark = runtime.sparkSession
+
+      var sq = createSSEL
+      ScriptSQLExec.parse(""" set pwd = "mlsql" options scope="un_select";select "${pwd}" value as t;""", sq)
+      var res = spark.sql("select value from t").collect().head.get(0)
+      assert(res == "")
+
+      sq = createSSEL
+      ScriptSQLExec.parse(""" set pwd = "mlsql" options scope="all";select "${pwd}" value as t;""", sq)
+      res = spark.sql("select value from t").collect().head.get(0)
+      assert(res == "mlsql")
+
+    }
+  }
+
 
   "save with file num options" should "work fine" taggedAs (NotToRunTag) in {
 
