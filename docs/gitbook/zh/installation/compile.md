@@ -7,7 +7,7 @@
 1. clone项目
 
 ```
-git clone git@github.com:allwefantasy/streamingpro.git
+git clone https://github.com/allwefantasy/streamingpro.git
 ```
 
 2. 编译
