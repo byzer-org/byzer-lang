@@ -87,6 +87,20 @@ object ScriptRunner {
     }
   }
 
+  /**
+    * Example:
+    *
+    * val timeout = JobManager.getJobInfo.get(context.groupId).get.timeout
+    * val code =
+    * """
+    * |
+    * """.stripMargin
+    * val jobInfo = JobManager.getJobInfo(context.owner, MLSQLJobType.SCRIPT, "", code, timeout)
+    *         ScriptRunner.runJob(code, jobInfo, (df) => {
+    *
+    * })
+    *
+    */
   def runJob(code: String, jobInfo: MLSQLJobInfo, fetchResult: (DataFrame) => Unit) = {
     val context = ScriptSQLExec.contextGetOrForTest()
     _run(code, context, jobInfo, context.execListener.sparkSession, fetchResult, true, true)
