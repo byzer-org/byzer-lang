@@ -32,14 +32,15 @@ class MLSQLSchedulerClient[T <% Ordered[T]](
     job.isExecuted = job.isExecuted ++ Seq(true)
     if (res.getStatusLine.getStatusCode == 200) {
       job.isSuccess = job.isSuccess ++ Seq(true)
-    } else job.isSuccess = job.isSuccess ++ Seq(false)
+    } else {
+      job.isSuccess = job.isSuccess ++ Seq(false)
+    }
     try {
       job.msg = job.msg ++ Seq(new String(EntityUtils.toByteArray(res.getEntity), Charset.forName("utf8")))
     } catch {
       case
         e: Exception =>
         job.msg = job.msg ++ Seq(e.getMessage)
-        throw new RuntimeException(s"fail to execute job ${job.id}: ${job.msg}")
     }
 
   }
