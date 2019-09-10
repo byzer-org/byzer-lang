@@ -19,7 +19,8 @@ object ETRegister {
     wow("DeltaCompactionCommandWrapper"),
     wow("ShowTablesExt"),
     "DTF" -> "tech.mlsql.ets.tensorflow.DistributedTensorflow",
-    wow("PythonCommand")
+    wow("PythonCommand"),
+    wow("SchedulerCommand")
   )
 
 }
