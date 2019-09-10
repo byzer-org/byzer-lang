@@ -32,10 +32,12 @@ class AsSchedulerService extends MLSQLLifecycle {
   }
 
   override def afterRuntimeStarted(params: Map[String, String], conf: SparkConf, rootSparkSession: SparkSession): Unit = {
-    val timezoneID = rootSparkSession.sessionState.conf.sessionLocalTimeZone
-    val authSecret = rootSparkSession.conf.get(PREFIX + CONSOLE_TOKEN) //context.userDefinedParam.filter(f => f._1 == "__auth_secret__").head._2
-    val consoleUrl = rootSparkSession.conf.get(PREFIX + CONSOLE_URL) //context.userDefinedParam.filter(f => f._1 == "__default__console_url__").head._2
-    TimeScheduler.start(new SchedulerTaskStore(rootSparkSession, consoleUrl, authSecret), timezoneID)
+    if (params.getOrElse(KEY, "false").toBoolean) {
+      val timezoneID = rootSparkSession.sessionState.conf.sessionLocalTimeZone
+      val authSecret = rootSparkSession.conf.get(PREFIX + CONSOLE_TOKEN) //context.userDefinedParam.filter(f => f._1 == "__auth_secret__").head._2
+      val consoleUrl = rootSparkSession.conf.get(PREFIX + CONSOLE_URL) //context.userDefinedParam.filter(f => f._1 == "__default__console_url__").head._2
+      TimeScheduler.start(new SchedulerTaskStore(rootSparkSession, consoleUrl, authSecret), timezoneID)
+    }
   }
 }
 
