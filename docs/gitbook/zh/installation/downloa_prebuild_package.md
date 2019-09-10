@@ -84,6 +84,8 @@ chmod u+x start-default.sh
 启动后，默认监听的是8080端口。你也可以修改，具体配置卫浴修改application.docker.yml. MLSQL Cluster 并没有Web页面，它主要是衔接
 MLSQL Console 和Engine的。
 
+> MySQL 5.7经过测试，如发生java.math.BigInteger can not cast to java.lang.Long等错误，可尝试降级MySQL的版本。
+
 ## 启动和配置 MLSQL Console
 
 同样，从官方站点下载后，解压，得到目录结构如下：
