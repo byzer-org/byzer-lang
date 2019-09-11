@@ -84,6 +84,7 @@ class DeltaCompactionCommandWrapper(override val uid: String) extends SQLAlg wit
         val info = DeltaUtils.tableStat(deltaLog)
         spark.createDataset[TableStat](Seq(info)).toDF()
 
+
       case Seq("show", "tables") =>
         val dataLake = new DataLake(spark)
         if (!dataLake.isEnable) {
