@@ -18,6 +18,7 @@
 
 package streaming.core.strategy.platform
 
+import java.util
 import java.util.concurrent.atomic.{AtomicInteger, AtomicReference}
 import java.util.{Map => JMap}
 
@@ -29,8 +30,9 @@ import streaming.common.zk.{ZKClient, ZkRegister}
 import streaming.core.strategy.JobStrategy
 import streaming.core.{Dispatcher, StreamingApp}
 import tech.mlsql.common.utils.shell.command.ParamsUtil
+import tech.mlsql.runtime.MLSQLPlatformLifecycle
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 import scala.collection.mutable.ArrayBuffer
 
 /**
@@ -60,6 +62,16 @@ class PlatformManager {
 
   def unRegister(listener: PlatformManagerListener) = {
     listeners -= listener
+  }
+
+  val lifeCycleCallback = ArrayBuffer[MLSQLPlatformLifecycle]()
+
+  def registerMLSQLPlatformLifecycle(listener: MLSQLPlatformLifecycle) = {
+    lifeCycleCallback += listener
+  }
+
+  def unRegisterMLSQLPlatformLifecycle(listener: MLSQLPlatformLifecycle) = {
+    lifeCycleCallback -= listener
   }
 
   def startRestServer = {
@@ -95,13 +107,17 @@ class PlatformManager {
 
 
     val tempParams = new java.util.HashMap[Any, Any]()
-    params.getParamsMap.filter(f => f._1.startsWith("streaming.")).foreach { f => tempParams.put(f._1, f._2) }
+    params.getParamsMap.asScala.filter(f => f._1.startsWith("streaming.")).foreach { f => tempParams.put(f._1, f._2) }
+
+
+    lifeCycleCallback.foreach(f => f.beforeRuntime(params.getParamsMap.asScala.toMap))
     val runtime = PlatformManager.getRuntime
+    lifeCycleCallback.foreach(f => f.afterRuntime(runtime, params.getParamsMap.asScala.toMap))
 
 
     val dispatcher = findDispatcher
 
-    var jobs: Array[String] = dispatcher.strategies.filter(f => f._2.isInstanceOf[JobStrategy]).keys.toArray
+    var jobs: Array[String] = dispatcher.strategies.asScala.filter(f => f._2.isInstanceOf[JobStrategy]).keys.toArray
 
     if (params.hasParam("streaming.jobs"))
       jobs = params.getParam("streaming.jobs").split(",")
@@ -137,6 +153,7 @@ class PlatformManager {
     StrategyDispatcher.throwsException = failsAll
 
     val jobCounter = new AtomicInteger(0)
+    lifeCycleCallback.foreach(f => f.beforeDispatcher(runtime, params.getParamsMap.asScala.toMap))
     jobs.foreach {
       jobName =>
         /*
@@ -152,6 +169,7 @@ class PlatformManager {
         }
         jobCounter.incrementAndGet()
     }
+    lifeCycleCallback.foreach(f => f.afterDispatcher(runtime, params.getParamsMap.asScala.toMap))
 
     if (params.getBooleanParam("streaming.unitest.startRuntime", true)) {
       runtime.startRuntime
@@ -215,7 +233,8 @@ object PlatformManager {
 
   def getRuntime: StreamingRuntime = {
     val params: JMap[String, String] = getOrCreate.config.get().getParamsMap
-    val tempParams: JMap[Any, Any] = params.map(f => (f._1.asInstanceOf[Any], f._2.asInstanceOf[Any]))
+    val tempParams: JMap[Any, Any] = new util.HashMap[Any, Any]()
+    params.asScala.map(f => tempParams.put(f._1.asInstanceOf[Any], f._2.asInstanceOf[Any]))
 
     val platformName = params.get("streaming.platform")
     val runtime = createRuntimeByPlatform(platformNameMapping(platformName), tempParams)

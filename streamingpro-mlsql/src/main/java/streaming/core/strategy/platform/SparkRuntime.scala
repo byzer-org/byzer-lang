@@ -37,7 +37,7 @@ import tech.mlsql.common.utils.network.NetUtils
 import tech.mlsql.datalake.DataLake
 import tech.mlsql.job.JobManager
 import tech.mlsql.log.DriverLogServer
-import tech.mlsql.runtime.{AsSchedulerService, MLSQLLifecycle}
+import tech.mlsql.runtime.{AsSchedulerService, MLSQLRuntimeLifecycle}
 import tech.mlsql.tool.ScalaObjectReflect
 
 import scala.collection.JavaConversions._
@@ -54,7 +54,7 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
   def name = "SPARK"
 
   registerJdbcDialect(HiveJdbcDialect)
-  val lifeCyleCallback = ArrayBuffer[MLSQLLifecycle](new AsSchedulerService())
+  val lifeCyleCallback = ArrayBuffer[MLSQLRuntimeLifecycle](new AsSchedulerService())
   var localSchedulerBackend: LocalPSSchedulerBackend = null
   var psDriverBackend: PSDriverBackend = null
 
