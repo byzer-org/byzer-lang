@@ -127,12 +127,12 @@ object PluginCommand {
   val TABLE_FILES = "__mlsql__.files"
 
   def downloadJarFile(spark: SparkSession, jarPath: String) = {
-    val response = Request.Post(s"http://store.mlsql.tech/repo/plugins/download").connectTimeout(60 * 1000)
+    val response = Request.Post(s"http://store.mlsql.tech/api/repo/plugins/download").connectTimeout(60 * 1000)
       .socketTimeout(60 * 60 * 1000).bodyForm(Form.form().add("name", jarPath).build(),
       Charset.forName("utf-8")).execute().returnResponse()
 
     if (response.getStatusLine.getStatusCode != 200) {
-      throw new MLSQLException(s"Fail to download ${jarPath} from http://store.mlsql.tech/repo/plugins/download")
+      throw new MLSQLException(s"Fail to download ${jarPath} from http://store.mlsql.tech/api/repo/plugins/download")
     }
 
     var fieldValue = response.getFirstHeader("Content-Disposition").getValue
