@@ -20,23 +20,30 @@ package streaming.core
 
 import streaming.core.strategy.platform.PlatformManager
 import tech.mlsql.common.utils.shell.command.ParamsUtil
+import tech.mlsql.runtime.MLSQLPlatformLifecycle
 
 
 object StreamingApp {
 
   def main(args: Array[String]): Unit = {
     val params = new ParamsUtil(args)
-    configureLogProperty(params)
     require(params.hasParam("streaming.name"), "Application name should be set")
-    PlatformManager.getOrCreate.run(params)
+    val platform = PlatformManager.getOrCreate
+    try {
+      List("tech.mlsql.runtime.LogFileHook", "tech.mlsql.runtime.PluginHook").foreach { className =>
+        platform.registerMLSQLPlatformLifecycle(
+          Class.forName(className).
+            newInstance().asInstanceOf[MLSQLPlatformLifecycle])
+      }
+
+    } catch {
+      case e: Exception =>
+        e.printStackTrace()
+    }
+
+    platform.run(params)
   }
 
-  def configureLogProperty(params: ParamsUtil) = {
-    if (System.getProperty("REALTIME_LOG_HOME") == null) {
-      System.setProperty("REALTIME_LOG_HOME", params.getParam("REALTIME_LOG_HOME",
-        "/tmp/__mlsql__/logs"))
-    }
-  }
 }
 
 class StreamingApp
