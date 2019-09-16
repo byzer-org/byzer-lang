@@ -4,7 +4,7 @@ package tech.mlsql.ets
 import java.io.File
 import java.net.{URL, URLClassLoader}
 import java.nio.charset.Charset
-import java.nio.file.Files
+import java.nio.file.{Files, StandardCopyOption}
 
 import org.apache.http.client.fluent.{Form, Request}
 import org.apache.spark.sql.expressions.UserDefinedFunction
@@ -20,6 +20,7 @@ import tech.mlsql.common.utils.serder.json.JSONTool
 import tech.mlsql.core.version.MLSQLVersion
 import tech.mlsql.datalake.DataLake
 import tech.mlsql.dsl.CommandCollection
+import tech.mlsql.dsl.includes.PluginIncludeSource
 import tech.mlsql.ets.register.ETRegister
 import tech.mlsql.version.VersionCompatibility
 
@@ -47,11 +48,7 @@ class PluginCommand(override val uid: String) extends SQLAlg with Functions with
     command match {
       case Seq(pluginType, "add", className, pluginName, left@_*) =>
 
-        require(pluginType == PluginType.DS || pluginType == PluginType.ET, "pluginType should be ds or et")
-
-        def isEt = {
-          pluginType == PluginType.ET
-        }
+        require(pluginType == PluginType.DS || pluginType == PluginType.ET || pluginType == PluginType.SCRIPT, "pluginType should be ds or et or script")
 
         val table = try {
           readTable(spark, TABLE_PLUGINS)
@@ -68,11 +65,12 @@ class PluginCommand(override val uid: String) extends SQLAlg with Functions with
 
         val localPath = downloadFromHDFS(fileName, pluginPath)
 
-        loadJarInDriver(localPath)
-        spark.sparkContext.addJar(localPath)
+        if (pluginType == PluginType.DS || pluginType == PluginType.ET) {
+          loadJarInDriver(localPath)
+          spark.sparkContext.addJar(localPath)
+          checkVersionCompatibility(pluginName, className)
+        }
 
-
-        checkVersionCompatibility(pluginName, className)
 
         val commandName = left.toArray match {
           case Array("named", commandName) =>
@@ -80,24 +78,34 @@ class PluginCommand(override val uid: String) extends SQLAlg with Functions with
           case _ => None
         }
 
-        if (isEt) {
-          registerET(pluginName, className, commandName, () => {
-          })
-          val etName = className.split("\\.").last
-          saveTable(spark, spark.createDataset(Seq(ETRecord(pluginName, commandName, etName, className))).toDF(), TABLE_ETRecord, None, false)
-        } else {
-          registerDS(pluginName, className, commandName, () => {
-            saveTable(spark, spark.createDataset(Seq(DSRecord(pluginName, commandName, className))).toDF(), TABLE_DSRecord, None, false)
-          })
+        pluginType match {
+          case PluginType.ET =>
+            registerET(pluginName, className, commandName, () => {
+            })
+            val etName = className.split("\\.").last
+            saveTable(spark, spark.createDataset(Seq(ETRecord(pluginName, commandName, etName, className))).toDF(), TABLE_ETRecord, None, false)
+          case PluginType.DS =>
+            registerDS(pluginName, className, commandName, () => {
+              saveTable(spark, spark.createDataset(Seq(DSRecord(pluginName, commandName, className))).toDF(), TABLE_DSRecord, None, false)
+            })
+          case PluginType.SCRIPT =>
+            PluginIncludeSource.register(pluginName, localPath)
         }
 
+
         saveTable(
-          spark, spark.createDataset(Seq(AddPlugin(pluginName, pluginPath))).toDF(),
+          spark, spark.createDataset(Seq(AddPlugin(pluginName, pluginPath, pluginType))).toDF(),
           TABLE_PLUGINS, None, false)
 
         readTable(spark, TABLE_PLUGINS)
 
+      case Seq("script", "show", item) =>
+        val includeSource = new PluginIncludeSource()
+        val content = includeSource.fetchSource(spark, item, Map[String, String]())
+        spark.createDataset[ScriptContent](Seq(ScriptContent(item, content))).toDF()
+
     }
+
 
   }
 
@@ -109,15 +117,17 @@ class PluginCommand(override val uid: String) extends SQLAlg with Functions with
   override def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = ???
 }
 
-case class AddPlugin(pluginName: String, path: String)
+case class AddPlugin(pluginName: String, path: String, pluginType: String)
 
 case class ETRecord(pluginName: String, commandName: Option[String], etName: String, className: String)
 
 case class DSRecord(pluginName: String, shortFormat: Option[String], fullFormat: String)
 
+
 object PluginType {
   val ET = "et"
   val DS = "ds"
+  val SCRIPT = "script"
 }
 
 object PluginCommand {
@@ -131,7 +141,7 @@ object PluginCommand {
       .socketTimeout(60 * 60 * 1000).bodyForm(Form.form().add("name", jarPath).build(),
       Charset.forName("utf-8")).execute().returnResponse()
 
-    if (response.getStatusLine.getStatusCode != 200) {
+    if (response.getStatusLine.getStatusCode != 200 || response.getFirstHeader("Content-Disposition") == null) {
       throw new MLSQLException(s"Fail to download ${jarPath} from http://store.mlsql.tech/api/repo/plugins/download")
     }
 
@@ -143,6 +153,7 @@ object PluginCommand {
 
     val hdfsPath = PathFun(dataLake.identifyToPath(TABLE_FILES)).add("store").add("plugins")
     HDFSOperator.saveStream(hdfsPath.toPath, fieldValue, inputStream)
+    HDFSOperator.deleteDir("." + hdfsPath.toPath + ".crc")
     (fieldValue, PathFun(hdfsPath.toPath).add(fieldValue).toPath)
 
   }
@@ -155,12 +166,8 @@ object PluginCommand {
       tmpLocation.mkdirs()
     }
     val jarFile = new File(PathFun(tmpLocation.getPath).add(fileName).toPath)
-    if (!jarFile.exists()) {
-      Files.copy(inputStream, jarFile.toPath)
-    } else {
-      inputStream.close()
-    }
-
+    Files.copy(inputStream, jarFile.toPath, StandardCopyOption.REPLACE_EXISTING)
+    inputStream.close()
     val localPath = jarFile.getPath
     localPath
   }
@@ -213,3 +220,5 @@ object PluginCommand {
     }
   }
 }
+
+case class ScriptContent(path: String, value: String)

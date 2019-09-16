@@ -3,6 +3,7 @@ package tech.mlsql.runtime
 import org.apache.spark.sql.DataFrame
 import streaming.core.strategy.platform.{SparkRuntime, StreamingRuntime}
 import tech.mlsql.common.utils.log.Logging
+import tech.mlsql.dsl.includes.PluginIncludeSource
 import tech.mlsql.ets._
 
 /**
@@ -39,8 +40,15 @@ class PluginHook extends MLSQLPlatformLifecycle with Logging {
     plugins.as[AddPlugin].collect().foreach { plugin =>
       logInfo(s"Plugin ${plugin.pluginName} in ${plugin.path}")
       val localPath = downloadFromHDFS(plugin.path.split("/").last, plugin.path)
-      loadJarInDriver(localPath)
-      spark.sparkContext.addJar(localPath)
+
+      if (plugin.pluginType == PluginType.DS || plugin.pluginType == PluginType.ET) {
+        loadJarInDriver(localPath)
+        spark.sparkContext.addJar(localPath)
+      }
+
+      if (plugin.pluginType == PluginType.SCRIPT) {
+        PluginIncludeSource.register(plugin.pluginName, plugin.path)
+      }
     }
 
     ets.as[ETRecord].collect().foreach { et =>
