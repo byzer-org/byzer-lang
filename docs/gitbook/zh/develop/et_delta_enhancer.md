@@ -146,5 +146,9 @@ override def supportedVersions: Seq[String] = {
 
 你需要将插件使用shade模式打成jar包然后提交到应用商店，之后用户可以直接使用!plugin命令安装。
 
+```sql
+!plugin et add tech.mlsql.plugin.et.DeltaCommand delta_enhancer named deltaEnhancer; 
+```
+
 
  
