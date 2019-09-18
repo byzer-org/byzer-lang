@@ -37,10 +37,12 @@ import tech.mlsql.common.utils.network.NetUtils
 import tech.mlsql.datalake.DataLake
 import tech.mlsql.job.JobManager
 import tech.mlsql.log.DriverLogServer
+import tech.mlsql.runtime.{AsSchedulerService, MLSQLRuntimeLifecycle}
 import tech.mlsql.tool.ScalaObjectReflect
 
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
+import scala.collection.mutable.ArrayBuffer
 
 /**
   * Created by allwefantasy on 30/3/2017.
@@ -52,6 +54,7 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
   def name = "SPARK"
 
   registerJdbcDialect(HiveJdbcDialect)
+  val lifeCyleCallback = ArrayBuffer[MLSQLRuntimeLifecycle](new AsSchedulerService())
   var localSchedulerBackend: LocalPSSchedulerBackend = null
   var psDriverBackend: PSDriverBackend = null
 
@@ -61,6 +64,7 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
 
   var sessionManager = new SessionManager(sparkSession)
   sessionManager.start()
+
 
   def getSession(owner: String) = {
     sessionManager.getSession(SessionIdentifier(owner)).sparkSession
@@ -134,6 +138,9 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
       conf.set(DataLake.RUNTIME_KEY, params.get(DataLake.USER_KEY).toString)
     }
 
+    lifeCyleCallback.foreach { callback =>
+      callback.beforeRuntimeStarted(params.map(f => (f._1.toString, f._2.toString)).toMap, conf)
+    }
 
     val sparkSession = SparkSession.builder().config(conf)
 
@@ -177,6 +184,9 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
       sparkSession.getOrCreate()
     }
 
+    lifeCyleCallback.foreach { callback =>
+      callback.afterRuntimeStarted(params.map(f => (f._1.toString, f._2.toString)).toMap, conf, ss)
+    }
 
     if (MLSQLConf.MLSQL_SPARK_SERVICE.readFrom(configReader)) {
       JobManager.init(ss)

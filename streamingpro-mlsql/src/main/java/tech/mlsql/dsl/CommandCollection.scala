@@ -3,11 +3,25 @@ package tech.mlsql.dsl
 import org.apache.spark.sql.SparkSession
 import streaming.dsl.{ScriptSQLExec, ScriptSQLExecListener}
 
+import scala.collection.JavaConverters._
+
 /**
   * 2019-04-11 WilliamZhu(allwefantasy@gmail.com)
   */
 object CommandCollection {
+
+  private val commandMapping = new java.util.concurrent.ConcurrentHashMap[String, String]()
+
+  def refreshCommandMapping(items: Map[String, String]) = {
+    items.foreach { k =>
+      commandMapping.put(k._1, k._2)
+    }
+  }
+
   def fill(context: ScriptSQLExecListener): Unit = {
+    commandMapping.asScala.foreach { k =>
+      context.addEnv(k._1, s"""run command as ${k._2}.`` where parameters='''{:all}'''""")
+    }
     context.addEnv("desc", """run command as ShowTableExt.`{}`""")
     context.addEnv("kill", """run command as Kill.`{}`""")
     context.addEnv("jdbc", """ run command as JDBC.`{}` where `driver-statement-0`='''{}''' """)
@@ -36,8 +50,10 @@ object CommandCollection {
     context.addEnv("withWartermark",""" register WaterMarkInPlace.`` where inputTable="{}" and eventTimeCol="{}" and delayThreshold="{}" """)
 
     context.addEnv("delta","""run command as DeltaCompactionCommandWrapper.`` where parameters='''{:all}'''""")
+    context.addEnv("scheduler","""run command as SchedulerCommand.`` where parameters='''{:all}'''""")
 
     context.addEnv("python","""run command as PythonCommand.`` where parameters='''{:all}'''""")
+    context.addEnv("plugin","""run command as PluginCommand.`` where parameters='''{:all}'''""")
 
     context.addEnv("kafkaTool",
       """ run command as KafkaCommand.`kafka` where

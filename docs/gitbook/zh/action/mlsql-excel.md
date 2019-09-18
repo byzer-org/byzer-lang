@@ -4,9 +4,9 @@ MLSQL Console 是一款集数据研发，数据分析，机器学习等于一体
 
 ## 工作区介绍
 
-![image.png](https://upload-images.jianshu.io/upload_images/1063603-ad4b2e91807adf66.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![image.png](https://docs.mlsql.tech/upload_images/1063603-ad4b2e91807adf66.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
-![image.png](https://upload-images.jianshu.io/upload_images/1063603-906e3cbed89a5828.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![image.png](https://docs.mlsql.tech/upload_images/1063603-906e3cbed89a5828.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 快捷菜单区可以自动帮我们生成MLSQL语句，一般而言，用户只需要自己能够手动写一些select 语句即可。
 
@@ -14,13 +14,13 @@ MLSQL Console 是一款集数据研发，数据分析，机器学习等于一体
 
 有两个excel文件：
 
-![image.png](https://upload-images.jianshu.io/upload_images/1063603-a4268a01aa434433.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![image.png](https://docs.mlsql.tech/upload_images/1063603-a4268a01aa434433.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 内容分别如下：
 
-![image.png](https://upload-images.jianshu.io/upload_images/1063603-a214772bdcccdd2b.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![image.png](https://docs.mlsql.tech/upload_images/1063603-a214772bdcccdd2b.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
-![image.png](https://upload-images.jianshu.io/upload_images/1063603-41a3a88400b58e4a.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![image.png](https://docs.mlsql.tech/upload_images/1063603-41a3a88400b58e4a.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 第一个excel有每天每个科室的接待病人的数量。第二个excel有主任和对应的邮箱。
 
@@ -48,15 +48,15 @@ MLSQL Console 是一款集数据研发，数据分析，机器学习等于一体
 
 打开操作界面的 Tools/Dashboard,然后拖拽excel-example（目录里包含了两个示例excel）到上传区进行上传操作：
 
-![image.png](https://upload-images.jianshu.io/upload_images/1063603-d4d47c0c84fff34f.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![image.png](https://docs.mlsql.tech/upload_images/1063603-d4d47c0c84fff34f.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 上传成功后，拖拽Quick Menu/Download uploaded file到编辑区：
 
-![image.png](https://upload-images.jianshu.io/upload_images/1063603-d03b9fe04355e4b6.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![image.png](https://docs.mlsql.tech/upload_images/1063603-d03b9fe04355e4b6.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 输入上传的文件夹名以及要保存的目录。点击Ok，系统会自动生成语句，点击运行，系统会显示文件下载的实际目录：
 
-![image.png](https://upload-images.jianshu.io/upload_images/1063603-f7ef38eb5e7e3f4e.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![image.png](https://docs.mlsql.tech/upload_images/1063603-f7ef38eb5e7e3f4e.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 到此为止，我们的文件在远程服务器的路径为：
 
@@ -70,14 +70,14 @@ MLSQL Console 是一款集数据研发，数据分析，机器学习等于一体
 ### Step2: 加载Excel并且查看
 接着我们要加载我们的excel，把它们转化为SQL能操作的表。拖拽 Load data到编辑区：
 
-![image.png](https://upload-images.jianshu.io/upload_images/1063603-98c548a326a37454.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![image.png](https://docs.mlsql.tech/upload_images/1063603-98c548a326a37454.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 填写路径以及表名。表名随意，只要你自己记得就行。点击Ok，那么就能生成对应的语句了。
 同理完成另外一个脚本的处理。
 
 这个时候你已经可以通过表名来查看内容了:
 
-![image.png](https://upload-images.jianshu.io/upload_images/1063603-a486d5b7368e9e85.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![image.png](https://docs.mlsql.tech/upload_images/1063603-a486d5b7368e9e85.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 excel里的内容能够被正确的展示。
 
@@ -104,19 +104,19 @@ as finalTable;
 
 为了展示出图，横坐标名字一定要为x,然后通过dash参数告诉系统使用什么图做展示。这里是折线图，写line就好。最后的SQL大概是如下的：
 
-![image.png](https://upload-images.jianshu.io/upload_images/1063603-0c0d1b7ace2909ae.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![image.png](https://docs.mlsql.tech/upload_images/1063603-0c0d1b7ace2909ae.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 我们点击运行，运行的结果如下：
 
-![image.png](https://upload-images.jianshu.io/upload_images/1063603-8940cbefc9f48cb9.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![image.png](https://docs.mlsql.tech/upload_images/1063603-8940cbefc9f48cb9.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 点击 Tools/Dashboard 查看图标：
 
-![image.png](https://upload-images.jianshu.io/upload_images/1063603-778c4038efc64fe9.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![image.png](https://docs.mlsql.tech/upload_images/1063603-778c4038efc64fe9.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 可以看到 两者差异还是非常大的，而且皮肤科还有数据缺失。
 
-![image.png](https://upload-images.jianshu.io/upload_images/1063603-fad260b994b3b063.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![image.png](https://docs.mlsql.tech/upload_images/1063603-fad260b994b3b063.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 ## 任务二
 
@@ -147,7 +147,7 @@ as output;
 
 我们用email做横坐标，然后平均病人数作为纵坐标的值，同时使用柱状图：
 
-![image.png](https://upload-images.jianshu.io/upload_images/1063603-637bcd5598fa686f.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![image.png](https://docs.mlsql.tech/upload_images/1063603-637bcd5598fa686f.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 可以看到 jack@hotmail的科室日均接诊量遥遥领先。
 
@@ -156,19 +156,19 @@ as output;
 最后我们希望把triagePatientWithEmail表保存下来，然后下载到自己的电脑上。拖拽
 Save data到编辑区，打开对话框，选择excel格式，然后将triagePatientWithEmail 表保存到/tmp/triagePatientWithEmail.xlsx 文件：
 
-![image.png](https://upload-images.jianshu.io/upload_images/1063603-e1676154ed18233d.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![image.png](https://docs.mlsql.tech/upload_images/1063603-e1676154ed18233d.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 点击ok后自动生成语句，然后点击运行,结果显示保存完毕。我们可以用前面查看excel的方法加载他：
 
 
-![image.png](https://upload-images.jianshu.io/upload_images/1063603-16ad7aabe0b55209.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![image.png](https://docs.mlsql.tech/upload_images/1063603-16ad7aabe0b55209.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 很完美。然后我们现在要下载他，拖拽
-![image.png](https://upload-images.jianshu.io/upload_images/1063603-f0e0800e53569366.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![image.png](https://docs.mlsql.tech/upload_images/1063603-f0e0800e53569366.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 到编辑区，然后填写路径：
 
-![image.png](https://upload-images.jianshu.io/upload_images/1063603-d8a48875f679a162.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![image.png](https://docs.mlsql.tech/upload_images/1063603-d8a48875f679a162.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 点击Ok,会打开新标签页进行下载。
 

@@ -7,7 +7,7 @@
 1. clone项目
 
 ```
-git clone git@github.com:allwefantasy/streamingpro.git
+git clone https://github.com/allwefantasy/streamingpro.git
 ```
 
 2. 编译
@@ -60,6 +60,8 @@ target/streamingpro-cluster-${VERSION}.jar
 
 
 创建MySQL数据库,根据 `src/main/resources/db.sql `创建对应的库表。数据库名字为mlsql_cluster.
+
+> MySQL 5.7经过测试，如发生java.math.BigInteger can not cast to java.lang.Long等错误，可尝试降级MySQL的版本。
 
 现在，创建一个发行版：
 

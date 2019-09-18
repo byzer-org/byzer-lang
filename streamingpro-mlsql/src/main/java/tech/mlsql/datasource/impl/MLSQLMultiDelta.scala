@@ -154,7 +154,9 @@ class MLSQLMultiDelta(override val uid: String) extends MLSQLBaseStreamSource wi
           val meta = record.getJSONObject(MLSQLMultiDeltaOptions.META_KEY)
           meta.getString("type") != "delete"
         }
-        saveToSink(upsertRDD, UpsertTableInDelta.OPERATION_TYPE_UPSERT)
+        if (upsertRDD.count() > 0) {
+          saveToSink(upsertRDD, UpsertTableInDelta.OPERATION_TYPE_UPSERT)
+        }
 
         // filter delete
 
@@ -162,7 +164,9 @@ class MLSQLMultiDelta(override val uid: String) extends MLSQLBaseStreamSource wi
           val meta = record.getJSONObject(MLSQLMultiDeltaOptions.META_KEY)
           meta.getString("type") == "delete"
         }
-        saveToSink(deleteRDD, UpsertTableInDelta.OPERATION_TYPE_DELETE)
+        if (deleteRDD.count() > 0) {
+          saveToSink(deleteRDD, UpsertTableInDelta.OPERATION_TYPE_DELETE)
+        }
       } finally {
         ds.unpersist()
       }
