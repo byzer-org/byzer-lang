@@ -120,7 +120,7 @@ class TrainAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdap
 }
 
 object MLMapping {
-  val mapping = ETRegister.mapping ++ Map[String, String](
+  val mapping = Map[String, String](
     "Word2vec" -> "streaming.dsl.mmlib.algs.SQLWord2Vec",
     "NaiveBayes" -> "streaming.dsl.mmlib.algs.SQLNaiveBayes",
     "RandomForest" -> "streaming.dsl.mmlib.algs.SQLRandomForest",
@@ -165,8 +165,9 @@ object MLMapping {
 
   )
 
+
   def findAlg(name: String) = {
-    mapping.get(name.capitalize) match {
+    (ETRegister.getMapping ++ mapping).get(name.capitalize) match {
       case Some(clzz) =>
         Class.forName(clzz).newInstance().asInstanceOf[SQLAlg]
       case None =>

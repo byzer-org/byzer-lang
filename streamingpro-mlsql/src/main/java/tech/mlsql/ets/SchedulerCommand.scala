@@ -31,7 +31,7 @@ class SchedulerCommand(override val uid: String) extends SQLAlg with Functions w
     import AsSchedulerService._
     import spark.implicits._
 
-    require(spark.conf.getOption(PREFIX + KEY).isDefined, s"!scheduler is only can used in MLSQL Engine configured with ${KEY}")
+    require(spark.conf.getOption(PREFIX + AsSchedulerServiceKEY).isDefined, s"!scheduler is only can used in MLSQL Engine configured with ${AsSchedulerServiceKEY}")
 
     val commands = JSONTool.parseJson[List[String]](params("parameters")).toArray
     val context = ScriptSQLExec.context()

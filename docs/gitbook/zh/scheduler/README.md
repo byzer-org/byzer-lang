@@ -1,7 +1,5 @@
 # 如何集成调度
 
-调度对于ETL任务来说非常重要。MLSQL Stack目前并没有提供一个官方的调度，同时也没有集成
-第三方到Console端。我们正在积极的处理这件事情，希望提供一个常见的第三方调度的支持。在此之前，
 用户可以使用第三方调度如[Easy Scheduler](https://analysys.github.io/easyscheduler_docs_cn/),
 然后在它提供的交互界面设置你的定时任务。
 
