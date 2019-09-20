@@ -93,7 +93,9 @@ object TableType {
   val CUSTOME = TableTypeMeta("custom", Set("custom"))
   val BINLOG = TableTypeMeta("binlog", Set("binlog"))
   val HBASE = TableTypeMeta("hbase", Set("hbase"))
-  val HDFS = TableTypeMeta("hdfs", Set("parquet", "binlogRate", "json", "csv", "image", "text", "xml", "excel", "libsvm", "delta", "rate", "streamParquet"))
+  val HDFS = TableTypeMeta("hdfs", Set("parquet",
+    "binlogRate", "json", "csv", "image",
+    "text", "xml", "excel", "libsvm", "delta", "rate", "streamParquet"))
   val HTTP = TableTypeMeta("http", Set("http"))
   val JDBC = TableTypeMeta("jdbc", Set("jdbc", "streamJDBC"))
   val ES = TableTypeMeta("es", Set("es"))
@@ -111,6 +113,10 @@ object TableType {
 
   def from(str: String) = {
     List(BINLOG, UNKNOW, KAFKA, SOCKET, REDIS, HIVE, HBASE, HDFS, HTTP, JDBC, ES, MONGO, SOLR, TEMP, API, WEB, GRAMMAR, SYSTEM, CUSTOME).filter(f => f.includes.contains(str)).headOption
+  }
+
+  def toIncludesList = {
+    List(BINLOG, UNKNOW, KAFKA, SOCKET, REDIS, HIVE, HBASE, HDFS, HTTP, JDBC, ES, MONGO, SOLR, TEMP, API, WEB, GRAMMAR, SYSTEM, CUSTOME).flatMap(f => f.includes).toList
   }
 
   def toList = {

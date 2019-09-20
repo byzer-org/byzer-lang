@@ -21,6 +21,7 @@ import tech.mlsql.arrow.python.runner.{PythonConf, PythonProjectRunner}
 import tech.mlsql.common.utils.cluster.ml._
 import tech.mlsql.common.utils.hdfs.HDFSOperator
 import tech.mlsql.common.utils.lang.sc.ScalaMethodMacros
+import tech.mlsql.common.utils.network.NetUtils
 import tech.mlsql.ets.ml.cluster._
 import tech.mlsql.log.WriteLog
 
@@ -62,7 +63,8 @@ class DistributedTensorflow(override val uid: String) extends SQLAlg with SQLPyt
     // We start a temp driver server, so the workers can connect it.
     // It will be used to coordinate the ps workers.
     val mlDriver = new MLDriver[String](new AtomicReference[String]("")) {
-      override def host: String = MLSQLSparkUtils.rpcEnv().address.host
+      override def host: String = if (MLSQLSparkUtils.rpcEnv().address == null) NetUtils.getHost
+      else MLSQLSparkUtils.rpcEnv().address.host
     }
 
     def configureLogConf() = {

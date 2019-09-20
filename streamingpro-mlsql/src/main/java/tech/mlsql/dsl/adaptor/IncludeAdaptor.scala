@@ -74,6 +74,7 @@ object IncludeAdaptor {
     "hdfs" -> "streaming.dsl.mmlib.algs.includes.HDFSIncludeSource",
     "http" -> "streaming.dsl.mmlib.algs.includes.HTTPIncludeSource",
     "store" -> "tech.mlsql.dsl.includes.StoreIncludeSource",
+    "plugin" -> "tech.mlsql.dsl.includes.PluginIncludeSource",
 
     "function" -> "streaming.dsl.mmlib.algs.includes.analyst.HttpBaseDirIncludeSource",
     "view" -> "streaming.dsl.mmlib.algs.includes.analyst.HttpBaseDirIncludeSource",

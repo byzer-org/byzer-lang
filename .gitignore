@@ -157,4 +157,5 @@ contri/streamingpro-automl/logs/
 streamingpro-mlsql/src/main/java/streaming/core/WilliamLocalSparkServiceApp.scala
 streamingpro-api/spark-warehouse
 streamingpro-jython/logs/
- streamingpro-jython/metastore_db
+streamingpro-jython/metastore_db
+__mlsql__/

@@ -1,3 +1,63 @@
+MLSQL Version 1.4.0 (2019-09-xx)
+==========================
+
+MLSQL Language
+--------
+- [MLSQL Analyzer](http://docs.mlsql.tech/zh/grammar/analyze.md) 
+
+Bug Fix
+---------
+
+- When extracting HBase namespace, it returns ref instead of real namespace.  
+- When using ET JDBC to update MySQL, Losing data will happens. 
+- more......  
+ 
+
+
+New Features
+----------
+- Python 
+    - [Tensorflow Cluster](http://docs.mlsql.tech/zh/python/dtf.html)
+    - [Python Interactive Mode](http://docs.mlsql.tech/zh/python/interactive.html)
+    - [Python Table Mode](http://docs.mlsql.tech/zh/python/table.html)
+- Batch
+    - [AdHoc Kakfa](http://docs.mlsql.tech/zh/stream/query_kafka.html)
+- Stream
+    - [Kafka Schema Infer](http://docs.mlsql.tech/zh/stream/data_convert.html)
+    - [Kafka tools](http://docs.mlsql.tech/zh/stream/kakfa_tool.html)    
+                               
+Break Features 
+--------
+
+- Remove streamingpro-opencv, streamingpro-dl4j, streamingpro-automl
+- Merge streamingpro-crawler into stremingpro-mlsql
+- `/stream/jobs/kill` and `/stream/jobs/running`,`/run/sql` are removed
+
+
+Components
+--------
+
+- [PyJava](https://github.com/allwefantasy/pyjava) is an ongoing effort towards bringing the data exchanging ability between Java/Scala and Python.
+-  MLSQL Console supports pyechars render.
+- [MLSQL Console supports notebook mode](http://docs.mlsql.tech/zh/console/notebook.html)  
+
+Plan of next release.
+-------
+- Python support should be more robust
+ 
+
+Docs Link
+--------
+
+- [MLSQL-1.4.0](http://docs.mlsql.tech/v1.4.0/zh/) 
+
+Download Link
+---------
+
+- [MLSQL-1.4.0](http://download.mlsql.tech/1.4.0/)
+
+
+
 MLSQL Version 1.3.0 (2019-06-xx)
 ==========================
 

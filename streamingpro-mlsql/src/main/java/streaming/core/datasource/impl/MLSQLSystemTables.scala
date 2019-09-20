@@ -60,7 +60,7 @@ class MLSQLSystemTables extends MLSQLSource with MLSQLSourceInfo with MLSQLRegis
         spark.createDataset(TableType.toList).toDF()
 
       case Array("tables", "sourceTypes") =>
-        spark.createDataset(SourceTypeRegistry.sources ++ Seq("mysql")).toDF()
+        spark.createDataset(SourceTypeRegistry.sources ++ TableType.toIncludesList).toDF()
 
       case Array("tables", "operateTypes") =>
         val res = OperateType.toList
