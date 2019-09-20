@@ -35,6 +35,11 @@ abstract class MLSQLBaseFileSource extends MLSQLSource with MLSQLSink with MLSQL
     DataSourceRegistry.register(MLSQLDataSourceKey(shortFormat, MLSQLSparkDataSourceType), this)
   }
 
+  override def unRegister(): Unit = {
+    DataSourceRegistry.unRegister(MLSQLDataSourceKey(fullFormat, MLSQLSparkDataSourceType))
+    DataSourceRegistry.unRegister(MLSQLDataSourceKey(shortFormat, MLSQLSparkDataSourceType))
+  }
+
   override def sourceInfo(config: DataAuthConfig): SourceInfo = {
     val context = ScriptSQLExec.contextGetOrForTest()
     val owner = config.config.get("owner").getOrElse(context.owner)
