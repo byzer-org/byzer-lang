@@ -116,7 +116,7 @@ class MLSQLResource(spark: SparkSession, owner: String, getGroupId: String => St
     val activeJobs = new ListBuffer[v1.JobData]()
     val completedJobs = new ListBuffer[v1.JobData]()
     val failedJobs = new ListBuffer[v1.JobData]()
-    store.jobsList(null).filter(f => f.jobGroup.get == finalJobGroupId).foreach { job =>
+    store.jobsList(null).filter(f => f.jobGroup.isDefined).filter(f => f.jobGroup.get == finalJobGroupId).foreach { job =>
       job.status match {
         case JobExecutionStatus.SUCCEEDED =>
           completedJobs += job
