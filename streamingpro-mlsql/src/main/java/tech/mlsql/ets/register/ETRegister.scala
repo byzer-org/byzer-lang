@@ -12,6 +12,7 @@ object ETRegister {
   def wow(name: String) = mapping.put(name, ("tech.mlsql.ets." + name))
 
   def register(name: String, value: String) = mapping.put(name, value)
+  def remove(name: String) = mapping.remove(name)
 
   def getMapping = {
     mapping.asScala
