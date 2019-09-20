@@ -150,6 +150,15 @@ object SchedulerCommand {
 
   }
 
+  def tryReadTable(spark: SparkSession, table: String, empty: () => DataFrame) = {
+    try {
+      readTable(spark, table)
+    } catch {
+      case e: Exception =>
+        empty()
+    }
+  }
+
   def readTable(spark: SparkSession, tableName: String) = {
     val dataLake = new DataLake(spark)
     require(dataLake.isEnable, "please set -streaming.datalake.path enable delta db mode")
