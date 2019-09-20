@@ -76,7 +76,7 @@ class InitializationCompositor[T] extends Compositor[T] with CompositorHelper {
     val _sql = translateSQL(sql.get, params)
     val _owner = owner.getOrElse("admin")
     val session = setUpSession(_owner)
-    val job = JobManager.getJobInfo(_owner, "initial-job", MLSQLJobType.SCRIPT, _sql, -1)
+    val job = JobManager.getJobInfo(_owner,  MLSQLJobType.SCRIPT,"initial-job", _sql, -1)
     setUpScriptSQLExecListener(_owner, session, job.groupId)
     ScriptRunner.runJob(_sql, job, (df) => {
       df.show(100)

@@ -34,14 +34,15 @@ object MLSQLStreamManager extends Logging with WowLog {
     }
   }
 
-  def addListener(name: String, item: MLSQLStreamListenerItem) = {
+  def addListener(name: String, item: MLSQLExternalStreamListener) = {
     synchronized {
       val buffer = _listenerStore.getOrDefault(name, ArrayBuffer())
-      buffer += new MLSQLExternalStreamListener(item)
+      buffer += item
       _listenerStore.put(name, buffer)
 
     }
   }
+
 
   def removeListener(uuid: String) = {
     _listenerStore.asScala.foreach { items =>
@@ -88,7 +89,13 @@ object MLSQLStreamEventName extends Enumeration {
   val terminated = Value("terminated")
 }
 
-class MLSQLExternalStreamListener(val item: MLSQLStreamListenerItem) extends Logging with WowLog {
+trait MLSQLExternalStreamListener extends Logging with WowLog {
+  def send(newParams: Map[String, String]): Unit
+
+  def item: MLSQLStreamListenerItem
+}
+
+class HttpMLSQLExternalStreamListener(val item: MLSQLStreamListenerItem) extends MLSQLExternalStreamListener {
   val connectTimeout = 10 * 1000
   val socketTimeout = 10 * 1000
 

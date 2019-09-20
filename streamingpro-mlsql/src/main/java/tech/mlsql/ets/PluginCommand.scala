@@ -48,7 +48,10 @@ class PluginCommand(override val uid: String) extends SQLAlg with Functions with
     command match {
       case Seq(pluginType, "add", className, pluginName, left@_*) =>
 
-        require(pluginType == PluginType.DS || pluginType == PluginType.ET || pluginType == PluginType.SCRIPT, "pluginType should be ds or et or script")
+        require(pluginType == PluginType.DS
+          || pluginType == PluginType.ET
+          || pluginType == PluginType.SCRIPT
+          || pluginType == PluginType.APP, "pluginType should be ds or et or script or app")
 
         val table = try {
           readTable(spark, TABLE_PLUGINS)
@@ -65,7 +68,7 @@ class PluginCommand(override val uid: String) extends SQLAlg with Functions with
 
         val localPath = downloadFromHDFS(fileName, pluginPath)
 
-        if (pluginType == PluginType.DS || pluginType == PluginType.ET) {
+        if (pluginType == PluginType.DS || pluginType == PluginType.ET || pluginType == PluginType.APP) {
           loadJarInDriver(localPath)
           spark.sparkContext.addJar(localPath)
           checkVersionCompatibility(pluginName, className)
@@ -76,6 +79,10 @@ class PluginCommand(override val uid: String) extends SQLAlg with Functions with
           case Array("named", commandName) =>
             Option(commandName)
           case _ => None
+        }
+
+        if (pluginType == PluginType.APP) {
+          appCallBack(pluginName, className, left)
         }
 
         pluginType match {
@@ -90,6 +97,9 @@ class PluginCommand(override val uid: String) extends SQLAlg with Functions with
             })
           case PluginType.SCRIPT =>
             PluginIncludeSource.register(pluginName, localPath)
+
+          case PluginType.APP =>
+            saveTable(spark, spark.createDataset(Seq(AppRecord(pluginName, className, left))).toDF(), TABLE_APPRecord, None, false)
         }
 
 
@@ -123,16 +133,20 @@ case class ETRecord(pluginName: String, commandName: Option[String], etName: Str
 
 case class DSRecord(pluginName: String, shortFormat: Option[String], fullFormat: String)
 
+case class AppRecord(pluginName: String, className: String, params: Seq[String])
+
 
 object PluginType {
   val ET = "et"
   val DS = "ds"
   val SCRIPT = "script"
+  val APP = "app"
 }
 
 object PluginCommand {
   val TABLE_ETRecord = "__mlsql__.etRecord"
   val TABLE_DSRecord = "__mlsql__.dsRecord"
+  val TABLE_APPRecord = "__mlsql__.appRecord"
   val TABLE_PLUGINS = "__mlsql__.plugins"
   val TABLE_FILES = "__mlsql__.files"
 
@@ -192,6 +206,12 @@ object PluginCommand {
               |Current MLSQL Engine version: ${MLSQLVersion.version().version}
             """.stripMargin)
     }
+  }
+
+
+  def appCallBack(pluginName: String, className: String, params: Seq[String]) = {
+    val app = Class.forName(className).newInstance().asInstanceOf[tech.mlsql.app.App]
+    app.run(params)
   }
 
   def registerET(pluginName: String, className: String, commandName: Option[String], callback: () => Unit) = {

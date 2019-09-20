@@ -5,7 +5,7 @@ import java.util.UUID
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.mlsql.session.MLSQLException
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import streaming.core.stream.{MLSQLStreamEventName, MLSQLStreamListenerItem, MLSQLStreamManager}
+import streaming.core.stream.{HttpMLSQLExternalStreamListener, MLSQLStreamEventName, MLSQLStreamListenerItem, MLSQLStreamManager}
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.Functions
@@ -37,11 +37,10 @@ class MLSQLEventCommand(override val uid: String) extends SQLAlg with Functions 
 
       val eventNames = params.getOrElse("eventName", s"${MLSQLStreamEventName.started.toString},${MLSQLStreamEventName.progress.toString},${MLSQLStreamEventName.terminated.toString}").
         split(",").filterNot(_.isEmpty)
-     
+
       eventNames.foreach { eventName =>
-        MLSQLStreamManager.addListener(context.owner,
-          MLSQLStreamListenerItem(UUID.randomUUID().toString,context.owner, streamName, MLSQLStreamEventName.withName(eventName),
-            params(MLSQLEventCommand.handleHttpUrl), params(MLSQLEventCommand.method), handleParams))
+        MLSQLStreamManager.addListener(eventName, new HttpMLSQLExternalStreamListener(MLSQLStreamListenerItem(UUID.randomUUID().toString, context.owner, streamName, MLSQLStreamEventName.withName(eventName),
+          params(MLSQLEventCommand.handleHttpUrl), params(MLSQLEventCommand.method), handleParams)))
       }
 
     }
