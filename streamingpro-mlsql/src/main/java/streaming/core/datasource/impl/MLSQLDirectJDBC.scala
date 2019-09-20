@@ -21,9 +21,10 @@ import scala.collection.JavaConverters._
 
 /**
   * 2018-12-21 WilliamZhu(allwefantasy@gmail.com)
+  * with DatasourceAuth
   */
 class MLSQLDirectJDBC extends MLSQLDirectSource with MLSQLDirectSink with MLSQLSourceInfo with MLSQLRegistry
-  with DatasourceAuth with Logging with WowLog {
+  with Logging with WowLog {
 
   override def fullFormat: String = "jdbc"
 
@@ -118,74 +119,74 @@ class MLSQLDirectJDBC extends MLSQLDirectSource with MLSQLDirectSink with MLSQLS
     si
   }
 
-  override def auth(path: String, params: Map[String, String]): List[MLSQLTable] = {
-    val si = this.sourceInfo(DataAuthConfig(path, params))
-
-    val context = ScriptSQLExec.contextGetOrForTest()
-
-    // we should auth all tables in direct query
-    val sql = params("directQuery")
-    // first, only select supports
-    if (!sql.trim.toLowerCase.startsWith("select ")) {
-      throw new MLSQLException("JDBC direct query only support select statement")
-    }
-    logInfo("Auth direct query tables.... ")
-    //second, we should extract all tables from the sql
-
-    val tableRefs = MLSQLAuthParser.filterTables(sql, context.execListener.sparkSession)
-
-    def isSkipAuth = {
-      context.execListener.env()
-        .getOrElse("SKIP_AUTH", "true")
-        .toBoolean
-    }
-
-    tableRefs.foreach { tableIdentify =>
-      if (tableIdentify.database.isDefined) {
-        throw new MLSQLException("JDBC direct query should not allow using db prefix. Please just use table")
-      }
-    }
-
-    if (!isSkipAuth && context.execListener.getStage.get == Stage.auth && !MLSQLSparkConf.runtimeDirectQueryAuth) {
-      val _params = loadConfigFromExternal(params, path)
-      val tableList = tableRefs.map(_.identifier).toList
-      val tableColsMap = JDBCUtils.queryTableWithColumnsInDriver(_params ,tableList)
-      val createSqlList = JDBCUtils.tableColumnsToCreateSql(tableColsMap)
-      val tableAndCols = MLSQLSQLParser.extractTableWithColumns(si.sourceType ,sql ,createSqlList)
-
-      tableAndCols.map { tc =>
-          MLSQLTable(Option(si.db), Option(tc._1), Option(tc._2.toSet), OperateType.DIRECT_QUERY, Option(si.sourceType), TableType.JDBC)
-      }.foreach { mlsqlTable =>
-        context.execListener.authProcessListner match {
-          case Some(authProcessListener) =>
-            authProcessListener.addTable(mlsqlTable)
-          case None =>
-        }
-      }
-    }
-
-    if (!isSkipAuth && context.execListener.getStage.get == Stage.physical && MLSQLSparkConf.runtimeDirectQueryAuth) {
-      val _params = loadConfigFromExternal(params, path)
-      //clone new sparksession so we will not affect current spark context catalog
-      val spark = MLSQLSparkSession.cloneSession(context.execListener.sparkSession)
-      tableRefs.map { tableIdentify =>
-        spark.read.options(_params + ("dbtable" -> tableIdentify.table)).format("jdbc").load().createOrReplaceTempView(tableIdentify.table)
-      }
-
-      val df = spark.sql(sql)
-      val tableAndCols = MLSQLDFParser.extractTableWithColumns(df)
-      var mlsqlTables = List.empty[MLSQLTable]
-
-      tableAndCols.foreach {
-        case (table, cols) =>
-          mlsqlTables ::= MLSQLTable(Option(si.db), Option(table), Option(cols.toSet), OperateType.DIRECT_QUERY, Option(si.sourceType), TableType.JDBC)
-      }
-      context.execListener.getTableAuth.foreach { tableAuth =>
-        println(mlsqlTables)
-        tableAuth.auth(mlsqlTables)
-      }
-
-    }
-    List()
-  }
+//  override def auth(path: String, params: Map[String, String]): List[MLSQLTable] = {
+//    val si = this.sourceInfo(DataAuthConfig(path, params))
+//
+//    val context = ScriptSQLExec.contextGetOrForTest()
+//
+//    // we should auth all tables in direct query
+//    val sql = params("directQuery")
+//    // first, only select supports
+//    if (!sql.trim.toLowerCase.startsWith("select ")) {
+//      throw new MLSQLException("JDBC direct query only support select statement")
+//    }
+//    logInfo("Auth direct query tables.... ")
+//    //second, we should extract all tables from the sql
+//
+//    val tableRefs = MLSQLAuthParser.filterTables(sql, context.execListener.sparkSession)
+//
+//    def isSkipAuth = {
+//      context.execListener.env()
+//        .getOrElse("SKIP_AUTH", "true")
+//        .toBoolean
+//    }
+//
+//    tableRefs.foreach { tableIdentify =>
+//      if (tableIdentify.database.isDefined) {
+//        throw new MLSQLException("JDBC direct query should not allow using db prefix. Please just use table")
+//      }
+//    }
+//
+//    if (!isSkipAuth && context.execListener.getStage.get == Stage.auth && !MLSQLSparkConf.runtimeDirectQueryAuth) {
+//      val _params = loadConfigFromExternal(params, path)
+//      val tableList = tableRefs.map(_.identifier).toList
+//      val tableColsMap = JDBCUtils.queryTableWithColumnsInDriver(_params ,tableList)
+//      val createSqlList = JDBCUtils.tableColumnsToCreateSql(tableColsMap)
+//      val tableAndCols = MLSQLSQLParser.extractTableWithColumns(si.sourceType ,sql ,createSqlList)
+//
+//      tableAndCols.map { tc =>
+//          MLSQLTable(Option(si.db), Option(tc._1), Option(tc._2.toSet), OperateType.DIRECT_QUERY, Option(si.sourceType), TableType.JDBC)
+//      }.foreach { mlsqlTable =>
+//        context.execListener.authProcessListner match {
+//          case Some(authProcessListener) =>
+//            authProcessListener.addTable(mlsqlTable)
+//          case None =>
+//        }
+//      }
+//    }
+//
+//    if (!isSkipAuth && context.execListener.getStage.get == Stage.physical && MLSQLSparkConf.runtimeDirectQueryAuth) {
+//      val _params = loadConfigFromExternal(params, path)
+//      //clone new sparksession so we will not affect current spark context catalog
+//      val spark = MLSQLSparkSession.cloneSession(context.execListener.sparkSession)
+//      tableRefs.map { tableIdentify =>
+//        spark.read.options(_params + ("dbtable" -> tableIdentify.table)).format("jdbc").load().createOrReplaceTempView(tableIdentify.table)
+//      }
+//
+//      val df = spark.sql(sql)
+//      val tableAndCols = MLSQLDFParser.extractTableWithColumns(df)
+//      var mlsqlTables = List.empty[MLSQLTable]
+//
+//      tableAndCols.foreach {
+//        case (table, cols) =>
+//          mlsqlTables ::= MLSQLTable(Option(si.db), Option(table), Option(cols.toSet), OperateType.DIRECT_QUERY, Option(si.sourceType), TableType.JDBC)
+//      }
+//      context.execListener.getTableAuth.foreach { tableAuth =>
+//        println(mlsqlTables)
+//        tableAuth.auth(mlsqlTables)
+//      }
+//
+//    }
+//    List()
+//  }
 }
