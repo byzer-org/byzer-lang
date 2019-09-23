@@ -1,4 +1,4 @@
-#MLSQL Console Usage Guide
+# MLSQL Console Usage Guide (Quick Tutorial)
 
 Popular programming languages provide a very friendly interface. For example, Python provides direct command-line interaction, or tools such as Jupyter and Zeppline.
 MLSQL Engine mainly interacts in the form of HTTP protocol, which is not convenient to use.
