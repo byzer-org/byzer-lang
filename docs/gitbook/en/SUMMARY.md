@@ -24,7 +24,7 @@
 * outline
     * [MSLQL brief introduction](getting_started/READEME.md)        
 
-* 用户指南
+* User guide
     * [Compile & Run & Deploy](installation/README.md)
         * [Docker installation and experience](installation/docker.md)
         * [Official website experience site](installation/trymlsql.md)
