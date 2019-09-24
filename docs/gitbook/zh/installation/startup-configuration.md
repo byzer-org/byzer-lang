@@ -20,7 +20,7 @@ load mlsqlConf.`` as output;
 |streaming.udf.clzznames | 自定义udf函数包  ||
 |streaming.master | 等价于--master  ||
 |streaming.platform | 目前只支持spark  ||
-|streaming.deploy.rest.api | 用Local模式部署成API时，请开启该选项  |false|
+|streaming.deploy.rest.api | 用Local模式部署成API时，请开启该选项，此参数会导致hive失效，默认sparkcontext会被替换  |false|
 |streaming.enableHiveSupport | 开启Hive支持  |false|
 |streaming.enableCarbonDataSupport| 开启carbondata支持  |false|
 |streaming.carbondata.store | carbondata 存储路径  ||
