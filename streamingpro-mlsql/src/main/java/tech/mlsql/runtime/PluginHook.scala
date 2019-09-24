@@ -1,6 +1,5 @@
 package tech.mlsql.runtime
 
-import org.apache.spark.sql.DataFrame
 import streaming.core.strategy.platform.{SparkRuntime, StreamingRuntime}
 import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.dsl.includes.PluginIncludeSource
@@ -24,18 +23,11 @@ class PluginHook extends MLSQLPlatformLifecycle with Logging {
     import SchedulerCommand._
     import spark.implicits._
 
-    def tryReadTable(table: String, empty: () => DataFrame) = {
-      try {
-        readTable(spark, table)
-      } catch {
-        case e: Exception =>
-          empty()
-      }
-    }
 
-    val plugins = tryReadTable(TABLE_PLUGINS, () => spark.createDataset[AddPlugin](Seq()).toDF())
-    val ets = tryReadTable(TABLE_ETRecord, () => spark.createDataset[ETRecord](Seq()).toDF())
-    val dses = tryReadTable(TABLE_DSRecord, () => spark.createDataset[DSRecord](Seq()).toDF())
+    val plugins = tryReadTable(spark, TABLE_PLUGINS, () => spark.createDataset[AddPlugin](Seq()).toDF())
+    val ets = tryReadTable(spark, TABLE_ETRecord, () => spark.createDataset[ETRecord](Seq()).toDF())
+    val dses = tryReadTable(spark, TABLE_DSRecord, () => spark.createDataset[DSRecord](Seq()).toDF())
+    val apps = tryReadTable(spark, TABLE_APPRecord, () => spark.createDataset[AppRecord](Seq()).toDF())
 
     plugins.as[AddPlugin].collect().foreach { plugin =>
       logInfo(s"Plugin ${plugin.pluginName} in ${plugin.path}")
@@ -61,6 +53,11 @@ class PluginHook extends MLSQLPlatformLifecycle with Logging {
       logInfo(s"Register DS Plugin ${ds.pluginName} in ${ds.fullFormat}")
       registerDS(ds.pluginName, ds.fullFormat, ds.shortFormat, () => {
       })
+    }
+
+    apps.as[AppRecord].collect().foreach { ds =>
+      logInfo(s"Register App Plugin ${ds.pluginName} in ${ds.className}")
+      Class.forName(ds.className).newInstance().asInstanceOf[tech.mlsql.app.App].run(ds.params)
     }
 
   }

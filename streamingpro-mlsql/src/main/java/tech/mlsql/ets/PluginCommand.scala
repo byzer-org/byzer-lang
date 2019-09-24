@@ -44,11 +44,49 @@ class PluginCommand(override val uid: String) extends SQLAlg with Functions with
       dataLake.isEnable
     }
 
+    def fetchTable(tableName: String, callback: () => DataFrame) = {
+      val table = try {
+        readTable(spark, tableName)
+      } catch {
+        case e: Exception =>
+          callback()
+
+      }
+      table
+    }
+
     require(isDeltaLakeEnable(), "-streaming.datalake.path is required ")
     command match {
+      case Seq(pluginType, "remove", pluginName) =>
+        pluginType match {
+          case PluginType.ET =>
+            val item = fetchTable(TABLE_ETRecord, () => spark.createDataset[ETRecord](Seq()).toDF()).where($"pluginName" === pluginName).as[ETRecord].head()
+            removeET(pluginName, item.className, item.commandName, () => {
+              saveTable(spark, spark.createDataset(Seq(ETRecord(pluginName, item.commandName, item.etName, item.className))).toDF(), TABLE_ETRecord, Option("pluginName"), true)
+            })
+
+          case PluginType.DS =>
+            val item = fetchTable(TABLE_DSRecord, () => spark.createDataset[DSRecord](Seq()).toDF()).where($"pluginName" === pluginName).as[DSRecord].head()
+            removeDS(pluginName, item.fullFormat, item.shortFormat, () => {
+              saveTable(spark, spark.createDataset(Seq(DSRecord(pluginName, item.shortFormat, item.fullFormat))).toDF(), TABLE_DSRecord, Option("pluginName"), true)
+            })
+          case PluginType.SCRIPT =>
+            PluginIncludeSource.unRegister(pluginName)
+
+          case PluginType.APP =>
+            saveTable(spark, spark.createDataset(Seq(AppRecord(pluginName, "", Seq()))).toDF(), TABLE_APPRecord, Option("pluginName"), true)
+        }
+
+        saveTable(spark, spark.createDataset(Seq(AddPlugin(pluginName, "", pluginType))).toDF(), TABLE_PLUGINS, Option("pluginName,pluginType"), true)
+        readTable(spark, TABLE_PLUGINS)
+
+
       case Seq(pluginType, "add", className, pluginName, left@_*) =>
 
-        require(pluginType == PluginType.DS || pluginType == PluginType.ET || pluginType == PluginType.SCRIPT, "pluginType should be ds or et or script")
+        require(pluginType == PluginType.DS
+          || pluginType == PluginType.ET
+          || pluginType == PluginType.SCRIPT
+          || pluginType == PluginType.APP, "pluginType should be ds or et or script or app")
 
         val table = try {
           readTable(spark, TABLE_PLUGINS)
@@ -65,7 +103,7 @@ class PluginCommand(override val uid: String) extends SQLAlg with Functions with
 
         val localPath = downloadFromHDFS(fileName, pluginPath)
 
-        if (pluginType == PluginType.DS || pluginType == PluginType.ET) {
+        if (pluginType == PluginType.DS || pluginType == PluginType.ET || pluginType == PluginType.APP) {
           loadJarInDriver(localPath)
           spark.sparkContext.addJar(localPath)
           checkVersionCompatibility(pluginName, className)
@@ -76,6 +114,10 @@ class PluginCommand(override val uid: String) extends SQLAlg with Functions with
           case Array("named", commandName) =>
             Option(commandName)
           case _ => None
+        }
+
+        if (pluginType == PluginType.APP) {
+          appCallBack(pluginName, className, left)
         }
 
         pluginType match {
@@ -90,6 +132,9 @@ class PluginCommand(override val uid: String) extends SQLAlg with Functions with
             })
           case PluginType.SCRIPT =>
             PluginIncludeSource.register(pluginName, localPath)
+
+          case PluginType.APP =>
+            saveTable(spark, spark.createDataset(Seq(AppRecord(pluginName, className, left))).toDF(), TABLE_APPRecord, None, false)
         }
 
 
@@ -123,16 +168,20 @@ case class ETRecord(pluginName: String, commandName: Option[String], etName: Str
 
 case class DSRecord(pluginName: String, shortFormat: Option[String], fullFormat: String)
 
+case class AppRecord(pluginName: String, className: String, params: Seq[String])
+
 
 object PluginType {
   val ET = "et"
   val DS = "ds"
   val SCRIPT = "script"
+  val APP = "app"
 }
 
 object PluginCommand {
   val TABLE_ETRecord = "__mlsql__.etRecord"
   val TABLE_DSRecord = "__mlsql__.dsRecord"
+  val TABLE_APPRecord = "__mlsql__.appRecord"
   val TABLE_PLUGINS = "__mlsql__.plugins"
   val TABLE_FILES = "__mlsql__.files"
 
@@ -194,6 +243,12 @@ object PluginCommand {
     }
   }
 
+
+  def appCallBack(pluginName: String, className: String, params: Seq[String]) = {
+    val app = Class.forName(className).newInstance().asInstanceOf[tech.mlsql.app.App]
+    app.run(params)
+  }
+
   def registerET(pluginName: String, className: String, commandName: Option[String], callback: () => Unit) = {
     val etName = className.split("\\.").last
     ETRegister.register(etName, className)
@@ -205,6 +260,30 @@ object PluginCommand {
     }
 
 
+  }
+
+  def removeET(pluginName: String, className: String, commandName: Option[String], callback: () => Unit) = {
+    val etName = className.split("\\.").last
+    ETRegister.remove(etName)
+    commandName match {
+      case Some(alisName) =>
+        CommandCollection.remove(alisName)
+        callback()
+      case None =>
+    }
+
+  }
+
+  def removeDS(pluginName: String, className: String, commandName: Option[String], callback: () => Unit) = {
+    val dataSource = Class.forName(className).newInstance()
+    if (dataSource.isInstanceOf[MLSQLRegistry]) {
+      dataSource.asInstanceOf[MLSQLRegistry].unRegister()
+    }
+    commandName match {
+      case Some(alisName) =>
+        callback()
+      case None =>
+    }
   }
 
   def registerDS(pluginName: String, className: String, commandName: Option[String], callback: () => Unit) = {

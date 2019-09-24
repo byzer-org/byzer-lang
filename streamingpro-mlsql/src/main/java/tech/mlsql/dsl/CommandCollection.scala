@@ -18,6 +18,10 @@ object CommandCollection {
     }
   }
 
+  def remove(name: String) = {
+    commandMapping.remove(name)
+  }
+
   def fill(context: ScriptSQLExecListener): Unit = {
     commandMapping.asScala.foreach { k =>
       context.addEnv(k._1, s"""run command as ${k._2}.`` where parameters='''{:all}'''""")

@@ -66,9 +66,10 @@ object PluginIncludeSource {
     store.put(pluginName, localJarPath)
   }
 
-  def main(args: Array[String]): Unit = {
-    println("a".split("/", 2).toSeq)
+  def unRegister(pluginName: String): Unit = {
+    store.remove(pluginName)
   }
+
 }
 
 class Step[T] extends Compositor[T] with CompositorHelper {
