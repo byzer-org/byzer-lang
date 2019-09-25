@@ -112,10 +112,11 @@ class MLSQLRate(override val uid: String) extends MLSQLBaseStreamSource with Wow
 
   override def save(batchWriter: DataFrameWriter[Row], config: DataSinkConfig): Any = {
     val dataLake = new DataLake(config.df.get.sparkSession)
+    val context = ScriptSQLExec.contextGetOrForTest()
     val finalPath = if (dataLake.isEnable) {
       dataLake.identifyToPath(config.path)
     } else {
-      config.path
+      resolvePath(config.path, context.owner)
     }
 
     return super.save(batchWriter, config.copy(config = (config.config ++ Map("dbtable" -> finalPath))))
