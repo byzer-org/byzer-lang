@@ -76,6 +76,7 @@
        * [如何发送邮件](process/estimator_transformer/SendMessage.md) 
     * [如何集成调度](scheduler/README.md)
        * [内置调度](scheduler/buildin_scheduler.md)
+       * [外置调度整合](scheduler/third_party_scheduler.md)
     * [如何缓存表](process/estimator_transformer/CacheExt.md)                                       
     * [Python支持](python/README.md)
         * [Python环境](python/python-env.md)        
