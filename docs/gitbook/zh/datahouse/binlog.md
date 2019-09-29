@@ -99,3 +99,14 @@ Upsert语义。
 2. 只支持binglog中 update/delete/insert 动作的同步。如果修改了数据库表结构，默认会同步失败，用户需要重新全量同步之后再进行增量同步。
 如果希望能够继续运行，可以在Save语句中设置mergeSchema="true"。
 3. 如果不同的表有不同的主键列(需要配置不同的idCols),那么可能需要些多个流式同步脚本。
+
+## 常见错误
+
+如果一直出现
+
+```
+Trying to restore lost connectioin to .....
+Connected to ....
+```
+
+那么看看MySQL的my.cnf中的server_id参数是不是有配置。
