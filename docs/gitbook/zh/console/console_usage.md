@@ -133,7 +133,7 @@ from table1 as output;
 
 我们还提供了一个Demo页，方便展示MLSQL具备的能力，也让你可以一步一步照着学习：
 
-![](http://docs.mlsql.tech/upload_images/1063603-d4453efa16e124b0.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![](http://docs.mlsql.tech/upload_images/1063603-d4453efa16e124b0.png)
 
 你可以通过点击Next Step 看下一步的代码，也可以在当前页面运行看看。
 

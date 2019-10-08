@@ -18,7 +18,7 @@
 
 package streaming.rest
 
-import net.csdn.annotation.rest.At
+import net.csdn.annotation.rest.{At, NoAction}
 import net.csdn.modules.http.ApplicationController
 import net.csdn.modules.http.RestRequest.Method._
 import net.sf.json.{JSONArray, JSONObject}
@@ -47,6 +47,11 @@ class RestPredictController extends ApplicationController {
     render(200, res)
   }
 
+  @NoAction
+  def serverless() = {
+
+  }
+
   def getSession = {
     if (paramAsBoolean("sessionPerUser", false)) {
       runtime.asInstanceOf[SparkRuntime].getSession(param("owner", "admin"))
@@ -66,7 +71,7 @@ class RestPredictController extends ApplicationController {
 
   def createContext = {
     val userDefineParams = params.toMap.filter(f => f._1.startsWith("context.")).map(f => (f._1.substring("context.".length), f._2)).toMap
-    ScriptSQLExec.setContext(new MLSQLExecuteContext(null,param("owner"), "", "", userDefineParams))
+    ScriptSQLExec.setContext(new MLSQLExecuteContext(null, param("owner"), "", "", userDefineParams))
   }
 
   def getSQL = {

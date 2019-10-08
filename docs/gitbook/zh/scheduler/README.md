@@ -1,9 +1,9 @@
 # 如何集成调度
 
-用户可以使用第三方调度如[Easy Scheduler](https://analysys.github.io/easyscheduler_docs_cn/),
+MLSQL内置了一个调度引擎（1.5.0及以上可以用）。当然，用户也可以使用譬如第三方调度如[Easy Scheduler](https://analysys.github.io/easyscheduler_docs_cn/),
 然后在它提供的交互界面设置你的定时任务。
 
-## 直观的解决方案
+## 整合方案
 
 MLSQL的分布式运行环境 MLSQL Engine提供了http接口供用户传递脚本调用。所以比较直观的做法如下：
 
@@ -14,3 +14,5 @@ MLSQL的分布式运行环境 MLSQL Engine提供了http接口供用户传递脚�
 
 当你使用shell或者Java Proxy的时候，任务提交给Engine的时候，应该是异步还是同步呢？我们建议同步，
 并且设置一定的超时时间。这样，调度程序可以检查到必要的错误。
+
+下一节，我们会讲解如何使用诶之调度器来完成一些日常的调度工作。

@@ -92,6 +92,7 @@ class KafkaCommand(override val uid: String) extends SQLAlg with ETAuth with Fun
       .options(parameters)
       .option("startingOffsets", startOffset.json)
       .option("endingOffsets", endOffset.json)
+      .option("failOnDataLoss", "false")
       .load()
     val res = newdf.selectExpr("CAST(key AS STRING)", "CAST(value AS STRING)")
       .as[(String, String)]
