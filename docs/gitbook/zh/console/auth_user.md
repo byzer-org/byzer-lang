@@ -90,7 +90,7 @@ MLSQL Console在设计时，用户是属于自组织的，没有最高权限用�
 
 该功能位于菜单导航栏Team下的左侧边栏的Team标签下：
 
-WX20190819-184043.png)
+![](http://docs.mlsql.tech/upload_images/WX20190819-184043.png)
 
 举个例子，我现在要访问如下hive表hive_table_1:
 
