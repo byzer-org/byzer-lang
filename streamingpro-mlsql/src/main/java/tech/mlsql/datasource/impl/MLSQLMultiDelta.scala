@@ -13,14 +13,15 @@ import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
 import streaming.source.parser.impl.JsonSourceParser
 import tech.mlsql.common.utils.Md5
+import tech.mlsql.datalake.DataLake
 import tech.mlsql.datasource.{MLSQLMultiDeltaOptions, TableMetaInfo}
 
 import scala.collection.JavaConverters._
 import scala.util.Try
 
 /**
-  * 2019-06-17 WilliamZhu(allwefantasy@gmail.com)
-  */
+ * 2019-06-17 WilliamZhu(allwefantasy@gmail.com)
+ */
 class MLSQLMultiDelta(override val uid: String) extends MLSQLBaseStreamSource with WowParams {
   def this() = this(BaseParams.randomUID())
 
@@ -33,9 +34,17 @@ class MLSQLMultiDelta(override val uid: String) extends MLSQLBaseStreamSource wi
     require(config.config.contains("idCols"), "idCols is required")
     require(config.path.contains("{table}") && config.path.contains("{db}"), "path should like /tmp/db-sync/{db}/{table}")
     val context = ScriptSQLExec.contextGetOrForTest()
+
     val filePath = resourceRealPath(context.execListener, Option(context.owner), config.path)
+    val dataLake = new DataLake(config.df.get.sparkSession)
+    val finalPath = if (dataLake.isEnable) {
+      dataLake.identifyToPath(filePath)
+    } else {
+      filePath
+    }
+
     val newConfig = config.copy(
-      config = Map("path" -> config.path, MLSQLMultiDeltaOptions.FULL_PATH_KEY -> filePath) ++ config.config)
+      config = Map("path" -> config.path, MLSQLMultiDeltaOptions.FULL_PATH_KEY -> finalPath) ++ config.config)
 
 
     return super.save(batchWriter, newConfig)
