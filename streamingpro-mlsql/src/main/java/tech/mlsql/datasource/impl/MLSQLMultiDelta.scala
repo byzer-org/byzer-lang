@@ -59,8 +59,8 @@ class MLSQLMultiDelta(override val uid: String) extends MLSQLBaseStreamSource wi
       // Notice that for now, ds is not really can be re-consumed. This means we should cache it
       ds.cache()
       try {
-        val originalLogPath = options(MLSQLMultiDeltaOptions.FULL_PATH_KEY).split("\\{db\\}").head + MLSQLMultiDeltaOptions.META_KEY
-        if (options.getOrElse(MLSQLMultiDeltaOptions.KEEP_BINLOG_IN_META, "false").toBoolean) {
+        if (options.getOrElse(MLSQLMultiDeltaOptions.KEEP_BINLOG, "false").toBoolean) {
+          val originalLogPath = options(MLSQLMultiDeltaOptions.BINLOG_PATH)
           ds.write.format("org.apache.spark.sql.delta.sources.MLSQLDeltaDataSource").mode(SaveMode.Append).save(originalLogPath)
         } else {
           // do cache
