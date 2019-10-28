@@ -34,8 +34,8 @@ import streaming.dsl.mmlib.algs.SQLPythonFunc._
 import streaming.dsl.mmlib.algs.{Functions, SQLPythonAlg, SQLPythonFunc}
 import tech.mlsql.common.utils.env.python.BasicCondaEnvManager
 import tech.mlsql.common.utils.hdfs.HDFSOperator
-import tech.mlsql.common.utils.network.NetUtils
 import tech.mlsql.common.utils.lang.sc.ScalaMethodMacros._
+import tech.mlsql.common.utils.network.NetUtils
 
 import scala.collection.JavaConverters._
 
@@ -230,19 +230,13 @@ class PythonTrain extends Functions with Serializable {
           scriptName = pythonProject.get.fileName,
           validateData = Array()
         )
-
-        def filterScore(str: String) = {
-          if (str != null && str.startsWith("mlsql_validation_score:")) {
-            str.split(":").last.toDouble
-          } else 0d
-        }
-
-        val scores = res.map { f =>
+        
+        res.foreach { f =>
           logInfo(format(f))
           message += f
-          filterScore(f)
-        }.toSeq
-        score = scores.headOption.getOrElse(0d)
+
+        }
+        score = 0d
       } catch {
         case e: Exception =>
           message += format_cause(e)
@@ -492,18 +486,11 @@ class PythonTrain extends Functions with Serializable {
           validateData = rowsBr.value
         )
 
-        def filterScore(str: String) = {
-          if (str != null && str.startsWith("mlsql_validation_score:")) {
-            str.split(":").last.toDouble
-          } else 0d
-        }
-
-        val scores = res.map { f =>
+        res.foreach { f =>
           logInfo(format(f))
           message += f
-          filterScore(f)
-        }.toSeq
-        score = scores.headOption.getOrElse(0d)
+        }
+        score = 0
       } catch {
         case e: Exception =>
           message += format_cause(e)
