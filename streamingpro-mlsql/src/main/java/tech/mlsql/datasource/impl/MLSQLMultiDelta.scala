@@ -148,7 +148,7 @@ class MLSQLMultiDelta(override val uid: String) extends MLSQLBaseStreamSource wi
               deltaLog,
               options = new DeltaOptions(Map[String, String](), ds.sparkSession.sessionState.conf),
               partitionColumns = Seq(),
-              configuration = Map(
+              configuration = options ++ Map(
                 UpsertTableInDelta.OPERATION_TYPE -> operate,
                 UpsertTableInDelta.ID_COLS -> idCols.mkString(",")
               )

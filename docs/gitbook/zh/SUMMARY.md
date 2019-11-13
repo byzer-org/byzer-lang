@@ -157,6 +157,7 @@
     * [MLSQL ET插件 随机森林算法 开发示例](develop/et.md) 
     * [MLSQL DataSource插件开发指南](develop/datasource.md)
     * [MLSQL Script插件 binlog2delta 开发示例](develop/binlog2delta.md)
+    * [MLSQL App插件 EchoController 开发示例](develop/echo_controller.md)
     * [Ambari HDP Spark多版本兼容](develop/ambari_multi_spark.md)     
 
 * MLSQL实战 
