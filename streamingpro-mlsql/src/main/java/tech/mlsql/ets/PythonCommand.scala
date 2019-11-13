@@ -16,7 +16,6 @@ import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.Functions
 import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
-import tech.mlsql.arrow.python.PythonWorkerFactory
 import tech.mlsql.arrow.python.ispark.SparkContextImp
 import tech.mlsql.arrow.python.runner.{ArrowPythonRunner, ChainedPythonFunctions, PythonConf, PythonFunction}
 import tech.mlsql.common.utils.distribute.socket.server.{ReportHostAndPort, SocketServerInExecutor, SocketServerSerDer, TempSocketServerInDriver}
@@ -30,8 +29,8 @@ import tech.mlsql.session.SetSession
 import scala.collection.mutable.ArrayBuffer
 
 /**
-  * 2019-08-16 WilliamZhu(allwefantasy@gmail.com)
-  */
+ * 2019-08-16 WilliamZhu(allwefantasy@gmail.com)
+ */
 class PythonCommand(override val uid: String) extends SQLAlg with Functions with WowParams {
   def this() = this(BaseParams.randomUID())
 
@@ -282,16 +281,16 @@ class PythonCommand(override val uid: String) extends SQLAlg with Functions with
   }
 
   /**
-    *
-    * Here we should give mlsql log server information to the conf which
-    * will be configured by ArrowPythonRunner
-    */
+   *
+   * Here we should give mlsql log server information to the conf which
+   * will be configured by ArrowPythonRunner
+   */
   private def configureLogConf() = {
     val context = ScriptSQLExec.context()
     val conf = context.execListener.sparkSession.sqlContext.getAllConfs
     conf.filter(f => f._1.startsWith("spark.mlsql.log.driver")) ++
       Map(
-        PythonWorkerFactory.Tool.REDIRECT_IMPL -> "tech.mlsql.log.RedirectStreamsToSocketServer",
+        //        PythonWorkerFactory.Tool.REDIRECT_IMPL -> "tech.mlsql.log.RedirectStreamsToSocketServer",
         ScalaMethodMacros.str(PythonConf.PY_EXECUTE_USER) -> context.owner,
         "groupId" -> context.groupId
       )

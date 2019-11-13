@@ -5,19 +5,27 @@ import tech.mlsql.common.utils.Md5
 import tech.mlsql.session
 
 /**
-  * 2019-08-16 WilliamZhu(allwefantasy@gmail.com)
-  */
+ * 2019-08-16 WilliamZhu(allwefantasy@gmail.com)
+ */
 class SetSession(spark: SparkSession, owner: String) {
 
   import spark.implicits._
 
   def envTableName = Md5.md5Hash(owner)
 
+  private def isTheSame(oldItem: SetItem, newItem: SetItem) = {
+    (newItem.k, newItem.config(SetSession.__MLSQL_CL__)) == (oldItem.k, oldItem.config(SetSession.__MLSQL_CL__))
+  }
+
   def set(k: String, v: String, config: Map[String, String]) = {
     if (envTableExists) {
-      val newItems = spark.table(envTableName).as[SetItem].collect().toSet ++ Set(SetItem(k, v,
+      val oldItems = spark.table(envTableName).as[SetItem].collect().toList
+      val newItem = SetItem(k, v,
         Map(SetSession.__MLSQL_CL__ -> session.SetSession.SET_STATEMENT_CL) ++ config
-      ))
+      )
+      val newItems = oldItems.filterNot { oldItem =>
+        isTheSame(oldItem, newItem)
+      } ++ List(newItem)
       spark.createDataset[SetItem](newItems.toSeq).
         createOrReplaceTempView(envTableName)
     } else {

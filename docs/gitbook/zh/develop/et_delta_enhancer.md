@@ -2,11 +2,12 @@
 
 MLSQL提供了 [插件商店](https://docs.mlsql.tech/zh/plugins/),方便开发者发布自己开发的插件。
 
-MLSQL 支持三种类型的插件：
+MLSQL 支持四种类型的插件：
 
 1. ET 插件
 2. DataSource 插件
 3. Script 插件
+4. App 插件
 
 
 如果从数据处理的角度而言，DataSource插件可以让你扩展MLSQL访问你想要的数据源，而ET插件则可以完成数据处理相关的工作，甚至构建一个机器学习集群，
