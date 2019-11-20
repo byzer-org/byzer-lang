@@ -27,7 +27,7 @@ object ETRegister {
   wow("MLSQLEventCommand")
   wow("KafkaCommand")
   wow("DeltaCompactionCommand")
-  wow("DeltaCompactionCommandWrapper")
+  wow("DeltaCommandWrapper")
   wow("ShowTablesExt")
   register("DTF", "tech.mlsql.ets.tensorflow.DistributedTensorflow")
   wow("PythonCommand")
