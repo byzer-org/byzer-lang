@@ -11,11 +11,12 @@ import org.apache.spark.sql.mlsql.session.MLSQLException
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.{DataFrame, Row, SparkSession, SparkUtils}
 import org.apache.spark.util.{TaskCompletionListener, TaskFailureListener}
-import org.apache.spark.{MLSQLSparkUtils, TaskContext}
+import org.apache.spark.{MLSQLSparkUtils, SparkConf, TaskContext}
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.Functions
 import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
+import tech.mlsql.arrow.python.PythonWorkerFactory
 import tech.mlsql.arrow.python.ispark.SparkContextImp
 import tech.mlsql.arrow.python.runner.{ArrowPythonRunner, ChainedPythonFunctions, PythonConf, PythonFunction}
 import tech.mlsql.common.utils.distribute.socket.server.{ReportHostAndPort, SocketServerInExecutor, SocketServerSerDer, TempSocketServerInDriver}
@@ -290,7 +291,7 @@ class PythonCommand(override val uid: String) extends SQLAlg with Functions with
     val conf = context.execListener.sparkSession.sqlContext.getAllConfs
     conf.filter(f => f._1.startsWith("spark.mlsql.log.driver")) ++
       Map(
-        //        PythonWorkerFactory.Tool.REDIRECT_IMPL -> "tech.mlsql.log.RedirectStreamsToSocketServer",
+        //PythonWorkerFactory.Tool.REDIRECT_IMPL -> "tech.mlsql.log.RedirectStreamsToSocketServer",
         ScalaMethodMacros.str(PythonConf.PY_EXECUTE_USER) -> context.owner,
         "groupId" -> context.groupId
       )

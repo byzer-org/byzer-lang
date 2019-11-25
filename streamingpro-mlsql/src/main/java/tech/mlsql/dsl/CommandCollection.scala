@@ -53,7 +53,7 @@ object CommandCollection {
 
     context.addEnv("withWartermark",""" register WaterMarkInPlace.`` where inputTable="{}" and eventTimeCol="{}" and delayThreshold="{}" """)
 
-    context.addEnv("delta","""run command as DeltaCompactionCommandWrapper.`` where parameters='''{:all}'''""")
+    context.addEnv("delta","""run command as DeltaCommandWrapper.`` where parameters='''{:all}'''""")
     context.addEnv("scheduler","""run command as SchedulerCommand.`` where parameters='''{:all}'''""")
 
     context.addEnv("python","""run command as PythonCommand.`` where parameters='''{:all}'''""")
