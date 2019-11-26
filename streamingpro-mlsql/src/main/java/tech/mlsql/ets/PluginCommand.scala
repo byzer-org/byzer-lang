@@ -26,8 +26,8 @@ import tech.mlsql.version.VersionCompatibility
 
 
 /**
-  * 2019-09-11 WilliamZhu(allwefantasy@gmail.com)
-  */
+ * 2019-09-11 WilliamZhu(allwefantasy@gmail.com)
+ */
 class PluginCommand(override val uid: String) extends SQLAlg with Functions with WowParams {
   def this() = this(BaseParams.randomUID())
 
@@ -215,6 +215,9 @@ object PluginCommand {
       tmpLocation.mkdirs()
     }
     val jarFile = new File(PathFun(tmpLocation.getPath).add(fileName).toPath)
+    if (jarFile.exists()) {
+      jarFile.delete()
+    }
     Files.copy(inputStream, jarFile.toPath, StandardCopyOption.REPLACE_EXISTING)
     inputStream.close()
     val localPath = jarFile.getPath
@@ -236,9 +239,9 @@ object PluginCommand {
         s"""
            |Plugins ${pluginName} supports:
            |
-              |${versions.mkString(",")}
+           |${versions.mkString(",")}
            |
-              |Current MLSQL Engine version: ${MLSQLVersion.version().version}
+           |Current MLSQL Engine version: ${MLSQLVersion.version().version}
             """.stripMargin)
     }
   }
