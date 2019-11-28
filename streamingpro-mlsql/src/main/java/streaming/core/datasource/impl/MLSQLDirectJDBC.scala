@@ -23,10 +23,9 @@ import scala.collection.JavaConverters._
 
 /**
   * 2018-12-21 WilliamZhu(allwefantasy@gmail.com)
-  * with DatasourceAuth
   */
 class MLSQLDirectJDBC extends MLSQLDirectSource with MLSQLDirectSink with MLSQLSourceInfo with MLSQLRegistry
-  with Logging with WowLog {
+  with DatasourceAuth with Logging with WowLog {
 
   override def fullFormat: String = "jdbc"
 
@@ -125,6 +124,7 @@ class MLSQLDirectJDBC extends MLSQLDirectSource with MLSQLDirectSink with MLSQLS
 
     si
   }
+
   // this function depends on druid, so we can
   // fix chinese tablename since in spark parser it's not supported
   //MLSQLAuthParser.filterTables(sql, context.execListener.sparkSession)
@@ -215,5 +215,4 @@ class MLSQLDirectJDBC extends MLSQLDirectSource with MLSQLDirectSink with MLSQLS
     }
     List()
   }
->>>>>>> update_mlsql/master
 }
