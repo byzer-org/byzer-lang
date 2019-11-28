@@ -6,6 +6,7 @@ import streaming.core.datasource._
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
 import tech.mlsql.datalake.DataLake
+import tech.mlsql.datasource.MLSQLMultiDeltaOptions
 
 /**
   * 2019-04-30 WilliamZhu(allwefantasy@gmail.com)
@@ -118,8 +119,9 @@ class MLSQLRate(override val uid: String) extends MLSQLBaseStreamSource with Wow
     } else {
       resolvePath(config.path, context.owner)
     }
-
-    return super.save(batchWriter, config.copy(config = (config.config ++ Map("dbtable" -> finalPath))))
+    val newConfig = config.copy(
+      config = Map("path" -> config.path, MLSQLMultiDeltaOptions.FULL_PATH_KEY -> finalPath) ++ config.config ++ Map("dbtable" -> finalPath))
+    return super.save(batchWriter, newConfig)
 
   }
 
