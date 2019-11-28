@@ -155,17 +155,6 @@
 
                     </exclusions>
                 </dependency>
-                <dependency>
-                    <groupId>org.postgresql</groupId>
-                    <artifactId>postgresql</artifactId>
-                    <version>42.1.2</version>
-                </dependency>
-
-                <dependency>
-                    <groupId>com.oracle</groupId>
-                    <artifactId>ojdbc</artifactId>
-                    <version>11.1.0.7.0</version>
-                </dependency>
             </dependencies>
         </profile>
 
