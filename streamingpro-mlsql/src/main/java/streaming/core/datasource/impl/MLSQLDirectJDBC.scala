@@ -132,7 +132,7 @@ class MLSQLDirectJDBC extends MLSQLDirectSource with MLSQLDirectSink with MLSQLS
     val repository = new SchemaRepository(dbType)
     repository.console(sql)
     val stmt = SQLUtils.parseSingleStatement(sql, dbType)
-    val visitor = new SchemaStatVisitor()
+    val visitor = SQLUtils.createSchemaStatVisitor(dbType)
     stmt.accept(visitor)
     visitor.getTables().asScala.map { f =>
       val dbAndTable = f._1.getName
