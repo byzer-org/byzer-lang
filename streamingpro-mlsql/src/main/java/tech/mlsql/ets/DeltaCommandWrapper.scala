@@ -17,7 +17,7 @@ import tech.mlsql.ets.delta.{DeltaUtils, TableStat}
 /**
   * 2019-06-06 WilliamZhu(allwefantasy@gmail.com)
   */
-class DeltaCompactionCommandWrapper(override val uid: String) extends SQLAlg with Functions with WowParams {
+class DeltaCommandWrapper(override val uid: String) extends SQLAlg with Functions with WowParams {
   def this() = this(BaseParams.randomUID())
 
 

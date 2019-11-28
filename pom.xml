@@ -69,8 +69,8 @@
         <common-utils-version>0.2.0</common-utils-version>
         <mlsql-ps-service-version>1.3.5</mlsql-ps-service-version>
         <pyjava-version>0.2.0</pyjava-version>
-        <delta-plus-version>0.1.6</delta-plus-version>
-        <spark-binlog-version>0.1.9</spark-binlog-version>
+        <delta-plus-version>0.2.0-SNAPSHOT</delta-plus-version>
+        <spark-binlog-version>0.2.1</spark-binlog-version>
         <mlsql-scheduler-version>0.1.0</mlsql-scheduler-version>
     </properties>
 

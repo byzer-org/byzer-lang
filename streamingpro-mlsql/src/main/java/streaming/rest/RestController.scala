@@ -36,16 +36,18 @@ import org.apache.spark.sql.execution.datasources.json.WowJsonInferSchema
 import org.apache.spark.sql.mlsql.session.{MLSQLSparkSession, SparkSessionCacheManager}
 import org.apache.spark.{MLSQLConf, SparkInstanceService}
 import tech.mlsql.MLSQLEnvKey
+import tech.mlsql.app.CustomController
 import tech.mlsql.common.utils.serder.json.JSONTool
 import tech.mlsql.job.{JobManager, MLSQLJobType}
+import tech.mlsql.runtime.AppRuntimeStore
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable.ArrayBuffer
 import scala.util.control.NonFatal
 
 /**
-  * Created by allwefantasy on 28/3/2017.
-  */
+ * Created by allwefantasy on 28/3/2017.
+ */
 @OpenAPIDefinition(
   info = new BasicInfo(
     desc = "The collection of rest api are used to execute SQL, manager jobs and download hdfs file.",
@@ -160,7 +162,13 @@ class RestController extends ApplicationController with WowLog {
       params.getOrDefault("executeMode", "query") match {
         case "query" => query
         case "analyze" => analyze
-        case _ => query
+        case executeMode: String =>
+          AppRuntimeStore.store.getController(executeMode) match {
+            case Some(item) =>
+              outputResult = Class.forName(item.customClassItem.className).
+                newInstance().asInstanceOf[CustomController].run(params().toMap)
+            case None => throw new RuntimeException(s"no executeMode named ${executeMode}")
+          }
       }
 
     } catch {
@@ -445,20 +453,20 @@ class RestController extends ApplicationController with WowLog {
   }
 
   /**
-    * | enable limit | global | maxResultSize | condition                       | result           |
-    * | ------------ | ------ | ------------- | ------------------------------- | ---------------- |
-    * | true         | -1     | -1            | N/A                             | defualt = 1000   |
-    * | true         | -1     | Int           | N/A                             | ${maxResultSize} |
-    * | true         | Int    | -1            | Or ${maxResultSize} > ${global} | ${global}        |
-    * | true         | Int    | Int           | AND ${maxResultSize} < ${global}| ${maxResultSize} |
-    *
-    * when we enable result size limitation, the size of result should <= ${maxSize} <= ${global}
-    *
-    * @param ds
-    * @param maxSize
-    * @tparam T
-    * @return
-    */
+   * | enable limit | global | maxResultSize | condition                       | result           |
+   * | ------------ | ------ | ------------- | ------------------------------- | ---------------- |
+   * | true         | -1     | -1            | N/A                             | defualt = 1000   |
+   * | true         | -1     | Int           | N/A                             | ${maxResultSize} |
+   * | true         | Int    | -1            | Or ${maxResultSize} > ${global} | ${global}        |
+   * | true         | Int    | Int           | AND ${maxResultSize} < ${global}| ${maxResultSize} |
+   *
+   * when we enable result size limitation, the size of result should <= ${maxSize} <= ${global}
+   *
+   * @param ds
+   * @param maxSize
+   * @tparam T
+   * @return
+   */
   private def limitOrNot[T](ds: Dataset[T], maxSize: Int = paramAsInt("maxResultSize", -1)): Dataset[T] = {
     var result = ds
     val globalLimit = ds.sparkSession.sparkContext.getConf.getInt(

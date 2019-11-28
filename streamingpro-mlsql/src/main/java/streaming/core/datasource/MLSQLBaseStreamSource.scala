@@ -102,6 +102,11 @@ abstract class MLSQLBaseStreamSource extends MLSQLSource with MLSQLSink with MLS
     DataSourceRegistry.register(MLSQLDataSourceKey(shortFormat, MLSQLSparkDataSourceType), this)
   }
 
+  override def unRegister(): Unit = {
+    DataSourceRegistry.unRegister(MLSQLDataSourceKey(fullFormat, MLSQLSparkDataSourceType))
+    DataSourceRegistry.unRegister(MLSQLDataSourceKey(shortFormat, MLSQLSparkDataSourceType))
+  }
+
   def resolvePath(path: String, owner: String) = {
     path
   }

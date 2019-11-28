@@ -34,6 +34,11 @@ object DataSourceRegistry extends Logging {
     registry.put(name, obj)
   }
 
+  def unRegister(name: MLSQLDataSourceKey) = {
+    registry.remove(name)
+  }
+
+
   def allSourceNames = {
     registry.asScala.map(f => f._2.shortFormat).toSeq
   }
@@ -82,6 +87,8 @@ object DataSourceRegistry extends Logging {
 
 trait MLSQLRegistry {
   def register(): Unit
+
+  def unRegister(): Unit = {}
 }
 
 case class DataSourceConfig(path: String, config: Map[String, String], df: Option[DataFrame] = None)

@@ -122,8 +122,8 @@ class SetAdaptor(scriptSQLExecListener: ScriptSQLExecListener, stage: Stage.stag
         value = cleanBlockStr(cleanStr(command))
     }
 
-    val scope = option.getOrElse("scope" ,"all").split(",")
-    val scopeParameter = scope.foldLeft(mutable.Set[ParameterScope]())((x ,y) => {
+    val scope = option.getOrElse("scope", "all").split(",")
+    val scopeParameter = scope.foldLeft(mutable.Set[ParameterScope]())((x, y) => {
       y match {
         case "un_select" => x.add(ParameterScope.UN_SELECT)
         case _ =>
@@ -131,25 +131,38 @@ class SetAdaptor(scriptSQLExecListener: ScriptSQLExecListener, stage: Stage.stag
       x
     })
 
-     if(scopeParameter.size == 0){
-       scopeParameter.add(ParameterScope.ALL)
-     }
+    if (scopeParameter.size == 0) {
+      scopeParameter.add(ParameterScope.ALL)
+    }
 
     if (!overwrite) {
       if (!scriptSQLExecListener.env().contains(key)) {
         scriptSQLExecListener.addEnv(key, value)
-        scriptSQLExecListener.addEnvScpoe(key, SetScopeParameter(value ,scopeParameter))
+        scriptSQLExecListener.addEnvScpoe(key, SetScopeParameter(value, scopeParameter))
       }
     } else {
       scriptSQLExecListener.addEnv(key, value)
-      scriptSQLExecListener.addEnvScpoe(key, SetScopeParameter(value ,scopeParameter))
+      scriptSQLExecListener.addEnvScpoe(key, SetScopeParameter(value, scopeParameter))
     }
 
     scriptSQLExecListener.env().view.foreach {
       case (k, v) =>
+
+        val unSelect = scriptSQLExecListener.envScope
+          .filter(_._2.scope.contains(ParameterScope.UN_SELECT))
+          .mapValues(_.value)
+          .toMap.map(f => f._1).toList
+
         val mergedValue = TemplateMerge.merge(v, scriptSQLExecListener.env().toMap)
         if (mergedValue != v) {
           scriptSQLExecListener.addEnv(k, mergedValue)
+        }
+
+        val scopedMergedValue = TemplateMerge.merge(v, scriptSQLExecListener.env().toMap -- unSelect)
+        if (scopeParameter.contains(ParameterScope.ALL)) {
+          if (scopedMergedValue != v) {
+            scriptSQLExecListener.addEnvScpoe(key, SetScopeParameter(scopedMergedValue, scopeParameter))
+          }
         }
     }
 

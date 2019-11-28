@@ -76,6 +76,7 @@
        * [如何发送邮件](process/estimator_transformer/SendMessage.md) 
     * [如何集成调度](scheduler/README.md)
        * [内置调度](scheduler/buildin_scheduler.md)
+       * [外置调度整合](scheduler/third_party_scheduler.md)
     * [如何缓存表](process/estimator_transformer/CacheExt.md)                                       
     * [Python支持](python/README.md)
         * [Python环境](python/python-env.md)        
@@ -156,6 +157,7 @@
     * [MLSQL ET插件 随机森林算法 开发示例](develop/et.md) 
     * [MLSQL DataSource插件开发指南](develop/datasource.md)
     * [MLSQL Script插件 binlog2delta 开发示例](develop/binlog2delta.md)
+    * [MLSQL App插件 EchoController 开发示例](develop/echo_controller.md)
     * [Ambari HDP Spark多版本兼容](develop/ambari_multi_spark.md)     
 
 * MLSQL实战 

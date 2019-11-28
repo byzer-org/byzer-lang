@@ -89,6 +89,11 @@ class MLSQLDirectJDBC extends MLSQLDirectSource with MLSQLDirectSink with MLSQLS
     DataSourceRegistry.register(MLSQLDataSourceKey(shortFormat, MLSQLDirectDataSourceType), this)
   }
 
+  override def unRegister(): Unit = {
+    DataSourceRegistry.unRegister(MLSQLDataSourceKey(fullFormat, MLSQLDirectDataSourceType))
+    DataSourceRegistry.unRegister(MLSQLDataSourceKey(shortFormat, MLSQLDirectDataSourceType))
+  }
+
   def sourceInfo(config: DataAuthConfig): SourceInfo = {
     val Array(_dbname, _dbtable) = if (config.path.contains(dbSplitter)) {
       config.path.split(toSplit, 2)

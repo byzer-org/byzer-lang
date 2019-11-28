@@ -18,6 +18,10 @@ object CommandCollection {
     }
   }
 
+  def remove(name: String) = {
+    commandMapping.remove(name)
+  }
+
   def fill(context: ScriptSQLExecListener): Unit = {
     commandMapping.asScala.foreach { k =>
       context.addEnv(k._1, s"""run command as ${k._2}.`` where parameters='''{:all}'''""")
@@ -49,7 +53,7 @@ object CommandCollection {
 
     context.addEnv("withWartermark",""" register WaterMarkInPlace.`` where inputTable="{}" and eventTimeCol="{}" and delayThreshold="{}" """)
 
-    context.addEnv("delta","""run command as DeltaCompactionCommandWrapper.`` where parameters='''{:all}'''""")
+    context.addEnv("delta","""run command as DeltaCommandWrapper.`` where parameters='''{:all}'''""")
     context.addEnv("scheduler","""run command as SchedulerCommand.`` where parameters='''{:all}'''""")
 
     context.addEnv("python","""run command as PythonCommand.`` where parameters='''{:all}'''""")
