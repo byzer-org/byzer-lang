@@ -74,20 +74,23 @@ mysqlbinlog \
 
 ```sql
 save append table1  
-as binlogRate.`/tmp/binlog1/{db}/{table}` 
+as rate.`mysql_{db}.{table}` 
 options mode="Append"
 and idCols="id"
 and duration="5"
-and checkpointLocation="/tmp/cpl-binlog";
+and syncType="binlog"
+and checkpointLocation="/tmp/cpl-binlog2";
 ```
 
 这里，我们对每个参数都会做个解释。
 
-`/tmp/binlog1/{db}/{table}` 中的 db,table是占位符。因为我们一次性会同步很多数据库的多张表，如果全部手动指定会显得
-非常的麻烦和低效。MLSQL的 binlogRate 数据源允许我们通过占位符进行替换。
+`mysql_{db}.{table}` 中的 db,table是占位符。因为我们一次性会同步很多数据库的多张表，如果全部手动指定会显得
+非常的麻烦和低效。MLSQL的 rate 数据源允许我们通过占位符进行替换。
 
 第二个是idCols， 这个参数已经在前面Delta数据库的章节中和大家见过面。idCols需要用户指定一组联合主键，使得MLSQL能够完成
 Upsert语义。 
+
+第三个syncType表示我们同步的是binlog,这样才会执行binlog特有的操作。
 
 最后两个参数duration,checkpointLocation 则是流式计算特有的，分别表示运行的周期以及运行日志存放在哪。
 
