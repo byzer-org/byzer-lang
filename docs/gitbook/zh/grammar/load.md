@@ -89,6 +89,16 @@ select * from newtable;
 1. load/connect 都需要需要最后接as， as 表示为注册，前面是注册的内容，as后面是注册后的名字。load as 是注册视图（表），connect as 是注册连接。
 2. 注册的东西在后面的语句中都可以直接使用，这也是MLSQL能成为脚本的根基之一。
 
+通用参数withoutColumns、withColumns，可以通过withoutColumns移除掉不需要的列，withColumns指定需要的列，两者只能选一个
+
+```
+set abc='''
+{ "x": 100, "y": 200, "z": 200 ,"dataType":"A group"}
+{ "x": 120, "y": 100, "z": 260 ,"dataType":"B group"}
+''';
+load jsonStr.`abc` options withoutColumns="x,y" as table1;
+```
+
 ## 如何高效的书写Load语句
 
 从上面的例子，我们可以看出，使用load语句，前提是我们知道有哪些数据源或者格式可用。还有一个难题，就是这些数据源或者格式都有什么可选的配置，也就是我们

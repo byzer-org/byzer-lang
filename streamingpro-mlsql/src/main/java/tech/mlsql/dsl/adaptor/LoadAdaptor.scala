@@ -131,6 +131,18 @@ class LoadPRocessing(scriptSQLExecListener: ScriptSQLExecListener,
       }).get
     }
 
+    //please set spark.sql.caseSensitive true !
+    val conf = dsConf.config
+    val withoutColumns = if (conf.contains("withColumns")) {
+      table.columns.map(_.toLowerCase).toSet.diff(conf("withColumns").split(",").map(_.toLowerCase).toSet)
+    } else if (conf.contains("withoutColumns")) {
+      conf("withoutColumns").split(",").toSet
+    } else {
+      Set.empty[String]
+    }
+
+    table = table.drop(withoutColumns.toSeq: _*)
+
     // In order to control the access of columns, we should rewrite the final sql (conver * to specify column names)
     table = rewriteOrNot(table, dsConf, sourceInfo, ScriptSQLExec.context())
 
