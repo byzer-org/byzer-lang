@@ -158,7 +158,8 @@
     * [MLSQL DataSource插件开发指南](develop/datasource.md)
     * [MLSQL Script插件 binlog2delta 开发示例](develop/binlog2delta.md)
     * [MLSQL App插件 EchoController 开发示例](develop/echo_controller.md)
-    * [Ambari HDP Spark多版本兼容](develop/ambari_multi_spark.md)     
+    * [Ambari HDP Spark多版本兼容](develop/ambari_multi_spark.md)  
+    * [MLSQL监控-集成prometheus](develop/spark_prometheus.md)
 
 * MLSQL实战 
     * [产品和运营如何利用MLSQL完成excel处理](action/mlsql-excel.md) 
