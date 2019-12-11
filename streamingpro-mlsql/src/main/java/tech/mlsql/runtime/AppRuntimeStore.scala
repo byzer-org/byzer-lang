@@ -69,7 +69,8 @@ trait LoadSaveRuntimeStore {
 object AppRuntimeStore {
   private val _store = new InMemoryStore()
   val store = new AppRuntimeStore(_store)
-  val LOAD_SAVE_KEY = "load_save_key"
+  val LOAD_BEFORE_KEY = "load_before_key"
+  val LOAD_AFTER_KEY = "load_after_key"
 }
 
 class Jack extends CustomController {

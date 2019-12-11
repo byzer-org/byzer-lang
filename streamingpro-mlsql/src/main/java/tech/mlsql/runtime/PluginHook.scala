@@ -16,7 +16,16 @@ class PluginHook extends MLSQLPlatformLifecycle with Logging {
 
   override def beforeDispatcher(runtime: StreamingRuntime, params: Map[String, String]): Unit = {
     // build-in plugins
-    AppRuntimeStore.store.registerLoadSave(AppRuntimeStore.LOAD_SAVE_KEY, "tech.mlsql.plugin.load.DefaultLoaderPlugin")
+    params.getOrElse("streaming.plugin.buildin.loads.before", "").
+      split(",").filterNot(_.isEmpty).
+      foreach { beforeItem =>
+        AppRuntimeStore.store.registerLoadSave(AppRuntimeStore.LOAD_BEFORE_KEY, beforeItem)
+      }
+
+    params.getOrElse("streaming.plugin.buildin.loads.after", "tech.mlsql.plugin.load.DefaultLoaderPlugin").split(",").filterNot(_.isEmpty).
+      foreach { afterItem =>
+        AppRuntimeStore.store.registerLoadSave(AppRuntimeStore.LOAD_AFTER_KEY, afterItem)
+      }
 
     if (!params.contains("streaming.datalake.path")) return
     val spark = runtime.asInstanceOf[SparkRuntime].sparkSession
