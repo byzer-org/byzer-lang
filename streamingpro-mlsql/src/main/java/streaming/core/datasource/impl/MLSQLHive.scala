@@ -14,7 +14,13 @@ class MLSQLHive(override val uid: String) extends MLSQLSource with MLSQLSink wit
 
   override def load(reader: DataFrameReader, config: DataSourceConfig): DataFrame = {
     val format = config.config.getOrElse("implClass", fullFormat)
-    reader.options(config.config).format(format).table(config.path)
+    val table = reader.options(config.config).format(format).table(config.path)
+
+    if (config.config.contains("conditionExpr")){
+      table.filter(config.config("conditionExpr"))
+    }else{
+      table
+    }
   }
 
   override def save(writer: DataFrameWriter[Row], config: DataSinkConfig): Unit = {
