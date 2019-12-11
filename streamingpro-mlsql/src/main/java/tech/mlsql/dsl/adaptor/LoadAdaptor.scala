@@ -132,10 +132,11 @@ class LoadPRocessing(scriptSQLExecListener: ScriptSQLExecListener,
       }).get
     }
 
+    table = customRewrite(AppRuntimeStore.LOAD_BEFORE_KEY,table, dsConf, sourceInfo, ScriptSQLExec.context())
     // In order to control the access of columns, we should rewrite the final sql (conver * to specify column names)
     table = authRewrite(table, dsConf, sourceInfo, ScriptSQLExec.context())
     // finally use the  build-in or third-party plugins to rewrite the table.
-    table = customRewrite(table, dsConf, sourceInfo, ScriptSQLExec.context())
+    table = customRewrite(AppRuntimeStore.LOAD_AFTER_KEY,table, dsConf, sourceInfo, ScriptSQLExec.context())
 
     def isStream = {
       scriptSQLExecListener.env().contains("streamName")
@@ -226,12 +227,12 @@ class LoadPRocessing(scriptSQLExecListener: ScriptSQLExecListener,
     }
   }
 
-  def customRewrite(df: DataFrame,
+  def customRewrite(orderKey: String, df: DataFrame,
                     config: DataSourceConfig,
                     sourceInfo: Option[SourceInfo],
                     context: MLSQLExecuteContext) = {
     var newDF = df
-    AppRuntimeStore.store.getLoadSave(AppRuntimeStore.LOAD_SAVE_KEY) match {
+    AppRuntimeStore.store.getLoadSave(orderKey) match {
       case Some(item) =>
 
         item.customClassItems.classNames.foreach { className =>
