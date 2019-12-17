@@ -294,12 +294,7 @@ object PluginCommand {
     if (dataSource.isInstanceOf[MLSQLRegistry]) {
       dataSource.asInstanceOf[MLSQLRegistry].register()
     }
-    commandName match {
-      case Some(alisName) =>
-
-        callback()
-      case None =>
-    }
+    callback()
   }
 }
 
