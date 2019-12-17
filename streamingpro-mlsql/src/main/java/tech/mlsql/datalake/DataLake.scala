@@ -9,10 +9,12 @@ import org.apache.spark.sql.mlsql.session.MLSQLException
 import tech.mlsql.common.utils.path.PathFun
 
 /**
-  * 2019-08-31 WilliamZhu(allwefantasy@gmail.com)
-  */
+ * 2019-08-31 WilliamZhu(allwefantasy@gmail.com)
+ */
 class DataLake(sparkSession: SparkSession) {
   def isEnable = sparkSession.sessionState.conf.contains(DataLake.RUNTIME_KEY)
+
+  def overwriteHive = sparkSession.sessionState.conf.getConfString(DataLake.DELTA_LAKE_OVERWRITE_HIVE, "false").toBoolean
 
   def value = {
     sparkSession.sessionState.conf.getConfString(DataLake.RUNTIME_KEY)
@@ -49,4 +51,5 @@ class DataLake(sparkSession: SparkSession) {
 object DataLake {
   val RUNTIME_KEY = "spark.mlsql.datalake.path"
   val USER_KEY = "streaming.datalake.path"
+  val DELTA_LAKE_OVERWRITE_HIVE = "spark.mlsql.datalake.overwrite.hive"
 }
