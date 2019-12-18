@@ -78,8 +78,8 @@
 
         <dependency>
             <groupId>tech.mlsql</groupId>
-            <artifactId>spark-binlog_${scala.binary.version}</artifactId>
-            <version>${spark-binlog-version}</version>
+            <artifactId>mysql-binlog_${scala.binary.version}</artifactId>
+            <version>${mysql-binlog-version}</version>
             <exclusions>
                 <exclusion>
                     <groupId>tech.mlsql</groupId>
