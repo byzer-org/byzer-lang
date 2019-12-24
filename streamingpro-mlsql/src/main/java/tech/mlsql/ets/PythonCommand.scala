@@ -11,7 +11,7 @@ import org.apache.spark.sql.mlsql.session.MLSQLException
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.{DataFrame, Row, SparkSession, SparkUtils}
 import org.apache.spark.util.{TaskCompletionListener, TaskFailureListener}
-import org.apache.spark.{MLSQLSparkUtils, SparkConf, TaskContext}
+import org.apache.spark.{MLSQLSparkUtils, TaskContext}
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.Functions
@@ -281,6 +281,12 @@ class PythonCommand(override val uid: String) extends SQLAlg with Functions with
 
   }
 
+  def isLocalMaster(conf: Map[String, String]): Boolean = {
+    //      val master = MLSQLConf.MLSQL_MASTER.readFrom(configReader).getOrElse("")
+    val master = conf.getOrElse("spark.master", "")
+    master == "local" || master.startsWith("local[")
+  }
+
   /**
    *
    * Here we should give mlsql log server information to the conf which
@@ -289,12 +295,16 @@ class PythonCommand(override val uid: String) extends SQLAlg with Functions with
   private def configureLogConf() = {
     val context = ScriptSQLExec.context()
     val conf = context.execListener.sparkSession.sqlContext.getAllConfs
+    val extraConfig = if (isLocalMaster(conf)) {
+      Map[String, String]()
+    } else {
+      Map(PythonWorkerFactory.Tool.REDIRECT_IMPL -> "tech.mlsql.log.RedirectStreamsToSocketServer")
+    }
     conf.filter(f => f._1.startsWith("spark.mlsql.log.driver")) ++
       Map(
-        //PythonWorkerFactory.Tool.REDIRECT_IMPL -> "tech.mlsql.log.RedirectStreamsToSocketServer",
         ScalaMethodMacros.str(PythonConf.PY_EXECUTE_USER) -> context.owner,
         "groupId" -> context.groupId
-      )
+      ) ++ extraConfig
   }
 
   private def recognizeError(e: Exception) = {
