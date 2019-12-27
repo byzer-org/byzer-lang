@@ -4,14 +4,15 @@ import scala.collection.JavaConverters._
 
 
 /**
-  * 2019-04-12 WilliamZhu(allwefantasy@gmail.com)
-  */
+ * 2019-04-12 WilliamZhu(allwefantasy@gmail.com)
+ */
 object ETRegister {
   private val mapping = new java.util.concurrent.ConcurrentHashMap[String, String]()
 
   def wow(name: String) = mapping.put(name, ("tech.mlsql.ets." + name))
 
   def register(name: String, value: String) = mapping.put(name, value)
+
   def remove(name: String) = mapping.remove(name)
 
   def getMapping = {
@@ -33,5 +34,6 @@ object ETRegister {
   wow("PythonCommand")
   wow("SchedulerCommand")
   wow("PluginCommand")
+  wow("Ray")
 
 }
