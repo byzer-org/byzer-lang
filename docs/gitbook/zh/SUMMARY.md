@@ -22,7 +22,7 @@
 ## 目录
 
 * 概要
-    * [MSLQL简介](getting_started/READEME.md)        
+    * [MLSQL简介](getting_started/READEME.md)        
 
 * 用户指南
     * [编译&运行&部署](installation/README.md)
