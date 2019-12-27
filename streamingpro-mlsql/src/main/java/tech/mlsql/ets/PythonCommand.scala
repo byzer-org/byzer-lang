@@ -239,14 +239,21 @@ class PythonCommand(override val uid: String) extends SQLAlg with Functions with
     val envSession = new SetSession(session, context.owner)
     val envs = Map(
       ScalaMethodMacros.str(PythonConf.PY_EXECUTE_USER) -> context.owner,
-      ScalaMethodMacros.str(PythonConf.PYTHON_ENV) -> "echo ok"
+      ScalaMethodMacros.str(PythonConf.PYTHON_ENV) -> "export ARROW_PRE_0_15_IPC_FORMAT=1"
     ) ++
-      envSession.fetchPythonEnv.get.collect().map(f => (f.k, f.v)).toMap
+      envSession.fetchPythonEnv.get.collect().map { f =>
+        if (f.k == ScalaMethodMacros.str(PythonConf.PYTHON_ENV)) {
+          (f.k, f.v + " && export ARROW_PRE_0_15_IPC_FORMAT=1")
+        } else {
+          (f.k, f.v)
+        }
+
+      }.toMap
 
     val runnerConf = getSchemaAndConf(envSession) ++ configureLogConf
 
     val targetSchema = SparkSimpleSchemaParser.parse(runnerConf("schema")).asInstanceOf[StructType]
-
+    val pythonVersion = runnerConf.getOrElse("pythonVersion", "3.6")
     val timezoneID = session.sessionState.conf.sessionLocalTimeZone
     val df = session.table(sourceTable)
     val sourceSchema = df.schema
@@ -258,7 +265,7 @@ class PythonCommand(override val uid: String) extends SQLAlg with Functions with
 
         val batch = new ArrowPythonRunner(
           Seq(ChainedPythonFunctions(Seq(PythonFunction(
-            code, envs4j, "python", "3.6")))), sourceSchema,
+            code, envs4j, "python", pythonVersion)))), sourceSchema,
           timezoneID, runnerConf
         )
 

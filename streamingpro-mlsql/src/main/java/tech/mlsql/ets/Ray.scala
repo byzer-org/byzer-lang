@@ -8,13 +8,14 @@ import org.apache.spark.sql.catalyst.encoders.RowEncoder
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.mlsql.session.MLSQLException
 import org.apache.spark.sql.types.StructType
-import org.apache.spark.sql.{DataFrame, SparkSession, SparkUtils}
+import org.apache.spark.sql.{DataFrame, Row, SparkSession, SparkUtils}
 import org.apache.spark.{MLSQLSparkUtils, TaskContext}
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib._
 import streaming.dsl.mmlib.algs.Functions
 import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
 import tech.mlsql.arrow.python.PythonWorkerFactory
+import tech.mlsql.arrow.python.iapp.{AppContextImpl, JavaContext}
 import tech.mlsql.arrow.python.ispark.SparkContextImp
 import tech.mlsql.arrow.python.runner._
 import tech.mlsql.common.utils.distribute.socket.server.{ReportHostAndPort, SocketServerInExecutor}
@@ -57,9 +58,16 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
     val envSession = new SetSession(session, context.owner)
     val envs = Map(
       ScalaMethodMacros.str(PythonConf.PY_EXECUTE_USER) -> context.owner,
-      ScalaMethodMacros.str(PythonConf.PYTHON_ENV) -> "echo ok"
+      ScalaMethodMacros.str(PythonConf.PYTHON_ENV) -> "export ARROW_PRE_0_15_IPC_FORMAT=1"
     ) ++
-      envSession.fetchPythonEnv.get.collect().map(f => (f.k, f.v)).toMap
+      envSession.fetchPythonEnv.get.collect().map { f =>
+        if (f.k == ScalaMethodMacros.str(PythonConf.PYTHON_ENV)) {
+          (f.k, f.v + " && export ARROW_PRE_0_15_IPC_FORMAT=1")
+        } else {
+          (f.k, f.v)
+        }
+
+      }.toMap
 
     val runnerConf = getSchemaAndConf(envSession) ++ configureLogConf
     val timezoneID = session.sessionState.conf.sessionLocalTimeZone
@@ -120,35 +128,66 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
     if (clockTimes < 0) {
       throw new RuntimeException(s"fail to start data socket server. targetLen:${targetLen} actualLen:${refs.get().length}")
     }
-//    tempSocketServerInDriver.close
+    tempSocketServerInDriver.close
     val targetSchema = SparkSimpleSchemaParser.parse(runnerConf("schema")).asInstanceOf[StructType]
 
     try {
       import session.implicits._
+      val runIn = runnerConf.getOrElse("runIn", "executor")
+      val pythonVersion = runnerConf.getOrElse("pythonVersion", "3.6")
       val newdf = session.createDataset[DataServer](refs.get().map(f => DataServer(f.host, f.port, timezoneID))).repartition(1)
       val sourceSchema = newdf.schema
-      val data = newdf.toDF().rdd.mapPartitions { iter =>
-        val encoder = RowEncoder.apply(sourceSchema).resolveAndBind()
-        val envs4j = new util.HashMap[String, String]()
-        envs.foreach(f => envs4j.put(f._1, f._2))
+      runIn match {
+        case "executor" =>
+          val data = newdf.toDF().rdd.mapPartitions { iter =>
+            val encoder = RowEncoder.apply(sourceSchema).resolveAndBind()
+            val envs4j = new util.HashMap[String, String]()
+            envs.foreach(f => envs4j.put(f._1, f._2))
 
-        val batch = new ArrowPythonRunner(
-          Seq(ChainedPythonFunctions(Seq(PythonFunction(
-            code, envs4j, "python", "3.6")))), sourceSchema,
-          timezoneID, runnerConf
-        )
+            val batch = new ArrowPythonRunner(
+              Seq(ChainedPythonFunctions(Seq(PythonFunction(
+                code, envs4j, "python", pythonVersion)))), sourceSchema,
+              timezoneID, runnerConf
+            )
 
-        val newIter = iter.map { irow =>
-          encoder.toRow(irow)
-        }
-        val commonTaskContext = new SparkContextImp(TaskContext.get(), batch)
-        val columnarBatchIter = batch.compute(Iterator(newIter), TaskContext.getPartitionId(), commonTaskContext)
-        columnarBatchIter.flatMap { batch =>
-          batch.rowIterator.asScala
-        }
+            val newIter = iter.map { irow =>
+              encoder.toRow(irow)
+            }
+            val commonTaskContext = new SparkContextImp(TaskContext.get(), batch)
+            val columnarBatchIter = batch.compute(Iterator(newIter), TaskContext.getPartitionId(), commonTaskContext)
+            columnarBatchIter.flatMap { batch =>
+              batch.rowIterator.asScala
+            }
+          }
+
+          SparkUtils.internalCreateDataFrame(session, data, targetSchema, false)
+        case "driver" =>
+          val dataServers = refs.get().map(f => DataServer(f.host, f.port, timezoneID))
+          val encoder = RowEncoder.apply(sourceSchema).resolveAndBind()
+          val envs4j = new util.HashMap[String, String]()
+          envs.foreach(f => envs4j.put(f._1, f._2))
+
+          val batch = new ArrowPythonRunner(
+            Seq(ChainedPythonFunctions(Seq(PythonFunction(
+              code, envs4j, "python", pythonVersion)))), sourceSchema,
+            timezoneID, runnerConf
+          )
+
+          val newIter = dataServers.map { irow =>
+            encoder.toRow(Row.fromSeq(Seq(irow.host, irow.port, irow.timezone)))
+          }.iterator
+          val javaContext = new JavaContext()
+          val commonTaskContext = new AppContextImpl(javaContext, batch)
+          val columnarBatchIter = batch.compute(Iterator(newIter), 0, commonTaskContext)
+          val data = columnarBatchIter.flatMap { batch =>
+            batch.rowIterator.asScala.map(f => encoder.fromRow(f))
+          }.toSeq
+          javaContext.markComplete
+          javaContext.close
+          val rdd = session.sparkContext.makeRDD[Row](data)
+          session.createDataFrame(rdd, sourceSchema)
       }
 
-      SparkUtils.internalCreateDataFrame(session, data, targetSchema, false)
     } catch {
       case e: Exception =>
         recognizeError(e)
