@@ -6,8 +6,8 @@ import tech.mlsql.dsl.includes.PluginIncludeSource
 import tech.mlsql.ets._
 
 /**
-  * 2019-09-12 WilliamZhu(allwefantasy@gmail.com)
-  */
+ * 2019-09-12 WilliamZhu(allwefantasy@gmail.com)
+ */
 class PluginHook extends MLSQLPlatformLifecycle with Logging {
 
   override def beforeRuntime(params: Map[String, String]): Unit = {}
@@ -15,9 +15,20 @@ class PluginHook extends MLSQLPlatformLifecycle with Logging {
   override def afterRuntime(runtime: StreamingRuntime, params: Map[String, String]): Unit = {}
 
   override def beforeDispatcher(runtime: StreamingRuntime, params: Map[String, String]): Unit = {
+    // build-in plugins
+    params.getOrElse("streaming.plugin.buildin.loads.before", "").
+      split(",").filterNot(_.isEmpty).
+      foreach { beforeItem =>
+        AppRuntimeStore.store.registerLoadSave(AppRuntimeStore.LOAD_BEFORE_KEY, beforeItem)
+      }
+
+    params.getOrElse("streaming.plugin.buildin.loads.after", "tech.mlsql.plugin.load.DefaultLoaderPlugin").split(",").filterNot(_.isEmpty).
+      foreach { afterItem =>
+        AppRuntimeStore.store.registerLoadSave(AppRuntimeStore.LOAD_AFTER_KEY, afterItem)
+      }
+
     if (!params.contains("streaming.datalake.path")) return
     val spark = runtime.asInstanceOf[SparkRuntime].sparkSession
-
 
     import PluginCommand._
     import SchedulerCommand._

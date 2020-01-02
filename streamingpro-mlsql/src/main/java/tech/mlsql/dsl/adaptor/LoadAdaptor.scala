@@ -31,13 +31,14 @@ import streaming.source.parser.impl.JsonSourceParser
 import streaming.source.parser.{SourceParser, SourceSchema}
 import tech.mlsql.MLSQLEnvKey
 import tech.mlsql.dsl.auth.DatasourceAuth
+import tech.mlsql.runtime.AppRuntimeStore
 import tech.mlsql.sql.MLSQLSparkConf
 
 import scala.util.Try
 
 /**
-  * Created by allwefantasy on 27/8/2017.
-  */
+ * Created by allwefantasy on 27/8/2017.
+ */
 class LoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdaptor {
 
   def evaluate(value: String) = {
@@ -131,8 +132,11 @@ class LoadPRocessing(scriptSQLExecListener: ScriptSQLExecListener,
       }).get
     }
 
+    table = customRewrite(AppRuntimeStore.LOAD_BEFORE_KEY,table, dsConf, sourceInfo, ScriptSQLExec.context())
     // In order to control the access of columns, we should rewrite the final sql (conver * to specify column names)
-    table = rewriteOrNot(table, dsConf, sourceInfo, ScriptSQLExec.context())
+    table = authRewrite(table, dsConf, sourceInfo, ScriptSQLExec.context())
+    // finally use the  build-in or third-party plugins to rewrite the table.
+    table = customRewrite(AppRuntimeStore.LOAD_AFTER_KEY,table, dsConf, sourceInfo, ScriptSQLExec.context())
 
     def isStream = {
       scriptSQLExecListener.env().contains("streamName")
@@ -204,10 +208,10 @@ class LoadPRocessing(scriptSQLExecListener: ScriptSQLExecListener,
     table.createOrReplaceTempView(tableName)
   }
 
-  def rewriteOrNot(df: DataFrame,
-                   config: DataSourceConfig,
-                   sourceInfo: Option[SourceInfo],
-                   context: MLSQLExecuteContext): DataFrame = {
+  def authRewrite(df: DataFrame,
+                  config: DataSourceConfig,
+                  sourceInfo: Option[SourceInfo],
+                  context: MLSQLExecuteContext): DataFrame = {
     val rewrite = MLSQLSparkConf.runtimeLoadRewrite
 
     val implClass = MLSQLSparkConf.runtimeLoadRewriteImpl
@@ -221,6 +225,25 @@ class LoadPRocessing(scriptSQLExecListener: ScriptSQLExecListener,
     } else {
       df
     }
+  }
+
+  def customRewrite(orderKey: String, df: DataFrame,
+                    config: DataSourceConfig,
+                    sourceInfo: Option[SourceInfo],
+                    context: MLSQLExecuteContext) = {
+    var newDF = df
+    AppRuntimeStore.store.getLoadSave(orderKey) match {
+      case Some(item) =>
+
+        item.customClassItems.classNames.foreach { className =>
+          val instance = Class.forName(className)
+          newDF = instance.newInstance()
+            .asInstanceOf[RewriteableSource]
+            .rewrite(df, config, sourceInfo, context)
+        }
+      case None =>
+    }
+    newDF
   }
 }
 

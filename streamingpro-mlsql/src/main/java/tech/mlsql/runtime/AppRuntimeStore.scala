@@ -7,7 +7,9 @@ import tech.mlsql.runtime.kvstore.{InMemoryStore, KVIndex, KVStore}
 /**
  * 6/11/2019 WilliamZhu(allwefantasy@gmail.com)
  */
-class AppRuntimeStore(val store: KVStore, val listener: Option[AppSRuntimeListener] = None) extends ControllerRuntimeStore {
+class AppRuntimeStore(val store: KVStore, val listener: Option[AppSRuntimeListener] = None)
+  extends ControllerRuntimeStore
+    with LoadSaveRuntimeStore {
 
 }
 
@@ -34,9 +36,41 @@ trait ControllerRuntimeStore {
 
 }
 
+trait LoadSaveRuntimeStore {
+  self: AppRuntimeStore =>
+
+  def registerLoadSave(name: String, className: String) = {
+    val wrapper = getLoadSave(name) match {
+      case Some(item) =>
+        val customClassItems = item.customClassItems.copy(classNames = (item.customClassItems.classNames ++ Seq(className)))
+        item.copy(customClassItems = customClassItems)
+      case None =>
+        CustomClassItemListWrapper(CustomClassItemList(name, Seq(className)))
+    }
+    store.write(wrapper)
+  }
+
+  def removeLoadSave(name: String) = {
+    store.delete(classOf[CustomClassItemWrapper], name)
+  }
+
+  def getLoadSave(name: String): Option[CustomClassItemListWrapper] = {
+    try {
+      Some(store.read(classOf[CustomClassItemListWrapper], name))
+    } catch {
+      case e: NoSuchElementException =>
+        None
+      case e: Exception => throw e
+    }
+
+  }
+}
+
 object AppRuntimeStore {
   private val _store = new InMemoryStore()
   val store = new AppRuntimeStore(_store)
+  val LOAD_BEFORE_KEY = "load_before_key"
+  val LOAD_AFTER_KEY = "load_after_key"
 }
 
 class Jack extends CustomController {
@@ -54,3 +88,11 @@ case class CustomClassItemWrapper(customClassItem: CustomClassItem) {
 }
 
 case class CustomClassItem(@KVIndex name: String, className: String)
+
+case class CustomClassItemListWrapper(customClassItems: CustomClassItemList) {
+  @JsonIgnore
+  @KVIndex
+  def id = customClassItems.name
+}
+
+case class CustomClassItemList(@KVIndex name: String, classNames: Seq[String])

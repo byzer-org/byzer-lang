@@ -41,6 +41,20 @@
             <artifactId>spark-sql_${scala.binary.version}</artifactId>
             <version>${spark.version}</version>
             <scope>provided</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.arrow</groupId>
+                    <artifactId>arrow-vector</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.arrow</groupId>
+                    <artifactId>arrow-memory</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.arrow</groupId>
+                    <artifactId>arrow-format</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <dependency>
@@ -78,8 +92,8 @@
 
         <dependency>
             <groupId>tech.mlsql</groupId>
-            <artifactId>spark-binlog_${scala.binary.version}</artifactId>
-            <version>${spark-binlog-version}</version>
+            <artifactId>mysql-binlog_${scala.binary.version}</artifactId>
+            <version>${mysql-binlog-version}</version>
             <exclusions>
                 <exclusion>
                     <groupId>tech.mlsql</groupId>

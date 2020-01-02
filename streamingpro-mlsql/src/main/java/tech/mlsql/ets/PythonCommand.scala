@@ -11,7 +11,7 @@ import org.apache.spark.sql.mlsql.session.MLSQLException
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.{DataFrame, Row, SparkSession, SparkUtils}
 import org.apache.spark.util.{TaskCompletionListener, TaskFailureListener}
-import org.apache.spark.{MLSQLSparkUtils, SparkConf, TaskContext}
+import org.apache.spark.{MLSQLSparkUtils, TaskContext}
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.Functions
@@ -239,14 +239,21 @@ class PythonCommand(override val uid: String) extends SQLAlg with Functions with
     val envSession = new SetSession(session, context.owner)
     val envs = Map(
       ScalaMethodMacros.str(PythonConf.PY_EXECUTE_USER) -> context.owner,
-      ScalaMethodMacros.str(PythonConf.PYTHON_ENV) -> "echo ok"
+      ScalaMethodMacros.str(PythonConf.PYTHON_ENV) -> "export ARROW_PRE_0_15_IPC_FORMAT=1"
     ) ++
-      envSession.fetchPythonEnv.get.collect().map(f => (f.k, f.v)).toMap
+      envSession.fetchPythonEnv.get.collect().map { f =>
+        if (f.k == ScalaMethodMacros.str(PythonConf.PYTHON_ENV)) {
+          (f.k, f.v + " && export ARROW_PRE_0_15_IPC_FORMAT=1")
+        } else {
+          (f.k, f.v)
+        }
+
+      }.toMap
 
     val runnerConf = getSchemaAndConf(envSession) ++ configureLogConf
 
     val targetSchema = SparkSimpleSchemaParser.parse(runnerConf("schema")).asInstanceOf[StructType]
-
+    val pythonVersion = runnerConf.getOrElse("pythonVersion", "3.6")
     val timezoneID = session.sessionState.conf.sessionLocalTimeZone
     val df = session.table(sourceTable)
     val sourceSchema = df.schema
@@ -258,7 +265,7 @@ class PythonCommand(override val uid: String) extends SQLAlg with Functions with
 
         val batch = new ArrowPythonRunner(
           Seq(ChainedPythonFunctions(Seq(PythonFunction(
-            code, envs4j, "python", "3.6")))), sourceSchema,
+            code, envs4j, "python", pythonVersion)))), sourceSchema,
           timezoneID, runnerConf
         )
 
@@ -281,6 +288,12 @@ class PythonCommand(override val uid: String) extends SQLAlg with Functions with
 
   }
 
+  def isLocalMaster(conf: Map[String, String]): Boolean = {
+    //      val master = MLSQLConf.MLSQL_MASTER.readFrom(configReader).getOrElse("")
+    val master = conf.getOrElse("spark.master", "")
+    master == "local" || master.startsWith("local[")
+  }
+
   /**
    *
    * Here we should give mlsql log server information to the conf which
@@ -289,12 +302,16 @@ class PythonCommand(override val uid: String) extends SQLAlg with Functions with
   private def configureLogConf() = {
     val context = ScriptSQLExec.context()
     val conf = context.execListener.sparkSession.sqlContext.getAllConfs
+    val extraConfig = if (isLocalMaster(conf)) {
+      Map[String, String]()
+    } else {
+      Map(PythonWorkerFactory.Tool.REDIRECT_IMPL -> "tech.mlsql.log.RedirectStreamsToSocketServer")
+    }
     conf.filter(f => f._1.startsWith("spark.mlsql.log.driver")) ++
       Map(
-        //PythonWorkerFactory.Tool.REDIRECT_IMPL -> "tech.mlsql.log.RedirectStreamsToSocketServer",
         ScalaMethodMacros.str(PythonConf.PY_EXECUTE_USER) -> context.owner,
         "groupId" -> context.groupId
-      )
+      ) ++ extraConfig
   }
 
   private def recognizeError(e: Exception) = {
