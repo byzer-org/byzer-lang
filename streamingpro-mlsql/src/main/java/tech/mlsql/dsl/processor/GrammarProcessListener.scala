@@ -3,7 +3,7 @@ package tech.mlsql.dsl.processor
 import org.apache.spark.sql.SparkSession
 import streaming.dsl.ScriptSQLExecListener
 import streaming.dsl.parser.DSLSQLParser.SqlContext
-import tech.mlsql.dsl.adaptor.SelectGrammarAdaptor
+import tech.mlsql.dsl.adaptor.{LoadGrammarAdaptor, SelectGrammarAdaptor}
 
 /**
   * 2019-04-12 WilliamZhu(allwefantasy@gmail.com)
@@ -17,6 +17,8 @@ class GrammarProcessListener(val sqel: ScriptSQLExecListener, _sparkSession: Spa
     ctx.getChild(0).getText.toLowerCase() match {
       case "select" =>
         new SelectGrammarAdaptor(this).parse(ctx)
+      case "load" =>
+        new LoadGrammarAdaptor(this).parse(ctx)
       case _ =>
     }
   }
