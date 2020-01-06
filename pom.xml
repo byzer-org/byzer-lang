@@ -345,7 +345,6 @@
                 <module>streamingpro-spark-2.3.0-adaptor</module>
                 <module>streamingpro-dsl</module>
                 <module>streamingpro-mlsql</module>
-                <module>contri/streamingpro-xgboost</module>
             </modules>
             <dependencies>
                 <dependency>

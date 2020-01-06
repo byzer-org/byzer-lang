@@ -7,7 +7,7 @@ import java.util.concurrent.atomic.AtomicReference
 import org.apache.spark.sql.catalyst.encoders.RowEncoder
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.mlsql.session.MLSQLException
-import org.apache.spark.sql.types.StructType
+import org.apache.spark.sql.types.{IntegerType, LongType, StringType, StructField, StructType}
 import org.apache.spark.sql.{DataFrame, Row, SparkSession, SparkUtils}
 import org.apache.spark.{MLSQLSparkUtils, TaskContext}
 import streaming.dsl.ScriptSQLExec
@@ -73,7 +73,6 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
     val timezoneID = session.sessionState.conf.sessionLocalTimeZone
     val df = session.table(sourceTable)
 
-
     val refs = new AtomicReference[ArrayBuffer[ReportHostAndPort]]()
     refs.set(ArrayBuffer[ReportHostAndPort]())
     val stopFlag = new AtomicReference[String]()
@@ -130,6 +129,11 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
     }
     tempSocketServerInDriver.close
     val targetSchema = SparkSimpleSchemaParser.parse(runnerConf("schema")).asInstanceOf[StructType]
+    val dataModeSchema = StructType(Seq(StructField("host", StringType), StructField("port", LongType), StructField("server_id", StringType)))
+    val dataMode = runnerConf.getOrElse("dataMode", "model")
+
+    val stage1_schema  = if (dataMode=="data") dataModeSchema else targetSchema
+    val stage2_schema = targetSchema
 
     try {
       import session.implicits._
@@ -137,7 +141,7 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
       val pythonVersion = runnerConf.getOrElse("pythonVersion", "3.6")
       val newdf = session.createDataset[DataServer](refs.get().map(f => DataServer(f.host, f.port, timezoneID))).repartition(1)
       val sourceSchema = newdf.schema
-      runIn match {
+      val outputDF = runIn match {
         case "executor" =>
           val data = newdf.toDF().rdd.mapPartitions { iter =>
             val encoder = RowEncoder.apply(sourceSchema).resolveAndBind()
@@ -160,10 +164,11 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
             }
           }
 
-          SparkUtils.internalCreateDataFrame(session, data, targetSchema, false)
+          SparkUtils.internalCreateDataFrame(session, data, stage1_schema, false)
         case "driver" =>
           val dataServers = refs.get().map(f => DataServer(f.host, f.port, timezoneID))
           val encoder = RowEncoder.apply(sourceSchema).resolveAndBind()
+          val stage1_schema_encoder = RowEncoder.apply(stage1_schema).resolveAndBind()
           val envs4j = new util.HashMap[String, String]()
           envs.foreach(f => envs4j.put(f._1, f._2))
 
@@ -180,12 +185,29 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
           val commonTaskContext = new AppContextImpl(javaContext, batch)
           val columnarBatchIter = batch.compute(Iterator(newIter), 0, commonTaskContext)
           val data = columnarBatchIter.flatMap { batch =>
-            batch.rowIterator.asScala.map(f => encoder.fromRow(f))
-          }.toSeq
+            batch.rowIterator.asScala.map(f =>
+              stage1_schema_encoder.fromRow(f)
+            )
+          }.toList
           javaContext.markComplete
           javaContext.close
           val rdd = session.sparkContext.makeRDD[Row](data)
-          session.createDataFrame(rdd, sourceSchema)
+          session.createDataFrame(rdd, stage1_schema)
+      }
+
+      if (dataMode=="data") {
+        val rows = outputDF.collect()
+        val rdd = session.sparkContext.makeRDD[Row](rows)
+        val newRDD = rdd.repartition(rows.length).flatMap { row =>
+
+          val socketRunner = new SparkSocketRunner("arrow from python", NetUtils.getHost, timezoneID)
+          val commonTaskContext = new SparkContextImp(TaskContext.get(), null)
+          val iter = socketRunner.readFromStreamWithArrow(row.getAs[String]("host"), row.getAs[Long]("port").toInt, commonTaskContext)
+          iter
+        }
+        SparkUtils.internalCreateDataFrame(session, newRDD, stage2_schema, false)
+      } else {
+        outputDF
       }
 
     } catch {
