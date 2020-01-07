@@ -94,7 +94,7 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
           val host: String = if (MLSQLSparkUtils.rpcEnv().address == null) NetUtils.getHost
           else MLSQLSparkUtils.rpcEnv().address.host
 
-          val socketRunner = new SparkSocketRunner("wow", host, timezoneID)
+          val socketRunner = new SparkSocketRunner("serveToStreamWithArrow", host, timezoneID)
           val commonTaskContext = new SparkContextImp(TaskContext.get(), null)
           val enconder = RowEncoder.apply(dataSchema).resolveAndBind()
           val newIter = iter.map { irow =>
@@ -200,7 +200,7 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
         val rdd = session.sparkContext.makeRDD[Row](rows)
         val newRDD = rdd.repartition(rows.length).flatMap { row =>
 
-          val socketRunner = new SparkSocketRunner("arrow from python", NetUtils.getHost, timezoneID)
+          val socketRunner = new SparkSocketRunner("readFromStreamWithArrow", NetUtils.getHost, timezoneID)
           val commonTaskContext = new SparkContextImp(TaskContext.get(), null)
           val iter = socketRunner.readFromStreamWithArrow(row.getAs[String]("host"), row.getAs[Long]("port").toInt, commonTaskContext)
           iter
