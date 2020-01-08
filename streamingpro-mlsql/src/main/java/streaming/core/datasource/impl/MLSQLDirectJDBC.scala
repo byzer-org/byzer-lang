@@ -153,7 +153,7 @@ class MLSQLDirectJDBC extends MLSQLDirectSource with MLSQLDirectSink with MLSQLS
     val sql = params("directQuery")
     val dbType = params.getOrElse("dbType", JdbcConstants.MYSQL)
     // first, only select supports
-    if (!sql.trim.toLowerCase.startsWith("select ")) {
+    if (!sql.trim.toLowerCase.startsWith("select")) {
       throw new MLSQLException("JDBC direct query only support select statement")
     }
     logInfo("Auth direct query tables.... ")
