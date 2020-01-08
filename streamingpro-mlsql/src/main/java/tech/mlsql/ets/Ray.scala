@@ -7,7 +7,7 @@ import java.util.concurrent.atomic.AtomicReference
 import org.apache.spark.sql.catalyst.encoders.RowEncoder
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.mlsql.session.MLSQLException
-import org.apache.spark.sql.types.{IntegerType, LongType, StringType, StructField, StructType}
+import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Row, SparkSession, SparkUtils}
 import org.apache.spark.{MLSQLSparkUtils, TaskContext}
 import streaming.dsl.ScriptSQLExec
@@ -128,11 +128,29 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
       throw new RuntimeException(s"fail to start data socket server. targetLen:${targetLen} actualLen:${refs.get().length}")
     }
     tempSocketServerInDriver.close
-    val targetSchema = SparkSimpleSchemaParser.parse(runnerConf("schema")).asInstanceOf[StructType]
+
+    def isSchemaJson() = {
+      runnerConf("schema").trim.startsWith("{")
+    }
+
+    def isSimpleSchema() = {
+      runnerConf("schema").trim.startsWith("st")
+    }
+
+    val targetSchema = runnerConf("schema").trim match {
+      case item if item.startsWith("{") =>
+        DataType.fromJson(runnerConf("schema")).asInstanceOf[StructType]
+      case item if item.startsWith("st") =>
+        SparkSimpleSchemaParser.parse(runnerConf("schema")).asInstanceOf[StructType]
+      case _ =>
+        StructType.fromDDL(runnerConf("schema"))
+    }
+
+
     val dataModeSchema = StructType(Seq(StructField("host", StringType), StructField("port", LongType), StructField("server_id", StringType)))
     val dataMode = runnerConf.getOrElse("dataMode", "model")
 
-    val stage1_schema  = if (dataMode=="data") dataModeSchema else targetSchema
+    val stage1_schema = if (dataMode == "data") dataModeSchema else targetSchema
     val stage2_schema = targetSchema
 
     try {
@@ -195,7 +213,7 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
           session.createDataFrame(rdd, stage1_schema)
       }
 
-      if (dataMode=="data") {
+      if (dataMode == "data") {
         val rows = outputDF.collect()
         val rdd = session.sparkContext.makeRDD[Row](rows)
         val newRDD = rdd.repartition(rows.length).flatMap { row =>
