@@ -6,9 +6,10 @@ import java.util
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicReference}
 
 import org.apache.spark.internal.Logging
+import org.apache.spark.sql.Row
 import org.apache.spark.sql.catalyst.encoders.RowEncoder
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
-import org.apache.spark.{MLSQLSparkUtils, SparkEnv, TaskContext}
+import org.apache.spark.{SparkEnv, TaskContext}
 import tech.mlsql.arrow.python.iapp.{AppContextImpl, JavaContext}
 import tech.mlsql.arrow.python.runner.{ArrowPythonRunner, ChainedPythonFunctions, PythonFunction}
 import tech.mlsql.common.utils.distribute.socket.server.{Request, Response, SocketServerInExecutor, SocketServerSerDer}
@@ -19,8 +20,8 @@ import scala.collection.JavaConverters._
 import scala.collection.mutable.ArrayBuffer
 
 /**
-  * 2019-08-16 WilliamZhu(allwefantasy@gmail.com)
-  */
+ * 2019-08-16 WilliamZhu(allwefantasy@gmail.com)
+ */
 class PythonServer[T](taskContextRef: AtomicReference[T])
   extends SocketServerInExecutor[T](taskContextRef, "python-socket-server-in-executor")
     with Logging {
@@ -59,7 +60,7 @@ class PythonServer[T](taskContextRef: AtomicReference[T])
           val dataSchema = StructType(Seq(StructField("value", StringType)))
           val enconder = RowEncoder.apply(dataSchema).resolveAndBind()
 
-          val newIter = Seq().map { irow =>
+          val newIter = Seq[Row]().map { irow =>
             enconder.toRow(irow)
           }.iterator
           try {
@@ -74,7 +75,7 @@ class PythonServer[T](taskContextRef: AtomicReference[T])
             val items = columnarBatchIter.flatMap { batch =>
               batch.rowIterator.asScala
             }.map(f => f.copy().toSeq(outputSchema))
-            client.sendResponse(dOut, ExecuteResult(true, items.toSeq))
+            client.sendResponse(dOut, ExecuteResult(true, items.toList))
             javaConext.markComplete
             javaConext.close
           } catch {
