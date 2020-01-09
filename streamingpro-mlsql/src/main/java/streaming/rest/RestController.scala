@@ -40,6 +40,8 @@ import tech.mlsql.app.CustomController
 import tech.mlsql.common.utils.serder.json.JSONTool
 import tech.mlsql.job.{JobManager, MLSQLJobType}
 import tech.mlsql.runtime.AppRuntimeStore
+import tech.mlsql.runtime.plugins.exception_render.ExceptionRenderManager
+import tech.mlsql.runtime.plugins.request_cleaner.RequestCleanerManager
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable.ArrayBuffer
@@ -173,13 +175,10 @@ class RestController extends ApplicationController with WowLog {
 
     } catch {
       case e: Exception =>
-        e.printStackTrace()
-        val msgBuffer = ArrayBuffer[String]()
-        if (paramAsBoolean("show_stack", false)) {
-          format_full_exception(msgBuffer, e)
-        }
-        render(500, e.getMessage + "\n" + msgBuffer.mkString("\n"))
+        val msg = ExceptionRenderManager.call(e)
+        render(500, msg.str.get)
     } finally {
+      RequestCleanerManager.call()
       cleanActiveSessionInSpark
     }
     render(outputResult)
