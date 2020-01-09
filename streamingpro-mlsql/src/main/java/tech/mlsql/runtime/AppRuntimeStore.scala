@@ -9,7 +9,9 @@ import tech.mlsql.runtime.kvstore.{InMemoryStore, KVIndex, KVStore}
  */
 class AppRuntimeStore(val store: KVStore, val listener: Option[AppSRuntimeListener] = None)
   extends ControllerRuntimeStore
-    with LoadSaveRuntimeStore {
+    with LoadSaveRuntimeStore
+    with RequestCleanerRuntimeStore
+    with ExceptionRenderRuntimeStore {
 
 }
 
@@ -29,6 +31,56 @@ trait ControllerRuntimeStore {
     } catch {
       case e: NoSuchElementException =>
         None
+      case e: Exception => throw e
+    }
+
+  }
+
+}
+
+trait RequestCleanerRuntimeStore {
+  self: AppRuntimeStore =>
+  def registerRequestCleaner(name: String, className: String) = {
+    store.write(RequestCleanerItemWrapper(CustomClassItem(name, className)))
+  }
+
+  def removeRequestCleaner(name: String) = {
+    store.delete(classOf[RequestCleanerItemWrapper], name)
+  }
+
+  def getRequestCleaners(): List[RequestCleanerItemWrapper] = {
+    try {
+      import scala.collection.JavaConverters._
+      val items = store.view(classOf[RequestCleanerItemWrapper]).iterator().asScala.toList
+      items
+    } catch {
+      case e: NoSuchElementException =>
+        List()
+      case e: Exception => throw e
+    }
+
+  }
+
+}
+
+trait ExceptionRenderRuntimeStore {
+  self: AppRuntimeStore =>
+  def registerExceptionRender(name: String, className: String) = {
+    store.write(ExceptionRenderItemWrapper(CustomClassItem(name, className)))
+  }
+
+  def removeExceptionRender(name: String) = {
+    store.delete(classOf[ExceptionRenderItemWrapper], name)
+  }
+
+  def getExceptionRenders(): List[ExceptionRenderItemWrapper] = {
+    try {
+      import scala.collection.JavaConverters._
+      val items = store.view(classOf[ExceptionRenderItemWrapper]).iterator().asScala.toList
+      items
+    } catch {
+      case e: NoSuchElementException =>
+        List()
       case e: Exception => throw e
     }
 
@@ -82,6 +134,18 @@ class Jack extends CustomController {
 class AppSRuntimeListener {}
 
 case class CustomClassItemWrapper(customClassItem: CustomClassItem) {
+  @JsonIgnore
+  @KVIndex
+  def id = customClassItem.name
+}
+
+case class ExceptionRenderItemWrapper(customClassItem: CustomClassItem) {
+  @JsonIgnore
+  @KVIndex
+  def id = customClassItem.name
+}
+
+case class RequestCleanerItemWrapper(customClassItem: CustomClassItem) {
   @JsonIgnore
   @KVIndex
   def id = customClassItem.name
