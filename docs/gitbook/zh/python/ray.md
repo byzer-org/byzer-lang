@@ -1,15 +1,29 @@
 ## Ray支持
 
-MLSQL支持使用Ray来做数据处理和模型训练。
+MLSQL默认Python支持，是让Python进城和底层Spark引擎在同一个集群。比如可能是共享了Yarn集群，但是Python环境并不好管理，资源控制也会是个问题，总体而言，
+运维成本高，对Hadoop压力大，不支持GPU调度等相关功能。所以MLSQL在1.5.0版本对Ray做了支持。大家可以简单将Ray理解为一个分布式Python执行引擎。
 
-> 使用前，请确保在Ray的Python环境里安装了pyjava，同时也确保在MLSQL的driver以及executor端的Python环境里安装了pyjava.
 
-一个可选定安装环境的命令如下：
+## 环境配置
+
+MLSQL会启动一个Python Client去和Ray交互，所以你需要保证Python Client和Ray所处的Python环境是一致的。MLSQL为了简化环境，允许将client运行在
+Driver端，这样你只要配置一个Driver端的Python环境即可，可通过下面的命令设置：
 
 ```
-pip install aiohttp psutil setproctitle grpcio  pyarrow==0.12.0 ray pandas numpy
+!python conf "runIn=driver";
 ```
 
+接着，你需要在driver以及Ray上安装如下Python包：
+
+```
+pip install aiohttp psutil setproctitle grpcio  pyarrow==0.12.0 ray pandas numpy pyjava
+```
+
+如果你还需要用到一些其他的包，可以自行安装。
+
+## 数据处理
+
+这里，我们将Ray当做一个数据处理集群。比如针对表的每一行做处理。
 
 数据处理参考如下代码：
 
@@ -45,11 +59,19 @@ from pyjava.api.mlsql import RayContext
 
 ray_context = RayContext.connect(context,"192.168.31.80:10579")
 
+## 一条一条处理
 def echo(row):
     return row
 
-
 ray_context.setup(echo)
+ray_context.foreach(echo) # pyjava >= 0.2.6.1
+
+## 或者一个shard一个shard处理，pyjava >= 0.2.6.1
+def echo(rows):
+    for row in rows:
+        yield row
+
+ray_context.map_iter(echo) 
 
 
 ''' named mlsql_temp_table2;
@@ -94,8 +116,7 @@ import sys
 
 ray_context = RayContext.connect(context,"192.168.206.35:30312")
 
-
-
+## 这里你可以启动ray的一个task进行模型训练啥的
 @ray.remote
 @rayfix.last
 def echo(item):
@@ -103,7 +124,14 @@ def echo(item):
 echo_res = echo.remote("jack")
 print(ray.get(echo_res))
 
+## 下面是通过较为底层的API获取数据，用户可以使用ray的task并行完成：
 
+rows = []
+for shard in ray_context.data_servers():    
+    for item in ray_context.fetch_once_as_rows(shard):
+        rows.append(item)
+
+## 设置结果返回给系统
 context.set_output([[
 pd.Series([1, 2, 3, 4]),
 pd.Series([2.0, 3.0, 4.0, 5.0])
