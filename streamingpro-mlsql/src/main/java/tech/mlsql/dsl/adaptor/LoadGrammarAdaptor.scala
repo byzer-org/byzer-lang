@@ -12,22 +12,15 @@ class LoadGrammarAdaptor(grammarProcessListener: GrammarProcessListener) extends
     TemplateMerge.merge(value, grammarProcessListener.sqel.env().toMap)
   }
   override def parse(ctx: DSLSQLParser.SqlContext): Unit = {
-    var option = Map[String, String]()
-    (0 to ctx.getChildCount() - 1).foreach { tokenIndex =>
-      ctx.getChild(tokenIndex) match {
-        case s: ExpressionContext =>
-          option += (cleanStr(s.qualifiedName().getText) -> evaluate(getStrOrBlockStr(s)))
-        case _ =>
+    val loadStatement = new LoadAdaptor(grammarProcessListener).analyze(ctx)
+    if(loadStatement.format.toUpperCase == "JDBC" && loadStatement.option.getOrElse("directQuery","") != ""){
+      val repository = new SchemaRepository(loadStatement.option.getOrElse("dbType",JdbcConstants.MYSQL))
+      val directQuery = loadStatement.option.getOrElse("directQuery","")
+      try {
+        repository.console(directQuery)
+      } catch {
+        case e: Exception => {throw new RuntimeException("SQL syntax error, please check:"+directQuery)}
       }
     }
-    val dbType = option.getOrElse("dbType",JdbcConstants.MYSQL)
-    val directQuery = option.getOrElse("directQuery","select a from b")
-    val repository = new SchemaRepository(dbType)
-    try {
-      repository.console(directQuery)
-    } catch {
-      case e: Exception => {throw new RuntimeException("SQL syntax error, please check:"+directQuery)}
-    }
   }
-
 }
