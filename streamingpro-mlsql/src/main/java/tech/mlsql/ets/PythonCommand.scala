@@ -117,9 +117,16 @@ class PythonCommand(override val uid: String) extends SQLAlg with Functions with
       val envs = Map(
         ScalaMethodMacros.str(PythonConf.PY_EXECUTE_USER) -> context.owner,
         ScalaMethodMacros.str(PythonConf.PY_INTERACTIVE) -> "yes",
-        ScalaMethodMacros.str(PythonConf.PYTHON_ENV) -> ":"
+        ScalaMethodMacros.str(PythonConf.PYTHON_ENV) -> "export ARROW_PRE_0_15_IPC_FORMAT=1"
       ) ++
-        envSession.fetchPythonEnv.get.collect().map(f => (f.k, f.v)).toMap
+        envSession.fetchPythonEnv.get.collect().map { f =>
+          if (f.k == ScalaMethodMacros.str(PythonConf.PYTHON_ENV)) {
+            (f.k, f.v + " && export ARROW_PRE_0_15_IPC_FORMAT=1")
+          } else {
+            (f.k, f.v)
+          }
+
+        }.toMap
 
 
       def request = {

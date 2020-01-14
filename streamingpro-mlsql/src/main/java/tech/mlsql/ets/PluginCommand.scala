@@ -277,16 +277,12 @@ object PluginCommand {
 
   }
 
-  def removeDS(pluginName: String, className: String, commandName: Option[String], callback: () => Unit) = {
-    val dataSource = Class.forName(className).newInstance()
+  def removeDS(pluginName: String, fullFormat: String, shortFormat: Option[String], callback: () => Unit) = {
+    val dataSource = Class.forName(fullFormat).newInstance()
     if (dataSource.isInstanceOf[MLSQLRegistry]) {
       dataSource.asInstanceOf[MLSQLRegistry].unRegister()
     }
-    commandName match {
-      case Some(alisName) =>
-        callback()
-      case None =>
-    }
+    callback()
   }
 
   def registerDS(pluginName: String, className: String, commandName: Option[String], callback: () => Unit) = {

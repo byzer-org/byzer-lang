@@ -22,7 +22,7 @@
 ## 目录
 
 * 概要
-    * [MSLQL简介](getting_started/READEME.md)        
+    * [MLSQL简介](getting_started/READEME.md)        
 
 * 用户指南
     * [编译&运行&部署](installation/README.md)
@@ -79,9 +79,10 @@
        * [外置调度整合](scheduler/third_party_scheduler.md)
     * [如何缓存表](process/estimator_transformer/CacheExt.md)                                       
     * [Python支持](python/README.md)
-        * [Python环境](python/python-env.md)        
-        * [交互式Python](python/interactive.md)
         * [使用Python处理MLSQL中的表](python/table.md)
+        * [使用Ray](python/ray.md)
+        * [Python环境](python/python-env.md)        
+        * [交互式Python](python/interactive.md)        
         * [Python项目](python/project.md)                
         * [分布式运行Python项目](python/distribute-python.md)
         * [单实例运行Python项目](python/python.md)

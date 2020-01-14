@@ -1,7 +1,6 @@
 ## MLSQL
 
-MLSQL is a SQL-Based language, and it's also a distributed compute engine based on Spark. 
-The design goal of the MLSQL is to unify Big Data and Machine Learning, one language, one platform.
+MLSQL is a Programming Language Designed For Big Data and AI, and it also have a distributed runtime. 
 
 ## Official WebSite
 
@@ -16,8 +15,8 @@ Find more examples on [our user guide](http://docs.mlsql.tech/en).
 
 ## Get PreBuild Distribution
 
-* The lasted version is MLSQL v1.4.0
-* You can download from [MLSQL Website](http://download.mlsql.tech/)
+* The lasted version is MLSQL v1.5.0
+* You can download from [MLSQL Website](http://download.mlsql.tech/1.5.0/)
 * Spark 2.3.2/2.4.3 are tested
 
 
@@ -85,10 +84,5 @@ This guide document introduce [how to contribute to MLSQL](https://github.com/al
 [![HitCount](http://hits.dwyl.io/allwefantasy/streamingpro.svg)](http://hits.dwyl.io/allwefantasy/streamingpro)
 
 ----------
-
-## ChatRoom
-
-![](http://docs.mlsql.tech/upload_images/qq_small.png) 
-![](http://docs.mlsql.tech/upload_images/dingding_small.png)
 
 

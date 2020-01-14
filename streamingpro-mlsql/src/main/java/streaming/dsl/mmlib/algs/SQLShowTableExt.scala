@@ -4,15 +4,22 @@ import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.param.BaseParams
+import tech.mlsql.common.utils.serder.json.JSONTool
 
 /**
-  * 2019-04-11 WilliamZhu(allwefantasy@gmail.com)
-  */
+ * 2019-04-11 WilliamZhu(allwefantasy@gmail.com)
+ */
 class SQLShowTableExt(override val uid: String) extends SQLAlg with Functions with BaseParams {
   def this() = this(BaseParams.randomUID())
 
   override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
-    df.sparkSession.sql(s"desc ${path}")
+    import df.sparkSession.implicits._
+    val command = JSONTool.parseJson[List[String]](params("parameters")).toArray
+    command match {
+      case Array(tableName) => df.sparkSession.sql(s"desc ${tableName}")
+      case Array(tableName, "json") => df.sparkSession.createDataset[String](Seq(df.sparkSession.table(tableName).schema.json)).toDF("value")
+    }
+
   }
 
 
