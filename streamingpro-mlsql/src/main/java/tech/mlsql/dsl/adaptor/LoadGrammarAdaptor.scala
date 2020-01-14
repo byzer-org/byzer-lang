@@ -15,7 +15,7 @@ class LoadGrammarAdaptor(grammarProcessListener: GrammarProcessListener) extends
     val loadStatement = new LoadAdaptor(grammarProcessListener).analyze(ctx)
     if(loadStatement.format.toUpperCase == "JDBC" && loadStatement.option.getOrElse("directQuery","") != ""){
       val repository = new SchemaRepository(loadStatement.option.getOrElse("dbType",JdbcConstants.MYSQL))
-      val directQuery = loadStatement.option.getOrElse("directQuery","")
+      val directQuery = evaluate(loadStatement.option.getOrElse("directQuery",""))
       try {
         repository.console(directQuery)
       } catch {
