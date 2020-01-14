@@ -17,6 +17,8 @@ class GrammarProcessListener(val sqel: ScriptSQLExecListener, _sparkSession: Spa
     ctx.getChild(0).getText.toLowerCase() match {
       case "select" =>
         new SelectGrammarAdaptor(this).parse(ctx)
+      case "load" =>
+        new LoadGrammarAdaptor(this).parse(ctx)
       case _ =>
     }
   }
