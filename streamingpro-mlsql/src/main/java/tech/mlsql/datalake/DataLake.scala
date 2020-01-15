@@ -12,6 +12,14 @@ import tech.mlsql.common.utils.path.PathFun
  * 2019-08-31 WilliamZhu(allwefantasy@gmail.com)
  */
 class DataLake(sparkSession: SparkSession) {
+
+  val BUILD_IN_DB_PREFIX = "__instances__"
+
+  def appName = sparkSession.sparkContext.appName
+
+  def buildInDBs = Set("__mlsql__", "__tmp__")
+
+
   def isEnable = sparkSession.sessionState.conf.contains(DataLake.RUNTIME_KEY)
 
   def overwriteHive = sparkSession.sessionState.conf.getConfString(DataLake.DELTA_LAKE_OVERWRITE_HIVE, "false").toBoolean
@@ -21,7 +29,12 @@ class DataLake(sparkSession: SparkSession) {
   }
 
   def dbAndtableToPath(db: String, table: String) = {
-    PathFun(value).add(db).add(table).toPath
+    if (buildInDBs.contains(db)) {
+      PathFun(value).add(BUILD_IN_DB_PREFIX).add(appName).add(db).add(table).toPath
+    } else {
+      PathFun(value).add(db).add(table).toPath
+    }
+
   }
 
   def identifyToPath(dbAndTable: String) = {

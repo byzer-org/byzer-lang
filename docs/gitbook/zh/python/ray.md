@@ -180,3 +180,38 @@ ray的client跑在driver端：
 ```
 model表示模型训练，data表示数据处理。
 
+***注意***
+
+如果运行在notebook里，因为!ray代码执行完成显示结果后，再次调用引用会产生一些问题。
+
+大家可以安装如下插件：
+
+```
+!plugin et add tech.mlsql.plugins.et.SaveThenLoad "save-then-load" named saveThenLoad;
+```
+
+然后在在!ray代码加一行：
+
+```sql
+!ray on items '''
+from pyecharts.charts import Bar
+from pyjava.api.mlsql import RayContext
+import pandas as pd
+ray_context = RayContext.connect(context,"192.168.204.236:61833")
+rows = [row for row in ray_context.to_pandas().to_dict('records')]
+x = [row['x'] for row in rows]
+y = [row['y'] for row in rows]
+y_name="商家A"
+bar = Bar()
+bar.add_xaxis(x)
+bar.add_yaxis(y_name, y)
+html=bar.render_embed()
+df = pd.DataFrame({'content': [html]})
+data_manager.set_output([[df['content']]])
+'''
+named newitems;
+!saveThenLoad newitems;
+```
+
+后续你就可以多次调用newitems这个表而不会出错了。如果修改了pytho代码，重新运行前面的脚本即可。
+

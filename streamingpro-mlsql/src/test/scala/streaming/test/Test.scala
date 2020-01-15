@@ -2,10 +2,12 @@ package streaming.test
 
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.{Callable, Executors, Future}
+import java.util.concurrent.{Callable, ConcurrentHashMap, Executors, Future}
 
 import org.apache.http.client.fluent.{Form, Request}
 import org.apache.spark.internal.Logging
+import streaming.dsl.DBMappingKey
+import tech.mlsql.common.utils.lang.sc.ScalaReflect
 
 /**
   * 2019-03-05 WilliamZhu(allwefantasy@gmail.com)
@@ -129,5 +131,12 @@ object ProfileUtils extends Logging {
 
   def stdV[T: Numeric](xs: Iterable[T]): Double = {
     Math.sqrt(variance(xs))
+  }
+}
+
+object Wow {
+  def main(args: Array[String]): Unit = {
+    val dbmapping = ScalaReflect.fromObjectStr("streaming.dsl.ConnectMeta").field("dbMapping").invoke().asInstanceOf[ConcurrentHashMap[DBMappingKey, Map[String, String]]]
+    println(dbmapping)
   }
 }
