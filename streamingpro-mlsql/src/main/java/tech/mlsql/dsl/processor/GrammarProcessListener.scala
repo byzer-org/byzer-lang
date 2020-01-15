@@ -4,6 +4,7 @@ import org.apache.spark.sql.SparkSession
 import streaming.dsl.ScriptSQLExecListener
 import streaming.dsl.parser.DSLSQLParser.SqlContext
 import tech.mlsql.dsl.adaptor.SelectGrammarAdaptor
+import tech.mlsql.dsl.adaptor.LoadGrammarAdaptor
 
 /**
   * 2019-04-12 WilliamZhu(allwefantasy@gmail.com)
