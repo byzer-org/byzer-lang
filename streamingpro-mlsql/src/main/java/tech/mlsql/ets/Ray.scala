@@ -37,15 +37,25 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
 
   //
   override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
-
     val spark = df.sparkSession
+
+    def genCode(code: String) = {
+      if (code.startsWith("py.")) {
+        val content = spark.table(code.split("\\.").last).collect().head.getString(0)
+        print(content)
+        val value = JSONTool.parseJson[Map[String, String]](content)
+        value("content")
+      } else code
+    }
+
     val command = JSONTool.parseJson[List[String]](params("parameters")).toArray
     val newdf = command match {
       case Array("on", tableName, code) =>
-        distribute_execute(spark, code, tableName)
+
+        distribute_execute(spark, genCode(code), tableName)
 
       case Array("on", tableName, code, "named", targetTable) =>
-        val resDf = distribute_execute(spark, code, tableName)
+        val resDf = distribute_execute(spark, genCode(code), tableName)
         resDf.createOrReplaceTempView(targetTable)
         resDf
     }
@@ -282,8 +292,6 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
     }
     runnerConf
   }
-
- 
 
 
   override def supportedVersions: Seq[String] = {

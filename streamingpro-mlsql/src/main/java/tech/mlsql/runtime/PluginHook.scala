@@ -27,13 +27,15 @@ class PluginHook extends MLSQLPlatformLifecycle with Logging {
         AppRuntimeStore.store.registerLoadSave(AppRuntimeStore.LOAD_AFTER_KEY, afterItem)
       }
 
+    // build-in plugins
+    Class.forName("tech.mlsql.plugins.app.pythoncontroller.PythonApp").newInstance().asInstanceOf[tech.mlsql.app.App].run(Seq[String]())
+
     if (!params.contains("streaming.datalake.path")) return
     val spark = runtime.asInstanceOf[SparkRuntime].sparkSession
 
     import PluginCommand._
     import SchedulerCommand._
     import spark.implicits._
-
 
     val plugins = tryReadTable(spark, TABLE_PLUGINS, () => spark.createDataset[AddPlugin](Seq()).toDF())
     val ets = tryReadTable(spark, TABLE_ETRecord, () => spark.createDataset[ETRecord](Seq()).toDF())

@@ -413,7 +413,7 @@
                 <module>streamingpro-spark-2.4.0-adaptor</module>
                 <module>streamingpro-dsl</module>
                 <module>streamingpro-mlsql</module>
-                <module>contri/streamingpro-xgboost</module>
+                <module>external/python-controller</module>
             </modules>
             <dependencies>
                 <dependency>
