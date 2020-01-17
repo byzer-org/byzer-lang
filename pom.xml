@@ -62,13 +62,13 @@
         <guava.version>16.0</guava.version>
         <httpclient.version>4.5.3</httpclient.version>
 
-        <serviceframework.version>2.0.0</serviceframework.version>
+        <serviceframework.version>2.0.2</serviceframework.version>
         <scope>provided</scope>
         <hadoop-client-version>2.6.5</hadoop-client-version>
 
         <common-utils-version>0.2.1</common-utils-version>
         <mlsql-ps-service-version>1.3.5</mlsql-ps-service-version>
-        <pyjava-version>0.2.6</pyjava-version>
+        <pyjava-version>0.2.7</pyjava-version>
         <delta-plus-version>0.2.0</delta-plus-version>
         <mysql-binlog-version>1.0.0</mysql-binlog-version>
         <mlsql-scheduler-version>0.1.0</mlsql-scheduler-version>
@@ -354,7 +354,7 @@
                 </dependency>
                 <dependency>
                     <groupId>net.csdn</groupId>
-                    <artifactId>serviceframework-jetty-9-server</artifactId>
+                    <artifactId>serviceframework-jetty-9-server_${scala.binary.version}</artifactId>
                     <version>${serviceframework.version}</version>
                     <exclusions>
                         <!--<exclusion>-->

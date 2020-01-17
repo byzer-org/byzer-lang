@@ -77,7 +77,7 @@
         </dependency>
         <dependency>
             <groupId>net.csdn</groupId>
-            <artifactId>serviceframework-jetty-9-server</artifactId>
+            <artifactId>serviceframework-jetty-9-server_${scala.binary.version}</artifactId>
             <version>${serviceframework.version}</version>
         </dependency>
         <dependency>
