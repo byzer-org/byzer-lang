@@ -5,7 +5,6 @@ import java.nio.charset.Charset
 import java.util.UUID
 
 import org.apache.commons.io.FileUtils
-import org.apache.spark.sql.mlsql.session.MLSQLException
 import streaming.dsl.ScriptSQLExec
 import tech.mlsql.app.CustomController
 import tech.mlsql.arrow.python.PythonWorkerFactory
@@ -57,70 +56,20 @@ class PythonController extends CustomController {
       ScalaMethodMacros.str(PythonConf.PYTHON_ENV) -> "export ARROW_PRE_0_15_IPC_FORMAT=1"
     ) ++ pythonEnvs
 
-
     val scriptId = params("scriptId").toInt
-
+    val sql = params("sql")
 
     val runnerConf = getSchemaAndConf(envSession) ++ configureLogConf
     val runIn = runnerConf.getOrElse("runIn", "executor")
 
-    def runPython(item: String) = {
-      val uuid = UUID.randomUUID().toString
-
-      val pythonProjectCode = JSONTool.parseJson[List[FullPathAndScriptFile]](item)
-      var projectName = ""
-      pythonProjectCode.foreach { item =>
-        val home = PathFun("/tmp/__mlsql__").add(uuid)
-        val tempPath = item.path.split("/").drop(1)
-        projectName = tempPath.head
-        tempPath.dropRight(1).foreach(home.add(_))
-        val file = new File(home.toPath)
-        if (!file.exists()) {
-          file.mkdirs()
-        }
-        FileUtils.writeStringToFile(new File(home.add(item.scriptFile.name).toPath), item.scriptFile.content, Charset.forName("utf-8"))
-      }
-
-      val currentScript = pythonProjectCode.filter(_.scriptFile.id == scriptId).head
-      val scriptsInSamePackage = pythonProjectCode.filter(_.path.split("/").dropRight(1) == currentScript.path.split("/").dropRight(1))
-      var withM = ""
-      if (scriptsInSamePackage.size > 0 && scriptsInSamePackage.filter(_.path.endsWith("__init__.py")).size == 1) {
-        withM = " -m "
-      }
-
-      val pythonPackage = currentScript.path.split("/").drop(2).dropRight(1).mkString(".")
-      val executePythonPath = if (pythonPackage.isEmpty) {
-        currentScript.scriptFile.name
-      } else {
-        pythonPackage + "." + currentScript.scriptFile.name
-      }
-
-
-      try {
-        val projectPath = PathFun("/tmp/__mlsql__").add(uuid).add(projectName).toPath
-        val envCommand = envs.get(ScalaMethodMacros.str(PythonConf.PYTHON_ENV)).getOrElse("")
-        val command = Seq("bash", "-c", envCommand + s" && cd ${projectPath} &&  python ${withM} ${executePythonPath}")
-
-        val runner = new PythonProjectRunner(projectPath, envs)
-        val output = runner.run(command, Map("throwErr" -> "true"))
-        JSONTool.toJsonStr(output.toList)
-      } catch {
-        case e: PythonErrException => JSONTool.toJsonStr(e.getMessage.split("\n").toList)
-        case e: Exception =>
-          JSONTool.toJsonStr(e.getStackTrace.map(f => f.toString).toList)
-      } finally {
-        FileUtils.deleteQuietly(new File(PathFun("/tmp/__mlsql__").add(uuid).toPath))
-      }
-
-    }
 
     val res = runIn match {
       case "executor" =>
-        session.sparkContext.parallelize[String](Seq(params("sql")), 1).map { item =>
-          runPython(item)
+        session.sparkContext.parallelize[String](Seq(sql), 1).map { item =>
+          PyRunner.runPython(item, scriptId, envs)
         }.collect().head
       case "driver" =>
-        runPython(params("sql"))
+        PyRunner.runPython(sql, scriptId, envs)
     }
     res
 
@@ -143,26 +92,11 @@ class PythonController extends CustomController {
 
 
   def getSchemaAndConf(envSession: SetSession) = {
-    def error = {
-      throw new MLSQLException(
-        """
-          |Using `!python conf` to specify the python return value format is required.
-          |Do like following:
-          |
-          |```
-          |!python conf "schema=st(field(a,integer),field(b,integer))"
-          |```
-  """.stripMargin)
-    }
-
     val runnerConf = envSession.fetchPythonRunnerConf match {
       case Some(conf) =>
         val temp = conf.collect().map(f => (f.k, f.v)).toMap
-        if (!temp.contains("schema")) {
-          error
-        }
         temp
-      case None => error
+      case None => Map[String, String]()
     }
     runnerConf
   }
@@ -173,6 +107,62 @@ class PythonController extends CustomController {
     master == "local" || master.startsWith("local[")
   }
 
+}
+
+object PyRunner {
+  def runPython(item: String, scriptId: Int, envs: Map[String, String]) = {
+    val uuid = UUID.randomUUID().toString
+
+    val pythonProjectCode = JSONTool.parseJson[List[FullPathAndScriptFile]](item)
+    var projectName = ""
+    pythonProjectCode.foreach { item =>
+      val home = PathFun("/tmp/__mlsql__").add(uuid)
+      val tempPath = item.path.split("/").drop(1)
+      projectName = tempPath.head
+      tempPath.dropRight(1).foreach(home.add(_))
+      val file = new File(home.toPath)
+      if (!file.exists()) {
+        file.mkdirs()
+      }
+      FileUtils.writeStringToFile(new File(home.add(item.scriptFile.name).toPath), item.scriptFile.content, Charset.forName("utf-8"))
+    }
+
+    val currentScript = pythonProjectCode.filter(_.scriptFile.id == scriptId).head
+
+    var withM = ""
+    if (pythonProjectCode.size > 1) {
+      withM = " -m "
+    }
+
+    val pythonPackage = currentScript.path.split("/").drop(2).dropRight(1).mkString(".")
+    var executePythonPath = if (pythonPackage.isEmpty) {
+      currentScript.scriptFile.name
+    } else {
+      pythonPackage + "." + currentScript.scriptFile.name
+    }
+
+    if (!withM.isEmpty) {
+      executePythonPath = executePythonPath.split("\\.").dropRight(1).mkString(".")
+    }
+
+
+    try {
+      val projectPath = PathFun("/tmp/__mlsql__").add(uuid).add(projectName).toPath
+      val envCommand = envs.get(ScalaMethodMacros.str(PythonConf.PYTHON_ENV)).getOrElse("")
+      val command = Seq("bash", "-c", envCommand + s" && cd ${projectPath} &&  python ${withM} ${executePythonPath}")
+
+      val runner = new PythonProjectRunner(projectPath, envs)
+      val output = runner.run(command, Map("throwErr" -> "true"))
+      JSONTool.toJsonStr(output.toList)
+    } catch {
+      case e: PythonErrException => JSONTool.toJsonStr(e.getMessage.split("\n").toList)
+      case e: Exception =>
+        JSONTool.toJsonStr(e.getStackTrace.map(f => f.toString).toList)
+    } finally {
+      FileUtils.deleteQuietly(new File(PathFun("/tmp/__mlsql__").add(uuid).toPath))
+    }
+
+  }
 }
 
 case class FullPathAndScriptFile(path: String, scriptFile: quill_model.ScriptFile)
