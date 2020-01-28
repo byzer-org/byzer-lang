@@ -16,7 +16,7 @@
         <dependency>
             <groupId>tech.mlsql</groupId>
             <artifactId>streamingpro-mlsql-spark_${spark.bigversion}_${scala.binary.version}</artifactId>
-            <version>1.5.0</version>
+            <version>${project.version}</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>
