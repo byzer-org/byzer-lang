@@ -429,7 +429,7 @@
                 </dependency>
                 <dependency>
                     <groupId>net.csdn</groupId>
-                    <artifactId>serviceframework-jetty-9-server</artifactId>
+                    <artifactId>serviceframework-jetty-9-server_${scala.binary.version}</artifactId>
                     <version>${serviceframework.version}</version>
                     <exclusions>
                         <!--<exclusion>-->
@@ -496,7 +496,7 @@
             <dependencies>
                 <dependency>
                     <groupId>net.csdn</groupId>
-                    <artifactId>serviceframework-jetty-9-server</artifactId>
+                    <artifactId>serviceframework-jetty-9-server_${scala.binary.version}</artifactId>
                     <version>${serviceframework.version}</version>
                 </dependency>
             </dependencies>

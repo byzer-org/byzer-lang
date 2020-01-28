@@ -28,7 +28,14 @@ class PluginHook extends MLSQLPlatformLifecycle with Logging {
       }
 
     // build-in plugins
-    Class.forName("tech.mlsql.plugins.app.pythoncontroller.PythonApp").newInstance().asInstanceOf[tech.mlsql.app.App].run(Seq[String]())
+    try {
+      Class.forName("tech.mlsql.plugins.app.pythoncontroller.PythonApp").newInstance().
+        asInstanceOf[tech.mlsql.app.App].run(Seq[String]())
+    } catch {
+      case e: Exception =>
+        logInfo("Fail to start PythonApp plugin")
+    }
+
 
     if (!params.contains("streaming.datalake.path")) return
     val spark = runtime.asInstanceOf[SparkRuntime].sparkSession

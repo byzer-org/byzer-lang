@@ -14,6 +14,12 @@
     <dependencies>
         <dependency>
             <groupId>tech.mlsql</groupId>
+            <artifactId>python-controller-${spark.bigversion}_${scala.binary.version}</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        
+        <dependency>
+            <groupId>tech.mlsql</groupId>
             <artifactId>streamingpro-spark-common-2.4_${scala.binary.version}</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
