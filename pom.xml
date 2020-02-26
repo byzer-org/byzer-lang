@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>tech.mlsql</groupId>
-    <artifactId>streamingpro</artifactId>
+    <artifactId>streamingpro_2.11</artifactId>
     <packaging>pom</packaging>
     <version>1.6.0-SNAPSHOT</version>
 
