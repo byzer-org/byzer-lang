@@ -311,12 +311,44 @@
                         </exclusion>
                     </exclusions>
                 </dependency>
-                <!--<dependency>-->
-                <!--<groupId>com.intel.analytics.zoo</groupId>-->
-                <!--<artifactId>analytics-zoo-bigdl_0.6.0-spark_2.3.1</artifactId>-->
-                <!--<version>0.3.0</version>-->
-                <!--</dependency>-->
+                <dependency>
+                    <groupId>org.apache.spark</groupId>
+                    <artifactId>spark-streaming-kafka-0-8_${scala.binary.version}</artifactId>
+                    <version>${spark.version}</version>
+                    <exclusions>
+                        <exclusion>
+                            <groupId>org.apache.kafka</groupId>
+                            <artifactId>kafka-clients</artifactId>
+                        </exclusion>
+                    </exclusions>
+                </dependency>
+                <dependency>
+                    <groupId>com.databricks</groupId>
+                    <artifactId>spark-xml_${scala.binary.version}</artifactId>
+                    <version>0.4.1</version>
+                </dependency>
+                <dependency>
+                    <groupId>com.crealytics</groupId>
+                    <artifactId>spark-excel_${scala.binary.version}</artifactId>
+                    <version>0.11.1</version>
+                    <exclusions>
+                        <exclusion>
+                            <groupId>com.fasterxml.jackson.core</groupId>
+                            <artifactId>jackson-core</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>org.apache.commons</groupId>
+                            <artifactId>commons-compress</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>org.scala-lang</groupId>
+                            <artifactId>scala-library</artifactId>
+                        </exclusion>
+                    </exclusions>
+
+                </dependency>
             </dependencies>
+
         </profile>
 
         <profile>
@@ -342,11 +374,42 @@
                         </exclusion>
                     </exclusions>
                 </dependency>
-                <!--<dependency>-->
-                <!--<groupId>com.intel.analytics.zoo</groupId>-->
-                <!--<artifactId>analytics-zoo-bigdl_0.6.0-spark_2.3.1</artifactId>-->
-                <!--<version>0.3.0</version>-->
-                <!--</dependency>-->
+                <dependency>
+                    <groupId>org.apache.spark</groupId>
+                    <artifactId>spark-streaming-kafka-0-8_${scala.binary.version}</artifactId>
+                    <version>${spark.version}</version>
+                    <exclusions>
+                        <exclusion>
+                            <groupId>org.apache.kafka</groupId>
+                            <artifactId>kafka-clients</artifactId>
+                        </exclusion>
+                    </exclusions>
+                </dependency>
+                <dependency>
+                    <groupId>com.databricks</groupId>
+                    <artifactId>spark-xml_${scala.binary.version}</artifactId>
+                    <version>0.4.1</version>
+                </dependency>
+                <dependency>
+                    <groupId>com.crealytics</groupId>
+                    <artifactId>spark-excel_${scala.binary.version}</artifactId>
+                    <version>0.11.1</version>
+                    <exclusions>
+                        <exclusion>
+                            <groupId>com.fasterxml.jackson.core</groupId>
+                            <artifactId>jackson-core</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>org.apache.commons</groupId>
+                            <artifactId>commons-compress</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>org.scala-lang</groupId>
+                            <artifactId>scala-library</artifactId>
+                        </exclusion>
+                    </exclusions>
+
+                </dependency>
             </dependencies>
         </profile>
 
@@ -614,17 +677,7 @@
             </exclusions>
         </dependency>
 
-        <dependency>
-            <groupId>org.apache.spark</groupId>
-            <artifactId>spark-streaming-kafka-0-8_${scala.binary.version}</artifactId>
-            <version>${spark.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.apache.kafka</groupId>
-                    <artifactId>kafka-clients</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
+       
 
 
         <dependency>
@@ -633,11 +686,7 @@
             <version>${spark.version}</version>
         </dependency>
 
-        <dependency>
-            <groupId>com.databricks</groupId>
-            <artifactId>spark-xml_${scala.binary.version}</artifactId>
-            <version>0.4.1</version>
-        </dependency>
+        
 
         <dependency>
             <groupId>org.apache.hadoop</groupId>
@@ -695,26 +744,7 @@
                 </exclusion>
             </exclusions>
         </dependency>
-        <dependency>
-            <groupId>com.crealytics</groupId>
-            <artifactId>spark-excel_${scala.binary.version}</artifactId>
-            <version>0.11.1</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.fasterxml.jackson.core</groupId>
-                    <artifactId>jackson-core</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.apache.commons</groupId>
-                    <artifactId>commons-compress</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.scala-lang</groupId>
-                    <artifactId>scala-library</artifactId>
-                </exclusion>
-            </exclusions>
-
-        </dependency>
+        
         <dependency>
             <groupId>com.alibaba</groupId>
             <artifactId>druid</artifactId>
