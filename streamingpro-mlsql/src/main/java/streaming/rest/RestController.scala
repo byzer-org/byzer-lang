@@ -392,11 +392,7 @@ class RestController extends ApplicationController with WowLog {
   def pingExecuotrs = {
     runtime match {
       case sparkRuntime: SparkRuntime =>
-        val endpoint = if (sparkRuntime.sparkSession.sparkContext.isLocal) {
-          sparkRuntime.localSchedulerBackend.localEndpoint
-        } else {
-          sparkRuntime.psDriverBackend.psDriverRpcEndpointRef
-        }
+        val endpoint = sparkRuntime.psDriverBackend.psDriverRpcEndpointRef
         endpoint.ask(Message.Ping)
       case _ =>
         throw new RuntimeException(s"unsupport runtime ${runtime.getClass} !")

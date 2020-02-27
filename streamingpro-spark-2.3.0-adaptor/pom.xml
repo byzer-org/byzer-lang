@@ -24,12 +24,6 @@
         </dependency>
 
         <dependency>
-            <groupId>tech.mlsql</groupId>
-            <artifactId>mlsql-ps-service_2.3.2_${scala.binary.version}</artifactId>
-            <version>${mlsql-ps-service-version}</version>
-        </dependency>
-
-        <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-core_${scala.binary.version}</artifactId>
             <version>${spark.version}</version>

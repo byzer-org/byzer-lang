@@ -7,22 +7,6 @@ import org.apache.spark.MLSQLConf
   */
 object MLSQLMessage {
 
-  val MLSQL_CLUSTER_PS_ENABLE_NOTICE =
-    s"""
-       |------------------------------------------------------------------------
-       |MLSQL detects that ${MLSQLConf.MLSQL_CLUSTER_PS_ENABLE.key} is enabled.
-       |
-             |Please make sure
-       |1. you have placed mlsql-ps-service_x.x.x_2.11-x.x.x.jar  in SPARK_HOME/jars
-       |
-             |You can download the jar from http://download.mlsql.tech/1.4.0-SNAPSHOT/mlsql-ps-services/.
-       |Please choose the right version.
-       |
-             |Otherwise the executor will fail to start and the whole application will fails.
-       |------------------------------------------------------------------------
-          """.stripMargin
-
-
   val PYTHON_REQUEIRE_MLSQL_CLUSTER_PS_ENABLE =
     s"""
        |[Warning]

@@ -22,13 +22,11 @@ import java.lang.reflect.Modifier
 import java.util.concurrent.atomic.AtomicReference
 import java.util.{UUID, Map => JMap}
 
-import _root_.streaming.core.message.MLSQLMessage
 import _root_.streaming.core.stream.MLSQLStreamManager
 import _root_.streaming.dsl.mmlib.algs.bigdl.WowLoggerFilter
 import net.csdn.common.reflect.ReflectHelper
 import org.apache.spark._
 import org.apache.spark.ps.cluster.PSDriverBackend
-import org.apache.spark.ps.local.LocalPSSchedulerBackend
 import org.apache.spark.sql.jdbc.{JdbcDialect, JdbcDialects}
 import org.apache.spark.sql.mlsql.session.{SessionIdentifier, SessionManager}
 import org.apache.spark.sql.{MLSQLUtils, SQLContext, SparkSession}
@@ -45,8 +43,8 @@ import scala.collection.JavaConverters._
 import scala.collection.mutable.ArrayBuffer
 
 /**
-  * Created by allwefantasy on 30/3/2017.
-  */
+ * Created by allwefantasy on 30/3/2017.
+ */
 class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with PlatformManagerListener with Logging {
 
   val configReader = MLSQLConf.createConfigReader(params.map(f => (f._1.toString, f._2.toString)))
@@ -55,7 +53,6 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
 
   registerJdbcDialect(HiveJdbcDialect)
   val lifeCyleCallback = ArrayBuffer[MLSQLRuntimeLifecycle](new AsSchedulerService())
-  var localSchedulerBackend: LocalPSSchedulerBackend = null
   var psDriverBackend: PSDriverBackend = null
 
   var sparkSession: SparkSession = createRuntime
@@ -94,12 +91,6 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
 
     conf.setAppName(MLSQLConf.MLSQL_NAME.readFrom(configReader))
 
-    def isLocalMaster(conf: SparkConf): Boolean = {
-      //      val master = MLSQLConf.MLSQL_MASTER.readFrom(configReader).getOrElse("")
-      val master = conf.get("spark.master", "")
-      master == "local" || master.startsWith("local[")
-    }
-
     if (MLSQLConf.MLSQL_BIGDL_ENABLE.readFrom(configReader)) {
       conf.setIfMissing("spark.shuffle.reduceLocality.enabled", "false")
       conf.setIfMissing("spark.shuffle.blockTransferService", "nio")
@@ -107,11 +98,10 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
       conf.setIfMissing("spark.speculation", "false")
     }
 
-    if (MLSQLConf.MLSQL_CLUSTER_PS_ENABLE.readFrom(configReader) && !isLocalMaster(conf)) {
-      logWarning(MLSQLMessage.MLSQL_CLUSTER_PS_ENABLE_NOTICE)
-      logInfo("register worker.sink.pservice.class with org.apache.spark.ps.cluster.PSServiceSink")
+    if (MLSQLConf.MLSQL_CLUSTER_PS_ENABLE.readFrom(configReader)) {
+      logInfo("MLSQL ps cluster is enabled.")
       conf.set("spark.network.timeout", MLSQLConf.MLSQL_PS_NETWORK_TIMEOUT.readFrom(configReader) + "s")
-      conf.set("spark.metrics.conf.executor.sink.pservice.class", "org.apache.spark.ps.cluster.PSServiceSink")
+      conf.set("spark.executor.plugins", "org.apache.spark.ps.cluster.PSExecutorPlugin")
 
 
       val port = NetUtils.availableAndReturn(MLSQLUtils.localCanonicalHostName, 7778, 7999)
@@ -123,8 +113,8 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
     }
 
     /**
-      * start a log server ,so the executor can send log to driver and the driver will log them into log files.
-      */
+     * start a log server ,so the executor can send log to driver and the driver will log them into log files.
+     */
     if (MLSQLConf.MLSQL_SPARK_SERVICE.readFrom(configReader) ||
       params.getOrDefault("streaming.unittest", "false").toString.toBoolean) {
       val token = UUID.randomUUID().toString
@@ -157,32 +147,13 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
       sparkSession.enableHiveSupport()
     }
 
-    val checkCarbonDataCoreCompatibility = CarbonCoreVersion.coreCompatibility(SparkCoreVersion.version, SparkCoreVersion.exactVersion)
-    val isCarbonDataEnabled = MLSQLConf.MLSQL_ENABLE_CARBONDATA_SUPPORT.readFrom(configReader) && checkCarbonDataCoreCompatibility
-
-    if (!checkCarbonDataCoreCompatibility) {
-      logWarning(s"------- CarbonData do not support current version of spark [${SparkCoreVersion.exactVersion}], streaming.enableCarbonDataSupport will not take effect.--------")
+    if (MLSQLConf.MLSQL_DEPLOY_REST_API.readFrom(configReader)) {
+      conf.setIfMissing("spark.default.parallelism", "1")
+        .setIfMissing("spark.sql.shuffle.partitions", "1")
+      val wfsc = new WowFastSparkContext(conf)
+      ReflectHelper.method(sparkSession, "sparkContext", wfsc)
     }
-
-    val ss = if (isCarbonDataEnabled) {
-
-      logInfo("CarbonData enabled...")
-      setHiveConnectionURL
-      val carbonBuilder = Class.forName("org.apache.spark.sql.CarbonSession$CarbonBuilder").
-        getConstructor(classOf[SparkSession.Builder]).
-        newInstance(sparkSession)
-      Class.forName("org.apache.spark.sql.CarbonSession$CarbonBuilder").
-        getMethod("getOrCreateCarbonSession", classOf[String], classOf[String]).
-        invoke(carbonBuilder, params("streaming.carbondata.store").toString, params("streaming.carbondata.meta").toString).asInstanceOf[SparkSession]
-    } else {
-      if (MLSQLConf.MLSQL_DEPLOY_REST_API.readFrom(configReader)) {
-        conf.setIfMissing("spark.default.parallelism", "1")
-          .setIfMissing("spark.sql.shuffle.partitions", "1")
-        val wfsc = new WowFastSparkContext(conf)
-        ReflectHelper.method(sparkSession, "sparkContext", wfsc)
-      }
-      sparkSession.getOrCreate()
-    }
+    val ss = sparkSession.getOrCreate()
 
     lifeCyleCallback.foreach { callback =>
       callback.afterRuntimeStarted(params.map(f => (f._1.toString, f._2.toString)).toMap, conf, ss)
@@ -192,15 +163,7 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
       JobManager.init(ss)
     }
 
-    // parameter server should be enabled by default
-
-    if (MLSQLConf.MLSQL_LOCAL_PS_ENABLE.readFrom(configReader) && isLocalMaster(conf)) {
-      logInfo("start LocalPSSchedulerBackend")
-      localSchedulerBackend = new LocalPSSchedulerBackend(ss.sparkContext)
-      localSchedulerBackend.start()
-    }
-
-    if (MLSQLConf.MLSQL_CLUSTER_PS_ENABLE.readFrom(configReader) && !isLocalMaster(conf)) {
+    if (MLSQLConf.MLSQL_CLUSTER_PS_ENABLE.readFrom(configReader)) {
       logInfo("start PSDriverBackend")
       psDriverBackend = new PSDriverBackend(ss.sparkContext)
       psDriverBackend.start()
@@ -317,15 +280,15 @@ object SparkRuntime {
   private val INSTANTIATION_LOCK = new Object()
 
   /**
-    * Reference to the last created SQLContext.
-    */
+   * Reference to the last created SQLContext.
+   */
   @transient private val lastInstantiatedContext = new AtomicReference[SparkRuntime]()
 
   /**
-    * Get the singleton SQLContext if it exists or create a new one using the given SparkContext.
-    * This function can be used to create a singleton SQLContext object that can be shared across
-    * the JVM.
-    */
+   * Get the singleton SQLContext if it exists or create a new one using the given SparkContext.
+   * This function can be used to create a singleton SQLContext object that can be shared across
+   * the JVM.
+   */
   def getOrCreate(params: JMap[Any, Any]): SparkRuntime = {
     INSTANTIATION_LOCK.synchronized {
       if (lastInstantiatedContext.get() == null) {
