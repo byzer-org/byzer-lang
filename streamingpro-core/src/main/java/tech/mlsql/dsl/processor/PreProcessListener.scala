@@ -2,16 +2,16 @@ package tech.mlsql.dsl.processor
 
 import streaming.dsl.ScriptSQLExecListener
 import streaming.dsl.parser.DSLSQLParser.SqlContext
-import streaming.parser.lisener.BaseParseListenerextends
+import streaming.parser.lisener.BaseParseListener
 import tech.mlsql.dsl.adaptor.{CommandAdaptor, SetAdaptor, SingleStatement, StatementAdaptor}
 import tech.mlsql.{MLSQLEnvKey, Stage}
 
 import scala.collection.mutable.ArrayBuffer
 
 /**
-  * 2019-04-11 WilliamZhu(allwefantasy@gmail.com)
-  */
-class PreProcessListener(val scriptSQLExecListener: ScriptSQLExecListener) extends BaseParseListenerextends {
+ * 2019-04-11 WilliamZhu(allwefantasy@gmail.com)
+ */
+class PreProcessListener(val scriptSQLExecListener: ScriptSQLExecListener) extends BaseParseListener {
 
   private val _statements = new ArrayBuffer[String]()
   private val _singleStatements = new ArrayBuffer[SingleStatement]()

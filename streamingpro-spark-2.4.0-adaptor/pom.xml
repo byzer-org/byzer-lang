@@ -12,11 +12,6 @@
     <artifactId>streamingpro-spark-2.4.0-adaptor_${scala.binary.version}</artifactId>
 
     <dependencies>
-        <dependency>
-            <groupId>tech.mlsql</groupId>
-            <artifactId>python-controller-${spark.bigversion}_${scala.binary.version}</artifactId>
-            <version>${project.parent.version}</version>
-        </dependency>
         
         <dependency>
             <groupId>tech.mlsql</groupId>
@@ -29,13 +24,7 @@
             <artifactId>streamingpro-common-2.4_${scala.binary.version}</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
-
-        <dependency>
-            <groupId>org.apache.spark</groupId>
-            <artifactId>spark-core_${scala.binary.version}</artifactId>
-            <version>${spark.version}</version>
-            <scope>provided</scope>
-        </dependency>
+        
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-sql_${scala.binary.version}</artifactId>

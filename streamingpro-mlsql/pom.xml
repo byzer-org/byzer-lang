@@ -72,91 +72,91 @@
             </build>
         </profile>
 
-<!--        <profile>-->
-<!--            <id>carbondata</id>-->
-<!--            <dependencies>-->
-<!--                <dependency>-->
-<!--                    <groupId>org.apache.carbondata</groupId>-->
-<!--                    <artifactId>carbondata-spark2</artifactId>-->
-<!--                    <version>1.5.2</version>-->
-<!--                    <exclusions>-->
-<!--                        <exclusion>-->
-<!--                            <groupId>org.apache.spark</groupId>-->
-<!--                            <artifactId>spark-repl_${scala.binary.version}</artifactId>-->
-<!--                        </exclusion>-->
-<!--                        <exclusion>-->
-<!--                            <groupId>org.apache.spark</groupId>-->
-<!--                            <artifactId>spark-repl_${scala.binary.version}</artifactId>-->
-<!--                        </exclusion>-->
-<!--                        <exclusion>-->
-<!--                            <groupId>org.apache.spark</groupId>-->
-<!--                            <artifactId>spark-sql_${scala.binary.version}</artifactId>-->
-<!--                        </exclusion>-->
-<!--                        <exclusion>-->
-<!--                            <groupId>org.apache.spark</groupId>-->
-<!--                            <artifactId>spark-hive-thriftserver_${scala.binary.version}</artifactId>-->
-<!--                        </exclusion>-->
-<!--                        <exclusion>-->
-<!--                            <groupId>org.apache.spark</groupId>-->
-<!--                            <artifactId>spark-core_${scala.binary.version}</artifactId>-->
-<!--                        </exclusion>-->
-<!--                        <exclusion>-->
-<!--                            <groupId>org.apache.spark</groupId>-->
-<!--                            <artifactId>spark-streaming_${scala.binary.version}</artifactId>-->
-<!--                        </exclusion>-->
-<!--                        <exclusion>-->
-<!--                            <groupId>org.apache.spark</groupId>-->
-<!--                            <artifactId>spark-sql-kafka-0-10_${scala.binary.version}</artifactId>-->
-<!--                        </exclusion>-->
-<!--                        <exclusion>-->
-<!--                            <groupId>org.apache.spark</groupId>-->
-<!--                            <artifactId>spark-core_${scala.binary.version}</artifactId>-->
-<!--                        </exclusion>-->
-<!--                        <exclusion>-->
-<!--                            <groupId>net.java.dev.jets3t</groupId>-->
-<!--                            <artifactId>jets3t</artifactId>-->
-<!--                        </exclusion>-->
-<!--                        <exclusion>-->
-<!--                            <groupId>net.java.dev.jets3t</groupId>-->
-<!--                            <artifactId>jets3t</artifactId>-->
-<!--                        </exclusion>-->
-<!--                        <exclusion>-->
-<!--                            <groupId>org.apache.avro</groupId>-->
-<!--                            <artifactId>avro</artifactId>-->
-<!--                        </exclusion>-->
-<!--                        <exclusion>-->
-<!--                            <groupId>org.apache.httpcomponents</groupId>-->
-<!--                            <artifactId>httpclient</artifactId>-->
-<!--                        </exclusion>-->
-<!--                        <exclusion>-->
-<!--                            <groupId>com.google.guava</groupId>-->
-<!--                            <artifactId>guava</artifactId>-->
-<!--                        </exclusion>-->
-<!--                        <exclusion>-->
-<!--                            <groupId>org.apache.hadoop</groupId>-->
-<!--                            <artifactId>hadoop-client</artifactId>-->
-<!--                        </exclusion>-->
-<!--                        <exclusion>-->
-<!--                            <groupId>org.apache.hadoop</groupId>-->
-<!--                            <artifactId>hadoop-common</artifactId>-->
-<!--                        </exclusion>-->
-<!--                        <exclusion>-->
-<!--                            <groupId>org.apache.hadoop</groupId>-->
-<!--                            <artifactId>hadoop-aws</artifactId>-->
-<!--                        </exclusion>-->
-<!--                        <exclusion>-->
-<!--                            <groupId>org.apache.hadoop</groupId>-->
-<!--                            <artifactId>hadoop-hdfs</artifactId>-->
-<!--                        </exclusion>-->
-<!--                        <exclusion>-->
-<!--                            <groupId>io.netty</groupId>-->
-<!--                            <artifactId>netty-all</artifactId>-->
-<!--                        </exclusion>-->
+        <!--        <profile>-->
+        <!--            <id>carbondata</id>-->
+        <!--            <dependencies>-->
+        <!--                <dependency>-->
+        <!--                    <groupId>org.apache.carbondata</groupId>-->
+        <!--                    <artifactId>carbondata-spark2</artifactId>-->
+        <!--                    <version>1.5.2</version>-->
+        <!--                    <exclusions>-->
+        <!--                        <exclusion>-->
+        <!--                            <groupId>org.apache.spark</groupId>-->
+        <!--                            <artifactId>spark-repl_${scala.binary.version}</artifactId>-->
+        <!--                        </exclusion>-->
+        <!--                        <exclusion>-->
+        <!--                            <groupId>org.apache.spark</groupId>-->
+        <!--                            <artifactId>spark-repl_${scala.binary.version}</artifactId>-->
+        <!--                        </exclusion>-->
+        <!--                        <exclusion>-->
+        <!--                            <groupId>org.apache.spark</groupId>-->
+        <!--                            <artifactId>spark-sql_${scala.binary.version}</artifactId>-->
+        <!--                        </exclusion>-->
+        <!--                        <exclusion>-->
+        <!--                            <groupId>org.apache.spark</groupId>-->
+        <!--                            <artifactId>spark-hive-thriftserver_${scala.binary.version}</artifactId>-->
+        <!--                        </exclusion>-->
+        <!--                        <exclusion>-->
+        <!--                            <groupId>org.apache.spark</groupId>-->
+        <!--                            <artifactId>spark-core_${scala.binary.version}</artifactId>-->
+        <!--                        </exclusion>-->
+        <!--                        <exclusion>-->
+        <!--                            <groupId>org.apache.spark</groupId>-->
+        <!--                            <artifactId>spark-streaming_${scala.binary.version}</artifactId>-->
+        <!--                        </exclusion>-->
+        <!--                        <exclusion>-->
+        <!--                            <groupId>org.apache.spark</groupId>-->
+        <!--                            <artifactId>spark-sql-kafka-0-10_${scala.binary.version}</artifactId>-->
+        <!--                        </exclusion>-->
+        <!--                        <exclusion>-->
+        <!--                            <groupId>org.apache.spark</groupId>-->
+        <!--                            <artifactId>spark-core_${scala.binary.version}</artifactId>-->
+        <!--                        </exclusion>-->
+        <!--                        <exclusion>-->
+        <!--                            <groupId>net.java.dev.jets3t</groupId>-->
+        <!--                            <artifactId>jets3t</artifactId>-->
+        <!--                        </exclusion>-->
+        <!--                        <exclusion>-->
+        <!--                            <groupId>net.java.dev.jets3t</groupId>-->
+        <!--                            <artifactId>jets3t</artifactId>-->
+        <!--                        </exclusion>-->
+        <!--                        <exclusion>-->
+        <!--                            <groupId>org.apache.avro</groupId>-->
+        <!--                            <artifactId>avro</artifactId>-->
+        <!--                        </exclusion>-->
+        <!--                        <exclusion>-->
+        <!--                            <groupId>org.apache.httpcomponents</groupId>-->
+        <!--                            <artifactId>httpclient</artifactId>-->
+        <!--                        </exclusion>-->
+        <!--                        <exclusion>-->
+        <!--                            <groupId>com.google.guava</groupId>-->
+        <!--                            <artifactId>guava</artifactId>-->
+        <!--                        </exclusion>-->
+        <!--                        <exclusion>-->
+        <!--                            <groupId>org.apache.hadoop</groupId>-->
+        <!--                            <artifactId>hadoop-client</artifactId>-->
+        <!--                        </exclusion>-->
+        <!--                        <exclusion>-->
+        <!--                            <groupId>org.apache.hadoop</groupId>-->
+        <!--                            <artifactId>hadoop-common</artifactId>-->
+        <!--                        </exclusion>-->
+        <!--                        <exclusion>-->
+        <!--                            <groupId>org.apache.hadoop</groupId>-->
+        <!--                            <artifactId>hadoop-aws</artifactId>-->
+        <!--                        </exclusion>-->
+        <!--                        <exclusion>-->
+        <!--                            <groupId>org.apache.hadoop</groupId>-->
+        <!--                            <artifactId>hadoop-hdfs</artifactId>-->
+        <!--                        </exclusion>-->
+        <!--                        <exclusion>-->
+        <!--                            <groupId>io.netty</groupId>-->
+        <!--                            <artifactId>netty-all</artifactId>-->
+        <!--                        </exclusion>-->
 
-<!--                    </exclusions>-->
-<!--                </dependency>-->
-<!--            </dependencies>-->
-<!--        </profile>-->
+        <!--                    </exclusions>-->
+        <!--                </dependency>-->
+        <!--            </dependencies>-->
+        <!--        </profile>-->
 
         <profile>
             <id>unit-test</id>
@@ -476,17 +476,11 @@
         </profile>
     </profiles>
     <dependencies>
-        
+
         <dependency>
             <groupId>tech.mlsql</groupId>
-            <artifactId>pyjava-${spark.bigversion}_${scala.binary.version}</artifactId>
-            <version>${pyjava-version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>tech.mlsql</groupId>
-                    <artifactId>common-utils_${scala.binary.version}</artifactId>
-                </exclusion>
-            </exclusions>
+            <artifactId>python-controller-${spark.bigversion}_${scala.binary.version}</artifactId>
+            <version>${project.parent.version}</version>
         </dependency>
 
         <dependency>
@@ -556,7 +550,7 @@
 
         <dependency>
             <groupId>tech.mlsql</groupId>
-            <artifactId>streamingpro-api-${spark.bigversion}_${scala.binary.version}</artifactId>
+            <artifactId>streamingpro-core-${spark.bigversion}_${scala.binary.version}</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
 
@@ -677,8 +671,6 @@
             </exclusions>
         </dependency>
 
-       
-
 
         <dependency>
             <groupId>org.apache.spark</groupId>
@@ -686,7 +678,6 @@
             <version>${spark.version}</version>
         </dependency>
 
-        
 
         <dependency>
             <groupId>org.apache.hadoop</groupId>
@@ -743,12 +734,6 @@
                     <artifactId>netty</artifactId>
                 </exclusion>
             </exclusions>
-        </dependency>
-        
-        <dependency>
-            <groupId>com.alibaba</groupId>
-            <artifactId>druid</artifactId>
-            <version>1.1.16</version>
         </dependency>
 
 

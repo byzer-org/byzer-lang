@@ -15,10 +15,56 @@
     <dependencies>
         <dependency>
             <groupId>tech.mlsql</groupId>
-            <artifactId>streamingpro-mlsql-spark_${spark.bigversion}_${scala.binary.version}</artifactId>
+            <artifactId>streamingpro-core-${spark.bigversion}_${scala.binary.version}</artifactId>
             <version>${project.version}</version>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-sql_${scala.binary.version}</artifactId>
+            <version>${spark.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-core_${scala.binary.version}</artifactId>
+            <version>${spark.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-catalyst_${scala.binary.version}</artifactId>
+            <version>${spark.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>tech.mlsql</groupId>
+            <artifactId>streamingpro-dsl-${spark.bigversion}_${scala.binary.version}</artifactId>
+            <version>${project.parent.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>tech.mlsql</groupId>
+            <artifactId>streamingpro-spark-${spark.bigversion}.0-adaptor_${scala.binary.version}</artifactId>
+            <version>${project.parent.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>tech.mlsql</groupId>
+            <artifactId>streamingpro-common-${spark.bigversion}_${scala.binary.version}</artifactId>
+            <version>${project.parent.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-sql-kafka-0-10_${scala.binary.version}</artifactId>
+            <version>${spark.version}</version>
+            <scope>provided</scope>
+        </dependency>
     </dependencies>
+    
 
 </project>

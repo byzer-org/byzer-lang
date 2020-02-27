@@ -41,7 +41,7 @@
     <modules>
         <module>streamingpro-commons</module>
         <module>streamingpro-spark-common</module>
-        <module>streamingpro-api</module>
+        <module>streamingpro-core</module>
         <module>streamingpro-cluster</module>
     </modules>
 

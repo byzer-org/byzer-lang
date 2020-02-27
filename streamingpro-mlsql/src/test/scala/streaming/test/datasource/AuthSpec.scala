@@ -2,12 +2,12 @@ package streaming.test.datasource
 
 import org.apache.spark.streaming.BasicSparkOperation
 import org.scalatest.BeforeAndAfterAll
-import streaming.core.strategy.platform.SparkRuntime
-import streaming.core.{BasicMLSQLConfig, SpecFunctions}
-import streaming.dsl.ScriptSQLExec
-import streaming.dsl.auth.meta.client.DefaultConsoleClient
-import streaming.dsl.auth.{OperateType, TableType}
-import streaming.test.datasource.help.MLSQLTableEnhancer._
+import _root_.streaming.core.strategy.platform.SparkRuntime
+import _root_.streaming.core.{BasicMLSQLConfig, SpecFunctions}
+import _root_.streaming.dsl.ScriptSQLExec
+import _root_.streaming.dsl.auth.{OperateType, TableType}
+import _root_.streaming.test.datasource.help.MLSQLTableEnhancer._
+import streaming.dsl.auth.client.DefaultConsoleClient
 import tech.mlsql.common.utils.log.Logging
 
 /**

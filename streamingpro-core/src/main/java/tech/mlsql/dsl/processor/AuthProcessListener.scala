@@ -3,17 +3,15 @@ package tech.mlsql.dsl.processor
 import streaming.dsl.ScriptSQLExecListener
 import streaming.dsl.auth._
 import streaming.dsl.parser.DSLSQLParser.SqlContext
-import streaming.parser.lisener.BaseParseListenerextends
-import tech.mlsql.Stage
+import streaming.parser.lisener.BaseParseListener
 import tech.mlsql.common.utils.log.Logging
-import tech.mlsql.dsl.adaptor.SetAdaptor
 
 import scala.collection.mutable.ArrayBuffer
 
 /**
-  * 2019-04-12 WilliamZhu(allwefantasy@gmail.com)
-  */
-class AuthProcessListener(val listener: ScriptSQLExecListener) extends BaseParseListenerextends with Logging {
+ * 2019-04-12 WilliamZhu(allwefantasy@gmail.com)
+ */
+class AuthProcessListener(val listener: ScriptSQLExecListener) extends BaseParseListener with Logging {
 
   val ENABLE_RUNTIME_SELECT_AUTH = listener.sparkSession
     .sparkContext
