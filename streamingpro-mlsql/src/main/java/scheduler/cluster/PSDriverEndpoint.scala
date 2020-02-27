@@ -21,7 +21,7 @@ package org.apache.spark.scheduler.cluster
 import java.util.concurrent.atomic.AtomicInteger
 
 import org.apache.spark.internal.Logging
-import org.apache.spark.ps.cluster.Message.{CreateOrRemovePythonCondaEnvResponse, CreateOrRemovePythonCondaEnvResponseItem}
+import org.apache.spark.ps.cluster.Message.{CreateOrRemovePythonCondaEnvResponse, CreateOrRemovePythonCondaEnvResponseItem, Pong}
 import org.apache.spark.ps.cluster.{Message, PSExecutorBackend}
 import org.apache.spark.rpc._
 import org.apache.spark.util.Utils
@@ -45,13 +45,6 @@ class PSDriverEndpoint(sc: SparkContext, override val rpcEnv: RpcEnv)
   override def onStart() {
     // Periodically revive offers to allow delay scheduling to work
     logInfo("started PSDriverEndpoint")
-  }
-
-  override def receive: PartialFunction[Any, Unit] = {
-    case Message.Pong(id) =>
-      logInfo(s"received message ${Message.Pong} from executor ${id}!")
-    case Message.Ping =>
-      ping
   }
 
   override def receiveAndReply(context: RpcCallContext): PartialFunction[Any, Unit] = {
@@ -112,8 +105,7 @@ class PSDriverEndpoint(sc: SparkContext, override val rpcEnv: RpcEnv)
       context.reply(CreateOrRemovePythonCondaEnvResponse(condaYamlFile, resBuffer, filterDuplicateHost.size))
     }
     case Message.Ping =>
-      ping
-      context.reply(true)
+      context.reply(ping)
   }
 
   private def filterDuplicateHost = {
@@ -128,16 +120,17 @@ class PSDriverEndpoint(sc: SparkContext, override val rpcEnv: RpcEnv)
     hostMap.values
   }
 
-  private def ping: Unit = {
+  private def ping = {
     logInfo("received ping message")
     val ks = if (PSExecutorBackend.isLocalMaster(sc.conf)) executorDataMap.map(_._1).toSet else sc.getExecutorIds().toSet
+    val pongs = ArrayBuffer[Pong]()
     executorDataMap.foreach { ed =>
       if (ks.contains(ed._1)) {
         val response = ed._2.executorEndpoint.askSync[Message.Pong](Message.Ping)
-        self.send(response)
+        pongs += response
       }
     }
-
+    pongs.toList
   }
 
 
