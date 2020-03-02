@@ -233,7 +233,7 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
           val socketRunner = new SparkSocketRunner("readFromStreamWithArrow", NetUtils.getHost, timezoneID)
           val commonTaskContext = new SparkContextImp(TaskContext.get(), null)
           val iter = socketRunner.readFromStreamWithArrow(row.getAs[String]("host"), row.getAs[Long]("port").toInt, commonTaskContext)
-          iter
+          iter.map(f=>f.copy())
         }
       } else rdd.map(f => encoder.toRow(f))
 
