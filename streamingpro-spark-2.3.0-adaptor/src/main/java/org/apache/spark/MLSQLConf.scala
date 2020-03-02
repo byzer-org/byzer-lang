@@ -63,6 +63,11 @@ object MLSQLConf {
   val MLSQL_NAME: ConfigEntry[String] = MLSQLConfigBuilder("streaming.name")
     .doc("The name will showed in yarn cluster and spark ui").stringConf.createWithDefault("mlsql")
 
+  val MLSQL_EXECUTOR_LOG_IN_DRIVER = MLSQLConfigBuilder("streaming.executor.log.in.driver").doc(
+    """
+      |Executor send log msg to driver.
+    """.stripMargin).booleanConf.createWithDefault(true)
+
   val MLSQL_BIGDL_ENABLE: ConfigEntry[Boolean] = MLSQLConfigBuilder("streaming.bigdl.enable")
     .doc(
       """
