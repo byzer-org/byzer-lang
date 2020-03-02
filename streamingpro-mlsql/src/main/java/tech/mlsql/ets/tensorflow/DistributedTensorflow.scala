@@ -151,7 +151,7 @@ class DistributedTensorflow(override val uid: String) extends SQLAlg with SQLPyt
               val runner = new PythonProjectRunner(taskDirectory, Map())
               val res = runner.run(command, paramMap ++ logConf)
               processRef.set(runner.getPythonProcess.get)
-              WriteLog.write(res, logConf, false)
+              WriteLog.write(res)
             } catch {
               case e: Exception =>
                 if (flag.get() != "kill-python") {
@@ -245,7 +245,7 @@ class DistributedTensorflow(override val uid: String) extends SQLAlg with SQLPyt
         val runner = new PythonProjectRunner(taskDirectory, Map())
         val res = runner.run(command, paramMap ++ logConf)
         processRef.set(runner.getPythonProcess.get)
-        WriteLog.write(res, logConf, false)
+        WriteLog.write(res)
         logInfo(s"report worker ${tfContext.currentRole.taskIndex} success")
         tfContext.reportSuccess
       } catch {
