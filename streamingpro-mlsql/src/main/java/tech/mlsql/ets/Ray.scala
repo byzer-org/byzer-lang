@@ -226,13 +226,17 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
     if (dataMode == "data") {
       val rows = outputDF.collect()
       val rdd = session.sparkContext.makeRDD[Row](rows)
-      val newRDD = rdd.repartition(rows.length).flatMap { row =>
+      val encoder = RowEncoder.apply(stage2_schema).resolveAndBind()
+      val newRDD = if (rdd.partitions.length > 0 && rows.length > 0) {
+        rdd.repartition(rows.length).flatMap { row =>
 
-        val socketRunner = new SparkSocketRunner("readFromStreamWithArrow", NetUtils.getHost, timezoneID)
-        val commonTaskContext = new SparkContextImp(TaskContext.get(), null)
-        val iter = socketRunner.readFromStreamWithArrow(row.getAs[String]("host"), row.getAs[Long]("port").toInt, commonTaskContext)
-        iter
-      }
+          val socketRunner = new SparkSocketRunner("readFromStreamWithArrow", NetUtils.getHost, timezoneID)
+          val commonTaskContext = new SparkContextImp(TaskContext.get(), null)
+          val iter = socketRunner.readFromStreamWithArrow(row.getAs[String]("host"), row.getAs[Long]("port").toInt, commonTaskContext)
+          iter
+        }
+      } else rdd.map(f => encoder.toRow(f))
+
       SparkUtils.internalCreateDataFrame(session, newRDD, stage2_schema, false)
     } else {
       outputDF
@@ -255,7 +259,7 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
   private def configureLogConf() = {
     val context = ScriptSQLExec.context()
     val conf = context.execListener.sparkSession.sqlContext.getAllConfs
-    val extraConfig = if (isLocalMaster(conf)) {
+    val extraConfig = if (!conf.contains("spark.mlsql.log.driver.host")) {
       Map[String, String]()
     } else {
       Map(PythonWorkerFactory.Tool.REDIRECT_IMPL -> "tech.mlsql.log.RedirectStreamsToSocketServer")

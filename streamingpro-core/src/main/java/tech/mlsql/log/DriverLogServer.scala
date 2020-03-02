@@ -3,9 +3,8 @@ package tech.mlsql.log
 import java.io.{DataInputStream, DataOutputStream}
 import java.net.Socket
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicReference}
-
-import org.apache.spark.internal.Logging
 import org.apache.spark.{MLSQLSparkUtils, SparkEnv}
+import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.common.utils.distribute.socket.server.{Request, Response, SocketServerInExecutor, SocketServerSerDer}
 import tech.mlsql.common.utils.network.NetUtils
 

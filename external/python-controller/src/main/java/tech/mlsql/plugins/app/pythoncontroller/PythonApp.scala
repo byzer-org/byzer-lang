@@ -66,10 +66,10 @@ class PythonController extends CustomController {
     val res = runIn match {
       case "executor" =>
         session.sparkContext.parallelize[String](Seq(sql), 1).map { item =>
-          PyRunner.runPython(item, scriptId, envs)
+          PyRunner.runPython(item, scriptId, envs, runnerConf)
         }.collect().head
       case "driver" =>
-        PyRunner.runPython(sql, scriptId, envs)
+        PyRunner.runPython(sql, scriptId, envs, runnerConf)
     }
     res
 
@@ -110,7 +110,7 @@ class PythonController extends CustomController {
 }
 
 object PyRunner {
-  def runPython(item: String, scriptId: Int, envs: Map[String, String]) = {
+  def runPython(item: String, scriptId: Int, envs: Map[String, String], conf: Map[String, String]) = {
     val uuid = UUID.randomUUID().toString
 
     val pythonProjectCode = JSONTool.parseJson[List[FullPathAndScriptFile]](item)
@@ -152,7 +152,7 @@ object PyRunner {
       val command = Seq("bash", "-c", envCommand + s" && cd ${projectPath} &&  python ${withM} ${executePythonPath}")
 
       val runner = new PythonProjectRunner(projectPath, envs)
-      val output = runner.run(command, Map("throwErr" -> "true"))
+      val output = runner.run(command, conf ++ Map("throwErr" -> "true"))
       JSONTool.toJsonStr(output.toList)
     } catch {
       case e: PythonErrException => JSONTool.toJsonStr(e.getMessage.split("\n").toList)

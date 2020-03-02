@@ -98,6 +98,7 @@ object WriteLog {
     synchronized {
       if (POOL == null) {
         POOL = new WriteLogPool(30, conf)
+        POOL.init()
       }
     }
 
