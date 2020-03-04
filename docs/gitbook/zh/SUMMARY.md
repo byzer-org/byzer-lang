@@ -78,7 +78,7 @@
        * [内置调度](scheduler/buildin_scheduler.md)
        * [外置调度整合](scheduler/third_party_scheduler.md)
     * [如何缓存表](process/estimator_transformer/CacheExt.md)                                       
-    * [Python支持](python/README.md)
+    * [Python使用指南](python/README.md)
         * [使用Python处理MLSQL中的表](python/table.md)
         * [使用Ray](python/ray.md)
         * [Python环境](python/python-env.md)        

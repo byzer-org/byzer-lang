@@ -10,8 +10,8 @@ import scala.collection.JavaConverters._
 
 
 /**
-  * 2019-04-02 WilliamZhu(allwefantasy@gmail.com)
-  */
+ * 2019-04-02 WilliamZhu(allwefantasy@gmail.com)
+ */
 object LogTail {
   private val pattern = Pattern.compile("\\d{2}/\\d{2}/\\d{2}\\s\\d{2}\\:\\d{2}\\:\\d{2}\\s")
 

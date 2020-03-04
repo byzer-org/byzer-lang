@@ -1,8 +1,8 @@
 package tech.mlsql
 
 /**
-  * 2019-05-30 WilliamZhu(allwefantasy@gmail.com)
-  */
+ * 2019-05-30 WilliamZhu(allwefantasy@gmail.com)
+ */
 object MLSQLEnvKey {
   val REALTIME_LOG_HOME = "REALTIME_LOG_HOME"
 
@@ -17,8 +17,6 @@ object MLSQLEnvKey {
   val CONTEXT_KAFKA_SCHEMA = "context_kafka_schema"
 
   def realTimeLogHome = {
-    val item = System.getProperty(REALTIME_LOG_HOME)
-    if (item == null) "/tmp/__mlsql__/logs"
-    else item
+    "./logs"
   }
 }
