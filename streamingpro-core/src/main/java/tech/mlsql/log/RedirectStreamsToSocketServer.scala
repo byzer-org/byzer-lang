@@ -40,7 +40,7 @@ class RedirectLogThread(
   WriteLog.init(conf)
 
   override def run() {
-    WriteLog.write(scala.io.Source.fromInputStream(in).getLines())
+    WriteLog.write(scala.io.Source.fromInputStream(in).getLines(),conf)
   }
 }
 
@@ -72,15 +72,15 @@ class WriteLog(conf: Map[String, String]) {
   val host = conf("spark.mlsql.log.driver.host")
   val port = conf("spark.mlsql.log.driver.port")
   val token = conf("spark.mlsql.log.driver.token")
-  val owner = conf.getOrElse(ScalaMethodMacros.str(PythonConf.PY_EXECUTE_USER), "")
-  val groupId = conf.getOrElse("groupId", "")
   val socket = new Socket(host, port.toInt)
 
 
-  def write(in: Iterator[String]) = {
+  def write(in: Iterator[String], params: Map[String, String]) = {
     val dOut = new DataOutputStream(socket.getOutputStream)
     in.foreach { line =>
       val client = new DriverLogClient()
+      val owner = params.getOrElse(ScalaMethodMacros.str(PythonConf.PY_EXECUTE_USER), "")
+      val groupId = params.getOrElse("groupId", "")
       client.sendRequest(dOut, SendLog(token, LogUtils.formatWithOwner(line, owner, groupId)))
     }
   }
@@ -104,7 +104,7 @@ object WriteLog {
 
   }
 
-  def write(in: Iterator[String]) = {
+  def write(in: Iterator[String], params: Map[String, String]) = {
     if (POOL == null) {
       throw new RuntimeException("WriteLog Pool is not init")
     }
@@ -113,7 +113,7 @@ object WriteLog {
       if (obj == null) {
         throw new RuntimeException("Cannot get connection for task writing log to driver")
       }
-      obj.write(in)
+      obj.write(in, params)
 
     } {
       if (obj != null) {

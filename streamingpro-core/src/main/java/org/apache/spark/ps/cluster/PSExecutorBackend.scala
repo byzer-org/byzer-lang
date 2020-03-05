@@ -12,6 +12,7 @@ import org.apache.spark.security.CryptoStreamUtils
 import org.apache.spark.util.ThreadUtils
 import tech.mlsql.common.utils.env.python.BasicCondaEnvManager
 import tech.mlsql.common.utils.hdfs.HDFSOperator
+import tech.mlsql.log.WriteLog
 
 import scala.collection.mutable
 import scala.util.{Failure, Success}
@@ -204,6 +205,7 @@ object PSExecutorBackend {
 class PSExecutorPlugin(conf: SparkConf) extends ExecutorPlugin with Logging {
   override def init(): Unit = {
     try {
+      WriteLog.init(conf.getAll.toMap)
       PSExecutorBackend.loadPlugin(conf)
     } catch {
       case e: Exception =>

@@ -3,8 +3,11 @@ package tech.mlsql.plugins.app.pythoncontroller
 import java.io.File
 import java.nio.charset.Charset
 import java.util.UUID
+import java.util.concurrent.atomic.AtomicReference
 
 import org.apache.commons.io.FileUtils
+import org.apache.spark.TaskContext
+import org.apache.spark.util.TaskCompletionListener
 import streaming.dsl.ScriptSQLExec
 import tech.mlsql.app.CustomController
 import tech.mlsql.arrow.python.PythonWorkerFactory
@@ -14,6 +17,8 @@ import tech.mlsql.common.utils.path.PathFun
 import tech.mlsql.common.utils.serder.json.JSONTool
 import tech.mlsql.dsl.CommandCollection
 import tech.mlsql.ets.register.ETRegister
+import tech.mlsql.job.{JobManager, MLSQLJobType}
+import tech.mlsql.log.WriteLog
 import tech.mlsql.runtime.AppRuntimeStore
 import tech.mlsql.session.SetSession
 import tech.mlsql.version.VersionCompatibility
@@ -62,15 +67,45 @@ class PythonController extends CustomController {
     val runnerConf = getSchemaAndConf(envSession) ++ configureLogConf
     val runIn = runnerConf.getOrElse("runIn", "executor")
 
+    val groupId = ScriptSQLExec.context().groupId
+    var jobInfo = JobManager.getJobInfo(
+      params("owner"), params.getOrElse("jobType", MLSQLJobType.SCRIPT), params("jobName"), params("sql"),
+      params.getOrElse("timeout", "-1").toLong
+    )
+    jobInfo = jobInfo.copy(groupId = groupId)
+    var res: String = ""
 
-    val res = runIn match {
-      case "executor" =>
-        session.sparkContext.parallelize[String](Seq(sql), 1).map { item =>
-          PyRunner.runPython(item, scriptId, envs, runnerConf)
-        }.collect().head
-      case "driver" =>
-        PyRunner.runPython(sql, scriptId, envs, runnerConf)
-    }
+    JobManager.run(session, jobInfo, () => {
+      runIn match {
+        case "executor" =>
+          res = session.sparkContext.parallelize[String](Seq(sql), 1).map { item =>
+
+            val pythonProjectRunnerRef = new AtomicReference[PythonProjectRunner]()
+            TaskContext.get().addTaskCompletionListener(new TaskCompletionListener {
+              override def onTaskCompletion(context: TaskContext): Unit = {
+                if (pythonProjectRunnerRef.get() != null) {
+                  pythonProjectRunnerRef.get().getPythonProcess.map(_.close())
+                }
+              }
+            })
+            var wow = "[]"
+            val thread = new Thread(new Runnable {
+              override def run(): Unit = {
+                wow = PyRunner.runPython(pythonProjectRunnerRef, item, scriptId, envs, runnerConf)
+              }
+            })
+            thread.start()
+
+            while (!TaskContext.get().isInterrupted() && thread.isAlive) {
+              Thread.sleep(1000)
+            }
+            wow
+          }.collect().head
+        case "driver" =>
+          val pythonProjectRunnerRef = new AtomicReference[PythonProjectRunner]()
+          res = PyRunner.runPython(pythonProjectRunnerRef, sql, scriptId, envs, runnerConf)
+      }
+    })
     res
 
   }
@@ -110,7 +145,7 @@ class PythonController extends CustomController {
 }
 
 object PyRunner {
-  def runPython(item: String, scriptId: Int, envs: Map[String, String], conf: Map[String, String]) = {
+  def runPython(ref: AtomicReference[PythonProjectRunner], item: String, scriptId: Int, envs: Map[String, String], conf: Map[String, String]) = {
     val uuid = UUID.randomUUID().toString
 
     val pythonProjectCode = JSONTool.parseJson[List[FullPathAndScriptFile]](item)
@@ -149,11 +184,15 @@ object PyRunner {
     try {
       val projectPath = PathFun("/tmp/__mlsql__").add(uuid).add(projectName).toPath
       val envCommand = envs.get(ScalaMethodMacros.str(PythonConf.PYTHON_ENV)).getOrElse("")
-      val command = Seq("bash", "-c", envCommand + s" && cd ${projectPath} &&  python ${withM} ${executePythonPath}")
+      val command = Seq("bash", "-c", envCommand + s" && cd ${projectPath} &&  python -u ${withM} ${executePythonPath}")
 
       val runner = new PythonProjectRunner(projectPath, envs)
+      ref.set(runner)
       val output = runner.run(command, conf ++ Map("throwErr" -> "true"))
-      JSONTool.toJsonStr(output.toList)
+      output.foreach { line =>
+        WriteLog.write(List(line).toIterator, conf)
+      }
+      JSONTool.toJsonStr(List())
     } catch {
       case e: PythonErrException => JSONTool.toJsonStr(e.getMessage.split("\n").toList)
       case e: Exception =>

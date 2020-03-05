@@ -14,9 +14,9 @@ object LogUtils {
     } else {
       if (ScriptSQLExec.context() != null) {
         val context = ScriptSQLExec.context()
-        s"""[owner] [${context.owner}] [groupId] [${context.groupId}] $msg"""
+        s"""[owner] [${context.owner}] [groupId] [${context.groupId}] __MMMMMM__ $msg"""
       } else {
-        s"""[owner] [null] [groupId] [null] $msg"""
+        s"""[owner] [null] [groupId] [null] __MMMMMM__ $msg"""
       }
     }
 
@@ -24,7 +24,7 @@ object LogUtils {
   }
 
   def formatWithOwner(msg: String, owner: String, groupId: String) = {
-    s"""[owner] [${owner}] [groupId] [${groupId}] $msg"""
+    s"""[owner] [${owner}] [groupId] [${groupId}] __MMMMMM__ $msg"""
   }
 
   def wow_format(msg: String) = {
