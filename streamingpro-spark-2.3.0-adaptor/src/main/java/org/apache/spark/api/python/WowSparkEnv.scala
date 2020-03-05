@@ -29,8 +29,7 @@ import org.apache.spark.memory.MemoryManager
 import org.apache.spark.metrics.MetricsSystem
 import org.apache.spark.{MapOutputTracker, SecurityManager, SparkConf, SparkEnv}
 import org.apache.spark.rpc.RpcEnv
-import org.apache.spark.scheduler.{OutputCommitCoordinator, TaskSchedulerImpl}
-import org.apache.spark.scheduler.local.{LocalSchedulerBackend, WowLocalSchedulerBackend}
+import org.apache.spark.scheduler.{OutputCommitCoordinator}
 import org.apache.spark.serializer._
 import org.apache.spark.shuffle.ShuffleManager
 import org.apache.spark.sql.SparkSession
@@ -165,19 +164,5 @@ object WowSparkEnv {
 
   def enhanceSparkEnvForAPIService(session: SparkSession) = {
     SparkEnv.set(createSparkEnv)
-    val localScheduler = session.sparkContext.schedulerBackend.asInstanceOf[LocalSchedulerBackend]
-
-    val scheduler = ReflectHelper.field(localScheduler, "scheduler")
-
-    val totalCores = localScheduler.totalCores
-    localScheduler.stop()
-
-
-    val wowLocalSchedulerBackend = new WowLocalSchedulerBackend(session.sparkContext.getConf, scheduler.asInstanceOf[TaskSchedulerImpl], totalCores)
-    wowLocalSchedulerBackend.start()
-
-    ReflectHelper.field(session.sparkContext, "_schedulerBackend", wowLocalSchedulerBackend)
-
-
   }
 }

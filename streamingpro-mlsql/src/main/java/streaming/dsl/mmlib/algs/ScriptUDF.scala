@@ -25,19 +25,19 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.udf.UDFManager
 import streaming.dsl.mmlib._
 import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
-import streaming.udf._
+import streaming.udf.RuntimeCompileScriptFactory
 
 /**
-  * Created by allwefantasy on 27/8/2018.
-  */
-class ScriptUDF(override val uid: String) extends SQLAlg with MllibFunctions with Functions with WowParams {
+ * Created by allwefantasy on 27/8/2018.
+ */
+class ScriptUDF(override val uid: String) extends SQLAlg with WowParams {
 
   def this() = this(BaseParams.randomUID())
 
   override def skipPathPrefix: Boolean = true
 
   override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
-    emptyDataFrame()(df)
+    df.sparkSession.emptyDataFrame
   }
 
   override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = {
@@ -415,12 +415,5 @@ class ScriptUDF(override val uid: String) extends SQLAlg with MllibFunctions wit
   setDefault(dataType, "")
 }
 
-case class ScriptUDFCacheKey(
-    originalCode: String,
-    wrappedCode: String,
-    className: String,
-    udfType: String,
-    methodName: String,
-    dataType: String,
-    lang: String)
+
 

@@ -18,15 +18,14 @@
 
 package streaming.dsl.mmlib.algs.param
 
-import org.apache.spark.ml.param.{BooleanParam, Param, ParamMap, Params}
+import org.apache.spark.ml.param.{BooleanParam, Param}
 import org.apache.spark.ml.util.Identifiable
-import org.apache.spark.sql.types.{StringType, StructField, StructType}
-import org.apache.spark.sql.{Row, SparkSession}
+import org.apache.spark.sql.SparkSession
 import streaming.dsl.mmlib.algs.SQLPythonFunc
 
 /**
-  * Created by allwefantasy on 14/9/2018.
-  */
+ * Created by allwefantasy on 14/9/2018.
+ */
 trait BaseParams extends WowParams {
 
 

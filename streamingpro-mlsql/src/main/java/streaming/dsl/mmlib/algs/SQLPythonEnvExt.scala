@@ -81,28 +81,9 @@ class SQLPythonEnvExt(override val uid: String) extends SQLAlg with WowParams {
     val appName = spark.sparkContext.getConf.get("spark.app.name")
     val remoteCommand = Message.CreateOrRemovePythonCondaEnv($(condaYamlFilePath), params ++ Map(BasicCondaEnvManager.MLSQL_INSTNANCE_NAME_KEY -> appName), wowCommand)
 
-    val response = if (spark.sparkContext.isLocal) {
-      val psDriverBackend = PlatformManager.getRuntime.asInstanceOf[SparkRuntime].localSchedulerBackend
-      psDriverBackend.localEndpoint.askSync[CreateOrRemovePythonCondaEnvResponse](remoteCommand, PSDriverEndpoint.MLSQL_DEFAULT_RPC_TIMEOUT(spark.sparkContext.getConf))
-    } else {
-      val runtime = PlatformManager.getRuntime.asInstanceOf[SparkRuntime]
-      assert(MLSQLConf.MLSQL_CLUSTER_PS_ENABLE.readFrom(runtime.configReader),
-        """
-          |-streaming.ps.cluster.enable  should be  true.
-          |
-          |Please make sure
-          |
-          |1. you have the uber-jar of mlsql placed in --jars
-          |2. Put mlsql-ps-service_xxx_2.11-xxx.jar to $SPARK_HOME/libs
-          |
-          |You can download mlsql-ps-service_xxx_2.11-xxx.jar from http://download.mlsql.tech/1.4.0-SNAPSHOT/mlsql-ps-services/
-          |
-          |Otherwise the executor will
-          |fail to start and the whole application will fails.
-        """.stripMargin)
-      val psDriverBackend = runtime.psDriverBackend
-      psDriverBackend.psDriverRpcEndpointRef.askSync[CreateOrRemovePythonCondaEnvResponse](remoteCommand, PSDriverEndpoint.MLSQL_DEFAULT_RPC_TIMEOUT(spark.sparkContext.getConf))
-    }
+    val runtime = PlatformManager.getRuntime.asInstanceOf[SparkRuntime]
+    val psDriverBackend = runtime.psDriverBackend
+    val response = psDriverBackend.psDriverRpcEndpointRef.askSync[CreateOrRemovePythonCondaEnvResponse](remoteCommand, PSDriverEndpoint.MLSQL_DEFAULT_RPC_TIMEOUT(spark.sparkContext.getConf))
     import spark.implicits._
     spark.createDataset[CreateOrRemovePythonCondaEnvResponse](Seq(response)).toDF()
   }

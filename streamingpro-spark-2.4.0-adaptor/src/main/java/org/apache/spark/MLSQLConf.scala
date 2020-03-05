@@ -26,8 +26,8 @@ import org.apache.spark.internal.config._
 import scala.collection.JavaConverters._
 
 /**
-  * Created by allwefantasy on 3/6/2018.
-  */
+ * Created by allwefantasy on 3/6/2018.
+ */
 object MLSQLConf {
   private[this] val mlsqlConfEntries = new HashMap[String, ConfigEntry[_]]()
 
@@ -75,15 +75,10 @@ object MLSQLConf {
         |  conf.setIfMissing("spark.speculation", "false")
       """.stripMargin).booleanConf.createWithDefault(true)
 
-  val MLSQL_LOCAL_PS_ENABLE: ConfigEntry[Boolean] = MLSQLConfigBuilder("streaming.ps.local.enable").doc(
-    """
-      |MLSQL supports directly communicating with executor if you set this true.
-    """.stripMargin).booleanConf.createWithDefault(true)
-
   val MLSQL_CLUSTER_PS_ENABLE: ConfigEntry[Boolean] = MLSQLConfigBuilder("streaming.ps.cluster.enable").doc(
     """
       |MLSQL supports directly communicating with executor if you set this true.
-    """.stripMargin).booleanConf.createWithDefault(false)
+    """.stripMargin).booleanConf.createWithDefault(true)
 
   val MLSQL_CLUSTER_PS_DRIVER_PORT: ConfigEntry[Int] = MLSQLConfigBuilder("spark.ps.cluster.driver.port").doc(
     """
@@ -135,6 +130,11 @@ object MLSQLConf {
     """
       |Run MLSQL as service and without quit.
     """.stripMargin).booleanConf.createWithDefault(false)
+
+  val MLSQL_EXECUTOR_LOG_IN_DRIVER = MLSQLConfigBuilder("streaming.executor.log.in.driver").doc(
+    """
+      |Executor send log msg to driver.
+    """.stripMargin).booleanConf.createWithDefault(true)
 
   val MLSQL_DISABLE_SPARK_LOG = MLSQLConfigBuilder("streaming.disableSparkLog").doc(
     """

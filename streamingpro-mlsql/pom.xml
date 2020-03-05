@@ -3,7 +3,7 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
-        <artifactId>streamingpro</artifactId>
+        <artifactId>streamingpro_2.11</artifactId>
         <groupId>tech.mlsql</groupId>
         <version>1.6.0-SNAPSHOT</version>
     </parent>
@@ -70,92 +70,6 @@
                     </plugin>
                 </plugins>
             </build>
-        </profile>
-
-        <profile>
-            <id>carbondata</id>
-            <dependencies>
-                <dependency>
-                    <groupId>org.apache.carbondata</groupId>
-                    <artifactId>carbondata-spark2</artifactId>
-                    <version>1.5.2</version>
-                    <exclusions>
-                        <exclusion>
-                            <groupId>org.apache.spark</groupId>
-                            <artifactId>spark-repl_${scala.binary.version}</artifactId>
-                        </exclusion>
-                        <exclusion>
-                            <groupId>org.apache.spark</groupId>
-                            <artifactId>spark-repl_${scala.binary.version}</artifactId>
-                        </exclusion>
-                        <exclusion>
-                            <groupId>org.apache.spark</groupId>
-                            <artifactId>spark-sql_${scala.binary.version}</artifactId>
-                        </exclusion>
-                        <exclusion>
-                            <groupId>org.apache.spark</groupId>
-                            <artifactId>spark-hive-thriftserver_${scala.binary.version}</artifactId>
-                        </exclusion>
-                        <exclusion>
-                            <groupId>org.apache.spark</groupId>
-                            <artifactId>spark-core_${scala.binary.version}</artifactId>
-                        </exclusion>
-                        <exclusion>
-                            <groupId>org.apache.spark</groupId>
-                            <artifactId>spark-streaming_${scala.binary.version}</artifactId>
-                        </exclusion>
-                        <exclusion>
-                            <groupId>org.apache.spark</groupId>
-                            <artifactId>spark-sql-kafka-0-10_${scala.binary.version}</artifactId>
-                        </exclusion>
-                        <exclusion>
-                            <groupId>org.apache.spark</groupId>
-                            <artifactId>spark-core_${scala.binary.version}</artifactId>
-                        </exclusion>
-                        <exclusion>
-                            <groupId>net.java.dev.jets3t</groupId>
-                            <artifactId>jets3t</artifactId>
-                        </exclusion>
-                        <exclusion>
-                            <groupId>net.java.dev.jets3t</groupId>
-                            <artifactId>jets3t</artifactId>
-                        </exclusion>
-                        <exclusion>
-                            <groupId>org.apache.avro</groupId>
-                            <artifactId>avro</artifactId>
-                        </exclusion>
-                        <exclusion>
-                            <groupId>org.apache.httpcomponents</groupId>
-                            <artifactId>httpclient</artifactId>
-                        </exclusion>
-                        <exclusion>
-                            <groupId>com.google.guava</groupId>
-                            <artifactId>guava</artifactId>
-                        </exclusion>
-                        <exclusion>
-                            <groupId>org.apache.hadoop</groupId>
-                            <artifactId>hadoop-client</artifactId>
-                        </exclusion>
-                        <exclusion>
-                            <groupId>org.apache.hadoop</groupId>
-                            <artifactId>hadoop-common</artifactId>
-                        </exclusion>
-                        <exclusion>
-                            <groupId>org.apache.hadoop</groupId>
-                            <artifactId>hadoop-aws</artifactId>
-                        </exclusion>
-                        <exclusion>
-                            <groupId>org.apache.hadoop</groupId>
-                            <artifactId>hadoop-hdfs</artifactId>
-                        </exclusion>
-                        <exclusion>
-                            <groupId>io.netty</groupId>
-                            <artifactId>netty-all</artifactId>
-                        </exclusion>
-
-                    </exclusions>
-                </dependency>
-            </dependencies>
         </profile>
 
         <profile>
@@ -311,12 +225,44 @@
                         </exclusion>
                     </exclusions>
                 </dependency>
-                <!--<dependency>-->
-                <!--<groupId>com.intel.analytics.zoo</groupId>-->
-                <!--<artifactId>analytics-zoo-bigdl_0.6.0-spark_2.3.1</artifactId>-->
-                <!--<version>0.3.0</version>-->
-                <!--</dependency>-->
+                <dependency>
+                    <groupId>org.apache.spark</groupId>
+                    <artifactId>spark-streaming-kafka-0-8_${scala.binary.version}</artifactId>
+                    <version>${spark.version}</version>
+                    <exclusions>
+                        <exclusion>
+                            <groupId>org.apache.kafka</groupId>
+                            <artifactId>kafka-clients</artifactId>
+                        </exclusion>
+                    </exclusions>
+                </dependency>
+                <dependency>
+                    <groupId>com.databricks</groupId>
+                    <artifactId>spark-xml_${scala.binary.version}</artifactId>
+                    <version>0.4.1</version>
+                </dependency>
+                <dependency>
+                    <groupId>com.crealytics</groupId>
+                    <artifactId>spark-excel_${scala.binary.version}</artifactId>
+                    <version>0.11.1</version>
+                    <exclusions>
+                        <exclusion>
+                            <groupId>com.fasterxml.jackson.core</groupId>
+                            <artifactId>jackson-core</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>org.apache.commons</groupId>
+                            <artifactId>commons-compress</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>org.scala-lang</groupId>
+                            <artifactId>scala-library</artifactId>
+                        </exclusion>
+                    </exclusions>
+
+                </dependency>
             </dependencies>
+
         </profile>
 
         <profile>
@@ -342,11 +288,42 @@
                         </exclusion>
                     </exclusions>
                 </dependency>
-                <!--<dependency>-->
-                <!--<groupId>com.intel.analytics.zoo</groupId>-->
-                <!--<artifactId>analytics-zoo-bigdl_0.6.0-spark_2.3.1</artifactId>-->
-                <!--<version>0.3.0</version>-->
-                <!--</dependency>-->
+                <dependency>
+                    <groupId>org.apache.spark</groupId>
+                    <artifactId>spark-streaming-kafka-0-8_${scala.binary.version}</artifactId>
+                    <version>${spark.version}</version>
+                    <exclusions>
+                        <exclusion>
+                            <groupId>org.apache.kafka</groupId>
+                            <artifactId>kafka-clients</artifactId>
+                        </exclusion>
+                    </exclusions>
+                </dependency>
+                <dependency>
+                    <groupId>com.databricks</groupId>
+                    <artifactId>spark-xml_${scala.binary.version}</artifactId>
+                    <version>0.4.1</version>
+                </dependency>
+                <dependency>
+                    <groupId>com.crealytics</groupId>
+                    <artifactId>spark-excel_${scala.binary.version}</artifactId>
+                    <version>0.11.1</version>
+                    <exclusions>
+                        <exclusion>
+                            <groupId>com.fasterxml.jackson.core</groupId>
+                            <artifactId>jackson-core</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>org.apache.commons</groupId>
+                            <artifactId>commons-compress</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>org.scala-lang</groupId>
+                            <artifactId>scala-library</artifactId>
+                        </exclusion>
+                    </exclusions>
+
+                </dependency>
             </dependencies>
         </profile>
 
@@ -413,17 +390,11 @@
         </profile>
     </profiles>
     <dependencies>
-        
+
         <dependency>
             <groupId>tech.mlsql</groupId>
-            <artifactId>pyjava-${spark.bigversion}_${scala.binary.version}</artifactId>
-            <version>${pyjava-version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>tech.mlsql</groupId>
-                    <artifactId>common-utils_${scala.binary.version}</artifactId>
-                </exclusion>
-            </exclusions>
+            <artifactId>python-controller-${spark.bigversion}_${scala.binary.version}</artifactId>
+            <version>${project.parent.version}</version>
         </dependency>
 
         <dependency>
@@ -493,7 +464,7 @@
 
         <dependency>
             <groupId>tech.mlsql</groupId>
-            <artifactId>streamingpro-api-${spark.bigversion}_${scala.binary.version}</artifactId>
+            <artifactId>streamingpro-core-${spark.bigversion}_${scala.binary.version}</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
 
@@ -614,18 +585,6 @@
             </exclusions>
         </dependency>
 
-        <dependency>
-            <groupId>org.apache.spark</groupId>
-            <artifactId>spark-streaming-kafka-0-8_${scala.binary.version}</artifactId>
-            <version>${spark.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.apache.kafka</groupId>
-                    <artifactId>kafka-clients</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-
 
         <dependency>
             <groupId>org.apache.spark</groupId>
@@ -633,11 +592,6 @@
             <version>${spark.version}</version>
         </dependency>
 
-        <dependency>
-            <groupId>com.databricks</groupId>
-            <artifactId>spark-xml_${scala.binary.version}</artifactId>
-            <version>0.4.1</version>
-        </dependency>
 
         <dependency>
             <groupId>org.apache.hadoop</groupId>
@@ -694,31 +648,6 @@
                     <artifactId>netty</artifactId>
                 </exclusion>
             </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>com.crealytics</groupId>
-            <artifactId>spark-excel_${scala.binary.version}</artifactId>
-            <version>0.11.1</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.fasterxml.jackson.core</groupId>
-                    <artifactId>jackson-core</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.apache.commons</groupId>
-                    <artifactId>commons-compress</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.scala-lang</groupId>
-                    <artifactId>scala-library</artifactId>
-                </exclusion>
-            </exclusions>
-
-        </dependency>
-        <dependency>
-            <groupId>com.alibaba</groupId>
-            <artifactId>druid</artifactId>
-            <version>1.1.16</version>
         </dependency>
 
 

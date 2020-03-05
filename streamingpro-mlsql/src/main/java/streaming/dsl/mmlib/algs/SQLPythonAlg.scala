@@ -136,13 +136,8 @@ object SQLPythonAlg extends Logging with WowLog {
   }
 
   def distributeResource(spark: SparkSession, path: String, tempLocalPath: String) = {
-    if (spark.sparkContext.isLocal) {
-      val psDriverBackend = PlatformManager.getRuntime.asInstanceOf[SparkRuntime].localSchedulerBackend
-      psDriverBackend.localEndpoint.askSync[Boolean](Message.CopyModelToLocal(path, tempLocalPath))
-    } else {
-      val psDriverBackend = PlatformManager.getRuntime.asInstanceOf[SparkRuntime].psDriverBackend
-      psDriverBackend.psDriverRpcEndpointRef.askSync[Boolean](Message.CopyModelToLocal(path, tempLocalPath))
-    }
+    val psDriverBackend = PlatformManager.getRuntime.asInstanceOf[SparkRuntime].psDriverBackend
+    psDriverBackend.psDriverRpcEndpointRef.askSync[Boolean](Message.CopyModelToLocal(path, tempLocalPath))
   }
 
   def isAPIService() = {

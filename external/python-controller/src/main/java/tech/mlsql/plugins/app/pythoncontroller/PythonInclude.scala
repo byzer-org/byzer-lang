@@ -4,9 +4,8 @@ import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import streaming.dsl.auth.TableAuthResult
 import streaming.dsl.mmlib._
-import streaming.dsl.mmlib.algs.Functions
 import streaming.dsl.mmlib.algs.includes.analyst.HttpBaseDirIncludeSource
-import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
+import streaming.dsl.mmlib.algs.param.WowParams
 import tech.mlsql.common.utils.serder.json.JSONTool
 import tech.mlsql.dsl.auth.ETAuth
 import tech.mlsql.dsl.auth.dsl.mmlib.ETMethod.ETMethod
@@ -15,8 +14,8 @@ import tech.mlsql.version.VersionCompatibility
 /**
  * 16/1/2020 WilliamZhu(allwefantasy@gmail.com)
  */
-class PythonInclude(override val uid: String) extends SQLAlg with VersionCompatibility with Functions with WowParams with ETAuth {
-  def this() = this(BaseParams.randomUID())
+class PythonInclude(override val uid: String) extends SQLAlg with VersionCompatibility with WowParams with ETAuth {
+  def this() = this(WowParams.randomUID())
 
 
   override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {

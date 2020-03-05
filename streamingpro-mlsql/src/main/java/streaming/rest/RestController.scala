@@ -31,6 +31,7 @@ import net.csdn.modules.http.ApplicationController
 import net.csdn.modules.http.RestRequest.Method._
 import net.csdn.modules.transport.HttpTransportService
 import org.apache.spark.ps.cluster.Message
+import org.apache.spark.ps.cluster.Message.Pong
 import org.apache.spark.sql._
 import org.apache.spark.sql.execution.datasources.json.WowJsonInferSchema
 import org.apache.spark.sql.mlsql.session.{MLSQLSparkSession, SparkSessionCacheManager}
@@ -390,18 +391,15 @@ class RestController extends ApplicationController with WowLog {
 
   @At(path = Array("/debug/executor/ping"), types = Array(GET, POST))
   def pingExecuotrs = {
-    runtime match {
+    val pongs = runtime match {
       case sparkRuntime: SparkRuntime =>
-        val endpoint = if (sparkRuntime.sparkSession.sparkContext.isLocal) {
-          sparkRuntime.localSchedulerBackend.localEndpoint
-        } else {
-          sparkRuntime.psDriverBackend.psDriverRpcEndpointRef
-        }
-        endpoint.ask(Message.Ping)
+        val endpoint = sparkRuntime.psDriverBackend.psDriverRpcEndpointRef
+        val pongs = endpoint.askSync[List[Pong]](Message.Ping)
+        pongs
       case _ =>
         throw new RuntimeException(s"unsupport runtime ${runtime.getClass} !")
     }
-    render("{}")
+    render(JSONTool.toJsonStr(pongs))
   }
 
   @At(path = Array("/instance/resource"), types = Array(GET, POST))

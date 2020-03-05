@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>tech.mlsql</groupId>
-    <artifactId>streamingpro</artifactId>
+    <artifactId>streamingpro_2.11</artifactId>
     <packaging>pom</packaging>
     <version>1.6.0-SNAPSHOT</version>
 
@@ -41,7 +41,7 @@
     <modules>
         <module>streamingpro-commons</module>
         <module>streamingpro-spark-common</module>
-        <module>streamingpro-api</module>
+        <module>streamingpro-core</module>
         <module>streamingpro-cluster</module>
     </modules>
 
@@ -61,14 +61,14 @@
         <flink.version>1.4.2</flink.version>
         <guava.version>16.0</guava.version>
         <httpclient.version>4.5.3</httpclient.version>
-
-        <serviceframework.version>2.0.2</serviceframework.version>
+        
         <scope>provided</scope>
         <hadoop-client-version>2.6.5</hadoop-client-version>
 
-        <common-utils-version>0.2.1</common-utils-version>
-        <mlsql-ps-service-version>1.3.5</mlsql-ps-service-version>
-        <pyjava-version>0.2.7</pyjava-version>
+        <common-utils-version>0.2.4</common-utils-version>
+        <serviceframework.version>2.0.2</serviceframework.version>
+        <pyjava-version>0.2.8</pyjava-version>
+
         <delta-plus-version>0.2.0</delta-plus-version>
         <mysql-binlog-version>1.0.0</mysql-binlog-version>
         <mlsql-scheduler-version>0.1.0</mlsql-scheduler-version>
@@ -345,6 +345,7 @@
                 <module>streamingpro-spark-2.3.0-adaptor</module>
                 <module>streamingpro-dsl</module>
                 <module>streamingpro-mlsql</module>
+                <module>external/python-controller</module>
             </modules>
             <dependencies>
                 <dependency>
@@ -487,6 +488,7 @@
                 </dependency>
             </dependencies>
         </profile>
+
 
         <profile>
             <id>flink-1.4.2</id>

@@ -44,10 +44,10 @@ import tech.mlsql.common.utils.log.Logging
 import scala.collection.mutable.ArrayBuffer
 
 /**
-  * Created by allwefantasy on 13/1/2018.
-  */
+ * Created by allwefantasy on 13/1/2018.
+ */
 trait Functions extends SQlBaseFunc with Logging with WowLog with Serializable {
-  
+
   def pythonCheckRequirements(df: DataFrame) = {
     val conf: SparkConf = df.sparkSession.sparkContext.getConf
     val master = conf.get("spark.master", "")
@@ -432,13 +432,8 @@ trait Functions extends SQlBaseFunc with Logging with WowLog with Serializable {
 
 
   def distributeResource(spark: SparkSession, path: String, tempLocalPath: String) = {
-    if (spark.sparkContext.isLocal) {
-      val psDriverBackend = PlatformManager.getRuntime.asInstanceOf[SparkRuntime].localSchedulerBackend
-      psDriverBackend.localEndpoint.askSync[Boolean](Message.CopyModelToLocal(path, tempLocalPath))
-    } else {
-      val psDriverBackend = PlatformManager.getRuntime.asInstanceOf[SparkRuntime].psDriverBackend
-      psDriverBackend.psDriverRpcEndpointRef.askSync[Boolean](Message.CopyModelToLocal(path, tempLocalPath))
-    }
+    val psDriverBackend = PlatformManager.getRuntime.asInstanceOf[SparkRuntime].psDriverBackend
+    psDriverBackend.psDriverRpcEndpointRef.askSync[Boolean](Message.CopyModelToLocal(path, tempLocalPath))
   }
 }
 

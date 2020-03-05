@@ -309,7 +309,7 @@ class PythonCommand(override val uid: String) extends SQLAlg with Functions with
   private def configureLogConf() = {
     val context = ScriptSQLExec.context()
     val conf = context.execListener.sparkSession.sqlContext.getAllConfs
-    val extraConfig = if (isLocalMaster(conf)) {
+    val extraConfig = if (!conf.contains("spark.mlsql.log.driver.host")) {
       Map[String, String]()
     } else {
       Map(PythonWorkerFactory.Tool.REDIRECT_IMPL -> "tech.mlsql.log.RedirectStreamsToSocketServer")

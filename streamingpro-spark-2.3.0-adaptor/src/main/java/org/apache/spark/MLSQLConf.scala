@@ -63,6 +63,11 @@ object MLSQLConf {
   val MLSQL_NAME: ConfigEntry[String] = MLSQLConfigBuilder("streaming.name")
     .doc("The name will showed in yarn cluster and spark ui").stringConf.createWithDefault("mlsql")
 
+  val MLSQL_EXECUTOR_LOG_IN_DRIVER = MLSQLConfigBuilder("streaming.executor.log.in.driver").doc(
+    """
+      |Executor send log msg to driver.
+    """.stripMargin).booleanConf.createWithDefault(true)
+
   val MLSQL_BIGDL_ENABLE: ConfigEntry[Boolean] = MLSQLConfigBuilder("streaming.bigdl.enable")
     .doc(
       """
@@ -75,15 +80,12 @@ object MLSQLConf {
         |  conf.setIfMissing("spark.speculation", "false")
       """.stripMargin).booleanConf.createWithDefault(true)
 
-  val MLSQL_LOCAL_PS_ENABLE: ConfigEntry[Boolean] = MLSQLConfigBuilder("streaming.ps.local.enable").doc(
-    """
-      |MLSQL supports directly communicating with executor if you set this true.
-    """.stripMargin).booleanConf.createWithDefault(true)
+
 
   val MLSQL_CLUSTER_PS_ENABLE: ConfigEntry[Boolean] = MLSQLConfigBuilder("streaming.ps.cluster.enable").doc(
     """
       |MLSQL supports directly communicating with executor if you set this true.
-    """.stripMargin).booleanConf.createWithDefault(false)
+    """.stripMargin).booleanConf.createWithDefault(true)
 
   val MLSQL_CLUSTER_PS_DRIVER_PORT: ConfigEntry[Int] = MLSQLConfigBuilder("spark.ps.cluster.driver.port").doc(
     """

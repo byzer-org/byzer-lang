@@ -35,8 +35,11 @@ class SQLMLSQLJobExt(override val uid: String) extends SQLAlg with WowParams wit
       import df.sparkSession.implicits._
       return Seq(("", s"You can not kill the job $path cause you are not the owner")).toDF("param", "description")
     }
-
-    JobManager.killJob(spark, groupId)
+    try{
+      JobManager.killJob(spark, groupId)
+    } catch {
+      case e:Exception =>
+    }
     import df.sparkSession.implicits._
     Seq.empty[(String, String)].toDF("param", "description")
 

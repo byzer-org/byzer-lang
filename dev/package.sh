@@ -56,7 +56,7 @@ esac
 echo ${machine}
 
 current_version=$(cat pom.xml|grep -e '<version>.*</version>' | head -n 1 | tail -n 1 | cut -d'>' -f2 | cut -d '<' -f1)
-MLSQL_VERSION_FILE="./streamingpro-mlsql/src/main/java/tech/mlsql/core/version/MLSQLVersion.scala"
+MLSQL_VERSION_FILE="./streamingpro-core/src/main/java/tech/mlsql/core/version/MLSQLVersion.scala"
 
 if [[ "${machine}" == "Linux" ]]
 then

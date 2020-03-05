@@ -27,8 +27,8 @@ import streaming.dsl.mmlib.algs.python.{MLFlow, PythonScript}
 import tech.mlsql.common.utils.hdfs.HDFSOperator
 
 /**
-  * Created by allwefantasy on 1/2/2018.
-  */
+ * Created by allwefantasy on 1/2/2018.
+ */
 object SQLPythonFunc {
 
   def getPath(params: Map[String, String]) = {
@@ -191,5 +191,3 @@ object SQLPythonFunc {
 
   // -- path related
 }
-
-
