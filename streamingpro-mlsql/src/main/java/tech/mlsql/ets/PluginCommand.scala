@@ -9,6 +9,7 @@ import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
 import tech.mlsql.common.utils.serder.json.JSONTool
 import tech.mlsql.datalake.DataLake
 import tech.mlsql.dsl.includes.PluginIncludeSource
+import tech.mlsql.runtime.PluginUtils
 import tech.mlsql.runtime.plugins._
 
 
@@ -68,13 +69,20 @@ class PluginCommand(override val uid: String) extends SQLAlg with WowParams {
         readTable(spark, TABLE_PLUGINS)
 
 
-      case Seq(pluginType, "add", className, pluginName, left@_*) =>
+      case Seq(pluginType, "add", _className, pluginName, left@_*) =>
 
         require(pluginType == PluginType.DS
           || pluginType == PluginType.ET
           || pluginType == PluginType.SCRIPT
           || pluginType == PluginType.APP, "pluginType should be ds or et or script or app")
 
+        val plugin = PluginUtils.getLatestPluginInfo(pluginName)
+        val className = if (_className == "-") {
+          val config = JSONTool.parseJson[Map[String, String]](plugin.extraParams)
+          config("mainClass")
+        } else {
+          _className
+        }
         val table = try {
           readTable(spark, TABLE_PLUGINS)
         } catch {

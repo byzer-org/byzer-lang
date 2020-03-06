@@ -11,6 +11,7 @@ import org.apache.spark.sql.mlsql.session.MLSQLException
 import streaming.core.datasource.MLSQLRegistry
 import tech.mlsql.common.utils.hdfs.HDFSOperator
 import tech.mlsql.common.utils.path.PathFun
+import tech.mlsql.common.utils.serder.json.JSONTool
 import tech.mlsql.core.version.MLSQLVersion
 import tech.mlsql.datalake.DataLake
 import tech.mlsql.dsl.CommandCollection
@@ -27,14 +28,41 @@ object PluginUtils {
   val TABLE_PLUGINS = "__mlsql__.plugins"
   val TABLE_FILES = "__mlsql__.files"
 
-  def downloadJarFile(spark: SparkSession, jarPath: String) = {
-    val response = Request.Post(s"http://store.mlsql.tech/api/repo/plugins/download").connectTimeout(60 * 1000)
-      .socketTimeout(60 * 60 * 1000).bodyForm(Form.form().add("name", jarPath).build(),
+  val PLUGIN_STORE_URL = "http://store.mlsql.tech/run"
+
+  def getPluginInfo(name: String) = {
+    val pluginListResponse = Request.Post(PLUGIN_STORE_URL).connectTimeout(60 * 1000)
+      .socketTimeout(60 * 60 * 1000).bodyForm(Form.form().
+      add("action", "getPlugin").
+      add("pluginName", name).
+      add("pluginType", "MLSQL_PLUGIN").
+      build(),
+      Charset.forName("utf-8")).execute().returnContent().asString(Charset.forName("utf-8"))
+    JSONTool.parseJson[List[PluginStoreItem]](pluginListResponse)
+  }
+
+  def getLatestPluginInfo(name: String) = {
+    val plugins = getPluginInfo(name)
+    plugins.sortBy(_.version).last
+  }
+
+  def downloadJarFile(spark: SparkSession, pluginName: String) = {
+
+    val plugin = getLatestPluginInfo(pluginName)
+
+    val response = Request.Post(PLUGIN_STORE_URL).connectTimeout(60 * 1000)
+      .socketTimeout(60 * 60 * 1000).bodyForm(Form.form().
+      add("action", "downloadPlugin").
+      add("pluginName", pluginName).
+      add("pluginType", "MLSQL_PLUGIN").
+      add("version", plugin.version).
+      build(),
       Charset.forName("utf-8")).execute().returnResponse()
 
     if (response.getStatusLine.getStatusCode != 200 || response.getFirstHeader("Content-Disposition") == null) {
-      throw new MLSQLException(s"Fail to download ${jarPath} from http://store.mlsql.tech/api/repo/plugins/download")
+      throw new MLSQLException(s"Fail to download ${pluginName} from http://store.mlsql.tech/api/repo/plugins/download")
     }
+
 
     var fieldValue = response.getFirstHeader("Content-Disposition").getValue
     val inputStream = response.getEntity.getContent
@@ -135,3 +163,5 @@ object PluginUtils {
     callback()
   }
 }
+
+case class PluginStoreItem(id: Int, name: String, path: String, version: String, pluginType: Int, extraParams: String)
