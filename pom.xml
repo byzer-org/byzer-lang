@@ -70,7 +70,7 @@
         <pyjava-version>0.2.8.0</pyjava-version>
 
         <delta-plus-version>0.2.0</delta-plus-version>
-        <mysql-binlog-version>1.0.0</mysql-binlog-version>
+        <mysql-binlog-version>1.0.0-SNAPSHOT</mysql-binlog-version>
         <mlsql-scheduler-version>0.1.0</mlsql-scheduler-version>
     </properties>
 

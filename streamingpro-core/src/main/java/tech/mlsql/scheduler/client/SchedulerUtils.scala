@@ -17,7 +17,7 @@ object SchedulerUtils {
     val dataLake = new DataLake(spark)
     require(dataLake.isEnable, "please set -streaming.datalake.path enable delta db mode")
     val finalPath = dataLake.identifyToPath(tableName)
-    val writer = data.write.format(DELTA_FORMAT)
+    val writer = data.repartition(1).write.format(DELTA_FORMAT)
     if (updateCol.isDefined) {
       writer.option("idCols", updateCol.get)
       if (isDelete) {
