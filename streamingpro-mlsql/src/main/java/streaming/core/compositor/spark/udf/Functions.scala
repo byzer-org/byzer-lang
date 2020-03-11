@@ -25,14 +25,15 @@ import org.apache.spark.ml.linalg.{DenseVector, Matrices, Matrix, SparseVector, 
 import org.apache.spark.mllib.linalg.{Vectors => OldVectors}
 import org.apache.spark.sql.UDFRegistration
 import streaming.common.UnicodeUtils
+import tech.mlsql.common.utils.distribute.socket.server.{ByteUnit, JavaUtils}
 
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
 import scala.collection.mutable.WrappedArray
 
 /**
-  * Created by allwefantasy on 3/5/2017.
-  */
+ * Created by allwefantasy on 3/5/2017.
+ */
 object Functions {
   def parse(uDFRegistration: UDFRegistration) = {
     uDFRegistration.register("parse", (co: String) => {
@@ -422,6 +423,48 @@ object Functions {
     })
   }
 
+
+  // =================
+  // unit operation
+  // =================
+
+  def byteStringAsBytes(uDFRegistration: UDFRegistration) = {
+    uDFRegistration.register("byteStringAsBytes", (item: String) => {
+      JavaUtils.byteStringAsBytes(item)
+    })
+  }
+
+  def byteStringAsKb(uDFRegistration: UDFRegistration) = {
+    uDFRegistration.register("byteStringAsKb", (item: String) => {
+      JavaUtils.byteStringAsKb(item)
+    })
+  }
+
+  def byteStringAsMb(uDFRegistration: UDFRegistration) = {
+    uDFRegistration.register("byteStringAsMb", (item: String) => {
+      JavaUtils.byteStringAsMb(item)
+    })
+  }
+
+  def byteStringAsGb(uDFRegistration: UDFRegistration) = {
+    uDFRegistration.register("byteStringAsGb", (item: String) => {
+      JavaUtils.byteStringAsGb(item)
+    })
+  }
+
+  def byteStringAs(uDFRegistration: UDFRegistration) = {
+    uDFRegistration.register("byteStringAsGb", (item: String, unit: String) => {
+      JavaUtils.byteStringAs(item, ByteUnit.valueOf(unit))
+    })
+  }
+
+  def timeAgo(uDFRegistration: UDFRegistration) = {
+    uDFRegistration.register("timeAgo", (item: String) => {
+      val seconds = JavaUtils.timeStringAsSec(item)
+      System.currentTimeMillis() - 1000 * seconds
+    })
+  }
+
   // for spark 2.2.x
   object BreezeImplicit {
 
@@ -460,5 +503,6 @@ object Functions {
     }
 
   }
+
 
 }

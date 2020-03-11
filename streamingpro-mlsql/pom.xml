@@ -399,6 +399,13 @@
 
         <dependency>
             <groupId>tech.mlsql</groupId>
+            <artifactId>mlsql-watcher-${spark.bigversion}_${scala.binary.version}</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+
+
+        <dependency>
+            <groupId>tech.mlsql</groupId>
             <artifactId>mlsql-scheduler</artifactId>
             <version>${mlsql-scheduler-version}</version>
             <exclusions>

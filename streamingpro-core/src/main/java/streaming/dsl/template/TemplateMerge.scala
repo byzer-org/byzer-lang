@@ -20,11 +20,12 @@ package streaming.dsl.template
 
 import org.joda.time.DateTime
 import tech.mlsql.common.utils.evaluate.RenderEngine
+import tech.mlsql.template.SQLSnippetTemplate
 
 
 /**
-  * Created by allwefantasy on 29/3/2018.
-  */
+ * Created by allwefantasy on 29/3/2018.
+ */
 object TemplateMerge {
 
   def merge(sql: String, root: Map[String, String]) = {
@@ -37,7 +38,7 @@ object TemplateMerge {
       "tomorrow" -> DateTime.now().plusDays(1).toString(dformat),
       "theDayBeforeYesterday" -> DateTime.now().minusDays(2).toString(dformat)
     )
-    val newRoot = Map("date" -> new DateTime()) ++ predified_variables ++ root
+    val newRoot = Map("date" -> new DateTime(), "template" -> new SQLSnippetTemplate()) ++ predified_variables ++ root
 
     RenderEngine.render(sql, newRoot)
   }

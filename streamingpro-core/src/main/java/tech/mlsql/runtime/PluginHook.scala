@@ -31,6 +31,8 @@ class PluginHook extends MLSQLPlatformLifecycle with Logging {
     try {
       Class.forName("tech.mlsql.plugins.app.pythoncontroller.PythonApp").newInstance().
         asInstanceOf[tech.mlsql.app.App].run(Seq[String]())
+      Class.forName("tech.mlsql.plugins.mlsql_watcher.MLSQLWatcher").newInstance().
+        asInstanceOf[tech.mlsql.app.App].run(Seq[String]())
     } catch {
       case e: Exception =>
         logInfo("Fail to start PythonApp plugin",e)

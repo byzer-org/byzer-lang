@@ -4,7 +4,7 @@ mode:
 production:
     datasources:
         mysql:
-            disable: true
+          disable: true
         mongodb:
            disable: true
         redis:
