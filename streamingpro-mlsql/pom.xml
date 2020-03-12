@@ -273,6 +273,13 @@
                     <artifactId>streamingpro-spark-2.4.0-adaptor_${scala.binary.version}</artifactId>
                     <version>${project.parent.version}</version>
                 </dependency>
+
+                <dependency>
+                    <groupId>tech.mlsql</groupId>
+                    <artifactId>mlsql-watcher-${spark.bigversion}_${scala.binary.version}</artifactId>
+                    <version>${project.parent.version}</version>
+                </dependency>
+
                 <dependency>
                     <groupId>com.intel.analytics.bigdl</groupId>
                     <artifactId>bigdl-SPARK_2.4</artifactId>
@@ -396,13 +403,6 @@
             <artifactId>python-controller-${spark.bigversion}_${scala.binary.version}</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
-
-        <dependency>
-            <groupId>tech.mlsql</groupId>
-            <artifactId>mlsql-watcher-${spark.bigversion}_${scala.binary.version}</artifactId>
-            <version>${project.parent.version}</version>
-        </dependency>
-
 
         <dependency>
             <groupId>tech.mlsql</groupId>
