@@ -2,7 +2,7 @@ package org.apache.spark
 
 import _root_.streaming.core.strategy.platform.{PlatformManager, SparkRuntime}
 import tech.mlsql.common.utils.log.Logging
-import tech.mlsql.plugins.mlsql_watcher.db.{WExecutor, WExecutorJob, WJob}
+import tech.mlsql.plugins.mlsql_watcher.db.{WExecutor, WExecutorJob}
 
 import scala.collection.mutable
 
@@ -32,27 +32,11 @@ object DataCompute extends Logging {
 
     val executorMap = new mutable.HashMap[ExecutorGroupKey, WExecutorJob]()
 
-    val groupIdMap = new mutable.HashMap[GroupKey, WJob]()
+    //    val groupIdMap = new mutable.HashMap[GroupKey, WJob]()
 
 
     statusStore.jobsList(new java.util.ArrayList[JobExecutionStatus]()).foreach { item =>
       val groupId = item.jobGroup.getOrElse("NONE")
-
-      var diskBytesSpilled = 0L
-      var shuffleRemoteBytesRead = 0L
-      var shuffleLocalBytesRead = 0L
-      var shuffleRecordsRead = 0L
-      var shuffleBytesWritten = 0L
-      var shuffleRecordsWritten = 0L
-      val executors = new java.util.HashSet[String]()
-      var addTime = 0L
-
-      if (addTime == 0) {
-        addTime = item.submissionTime.map(f => f.getTime).getOrElse(0L)
-      } else {
-        addTime = Math.min(item.submissionTime.map(f => f.getTime).getOrElse(-1L), addTime)
-      }
-
 
       item.stageIds.foreach { id =>
         statusStore.stageData(id).foreach {
@@ -70,14 +54,7 @@ object DataCompute extends Logging {
               val _shuffleRecordsWritten = taskData.taskMetrics.get.shuffleWriteMetrics.recordsWritten
 
 
-              diskBytesSpilled += _diskBytesSpilled
-              shuffleRemoteBytesRead += _shuffleRemoteBytesRead
-              shuffleLocalBytesRead += _shuffleLocalBytesRead
-              shuffleRecordsRead += _shuffleRecordsRead
-              shuffleBytesWritten += _shuffleBytesWritten
-              shuffleRecordsWritten += _shuffleRecordsWritten
-
-              if (!executors.contains(ExecutorGroupKey(taskData.executorId, groupId))) {
+              if (!executorMap.contains(ExecutorGroupKey(taskData.executorId, groupId))) {
                 executorMap.put(ExecutorGroupKey(taskData.executorId, groupId), WExecutorJob(0, appName, groupId,
                   taskData.executorId,
                   _diskBytesSpilled,
@@ -100,29 +77,14 @@ object DataCompute extends Logging {
 
                 executorMap.put(ExecutorGroupKey(taskData.executorId, groupId), newwej)
               }
-              executors.add(taskData.executorId)
             }
         }
 
       }
-      if (!groupIdMap.contains(GroupKey(groupId))) {
-
-      }
-
     }
+    
 
-//    WJob(0, appName, groupId,
-//      executors.asScala.toList.mkString(","),
-//      diskBytesSpilled,
-//      shuffleLocalBytesRead,
-//      shuffleLocalBytesRead,
-//      shuffleRecordsRead,
-//      shuffleBytesWritten,
-//      shuffleRecordsWritten,
-//      addTime,
-//      createdAt = computeTime)
-
-    (executorItems, List(), executorMap.map(_._2).toList)
+    (executorItems, executorMap.map(_._2).toList)
   }
 }
 

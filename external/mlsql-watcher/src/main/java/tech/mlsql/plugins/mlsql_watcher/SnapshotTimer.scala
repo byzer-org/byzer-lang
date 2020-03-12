@@ -39,15 +39,13 @@ object SnapshotTimer extends Logging {
         cleanerThresh.set(tempValue)
       }
 
-      val (executorItems, jobItems, executorJobItems) = DataCompute.compute()
+      val (executorItems, executorJobItems) = DataCompute.compute()
       try {
         if (cleanerThresh.get() > 0) {
           ctx.run(query[WExecutor].filter(_.createdAt < lift(System.currentTimeMillis() - cleanerThresh.get())).delete)
-          ctx.run(query[WJob].filter(_.createdAt < lift(System.currentTimeMillis() - cleanerThresh.get())).delete)
           ctx.run(query[WExecutorJob].filter(_.createdAt < lift(System.currentTimeMillis() - cleanerThresh.get())).delete)
         }
         ctx.run(liftQuery(executorItems).foreach(item => query[WExecutor].insert(item)))
-        ctx.run(liftQuery(jobItems).foreach(item => query[WJob].insert(item)))
         ctx.run(liftQuery(executorJobItems).foreach(item => query[WExecutorJob].insert(item)))
       } catch {
         case e: Exception =>

@@ -21,15 +21,5 @@ case class WExecutorJob(id: Int, clusterName: String, groupId: String, executorN
                         createdAt: Long
                        )
 
-case class WJob(id: Int, clusterName: String, groupId: String, executorName: String,
-                diskBytesSpilled: Long,
-                shuffleRemoteBytesRead: Long,
-                shuffleLocalBytesRead: Long,
-                shuffleRecordsRead: Long,
-                shuffleBytesWritten: Long,
-                shuffleRecordsWritten: Long,
-                addTime: Long,
-                createdAt: Long
-               )
 
 case class WKv(id: Int, name: String, value: String)
