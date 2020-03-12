@@ -4,6 +4,7 @@ case class WExecutor(id: Int, clusterName: String, name: String,
                      hostPort: String,
                      totalShuffleRead: Long,
                      totalShuffleWrite: Long,
+                     gcTime: Long,
                      addTime: Long,
                      removeTime: Long,
                      createdAt: Long

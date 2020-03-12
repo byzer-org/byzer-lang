@@ -24,6 +24,7 @@ object DataCompute extends Logging {
         hostPort = item.hostPort,
         totalShuffleRead = item.totalShuffleRead,
         totalShuffleWrite = item.totalShuffleWrite,
+        gcTime = item.totalGCTime,
         addTime = item.addTime.getTime,
         removeTime = item.removeTime.map(_.getTime).getOrElse(-1L),
         createdAt = computeTime
@@ -31,8 +32,6 @@ object DataCompute extends Logging {
     }.toList
 
     val executorMap = new mutable.HashMap[ExecutorGroupKey, WExecutorJob]()
-
-    //    val groupIdMap = new mutable.HashMap[GroupKey, WJob]()
 
 
     statusStore.jobsList(new java.util.ArrayList[JobExecutionStatus]()).foreach { item =>
@@ -45,7 +44,6 @@ object DataCompute extends Logging {
             val tasks = statusStore.taskList(stage.stageId, stage.attemptId, Integer.MAX_VALUE)
             tasks.filter(_.taskMetrics.isDefined).foreach { task =>
               val taskData = task
-
               val _diskBytesSpilled = taskData.taskMetrics.get.diskBytesSpilled
               val _shuffleRemoteBytesRead = taskData.taskMetrics.get.shuffleReadMetrics.remoteBytesRead
               val _shuffleLocalBytesRead = taskData.taskMetrics.get.shuffleReadMetrics.localBytesRead
@@ -82,7 +80,7 @@ object DataCompute extends Logging {
 
       }
     }
-    
+
 
     (executorItems, executorMap.map(_._2).toList)
   }
