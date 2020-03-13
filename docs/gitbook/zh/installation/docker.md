@@ -1,5 +1,7 @@
 ## 使用Docker安装体验
 
+> 因为自己的电脑支撑不起docker的空间开销，docker版本不在更新。优先推荐大家使用[下载预编译的安装包](https://docs.mlsql.tech/zh/installation/downloa_prebuild_package.html)
+
 在终端执行如下指令：
 
 ```shell

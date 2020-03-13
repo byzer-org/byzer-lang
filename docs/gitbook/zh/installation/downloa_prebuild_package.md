@@ -2,6 +2,8 @@
 
 MLSQL Stack 提供了对各个版本的预编译版本。 用户可以在[下载站点](http://download.mlsql.tech)获得需要的版本。
 
+> 我们推荐大家安装最新版本 1.6.0-SNAPSHOT
+
 
 ## 下载目录结构介绍
 
@@ -19,18 +21,6 @@ MLSQL Stack 提供了对各个版本的预编译版本。 用户可以在[下载
 从图中实例，我们发现有有四个文件，分别是cluster,console,和engine。 其中engine根据底层的Spark版本，又区分为2.3/2.4两个版本。
 所以，大家在下载engine的时候，需要根据自己要运行的Spark版本选择合适的版本。通常，我们建议大家下载基于最新的spark版本的发型包，
 因为MLSQL新功能特性都会优先体现在最近的Spark版本之上。
-
-大家可能比较好奇的是。mlsql-ps-services 和 mlsql-hbase。 为了满足用户需要管理和运行Python运行环境需求，我们需要在driver 和 executor 
-之间建立新的PRC连接，这样用户就可以在driver端发送指令给所有的executor节点。具体做法是：
-
-1. 将mlsql-ps-services里对应版本的jar包 放入到SPARK_HOME/jars/里去
-2. 启动MLSQL Engine时配置上`-streaming.ps.cluster.enable true`。
-
-值得注意的是，这两个动作只有在分布式场景下才会需要。在后续Python章节的内容里，我们会有更详细的介绍。
-
-
-mlsql-hbase 则是提供了一个hbase 数据源的shaded包。很神奇的是，hbase 的client需要依赖了无数的包，而且这些包和其他系统的包经常会冲突。所以为了方便，
-我们预先构建了hbase的包，大家只要通过--jars带上即可拥有访问hbase的能力。
 
 ## 启动和配置 MLSQL Engine
 
@@ -67,7 +57,7 @@ chmod u+x start-default.sh
 即可。当然，这需要你已经将hdfs,yarn等相关的配置文件放到SPARK_HOME/conf里。
 
 
-## 启动和配置 MLSQL Cluster
+## 启动和配置 MLSQL Cluster (可选)
 
 同样，下载解压后，目录结构如下：
 
@@ -106,7 +96,13 @@ MLSQL Console也需要依赖MySQL,所以，同cluster一样，你需要经过相
 
 ```
 export MLSQL_CONSOLE_JAR="mlsql-api-console-1.4.0-SNAPSHOT.jar"
+
+# 如果你没有安装cluster,那么这个请注释掉这句，并且开启下面那一句
 export MLSQL_CLUSTER_URL=http://127.0.0.1:8080
+
+# 如果你没有安装cluster,请开启这一句
+# export MLSQL_ENGINE_URL=http://127.0.0.1:9003
+
 export MY_URL=http://127.0.0.1:9002
 export USER_HOME=/home/users
 export ENABLE_AUTH_CENTER=false
@@ -118,9 +114,23 @@ cd $SELF
 ./start.sh
 ```
 
+如果你没有安装cluster,修改start.sh为如下内容：
+
+```
+#!/usr/bin/env bash
+
+java -cp .:${MLSQL_CONSOLE_JAR} tech.mlsql.MLSQLConsole \
+-mlsql_engine_url ${MLSQL_ENGINE_URL} \
+-my_url ${MY_URL} \
+-user_home ${USER_HOME} \
+-enable_auth_center ${ENABLE_AUTH_CENTER:-false} \
+-config ${MLSQL_CONSOLE_CONFIG_FILE}
+```
+
 前面export 部分本质上都是配置。其中有几个配置值得大家注意。第一个是MLSQL_CLUSTER_URL，他表示MLSQL Cluster的地址。前面我们已经
 在本地启动了MLSQL Cluster,所以对一个的地址是 `http://127.0.0.1:8080`。MY_URL 则是表示MLSQL Console自己的地址。MLSQL CLuster 和
-MLSQL Engine需要反向连接MLSQL Console,这里其实是告诉他们两MLSQL Console的地址是什么。
+MLSQL Engine需要反向连接MLSQL Console,这里其实是告诉他们两MLSQL Console的地址是什么。MLSQL_ENGINE_URL则是engine的直接地址，如果你没有
+配置cluster，则会显示上面的效果。
 
 USER_HOME 是为了契合MLSQL Stack里一个比较特殊的概念。 MLSQL Stack 设计的时候是面向多租户的，这意味着，每个用户有自己的执行环境，这也包括
 主目录，正如其他的系统譬如Linxu一样。通常如果你是local模式部署MLSQL Engine,那么主目录是MLSQL Engine所在机器的目录。如果你是分布式部署，那么
@@ -140,7 +150,11 @@ USER_HOME 是为了契合MLSQL Stack里一个比较特殊的概念。 MLSQL Stac
 
 ENABLE_AUTH_CENTER 参数指是否开启权限校验。默认是不开启。
 
-现在，MLSQL Console也启动了，我们需要注册和登录进去，并且做一些设置来确保我们可用。其配置和[使用Docker安装体验](installation/docker.md)里描述
+现在，MLSQL Console也启动了，我们需要注册和登录进去。
+
+## 开启Cluster后的额外配置
+
+如果你安装了cluster,则需要进行一些额外配置，来确保我们可用。其配置和[使用Docker安装体验](https://docs.mlsql.tech/zh/installation/docker.html)里描述
 的大部分一致。唯一需要变更的地方是：
 
 ![image.png](http://docs.mlsql.tech/upload_images/WX20190807-095834.png)
