@@ -28,22 +28,13 @@ class PluginHook extends MLSQLPlatformLifecycle with Logging {
       }
 
     // build-in plugins
-    try {
-      Class.forName("tech.mlsql.plugins.app.pythoncontroller.PythonApp").newInstance().
-        asInstanceOf[tech.mlsql.app.App].run(Seq[String]())
-      Class.forName("tech.mlsql.plugins.mlsql_watcher.MLSQLWatcher").newInstance().
-        asInstanceOf[tech.mlsql.app.App].run(Seq[String]())
-    } catch {
-      case e: Exception =>
-        logInfo("Fail to start PythonApp plugin",e)
-    }
+    PluginHook.startBuildIn()
 
 
     if (!params.contains("streaming.datalake.path")) return
     val spark = runtime.asInstanceOf[SparkRuntime].sparkSession
-    import spark.implicits._
-
     import PluginUtils._
+    import spark.implicits._
     import tech.mlsql.scheduler.client.SchedulerUtils._
 
     val plugins = tryReadTable(spark, TABLE_PLUGINS, () => spark.createDataset[AddPlugin](Seq()).toDF())
@@ -85,6 +76,26 @@ class PluginHook extends MLSQLPlatformLifecycle with Logging {
   }
 
   override def afterDispatcher(runtime: StreamingRuntime, params: Map[String, String]): Unit = {
+
+  }
+}
+
+object PluginHook extends Logging {
+  private val apps = List(
+    "tech.mlsql.plugins.app.pythoncontroller.PythonApp",
+    "tech.mlsql.plugins.mlsql_watcher.MLSQLWatcher"
+  )
+
+  def startBuildIn() = {
+    apps.foreach { app =>
+      try {
+        Class.forName(app).newInstance().
+          asInstanceOf[tech.mlsql.app.App].run(Seq[String]())
+      } catch {
+        case e: Exception =>
+          logInfo("Fail to start default plugin", e)
+      }
+    }
 
   }
 }
