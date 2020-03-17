@@ -146,7 +146,6 @@ object MLSQLConf {
       |register udf class
     """.stripMargin).stringConf.createOptional
 
-
   val SESSION_IDLE_TIMEOUT: ConfigEntry[Long] =
     MLSQLConfigBuilder("spark.mlsql.session.idle.timeout")
       .doc("SparkSession timeout")

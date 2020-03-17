@@ -11,6 +11,7 @@ import tech.mlsql.datalake.DataLake
 import tech.mlsql.dsl.includes.PluginIncludeSource
 import tech.mlsql.runtime.PluginUtils
 import tech.mlsql.runtime.plugins._
+import tech.mlsql.store.DBStore
 
 
 /**
@@ -20,7 +21,6 @@ class PluginCommand(override val uid: String) extends SQLAlg with WowParams {
   def this() = this(BaseParams.randomUID())
 
   import tech.mlsql.runtime.PluginUtils._
-  import tech.mlsql.scheduler.client.SchedulerUtils._
 
   override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
     val spark = df.sparkSession
@@ -34,7 +34,7 @@ class PluginCommand(override val uid: String) extends SQLAlg with WowParams {
 
     def fetchTable(tableName: String, callback: () => DataFrame) = {
       val table = try {
-        readTable(spark, tableName)
+        DBStore.store.readTable(spark, tableName)
       } catch {
         case e: Exception =>
           callback()
@@ -48,25 +48,44 @@ class PluginCommand(override val uid: String) extends SQLAlg with WowParams {
       case Seq(pluginType, "remove", pluginName) =>
         pluginType match {
           case PluginType.ET =>
-            val item = fetchTable(TABLE_ETRecord, () => spark.createDataset[ETRecord](Seq()).toDF()).where($"pluginName" === pluginName).as[ETRecord].head()
+
+            val items = fetchTable(TABLE_ETRecord,
+              () => spark.createDataset[ETRecord](Seq()).toDF())
+              .where($"pluginName" === pluginName).as[ETRecord].collect()
+
+            if (items.size == 0) {
+              throw new RuntimeException(s"${pluginName} is not found")
+            }
+            val item = items.head
+
             removeET(pluginName, item.className, item.commandName, () => {
-              saveTable(spark, spark.createDataset(Seq(ETRecord(pluginName, item.commandName, item.etName, item.className))).toDF(), TABLE_ETRecord, Option("pluginName"), true)
+              DBStore.store.saveTable(spark, spark.createDataset(Seq(ETRecord(pluginName, item.commandName, item.etName, item.className))).toDF(), TABLE_ETRecord, Option("pluginName"), true)
             })
 
           case PluginType.DS =>
-            val item = fetchTable(TABLE_DSRecord, () => spark.createDataset[DSRecord](Seq()).toDF()).where($"pluginName" === pluginName).as[DSRecord].head()
+
+            val items = fetchTable(TABLE_DSRecord,
+              () => spark.createDataset[DSRecord](Seq()).toDF())
+              .where($"pluginName" === pluginName).as[DSRecord].collect()
+
+            if (items.size == 0) {
+              throw new RuntimeException(s"Plugin [${pluginName}] is not found")
+            }
+            val item = items.head
+
             removeDS(pluginName, item.fullFormat, item.shortFormat, () => {
-              saveTable(spark, spark.createDataset(Seq(DSRecord(pluginName, item.shortFormat, item.fullFormat))).toDF(), TABLE_DSRecord, Option("pluginName"), true)
+              DBStore.store.saveTable(spark, spark.createDataset(Seq(DSRecord(pluginName, item.shortFormat, item.fullFormat))).toDF(), TABLE_DSRecord, Option("pluginName"), true)
             })
+
           case PluginType.SCRIPT =>
             PluginIncludeSource.unRegister(pluginName)
 
           case PluginType.APP =>
-            saveTable(spark, spark.createDataset(Seq(AppRecord(pluginName, "", Seq()))).toDF(), TABLE_APPRecord, Option("pluginName"), true)
+            DBStore.store.saveTable(spark, spark.createDataset(Seq(AppRecord(pluginName, "", Seq()))).toDF(), TABLE_APPRecord, Option("pluginName"), true)
         }
 
-        saveTable(spark, spark.createDataset(Seq(AddPlugin(pluginName, "", pluginType))).toDF(), TABLE_PLUGINS, Option("pluginName,pluginType"), true)
-        readTable(spark, TABLE_PLUGINS)
+        DBStore.store.saveTable(spark, spark.createDataset(Seq(AddPlugin(pluginName, "", pluginType))).toDF(), TABLE_PLUGINS, Option("pluginName,pluginType"), true)
+        fetchTable(TABLE_PLUGINS, () => spark.createDataset[AddPlugin](Seq()).toDF())
 
 
       case Seq(pluginType, "add", _className, pluginName, left@_*) =>
@@ -84,7 +103,7 @@ class PluginCommand(override val uid: String) extends SQLAlg with WowParams {
           _className
         }
         val table = try {
-          readTable(spark, TABLE_PLUGINS)
+          DBStore.store.readTable(spark, TABLE_PLUGINS)
         } catch {
           case e: Exception =>
             spark.createDataset[AddPlugin](Seq()).toDF()
@@ -120,24 +139,24 @@ class PluginCommand(override val uid: String) extends SQLAlg with WowParams {
             registerET(pluginName, className, commandName, () => {
             })
             val etName = className.split("\\.").last
-            saveTable(spark, spark.createDataset(Seq(ETRecord(pluginName, commandName, etName, className))).toDF(), TABLE_ETRecord, None, false)
+            DBStore.store.saveTable(spark, spark.createDataset(Seq(ETRecord(pluginName, commandName, etName, className))).toDF(), TABLE_ETRecord, None, false)
           case PluginType.DS =>
             registerDS(pluginName, className, commandName, () => {
-              saveTable(spark, spark.createDataset(Seq(DSRecord(pluginName, commandName, className))).toDF(), TABLE_DSRecord, None, false)
+              DBStore.store.saveTable(spark, spark.createDataset(Seq(DSRecord(pluginName, commandName, className))).toDF(), TABLE_DSRecord, None, false)
             })
           case PluginType.SCRIPT =>
             PluginIncludeSource.register(pluginName, localPath)
 
           case PluginType.APP =>
-            saveTable(spark, spark.createDataset(Seq(AppRecord(pluginName, className, left))).toDF(), TABLE_APPRecord, None, false)
+            DBStore.store.saveTable(spark, spark.createDataset(Seq(AppRecord(pluginName, className, left))).toDF(), TABLE_APPRecord, None, false)
         }
 
 
-        saveTable(
+        DBStore.store.saveTable(
           spark, spark.createDataset(Seq(AddPlugin(pluginName, pluginPath, pluginType))).toDF(),
           TABLE_PLUGINS, None, false)
 
-        readTable(spark, TABLE_PLUGINS)
+        DBStore.store.readTable(spark, TABLE_PLUGINS)
 
       case Seq("script", "show", item) =>
         val includeSource = new PluginIncludeSource()

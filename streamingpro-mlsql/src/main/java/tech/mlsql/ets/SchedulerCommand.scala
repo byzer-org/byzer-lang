@@ -6,21 +6,21 @@ import it.sauronsoftware.cron4j.SchedulingPattern
 import org.apache.http.client.fluent.Request
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.mlsql.session.MLSQLException
-import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession, functions => F}
+import org.apache.spark.sql.types.IntegerType
+import org.apache.spark.sql.{DataFrame, SparkSession, functions => F}
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib.SQLAlg
-import streaming.dsl.mmlib.algs.Functions
 import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
 import tech.mlsql.common.utils.path.PathFun
 import tech.mlsql.common.utils.serder.json.JSONTool
-import tech.mlsql.datalake.DataLake
 import tech.mlsql.runtime.AsSchedulerService
 import tech.mlsql.scheduler.{DependencyJob, TimerJob}
+import tech.mlsql.store.DBStore
 
 /**
-  * 2019-09-05 WilliamZhu(allwefantasy@gmail.com)
-  */
-class SchedulerCommand(override val uid: String) extends SQLAlg  with WowParams {
+ * 2019-09-05 WilliamZhu(allwefantasy@gmail.com)
+ */
+class SchedulerCommand(override val uid: String) extends SQLAlg with WowParams {
 
   import tech.mlsql.scheduler.client.SchedulerUtils._
 
@@ -77,34 +77,34 @@ class SchedulerCommand(override val uid: String) extends SQLAlg  with WowParams 
         validateExpr(cronExpr)
         val scriptId = getScriptId(id)
         val df = spark.createDataset(Seq(TimerJob(context.owner, scriptId, cronExpr))).toDF()
-        saveTable(spark, df, SCHEDULER_TIME_JOBS, Option("id"), cronExpr.isEmpty)
+        DBStore.store.saveTable(spark, df, SCHEDULER_TIME_JOBS, Option("id"), cronExpr.isEmpty)
         if (cronExpr.isEmpty) {
-          val removeDf = readTable(spark, SCHEDULER_DEPENDENCY_JOBS).where(F.col("dependency") === scriptId)
-          saveTable(spark, removeDf, SCHEDULER_DEPENDENCY_JOBS, Option("id,dependency"), true)
+          val removeDf = DBStore.store.readTable(spark, SCHEDULER_DEPENDENCY_JOBS).where(F.col("dependency") === scriptId)
+          DBStore.store.saveTable(spark, removeDf, SCHEDULER_DEPENDENCY_JOBS, Option("id,dependency"), true)
         }
-        readTable(spark, SCHEDULER_TIME_JOBS)
+        DBStore.store.readTable(spark, SCHEDULER_TIME_JOBS)
 
       case Array(id, "depends", "on", dependedIds) =>
-        val timeJobs = readTable(spark, SCHEDULER_TIME_JOBS).as[TimerJob[Int]].collect().map(f => f.id).toSet
+        val timeJobs = DBStore.store.readTable(spark, SCHEDULER_TIME_JOBS).withColumn("id",F.col("id").cast(IntegerType)).as[TimerJob[Int]].collect().map(f => f.id).toSet
         val jobs = dependedIds.split(",").map { f =>
           val depId = getScriptId(f)
           require(timeJobs.contains(depId), s"${depId} should be timer job")
           DependencyJob(context.owner, getScriptId(id), depId)
         }
         val df = spark.createDataset(jobs).toDF()
-        saveTable(spark, df, SCHEDULER_DEPENDENCY_JOBS, Option("id,dependency"), false)
-        readTable(spark, SCHEDULER_DEPENDENCY_JOBS)
+        DBStore.store.saveTable(spark, df, SCHEDULER_DEPENDENCY_JOBS, Option("id,dependency"), false)
+        DBStore.store.readTable(spark, SCHEDULER_DEPENDENCY_JOBS)
 
       case Array("remove", id, "depends", "on", dependedIds) =>
-        val timeJobs = readTable(spark, SCHEDULER_TIME_JOBS).as[TimerJob[Int]].collect().map(f => f.id).toSet
+        val timeJobs = DBStore.store.readTable(spark, SCHEDULER_TIME_JOBS).withColumn("id",F.col("id").cast(IntegerType)).as[TimerJob[Int]].collect().map(f => f.id).toSet
         val jobs = dependedIds.split(",").map { f =>
           val depId = getScriptId(f)
           require(timeJobs.contains(depId), s"${depId} should be timer job")
           DependencyJob(context.owner, getScriptId(id), depId)
         }
         val df = spark.createDataset(jobs).toDF()
-        saveTable(spark, df, SCHEDULER_DEPENDENCY_JOBS, Option("id,dependency"), true)
-        readTable(spark, SCHEDULER_DEPENDENCY_JOBS)
+        DBStore.store.saveTable(spark, df, SCHEDULER_DEPENDENCY_JOBS, Option("id,dependency"), true)
+        DBStore.store.readTable(spark, SCHEDULER_DEPENDENCY_JOBS)
 
       //      case Array("conf", hostTag) =>
       //

@@ -51,7 +51,10 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
   def name = "SPARK"
 
   registerJdbcDialect(HiveJdbcDialect)
-  val lifeCyleCallback = ArrayBuffer[MLSQLRuntimeLifecycle](new AsSchedulerService())
+  val lifeCyleCallback = ArrayBuffer[MLSQLRuntimeLifecycle](
+    Class.forName("tech.mlsql.runtime.MetaStoreService").newInstance().asInstanceOf[MLSQLRuntimeLifecycle],
+    new AsSchedulerService()
+  )
   var psDriverBackend: PSDriverBackend = null
 
   var sparkSession: SparkSession = createRuntime
