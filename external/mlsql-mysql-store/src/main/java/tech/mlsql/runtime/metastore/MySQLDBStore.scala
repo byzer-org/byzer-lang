@@ -4,12 +4,10 @@ import java.util.Date
 
 import net.csdn.common.settings.ImmutableSettings
 import net.csdn.modules.persist.mysql.MysqlClient
-import net.sf.json.{JSONArray, JSONObject}
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
-import org.spark_project.guava.base.CaseFormat
+import tech.mlsql.common.utils.base.CaseFormat
 import tech.mlsql.common.utils.serder.json.JSONTool
 import tech.mlsql.runtime.MetaStoreService.ctx
-import tech.mlsql.runtime.PluginUtils
 import tech.mlsql.store.DBStore
 
 import scala.collection.JavaConverters._
@@ -118,10 +116,10 @@ object MySQLDBStore {
 
   def getJson(value: String): Any = {
     if (value.startsWith("[") && value.endsWith("]")) {
-      return JSONArray.fromObject(value)
+      return JSONTool.jParseJsonArray(value)
     }
     if (value.startsWith("{") && value.endsWith("}")) {
-      return JSONObject.fromObject(value)
+      return JSONTool.jParseJsonObj(value)
     }
     return value
   }
