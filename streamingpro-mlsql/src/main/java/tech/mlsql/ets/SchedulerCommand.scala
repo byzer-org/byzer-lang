@@ -85,7 +85,7 @@ class SchedulerCommand(override val uid: String) extends SQLAlg with WowParams {
         DBStore.store.readTable(spark, SCHEDULER_TIME_JOBS)
 
       case Array(id, "depends", "on", dependedIds) =>
-        val timeJobs = DBStore.store.readTable(spark, SCHEDULER_TIME_JOBS).withColumn("id",F.col("id").cast(IntegerType)).as[TimerJob[Int]].collect().map(f => f.id).toSet
+        val timeJobs = DBStore.store.readTable(spark, SCHEDULER_TIME_JOBS).withColumn("id", F.col("id").cast(IntegerType)).as[TimerJob[Int]].collect().map(f => f.id).toSet
         val jobs = dependedIds.split(",").map { f =>
           val depId = getScriptId(f)
           require(timeJobs.contains(depId), s"${depId} should be timer job")
@@ -93,10 +93,10 @@ class SchedulerCommand(override val uid: String) extends SQLAlg with WowParams {
         }
         val df = spark.createDataset(jobs).toDF()
         DBStore.store.saveTable(spark, df, SCHEDULER_DEPENDENCY_JOBS, Option("id,dependency"), false)
-        DBStore.store.readTable(spark, SCHEDULER_DEPENDENCY_JOBS)
+        DBStore.store.tryReadTable(spark, SCHEDULER_DEPENDENCY_JOBS, () => spark.createDataset[DependencyJob[Int]](Seq()).toDF())
 
       case Array("remove", id, "depends", "on", dependedIds) =>
-        val timeJobs = DBStore.store.readTable(spark, SCHEDULER_TIME_JOBS).withColumn("id",F.col("id").cast(IntegerType)).as[TimerJob[Int]].collect().map(f => f.id).toSet
+        val timeJobs = DBStore.store.readTable(spark, SCHEDULER_TIME_JOBS).withColumn("id", F.col("id").cast(IntegerType)).as[TimerJob[Int]].collect().map(f => f.id).toSet
         val jobs = dependedIds.split(",").map { f =>
           val depId = getScriptId(f)
           require(timeJobs.contains(depId), s"${depId} should be timer job")
@@ -104,12 +104,23 @@ class SchedulerCommand(override val uid: String) extends SQLAlg with WowParams {
         }
         val df = spark.createDataset(jobs).toDF()
         DBStore.store.saveTable(spark, df, SCHEDULER_DEPENDENCY_JOBS, Option("id,dependency"), true)
-        DBStore.store.readTable(spark, SCHEDULER_DEPENDENCY_JOBS)
+        DBStore.store.tryReadTable(spark, SCHEDULER_DEPENDENCY_JOBS, () => spark.createDataset[DependencyJob[Int]](Seq()).toDF())
 
-      //      case Array("conf", hostTag) =>
-      //
-      //        envSession.set("__scheduler__", hostTag, Map(SetSession.__MLSQL_CL__ -> SetSession.SET_STATEMENT_CL))
-      //        envSession.fetchPythonRunnerConf.get.toDF()
+      case Array("remove", name) =>
+        val id = getScriptId(name)
+        val timeJob = DBStore.store.readTable(spark, SCHEDULER_TIME_JOBS).withColumn("id", F.col("id").cast(IntegerType)).as[TimerJob[Int]].filter(f => f.id == id)
+        DBStore.store.saveTable(spark, timeJob.toDF(), SCHEDULER_TIME_JOBS, Option("id"), true)
+        DBStore.store.tryReadTable(spark, SCHEDULER_TIME_JOBS, () => spark.createDataset[TimerJob[Int]](Seq()).toDF())
+
+      case Array("remove", "id", id) =>
+        val timeJob = DBStore.store.readTable(spark, SCHEDULER_TIME_JOBS).withColumn("id", F.col("id").cast(IntegerType)).as[TimerJob[Int]].filter(f => f.id == id.toInt)
+        DBStore.store.saveTable(spark, timeJob.toDF(), SCHEDULER_TIME_JOBS, Option("id"), true)
+        DBStore.store.tryReadTable(spark, SCHEDULER_TIME_JOBS, () => spark.createDataset[TimerJob[Int]](Seq()).toDF())
+
+      case Array("list") =>
+        DBStore.store.tryReadTable(spark, SCHEDULER_TIME_JOBS, () => spark.createDataset[TimerJob[Int]](Seq()).toDF())
+      case Array("list", "depends") =>
+        DBStore.store.tryReadTable(spark, SCHEDULER_DEPENDENCY_JOBS, () => spark.createDataset[DependencyJob[Int]](Seq()).toDF())
 
     }
   }
