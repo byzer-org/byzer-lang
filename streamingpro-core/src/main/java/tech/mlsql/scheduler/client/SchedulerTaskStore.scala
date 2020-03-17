@@ -2,10 +2,13 @@ package tech.mlsql.scheduler.client
 
 import it.sauronsoftware.cron4j._
 import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.types.IntegerType
 import streaming.log.WowLog
 import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.scheduler.algorithm.DAG
 import tech.mlsql.scheduler.{CronOp, DependencyJob, JobNode, TimerJob}
+import tech.mlsql.store.DBStore
+import org.apache.spark.sql.{functions => F}
 
 /**
   * 2019-09-06 WilliamZhu(allwefantasy@gmail.com)
@@ -17,7 +20,7 @@ class SchedulerTaskStore(spark: SparkSession, _consoleUrl: String, _consoleToken
 
   override def getTasks: TaskTable = {
     val timer_data = try {
-      readTable(spark, SCHEDULER_TIME_JOBS).as[TimerJob[Int]].collect()
+      DBStore.store.readTable(spark, SCHEDULER_TIME_JOBS).withColumn("id",F.col("id").cast(IntegerType)).as[TimerJob[Int]].collect()
     } catch {
       case e: Exception =>
         logWarning(s"${SCHEDULER_TIME_JOBS} not created before visit", e)
@@ -25,7 +28,8 @@ class SchedulerTaskStore(spark: SparkSession, _consoleUrl: String, _consoleToken
     }
     val taskTable = new TaskTable()
     val dependency_data = try {
-      readTable(spark, SCHEDULER_DEPENDENCY_JOBS).as[DependencyJob[Int]].collect()
+      DBStore.store.readTable(spark, SCHEDULER_DEPENDENCY_JOBS).withColumn("id",F.col("id").cast(IntegerType))
+        .withColumn("dependency",F.col("dependency").cast(IntegerType)).as[DependencyJob[Int]].collect()
     } catch {
       case e: Exception =>
         Array[DependencyJob[Int]]()
@@ -44,7 +48,7 @@ class SchedulerTaskStore(spark: SparkSession, _consoleUrl: String, _consoleToken
         import spark.implicits._
 
         val leafIds = try {
-          readTable(spark, SCHEDULER_TIME_JOBS_STATUS).as[JobNode[Int]].collect().toSeq
+          DBStore.store.readTable(spark, SCHEDULER_TIME_JOBS_STATUS).as[JobNode[Int]].collect().toSeq
         } catch {
           case e: Exception =>
             recomputeLeafIds
@@ -68,7 +72,7 @@ class SchedulerTaskStore(spark: SparkSession, _consoleUrl: String, _consoleToken
             val startTime = System.currentTimeMillis()
             runInSpark(wow)
             val logItem = SchedulerLogItem(startTime, System.currentTimeMillis(), wow, wow, nodes.toSeq)
-            saveTable(spark, spark.createDataset(Seq(logItem)).toDF(), SCHEDULER_LOG, None, false)
+            DBStore.store.saveTable(spark, spark.createDataset(Seq(logItem)).toDF(), SCHEDULER_LOG, None, false)
 
             // if all jobs success, trigger the dependency jobs.
             if (leafIds.filter(f => f.isLastSuccess).size == leafIds.size) {
@@ -81,7 +85,7 @@ class SchedulerTaskStore(spark: SparkSession, _consoleUrl: String, _consoleToken
                   val startTime = System.currentTimeMillis()
                   runInSpark(job)
                   val logItem = SchedulerLogItem(startTime, System.currentTimeMillis(), job, wow, dagInstance.findNodeInTheSameTree(job.id).toSeq)
-                  saveTable(spark, spark.createDataset(Seq(logItem)).toDF(), SCHEDULER_LOG, None, false)
+                  DBStore.store.saveTable(spark, spark.createDataset(Seq(logItem)).toDF(), SCHEDULER_LOG, None, false)
                 }
               }
               leafIds.foreach(f => f.cleanStatus)
@@ -91,11 +95,11 @@ class SchedulerTaskStore(spark: SparkSession, _consoleUrl: String, _consoleToken
             val jobNode = JobNode(timerJob.id, 0, 0, Seq(), Seq(), Seq(), Option(CronOp(timerJob.cron)), timerJob.owner)
             runInSpark(jobNode)
             val logItem = SchedulerLogItem(startTime, System.currentTimeMillis(), jobNode, jobNode, nodes.toSeq)
-            saveTable(spark, spark.createDataset(Seq(logItem)).toDF(), SCHEDULER_LOG, None, false)
+            DBStore.store.saveTable(spark, spark.createDataset(Seq(logItem)).toDF(), SCHEDULER_LOG, None, false)
         }
 
         if (leafIds.size > 0) {
-          saveTable(spark, spark.createDataset[JobNode[Int]](leafIds.toSeq).toDF(), SCHEDULER_TIME_JOBS_STATUS, Option("id"), false)
+          DBStore.store.saveTable(spark, spark.createDataset[JobNode[Int]](leafIds.toSeq).toDF(), SCHEDULER_TIME_JOBS_STATUS, Option("id"), false)
         }
 
       }

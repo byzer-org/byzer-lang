@@ -4,6 +4,7 @@ import streaming.core.strategy.platform.{SparkRuntime, StreamingRuntime}
 import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.dsl.includes.PluginIncludeSource
 import tech.mlsql.runtime.plugins._
+import tech.mlsql.store.DBStore
 
 /**
  * 2019-09-12 WilliamZhu(allwefantasy@gmail.com)
@@ -37,10 +38,10 @@ class PluginHook extends MLSQLPlatformLifecycle with Logging {
     import spark.implicits._
     import tech.mlsql.scheduler.client.SchedulerUtils._
 
-    val plugins = tryReadTable(spark, TABLE_PLUGINS, () => spark.createDataset[AddPlugin](Seq()).toDF())
-    val ets = tryReadTable(spark, TABLE_ETRecord, () => spark.createDataset[ETRecord](Seq()).toDF())
-    val dses = tryReadTable(spark, TABLE_DSRecord, () => spark.createDataset[DSRecord](Seq()).toDF())
-    val apps = tryReadTable(spark, TABLE_APPRecord, () => spark.createDataset[AppRecord](Seq()).toDF())
+    val plugins = DBStore.store.tryReadTable(spark, TABLE_PLUGINS, () => spark.createDataset[AddPlugin](Seq()).toDF())
+    val ets = DBStore.store.tryReadTable(spark, TABLE_ETRecord, () => spark.createDataset[ETRecord](Seq()).toDF())
+    val dses = DBStore.store.tryReadTable(spark, TABLE_DSRecord, () => spark.createDataset[DSRecord](Seq()).toDF())
+    val apps = DBStore.store.tryReadTable(spark, TABLE_APPRecord, () => spark.createDataset[AppRecord](Seq()).toDF())
 
     plugins.as[AddPlugin].collect().foreach { plugin =>
       logInfo(s"Plugin ${plugin.pluginName} in ${plugin.path}")
