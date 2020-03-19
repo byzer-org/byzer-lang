@@ -25,7 +25,8 @@ import org.apache.spark.ml.linalg.{DenseVector, Matrices, Matrix, SparseVector, 
 import org.apache.spark.mllib.linalg.{Vectors => OldVectors}
 import org.apache.spark.sql.UDFRegistration
 import streaming.common.UnicodeUtils
-import tech.mlsql.common.utils.distribute.socket.server.{ByteUnit, JavaUtils}
+import tech.mlsql.common.utils.base.Measurement
+import tech.mlsql.common.utils.distribute.socket.server.ByteUnit
 
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
@@ -430,37 +431,37 @@ object Functions {
 
   def byteStringAsBytes(uDFRegistration: UDFRegistration) = {
     uDFRegistration.register("byteStringAsBytes", (item: String) => {
-      JavaUtils.byteStringAsBytes(item)
+      Measurement.byteStringAsBytes(item)
     })
   }
 
   def byteStringAsKb(uDFRegistration: UDFRegistration) = {
     uDFRegistration.register("byteStringAsKb", (item: String) => {
-      JavaUtils.byteStringAsKb(item)
+      Measurement.byteStringAsKb(item)
     })
   }
 
   def byteStringAsMb(uDFRegistration: UDFRegistration) = {
     uDFRegistration.register("byteStringAsMb", (item: String) => {
-      JavaUtils.byteStringAsMb(item)
+      Measurement.byteStringAsMb(item)
     })
   }
 
   def byteStringAsGb(uDFRegistration: UDFRegistration) = {
     uDFRegistration.register("byteStringAsGb", (item: String) => {
-      JavaUtils.byteStringAsGb(item)
+      Measurement.byteStringAsGb(item)
     })
   }
 
   def byteStringAs(uDFRegistration: UDFRegistration) = {
     uDFRegistration.register("byteStringAsGb", (item: String, unit: String) => {
-      JavaUtils.byteStringAs(item, ByteUnit.valueOf(unit))
+      Measurement.byteStringAs(item, ByteUnit.valueOf(unit))
     })
   }
 
   def timeAgo(uDFRegistration: UDFRegistration) = {
     uDFRegistration.register("timeAgo", (item: String) => {
-      val seconds = JavaUtils.timeStringAsSec(item)
+      val seconds = Measurement.timeStringAsSec(item)
       System.currentTimeMillis() - 1000 * seconds
     })
   }
