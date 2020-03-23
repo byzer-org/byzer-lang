@@ -60,7 +60,7 @@
 
         <flink.version>1.4.2</flink.version>
         <guava.version>16.0</guava.version>
-        <jetty.version>9.2.16.v20160414</jetty.version>
+        <jetty.version>9.4.27.v20200227</jetty.version>
 
         <httpclient.version>4.5.3</httpclient.version>
         
