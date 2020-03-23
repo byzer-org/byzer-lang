@@ -162,6 +162,8 @@ class PluginCommand(override val uid: String) extends SQLAlg with WowParams {
         val includeSource = new PluginIncludeSource()
         val content = includeSource.fetchSource(spark, item, Map[String, String]())
         spark.createDataset[ScriptContent](Seq(ScriptContent(item, content))).toDF()
+      case Seq("list") => DBStore.store.readTable(spark, TABLE_PLUGINS)
+      case Seq("list", pluginType) => DBStore.store.readTable(spark, TABLE_PLUGINS).where(s""" pluginType="${pluginType}" """)
 
     }
 
