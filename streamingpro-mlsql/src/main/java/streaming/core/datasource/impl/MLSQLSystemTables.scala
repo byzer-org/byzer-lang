@@ -75,6 +75,7 @@ class MLSQLSystemTables extends MLSQLSource with MLSQLSourceInfo with MLSQLRegis
         spark.createDataset(Seq(msgs)).toDF("offset", "value")
       case Array("version") =>
         spark.createDataset(Seq(MLSQLVersion.version())).toDF()
+
       case _ => throw new MLSQLException(
         s"""
            |path [${config.path}] is not found. please check the doc website for more details:
