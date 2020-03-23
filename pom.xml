@@ -60,6 +60,8 @@
 
         <flink.version>1.4.2</flink.version>
         <guava.version>16.0</guava.version>
+        <jetty.version>9.2.16.v20160414</jetty.version>
+
         <httpclient.version>4.5.3</httpclient.version>
         
         <scope>provided</scope>
@@ -124,22 +126,22 @@
                 <dependency>
                     <groupId>org.eclipse.jetty</groupId>
                     <artifactId>jetty-server</artifactId>
-                    <version>9.2.16.v20160414</version>
+                    <version>${jetty.version}</version>
                 </dependency>
                 <dependency>
                     <groupId>org.eclipse.jetty</groupId>
                     <artifactId>jetty-io</artifactId>
-                    <version>9.2.16.v20160414</version>
+                    <version>${jetty.version}</version>
                 </dependency>
                 <dependency>
                     <groupId>org.eclipse.jetty</groupId>
                     <artifactId>jetty-util</artifactId>
-                    <version>9.2.16.v20160414</version>
+                    <version>${jetty.version}</version>
                 </dependency>
                 <dependency>
                     <groupId>org.eclipse.jetty</groupId>
                     <artifactId>jetty-http</artifactId>
-                    <version>9.2.16.v20160414</version>
+                    <version>${jetty.version}</version>
                 </dependency>
                 <dependency>
                     <groupId>org.apache.hadoop</groupId>
