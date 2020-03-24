@@ -71,7 +71,7 @@ class SelectAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAda
   }
 
   def runtimeTableAuth(df: DataFrame): Unit = {
-    // enable runtime select auth
+    //enable runtime select auth
     if (MLSQLSparkConf.runtimeSelectAuth) {
       scriptSQLExecListener.getTableAuth.foreach(tableAuth => {
 
@@ -79,16 +79,9 @@ class SelectAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAda
         var mlsqlTables = List.empty[MLSQLTable]
 
         tableAndCols.foreach {
-          case (table, cols) =>
-            val stable = scriptSQLExecListener.sparkSession.catalog.getTable(table)
-            val db = Option(stable.database)
-            val tableStr = Option(stable.name)
-            val ttpe = if (stable.isTemporary) {
-              TableType.TEMP
-            } else {
-              TableType.HIVE
-            }
-            mlsqlTables ::= MLSQLTable(db, tableStr, Option(cols.toSet), OperateType.SELECT, None, ttpe)
+          case (dbTable, cols) =>
+            val Array(dbName, tableName) = dbTable.split("\\.", 2)
+            mlsqlTables ::= MLSQLTable(Option(dbName), Option(tableName), Option(cols.toSet), OperateType.SELECT, None, TableType.HIVE)
         }
 
         tableAuth.auth(mlsqlTables)
