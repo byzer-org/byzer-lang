@@ -4,7 +4,8 @@ import java.util.Date
 
 import net.csdn.common.settings.ImmutableSettings
 import net.csdn.modules.persist.mysql.MysqlClient
-import org.apache.spark.sql.{DataFrame, Row, SparkSession}
+import org.apache.spark.sql.types.{MapType, StringType, StructType}
+import org.apache.spark.sql.{DataFrame, Row, SparkSession, functions => F}
 import tech.mlsql.common.utils.base.CaseFormat
 import tech.mlsql.common.utils.names.NameConvert
 import tech.mlsql.common.utils.serder.json.JSONTool
@@ -20,6 +21,7 @@ class MySQLDBStore extends DBStore {
 
   import MySQLDBStore._
 
+
   override def readTable(spark: SparkSession, tableName: String): DataFrame = {
     val Array(db, table) = tableName.split("\\.")
     val client = new MysqlClient(ctx.dataSource)
@@ -27,7 +29,7 @@ class MySQLDBStore extends DBStore {
     import spark.implicits._
     val db_table = "w_" + NameConvert.lowerCamelToLowerUnderScore(table)
 
-    val data = spark.read.json(spark.createDataset[String](
+    var data = spark.read.json(spark.createDataset[String](
       client.query(s"select * from $db_table").asScala.
         map { f =>
           val _item = f.asScala.map { item =>
@@ -39,15 +41,25 @@ class MySQLDBStore extends DBStore {
               case _ => value
             }
 
-            (NameConvert.lowerUnderScoreToLowerCamel(item._1.toString), value)
+            (NameConvert.lowerUnderScoreToLowerCamel(item._1.toString), newValue)
 
           }.toMap
           JSONTool.toJsonStr(_item)
         }))
 
     if (data.count() == 0) throw new RuntimeException("no data")
-    data
 
+    val convertRowToMap = (row: Row) => {
+      row.schema.fieldNames.filter(field => !row.isNullAt(row.fieldIndex(field))).map(field => field -> row.getAs[String](field)).toMap
+    }
+    val udf = F.udf(convertRowToMap, MapType(StringType, StringType))
+    data.schema.filter(f => f.dataType match {
+      case StructType(_)=> true
+      case _ => false
+    }).map { wow =>
+      data = data.withColumn(wow.name, udf(F.col(wow.name)))
+    }
+    data
   }
 
   override def tryReadTable(spark: SparkSession, table: String, empty: () => DataFrame): DataFrame = {
@@ -117,10 +129,10 @@ object MySQLDBStore {
 
   def getJson(value: String): Any = {
     if (value.startsWith("[") && value.endsWith("]")) {
-      return JSONTool.jParseJsonArray(value)
+      return JSONTool.parseJson[List[String]](value)
     }
     if (value.startsWith("{") && value.endsWith("}")) {
-      return JSONTool.jParseJsonObj(value)
+      return JSONTool.parseJson[Map[String, String]](value)
     }
     return value
   }
