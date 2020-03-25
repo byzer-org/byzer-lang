@@ -22,7 +22,6 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicReference
 import java.util.{List => JList, Map => JMap}
 
-import net.csdn.common.logging.Loggers
 import org.apache.spark.sql.{SQLContext, SparkSession}
 import org.apache.spark.streaming._
 import org.apache.spark.streaming.scheduler.{StreamingListener, StreamingListenerBatchCompleted}
@@ -37,7 +36,6 @@ class SparkStreamingRuntime(_params: JMap[Any, Any]) extends StreamingRuntime wi
 
   self =>
 
-  private val logger = Loggers.getLogger(classOf[SparkStreamingRuntime])
 
   def name = "SPARK_STREAMING"
 

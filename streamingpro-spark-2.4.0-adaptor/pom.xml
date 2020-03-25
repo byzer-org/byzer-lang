@@ -12,6 +12,12 @@
     <artifactId>streamingpro-spark-2.4.0-adaptor_${scala.binary.version}</artifactId>
 
     <dependencies>
+
+        <dependency>
+            <groupId>tech.mlsql</groupId>
+            <artifactId>spark-adhoc-kafka_${scala.binary.version}</artifactId>
+            <version>${spark-adhoc-kafka.version}</version>
+        </dependency>
         
         <dependency>
             <groupId>tech.mlsql</groupId>

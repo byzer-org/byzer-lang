@@ -6,13 +6,12 @@ import org.apache.kafka.common.TopicPartition
 import org.apache.kafka.common.serialization.ByteArrayDeserializer
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.util.UninterruptibleThread
-import streaming.log.WowLog
 import tech.mlsql.common.utils.log.Logging
 
 /**
   * 2019-06-03 WilliamZhu(allwefantasy@gmail.com)
   */
-object MLSQLKafkaOffsetInfo extends Logging with WowLog {
+object MLSQLKafkaOffsetInfo extends Logging  {
   def getKafkaInfo(spark: SparkSession, params: Map[String, String]) = {
     val parameters = params
     val caseInsensitiveParams = parameters.map { case (k, v) => (k.toLowerCase(Locale.ROOT), v) }

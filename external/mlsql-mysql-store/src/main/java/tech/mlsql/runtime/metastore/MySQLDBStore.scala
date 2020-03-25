@@ -6,6 +6,7 @@ import net.csdn.common.settings.ImmutableSettings
 import net.csdn.modules.persist.mysql.MysqlClient
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import tech.mlsql.common.utils.base.CaseFormat
+import tech.mlsql.common.utils.names.NameConvert
 import tech.mlsql.common.utils.serder.json.JSONTool
 import tech.mlsql.runtime.MetaStoreService.ctx
 import tech.mlsql.store.DBStore
@@ -24,7 +25,7 @@ class MySQLDBStore extends DBStore {
     val client = new MysqlClient(ctx.dataSource)
     client.settings(ImmutableSettings.settingsBuilder().build())
     import spark.implicits._
-    val db_table = "w_" + CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_UNDERSCORE, table)
+    val db_table = "w_" + NameConvert.lowerCamelToLowerUnderScore(table)
 
     val data = spark.read.json(spark.createDataset[String](
       client.query(s"select * from $db_table").asScala.
@@ -38,7 +39,7 @@ class MySQLDBStore extends DBStore {
               case _ => value
             }
 
-            (underScoreToCamel(item._1.toString), value)
+            (NameConvert.lowerUnderScoreToLowerCamel(item._1.toString), value)
 
           }.toMap
           JSONTool.toJsonStr(_item)
@@ -71,11 +72,11 @@ class MySQLDBStore extends DBStore {
 
       updateCol match {
         case Some(idCols) =>
-          val condition = idCols.split(",").map(name => s" ${camelToUnderScore(name)}=? ").mkString("and")
+          val condition = idCols.split(",").map(name => s" ${NameConvert.lowerCamelToLowerUnderScore(name)}=? ").mkString("and")
           val condParams = idCols.split(",").map(name => item.get(schema.indexOf(name))).toList.asJava.toArray
 
 
-          val updateCond = schema.map(name => s" ${camelToUnderScore(name)}=? ").mkString(",")
+          val updateCond = schema.map(name => s" ${NameConvert.lowerCamelToLowerUnderScore(name)}=? ").mkString(",")
           val updateParams = schema.map(name => item.get(schema.indexOf(name))).toList.asJava.toArray
 
           if (isDelete) {
@@ -86,7 +87,7 @@ class MySQLDBStore extends DBStore {
               val params = (updateParams.toList ++ condParams.toList).toArray
               client.execute(s"update $db_table set ${updateCond} where ${condition}", params: _*)
             } else {
-              val insertCond = schema.map(name => s" ${camelToUnderScore(name)} ").mkString(",")
+              val insertCond = schema.map(name => s" ${NameConvert.lowerCamelToLowerUnderScore(name)} ").mkString(",")
               val insertCond2 = schema.map(name => s" ? ").mkString(",")
               val insertParams = schema.map(name => item.get(schema.indexOf(name))).toList.asJava.toArray
               client.execute(s"INSERT INTO $db_table (${insertCond}) VALUES (${insertCond2})", insertParams: _*)
@@ -94,10 +95,10 @@ class MySQLDBStore extends DBStore {
           }
 
         case None =>
-          val condition = schema.map(name => s" ${camelToUnderScore(name)}=? ").mkString("and")
+          val condition = schema.map(name => s" ${NameConvert.lowerCamelToLowerUnderScore(name)}=? ").mkString("and")
           val condParams = schema.map(name => item.get(schema.indexOf(name))).toList.asJava.toArray
 
-          val insertCond = schema.map(name => s" ${camelToUnderScore(name)} ").mkString(",")
+          val insertCond = schema.map(name => s" ${NameConvert.lowerCamelToLowerUnderScore(name)} ").mkString(",")
           val insertCond2 = schema.map(name => s" ? ").mkString(",")
           val insertParams = schema.map(name => item.get(schema.indexOf(name))).toList.asJava.toArray
 
@@ -124,13 +125,6 @@ object MySQLDBStore {
     return value
   }
 
-  def camelToUnderScore(name: String) = {
-    CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_UNDERSCORE, name)
-  }
-
-  def underScoreToCamel(name: String) = {
-    CaseFormat.LOWER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, name)
-  }
 
   def wipeOutComplexStruct(schema: Array[String], _item: Row) = {
     val item = schema.map { name =>
