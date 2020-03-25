@@ -63,7 +63,8 @@
         <jetty.version>9.2.16.v20160414</jetty.version>
 
         <httpclient.version>4.5.3</httpclient.version>
-        
+        <lift-json.version>3.4.1</lift-json.version>
+
         <scope>provided</scope>
         <hadoop-client-version>2.6.5</hadoop-client-version>
 
@@ -74,21 +75,22 @@
         <delta-plus-version>0.2.0</delta-plus-version>
         <mysql-binlog-version>1.0.1</mysql-binlog-version>
         <mlsql-scheduler-version>0.1.0</mlsql-scheduler-version>
+        <spark-adhoc-kafka.version>0.1.2</spark-adhoc-kafka.version>
     </properties>
 
-<!--    <repositories>-->
-<!--        <repository>-->
-<!--            <id>aliyun</id>-->
-<!--            <name>Nexus Release Repository</name>-->
-<!--            <url>http://maven.aliyun.com/nexus/content/groups/public</url>-->
-<!--            <releases>-->
-<!--                <enabled>true</enabled>-->
-<!--            </releases>-->
-<!--            <snapshots>-->
-<!--                <enabled>true</enabled>-->
-<!--            </snapshots>-->
-<!--        </repository>-->
-<!--    </repositories>-->
+    <!--    <repositories>-->
+    <!--        <repository>-->
+    <!--            <id>aliyun</id>-->
+    <!--            <name>Nexus Release Repository</name>-->
+    <!--            <url>http://maven.aliyun.com/nexus/content/groups/public</url>-->
+    <!--            <releases>-->
+    <!--                <enabled>true</enabled>-->
+    <!--            </releases>-->
+    <!--            <snapshots>-->
+    <!--                <enabled>true</enabled>-->
+    <!--            </snapshots>-->
+    <!--        </repository>-->
+    <!--    </repositories>-->
 
     <profiles>
 
@@ -428,11 +430,6 @@
                 </dependency>
 
                 <dependency>
-                    <groupId>tech.mlsql</groupId>
-                    <artifactId>spark-adhoc-kafka_2.11</artifactId>
-                    <version>0.1.2</version>
-                </dependency>
-                <dependency>
                     <groupId>net.csdn</groupId>
                     <artifactId>serviceframework-jetty-9-server_${scala.binary.version}</artifactId>
                     <version>${serviceframework.version}</version>
@@ -612,7 +609,7 @@
         <dependency>
             <groupId>net.liftweb</groupId>
             <artifactId>lift-json_${scala.binary.version}</artifactId>
-            <version>2.6.2</version>
+            <version>${lift-json.version}</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.scala-lang</groupId>

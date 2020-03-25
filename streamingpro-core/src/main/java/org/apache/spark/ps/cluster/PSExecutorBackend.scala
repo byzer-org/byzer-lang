@@ -5,6 +5,7 @@ import java.util.Locale
 
 import _root_.streaming.core.strategy.platform.{PlatformManager, SparkRuntime}
 import org.apache.spark._
+import org.apache.spark.api.MLSQLExecutorPlugin
 import org.apache.spark.internal.Logging
 import org.apache.spark.internal.config._
 import org.apache.spark.rpc.{RpcCallContext, RpcEnv, ThreadSafeRpcEndpoint}
@@ -202,7 +203,7 @@ object PSExecutorBackend {
   }
 }
 
-class PSExecutorPlugin(conf: SparkConf) extends ExecutorPlugin with Logging {
+class PSExecutorPlugin(conf: SparkConf) extends MLSQLExecutorPlugin with Logging {
   override def init(): Unit = {
     try {
       WriteLog.init(conf.getAll.toMap)
