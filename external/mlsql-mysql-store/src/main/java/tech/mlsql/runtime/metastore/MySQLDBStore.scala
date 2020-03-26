@@ -15,7 +15,7 @@ import tech.mlsql.store.DBStore
 import scala.collection.JavaConverters._
 
 /**
- * not support scheduler yet
+ * MySQLDBStore for now only support complex type like List[String],Map[String,String].
  */
 class MySQLDBStore extends DBStore {
 
