@@ -36,7 +36,6 @@ class PluginHook extends MLSQLPlatformLifecycle with Logging {
     val spark = runtime.asInstanceOf[SparkRuntime].sparkSession
     import PluginUtils._
     import spark.implicits._
-    import tech.mlsql.scheduler.client.SchedulerUtils._
 
     val plugins = DBStore.store.tryReadTable(spark, TABLE_PLUGINS, () => spark.createDataset[AddPlugin](Seq()).toDF())
     val ets = DBStore.store.tryReadTable(spark, TABLE_ETRecord, () => spark.createDataset[ETRecord](Seq()).toDF())
@@ -84,7 +83,8 @@ class PluginHook extends MLSQLPlatformLifecycle with Logging {
 object PluginHook extends Logging {
   private val apps = List(
     "tech.mlsql.plugins.app.pythoncontroller.PythonApp",
-    "tech.mlsql.plugins.mlsql_watcher.MLSQLWatcher"
+    "tech.mlsql.plugins.mlsql_watcher.MLSQLWatcher",
+    "tech.mlsql.plugins.sql.profiler.ProfilerApp"
   )
 
   def startBuildIn() = {

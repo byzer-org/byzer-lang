@@ -51,10 +51,11 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
   def name = "SPARK"
 
   registerJdbcDialect(HiveJdbcDialect)
+
   val lifeCyleCallback = ArrayBuffer[MLSQLRuntimeLifecycle](
-    Class.forName("tech.mlsql.runtime.MetaStoreService").newInstance().asInstanceOf[MLSQLRuntimeLifecycle],
     new AsSchedulerService()
   )
+
   var psDriverBackend: PSDriverBackend = null
 
   var sparkSession: SparkSession = createRuntime
@@ -130,6 +131,8 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
       conf.set(DataLake.RUNTIME_KEY, params.get(DataLake.USER_KEY).toString)
     }
 
+    registerLifeCyleCallback("tech.mlsql.runtime.MetaStoreService")
+
     lifeCyleCallback.foreach { callback =>
       callback.beforeRuntimeStarted(params.map(f => (f._1.toString, f._2.toString)).toMap, conf)
     }
@@ -193,6 +196,16 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
   }
 
   createTables
+
+  def registerLifeCyleCallback(name: String) = {
+    try {
+      val instance = Class.forName(name).newInstance().asInstanceOf[MLSQLRuntimeLifecycle]
+      lifeCyleCallback += instance
+
+    } catch {
+      case e: Exception =>
+    }
+  }
 
   def registerJdbcDialect(dialect: JdbcDialect) = {
     logInfo("register HiveSqlDialect.....")
