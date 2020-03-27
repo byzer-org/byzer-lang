@@ -40,9 +40,9 @@ class MLSQLSparkSession(userName: String, conf: Map[String, String]) extends Log
 
   private[this] def getOrCreate(sessionConf: Map[String, String]): Unit = synchronized {
     var checkRound = 15
-    val interval = 1l
+    val interval = 1000L
     // if user's sc is being constructed by another
-    while (!SparkRuntime.RUNTIME_IS_READY.get() || MLSQLSparkSession.isPartiallyConstructed(userName)) {
+    while (!PlatformManager.RUNTIME_IS_READY.get() || MLSQLSparkSession.isPartiallyConstructed(userName)) {
       wait(interval)
       checkRound -= 1
       if (checkRound <= 0) {
