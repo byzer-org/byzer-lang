@@ -268,6 +268,7 @@
         <profile>
             <id>streamingpro-spark-2.4.0-adaptor</id>
             <dependencies>
+
                 <dependency>
                     <groupId>tech.mlsql</groupId>
                     <artifactId>streamingpro-spark-2.4.0-adaptor_${scala.binary.version}</artifactId>
@@ -279,6 +280,13 @@
                     <artifactId>python-controller-${spark.bigversion}_${scala.binary.version}</artifactId>
                     <version>${project.parent.version}</version>
                 </dependency>
+
+                <dependency>
+                    <groupId>tech.mlsql</groupId>
+                    <artifactId>mlsql-sql-profiler-${spark.bigversion}_${scala.binary.version}</artifactId>
+                    <version>${project.parent.version}</version>
+                </dependency>
+
 
                 <dependency>
                     <groupId>tech.mlsql</groupId>

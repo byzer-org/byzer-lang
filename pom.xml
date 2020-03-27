@@ -69,7 +69,7 @@
         <hadoop-client-version>2.6.5</hadoop-client-version>
 
         <common-utils-version>0.2.8</common-utils-version>
-        <serviceframework.version>2.0.4</serviceframework.version>
+        <serviceframework.version>2.0.5</serviceframework.version>
         <pyjava-version>0.2.8.0</pyjava-version>
 
         <delta-plus-version>0.2.0</delta-plus-version>
@@ -421,6 +421,7 @@
                 <module>external/python-controller</module>
                 <module>external/mlsql-watcher</module>
                 <module>external/mlsql-mysql-store</module>
+                <module>external/mlsql-sql-profiler</module>
             </modules>
             <dependencies>
                 <dependency>
