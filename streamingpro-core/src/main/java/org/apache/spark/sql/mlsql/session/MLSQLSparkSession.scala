@@ -42,7 +42,7 @@ class MLSQLSparkSession(userName: String, conf: Map[String, String]) extends Log
     var checkRound = 15
     val interval = 1l
     // if user's sc is being constructed by another
-    while (MLSQLSparkSession.isPartiallyConstructed(userName)) {
+    while (!SparkRuntime.RUNTIME_IS_READY.get() || MLSQLSparkSession.isPartiallyConstructed(userName)) {
       wait(interval)
       checkRound -= 1
       if (checkRound <= 0) {
