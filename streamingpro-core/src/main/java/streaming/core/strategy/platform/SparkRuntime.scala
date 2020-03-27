@@ -19,7 +19,7 @@
 package streaming.core.strategy.platform
 
 import java.lang.reflect.Modifier
-import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.atomic.{AtomicBoolean, AtomicReference}
 import java.util.{UUID, Map => JMap}
 
 import _root_.streaming.core.stream.MLSQLStreamManager
@@ -46,6 +46,7 @@ import scala.collection.mutable.ArrayBuffer
  */
 class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with PlatformManagerListener with Logging {
 
+  // init
   val configReader = MLSQLConf.createConfigReader(params.map(f => (f._1.toString, f._2.toString)))
 
   def name = "SPARK"
@@ -65,7 +66,9 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
   var sessionManager = new SessionManager(sparkSession)
   sessionManager.start()
 
+  postInit()
 
+  //---------------------FUNCTIONS---------------------------------
   def getSession(owner: String) = {
     sessionManager.getSession(SessionIdentifier(owner)).sparkSession
   }
@@ -178,24 +181,24 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
     ss
   }
 
-  params.put("_session_", sparkSession)
-
-  registerUDF("streaming.core.compositor.spark.udf.Functions")
-  registerUDF("tech.mlsql.crawler.udf.Functions")
-
-  if (params.containsKey(MLSQLConf.MLSQL_UDF_CLZZNAMES.key)) {
-    MLSQLConf.MLSQL_UDF_CLZZNAMES.readFrom(configReader).get.split(",").foreach { clzz =>
-      registerUDF(clzz)
+  def postInit() = {
+    params.put("_session_", sparkSession)
+    registerUDF("streaming.core.compositor.spark.udf.Functions")
+    registerUDF("tech.mlsql.crawler.udf.Functions")
+    if (params.containsKey(MLSQLConf.MLSQL_UDF_CLZZNAMES.key)) {
+      MLSQLConf.MLSQL_UDF_CLZZNAMES.readFrom(configReader).get.split(",").foreach { clzz =>
+        registerUDF(clzz)
+      }
     }
+    MLSQLStreamManager.start(sparkSession)
+    createTables
+    SparkRuntime.RUNTIME_IS_READY.compareAndSet(false, true)
   }
 
-  MLSQLStreamManager.start(sparkSession)
 
   def createTables = {
     sparkSession.sql("select 1 as a").createOrReplaceTempView("command")
   }
-
-  createTables
 
   def registerLifeCyleCallback(name: String) = {
     try {
@@ -289,7 +292,7 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
 
 object SparkRuntime {
 
-
+  val RUNTIME_IS_READY = new AtomicBoolean(false)
   private val INSTANTIATION_LOCK = new Object()
 
   /**
