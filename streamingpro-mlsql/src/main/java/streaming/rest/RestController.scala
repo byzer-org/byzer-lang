@@ -123,7 +123,7 @@ class RestController extends ApplicationController with WowLog {
                 skipPhysicalJob = paramAsBoolean("skipPhysicalJob", false),
                 skipGrammarValidate = paramAsBoolean("skipGrammarValidate", true))
 
-              outputResult = if (!silence) getScriptResult(context, sparkSession) else "[]"
+              outputResult = getScriptResult(context, sparkSession)
               htp.post(new Url(param("callback")), Map("stat" -> s"""succeeded""", "res" -> outputResult))
             } catch {
               case e: Exception =>

@@ -56,12 +56,11 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
   val lifeCyleCallback = ArrayBuffer[MLSQLRuntimeLifecycle](
     new AsSchedulerService()
   )
-
   var psDriverBackend: PSDriverBackend = null
 
-  var sparkSession: SparkSession = createRuntime
-
   var driverLogServer: DriverLogServer[String] = null
+
+  var sparkSession: SparkSession = createRuntime
 
   var sessionManager = new SessionManager(sparkSession)
   sessionManager.start()
@@ -192,7 +191,6 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
     }
     MLSQLStreamManager.start(sparkSession)
     createTables
-    SparkRuntime.RUNTIME_IS_READY.compareAndSet(false, true)
   }
 
 
@@ -291,8 +289,7 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
 }
 
 object SparkRuntime {
-
-  val RUNTIME_IS_READY = new AtomicBoolean(false)
+  
   private val INSTANTIATION_LOCK = new Object()
 
   /**

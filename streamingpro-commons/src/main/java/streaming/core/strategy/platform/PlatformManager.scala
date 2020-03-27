@@ -19,7 +19,7 @@
 package streaming.core.strategy.platform
 
 import java.util
-import java.util.concurrent.atomic.{AtomicInteger, AtomicReference}
+import java.util.concurrent.atomic.{AtomicBoolean, AtomicInteger, AtomicReference}
 import java.util.{Map => JMap}
 
 import net.csdn.ServiceFramwork
@@ -36,8 +36,8 @@ import scala.collection.JavaConverters._
 import scala.collection.mutable.ArrayBuffer
 
 /**
-  * 4/27/16 WilliamZhu(allwefantasy@gmail.com)
-  */
+ * 4/27/16 WilliamZhu(allwefantasy@gmail.com)
+ */
 
 
 class PlatformManager {
@@ -170,13 +170,15 @@ class PlatformManager {
         jobCounter.incrementAndGet()
     }
     lifeCycleCallback.foreach(f => f.afterDispatcher(runtime, params.getParamsMap.asScala.toMap))
-
+    
     if (params.getBooleanParam("streaming.unitest.startRuntime", true)) {
       runtime.startRuntime
     }
+    PlatformManager.RUNTIME_IS_READY.compareAndSet(false, true)
     if (params.getBooleanParam("streaming.unitest.awaitTermination", true)) {
       runtime.awaitTermination
     }
+
 
   }
 
@@ -186,17 +188,19 @@ class PlatformManager {
 
 object PlatformManager {
   private val INSTANTIATION_LOCK = new Object()
+  //SparkRuntime.RUNTIME_IS_READY.compareAndSet(false, true)
+  val RUNTIME_IS_READY = new AtomicBoolean(false)
 
   /**
-    * Reference to the last created SQLContext.
-    */
+   * Reference to the last created SQLContext.
+   */
   @transient private val lastInstantiatedContext = new AtomicReference[PlatformManager]()
 
   /**
-    * Get the singleton SQLContext if it exists or create a new one using the given SparkContext.
-    * This function can be used to create a singleton SQLContext object that can be shared across
-    * the JVM.
-    */
+   * Get the singleton SQLContext if it exists or create a new one using the given SparkContext.
+   * This function can be used to create a singleton SQLContext object that can be shared across
+   * the JVM.
+   */
   def getOrCreate: PlatformManager = {
     INSTANTIATION_LOCK.synchronized {
       if (lastInstantiatedContext.get() == null) {
