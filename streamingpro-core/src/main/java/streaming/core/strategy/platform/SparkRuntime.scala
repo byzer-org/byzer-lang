@@ -204,6 +204,7 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
 
     } catch {
       case e: Exception =>
+        logInfo(s"Fail to register cycle callback :${name}")
     }
   }
 
