@@ -39,6 +39,18 @@
                                 <goals>
                                     <goal>shade</goal>
                                 </goals>
+<!--                                <configuration>-->
+<!--                                    <artifactSet>-->
+<!--                                        <excludes>-->
+<!--                                            <exclude>org.apache.spark:spark-hive-thriftserver_2.11</exclude>-->
+<!--                                            <exclude>org.spark-project.hive:hive-cli:jar:1.2.1.spark2</exclude>-->
+<!--                                            <exclude>org.spark-project.hive:hive-jdbc</exclude>-->
+<!--                                            <exclude>org.spark-project.hive:hive-beeline</exclude>-->
+<!--                                            <exclude>org.scala-lang:scala-compiler</exclude>-->
+<!--                                            <exclude>org.antlr:antlr4</exclude>-->
+<!--                                        </excludes>-->
+<!--                                    </artifactSet>-->
+<!--                                </configuration>-->
                             </execution>
                         </executions>
                     </plugin>

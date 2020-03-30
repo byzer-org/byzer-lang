@@ -9,6 +9,7 @@ import org.apache.http.client.fluent.{Form, Request}
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.mlsql.session.MLSQLException
 import streaming.core.datasource.MLSQLRegistry
+import tech.mlsql.common.utils.classloader.ClassLoaderTool
 import tech.mlsql.common.utils.hdfs.HDFSOperator
 import tech.mlsql.common.utils.path.PathFun
 import tech.mlsql.common.utils.serder.json.JSONTool
@@ -95,15 +96,15 @@ object PluginUtils {
   }
 
   def loadJarInDriver(path: String) = {
-
-    val systemClassLoader = ClassLoader.getSystemClassLoader().asInstanceOf[URLClassLoader]
+    //.getSystemClassLoader()
+    val systemClassLoader = ClassLoaderTool.getContextOrDefaultLoader.asInstanceOf[URLClassLoader]
     val method = classOf[URLClassLoader].getDeclaredMethod("addURL", classOf[URL])
     method.setAccessible(true)
     method.invoke(systemClassLoader, new File(path).toURI.toURL)
   }
 
   def checkVersionCompatibility(pluginName: String, className: String) = {
-    val versions = Class.forName(className).newInstance().asInstanceOf[VersionCompatibility].supportedVersions
+    val versions = ClassLoaderTool.classForName(className).newInstance().asInstanceOf[VersionCompatibility].supportedVersions
     if (!versions.contains(MLSQLVersion.version().version)) {
       throw new MLSQLException(
         s"""

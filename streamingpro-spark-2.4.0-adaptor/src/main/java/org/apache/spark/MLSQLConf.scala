@@ -131,11 +131,7 @@ object MLSQLConf {
       |Run MLSQL as service and without quit.
     """.stripMargin).booleanConf.createWithDefault(false)
 
-  val MLSQL_EXECUTOR_LOG_IN_DRIVER = MLSQLConfigBuilder("streaming.executor.log.in.driver").doc(
-    """
-      |Executor send log msg to driver.
-    """.stripMargin).booleanConf.createWithDefault(true)
-
+  
   val MLSQL_DISABLE_SPARK_LOG = MLSQLConfigBuilder("streaming.disableSparkLog").doc(
     """
       |Sometimes there are too much spark job info, you can disable them.
@@ -198,6 +194,11 @@ object MLSQLConf {
       .doc("the max size of restful api result.")
       .longConf
       .createWithDefault(1000)
+
+  val MLSQL_LOG: ConfigEntry[Boolean] = MLSQLConfigBuilder("streaming.executor.log.in.driver")
+    .doc("Executor send log msg to driver.")
+    .booleanConf
+    .createWithDefault(true)
 
 
   def getAllDefaults: Map[String, String] = {

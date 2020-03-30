@@ -19,16 +19,16 @@
 package streaming.core.strategy.platform
 
 import java.lang.reflect.Modifier
-import java.util.concurrent.atomic.{AtomicBoolean, AtomicReference}
+import java.util.concurrent.atomic.AtomicReference
 import java.util.{UUID, Map => JMap}
 
 import _root_.streaming.core.stream.MLSQLStreamManager
 import net.csdn.common.reflect.ReflectHelper
-import org.apache.spark._
 import org.apache.spark.ps.cluster.PSDriverBackend
 import org.apache.spark.sql.jdbc.{JdbcDialect, JdbcDialects}
 import org.apache.spark.sql.mlsql.session.{SessionIdentifier, SessionManager}
 import org.apache.spark.sql.{MLSQLUtils, SQLContext, SparkSession}
+import org.apache.spark.{MLSQLConf, SparkConf, SparkRuntimeOperator, WowFastSparkContext}
 import tech.mlsql.common.utils.lang.sc.ScalaObjectReflect
 import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.common.utils.network.NetUtils
@@ -120,7 +120,10 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
     /**
      * start a log server ,so the executor can send log to driver and the driver will log them into log files.
      */
-    if ((MLSQLConf.MLSQL_SPARK_SERVICE.readFrom(configReader) && MLSQLConf.MLSQL_EXECUTOR_LOG_IN_DRIVER.readFrom(configReader)) ||
+    val confSparkService = MLSQLConf.MLSQL_SPARK_SERVICE.readFrom(configReader)
+//    val confLogInDriver = MLSQLConf.MLSQL_LOG.readFrom(configReader)
+    val confLogInDriver = params.asScala.getOrElse("streaming.executor.log.in.driver", "true").toString.toBoolean
+    if ((confSparkService && confLogInDriver) ||
       params.getOrDefault("streaming.unittest", "false").toString.toBoolean) {
       val token = UUID.randomUUID().toString
       driverLogServer = new DriverLogServer[String](new AtomicReference[String](token))
@@ -289,7 +292,7 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
 }
 
 object SparkRuntime {
-  
+
   private val INSTANTIATION_LOCK = new Object()
 
   /**
