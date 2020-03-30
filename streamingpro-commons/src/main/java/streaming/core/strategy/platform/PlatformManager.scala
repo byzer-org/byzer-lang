@@ -29,6 +29,7 @@ import serviceframework.dispatcher.StrategyDispatcher
 import streaming.common.zk.{ZKClient, ZkRegister}
 import streaming.core.strategy.JobStrategy
 import streaming.core.{Dispatcher, StreamingApp}
+import tech.mlsql.common.utils.base.TryTool
 import tech.mlsql.common.utils.shell.command.ParamsUtil
 import tech.mlsql.runtime.MLSQLPlatformLifecycle
 
@@ -110,9 +111,16 @@ class PlatformManager {
     params.getParamsMap.asScala.filter(f => f._1.startsWith("streaming.")).foreach { f => tempParams.put(f._1, f._2) }
 
 
-    lifeCycleCallback.foreach(f => f.beforeRuntime(params.getParamsMap.asScala.toMap))
+    TryTool.tryLogNonFatalError{
+      lifeCycleCallback.foreach(f => f.beforeRuntime(params.getParamsMap.asScala.toMap))
+    }
+
     val runtime = PlatformManager.getRuntime
-    lifeCycleCallback.foreach(f => f.afterRuntime(runtime, params.getParamsMap.asScala.toMap))
+
+    TryTool.tryLogNonFatalError{
+      lifeCycleCallback.foreach(f => f.afterRuntime(runtime, params.getParamsMap.asScala.toMap))
+    }
+
 
 
     val dispatcher = findDispatcher
@@ -153,7 +161,12 @@ class PlatformManager {
     StrategyDispatcher.throwsException = failsAll
 
     val jobCounter = new AtomicInteger(0)
-    lifeCycleCallback.foreach(f => f.beforeDispatcher(runtime, params.getParamsMap.asScala.toMap))
+
+    TryTool.tryLogNonFatalError{
+      lifeCycleCallback.foreach(f => f.beforeDispatcher(runtime, params.getParamsMap.asScala.toMap))
+    }
+
+
     jobs.foreach {
       jobName =>
         /*
@@ -169,7 +182,11 @@ class PlatformManager {
         }
         jobCounter.incrementAndGet()
     }
-    lifeCycleCallback.foreach(f => f.afterDispatcher(runtime, params.getParamsMap.asScala.toMap))
+
+    TryTool.tryLogNonFatalError{
+      lifeCycleCallback.foreach(f => f.afterDispatcher(runtime, params.getParamsMap.asScala.toMap))
+    }
+
     
     if (params.getBooleanParam("streaming.unitest.startRuntime", true)) {
       runtime.startRuntime
