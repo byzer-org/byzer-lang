@@ -63,11 +63,6 @@ object MLSQLConf {
   val MLSQL_NAME: ConfigEntry[String] = MLSQLConfigBuilder("streaming.name")
     .doc("The name will showed in yarn cluster and spark ui").stringConf.createWithDefault("mlsql")
 
-  val MLSQL_EXECUTOR_LOG_IN_DRIVER = MLSQLConfigBuilder("streaming.executor.log.in.driver").doc(
-    """
-      |Executor send log msg to driver.
-    """.stripMargin).booleanConf.createWithDefault(true)
-
   val MLSQL_BIGDL_ENABLE: ConfigEntry[Boolean] = MLSQLConfigBuilder("streaming.bigdl.enable")
     .doc(
       """
@@ -201,6 +196,11 @@ object MLSQLConf {
       .doc("the max size of restful api result.")
       .longConf
       .createWithDefault(1000)
+
+  val MLSQL_LOG: ConfigEntry[Boolean] = MLSQLConfigBuilder("streaming.executor.log.in.driver")
+    .doc("Executor send log msg to driver.")
+    .booleanConf
+    .createWithDefault(true)
 
   def getAllDefaults: Map[String, String] = {
     entries.entrySet().asScala.map { kv =>
