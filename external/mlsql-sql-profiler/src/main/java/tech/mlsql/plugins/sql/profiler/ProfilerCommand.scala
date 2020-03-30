@@ -28,12 +28,14 @@ class ProfilerCommand(override val uid: String) extends SQLAlg with WowParams {
 
 
       case List("sql", command) => df.sparkSession.sql(command)
-      case List("explain", tableName, left@_*) =>
+      case List("explain", tableNameOrSQL, left@_*) =>
         val extended = left match {
           case Seq(extended) => extended.toBoolean
           case _ => true
         }
-        val newDF = df.sparkSession.table(tableName)
+
+        val newDF = if (df.sparkSession.catalog.tableExists(tableNameOrSQL)) df.sparkSession.table(tableNameOrSQL)
+        else df.sparkSession.sql(tableNameOrSQL)
         explain(newDF, extended)
     }
   }
