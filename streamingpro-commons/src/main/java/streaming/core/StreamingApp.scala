@@ -19,6 +19,7 @@
 package streaming.core
 
 import streaming.core.strategy.platform.PlatformManager
+import tech.mlsql.common.utils.base.TryTool
 import tech.mlsql.common.utils.shell.command.ParamsUtil
 import tech.mlsql.runtime.MLSQLPlatformLifecycle
 
@@ -29,16 +30,12 @@ object StreamingApp {
     val params = new ParamsUtil(args)
     require(params.hasParam("streaming.name"), "Application name should be set")
     val platform = PlatformManager.getOrCreate
-    try {
+    TryTool.tryOrExit {
       List("tech.mlsql.runtime.LogFileHook", "tech.mlsql.runtime.PluginHook").foreach { className =>
         platform.registerMLSQLPlatformLifecycle(
           Class.forName(className).
             newInstance().asInstanceOf[MLSQLPlatformLifecycle])
       }
-
-    } catch {
-      case e: Exception =>
-        e.printStackTrace()
     }
 
     platform.run(params)

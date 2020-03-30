@@ -47,7 +47,9 @@ class MLSQLSparkSession(userName: String, conf: Map[String, String]) extends Log
       checkRound -= 1
       if (checkRound <= 0) {
         throw new MLSQLException(s"A partially constructed SparkContext for [$userName] " +
-          s"has last more than ${checkRound * interval} seconds")
+          s"has last more than ${checkRound * interval} seconds." +
+          s"RUNTIME_IS_READY:${PlatformManager.RUNTIME_IS_READY.get()} " +
+          s"isPartiallyConstructed:${MLSQLSparkSession.isPartiallyConstructed(userName)}")
       }
       logInfo(s"A partially constructed SparkContext for [$userName], $checkRound times countdown.")
     }
