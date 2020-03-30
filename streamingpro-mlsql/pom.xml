@@ -528,12 +528,6 @@
         </dependency>
 
         <dependency>
-            <groupId>tech.mlsql</groupId>
-            <artifactId>common-utils_${scala.binary.version}</artifactId>
-            <version>${common-utils-version}</version>
-        </dependency>
-
-        <dependency>
             <groupId>org.scalactic</groupId>
             <artifactId>scalactic_${scala.binary.version}</artifactId>
             <version>3.0.0</version>
