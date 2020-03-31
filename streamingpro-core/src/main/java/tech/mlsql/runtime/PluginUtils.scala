@@ -11,6 +11,7 @@ import org.apache.spark.sql.mlsql.session.MLSQLException
 import streaming.core.datasource.MLSQLRegistry
 import tech.mlsql.common.utils.classloader.ClassLoaderTool
 import tech.mlsql.common.utils.hdfs.HDFSOperator
+import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.common.utils.path.PathFun
 import tech.mlsql.common.utils.serder.json.JSONTool
 import tech.mlsql.core.version.MLSQLVersion
@@ -22,7 +23,7 @@ import tech.mlsql.version.VersionCompatibility
 /**
  * 27/2/2020 WilliamZhu(allwefantasy@gmail.com)
  */
-object PluginUtils {
+object PluginUtils extends Logging {
   val TABLE_ETRecord = "__mlsql__.etRecord"
   val TABLE_DSRecord = "__mlsql__.dsRecord"
   val TABLE_APPRecord = "__mlsql__.appRecord"
@@ -105,7 +106,7 @@ object PluginUtils {
 
   def checkVersionCompatibility(pluginName: String, className: String) = {
     val versions = ClassLoaderTool.classForName(className).newInstance().asInstanceOf[VersionCompatibility].supportedVersions
-    if (!versions.contains(MLSQLVersion.version().version)) {
+    if (!versions.contains(MLSQLVersion.version().version) || MLSQLVersion.version().version.compareTo(versions.sorted.head) < 0) {
       throw new MLSQLException(
         s"""
            |Plugins ${pluginName} supports:
@@ -119,7 +120,7 @@ object PluginUtils {
 
 
   def appCallBack(pluginName: String, className: String, params: Seq[String]) = {
-    val app = Class.forName(className).newInstance().asInstanceOf[tech.mlsql.app.App]
+    val app = ClassLoaderTool.classForName(className).newInstance().asInstanceOf[tech.mlsql.app.App]
     app.run(params)
   }
 
@@ -149,7 +150,7 @@ object PluginUtils {
   }
 
   def removeDS(pluginName: String, fullFormat: String, shortFormat: Option[String], callback: () => Unit) = {
-    val dataSource = Class.forName(fullFormat).newInstance()
+    val dataSource = ClassLoaderTool.classForName(fullFormat).newInstance()
     if (dataSource.isInstanceOf[MLSQLRegistry]) {
       dataSource.asInstanceOf[MLSQLRegistry].unRegister()
     }
@@ -157,7 +158,7 @@ object PluginUtils {
   }
 
   def registerDS(pluginName: String, className: String, commandName: Option[String], callback: () => Unit) = {
-    val dataSource = Class.forName(className).newInstance()
+    val dataSource = ClassLoaderTool.classForName(className).newInstance()
     if (dataSource.isInstanceOf[MLSQLRegistry]) {
       dataSource.asInstanceOf[MLSQLRegistry].register()
     }

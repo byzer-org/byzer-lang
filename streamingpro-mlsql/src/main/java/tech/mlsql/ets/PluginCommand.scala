@@ -6,6 +6,7 @@ import org.apache.spark.sql.mlsql.session.MLSQLException
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
+import tech.mlsql.common.utils.base.TryTool
 import tech.mlsql.common.utils.serder.json.JSONTool
 import tech.mlsql.datalake.DataLake
 import tech.mlsql.dsl.includes.PluginIncludeSource
@@ -33,14 +34,11 @@ class PluginCommand(override val uid: String) extends SQLAlg with WowParams {
     }
 
     def fetchTable(tableName: String, callback: () => DataFrame) = {
-      val table = try {
+      TryTool.tryOrElse {
         DBStore.store.readTable(spark, tableName)
-      } catch {
-        case e: Exception =>
-          callback()
-
+      } {
+        callback()
       }
-      table
     }
 
     require(isDeltaLakeEnable(), "-streaming.datalake.path is required ")
@@ -59,7 +57,9 @@ class PluginCommand(override val uid: String) extends SQLAlg with WowParams {
             val item = items.head
 
             removeET(pluginName, item.className, item.commandName, () => {
-              DBStore.store.saveTable(spark, spark.createDataset(Seq(ETRecord(pluginName, item.commandName, item.etName, item.className))).toDF(), TABLE_ETRecord, Option("pluginName"), true)
+              DBStore.store.saveTable(spark, spark.createDataset(Seq(
+                ETRecord(pluginName, item.commandName, item.etName, item.className))).toDF(),
+                TABLE_ETRecord, Option("pluginName"), true)
             })
 
           case PluginType.DS =>
@@ -74,17 +74,21 @@ class PluginCommand(override val uid: String) extends SQLAlg with WowParams {
             val item = items.head
 
             removeDS(pluginName, item.fullFormat, item.shortFormat, () => {
-              DBStore.store.saveTable(spark, spark.createDataset(Seq(DSRecord(pluginName, item.shortFormat, item.fullFormat))).toDF(), TABLE_DSRecord, Option("pluginName"), true)
+              DBStore.store.saveTable(spark, spark.createDataset(
+                Seq(DSRecord(pluginName, item.shortFormat, item.fullFormat))).toDF(),
+                TABLE_DSRecord, Option("pluginName"), true)
             })
 
           case PluginType.SCRIPT =>
             PluginIncludeSource.unRegister(pluginName)
 
           case PluginType.APP =>
-            DBStore.store.saveTable(spark, spark.createDataset(Seq(AppRecord(pluginName, "", Seq()))).toDF(), TABLE_APPRecord, Option("pluginName"), true)
+            DBStore.store.saveTable(spark, spark.createDataset(Seq(AppRecord(pluginName, "", Seq()))).toDF(),
+              TABLE_APPRecord, Option("pluginName"), true)
         }
 
-        DBStore.store.saveTable(spark, spark.createDataset(Seq(AddPlugin(pluginName, "", pluginType))).toDF(), TABLE_PLUGINS, Option("pluginName,pluginType"), true)
+        DBStore.store.saveTable(spark, spark.createDataset(Seq(AddPlugin(pluginName, "", pluginType))).toDF(),
+          TABLE_PLUGINS, Option("pluginName,pluginType"), true)
         fetchTable(TABLE_PLUGINS, () => spark.createDataset[AddPlugin](Seq()).toDF())
 
 
@@ -139,16 +143,22 @@ class PluginCommand(override val uid: String) extends SQLAlg with WowParams {
             registerET(pluginName, className, commandName, () => {
             })
             val etName = className.split("\\.").last
-            DBStore.store.saveTable(spark, spark.createDataset(Seq(ETRecord(pluginName, commandName, etName, className))).toDF(), TABLE_ETRecord, None, false)
+            DBStore.store.saveTable(spark, spark.createDataset(
+              Seq(ETRecord(pluginName, commandName, etName, className))).toDF(),
+              TABLE_ETRecord, None, false)
           case PluginType.DS =>
             registerDS(pluginName, className, commandName, () => {
-              DBStore.store.saveTable(spark, spark.createDataset(Seq(DSRecord(pluginName, commandName, className))).toDF(), TABLE_DSRecord, None, false)
+              DBStore.store.saveTable(spark, spark.createDataset(
+                Seq(DSRecord(pluginName, commandName, className))).toDF(),
+                TABLE_DSRecord, None, false)
             })
           case PluginType.SCRIPT =>
             PluginIncludeSource.register(pluginName, localPath)
 
           case PluginType.APP =>
-            DBStore.store.saveTable(spark, spark.createDataset(Seq(AppRecord(pluginName, className, left))).toDF(), TABLE_APPRecord, None, false)
+            DBStore.store.saveTable(spark,
+              spark.createDataset(Seq(AppRecord(pluginName, className, left))).toDF(),
+              TABLE_APPRecord, None, false)
         }
 
 
@@ -162,8 +172,11 @@ class PluginCommand(override val uid: String) extends SQLAlg with WowParams {
         val includeSource = new PluginIncludeSource()
         val content = includeSource.fetchSource(spark, item, Map[String, String]())
         spark.createDataset[ScriptContent](Seq(ScriptContent(item, content))).toDF()
+
       case Seq("list") => DBStore.store.readTable(spark, TABLE_PLUGINS)
-      case Seq("list", pluginType) => DBStore.store.readTable(spark, TABLE_PLUGINS).where(s""" pluginType="${pluginType}" """)
+
+      case Seq("list", pluginType) =>
+        DBStore.store.readTable(spark, TABLE_PLUGINS).where(s""" pluginType="${pluginType}" """)
 
     }
 
