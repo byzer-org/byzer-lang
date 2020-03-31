@@ -23,7 +23,9 @@ object LogTail {
       merge(msg)
     } {
       val items = new util.ArrayList[String]()
-      msg.split("\n").foreach(line => items.add(line))
+      if (msg != null) {
+        msg.split("\n").foreach(line => items.add(line))
+      }
       (items, 0)
     }
     val newMsg = lines.asScala.filter(f => (f.contains(s"[owner] [${owner}]") || f.contains("DistriOptimizer$: [")) && !f.contains("load _mlsql_.`"))
@@ -53,6 +55,7 @@ object LogTail {
     lines.add(toSend.substring(list.get(list.size() - 1).start))
     (lines, backoff)
   }
+
 }
 
 case class LogMsg(offset: Long, msg: Seq[String])
