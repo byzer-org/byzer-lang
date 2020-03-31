@@ -59,23 +59,32 @@
             <groupId>tech.mlsql</groupId>
             <artifactId>common-utils_${scala.binary.version}</artifactId>
             <version>${common-utils-version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.python</groupId>
+                    <artifactId>jython-standalone</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.101tec</groupId>
             <artifactId>zkclient</artifactId>
-            <version>0.5</version>
+            <version>${zkclient.version}</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.jboss.netty</groupId>
                     <artifactId>netty</artifactId>
                 </exclusion>
-
+                <exclusion>
+                    <groupId>io.netty</groupId>
+                    <artifactId>netty</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
         <dependency>
             <groupId>com.lihaoyi</groupId>
             <artifactId>os-lib_${scala.binary.version}</artifactId>
-            <version>0.2.9</version>
+            <version>${os-lib.version}</version>
         </dependency>
     </dependencies>
 

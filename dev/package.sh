@@ -34,6 +34,10 @@ OSS_ENABLE=${OSS_ENABLE:-false}
 DATASOURCE_INCLUDED=${DATASOURCE_INCLUDED:-false}
 COMMAND=${COMMAND:-package}
 
+ENABLE_JYTHON=${ENABLE_JYTHON=-true}
+ENABLE_CHINESE_ANALYZER=${ENABLE_CHINESE_ANALYZER=-true}
+ENABLE_HIVE_THRIFT_SERVER=${ENABLE_HIVE_THRIFT_SERVER=-true}
+
 for env in MLSQL_SPARK_VERSION DRY_RUN DISTRIBUTION; do
   if [[ -z "${!env}" ]]; then
     echo "===$env must be set to run this script==="
@@ -70,7 +74,20 @@ else
 fi
 #---------------------
 
-BASE_PROFILES="-Pscala-${SCALA_VERSION} -Ponline -Phive-thrift-server "
+BASE_PROFILES="-Pscala-${SCALA_VERSION} -Ponline  "
+
+if [[ "${ENABLE_HIVE_THRIFT_SERVER}" == "true" ]]; then
+  BASE_PROFILES="$BASE_PROFILES -Phive-thrift-server"
+fi
+
+if [[ "${ENABLE_JYTHON}" == "true" ]]; then
+  BASE_PROFILES="$BASE_PROFILES -Pjython-support"
+fi
+
+if [[ "${ENABLE_CHINESE_ANALYZER}" == "true" ]]; then
+  BASE_PROFILES="$BASE_PROFILES -Pchinese-analyzer-support"
+fi
+
 
 if [[ "$MLSQL_SPARK_VERSION" > "2.2" ]]; then
   BASE_PROFILES="$BASE_PROFILES"

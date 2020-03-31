@@ -12,6 +12,12 @@
     <artifactId>streamingpro-core-${spark.bigversion}_${scala.binary.version}</artifactId>
     <dependencies>
         <dependency>
+            <groupId>org.python</groupId>
+            <artifactId>jython-standalone</artifactId>
+            <version>${jython.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-sql_${scala.binary.version}</artifactId>
             <version>${spark.version}</version>
@@ -63,30 +69,26 @@
             <version>${spark.version}</version>
             <scope>provided</scope>
         </dependency>
-        <dependency>
-            <groupId>tech.mlsql</groupId>
-            <artifactId>common-utils_${scala.binary.version}</artifactId>
-            <version>${common-utils-version}</version>
-        </dependency>
+
         <dependency>
             <groupId>com.alibaba</groupId>
             <artifactId>druid</artifactId>
-            <version>1.1.16</version>
+            <version>${druid.version}</version>
         </dependency>
         <dependency>
             <groupId>org.jsoup</groupId>
             <artifactId>jsoup</artifactId>
-            <version>1.11.2</version>
+            <version>${jsoup.version}</version>
         </dependency>
         <dependency>
             <groupId>us.codecraft</groupId>
             <artifactId>xsoup</artifactId>
-            <version>0.3.1</version>
+            <version>${xsoup.version}</version>
         </dependency>
         <dependency>
             <groupId>cn.edu.hfut.dmic.webcollector</groupId>
             <artifactId>WebCollector</artifactId>
-            <version>2.71</version>
+            <version>${WebCollector.version}</version>
             <exclusions>
                 <exclusion>
                     <groupId>junit</groupId>
@@ -120,7 +122,7 @@
         <dependency>
             <groupId>tech.mlsql</groupId>
             <artifactId>simple-schema_${scala.binary.version}</artifactId>
-            <version>0.2.0</version>
+            <version>${simpleschema.version}</version>
         </dependency>
         <dependency>
             <groupId>tech.mlsql</groupId>
@@ -144,7 +146,7 @@
                 </exclusion>
             </exclusions>
         </dependency>
-        
+
     </dependencies>
 
 </project>

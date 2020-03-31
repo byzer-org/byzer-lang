@@ -4,6 +4,7 @@ import java.util
 import java.util.regex.Pattern
 
 import tech.mlsql.MLSQLEnvKey
+import tech.mlsql.common.utils.base.TryTool
 import tech.mlsql.common.utils.shell.ShellCommand
 
 import scala.collection.JavaConverters._
@@ -18,7 +19,15 @@ object LogTail {
   def log(owner: String, _filePath: String, offset: Long, size: Int = 1024 * 1024 - 1) = {
     val filePath = s"${MLSQLEnvKey.realTimeLogHome}/mlsql_engine.log"
     val (newOffset, msg, fileSize) = ShellCommand.progress(filePath, offset, size)
-    val (lines, backoff) = merge(msg)
+    val (lines, backoff) = TryTool.tryOrElse {
+      merge(msg)
+    } {
+      val items = new util.ArrayList[String]()
+      if (msg != null) {
+        msg.split("\n").foreach(line => items.add(line))
+      }
+      (items, 0)
+    }
     val newMsg = lines.asScala.filter(f => (f.contains(s"[owner] [${owner}]") || f.contains("DistriOptimizer$: [")) && !f.contains("load _mlsql_.`"))
     LogMsg(newOffset - backoff, newMsg)
   }
@@ -46,6 +55,7 @@ object LogTail {
     lines.add(toSend.substring(list.get(list.size() - 1).start))
     (lines, backoff)
   }
+
 }
 
 case class LogMsg(offset: Long, msg: Seq[String])

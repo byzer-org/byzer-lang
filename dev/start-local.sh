@@ -20,6 +20,7 @@ $SPARK_HOME/bin/spark-submit --class streaming.core.StreamingApp \
         --jars ${JARS} \
         --master local[*] \
         --name mlsql \
+        --conf "spark.driver.extraJavaOptions"="-DREALTIME_LOG_HOME=/tmp/__mlsql__/logs" \
         --conf "spark.sql.hive.thriftServer.singleSession=true" \
         --conf "spark.kryoserializer.buffer=256k" \
         --conf "spark.kryoserializer.buffer.max=1024m" \

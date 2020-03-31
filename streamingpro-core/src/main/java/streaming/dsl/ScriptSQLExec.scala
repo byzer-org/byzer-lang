@@ -21,17 +21,17 @@ package streaming.dsl
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicReference
 
-import org.antlr.v4.runtime._
-import org.antlr.v4.runtime.misc.Interval
-import org.antlr.v4.runtime.tree.ParseTreeWalker
-import org.apache.spark.MLSQLSyntaxErrorListener
-import org.apache.spark.sql.SparkSession
 import _root_.streaming.core.Dispatcher
 import _root_.streaming.dsl.auth._
 import _root_.streaming.dsl.parser.DSLSQLParser.SqlContext
 import _root_.streaming.dsl.parser._
 import _root_.streaming.log.WowLog
 import _root_.streaming.parser.lisener.BaseParseListener
+import org.antlr.v4.runtime._
+import org.antlr.v4.runtime.misc.Interval
+import org.antlr.v4.runtime.tree.ParseTreeWalker
+import org.apache.spark.MLSQLSyntaxErrorListener
+import org.apache.spark.sql.SparkSession
 import tech.mlsql.Stage
 import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.dsl.CommandCollection
@@ -41,12 +41,13 @@ import tech.mlsql.dsl.processor.{AuthProcessListener, GrammarProcessListener, Pr
 import tech.mlsql.dsl.scope.SetScopeParameter
 import tech.mlsql.job.MLSQLJobProgressListener
 
+import scala.collection.JavaConverters._
 import scala.collection.mutable.ArrayBuffer
 
 
 /**
-  * Created by allwefantasy on 25/8/2017.
-  */
+ * Created by allwefantasy on 25/8/2017.
+ */
 object ScriptSQLExec extends Logging with WowLog {
 
   private[this] val mlsqlExecuteContext: ThreadLocal[MLSQLExecuteContext] = new ThreadLocal[MLSQLExecuteContext]
@@ -339,6 +340,10 @@ object ConnectMeta {
       f(item)
       Option(item)
     } else None
+  }
+
+  def toMap = {
+    dbMapping.asScala.toMap
   }
 }
 
