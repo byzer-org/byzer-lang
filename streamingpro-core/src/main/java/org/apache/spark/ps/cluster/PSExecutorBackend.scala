@@ -204,7 +204,7 @@ object PSExecutorBackend {
 }
 
 class PSExecutorPlugin(conf: SparkConf) extends MLSQLExecutorPlugin with Logging {
-  override def init(): Unit = {
+  override def _init(config: Map[Any, Any]): Unit = {
     try {
       WriteLog.init(conf.getAll.toMap)
       PSExecutorBackend.loadPlugin(conf)
@@ -216,6 +216,6 @@ class PSExecutorPlugin(conf: SparkConf) extends MLSQLExecutorPlugin with Logging
   }
 
 
-  override def shutdown(): Unit = {
+  override def _shutdown(): Unit = {
   }
 }
