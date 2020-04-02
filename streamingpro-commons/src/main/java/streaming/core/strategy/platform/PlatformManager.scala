@@ -111,16 +111,15 @@ class PlatformManager {
     params.getParamsMap.asScala.filter(f => f._1.startsWith("streaming.")).foreach { f => tempParams.put(f._1, f._2) }
 
 
-    TryTool.tryLogNonFatalError{
+    TryTool.tryLogNonFatalError {
       lifeCycleCallback.foreach(f => f.beforeRuntime(params.getParamsMap.asScala.toMap))
     }
 
     val runtime = PlatformManager.getRuntime
 
-    TryTool.tryLogNonFatalError{
+    TryTool.tryLogNonFatalError {
       lifeCycleCallback.foreach(f => f.afterRuntime(runtime, params.getParamsMap.asScala.toMap))
     }
-
 
 
     val dispatcher = findDispatcher
@@ -162,7 +161,7 @@ class PlatformManager {
 
     val jobCounter = new AtomicInteger(0)
 
-    TryTool.tryLogNonFatalError{
+    TryTool.tryLogNonFatalError {
       lifeCycleCallback.foreach(f => f.beforeDispatcher(runtime, params.getParamsMap.asScala.toMap))
     }
 
@@ -183,11 +182,11 @@ class PlatformManager {
         jobCounter.incrementAndGet()
     }
 
-    TryTool.tryLogNonFatalError{
+    TryTool.tryLogNonFatalError {
       lifeCycleCallback.foreach(f => f.afterDispatcher(runtime, params.getParamsMap.asScala.toMap))
     }
 
-    
+
     if (params.getBooleanParam("streaming.unitest.startRuntime", true)) {
       runtime.startRuntime
     }

@@ -67,7 +67,6 @@ CREATE TABLE `w_executor_job` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
-
 # Dump of table w_kv
 # ------------------------------------------------------------
 
@@ -81,8 +80,6 @@ CREATE TABLE `w_kv` (
   UNIQUE KEY `name_2` (`name`),
   KEY `name` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
-
 
 
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
