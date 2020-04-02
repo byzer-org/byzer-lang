@@ -10,6 +10,7 @@ import tech.mlsql.plugins.mlsql_watcher.db.PluginDB.ctx
 import tech.mlsql.plugins.mlsql_watcher.db.PluginDB.ctx._
 import tech.mlsql.plugins.mlsql_watcher.db.{CustomDB, CustomDBWrapper, PluginDB, WKv}
 import tech.mlsql.runtime.AppRuntimeStore
+import tech.mlsql.store.{DBStore, DictType}
 
 /**
  * 11/3/2020 WilliamZhu(allwefantasy@gmail.com)
@@ -24,6 +25,9 @@ class MLSQLWatcherCommand(override val uid: String) extends SQLAlg with WowParam
     args match {
       case List("db", "add", dbName, dbConfig) =>
         AppRuntimeStore.store.store.write(CustomDBWrapper(CustomDB(PluginDB.plugin_name, dbName, dbConfig)))
+        //persist
+        DBStore.store.saveConfig(df.sparkSession, PluginDB.plugin_name, dbName, dbConfig, DictType.DB)
+        DBStore.store.saveConfig(df.sparkSession, PluginDB.plugin_name, PluginDB.plugin_name, dbName, DictType.APP_TO_DB)
       case List("cleaner", time) =>
         val seconds = JavaUtils.timeStringAsSec(time)
         SnapshotTimer.cleanerThresh.set(seconds * 1000)

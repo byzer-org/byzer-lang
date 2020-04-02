@@ -10,7 +10,9 @@ import tech.mlsql.common.utils.base.CaseFormat
 import tech.mlsql.common.utils.names.NameConvert
 import tech.mlsql.common.utils.serder.json.JSONTool
 import tech.mlsql.runtime.MetaStoreService.ctx
-import tech.mlsql.store.DBStore
+import tech.mlsql.runtime.MetaStoreService.ctx._
+import tech.mlsql.store.DictType.DictType
+import tech.mlsql.store.{DBStore, WDictStore}
 
 import scala.collection.JavaConverters._
 
@@ -54,7 +56,7 @@ class MySQLDBStore extends DBStore {
     }
     val udf = F.udf(convertRowToMap, MapType(StringType, StringType))
     data.schema.filter(f => f.dataType match {
-      case StructType(_)=> true
+      case StructType(_) => true
       case _ => false
     }).map { wow =>
       data = data.withColumn(wow.name, udf(F.col(wow.name)))
@@ -122,6 +124,25 @@ class MySQLDBStore extends DBStore {
       }
 
     }
+  }
+
+  override def saveConfig(spark: SparkSession,appPrefix: String, name: String, value: String, dictType: DictType): Unit = {
+    val key = s"${appPrefix}_${name}"
+    ctx.run(ctx.query[WDictStore].insert(
+      _.id -> lift(0),
+      _.name -> lift(key),
+      _.value -> lift(value),
+      _.dictType -> lift(dictType.id))
+    )
+  }
+
+  override def readConfig(spark: SparkSession,appPrefix: String, name: String, dictType: DictType): Option[WDictStore] = {
+    val key = s"${appPrefix}_${name}"
+    ctx.run(ctx.query[WDictStore].filter(_.name == lift(key)).filter(_.dictType == lift(dictType.id))).headOption
+  }
+
+  override def readAllConfig(spark: SparkSession,appPrefix: String): List[WDictStore] = {
+    ctx.run(ctx.query[WDictStore]).filter(f => f.name.startsWith(appPrefix))
   }
 }
 
