@@ -79,7 +79,11 @@ class SQLPythonEnvExt(override val uid: String) extends SQLAlg with WowParams {
       case "remove" => Message.RemoveEnvCommand
     }
     val appName = spark.sparkContext.getConf.get("spark.app.name")
-    val remoteCommand = Message.CreateOrRemovePythonCondaEnv(ScriptSQLExec.context().owner, ScriptSQLExec.context().groupId, $(condaYamlFilePath), params ++ Map(BasicCondaEnvManager.MLSQL_INSTNANCE_NAME_KEY -> appName), wowCommand)
+    val remoteCommand = Message.CreateOrRemovePythonCondaEnv(
+      ScriptSQLExec.context().owner, ScriptSQLExec.context().groupId,
+      $(condaYamlFilePath),
+      params ++ Map(BasicCondaEnvManager.MLSQL_INSTNANCE_NAME_KEY -> appName),
+      wowCommand)
 
     val runtime = PlatformManager.getRuntime.asInstanceOf[SparkRuntime]
     val psDriverBackend = runtime.psDriverBackend

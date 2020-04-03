@@ -47,9 +47,8 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <scala.version>2.11.8</scala.version>
+        <scala.version>2.11.12</scala.version>
         <scala.binary.version>2.11</scala.binary.version>
-        <scala.jline.version>2.11.0-M3</scala.jline.version>
 
         <spark.streaming.kafka.artifactId>spark-streaming-kafka-0-8_${scala.binary.version}
         </spark.streaming.kafka.artifactId>
@@ -278,7 +277,6 @@
             <properties>
                 <scala.version>2.11.8</scala.version>
                 <scala.binary.version>2.11</scala.binary.version>
-                <scala.jline.version>2.11.0-M3</scala.jline.version>
             </properties>
             <build>
                 <plugins>
@@ -311,9 +309,8 @@
         <profile>
             <id>scala-2.12</id>
             <properties>
-                <scala.version>2.12.8</scala.version>
+                <scala.version>2.12.10</scala.version>
                 <scala.binary.version>2.12</scala.binary.version>
-                <scala.jline.version>2.12.8</scala.jline.version>
             </properties>
             <build>
                 <plugins>
