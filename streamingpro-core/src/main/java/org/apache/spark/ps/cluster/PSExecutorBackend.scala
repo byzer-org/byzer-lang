@@ -11,9 +11,10 @@ import org.apache.spark.internal.config._
 import org.apache.spark.rpc.{RpcCallContext, RpcEnv, ThreadSafeRpcEndpoint}
 import org.apache.spark.security.CryptoStreamUtils
 import org.apache.spark.util.ThreadUtils
-import tech.mlsql.common.utils.env.python.BasicCondaEnvManager
+import tech.mlsql.common.utils.exception.ExceptionTool
 import tech.mlsql.common.utils.hdfs.HDFSOperator
 import tech.mlsql.log.WriteLog
+import tech.mlsql.python.BasicCondaEnvManager
 
 import scala.collection.mutable
 import scala.util.{Failure, Success}
@@ -68,9 +69,10 @@ class PSExecutorBackend(env: SparkEnv, override val rpcEnv: RpcEnv, psDriverUrl:
       context.reply(true)
     }
 
-    case Message.CreateOrRemovePythonCondaEnv(condaYamlFile, options, command) => {
+    case Message.CreateOrRemovePythonCondaEnv(user,groupId,condaYamlFile, options, command) => {
+      var message = ""
       val success = try {
-        val condaEnvManager = new BasicCondaEnvManager(options)
+        val condaEnvManager = new BasicCondaEnvManager(user,groupId,context.senderAddress.hostPort, options)
         command match {
           case Message.AddEnvCommand =>
             condaEnvManager.getOrCreateCondaEnv(Option(condaYamlFile))
@@ -81,10 +83,11 @@ class PSExecutorBackend(env: SparkEnv, override val rpcEnv: RpcEnv, psDriverUrl:
       } catch {
         case e: Exception =>
           logError("Create PythonEnv fail", e)
+          message = ExceptionTool.exceptionString(e)
           false
       }
 
-      context.reply(success)
+      context.reply((success, message))
     }
     case Message.Ping =>
       logInfo(s"received message ${Message.Ping}")

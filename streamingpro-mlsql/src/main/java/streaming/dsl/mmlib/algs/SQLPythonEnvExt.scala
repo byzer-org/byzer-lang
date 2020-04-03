@@ -18,7 +18,6 @@
 
 package streaming.dsl.mmlib.algs
 
-import org.apache.spark.MLSQLConf
 import org.apache.spark.ml.param.Param
 import org.apache.spark.ps.cluster.Message
 import org.apache.spark.ps.cluster.Message.CreateOrRemovePythonCondaEnvResponse
@@ -27,14 +26,15 @@ import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.mlsql.session.MLSQLException
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import streaming.core.strategy.platform.{PlatformManager, SparkRuntime}
+import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib._
 import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
 import tech.mlsql.common.utils.env.python.BasicCondaEnvManager
 import tech.mlsql.common.utils.hdfs.HDFSOperator
 
 /**
-  * 2019-01-16 WilliamZhu(allwefantasy@gmail.com)
-  */
+ * 2019-01-16 WilliamZhu(allwefantasy@gmail.com)
+ */
 class SQLPythonEnvExt(override val uid: String) extends SQLAlg with WowParams {
 
   def this() = this(BaseParams.randomUID())
@@ -79,7 +79,7 @@ class SQLPythonEnvExt(override val uid: String) extends SQLAlg with WowParams {
       case "remove" => Message.RemoveEnvCommand
     }
     val appName = spark.sparkContext.getConf.get("spark.app.name")
-    val remoteCommand = Message.CreateOrRemovePythonCondaEnv($(condaYamlFilePath), params ++ Map(BasicCondaEnvManager.MLSQL_INSTNANCE_NAME_KEY -> appName), wowCommand)
+    val remoteCommand = Message.CreateOrRemovePythonCondaEnv(ScriptSQLExec.context().owner, ScriptSQLExec.context().groupId, $(condaYamlFilePath), params ++ Map(BasicCondaEnvManager.MLSQL_INSTNANCE_NAME_KEY -> appName), wowCommand)
 
     val runtime = PlatformManager.getRuntime.asInstanceOf[SparkRuntime]
     val psDriverBackend = runtime.psDriverBackend
