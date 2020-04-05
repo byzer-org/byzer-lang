@@ -833,15 +833,22 @@
                 <version>3.0.2</version>
             </plugin>
             <plugin>
-                <groupId>net.alchim31.maven</groupId>
-                <artifactId>scala-maven-plugin</artifactId>
-                <version>3.2.2</version>
+                <groupId>org.scala-tools</groupId>
+                <artifactId>maven-scala-plugin</artifactId>
+                <version>2.15.2</version>
+                <configuration>
+                    <args>
+                        <arg>
+                            -g:vars
+                        </arg>
+                    </args>
+                    <verbose>true</verbose>
+                </configuration>
                 <executions>
                     <execution>
                         <id>scala-compile-first</id>
                         <phase>process-resources</phase>
                         <goals>
-                            <goal>add-source</goal>
                             <goal>compile</goal>
                         </goals>
                     </execution>
@@ -864,8 +871,8 @@
                     <verbose>true</verbose>
                     <source>${java.version}</source>
                     <target>${java.version}</target>
-                    <skipMain>true</skipMain> <!-- skip compile -->
-                    <skip>true</skip> <!-- skip testCompile -->
+<!--                    <skipMain>true</skipMain> &lt;!&ndash; skip compile &ndash;&gt;-->
+<!--                    <skip>true</skip> &lt;!&ndash; skip testCompile &ndash;&gt;-->
                 </configuration>
 
             </plugin>

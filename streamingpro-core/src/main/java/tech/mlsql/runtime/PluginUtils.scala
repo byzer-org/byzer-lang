@@ -1,14 +1,19 @@
 package tech.mlsql.runtime
 
-import java.io.File
+import java.io.{File, InputStream, OutputStream}
 import java.net.{URL, URLClassLoader}
 import java.nio.charset.Charset
 import java.nio.file.{Files, StandardCopyOption}
 
+import net.csdn.common.reflect.ReflectHelper
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.{FSDataOutputStream, FileSystem, Path}
+import org.apache.http.HttpResponse
 import org.apache.http.client.fluent.{Form, Request}
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.mlsql.session.MLSQLException
 import streaming.core.datasource.MLSQLRegistry
+import streaming.log.WowLog
 import tech.mlsql.common.utils.classloader.ClassLoaderTool
 import tech.mlsql.common.utils.hdfs.HDFSOperator
 import tech.mlsql.common.utils.log.Logging
@@ -23,7 +28,7 @@ import tech.mlsql.version.VersionCompatibility
 /**
  * 27/2/2020 WilliamZhu(allwefantasy@gmail.com)
  */
-object PluginUtils extends Logging {
+object PluginUtils extends Logging with WowLog {
   val TABLE_ETRecord = "__mlsql__.etRecord"
   val TABLE_DSRecord = "__mlsql__.dsRecord"
   val TABLE_APPRecord = "__mlsql__.appRecord"
@@ -52,14 +57,15 @@ object PluginUtils extends Logging {
 
     val plugin = getLatestPluginInfo(pluginName)
 
-    val response = Request.Post(PLUGIN_STORE_URL).connectTimeout(60 * 1000)
+    val wrapperResponse = Request.Post(PLUGIN_STORE_URL).connectTimeout(60 * 1000)
       .socketTimeout(60 * 60 * 1000).bodyForm(Form.form().
       add("action", "downloadPlugin").
       add("pluginName", pluginName).
       add("pluginType", "MLSQL_PLUGIN").
       add("version", plugin.version).
       build(),
-      Charset.forName("utf-8")).execute().returnResponse()
+      Charset.forName("utf-8")).execute()
+    val response = ReflectHelper.field(wrapperResponse, "response").asInstanceOf[HttpResponse]
 
     if (response.getStatusLine.getStatusCode != 200 || response.getFirstHeader("Content-Disposition") == null) {
       throw new MLSQLException(s"Fail to download ${pluginName} from http://store.mlsql.tech/api/repo/plugins/download")
@@ -67,15 +73,92 @@ object PluginUtils extends Logging {
 
 
     var fieldValue = response.getFirstHeader("Content-Disposition").getValue
+    val fileLenHeader = response.getFirstHeader("Content-Length")
+    val fileLen = if (fileLenHeader != null) {
+      fileLenHeader.getValue.toLong
+    } else -1
+
+
     val inputStream = response.getEntity.getContent
     fieldValue = fieldValue.substring(fieldValue.indexOf("filename=") + 10, fieldValue.length() - 1);
 
     val dataLake = new DataLake(spark)
 
     val hdfsPath = PathFun(dataLake.identifyToPath(TABLE_FILES)).add("store").add("plugins")
-    HDFSOperator.saveStream(hdfsPath.toPath, fieldValue, inputStream)
+    saveStream(pluginName, fileLen, hdfsPath.toPath, fieldValue, inputStream)
     HDFSOperator.deleteDir("." + hdfsPath.toPath + ".crc")
     (fieldValue, PathFun(hdfsPath.toPath).add(fieldValue).toPath)
+
+  }
+
+  def saveStream(pluginName: String, fileLen: Long, path: String, fileName: String, inputStream: InputStream) = {
+
+    def formatNumber(wow: Double): String = {
+      if (wow == -1) return "UNKNOW"
+      "%1.2f".format(wow)
+    }
+
+    def toKBOrMBStr(totalRead: Double): String = {
+      if (totalRead / 1024 / 1024 > 1) s"${formatNumber(totalRead / 1024 / 1024)}MB"
+      else s"${formatNumber(totalRead / 1024)}KB"
+    }
+
+    def KB(bytes: Double) = {
+      bytes / 1024
+    }
+
+    def MB(bytes: Double) = {
+      bytes / 1024 / 1024
+    }
+
+    def copyBytes(in: InputStream, out: OutputStream, buffSize: Int) = {
+      val buf = new Array[Byte](buffSize);
+      var bytesRead = in.read(buf)
+      var totalRead = 0D
+      var showProgressSize = 0L
+      var logByteInterval = 100 //KB
+      while (bytesRead >= 0) {
+        out.write(buf, 0, bytesRead);
+        totalRead += bytesRead
+        showProgressSize += bytesRead
+        if (KB(showProgressSize) > logByteInterval) {
+          val progress = if (fileLen == -1) -1 else totalRead / fileLen
+
+          logInfo(format(s"Downloading plugin ${pluginName}. " +
+            s"Progress: ${formatNumber(progress * 100)}% / Download:${toKBOrMBStr(totalRead)}/${toKBOrMBStr(fileLen)}"))
+          showProgressSize = 0L
+          if (MB(totalRead) > 5) {
+            logByteInterval = 500 //KB
+          }
+        }
+        bytesRead = in.read(buf);
+      }
+      logInfo(format(s"Plugin ${pluginName} have been downloaded. size:${totalRead / 1024}KB "))
+    }
+
+    var dos: FSDataOutputStream = null
+    try {
+
+      val fs = FileSystem.get(new Configuration())
+      if (!fs.exists(new Path(path))) {
+        fs.mkdirs(new Path(path))
+      }
+      dos = fs.create(new Path(new java.io.File(path, fileName).getPath), true)
+      copyBytes(inputStream, dos, 4 * 1024 * 1024)
+    } catch {
+      case ex: Exception =>
+        println("file save exception")
+    } finally {
+      if (null != dos) {
+        try {
+          dos.close()
+        } catch {
+          case ex: Exception =>
+            println("close exception")
+        }
+        dos.close()
+      }
+    }
 
   }
 

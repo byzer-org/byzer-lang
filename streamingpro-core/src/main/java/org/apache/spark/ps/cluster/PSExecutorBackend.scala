@@ -69,10 +69,10 @@ class PSExecutorBackend(env: SparkEnv, override val rpcEnv: RpcEnv, psDriverUrl:
       context.reply(true)
     }
 
-    case Message.CreateOrRemovePythonCondaEnv(user,groupId,condaYamlFile, options, command) => {
+    case Message.CreateOrRemovePythonEnv(user, groupId, condaYamlFile, options, command) => {
       var message = ""
       val success = try {
-        val condaEnvManager = new BasicCondaEnvManager(user,groupId,context.senderAddress.hostPort, options)
+        val condaEnvManager = new BasicCondaEnvManager(user, groupId, context.senderAddress.hostPort, options)
         command match {
           case Message.AddEnvCommand =>
             condaEnvManager.getOrCreateCondaEnv(Option(condaYamlFile))
@@ -105,7 +105,7 @@ object PSExecutorBackend {
 
   var executorBackend: Option[PSExecutorBackend] = None
 
-  def loadPlugin(conf: SparkConf) = {
+  def loadPlugin(conf: SparkConf):Unit = {
     val env = SparkEnv.get
     var psDriverUrl: String = null
     var psExecutorId: String = null
@@ -209,11 +209,12 @@ object PSExecutorBackend {
 class PSExecutorPlugin(conf: SparkConf) extends MLSQLExecutorPlugin with Logging {
   override def _init(config: Map[Any, Any]): Unit = {
     try {
+      logInfo("PSExecutor starting.....")
       WriteLog.init(conf.getAll.toMap)
       PSExecutorBackend.loadPlugin(conf)
     } catch {
       case e: Exception =>
-        logWarning(s"Plugin org.apache.spark.ps.cluster.PSExecutorBackend load fail.....", e)
+        logWarning(s"Plugorg.apache.spark.ps.clusterin org.apache.spark.ps.cluster.PSExecutorBackend load fail.....", e)
     }
 
   }

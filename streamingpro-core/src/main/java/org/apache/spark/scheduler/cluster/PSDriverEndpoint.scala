@@ -80,7 +80,7 @@ class PSDriverEndpoint(sc: SparkContext, override val rpcEnv: RpcEnv)
         }
       }
       context.reply(true)
-    case Message.CreateOrRemovePythonCondaEnv(user, groupId, condaYamlFile, options, command) => {
+    case Message.CreateOrRemovePythonEnv(user, groupId, condaYamlFile, options, command) => {
       val ks = getAllExecutorIDs
       val counter = new AtomicInteger(0)
 
@@ -90,7 +90,7 @@ class PSDriverEndpoint(sc: SparkContext, override val rpcEnv: RpcEnv)
           val res = CreateOrRemovePythonCondaEnvResponseItem(false, ed._2.executorHost, System.currentTimeMillis(), 0, "")
           logInfo(s"PythonEnv[${condaYamlFile}]: Prepare python env in ${ed._2.executorHost} ")
           val (success, message) = try {
-            ed._2.executorEndpoint.askSync[(Boolean, String)](Message.CreateOrRemovePythonCondaEnv(user, groupId, condaYamlFile, options, command), PSDriverEndpoint.MLSQL_DEFAULT_RPC_TIMEOUT(sc.conf))
+            ed._2.executorEndpoint.askSync[(Boolean, String)](Message.CreateOrRemovePythonEnv(user, groupId, condaYamlFile, options, command), PSDriverEndpoint.MLSQL_DEFAULT_RPC_TIMEOUT(sc.conf))
           } catch {
             case e: Exception =>
               logError("PythonEnv create exception", e)
