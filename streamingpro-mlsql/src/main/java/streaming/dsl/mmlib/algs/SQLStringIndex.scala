@@ -25,14 +25,13 @@ import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.types.{ArrayType, StringType}
 import org.apache.spark.sql.{DataFrame, SparkSession, functions => F}
 import streaming.dsl.mmlib.SQLAlg
-import streaming.dsl.mmlib.algs.bigdl.BigDLFunctions
 import streaming.dsl.mmlib.algs.classfication.BaseClassification
 import streaming.dsl.mmlib.algs.param.BaseParams
 
 /**
   * Created by allwefantasy on 15/1/2018.
   */
-class SQLStringIndex(override val uid: String) extends SQLAlg with MllibFunctions with BigDLFunctions with BaseClassification {
+class SQLStringIndex(override val uid: String) extends SQLAlg with Functions with MllibFunctions  with BaseClassification {
 
   def this() = this(BaseParams.randomUID())
 

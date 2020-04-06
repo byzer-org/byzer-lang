@@ -40,7 +40,7 @@ class RedirectLogThread(
   WriteLog.init(conf)
 
   override def run() {
-    WriteLog.write(scala.io.Source.fromInputStream(in).getLines(),conf)
+    WriteLog.write(scala.io.Source.fromInputStream(in).getLines(), conf)
   }
 }
 
@@ -104,9 +104,11 @@ object WriteLog {
 
   }
 
-  def write(in: Iterator[String], params: Map[String, String]) = {
+  def write(in: Iterator[String], params: Map[String, String]): Unit = {
     if (POOL == null) {
-      throw new RuntimeException("WriteLog Pool is not init")
+      in.foreach(println(_))
+      return
+      //throw new RuntimeException("WriteLog Pool is not init")
     }
     val obj = POOL.borrowObj()
     Utils.tryWithSafeFinally {

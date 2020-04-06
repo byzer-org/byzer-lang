@@ -1,6 +1,7 @@
 package tech.mlsql.runtime
 
 import streaming.core.strategy.platform.{SparkRuntime, StreamingRuntime}
+import tech.mlsql.common.utils.classloader.ClassLoaderTool
 import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.dsl.includes.PluginIncludeSource
 import tech.mlsql.runtime.plugins._
@@ -70,7 +71,7 @@ class PluginHook extends MLSQLPlatformLifecycle with Logging {
 
     apps.as[AppRecord].collect().foreach { ds =>
       logInfo(s"Register App Plugin ${ds.pluginName} in ${ds.className}")
-      Class.forName(ds.className).newInstance().asInstanceOf[tech.mlsql.app.App].run(ds.params)
+      ClassLoaderTool.classForName(ds.className).newInstance().asInstanceOf[tech.mlsql.app.App].run(ds.params)
     }
 
   }
@@ -90,7 +91,7 @@ object PluginHook extends Logging {
   def startBuildIn() = {
     apps.foreach { app =>
       try {
-        Class.forName(app).newInstance().
+        ClassLoaderTool.classForName(app).newInstance().
           asInstanceOf[tech.mlsql.app.App].run(Seq[String]())
       } catch {
         case e: Exception =>

@@ -47,10 +47,11 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <scala.version>2.11.8</scala.version>
+        <scala.version>2.11.12</scala.version>
         <scala.binary.version>2.11</scala.binary.version>
-        <scala.jline.version>2.11.0-M3</scala.jline.version>
-
+        <java.version>1.8</java.version>
+        <maven.compiler.source>${java.version}</maven.compiler.source>
+        <maven.compiler.target>${java.version}</maven.compiler.target>
         <spark.streaming.kafka.artifactId>spark-streaming-kafka-0-8_${scala.binary.version}
         </spark.streaming.kafka.artifactId>
         <spark.sql.kafka.artifactId>spark-sql-kafka-0-10_${scala.binary.version}</spark.sql.kafka.artifactId>
@@ -276,9 +277,8 @@
         <profile>
             <id>scala-2.11</id>
             <properties>
-                <scala.version>2.11.8</scala.version>
+                <scala.version>2.11.12</scala.version>
                 <scala.binary.version>2.11</scala.binary.version>
-                <scala.jline.version>2.11.0-M3</scala.jline.version>
             </properties>
             <build>
                 <plugins>
@@ -311,9 +311,8 @@
         <profile>
             <id>scala-2.12</id>
             <properties>
-                <scala.version>2.12.8</scala.version>
+                <scala.version>2.12.10</scala.version>
                 <scala.binary.version>2.12</scala.binary.version>
-                <scala.jline.version>2.12.8</scala.jline.version>
             </properties>
             <build>
                 <plugins>
@@ -827,23 +826,12 @@
             </resource>
         </resources>
         <plugins>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.0.0-M1</version>
-                <configuration>
-                    <forkCount>1</forkCount>
-                    <reuseForks>true</reuseForks>
-                    <argLine>-Xmx4024m</argLine>
-                    <includes>
-                        <include>**/*.java</include>
-                        <include>**/*.scala</include>
-                    </includes>
-                </configuration>
-
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.0.2</version>
             </plugin>
-
-
             <plugin>
                 <groupId>org.scala-tools</groupId>
                 <artifactId>maven-scala-plugin</artifactId>
@@ -877,13 +865,14 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>2.3.2</version>
+                <version>3.7.0</version>
                 <configuration>
-                    <!--<compilerArgument>-parameters</compilerArgument>-->
                     <compilerArgument>-g</compilerArgument>
                     <verbose>true</verbose>
-                    <source>1.8</source>
-                    <target>1.8</target>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
+<!--                    <skipMain>true</skipMain> &lt;!&ndash; skip compile &ndash;&gt;-->
+<!--                    <skip>true</skip> &lt;!&ndash; skip testCompile &ndash;&gt;-->
                 </configuration>
 
             </plugin>
@@ -891,15 +880,16 @@
             <!--   要将源码放上去，需要加入这个插件    -->
             <plugin>
                 <artifactId>maven-source-plugin</artifactId>
-                <version>2.1</version>
+                <version>3.0.1</version>
                 <configuration>
                     <attach>true</attach>
                 </configuration>
                 <executions>
                     <execution>
-                        <phase>compile</phase>
+                        <id>create-source-jar</id>
                         <goals>
-                            <goal>jar</goal>
+                            <goal>jar-no-fork</goal>
+                            <goal>test-jar-no-fork</goal>
                         </goals>
                     </execution>
                 </executions>

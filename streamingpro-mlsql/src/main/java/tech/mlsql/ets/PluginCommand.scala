@@ -4,11 +4,15 @@ package tech.mlsql.ets
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.mlsql.session.MLSQLException
 import org.apache.spark.sql.{DataFrame, SparkSession}
+import streaming.dsl.ScriptSQLExec
+import streaming.dsl.auth._
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
 import tech.mlsql.common.utils.base.TryTool
 import tech.mlsql.common.utils.serder.json.JSONTool
 import tech.mlsql.datalake.DataLake
+import tech.mlsql.dsl.auth.ETAuth
+import tech.mlsql.dsl.auth.dsl.mmlib.ETMethod.ETMethod
 import tech.mlsql.dsl.includes.PluginIncludeSource
 import tech.mlsql.runtime.PluginUtils
 import tech.mlsql.runtime.plugins._
@@ -18,7 +22,7 @@ import tech.mlsql.store.DBStore
 /**
  * 2019-09-11 WilliamZhu(allwefantasy@gmail.com)
  */
-class PluginCommand(override val uid: String) extends SQLAlg with WowParams {
+class PluginCommand(override val uid: String) extends SQLAlg with ETAuth with WowParams {
   def this() = this(BaseParams.randomUID())
 
   import tech.mlsql.runtime.PluginUtils._
@@ -183,12 +187,29 @@ class PluginCommand(override val uid: String) extends SQLAlg with WowParams {
 
   }
 
+  override def auth(etMethod: ETMethod, path: String, params: Map[String, String]): List[TableAuthResult] = {
+    val vtable = MLSQLTable(
+      Option(DB_DEFAULT.MLSQL_SYSTEM.toString),
+      Option("__plugin_operator__"),
+      OperateType.INSERT,
+      Option("_mlsql_"),
+      TableType.SYSTEM)
+
+    val context = ScriptSQLExec.contextGetOrForTest()
+    context.execListener.getTableAuth match {
+      case Some(tableAuth) =>
+        tableAuth.auth(List(vtable))
+      case None => List(TableAuthResult(true, ""))
+    }
+  }
 
   override def batchPredict(df: DataFrame, path: String, params: Map[String, String]): DataFrame = train(df, path, params)
 
   override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = ???
 
   override def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = ???
+
+
 }
 
 

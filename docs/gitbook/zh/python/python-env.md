@@ -14,25 +14,7 @@ MLSQL通过Conda很好的解决了这个问题，你只要描述你需要的依�
 
 ## 前提条件
 
-如果MLSQL运行在Local模式下，你只要确保conda环境有即可。如果你需要yarn环境下使用，请确保每个节点都安装有conda,并且
-确保启动脚本中按如下要求进行设置：
-
-
-```
-
--streaming.ps.cluster.enable  should be  true.
-
-Please make sure
-
-1. you have the uber-jar of mlsql placed in --jars
-2. Put mlsql-ps-service_xxx_2.11-xxx.jar to $SPARK_HOME/libs 
-
-You can download mlsql-ps-service_xxx_2.11-xxx.jar from http://download.mlsql.tech/1.4.0-SNAPSHOT/mlsql-ps-services/
-
-Otherwise the executor will
-fail to start and the whole application will fails.
-
-```
+如果MLSQL运行在Local模式下，你只要确保conda环境有即可。如果你需要yarn环境下使用，请确保每个节点都安装有conda
 
 注意，如果你用ROOT权限安装conda,请确保你运行的MLSQL有权限使用conda(譬如创建新环境等等)
 

@@ -104,7 +104,7 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
     }
 
     if (MLSQLConf.MLSQL_CLUSTER_PS_ENABLE.readFrom(configReader)) {
-      logInfo("MLSQL ps cluster is enabled.")
+      logInfo("PSExecutor configured...")
       conf.set("spark.network.timeout", MLSQLConf.MLSQL_PS_NETWORK_TIMEOUT.readFrom(configReader) + "s")
       conf.set("spark.executor.plugins", "org.apache.spark.ps.cluster.PSExecutorPlugin")
 
@@ -122,7 +122,7 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
      */
     val confSparkService = MLSQLConf.MLSQL_SPARK_SERVICE.readFrom(configReader)
 //    val confLogInDriver = MLSQLConf.MLSQL_LOG.readFrom(configReader)
-    val confLogInDriver = params.asScala.getOrElse("streaming.executor.log.in.driver", "true").toString.toBoolean
+     val confLogInDriver = params.asScala.getOrElse("streaming.executor.log.in.driver", "true").toString.toBoolean
     if ((confSparkService && confLogInDriver) ||
       params.getOrDefault("streaming.unittest", "false").toString.toBoolean) {
       val token = UUID.randomUUID().toString
@@ -174,7 +174,7 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
     }
 
     if (MLSQLConf.MLSQL_CLUSTER_PS_ENABLE.readFrom(configReader)) {
-      logInfo("start PSDriverBackend")
+      logInfo("PSDriver starting...")
       psDriverBackend = new PSDriverBackend(ss.sparkContext)
       psDriverBackend.start()
     }
