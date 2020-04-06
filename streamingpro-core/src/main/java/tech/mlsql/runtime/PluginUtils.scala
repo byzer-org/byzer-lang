@@ -53,16 +53,26 @@ object PluginUtils extends Logging with WowLog {
     plugins.sortBy(_.version).last
   }
 
-  def downloadJarFile(spark: SparkSession, pluginName: String) = {
+  def getPluginNameAndVersion(name: String): (String, String) = {
+    if (name.contains(":")) {
+      name.split(":") match {
+        case Array(name, version) => (name, version)
+      }
+    } else {
+      (name, getLatestPluginInfo(name).version)
+    }
+  }
 
-    val plugin = getLatestPluginInfo(pluginName)
+  def downloadJarFileToHDFS(spark: SparkSession, pluginName: String, version:String) = {
+
+
 
     val wrapperResponse = Request.Post(PLUGIN_STORE_URL).connectTimeout(60 * 1000)
       .socketTimeout(60 * 60 * 1000).bodyForm(Form.form().
       add("action", "downloadPlugin").
       add("pluginName", pluginName).
       add("pluginType", "MLSQL_PLUGIN").
-      add("version", plugin.version).
+      add("version", version).
       build(),
       Charset.forName("utf-8")).execute()
     val response = ReflectHelper.field(wrapperResponse, "response").asInstanceOf[HttpResponse]
@@ -162,7 +172,7 @@ object PluginUtils extends Logging with WowLog {
 
   }
 
-  def downloadFromHDFS(fileName: String, pluginPath: String) = {
+  def downloadFromHDFSToLocal(fileName: String, pluginPath: String) = {
     val inputStream = HDFSOperator.readAsInputStream(pluginPath)
 
     val tmpLocation = new File("./__mlsql__/store/plugins")
@@ -213,11 +223,10 @@ object PluginUtils extends Logging with WowLog {
     commandName match {
       case Some(alisName) =>
         CommandCollection.refreshCommandMapping(Map(alisName -> etName))
-        callback()
+
       case None =>
     }
-
-
+    callback()
   }
 
   def removeET(pluginName: String, className: String, commandName: Option[String], callback: () => Unit) = {
@@ -226,10 +235,9 @@ object PluginUtils extends Logging with WowLog {
     commandName match {
       case Some(alisName) =>
         CommandCollection.remove(alisName)
-        callback()
       case None =>
     }
-
+    callback()
   }
 
   def removeDS(pluginName: String, fullFormat: String, shortFormat: Option[String], callback: () => Unit) = {

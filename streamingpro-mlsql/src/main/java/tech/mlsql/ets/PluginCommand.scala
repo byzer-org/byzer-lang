@@ -62,7 +62,7 @@ class PluginCommand(override val uid: String) extends SQLAlg with ETAuth with Wo
 
             removeET(pluginName, item.className, item.commandName, () => {
               DBStore.store.saveTable(spark, spark.createDataset(Seq(
-                ETRecord(pluginName, item.commandName, item.etName, item.className))).toDF(),
+                ETRecord(pluginName, item.commandName, item.etName, item.className, null))).toDF(),
                 TABLE_ETRecord, Option("pluginName"), true)
             })
 
@@ -79,7 +79,7 @@ class PluginCommand(override val uid: String) extends SQLAlg with ETAuth with Wo
 
             removeDS(pluginName, item.fullFormat, item.shortFormat, () => {
               DBStore.store.saveTable(spark, spark.createDataset(
-                Seq(DSRecord(pluginName, item.shortFormat, item.fullFormat))).toDF(),
+                Seq(DSRecord(pluginName, item.shortFormat, item.fullFormat, null))).toDF(),
                 TABLE_DSRecord, Option("pluginName"), true)
             })
 
@@ -87,23 +87,25 @@ class PluginCommand(override val uid: String) extends SQLAlg with ETAuth with Wo
             PluginIncludeSource.unRegister(pluginName)
 
           case PluginType.APP =>
-            DBStore.store.saveTable(spark, spark.createDataset(Seq(AppRecord(pluginName, "", Seq()))).toDF(),
+            DBStore.store.saveTable(spark, spark.createDataset(Seq(AppRecord(pluginName, "", Seq(), null))).toDF(),
               TABLE_APPRecord, Option("pluginName"), true)
         }
 
-        DBStore.store.saveTable(spark, spark.createDataset(Seq(AddPlugin(pluginName, "", pluginType))).toDF(),
+        DBStore.store.saveTable(spark, spark.createDataset(Seq(AddPlugin(pluginName, "", pluginType, null))).toDF(),
           TABLE_PLUGINS, Option("pluginName,pluginType"), true)
         fetchTable(TABLE_PLUGINS, () => spark.createDataset[AddPlugin](Seq()).toDF())
 
 
-      case Seq(pluginType, "add", _className, pluginName, left@_*) =>
+      case Seq(pluginType, "add", _className, _pluginName, left@_*) =>
 
         require(pluginType == PluginType.DS
           || pluginType == PluginType.ET
           || pluginType == PluginType.SCRIPT
           || pluginType == PluginType.APP, "pluginType should be ds or et or script or app")
 
-        val plugin = PluginUtils.getLatestPluginInfo(pluginName)
+
+        val (pluginName, pluginVersion) = PluginUtils.getPluginNameAndVersion(_pluginName)
+        val plugin = PluginUtils.getPluginInfo(pluginName).filter(f => f.version == pluginVersion).head
         val className = if (_className == "-") {
           val config = JSONTool.parseJson[Map[String, String]](plugin.extraParams)
           config("mainClass")
@@ -121,9 +123,9 @@ class PluginCommand(override val uid: String) extends SQLAlg with ETAuth with Wo
           throw new MLSQLException(s"${pluginName} is already installed.")
         }
 
-        val (fileName, pluginPath) = downloadJarFile(spark, pluginName)
+        val (fileName, pluginPath) = downloadJarFileToHDFS(spark, pluginName, pluginVersion)
 
-        val localPath = downloadFromHDFS(fileName, pluginPath)
+        val localPath = downloadFromHDFSToLocal(fileName, pluginPath)
 
         if (pluginType == PluginType.DS || pluginType == PluginType.ET || pluginType == PluginType.APP) {
           loadJarInDriver(localPath)
@@ -145,15 +147,16 @@ class PluginCommand(override val uid: String) extends SQLAlg with ETAuth with Wo
         pluginType match {
           case PluginType.ET =>
             registerET(pluginName, className, commandName, () => {
+              val etName = className.split("\\.").last
+              DBStore.store.saveTable(spark, spark.createDataset(
+                Seq(ETRecord(pluginName, commandName, etName, className, pluginVersion))).toDF(),
+                TABLE_ETRecord, None, false)
             })
-            val etName = className.split("\\.").last
-            DBStore.store.saveTable(spark, spark.createDataset(
-              Seq(ETRecord(pluginName, commandName, etName, className))).toDF(),
-              TABLE_ETRecord, None, false)
+
           case PluginType.DS =>
             registerDS(pluginName, className, commandName, () => {
               DBStore.store.saveTable(spark, spark.createDataset(
-                Seq(DSRecord(pluginName, commandName, className))).toDF(),
+                Seq(DSRecord(pluginName, commandName, className, pluginVersion))).toDF(),
                 TABLE_DSRecord, None, false)
             })
           case PluginType.SCRIPT =>
@@ -161,13 +164,13 @@ class PluginCommand(override val uid: String) extends SQLAlg with ETAuth with Wo
 
           case PluginType.APP =>
             DBStore.store.saveTable(spark,
-              spark.createDataset(Seq(AppRecord(pluginName, className, left))).toDF(),
+              spark.createDataset(Seq(AppRecord(pluginName, className, left, pluginVersion))).toDF(),
               TABLE_APPRecord, None, false)
         }
 
 
         DBStore.store.saveTable(
-          spark, spark.createDataset(Seq(AddPlugin(pluginName, pluginPath, pluginType))).toDF(),
+          spark, spark.createDataset(Seq(AddPlugin(pluginName, pluginPath, pluginType, pluginVersion))).toDF(),
           TABLE_PLUGINS, None, false)
 
         DBStore.store.readTable(spark, TABLE_PLUGINS)
