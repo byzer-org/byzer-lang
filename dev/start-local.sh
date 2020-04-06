@@ -12,6 +12,13 @@ if [ -z "${MLSQL_HOME}" ]; then
   export MLSQL_HOME="$(cd "`dirname "$0"`"/.; pwd)"
 fi
 
+echo "#############################"
+echo "Run with spark : $SPARK_HOME"
+echo "With DRIVER_MEMORY=${DRIVER_MEMORY:-2g}"
+echo "Try mannualy to copy https://github.com/allwefantasy/mlsql/blob/master/streamingpro-mlsql/src/main/resources-online/log4j.properties to your SPARK_HOME/CONF"
+echo "#############################"
+sleep 5
+
 JARS=$(echo ${MLSQL_HOME}/libs/*.jar | tr ' ' ',')
 MAIN_JAR=$(ls ${MLSQL_HOME}/libs|grep 'streamingpro-mlsql')
 export DRIVER_MEMORY=${DRIVER_MEMORY:-2g}
@@ -20,7 +27,6 @@ $SPARK_HOME/bin/spark-submit --class streaming.core.StreamingApp \
         --jars ${JARS} \
         --master local[*] \
         --name mlsql \
-        --conf "spark.driver.extraJavaOptions"="-DREALTIME_LOG_HOME=/tmp/__mlsql__/logs" \
         --conf "spark.sql.hive.thriftServer.singleSession=true" \
         --conf "spark.kryoserializer.buffer=256k" \
         --conf "spark.kryoserializer.buffer.max=1024m" \
