@@ -45,7 +45,7 @@ class PluginHook extends MLSQLPlatformLifecycle with Logging {
 
     plugins.as[AddPlugin].collect().foreach { plugin =>
       logInfo(s"Plugin ${plugin.pluginName} in ${plugin.path}")
-      val localPath = downloadFromHDFS(plugin.path.split("/").last, plugin.path)
+      val localPath = downloadFromHDFSToLocal(plugin.path.split("/").last, plugin.path)
 
       if (plugin.pluginType == PluginType.DS || plugin.pluginType == PluginType.ET) {
         loadJarInDriver(localPath)

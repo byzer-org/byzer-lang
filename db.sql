@@ -7,7 +7,7 @@
 #
 # Host: 127.0.0.1 (MySQL 5.7.28-log)
 # Database: app_runtime_full
-# Generation Time: 2020-03-17 07:57:47 +0000
+# Generation Time: 2020-04-06 07:19:30 +0000
 # ************************************************************
 
 
@@ -23,20 +23,17 @@
 # Dump of table w_app_record
 # ------------------------------------------------------------
 
-DROP TABLE IF EXISTS `w_app_record`;
-
 CREATE TABLE `w_app_record` (
   `plugin_name` varchar(256) DEFAULT NULL,
   `class_name` varchar(256) DEFAULT NULL,
-  `params` text
+  `params` text,
+  `version` varchar(256) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
 
 # Dump of table w_dependency_jobs
 # ------------------------------------------------------------
-
-DROP TABLE IF EXISTS `w_dependency_jobs`;
 
 CREATE TABLE `w_dependency_jobs` (
   `owner` varchar(256) DEFAULT NULL,
@@ -46,15 +43,28 @@ CREATE TABLE `w_dependency_jobs` (
 
 
 
-# Dump of table w_ds_record
+# Dump of table w_dict_store
 # ------------------------------------------------------------
 
-DROP TABLE IF EXISTS `w_ds_record`;
+CREATE TABLE `w_dict_store` (
+  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `name` varchar(256) DEFAULT NULL,
+  `value` text,
+  `dict_type` int(11) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `name` (`name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+
+
+# Dump of table w_ds_record
+# ------------------------------------------------------------
 
 CREATE TABLE `w_ds_record` (
   `plugin_name` varchar(256) DEFAULT NULL,
   `short_format` varchar(1024) DEFAULT NULL,
-  `full_format` varchar(1024) DEFAULT NULL
+  `full_format` varchar(1024) DEFAULT NULL,
+  `version` varchar(256) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
@@ -68,24 +78,31 @@ CREATE TABLE `w_et_record` (
   `plugin_name` varchar(256) DEFAULT NULL,
   `command_name` varchar(1024) DEFAULT NULL,
   `et_name` varchar(1024) DEFAULT NULL,
-  `class_name` varchar(1024) DEFAULT NULL
+  `class_name` varchar(1024) DEFAULT NULL,
+  `version` varchar(256) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
 
-# Dump of table w_log
+# Dump of table w_job
 # ------------------------------------------------------------
 
-DROP TABLE IF EXISTS `w_log`;
-
-CREATE TABLE `w_log` (
+CREATE TABLE `w_job` (
   `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
-  `start_time` bigint(20) DEFAULT NULL,
-  `end_time` bigint(11) DEFAULT NULL,
-  `current_run` text,
-  `timer_job` text,
-  `dependencies` text,
-  PRIMARY KEY (`id`)
+  `cluster_name` varchar(256) DEFAULT NULL,
+  `group_id` varchar(256) DEFAULT NULL,
+  `executor_name` varchar(256) DEFAULT NULL,
+  `disk_bytes_spilled` bigint(20) DEFAULT NULL,
+  `shuffle_remote_bytes_read` bigint(20) DEFAULT NULL,
+  `shuffle_local_bytes_read` bigint(20) DEFAULT NULL,
+  `shuffle_records_read` bigint(20) DEFAULT NULL,
+  `shuffle_bytes_written` bigint(20) DEFAULT NULL,
+  `shuffle_records_written` bigint(20) DEFAULT NULL,
+  `add_time` bigint(20) DEFAULT NULL,
+  `created_at` bigint(20) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `group_id` (`group_id`),
+  KEY `created_at` (`created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
@@ -93,20 +110,17 @@ CREATE TABLE `w_log` (
 # Dump of table w_plugins
 # ------------------------------------------------------------
 
-DROP TABLE IF EXISTS `w_plugins`;
-
 CREATE TABLE `w_plugins` (
   `plugin_name` varchar(256) DEFAULT NULL,
   `path` varchar(1024) DEFAULT NULL,
-  `plugin_type` varchar(256) DEFAULT NULL
+  `plugin_type` varchar(256) DEFAULT NULL,
+  `version` varchar(256) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
 
 # Dump of table w_time_jobs
 # ------------------------------------------------------------
-
-DROP TABLE IF EXISTS `w_time_jobs`;
 
 CREATE TABLE `w_time_jobs` (
   `owner` varchar(256) DEFAULT NULL,
@@ -118,8 +132,6 @@ CREATE TABLE `w_time_jobs` (
 
 # Dump of table w_time_jobs_status
 # ------------------------------------------------------------
-
-DROP TABLE IF EXISTS `w_time_jobs_status`;
 
 CREATE TABLE `w_time_jobs_status` (
   `in_degree` int(11) DEFAULT NULL,
@@ -133,14 +145,7 @@ CREATE TABLE `w_time_jobs_status` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
-CREATE TABLE `w_dict_store` (
-  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
-  `name` varchar(256) DEFAULT NULL,
-  `value` text,
-  `dict_type` int(11) DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  KEY `name` (`name`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
 
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
