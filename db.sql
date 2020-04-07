@@ -84,29 +84,6 @@ CREATE TABLE `w_et_record` (
 
 
 
-# Dump of table w_job
-# ------------------------------------------------------------
-
-CREATE TABLE `w_job` (
-  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
-  `cluster_name` varchar(256) DEFAULT NULL,
-  `group_id` varchar(256) DEFAULT NULL,
-  `executor_name` varchar(256) DEFAULT NULL,
-  `disk_bytes_spilled` bigint(20) DEFAULT NULL,
-  `shuffle_remote_bytes_read` bigint(20) DEFAULT NULL,
-  `shuffle_local_bytes_read` bigint(20) DEFAULT NULL,
-  `shuffle_records_read` bigint(20) DEFAULT NULL,
-  `shuffle_bytes_written` bigint(20) DEFAULT NULL,
-  `shuffle_records_written` bigint(20) DEFAULT NULL,
-  `add_time` bigint(20) DEFAULT NULL,
-  `created_at` bigint(20) DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  KEY `group_id` (`group_id`),
-  KEY `created_at` (`created_at`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
-
-
 # Dump of table w_plugins
 # ------------------------------------------------------------
 
