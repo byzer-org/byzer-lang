@@ -48,7 +48,6 @@ connect jdbc where
  as app_runtime_full;
  
 load jdbc.`app_runtime_full.w_executor` as w_executor;
-load jdbc.`app_runtime_full.w_job` as w_job;
 load jdbc.`app_runtime_full.w_executor_job` as w_executor_job;
 ```
 

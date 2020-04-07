@@ -8,7 +8,7 @@ import java.util.concurrent.atomic.AtomicReference
 import org.apache.spark.sql.catalyst.encoders.RowEncoder
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.mlsql.session.MLSQLException
-import org.apache.spark.sql.types.StructType
+import org.apache.spark.sql.types.{DataType, StructType}
 import org.apache.spark.sql.{DataFrame, Row, SparkSession, SparkUtils}
 import org.apache.spark.util.{TaskCompletionListener, TaskFailureListener}
 import org.apache.spark.{MLSQLSparkUtils, TaskContext}
@@ -259,7 +259,15 @@ class PythonCommand(override val uid: String) extends SQLAlg with Functions with
 
     val runnerConf = getSchemaAndConf(envSession) ++ configureLogConf
 
-    val targetSchema = SparkSimpleSchemaParser.parse(runnerConf("schema")).asInstanceOf[StructType]
+    val targetSchema = runnerConf("schema").trim match {
+      case item if item.startsWith("{") =>
+        DataType.fromJson(runnerConf("schema")).asInstanceOf[StructType]
+      case item if item.startsWith("st") =>
+        SparkSimpleSchemaParser.parse(runnerConf("schema")).asInstanceOf[StructType]
+      case _ =>
+        StructType.fromDDL(runnerConf("schema"))
+    }
+    
     val pythonVersion = runnerConf.getOrElse("pythonVersion", "3.6")
     val timezoneID = session.sessionState.conf.sessionLocalTimeZone
     val df = session.table(sourceTable)
