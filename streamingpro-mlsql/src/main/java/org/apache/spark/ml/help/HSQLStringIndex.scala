@@ -18,9 +18,9 @@
 
 package org.apache.spark.ml.help
 
-import org.apache.spark.SparkException
+import org.apache.spark.{MLSQLSparkConst, SparkException}
 import org.apache.spark.ml.feature.{StringIndexer, StringIndexerModel}
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.{MLSQLUtils, SparkSession}
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.types.{DoubleType, IntegerType, StringType}
 import org.apache.spark.util.collection.OpenHashMap
@@ -37,7 +37,7 @@ object HSQLStringIndex {
     sparkSession.udf.register(name + "_r", res(name + "_r").asInstanceOf[Double => String])
     sparkSession.udf.register(name + "_rarray", res(name + "_rarray").asInstanceOf[Seq[Double] => Seq[String]])
 
-    UserDefinedFunction(res(name), IntegerType, Some(Seq(StringType)))
+    MLSQLUtils.createUserDefinedFunction(res(name), IntegerType, Some(Seq(StringType)))
   }
 
   def wordToIndex(sparkSession: SparkSession, _model: Any) = {

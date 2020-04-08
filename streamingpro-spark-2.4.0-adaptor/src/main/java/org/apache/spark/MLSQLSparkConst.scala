@@ -24,6 +24,8 @@ import org.apache.hadoop.conf.Configuration
 import org.apache.spark.deploy.SparkHadoopUtil
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.execution.command.ExplainCommand
+import org.apache.spark.sql.expressions.UserDefinedFunction
+import org.apache.spark.sql.types.DataType
 import org.apache.spark.util.{ShutdownHookManager, Utils, VersionUtils}
 import org.slf4j.Logger
 
@@ -102,9 +104,5 @@ object MLSQLSparkConst {
   def majorVersion(sparkVersion: String): Int = VersionUtils.majorVersion(sparkVersion)
 
   def minorVersion(sparkVersion: String): Int = VersionUtils.minorVersion(sparkVersion)
-
-  def createExplainCommand(lg: LogicalPlan, extended: Boolean) = {
-    ExplainCommand(lg, extended = extended)
-  }
 
 }
