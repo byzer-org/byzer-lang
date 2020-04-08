@@ -21,7 +21,6 @@ package streaming.dsl.mmlib.algs
 import java.nio.file.Paths
 import java.util.UUID
 
-import com.hortonworks.spark.sql.kafka08.KafkaOperator
 import org.apache.spark.sql.SparkSession
 import streaming.dsl.mmlib.algs.python.{MLFlow, PythonScript}
 import tech.mlsql.common.utils.hdfs.HDFSOperator
@@ -59,7 +58,7 @@ object SQLPythonFunc {
   def recordUserLog(algIndex: Int, pythonScript: PythonScript, kafkaParam: Map[String, String], res: Iterator[String],
                     logCallback: (String) => Unit = (msg: String) => {}) = {
     val logPrefix = algIndex + "/" + pythonScript.filePath + ":  "
-    val scores = KafkaOperator.writeKafka(logPrefix, kafkaParam, res, logCallback)
+    val scores = writeLog(logPrefix, kafkaParam, res, logCallback)
     val score = if (scores.size > 0) scores.head else 0d
     score
   }
@@ -76,18 +75,31 @@ object SQLPythonFunc {
   }
 
   def recordSingleLineLog(kafkaParam: Map[String, String], line: String, logCallback: (String) => Unit = (msg: String) => {}) = {
-    KafkaOperator.writeKafka("", kafkaParam, Seq(line).toIterator, logCallback)
+    writeLog("", kafkaParam, Seq(line).toIterator, logCallback)
   }
 
   def recordMultiLineLog(kafkaParam: Map[String, String], res: Iterator[String], logCallback: (String) => Unit = (msg: String) => {}) = {
-    KafkaOperator.writeKafka("", kafkaParam, res, logCallback)
+    writeLog("", kafkaParam, res, logCallback)
   }
 
   def recordUserException(kafkaParam: Map[String, String], e: Exception, logCallback: (String) => Unit = (msg: String) => {}) = {
-    KafkaOperator.writeKafka("", kafkaParam, Seq(e.getStackTrace.map { f =>
+    writeLog("", kafkaParam, Seq(e.getStackTrace.map { f =>
       logCallback(f.toString)
       f.toString
     }.mkString("\n")).toIterator)
+  }
+
+  def writeLog(prefix: String, kafkaParam: Map[String, String], lines: Iterator[String], logCallback: (String) => Unit = (msg: String) => {}) = {
+    def filterScore(str: String) = {
+      if (str != null && str.startsWith("mlsql_validation_score:")) {
+        str.split(":").last.toDouble
+      } else 0d
+    }
+    lines.map {
+      f =>
+        logCallback(prefix + "" + f)
+        filterScore(f)
+    }.filter(f => f > 0d).toSeq
   }
 
 
