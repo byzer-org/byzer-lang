@@ -29,7 +29,7 @@ class MockStreamTest extends StreamTest {
   object TriggerData {
     def apply(source: Source, f: () => Unit) = {
       new TriggerData(source) {
-        override def addData(query: Option[StreamExecution]): (BaseStreamingSource, Offset) = {
+        override def addData(query: Option[StreamExecution]): (Source, Offset) = {
           f()
           (source, source.getOffset.get)
         }
