@@ -3,7 +3,7 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
-        <artifactId>streamingpro_2.11</artifactId>
+        <artifactId>streamingpro_2.12</artifactId>
         <groupId>tech.mlsql</groupId>
         <version>1.6.0-SNAPSHOT</version>
     </parent>
@@ -96,12 +96,12 @@
             <dependencies>
                 <dependency>
                     <groupId>org.elasticsearch</groupId>
-                    <artifactId>elasticsearch-spark-20_2.11</artifactId>
+                    <artifactId>elasticsearch-spark-20_2.12</artifactId>
                     <version>6.5.0</version>
                 </dependency>
                 <dependency>
                     <groupId>org.mongodb.spark</groupId>
-                    <artifactId>mongo-spark-connector_2.11</artifactId>
+                    <artifactId>mongo-spark-connector_2.12</artifactId>
                     <version>2.4.1</version>
                 </dependency>
                 <dependency>
@@ -414,7 +414,7 @@
             <dependencies>
                 <!--<dependency>-->
                 <!--<groupId>org.elasticsearch</groupId>-->
-                <!--<artifactId>elasticsearch-spark-20_2.11</artifactId>-->
+                <!--<artifactId>elasticsearch-spark-20_2.12</artifactId>-->
                 <!--<version>5.5.2</version>-->
                 <!--</dependency>-->
                 <dependency>

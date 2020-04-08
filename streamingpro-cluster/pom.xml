@@ -3,7 +3,7 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
-        <artifactId>streamingpro_2.11</artifactId>
+        <artifactId>streamingpro_2.12</artifactId>
         <groupId>tech.mlsql</groupId>
         <version>1.6.0-SNAPSHOT</version>
     </parent>
@@ -82,7 +82,7 @@
         </dependency>
         <dependency>
             <groupId>net.csdn</groupId>
-            <artifactId>serviceframework-web_2.11</artifactId>
+            <artifactId>serviceframework-web_2.12</artifactId>
             <version>${serviceframework.version}</version>
             <exclusions>
                 <exclusion>
@@ -136,13 +136,13 @@
         </dependency>
         <dependency>
             <groupId>net.csdn</groupId>
-            <artifactId>serviceframework-orm_2.11</artifactId>
+            <artifactId>serviceframework-orm_2.12</artifactId>
             <version>${serviceframework.version}</version>
         </dependency>
 
         <dependency>
             <groupId>org.json4s</groupId>
-            <artifactId>json4s-jackson_2.11</artifactId>
+            <artifactId>json4s-jackson_2.12</artifactId>
             <version>3.6.1</version>
         </dependency>
     </dependencies>
