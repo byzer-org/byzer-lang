@@ -24,6 +24,8 @@ import breeze.linalg.{DenseVector => BDV, SparseVector => BSV, Vector => BV}
 import org.apache.spark.ml.linalg.{DenseVector, Matrices, Matrix, SparseVector, Vector, Vectors}
 import org.apache.spark.mllib.linalg.{Vectors => OldVectors}
 import org.apache.spark.sql.UDFRegistration
+import org.joda.time.DateTime
+import org.joda.time.format.DateTimeFormat
 import streaming.common.UnicodeUtils
 import tech.mlsql.common.utils.base.Measurement
 import tech.mlsql.common.utils.distribute.socket.server.ByteUnit
@@ -503,6 +505,19 @@ object Functions {
       }
     }
 
+  }
+
+  def parseDateAsLong(uDFRegistration: UDFRegistration): Unit = {
+    uDFRegistration.register("parseDateAsLong", (date: String, pattern: String) => {
+      DateTime.parse(date, DateTimeFormat.forPattern(pattern)).getMillis
+    })
+  }
+
+  def parseLongAsDate(uDFRegistration: UDFRegistration): Unit = {
+    uDFRegistration.register("parseLongAsDate", (date: Long, pattern: String) => {
+      val dt = new DateTime().withMillis(date)
+      dt.toString(pattern)
+    })
   }
 
 

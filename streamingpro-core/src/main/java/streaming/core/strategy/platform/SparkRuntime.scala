@@ -29,6 +29,7 @@ import org.apache.spark.sql.jdbc.{JdbcDialect, JdbcDialects}
 import org.apache.spark.sql.mlsql.session.{SessionIdentifier, SessionManager}
 import org.apache.spark.sql.{MLSQLUtils, SQLContext, SparkSession}
 import org.apache.spark.{MLSQLConf, SparkConf, SparkRuntimeOperator, WowFastSparkContext}
+import tech.mlsql.common.utils.classloader.ClassLoaderTool
 import tech.mlsql.common.utils.lang.sc.ScalaObjectReflect
 import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.common.utils.network.NetUtils
@@ -219,7 +220,7 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
 
   def registerUDF(clzz: String) = {
     logInfo("register functions.....")
-    Class.forName(clzz).getMethods.foreach { f =>
+    ClassLoaderTool.classForName(clzz).getMethods.foreach { f =>
       try {
         if (Modifier.isStatic(f.getModifiers)) {
           f.invoke(null, sparkSession.udf)

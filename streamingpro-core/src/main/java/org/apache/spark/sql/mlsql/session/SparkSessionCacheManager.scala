@@ -87,6 +87,10 @@ class SparkSessionCacheManager extends Logging {
     }
   }
 
+  def users = {
+    userToSparkSession.asScala.map(_._1).toList
+  }
+
   /**
    * Periodically close idle SparkSessions
    */
