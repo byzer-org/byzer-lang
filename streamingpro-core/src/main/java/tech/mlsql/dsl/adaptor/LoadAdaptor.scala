@@ -160,7 +160,7 @@ class LoadPRocessing(scriptSQLExecListener: ScriptSQLExecListener,
       table = withWaterMark(table, option)
 
       def deserializeSchema(json: String): StructType = {
-        Try(DataType.fromJson(json)).getOrElse(LegacyTypeStringParser.parse(json)) match {
+        DataType.fromJson(json) match {
           case t: StructType => t
           case _ => throw new RuntimeException(s"Failed parsing StructType: $json")
         }
