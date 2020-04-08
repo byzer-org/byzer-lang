@@ -17,7 +17,7 @@
 完成如上操作之后，安装插件：
 
 ```
-!plugin et add - "run-script" named runScript;
+!plugin et add - "run-script-2.4" named runScript;
 ```
 
 

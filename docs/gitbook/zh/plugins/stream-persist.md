@@ -17,7 +17,7 @@
 完成如上操作之后，安装插件：
 
 ```
-!plugin app add - "stream-persist-app";
+!plugin app add - "stream-persist-app-2.4";
 ```
 
 

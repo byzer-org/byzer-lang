@@ -17,7 +17,7 @@
 完成如上操作之后，安装插件：
 
 ```
-!plugin app add - 'connect-persist-app';
+!plugin app add - 'connect-persist-app-2.4';
 ```
 
 
