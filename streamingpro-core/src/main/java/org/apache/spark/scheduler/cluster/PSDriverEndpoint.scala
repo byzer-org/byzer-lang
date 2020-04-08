@@ -39,7 +39,7 @@ import scala.concurrent.duration._
 class PSDriverEndpoint(sc: SparkContext, override val rpcEnv: RpcEnv)
   extends ThreadSafeRpcEndpoint with Logging with WowLog {
   protected val addressToExecutorId = new HashMap[RpcAddress, String]
-  private val executorDataMap = new HashMap[String, ExecutorData]()
+  private val executorDataMap = new HashMap[String, MLSQLExecutorData]()
   //  private var sparkExecutorDataMap = new HashMap[String, ExecutorData]()
   //  private val refreshThread =
   //  ThreadUtils.newDaemonSingleThreadScheduledExecutor("ps-driver-refresh-thread")
@@ -63,7 +63,7 @@ class PSDriverEndpoint(sc: SparkContext, override val rpcEnv: RpcEnv)
         logInfo(s"Registered ps-executor $executorRef ($executorAddress) with ID $executorId")
         addressToExecutorId(executorAddress) = executorId
 
-        val data = new ExecutorData(executorRef, executorRef.address, hostname,
+        val data = new MLSQLExecutorData(executorRef, executorRef.address, hostname,
           cores, cores, logUrls)
         executorDataMap.put(executorId, data)
         executorRef.send(Message.RegisteredExecutor)
@@ -114,7 +114,7 @@ class PSDriverEndpoint(sc: SparkContext, override val rpcEnv: RpcEnv)
   }
 
   private def filterDuplicateHost = {
-    val hostMap = new mutable.HashMap[String, (String, ExecutorData)]()
+    val hostMap = new mutable.HashMap[String, (String, MLSQLExecutorData)]()
 
     executorDataMap.foreach { f =>
       if (!hostMap.contains(f._2.executorHost)) {
@@ -149,3 +149,12 @@ object PSDriverEndpoint {
     new RpcTimeout(timeout, MLSQLConf.MLSQL_PS_ASK_TIMEOUT.key)
   }
 }
+
+case class MLSQLExecutorData(
+                              val executorEndpoint: RpcEndpointRef,
+                              val executorAddress: RpcAddress,
+                              val executorHost: String,
+                              var freeCores: Int,
+                              val totalCores: Int,
+                              val logUrlMap: Map[String, String]
+                            )
