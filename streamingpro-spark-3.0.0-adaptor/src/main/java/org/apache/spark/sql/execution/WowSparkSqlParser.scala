@@ -30,7 +30,7 @@ import scala.collection.mutable.ArrayBuffer
 /**
   * Concrete parser for Spark SQL statements.
   */
-class WowSparkSqlParser(conf: SQLConf) extends AbstractSqlParser {
+class WowSparkSqlParser(conf: SQLConf) extends AbstractSqlParser(conf) {
   val astBuilder = new WowSparkSqlAstBuilder(conf)
 
   private val substitutor = new VariableSubstitution(conf)

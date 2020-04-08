@@ -22,18 +22,16 @@ import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 import java.lang.invoke.SerializedLambda
 import java.util
 
-import com.sun.org.apache.bcel.internal.generic.{GETFIELD, INVOKESPECIAL, INVOKEVIRTUAL, NEW}
 import org.apache.spark.internal.Logging
 import org.apache.spark.{SparkEnv, SparkException}
-import org.apache.xbean.asm6.Opcodes.ASM6
-import org.apache.xbean.asm6.{ClassReader, ClassVisitor, MethodVisitor, Type}
+import org.apache.xbean.asm7.ClassReader
 
 import scala.collection.mutable.{Map, Set, Stack}
 import scala.language.existentials
 
 /**
-  * Created by allwefantasy on 6/8/2018.
-  */
+ * Created by allwefantasy on 6/8/2018.
+ */
 object WowCacheableClosureCleaner extends Logging {
   val serializableMap: LRUCache[String, Boolean] = new LRUCache[String, Boolean](100000)
   private val isScala2_11 = scala.util.Properties.versionString.contains("2.11")
@@ -81,8 +79,8 @@ object WowCacheableClosureCleaner extends Logging {
   }
 
   /**
-    * Return a list of classes that represent closures enclosed in the given closure object.
-    */
+   * Return a list of classes that represent closures enclosed in the given closure object.
+   */
   private def getInnerClosureClasses(obj: AnyRef): List[Class[_]] = {
     val seen = Set[Class[_]](obj.getClass)
     val stack = Stack[Class[_]](obj.getClass)
@@ -149,15 +147,15 @@ object WowCacheableClosureCleaner extends Logging {
   }
 
   /**
-    * Clean the given closure in place.
-    *
-    * More specifically, this renders the given closure serializable as long as it does not
-    * explicitly reference unserializable objects.
-    *
-    * @param closure           the closure to clean
-    * @param checkSerializable whether to verify that the closure is serializable after cleaning
-    * @param cleanTransitively whether to clean enclosing closures transitively
-    */
+   * Clean the given closure in place.
+   *
+   * More specifically, this renders the given closure serializable as long as it does not
+   * explicitly reference unserializable objects.
+   *
+   * @param closure           the closure to clean
+   * @param checkSerializable whether to verify that the closure is serializable after cleaning
+   * @param cleanTransitively whether to clean enclosing closures transitively
+   */
   def clean(
              closure: AnyRef,
              checkSerializable: Boolean = true,
@@ -166,10 +164,10 @@ object WowCacheableClosureCleaner extends Logging {
   }
 
   /**
-    * Try to get a serialized Lambda from the closure.
-    *
-    * @param closure the closure to check.
-    */
+   * Try to get a serialized Lambda from the closure.
+   *
+   * @param closure the closure to check.
+   */
   private def getSerializedLambda(closure: AnyRef): Option[SerializedLambda] = {
     if (isScala2_11) {
       return None
@@ -202,46 +200,46 @@ object WowCacheableClosureCleaner extends Logging {
   }
 
   /**
-    * Helper method to clean the given closure in place.
-    *
-    * The mechanism is to traverse the hierarchy of enclosing closures and null out any
-    * references along the way that are not actually used by the starting closure, but are
-    * nevertheless included in the compiled anonymous classes. Note that it is unsafe to
-    * simply mutate the enclosing closures in place, as other code paths may depend on them.
-    * Instead, we clone each enclosing closure and set the parent pointers accordingly.
-    *
-    * By default, closures are cleaned transitively. This means we detect whether enclosing
-    * objects are actually referenced by the starting one, either directly or transitively,
-    * and, if not, sever these closures from the hierarchy. In other words, in addition to
-    * nulling out unused field references, we also null out any parent pointers that refer
-    * to enclosing objects not actually needed by the starting closure. We determine
-    * transitivity by tracing through the tree of all methods ultimately invoked by the
-    * inner closure and record all the fields referenced in the process.
-    *
-    * For instance, transitive cleaning is necessary in the following scenario:
-    *
-    * class SomethingNotSerializable {
-    * def someValue = 1
-    * def scope(name: String)(body: => Unit) = body
-    * def someMethod(): Unit = scope("one") {
-    * def x = someValue
-    * def y = 2
-    * scope("two") { println(y + 1) }
-    * }
-    * }
-    *
-    * In this example, scope "two" is not serializable because it references scope "one", which
-    * references SomethingNotSerializable. Note that, however, the body of scope "two" does not
-    * actually depend on SomethingNotSerializable. This means we can safely null out the parent
-    * pointer of a cloned scope "one" and set it the parent of scope "two", such that scope "two"
-    * no longer references SomethingNotSerializable transitively.
-    *
-    * @param func              the starting closure to clean
-    * @param checkSerializable whether to verify that the closure is serializable after cleaning
-    * @param cleanTransitively whether to clean enclosing closures transitively
-    * @param accessedFields    a map from a class to a set of its fields that are accessed by
-    *                          the starting closure
-    */
+   * Helper method to clean the given closure in place.
+   *
+   * The mechanism is to traverse the hierarchy of enclosing closures and null out any
+   * references along the way that are not actually used by the starting closure, but are
+   * nevertheless included in the compiled anonymous classes. Note that it is unsafe to
+   * simply mutate the enclosing closures in place, as other code paths may depend on them.
+   * Instead, we clone each enclosing closure and set the parent pointers accordingly.
+   *
+   * By default, closures are cleaned transitively. This means we detect whether enclosing
+   * objects are actually referenced by the starting one, either directly or transitively,
+   * and, if not, sever these closures from the hierarchy. In other words, in addition to
+   * nulling out unused field references, we also null out any parent pointers that refer
+   * to enclosing objects not actually needed by the starting closure. We determine
+   * transitivity by tracing through the tree of all methods ultimately invoked by the
+   * inner closure and record all the fields referenced in the process.
+   *
+   * For instance, transitive cleaning is necessary in the following scenario:
+   *
+   * class SomethingNotSerializable {
+   * def someValue = 1
+   * def scope(name: String)(body: => Unit) = body
+   * def someMethod(): Unit = scope("one") {
+   * def x = someValue
+   * def y = 2
+   * scope("two") { println(y + 1) }
+   * }
+   * }
+   *
+   * In this example, scope "two" is not serializable because it references scope "one", which
+   * references SomethingNotSerializable. Note that, however, the body of scope "two" does not
+   * actually depend on SomethingNotSerializable. This means we can safely null out the parent
+   * pointer of a cloned scope "one" and set it the parent of scope "two", such that scope "two"
+   * no longer references SomethingNotSerializable transitively.
+   *
+   * @param func              the starting closure to clean
+   * @param checkSerializable whether to verify that the closure is serializable after cleaning
+   * @param cleanTransitively whether to clean enclosing closures transitively
+   * @param accessedFields    a map from a class to a set of its fields that are accessed by
+   *                          the starting closure
+   */
   private def clean(
                      func: AnyRef,
                      checkSerializable: Boolean,

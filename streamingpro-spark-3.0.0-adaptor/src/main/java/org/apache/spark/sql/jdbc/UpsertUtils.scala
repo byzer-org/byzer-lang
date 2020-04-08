@@ -19,10 +19,10 @@
 package org.apache.spark.sql.jdbc
 
 /**
-  * Created by allwefantasy on 26/4/2018.
-  */
+ * Created by allwefantasy on 26/4/2018.
+ */
 
-import java.sql.{BatchUpdateException, Connection, PreparedStatement}
+import java.sql.{Connection, PreparedStatement}
 
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.execution.datasources.jdbc.{JDBCOptions, JdbcUtils}
@@ -41,9 +41,10 @@ object UpsertUtils extends Logging {
 
     val rddSchema = df.schema
     val getConnection: () => Connection = JdbcUtils.createConnectionFactory(jdbcOptions)
-    df.foreachPartition { iterator =>
-      upsertPartition(getConnection, jdbcOptions.tableOrQuery, iterator, idCol, rddSchema, nullTypes, jdbcOptions.batchSize,
-        dialect, isCaseSensitive)
+    df.rdd.foreachPartition {
+      (iterator: Iterator[Row]) =>
+        upsertPartition(getConnection, jdbcOptions.tableOrQuery, iterator, idCol, rddSchema, nullTypes, jdbcOptions.batchSize,
+          dialect, isCaseSensitive)
     }
   }
 
@@ -54,19 +55,19 @@ object UpsertUtils extends Logging {
   }
 
   /**
-    * Saves a partition of a DataFrame to the JDBC database.  This is done in
-    * a single database transaction in order to avoid repeatedly inserting
-    * data as much as possible.
-    *
-    * It is still theoretically possible for rows in a DataFrame to be
-    * inserted into the database more than once if a stage somehow fails after
-    * the commit occurs but before the stage can return successfully.
-    *
-    * This is not a closure inside saveTable() because apparently cosmetic
-    * implementation changes elsewhere might easily render such a closure
-    * non-Serializable.  Instead, we explicitly close over all variables that
-    * are used.
-    */
+   * Saves a partition of a DataFrame to the JDBC database.  This is done in
+   * a single database transaction in order to avoid repeatedly inserting
+   * data as much as possible.
+   *
+   * It is still theoretically possible for rows in a DataFrame to be
+   * inserted into the database more than once if a stage somehow fails after
+   * the commit occurs but before the stage can return successfully.
+   *
+   * This is not a closure inside saveTable() because apparently cosmetic
+   * implementation changes elsewhere might easily render such a closure
+   * non-Serializable.  Instead, we explicitly close over all variables that
+   * are used.
+   */
   def upsertPartition(
                        getConnection: () => Connection,
                        table: String,
@@ -183,11 +184,11 @@ trait UpsertBuilder {
 }
 
 /**
-  *
-  * @param stmt
-  * @param schema The modified schema.  Postgres upserts, for instance, add fields to the SQL, so we update the
-  *               schema to reflect that.
-  */
+ *
+ * @param stmt
+ * @param schema The modified schema.  Postgres upserts, for instance, add fields to the SQL, so we update the
+ *               schema to reflect that.
+ */
 case class UpsertInfo(stmt: PreparedStatement, schema: StructType)
 
 object UpsertBuilder {

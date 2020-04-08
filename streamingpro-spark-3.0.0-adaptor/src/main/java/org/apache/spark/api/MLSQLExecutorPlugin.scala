@@ -1,6 +1,7 @@
 package org.apache.spark.api
 
-import org.apache.spark.ExecutorPlugin
+import _root_.java.util
+import org.apache.spark.api.plugin.{ExecutorPlugin, PluginContext}
 
 /**
  * The parameters in init method are different in different version of Spark.
@@ -8,7 +9,7 @@ import org.apache.spark.ExecutorPlugin
  * differences. 
  */
 trait MLSQLExecutorPlugin extends ExecutorPlugin {
-  override def init(): Unit = _init(Map[Any, Any]())
+  override def init(ctx: PluginContext, extraConf: util.Map[String, String]): Unit = _init(Map[Any, Any]())
 
   override def shutdown(): Unit = _shutdown()
 

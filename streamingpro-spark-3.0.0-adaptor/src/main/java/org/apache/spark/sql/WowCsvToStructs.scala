@@ -22,7 +22,7 @@ import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.expressions.codegen.CodegenFallback
 import org.apache.spark.sql.catalyst.expressions.{ExpectsInputTypes, Expression, TimeZoneAwareExpression, UnaryExpression}
 import org.apache.spark.sql.catalyst.util.{BadRecordException, GenericArrayData}
-import org.apache.spark.sql.execution.datasources.csv.{CSVOptions, UnivocityParser}
+import org.apache.spark.sql.catalyst.csv.{CSVOptions, UnivocityParser}
 import org.apache.spark.sql.types._
 
 

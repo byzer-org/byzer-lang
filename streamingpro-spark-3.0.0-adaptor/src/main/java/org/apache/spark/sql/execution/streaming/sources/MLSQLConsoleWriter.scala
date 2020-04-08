@@ -17,18 +17,17 @@
 
 package org.apache.spark.sql.execution.streaming.sources
 
-import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.plans.logical.LocalRelation
-import org.apache.spark.sql.sources.v2.DataSourceOptions
-import org.apache.spark.sql.sources.v2.writer.streaming.StreamWriter
-import org.apache.spark.sql.sources.v2.writer.{DataWriterFactory, WriterCommitMessage}
+import org.apache.spark.sql.connector.write.streaming.{StreamingDataWriterFactory, StreamingWrite}
+import org.apache.spark.sql.connector.write.{PhysicalWriteInfo, WriterCommitMessage}
 import org.apache.spark.sql.types.StructType
+import org.apache.spark.sql.util.CaseInsensitiveStringMap
 import org.apache.spark.sql.{DFVisitor, Dataset, SparkSession}
 import tech.mlsql.common.utils.log.Logging
 
 /** Common methods used to create writes for the the console sink */
-class MLSQLConsoleWriter(schema: StructType, options: DataSourceOptions)
-  extends StreamWriter with Logging {
+class MLSQLConsoleWriter(schema: StructType, options: CaseInsensitiveStringMap)
+  extends StreamingWrite with Logging {
 
   // Number of rows to display, by default 20 rows
   protected val numRowsToShow = options.getInt("numRows", 20)
@@ -39,7 +38,8 @@ class MLSQLConsoleWriter(schema: StructType, options: DataSourceOptions)
   assert(SparkSession.getActiveSession.isDefined)
   protected val spark = SparkSession.getActiveSession.get
 
-  def createWriterFactory(): DataWriterFactory[InternalRow] = PackedRowWriterFactory
+  def createStreamingWriterFactory(info: PhysicalWriteInfo): StreamingDataWriterFactory =
+    PackedRowWriterFactory
 
   override def commit(epochId: Long, messages: Array[WriterCommitMessage]): Unit = {
     // We have to print a "Batch" label for the epoch for compatibility with the pre-data source V2
@@ -62,7 +62,6 @@ class MLSQLConsoleWriter(schema: StructType, options: DataSourceOptions)
     logInfo(format(printMessage))
     logInfo(format("-------------------------------------------"))
     // scalastyle:off println
-
     val newdata = Dataset.ofRows(spark, LocalRelation(schema.toAttributes, rows))
     val value = DFVisitor.showString(newdata, numRowsToShow, 20, isTruncated)
     value.split("\n").foreach { line =>
@@ -71,13 +70,13 @@ class MLSQLConsoleWriter(schema: StructType, options: DataSourceOptions)
   }
 
   def format(str: String) = {
-    val prefix = if (options.get("LogPrefix").isPresent) {
-      options.get("LogPrefix").get()
+    val prefix = if (options.get("LogPrefix") != null) {
+      options.get("LogPrefix")
     } else ""
     s"${prefix} ${str}"
   }
 
   override def toString(): String = {
-    format(s"ConsoleWriter[numRows=$numRowsToShow, truncate=$isTruncated]")
+    s"ConsoleWriter[numRows=$numRowsToShow, truncate=$isTruncated]"
   }
 }

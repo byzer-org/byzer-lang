@@ -27,16 +27,15 @@ import org.apache.spark.sql.catalyst.encoders.RowEncoder
 import org.apache.spark.sql.catalyst.json.JacksonUtils.nextUntil
 import org.apache.spark.sql.catalyst.json.{CreateJacksonParser, JSONOptions, JacksonGenerator, JacksonParser}
 import org.apache.spark.sql.catalyst.plans.logical.LocalRelation
-import org.apache.spark.sql.catalyst.util.{DropMalformedMode, FailFastMode, ParseMode, PermissiveMode}
-import org.apache.spark.sql.execution.datasources.FailureSafeParser
+import org.apache.spark.sql.catalyst.util._
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
 import org.apache.spark.unsafe.types.UTF8String
 import org.apache.spark.util.Utils
 
 /**
-  * Created by allwefantasy on 6/8/2018.
-  */
+ * Created by allwefantasy on 6/8/2018.
+ */
 object WowJsonInferSchema {
 
   def inferJson(json: Seq[UTF8String], sparkSession: SparkSession) = {
@@ -54,7 +53,7 @@ object WowJsonInferSchema {
       sparkSession.sessionState.conf.columnNameOfCorruptRecord)
     val schema = infer(json.take(1).map(UTF8String.fromString(_)), parsedOptions, CreateJacksonParser.utf8String)
     val createParser = CreateJacksonParser.string _
-    val rawParser = new JacksonParser(schema, parsedOptions)
+    val rawParser = new JacksonParser(schema, parsedOptions, false)
     val parser = new FailureSafeParser[String](
       input => rawParser.parse(input, createParser, UTF8String.fromString),
       parsedOptions.parseMode,
@@ -115,11 +114,11 @@ object WowJsonInferSchema {
   }
 
   /**
-    * Infer the type of a collection of json records in three stages:
-    *   1. Infer the type of each record
-    *   2. Merge types by choosing the lowest type necessary to cover equal keys
-    *   3. Replace any remaining null fields with string, the top type
-    */
+   * Infer the type of a collection of json records in three stages:
+   *   1. Infer the type of each record
+   *   2. Merge types by choosing the lowest type necessary to cover equal keys
+   *   3. Replace any remaining null fields with string, the top type
+   */
   def infer[T](
                 json: Seq[T],
                 configOptions: JSONOptions,
@@ -128,9 +127,7 @@ object WowJsonInferSchema {
     val columnNameOfCorruptRecord = configOptions.columnNameOfCorruptRecord
 
     // perform schema inference on each row and merge afterwards
-    val factory = new JsonFactory()
-    configOptions.setJacksonOptions(factory)
-
+    val factory = configOptions.buildJsonFactory()
     val rootType = json.map { row =>
       try {
         Utils.tryWithResource(createParser(factory, row)) { parser =>
@@ -175,8 +172,8 @@ object WowJsonInferSchema {
   }
 
   /**
-    * Infer the type of a json document from the parser's token stream
-    */
+   * Infer the type of a json document from the parser's token stream
+   */
   private def inferField(parser: JsonParser, configOptions: JSONOptions): DataType = {
     import com.fasterxml.jackson.core.JsonToken._
     parser.getCurrentToken match {
@@ -255,8 +252,8 @@ object WowJsonInferSchema {
   }
 
   /**
-    * Convert NullType to StringType and remove StructTypes with no fields
-    */
+   * Convert NullType to StringType and remove StructTypes with no fields
+   */
   private def canonicalizeType(tpe: DataType): Option[DataType] = tpe match {
     case at@ArrayType(elementType, _) =>
       for {
@@ -317,8 +314,8 @@ object WowJsonInferSchema {
   }
 
   /**
-    * Remove top-level ArrayType wrappers and merge the remaining schemas
-    */
+   * Remove top-level ArrayType wrappers and merge the remaining schemas
+   */
   private def compatibleRootType(
                                   columnNameOfCorruptRecords: String,
                                   parseMode: ParseMode): (DataType, DataType) => DataType = {
@@ -343,8 +340,8 @@ object WowJsonInferSchema {
   private[this] val emptyStructFieldArray = Array.empty[StructField]
 
   /**
-    * Returns the most general data type for two given data types.
-    */
+   * Returns the most general data type for two given data types.
+   */
   def compatibleType(t1: DataType, t2: DataType): DataType = {
     TypeCoercion.findTightestCommonType(t1, t2).getOrElse {
       // t1 or t2 is a StructType, ArrayType, or an unexpected type.
