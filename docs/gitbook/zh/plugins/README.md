@@ -1,6 +1,7 @@
 # MLSQL插件商店 
 
-> 该功能需要1.5.0版本及以上
+> Note: 本文档适用于MLSQL Engine 1.6.0-SNAPSHOT/1.6.0 及以上版本。  
+> 对应的Spark版本应该为2.4.5,不低于2.4.3。
 
 MLSQL支持通过插件全面的扩展功能。事实上，MLSQL自身就完全是以内置插件的形式构建起来的。现在，MLSQL也提供了[插件商店](https://store.mlsql.tech/),
 后续新开发的功能都会以插件形式提供出来。
@@ -21,11 +22,10 @@ MLSQL 支持四种类型的插件：
 MLSQL安装插件的方式很简单，在MLSQL Console中执行以下指令。
 
 ```sql
-!plugin et add tech.mlsql.plugin.et.DeltaCommand delta_enhancer named delta_enhancer;
+!plugin et add - delta_enhancer named delta_enhancer;
 ```
 
-这个指令表示我要增加一个et插件，插件名字叫 delta_enhancer，入口类是 `tech.mlsql.plugin.et.DeltaCommand`， 这个ET插件我想以后
-通过`!delta_enhancer` 来使用。
+这个指令表示我要增加一个et插件，插件名字叫 delta_enhancer， 这个ET插件我想以后通过`!delta_enhancer` 来使用。
 
 
 > 为了使用该功能，你需要启动MLSQL Engine是设置 -streaming.datalake.path 参数，并确保运行MLSQL Engine的账号有权限读写该目录。
