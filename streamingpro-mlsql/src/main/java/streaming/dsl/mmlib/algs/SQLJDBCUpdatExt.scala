@@ -96,7 +96,7 @@ class SQLJDBCUpdatExt(override val uid: String) extends SQLAlg with WowParams{
       }
       df_change = df_change.withColumn(colName, df_change(colName).cast(columnSchema(0).dataType))
     }
-    df_change.foreachPartition(f => {
+    df_change.rdd.foreachPartition(f => {
        val connection = ConnectDB(_params)
        val stmt = connection.prepareStatement(sql)
        connection.setAutoCommit(false)
