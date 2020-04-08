@@ -1,6 +1,6 @@
 package tech.mlsql.plugins.sql.profiler
 
-import org.apache.spark.sql.execution.command.ExplainCommand
+import org.apache.spark.MLSQLSparkUtils
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import streaming.dsl.mmlib.SQLAlg
@@ -42,7 +42,7 @@ class ProfilerCommand(override val uid: String) extends SQLAlg with WowParams {
 
   def explain(df: DataFrame, extended: Boolean) = {
     import df.sparkSession.implicits._
-    val explain = ExplainCommand(df.queryExecution.logical, extended = extended)
+    val explain = MLSQLSparkUtils.createExplainCommand(df.queryExecution.logical, extended = extended)
     val items = df.sparkSession.sessionState.executePlan(explain).executedPlan.executeCollect().
       map(_.getString(0)).mkString("\n")
     println(items)
