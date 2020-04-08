@@ -12,7 +12,11 @@
     <artifactId>streamingpro-spark-3.0.0-adaptor_${scala.binary.version}</artifactId>
 
     <dependencies>
-        
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-sql-kafka-0-10_${scala.binary.version}</artifactId>
+            <version>${spark.version}</version>
+        </dependency>
         <dependency>
             <groupId>tech.mlsql</groupId>
             <artifactId>streamingpro-spark-common-3.0_${scala.binary.version}</artifactId>

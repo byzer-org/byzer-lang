@@ -22,14 +22,19 @@ import java.io.File
 
 import org.apache.hadoop.conf.Configuration
 import org.apache.spark.deploy.SparkHadoopUtil
+import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
+import org.apache.spark.sql.execution.command.ExplainCommand
+import org.apache.spark.sql.execution.{ExplainMode, ExtendedMode}
+import org.apache.spark.sql.expressions.{SparkUserDefinedFunction, UserDefinedFunction}
+import org.apache.spark.sql.types.DataType
 import org.apache.spark.util.{ShutdownHookManager, Utils, VersionUtils}
 import org.slf4j.Logger
 
 import scala.util.matching.Regex
 
 /**
-  * Created by allwefantasy on 1/6/2018.
-  */
+ * Created by allwefantasy on 1/6/2018.
+ */
 object MLSQLSparkConst {
   val SPARK_PREFIX = "spark."
   val YARN_PREFIX = "yarn."
