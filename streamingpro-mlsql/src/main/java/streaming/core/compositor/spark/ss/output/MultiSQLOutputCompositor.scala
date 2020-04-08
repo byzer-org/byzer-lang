@@ -22,10 +22,7 @@ import java.util
 import java.util.concurrent.TimeUnit
 
 import org.apache.log4j.Logger
-import org.apache.spark.sql.AnalysisException
-import org.apache.spark.sql.catalyst.expressions.Literal
-import org.apache.spark.sql.streaming.ProcessingTime
-import org.apache.spark.sql.types.StringType
+import org.apache.spark.sql.streaming.Trigger
 import serviceframework.dispatcher.{Compositor, Processor, Strategy}
 import streaming.core.CompositorHelper
 import streaming.core.strategy.ParamsValidator
@@ -98,7 +95,7 @@ class MultiSQLOutputCompositor[T] extends Compositor[T] with CompositorHelper wi
         }
         val query = ssStream.options(options).outputMode(mode).format(format)
 
-        query.trigger(ProcessingTime(_cfg.getOrElse("duration", "10").toInt, TimeUnit.SECONDS)).start()
+        query.trigger(Trigger.ProcessingTime(_cfg.getOrElse("duration", "10").toInt, TimeUnit.SECONDS)).start()
 
       } catch {
         case e: Exception => e.printStackTrace()

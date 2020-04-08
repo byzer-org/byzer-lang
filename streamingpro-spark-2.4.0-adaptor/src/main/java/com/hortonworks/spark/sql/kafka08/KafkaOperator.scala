@@ -53,7 +53,7 @@ object KafkaOperator {
       val producer = new KafkaProducer[String, String](props)
       try {
         lines.map { line =>
-          logCallback(prefix + "" + line)
+          logCallback(prefix + "" + line)         ProcessingTime
           producer.send(new ProducerRecord[String, String](topic, prefix + "" + line))
           filterScore(line)
         }.filter(f => f > 0d).toSeq
