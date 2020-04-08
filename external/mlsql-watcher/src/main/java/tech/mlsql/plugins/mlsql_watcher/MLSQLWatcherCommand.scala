@@ -4,6 +4,7 @@ import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.param.WowParams
+import tech.mlsql.common.utils.base.Measurement
 import tech.mlsql.common.utils.distribute.socket.server.JavaUtils
 import tech.mlsql.common.utils.serder.json.JSONTool
 import tech.mlsql.plugins.mlsql_watcher.db.PluginDB.ctx
@@ -29,7 +30,7 @@ class MLSQLWatcherCommand(override val uid: String) extends SQLAlg with WowParam
         DBStore.store.saveConfig(df.sparkSession, PluginDB.plugin_name, dbName, dbConfig, DictType.DB)
         DBStore.store.saveConfig(df.sparkSession, PluginDB.plugin_name, PluginDB.plugin_name, dbName, DictType.APP_TO_DB)
       case List("cleaner", time) =>
-        val seconds = JavaUtils.timeStringAsSec(time)
+        val seconds = Measurement.timeStringAsSec(time)
         SnapshotTimer.cleanerThresh.set(seconds * 1000)
         if (MLSQLWatcherCommand.isDbConfigured) {
           ctx.run(query[WKv].insert(_.name -> lift(MLSQLWatcherCommand.KEY_CLEAN_TIME), _.value -> lift((seconds * 1000).toString)).
