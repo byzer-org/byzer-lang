@@ -50,7 +50,9 @@
                                             <exclude>org.fusesource.leveldbjni:leveldbjni-all</exclude>
                                             <exclude>org.scala-lang:scala-reflect</exclude>
                                             <exclude>org.scala-lang.modules:scala-xml_${scala.binary.version}</exclude>
-                                            <exclude>org.scala-lang.modules:scala-parser-combinators_${scala.binary.version}</exclude>
+                                            <exclude>
+                                                org.scala-lang.modules:scala-parser-combinators_${scala.binary.version}
+                                            </exclude>
                                             <exclude>org.apache.spark:spark-tags_${scala.binary.version}</exclude>
                                             <exclude>org.spark-project.spark:unused</exclude>
                                             <exclude>org.scala-lang:jline</exclude>
@@ -370,7 +372,7 @@
         <profile>
             <id>chinese-analyzer-support</id>
             <dependencies>
-                
+
             </dependencies>
         </profile>
 
@@ -421,6 +423,11 @@
         </profile>
     </profiles>
     <dependencies>
+        <dependency>
+            <groupId>tech.mlsql</groupId>
+            <artifactId>common-utils_${scala.binary.version}</artifactId>
+            <version>${common-utils-version}</version>
+        </dependency>
 
         <dependency>
             <groupId>tech.mlsql</groupId>
