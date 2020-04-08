@@ -23,7 +23,7 @@ import org.apache.spark.graphx.{Edge, Graph, VertexId}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.types.{DoubleType, LongType, StructField, StructType}
-import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession}
+import org.apache.spark.sql.{DataFrame, MLSQLUtils, Row, SaveMode, SparkSession}
 import streaming.dsl.mmlib.SQLAlg
 
 /**
@@ -78,6 +78,6 @@ class SQLPageRank extends SQLAlg with Functions {
     val f = (vertexId: Long) => {
       model.value(vertexId)
     }
-    UserDefinedFunction(f, DoubleType, Some(Seq(LongType)))
+    MLSQLUtils.createUserDefinedFunction(f, DoubleType, Some(Seq(LongType)))
   }
 }

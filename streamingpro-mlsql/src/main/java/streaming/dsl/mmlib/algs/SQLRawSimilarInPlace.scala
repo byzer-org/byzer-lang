@@ -20,7 +20,7 @@ package streaming.dsl.mmlib.algs
 
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.types._
-import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession}
+import org.apache.spark.sql.{DataFrame, MLSQLUtils, Row, SaveMode, SparkSession}
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.feature.StringFeature
 
@@ -66,7 +66,7 @@ class SQLRawSimilarInPlace extends SQLAlg with Functions {
     val f = (i: Long, threshhold: Double) => {
       model.value(i).filter(f => f._2 > threshhold)
     }
-    UserDefinedFunction(f, MapType(LongType, DoubleType), Some(Seq(LongType, DoubleType)))
+    MLSQLUtils.createUserDefinedFunction(f, MapType(LongType, DoubleType), Some(Seq(LongType, DoubleType)))
   }
 
 }

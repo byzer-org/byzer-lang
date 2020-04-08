@@ -63,6 +63,6 @@ class SQLFPGrowth extends SQLAlg with Functions {
         Seq.empty
       }
     }
-    UserDefinedFunction(f, ArrayType(StringType), Some(Seq(ArrayType(StringType))))
+    MLSQLUtils.createUserDefinedFunction(f, ArrayType(StringType), Some(Seq(ArrayType(StringType))))
   }
 }

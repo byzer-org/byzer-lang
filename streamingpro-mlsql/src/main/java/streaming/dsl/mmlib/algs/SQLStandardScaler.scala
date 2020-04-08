@@ -22,7 +22,7 @@ import org.apache.spark.ml.feature.{StandardScaler, StandardScalerModel}
 import org.apache.spark.ml.linalg.SQLDataTypes._
 import org.apache.spark.ml.linalg.Vector
 import org.apache.spark.mllib.feature
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.{DataFrame, MLSQLUtils, SparkSession}
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.DoubleType
@@ -55,6 +55,6 @@ class SQLStandardScaler extends SQLAlg with Functions {
     val withMean = model.value.getWithMean
     val scaler = new org.apache.spark.mllib.feature.StandardScalerModel(OldVectors.fromML(std), OldVectors.fromML(mean), withStd, withMean)
     val f: Vector => Vector = v => scaler.transform(OldVectors.fromML(v)).asML
-    UserDefinedFunction(f, VectorType, Some(Seq(VectorType)))
+    MLSQLUtils.createUserDefinedFunction(f, VectorType, Some(Seq(VectorType)))
   }
 }

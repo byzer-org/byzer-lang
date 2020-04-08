@@ -19,7 +19,7 @@
 package streaming.dsl.mmlib.algs
 
 import net.sf.json.JSONObject
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.{DataFrame, MLSQLUtils, SparkSession}
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.types.StringType
 import streaming.dsl.mmlib.SQLAlg
@@ -46,6 +46,6 @@ class SQLMap extends SQLAlg with MllibFunctions with Functions {
     val f = (a: String) => {
       res(a)
     }
-    UserDefinedFunction(f, StringType, Some(Seq(StringType)))
+    MLSQLUtils.createUserDefinedFunction(f, StringType, Some(Seq(StringType)))
   }
 }

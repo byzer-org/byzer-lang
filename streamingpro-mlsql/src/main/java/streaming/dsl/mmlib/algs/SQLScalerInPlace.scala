@@ -18,7 +18,7 @@
 
 package streaming.dsl.mmlib.algs
 
-import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
+import org.apache.spark.sql.{DataFrame, MLSQLUtils, SaveMode, SparkSession}
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import streaming.dsl.mmlib.SQLAlg
 import MetaConst._
@@ -104,6 +104,6 @@ class SQLScalerInPlace extends SQLAlg with Functions {
       } else values
       meta.scaleFunc(Vectors.dense(newValues.toArray)).toArray
     }
-    UserDefinedFunction(f, ArrayType(DoubleType), Some(Seq(ArrayType(DoubleType))))
+    MLSQLUtils.createUserDefinedFunction(f, ArrayType(DoubleType), Some(Seq(ArrayType(DoubleType))))
   }
 }

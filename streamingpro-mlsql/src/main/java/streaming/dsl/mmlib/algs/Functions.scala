@@ -32,7 +32,7 @@ import org.apache.spark.ps.cluster.Message
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.mlsql.session.MLSQLException
 import org.apache.spark.sql.types._
-import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession, functions => F}
+import org.apache.spark.sql.{DataFrame, MLSQLUtils, Row, SaveMode, SparkSession, functions => F}
 import org.apache.spark.util.{ObjPickle, WowXORShiftRandom}
 import org.apache.spark.{MLSQLConf, Partitioner, SparkConf}
 import streaming.core.message.MLSQLMessage
@@ -381,7 +381,7 @@ trait Functions extends SQlBaseFunc with Logging with WowLog with Serializable {
 
     sparkSession.udf.register(name + "_raw", f2)
 
-    UserDefinedFunction(f, VectorType, Some(Seq(VectorType)))
+    MLSQLUtils.createUserDefinedFunction(f, VectorType, Some(Seq(VectorType)))
   }
 
   def writeKafka(df: DataFrame, path: String, params: Map[String, String]) = {

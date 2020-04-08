@@ -21,7 +21,7 @@ package streaming.dsl.mmlib.algs
 import org.apache.spark.ml.linalg.Vectors
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.types.{ArrayType, DoubleType}
-import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
+import org.apache.spark.sql.{DataFrame, MLSQLUtils, SaveMode, SparkSession}
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.MetaConst._
 import streaming.dsl.mmlib.algs.feature.DoubleFeature
@@ -87,6 +87,6 @@ class SQLNormalizeInPlace extends SQLAlg with Functions {
       } else values
       meta.scaleFunc(Vectors.dense(newValues.toArray)).toArray
     }
-    UserDefinedFunction(f, ArrayType(DoubleType), Some(Seq(ArrayType(DoubleType))))
+    MLSQLUtils.createUserDefinedFunction(f, ArrayType(DoubleType), Some(Seq(ArrayType(DoubleType))))
   }
 }

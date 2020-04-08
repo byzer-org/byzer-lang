@@ -107,13 +107,13 @@ class SQLMapValues extends SQLAlg with Functions {
       })
     }
 
-    val audf = UserDefinedFunction(fArray, ArrayType(outputDataType), Some(Seq(ArrayType(StringType))))
+    val audf = MLSQLUtils.createUserDefinedFunction(fArray, ArrayType(outputDataType), Some(Seq(ArrayType(StringType))))
 
     sparkSession.udf.register(name + "_array", audf)
 
     val f = (key: String) => {
       dictbc.value.getOrElse(key, defaultvalue.value)
     }
-    UserDefinedFunction(f, outputDataType, Some(Seq(StringType)))
+    MLSQLUtils.createUserDefinedFunction(f, outputDataType, Some(Seq(StringType)))
   }
 }
