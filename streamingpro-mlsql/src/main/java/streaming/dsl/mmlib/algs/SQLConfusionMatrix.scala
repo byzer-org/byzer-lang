@@ -20,9 +20,10 @@ package streaming.dsl.mmlib.algs
 
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.types._
-import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession}
+import org.apache.spark.sql.{DataFrame, MLSQLUtils, Row, SaveMode, SparkSession}
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.MetaConst._
+
 import Array._
 
 
@@ -128,7 +129,7 @@ class SQLConfusionMatrix extends SQLAlg with Functions {
   }
 
   override def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = {
-    UserDefinedFunction(null, ArrayType(DoubleType), Some(Seq(ArrayType(DoubleType))))
+    MLSQLUtils.createUserDefinedFunction(null, ArrayType(DoubleType), Some(Seq(ArrayType(DoubleType))))
   }
 }
 

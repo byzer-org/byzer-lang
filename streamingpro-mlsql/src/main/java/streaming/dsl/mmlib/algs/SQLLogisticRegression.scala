@@ -18,7 +18,7 @@
 
 package streaming.dsl.mmlib.algs
 
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.{DataFrame, MLSQLUtils, SparkSession}
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.ml.classification.{LogisticRegression, LogisticRegressionModel}
 import org.apache.spark.ml.linalg.SQLDataTypes.VectorType
@@ -48,6 +48,6 @@ class SQLLogisticRegression extends SQLAlg with Functions {
       val result = model.value.getClass.getMethod("predict", classOf[Vector]).invoke(model.value, vec)
       result
     }
-    UserDefinedFunction(f, DoubleType, Some(Seq(VectorType)))
+    MLSQLUtils.createUserDefinedFunction(f, DoubleType, Some(Seq(VectorType)))
   }
 }

@@ -29,7 +29,7 @@ import org.apache.spark.ml.clustering.BisectingKMeansModel
 import org.apache.spark.ml.linalg.SQLDataTypes._
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.types._
-import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession}
+import org.apache.spark.sql.{DataFrame, MLSQLUtils, Row, SaveMode, SparkSession}
 import org.apache.spark.util.ExternalCommandRunner
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.MetaConst.getDataPath
@@ -115,6 +115,6 @@ class SQLModelExplainInPlace extends SQLAlg with Functions {
   }
 
   override def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = {
-    UserDefinedFunction(null, VectorType, Some(Seq(VectorType)))
+    MLSQLUtils.createUserDefinedFunction(null, VectorType, Some(Seq(VectorType)))
   }
 }

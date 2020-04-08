@@ -55,7 +55,7 @@ class SQLTfIdf extends SQLAlg with Functions {
 
   override def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = {
     val res = internal_predict(sparkSession, _model, name)
-    UserDefinedFunction(res(name), VectorType, Some(Seq(ArrayType(IntegerType))))
+    MLSQLUtils.createUserDefinedFunction(res(name), VectorType, Some(Seq(ArrayType(IntegerType))))
   }
 
   def internal_predict(sparkSession: SparkSession, _model: Any, name: String) = {

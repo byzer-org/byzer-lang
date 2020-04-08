@@ -19,7 +19,6 @@
 package streaming.dsl.mmlib.algs.feature
 
 import scala.collection.mutable.{ArrayBuffer, WrappedArray}
-
 import breeze.linalg.{DenseVector => BDV, SparseVector => BSV, Vector => BV}
 import org.apache.spark.ml.feature.{StandardScaler, VectorAssembler}
 import org.apache.spark.ml.linalg.{Vector, Vectors}
@@ -28,7 +27,7 @@ import org.apache.spark.mllib.feature.StandardScalerModel
 import org.apache.spark.mllib.linalg.{DenseVector => OldDenseVector, SparseVector => OldSparseVector, Vector => OldVector, Vectors => OldVectors}
 import org.apache.spark.mllib.stat.Statistics
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession, functions => F}
+import org.apache.spark.sql.{DataFrame, MLSQLUtils, Row, SaveMode, SparkSession, functions => F}
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.types.{ArrayType, DoubleType}
 import streaming.dsl.mmlib.algs.MetaConst._
@@ -212,7 +211,7 @@ object DoubleFeature extends BaseFeatureFunctions {
           baseRescale(v, (a) => Math.log(a))
         }
     }
-    val f = UserDefinedFunction(reScale, VectorType, Some(Seq(VectorType)))
+    val f = MLSQLUtils.createUserDefinedFunction(reScale, VectorType, Some(Seq(VectorType)))
     newDF = replaceColumn(newDF, tempColName, f)
     newDF = expandColumnsFromVector(newDF, fields, tempColName)
     newDF

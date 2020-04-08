@@ -22,7 +22,7 @@ import org.apache.spark.ml.linalg.SQLDataTypes._
 import org.apache.spark.ml.param.{DoubleParam, Param}
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.types._
-import org.apache.spark.sql.{DataFrame, Row, SparkSession}
+import org.apache.spark.sql.{DataFrame, MLSQLUtils, Row, SparkSession}
 import streaming.core.shared.SharedObjManager
 import streaming.dsl.mmlib.algs.MetaConst._
 import streaming.dsl.mmlib.algs.classfication.BaseClassification
@@ -108,7 +108,7 @@ class SQLTfIdfInPlace(override val uid: String) extends SQLAlg with MllibFunctio
 
   override def predict(spark: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = {
     val func = internal_predict(spark, _model, name, params)
-    UserDefinedFunction(func, VectorType, Some(Seq(StringType)))
+    MLSQLUtils.createUserDefinedFunction(func, VectorType, Some(Seq(StringType)))
   }
 
   def internal_predict(spark: SparkSession, _model: Any, name: String, params: Map[String, String]) = {

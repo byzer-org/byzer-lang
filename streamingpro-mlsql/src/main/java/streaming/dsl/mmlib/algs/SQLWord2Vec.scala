@@ -20,7 +20,7 @@ package streaming.dsl.mmlib.algs
 
 import org.apache.spark.ml.feature.{Word2Vec, Word2VecModel}
 import org.apache.spark.ml.linalg.DenseVector
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.{DataFrame, MLSQLUtils, SparkSession}
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.types._
 import streaming.dsl.mmlib.SQLAlg
@@ -68,6 +68,6 @@ class SQLWord2Vec extends SQLAlg with Functions {
   def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = {
     val res = internal_predict(sparkSession, _model, name)
     sparkSession.udf.register(name + "_array", res(name + "_array"))
-    UserDefinedFunction(res(name), ArrayType(DoubleType), Some(Seq(StringType)))
+    MLSQLUtils.createUserDefinedFunction(res(name), ArrayType(DoubleType), Some(Seq(StringType)))
   }
 }

@@ -21,7 +21,7 @@ package streaming.dsl.mmlib.algs
 import org.apache.spark.ml.feature.{Bucketizer, DiscretizerFeature, QuantileDiscretizer}
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.types._
-import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
+import org.apache.spark.sql.{DataFrame, MLSQLUtils, SaveMode, SparkSession}
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.MetaConst._
 import streaming.dsl.mmlib.algs.meta.DiscretizerMeta
@@ -90,7 +90,7 @@ class SQLDiscretizer extends SQLAlg with Functions {
 
   override def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = {
     val meta = _model.asInstanceOf[DiscretizerMeta]
-    UserDefinedFunction(meta.discretizerFunc, ArrayType(DoubleType), Some(Seq(ArrayType(DoubleType))))
+    MLSQLUtils.createUserDefinedFunction(meta.discretizerFunc, ArrayType(DoubleType), Some(Seq(ArrayType(DoubleType))))
   }
 }
 

@@ -339,20 +339,20 @@ class SQLFeatureExtractInPlace extends SQLAlg with Functions {
   }
 
   override def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = {
-    sparkSession.udf.register(name + "_phone", phoneExisted.f.asInstanceOf[String => Boolean])
-    sparkSession.udf.register(name + "_email", emailExisted.f.asInstanceOf[String => Boolean])
-    sparkSession.udf.register(name + "_qqwechat", qqwechatExisted.f.asInstanceOf[String => Boolean])
-    sparkSession.udf.register(name + "_url", urlNumber.f.asInstanceOf[String => Int])
-    sparkSession.udf.register(name + "_cleanEmotionAndSpec", cleanEmotionAndSpecChar.f.asInstanceOf[String => String])
-    sparkSession.udf.register(name + "_cleanHtml", cleanDoc.f.asInstanceOf[String => String])
-    sparkSession.udf.register(name + "_pic", picNumber.f.asInstanceOf[String => Int])
-    sparkSession.udf.register(name + "_blank", blankPercent.f.asInstanceOf[String => Int])
-    sparkSession.udf.register(name + "_chinese", chinesePercent.f.asInstanceOf[String => Int])
-    sparkSession.udf.register(name + "_english", englishPercent.f.asInstanceOf[String => Int])
-    sparkSession.udf.register(name + "_number", numberPercent.f.asInstanceOf[String => Int])
-    sparkSession.udf.register(name + "_punctuation", punctuationPercent.f.asInstanceOf[String => Int])
-    sparkSession.udf.register(name + "_mostchar", mostcharPercent.f.asInstanceOf[String => Int])
-    sparkSession.udf.register(name + "_length", docLength.f.asInstanceOf[String => Int])
+    sparkSession.udf.register(name + "_phone", phoneExisted)
+    sparkSession.udf.register(name + "_email", emailExisted)
+    sparkSession.udf.register(name + "_qqwechat", qqwechatExisted)
+    sparkSession.udf.register(name + "_url", urlNumber)
+    sparkSession.udf.register(name + "_cleanEmotionAndSpec", cleanEmotionAndSpecChar)
+    sparkSession.udf.register(name + "_cleanHtml", cleanDoc)
+    sparkSession.udf.register(name + "_pic", picNumber)
+    sparkSession.udf.register(name + "_blank", blankPercent)
+    sparkSession.udf.register(name + "_chinese", chinesePercent)
+    sparkSession.udf.register(name + "_english", englishPercent)
+    sparkSession.udf.register(name + "_number", numberPercent)
+    sparkSession.udf.register(name + "_punctuation", punctuationPercent)
+    sparkSession.udf.register(name + "_mostchar", mostcharPercent)
+    sparkSession.udf.register(name + "_length", docLength)
     phoneExisted
   }
 }

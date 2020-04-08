@@ -18,7 +18,7 @@
 
 package streaming.dsl.mmlib.algs
 
-import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession, functions => F}
+import org.apache.spark.sql.{DataFrame, MLSQLUtils, Row, SaveMode, SparkSession, functions => F}
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import streaming.dsl.mmlib.SQLAlg
 import MetaConst._
@@ -96,6 +96,6 @@ class SQLVecMapInPlace extends SQLAlg with Functions {
       val elements = item.map(f => (word2IndexMappingBr.value(f._1).toInt, f._2)).toSeq
       Vectors.sparse(featureSize, elements)
     }
-    UserDefinedFunction(f, VectorType, Some(Seq(MapType(StringType, DoubleType))))
+    MLSQLUtils.createUserDefinedFunction(f, VectorType, Some(Seq(MapType(StringType, DoubleType))))
   }
 }

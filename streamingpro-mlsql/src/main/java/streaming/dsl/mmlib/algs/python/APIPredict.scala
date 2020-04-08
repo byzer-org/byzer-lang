@@ -26,11 +26,11 @@ import java.util.UUID
 import org.apache.commons.io.FileUtils
 import org.apache.spark.api.python.WowPythonRunner
 import org.apache.spark.ml.linalg.SQLDataTypes.VectorType
-import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.util.ArrayBasedMapData
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.types.{MapType, StringType, StructField, StructType}
+import org.apache.spark.sql.{MLSQLUtils, SparkSession}
 import org.apache.spark.util.ObjPickle.{pickleInternalRow, unpickle}
 import org.apache.spark.util.VectorSerDer.{ser_vector, vector_schema}
 import org.apache.spark.util.{PredictTaskContext, PythonProjectExecuteRunner, VectorSerDer}
@@ -203,6 +203,6 @@ class APIPredict extends Logging with WowLog with Serializable {
       }.sortBy(f => f._1).reverse.head._2
     }
     logInfo(format("Generate UDF in MSQL"))
-    UserDefinedFunction(f2, VectorType, Some(Seq(VectorType)))
+    MLSQLUtils.createUserDefinedFunction(f2, VectorType, Some(Seq(VectorType)))
   }
 }

@@ -124,7 +124,7 @@ class KafkaCommand(override val uid: String) extends SQLAlg with ETAuth with Fun
   def serializeSchema(schema: StructType): String = schema.json
 
   def deserializeSchema(json: String): StructType = {
-    Try(DataType.fromJson(json)).getOrElse(LegacyTypeStringParser.parse(json)) match {
+    DataType.fromJson(json) match {
       case t: StructType => t
       case _ => throw new RuntimeException(s"Failed parsing StructType: $json")
     }

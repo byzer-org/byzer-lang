@@ -18,7 +18,7 @@
 
 package streaming.dsl.mmlib.algs
 
-import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession}
+import org.apache.spark.sql.{DataFrame, MLSQLUtils, Row, SaveMode, SparkSession}
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.types.{ArrayType, StringType, StructField, StructType}
 import streaming.dsl.mmlib.SQLAlg
@@ -74,6 +74,6 @@ class SQLDicOrTableToArray extends SQLAlg with Functions {
 
   override def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = {
     val ip = internal_predict(sparkSession, _model, name)
-    UserDefinedFunction(ip(name), ArrayType(StringType), Some(Seq(StringType)))
+    MLSQLUtils.createUserDefinedFunction(ip(name), ArrayType(StringType), Some(Seq(StringType)))
   }
 }

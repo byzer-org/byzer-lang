@@ -21,7 +21,7 @@ package streaming.dsl.mmlib.algs
 import org.apache.spark.ml.clustering.{BisectingKMeans, BisectingKMeansModel}
 import org.apache.spark.ml.linalg.SQLDataTypes._
 import org.apache.spark.ml.linalg.Vector
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.{DataFrame, MLSQLUtils, SparkSession}
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.types.IntegerType
 import streaming.dsl.mmlib.SQLAlg
@@ -84,6 +84,6 @@ class SQLKMeans(override val uid: String) extends SQLAlg with MllibFunctions wit
     val f = (v: Vector) => {
       model.value.getClass.getDeclaredMethod("predict", classOf[Vector]).invoke(model.value, v).asInstanceOf[Int]
     }
-    UserDefinedFunction(f, IntegerType, Some(Seq(VectorType)))
+    MLSQLUtils.createUserDefinedFunction(f, IntegerType, Some(Seq(VectorType)))
   }
 }
