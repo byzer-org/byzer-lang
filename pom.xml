@@ -501,7 +501,7 @@
 
 
         <profile>
-            <id>spark-3.0</id>
+            <id>spark-3.0.0</id>
             <properties>
                 <spark.streaming.kafka.artifactId>spark-streaming-kafka-0-8_${scala.binary.version}
                 </spark.streaming.kafka.artifactId>
