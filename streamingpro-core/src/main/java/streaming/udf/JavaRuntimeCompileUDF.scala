@@ -59,7 +59,7 @@ object JavaRuntimeCompileUDF extends RuntimeCompileUDF with Logging {
 
   override def invokeFunctionFromInstance(scriptCacheKey: ScriptUDFCacheKey)
   : (Seq[Object]) => AnyRef = {
-    lazy val clz = driverExecute(scriptCacheKey).asInstanceOf[Class[_]]
+    lazy val clz = JavaRuntimeCompileUDF.driverExecute(scriptCacheKey).asInstanceOf[Class[_]]
     lazy val instance = SourceCodeCompiler.newInstance(clz)
     lazy val method = SourceCodeCompiler.getMethod(clz, scriptCacheKey.methodName)
 

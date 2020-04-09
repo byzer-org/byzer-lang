@@ -72,14 +72,14 @@ object ScalaRuntimeCompileUDAF extends RuntimeCompileUDAF with ScalaCompileUtils
     new UserDefinedAggregateFunction with Serializable {
 
       @transient val clazzUsingInDriver = wrap(() => {
-        driverExecute(scriptCacheKey)
+        ScalaRuntimeCompileUDAF.driverExecute(scriptCacheKey)
       }).asInstanceOf[Class[_]]
       @transient val instanceUsingInDriver = newInstance(clazzUsingInDriver)
 
       lazy val clazzUsingInExecutor = wrap(() => {
-        executorExecute(scriptCacheKey)
+        ScalaRuntimeCompileUDAF.executorExecute(scriptCacheKey)
       }).asInstanceOf[Class[_]]
-      lazy val instanceUsingInExecutor = newInstance(clazzUsingInExecutor)
+      lazy val instanceUsingInExecutor = ScalaRuntimeCompileUDAF.newInstance(clazzUsingInExecutor)
 
       def invokeMethod[T: ClassTag](clazz: Class[_], instance: Any, method: String): T = {
         wrap(() => {

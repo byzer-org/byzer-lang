@@ -91,7 +91,7 @@ object PythonRuntimeCompileUDF extends RuntimeCompileUDF with Logging {
 
     // instance will call by spark executor, so we declare as lazy val
     lazy val instance = wrap(() => {
-      executorExecute(scriptCacheKey).asInstanceOf[PyObject].__call__()
+      PythonRuntimeCompileUDF.executorExecute(scriptCacheKey).asInstanceOf[PyObject].__call__()
     }).asInstanceOf[PyObject]
 
     // the same with instance, method will call by spark executor too.
