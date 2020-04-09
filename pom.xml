@@ -644,6 +644,14 @@
             <version>${scala.version}</version>
             <scope>${scope}</scope>
         </dependency>
+
+        <dependency>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-reflect</artifactId>
+            <version>${scala.version}</version>
+            <scope>${scope}</scope>
+        </dependency>
+
         <dependency>
             <groupId>org.scalatest</groupId>
             <artifactId>scalatest_${scala.binary.version}</artifactId>
@@ -958,8 +966,8 @@
                     <verbose>true</verbose>
                     <source>${java.version}</source>
                     <target>${java.version}</target>
-<!--                    <skipMain>true</skipMain> &lt;!&ndash; skip compile &ndash;&gt;-->
-<!--                    <skip>true</skip> &lt;!&ndash; skip testCompile &ndash;&gt;-->
+                    <!--                    <skipMain>true</skipMain> &lt;!&ndash; skip compile &ndash;&gt;-->
+                    <!--                    <skip>true</skip> &lt;!&ndash; skip testCompile &ndash;&gt;-->
                 </configuration>
 
             </plugin>
