@@ -430,18 +430,6 @@
         </dependency>
 
         <dependency>
-            <groupId>tech.mlsql</groupId>
-            <artifactId>mlsql-scheduler</artifactId>
-            <version>${mlsql-scheduler-version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>tech.mlsql</groupId>
-                    <artifactId>common-utils_${scala.binary.version}</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-
-        <dependency>
             <groupId>org.jsoup</groupId>
             <artifactId>jsoup</artifactId>
             <version>1.11.2</version>
