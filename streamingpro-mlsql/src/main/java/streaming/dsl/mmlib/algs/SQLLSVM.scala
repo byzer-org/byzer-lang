@@ -53,6 +53,6 @@ class SQLLSVM extends SQLAlg with Functions {
       raw2probability
 
     }
-    UserDefinedFunction(f, DoubleType, Some(Seq(VectorType)))
+    MLSQLUtils.createUserDefinedFunction(f, DoubleType, Some(Seq(VectorType)))
   }
 }

@@ -117,8 +117,8 @@ object ScalaRuntimeCompileUDF extends RuntimeCompileUDF with ScalaCompileUtils w
 
   def invokeFunctionFromInstance(scriptCacheKey: ScriptUDFCacheKey): (Seq[Object]) => AnyRef = {
 
-    lazy val clz = executorExecute(scriptCacheKey).asInstanceOf[Class[_]]
-    lazy val instance = newInstance(clz)
+    lazy val clz = ScalaRuntimeCompileUDF.executorExecute(scriptCacheKey).asInstanceOf[Class[_]]
+    lazy val instance = ScalaRuntimeCompileUDF.newInstance(clz)
     lazy val method = SourceCodeCompiler.getMethod(clz, scriptCacheKey.methodName)
 
     val func: (Seq[Object]) => AnyRef = {

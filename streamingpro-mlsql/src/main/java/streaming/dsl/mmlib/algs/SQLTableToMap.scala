@@ -19,9 +19,8 @@
 package streaming.dsl.mmlib.algs
 
 import org.apache.spark.sql.expressions.UserDefinedFunction
-import org.apache.spark.sql.{functions => F}
+import org.apache.spark.sql.{DataFrame, MLSQLUtils, Row, SaveMode, SparkSession, functions => F}
 import org.apache.spark.sql.types.{ArrayType, StringType}
-import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession}
 import streaming.dsl.mmlib.SQLAlg
 
 /**
@@ -47,6 +46,6 @@ class SQLTableToMap extends SQLAlg with Functions {
     val f = (name: String) => {
       model.value(name)
     }
-    UserDefinedFunction(f, StringType, Some(Seq(StringType)))
+    MLSQLUtils.createUserDefinedFunction(f, StringType, Some(Seq(StringType)))
   }
 }

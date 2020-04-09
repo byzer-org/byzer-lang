@@ -21,7 +21,7 @@ package streaming.dsl.mmlib.algs
 import org.apache.spark.ml.param.{IntParam, Param}
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.types._
-import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession, functions => F}
+import org.apache.spark.sql.{DataFrame, MLSQLUtils, Row, SaveMode, SparkSession, functions => F}
 import streaming.core.shared.SharedObjManager
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.MetaConst._
@@ -221,7 +221,7 @@ class SQLWord2VecInPlace(override val uid: String) extends SQLAlg with MllibFunc
         val f2 = (a: String) => {
           func(a).flatten
         }
-        UserDefinedFunction(f2, ArrayType(DoubleType), Some(Seq(StringType)))
+        MLSQLUtils.createUserDefinedFunction(f2, ArrayType(DoubleType), Some(Seq(StringType)))
       }
       case "merge" => {
         val f2 = (a: String) => {
@@ -239,13 +239,13 @@ class SQLWord2VecInPlace(override val uid: String) extends SQLAlg with MllibFunc
             r.toSeq
           }
         }
-        UserDefinedFunction(f2, ArrayType(DoubleType), Some(Seq(StringType)))
+        MLSQLUtils.createUserDefinedFunction(f2, ArrayType(DoubleType), Some(Seq(StringType)))
       }
       case _ => {
         if (wordVecsBr.value.size == 0 && resultFeature.equals("index"))
-          UserDefinedFunction(funcIndex, ArrayType(IntegerType), Some(Seq(StringType)))
+          MLSQLUtils.createUserDefinedFunction(funcIndex, ArrayType(IntegerType), Some(Seq(StringType)))
         else
-          UserDefinedFunction(func, ArrayType(ArrayType(DoubleType)), Some(Seq(StringType)))
+          MLSQLUtils.createUserDefinedFunction(func, ArrayType(ArrayType(DoubleType)), Some(Seq(StringType)))
       }
     }
   }

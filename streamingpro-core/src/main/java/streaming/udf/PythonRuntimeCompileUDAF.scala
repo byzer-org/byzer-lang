@@ -62,11 +62,11 @@ object PythonRuntimeCompileUDAF extends RuntimeCompileUDAF {
       }
 
       @transient val objectUsingInDriver = wrap(() => {
-        driverExecute(scriptCacheKey).asInstanceOf[PyObject].__call__()
+        PythonRuntimeCompileUDAF.driverExecute(scriptCacheKey).asInstanceOf[PyObject].__call__()
       }).asInstanceOf[PyObject]
 
       lazy val objectUsingInExecutor = wrap(() => {
-        executorExecute(scriptCacheKey).asInstanceOf[PyObject].__call__()
+        PythonRuntimeCompileUDAF.executorExecute(scriptCacheKey).asInstanceOf[PyObject].__call__()
       }).asInstanceOf[PyObject]
 
 

@@ -20,7 +20,7 @@ package streaming.dsl.mmlib.algs
 
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.types._
-import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
+import org.apache.spark.sql.{DataFrame, MLSQLUtils, SaveMode, SparkSession}
 import streaming.core.shared.SharedObjManager
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.MetaConst._
@@ -99,7 +99,7 @@ class SQLWord2ArrayInPlace extends SQLAlg with Functions {
 
       finalWordArray.filter(f => words.value.contains(f)).toArray
     }
-    UserDefinedFunction(func, ArrayType(StringType), Some(Seq(StringType)))
+    MLSQLUtils.createUserDefinedFunction(func, ArrayType(StringType), Some(Seq(StringType)))
   }
 
 }

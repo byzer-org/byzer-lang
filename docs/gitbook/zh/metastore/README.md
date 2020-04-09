@@ -1,7 +1,7 @@
 ##  MLSQL元信息存储
 
-MLSQL会存储一些信息，比如已经安装的plugin, scheduler service 的任务等等。目前MLSQL提供了
-两种存储的支持：
+支持插件后，MLSQL需要存储插件的信息。同时一些内置的插件也需要有一些状态存储，比如scheduler service。  
+目前MLSQL提供了两种持久化存储的支持：
 
 1. Delta Lake
 2. MySQL
@@ -12,7 +12,7 @@ MLSQL会存储一些信息，比如已经安装的plugin, scheduler service 的�
 -streaming.datalake.path [HDFS路径]
 ```
 
-也可以替换成 MySQL,开启方式为：
+也可以替换成 MySQL,开启方式为（无需关闭Delta Lake）：
 
 ```
 -streaming.metastore.db.type  "mysql",
@@ -20,7 +20,7 @@ MLSQL会存储一些信息，比如已经安装的plugin, scheduler service 的�
 -streaming.metastore.db.config.path "./__mlsql__/db.yml"
 ```
 
-你需要创建一个数据库，然后将项目根目录下的db.sql导入进去。db.yml的示例配置如下：
+你需要创建一个数据库，然后将MLSQL项目根目录下的db.sql导入进去。db.yml的示例配置如下：
 
 ```
 app_runtime_full:

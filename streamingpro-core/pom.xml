@@ -126,7 +126,7 @@
         </dependency>
         <dependency>
             <groupId>tech.mlsql</groupId>
-            <artifactId>mlsql-scheduler</artifactId>
+            <artifactId>mlsql-scheduler_${scala.binary.version}</artifactId>
             <version>${mlsql-scheduler-version}</version>
             <exclusions>
                 <exclusion>
@@ -135,18 +135,7 @@
                 </exclusion>
             </exclusions>
         </dependency>
-        <dependency>
-            <groupId>org.apache.spark</groupId>
-            <artifactId>spark-streaming-kafka-0-8_${scala.binary.version}</artifactId>
-            <version>${spark.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.apache.kafka</groupId>
-                    <artifactId>kafka-clients</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-
+       
     </dependencies>
 
 </project>

@@ -23,8 +23,8 @@ import java.util.Properties
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
 
 /**
-  * Created by allwefantasy on 23/4/2018.
-  */
+ * Created by allwefantasy on 23/4/2018.
+ */
 object KafkaOperator {
 
   def filterScore(str: String) = {

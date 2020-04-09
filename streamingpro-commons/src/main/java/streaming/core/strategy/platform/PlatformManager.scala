@@ -30,6 +30,7 @@ import streaming.common.zk.{ZKClient, ZkRegister}
 import streaming.core.strategy.JobStrategy
 import streaming.core.{Dispatcher, StreamingApp}
 import tech.mlsql.common.utils.base.TryTool
+import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.common.utils.shell.command.ParamsUtil
 import tech.mlsql.runtime.MLSQLPlatformLifecycle
 
@@ -41,11 +42,9 @@ import scala.collection.mutable.ArrayBuffer
  */
 
 
-class PlatformManager {
+class PlatformManager extends Logging{
   self =>
   val config = new AtomicReference[ParamsUtil]()
-
-  val logger = Loggers.getLogger(classOf[PlatformManager])
 
   def findDispatcher(contextParams: JMap[Any, Any]): StrategyDispatcher[Any] = {
     Dispatcher.dispatcher(contextParams)

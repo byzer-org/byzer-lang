@@ -84,6 +84,6 @@ class SQLGBTRegressor(override val uid: String) extends SQLAlg with Functions wi
     val f = (vec: Vector) => {
       model.value.getClass.getMethod("predict", classOf[Vector]).invoke(model.value, vec)
     }
-    UserDefinedFunction(f, DoubleType, Some(Seq(VectorType)))
+    MLSQLUtils.createUserDefinedFunction(f, DoubleType, Some(Seq(VectorType)))
   }
 }

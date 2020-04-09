@@ -1,5 +1,6 @@
 package tech.mlsql.runtime
 
+import org.apache.spark.SparkCoreVersion
 import streaming.core.strategy.platform.{SparkRuntime, StreamingRuntime}
 import tech.mlsql.common.utils.classloader.ClassLoaderTool
 import tech.mlsql.common.utils.log.Logging
@@ -88,7 +89,10 @@ object PluginHook extends Logging {
     "tech.mlsql.plugins.sql.profiler.ProfilerApp"
   )
 
-  def startBuildIn() = {
+  def startBuildIn(): Unit = {
+    if (SparkCoreVersion.is_2_3_X()) {
+      return
+    }
     apps.foreach { app =>
       try {
         ClassLoaderTool.classForName(app).newInstance().

@@ -63,6 +63,6 @@ class SQLHashTfIdf extends SQLAlg with Functions {
       val vec = hashingTF.transform(words)
       idfModel.transform(vec).asML
     }
-    UserDefinedFunction(idf, VectorType, Some(Seq(ArrayType(StringType))))
+    MLSQLUtils.createUserDefinedFunction(idf, VectorType, Some(Seq(ArrayType(StringType))))
   }
 }
