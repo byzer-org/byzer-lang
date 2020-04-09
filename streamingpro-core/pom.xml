@@ -117,10 +117,6 @@
                     <groupId>tech.mlsql</groupId>
                     <artifactId>common-utils_${scala.binary.version}</artifactId>
                 </exclusion>
-                <exclusion>
-                    <groupId>tech.mlsql</groupId>
-                    <artifactId>common-utils_2.11</artifactId>
-                </exclusion>
             </exclusions>
         </dependency>
         <dependency>
@@ -136,10 +132,6 @@
                 <exclusion>
                     <groupId>tech.mlsql</groupId>
                     <artifactId>common-utils_${scala.binary.version}</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>tech.mlsql</groupId>
-                    <artifactId>common-utils_2.11</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
