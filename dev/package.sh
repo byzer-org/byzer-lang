@@ -6,7 +6,7 @@ usage: package
 run package command based on different spark version.
 Inputs are specified with the following environment variables:
 
-MLSQL_SPARK_VERSION - the spark version, 2.2/2.3/2.4 default 2.3
+MLSQL_SPARK_VERSION - the spark version, 2.2/2.3/2.4/3.0 default 2.4
 DRY_RUN true|false               default false
 DISTRIBUTION true|false          default false
 DATASOURCE_INCLUDED true|false   default false
@@ -26,7 +26,7 @@ cd $SELF
 
 cd ..
 
-MLSQL_SPARK_VERSION=${MLSQL_SPARK_VERSION:-2.3}
+MLSQL_SPARK_VERSION=${MLSQL_SPARK_VERSION:-2.4}
 SCALA_VERSION=${SCALA_VERSION:-2.11}
 DRY_RUN=${DRY_RUN:-false}
 DISTRIBUTION=${DISTRIBUTION:-false}
