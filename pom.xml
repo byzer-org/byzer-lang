@@ -80,11 +80,11 @@
 
         <common-utils-version>0.2.9</common-utils-version>
         <serviceframework.version>2.0.6</serviceframework.version>
-        <pyjava-version>0.2.8.0</pyjava-version>
+        <pyjava-version>0.2.8.1</pyjava-version>
 
         <delta-plus-version>0.2.0</delta-plus-version>
         <mysql-binlog-version>1.0.1</mysql-binlog-version>
-        <mlsql-scheduler-version>0.1.1</mlsql-scheduler-version>
+        <mlsql-scheduler-version>0.1.2</mlsql-scheduler-version>
         <spark-adhoc-kafka.version>0.1.2</spark-adhoc-kafka.version>
     </properties>
 
