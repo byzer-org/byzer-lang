@@ -3,6 +3,9 @@ package org.apache.spark.sql
 import java.lang.reflect.Type
 
 import org.apache.spark.sql.catalyst.JavaTypeInference
+import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
+import org.apache.spark.sql.execution.command.ExplainCommand
+import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.types.DataType
 import org.apache.spark.status.api.v1
 import org.apache.spark.util.Utils
@@ -40,6 +43,16 @@ object MLSQLUtils {
       None,
       None,
       Map())
+  }
+
+  def createExplainCommand(lg: LogicalPlan, extended: Boolean) = {
+    ExplainCommand(lg, extended = extended)
+  }
+
+  def createUserDefinedFunction(f: AnyRef,
+                                dataType: DataType,
+                                inputTypes: Option[Seq[DataType]]): UserDefinedFunction = {
+    UserDefinedFunction(f, dataType, inputTypes)
   }
 
 }
