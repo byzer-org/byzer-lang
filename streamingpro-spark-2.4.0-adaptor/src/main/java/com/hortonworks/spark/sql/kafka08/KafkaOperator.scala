@@ -23,8 +23,8 @@ import java.util.Properties
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
 
 /**
-  * Created by allwefantasy on 23/4/2018.
-  */
+ * Created by allwefantasy on 23/4/2018.
+ */
 object KafkaOperator {
 
   def filterScore(str: String) = {
@@ -53,7 +53,7 @@ object KafkaOperator {
       val producer = new KafkaProducer[String, String](props)
       try {
         lines.map { line =>
-          logCallback(prefix + "" + line)         ProcessingTime
+          logCallback(prefix + "" + line)
           producer.send(new ProducerRecord[String, String](topic, prefix + "" + line))
           filterScore(line)
         }.filter(f => f > 0d).toSeq
