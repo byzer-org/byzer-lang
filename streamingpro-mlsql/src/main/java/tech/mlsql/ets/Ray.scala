@@ -48,6 +48,9 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
       } else code
     }
 
+    val envSession = new SetSession(spark, ScriptSQLExec.context().owner)
+    envSession.set("pythonMode", "ray", Map(SetSession.__MLSQL_CL__ -> SetSession.PYTHON_RUNNER_CONF_CL))
+
     val command = JSONTool.parseJson[List[String]](params("parameters")).toArray
     val newdf = command match {
       case Array("on", tableName, code) =>
@@ -86,6 +89,7 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
     val refs = new AtomicReference[ArrayBuffer[ReportHostAndPort]]()
     refs.set(ArrayBuffer[ReportHostAndPort]())
     val stopFlag = new AtomicReference[String]()
+    stopFlag.set("false")
     val tempSocketServerInDriver = new CollectServerInDriver(refs, stopFlag)
 
 
@@ -128,16 +132,15 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
     thread.setDaemon(true)
     thread.start()
 
-    var clockTimes = 20
-    if (targetLen != refs.get().length && clockTimes >= 0) {
+    var clockTimes = 120
+    while (targetLen != refs.get().length && clockTimes >= 0) {
       Thread.sleep(500)
       clockTimes -= 1
     }
-    stopFlag.set("stop")
     if (clockTimes < 0) {
       throw new RuntimeException(s"fail to start data socket server. targetLen:${targetLen} actualLen:${refs.get().length}")
     }
-    tempSocketServerInDriver.close
+    tempSocketServerInDriver.shutdown
 
     def isSchemaJson() = {
       runnerConf("schema").trim.startsWith("{")
@@ -233,7 +236,7 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
           val socketRunner = new SparkSocketRunner("readFromStreamWithArrow", NetUtils.getHost, timezoneID)
           val commonTaskContext = new SparkContextImp(TaskContext.get(), null)
           val iter = socketRunner.readFromStreamWithArrow(row.getAs[String]("host"), row.getAs[Long]("port").toInt, commonTaskContext)
-          iter.map(f=>f.copy())
+          iter.map(f => f.copy())
         }
       } else rdd.map(f => encoder.toRow(f))
 

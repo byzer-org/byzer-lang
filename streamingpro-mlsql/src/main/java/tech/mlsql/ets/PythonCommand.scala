@@ -40,6 +40,9 @@ class PythonCommand(override val uid: String) extends SQLAlg with Functions with
     val spark = df.sparkSession
     val context = ScriptSQLExec.context()
 
+    val envSession = new SetSession(spark, context.owner)
+    envSession.set("pythonMode", "python", Map(SetSession.__MLSQL_CL__ -> SetSession.PYTHON_RUNNER_CONF_CL))
+
     val hostAndPortContext = new AtomicReference[ReportHostAndPort]()
     val tempServer = new TempSocketServerInDriver(hostAndPortContext) {
       override def host: String = if (MLSQLSparkUtils.rpcEnv().address == null) NetUtils.getHost
@@ -105,7 +108,7 @@ class PythonCommand(override val uid: String) extends SQLAlg with Functions with
 
     }
 
-    val envSession = new SetSession(spark, context.owner)
+
     val command = JSONTool.parseJson[List[String]](params("parameters")).toArray
 
     def execute(code: String, table: Option[String]) = {
