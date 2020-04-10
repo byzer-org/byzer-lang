@@ -55,11 +55,6 @@ even if the topic is not related to source code itself (e.g., documentation, new
 
 This is an active open source project for everyone,
 and we are always open to people who want to use this system or contribute to it.
-This guide document introduce [how to contribute to MLSQL](https://github.com/allwefantasy/streamingpro/blob/master/docs/docv2/contribute/contribute.md).
-
-## RoadMap
-
-1. [Versioning Policy](https://github.com/allwefantasy/streamingpro/blob/master/docs/docv2/contribute/release.md)
 
 
 ## Contributors
