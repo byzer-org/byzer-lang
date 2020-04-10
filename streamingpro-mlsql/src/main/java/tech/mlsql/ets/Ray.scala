@@ -42,7 +42,6 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
     def genCode(code: String) = {
       if (code.startsWith("py.")) {
         val content = spark.table(code.split("\\.").last).collect().head.getString(0)
-        print(content)
         val value = JSONTool.parseJson[Map[String, String]](content)
         value("content")
       } else code
