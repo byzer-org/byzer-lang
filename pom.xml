@@ -47,16 +47,28 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <scala.version>2.11.12</scala.version>
-        <scala.binary.version>2.11</scala.binary.version>
+        
         <java.version>1.8</java.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
+
+        <scala.version>2.11.12</scala.version>
+        <scala.binary.version>2.11</scala.binary.version>
+        <spark.version>2.4.3</spark.version>
+        <spark.bigversion>2.4</spark.bigversion>
+
+<!--        <scala.version>2.12.12</scala.version>-->
+<!--        <scala.binary.version>2.12</scala.binary.version>-->
+<!--        <spark.version>3.0.0-preview2</spark.version>-->
+<!--        <spark.bigversion>3.0</spark.bigversion>-->
+
+
+
         <spark.streaming.kafka.artifactId>spark-streaming-kafka-0-8_${scala.binary.version}
         </spark.streaming.kafka.artifactId>
         <spark.sql.kafka.artifactId>spark-sql-kafka-0-10_${scala.binary.version}</spark.sql.kafka.artifactId>
-        <spark.version>2.4.3</spark.version>
-        <spark.bigversion>2.4</spark.bigversion>
+
+
 
 
         <flink.version>1.4.2</flink.version>
