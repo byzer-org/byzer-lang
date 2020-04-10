@@ -16,8 +16,8 @@ import scala.collection.JavaConverters._
 import scala.collection.mutable.ArrayBuffer
 
 /**
-  * 2019-04-07 WilliamZhu(allwefantasy@gmail.com)
-  */
+ * 2019-04-07 WilliamZhu(allwefantasy@gmail.com)
+ */
 object JobManager extends Logging {
   private[this] var _jobManager: JobManager = _
   private[this] val _executor = Executors.newFixedThreadPool(100)
@@ -246,7 +246,7 @@ class DefaultMLSQLJobProgressListener extends MLSQLJobProgressListener with Logg
       job.progress.script = sql
       shouldLog = true
     }
-    if (shouldLog) {
+    if (shouldLog && !job.progress.script.startsWith("load _mlsql_.")) {
       logInfo(format(s"Total jobs: ${job.progress.totalJob} current job:${job.progress.currentJobIndex} job script:${job.progress.script} "))
     }
 
