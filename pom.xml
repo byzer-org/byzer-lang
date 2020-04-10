@@ -57,7 +57,7 @@
         <spark.version>2.4.3</spark.version>
         <spark.bigversion>2.4</spark.bigversion>
 
-<!--        <scala.version>2.12.12</scala.version>-->
+<!--        <scala.version>2.12.10</scala.version>-->
 <!--        <scala.binary.version>2.12</scala.binary.version>-->
 <!--        <spark.version>3.0.0-preview2</spark.version>-->
 <!--        <spark.bigversion>3.0</spark.bigversion>-->
