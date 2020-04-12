@@ -461,12 +461,6 @@ object Functions {
     })
   }
 
-  def timeAgo(uDFRegistration: UDFRegistration) = {
-    uDFRegistration.register("timeAgo", (item: String) => {
-      val seconds = Measurement.timeStringAsSec(item)
-      System.currentTimeMillis() - 1000 * seconds
-    })
-  }
 
   // for spark 2.2.x
   object BreezeImplicit {
@@ -517,6 +511,27 @@ object Functions {
     uDFRegistration.register("parseLongAsDate", (date: Long, pattern: String) => {
       val dt = new DateTime().withMillis(date)
       dt.toString(pattern)
+    })
+  }
+
+  def timeAgo(uDFRegistration: UDFRegistration) = {
+    uDFRegistration.register("timeAgo", (item: String) => {
+      val seconds = Measurement.timeStringAsSec(item)
+      System.currentTimeMillis() - 1000 * seconds
+    })
+  }
+
+  def timePlus(uDFRegistration: UDFRegistration) = {
+    uDFRegistration.register("timePlus", (time: Long, item: String) => {
+      val seconds = Measurement.timeStringAsSec(item)
+      time + 1000 * seconds
+    })
+  }
+
+  def timeMinus(uDFRegistration: UDFRegistration) = {
+    uDFRegistration.register("timeMinus", (time: Long, item: String) => {
+      val seconds = Measurement.timeStringAsSec(item)
+      time + 1000 * seconds
     })
   }
 
