@@ -105,7 +105,7 @@ object PSExecutorBackend {
 
   var executorBackend: Option[PSExecutorBackend] = None
 
-  def loadPlugin(conf: SparkConf):Unit = {
+  def loadPlugin(conf: SparkConf): Unit = {
     val env = SparkEnv.get
     var psDriverUrl: String = null
     var psExecutorId: String = null
@@ -208,14 +208,18 @@ object PSExecutorBackend {
 
 class PSExecutorPlugin(conf: SparkConf) extends MLSQLExecutorPlugin with Logging {
   override def _init(config: Map[Any, Any]): Unit = {
+    logInfo("PSExecutorPlugin starting.....")
     try {
-      logInfo("PSExecutor starting.....")
       WriteLog.init(conf.getAll.toMap)
+    } catch {
+      case e: Exception => logInfo("Fail to connect DriverLogServer", e)
+    }
+    try {
       PSExecutorBackend.loadPlugin(conf)
     } catch {
-      case e: Exception =>
-        logWarning(s"Plugorg.apache.spark.ps.clusterin org.apache.spark.ps.cluster.PSExecutorBackend load fail.....", e)
+      case e: Exception => logInfo("Fail to load PSExecutorPlugin", e)
     }
+
 
   }
 
