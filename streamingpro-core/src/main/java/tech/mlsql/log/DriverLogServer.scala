@@ -3,14 +3,16 @@ package tech.mlsql.log
 import java.io.{DataInputStream, DataOutputStream}
 import java.net.Socket
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicReference}
+
 import org.apache.spark.{MLSQLSparkUtils, SparkEnv}
-import tech.mlsql.common.utils.log.Logging
+import tech.mlsql.common.utils.base.TryTool
 import tech.mlsql.common.utils.distribute.socket.server.{Request, Response, SocketServerInExecutor, SocketServerSerDer}
+import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.common.utils.network.NetUtils
 
 /**
-  * 2019-08-21 WilliamZhu(allwefantasy@gmail.com)
-  */
+ * 2019-08-21 WilliamZhu(allwefantasy@gmail.com)
+ */
 class DriverLogServer[T](taskContextRef: AtomicReference[T]) extends SocketServerInExecutor[T](taskContextRef, "driver-log-server-in-driver") with Logging {
 
   @volatile private var markClose: AtomicBoolean = new AtomicBoolean(false)
@@ -28,18 +30,26 @@ class DriverLogServer[T](taskContextRef: AtomicReference[T]) extends SocketServe
     val dIn = new DataInputStream(socket.getInputStream)
     val dOut = new DataOutputStream(socket.getOutputStream)
 
-    while (true) {
-      client.readRequest(dIn) match {
-        case SendLog(token, logLine) =>
-          if (token != taskContextRef.get()) {
-            logInfo(s"${socket} auth fail. token:${token}")
-            socket.close()
-          } else {
-            logInfo(logLine)
-          }
+    TryTool.tryOrElse {
+      while (true) {
+        client.readRequest(dIn) match {
+          case SendLog(token, logLine) =>
+            if (token != taskContextRef.get()) {
+              logInfo(s"${socket} auth fail. token:${token}")
+              socket.close()
+            } else {
+              logInfo(logLine)
+            }
 
+        }
+      }
+    } {
+      TryTool.tryOrNull {
+        socket.close()
       }
     }
+
+
   }
 
   override def host: String = {

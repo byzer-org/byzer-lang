@@ -130,7 +130,7 @@ object ScriptSQLExec extends Logging with WowLog {
       val authImpl = staticAuthImpl match {
         case Some(temp) => temp
         case None => context.userDefinedParam.getOrElse("__auth_client__",
-          Dispatcher.contextParams("").getOrDefault("context.__auth_client__", "streaming.dsl.auth.meta.client.DefaultConsoleClient").toString)
+          Dispatcher.contextParams("").getOrDefault("context.__auth_client__", "streaming.dsl.auth.client.DefaultConsoleClient").toString)
       }
       val tableAuth = Class.forName(authImpl)
         .newInstance().asInstanceOf[TableAuth]

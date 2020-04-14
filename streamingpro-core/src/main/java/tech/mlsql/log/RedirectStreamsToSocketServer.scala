@@ -7,6 +7,7 @@ import tech.mlsql.arrow.Utils
 import tech.mlsql.arrow.api.RedirectStreams
 import tech.mlsql.arrow.python.runner.PythonConf
 import tech.mlsql.common.utils.lang.sc.ScalaMethodMacros
+import tech.mlsql.common.utils.log.Logging
 
 /**
  * 2019-08-21 WilliamZhu(allwefantasy@gmail.com)
@@ -67,13 +68,14 @@ class WriteLogPool(size: Int, conf: Map[String, String]) {
 
 }
 
-class WriteLog(conf: Map[String, String]) {
+class WriteLog(conf: Map[String, String]) extends Logging {
 
   val host = conf("spark.mlsql.log.driver.host")
   val port = conf("spark.mlsql.log.driver.port")
   val token = conf("spark.mlsql.log.driver.token")
   val socket = new Socket(host, port.toInt)
 
+  logInfo(s"Init WriteLog in executor. The target DriverLogServer is ${host}:${port} with token ${token}")
 
   def write(in: Iterator[String], params: Map[String, String]) = {
     val dOut = new DataOutputStream(socket.getOutputStream)
