@@ -73,9 +73,9 @@ class WriteLog(conf: Map[String, String]) extends Logging {
   val host = conf("spark.mlsql.log.driver.host")
   val port = conf("spark.mlsql.log.driver.port")
   val token = conf("spark.mlsql.log.driver.token")
-  val socket = new Socket(host, port.toInt)
 
   logInfo(s"Init WriteLog in executor. The target DriverLogServer is ${host}:${port} with token ${token}")
+  val socket = new Socket(host, port.toInt)
 
   def write(in: Iterator[String], params: Map[String, String]) = {
     val dOut = new DataOutputStream(socket.getOutputStream)
