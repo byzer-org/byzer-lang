@@ -1,5 +1,22 @@
 # 制作一张交互式报表
 
+【文档更新日志：2020-04-14】
+
+> Note: 本文档适用于MLSQL Engine 1.6.0-SNAPSHOT/1.6.0 及以上版本。  
+> 对应的Spark版本可支持2.3.2/2.4.3/3.0.0-preview2
+
+##  环境要求：
+
+```
+pip install Cython
+pip install pyarrow==0.10.0
+pip install ray==0.8.0
+pip install aiohttp psutil setproctitle grpcio
+pip install watchdog requests click uuid sfcli  pyjava 
+pip install dash plotly
+```
+
+
 完整代码如下：
 
 ```sql

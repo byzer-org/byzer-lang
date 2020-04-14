@@ -1,5 +1,16 @@
 # 制作一张动态报表
 
+##  环境要求：
+
+```
+pip install Cython
+pip install pyarrow==0.10.0
+pip install ray==0.8.0
+pip install aiohttp psutil setproctitle grpcio
+pip install watchdog requests click uuid sfcli  pyjava 
+pip install dash plotly
+```
+
 利用前面我们获得数据，现在可以使用这些数据然后使用python绘制报表了：
 
 ```sql
