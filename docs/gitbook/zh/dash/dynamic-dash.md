@@ -1,5 +1,16 @@
 # 制作一张动态报表
 
+【文档更新日志：2020-04-14】
+
+> Note: 本文档适用于MLSQL Engine 1.6.0-SNAPSHOT/1.6.0 及以上版本。  
+> 对应的Spark版本可支持2.3.2/2.4.3/3.0.0-preview2
+>
+
+##  前提
+
+我们假设你已经拥有了[MLSQL机器学习指南（Python版）](http://docs.mlsql.tech/zh/python/) 相关的一些知识。
+
+
 ##  环境要求：
 
 ```
@@ -10,6 +21,7 @@ pip install aiohttp psutil setproctitle grpcio
 pip install watchdog requests click uuid sfcli  pyjava 
 pip install dash plotly
 ```
+
 
 利用前面我们获得数据，现在可以使用这些数据然后使用python绘制报表了：
 
