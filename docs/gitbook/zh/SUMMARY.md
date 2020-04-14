@@ -88,7 +88,7 @@
     * [MLSQL可视化](dash/README.md)
         * [把python测试数据集导出到数仓](dash/export-python-data-to-delta.md)
         * [制作一张动态报表](dash/dynamic-dash.md)
-        * [制作一张可交互报表](dash/dynamic-dash.md)
+        * [制作一张交互式报表](dash/iteractive-dash.md)
     * [MLSQL插件商店](plugins/README.md)
         * [Excel数据源插件](plugins/mlsql-excel.md)
         * [Connect语句持久化](plugins/connect-persist.md)
