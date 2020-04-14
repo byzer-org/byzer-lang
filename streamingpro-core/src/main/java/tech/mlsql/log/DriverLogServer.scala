@@ -8,6 +8,7 @@ import org.apache.spark.{MLSQLSparkUtils, SparkEnv}
 import tech.mlsql.common.utils.base.TryTool
 import tech.mlsql.common.utils.distribute.socket.server.{Request, Response, SocketServerInExecutor, SocketServerSerDer}
 import tech.mlsql.common.utils.log.Logging
+import tech.mlsql.common.utils.net.NetTool
 import tech.mlsql.common.utils.network.NetUtils
 
 /**
@@ -53,14 +54,8 @@ class DriverLogServer[T](taskContextRef: AtomicReference[T]) extends SocketServe
   }
 
   override def host: String = {
-    if (SparkEnv.get == null) {
-      //When SparkEnv.get is null, the program may run in a test
-      //So return local address would be ok.
-      "127.0.0.1"
-    } else {
-      if (MLSQLSparkUtils.rpcEnv().address == null) NetUtils.getHost
-      else MLSQLSparkUtils.rpcEnv().address.host
-    }
+    if (SparkEnv.get == null || MLSQLSparkUtils.rpcEnv().address == null) NetTool.localHostName()
+    else MLSQLSparkUtils.rpcEnv().address.host
   }
 }
 
