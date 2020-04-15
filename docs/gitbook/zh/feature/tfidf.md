@@ -1,5 +1,11 @@
 # TFIDF
 
+【文档更新日志：2020-04-14】
+
+> Note: 本文档适用于MLSQL Engine 1.2.0 及以上版本。  
+> 对应的Spark版本可支持2.3.2/2.4.3
+>
+
 假设我们有如下的数据
 
 ```sql
@@ -25,17 +31,19 @@ set rawText='''
 ```sql
 load jsonStr.`rawText` as orginal_text_corpus;
 
+
 train orginal_text_corpus as TfIdfInPlace.`/tmp/tfidfinplace`
 where inputCol="content"
 and ignoreNature="true"
-and nGrams="2,3";
+and nGrams="2,3"
+as tfTable;
 
-load parquet.`/tmp/tfidfinplace/data` as lwys_corpus_with_featurize;
+select * from tfTable as output;
 ```
 
 经过上面的处理，我们看看结果:
 
-![](http://docs.mlsql.tech/upload_images/WX20190112-134603@2x.png)
+![](http://docs.mlsql.tech/upload_images/WX20200414-154955.png)
 
 我们会发现content已经被数字化了，里面有type,size,indices,values等四个字段。这是向量稀疏化表示的一种方式。
 
