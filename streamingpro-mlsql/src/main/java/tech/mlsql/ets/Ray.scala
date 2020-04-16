@@ -9,7 +9,8 @@ import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.mlsql.session.MLSQLException
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Row, SparkSession, SparkUtils}
-import org.apache.spark.{MLSQLSparkUtils, TaskContext}
+import org.apache.spark.{MLSQLSparkUtils, SparkInstanceService, TaskContext}
+import streaming.core.datasource.util.MLSQLJobCollect
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib._
 import streaming.dsl.mmlib.algs.Functions
@@ -18,6 +19,7 @@ import tech.mlsql.arrow.python.PythonWorkerFactory
 import tech.mlsql.arrow.python.iapp.{AppContextImpl, JavaContext}
 import tech.mlsql.arrow.python.ispark.SparkContextImp
 import tech.mlsql.arrow.python.runner._
+import tech.mlsql.common.utils.base.TryTool
 import tech.mlsql.common.utils.distribute.socket.server.{ReportHostAndPort, SocketServerInExecutor}
 import tech.mlsql.common.utils.lang.sc.ScalaMethodMacros
 import tech.mlsql.common.utils.network.NetUtils
@@ -92,7 +94,25 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
     val tempSocketServerInDriver = new CollectServerInDriver(refs, stopFlag)
 
 
-    val targetLen = df.rdd.partitions.length
+    var targetLen = df.rdd.partitions.length
+
+    val tempdf = TryTool.tryOrElse {
+      val resource = new SparkInstanceService(session).resources
+      val jobInfo = new MLSQLJobCollect(session, context.owner)
+      val leftResource = resource.totalCores - jobInfo.resourceSummary(null).activeTasks
+      if (leftResource <= targetLen) {
+        df.repartition(Math.max(Math.floor(leftResource / 2), 1).toInt)
+      } else df
+    } {
+      //      WriteLog.write(List("Warning: Fail to detect instance resource. Setup 4 data server for Python.").toIterator, runnerConf)
+      logWarning(format("Warning: Fail to detect instance resource. Setup 4 data server for Python."))
+      if (targetLen > 4) {
+        df.repartition(4)
+      } else df
+    }
+
+
+    targetLen = tempdf.rdd.partitions.length
 
     val thread = new Thread("temp-data-server-in-spark") {
       override def run(): Unit = {
@@ -102,7 +122,7 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
         val tempSocketServerPort = tempSocketServerInDriver._port
         val timezoneID = session.sessionState.conf.sessionLocalTimeZone
 
-        df.rdd.mapPartitions { iter =>
+        tempdf.rdd.mapPartitions { iter =>
 
           val host: String = if (MLSQLSparkUtils.rpcEnv().address == null) NetUtils.getHost
           else MLSQLSparkUtils.rpcEnv().address.host
