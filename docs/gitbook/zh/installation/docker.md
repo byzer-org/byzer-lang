@@ -38,6 +38,28 @@ systemctl restart docker
 bash <(curl http://download.mlsql.tech/scripts/run-all.sh)
 ```
 
+## Python库安装
+
+如果需要安装python的一些库，按如下方式操作。
+
+1. 进入交互式shell
+
+```
+docker exec  -it mlsql-server bash
+```
+
+切入conda环境：
+
+```
+source activate dev
+```
+
+pip 安装然后退出即可：
+
+```
+pip install 库名
+```
+
 ## 手动搭建
 
 创建网络:
