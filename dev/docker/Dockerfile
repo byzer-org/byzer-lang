@@ -1,52 +1,39 @@
-FROM debian:stretch
+FROM ubuntu:18.04
 
-#  $ docker build . -t continuumio/miniconda3:latest -t continuumio/miniconda3:4.5.11
-#  $ docker run --rm -it continuumio/miniconda3:latest /bin/bash
-#  $ docker push continuumio/miniconda3:latest
-#  $ docker push continuumio/miniconda3:4.5.11
-
+RUN apt-get update && apt-get install -y locales && rm -rf /var/lib/apt/lists/* \
+    && localedef -i en_US -c -f UTF-8 -A /usr/share/locale/locale.alias en_US.UTF-8
 ENV LANG=C.UTF-8 LC_ALL=C.UTF-8
+
+RUN apt-get update && apt-get install -y --no-install-recommends apt-utils build-essential software-properties-common curl wget unzip nano git
+RUN add-apt-repository -y ppa:openjdk-r/ppa
+RUN apt-get update
+RUN apt-get -y install openjdk-8-jdk
+
 ENV PATH /opt/conda/bin:$PATH
 
-RUN apt-get update --fix-missing && \
-    apt-get install -y openjdk-8-jre-headless wget bzip2 ca-certificates curl git && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+# RUN apt-get update --fix-missing && \
+#     apt-get install -y openjdk-8-jre-headless wget bzip2 ca-certificates curl git && \
+#     apt-get clean && \
+#     rm -rf /var/lib/apt/lists/*
 
 RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-4.5.11-Linux-x86_64.sh -O ~/miniconda.sh && \
     /bin/bash ~/miniconda.sh -b -p /opt/conda && \
     rm ~/miniconda.sh && \
     /opt/conda/bin/conda clean -tipsy && \
     ln -s /opt/conda/etc/profile.d/conda.sh /etc/profile.d/conda.sh && \
-    echo ". /opt/conda/etc/profile.d/conda.sh" >> ~/.bashrc && \
-    echo "conda activate base" >> ~/.bashrc
+    echo ". /opt/conda/etc/profile.d/conda.sh" >> /etc/profile && \
+    echo "conda activate base" >> /etc/profile && \
+    . /etc/profile
 
-# ENV TINI_VERSION v0.16.1
-# ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /usr/bin/tini
-# RUN chmod +x /usr/bin/tini
-
-#RUN conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/free/
-#RUN conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main/
-#RUN conda config --set show_channel_urls yes
 
 RUN mkdir ~/.pip
-
 RUN echo "[global]\n trusted-host = mirrors.aliyun.com\n index-url = https://mirrors.aliyun.com/pypi/simple" > ~/.pip/pip.conf
 
-ARG MAVEN_VERSION=3.6.0
-ARG USER_HOME_DIR="/root"
-ARG SHA=fae9c12b570c3ba18116a4e26ea524b29f7279c17cbaadc3326ca72927368924d9131d11b9e851b8dc9162228b6fdea955446be41207a5cfc61283dd8a561d2f
-ARG BASE_URL=https://apache.osuosl.org/maven/maven-3/${MAVEN_VERSION}/binaries
-
-RUN mkdir -p /usr/share/maven /usr/share/maven/ref \
-  && curl -fsSL -o /tmp/apache-maven.tar.gz ${BASE_URL}/apache-maven-${MAVEN_VERSION}-bin.tar.gz \
-  && echo "${SHA}  /tmp/apache-maven.tar.gz" | sha512sum -c - \
-  && tar -xzf /tmp/apache-maven.tar.gz -C /usr/share/maven --strip-components=1 \
-  && rm -f /tmp/apache-maven.tar.gz \
-  && ln -s /usr/share/maven/bin/mvn /usr/bin/mvn
-
-ENV MAVEN_HOME /usr/share/maven
-ENV MAVEN_CONFIG "$USER_HOME_DIR/.m2"
+RUN conda create --name dev python=3.6 --yes --quiet
+RUN  . /etc/profile && conda activate dev && pip install --no-cache-dir \
+Cython numpy pandas scikit-learn plotly pyarrow==0.10.0 ray==0.8.0 \
+aiohttp psutil setproctitle grpcio \
+watchdog requests click uuid sfcli  pyjava
 
 
 ARG SPARK_VERSION
