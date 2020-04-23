@@ -29,9 +29,9 @@ import streaming.dsl.mmlib.algs.classfication.BaseClassification
 import streaming.dsl.mmlib.algs.param.BaseParams
 
 /**
-  * Created by allwefantasy on 15/1/2018.
-  */
-class SQLStringIndex(override val uid: String) extends SQLAlg with Functions with MllibFunctions  with BaseClassification {
+ * Created by allwefantasy on 15/1/2018.
+ */
+class SQLStringIndex(override val uid: String) extends SQLAlg with Functions with MllibFunctions with BaseClassification {
 
   def this() = this(BaseParams.randomUID())
 
@@ -61,7 +61,7 @@ class SQLStringIndex(override val uid: String) extends SQLAlg with Functions wit
     configureModel(rfc, params)
     val model = rfc.fit(newDf)
     model.write.overwrite().save(path)
-    emptyDataFrame()(df)
+    model.transform(df)
   }
 
   override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = {

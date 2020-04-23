@@ -189,6 +189,7 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
     params.put("_session_", sparkSession)
     registerUDF("streaming.core.compositor.spark.udf.Functions")
     registerUDF("tech.mlsql.crawler.udf.Functions")
+    registerUDF("tech.mlsql.udf.Functions")
     if (params.containsKey(MLSQLConf.MLSQL_UDF_CLZZNAMES.key)) {
       MLSQLConf.MLSQL_UDF_CLZZNAMES.readFrom(configReader).get.split(",").foreach { clzz =>
         registerUDF(clzz)
