@@ -18,7 +18,6 @@
 
 package tech.mlsql.dsl.adaptor
 
-import org.apache.spark.sql.catalyst.parser.LegacyTypeStringParser
 import org.apache.spark.sql.types.{DataType, StructType}
 import org.apache.spark.sql.{DataFrame, DataFrameReader, functions => F}
 import streaming.core.datasource._
@@ -33,8 +32,6 @@ import tech.mlsql.MLSQLEnvKey
 import tech.mlsql.dsl.auth.DatasourceAuth
 import tech.mlsql.runtime.AppRuntimeStore
 import tech.mlsql.sql.MLSQLSparkConf
-
-import scala.util.Try
 
 /**
  * Created by allwefantasy on 27/8/2017.
@@ -132,11 +129,11 @@ class LoadPRocessing(scriptSQLExecListener: ScriptSQLExecListener,
       }).get
     }
 
-    table = customRewrite(AppRuntimeStore.LOAD_BEFORE_KEY,table, dsConf, sourceInfo, ScriptSQLExec.context())
+    table = customRewrite(AppRuntimeStore.LOAD_BEFORE_KEY, table, dsConf, sourceInfo, ScriptSQLExec.context())
     // In order to control the access of columns, we should rewrite the final sql (conver * to specify column names)
     table = authRewrite(table, dsConf, sourceInfo, ScriptSQLExec.context())
     // finally use the  build-in or third-party plugins to rewrite the table.
-    table = customRewrite(AppRuntimeStore.LOAD_AFTER_KEY,table, dsConf, sourceInfo, ScriptSQLExec.context())
+    table = customRewrite(AppRuntimeStore.LOAD_AFTER_KEY, table, dsConf, sourceInfo, ScriptSQLExec.context())
 
     def isStream = {
       scriptSQLExecListener.env().contains("streamName")
