@@ -531,7 +531,7 @@ object Functions {
   def timeMinus(uDFRegistration: UDFRegistration) = {
     uDFRegistration.register("timeMinus", (time: Long, item: String) => {
       val seconds = Measurement.timeStringAsSec(item)
-      time + 1000 * seconds
+      time - 1000 * seconds
     })
   }
 
