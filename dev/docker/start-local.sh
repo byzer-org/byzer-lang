@@ -34,4 +34,5 @@ $SPARK_HOME/bin/spark-submit --class streaming.core.StreamingApp \
         -streaming.driver.port 9003   \
         -streaming.spark.service true \
         -streaming.thrift false \
+        -streaming.datalake.path /tmp/datalake \
         -streaming.enableHiveSupport true
