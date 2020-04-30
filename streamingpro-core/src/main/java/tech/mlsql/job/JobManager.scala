@@ -86,7 +86,16 @@ object JobManager extends Logging {
     _executor.execute(new Runnable {
       override def run(): Unit = {
         ScriptSQLExec.setContext(context)
-        JobManager.run(session, job, f)
+        try {
+          JobManager.run(session, job, f)
+        } catch {
+          case e: Exception =>
+            logInfo("Async Job Exception", e)
+        } finally {
+          ScriptSQLExec.unset
+          SparkSession.clearActiveSession()
+        }
+
       }
     })
   }
