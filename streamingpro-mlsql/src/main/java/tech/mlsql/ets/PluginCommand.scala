@@ -125,7 +125,7 @@ class PluginCommand(override val uid: String) extends SQLAlg with ETAuth with Wo
 
         val (fileName, pluginPath) = downloadJarFileToHDFS(spark, pluginName, pluginVersion)
 
-        val localPath = downloadFromHDFSToLocal(fileName, pluginPath)
+        val localPath = downloadFromHDFSToLocal(fileName, pluginPath,spark.sparkContext.hadoopConfiguration)
 
         if (pluginType == PluginType.DS || pluginType == PluginType.ET || pluginType == PluginType.APP) {
           loadJarInDriver(localPath)

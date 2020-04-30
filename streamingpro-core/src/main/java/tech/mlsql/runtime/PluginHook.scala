@@ -46,7 +46,7 @@ class PluginHook extends MLSQLPlatformLifecycle with Logging {
 
     plugins.as[AddPlugin].collect().foreach { plugin =>
       logInfo(s"Plugin ${plugin.pluginName} in ${plugin.path}")
-      val localPath = downloadFromHDFSToLocal(plugin.path.split("/").last, plugin.path)
+      val localPath = downloadFromHDFSToLocal(plugin.path.split("/").last, plugin.path,spark.sparkContext.hadoopConfiguration)
 
       if (plugin.pluginType == PluginType.DS || plugin.pluginType == PluginType.ET) {
         loadJarInDriver(localPath)
@@ -54,7 +54,7 @@ class PluginHook extends MLSQLPlatformLifecycle with Logging {
       }
 
       if (plugin.pluginType == PluginType.SCRIPT) {
-        PluginIncludeSource.register(plugin.pluginName, plugin.path)
+        PluginIncludeSource.register(plugin.pluginName, localPath)
       }
     }
 
