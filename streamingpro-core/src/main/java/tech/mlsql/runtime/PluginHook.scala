@@ -54,7 +54,7 @@ class PluginHook extends MLSQLPlatformLifecycle with Logging {
       }
 
       if (plugin.pluginType == PluginType.SCRIPT) {
-        PluginIncludeSource.register(plugin.pluginName, plugin.path)
+        PluginIncludeSource.register(plugin.pluginName, localPath)
       }
     }
 
