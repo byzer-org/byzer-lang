@@ -7,7 +7,7 @@ import java.nio.file.{Files, StandardCopyOption}
 
 import net.csdn.common.reflect.ReflectHelper
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.{FSDataOutputStream, FileSystem, Path}
+import org.apache.hadoop.fs.{FSDataInputStream, FSDataOutputStream, FileSystem, Path}
 import org.apache.http.HttpResponse
 import org.apache.http.client.fluent.{Form, Request}
 import org.apache.spark.sql.SparkSession
@@ -63,8 +63,7 @@ object PluginUtils extends Logging with WowLog {
     }
   }
 
-  def downloadJarFileToHDFS(spark: SparkSession, pluginName: String, version:String) = {
-
+  def downloadJarFileToHDFS(spark: SparkSession, pluginName: String, version: String) = {
 
 
     val wrapperResponse = Request.Post(PLUGIN_STORE_URL).connectTimeout(60 * 1000)
@@ -95,13 +94,13 @@ object PluginUtils extends Logging with WowLog {
     val dataLake = new DataLake(spark)
 
     val hdfsPath = PathFun(dataLake.identifyToPath(TABLE_FILES)).add("store").add("plugins")
-    saveStream(pluginName, fileLen, hdfsPath.toPath, fieldValue, inputStream)
+    saveStream(pluginName, fileLen, hdfsPath.toPath, fieldValue, inputStream,spark.sparkContext.hadoopConfiguration)
     HDFSOperator.deleteDir("." + hdfsPath.toPath + ".crc")
     (fieldValue, PathFun(hdfsPath.toPath).add(fieldValue).toPath)
 
   }
 
-  def saveStream(pluginName: String, fileLen: Long, path: String, fileName: String, inputStream: InputStream) = {
+  def saveStream(pluginName: String, fileLen: Long, path: String, fileName: String, inputStream: InputStream,hadoopConf:Configuration) = {
 
     def formatNumber(wow: Double): String = {
       if (wow == -1) return "UNKNOW"
@@ -149,7 +148,7 @@ object PluginUtils extends Logging with WowLog {
     var dos: FSDataOutputStream = null
     try {
 
-      val fs = FileSystem.get(new Configuration())
+      val fs = FileSystem.get(hadoopConf)
       if (!fs.exists(new Path(path))) {
         fs.mkdirs(new Path(path))
       }
@@ -172,8 +171,21 @@ object PluginUtils extends Logging with WowLog {
 
   }
 
-  def downloadFromHDFSToLocal(fileName: String, pluginPath: String) = {
-    val inputStream = HDFSOperator.readAsInputStream(pluginPath)
+  def readAsInputStream(fileName: String, conf: Configuration): InputStream = {
+    val fs = FileSystem.get(conf)
+    val src: Path = new Path(fileName)
+    var in: FSDataInputStream = null
+    try {
+      in = fs.open(src)
+    } catch {
+      case e: Exception =>
+        if (in != null) in.close()
+    }
+    return in
+  }
+
+  def downloadFromHDFSToLocal(fileName: String, pluginPath: String, conf: Configuration) = {
+    val inputStream = readAsInputStream(pluginPath, conf)
 
     val tmpLocation = new File("./__mlsql__/store/plugins")
     if (!tmpLocation.exists()) {
