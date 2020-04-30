@@ -12,6 +12,8 @@
 -streaming.datalake.path [HDFS路径]
 ```
 
+> 在yarn下部署，暂时推荐yarn-client模式，需要保证提交mlsql任务的用户，在`start-default.sh`同级目录下，有创建目录的权限，或者提前创建好`__mlsql__`目录，并给予对应权限
+
 也可以替换成 MySQL,开启方式为（无需关闭Delta Lake）：
 
 ```
