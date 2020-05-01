@@ -101,7 +101,7 @@
         <common-utils-version>0.3.4</common-utils-version>
         <serviceframework.version>2.0.6</serviceframework.version>
 
-        <pyjava-version>0.2.8.3</pyjava-version>
+        <pyjava-version>0.2.8.4</pyjava-version>
         <mlsql-scheduler-version>0.1.3</mlsql-scheduler-version>
 
         <delta-plus-version>0.2.0</delta-plus-version>
