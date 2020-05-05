@@ -86,5 +86,5 @@ and we are always open to people who want to use this system or contribute to it
 
 扫码添加小可爱微信号，添加成功后，发送  mlsql  这5个英文字母进群。
 
-![](http://docs.mlsql.tech/upload_images/WechatIMG80.png)
+<img style="height:200px" src="http://docs.mlsql.tech/upload_images/WechatIMG80.png" />
 
