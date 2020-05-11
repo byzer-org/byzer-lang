@@ -18,9 +18,9 @@
 
 package streaming.core.datasource
 
-import com.google.common.reflect.ClassPath
 import org.apache.spark.sql.{DataFrame, SaveMode}
 import tech.mlsql.common.utils.log.Logging
+import tech.mlsql.common.utils.reflect.ClassPath
 
 import scala.collection.JavaConverters._
 
