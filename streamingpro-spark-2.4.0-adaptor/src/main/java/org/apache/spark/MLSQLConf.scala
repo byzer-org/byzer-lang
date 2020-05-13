@@ -73,7 +73,7 @@ object MLSQLConf {
         |  conf.setIfMissing("spark.shuffle.blockTransferService", "nio")
         |  conf.setIfMissing("spark.scheduler.minRegisteredResourcesRatio", "1.0")
         |  conf.setIfMissing("spark.speculation", "false")
-      """.stripMargin).booleanConf.createWithDefault(true)
+      """.stripMargin).booleanConf.createWithDefault(false)
 
   val MLSQL_CLUSTER_PS_ENABLE: ConfigEntry[Boolean] = MLSQLConfigBuilder("streaming.ps.cluster.enable").doc(
     """
