@@ -49,7 +49,7 @@ class MySQLDBStore extends DBStore {
           JSONTool.toJsonStr(_item)
         }))
 
-    if (data.count() == 0) throw new RuntimeException("no data")
+    if (data.count() == 0) throw new RuntimeException(s"There is no data in ${tableName}")
 
     val convertRowToMap = (row: Row) => {
       row.schema.fieldNames.filter(field => !row.isNullAt(row.fieldIndex(field))).map(field => field -> row.getAs[String](field)).toMap
@@ -126,7 +126,7 @@ class MySQLDBStore extends DBStore {
     }
   }
 
-  override def saveConfig(spark: SparkSession,appPrefix: String, name: String, value: String, dictType: DictType): Unit = {
+  override def saveConfig(spark: SparkSession, appPrefix: String, name: String, value: String, dictType: DictType): Unit = {
     val key = s"${appPrefix}_${name}"
     ctx.run(ctx.query[WDictStore].insert(
       _.id -> lift(0),
@@ -136,12 +136,12 @@ class MySQLDBStore extends DBStore {
     )
   }
 
-  override def readConfig(spark: SparkSession,appPrefix: String, name: String, dictType: DictType): Option[WDictStore] = {
+  override def readConfig(spark: SparkSession, appPrefix: String, name: String, dictType: DictType): Option[WDictStore] = {
     val key = s"${appPrefix}_${name}"
     ctx.run(ctx.query[WDictStore].filter(_.name == lift(key)).filter(_.dictType == lift(dictType.id))).headOption
   }
 
-  override def readAllConfig(spark: SparkSession,appPrefix: String): List[WDictStore] = {
+  override def readAllConfig(spark: SparkSession, appPrefix: String): List[WDictStore] = {
     ctx.run(ctx.query[WDictStore]).filter(f => f.name.startsWith(appPrefix))
   }
 }
