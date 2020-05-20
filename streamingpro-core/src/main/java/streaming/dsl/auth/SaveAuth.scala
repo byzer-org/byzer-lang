@@ -45,8 +45,7 @@ class SaveAuth(authProcessListener: AuthProcessListener) extends MLSQLAuth with 
     var option = Map[String, String]()
     var tableName = ""
     var partitionByCol = Array[String]()
-
-    val owner = option.get("owner")
+    
     var path = ""
 
     (0 to ctx.getChildCount() - 1).foreach { tokenIndex =>
@@ -68,6 +67,8 @@ class SaveAuth(authProcessListener: AuthProcessListener) extends MLSQLAuth with 
         case _ =>
       }
     }
+
+    val owner = option.get("owner")
 
     val tableType = TableType.from(format) match {
       case Some(tt) => tt
