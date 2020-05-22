@@ -55,8 +55,8 @@ class EngineResource(override val uid: String) extends SQLAlg with ETAuth with F
     val executorsShouldAddOrRemove = Math.floor(_cpus / executorInfo.executorCores).toInt
     val currentExecutorNum = executorInfo.executorDataMap.size
 
-    def tooMuchWithOneTime(cpus: Int) = {
-      if (cpus > 20) {
+    def tooMuchWithOneTime(cpusOrExecutorNum: Int) = {
+      if (cpusOrExecutorNum > 20) {
         throw new MLSQLException("Too many cpus added at one time. Please add them with multi times.");
       }
     }
@@ -76,7 +76,7 @@ class EngineResource(override val uid: String) extends SQLAlg with ETAuth with F
         val diff = executorsShouldAddOrRemove - currentExecutorNum
         if (diff < 0) {
           tooMuchWithOneTime(-diff)
-          logInfo(s"Removing cpus; currentExecutorNum:${currentExecutorNum} targetExecutorNum:${currentExecutorNum + diff}")
+          logInfo(s"Adding cpus; currentExecutorNum:${currentExecutorNum} targetExecutorNum:${currentExecutorNum + diff}")
           resourceControl.killExecutors(-diff, _timeout)
         }
 
