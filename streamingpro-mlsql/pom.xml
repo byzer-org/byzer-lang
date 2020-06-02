@@ -300,6 +300,12 @@
                     <artifactId>spark-xml_${scala.binary.version}</artifactId>
                     <version>0.4.1</version>
                 </dependency>
+
+                <dependency>
+                    <groupId>tech.mlsql</groupId>
+                    <artifactId>mlsql-autosuggest-${spark.bigversion}_${scala.binary.version}</artifactId>
+                    <version>${project.parent.version}</version>
+                </dependency>
             </dependencies>
         </profile>
 
