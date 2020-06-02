@@ -53,4 +53,16 @@ class AutoSuggestContextTest extends BaseTest {
     assert(tokenPos == TokenPos(9, TokenPosType.CURRENT, 1))
     assert(context.toRelativePos(tokenPos)._1 == TokenPos(2, TokenPosType.CURRENT, 1))
   }
+
+  test("keyword") {
+    val wow = context.lexer.tokenizeNonDefaultChannel(
+      """
+        | -- yes
+        | loa
+        |""".stripMargin).tokens.asScala.toList
+    context.build(wow)
+    val tokenPos = LexerUtils.toTokenPos(wow, 3, 4)
+    assert(tokenPos == TokenPos(0, TokenPosType.CURRENT, 3))
+    assert(context.suggest(tokenPos)(0) == "load")
+  }
 }
