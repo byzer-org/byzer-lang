@@ -30,14 +30,5 @@ class LoadSuggesterTest extends BaseTest {
     assert(loadSuggester.size > 1)
   }
 
-  test("load hive.[cursor]") {
-    val wow = context.lexer.tokenizeNonDefaultChannel(
-      """
-        | -- yes
-        | load
-        |""".stripMargin).tokens.asScala.toList
-    val loadSuggester = new LoadSuggester(context, wow, TokenPos(0, TokenPosType.NEXT, 0)).suggest()
-    println(loadSuggester)
-    assert(loadSuggester.size > 1)
-  }
+ 
 }

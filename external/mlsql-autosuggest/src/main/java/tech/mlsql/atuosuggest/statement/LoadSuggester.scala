@@ -5,14 +5,26 @@ import streaming.core.datasource.{DataSourceRegistry, MLSQLSourceInfo}
 import streaming.dsl.parser.DSLSQLLexer
 import tech.mlsql.atuosuggest.{AutoSuggestContext, TokenPos, TokenPosType}
 
+import scala.collection.mutable
+
 /**
  * 1/6/2020 WilliamZhu(allwefantasy@gmail.com)
  *
  *
  */
-class LoadSuggester(context: AutoSuggestContext, tokens: List[Token], tokenPos: TokenPos) extends StatementSuggester {
-  val formatSuggester = new FormatSuggester(context, tokens, tokenPos)
-  val optionsSuggester = new OptionsSuggester(context, tokens, tokenPos)
+class LoadSuggester(context: AutoSuggestContext, tokens: List[Token], tokenPos: TokenPos) extends StatementSuggester with SuggesterRegister {
+
+  private val subInstances = new mutable.HashMap[String, StatementSuggester]()
+
+  register(classOf[PathSuggester])
+  register(classOf[FormatSuggester])
+  register(classOf[OptionsSuggester])
+
+  override def register(clzz: Class[_ <: StatementSuggester]): SuggesterRegister = {
+    val instance = clzz.getConstructor(classOf[LoadSuggester]).newInstance(this).asInstanceOf[StatementSuggester]
+    subInstances.put(instance.name, instance)
+    this
+  }
 
   override def isMatch(): Boolean = {
     tokens.headOption.map(_.getType) match {
@@ -22,12 +34,13 @@ class LoadSuggester(context: AutoSuggestContext, tokens: List[Token], tokenPos: 
   }
 
   override def suggest(): List[String] = {
-    if (formatSuggester.isMatch()) return formatSuggester.suggest()
-    if (optionsSuggester.isMatch()) return optionsSuggester.suggest()
-    List()
+    subInstances.filter(_._2.isMatch()).headOption match {
+      case Some(item) => item._2.suggest()
+      case None => List()
+    }
   }
 
-  class FormatSuggester(context: AutoSuggestContext, tokens: List[Token], tokenPos: TokenPos) extends StatementSuggester {
+  class FormatSuggester extends StatementSuggester {
     override def isMatch(): Boolean = {
 
       (tokenPos.pos, tokenPos.currentOrNext) match {
@@ -44,26 +57,29 @@ class LoadSuggester(context: AutoSuggestContext, tokens: List[Token], tokenPos: 
         "parquet", "csv", "jsonStr", "csvStr", "json", "text", "orc", "kafka", "kafka8", "kafka9", "crawlersql", "image",
         "script", "hive", "xml", "mlsqlAPI", "mlsqlConf"
       )).toList
-      if (tokenPos.offsetInToken != 0) {
-        return sources.filter(s => s.startsWith(tokens(tokenPos.pos).getText.substring(0, tokenPos.offsetInToken)))
-      }
-      return sources
+      LexerUtils.filterPrefixIfNeeded(sources, tokens, tokenPos)
 
     }
+
+    override def name: String = "format"
   }
 
-  class OptionsSuggester(context: AutoSuggestContext, tokens: List[Token], tokenPos: TokenPos) extends StatementSuggester {
+  class OptionsSuggester extends StatementSuggester {
     override def isMatch(): Boolean = {
       LexerUtils.isInWhereContext(tokens, tokenPos.pos) && LexerUtils.isWhereKey(tokens, tokenPos.pos)
     }
 
     override def suggest(): List[String] = {
       val source = tokens(1)
-      DataSourceRegistry.fetch(source.getText, Map[String, String]()) match {
+      val datasources = DataSourceRegistry.fetch(source.getText, Map[String, String]()) match {
         case Some(ds) => ds.asInstanceOf[MLSQLSourceInfo].explainParams(context.session).collect().map(_.getString(0)).toList
         case None => List()
       }
+      LexerUtils.filterPrefixIfNeeded(datasources, tokens, tokenPos)
+
     }
+
+    override def name: String = "options"
   }
 
   //Here you can implement Hive table / HDFS Path auto suggestion
@@ -75,8 +91,11 @@ class LoadSuggester(context: AutoSuggestContext, tokens: List[Token], tokenPos: 
     override def suggest(): List[String] = {
       List()
     }
+
+    override def name: String = "path"
   }
 
+  override def name: String = "load"
 }
 
 

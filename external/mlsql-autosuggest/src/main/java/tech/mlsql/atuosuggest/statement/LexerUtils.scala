@@ -9,6 +9,11 @@ import tech.mlsql.atuosuggest.{TokenPos, TokenPosType}
  */
 object LexerUtils {
 
+  def filterPrefixIfNeeded(candidates: List[String], tokens: List[Token], tokenPos: TokenPos) = {
+    if (tokenPos.offsetInToken != 0) {
+      candidates.filter(s => s.startsWith(tokens(tokenPos.pos).getText.substring(0, tokenPos.offsetInToken)))
+    } else candidates
+  }
 
 
   // line index should start with 1

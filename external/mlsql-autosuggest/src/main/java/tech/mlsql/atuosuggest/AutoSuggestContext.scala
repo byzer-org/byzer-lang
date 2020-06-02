@@ -4,7 +4,7 @@ import com.intigua.antlr4.autosuggest.LexerWrapper
 import org.antlr.v4.runtime.Token
 import org.apache.spark.sql.SparkSession
 import streaming.dsl.parser.DSLSQLLexer
-import tech.mlsql.atuosuggest.statement.{LoadSuggester, StatementSuggester}
+import tech.mlsql.atuosuggest.statement.LoadSuggester
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -13,7 +13,6 @@ import scala.collection.mutable.ArrayBuffer
  */
 class AutoSuggestContext(val session: SparkSession, val lexer: LexerWrapper) {
   val statements = ArrayBuffer[List[Token]]()
-  val suggesters = ArrayBuffer[StatementSuggester]()
 
   def build(_tokens: List[Token]): AutoSuggestContext = {
     val tokens = _tokens.zipWithIndex
@@ -61,7 +60,9 @@ class AutoSuggestContext(val session: SparkSession, val lexer: LexerWrapper) {
 
     val (relativeTokenPos, index) = toRelativePos(tokenPos)
     statements(index).headOption.map(_.getText) match {
-      case Some("load") => new LoadSuggester(this, statements(index), relativeTokenPos).suggest()
+      case Some("load") =>
+        val suggester = new LoadSuggester(this, statements(index), relativeTokenPos)
+        suggester.suggest()
       case Some(value) => firstWords.filter(_.startsWith(value))
       case None => firstWords
     }
