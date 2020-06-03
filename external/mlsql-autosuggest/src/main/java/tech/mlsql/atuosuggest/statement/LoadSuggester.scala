@@ -33,7 +33,7 @@ class LoadSuggester(context: AutoSuggestContext, tokens: List[Token], tokenPos: 
     }
   }
 
-  override def suggest(): List[String] = {
+  override def suggest(): List[SuggestItem] = {
     subInstances.filter(_._2.isMatch()).headOption match {
       case Some(item) => item._2.suggest()
       case None => List()
@@ -51,13 +51,13 @@ class LoadSuggester(context: AutoSuggestContext, tokens: List[Token], tokenPos: 
 
     }
 
-    override def suggest(): List[String] = {
+    override def suggest(): List[SuggestItem] = {
       // datasource type suggest
       val sources = (DataSourceRegistry.allSourceNames.toSet.toSeq ++ Seq(
         "parquet", "csv", "jsonStr", "csvStr", "json", "text", "orc", "kafka", "kafka8", "kafka9", "crawlersql", "image",
         "script", "hive", "xml", "mlsqlAPI", "mlsqlConf"
       )).toList
-      LexerUtils.filterPrefixIfNeeded(sources, tokens, tokenPos)
+      LexerUtils.filterPrefixIfNeeded(sources.map(SuggestItem(_)), tokens, tokenPos)
 
     }
 
@@ -69,13 +69,13 @@ class LoadSuggester(context: AutoSuggestContext, tokens: List[Token], tokenPos: 
       LexerUtils.isInWhereContext(tokens, tokenPos.pos) && LexerUtils.isWhereKey(tokens, tokenPos.pos)
     }
 
-    override def suggest(): List[String] = {
+    override def suggest(): List[SuggestItem] = {
       val source = tokens(1)
       val datasources = DataSourceRegistry.fetch(source.getText, Map[String, String]()) match {
         case Some(ds) => ds.asInstanceOf[MLSQLSourceInfo].explainParams(context.session).collect().map(_.getString(0)).toList
         case None => List()
       }
-      LexerUtils.filterPrefixIfNeeded(datasources, tokens, tokenPos)
+      LexerUtils.filterPrefixIfNeeded(datasources.map(SuggestItem(_)), tokens, tokenPos)
 
     }
 
@@ -88,7 +88,7 @@ class LoadSuggester(context: AutoSuggestContext, tokens: List[Token], tokenPos: 
       false
     }
 
-    override def suggest(): List[String] = {
+    override def suggest(): List[SuggestItem] = {
       List()
     }
 

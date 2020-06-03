@@ -4,23 +4,23 @@ import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.atn.ATNState;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 
-import java.io.IOException;
-import java.io.StringReader;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class LexerWrapper {
     private final LexerFactory lexerFactory;
     private Lexer cachedLexer;
+    private ToCharStream toCharStream;
 
     public static class TokenizationResult {
         public List<? extends Token> tokens;
         public String untokenizedText = "";
     }
 
-    public LexerWrapper(LexerFactory lexerFactory) {
+    public LexerWrapper(LexerFactory lexerFactory, ToCharStream toCharStream) {
         super();
         this.lexerFactory = lexerFactory;
+        this.toCharStream = toCharStream;
     }
 
     public TokenizationResult tokenizeNonDefaultChannel(String input) {
@@ -40,14 +40,14 @@ public class LexerWrapper {
     public Vocabulary getVocabulary() {
         return getCachedLexer().getVocabulary();
     }
-    
+
     private Lexer getCachedLexer() {
         if (cachedLexer == null) {
             cachedLexer = createLexer("");
         }
         return cachedLexer;
     }
-    
+
     private TokenizationResult tokenize(String input) {
         Lexer lexer = this.createLexer(input);
         lexer.removeErrorListeners();
@@ -69,17 +69,8 @@ public class LexerWrapper {
     }
 
     private Lexer createLexer(String lexerInput) {
-        return this.createLexer(toCharStream(lexerInput));
+        return this.createLexer(toCharStream.toCharStream(lexerInput));
     }
 
-    private static CharStream toCharStream(String text) {
-        CharStream inputStream;
-        try {
-            inputStream = CharStreams.fromReader(new StringReader(text)); //new CaseChangingCharStream(text);;
-        } catch (IOException e) {
-            throw new IllegalStateException("Unexpected while reading input string", e);
-        }
-        return inputStream;
-    }
 
 }

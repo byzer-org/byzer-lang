@@ -8,5 +8,7 @@ trait StatementSuggester {
 
   def isMatch(): Boolean
 
-  def suggest(): List[String]
+  def suggest(): List[SuggestItem]
 }
+
+case class SuggestItem(name: String)

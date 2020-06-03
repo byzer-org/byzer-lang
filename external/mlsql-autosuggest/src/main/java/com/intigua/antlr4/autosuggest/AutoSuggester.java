@@ -31,7 +31,7 @@ public class AutoSuggester {
     private Map<ATNState, Integer> parserStateToTokenListIndexWhereLastVisited = new HashMap<>();
 
     public AutoSuggester(LexerAndParserFactory lexerAndParserFactory, String input) {
-        this.lexerWrapper = new LexerWrapper(lexerAndParserFactory);
+        this.lexerWrapper = new LexerWrapper(lexerAndParserFactory, new DefaultToCharStream());
         this.parserWrapper = new ParserWrapper(lexerAndParserFactory, lexerWrapper.getVocabulary());
         this.input = input;
     }
@@ -39,7 +39,7 @@ public class AutoSuggester {
     public void setCasePreference(CasePreference casePreference) {
         this.casePreference = casePreference;
     }
-    
+
     public Collection<String> suggestCompletions() {
         tokenizeInput();
         runParserAtnAndCollectSuggestions();
@@ -77,8 +77,8 @@ public class AutoSuggester {
         }
         Integer previousTokenListIndexForThisState = setParserStateLastVisitedOnThisTokenIndex(parserState, tokenListIndex);
         try {
-            if(logger.isDebugEnabled()) {
-                logger.debug(indent + "State: " + parserWrapper.toString(parserState) );
+            if (logger.isDebugEnabled()) {
+                logger.debug(indent + "State: " + parserWrapper.toString(parserState));
                 logger.debug(indent + "State available transitions: " + parserWrapper.transitionsStr(parserState));
             }
 
@@ -92,7 +92,7 @@ public class AutoSuggester {
                 } else if (trans instanceof AtomTransition) {
                     handleAtomicTransition((AtomTransition) trans, tokenListIndex);
                 } else {
-                    handleSetTransition((SetTransition)trans, tokenListIndex);
+                    handleSetTransition((SetTransition) trans, tokenListIndex);
                 }
             }
         } finally {

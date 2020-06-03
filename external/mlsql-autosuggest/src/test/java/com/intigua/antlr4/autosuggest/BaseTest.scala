@@ -2,9 +2,11 @@ package com.intigua.antlr4.autosuggest
 
 import org.antlr.v4.runtime.Token
 import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.catalyst.parser.{SqlBaseLexer, SqlBaseParser}
 import org.scalatest.{BeforeAndAfterAll, FunSuite}
 import streaming.dsl.parser.{DSLSQLLexer, DSLSQLParser}
 import tech.mlsql.atuosuggest.AutoSuggestContext
+
 import scala.collection.JavaConverters._
 
 /**
@@ -19,8 +21,13 @@ class BaseTest extends FunSuite with BeforeAndAfterAll {
 
 
     val lexerAndParserfactory = new ReflectionLexerAndParserFactory(classOf[DSLSQLLexer], classOf[DSLSQLParser]);
-    val loadLexer = new LexerWrapper(lexerAndParserfactory)
-    context = new AutoSuggestContext(sparkSession, loadLexer)
+    val loadLexer = new LexerWrapper(lexerAndParserfactory, new DefaultToCharStream)
+
+    val lexerAndParserfactory2 = new ReflectionLexerAndParserFactory(classOf[SqlBaseLexer], classOf[SqlBaseParser]);
+    val rawSQLloadLexer = new LexerWrapper(lexerAndParserfactory2, new RawSQLToCharStream)
+
+
+    context = new AutoSuggestContext(sparkSession, loadLexer, rawSQLloadLexer)
     var tr = loadLexer.tokenizeNonDefaultChannel(
       """
         | -- yes
