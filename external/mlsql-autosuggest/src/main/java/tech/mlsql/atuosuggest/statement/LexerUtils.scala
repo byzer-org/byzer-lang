@@ -1,13 +1,27 @@
 package tech.mlsql.atuosuggest.statement
 
 import org.antlr.v4.runtime.Token
+import org.antlr.v4.runtime.misc.Interval
 import streaming.dsl.parser.DSLSQLLexer
-import tech.mlsql.atuosuggest.{TokenPos, TokenPosType}
+import tech.mlsql.atuosuggest.{AutoSuggestContext, TokenPos, TokenPosType}
+
+import scala.collection.JavaConverters._
 
 /**
  * 1/6/2020 WilliamZhu(allwefantasy@gmail.com)
  */
 object LexerUtils {
+
+  def toRawSQLTokens(autoSuggestContext: AutoSuggestContext, wow: List[Token]): List[Token] = {
+    val start = wow.head.getStartIndex
+    val stop = wow.last.getStopIndex
+
+    val input = wow.head.getTokenSource.asInstanceOf[DSLSQLLexer]._input
+    val interval = new Interval(start, stop)
+    val originalText = input.getText(interval)
+    val newTokens = autoSuggestContext.rawSQLLexer.tokenizeNonDefaultChannel(originalText).tokens.asScala.toList
+    return newTokens
+  }
 
   def filterPrefixIfNeeded(candidates: List[SuggestItem], tokens: List[Token], tokenPos: TokenPos) = {
     if (tokenPos.offsetInToken != 0) {

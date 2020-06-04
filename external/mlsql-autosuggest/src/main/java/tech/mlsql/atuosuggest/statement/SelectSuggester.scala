@@ -4,6 +4,7 @@ import org.antlr.v4.runtime.Token
 import org.antlr.v4.runtime.misc.Interval
 import org.apache.spark.sql.catalyst.parser.SqlBaseLexer
 import streaming.dsl.parser.DSLSQLLexer
+import tech.mlsql.atuosuggest.dsl.{Food, TokenMatcher}
 import tech.mlsql.atuosuggest.meta.MetaTableKey
 import tech.mlsql.atuosuggest.{AutoSuggestContext, TokenPos}
 
@@ -49,27 +50,55 @@ class SelectSuggester(val context: AutoSuggestContext, val tokens: List[Token], 
 case class MetaTableKeyWrapper(metaTableKey: MetaTableKey, aliasName: String)
 
 /**
- * the atom statement is only contains:
+ * the atom query statement is only contains:
  * select,from,groupby,where,join limit
  * Notice that we do not make sure the sql is right
  *
  */
-class SingleStatementAST(selectSuggester: SelectSuggester, start: Int, stop: Int) {
+class SingleStatementAST(selectSuggester: SelectSuggester, start: Int, stop: Int, var parent: SingleStatementAST) {
   val children = ArrayBuffer[SingleStatementAST]()
+
+  def isLeaf = {
+    children.length == 0
+  }
+
+  def output(tokens: List[Token]) = {
+    //    if (isLeaf) {
+    //      //collect table first
+    //      // T__3 == .
+    //      TokenMatcher(tokens.slice(0, stop), start).asStart(Food(None, SqlBaseLexer.FROM)).
+    //        eat(Food(None,SqlBaseLexer.IDENTIFIER)).optional.eat(Food(None,SqlBaseLexer.T__3)).optional.eat()
+    //
+    //    }
+
+  }
 
   def printAsStr(_tokens: List[Token]): String = {
     val tokens = _tokens.slice(start, stop)
     val stringBuilder = new mutable.StringBuilder()
-    stringBuilder.append(tokens.map(_.getText).mkString(" "))
+    var count = 1
+    stringBuilder.append(tokens.map { item =>
+      count += 1
+      val suffix = if (count % 20 == 0) "\n" else ""
+      item.getText + suffix
+    }.mkString(" "))
+    stringBuilder.append("\n")
+    stringBuilder.append("\n")
     stringBuilder.append("\n")
     children.zipWithIndex.foreach { case (item, index) => stringBuilder.append("=" * (index + 1) + ">" + item.printAsStr(tokens)) }
     stringBuilder.toString()
   }
 }
 
+
 object SingleStatementAST {
+
+  def matchTableAlias(tokens: List[Token], start: Int) = {
+    tokens(start)
+  }
+
   def build(selectSuggester: SelectSuggester, tokens: List[Token], start: Int, stop: Int, isSub: Boolean = false): SingleStatementAST = {
-    val ROOT = new SingleStatementAST(selectSuggester, 0, stop)
+    val ROOT = new SingleStatementAST(selectSuggester, 0, stop, null)
     // context start: ( select
     // context end: )
 
@@ -78,8 +107,13 @@ object SingleStatementAST {
       val token = tokens(index)
 
       if (token.getType == SqlBaseLexer.T__0 && index < stop - 1 && tokens(index + 1).getType == SqlBaseLexer.SELECT) {
-        println(index)
-        ROOT.children += SingleStatementAST.build(selectSuggester, tokens, index + 1, stop, true)
+        if (isSub) {
+          bracketStart += 1
+        }
+        val item = SingleStatementAST.build(selectSuggester, tokens, index + 1, stop, true)
+        ROOT.children += item
+        item.parent = ROOT
+
       } else {
         if (isSub) {
           if (token.getType == SqlBaseLexer.T__0) {
@@ -92,7 +126,9 @@ object SingleStatementAST {
           }
           else if (token.getType == SqlBaseLexer.T__1 && bracketStart == 0) {
             // check the alias
-            return new SingleStatementAST(selectSuggester, start, index)
+            val matcher = TokenMatcher(tokens, index + 1).eat(Food(None, SqlBaseLexer.AS)).optional.eat(Food(None, SqlBaseLexer.IDENTIFIER)).build
+            val stepSize = if (matcher.isSuccess) matcher.get else index
+            return new SingleStatementAST(selectSuggester, start, stepSize , null)
           }
 
         } else {
