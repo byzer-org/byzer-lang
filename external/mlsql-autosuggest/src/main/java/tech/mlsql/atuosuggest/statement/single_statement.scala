@@ -25,7 +25,7 @@ class SingleStatementAST(selectSuggester: SelectSuggester, var start: Int, var s
   }
 
   def name(tokens: List[Token]): Option[String] = {
-    if (isLeaf) None
+    if (parent == null) None
     else Option(tokens.slice(start, stop).last.getText)
   }
 

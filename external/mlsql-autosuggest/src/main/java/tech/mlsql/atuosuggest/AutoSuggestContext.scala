@@ -5,7 +5,7 @@ import org.antlr.v4.runtime.misc.Interval
 import org.antlr.v4.runtime.{CharStream, CodePointCharStream, IntStream, Token}
 import org.apache.spark.sql.SparkSession
 import streaming.dsl.parser.DSLSQLLexer
-import tech.mlsql.atuosuggest.meta.{LoadTableProvider, MetaTable, MetaTableKey}
+import tech.mlsql.atuosuggest.meta.{LoadTableProvider, MetaProvider, MetaTable, MetaTableKey}
 import tech.mlsql.atuosuggest.statement.LoadSuggester
 
 import scala.collection.mutable
@@ -19,9 +19,15 @@ class AutoSuggestContext(val session: SparkSession,
                          val rawSQLLexer: LexerWrapper) {
   val statements = ArrayBuffer[List[Token]]()
   val loadTableProvider: LoadTableProvider = new LoadTableProvider()
+  var metaProvider: MetaProvider = new MetaProvider {
+    override def search(key: MetaTableKey): Option[MetaTable] = None
+  }
   val TEMP_TABLES_IN_SCRIPT = new mutable.HashMap[MetaTableKey, MetaTable]()
   val TEMP_TABLES_IN_CURRENT_SQL = new mutable.HashMap[MetaTableKey, MetaTable]()
 
+  def setMetaProvider(_metaProvider: MetaProvider) = {
+    metaProvider = _metaProvider
+  }
 
   def build(_tokens: List[Token]): AutoSuggestContext = {
     val tokens = _tokens.zipWithIndex

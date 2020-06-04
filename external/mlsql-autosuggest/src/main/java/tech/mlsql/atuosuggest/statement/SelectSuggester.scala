@@ -3,6 +3,7 @@ package tech.mlsql.atuosuggest.statement
 import org.antlr.v4.runtime.Token
 import org.apache.spark.sql.catalyst.parser.SqlBaseLexer
 import streaming.dsl.parser.DSLSQLLexer
+import tech.mlsql.atuosuggest.meta.{MetaTable, MetaTableColumn, MetaTableKey}
 import tech.mlsql.atuosuggest.{AutoSuggestContext, TokenPos}
 
 import scala.collection.mutable
@@ -27,7 +28,44 @@ class SelectSuggester(val context: AutoSuggestContext, val tokens: List[Token], 
   override def suggest(): List[SuggestItem] = {
     val newTokens = LexerUtils.toRawSQLTokens(context, tokens)
     val root = SingleStatementAST.build(this, newTokens)
-    
+    import scala.collection.mutable
+    val TABLE_INFO = mutable.HashMap[Int, mutable.HashMap[MetaTableKeyWrapper, MetaTable]]()
+
+    def visit(root: SingleStatementAST, level: Int): Unit = {
+      if (!TABLE_INFO.contains(level)) {
+        TABLE_INFO.put(level, new mutable.HashMap[MetaTableKeyWrapper, MetaTable]())
+      }
+      if (root.isLeaf) {
+        root.tables(newTokens).map { item =>
+          context.metaProvider.search(item.metaTableKey) match {
+            case Some(res) =>
+              TABLE_INFO(level) += (item -> res)
+            case None =>
+          }
+        }
+      }
+      root.children.map(visit(_, level + 1))
+      val nameOpt = root.name(newTokens)
+      if (nameOpt.isDefined) {
+
+        val metaTableKey = MetaTableKey(None, None, null)
+        val metaTableKeyWrapper = MetaTableKeyWrapper(metaTableKey, nameOpt)
+        val metaColumns = root.output(newTokens).map { attr =>
+          MetaTableColumn(attr, null, true, Map())
+        }
+        TABLE_INFO(level) += (metaTableKeyWrapper -> MetaTable(metaTableKey, metaColumns))
+
+      }
+    }
+
+    visit(root, 0)
+    TABLE_INFO.foreach { case (level, info) =>
+      println(s"${level} =>")
+      println(info)
+    }
+
+    List()
+
   }
 
   override def register(clzz: Class[_ <: StatementSuggester]): SuggesterRegister = {

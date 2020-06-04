@@ -23,7 +23,11 @@ class AttributeExtractor(tokens: List[Token]) extends MatchAndExtractor[String] 
 
   override def extractor(start: Int, end: Int): String = {
     val attrTokens = tokens.slice(start, end)
-    attrTokens.last.getText
+    val token = attrTokens.last
+    if (token.getType == SqlBaseLexer.ASTERISK) {
+      return attrTokens.map(_.getText).mkString("")
+    }
+    token.getText
   }
 
   override def iterate(start: Int, end: Int, limit: Int): List[String] = {

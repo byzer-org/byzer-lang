@@ -38,6 +38,7 @@ class SelectSuggesterTest extends BaseTest {
     val root = SingleStatementAST._build(suggester, newTokens, 0, newTokens.size, false)
     println(root.printAsStr(newTokens, 0))
     println(root.output(newTokens))
+    suggester.suggest()
 
 
   }
