@@ -31,7 +31,7 @@ class TokenMatcher(tokens: List[Token], val start: Int) {
       }
 
     }
-    TokenMatcher(tokens, targetIndex)
+    TokenMatcher(tokens, targetIndex + offset)
   }
 
   def optional = {

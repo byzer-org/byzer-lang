@@ -17,7 +17,7 @@ class SelectSuggesterTest extends BaseTest {
         |  select no_result_type, keywords, search_num, row_number() over (PARTITION BY no_result_type order by search_num desc) as rank
         |  from(
         |    select no_result_type, keywords, sum(search_num) AS search_num
-        |    from jack.drugs_bad_case_di
+        |    from jack.drugs_bad_case_di,jack.abc jack
         |    where hp_stat_date >= date_sub(current_date,30)
         |    and action_dt >= date_sub(current_date,30)
         |    and action_type = 'search'
@@ -35,9 +35,9 @@ class SelectSuggesterTest extends BaseTest {
 
     val newTokens = LexerUtils.toRawSQLTokens(context, wow)
     newTokens.foreach(println(_))
-    val root = SingleStatementAST.build(suggester, newTokens, 0, newTokens.size, false)
-    println(root.printAsStr(newTokens,0))
-    root.output(newTokens)
+    val root = SingleStatementAST._build(suggester, newTokens, 0, newTokens.size, false)
+    println(root.printAsStr(newTokens, 0))
+    println(root.output(newTokens))
 
 
   }
