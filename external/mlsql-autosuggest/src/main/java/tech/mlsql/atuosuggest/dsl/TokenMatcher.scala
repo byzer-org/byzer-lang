@@ -7,17 +7,17 @@ import scala.collection.mutable.ArrayBuffer
 /**
  * 4/6/2020 WilliamZhu(allwefantasy@gmail.com)
  */
-class TokenMatcher(tokens: List[Token], start: Int) {
+class TokenMatcher(tokens: List[Token], val start: Int) {
   val foods = ArrayBuffer[FoodWrapper]()
   var cacheResult = -2
 
 
-  def eat(food: Food) = {
-    foods += FoodWrapper(AndOrFood(List(food), true), false)
+  def eat(food: Food*) = {
+    foods += FoodWrapper(AndOrFood(food.toList, true), false)
     this
   }
 
-  def asStart(food: Food) = {
+  def asStart(food: Food, offset: Int = 0) = {
     if (foods.size != 0) {
       throw new RuntimeException("eat/optional should not before indexFirstOf properly")
     }

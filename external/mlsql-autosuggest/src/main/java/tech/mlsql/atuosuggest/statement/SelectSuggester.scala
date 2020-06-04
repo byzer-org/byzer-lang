@@ -55,25 +55,33 @@ case class MetaTableKeyWrapper(metaTableKey: MetaTableKey, aliasName: String)
  * Notice that we do not make sure the sql is right
  *
  */
-class SingleStatementAST(selectSuggester: SelectSuggester, start: Int, stop: Int, var parent: SingleStatementAST) {
+class SingleStatementAST(selectSuggester: SelectSuggester, var start: Int, var stop: Int, var parent: SingleStatementAST) {
   val children = ArrayBuffer[SingleStatementAST]()
 
   def isLeaf = {
     children.length == 0
   }
 
-  def output(tokens: List[Token]) = {
-    //    if (isLeaf) {
-    //      //collect table first
-    //      // T__3 == .
-    //      TokenMatcher(tokens.slice(0, stop), start).asStart(Food(None, SqlBaseLexer.FROM)).
-    //        eat(Food(None,SqlBaseLexer.IDENTIFIER)).optional.eat(Food(None,SqlBaseLexer.T__3)).optional.eat()
-    //
-    //    }
+  def output(tokens: List[Token]): Unit = {
+    if (isLeaf) {
+      //collect table first
+      // T__3 == .
+      val tokenMatch = TokenMatcher(tokens.slice(0, stop), start).asStart(Food(None, SqlBaseLexer.FROM), 1).
+        eat(Food(None, SqlBaseLexer.IDENTIFIER), Food(None, SqlBaseLexer.T__3)).optional.
+        eat(Food(None, SqlBaseLexer.IDENTIFIER)).optional.
+        build
+      println(tokens(tokenMatch.get))
+      println(tokens(tokenMatch.get + 1))
+      if (tokenMatch.isSuccess) {
+        println(tokens.slice(tokenMatch.start, tokenMatch.get))
+      }
+
+    }
+    children.foreach(_.output(tokens))
 
   }
 
-  def printAsStr(_tokens: List[Token]): String = {
+  def printAsStr(_tokens: List[Token], _level: Int): String = {
     val tokens = _tokens.slice(start, stop)
     val stringBuilder = new mutable.StringBuilder()
     var count = 1
@@ -85,7 +93,7 @@ class SingleStatementAST(selectSuggester: SelectSuggester, start: Int, stop: Int
     stringBuilder.append("\n")
     stringBuilder.append("\n")
     stringBuilder.append("\n")
-    children.zipWithIndex.foreach { case (item, index) => stringBuilder.append("=" * (index + 1) + ">" + item.printAsStr(tokens)) }
+    children.zipWithIndex.foreach { case (item, index) => stringBuilder.append("=" * (_level + 1) + ">" + item.printAsStr(_tokens, _level + 1)) }
     stringBuilder.toString()
   }
 }
@@ -98,19 +106,18 @@ object SingleStatementAST {
   }
 
   def build(selectSuggester: SelectSuggester, tokens: List[Token], start: Int, stop: Int, isSub: Boolean = false): SingleStatementAST = {
-    val ROOT = new SingleStatementAST(selectSuggester, 0, stop, null)
+    val ROOT = new SingleStatementAST(selectSuggester, start, stop, null)
     // context start: ( select
     // context end: )
 
     var bracketStart = 0
-    for (index <- (start until stop)) {
+    var jumpIndex = -1
+    for (index <- (start until stop) if index >= jumpIndex) {
       val token = tokens(index)
 
       if (token.getType == SqlBaseLexer.T__0 && index < stop - 1 && tokens(index + 1).getType == SqlBaseLexer.SELECT) {
-        if (isSub) {
-          bracketStart += 1
-        }
         val item = SingleStatementAST.build(selectSuggester, tokens, index + 1, stop, true)
+        jumpIndex = item.stop
         ROOT.children += item
         item.parent = ROOT
 
@@ -118,23 +125,24 @@ object SingleStatementAST {
         if (isSub) {
           if (token.getType == SqlBaseLexer.T__0) {
             bracketStart += 1
-            //println(s"index:[$index] bracket +1 = ${bracketStart}")
           }
           if (token.getType == SqlBaseLexer.T__1 && bracketStart != 0) {
             bracketStart -= 1
-            //println(s"index:[$index] bracket -1 = ${bracketStart}")
           }
           else if (token.getType == SqlBaseLexer.T__1 && bracketStart == 0) {
             // check the alias
             val matcher = TokenMatcher(tokens, index + 1).eat(Food(None, SqlBaseLexer.AS)).optional.eat(Food(None, SqlBaseLexer.IDENTIFIER)).build
             val stepSize = if (matcher.isSuccess) matcher.get else index
-            return new SingleStatementAST(selectSuggester, start, stepSize , null)
+            ROOT.start = start
+            ROOT.stop = stepSize
+            return ROOT
           }
 
         } else {
           // do nothing
         }
       }
+
     }
     ROOT
   }

@@ -36,7 +36,8 @@ class SelectSuggesterTest extends BaseTest {
     val newTokens = LexerUtils.toRawSQLTokens(context, wow)
     newTokens.foreach(println(_))
     val root = SingleStatementAST.build(suggester, newTokens, 0, newTokens.size, false)
-    println(root.printAsStr(newTokens))
+    println(root.printAsStr(newTokens,0))
+    root.output(newTokens)
 
 
   }
