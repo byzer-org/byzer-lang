@@ -8,7 +8,7 @@ import tech.mlsql.atuosuggest.dsl.TokenMatcher
 trait MatchAndExtractor[T] {
   def matcher(start: Int): TokenMatcher
 
-  def extractor(start: Int, end: Int): T
+  def extractor(start: Int, end: Int): List[T]
 
   def iterate(start: Int, end: Int, limit: Int = 100): List[T]
 }

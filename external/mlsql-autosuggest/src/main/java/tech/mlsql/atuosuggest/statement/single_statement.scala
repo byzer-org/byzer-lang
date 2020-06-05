@@ -17,7 +17,7 @@ case class MetaTableKeyWrapper(metaTableKey: MetaTableKey, aliasName: Option[Str
  * Notice that we do not make sure the sql is right
  *
  */
-class SingleStatementAST(selectSuggester: SelectSuggester, var start: Int, var stop: Int, var parent: SingleStatementAST) {
+class SingleStatementAST(val selectSuggester: SelectSuggester, var start: Int, var stop: Int, var parent: SingleStatementAST) {
   val children = ArrayBuffer[SingleStatementAST]()
 
   def isLeaf = {
@@ -34,18 +34,31 @@ class SingleStatementAST(selectSuggester: SelectSuggester, var start: Int, var s
       //collect table first
       // T__3 == .
 
-      val extractor = new TableExtractor(selectSuggester.context,tokens)
+      val extractor = new TableExtractor(selectSuggester.context, this, tokens)
       val fromStart = TokenMatcher(tokens.slice(0, stop), start).asStart(Food(None, SqlBaseLexer.FROM), 1).start
       extractor.iterate(fromStart, tokens.size)
     } else {
-      List()
+      children.map(_.name(tokens).get).map { name =>
+        MetaTableKeyWrapper(MetaTableKey(None, None, null), Option(name))
+      }.toList
+
     }
+  }
+
+  def level = {
+    var count = 0
+    var temp = this.parent
+    while (temp != null) {
+      temp = temp.parent
+      count += 1
+    }
+    count
   }
 
 
   def output(tokens: List[Token]): List[String] = {
     val selectStart = TokenMatcher(tokens.slice(0, stop), start).asStart(Food(None, SqlBaseLexer.SELECT), 1).start
-    val extractor = new AttributeExtractor(selectSuggester.context,tokens)
+    val extractor = new AttributeExtractor(selectSuggester.context, this, tokens)
     extractor.iterate(selectStart, tokens.size)
   }
 
@@ -55,7 +68,7 @@ class SingleStatementAST(selectSuggester: SelectSuggester, var start: Int, var s
   }
 
   def visitUp(level: Int)(rule: PartialFunction[(SingleStatementAST, Int), Unit]): Unit = {
-    this.children.map(_.visitDown(level + 1)(rule))
+    this.children.map(_.visitUp(level + 1)(rule))
     rule.apply((this, level))
   }
 

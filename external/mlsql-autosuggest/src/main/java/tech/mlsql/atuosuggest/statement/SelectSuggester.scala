@@ -25,6 +25,7 @@ class SelectSuggester(val context: AutoSuggestContext, val _tokens: List[Token],
   def sqlAST = selectTree
 
   def tokens = newTokens
+  def table_info = TABLE_INFO
 
   override def isMatch(): Boolean = {
     _tokens.headOption.map(_.getType) match {

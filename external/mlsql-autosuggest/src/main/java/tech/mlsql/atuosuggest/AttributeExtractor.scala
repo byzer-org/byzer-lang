@@ -3,16 +3,18 @@ package tech.mlsql.atuosuggest
 import org.antlr.v4.runtime.Token
 import org.apache.spark.sql.catalyst.parser.SqlBaseLexer
 import tech.mlsql.atuosuggest.dsl.{Food, TokenMatcher}
-import tech.mlsql.atuosuggest.statement.MatchAndExtractor
+import tech.mlsql.atuosuggest.meta.MetaTableKey
+import tech.mlsql.atuosuggest.statement.{MatchAndExtractor, MetaTableKeyWrapper, SingleStatementAST}
 
 import scala.collection.mutable.ArrayBuffer
 
 /**
  * 4/6/2020 WilliamZhu(allwefantasy@gmail.com)
  */
-class AttributeExtractor(autoSuggestContext: AutoSuggestContext, tokens: List[Token]) extends MatchAndExtractor[String] {
+class AttributeExtractor(autoSuggestContext: AutoSuggestContext, ast: SingleStatementAST, tokens: List[Token]) extends MatchAndExtractor[String] {
+
   override def matcher(start: Int): TokenMatcher = {
-    return funcitonM(start)
+    return asterriskM(start)
   }
 
   private def attributeM(start: Int): TokenMatcher = {
@@ -36,7 +38,7 @@ class AttributeExtractor(autoSuggestContext: AutoSuggestContext, tokens: List[To
       val index = TokenMatcher(tokens, start).index(Array(Food(None, SqlBaseLexer.T__1), Food(None, SqlBaseLexer.AS), Food(None, SqlBaseLexer.IDENTIFIER)))
       if (index != -1) {
         //index + 1 to skip )
-        val aliasName = TokenMatcher(tokens, index+1).eat(Food(None, SqlBaseLexer.AS)).
+        val aliasName = TokenMatcher(tokens, index + 1).eat(Food(None, SqlBaseLexer.AS)).
           eat(Food(None, SqlBaseLexer.IDENTIFIER)).build
         if (aliasName.isSuccess) {
           return TokenMatcher.resultMatcher(tokens, start, aliasName.get)
@@ -49,13 +51,40 @@ class AttributeExtractor(autoSuggestContext: AutoSuggestContext, tokens: List[To
     return attributeM(start)
   }
 
-  override def extractor(start: Int, end: Int): String = {
+  private def asterriskM(start: Int): TokenMatcher = {
+    val temp = TokenMatcher(tokens, start).
+      eat(Food(None, SqlBaseLexer.IDENTIFIER), Food(None, SqlBaseLexer.T__3)).optional.
+      eat(Food(None, SqlBaseLexer.ASTERISK)).build
+    if (temp.isSuccess) {
+      return TokenMatcher.resultMatcher(tokens, start, temp.get)
+    }
+    return funcitonM(start)
+  }
+
+  override def extractor(start: Int, end: Int): List[String] = {
+
+
     val attrTokens = tokens.slice(start, end)
     val token = attrTokens.last
     if (token.getType == SqlBaseLexer.ASTERISK) {
-      return attrTokens.map(_.getText).mkString("")
+      return attrTokens match {
+        case List(tableName, _, _) =>
+          //expand output
+          ast.selectSuggester.table_info(ast.level + 1).
+            get(MetaTableKeyWrapper(MetaTableKey(None, None, null), Option(tableName.getText))) match {
+            case Some(table) => table.columns.map(_.name).toList
+            case None => List()
+          }
+        case List(starAttr) =>
+          val table = ast.tables(tokens).head
+          ast.selectSuggester.table_info(ast.level + 1).
+            get(table) match {
+            case Some(table) => table.columns.map(_.name).toList
+            case None => List()
+          }
+      }
     }
-    token.getText
+    List(token.getText)
   }
 
   override def iterate(start: Int, end: Int, limit: Int): List[String] = {
@@ -63,7 +92,7 @@ class AttributeExtractor(autoSuggestContext: AutoSuggestContext, tokens: List[To
     var matchRes = matcher(start)
     var whileLimit = 1000
     while (matchRes.isSuccess && whileLimit > 0) {
-      attributes += extractor(matchRes.start, matchRes.get)
+      attributes ++= extractor(matchRes.start, matchRes.get)
       whileLimit -= 1
       val temp = TokenMatcher(tokens, matchRes.get).eat(Food(None, SqlBaseLexer.T__2)).build
       if (temp.isSuccess) {

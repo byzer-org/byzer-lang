@@ -11,7 +11,7 @@ import scala.collection.mutable.ArrayBuffer
 /**
  * 4/6/2020 WilliamZhu(allwefantasy@gmail.com)
  */
-class TableExtractor(autoSuggestContext: AutoSuggestContext, tokens: List[Token]) extends MatchAndExtractor[MetaTableKeyWrapper] {
+class TableExtractor(autoSuggestContext: AutoSuggestContext,ast:SingleStatementAST, tokens: List[Token]) extends MatchAndExtractor[MetaTableKeyWrapper] {
   override def matcher(start: Int): TokenMatcher = {
     val temp = TokenMatcher(tokens, start).
       eat(Food(None, SqlBaseLexer.IDENTIFIER), Food(None, SqlBaseLexer.T__3)).optional.
@@ -22,7 +22,7 @@ class TableExtractor(autoSuggestContext: AutoSuggestContext, tokens: List[Token]
     temp
   }
 
-  override def extractor(start: Int, end: Int): MetaTableKeyWrapper = {
+  override def extractor(start: Int, end: Int): List[MetaTableKeyWrapper] = {
     val dbTableTokens = tokens.slice(start, end)
     val dbTable = if (dbTableTokens.length == 3) {
       val List(dbToken, _, tableToken) = dbTableTokens
@@ -34,7 +34,7 @@ class TableExtractor(autoSuggestContext: AutoSuggestContext, tokens: List[Token]
     else {
       MetaTableKeyWrapper(MetaTableKey(None, None, dbTableTokens.head.getText), None)
     }
-    dbTable
+    List(dbTable)
   }
 
   override def iterate(start: Int, end: Int, limit: Int = 100): List[MetaTableKeyWrapper] = {
@@ -42,7 +42,7 @@ class TableExtractor(autoSuggestContext: AutoSuggestContext, tokens: List[Token]
     var matchRes = matcher(start)
     var whileLimit = limit
     while (matchRes.isSuccess && whileLimit > 0) {
-      tables += extractor(matchRes.start, matchRes.get)
+      tables ++= extractor(matchRes.start, matchRes.get)
       whileLimit -= 1
       val temp = TokenMatcher(tokens, matchRes.get).eat(Food(None, SqlBaseLexer.T__2)).build
       if (temp.isSuccess) {
