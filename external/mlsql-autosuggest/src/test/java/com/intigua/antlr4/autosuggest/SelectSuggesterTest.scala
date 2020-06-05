@@ -64,9 +64,9 @@ class SelectSuggesterTest extends BaseTest {
       """
         |select no_result_type, keywords, search_num, rank
         |from(
-        |  select *,no_result_type, keywords, search_num, row_number() over (PARTITION BY no_result_type order by search_num desc) as rank
+        |  select  keywords, search_num, row_number() over (PARTITION BY no_result_type order by search_num desc) as rank
         |  from(
-        |    select no_result_type, keywords, sum(search_num) AS search_num
+        |    select *,no_result_type, keywords, sum(search_num) AS search_num
         |    from jack.drugs_bad_case_di,jack.abc jack
         |    where hp_stat_date >= date_sub(current_date,30)
         |    and action_dt >= date_sub(current_date,30)
