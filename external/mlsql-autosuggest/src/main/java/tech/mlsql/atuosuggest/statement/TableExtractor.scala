@@ -2,6 +2,7 @@ package tech.mlsql.atuosuggest.statement
 
 import org.antlr.v4.runtime.Token
 import org.apache.spark.sql.catalyst.parser.SqlBaseLexer
+import tech.mlsql.atuosuggest.AutoSuggestContext
 import tech.mlsql.atuosuggest.dsl.{Food, TokenMatcher}
 import tech.mlsql.atuosuggest.meta.MetaTableKey
 
@@ -10,7 +11,7 @@ import scala.collection.mutable.ArrayBuffer
 /**
  * 4/6/2020 WilliamZhu(allwefantasy@gmail.com)
  */
-class TableExtractor(tokens: List[Token]) extends MatchAndExtractor[MetaTableKeyWrapper] {
+class TableExtractor(autoSuggestContext: AutoSuggestContext, tokens: List[Token]) extends MatchAndExtractor[MetaTableKeyWrapper] {
   override def matcher(start: Int): TokenMatcher = {
     val temp = TokenMatcher(tokens, start).
       eat(Food(None, SqlBaseLexer.IDENTIFIER), Food(None, SqlBaseLexer.T__3)).optional.

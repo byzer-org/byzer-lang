@@ -34,7 +34,7 @@ class SingleStatementAST(selectSuggester: SelectSuggester, var start: Int, var s
       //collect table first
       // T__3 == .
 
-      val extractor = new TableExtractor(tokens)
+      val extractor = new TableExtractor(selectSuggester.context,tokens)
       val fromStart = TokenMatcher(tokens.slice(0, stop), start).asStart(Food(None, SqlBaseLexer.FROM), 1).start
       extractor.iterate(fromStart, tokens.size)
     } else {
@@ -45,8 +45,22 @@ class SingleStatementAST(selectSuggester: SelectSuggester, var start: Int, var s
 
   def output(tokens: List[Token]): List[String] = {
     val selectStart = TokenMatcher(tokens.slice(0, stop), start).asStart(Food(None, SqlBaseLexer.SELECT), 1).start
-    val extractor = new AttributeExtractor(tokens)
+    val extractor = new AttributeExtractor(selectSuggester.context,tokens)
     extractor.iterate(selectStart, tokens.size)
+  }
+
+  def visitDown(level: Int)(rule: PartialFunction[(SingleStatementAST, Int), Unit]): Unit = {
+    rule.apply((this, level))
+    this.children.map(_.visitDown(level + 1)(rule))
+  }
+
+  def visitUp(level: Int)(rule: PartialFunction[(SingleStatementAST, Int), Unit]): Unit = {
+    this.children.map(_.visitDown(level + 1)(rule))
+    rule.apply((this, level))
+  }
+
+  def fastEquals(other: SingleStatementAST): Boolean = {
+    this.eq(other) || this == other
   }
 
   def printAsStr(_tokens: List[Token], _level: Int): String = {

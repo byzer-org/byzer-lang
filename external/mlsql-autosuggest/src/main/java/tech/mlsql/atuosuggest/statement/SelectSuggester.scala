@@ -12,31 +12,37 @@ import scala.collection.mutable.ArrayBuffer
 /**
  * 3/6/2020 WilliamZhu(allwefantasy@gmail.com)
  */
-class SelectSuggester(val context: AutoSuggestContext, val tokens: List[Token], val tokenPos: TokenPos) extends StatementSuggester with SuggesterRegister {
+class SelectSuggester(val context: AutoSuggestContext, val _tokens: List[Token], val tokenPos: TokenPos) extends StatementSuggester with SuggesterRegister {
 
   private val subInstances = new mutable.HashMap[String, StatementSuggester]()
 
   override def name: String = "select"
 
+  private lazy val newTokens = LexerUtils.toRawSQLTokens(context, _tokens)
+  private lazy val TABLE_INFO = mutable.HashMap[Int, mutable.HashMap[MetaTableKeyWrapper, MetaTable]]()
+  private lazy val selectTree: SingleStatementAST = buildTree()
+
+  def sqlAST = selectTree
+
+  def tokens = newTokens
+
   override def isMatch(): Boolean = {
-    tokens.headOption.map(_.getType) match {
+    _tokens.headOption.map(_.getType) match {
       case Some(DSLSQLLexer.SELECT) => true
       case _ => false
     }
   }
 
-  override def suggest(): List[SuggestItem] = {
-    val newTokens = LexerUtils.toRawSQLTokens(context, tokens)
+  private def buildTree() = {
     val root = SingleStatementAST.build(this, newTokens)
     import scala.collection.mutable
-    val TABLE_INFO = mutable.HashMap[Int, mutable.HashMap[MetaTableKeyWrapper, MetaTable]]()
 
-    def visit(root: SingleStatementAST, level: Int): Unit = {
+    root.visitUp(level = 0) { case (ast: SingleStatementAST, level: Int) =>
       if (!TABLE_INFO.contains(level)) {
         TABLE_INFO.put(level, new mutable.HashMap[MetaTableKeyWrapper, MetaTable]())
       }
-      if (root.isLeaf) {
-        root.tables(newTokens).map { item =>
+      if (ast.isLeaf) {
+        ast.tables(newTokens).map { item =>
           context.metaProvider.search(item.metaTableKey) match {
             case Some(res) =>
               TABLE_INFO(level) += (item -> res)
@@ -44,21 +50,25 @@ class SelectSuggester(val context: AutoSuggestContext, val tokens: List[Token], 
           }
         }
       }
-      root.children.map(visit(_, level + 1))
-      val nameOpt = root.name(newTokens)
+      val nameOpt = ast.name(newTokens)
       if (nameOpt.isDefined) {
 
         val metaTableKey = MetaTableKey(None, None, null)
         val metaTableKeyWrapper = MetaTableKeyWrapper(metaTableKey, nameOpt)
-        val metaColumns = root.output(newTokens).map { attr =>
+        val metaColumns = ast.output(newTokens).map { attr =>
           MetaTableColumn(attr, null, true, Map())
         }
         TABLE_INFO(level) += (metaTableKeyWrapper -> MetaTable(metaTableKey, metaColumns))
 
       }
+
     }
 
-    visit(root, 0)
+    root
+  }
+
+  override def suggest(): List[SuggestItem] = {
+    selectTree.children.size
     TABLE_INFO.foreach { case (level, info) =>
       println(s"${level} =>")
       println(info)
@@ -78,7 +88,7 @@ class SelectSuggester(val context: AutoSuggestContext, val tokens: List[Token], 
 
 class ProjectSuggester(selectSuggester: SelectSuggester) extends StatementSuggester with SuggesterRegister {
 
-  val tokens = selectSuggester.tokens
+  val tokens = selectSuggester._tokens
   val tokenPos = selectSuggester.tokenPos
   val fromTableInCurrentScope = ArrayBuffer[MetaTableKeyWrapper]()
 
