@@ -1,15 +1,30 @@
 package tech.mlsql.atuosuggest.dsl
 
 import org.antlr.v4.runtime.Token
+import org.apache.spark.sql.catalyst.parser.SqlBaseLexer
 
 import scala.collection.mutable.ArrayBuffer
 
 /**
  * 4/6/2020 WilliamZhu(allwefantasy@gmail.com)
+ *
  */
 class TokenMatcher(tokens: List[Token], val start: Int) {
   val foods = ArrayBuffer[FoodWrapper]()
   var cacheResult = -2
+  private var direction: String = MatcherDirection.FORWARD
+
+  def forward = {
+    assert(foods.size == 0, "this function should be invoke before eat")
+    direction = MatcherDirection.FORWARD
+    this
+  }
+
+  def back = {
+    assert(foods.size == 0, "this function should be invoke before eat")
+    direction = MatcherDirection.BACK
+    this
+  }
 
   def eat(food: Food*) = {
     foods += FoodWrapper(AndOrFood(food.toList, true), false)
@@ -63,7 +78,9 @@ class TokenMatcher(tokens: List[Token], val start: Int) {
     this
   }
 
-  private def matchToken(food: Food, currentIndex: Int) = {
+  private def matchToken(food: Food, currentIndex: Int): Int = {
+    if (currentIndex < 0) return -1
+    if (currentIndex >= tokens.size) return -1
     food.name match {
       case Some(name) => if (tokens(currentIndex).getType == food.tp && tokens(currentIndex).getText == name) {
         currentIndex
@@ -75,7 +92,7 @@ class TokenMatcher(tokens: List[Token], val start: Int) {
     }
   }
 
-  def build: TokenMatcher = {
+  private def forwardBuild: TokenMatcher = {
     var currentIndex = start
     var isFail = false
 
@@ -107,6 +124,47 @@ class TokenMatcher(tokens: List[Token], val start: Int) {
     this
   }
 
+  private def backBuild: TokenMatcher = {
+    var currentIndex = start
+    var isFail = false
+
+
+    foods.map { foodw =>
+      val stepSize = foodw.foods.count
+      var matchValue = 0
+      foodw.foods.foods.zipWithIndex.foreach { case (food, idx) =>
+        if (matchValue == 0 && matchToken(food, currentIndex - idx) == -1) {
+          matchValue = -1
+        }
+      }
+      if (foodw.optional) {
+        if (matchValue != -1) {
+          currentIndex = currentIndex - stepSize
+        }
+      } else {
+        if (matchValue != -1) {
+          currentIndex = currentIndex - stepSize
+
+        } else {
+          //mark fail
+          isFail = true
+        }
+      }
+    }
+    val targetIndex = if (isFail) -1 else currentIndex
+    cacheResult = targetIndex
+    this
+  }
+
+  def build: TokenMatcher = {
+    direction match {
+      case MatcherDirection.FORWARD =>
+        forwardBuild
+      case MatcherDirection.BACK =>
+        backBuild
+    }
+  }
+
   def get = {
     if (this.cacheResult == -2) this.build
     this.cacheResult
@@ -116,6 +174,29 @@ class TokenMatcher(tokens: List[Token], val start: Int) {
     if (this.cacheResult == -2) this.build
     this.cacheResult != -1
   }
+
+  def getMatchTokens = {
+    direction match {
+      case MatcherDirection.BACK => tokens.slice(get + 1, start + 1)
+      case MatcherDirection.FORWARD => tokens.slice(start, get)
+    }
+
+  }
+}
+
+object MatcherDirection {
+  val FORWARD = "forward"
+  val BACK = "back"
+}
+
+object TokenTypeWrapper {
+  val LEFT_BRACKET = SqlBaseLexer.T__0 //(
+  val RIGHT_BRACKET = SqlBaseLexer.T__1 //)
+  val COMMA = SqlBaseLexer.T__2 //,
+  val DOT = SqlBaseLexer.T__3 //.
+  val LEFT_SQUARE_BRACKET = SqlBaseLexer.T__7 //[
+  val RIGHT_SQUARE_BRACKET = SqlBaseLexer.T__8 //]
+  val COLON = SqlBaseLexer.T__9 //:
 }
 
 object TokenMatcher {

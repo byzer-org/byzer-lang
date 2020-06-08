@@ -1,7 +1,7 @@
 package com.intigua.antlr4.autosuggest
 
 import tech.mlsql.atuosuggest.meta.{MetaProvider, MetaTable, MetaTableColumn, MetaTableKey}
-import tech.mlsql.atuosuggest.statement.SelectSuggester
+import tech.mlsql.atuosuggest.statement.{SelectSuggester, SuggestItem}
 import tech.mlsql.atuosuggest.{TokenPos, TokenPosType}
 
 import scala.collection.JavaConverters._
@@ -10,6 +10,22 @@ import scala.collection.JavaConverters._
  * 2/6/2020 WilliamZhu(allwefantasy@gmail.com)
  */
 class SelectSuggesterTest extends BaseTest {
+
+  def buildMetaProvider = {
+    context.setMetaProvider(new MetaProvider {
+      override def search(key: MetaTableKey): Option[MetaTable] = {
+        Option(MetaTable(key, List(
+          MetaTableColumn("no_result_type", null, true, Map()),
+          MetaTableColumn("keywords", null, true, Map()),
+          MetaTableColumn("search_num", null, true, Map()),
+          MetaTableColumn("hp_stat_date", null, true, Map()),
+          MetaTableColumn("action_dt", null, true, Map()),
+          MetaTableColumn("action_type", null, true, Map()),
+          MetaTableColumn("av", null, true, Map())
+        )))
+      }
+    })
+  }
 
   lazy val wow = context.lexer.tokenizeNonDefaultChannel(
     """
@@ -44,25 +60,13 @@ class SelectSuggesterTest extends BaseTest {
 
   }
 
-  test("select output") {
+  test("project: complex attribute suggest") {
 
-    context.setMetaProvider(new MetaProvider {
-      override def search(key: MetaTableKey): Option[MetaTable] = {
-        Option(MetaTable(key, List(
-          MetaTableColumn("no_result_type", null, true, Map()),
-          MetaTableColumn("keywords", null, true, Map()),
-          MetaTableColumn("search_num", null, true, Map()),
-          MetaTableColumn("hp_stat_date", null, true, Map()),
-          MetaTableColumn("action_dt", null, true, Map()),
-          MetaTableColumn("action_type", null, true, Map()),
-          MetaTableColumn("av", null, true, Map())
-        )))
-      }
-    })
+    buildMetaProvider
 
     lazy val wow2 = context.lexer.tokenizeNonDefaultChannel(
       """
-        |select no_result_type, keywords, search_num, rank
+        |select key no_result_type, keywords, search_num, rank
         |from(
         |  select  keywords, search_num, row_number() over (PARTITION BY no_result_type order by search_num desc) as rank
         |  from(
@@ -80,13 +84,22 @@ class SelectSuggesterTest extends BaseTest {
         |where rank <=
         |""".stripMargin).tokens.asScala.toList
 
-    val suggester = new SelectSuggester(context, wow2, TokenPos(0, TokenPosType.NEXT, 0))
-    val root = suggester.sqlAST
-    root.visitDown(0) { case (ast, level) =>
-      println(s"${ast.name(suggester.tokens)} ${ast.output(suggester.tokens)}")
-    }
+    val suggester = new SelectSuggester(context, wow2, TokenPos(1, TokenPosType.CURRENT, 2))
+    assert(suggester.suggest() == List(SuggestItem("keywords")))
 
+  }
 
+  test("project: single query with alias table name") {
+
+    buildMetaProvider
+    lazy val wow = context.lexer.tokenizeNonDefaultChannel(
+      """
+        |select a.k from jack.drugs_bad_case_di as a
+        |""".stripMargin).tokens.asScala.toList
+
+    val suggester = new SelectSuggester(context, wow, TokenPos(3, TokenPosType.CURRENT, 1))
+
+    assert(suggester.suggest() == List(SuggestItem("keywords")))
   }
 
 

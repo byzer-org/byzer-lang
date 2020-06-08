@@ -70,14 +70,14 @@ class AttributeExtractor(autoSuggestContext: AutoSuggestContext, ast: SingleStat
       return attrTokens match {
         case List(tableName, _, _) =>
           //expand output
-          ast.selectSuggester.table_info(ast.level + 1).
+          ast.selectSuggester.table_info(ast.level).
             get(MetaTableKeyWrapper(MetaTableKey(None, None, null), Option(tableName.getText))) match {
             case Some(table) => table.columns.map(_.name).toList
             case None => List()
           }
         case List(starAttr) =>
           val table = ast.tables(tokens).head
-          ast.selectSuggester.table_info(ast.level + 1).
+          ast.selectSuggester.table_info(ast.level).
             get(table) match {
             case Some(table) => table.columns.map(_.name).toList
             case None => List()

@@ -3,7 +3,7 @@ package tech.mlsql.atuosuggest.statement
 import org.antlr.v4.runtime.Token
 import org.apache.spark.sql.catalyst.parser.SqlBaseLexer
 import tech.mlsql.atuosuggest.AttributeExtractor
-import tech.mlsql.atuosuggest.dsl.{Food, TokenMatcher}
+import tech.mlsql.atuosuggest.dsl.{Food, TokenMatcher, TokenTypeWrapper}
 import tech.mlsql.atuosuggest.meta.MetaTableKey
 
 import scala.collection.mutable
@@ -33,10 +33,15 @@ class SingleStatementAST(val selectSuggester: SelectSuggester, var start: Int, v
     if (isLeaf) {
       //collect table first
       // T__3 == .
-
-      val extractor = new TableExtractor(selectSuggester.context, this, tokens)
+      // extract from `from`
+      val fromTables = new TableExtractor(selectSuggester.context, this, tokens)
       val fromStart = TokenMatcher(tokens.slice(0, stop), start).asStart(Food(None, SqlBaseLexer.FROM), 1).start
-      extractor.iterate(fromStart, tokens.size)
+      val tempTables = fromTables.iterate(fromStart, tokens.size)
+      //extract from `join`
+      val joinTables = new TableExtractor(selectSuggester.context, ast = this, tokens)
+      val joinStart = TokenMatcher(tokens.slice(0, stop), start).asStart(Food(None, SqlBaseLexer.JOIN), offset = 1).start
+      tempTables ++ joinTables.iterate(joinStart, tokens.size)
+
     } else {
       children.map(_.name(tokens).get).map { name =>
         MetaTableKeyWrapper(MetaTableKey(None, None, null), Option(name))
@@ -113,8 +118,8 @@ object SingleStatementAST {
     var jumpIndex = -1
     for (index <- (start until stop) if index >= jumpIndex) {
       val token = tokens(index)
-
-      if (token.getType == SqlBaseLexer.T__0 && index < stop - 1 && tokens(index + 1).getType == SqlBaseLexer.SELECT) {
+      if (token.getType == TokenTypeWrapper.LEFT_BRACKET && index < stop - 1 && tokens(index + 1).getType == SqlBaseLexer.SELECT) {
+//        println(s"enter: ${tokens.slice(index, index + 5).map(_.getText).mkString(" ")}")
         val item = SingleStatementAST._build(selectSuggester, tokens, index + 1, stop, true)
         jumpIndex = item.stop
         ROOT.children += item
@@ -122,18 +127,19 @@ object SingleStatementAST {
 
       } else {
         if (isSub) {
-          if (token.getType == SqlBaseLexer.T__0) {
+          if (token.getType == TokenTypeWrapper.LEFT_BRACKET) {
             bracketStart += 1
           }
-          if (token.getType == SqlBaseLexer.T__1 && bracketStart != 0) {
+          if (token.getType == TokenTypeWrapper.RIGHT_BRACKET && bracketStart != 0) {
             bracketStart -= 1
           }
-          else if (token.getType == SqlBaseLexer.T__1 && bracketStart == 0) {
+          else if (token.getType == TokenTypeWrapper.RIGHT_BRACKET && bracketStart == 0) {
             // check the alias
             val matcher = TokenMatcher(tokens, index + 1).eat(Food(None, SqlBaseLexer.AS)).optional.eat(Food(None, SqlBaseLexer.IDENTIFIER)).build
             val stepSize = if (matcher.isSuccess) matcher.get else index
             ROOT.start = start
             ROOT.stop = stepSize
+//            println(s"out: ${tokens.slice(stepSize - 5, stepSize).map(_.getText).mkString(" ")}")
             return ROOT
           }
 

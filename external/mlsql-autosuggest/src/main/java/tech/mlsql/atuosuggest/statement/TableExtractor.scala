@@ -11,7 +11,7 @@ import scala.collection.mutable.ArrayBuffer
 /**
  * 4/6/2020 WilliamZhu(allwefantasy@gmail.com)
  */
-class TableExtractor(autoSuggestContext: AutoSuggestContext,ast:SingleStatementAST, tokens: List[Token]) extends MatchAndExtractor[MetaTableKeyWrapper] {
+class TableExtractor(autoSuggestContext: AutoSuggestContext, ast:SingleStatementAST, tokens: List[Token]) extends MatchAndExtractor[MetaTableKeyWrapper] {
   override def matcher(start: Int): TokenMatcher = {
     val temp = TokenMatcher(tokens, start).
       eat(Food(None, SqlBaseLexer.IDENTIFIER), Food(None, SqlBaseLexer.T__3)).optional.
