@@ -1,6 +1,6 @@
 package com.intigua.antlr4.autosuggest
 
-import tech.mlsql.atuosuggest.statement.LoadSuggester
+import tech.mlsql.atuosuggest.statement.{LoadSuggester, SuggestItem}
 import tech.mlsql.atuosuggest.{TokenPos, TokenPosType}
 
 import scala.collection.JavaConverters._
@@ -16,7 +16,7 @@ class LoadSuggesterTest extends BaseTest {
         | load hiv
         |""".stripMargin).tokens.asScala.toList
     val loadSuggester = new LoadSuggester(context, wow, TokenPos(1, TokenPosType.CURRENT, 3)).suggest()
-    assert(loadSuggester.toList == List("hive"))
+    assert(loadSuggester.toList == List(SuggestItem("hive")))
   }
 
   test("load [cursor]") {
@@ -30,5 +30,5 @@ class LoadSuggesterTest extends BaseTest {
     assert(loadSuggester.size > 1)
   }
 
- 
+
 }
