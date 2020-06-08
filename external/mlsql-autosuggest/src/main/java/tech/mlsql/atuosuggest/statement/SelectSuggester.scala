@@ -3,6 +3,7 @@ package tech.mlsql.atuosuggest.statement
 import org.antlr.v4.runtime.Token
 import org.apache.spark.sql.catalyst.parser.SqlBaseLexer
 import streaming.dsl.parser.DSLSQLLexer
+import tech.mlsql.atuosuggest.dsl.{Food, TokenMatcher}
 import tech.mlsql.atuosuggest.meta.{MetaTable, MetaTableColumn, MetaTableKey}
 import tech.mlsql.atuosuggest.{AutoSuggestContext, TokenPos}
 
@@ -101,13 +102,18 @@ class ProjectSuggester(_selectSuggester: SelectSuggester) extends StatementSugge
   override def name: String = "project"
 
   override def isMatch(): Boolean = {
-    //make sure the pos  after select and [before from or is the end of the statement]
-    // it's ok if we are wrong.
-    tokens.zipWithIndex.filter(_._1.getType == SqlBaseLexer.FROM).headOption match {
-      case Some(from) => from._2 > tokenPos.pos
-      case None => true
-    }
+    // find subquery
+    var targetAst: SingleStatementAST = null
+    selectSuggester.sqlAST.visitUp(0) { case (ast, level) =>
+      if (targetAst == null && (ast.start <= tokenPos.pos && tokenPos.pos < ast.stop)) {
+        val fromPos = TokenMatcher(tokens, ast.start).index(Array(Food(None, SqlBaseLexer.FROM)))
+        if (fromPos < ast.stop && tokenPos.pos < fromPos) {
+          targetAst = ast
+        }
 
+      }
+    }
+    targetAst != null
   }
 
   override def suggest(): List[SuggestItem] = {
