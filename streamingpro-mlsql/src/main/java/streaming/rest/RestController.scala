@@ -127,7 +127,7 @@ class RestController extends ApplicationController with WowLog {
               htp.post(new Url(param("callback")),
                 Map("stat" -> s"""succeeded""",
                   "res" -> outputResult,
-                  "jobInfo" -> jobInfo))
+                  "jobInfo" -> JSONTool.toJsonStr(jobInfo)))
             } catch {
               case e: Exception =>
                 e.printStackTrace()
@@ -138,7 +138,7 @@ class RestController extends ApplicationController with WowLog {
                 htp.post(new Url(param("callback")),
                   Map("stat" -> s"""failed""",
                     "msg" -> (e.getMessage + "\n" + msgBuffer.mkString("\n")),
-                    "jobInfo" -> jobInfo
+                    "jobInfo" -> JSONTool.toJsonStr(jobInfo)
                   ))
             }
           })
