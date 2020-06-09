@@ -31,13 +31,64 @@ class TokenMatcher(tokens: List[Token], val start: Int) {
     this
   }
 
-  // find the first match 
-  def index(_foods: Array[Food]) = {
+  /**
+   *
+   * 一直前进 直到遇到我们需要的,成功返回最后的index值，否则返回-1
+   */
+  def orIndex(_foods: Array[Food], upperBound: Int = tokens.size) = {
     if (foods.size != 0) {
       throw new RuntimeException("eat/optional/asStart should not before index")
     }
+    direction match {
+      case MatcherDirection.FORWARD =>
+        var targetIndex = -1
+        (start until upperBound).foreach { idx =>
+          if (targetIndex == -1) {
+            // step by step until success
+            var matchValue = -1
+            _foods.zipWithIndex.foreach { case (food, _) =>
+              if (matchValue == -1 && matchToken(food, idx) != -1) {
+                matchValue = 0
+              }
+            }
+            if (matchValue != -1) {
+              targetIndex = idx
+            }
+          }
+
+        }
+        targetIndex
+      case MatcherDirection.BACK =>
+        var _start = start
+        var targetIndex = -1
+        while (_start >= 0) {
+          if (targetIndex == -1) {
+            // step by step until success
+            var matchValue = -1
+            _foods.zipWithIndex.foreach { case (food, _) =>
+              if (matchValue == -1 && matchToken(food, _start) != -1) {
+                matchValue = 0
+              }
+            }
+            if (matchValue != -1) {
+              targetIndex = _start
+            }
+          }
+          _start = _start - 1
+        }
+        targetIndex
+    }
+
+  }
+
+  // find the first match 
+  def index(_foods: Array[Food], upperBound: Int = tokens.size) = {
+    if (foods.size != 0) {
+      throw new RuntimeException("eat/optional/asStart should not before index")
+    }
+    assert(direction == MatcherDirection.FORWARD, "index only support forward")
     var targetIndex = -1
-    (start until tokens.size).foreach { idx =>
+    (start until upperBound).foreach { idx =>
       if (targetIndex == -1) {
         // step by step until success
         var matchValue = 0
@@ -207,6 +258,18 @@ object TokenMatcher {
     temp.cacheResult = stop
     temp
   }
+
+  def SQL_SPLITTER_KEY_WORDS = List(
+    SqlBaseLexer.SELECT,
+    SqlBaseLexer.FROM,
+    SqlBaseLexer.JOIN,
+    SqlBaseLexer.WHERE,
+    SqlBaseLexer.GROUP,
+    SqlBaseLexer.ON,
+    SqlBaseLexer.BY,
+    SqlBaseLexer.LIMIT,
+    SqlBaseLexer.ORDER
+  )
 }
 
 case class Food(name: Option[String], tp: Int)

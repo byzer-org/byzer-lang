@@ -54,7 +54,9 @@ trait StatementUtils {
       }.map { case (name, table) =>
         SuggestItem(name, table, Map())
       }.toList
-      case None => List()
+      case None => selectSuggester.context.metaProvider.list.map { item =>
+        SuggestItem(item.key.table, item, Map())
+      }
     }
   }
 
