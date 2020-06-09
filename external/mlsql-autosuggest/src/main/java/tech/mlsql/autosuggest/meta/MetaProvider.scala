@@ -12,6 +12,8 @@ package tech.mlsql.autosuggest.meta
  */
 trait MetaProvider {
   def search(key: MetaTableKey): Option[MetaTable]
+
+  def list: List[MetaTable]
 }
 
 

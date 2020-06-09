@@ -7,9 +7,29 @@ import org.apache.spark.sql.SparkSession
 import streaming.dsl.parser.DSLSQLLexer
 import tech.mlsql.autosuggest.meta.{LoadTableProvider, MetaProvider, MetaTable, MetaTableKey}
 import tech.mlsql.autosuggest.statement.{LoadSuggester, SelectSuggester, SuggestItem}
+import tech.mlsql.common.utils.reflect.ClassPath
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
+
+object AutoSuggestContext {
+  var isInit = false
+
+  def init: Unit = {
+    val funcRegs = ClassPath.from(classOf[AutoSuggestContext].getClassLoader).getTopLevelClasses("tech.mlsql.autosuggest.funcs").iterator()
+    while (funcRegs.hasNext) {
+      val wow = funcRegs.next()
+      val funcMetaTable = wow.load().newInstance().asInstanceOf[FuncReg].register
+      MLSQLSQLFunction.funcMetaProvider.register(funcMetaTable)
+    }
+    isInit = true
+  }
+
+  if (!isInit) {
+    init
+  }
+
+}
 
 /**
  * 2/6/2020 WilliamZhu(allwefantasy@gmail.com)
@@ -17,10 +37,14 @@ import scala.collection.mutable.ArrayBuffer
 class AutoSuggestContext(val session: SparkSession,
                          val lexer: LexerWrapper,
                          val rawSQLLexer: LexerWrapper) {
+
+
   val statements = ArrayBuffer[List[Token]]()
   val loadTableProvider: LoadTableProvider = new LoadTableProvider()
   var metaProvider: MetaProvider = new MetaProvider {
     override def search(key: MetaTableKey): Option[MetaTable] = None
+
+    override def list: List[MetaTable] = List()
   }
   val TEMP_TABLES_IN_SCRIPT = new mutable.HashMap[MetaTableKey, MetaTable]()
   val TEMP_TABLES_IN_CURRENT_SQL = new mutable.HashMap[MetaTableKey, MetaTable]()
@@ -74,7 +98,7 @@ class AutoSuggestContext(val session: SparkSession,
   def suggest(tokenPos: TokenPos) = {
 
     val (relativeTokenPos, index) = toRelativePos(tokenPos)
-    statements(index).headOption.map(_.getText) match {
+    val items = statements(index).headOption.map(_.getText) match {
       case Some("load") =>
         val suggester = new LoadSuggester(this, statements(index), relativeTokenPos)
         suggester.suggest()
@@ -84,9 +108,10 @@ class AutoSuggestContext(val session: SparkSession,
       case Some(value) => firstWords.filter(_.name.startsWith(value))
       case None => firstWords
     }
+    items.distinct
   }
 
-  private val firstWords = List("load", "select", "include", "register", "run", "train", "save", "set").map(SuggestItem(_)).toList
+  private val firstWords = List("load", "select", "include", "register", "run", "train", "save", "set").map(SuggestItem(_, TableConst.KEY_WORD_TABLE, Map())).toList
 
 
 }

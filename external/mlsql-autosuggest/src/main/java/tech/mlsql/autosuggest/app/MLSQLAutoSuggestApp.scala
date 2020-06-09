@@ -18,6 +18,7 @@ import scala.collection.JavaConverters._
  */
 class MLSQLAutoSuggestApp extends tech.mlsql.app.App with VersionCompatibility {
   override def run(args: Seq[String]): Unit = {
+    AutoSuggestContext.init
     AppRuntimeStore.store.registerController("autoSuggest", classOf[AutoSuggestController].getName)
   }
 

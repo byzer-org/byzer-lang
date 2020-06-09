@@ -16,7 +16,7 @@ class LoadSuggesterTest extends BaseTest {
         | load hiv
         |""".stripMargin).tokens.asScala.toList
     val loadSuggester = new LoadSuggester(context, wow, TokenPos(1, TokenPosType.CURRENT, 3)).suggest()
-    assert(loadSuggester.toList == List(SuggestItem("hive")))
+    assert(loadSuggester.map(_.name) == List("hive"))
   }
 
   test("load [cursor]") {

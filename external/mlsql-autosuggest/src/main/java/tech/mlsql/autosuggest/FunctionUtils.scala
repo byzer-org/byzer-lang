@@ -1,38 +1,106 @@
 package tech.mlsql.autosuggest
 
-import tech.mlsql.autosuggest.SQLFunction.DB_KEY
-import tech.mlsql.autosuggest.meta.{MetaTableColumn, MetaTableKey}
+import tech.mlsql.autosuggest.MLSQLSQLFunction.DB_KEY
+import tech.mlsql.autosuggest.meta.{MetaProvider, MetaTable, MetaTableColumn, MetaTableKey}
 
-/**
- * 8/6/2020 WilliamZhu(allwefantasy@gmail.com)
- */
-object SQLFunction {
-  val DB_KEY = "__FUNC__"
-  val RETURN_KEY = "__RETURN__"
+import scala.collection.mutable.ArrayBuffer
 
-  def apply(name: String): SQLFunction = new SQLFunction()
+object TableConst {
+  val KEY_WORD = "__KEY__WORD__"
+  val DATA_SOURCE_KEY = "__DATA__SOURCE__"
+  val OPTION_KEY = "__OPTION__"
 
+  def KEY_WORD_TABLE = MetaTable(MetaTableKey(None, None, TableConst.KEY_WORD), List())
 
+  def DATA_SOURCE_TABLE = MetaTable(MetaTableKey(None, None, TableConst.DATA_SOURCE_KEY), List())
+
+  def OPTION_TABLE = MetaTable(MetaTableKey(None, None, TableConst.OPTION_KEY), List())
 }
 
-class SQLFunction {
+
+object MLSQLSQLFunction {
+  val DB_KEY = "__FUNC__"
+  val RETURN_KEY = "__RETURN__"
+  val funcMetaProvider = new FuncMetaProvider()
+
+  def apply(name: String): MLSQLSQLFunction = new MLSQLSQLFunction(name)
+}
+
+class MLSQLSQLFunction(name: String) {
+
+  private val _params = ArrayBuffer[MetaTableColumn]()
+  private val _returnParam = ArrayBuffer[MetaTableColumn]()
+  private var _tableKey: MetaTableKey = MetaTableKey(None, Option(DB_KEY), name)
+
   def funcName(name: String) = {
-    MetaTableKey(None, Option(DB_KEY), name)
+    _tableKey = MetaTableKey(None, Option(DB_KEY), name)
     this
   }
 
-  def param() = {
-    
+  def funcParam = {
+    new MLSQLFuncParam(this)
   }
 
-  def funcParam(name: String, dataType: String) = {
-    MetaTableColumn(name, dataType, true, Map())
+  def returnParam(dataType: String, isNull: Boolean, extra: Map[String, String]) = {
+    assert(_returnParam.size == 0, "returnParam can only invoke once")
+    _returnParam += MetaTableColumn(null, dataType, isNull, extra)
+    this
   }
 
-  def funcParam(name: String, dataType: String, isNull: Boolean) = {
-    MetaTableColumn(name, dataType, true, Map())
+  def addColumn(column: MetaTableColumn) = {
+    _params += column
+    this
+  }
+
+  def build = {
+    MetaTable(_tableKey, (_returnParam ++ _params).toList)
+  }
+
+}
+
+class MLSQLFuncParam(_func: MLSQLSQLFunction) {
+  def param(name: String, dataType: String) = {
+    _func.addColumn(MetaTableColumn(name, dataType, true, Map()))
+    this
+  }
+
+  def param(name: String, dataType: String, isNull: Boolean) = {
+    _func.addColumn(MetaTableColumn(name, dataType, isNull, Map()))
+    this
+  }
+
+  def param(name: String, dataType: String, isNull: Boolean, extra: Map[String, String]) = {
+    _func.addColumn(MetaTableColumn(name, dataType, isNull, extra))
+    this
+  }
+
+  def func = {
+    _func
   }
 }
+
+class FuncMetaProvider extends MetaProvider {
+  private val funcs = scala.collection.mutable.HashMap[MetaTableKey, MetaTable]()
+
+  override def search(key: MetaTableKey): Option[MetaTable] = {
+    funcs.get(key)
+  }
+
+  override def list: List[MetaTable] = {
+    funcs.map(_._2).toList
+  }
+
+  def register(func: MetaTable) = {
+    this.funcs.put(func.key, func)
+    this
+  }
+
+  // for test
+  def clear = {
+    funcs.clear()
+  }
+}
+
 
 object DataType {
   val STRING = "string"
@@ -41,4 +109,6 @@ object DataType {
   val DOUBLE = "double"
   val DATE = "date"
   val DATE_TIMESTAMP = "date_timestamp"
+  val ARRAY = "array"
+  val MAP = "map"
 }

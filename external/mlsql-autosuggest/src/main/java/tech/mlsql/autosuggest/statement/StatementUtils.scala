@@ -3,7 +3,7 @@ package tech.mlsql.autosuggest.statement
 import org.antlr.v4.runtime.Token
 import org.apache.spark.sql.catalyst.parser.SqlBaseLexer
 import tech.mlsql.autosuggest.dsl.{Food, TokenMatcher, TokenTypeWrapper}
-import tech.mlsql.autosuggest.{TokenPos, TokenPosType}
+import tech.mlsql.autosuggest.{MLSQLSQLFunction, TokenPos, TokenPosType}
 
 /**
  * 8/6/2020 WilliamZhu(allwefantasy@gmail.com)
@@ -35,12 +35,12 @@ trait StatementUtils {
   }
 
   def table_info = {
-    var _level = levelFromTokenPos+1
-    if(selectSuggester.table_info.size == 1 && levelFromTokenPos == 0){
+    var _level = levelFromTokenPos + 1
+    if (selectSuggester.table_info.size == 1 && levelFromTokenPos == 0) {
       _level = 0
     }
 
-    if(levelFromTokenPos == selectSuggester.table_info.size - 1){
+    if (levelFromTokenPos == selectSuggester.table_info.size - 1) {
       _level = levelFromTokenPos
     }
     selectSuggester.table_info.get(_level)
@@ -49,9 +49,11 @@ trait StatementUtils {
 
   def tableSuggest(): List[SuggestItem] = {
     table_info match {
-      case Some(tb) => tb.keySet.map { key =>
-        key.aliasName.getOrElse(key.metaTableKey.table)
-      }.map(SuggestItem(_)).toList
+      case Some(tb) => tb.map { case (key, value) =>
+        (key.aliasName.getOrElse(key.metaTableKey.table), value)
+      }.map { case (name, table) =>
+        SuggestItem(name, table, Map())
+      }.toList
       case None => List()
     }
   }
@@ -66,7 +68,7 @@ trait StatementUtils {
 
     def allOutput = {
       table_info.get.flatMap { case (_, metaTable) =>
-        metaTable.columns.map(column => SuggestItem(column.name)).toList
+        metaTable.columns.map(column => SuggestItem(column.name, metaTable, Map())).toList
       }.toList
     }
 
@@ -76,7 +78,7 @@ trait StatementUtils {
       table_info.get.filter { case (key, value) =>
         key.aliasName.isDefined && key.aliasName.get == table
       }.headOption match {
-        case Some(table) => table._2.columns.map(column => SuggestItem(column.name)).toList
+        case Some(table) => table._2.columns.map(column => SuggestItem(column.name, table._2, Map())).toList
         case None => allOutput
       }
     } else allOutput
@@ -84,6 +86,22 @@ trait StatementUtils {
   }
 
   def functionSuggest(): List[SuggestItem] = {
-    List()
+    def allOutput = {
+      MLSQLSQLFunction.funcMetaProvider.list.map(item => SuggestItem(item.key.table, item, Map()))
+    }
+
+    val tempStart = tokenPos.currentOrNext match {
+      case TokenPosType.CURRENT =>
+        tokenPos.pos - 1
+      case TokenPosType.NEXT =>
+        tokenPos.pos
+    }
+
+    // 如果匹配上了，说明是字段，那么就不应该提示函数了
+    val temp = TokenMatcher(tokens, tempStart).back.eat(Food(None, TokenTypeWrapper.DOT), Food(None, SqlBaseLexer.IDENTIFIER)).build
+    if (temp.isSuccess) {
+      List()
+    } else allOutput
+
   }
 }

@@ -25,6 +25,8 @@ class BuildSubQueryTreeTest extends BaseTest {
           MetaTableColumn("av", null, true, Map())
         )))
       }
+
+      override def list: List[MetaTable] = List()
     })
   }
 
@@ -42,7 +44,7 @@ class BuildSubQueryTreeTest extends BaseTest {
       println(s"${ast.name(suggester.tokens)} ${ast.output(suggester.tokens)}")
     }
 
-    assert(suggester.suggest() == List(SuggestItem("keywords")))
+    assert(suggester.suggest().map(_.name) == List("keywords"))
   }
 
   test("subquery  build") {
@@ -59,7 +61,7 @@ class BuildSubQueryTreeTest extends BaseTest {
       println(s"${ast.name(suggester.tokens)} ${ast.output(suggester.tokens)}")
     }
 
-    assert(suggester.suggest() == List(SuggestItem("keywords")))
+    assert(suggester.suggest().map(_.name) == List("keywords"))
   }
 
   test("subquery  build without prefix") {
@@ -96,5 +98,5 @@ class BuildSubQueryTreeTest extends BaseTest {
 
   }
 
-  
+
 }

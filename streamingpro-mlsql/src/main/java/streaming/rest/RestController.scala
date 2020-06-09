@@ -124,7 +124,10 @@ class RestController extends ApplicationController with WowLog {
                 skipGrammarValidate = paramAsBoolean("skipGrammarValidate", true))
 
               outputResult = getScriptResult(context, sparkSession)
-              htp.post(new Url(param("callback")), Map("stat" -> s"""succeeded""", "res" -> outputResult))
+              htp.post(new Url(param("callback")),
+                Map("stat" -> s"""succeeded""",
+                  "res" -> outputResult,
+                  "jobInfo" -> jobInfo))
             } catch {
               case e: Exception =>
                 e.printStackTrace()
@@ -132,7 +135,11 @@ class RestController extends ApplicationController with WowLog {
                 if (paramAsBoolean("show_stack", false)) {
                   format_full_exception(msgBuffer, e)
                 }
-                htp.post(new Url(param("callback")), Map("stat" -> s"""failed""", "msg" -> (e.getMessage + "\n" + msgBuffer.mkString("\n"))))
+                htp.post(new Url(param("callback")),
+                  Map("stat" -> s"""failed""",
+                    "msg" -> (e.getMessage + "\n" + msgBuffer.mkString("\n")),
+                    "jobInfo" -> jobInfo
+                  ))
             }
           })
         } else {

@@ -3,7 +3,7 @@ package tech.mlsql.autosuggest.statement
 import org.antlr.v4.runtime.Token
 import streaming.core.datasource.{DataSourceRegistry, MLSQLSourceInfo}
 import streaming.dsl.parser.DSLSQLLexer
-import tech.mlsql.autosuggest.{AutoSuggestContext, TokenPos, TokenPosType}
+import tech.mlsql.autosuggest.{AutoSuggestContext, TableConst, TokenPos, TokenPosType}
 
 import scala.collection.mutable
 
@@ -57,7 +57,7 @@ class LoadSuggester(context: AutoSuggestContext, tokens: List[Token], tokenPos: 
         "parquet", "csv", "jsonStr", "csvStr", "json", "text", "orc", "kafka", "kafka8", "kafka9", "crawlersql", "image",
         "script", "hive", "xml", "mlsqlAPI", "mlsqlConf"
       )).toList
-      LexerUtils.filterPrefixIfNeeded(sources.map(SuggestItem(_)), tokens, tokenPos)
+      LexerUtils.filterPrefixIfNeeded(sources.map(SuggestItem(_, TableConst.DATA_SOURCE_TABLE, Map())), tokens, tokenPos)
 
     }
 
@@ -75,7 +75,7 @@ class LoadSuggester(context: AutoSuggestContext, tokens: List[Token], tokenPos: 
         case Some(ds) => ds.asInstanceOf[MLSQLSourceInfo].explainParams(context.session).collect().map(_.getString(0)).toList
         case None => List()
       }
-      LexerUtils.filterPrefixIfNeeded(datasources.map(SuggestItem(_)), tokens, tokenPos)
+      LexerUtils.filterPrefixIfNeeded(datasources.map(SuggestItem(_, TableConst.OPTION_TABLE, Map())), tokens, tokenPos)
 
     }
 

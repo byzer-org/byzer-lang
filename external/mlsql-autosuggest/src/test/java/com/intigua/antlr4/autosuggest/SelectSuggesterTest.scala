@@ -1,15 +1,20 @@
 package com.intigua.antlr4.autosuggest
 
+import org.scalatest.BeforeAndAfterEach
 import tech.mlsql.autosuggest.meta.{MetaProvider, MetaTable, MetaTableColumn, MetaTableKey}
-import tech.mlsql.autosuggest.statement.{SelectSuggester, SuggestItem}
-import tech.mlsql.autosuggest.{TokenPos, TokenPosType}
+import tech.mlsql.autosuggest.statement.SelectSuggester
+import tech.mlsql.autosuggest.{DataType, MLSQLSQLFunction, TokenPos, TokenPosType}
 
 import scala.collection.JavaConverters._
 
 /**
  * 2/6/2020 WilliamZhu(allwefantasy@gmail.com)
  */
-class SelectSuggesterTest extends BaseTest {
+class SelectSuggesterTest extends BaseTest with BeforeAndAfterEach {
+
+  override def beforeEach(): Unit = {
+    MLSQLSQLFunction.funcMetaProvider.clear
+  }
 
   def buildMetaProvider = {
     context.setMetaProvider(new MetaProvider {
@@ -23,8 +28,13 @@ class SelectSuggesterTest extends BaseTest {
           MetaTableColumn("action_type", null, true, Map()),
           MetaTableColumn("av", null, true, Map())
         )))
+
       }
+
+      override def list: List[MetaTable] = List()
     })
+
+
   }
 
   lazy val wow = context.lexer.tokenizeNonDefaultChannel(
@@ -51,6 +61,8 @@ class SelectSuggesterTest extends BaseTest {
 
     context.setMetaProvider(new MetaProvider {
       override def search(key: MetaTableKey): Option[MetaTable] = None
+
+      override def list: List[MetaTable] = List()
     })
 
 
@@ -85,7 +97,7 @@ class SelectSuggesterTest extends BaseTest {
         |""".stripMargin).tokens.asScala.toList
 
     val suggester = new SelectSuggester(context, wow2, TokenPos(1, TokenPosType.CURRENT, 2))
-    assert(suggester.suggest() == List(SuggestItem("keywords")))
+    assert(suggester.suggest().map(_.name) == List("keywords"))
 
   }
 
@@ -116,7 +128,8 @@ class SelectSuggesterTest extends BaseTest {
     //    wow2.zipWithIndex.foreach{case (token,index)=>
     //    println(s"${index} $token")}
     val suggester = new SelectSuggester(context, wow2, TokenPos(12, TokenPosType.CURRENT, 3))
-    assert(suggester.suggest().distinct == List(SuggestItem("search_num")))
+    assert(suggester.suggest().distinct.map(_.name) == List("search_num", "search_num", "search_num"))
+    suggester.suggest().distinct.foreach(println(_))
 
   }
 
@@ -130,7 +143,7 @@ class SelectSuggesterTest extends BaseTest {
 
     val suggester = new SelectSuggester(context, wow, TokenPos(3, TokenPosType.CURRENT, 1))
 
-    assert(suggester.suggest() == List(SuggestItem("keywords")))
+    assert(suggester.suggest().map(_.name) == List(("keywords")))
   }
 
   test("project: table or attribute") {
@@ -143,14 +156,14 @@ class SelectSuggesterTest extends BaseTest {
 
     val suggester = new SelectSuggester(context, wow, TokenPos(0, TokenPosType.NEXT, 0))
 
-    assert(suggester.suggest() == List(SuggestItem("a"),
-      SuggestItem("no_result_type"),
-      SuggestItem("keywords"),
-      SuggestItem("search_num"),
-      SuggestItem("hp_stat_date"),
-      SuggestItem("action_dt"),
-      SuggestItem("action_type"),
-      SuggestItem("av")))
+    assert(suggester.suggest().map(_.name) == List(("a"),
+      ("no_result_type"),
+      ("keywords"),
+      ("search_num"),
+      ("hp_stat_date"),
+      ("action_dt"),
+      ("action_type"),
+      ("av")))
   }
 
   test("project: complex table attribute ") {
@@ -178,49 +191,57 @@ class SelectSuggesterTest extends BaseTest {
         |""".stripMargin).tokens.asScala.toList
 
     val suggester = new SelectSuggester(context, wow2, TokenPos(0, TokenPosType.NEXT, 0))
-    assert(suggester.suggest() == List(SuggestItem("b"), SuggestItem("keywords"), SuggestItem("search_num"), SuggestItem("rank")))
+    println(suggester.sqlAST.printAsStr(suggester.tokens, 0))
+    suggester.table_info.foreach { case (level, item) =>
+      println(level + ":")
+      println(item.map(_._1).toList)
+    }
+    assert(suggester.suggest().map(_.name) == List(("b"), ("keywords"), ("search_num"), ("rank")))
 
   }
 
   test("project: function suggester") {
 
-    val metas = Map(MetaTableKey(None, Option("jack"), "drugs_bad_case_di") -> Option(MetaTable(MetaTableKey(None, Option("jack"), "drugs_bad_case_di"), List(
-      MetaTableColumn("no_result_type", null, true, Map()),
-      MetaTableColumn("keywords", null, true, Map()),
-      MetaTableColumn("search_num", null, true, Map()),
-      MetaTableColumn("hp_stat_date", null, true, Map()),
-      MetaTableColumn("action_dt", null, true, Map()),
-      MetaTableColumn("action_type", null, true, Map()),
-      MetaTableColumn("av", null, true, Map())
-    ))),
-      MetaTableKey(None, Option("__FUN__"), "split") -> Option(MetaTable(MetaTableKey(None, Option("__FUN__"), "split"), List(
-        MetaTableColumn("__RETURN__", "string", true, Map()) // return value
+    val func = MLSQLSQLFunction.apply("split").
+      funcParam.
+      param("str", DataType.STRING).
+      param("splitter", DataType.STRING).
+      func.
+      returnParam(DataType.ARRAY, true, Map()).
+      build
+    MLSQLSQLFunction.funcMetaProvider.register(func)
+
+    val tableKey = MetaTableKey(None, Option("jack"), "drugs_bad_case_di")
+
+    val metas = Map(tableKey ->
+      Option(MetaTable(tableKey, List(
+        MetaTableColumn("no_result_type", null, true, Map()),
+        MetaTableColumn("keywords", null, true, Map()),
+        MetaTableColumn("search_num", null, true, Map()),
+        MetaTableColumn("hp_stat_date", null, true, Map()),
+        MetaTableColumn("action_dt", null, true, Map()),
+        MetaTableColumn("action_type", null, true, Map()),
+        MetaTableColumn("av", null, true, Map())
       )))
 
     )
     context.setMetaProvider(new MetaProvider {
       override def search(key: MetaTableKey): Option[MetaTable] = {
         metas(key)
-
       }
+
+      override def list: List[MetaTable] = List()
     })
 
 
     lazy val wow = context.lexer.tokenizeNonDefaultChannel(
       """
-        |select  from jack.drugs_bad_case_di as a
+        |select spl  from jack.drugs_bad_case_di as a
         |""".stripMargin).tokens.asScala.toList
 
-    val suggester = new SelectSuggester(context, wow, TokenPos(0, TokenPosType.NEXT, 0))
-
-    assert(suggester.suggest() == List(SuggestItem("a"),
-      SuggestItem("no_result_type"),
-      SuggestItem("keywords"),
-      SuggestItem("search_num"),
-      SuggestItem("hp_stat_date"),
-      SuggestItem("action_dt"),
-      SuggestItem("action_type"),
-      SuggestItem("av")))
+    val suggester = new SelectSuggester(context, wow, TokenPos(1, TokenPosType.CURRENT, 3))
+    println(suggester.suggest())
+    assert(suggester.suggest().map(_.name) == List(("split")))
   }
 
 

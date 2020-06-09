@@ -4,7 +4,7 @@ import org.antlr.v4.runtime.Token
 import org.scalatest.BeforeAndAfterEach
 import tech.mlsql.autosuggest.meta.{MetaProvider, MetaTable, MetaTableColumn, MetaTableKey}
 import tech.mlsql.autosuggest.statement.{LexerUtils, SuggestItem}
-import tech.mlsql.autosuggest.{DataType, TokenPos, TokenPosType}
+import tech.mlsql.autosuggest.{DataType, TableConst, TokenPos, TokenPosType}
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable.ArrayBuffer
@@ -77,7 +77,7 @@ class AutoSuggestContextTest extends BaseTest with BeforeAndAfterEach {
     context.build(wow)
     val tokenPos = LexerUtils.toTokenPos(wow, 3, 4)
     assert(tokenPos == TokenPos(0, TokenPosType.CURRENT, 3))
-    assert(context.suggest(tokenPos)(0) == SuggestItem("load"))
+    assert(context.suggest(tokenPos) == List(SuggestItem("load", TableConst.KEY_WORD_TABLE, Map())))
   }
 
   test("spark sql") {
@@ -97,7 +97,7 @@ class AutoSuggestContextTest extends BaseTest with BeforeAndAfterEach {
         | select ke from (select keywords,search_num,c from table1) table2
         |""".stripMargin).tokens.asScala.toList
     val items = context.build(wow).suggest(LexerUtils.toTokenPos(wow, 4, 10))
-    assert(items == List(SuggestItem("keywords")))
+    assert(items.map(_.name) == List("keywords"))
   }
 
   test("load/select 4/22 select  from (select [cursor]keywords") {
@@ -114,6 +114,8 @@ class AutoSuggestContextTest extends BaseTest with BeforeAndAfterEach {
         ))
         value
       }
+
+      override def list: List[MetaTable] = List()
     })
     val wow = context.lexer.tokenizeNonDefaultChannel(
       """
@@ -122,12 +124,7 @@ class AutoSuggestContextTest extends BaseTest with BeforeAndAfterEach {
         | select  from (select keywords,search_num,c from table1) table2
         |""".stripMargin).tokens.asScala.toList
     val items = context.build(wow).suggest(LexerUtils.toTokenPos(wow, 4, 22))
-    assert(items == List(
-      SuggestItem("table2"),
-      SuggestItem("table1"),
-      SuggestItem("keywords"),
-      SuggestItem("search_num"),
-      SuggestItem("c"), SuggestItem("d")))
+    assert(items.map(_.name) == List("table1", "table2", "keywords", "search_num", "c", "keywords", "search_num", "c", "d"))
 
   }
 }

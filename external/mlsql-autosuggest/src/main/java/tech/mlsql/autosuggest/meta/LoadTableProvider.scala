@@ -14,4 +14,6 @@ class LoadTableProvider extends MetaProvider {
     cache += (name -> metaTable)
     this
   }
+
+  override def list: List[MetaTable] = cache.values.toList
 }

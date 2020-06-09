@@ -89,7 +89,8 @@ object PluginHook extends Logging {
   private val apps = List(
     "tech.mlsql.plugins.app.pythoncontroller.PythonApp",
     "tech.mlsql.plugins.mlsql_watcher.MLSQLWatcher",
-    "tech.mlsql.plugins.sql.profiler.ProfilerApp"
+    "tech.mlsql.plugins.sql.profiler.ProfilerApp",
+    "tech.mlsql.autosuggest.app.MLSQLAutoSuggestApp"
   )
 
   def startBuildIn(): Unit = {

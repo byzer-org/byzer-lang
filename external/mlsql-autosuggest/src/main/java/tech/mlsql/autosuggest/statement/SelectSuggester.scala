@@ -78,7 +78,7 @@ class SelectSuggester(val context: AutoSuggestContext, val _tokens: List[Token],
       }
     }
     if (instance == null) List()
-    else instance.suggest().distinct
+    else instance.suggest()
 
   }
 
