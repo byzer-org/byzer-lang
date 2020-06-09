@@ -11,10 +11,7 @@
 
 
     <modelVersion>4.0.0</modelVersion>
-
-    <groupId>tech.mlsql</groupId>
     <artifactId>mlsql-autosuggest-${spark.bigversion}_${scala.binary.version}</artifactId>
-    <version>${project.version}</version>
 
     <dependencies>
 
