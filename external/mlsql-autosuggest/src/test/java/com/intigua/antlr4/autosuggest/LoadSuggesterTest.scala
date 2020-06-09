@@ -1,7 +1,7 @@
 package com.intigua.antlr4.autosuggest
 
-import tech.mlsql.atuosuggest.statement.{LoadSuggester, SuggestItem}
-import tech.mlsql.atuosuggest.{TokenPos, TokenPosType}
+import tech.mlsql.autosuggest.statement.{LoadSuggester, SuggestItem}
+import tech.mlsql.autosuggest.{TokenPos, TokenPosType}
 
 import scala.collection.JavaConverters._
 

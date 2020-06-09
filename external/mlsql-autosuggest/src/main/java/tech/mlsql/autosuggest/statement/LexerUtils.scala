@@ -1,9 +1,9 @@
-package tech.mlsql.atuosuggest.statement
+package tech.mlsql.autosuggest.statement
 
 import org.antlr.v4.runtime.Token
 import org.antlr.v4.runtime.misc.Interval
 import streaming.dsl.parser.DSLSQLLexer
-import tech.mlsql.atuosuggest.{AutoSuggestContext, TokenPos, TokenPosType}
+import tech.mlsql.autosuggest.{AutoSuggestContext, TokenPos, TokenPosType}
 
 import scala.collection.JavaConverters._
 
@@ -29,10 +29,13 @@ object LexerUtils {
     } else candidates
   }
 
-
-  // line index should start with 1
-  // column index also should start with 1
-  // token index from 0
+  /**
+   *
+   * @param tokens
+   * @param lineNum  行号，从1开始计数
+   * @param colNum   列号，从1开始计数
+   * @return TokenPos 中的pos则是从0开始计数
+   */
   def toTokenPos(tokens: List[Token], lineNum: Int, colNum: Int): TokenPos = {
     /**
      * load hi[cursor]...   in token

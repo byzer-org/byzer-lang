@@ -1,4 +1,4 @@
-package tech.mlsql.atuosuggest.meta
+package tech.mlsql.autosuggest.meta
 
 
 /**

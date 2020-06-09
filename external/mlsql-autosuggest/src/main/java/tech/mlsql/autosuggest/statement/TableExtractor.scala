@@ -1,10 +1,10 @@
-package tech.mlsql.atuosuggest.statement
+package tech.mlsql.autosuggest.statement
 
 import org.antlr.v4.runtime.Token
 import org.apache.spark.sql.catalyst.parser.SqlBaseLexer
-import tech.mlsql.atuosuggest.AutoSuggestContext
-import tech.mlsql.atuosuggest.dsl.{Food, TokenMatcher, TokenTypeWrapper}
-import tech.mlsql.atuosuggest.meta.MetaTableKey
+import tech.mlsql.autosuggest.AutoSuggestContext
+import tech.mlsql.autosuggest.dsl.{Food, TokenMatcher, TokenTypeWrapper}
+import tech.mlsql.autosuggest.meta.MetaTableKey
 
 import scala.collection.mutable.ArrayBuffer
 

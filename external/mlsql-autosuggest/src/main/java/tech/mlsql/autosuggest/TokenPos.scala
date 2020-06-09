@@ -1,4 +1,4 @@
-package tech.mlsql.atuosuggest
+package tech.mlsql.autosuggest
 
 /**
  * TokenPos  mark the cursor position

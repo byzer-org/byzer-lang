@@ -1,4 +1,4 @@
-package tech.mlsql.atuosuggest.meta
+package tech.mlsql.autosuggest.meta
 
 /**
  * 3/6/2020 WilliamZhu(allwefantasy@gmail.com)

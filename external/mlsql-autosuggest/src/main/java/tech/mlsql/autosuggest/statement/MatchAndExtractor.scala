@@ -1,6 +1,6 @@
-package tech.mlsql.atuosuggest.statement
+package tech.mlsql.autosuggest.statement
 
-import tech.mlsql.atuosuggest.dsl.TokenMatcher
+import tech.mlsql.autosuggest.dsl.TokenMatcher
 
 /**
  * 4/6/2020 WilliamZhu(allwefantasy@gmail.com)

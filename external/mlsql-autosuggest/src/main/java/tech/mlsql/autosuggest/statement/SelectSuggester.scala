@@ -1,11 +1,11 @@
-package tech.mlsql.atuosuggest.statement
+package tech.mlsql.autosuggest.statement
 
 import org.antlr.v4.runtime.Token
 import org.apache.spark.sql.catalyst.parser.SqlBaseLexer
 import streaming.dsl.parser.DSLSQLLexer
-import tech.mlsql.atuosuggest.dsl.{Food, TokenMatcher}
-import tech.mlsql.atuosuggest.meta.{MetaTable, MetaTableColumn, MetaTableKey}
-import tech.mlsql.atuosuggest.{AutoSuggestContext, TokenPos}
+import tech.mlsql.autosuggest.dsl.{Food, TokenMatcher}
+import tech.mlsql.autosuggest.meta.{MetaTable, MetaTableColumn, MetaTableKey}
+import tech.mlsql.autosuggest.{AutoSuggestContext, TokenPos}
 
 import scala.collection.mutable
 
@@ -78,7 +78,7 @@ class SelectSuggester(val context: AutoSuggestContext, val _tokens: List[Token],
       }
     }
     if (instance == null) List()
-    else instance.suggest()
+    else instance.suggest().distinct
 
   }
 
@@ -102,18 +102,17 @@ class ProjectSuggester(_selectSuggester: SelectSuggester) extends StatementSugge
   override def name: String = "project"
 
   override def isMatch(): Boolean = {
-    // find subquery
-    var targetAst: SingleStatementAST = null
-    selectSuggester.sqlAST.visitUp(0) { case (ast, level) =>
-      if (targetAst == null && (ast.start <= tokenPos.pos && tokenPos.pos < ast.stop)) {
-        val fromPos = TokenMatcher(tokens, ast.start).index(Array(Food(None, SqlBaseLexer.FROM)))
-        if (fromPos < ast.stop && tokenPos.pos < fromPos) {
-          targetAst = ast
-        }
+    /**
+     *  0. 找到子句（自下而上遍历）
+     *  1. 在子句里找到from所在的位置，对比是不是在from前面
+     *  2. 如果没有找到from （可能用户还没来得及写from）,则认为就是在select语句里
+     */
+    val ast = getASTFromTokenPos
+    if (ast.isEmpty) return false
+    val fromPos = TokenMatcher(tokens, ast.get.start).index(Array(Food(None, SqlBaseLexer.FROM)))
+    if (fromPos == -1) return true
+    fromPos < ast.get.stop && tokenPos.pos < fromPos
 
-      }
-    }
-    targetAst != null
   }
 
   override def suggest(): List[SuggestItem] = {
@@ -123,17 +122,7 @@ class ProjectSuggester(_selectSuggester: SelectSuggester) extends StatementSugge
   override def register(clzz: Class[_ <: StatementSuggester]): SuggesterRegister = ???
 }
 
-class FromSuggester
 
-class GroupSuggester
-
-class HavingSuggester
-
-class SubQuerySuggester
-
-class JoinSuggester
-
-class FunctionSuggester
 
 
 

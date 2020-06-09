@@ -1,8 +1,8 @@
 package com.intigua.antlr4.autosuggest
 
-import tech.mlsql.atuosuggest.meta.{MetaProvider, MetaTable, MetaTableColumn, MetaTableKey}
-import tech.mlsql.atuosuggest.statement.{MetaTableKeyWrapper, SelectSuggester, SuggestItem}
-import tech.mlsql.atuosuggest.{TokenPos, TokenPosType}
+import tech.mlsql.autosuggest.meta.{MetaProvider, MetaTable, MetaTableColumn, MetaTableKey}
+import tech.mlsql.autosuggest.statement.{MetaTableKeyWrapper, SelectSuggester, SuggestItem}
+import tech.mlsql.autosuggest.{TokenPos, TokenPosType}
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable.ArrayBuffer

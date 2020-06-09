@@ -1,7 +1,7 @@
 package com.intigua.antlr4.autosuggest
 
-import tech.mlsql.atuosuggest.statement.LexerUtils
-import tech.mlsql.atuosuggest.{TokenPos, TokenPosType}
+import tech.mlsql.autosuggest.statement.LexerUtils
+import tech.mlsql.autosuggest.{TokenPos, TokenPosType}
 
 /**
  * 2/6/2020 WilliamZhu(allwefantasy@gmail.com)

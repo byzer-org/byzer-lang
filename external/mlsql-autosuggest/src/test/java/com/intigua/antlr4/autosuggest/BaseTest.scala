@@ -5,7 +5,7 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.parser.{SqlBaseLexer, SqlBaseParser}
 import org.scalatest.{BeforeAndAfterAll, FunSuite}
 import streaming.dsl.parser.{DSLSQLLexer, DSLSQLParser}
-import tech.mlsql.atuosuggest.AutoSuggestContext
+import tech.mlsql.autosuggest.AutoSuggestContext
 
 import scala.collection.JavaConverters._
 

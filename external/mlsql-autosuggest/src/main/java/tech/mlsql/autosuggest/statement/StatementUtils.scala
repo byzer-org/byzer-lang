@@ -1,9 +1,9 @@
-package tech.mlsql.atuosuggest.statement
+package tech.mlsql.autosuggest.statement
 
 import org.antlr.v4.runtime.Token
 import org.apache.spark.sql.catalyst.parser.SqlBaseLexer
-import tech.mlsql.atuosuggest.dsl.{Food, TokenMatcher, TokenTypeWrapper}
-import tech.mlsql.atuosuggest.{TokenPos, TokenPosType}
+import tech.mlsql.autosuggest.dsl.{Food, TokenMatcher, TokenTypeWrapper}
+import tech.mlsql.autosuggest.{TokenPos, TokenPosType}
 
 /**
  * 8/6/2020 WilliamZhu(allwefantasy@gmail.com)
@@ -16,7 +16,7 @@ trait StatementUtils {
   def tokens: List[Token]
 
 
-  def level = {
+  def levelFromTokenPos = {
     var targetLevel = 0
     selectSuggester.sqlAST.visitDown(0) { case (ast, _level) =>
       if (tokenPos.pos >= ast.start && tokenPos.pos < ast.stop) targetLevel = _level
@@ -24,11 +24,25 @@ trait StatementUtils {
     targetLevel
   }
 
+  def getASTFromTokenPos: Option[SingleStatementAST] = {
+    var targetAst: Option[SingleStatementAST] = None
+    selectSuggester.sqlAST.visitUp(0) { case (ast, level) =>
+      if (targetAst == None && (ast.start <= tokenPos.pos && tokenPos.pos < ast.stop)) {
+        targetAst = Option(ast)
+      }
+    }
+    targetAst
+  }
+
   def table_info = {
-    val _level = if (
-      (selectSuggester.table_info.size == 1 && level == 0) ||
-        level == selectSuggester.table_info.size - 1
-    ) 0 else level + 1
+    var _level = levelFromTokenPos+1
+    if(selectSuggester.table_info.size == 1 && levelFromTokenPos == 0){
+      _level = 0
+    }
+
+    if(levelFromTokenPos == selectSuggester.table_info.size - 1){
+      _level = levelFromTokenPos
+    }
     selectSuggester.table_info.get(_level)
   }
 

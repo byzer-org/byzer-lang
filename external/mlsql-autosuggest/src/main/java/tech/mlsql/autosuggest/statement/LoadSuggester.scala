@@ -1,9 +1,9 @@
-package tech.mlsql.atuosuggest.statement
+package tech.mlsql.autosuggest.statement
 
 import org.antlr.v4.runtime.Token
 import streaming.core.datasource.{DataSourceRegistry, MLSQLSourceInfo}
 import streaming.dsl.parser.DSLSQLLexer
-import tech.mlsql.atuosuggest.{AutoSuggestContext, TokenPos, TokenPosType}
+import tech.mlsql.autosuggest.{AutoSuggestContext, TokenPos, TokenPosType}
 
 import scala.collection.mutable
 

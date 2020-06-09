@@ -1,4 +1,4 @@
-package tech.mlsql.atuosuggest.dsl
+package tech.mlsql.autosuggest.dsl
 
 import org.antlr.v4.runtime.Token
 import org.apache.spark.sql.catalyst.parser.SqlBaseLexer

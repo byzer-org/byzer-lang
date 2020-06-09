@@ -1,12 +1,12 @@
-package tech.mlsql.atuosuggest
+package tech.mlsql.autosuggest
 
 import com.intigua.antlr4.autosuggest.LexerWrapper
 import org.antlr.v4.runtime.misc.Interval
 import org.antlr.v4.runtime.{CharStream, CodePointCharStream, IntStream, Token}
 import org.apache.spark.sql.SparkSession
 import streaming.dsl.parser.DSLSQLLexer
-import tech.mlsql.atuosuggest.meta.{LoadTableProvider, MetaProvider, MetaTable, MetaTableKey}
-import tech.mlsql.atuosuggest.statement.LoadSuggester
+import tech.mlsql.autosuggest.meta.{LoadTableProvider, MetaProvider, MetaTable, MetaTableKey}
+import tech.mlsql.autosuggest.statement.{LoadSuggester, SelectSuggester, SuggestItem}
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
@@ -78,12 +78,15 @@ class AutoSuggestContext(val session: SparkSession,
       case Some("load") =>
         val suggester = new LoadSuggester(this, statements(index), relativeTokenPos)
         suggester.suggest()
-      case Some(value) => firstWords.filter(_.startsWith(value))
+      case Some("select") =>
+        val suggester = new SelectSuggester(this, statements(index), relativeTokenPos)
+        suggester.suggest()
+      case Some(value) => firstWords.filter(_.name.startsWith(value))
       case None => firstWords
     }
   }
 
-  private val firstWords = List("load", "select", "include", "register", "run", "train", "save", "set")
+  private val firstWords = List("load", "select", "include", "register", "run", "train", "save", "set").map(SuggestItem(_)).toList
 
 
 }
