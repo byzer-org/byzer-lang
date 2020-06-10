@@ -13,18 +13,22 @@ MLSQL智能补全功能现阶段是作为MLSQL的一个插件的形式提供的�
 2. 表/字段属性/函数补全
 3. 可二次开发自定义对接任何Schema Provider
 
-第二个是MLSQL语法补全：
+第二个是MLSQL语法补全(依托于标准SQL的补全功能之上)：
 
 1. 支持各种数据源提示
-2. 支持临时表提示
+2. 支持临时表提示（临时表字段补全等等）
 3. 支持各种ET组件参数提示以及名称提示
 
-对于表和字段补，函数补全，相比其他一些SQL代码提示工具，该插件可根据当前已有的信息精确推断。比如：
+对于表和字段补，函数补全，相比其他一些SQL代码提示工具，该插件可根据当前已有的信息精确推断。
+
+## 效果展示
+
+### 标准的SQL语法提示
 
 ```sql
 select  no_result_type, keywords, search_num, rank
 from(
-  select  [CURSOR is HERE] row_number() over (PARTITION BY no_result_type order by search_num desc) as rank
+  select  [CURSOR位置] row_number() over (PARTITION BY no_result_type order by search_num desc) as rank
   from(
     select jack1.*,no_result_type, keywords, sum(search_num) AS search_num
     from jack.drugs_bad_case_di as jack1,jack.abc jack2
@@ -47,7 +51,26 @@ where rank <=
 4. keywords
 5. search_num
 
-如果有接口提供schema信息，会自动展开*，并且获取相关层级的信息从而非常精准的进行提示。同时，如果有shcema信息，对每个字段也支持类型提示。插件提供了非常友好和简单的接口方便用户接入自己的元数据。
+
+### 多行MLSQL的提示
+
+```sql
+load hive.`db.table1` as table2;
+select * from table2 as table3;
+select [鼠标位置] from table3 
+```
+
+假设db.table1 表的字段为a,b,c,d
+其中鼠标在低二行第七列，在此位置，会提示：
+
+1. table3
+2. a
+3. b
+4. c
+5. d
+
+可以看到，系统具有非常强的跨语句能力，会自动展开*，并且推测出每个表的schema信息从而进行补全。
+
 
 ## 用户指南
 
@@ -93,7 +116,7 @@ object Test {
 ```
 可以知道提示了split,并且这是一个函数，函数的参数以及返回值都有定义。
 
-### 编程开发
+### 编程使用
 
 首先初始化两个此法分析器：
 
@@ -125,6 +148,53 @@ val tokenPos = LexerUtils.toTokenPos(sqlTokens, lineNum, columnNum)
 JSONTool.toJsonStr(context.build(sqlTokens).suggest(tokenPos))
 ```
 
+### 对接自己公司的Schema信息
+用户只需要实现一个自定义的MetaProvider，就可以充分利用自己的schema系统
+
+```scala
+trait MetaProvider {
+  def search(key: MetaTableKey): Option[MetaTable]
+
+  def list: List[MetaTable]
+}
+```
+
+使用时，在AutoSuggestContext设置下使其生效：
+
+```
+context.setUserDefinedMetaProvider(有的实现类的实例)
+```
+
+MetaTableKey 的定义如下：
+
+```scala
+case class MetaTableKey(prefix: Option[String], db: Option[String], table: String)
+```
+
+prefix是方便定义数据源的。比如同样一个表，可能是hive表，也可能是mysql表。如果你只有一个数仓，不访问其他数据源，那么设置为None就好。对于下面的句子：
+
+```sql
+load hive.`db.table1` as table2;
+```
+【MLSQL Code Intelligence】 会发送如下的MetaTableKey给你的MetaProvider.search方法：
+
+```scala
+MetaTableKey(Option(hive),Option("db"),Option("table2"))
+```
+
+如果是一个普通的SQL语句，而非MLSQL 语句，比如：
+
+```sql
+select * from db.table1
+```
+
+则发送给MetaProvider.search方法的MetaTableKey是这个样子的：
+
+```scala
+MetaTableKey(None,Option("db"),Option("table2"))
+```
+
+
 
 ## 开发者指南
 
@@ -146,23 +216,6 @@ JSONTool.toJsonStr(context.build(sqlTokens).suggest(tokenPos))
 
 在AST树种，每个子语句都可以是不完整的。由上面流程可知，我们会以statement为粗粒度工作context,然后对于复杂的select语句，最后我们会进一步细化到每个子查询为工作context。这样为我们编码带来了非常大的便利。
 
-### TokenMatcher工具类
-
-在【MLSQL Code Intelligence】中，最主要的工作是做token匹配。我们提供了TokenMatcher来完成token的匹配。TokenMatcher支持前向和后向匹配。如下token序列:
-
-```
-select a , b , c from jack
-```
-
-假设我想以token index 3(b) 为起始点，前向匹配一个逗号，identify 可以使用如下语法：
-
-```scala
-val tokenMatcher = TokenMatcher(tokens,4).forward.eat(Food(None, TokenTypeWrapper.DOT), Food(None, SqlBaseLexer.IDENTIFIER)).build
-```
-
-接着你可以调用 tokenMatcher.isSuccess来判断是否匹配成功，可以调用tokenMatcher.get 获取匹配得到匹配成功后的index,通过tokenMatcher.getMatchTokens 获取匹配成功的token集合。
-
-注意，TokenMatcher起始位置是包含的，也就是他会将起始位置的token也加入到匹配token里去。所以在上面的例子中，start 是4而不是3. 更多例子可以查看源码。
 
 ### 快速参与贡献该项目
 【MLSQL Code Intelligence】 需要大量函数的定义，方便在用户使用时给予提示。下面是我实现的`split` 函数的代码：
@@ -192,6 +245,23 @@ class Splitter extends FuncReg {
 用户只要用FunctionBuilder去构建函数签名即可。这样用户在使用该函数的时候就能得到非常详尽的使用说明和参数说明。同时，我们也可以通过该函数签名获取嵌套函数处理后的字段的类型信息。
 
 用户只要按上面的方式添加更多函数到tech.mlsql.autosuggest.funcs包下即可。系统会自动扫描该包里的实现并且注册。
+### TokenMatcher工具类
+
+在【MLSQL Code Intelligence】中，最主要的工作是做token匹配。我们提供了TokenMatcher来完成token的匹配。TokenMatcher支持前向和后向匹配。如下token序列:
+
+```
+select a , b , c from jack
+```
+
+假设我想以token index 3(b) 为起始点，前向匹配一个逗号，identify 可以使用如下语法：
+
+```scala
+val tokenMatcher = TokenMatcher(tokens,4).forward.eat(Food(None, TokenTypeWrapper.DOT), Food(None, SqlBaseLexer.IDENTIFIER)).build
+```
+
+接着你可以调用 tokenMatcher.isSuccess来判断是否匹配成功，可以调用tokenMatcher.get 获取匹配得到匹配成功后的index,通过tokenMatcher.getMatchTokens 获取匹配成功的token集合。
+
+注意，TokenMatcher起始位置是包含的，也就是他会将起始位置的token也加入到匹配token里去。所以在上面的例子中，start 是4而不是3. 更多例子可以查看源码。
 
 ### 子查询层级结构
 

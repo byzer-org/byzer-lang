@@ -3,7 +3,7 @@ package tech.mlsql.autosuggest.meta
 /**
  * 3/6/2020 WilliamZhu(allwefantasy@gmail.com)
  */
-class LoadTableProvider extends MetaProvider {
+class StatementTempTableProvider extends MetaProvider {
   private val cache = scala.collection.mutable.HashMap[String, MetaTable]()
 
   override def search(key: MetaTableKey): Option[MetaTable] = {

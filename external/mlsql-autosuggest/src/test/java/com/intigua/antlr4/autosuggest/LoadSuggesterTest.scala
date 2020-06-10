@@ -1,6 +1,6 @@
 package com.intigua.antlr4.autosuggest
 
-import tech.mlsql.autosuggest.statement.{LoadSuggester, SuggestItem}
+import tech.mlsql.autosuggest.statement.LoadSuggester
 import tech.mlsql.autosuggest.{TokenPos, TokenPosType}
 
 import scala.collection.JavaConverters._
@@ -28,6 +28,17 @@ class LoadSuggesterTest extends BaseTest {
     val loadSuggester = new LoadSuggester(context, wow, TokenPos(0, TokenPosType.NEXT, 0)).suggest()
     println(loadSuggester)
     assert(loadSuggester.size > 1)
+  }
+
+  test("load csv.`` where [cursor]") {
+    val wow = context.lexer.tokenizeNonDefaultChannel(
+      """
+        | -- yes
+        | load csv.`` where
+        |""".stripMargin).tokens.asScala.toList
+    val result = new LoadSuggester(context, wow, TokenPos(4, TokenPosType.NEXT, 0)).suggest()
+    println(result)
+
   }
 
 

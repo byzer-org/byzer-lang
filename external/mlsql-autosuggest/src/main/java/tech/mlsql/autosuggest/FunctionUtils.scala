@@ -5,18 +5,6 @@ import tech.mlsql.autosuggest.meta.{MetaProvider, MetaTable, MetaTableColumn, Me
 
 import scala.collection.mutable.ArrayBuffer
 
-object TableConst {
-  val KEY_WORD = "__KEY__WORD__"
-  val DATA_SOURCE_KEY = "__DATA__SOURCE__"
-  val OPTION_KEY = "__OPTION__"
-
-  def KEY_WORD_TABLE = MetaTable(MetaTableKey(None, None, TableConst.KEY_WORD), List())
-
-  def DATA_SOURCE_TABLE = MetaTable(MetaTableKey(None, None, TableConst.DATA_SOURCE_KEY), List())
-
-  def OPTION_TABLE = MetaTable(MetaTableKey(None, None, TableConst.OPTION_KEY), List())
-}
-
 
 object MLSQLSQLFunction {
   val DB_KEY = "__FUNC__"

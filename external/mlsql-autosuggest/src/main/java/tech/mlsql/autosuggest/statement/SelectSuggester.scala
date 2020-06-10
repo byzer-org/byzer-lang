@@ -16,6 +16,11 @@ class SelectSuggester(val context: AutoSuggestContext, val _tokens: List[Token],
 
   private val subInstances = new mutable.HashMap[String, StatementSuggester]()
   register(classOf[ProjectSuggester])
+  register(classOf[FromSuggester])
+  register(classOf[FilterSuggester])
+  register(classOf[JoinSuggester])
+  register(classOf[JoinOnSuggester])
+  register(classOf[OrderSuggester])
 
   override def name: String = "select"
 
@@ -45,7 +50,7 @@ class SelectSuggester(val context: AutoSuggestContext, val _tokens: List[Token],
         TABLE_INFO.put(level, new mutable.HashMap[MetaTableKeyWrapper, MetaTable]())
       }
       if (ast.isLeaf) {
-        ast.tables(newTokens).map { item =>
+        ast.tables(newTokens).foreach { item =>
           context.metaProvider.search(item.metaTableKey) match {
             case Some(res) =>
               TABLE_INFO(level) += (item -> res)
@@ -90,7 +95,7 @@ class SelectSuggester(val context: AutoSuggestContext, val _tokens: List[Token],
 }
 
 
-class ProjectSuggester(_selectSuggester: SelectSuggester) extends StatementSuggester with StatementUtils with SuggesterRegister {
+class ProjectSuggester(_selectSuggester: SelectSuggester) extends StatementSuggester with SelectStatementUtils with SuggesterRegister {
 
   def tokens = _selectSuggester.tokens
 
@@ -98,20 +103,24 @@ class ProjectSuggester(_selectSuggester: SelectSuggester) extends StatementSugge
 
   def selectSuggester = _selectSuggester
 
+  def backAndFirstIs(t: Int, keywords: List[Int] = TokenMatcher.SQL_SPLITTER_KEY_WORDS): Boolean = {
+    // 能找得到所在的子查询（也可以是最外层）
+    val ast = getASTFromTokenPos
+    if (ast.isEmpty) return false
+
+    // 从光标位置去找第一个核心词
+    val temp = TokenMatcher(tokens, tokenPos.pos).back.orIndex(keywords.map(Food(None, _)).toArray)
+    if (temp == -1) return false
+    //第一个核心词必须是是定的词，并且在子查询里
+    if (tokens(temp).getType == t && temp >= ast.get.start && temp < ast.get.stop) return true
+    return false
+  }
+
 
   override def name: String = "project"
 
   override def isMatch(): Boolean = {
-    /**
-     *  0. 找到子句（自下而上遍历）
-     *  1. 在子句里找到from所在的位置，对比是不是在from前面
-     *  2. 如果没有找到from （可能用户还没来得及写from）,则认为就是在select语句里
-     */
-    val ast = getASTFromTokenPos
-    if (ast.isEmpty) return false
-    val fromPos = TokenMatcher(tokens, ast.get.start).index(Array(Food(None, SqlBaseLexer.FROM)))
-    if (fromPos == -1) return true
-    fromPos < ast.get.stop && tokenPos.pos < fromPos
+    backAndFirstIs(SqlBaseLexer.SELECT)
 
   }
 
@@ -121,6 +130,76 @@ class ProjectSuggester(_selectSuggester: SelectSuggester) extends StatementSugge
 
   override def register(clzz: Class[_ <: StatementSuggester]): SuggesterRegister = ???
 }
+
+class FilterSuggester(_selectSuggester: SelectSuggester) extends ProjectSuggester(_selectSuggester) {
+
+
+  override def name: String = "filter"
+
+  override def isMatch(): Boolean = {
+    backAndFirstIs(SqlBaseLexer.WHERE)
+
+  }
+
+  override def suggest(): List[SuggestItem] = {
+    LexerUtils.filterPrefixIfNeeded(tableSuggest() ++ attributeSuggest() ++ functionSuggest(), tokens, tokenPos)
+  }
+
+  override def register(clzz: Class[_ <: StatementSuggester]): SuggesterRegister = ???
+}
+
+class JoinOnSuggester(_selectSuggester: SelectSuggester) extends ProjectSuggester(_selectSuggester) {
+  override def name: String = "join_on"
+
+  override def isMatch(): Boolean = {
+    backAndFirstIs(SqlBaseLexer.ON)
+  }
+
+  override def suggest(): List[SuggestItem] = {
+    LexerUtils.filterPrefixIfNeeded(tableSuggest() ++ attributeSuggest() ++ functionSuggest(), tokens, tokenPos)
+  }
+}
+
+class JoinSuggester(_selectSuggester: SelectSuggester) extends ProjectSuggester(_selectSuggester) {
+  override def name: String = "join"
+
+  override def isMatch(): Boolean = {
+    backAndFirstIs(SqlBaseLexer.JOIN)
+  }
+
+  override def suggest(): List[SuggestItem] = {
+    LexerUtils.filterPrefixIfNeeded(tableSuggest(), tokens, tokenPos)
+  }
+}
+
+class FromSuggester(_selectSuggester: SelectSuggester) extends ProjectSuggester(_selectSuggester) {
+  override def name: String = "from"
+
+  override def isMatch(): Boolean = {
+    backAndFirstIs(SqlBaseLexer.FROM)
+  }
+
+  override def suggest(): List[SuggestItem] = {
+    LexerUtils.filterPrefixIfNeeded(tableSuggest(), tokens, tokenPos)
+  }
+}
+
+class OrderSuggester(_selectSuggester: SelectSuggester) extends ProjectSuggester(_selectSuggester) {
+  override def name: String = "order"
+
+  override def isMatch(): Boolean = {
+    backAndFirstIs(SqlBaseLexer.FROM)
+  }
+
+  override def suggest(): List[SuggestItem] = {
+    LexerUtils.filterPrefixIfNeeded(attributeSuggest() ++ functionSuggest(), tokens, tokenPos)
+  }
+}
+
+
+
+
+
 
 
 

@@ -4,19 +4,18 @@ import com.intigua.antlr4.autosuggest.LexerWrapper
 import org.antlr.v4.runtime.misc.Interval
 import org.antlr.v4.runtime.{CharStream, CodePointCharStream, IntStream, Token}
 import org.apache.spark.sql.SparkSession
-import streaming.dsl.parser.DSLSQLLexer
-import tech.mlsql.autosuggest.meta.{LoadTableProvider, MetaProvider, MetaTable, MetaTableKey}
-import tech.mlsql.autosuggest.statement.{LoadSuggester, SelectSuggester, SuggestItem}
+import tech.mlsql.autosuggest.meta._
+import tech.mlsql.autosuggest.preprocess.TablePreprocessor
+import tech.mlsql.autosuggest.statement._
 import tech.mlsql.common.utils.reflect.ClassPath
 
-import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
 object AutoSuggestContext {
   var isInit = false
 
   def init: Unit = {
-    val funcRegs = ClassPath.from(classOf[AutoSuggestContext].getClassLoader).getTopLevelClasses("tech.mlsql.autosuggest.funcs").iterator()
+    val funcRegs = ClassPath.from(classOf[AutoSuggestContext].getClassLoader).getTopLevelClasses(POrCLiterals.FUNCTION_PACKAGE).iterator()
     while (funcRegs.hasNext) {
       val wow = funcRegs.next()
       val funcMetaTable = wow.load().newInstance().asInstanceOf[FuncReg].register
@@ -32,44 +31,67 @@ object AutoSuggestContext {
 }
 
 /**
- * 2/6/2020 WilliamZhu(allwefantasy@gmail.com)
+ * 每个请求都需要实例化一个
  */
 class AutoSuggestContext(val session: SparkSession,
                          val lexer: LexerWrapper,
                          val rawSQLLexer: LexerWrapper) {
 
-
-  val statements = ArrayBuffer[List[Token]]()
-  val loadTableProvider: LoadTableProvider = new LoadTableProvider()
-  var metaProvider: MetaProvider = new MetaProvider {
+  private var _rawTokens: List[Token] = List()
+  private var _statements = List[List[Token]]()
+  private val _tempTableProvider: StatementTempTableProvider = new StatementTempTableProvider()
+  private var userDefinedProvider: MetaProvider = new MetaProvider {
     override def search(key: MetaTableKey): Option[MetaTable] = None
 
     override def list: List[MetaTable] = List()
   }
-  val TEMP_TABLES_IN_SCRIPT = new mutable.HashMap[MetaTableKey, MetaTable]()
-  val TEMP_TABLES_IN_CURRENT_SQL = new mutable.HashMap[MetaTableKey, MetaTable]()
+  private var _metaProvider: MetaProvider = new LayeredMetaProvider(tempTableProvider, userDefinedProvider)
 
-  def setMetaProvider(_metaProvider: MetaProvider) = {
-    metaProvider = _metaProvider
+  private val _statementProcessors = ArrayBuffer[PreProcessStatement]()
+  addStatementProcessor(new TablePreprocessor(this))
+
+  private var _statementSplitter: StatementSplitter = new MLSQLStatementSplitter()
+
+  def metaProvider = _metaProvider
+
+  def statements = {
+    _statements
   }
 
-  def build(_tokens: List[Token]): AutoSuggestContext = {
-    val tokens = _tokens.zipWithIndex
-    var start = 0
-    var end = 0
-    tokens.foreach { case (token, index) =>
-      // statement end
-      if (token.getType == DSLSQLLexer.T__1) {
-        end = index
-        statements.append(tokens.filter(p => p._2 >= start && p._2 <= end).map(_._1))
-        start = index + 1
-      }
+  def rawTokens = _rawTokens
 
-    }
-    // clean the last statement without ender
-    val theLeft = tokens.filter(p => p._2 >= start && p._2 <= tokens.size).map(_._1).toList
-    if (theLeft.size > 0) {
-      statements.append(theLeft)
+  def tempTableProvider = {
+    _tempTableProvider
+  }
+
+  def setStatementSplitter(_statementSplitter: StatementSplitter) = {
+    this._statementSplitter = _statementSplitter
+    this
+  }
+
+  def setUserDefinedMetaProvider(_metaProvider: MetaProvider) = {
+    userDefinedProvider = _metaProvider
+    this._metaProvider = new LayeredMetaProvider(tempTableProvider, userDefinedProvider)
+    this
+  }
+
+  def setRootMetaProvider(_metaProvider: MetaProvider) = {
+    this._metaProvider = _metaProvider
+    this
+  }
+
+  def addStatementProcessor(item: PreProcessStatement) = {
+    this._statementProcessors += item
+    this
+  }
+
+
+  def build(_tokens: List[Token]): AutoSuggestContext = {
+    _rawTokens = _tokens
+    _statements = _statementSplitter.split(rawTokens)
+    // preprocess
+    _statementProcessors.foreach { sta =>
+      _statements.foreach(sta.process(_))
     }
     return this
   }
@@ -79,7 +101,7 @@ class AutoSuggestContext(val session: SparkSession,
     var targetIndex = 0
     var targetPos: TokenPos = null
     var targetStaIndex = 0
-    statements.zipWithIndex.foreach { case (sta, index) =>
+    _statements.zipWithIndex.foreach { case (sta, index) =>
       val relativePos = tokenPos.pos - skipSize
       if (relativePos >= 0 && relativePos < sta.size) {
         targetPos = tokenPos.copy(pos = tokenPos.pos - skipSize)
@@ -98,12 +120,12 @@ class AutoSuggestContext(val session: SparkSession,
   def suggest(tokenPos: TokenPos) = {
 
     val (relativeTokenPos, index) = toRelativePos(tokenPos)
-    val items = statements(index).headOption.map(_.getText) match {
+    val items = _statements(index).headOption.map(_.getText) match {
       case Some("load") =>
-        val suggester = new LoadSuggester(this, statements(index), relativeTokenPos)
+        val suggester = new LoadSuggester(this, _statements(index), relativeTokenPos)
         suggester.suggest()
       case Some("select") =>
-        val suggester = new SelectSuggester(this, statements(index), relativeTokenPos)
+        val suggester = new SelectSuggester(this, _statements(index), relativeTokenPos)
         suggester.suggest()
       case Some(value) => firstWords.filter(_.name.startsWith(value))
       case None => firstWords
@@ -111,7 +133,7 @@ class AutoSuggestContext(val session: SparkSession,
     items.distinct
   }
 
-  private val firstWords = List("load", "select", "include", "register", "run", "train", "save", "set").map(SuggestItem(_, TableConst.KEY_WORD_TABLE, Map())).toList
+  private val firstWords = List("load", "select", "include", "register", "run", "train", "save", "set").map(SuggestItem(_, SpecialTableConst.KEY_WORD_TABLE, Map())).toList
 
 
 }
