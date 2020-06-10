@@ -17,7 +17,7 @@ class SelectSuggesterTest extends BaseTest with BeforeAndAfterEach {
   }
 
   def buildMetaProvider = {
-    context.setMetaProvider(new MetaProvider {
+    context.setUserDefinedMetaProvider(new MetaProvider {
       override def search(key: MetaTableKey): Option[MetaTable] = {
         Option(MetaTable(key, List(
           MetaTableColumn("no_result_type", null, true, Map()),
@@ -59,7 +59,7 @@ class SelectSuggesterTest extends BaseTest with BeforeAndAfterEach {
 
   test("select") {
 
-    context.setMetaProvider(new MetaProvider {
+    context.setUserDefinedMetaProvider(new MetaProvider {
       override def search(key: MetaTableKey): Option[MetaTable] = None
 
       override def list: List[MetaTable] = List()
@@ -225,7 +225,7 @@ class SelectSuggesterTest extends BaseTest with BeforeAndAfterEach {
       )))
 
     )
-    context.setMetaProvider(new MetaProvider {
+    context.setUserDefinedMetaProvider(new MetaProvider {
       override def search(key: MetaTableKey): Option[MetaTable] = {
         metas(key)
       }

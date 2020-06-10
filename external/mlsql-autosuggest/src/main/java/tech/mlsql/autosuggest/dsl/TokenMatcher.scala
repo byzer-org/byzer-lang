@@ -2,6 +2,7 @@ package tech.mlsql.autosuggest.dsl
 
 import org.antlr.v4.runtime.Token
 import org.apache.spark.sql.catalyst.parser.SqlBaseLexer
+import streaming.dsl.parser.DSLSQLLexer
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -248,6 +249,10 @@ object TokenTypeWrapper {
   val LEFT_SQUARE_BRACKET = SqlBaseLexer.T__7 //[
   val RIGHT_SQUARE_BRACKET = SqlBaseLexer.T__8 //]
   val COLON = SqlBaseLexer.T__9 //:
+}
+
+object MLSQLTokenTypeWrapper {
+  val DOT = DSLSQLLexer.T__0
 }
 
 object TokenMatcher {

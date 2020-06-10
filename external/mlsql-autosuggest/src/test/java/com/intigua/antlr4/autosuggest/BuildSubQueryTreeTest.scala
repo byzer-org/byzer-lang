@@ -13,7 +13,7 @@ import scala.collection.mutable.ArrayBuffer
 class BuildSubQueryTreeTest extends BaseTest {
 
   def buildMetaProvider = {
-    context.setMetaProvider(new MetaProvider {
+    context.setUserDefinedMetaProvider(new MetaProvider {
       override def search(key: MetaTableKey): Option[MetaTable] = {
         Option(MetaTable(key, List(
           MetaTableColumn("no_result_type", null, true, Map()),

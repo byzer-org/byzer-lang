@@ -95,7 +95,7 @@ class SelectSuggester(val context: AutoSuggestContext, val _tokens: List[Token],
 }
 
 
-class ProjectSuggester(_selectSuggester: SelectSuggester) extends StatementSuggester with StatementUtils with SuggesterRegister {
+class ProjectSuggester(_selectSuggester: SelectSuggester) extends StatementSuggester with SelectStatementUtils with SuggesterRegister {
 
   def tokens = _selectSuggester.tokens
 

@@ -4,7 +4,7 @@ import org.antlr.v4.runtime.Token
 import org.scalatest.BeforeAndAfterEach
 import tech.mlsql.autosuggest.meta.{MetaProvider, MetaTable, MetaTableColumn, MetaTableKey}
 import tech.mlsql.autosuggest.statement.{LexerUtils, SuggestItem}
-import tech.mlsql.autosuggest.{DataType, TableConst, TokenPos, TokenPosType}
+import tech.mlsql.autosuggest.{DataType, SpecialTableConst, TokenPos, TokenPosType}
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable.ArrayBuffer
@@ -15,7 +15,7 @@ import scala.collection.mutable.ArrayBuffer
 class AutoSuggestContextTest extends BaseTest with BeforeAndAfterEach {
 
   override def afterEach(): Unit = {
-    context.statements.clear()
+   // context.statements.clear()
   }
 
   test("parse") {
@@ -44,7 +44,7 @@ class AutoSuggestContextTest extends BaseTest with BeforeAndAfterEach {
     assert(context.statements.size == 2)
   }
 
-  def printStatements(items: ArrayBuffer[List[Token]]) = {
+  def printStatements(items: List[List[Token]]) = {
     items.foreach { item =>
       println(item.map(_.getText).mkString(" "))
       println()
@@ -77,7 +77,7 @@ class AutoSuggestContextTest extends BaseTest with BeforeAndAfterEach {
     context.build(wow)
     val tokenPos = LexerUtils.toTokenPos(wow, 3, 4)
     assert(tokenPos == TokenPos(0, TokenPosType.CURRENT, 3))
-    assert(context.suggest(tokenPos) == List(SuggestItem("load", TableConst.KEY_WORD_TABLE, Map())))
+    assert(context.suggest(tokenPos) == List(SuggestItem("load", SpecialTableConst.KEY_WORD_TABLE, Map())))
   }
 
   test("spark sql") {
@@ -101,7 +101,7 @@ class AutoSuggestContextTest extends BaseTest with BeforeAndAfterEach {
   }
 
   test("load/select 4/22 select  from (select [cursor]keywords") {
-    context.setMetaProvider(new MetaProvider {
+    context.setUserDefinedMetaProvider(new MetaProvider {
       override def search(key: MetaTableKey): Option[MetaTable] = {
         val key = MetaTableKey(None, None, "table1")
         val value = Option(MetaTable(
@@ -124,7 +124,7 @@ class AutoSuggestContextTest extends BaseTest with BeforeAndAfterEach {
         | select  from (select keywords,search_num,c from table1) table2
         |""".stripMargin).tokens.asScala.toList
     val items = context.build(wow).suggest(LexerUtils.toTokenPos(wow, 4, 22))
-    assert(items.map(_.name) == List("table1", "table2", "keywords", "search_num", "c", "keywords", "search_num", "c", "d"))
+    assert(items.map(_.name) == List("table2", "keywords", "search_num", "c"))
 
   }
 }
