@@ -9,6 +9,7 @@ import tech.mlsql.autosuggest.preprocess.TablePreprocessor
 import tech.mlsql.autosuggest.statement._
 import tech.mlsql.common.utils.reflect.ClassPath
 
+import scala.collection.JavaConverters._
 import scala.collection.mutable.ArrayBuffer
 
 object AutoSuggestContext {
@@ -85,6 +86,10 @@ class AutoSuggestContext(val session: SparkSession,
     this
   }
 
+  def buildFromString(str: String): AutoSuggestContext = {
+    build(lexer.tokenizeNonDefaultChannel(str).tokens.asScala.toList)
+    this
+  }
 
   def build(_tokens: List[Token]): AutoSuggestContext = {
     _rawTokens = _tokens
