@@ -7,6 +7,7 @@ import org.apache.spark.sql.SparkSession
 import tech.mlsql.autosuggest.meta._
 import tech.mlsql.autosuggest.preprocess.TablePreprocessor
 import tech.mlsql.autosuggest.statement._
+import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.common.utils.reflect.ClassPath
 
 import scala.collection.JavaConverters._
@@ -36,7 +37,9 @@ object AutoSuggestContext {
  */
 class AutoSuggestContext(val session: SparkSession,
                          val lexer: LexerWrapper,
-                         val rawSQLLexer: LexerWrapper) {
+                         val rawSQLLexer: LexerWrapper) extends Logging {
+
+  private var _debugMode = false
 
   private var _rawTokens: List[Token] = List()
   private var _statements = List[List[Token]]()
@@ -52,6 +55,12 @@ class AutoSuggestContext(val session: SparkSession,
   addStatementProcessor(new TablePreprocessor(this))
 
   private var _statementSplitter: StatementSplitter = new MLSQLStatementSplitter()
+
+  def setDebugMode(isDebug: Boolean) = {
+    this._debugMode = isDebug
+  }
+
+  def isInDebugMode = _debugMode
 
   def metaProvider = _metaProvider
 
@@ -123,8 +132,15 @@ class AutoSuggestContext(val session: SparkSession,
    * We need to convert it to the relative pos in every statement
    */
   def suggest(tokenPos: TokenPos) = {
-
+    if (isInDebugMode) {
+      logInfo("Global Pos::" + tokenPos.str)
+    }
     val (relativeTokenPos, index) = toRelativePos(tokenPos)
+
+    if (isInDebugMode) {
+      logInfo(s"Relative Pos in ${index}-statement ::" + relativeTokenPos.str)
+      logInfo(s"${index}-statement:\n${_statements(index).map(_.getText).mkString(" ")}")
+    }
     val items = _statements(index).headOption.map(_.getText) match {
       case Some("load") =>
         val suggester = new LoadSuggester(this, _statements(index), relativeTokenPos)

@@ -3,12 +3,13 @@ package tech.mlsql.autosuggest.statement
 import org.antlr.v4.runtime.Token
 import org.apache.spark.sql.catalyst.parser.SqlBaseLexer
 import tech.mlsql.autosuggest.dsl.{Food, TokenMatcher, TokenTypeWrapper}
-import tech.mlsql.autosuggest.{MLSQLSQLFunction, TokenPos, TokenPosType}
+import tech.mlsql.autosuggest.{MLSQLSQLFunction, SpecialTableConst, TokenPos, TokenPosType}
+import tech.mlsql.common.utils.log.Logging
 
 /**
  * 8/6/2020 WilliamZhu(allwefantasy@gmail.com)
  */
-trait SelectStatementUtils {
+trait SelectStatementUtils extends Logging {
   def selectSuggester: SelectSuggester
 
   def tokenPos: TokenPos
@@ -48,6 +49,17 @@ trait SelectStatementUtils {
 
 
   def tableSuggest(): List[SuggestItem] = {
+    if (selectSuggester.context.isInDebugMode) {
+      logInfo(s"tableSuggest, table_info:\n")
+      logInfo("========tableSuggest start=======")
+      if (table_info.isDefined) {
+        table_info.get.foreach { case (key, metaTable) =>
+          logInfo(key.toString + s"=>\n    key: ${metaTable.key} \n    columns: ${metaTable.columns.map(_.name).mkString(",")}")
+        }
+      }
+
+      logInfo("========tableSuggest end =======")
+    }
     table_info match {
       case Some(tb) => tb.map { case (key, value) =>
         (key.aliasName.getOrElse(key.metaTableKey.table), value)
@@ -67,23 +79,64 @@ trait SelectStatementUtils {
       case TokenPosType.NEXT =>
         tokenPos.pos
     }
+    if (selectSuggester.context.isInDebugMode) {
+      logInfo(s"attributeSuggest:\n")
+      logInfo("========attributeSuggest start=======")
+    }
 
     def allOutput = {
-      table_info.get.flatMap { case (_, metaTable) =>
-        metaTable.columns.map(column => SuggestItem(column.name, metaTable, Map())).toList
+      /**
+       * 优先推荐别名
+       */
+      val res = table_info.get.filter { item => item._2.key == SpecialTableConst.subQueryAliasTable && item._1.aliasName.isDefined }.flatMap { table =>
+        if (selectSuggester.context.isInDebugMode) {
+          val columns = table._2.columns.map { item => s"${item.name} ${item}" }.mkString("\n")
+          logInfo(s"TARGET table: ${table._1} \n columns: \n[${columns}] ")
+        }
+        table._2.columns.map(column => SuggestItem(column.name, table._2, Map()))
+
       }.toList
+
+      if (res.isEmpty) {
+        if (selectSuggester.context.isInDebugMode) {
+          val tables = table_info.get.map { case (key, table) =>
+            val columns = table.columns.map { item => s"${item.name} ${item}" }.mkString("\n")
+            s"${key}:\n ${columns}"
+          }.mkString("\n")
+          logInfo(s"ALL tables: \n ${tables}")
+        }
+        table_info.get.flatMap { case (_, metaTable) =>
+          metaTable.columns.map(column => SuggestItem(column.name, metaTable, Map())).toList
+        }.toList
+      } else res
+
+
     }
 
     val temp = TokenMatcher(tokens, tempStart).back.eat(Food(None, TokenTypeWrapper.DOT), Food(None, SqlBaseLexer.IDENTIFIER)).build
-    if (temp.isSuccess) {
+    if (selectSuggester.context.isInDebugMode) {
+      logInfo(s"Try to match attribute db prefix: Status(${temp.isSuccess})")
+    }
+    val res = if (temp.isSuccess) {
       val table = temp.getMatchTokens.head.getText
       table_info.get.filter { case (key, value) =>
         key.aliasName.isDefined && key.aliasName.get == table
       }.headOption match {
-        case Some(table) => table._2.columns.map(column => SuggestItem(column.name, table._2, Map())).toList
-        case None => allOutput
+        case Some(table) =>
+          if (selectSuggester.context.isInDebugMode) {
+            logInfo(s"table[${table._1}] found, return ${table._2.key} columns.")
+          }
+          table._2.columns.map(column => SuggestItem(column.name, table._2, Map())).toList
+        case None =>
+          if (selectSuggester.context.isInDebugMode) {
+            logInfo(s"No table found, so return all table[${table_info.get.flatMap { case (_, metaTable) => metaTable.key.toString }}] columns.")
+          }
+          allOutput
       }
     } else allOutput
+
+    logInfo("========attributeSuggest end=======")
+    res
 
   }
 

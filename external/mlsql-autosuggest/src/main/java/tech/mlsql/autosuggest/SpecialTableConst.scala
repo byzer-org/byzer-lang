@@ -20,4 +20,8 @@ object SpecialTableConst {
   def OPTION_TABLE = MetaTable(MetaTableKey(None, None, SpecialTableConst.OPTION_KEY), List())
 
   def tempTable(name: String) = MetaTable(MetaTableKey(None, Option(TEMP_TABLE_DB_KEY), name), List())
+
+  def subQueryAliasTable = {
+    MetaTableKey(None, None, null)
+  }
 }

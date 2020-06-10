@@ -29,11 +29,12 @@ object LexerUtils {
     } else candidates
   }
 
+
   /**
    *
    * @param tokens
-   * @param lineNum  行号，从1开始计数
-   * @param colNum   列号，从1开始计数
+   * @param lineNum 行号，从1开始计数
+   * @param colNum  列号，从1开始计数
    * @return TokenPos 中的pos则是从0开始计数
    */
   def toTokenPos(tokens: List[Token], lineNum: Int, colNum: Int): TokenPos = {
@@ -62,8 +63,11 @@ object LexerUtils {
     oneLineTokens.map { case (token, index) =>
       val start = token.getCharPositionInLine
       val end = token.getCharPositionInLine + token.getText.size
-
-      if (start < colNum && colNum <= end) {
+      //紧邻一个token的后面，没有空格,一般情况下是当做前一个token的一部分，用户还没写完，但是如果
+      //这个token是 [(,).]等，则不算
+      if (colNum == end && (1 <= token.getType) && (token.getType == DSLSQLLexer.UNRECOGNIZED)) {
+        TokenPos(index, TokenPosType.NEXT, 0)
+      } else if (start < colNum && colNum <= end) {
         // in token
         TokenPos(index, TokenPosType.CURRENT, colNum - start)
       } else if (colNum <= start) {
