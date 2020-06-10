@@ -54,7 +54,8 @@ class TablePreprocessor(context: AutoSuggestContext) extends PreProcessStatement
             defaultTable
           }
         case "select" =>
-          val selectSuggester = new SelectSuggester(context, statement, TokenPos(0, TokenPosType.NEXT, -1))
+          //statement.size - 3 是为了移除 最后的as table语句
+          val selectSuggester = new SelectSuggester(context, statement.slice(0, statement.size - 3), TokenPos(0, TokenPosType.NEXT, -1))
           val columns = selectSuggester.sqlAST.output(selectSuggester.tokens).map { name =>
             MetaTableColumn(name, null, true, Map())
           }

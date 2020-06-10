@@ -72,14 +72,30 @@ class AttributeExtractor(autoSuggestContext: AutoSuggestContext, ast: SingleStat
           //expand output
           ast.selectSuggester.table_info(ast.level).
             get(MetaTableKeyWrapper(MetaTableKey(None, None, null), Option(tableName.getText))) match {
-            case Some(table) => table.columns.map(_.name).toList
+            case Some(table) =>
+              //如果是临时表，那么需要进一步展开
+              val columns = if (table.key.db == Option(SpecialTableConst.TEMP_TABLE_DB_KEY)) {
+                autoSuggestContext.metaProvider.search(table.key) match {
+                  case Some(item) => item.columns
+                  case None => List()
+                }
+              } else table.columns
+              columns.map(_.name).toList
             case None => List()
           }
         case List(starAttr) =>
           val table = ast.tables(tokens).head
           ast.selectSuggester.table_info(ast.level).
             get(table) match {
-            case Some(table) => table.columns.map(_.name).toList
+            case Some(table) =>
+              //如果是临时表，那么需要进一步展开
+              val columns = if (table.key.db == Option(SpecialTableConst.TEMP_TABLE_DB_KEY)) {
+                autoSuggestContext.metaProvider.search(table.key) match {
+                  case Some(item) => item.columns
+                  case None => List()
+                }
+              } else table.columns
+              columns.map(_.name).toList
             case None => List()
           }
       }

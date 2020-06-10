@@ -50,7 +50,7 @@ class SelectSuggester(val context: AutoSuggestContext, val _tokens: List[Token],
         TABLE_INFO.put(level, new mutable.HashMap[MetaTableKeyWrapper, MetaTable]())
       }
       if (ast.isLeaf) {
-        ast.tables(newTokens).map { item =>
+        ast.tables(newTokens).foreach { item =>
           context.metaProvider.search(item.metaTableKey) match {
             case Some(res) =>
               TABLE_INFO(level) += (item -> res)

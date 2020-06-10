@@ -11,6 +11,8 @@ object SpecialTableConst {
   val OPTION_KEY = "__OPTION__"
   val TEMP_TABLE_DB_KEY = "__TEMP_TABLE__"
 
+  val TOP_LEVEL_KEY = "__TOP_LEVEL__"
+
   def KEY_WORD_TABLE = MetaTable(MetaTableKey(None, None, SpecialTableConst.KEY_WORD), List())
 
   def DATA_SOURCE_TABLE = MetaTable(MetaTableKey(None, None, SpecialTableConst.DATA_SOURCE_KEY), List())
