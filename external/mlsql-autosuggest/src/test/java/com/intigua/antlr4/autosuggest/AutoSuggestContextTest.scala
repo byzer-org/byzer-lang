@@ -7,7 +7,6 @@ import tech.mlsql.autosuggest.statement.{LexerUtils, SuggestItem}
 import tech.mlsql.autosuggest.{DataType, SpecialTableConst, TokenPos, TokenPosType}
 
 import scala.collection.JavaConverters._
-import scala.collection.mutable.ArrayBuffer
 
 /**
  * 2/6/2020 WilliamZhu(allwefantasy@gmail.com)
@@ -15,7 +14,7 @@ import scala.collection.mutable.ArrayBuffer
 class AutoSuggestContextTest extends BaseTest with BeforeAndAfterEach {
 
   override def afterEach(): Unit = {
-   // context.statements.clear()
+    // context.statements.clear()
   }
 
   test("parse") {
@@ -125,6 +124,33 @@ class AutoSuggestContextTest extends BaseTest with BeforeAndAfterEach {
         |""".stripMargin).tokens.asScala.toList
     val items = context.build(wow).suggest(LexerUtils.toTokenPos(wow, 4, 22))
     assert(items.map(_.name) == List("table2", "keywords", "search_num", "c"))
+
+  }
+
+  test("load/select table with star") {
+    context.setUserDefinedMetaProvider(new MetaProvider {
+      override def search(key: MetaTableKey): Option[MetaTable] = {
+        if (key.prefix == Option("hive")) {
+          Option(MetaTable(key, List(
+            MetaTableColumn("a", DataType.STRING, true, Map()),
+            MetaTableColumn("b", DataType.STRING, true, Map()),
+            MetaTableColumn("c", DataType.STRING, true, Map()),
+            MetaTableColumn("d", DataType.STRING, true, Map())
+          )))
+        } else None
+      }
+
+      override def list: List[MetaTable] = ???
+    })
+    val wow = context.lexer.tokenizeNonDefaultChannel(
+      """
+        | -- yes
+        | load hive.`db.table1` as table2;
+        | select * from table2 as table3;
+        | select  from table3
+        |""".stripMargin).tokens.asScala.toList
+    val items = context.build(wow).suggest(LexerUtils.toTokenPos(wow, 5, 8))
+    println(items)
 
   }
 }
