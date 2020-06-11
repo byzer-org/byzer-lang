@@ -88,7 +88,8 @@ class RestController extends ApplicationController with WowLog {
     new Parameter(name = "callback", required = false, description = "Used when async is set true. callback is a url. default: false", `type` = "string", allowEmptyValue = false),
     new Parameter(name = "skipInclude", required = false, description = "disable include statement. default: false", `type` = "boolean", allowEmptyValue = false),
     new Parameter(name = "skipAuth", required = false, description = "disable table authorize . default: true", `type` = "boolean", allowEmptyValue = false),
-    new Parameter(name = "skipGrammarValidate", required = false, description = "validate mlsql grammar. default: true", `type` = "boolean", allowEmptyValue = false)
+    new Parameter(name = "skipGrammarValidate", required = false, description = "validate mlsql grammar. default: true", `type` = "boolean", allowEmptyValue = false),
+    new Parameter(name = "includeSchema", required = false, description = "the return value should contains schema info. default: false", `type` = "boolean", allowEmptyValue = false)
   ))
   @Responses(Array(
     new ApiResponse(responseCode = "200", description = "", content = new Content(mediaType = "application/json",
@@ -105,7 +106,8 @@ class RestController extends ApplicationController with WowLog {
     if (paramAsBoolean("async", false) && !params().containsKey("callback")) {
       render(400, "when async is set true ,then you should set callback url")
     }
-    var outputResult: String = "[]"
+    val includeSchema = param("includeSchema", "false").toBoolean
+    var outputResult: String = if (includeSchema) "{}" else "[]"
     try {
       val jobInfo = JobManager.getJobInfo(
         param("owner"), param("jobType", MLSQLJobType.SCRIPT), param("jobName"), param("sql"),
@@ -193,18 +195,32 @@ class RestController extends ApplicationController with WowLog {
   }
 
   private def getScriptResult(context: ScriptSQLExecListener, sparkSession: SparkSession): String = {
+    val result = new StringBuffer()
+    val includeSchema = param("includeSchema", "false").toBoolean
+    if (includeSchema) {
+      result.append("{")
+    }
     context.getLastSelectTable() match {
       case Some(table) =>
+        val df = sparkSession.table(table)
+        if (includeSchema) {
+          result.append(s""" "schema":${df.schema.json},"data": """)
+        }
+
         if (context.env().getOrElse(MLSQLEnvKey.CONTEXT_SYSTEM_TABLE, "false").toBoolean) {
-          "[" + WowJsonInferSchema.toJson(sparkSession.table(table)).mkString(",") + "]"
+          result.append("[" + WowJsonInferSchema.toJson(df).mkString(",") + "]")
         } else {
           val scriptJsonStringResult = limitOrNot {
             sparkSession.sql(s"select * from $table limit " + paramAsInt("outputSize", 5000))
           }.toJSON.collect().mkString(",")
-          "[" + scriptJsonStringResult + "]"
+          result.append("[" + scriptJsonStringResult + "]")
         }
-      case None => "[]"
+      case None => result.append("[]")
     }
+    if (includeSchema) {
+      result.append("}")
+    }
+    return result.toString
   }
 
 
