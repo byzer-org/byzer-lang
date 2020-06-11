@@ -38,7 +38,7 @@ class AutoSuggestController extends CustomController {
     val sql = params("sql")
     val lineNum = params("lineNum").toInt
     val columnNum = params("columnNum").toInt
-    val isDebug = params("isDebug", "false").toBoolean
+    val isDebug = params.getOrElse("isDebug", "false").toBoolean
 
     val context = new AutoSuggestContext(ScriptSQLExec.context().execListener.sparkSession,
       AutoSuggestController.mlsqlLexer,
