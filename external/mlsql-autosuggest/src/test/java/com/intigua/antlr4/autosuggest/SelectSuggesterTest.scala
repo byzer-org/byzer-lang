@@ -1,6 +1,5 @@
 package com.intigua.antlr4.autosuggest
 
-import org.scalatest.BeforeAndAfterEach
 import tech.mlsql.autosuggest.meta.{MetaProvider, MetaTable, MetaTableColumn, MetaTableKey}
 import tech.mlsql.autosuggest.statement.SelectSuggester
 import tech.mlsql.autosuggest.{DataType, MLSQLSQLFunction, TokenPos, TokenPosType}
@@ -10,11 +9,7 @@ import scala.collection.JavaConverters._
 /**
  * 2/6/2020 WilliamZhu(allwefantasy@gmail.com)
  */
-class SelectSuggesterTest extends BaseTest with BeforeAndAfterEach {
-
-  override def beforeEach(): Unit = {
-    MLSQLSQLFunction.funcMetaProvider.clear
-  }
+class SelectSuggesterTest extends BaseTest {
 
   def buildMetaProvider = {
     context.setUserDefinedMetaProvider(new MetaProvider {
@@ -128,8 +123,7 @@ class SelectSuggesterTest extends BaseTest with BeforeAndAfterEach {
     //    wow2.zipWithIndex.foreach{case (token,index)=>
     //    println(s"${index} $token")}
     val suggester = new SelectSuggester(context, wow2, TokenPos(12, TokenPosType.CURRENT, 3))
-    assert(suggester.suggest().distinct.map(_.name) == List("search_num", "search_num", "search_num"))
-    suggester.suggest().distinct.foreach(println(_))
+    assert(suggester.suggest().distinct.map(_.name) == List("search_num"))
 
   }
 

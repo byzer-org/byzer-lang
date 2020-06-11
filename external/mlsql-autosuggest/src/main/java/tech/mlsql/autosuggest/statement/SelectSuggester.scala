@@ -120,8 +120,11 @@ class ProjectSuggester(_selectSuggester: SelectSuggester) extends StatementSugge
   override def name: String = "project"
 
   override def isMatch(): Boolean = {
-    backAndFirstIs(SqlBaseLexer.SELECT)
-
+    val temp = backAndFirstIs(SqlBaseLexer.SELECT)
+    if (selectSuggester.context.isInDebugMode) {
+      logInfo(s"${name} is matched")
+    }
+    temp
   }
 
   override def suggest(): List[SuggestItem] = {

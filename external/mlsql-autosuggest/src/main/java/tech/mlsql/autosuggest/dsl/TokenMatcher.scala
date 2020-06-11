@@ -288,3 +288,31 @@ case class AndOrFood(foods: List[Food], var and: Boolean) {
   }
 }
 
+object TokenWalker {
+  def apply(tokens: List[Token], start: Int): TokenWalker = new TokenWalker(tokens, start)
+}
+
+class TokenWalker(tokens: List[Token], start: Int) {
+
+  var currentToken: Option[Token] = Option(tokens(start))
+  var currentIndex = start
+
+  def nextSafe: TokenWalker = {
+    val token = if ((currentIndex + 1) < tokens.size) {
+      currentIndex += 1
+      Option(tokens(currentIndex))
+    } else None
+    currentToken = token
+    this
+  }
+
+  def range: TokenCharRange = {
+    if (currentToken.isEmpty) return TokenCharRange(-1, -1)
+    val start = currentToken.get.getCharPositionInLine
+    val end = currentToken.get.getCharPositionInLine + currentToken.get.getText.size
+    TokenCharRange(start, end)
+  }
+}
+
+case class TokenCharRange(start: Int, end: Int)
+

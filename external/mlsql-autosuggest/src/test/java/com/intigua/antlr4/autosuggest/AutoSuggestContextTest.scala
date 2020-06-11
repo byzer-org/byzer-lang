@@ -12,7 +12,6 @@ import scala.collection.JavaConverters._
  * 2/6/2020 WilliamZhu(allwefantasy@gmail.com)
  */
 class AutoSuggestContextTest extends BaseTest with BeforeAndAfterEach {
-
   override def afterEach(): Unit = {
     // context.statements.clear()
   }
@@ -89,13 +88,13 @@ class AutoSuggestContextTest extends BaseTest with BeforeAndAfterEach {
   }
 
   test("load/select 4/10 select ke[cursor] from") {
-    val wow = context.lexer.tokenizeNonDefaultChannel(
+    val wow =
       """
         | -- yes
         | load hive.`jack.db` as table1;
         | select ke from (select keywords,search_num,c from table1) table2
-        |""".stripMargin).tokens.asScala.toList
-    val items = context.build(wow).suggest(LexerUtils.toTokenPos(wow, 4, 10))
+        |""".stripMargin
+    val items = context.buildFromString(wow).suggest(LexerUtils.toTokenPos(context.rawTokens, 4, 10))
     assert(items.map(_.name) == List("keywords"))
   }
 
@@ -122,8 +121,9 @@ class AutoSuggestContextTest extends BaseTest with BeforeAndAfterEach {
         | load hive.`jack.db` as table1;
         | select  from (select keywords,search_num,c from table1) table2
         |""".stripMargin).tokens.asScala.toList
-    val items = context.build(wow).suggest(LexerUtils.toTokenPos(wow, 4, 22))
-    assert(items.map(_.name) == List("table2", "keywords", "search_num", "c"))
+    val items = context.build(wow).suggest(LexerUtils.toTokenPos(wow, 4, 8))
+    //    items.foreach(println(_))
+    assert(items.map(_.name) == List("table1", "table2", "keywords", "search_num", "c"))
 
   }
 
@@ -150,6 +150,34 @@ class AutoSuggestContextTest extends BaseTest with BeforeAndAfterEach {
         | select  from table3
         |""".stripMargin).tokens.asScala.toList
     val items = context.build(wow).suggest(LexerUtils.toTokenPos(wow, 5, 8))
+    println(items)
+
+  }
+
+  test("load/select table with star and func") {
+    context.setDebugMode(true)
+    context.setUserDefinedMetaProvider(new MetaProvider {
+      override def search(key: MetaTableKey): Option[MetaTable] = {
+        if (key.prefix == Option("hive")) {
+          Option(MetaTable(key, List(
+            MetaTableColumn("a", DataType.STRING, true, Map()),
+            MetaTableColumn("b", DataType.STRING, true, Map()),
+            MetaTableColumn("c", DataType.STRING, true, Map()),
+            MetaTableColumn("d", DataType.STRING, true, Map())
+          )))
+        } else None
+      }
+
+      override def list: List[MetaTable] = ???
+    })
+    val sql =
+      """
+        | -- yes
+        | load hive.`db.table1` as table2;
+        | select * from table2 as table3;
+        | select sum() from table3
+        |""".stripMargin
+    val items = context.buildFromString(sql).suggest(LexerUtils.toTokenPos(context.rawTokens, 5, 12))
     println(items)
 
   }

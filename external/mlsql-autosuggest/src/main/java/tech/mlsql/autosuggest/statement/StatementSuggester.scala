@@ -1,11 +1,12 @@
 package tech.mlsql.autosuggest.statement
 
 import tech.mlsql.autosuggest.meta.MetaTable
+import tech.mlsql.common.utils.log.Logging
 
 /**
  * 1/6/2020 WilliamZhu(allwefantasy@gmail.com)
  */
-trait StatementSuggester {
+trait StatementSuggester extends Logging{
   def name: String
 
   def isMatch(): Boolean

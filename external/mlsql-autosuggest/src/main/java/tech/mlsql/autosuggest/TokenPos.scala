@@ -26,6 +26,14 @@ object TokenPosType {
  * suggestion list.
  *
  */
-case class TokenPos(pos: Int, currentOrNext: Int, offsetInToken: Int = -1)
+case class TokenPos(pos: Int, currentOrNext: Int, offsetInToken: Int = -1) {
+  def str = {
+    val posType = currentOrNext match {
+      case TokenPosType.NEXT => "next"
+      case TokenPosType.CURRENT => "current"
+    }
+    s"TokenPos: Index(${pos}) currentOrNext(${posType}) offsetInToken(${offsetInToken})"
+  }
+}
 
 

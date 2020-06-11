@@ -28,7 +28,7 @@ MLSQL智能补全功能现阶段是作为MLSQL的一个插件的形式提供的�
 ```sql
 select  no_result_type, keywords, search_num, rank
 from(
-  select  [CURSOR位置] row_number() over (PARTITION BY no_result_type order by search_num desc) as rank
+  select  [鼠标位置] row_number() over (PARTITION BY no_result_type order by search_num desc) as rank
   from(
     select jack1.*,no_result_type, keywords, sum(search_num) AS search_num
     from jack.drugs_bad_case_di as jack1,jack.abc jack2
@@ -70,6 +70,28 @@ select [鼠标位置] from table3
 5. d
 
 可以看到，系统具有非常强的跨语句能力，会自动展开*，并且推测出每个表的schema信息从而进行补全。
+
+## MLSQL 数据源/ET组件参数提示
+
+```sql
+select spl  from jack.drugs_bad_case_di as a;
+load csv.`/tmp.csv` where [鼠标位置]
+```
+
+通常加载csv我们需要设定下csv是不是包含header, 分割符是什么。不过一般我们需要去查文档才能知道这些参数。 现在，【MLSQL Code Intelligence】会给出提示：
+
+```json
+[
+{"name":"codec","metaTable":{"key":{"table":"__OPTION__"},"columns":[]},"extra":{}},
+{"name":"dateFormat","metaTable":{"key":{"table":"__OPTION__"},"columns":[]},"extra":{}},
+{"name":"delimiter","metaTable":{"key":{"table":"__OPTION__"},"columns":[]},"extra":{}},
+{"name":"emptyValue","metaTable":{"key":{"table":"__OPTION__"},"columns":[]},"extra":{}},
+{"name":"escape","metaTable":{"key":{"table":"__OPTION__"},"columns":[]},"extra":{}},
+{"name":"header","metaTable":{"key":{"table":"__OPTION__"},"columns":[]},"extra":{}},
+{"name":"inferSchema","metaTable":{"key":{"table":"__OPTION__"},"columns":[]},"extra":{}},
+{"name":"quote","metaTable":{"key":{"table":"__OPTION__"},"columns":[]},"extra":{}}]
+```
+
 
 
 ## 用户指南
@@ -118,19 +140,8 @@ object Test {
 
 ### 编程使用
 
-首先初始化两个此法分析器：
-
-```scala
-object AutoSuggestController {
-  val lexerAndParserfactory = new ReflectionLexerAndParserFactory(classOf[DSLSQLLexer], classOf[DSLSQLParser]);
-  val mlsqlLexer = new LexerWrapper(lexerAndParserfactory, new DefaultToCharStream)
-
-  val lexerAndParserfactory2 = new ReflectionLexerAndParserFactory(classOf[SqlBaseLexer], classOf[SqlBaseParser]);
-  val sqlLexer = new LexerWrapper(lexerAndParserfactory2, new RawSQLToCharStream)
-
-}
-```
-接着创建AutoSuggestContext,然后用此法分析器解析sql,最后传递给context,同时传递行号和列好，即可。
+创建AutoSuggestContext即可，然后用buildFromString处理字符串，使用suggest方法
+进行推荐。
 
 ```scala
 
@@ -138,15 +149,16 @@ val sql = params("sql")
 val lineNum = params("lineNum").toInt
 val columnNum = params("columnNum").toInt
 
-val context = new AutoSuggestContext(ScriptSQLExec.context().execListener.sparkSession,
+val sparkSession = SparkSession.builder().appName("local").master("local[*]").getOrCreate()
+val context = new AutoSuggestContext(sparkSession,
   AutoSuggestController.mlsqlLexer,
   AutoSuggestController.sqlLexer)
 
-val sqlTokens = context.lexer.tokenizeNonDefaultChannel(sql).tokens.asScala.toList
-
-val tokenPos = LexerUtils.toTokenPos(sqlTokens, lineNum, columnNum)
-JSONTool.toJsonStr(context.build(sqlTokens).suggest(tokenPos))
+JSONTool.toJsonStr(context.buildFromString(sql).suggest(lineNum,columnNum))
 ```
+
+sparkSession也可以不设置，但是会缺失一些功能。
+
 
 ### 对接自己公司的Schema信息
 用户只需要实现一个自定义的MetaProvider，就可以充分利用自己的schema系统
@@ -245,6 +257,7 @@ class Splitter extends FuncReg {
 用户只要用FunctionBuilder去构建函数签名即可。这样用户在使用该函数的时候就能得到非常详尽的使用说明和参数说明。同时，我们也可以通过该函数签名获取嵌套函数处理后的字段的类型信息。
 
 用户只要按上面的方式添加更多函数到tech.mlsql.autosuggest.funcs包下即可。系统会自动扫描该包里的实现并且注册。
+
 ### TokenMatcher工具类
 
 在【MLSQL Code Intelligence】中，最主要的工作是做token匹配。我们提供了TokenMatcher来完成token的匹配。TokenMatcher支持前向和后向匹配。如下token序列:
