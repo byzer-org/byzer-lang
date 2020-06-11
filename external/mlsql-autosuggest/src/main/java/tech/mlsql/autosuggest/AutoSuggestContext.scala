@@ -127,6 +127,11 @@ class AutoSuggestContext(val session: SparkSession,
     return (targetPos, targetStaIndex)
   }
 
+  def suggest(lineNum:Int,columnNum:Int) = {
+    val tokenPos = LexerUtils.toTokenPos(rawTokens, lineNum, columnNum)
+    suggest(tokenPos)
+  }
+
   /**
    * Notice that the pos in tokenPos is in whole script.
    * We need to convert it to the relative pos in every statement
