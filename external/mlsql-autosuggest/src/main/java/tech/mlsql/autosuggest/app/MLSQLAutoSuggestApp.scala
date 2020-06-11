@@ -6,12 +6,9 @@ import streaming.dsl.ScriptSQLExec
 import streaming.dsl.parser.{DSLSQLLexer, DSLSQLParser}
 import tech.mlsql.app.CustomController
 import tech.mlsql.autosuggest.AutoSuggestContext
-import tech.mlsql.autosuggest.statement.LexerUtils
 import tech.mlsql.common.utils.serder.json.JSONTool
 import tech.mlsql.runtime.AppRuntimeStore
 import tech.mlsql.version.VersionCompatibility
-
-import scala.collection.JavaConverters._
 
 /**
  * 9/6/2020 WilliamZhu(allwefantasy@gmail.com)
@@ -41,13 +38,12 @@ class AutoSuggestController extends CustomController {
     val sql = params("sql")
     val lineNum = params("lineNum").toInt
     val columnNum = params("columnNum").toInt
+    val isDebug = params("isDebug", "false").toBoolean
 
     val context = new AutoSuggestContext(ScriptSQLExec.context().execListener.sparkSession,
       AutoSuggestController.mlsqlLexer,
       AutoSuggestController.sqlLexer)
-    val sqlTokens = context.lexer.tokenizeNonDefaultChannel(sql).tokens.asScala.toList
-    val tokenPos = LexerUtils.toTokenPos(sqlTokens, lineNum, columnNum)
-    JSONTool.toJsonStr(context.build(sqlTokens).suggest(tokenPos))
-
+    context.setDebugMode(isDebug)
+    JSONTool.toJsonStr(context.buildFromString(sql).suggest(lineNum, columnNum))
   }
 }

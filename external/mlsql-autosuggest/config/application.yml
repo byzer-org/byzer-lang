@@ -1,0 +1,129 @@
+#mode
+mode:
+  development
+#mode=production
+
+path:
+  conf: /Users/allwefantasy/CSDNWorkSpace/streamingpro-spark-2.4.x/external/mlsql-autosuggest/config/
+
+###############datasource config##################
+#mysql,mongodb,redis等数据源配置方式
+development:
+  datasources:
+    mysql:
+      host: 127.0.0.1
+      port: 3306
+      database: mlsql_console
+      username: xxx
+      password: xxxx
+      initialSize: 8
+      disable: true
+      removeAbandoned: true
+      testWhileIdle: true
+      removeAbandonedTimeout: 30
+      maxWait: 100
+      filters: stat,log4j
+    mongodb:
+      disable: true
+    redis:
+      disable: true
+test:
+  datasources:
+    mysql:
+      host: 127.0.0.1
+      port: 3306
+      database: wow
+      username: root
+      password: mlsql
+      disable: true
+
+production:
+  datasources:
+    mysql:
+      host: 127.0.0.1
+      port: 3306
+      database: wow
+      username: root
+      password: mlsql
+      disable: false
+
+###############application config##################
+#'model' for relational database  like MySQL
+#'document' for NoSQL database model configuration,  MongoDB
+auth_secret: "mlsql"
+application:
+  controller: tech.mlsql.autosuggest.app
+  model:      tech.mlsql.model
+  test:       test.com.example
+  static:
+    enable: false
+  template:
+    engine:
+      enable: false
+
+serviceframework:
+  template:
+    loader:
+      classpath:
+        enable: true
+  static:
+    loader:
+      classpath:
+        enable: true
+        dir: "streamingpro/assets"
+###############http config##################
+http:
+  port: 9004
+  disable: false
+  host: 0.0.0.0
+  server:
+    idleTimeout: 6000000
+  client:
+    accept:
+      timeout: 43200000
+
+#thrift:
+#    disable: true
+#    services:
+#        net_csdn_controller_thrift_impl_CBayesianQueryServiceImpl:
+#           port: 9001
+#           min_threads: 100
+#           max_threads: 1000
+#
+#    servers:
+#        spam_bayes: ["127.0.0.1:9001"]
+
+
+
+###############validator config##################
+#如果需要添加验证器，只要配置好类全名即可
+#替换验证器实现，则替换相应的类名即可
+#warning: 自定义验证器实现需要线程安全
+
+validator:
+  format:        net.csdn.validate.impl.Format
+  numericality:  net.csdn.validate.impl.Numericality
+  presence:      net.csdn.validate.impl.Presence
+  uniqueness:    net.csdn.validate.impl.Uniqueness
+  length:        net.csdn.validate.impl.Length
+  associated:    net.csdn.validate.impl.Associated
+
+mongo_validator:
+  format:        net.csdn.mongo.validate.impl.Format
+  numericality:  net.csdn.mongo.validate.impl.Numericality
+  presence:      net.csdn.mongo.validate.impl.Presence
+  uniqueness:    net.csdn.mongo.validate.impl.Uniqueness
+  length:        net.csdn.mongo.validate.impl.Length
+  associated:    net.csdn.mongo.validate.impl.Associated
+
+################ 数据库类型映射 ####################
+type_mapping:  net.csdn.jpa.type.impl.MysqlType
+
+qps:
+  /say/hello: 10
+
+qpslimit:
+  enable: true
+dubbo:
+  disable: true
+  server: true
