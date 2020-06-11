@@ -157,7 +157,7 @@ val context = new AutoSuggestContext(sparkSession,
 JSONTool.toJsonStr(context.buildFromString(sql).suggest(lineNum,columnNum))
 ```
 
-sparkSession也可以不设置，但是会缺失一些功能。
+sparkSession也可以设置为null，但是会缺失一些功能，比如数据源提示等等。
 
 
 ### 对接自己公司的Schema信息
