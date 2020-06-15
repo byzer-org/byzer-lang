@@ -1,6 +1,7 @@
 # MLSQL智能代码提示
 
-MLSQL智能补全功能现阶段是作为MLSQL的一个插件的形式提供的。在发布第一个版本后，我们会将其独立出来，作为一个通用的SQL提示引擎来进行后续的发展。为了方便对该项目指代，我们后续使用 【MLSQL Code Intelligence】
+MLSQL智能补全功能现阶段是作为MLSQL的一个插件的形式提供,也可以作为单独的应用运行。
+为了方便对该项目指代，我们后续使用 【MLSQL Code Intelligence】
 
 
 ## 当前状态
@@ -97,8 +98,117 @@ load csv.`/tmp.csv` where [鼠标位置]
 ## 用户指南
 
 ### 部署
-参考部署文档 [MLSQL部署](http://docs.mlsql.tech/zh/installation/)
+
+如果作为MLSQL插件运行， 请参考部署文档 [MLSQL部署](http://docs.mlsql.tech/zh/installation/)
 该插件作为MLSQ默认插件，所以开箱即用
+
+如果用户希望作为独立应用运行，那么可以自己现在源码然后打包，然后按如下命令启动：
+
+```
+java -cp .:jar  tech.mlsql.autosuggest.app.Standalone  -config /tmp/config/application.yml
+```
+application.yml 可以参考mlsql-autosuggest/config的示例。默认端口是9004.
+
+### Schema信息
+
+【MLSQL Code Intelligence】 需要基础表的schema信息，目前用户有三种可选方式：
+
+1. 主动注册schema信息
+2. 提供符合规范的Rest接口，系统会自动调用该接口获取schema信息
+3. 扩展【MLSQL Code Intelligence】的 MetaProvider，使得系统可以获取shcema信息。
+
+最简单的是方式1. 通过http接口注册表信息，我下面是使用scala代码完成，用户也可以使用POSTMan之类的工具完成注册。
+
+```scala
+def registerTable(port: Int = 9003) = {
+    val time = System.currentTimeMillis()
+    val response = Request.Post(s"http://127.0.0.1:${port}/run/script").bodyForm(
+      Form.form().add("executeMode", "registerTable").add("schema",
+        """
+          |CREATE TABLE emps(
+          |  empid INT NOT NULL,
+          |  deptno INT NOT NULL,
+          |  locationid INT NOT NULL,
+          |  empname VARCHAR(20) NOT NULL,
+          |  salary DECIMAL (18, 2),
+          |  PRIMARY KEY (empid),
+          |  FOREIGN KEY (deptno) REFERENCES depts(deptno),
+          |  FOREIGN KEY (locationid) REFERENCES locations(locationid)
+          |);
+          |""".stripMargin).add("db", "db1").add("table", "emps").
+        add("isDebug", "true").build()
+    ).execute().returnContent().asString()
+    println(response)
+  }
+```
+
+创建表的语句类型支持三种:db,hive,json。 分别对应MySQL语法，Hive语法，Spark SQL schema json格式。默认是MySQL的语法。
+
+接着就系统就能够提示了：
+
+```scala
+ def testSuggest(port: Int = 9003) = {
+    val time = System.currentTimeMillis()
+    val response = Request.Post(s"http://127.0.0.1:${port}/run/script").bodyForm(
+      Form.form().add("executeMode", "autoSuggest").add("sql",
+        """
+          |select emp from db1.emps as a;
+          |-- load csv.`/tmp.csv` where
+          |""".stripMargin).add("lineNum", "2").add("columnNum", "10").
+        add("isDebug", "true").build()
+    ).execute().returnContent().asString()
+    println(response)
+  }
+```
+
+第二种在请求参数里传递searchUrl和listUrl,要求接口的输入输出需要符合`tech.mlsql.autosuggest.meta.RestMetaProvider`
+中的定义。
+
+
+第三种模式是用户实现一个自定义的MetaProvider，就可以充分利用自己的schema系统
+
+```scala
+trait MetaProvider {
+  def search(key: MetaTableKey): Option[MetaTable]
+
+  def list: List[MetaTable]
+}
+```
+
+使用时，在AutoSuggestContext设置下使其生效：
+
+```
+context.setUserDefinedMetaProvider(有的实现类的实例)
+```
+
+MetaTableKey 的定义如下：
+
+```scala
+case class MetaTableKey(prefix: Option[String], db: Option[String], table: String)
+```
+
+prefix是方便定义数据源的。比如同样一个表，可能是hive表，也可能是mysql表。如果你只有一个数仓，不访问其他数据源，那么设置为None就好。对于下面的句子：
+
+```sql
+load hive.`db.table1` as table2;
+```
+【MLSQL Code Intelligence】 会发送如下的MetaTableKey给你的MetaProvider.search方法：
+
+```scala
+MetaTableKey(Option(hive),Option("db"),Option("table2"))
+```
+
+如果是一个普通的SQL语句，而非MLSQL 语句，比如：
+
+```sql
+select * from db.table1
+```
+
+则发送给MetaProvider.search方法的MetaTableKey是这个样子的：
+
+```scala
+MetaTableKey(None,Option("db"),Option("table2"))
+```
 
 ### 接口使用
 访问接口： http://127.0.0.1:9003/run/script?executeMode=autoSuggest
@@ -158,54 +268,6 @@ JSONTool.toJsonStr(context.buildFromString(sql).suggest(lineNum,columnNum))
 ```
 
 sparkSession也可以设置为null，但是会缺失一些功能，比如数据源提示等等。
-
-
-### 对接自己公司的Schema信息
-用户只需要实现一个自定义的MetaProvider，就可以充分利用自己的schema系统
-
-```scala
-trait MetaProvider {
-  def search(key: MetaTableKey): Option[MetaTable]
-
-  def list: List[MetaTable]
-}
-```
-
-使用时，在AutoSuggestContext设置下使其生效：
-
-```
-context.setUserDefinedMetaProvider(有的实现类的实例)
-```
-
-MetaTableKey 的定义如下：
-
-```scala
-case class MetaTableKey(prefix: Option[String], db: Option[String], table: String)
-```
-
-prefix是方便定义数据源的。比如同样一个表，可能是hive表，也可能是mysql表。如果你只有一个数仓，不访问其他数据源，那么设置为None就好。对于下面的句子：
-
-```sql
-load hive.`db.table1` as table2;
-```
-【MLSQL Code Intelligence】 会发送如下的MetaTableKey给你的MetaProvider.search方法：
-
-```scala
-MetaTableKey(Option(hive),Option("db"),Option("table2"))
-```
-
-如果是一个普通的SQL语句，而非MLSQL 语句，比如：
-
-```sql
-select * from db.table1
-```
-
-则发送给MetaProvider.search方法的MetaTableKey是这个样子的：
-
-```scala
-MetaTableKey(None,Option("db"),Option("table2"))
-```
-
 
 
 ## 开发者指南
