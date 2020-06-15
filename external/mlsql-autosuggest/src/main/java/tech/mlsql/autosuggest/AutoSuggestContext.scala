@@ -14,6 +14,8 @@ import scala.collection.JavaConverters._
 import scala.collection.mutable.ArrayBuffer
 
 object AutoSuggestContext {
+
+  val memoryMetaProvider = new MemoryMetaProvider()
   var isInit = false
 
   def init: Unit = {
