@@ -6,12 +6,10 @@ import streaming.dsl.ScriptSQLExec
 import streaming.dsl.parser.{DSLSQLLexer, DSLSQLParser}
 import tech.mlsql.app.CustomController
 import tech.mlsql.autosuggest.AutoSuggestContext
-import tech.mlsql.autosuggest.statement.LexerUtils
+import tech.mlsql.autosuggest.meta.RestMetaProvider
 import tech.mlsql.common.utils.serder.json.JSONTool
 import tech.mlsql.runtime.AppRuntimeStore
 import tech.mlsql.version.VersionCompatibility
-
-import scala.collection.JavaConverters._
 
 /**
  * 9/6/2020 WilliamZhu(allwefantasy@gmail.com)
@@ -20,6 +18,7 @@ class MLSQLAutoSuggestApp extends tech.mlsql.app.App with VersionCompatibility {
   override def run(args: Seq[String]): Unit = {
     AutoSuggestContext.init
     AppRuntimeStore.store.registerController("autoSuggest", classOf[AutoSuggestController].getName)
+    AppRuntimeStore.store.registerController("registerTable", classOf[RegisterTableController].getName)
   }
 
   override def supportedVersions: Seq[String] = {
@@ -36,18 +35,55 @@ object AutoSuggestController {
 
 }
 
+class RegisterTableController extends CustomController {
+  override def run(params: Map[String, String]): String = {
+    def hasParam(str: String) = params.contains(str)
+
+    def paramOpt(name: String) = {
+      if (hasParam(name)) Option(params(name)) else None
+    }
+
+    val prefix = paramOpt("prefix")
+    val db = paramOpt("db")
+    require(hasParam("table"), "table is required")
+    require(hasParam("schema"), "schema is required")
+    val table = params("table")
+    val session = new SchemaRegistry(ScriptSQLExec.context().execListener.sparkSession)
+    params.getOrElse("schemaType", "") match {
+      case Constants.DB => session.createTableFromDBSQL(prefix, db, table, params("schema"))
+      case Constants.HIVE => session.createTableFromHiveSQL(prefix, db, table, params("schema"))
+      case Constants.JSON => session.createTableFromJson(prefix, db, table, params("schema"))
+      case _ => session.createTableFromDBSQL(prefix, db, table, params("schema"))
+    }
+    JSONTool.toJsonStr(Map("success" -> true))
+  }
+}
+
 class AutoSuggestController extends CustomController {
   override def run(params: Map[String, String]): String = {
     val sql = params("sql")
     val lineNum = params("lineNum").toInt
     val columnNum = params("columnNum").toInt
+    val isDebug = params.getOrElse("isDebug", "false").toBoolean
+
+    val enableMemoryProvider = params.getOrElse("enableMemoryProvider", "true").toBoolean
 
     val context = new AutoSuggestContext(ScriptSQLExec.context().execListener.sparkSession,
       AutoSuggestController.mlsqlLexer,
       AutoSuggestController.sqlLexer)
-    val sqlTokens = context.lexer.tokenizeNonDefaultChannel(sql).tokens.asScala.toList
-    val tokenPos = LexerUtils.toTokenPos(sqlTokens, lineNum, columnNum)
-    JSONTool.toJsonStr(context.build(sqlTokens).suggest(tokenPos))
+    context.setDebugMode(isDebug)
+    if (enableMemoryProvider) {
+      context.setUserDefinedMetaProvider(AutoSuggestContext.memoryMetaProvider)
+    }
 
+    val searchUrl = params.get("searchUrl")
+    val listUrl = params.get("listUrl")
+    (searchUrl, listUrl) match {
+      case (Some(searchUrl), Some(listUrl)) =>
+        context.setUserDefinedMetaProvider(new RestMetaProvider(searchUrl, listUrl))
+      case (None, None) =>
+    }
+
+    JSONTool.toJsonStr(context.buildFromString(sql).suggest(lineNum, columnNum))
   }
 }

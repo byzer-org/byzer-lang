@@ -135,12 +135,19 @@ trait SelectStatementUtils extends Logging {
       }
     } else allOutput
 
-    logInfo("========attributeSuggest end=======")
+    if (selectSuggester.context.isInDebugMode) {
+      logInfo("========attributeSuggest end=======")
+    }
     res
 
   }
 
   def functionSuggest(): List[SuggestItem] = {
+    if (selectSuggester.context.isInDebugMode) {
+      logInfo(s"functionSuggest:\n")
+      logInfo("========functionSuggest start=======")
+    }
+
     def allOutput = {
       MLSQLSQLFunction.funcMetaProvider.list.map(item => SuggestItem(item.key.table, item, Map()))
     }
@@ -154,9 +161,15 @@ trait SelectStatementUtils extends Logging {
 
     // 如果匹配上了，说明是字段，那么就不应该提示函数了
     val temp = TokenMatcher(tokens, tempStart).back.eat(Food(None, TokenTypeWrapper.DOT), Food(None, SqlBaseLexer.IDENTIFIER)).build
-    if (temp.isSuccess) {
+    val res = if (temp.isSuccess) {
       List()
     } else allOutput
+
+    if (selectSuggester.context.isInDebugMode) {
+      logInfo(s"functions: ${allOutput.map(_.name).mkString(",")}")
+      logInfo("========functionSuggest end=======")
+    }
+    res
 
   }
 }
