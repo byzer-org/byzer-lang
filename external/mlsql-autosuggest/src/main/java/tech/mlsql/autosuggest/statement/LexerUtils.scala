@@ -3,6 +3,7 @@ package tech.mlsql.autosuggest.statement
 import org.antlr.v4.runtime.Token
 import org.antlr.v4.runtime.misc.Interval
 import streaming.dsl.parser.DSLSQLLexer
+import tech.mlsql.autosuggest.dsl.MLSQLTokenTypeWrapper
 import tech.mlsql.autosuggest.{AutoSuggestContext, TokenPos, TokenPosType}
 
 import scala.collection.JavaConverters._
@@ -43,11 +44,29 @@ object LexerUtils {
      * load [cursor]        out token
      * load[cursor]         in token
      */
+
+    if (tokens.size == 0) {
+      return TokenPos(-1, TokenPosType.NEXT, -1)
+    }
+
     val oneLineTokens = tokens.zipWithIndex.filter { case (token, index) =>
       token.getLine == lineNum
     }
-    val firstToken = oneLineTokens.head
-    val lastToken = oneLineTokens.last
+
+    val firstToken = oneLineTokens.headOption match {
+      case Some(head) => head
+      case None =>
+        tokens.zipWithIndex.filter { case (token, index) =>
+          token.getLine == lineNum - 1
+        }.head
+    }
+    val lastToken = oneLineTokens.lastOption match {
+      case Some(last) => last
+      case None =>
+        tokens.zipWithIndex.filter { case (token, index) =>
+          token.getLine == lineNum + 1
+        }.last
+    }
 
     if (colNum < firstToken._1.getCharPositionInLine) {
       return TokenPos(firstToken._2 - 1, TokenPosType.NEXT, 0)
@@ -65,7 +84,11 @@ object LexerUtils {
       val end = token.getCharPositionInLine + token.getText.size
       //紧邻一个token的后面，没有空格,一般情况下是当做前一个token的一部分，用户还没写完，但是如果
       //这个token是 [(,).]等，则不算
-      if (colNum == end && (1 <= token.getType) && (token.getType == DSLSQLLexer.UNRECOGNIZED)) {
+      if (colNum == end && (1 <= token.getType)
+        && (
+        token.getType == DSLSQLLexer.UNRECOGNIZED
+          || token.getType == MLSQLTokenTypeWrapper.DOT
+        )) {
         TokenPos(index, TokenPosType.NEXT, 0)
       } else if (start < colNum && colNum <= end) {
         // in token

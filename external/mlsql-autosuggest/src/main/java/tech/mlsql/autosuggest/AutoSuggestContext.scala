@@ -130,6 +130,9 @@ class AutoSuggestContext(val session: SparkSession,
   }
 
   def suggest(lineNum: Int, columnNum: Int): List[SuggestItem] = {
+    if (isInDebugMode) {
+      logInfo(s"lineNum:${lineNum} columnNum:${columnNum}")
+    }
     val tokenPos = LexerUtils.toTokenPos(rawTokens, lineNum, columnNum)
     suggest(tokenPos)
   }
@@ -140,7 +143,10 @@ class AutoSuggestContext(val session: SparkSession,
    */
   def suggest(tokenPos: TokenPos): List[SuggestItem] = {
     if (isInDebugMode) {
-      logInfo("Global Pos::" + tokenPos.str)
+      logInfo("Global Pos::" + tokenPos.str + s"::${rawTokens(tokenPos.pos)}")
+    }
+    if (tokenPos.pos == -1) {
+      return firstWords
     }
     val (relativeTokenPos, index) = toRelativePos(tokenPos)
 

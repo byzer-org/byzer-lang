@@ -24,7 +24,15 @@ class AttributeExtractor(autoSuggestContext: AutoSuggestContext, ast: SingleStat
       eat(Food(None, SqlBaseLexer.AS)).optional.
       eat(Food(None, SqlBaseLexer.IDENTIFIER)).optional.
       build
-    temp
+    temp.isSuccess match {
+      case true => temp
+      case false =>
+        TokenMatcher(tokens, start).
+          eatOneAny.
+          eat(Food(None, SqlBaseLexer.AS)).
+          eat(Food(None, SqlBaseLexer.IDENTIFIER)).
+          build
+    }
   }
 
   private def funcitonM(start: Int): TokenMatcher = {

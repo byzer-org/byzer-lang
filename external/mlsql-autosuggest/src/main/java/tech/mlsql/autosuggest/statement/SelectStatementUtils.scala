@@ -129,7 +129,7 @@ trait SelectStatementUtils extends Logging {
           table._2.columns.map(column => SuggestItem(column.name, table._2, Map())).toList
         case None =>
           if (selectSuggester.context.isInDebugMode) {
-            logInfo(s"No table found, so return all table[${table_info.get.flatMap { case (_, metaTable) => metaTable.key.toString }}] columns.")
+            logInfo(s"No table found, so return all table[${table_info.get.map { case (_, metaTable) => metaTable.key.toString }}] columns.")
           }
           allOutput
       }

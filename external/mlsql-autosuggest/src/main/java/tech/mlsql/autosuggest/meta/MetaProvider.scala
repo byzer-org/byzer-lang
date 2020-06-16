@@ -1,6 +1,5 @@
 package tech.mlsql.autosuggest.meta
 
-
 /**
  * Function should also be table and at the same time
  * the columns are treated as parameters.

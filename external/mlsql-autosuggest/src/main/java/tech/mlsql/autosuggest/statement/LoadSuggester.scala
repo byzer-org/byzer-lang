@@ -78,7 +78,10 @@ class LoadFormatSuggester(loadSuggester: LoadSuggester) extends StatementSuggest
       "parquet", "csv", "jsonStr", "csvStr", "json", "text", "orc", "kafka", "kafka8", "kafka9", "crawlersql", "image",
       "script", "hive", "xml", "mlsqlAPI", "mlsqlConf"
     )).toList
-    LexerUtils.filterPrefixIfNeeded(sources.map(SuggestItem(_, SpecialTableConst.DATA_SOURCE_TABLE, Map())), tokens, tokenPos)
+    LexerUtils.filterPrefixIfNeeded(
+      sources.map(SuggestItem(_, SpecialTableConst.DATA_SOURCE_TABLE,
+        Map("desc" -> "DataSource"))),
+      tokens, tokenPos)
 
   }
 
@@ -98,10 +101,15 @@ class LoadOptionsSuggester(loadSuggester: LoadSuggester) extends StatementSugges
   override def suggest(): List[SuggestItem] = {
     val source = tokens(1)
     val datasources = DataSourceRegistry.fetch(source.getText, Map[String, String]()) match {
-      case Some(ds) => ds.asInstanceOf[MLSQLSourceInfo].explainParams(loadSuggester.context.session).collect().map(_.getString(0)).toList
+      case Some(ds) => ds.asInstanceOf[MLSQLSourceInfo].
+        explainParams(loadSuggester.context.session).collect().
+        map(row => (row.getString(0), row.getString(1))).
+        toList
       case None => List()
     }
-    LexerUtils.filterPrefixIfNeeded(datasources.map(SuggestItem(_, SpecialTableConst.OPTION_TABLE, Map())), tokens, tokenPos)
+    LexerUtils.filterPrefixIfNeeded(datasources.map(tuple =>
+      SuggestItem(tuple._1, SpecialTableConst.OPTION_TABLE, Map("desc" -> tuple._2))),
+      tokens, tokenPos)
 
   }
 

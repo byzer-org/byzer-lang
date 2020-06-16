@@ -72,6 +72,18 @@ class SelectSuggester(val context: AutoSuggestContext, val _tokens: List[Token],
 
     }
 
+    if (context.isInDebugMode) {
+      logInfo(s"SQL[${newTokens.map(_.getText).mkString(" ")}]")
+      logInfo(s"STRUCTURE: \n")
+      TABLE_INFO.foreach { item =>
+        logInfo(s"Level:${item._1}")
+        item._2.foreach { table =>
+          logInfo(s"${table._1} => ${table._2}")
+        }
+      }
+
+    }
+
     root
   }
 
