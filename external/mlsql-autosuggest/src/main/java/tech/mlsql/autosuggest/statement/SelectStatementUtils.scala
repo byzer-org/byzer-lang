@@ -49,6 +49,15 @@ trait SelectStatementUtils extends Logging {
 
 
   def tableSuggest(): List[SuggestItem] = {
+    val tempStart = tokenPos.currentOrNext match {
+      case TokenPosType.CURRENT =>
+        tokenPos.pos - 1
+      case TokenPosType.NEXT =>
+        tokenPos.pos
+    }
+
+    val temp = TokenMatcher(tokens, tempStart).back.eat(Food(None, TokenTypeWrapper.DOT), Food(None, SqlBaseLexer.IDENTIFIER)).build
+
     if (selectSuggester.context.isInDebugMode) {
       logInfo(s"tableSuggest, table_info:\n")
       logInfo("========tableSuggest start=======")
@@ -58,8 +67,14 @@ trait SelectStatementUtils extends Logging {
         }
       }
 
+      logInfo(s"Final: suggest ${!temp.isSuccess}")
+
       logInfo("========tableSuggest end =======")
     }
+
+    if (temp.isSuccess) return List()
+
+
     table_info match {
       case Some(tb) => tb.map { case (key, value) =>
         (key.aliasName.getOrElse(key.metaTableKey.table), value)
@@ -120,7 +135,7 @@ trait SelectStatementUtils extends Logging {
     val res = if (temp.isSuccess) {
       val table = temp.getMatchTokens.head.getText
       table_info.get.filter { case (key, value) =>
-        key.aliasName.isDefined && key.aliasName.get == table
+        (key.aliasName.isDefined && key.aliasName.get == table) || key.metaTableKey.table == table
       }.headOption match {
         case Some(table) =>
           if (selectSuggester.context.isInDebugMode) {

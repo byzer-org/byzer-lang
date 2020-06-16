@@ -3,7 +3,7 @@ package tech.mlsql.autosuggest.statement
 import org.antlr.v4.runtime.Token
 import org.antlr.v4.runtime.misc.Interval
 import streaming.dsl.parser.DSLSQLLexer
-import tech.mlsql.autosuggest.dsl.MLSQLTokenTypeWrapper
+import tech.mlsql.autosuggest.dsl.{MLSQLTokenTypeWrapper, TokenTypeWrapper}
 import tech.mlsql.autosuggest.{AutoSuggestContext, TokenPos, TokenPosType}
 
 import scala.collection.JavaConverters._
@@ -14,14 +14,19 @@ import scala.collection.JavaConverters._
 object LexerUtils {
 
   def toRawSQLTokens(autoSuggestContext: AutoSuggestContext, wow: List[Token]): List[Token] = {
+    val originalText = toRawSQLStr(autoSuggestContext, wow)
+    val newTokens = autoSuggestContext.rawSQLLexer.tokenizeNonDefaultChannel(originalText).tokens.asScala.toList
+    return newTokens
+  }
+
+  def toRawSQLStr(autoSuggestContext: AutoSuggestContext, wow: List[Token]): String = {
     val start = wow.head.getStartIndex
     val stop = wow.last.getStopIndex
 
     val input = wow.head.getTokenSource.asInstanceOf[DSLSQLLexer]._input
     val interval = new Interval(start, stop)
     val originalText = input.getText(interval)
-    val newTokens = autoSuggestContext.rawSQLLexer.tokenizeNonDefaultChannel(originalText).tokens.asScala.toList
-    return newTokens
+    originalText
   }
 
   def filterPrefixIfNeeded(candidates: List[SuggestItem], tokens: List[Token], tokenPos: TokenPos) = {
@@ -88,6 +93,76 @@ object LexerUtils {
         && (
         token.getType == DSLSQLLexer.UNRECOGNIZED
           || token.getType == MLSQLTokenTypeWrapper.DOT
+        )) {
+        TokenPos(index, TokenPosType.NEXT, 0)
+      } else if (start < colNum && colNum <= end) {
+        // in token
+        TokenPos(index, TokenPosType.CURRENT, colNum - start)
+      } else if (colNum <= start) {
+        TokenPos(index - 1, TokenPosType.NEXT, 0)
+      } else {
+        TokenPos(-2, -2, -2)
+      }
+
+
+    }.filterNot(_.pos == -2).head
+  }
+
+  def toTokenPosForSparkSQL(tokens: List[Token], lineNum: Int, colNum: Int): TokenPos = {
+    /**
+     * load hi[cursor]...   in token
+     * load [cursor]        out token
+     * load[cursor]         in token
+     */
+
+    if (tokens.size == 0) {
+      return TokenPos(-1, TokenPosType.NEXT, -1)
+    }
+
+    val oneLineTokens = tokens.zipWithIndex.filter { case (token, index) =>
+      token.getLine == lineNum
+    }
+
+    val firstToken = oneLineTokens.headOption match {
+      case Some(head) => head
+      case None =>
+        tokens.zipWithIndex.filter { case (token, index) =>
+          token.getLine == lineNum - 1
+        }.head
+    }
+    val lastToken = oneLineTokens.lastOption match {
+      case Some(last) => last
+      case None =>
+        tokens.zipWithIndex.filter { case (token, index) =>
+          token.getLine == lineNum + 1
+        }.last
+    }
+
+    if (colNum < firstToken._1.getCharPositionInLine) {
+      return TokenPos(firstToken._2 - 1, TokenPosType.NEXT, 0)
+    }
+
+    if (colNum > lastToken._1.getCharPositionInLine + lastToken._1.getText.size) {
+      return TokenPos(lastToken._2, TokenPosType.NEXT, 0)
+    }
+
+    if (colNum > lastToken._1.getCharPositionInLine && colNum <= lastToken._1.getCharPositionInLine + lastToken._1.getText.size) {
+      return TokenPos(lastToken._2, TokenPosType.CURRENT, colNum - lastToken._1.getCharPositionInLine)
+    }
+    oneLineTokens.map { case (token, index) =>
+      val start = token.getCharPositionInLine
+      val end = token.getCharPositionInLine + token.getText.size
+      //紧邻一个token的后面，没有空格,一般情况下是当做前一个token的一部分，用户还没写完，但是如果
+      //这个token是 [(,).]等，则不算
+      if (colNum == end && (1 <= token.getType)
+        && (
+        token.getType == DSLSQLLexer.UNRECOGNIZED
+          || token.getType == TokenTypeWrapper.COLON
+          || token.getType == TokenTypeWrapper.DOT
+          || token.getType == TokenTypeWrapper.LEFT_BRACKET
+          || token.getType == TokenTypeWrapper.RIGHT_BRACKET
+          || token.getType == TokenTypeWrapper.LEFT_SQUARE_BRACKET
+          || token.getType == TokenTypeWrapper.RIGHT_SQUARE_BRACKET
         )) {
         TokenPos(index, TokenPosType.NEXT, 0)
       } else if (start < colNum && colNum <= end) {
