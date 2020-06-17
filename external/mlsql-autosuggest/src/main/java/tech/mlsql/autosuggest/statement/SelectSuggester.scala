@@ -5,7 +5,7 @@ import org.apache.spark.sql.catalyst.parser.SqlBaseLexer
 import streaming.dsl.parser.DSLSQLLexer
 import tech.mlsql.autosuggest.dsl.{Food, TokenMatcher}
 import tech.mlsql.autosuggest.meta.{MetaTable, MetaTableColumn, MetaTableKey}
-import tech.mlsql.autosuggest.{AutoSuggestContext, TokenPos}
+import tech.mlsql.autosuggest.{AutoSuggestContext, SpecialTableConst, TokenPos}
 
 import scala.collection.mutable
 
@@ -68,6 +68,18 @@ class SelectSuggester(val context: AutoSuggestContext, val _tokens: List[Token],
         }
         TABLE_INFO(level) += (metaTableKeyWrapper -> MetaTable(metaTableKey, metaColumns))
 
+      }
+
+    }
+
+    if (context.isInDebugMode) {
+      logInfo(s"SQL[${newTokens.map(_.getText).mkString(" ")}]")
+      logInfo(s"STRUCTURE: \n")
+      TABLE_INFO.foreach { item =>
+        logInfo(s"Level:${item._1}")
+        item._2.foreach { table =>
+          logInfo(s"${table._1} => ${table._2}")
+        }
       }
 
     }
@@ -183,7 +195,16 @@ class FromSuggester(_selectSuggester: SelectSuggester) extends ProjectSuggester(
   }
 
   override def suggest(): List[SuggestItem] = {
-    LexerUtils.filterPrefixIfNeeded(tableSuggest(), tokens, tokenPos)
+    val allTables = _selectSuggester.context.metaProvider.list.map { item =>
+      val prefix = (item.key.prefix, item.key.db) match {
+        case (Some(prefix), Some(db)) => prefix
+        case (Some(prefix), None) => prefix
+        case (None, Some(SpecialTableConst.TEMP_TABLE_DB_KEY)) => "temp table"
+        case (None, Some(db)) => db
+      }
+      SuggestItem(item.key.table, item, Map("desc" -> prefix))
+    }
+    LexerUtils.filterPrefixIfNeeded(tableSuggest() ++ allTables, tokens, tokenPos)
   }
 }
 
@@ -191,7 +212,7 @@ class OrderSuggester(_selectSuggester: SelectSuggester) extends ProjectSuggester
   override def name: String = "order"
 
   override def isMatch(): Boolean = {
-    backAndFirstIs(SqlBaseLexer.FROM)
+    backAndFirstIs(SqlBaseLexer.ORDER)
   }
 
   override def suggest(): List[SuggestItem] = {

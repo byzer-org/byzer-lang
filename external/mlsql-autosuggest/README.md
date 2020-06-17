@@ -1,14 +1,12 @@
-# MLSQL智能代码提示
-
-MLSQL智能补全功能现阶段是作为MLSQL的一个插件的形式提供,也可以作为单独的应用运行。
-为了方便对该项目指代，我们后续使用 【MLSQL Code Intelligence】
-
+# SQL Code Intelligence
+SQL Code Intelligence 是一个代码补全后端引擎。既可以作为MLSQL语法补全，
+也可以为标准Spark SQL(Select语句)做补全。`
 
 ## 当前状态
 【积极开发中，还未发布稳定版本】
 
 ## 目标
-【MLSQL Code Intelligence】目标分成两个，第一个是标准SQL补全：
+【SQL Code Intelligence】目标分成两个，第一个是标准SQL补全：
 
 1. SQL关键字补全
 2. 表/字段属性/函数补全
@@ -79,7 +77,7 @@ select spl  from jack.drugs_bad_case_di as a;
 load csv.`/tmp.csv` where [鼠标位置]
 ```
 
-通常加载csv我们需要设定下csv是不是包含header, 分割符是什么。不过一般我们需要去查文档才能知道这些参数。 现在，【MLSQL Code Intelligence】会给出提示：
+通常加载csv我们需要设定下csv是不是包含header, 分割符是什么。不过一般我们需要去查文档才能知道这些参数。 现在，【SQL Code Intelligence】会给出提示：
 
 ```json
 [
@@ -102,20 +100,21 @@ load csv.`/tmp.csv` where [鼠标位置]
 如果作为MLSQL插件运行， 请参考部署文档 [MLSQL部署](http://docs.mlsql.tech/zh/installation/)
 该插件作为MLSQ默认插件，所以开箱即用
 
-如果用户希望作为独立应用运行，那么可以自己现在源码然后打包，然后按如下命令启动：
+如果用户希望作为独立应用运行， 下载：[sql-code-intelligence](http://download.mlsql.tech/sql-code-intelligence/).
+下载后 `tar xvf  sql-code-intelligence-0.1.0.tar` 解压,执行如下指令即可运行：
 
 ```
-java -cp .:jar  tech.mlsql.autosuggest.app.Standalone  -config /tmp/config/application.yml
+java -cp .:sql-code-intelligence-0.1.0.jar  tech.mlsql.autosuggest.app.Standalone  -config ./config/application.yml
 ```
 application.yml 可以参考mlsql-autosuggest/config的示例。默认端口是9004.
 
 ### Schema信息
 
-【MLSQL Code Intelligence】 需要基础表的schema信息，目前用户有三种可选方式：
+【SQL Code Intelligence】 需要基础表的schema信息，目前用户有三种可选方式：
 
-1. 主动注册schema信息
-2. 提供符合规范的Rest接口，系统会自动调用该接口获取schema信息
-3. 扩展【MLSQL Code Intelligence】的 MetaProvider，使得系统可以获取shcema信息。
+1. 主动注册schema信息 （适合体验和调试）
+2. 提供符合规范的Rest接口，系统会自动调用该接口获取schema信息 （推荐，对本项目无需任何修改）
+3. 扩展【SQL Code Intelligence】的 MetaProvider，使得系统可以获取shcema信息。 (启动本项目时需要注册该类)
 
 最简单的是方式1. 通过http接口注册表信息，我下面是使用scala代码完成，用户也可以使用POSTMan之类的工具完成注册。
 
@@ -192,7 +191,7 @@ prefix是方便定义数据源的。比如同样一个表，可能是hive表，�
 ```sql
 load hive.`db.table1` as table2;
 ```
-【MLSQL Code Intelligence】 会发送如下的MetaTableKey给你的MetaProvider.search方法：
+【SQL Code Intelligence】 会发送如下的MetaTableKey给你的MetaProvider.search方法：
 
 ```scala
 MetaTableKey(Option(hive),Option("db"),Option("table2"))
@@ -273,7 +272,7 @@ sparkSession也可以设置为null，但是会缺失一些功能，比如数据�
 ## 开发者指南
 
 ### 解析流程
-【MLSQL Code Intelligence】复用了MLSQL/Spark SQL的lexer，重写了parser部分。因为代码提示有其自身特点，就是句法在书写过程中，大部分情况下都是错误的，无法使用严格的parser来进行解析。
+【SQL Code Intelligence】复用了MLSQL/Spark SQL的lexer，重写了parser部分。因为代码提示有其自身特点，就是句法在书写过程中，大部分情况下都是错误的，无法使用严格的parser来进行解析。
 
 使用两个Lexer的原因是因为，MLSQL Lexer主要用来解析整个MLSQL脚本，Spark SQL Lexer主要用来解决标准SQL中的select语句。但是因为该项目高度可扩展，用户也可以自行扩展到其他标准SQL的语句中。
 
@@ -292,7 +291,7 @@ sparkSession也可以设置为null，但是会缺失一些功能，比如数据�
 
 
 ### 快速参与贡献该项目
-【MLSQL Code Intelligence】 需要大量函数的定义，方便在用户使用时给予提示。下面是我实现的`split` 函数的代码：
+【SQL Code Intelligence】 需要大量函数的定义，方便在用户使用时给予提示。下面是我实现的`split` 函数的代码：
 
 ```scala
 class Splitter extends FuncReg {
@@ -322,7 +321,7 @@ class Splitter extends FuncReg {
 
 ### TokenMatcher工具类
 
-在【MLSQL Code Intelligence】中，最主要的工作是做token匹配。我们提供了TokenMatcher来完成token的匹配。TokenMatcher支持前向和后向匹配。如下token序列:
+在【SQL Code Intelligence】中，最主要的工作是做token匹配。我们提供了TokenMatcher来完成token的匹配。TokenMatcher支持前向和后向匹配。如下token序列:
 
 ```
 select a , b , c from jack

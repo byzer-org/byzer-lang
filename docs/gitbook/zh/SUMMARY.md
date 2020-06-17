@@ -156,6 +156,7 @@
         * [MLSQL Cluster 路由策略](cluster/route.md)        
     * [常见问题集锦](qa/README.md)
     * [长时间稳定运行注意事项](qa/long-run-issues.md)        
+    * [Cheatsheet](qa/cheatsheet.md)        
         
 
 * 开发者指南

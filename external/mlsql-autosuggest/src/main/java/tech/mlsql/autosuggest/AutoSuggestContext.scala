@@ -46,6 +46,8 @@ class AutoSuggestContext(val session: SparkSession,
   private var _rawTokens: List[Token] = List()
   private var _statements = List[List[Token]]()
   private val _tempTableProvider: StatementTempTableProvider = new StatementTempTableProvider()
+  private var _rawLineNum = 0
+  private var _rawColumnNum = 0
   private var userDefinedProvider: MetaProvider = new MetaProvider {
     override def search(key: MetaTableKey): Option[MetaTable] = None
 
@@ -130,6 +132,11 @@ class AutoSuggestContext(val session: SparkSession,
   }
 
   def suggest(lineNum: Int, columnNum: Int): List[SuggestItem] = {
+    if (isInDebugMode) {
+      logInfo(s"lineNum:${lineNum} columnNum:${columnNum}")
+    }
+    _rawLineNum = lineNum
+    _rawColumnNum = columnNum
     val tokenPos = LexerUtils.toTokenPos(rawTokens, lineNum, columnNum)
     suggest(tokenPos)
   }
@@ -140,7 +147,10 @@ class AutoSuggestContext(val session: SparkSession,
    */
   def suggest(tokenPos: TokenPos): List[SuggestItem] = {
     if (isInDebugMode) {
-      logInfo("Global Pos::" + tokenPos.str)
+      logInfo("Global Pos::" + tokenPos.str + s"::${rawTokens(tokenPos.pos)}")
+    }
+    if (tokenPos.pos == -1) {
+      return firstWords
     }
     val (relativeTokenPos, index) = toRelativePos(tokenPos)
 
@@ -153,7 +163,20 @@ class AutoSuggestContext(val session: SparkSession,
         val suggester = new LoadSuggester(this, _statements(index), relativeTokenPos)
         suggester.suggest()
       case Some("select") =>
-        val suggester = new SelectSuggester(this, _statements(index), relativeTokenPos)
+        // we should recompute the token pos since they use spark sql lexer instead of 
+        val selectTokens = _statements(index)
+        val startLineNum = selectTokens.head.getLine
+        val relativeLineNum = _rawLineNum - startLineNum + 1 // startLineNum start from 1
+        val relativeColumnNum = _rawColumnNum - selectTokens.head.getCharPositionInLine // charPos is start from 0
+
+        if (isInDebugMode) {
+          logInfo(s"select[${index}] relativeLineNum:${relativeLineNum} relativeColumnNum:${relativeColumnNum}")
+        }
+        val relativeTokenPos = LexerUtils.toTokenPosForSparkSQL(LexerUtils.toRawSQLTokens(this, selectTokens), relativeLineNum, relativeColumnNum)
+        if (isInDebugMode) {
+          logInfo(s"select[${index}] relativeTokenPos:${relativeTokenPos.str}")
+        }
+        val suggester = new SelectSuggester(this, selectTokens, relativeTokenPos)
         suggester.suggest()
       case Some(value) => firstWords.filter(_.name.startsWith(value))
       case None => firstWords

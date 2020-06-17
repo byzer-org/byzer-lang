@@ -499,33 +499,33 @@ public enum MysqlType implements SQLType {
             /*
              * The char/binary types can be converted to pretty much anything.
              */
-            case java.sql.Types.CHAR:
-            case java.sql.Types.VARCHAR:
-            case java.sql.Types.LONGVARCHAR:
-            case java.sql.Types.BINARY:
-            case java.sql.Types.VARBINARY:
-            case java.sql.Types.LONGVARBINARY:
+            case Types.CHAR:
+            case Types.VARCHAR:
+            case Types.LONGVARCHAR:
+            case Types.BINARY:
+            case Types.VARBINARY:
+            case Types.LONGVARBINARY:
 
                 switch (toType) {
-                    case java.sql.Types.DECIMAL:
-                    case java.sql.Types.NUMERIC:
-                    case java.sql.Types.REAL:
-                    case java.sql.Types.TINYINT:
-                    case java.sql.Types.SMALLINT:
-                    case java.sql.Types.INTEGER:
-                    case java.sql.Types.BIGINT:
-                    case java.sql.Types.FLOAT:
-                    case java.sql.Types.DOUBLE:
-                    case java.sql.Types.CHAR:
-                    case java.sql.Types.VARCHAR:
-                    case java.sql.Types.LONGVARCHAR:
-                    case java.sql.Types.BINARY:
-                    case java.sql.Types.VARBINARY:
-                    case java.sql.Types.LONGVARBINARY:
-                    case java.sql.Types.OTHER:
-                    case java.sql.Types.DATE:
-                    case java.sql.Types.TIME:
-                    case java.sql.Types.TIMESTAMP:
+                    case Types.DECIMAL:
+                    case Types.NUMERIC:
+                    case Types.REAL:
+                    case Types.TINYINT:
+                    case Types.SMALLINT:
+                    case Types.INTEGER:
+                    case Types.BIGINT:
+                    case Types.FLOAT:
+                    case Types.DOUBLE:
+                    case Types.CHAR:
+                    case Types.VARCHAR:
+                    case Types.LONGVARCHAR:
+                    case Types.BINARY:
+                    case Types.VARBINARY:
+                    case Types.LONGVARBINARY:
+                    case Types.OTHER:
+                    case Types.DATE:
+                    case Types.TIME:
+                    case Types.TIMESTAMP:
                         return true;
 
                     default:
@@ -535,38 +535,38 @@ public enum MysqlType implements SQLType {
                 /*
                  * We don't handle the BIT type yet.
                  */
-            case java.sql.Types.BIT:
+            case Types.BIT:
                 return false;
 
             /*
              * The numeric types. Basically they can convert among themselves, and with char/binary types.
              */
-            case java.sql.Types.DECIMAL:
-            case java.sql.Types.NUMERIC:
-            case java.sql.Types.REAL:
-            case java.sql.Types.TINYINT:
-            case java.sql.Types.SMALLINT:
-            case java.sql.Types.INTEGER:
-            case java.sql.Types.BIGINT:
-            case java.sql.Types.FLOAT:
-            case java.sql.Types.DOUBLE:
+            case Types.DECIMAL:
+            case Types.NUMERIC:
+            case Types.REAL:
+            case Types.TINYINT:
+            case Types.SMALLINT:
+            case Types.INTEGER:
+            case Types.BIGINT:
+            case Types.FLOAT:
+            case Types.DOUBLE:
 
                 switch (toType) {
-                    case java.sql.Types.DECIMAL:
-                    case java.sql.Types.NUMERIC:
-                    case java.sql.Types.REAL:
-                    case java.sql.Types.TINYINT:
-                    case java.sql.Types.SMALLINT:
-                    case java.sql.Types.INTEGER:
-                    case java.sql.Types.BIGINT:
-                    case java.sql.Types.FLOAT:
-                    case java.sql.Types.DOUBLE:
-                    case java.sql.Types.CHAR:
-                    case java.sql.Types.VARCHAR:
-                    case java.sql.Types.LONGVARCHAR:
-                    case java.sql.Types.BINARY:
-                    case java.sql.Types.VARBINARY:
-                    case java.sql.Types.LONGVARBINARY:
+                    case Types.DECIMAL:
+                    case Types.NUMERIC:
+                    case Types.REAL:
+                    case Types.TINYINT:
+                    case Types.SMALLINT:
+                    case Types.INTEGER:
+                    case Types.BIGINT:
+                    case Types.FLOAT:
+                    case Types.DOUBLE:
+                    case Types.CHAR:
+                    case Types.VARCHAR:
+                    case Types.LONGVARCHAR:
+                    case Types.BINARY:
+                    case Types.VARBINARY:
+                    case Types.LONGVARBINARY:
                         return true;
 
                     default:
@@ -574,21 +574,21 @@ public enum MysqlType implements SQLType {
                 }
 
                 /* MySQL doesn't support a NULL type. */
-            case java.sql.Types.NULL:
+            case Types.NULL:
                 return false;
 
             /*
              * With this driver, this will always be a serialized object, so the char/binary types will work.
              */
-            case java.sql.Types.OTHER:
+            case Types.OTHER:
 
                 switch (toType) {
-                    case java.sql.Types.CHAR:
-                    case java.sql.Types.VARCHAR:
-                    case java.sql.Types.LONGVARCHAR:
-                    case java.sql.Types.BINARY:
-                    case java.sql.Types.VARBINARY:
-                    case java.sql.Types.LONGVARBINARY:
+                    case Types.CHAR:
+                    case Types.VARCHAR:
+                    case Types.LONGVARCHAR:
+                    case Types.BINARY:
+                    case Types.VARBINARY:
+                    case Types.LONGVARBINARY:
                         return true;
 
                     default:
@@ -596,15 +596,15 @@ public enum MysqlType implements SQLType {
                 }
 
                 /* Dates can be converted to char/binary types. */
-            case java.sql.Types.DATE:
+            case Types.DATE:
 
                 switch (toType) {
-                    case java.sql.Types.CHAR:
-                    case java.sql.Types.VARCHAR:
-                    case java.sql.Types.LONGVARCHAR:
-                    case java.sql.Types.BINARY:
-                    case java.sql.Types.VARBINARY:
-                    case java.sql.Types.LONGVARBINARY:
+                    case Types.CHAR:
+                    case Types.VARCHAR:
+                    case Types.LONGVARCHAR:
+                    case Types.BINARY:
+                    case Types.VARBINARY:
+                    case Types.LONGVARBINARY:
                         return true;
 
                     default:
@@ -612,15 +612,15 @@ public enum MysqlType implements SQLType {
                 }
 
                 /* Time can be converted to char/binary types */
-            case java.sql.Types.TIME:
+            case Types.TIME:
 
                 switch (toType) {
-                    case java.sql.Types.CHAR:
-                    case java.sql.Types.VARCHAR:
-                    case java.sql.Types.LONGVARCHAR:
-                    case java.sql.Types.BINARY:
-                    case java.sql.Types.VARBINARY:
-                    case java.sql.Types.LONGVARBINARY:
+                    case Types.CHAR:
+                    case Types.VARCHAR:
+                    case Types.LONGVARCHAR:
+                    case Types.BINARY:
+                    case Types.VARBINARY:
+                    case Types.LONGVARBINARY:
                         return true;
 
                     default:
@@ -630,17 +630,17 @@ public enum MysqlType implements SQLType {
                 /*
                  * Timestamp can be converted to char/binary types and date/time types (with loss of precision).
                  */
-            case java.sql.Types.TIMESTAMP:
+            case Types.TIMESTAMP:
 
                 switch (toType) {
-                    case java.sql.Types.CHAR:
-                    case java.sql.Types.VARCHAR:
-                    case java.sql.Types.LONGVARCHAR:
-                    case java.sql.Types.BINARY:
-                    case java.sql.Types.VARBINARY:
-                    case java.sql.Types.LONGVARBINARY:
-                    case java.sql.Types.TIME:
-                    case java.sql.Types.DATE:
+                    case Types.CHAR:
+                    case Types.VARCHAR:
+                    case Types.LONGVARCHAR:
+                    case Types.BINARY:
+                    case Types.VARBINARY:
+                    case Types.LONGVARBINARY:
+                    case Types.TIME:
+                    case Types.DATE:
                         return true;
 
                     default:

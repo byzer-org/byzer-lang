@@ -24,7 +24,15 @@ class AttributeExtractor(autoSuggestContext: AutoSuggestContext, ast: SingleStat
       eat(Food(None, SqlBaseLexer.AS)).optional.
       eat(Food(None, SqlBaseLexer.IDENTIFIER)).optional.
       build
-    temp
+    temp.isSuccess match {
+      case true => temp
+      case false =>
+        TokenMatcher(tokens, start).
+          eatOneAny.
+          eat(Food(None, SqlBaseLexer.AS)).
+          eat(Food(None, SqlBaseLexer.IDENTIFIER)).
+          build
+    }
   }
 
   private def funcitonM(start: Int): TokenMatcher = {
@@ -71,7 +79,10 @@ class AttributeExtractor(autoSuggestContext: AutoSuggestContext, ast: SingleStat
         case List(tableName, _, _) =>
           //expand output
           ast.selectSuggester.table_info(ast.level).
-            get(MetaTableKeyWrapper(MetaTableKey(None, None, null), Option(tableName.getText))) match {
+            get(MetaTableKeyWrapper(MetaTableKey(None, None, null), Option(tableName.getText))).orElse{
+            ast.selectSuggester.table_info(ast.level).
+              get(MetaTableKeyWrapper(MetaTableKey(None, None, tableName.getText), None))
+          } match {
             case Some(table) =>
               //如果是临时表，那么需要进一步展开
               val columns = if (table.key.db == Option(SpecialTableConst.TEMP_TABLE_DB_KEY)) {

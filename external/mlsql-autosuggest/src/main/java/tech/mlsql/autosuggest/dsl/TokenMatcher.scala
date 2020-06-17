@@ -32,6 +32,11 @@ class TokenMatcher(tokens: List[Token], val start: Int) {
     this
   }
 
+  def eatOneAny = {
+    foods += FoodWrapper(AndOrFood(List(Food(None, -2)), true), false)
+    this
+  }
+
   /**
    *
    * 一直前进 直到遇到我们需要的,成功返回最后的index值，否则返回-1
@@ -133,6 +138,9 @@ class TokenMatcher(tokens: List[Token], val start: Int) {
   private def matchToken(food: Food, currentIndex: Int): Int = {
     if (currentIndex < 0) return -1
     if (currentIndex >= tokens.size) return -1
+    if (food.tp == -2) {
+      return currentIndex
+    }
     food.name match {
       case Some(name) => if (tokens(currentIndex).getType == food.tp && tokens(currentIndex).getText == name) {
         currentIndex

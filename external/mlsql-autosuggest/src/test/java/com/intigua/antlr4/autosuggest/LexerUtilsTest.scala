@@ -28,6 +28,11 @@ class LexerUtilsTest extends BaseTest {
     assert(LexerUtils.toTokenPos(context.rawTokens, 1, 11) == TokenPos(2, TokenPosType.NEXT, 0))
   }
 
+  test("select  from (select table2.abc as abc from table1 left join table2 on table1.column1 == table2.[cursor]) t1") {
+    context.buildFromString("select  from (select table2.abc as abc from table1 left join table2 on table1.column1 == table2.) t1")
+    assert(LexerUtils.toTokenPos(context.rawTokens, 1, 96) == TokenPos(21, TokenPosType.NEXT, 0))
+  }
+
   test("select sum(abc[cursor]) as t from table") {
     context.buildFromString("select sum(abc) as t from table")
     assert(LexerUtils.toTokenPos(context.rawTokens, 1, 14) == TokenPos(3, TokenPosType.CURRENT, 3))
