@@ -408,7 +408,7 @@
                 <spark.streaming.kafka.artifactId>spark-streaming-kafka-0-8_${scala.binary.version}
                 </spark.streaming.kafka.artifactId>
                 <spark.sql.kafka.artifactId>spark-sql-kafka-0-10_${scala.binary.version}</spark.sql.kafka.artifactId>
-                <spark.version>3.0.0-preview2</spark.version>
+                <spark.version>3.0.0</spark.version>
                 <spark.bigversion>3.0</spark.bigversion>
             </properties>
             <modules>
