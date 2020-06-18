@@ -33,6 +33,15 @@ object AutoSuggestController {
   val lexerAndParserfactory2 = new ReflectionLexerAndParserFactory(classOf[SqlBaseLexer], classOf[SqlBaseParser]);
   val sqlLexer = new LexerWrapper(lexerAndParserfactory2, new RawSQLToCharStream)
 
+  def getSchemaRegistry = {
+
+    new SchemaRegistry(getSession)
+  }
+
+  def getSession = {
+    val session = if (ScriptSQLExec.context() != null) ScriptSQLExec.context().execListener.sparkSession else Standalone.sparkSession
+    session
+  }
 }
 
 class RegisterTableController extends CustomController {
@@ -48,7 +57,8 @@ class RegisterTableController extends CustomController {
     require(hasParam("table"), "table is required")
     require(hasParam("schema"), "schema is required")
     val table = params("table")
-    val session = new SchemaRegistry(ScriptSQLExec.context().execListener.sparkSession)
+
+    val session = AutoSuggestController.getSchemaRegistry
     params.getOrElse("schemaType", "") match {
       case Constants.DB => session.createTableFromDBSQL(prefix, db, table, params("schema"))
       case Constants.HIVE => session.createTableFromHiveSQL(prefix, db, table, params("schema"))
@@ -65,10 +75,11 @@ class AutoSuggestController extends CustomController {
     val lineNum = params("lineNum").toInt
     val columnNum = params("columnNum").toInt
     val isDebug = params.getOrElse("isDebug", "false").toBoolean
+    val size = params.getOrElse("size", "30").toInt
 
     val enableMemoryProvider = params.getOrElse("enableMemoryProvider", "true").toBoolean
-
-    val context = new AutoSuggestContext(ScriptSQLExec.context().execListener.sparkSession,
+    val session = AutoSuggestController.getSession
+    val context = new AutoSuggestContext(session,
       AutoSuggestController.mlsqlLexer,
       AutoSuggestController.sqlLexer)
     context.setDebugMode(isDebug)
@@ -84,6 +95,6 @@ class AutoSuggestController extends CustomController {
       case (None, None) =>
     }
 
-    JSONTool.toJsonStr(context.buildFromString(sql).suggest(lineNum, columnNum))
+    JSONTool.toJsonStr(context.buildFromString(sql).suggest(lineNum, columnNum).take(size))
   }
 }
