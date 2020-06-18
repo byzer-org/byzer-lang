@@ -14,7 +14,7 @@ class BuildSubQueryTreeTest extends BaseTest {
 
   def buildMetaProvider = {
     context.setUserDefinedMetaProvider(new MetaProvider {
-      override def search(key: MetaTableKey): Option[MetaTable] = {
+      override def search(key: MetaTableKey,extra: Map[String, String] = Map()): Option[MetaTable] = {
         Option(MetaTable(key, List(
           MetaTableColumn("no_result_type", null, true, Map()),
           MetaTableColumn("keywords", null, true, Map()),
@@ -26,7 +26,7 @@ class BuildSubQueryTreeTest extends BaseTest {
         )))
       }
 
-      override def list: List[MetaTable] = List()
+      override def list(extra: Map[String, String] = Map()): List[MetaTable] = List()
     })
   }
 

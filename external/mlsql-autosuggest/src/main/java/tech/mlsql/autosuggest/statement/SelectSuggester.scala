@@ -195,7 +195,7 @@ class FromSuggester(_selectSuggester: SelectSuggester) extends ProjectSuggester(
   }
 
   override def suggest(): List[SuggestItem] = {
-    val allTables = _selectSuggester.context.metaProvider.list.map { item =>
+    val allTables = _selectSuggester.context.metaProvider.list(Map()).map { item =>
       val prefix = (item.key.prefix, item.key.db) match {
         case (Some(prefix), Some(db)) => prefix
         case (Some(prefix), None) => prefix

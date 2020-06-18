@@ -81,7 +81,7 @@ trait SelectStatementUtils extends Logging {
       }.map { case (name, table) =>
         SuggestItem(name, table, Map())
       }.toList
-      case None => selectSuggester.context.metaProvider.list.map { item =>
+      case None => selectSuggester.context.metaProvider.list(Map()).map { item =>
         SuggestItem(item.key.table, item, Map())
       }
     }
@@ -164,7 +164,7 @@ trait SelectStatementUtils extends Logging {
     }
 
     def allOutput = {
-      MLSQLSQLFunction.funcMetaProvider.list.map(item => SuggestItem(item.key.table, item, Map()))
+      MLSQLSQLFunction.funcMetaProvider.list(Map()).map(item => SuggestItem(item.key.table, item, Map()))
     }
 
     val tempStart = tokenPos.currentOrNext match {

@@ -100,7 +100,7 @@ class AutoSuggestContextTest extends BaseTest with BeforeAndAfterEach {
 
   test("load/select 4/22 select  from (select [cursor]keywords") {
     context.setUserDefinedMetaProvider(new MetaProvider {
-      override def search(key: MetaTableKey): Option[MetaTable] = {
+      override def search(key: MetaTableKey,extra: Map[String, String] = Map()): Option[MetaTable] = {
         val key = MetaTableKey(None, None, "table1")
         val value = Option(MetaTable(
           key, List(
@@ -113,7 +113,7 @@ class AutoSuggestContextTest extends BaseTest with BeforeAndAfterEach {
         value
       }
 
-      override def list: List[MetaTable] = List()
+      override def list(extra: Map[String, String] = Map()): List[MetaTable] = List()
     })
     val wow = context.lexer.tokenizeNonDefaultChannel(
       """
@@ -129,7 +129,7 @@ class AutoSuggestContextTest extends BaseTest with BeforeAndAfterEach {
 
   test("load/select table with star") {
     context.setUserDefinedMetaProvider(new MetaProvider {
-      override def search(key: MetaTableKey): Option[MetaTable] = {
+      override def search(key: MetaTableKey,extra: Map[String, String] = Map()): Option[MetaTable] = {
         if (key.prefix == Option("hive")) {
           Option(MetaTable(key, List(
             MetaTableColumn("a", DataType.STRING, true, Map()),
@@ -140,7 +140,7 @@ class AutoSuggestContextTest extends BaseTest with BeforeAndAfterEach {
         } else None
       }
 
-      override def list: List[MetaTable] = ???
+      override def list(extra: Map[String, String] = Map()): List[MetaTable] = ???
     })
     val wow = context.lexer.tokenizeNonDefaultChannel(
       """
@@ -157,7 +157,7 @@ class AutoSuggestContextTest extends BaseTest with BeforeAndAfterEach {
   test("load/select table with star and func") {
     context.setDebugMode(true)
     context.setUserDefinedMetaProvider(new MetaProvider {
-      override def search(key: MetaTableKey): Option[MetaTable] = {
+      override def search(key: MetaTableKey,extra: Map[String, String] = Map()): Option[MetaTable] = {
         if (key.prefix == Option("hive")) {
           Option(MetaTable(key, List(
             MetaTableColumn("a", DataType.STRING, true, Map()),
@@ -168,7 +168,7 @@ class AutoSuggestContextTest extends BaseTest with BeforeAndAfterEach {
         } else None
       }
 
-      override def list: List[MetaTable] = ???
+      override def list(extra: Map[String, String] = Map()): List[MetaTable] = ???
     })
     val sql =
       """

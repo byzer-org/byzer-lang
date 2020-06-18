@@ -49,9 +49,9 @@ class AutoSuggestContext(val session: SparkSession,
   private var _rawLineNum = 0
   private var _rawColumnNum = 0
   private var userDefinedProvider: MetaProvider = new MetaProvider {
-    override def search(key: MetaTableKey): Option[MetaTable] = None
+    override def search(key: MetaTableKey,extra: Map[String, String] = Map()): Option[MetaTable] = None
 
-    override def list: List[MetaTable] = List()
+    override def list(extra: Map[String, String] = Map()): List[MetaTable] = List()
   }
   private var _metaProvider: MetaProvider = new LayeredMetaProvider(tempTableProvider, userDefinedProvider)
 

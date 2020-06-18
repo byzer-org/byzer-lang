@@ -13,7 +13,7 @@ class TablePreprocessorTest extends BaseTest {
 
   test("load/select table") {
     context.setUserDefinedMetaProvider(new MetaProvider {
-      override def search(key: MetaTableKey): Option[MetaTable] = {
+      override def search(key: MetaTableKey,extra: Map[String, String] = Map()): Option[MetaTable] = {
         if (key.prefix == Option("hive")) {
           Option(MetaTable(key, List(
             MetaTableColumn("a", DataType.STRING, true, Map()),
@@ -24,7 +24,7 @@ class TablePreprocessorTest extends BaseTest {
         } else None
       }
 
-      override def list: List[MetaTable] = ???
+      override def list(extra: Map[String, String] = Map()): List[MetaTable] = ???
     })
     val wow = context.lexer.tokenizeNonDefaultChannel(
       """
@@ -46,7 +46,7 @@ class TablePreprocessorTest extends BaseTest {
 
   test("load/select table with star") {
     context.setUserDefinedMetaProvider(new MetaProvider {
-      override def search(key: MetaTableKey): Option[MetaTable] = {
+      override def search(key: MetaTableKey,extra: Map[String, String] = Map()): Option[MetaTable] = {
         if (key.prefix == Option("hive")) {
           Option(MetaTable(key, List(
             MetaTableColumn("a", DataType.STRING, true, Map()),
@@ -57,7 +57,7 @@ class TablePreprocessorTest extends BaseTest {
         } else None
       }
 
-      override def list: List[MetaTable] = ???
+      override def list(extra: Map[String, String] = Map()): List[MetaTable] = ???
     })
     val wow = context.lexer.tokenizeNonDefaultChannel(
       """

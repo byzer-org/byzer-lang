@@ -6,7 +6,7 @@ package tech.mlsql.autosuggest.meta
 class StatementTempTableProvider extends MetaProvider {
   private val cache = scala.collection.mutable.HashMap[String, MetaTable]()
 
-  override def search(key: MetaTableKey): Option[MetaTable] = {
+  override def search(key: MetaTableKey,extra: Map[String, String] = Map()): Option[MetaTable] = {
     cache.get(key.table)
   }
 
@@ -15,5 +15,5 @@ class StatementTempTableProvider extends MetaProvider {
     this
   }
 
-  override def list: List[MetaTable] = cache.values.toList
+  override def list(extra: Map[String, String] = Map()): List[MetaTable] = cache.values.toList
 }

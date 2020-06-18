@@ -13,7 +13,7 @@ class SelectSuggesterTest extends BaseTest {
 
   def buildMetaProvider = {
     context.setUserDefinedMetaProvider(new MetaProvider {
-      override def search(key: MetaTableKey): Option[MetaTable] = {
+      override def search(key: MetaTableKey,extra: Map[String, String] = Map()): Option[MetaTable] = {
         Option(MetaTable(key, List(
           MetaTableColumn("no_result_type", null, true, Map()),
           MetaTableColumn("keywords", null, true, Map()),
@@ -26,7 +26,7 @@ class SelectSuggesterTest extends BaseTest {
 
       }
 
-      override def list: List[MetaTable] = List()
+      override def list(extra: Map[String, String] = Map()): List[MetaTable] = List()
     })
 
 
@@ -55,9 +55,9 @@ class SelectSuggesterTest extends BaseTest {
   test("select") {
 
     context.setUserDefinedMetaProvider(new MetaProvider {
-      override def search(key: MetaTableKey): Option[MetaTable] = None
+      override def search(key: MetaTableKey,extra: Map[String, String] = Map()): Option[MetaTable] = None
 
-      override def list: List[MetaTable] = List()
+      override def list(extra: Map[String, String] = Map()): List[MetaTable] = List()
     })
 
 
@@ -220,11 +220,11 @@ class SelectSuggesterTest extends BaseTest {
 
     )
     context.setUserDefinedMetaProvider(new MetaProvider {
-      override def search(key: MetaTableKey): Option[MetaTable] = {
+      override def search(key: MetaTableKey,extra: Map[String, String] = Map()): Option[MetaTable] = {
         metas(key)
       }
 
-      override def list: List[MetaTable] = List()
+      override def list(extra: Map[String, String] = Map()): List[MetaTable] = List()
     })
 
 
