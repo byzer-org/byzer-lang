@@ -11,7 +11,7 @@ import org.apache.spark.sql.mlsql.session.MLSQLException
 import org.apache.spark.sql.types.{DataType, StructType}
 import org.apache.spark.sql.{DataFrame, Row, SparkSession, SparkUtils}
 import org.apache.spark.util.{TaskCompletionListener, TaskFailureListener}
-import org.apache.spark.{MLSQLSparkUtils, TaskContext}
+import org.apache.spark.{MLSQLSparkUtils, TaskContext, WowRowEncoder}
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.Functions
@@ -277,7 +277,8 @@ class PythonCommand(override val uid: String) extends SQLAlg with Functions with
     val sourceSchema = df.schema
     try {
       val data = df.rdd.mapPartitions { iter =>
-        val encoder = RowEncoder.apply(sourceSchema).resolveAndBind()
+
+        val encoder = WowRowEncoder.fromRow(sourceSchema)
         val envs4j = new util.HashMap[String, String]()
         envs.foreach(f => envs4j.put(f._1, f._2))
 
@@ -288,7 +289,7 @@ class PythonCommand(override val uid: String) extends SQLAlg with Functions with
         )
 
         val newIter = iter.map { irow =>
-          encoder.toRow(irow)
+          encoder(irow)
         }
         val commonTaskContext = new SparkContextImp(TaskContext.get(), batch)
         val columnarBatchIter = batch.compute(Iterator(newIter), TaskContext.getPartitionId(), commonTaskContext)

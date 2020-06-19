@@ -9,7 +9,7 @@ import org.apache.spark.internal.Logging
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.catalyst.encoders.RowEncoder
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
-import org.apache.spark.{SparkEnv, TaskContext}
+import org.apache.spark.{SparkEnv, TaskContext, WowRowEncoder}
 import tech.mlsql.arrow.python.iapp.{AppContextImpl, JavaContext}
 import tech.mlsql.arrow.python.runner.{ArrowPythonRunner, ChainedPythonFunctions, PythonFunction}
 import tech.mlsql.common.utils.distribute.socket.server.{Request, Response, SocketServerInExecutor, SocketServerSerDer}
@@ -58,10 +58,10 @@ class PythonServer[T](taskContextRef: AtomicReference[T])
           envs.foreach { case (a, b) => envs4j.put(a, b) }
 
           val dataSchema = StructType(Seq(StructField("value", StringType)))
-          val enconder = RowEncoder.apply(dataSchema).resolveAndBind()
+          val convert = WowRowEncoder.fromRow(dataSchema)
 
           val newIter = Seq[Row]().map { irow =>
-            enconder.toRow(irow)
+            convert(irow)
           }.iterator
           try {
             val arrowRunner = new ArrowPythonRunner(
