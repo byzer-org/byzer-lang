@@ -135,13 +135,13 @@ class JDBCSink(_options: Map[String, String]) extends Sink with Logging {
       }
     }
 
-    val rowEncoder = RowEncoder.apply(schema).resolveAndBind()
+    val toRow = RowEncoder.apply(schema).resolveAndBind().createDeserializer()
 
     data.queryExecution.toRdd.foreachPartition { iter =>
       if (writer.open(TaskContext.getPartitionId(), batchId)) {
         try {
           while (iter.hasNext) {
-            writer.process(rowEncoder.fromRow(iter.next()))
+            writer.process(toRow(iter.next()))
           }
         } catch {
           case e: Throwable =>
