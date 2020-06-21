@@ -48,6 +48,9 @@ object ScriptRunner {
         if (!reuseExecListenerEnv) {
           newContext.execListener.env().clear()
         }
+        List("SKIP_AUTH", "HOME", "OWNER").foreach { item =>
+          newContext.execListener.env().put(item, context.execListener.env().get(item).get)
+        }
         newContext
       } else context
       val skipAuth = newContext.execListener.env().getOrElse("SKIP_AUTH", "false").toBoolean
