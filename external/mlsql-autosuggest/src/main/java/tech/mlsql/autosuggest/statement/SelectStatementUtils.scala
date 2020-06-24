@@ -36,15 +36,7 @@ trait SelectStatementUtils extends Logging {
   }
 
   def table_info = {
-    var _level = levelFromTokenPos + 1
-    if (selectSuggester.table_info.size == 1 && levelFromTokenPos == 0) {
-      _level = 0
-    }
-
-    if (levelFromTokenPos == selectSuggester.table_info.size - 1) {
-      _level = levelFromTokenPos
-    }
-    selectSuggester.table_info.get(_level)
+    selectSuggester.table_info.get(levelFromTokenPos)
   }
 
 

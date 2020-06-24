@@ -123,7 +123,7 @@ class AutoSuggestContextTest extends BaseTest with BeforeAndAfterEach {
         |""".stripMargin).tokens.asScala.toList
     val items = context.build(wow).suggest(4, 8)
     //    items.foreach(println(_))
-    assert(items.map(_.name) == List("table1", "table2", "keywords", "search_num", "c"))
+    assert(items.map(_.name) == List("table2", "keywords", "search_num", "c"))
 
   }
 

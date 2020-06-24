@@ -49,8 +49,14 @@ class SelectSuggester(val context: AutoSuggestContext, val _tokens: List[Token],
       if (!TABLE_INFO.contains(level)) {
         TABLE_INFO.put(level, new mutable.HashMap[MetaTableKeyWrapper, MetaTable]())
       }
-      if (ast.isLeaf) {
-        ast.tables(newTokens).foreach { item =>
+
+      if (level != 0 && !TABLE_INFO.contains(level - 1)) {
+        TABLE_INFO.put(level - 1, new mutable.HashMap[MetaTableKeyWrapper, MetaTable]())
+      }
+
+
+      ast.tables(newTokens).foreach { item =>
+        if (item.aliasName.isEmpty || item.metaTableKey != MetaTableKey(None, None, null)) {
           context.metaProvider.search(item.metaTableKey) match {
             case Some(res) =>
               TABLE_INFO(level) += (item -> res)
@@ -58,6 +64,7 @@ class SelectSuggester(val context: AutoSuggestContext, val _tokens: List[Token],
           }
         }
       }
+
       val nameOpt = ast.name(newTokens)
       if (nameOpt.isDefined) {
 
@@ -66,8 +73,7 @@ class SelectSuggester(val context: AutoSuggestContext, val _tokens: List[Token],
         val metaColumns = ast.output(newTokens).map { attr =>
           MetaTableColumn(attr, null, true, Map())
         }
-        TABLE_INFO(level) += (metaTableKeyWrapper -> MetaTable(metaTableKey, metaColumns))
-
+        TABLE_INFO(level - 1) += (metaTableKeyWrapper -> MetaTable(metaTableKey, metaColumns))
       }
 
     }
