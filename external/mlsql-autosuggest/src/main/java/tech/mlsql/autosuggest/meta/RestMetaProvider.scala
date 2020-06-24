@@ -8,7 +8,7 @@ import tech.mlsql.common.utils.serder.json.JSONTool
  * 15/6/2020 WilliamZhu(allwefantasy@gmail.com)
  */
 class RestMetaProvider(searchUrl: String, listUrl: String) extends MetaProvider {
-  override def search(key: MetaTableKey): Option[MetaTable] = {
+  override def search(key: MetaTableKey,extra: Map[String, String] = Map()): Option[MetaTable] = {
     val form = Form.form()
     if (key.prefix.isDefined) {
       form.add("prefix", key.prefix.get)
@@ -24,9 +24,12 @@ class RestMetaProvider(searchUrl: String, listUrl: String) extends MetaProvider 
     } else None
   }
 
-  override def list: List[MetaTable] = {
-
-    val resp = Request.Post(listUrl).execute().returnResponse()
+  override def list(extra: Map[String, String] = Map()): List[MetaTable] = {
+    val form = Form.form()
+    extra.foreach { case (k, v) =>
+      form.add(k, v)
+    }
+    val resp = Request.Post(listUrl).bodyForm(form.build()).execute().returnResponse()
     if (resp.getStatusLine.getStatusCode == 200) {
       val metaTables = JSONTool.parseJson[List[MetaTable]](EntityUtils.toString(resp.getEntity))
       metaTables

@@ -73,9 +73,9 @@ object WowJsonInferSchema {
     // create the Generator without separator inserted between 2 records
     val gen = new JacksonGenerator(rowSchema, writer,
       new JSONOptions(Map.empty[String, String], sessionLocalTimeZone))
-    val enconder = RowEncoder.apply(rowSchema).resolveAndBind()
+    val fromRow = RowEncoder.apply(rowSchema).resolveAndBind().createSerializer()
     data.foreach { row =>
-      gen.write(enconder.toRow(row))
+      gen.write(fromRow(row))
       gen.flush()
       val json = writer.toString
       writer.reset()
@@ -101,9 +101,9 @@ object WowJsonInferSchema {
     val gen = new JacksonGenerator(rowSchema, writer,
       new JSONOptions(Map.empty[String, String], sessionLocalTimeZone))
 
-    val enconder = RowEncoder.apply(rowSchema).resolveAndBind()
+    val fromRow = RowEncoder.apply(rowSchema).resolveAndBind().createSerializer()
     val res = dataSet.collect.map { row =>
-      gen.write(enconder.toRow(row))
+      gen.write(fromRow(row))
       gen.flush()
       val json = writer.toString
       writer.reset()

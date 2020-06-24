@@ -5,6 +5,7 @@ import java.util.UUID
 
 import org.apache.commons.io.FileUtils
 import org.apache.hadoop.conf.Configuration
+import org.apache.spark.WowRowEncoder
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.catalyst.encoders.RowEncoder
 import org.apache.spark.sql.types.StructType
@@ -23,7 +24,8 @@ object DataManager extends Logging {
                 sessionLocalTimeZone: String,
                 algIndex: Int,
                 fileType: String) = {
-    val encoder = RowEncoder.apply(sourceSchema).resolveAndBind()
+    val convert = WowRowEncoder.fromRow(sourceSchema)
+
     val localPathConfig = LocalPathConfig.buildFromParams(null)
     var tempDataLocalPathWithAlgSuffix = localPathConfig.localDataPath
     tempDataLocalPathWithAlgSuffix = tempDataLocalPathWithAlgSuffix + "/" + algIndex
@@ -40,7 +42,7 @@ object DataManager extends Logging {
 
     try {
       iter.foreach { row =>
-        localFileWriter.write(encoder.toRow(row))
+        localFileWriter.write(convert(row))
       }
     } finally {
       localFileWriter.close()

@@ -75,7 +75,7 @@ class AutoSuggestContextTest extends BaseTest with BeforeAndAfterEach {
     context.build(wow)
     val tokenPos = LexerUtils.toTokenPos(wow, 3, 4)
     assert(tokenPos == TokenPos(0, TokenPosType.CURRENT, 3))
-    assert(context.suggest(tokenPos) == List(SuggestItem("load", SpecialTableConst.KEY_WORD_TABLE, Map())))
+    assert(context.suggest(3, 4) == List(SuggestItem("load", SpecialTableConst.KEY_WORD_TABLE, Map())))
   }
 
   test("spark sql") {
@@ -94,13 +94,13 @@ class AutoSuggestContextTest extends BaseTest with BeforeAndAfterEach {
         | load hive.`jack.db` as table1;
         | select ke from (select keywords,search_num,c from table1) table2
         |""".stripMargin
-    val items = context.buildFromString(wow).suggest(LexerUtils.toTokenPos(context.rawTokens, 4, 10))
+    val items = context.buildFromString(wow).suggest(4, 10)
     assert(items.map(_.name) == List("keywords"))
   }
 
   test("load/select 4/22 select  from (select [cursor]keywords") {
     context.setUserDefinedMetaProvider(new MetaProvider {
-      override def search(key: MetaTableKey): Option[MetaTable] = {
+      override def search(key: MetaTableKey, extra: Map[String, String] = Map()): Option[MetaTable] = {
         val key = MetaTableKey(None, None, "table1")
         val value = Option(MetaTable(
           key, List(
@@ -113,7 +113,7 @@ class AutoSuggestContextTest extends BaseTest with BeforeAndAfterEach {
         value
       }
 
-      override def list: List[MetaTable] = List()
+      override def list(extra: Map[String, String] = Map()): List[MetaTable] = List()
     })
     val wow = context.lexer.tokenizeNonDefaultChannel(
       """
@@ -121,15 +121,15 @@ class AutoSuggestContextTest extends BaseTest with BeforeAndAfterEach {
         | load hive.`jack.db` as table1;
         | select  from (select keywords,search_num,c from table1) table2
         |""".stripMargin).tokens.asScala.toList
-    val items = context.build(wow).suggest(LexerUtils.toTokenPos(wow, 4, 8))
+    val items = context.build(wow).suggest(4, 8)
     //    items.foreach(println(_))
-    assert(items.map(_.name) == List("table1", "table2", "keywords", "search_num", "c"))
+    assert(items.map(_.name) == List("table2", "keywords", "search_num", "c"))
 
   }
 
   test("load/select table with star") {
     context.setUserDefinedMetaProvider(new MetaProvider {
-      override def search(key: MetaTableKey): Option[MetaTable] = {
+      override def search(key: MetaTableKey, extra: Map[String, String] = Map()): Option[MetaTable] = {
         if (key.prefix == Option("hive")) {
           Option(MetaTable(key, List(
             MetaTableColumn("a", DataType.STRING, true, Map()),
@@ -140,7 +140,7 @@ class AutoSuggestContextTest extends BaseTest with BeforeAndAfterEach {
         } else None
       }
 
-      override def list: List[MetaTable] = ???
+      override def list(extra: Map[String, String] = Map()): List[MetaTable] = ???
     })
     val wow = context.lexer.tokenizeNonDefaultChannel(
       """
@@ -149,7 +149,7 @@ class AutoSuggestContextTest extends BaseTest with BeforeAndAfterEach {
         | select * from table2 as table3;
         | select  from table3
         |""".stripMargin).tokens.asScala.toList
-    val items = context.build(wow).suggest(LexerUtils.toTokenPos(wow, 5, 8))
+    val items = context.build(wow).suggest(5, 8)
     println(items)
 
   }
@@ -157,7 +157,7 @@ class AutoSuggestContextTest extends BaseTest with BeforeAndAfterEach {
   test("load/select table with star and func") {
     context.setDebugMode(true)
     context.setUserDefinedMetaProvider(new MetaProvider {
-      override def search(key: MetaTableKey): Option[MetaTable] = {
+      override def search(key: MetaTableKey, extra: Map[String, String] = Map()): Option[MetaTable] = {
         if (key.prefix == Option("hive")) {
           Option(MetaTable(key, List(
             MetaTableColumn("a", DataType.STRING, true, Map()),
@@ -168,7 +168,7 @@ class AutoSuggestContextTest extends BaseTest with BeforeAndAfterEach {
         } else None
       }
 
-      override def list: List[MetaTable] = ???
+      override def list(extra: Map[String, String] = Map()): List[MetaTable] = ???
     })
     val sql =
       """
@@ -177,7 +177,7 @@ class AutoSuggestContextTest extends BaseTest with BeforeAndAfterEach {
         | select * from table2 as table3;
         | select sum() from table3
         |""".stripMargin
-    val items = context.buildFromString(sql).suggest(LexerUtils.toTokenPos(context.rawTokens, 5, 12))
+    val items = context.buildFromString(sql).suggest(5, 12)
     println(items)
 
   }

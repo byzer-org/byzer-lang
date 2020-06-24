@@ -49,9 +49,9 @@ class AutoSuggestContext(val session: SparkSession,
   private var _rawLineNum = 0
   private var _rawColumnNum = 0
   private var userDefinedProvider: MetaProvider = new MetaProvider {
-    override def search(key: MetaTableKey): Option[MetaTable] = None
+    override def search(key: MetaTableKey, extra: Map[String, String] = Map()): Option[MetaTable] = None
 
-    override def list: List[MetaTable] = List()
+    override def list(extra: Map[String, String] = Map()): List[MetaTable] = List()
   }
   private var _metaProvider: MetaProvider = new LayeredMetaProvider(tempTableProvider, userDefinedProvider)
 
@@ -138,14 +138,15 @@ class AutoSuggestContext(val session: SparkSession,
     _rawLineNum = lineNum
     _rawColumnNum = columnNum
     val tokenPos = LexerUtils.toTokenPos(rawTokens, lineNum, columnNum)
-    suggest(tokenPos)
+    _suggest(tokenPos)
   }
 
   /**
    * Notice that the pos in tokenPos is in whole script.
    * We need to convert it to the relative pos in every statement
    */
-  def suggest(tokenPos: TokenPos): List[SuggestItem] = {
+  private[autosuggest] def _suggest(tokenPos: TokenPos): List[SuggestItem] = {
+    assert(_rawColumnNum != 0 || _rawColumnNum != 0, "lineNum and columnNum should be set")
     if (isInDebugMode) {
       logInfo("Global Pos::" + tokenPos.str + s"::${rawTokens(tokenPos.pos)}")
     }

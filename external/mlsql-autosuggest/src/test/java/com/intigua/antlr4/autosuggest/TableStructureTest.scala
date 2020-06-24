@@ -1,20 +1,59 @@
 package com.intigua.antlr4.autosuggest
 
 import tech.mlsql.autosuggest.meta.{MetaProvider, MetaTable, MetaTableColumn, MetaTableKey}
-import tech.mlsql.autosuggest.statement.{MetaTableKeyWrapper, SelectSuggester, SuggestItem}
+import tech.mlsql.autosuggest.statement.{MetaTableKeyWrapper, SelectSuggester}
 import tech.mlsql.autosuggest.{TokenPos, TokenPosType}
-
+import tech.mlsql.common.utils.log.Logging
 import scala.collection.JavaConverters._
+
 import scala.collection.mutable.ArrayBuffer
 
 /**
- * 8/6/2020 WilliamZhu(allwefantasy@gmail.com)
+ * 22/6/2020 WilliamZhu(allwefantasy@gmail.com)
  */
-class BuildSubQueryTreeTest extends BaseTest {
+class TableStructureTest extends BaseTest with Logging {
+
+
+  test("s1") {
+    buildMetaProvider
+    val sql =
+      """
+        |select  from (select no_result_type from db1.table1) b;
+        |""".stripMargin
+    val tokens = getMLSQLTokens(sql)
+
+    val suggester = new SelectSuggester(context, tokens, TokenPos(0, TokenPosType.NEXT, 0))
+    println(suggester.sqlAST)
+  }
+
+  test("s2") {
+    buildMetaProvider
+    val sql =
+      """
+        |select  from (select no_result_type from (select no_result_type from db1.table1) b left join db2.table2) c;
+        |""".stripMargin
+    val tokens = getMLSQLTokens(sql)
+
+    val suggester = new SelectSuggester(context, tokens, TokenPos(0, TokenPosType.NEXT, 0))
+    printAST(suggester)
+  }
+
+  def printAST(suggester: SelectSuggester) = {
+    suggester.sqlAST
+    logInfo(s"SQL[${suggester.tokens.map(_.getText).mkString(" ")}]")
+    logInfo(s"STRUCTURE: \n")
+    suggester.table_info.foreach { item =>
+      logInfo(s"Level:${item._1}")
+      item._2.foreach { table =>
+        logInfo(s"${table._1} => ${table._2.copy(columns = List())}")
+      }
+    }
+  }
+
 
   def buildMetaProvider = {
     context.setUserDefinedMetaProvider(new MetaProvider {
-      override def search(key: MetaTableKey): Option[MetaTable] = {
+      override def search(key: MetaTableKey, extra: Map[String, String] = Map()): Option[MetaTable] = {
         Option(MetaTable(key, List(
           MetaTableColumn("no_result_type", null, true, Map()),
           MetaTableColumn("keywords", null, true, Map()),
@@ -24,12 +63,14 @@ class BuildSubQueryTreeTest extends BaseTest {
           MetaTableColumn("action_type", null, true, Map()),
           MetaTableColumn("av", null, true, Map())
         )))
+
       }
 
-      override def list: List[MetaTable] = List()
+      override def list(extra: Map[String, String] = Map()): List[MetaTable] = List()
     })
-  }
 
+
+  }
   test("single select build") {
 
     buildMetaProvider
@@ -86,17 +127,15 @@ class BuildSubQueryTreeTest extends BaseTest {
     suggester.table_info.map {
       case (level, table) =>
         if (level == 0) {
-          assert(table.size == 0)
+          assert(table.map(_._1).toList == List(MetaTableKeyWrapper(MetaTableKey(None, None, null), Some("a"))))
         }
         if (level == 1) {
           val tables = table.map(_._1).toList
-          assert(tables == List(MetaTableKeyWrapper(MetaTableKey(None, Some("jack"), "drugs_bad_case_di"), None),
-            MetaTableKeyWrapper(MetaTableKey(None, None, null), Some("a"))))
+          assert(tables == List(MetaTableKeyWrapper(MetaTableKey(None, Some("jack"), "drugs_bad_case_di"), None)))
 
         }
     }
 
   }
-
 
 }

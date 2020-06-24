@@ -8,11 +8,11 @@ import scala.collection.JavaConverters._
 class MemoryMetaProvider extends MetaProvider {
   private val cache = new java.util.concurrent.ConcurrentHashMap[MetaTableKey, MetaTable]()
 
-  override def search(key: MetaTableKey): Option[MetaTable] = {
+  override def search(key: MetaTableKey,extra: Map[String, String] = Map()): Option[MetaTable] = {
     if (cache.containsKey(key)) Option(cache.get(key)) else None
   }
 
-  override def list: List[MetaTable] = {
+  override def list(extra: Map[String, String] = Map()): List[MetaTable] = {
     cache.values().asScala.toList
   }
 

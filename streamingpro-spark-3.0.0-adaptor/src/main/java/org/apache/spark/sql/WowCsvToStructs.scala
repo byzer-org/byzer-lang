@@ -92,7 +92,7 @@ case class WowCsvToStructs(schema: DataType,
     if (json.toString.trim.isEmpty) return null
 
     try {
-      converter(Seq(parser.parse(json.asInstanceOf[org.apache.spark.unsafe.types.UTF8String].toString)))
+      converter(Seq(parser.parse(json.asInstanceOf[org.apache.spark.unsafe.types.UTF8String].toString).get))
     } catch {
       case _: BadRecordException => null
     }

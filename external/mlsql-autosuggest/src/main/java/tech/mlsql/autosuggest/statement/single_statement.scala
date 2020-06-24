@@ -3,6 +3,7 @@ package tech.mlsql.autosuggest.statement
 import org.antlr.v4.runtime.Token
 import org.apache.spark.sql.catalyst.parser.SqlBaseLexer
 import tech.mlsql.autosuggest.AttributeExtractor
+import tech.mlsql.autosuggest.ast.NoneToken
 import tech.mlsql.autosuggest.dsl.{Food, TokenMatcher, TokenTypeWrapper}
 import tech.mlsql.autosuggest.meta.MetaTableKey
 
@@ -29,25 +30,48 @@ class SingleStatementAST(val selectSuggester: SelectSuggester, var start: Int, v
     else Option(tokens.slice(start, stop).last.getText)
   }
 
+
+  //  private def isInSubquery(holes: List[(Int, Int)],) = {
+  //
+  //  }
+
   def tables(tokens: List[Token]) = {
-    if (isLeaf) {
-      //collect table first
-      // T__3 == .
-      // extract from `from`
-      val fromTables = new TableExtractor(selectSuggester.context, this, tokens)
-      val fromStart = TokenMatcher(tokens.slice(0, stop), start).asStart(Food(None, SqlBaseLexer.FROM), 1).start
-      val tempTables = fromTables.iterate(fromStart, tokens.size)
-      //extract from `join`
-      val joinTables = new TableExtractor(selectSuggester.context, ast = this, tokens)
-      val joinStart = TokenMatcher(tokens.slice(0, stop), start).asStart(Food(None, SqlBaseLexer.JOIN), offset = 1).start
-      tempTables ++ joinTables.iterate(joinStart, tokens.size)
 
-    } else {
-      children.map(_.name(tokens).get).map { name =>
-        MetaTableKeyWrapper(MetaTableKey(None, None, null), Option(name))
-      }.toList
-
+    // replace token
+    val range = children.map { ast =>
+      (ast.start, ast.stop)
     }
+
+    def inRange(index:Int) = {
+      range.filter { item =>
+        item._1 <= index &&  index  <= item._2
+      }.headOption.isDefined
+    }
+
+    val tokensWithoutSubQuery = tokens.zipWithIndex.map { case (token,index) =>
+      if (inRange(index)) new NoneToken(token)
+      else token
+    }
+
+
+    // collect table first
+    // T__3 == .
+    // extract from `from`
+    val fromTables = new TableExtractor(selectSuggester.context, this, tokensWithoutSubQuery)
+    val fromStart = TokenMatcher(tokensWithoutSubQuery.slice(0, stop), start).asStart(Food(None, SqlBaseLexer.FROM), 1).start
+    val tempTables = fromTables.iterate(fromStart, tokensWithoutSubQuery.size)
+
+    // extract from `join`
+    val joinTables = new TableExtractor(selectSuggester.context, ast = this, tokensWithoutSubQuery)
+    val joinStart = TokenMatcher(tokensWithoutSubQuery.slice(0, stop), start).asStart(Food(None, SqlBaseLexer.JOIN), offset = 1).start
+    val tempJoinTables = joinTables.iterate(joinStart, tokens.size)
+
+    // extract subquery name
+    val subqueryTables = children.map(_.name(tokens).get).map { name =>
+      MetaTableKeyWrapper(MetaTableKey(None, None, null), Option(name))
+    }.toList
+
+    tempTables ++ tempJoinTables ++ subqueryTables
   }
 
   def level = {
@@ -119,7 +143,7 @@ object SingleStatementAST {
     for (index <- (start until stop) if index >= jumpIndex) {
       val token = tokens(index)
       if (token.getType == TokenTypeWrapper.LEFT_BRACKET && index < stop - 1 && tokens(index + 1).getType == SqlBaseLexer.SELECT) {
-//        println(s"enter: ${tokens.slice(index, index + 5).map(_.getText).mkString(" ")}")
+        //        println(s"enter: ${tokens.slice(index, index + 5).map(_.getText).mkString(" ")}")
         val item = SingleStatementAST._build(selectSuggester, tokens, index + 1, stop, true)
         jumpIndex = item.stop
         ROOT.children += item
@@ -139,7 +163,7 @@ object SingleStatementAST {
             val stepSize = if (matcher.isSuccess) matcher.get else index
             ROOT.start = start
             ROOT.stop = stepSize
-//            println(s"out: ${tokens.slice(stepSize - 5, stepSize).map(_.getText).mkString(" ")}")
+            //            println(s"out: ${tokens.slice(stepSize - 5, stepSize).map(_.getText).mkString(" ")}")
             return ROOT
           }
 

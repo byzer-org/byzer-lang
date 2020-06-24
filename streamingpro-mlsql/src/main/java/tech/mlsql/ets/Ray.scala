@@ -9,7 +9,7 @@ import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.mlsql.session.MLSQLException
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Row, SparkSession, SparkUtils}
-import org.apache.spark.{MLSQLSparkUtils, SparkInstanceService, TaskContext}
+import org.apache.spark.{MLSQLSparkUtils, SparkInstanceService, TaskContext, WowRowEncoder}
 import streaming.core.datasource.util.MLSQLJobCollect
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib._
@@ -129,9 +129,9 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
 
           val socketRunner = new SparkSocketRunner("serveToStreamWithArrow", host, timezoneID)
           val commonTaskContext = new SparkContextImp(TaskContext.get(), null)
-          val enconder = RowEncoder.apply(dataSchema).resolveAndBind()
+          val convert = WowRowEncoder.fromRow(dataSchema)
           val newIter = iter.map { irow =>
-            enconder.toRow(irow)
+            convert(irow)
           }
           val Array(_server, _host, _port) = socketRunner.serveToStreamWithArrow(newIter, dataSchema, 1000, commonTaskContext)
 
@@ -194,7 +194,7 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
     val outputDF = runIn match {
       case "executor" =>
         val data = newdf.toDF().rdd.mapPartitions { iter =>
-          val encoder = RowEncoder.apply(sourceSchema).resolveAndBind()
+          val convert = WowRowEncoder.fromRow(sourceSchema)
           val envs4j = new util.HashMap[String, String]()
           envs.foreach(f => envs4j.put(f._1, f._2))
 
@@ -205,7 +205,7 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
           )
 
           val newIter = iter.map { irow =>
-            encoder.toRow(irow)
+            convert(irow)
           }
           val commonTaskContext = new SparkContextImp(TaskContext.get(), batch)
           val columnarBatchIter = batch.compute(Iterator(newIter), TaskContext.getPartitionId(), commonTaskContext)
@@ -217,8 +217,8 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
         SparkUtils.internalCreateDataFrame(session, data, stage1_schema, false)
       case "driver" =>
         val dataServers = refs.get().map(f => DataServer(f.host, f.port, timezoneID))
-        val encoder = RowEncoder.apply(sourceSchema).resolveAndBind()
-        val stage1_schema_encoder = RowEncoder.apply(stage1_schema).resolveAndBind()
+        val convert = WowRowEncoder.fromRow(sourceSchema)
+        val stage1_schema_encoder = WowRowEncoder.toRow(stage1_schema)
         val envs4j = new util.HashMap[String, String]()
         envs.foreach(f => envs4j.put(f._1, f._2))
 
@@ -229,14 +229,14 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
         )
 
         val newIter = dataServers.map { irow =>
-          encoder.toRow(Row.fromSeq(Seq(irow.host, irow.port, irow.timezone)))
+          convert(Row.fromSeq(Seq(irow.host, irow.port, irow.timezone)))
         }.iterator
         val javaContext = new JavaContext()
         val commonTaskContext = new AppContextImpl(javaContext, batch)
         val columnarBatchIter = batch.compute(Iterator(newIter), 0, commonTaskContext)
         val data = columnarBatchIter.flatMap { batch =>
           batch.rowIterator.asScala.map(f =>
-            stage1_schema_encoder.fromRow(f)
+            stage1_schema_encoder(f)
           )
         }.toList
         javaContext.markComplete
@@ -248,7 +248,7 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
     if (dataMode == "data") {
       val rows = outputDF.collect()
       val rdd = session.sparkContext.makeRDD[Row](rows)
-      val encoder = RowEncoder.apply(stage2_schema).resolveAndBind()
+      val stage2_schema_encoder= WowRowEncoder.fromRow(stage2_schema)
       val newRDD = if (rdd.partitions.length > 0 && rows.length > 0) {
         rdd.repartition(rows.length).flatMap { row =>
 
@@ -257,7 +257,7 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
           val iter = socketRunner.readFromStreamWithArrow(row.getAs[String]("host"), row.getAs[Long]("port").toInt, commonTaskContext)
           iter.map(f => f.copy())
         }
-      } else rdd.map(f => encoder.toRow(f))
+      } else rdd.map(f => stage2_schema_encoder(f))
 
       SparkUtils.internalCreateDataFrame(session, newRDD, stage2_schema, false)
     } else {

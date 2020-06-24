@@ -168,9 +168,9 @@ def registerTable(port: Int = 9003) = {
 
 ```scala
 trait MetaProvider {
-  def search(key: MetaTableKey): Option[MetaTable]
+  def search(key: MetaTableKey,extra: Map[String, String] = Map()): Option[MetaTable]
 
-  def list: List[MetaTable]
+  def list(extra: Map[String, String] = Map()): List[MetaTable]
 }
 ```
 

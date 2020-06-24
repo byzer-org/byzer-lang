@@ -36,15 +36,7 @@ trait SelectStatementUtils extends Logging {
   }
 
   def table_info = {
-    var _level = levelFromTokenPos + 1
-    if (selectSuggester.table_info.size == 1 && levelFromTokenPos == 0) {
-      _level = 0
-    }
-
-    if (levelFromTokenPos == selectSuggester.table_info.size - 1) {
-      _level = levelFromTokenPos
-    }
-    selectSuggester.table_info.get(_level)
+    selectSuggester.table_info.get(levelFromTokenPos)
   }
 
 
@@ -81,7 +73,7 @@ trait SelectStatementUtils extends Logging {
       }.map { case (name, table) =>
         SuggestItem(name, table, Map())
       }.toList
-      case None => selectSuggester.context.metaProvider.list.map { item =>
+      case None => selectSuggester.context.metaProvider.list(Map()).map { item =>
         SuggestItem(item.key.table, item, Map())
       }
     }
@@ -164,7 +156,7 @@ trait SelectStatementUtils extends Logging {
     }
 
     def allOutput = {
-      MLSQLSQLFunction.funcMetaProvider.list.map(item => SuggestItem(item.key.table, item, Map()))
+      MLSQLSQLFunction.funcMetaProvider.list(Map()).map(item => SuggestItem(item.key.table, item, Map()))
     }
 
     val tempStart = tokenPos.currentOrNext match {

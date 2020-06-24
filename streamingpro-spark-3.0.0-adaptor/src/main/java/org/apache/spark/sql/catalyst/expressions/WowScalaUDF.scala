@@ -30,7 +30,7 @@ case class WowScalaUDF(function: AnyRef,
                        inputTypes: Seq[DataType] = Nil,
                        udfName: Option[String] = None,
                        nullable: Boolean = true,
-                       udfDeterministic: Boolean = true)  {
+                       udfDeterministic: Boolean = true) {
 
   def this(
             function: AnyRef,
@@ -43,14 +43,12 @@ case class WowScalaUDF(function: AnyRef,
   }
 
 
-
-
   def toScalaUDF = {
+
     new ScalaUDF(function,
       dataType,
       children,
-      inputsNullSafe,
-      inputTypes,
+      Nil,
       udfName,
       nullable,
       udfDeterministic

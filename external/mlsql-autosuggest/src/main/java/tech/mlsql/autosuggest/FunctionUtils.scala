@@ -70,11 +70,11 @@ class MLSQLFuncParam(_func: MLSQLSQLFunction) {
 class FuncMetaProvider extends MetaProvider {
   private val funcs = scala.collection.mutable.HashMap[MetaTableKey, MetaTable]()
 
-  override def search(key: MetaTableKey): Option[MetaTable] = {
+  override def search(key: MetaTableKey,extra: Map[String, String] = Map()): Option[MetaTable] = {
     funcs.get(key)
   }
 
-  override def list: List[MetaTable] = {
+  override def list(extra: Map[String, String] = Map()): List[MetaTable] = {
     funcs.map(_._2).toList
   }
 
