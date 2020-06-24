@@ -76,6 +76,7 @@ class AutoSuggestController extends CustomController {
     val columnNum = params("columnNum").toInt
     val isDebug = params.getOrElse("isDebug", "false").toBoolean
     val size = params.getOrElse("size", "30").toInt
+    val includeTableMeta = params.getOrElse("includeTableMeta", "false").toBoolean
 
     val enableMemoryProvider = params.getOrElse("enableMemoryProvider", "true").toBoolean
     val session = AutoSuggestController.getSession
@@ -94,7 +95,12 @@ class AutoSuggestController extends CustomController {
         context.setUserDefinedMetaProvider(new RestMetaProvider(searchUrl, listUrl))
       case (None, None) =>
     }
-
-    JSONTool.toJsonStr(context.buildFromString(sql).suggest(lineNum, columnNum).take(size))
+    var resItems = context.buildFromString(sql).suggest(lineNum, columnNum).take(size)
+    if (!includeTableMeta) {
+      resItems = resItems.map { item =>
+        item.copy(metaTable = null)
+      }.take(size)
+    }
+    JSONTool.toJsonStr(resItems)
   }
 }

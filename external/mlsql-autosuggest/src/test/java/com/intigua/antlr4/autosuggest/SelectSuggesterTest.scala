@@ -13,7 +13,7 @@ class SelectSuggesterTest extends BaseTest {
 
   def buildMetaProvider = {
     context.setUserDefinedMetaProvider(new MetaProvider {
-      override def search(key: MetaTableKey,extra: Map[String, String] = Map()): Option[MetaTable] = {
+      override def search(key: MetaTableKey, extra: Map[String, String] = Map()): Option[MetaTable] = {
         Option(MetaTable(key, List(
           MetaTableColumn("no_result_type", null, true, Map()),
           MetaTableColumn("keywords", null, true, Map()),
@@ -55,7 +55,7 @@ class SelectSuggesterTest extends BaseTest {
   test("select") {
 
     context.setUserDefinedMetaProvider(new MetaProvider {
-      override def search(key: MetaTableKey,extra: Map[String, String] = Map()): Option[MetaTable] = None
+      override def search(key: MetaTableKey, extra: Map[String, String] = Map()): Option[MetaTable] = None
 
       override def list(extra: Map[String, String] = Map()): List[MetaTable] = List()
     })
@@ -194,6 +194,22 @@ class SelectSuggesterTest extends BaseTest {
 
   }
 
+  test("table layer") {
+    buildMetaProvider
+    val sql =
+      """
+        |select  from (select no_result_type from db1.table1) b;
+        |""".stripMargin
+    val tokens = getMLSQLTokens(sql)
+
+    val suggester = new SelectSuggester(context, tokens, TokenPos(0, TokenPosType.NEXT, 0))
+    println("=======")
+    println(suggester.suggest())
+    assert(suggester.suggest().head.name=="b")
+  }
+
+  
+
   test("project: function suggester") {
 
     val func = MLSQLSQLFunction.apply("split").
@@ -220,7 +236,7 @@ class SelectSuggesterTest extends BaseTest {
 
     )
     context.setUserDefinedMetaProvider(new MetaProvider {
-      override def search(key: MetaTableKey,extra: Map[String, String] = Map()): Option[MetaTable] = {
+      override def search(key: MetaTableKey, extra: Map[String, String] = Map()): Option[MetaTable] = {
         metas(key)
       }
 

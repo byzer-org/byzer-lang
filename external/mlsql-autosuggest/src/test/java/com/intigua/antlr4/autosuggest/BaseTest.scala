@@ -46,4 +46,8 @@ class BaseTest extends FunSuite with BeforeAndAfterAll with BeforeAndAfterEach {
     tokens = tr.tokens.asScala.toList
   }
 
+  def getMLSQLTokens(sql: String) = {
+    context.lexer.tokenizeNonDefaultChannel(sql).tokens.asScala.toList
+  }
+
 }
