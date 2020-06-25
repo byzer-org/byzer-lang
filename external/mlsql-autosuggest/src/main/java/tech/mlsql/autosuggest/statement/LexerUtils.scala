@@ -81,7 +81,12 @@ object LexerUtils {
       return TokenPos(lastToken._2, TokenPosType.NEXT, 0)
     }
 
-    if (colNum > lastToken._1.getCharPositionInLine && colNum <= lastToken._1.getCharPositionInLine + lastToken._1.getText.size) {
+    if (colNum > lastToken._1.getCharPositionInLine
+      && colNum <= lastToken._1.getCharPositionInLine + lastToken._1.getText.size
+      &&
+      (lastToken._1.getType != DSLSQLLexer.UNRECOGNIZED
+      && lastToken._1.getType != MLSQLTokenTypeWrapper.DOT)
+    ) {
       return TokenPos(lastToken._2, TokenPosType.CURRENT, colNum - lastToken._1.getCharPositionInLine)
     }
     oneLineTokens.map { case (token, index) =>

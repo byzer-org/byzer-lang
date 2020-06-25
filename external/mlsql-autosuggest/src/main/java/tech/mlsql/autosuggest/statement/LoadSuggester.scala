@@ -21,6 +21,7 @@ class LoadSuggester(val context: AutoSuggestContext, val _tokens: List[Token], v
   register(classOf[LoadPathSuggester])
   register(classOf[LoadFormatSuggester])
   register(classOf[LoadOptionsSuggester])
+  register(classOf[LoadPathQuoteSuggester])
 
   override def register(clzz: Class[_ <: StatementSuggester]): SuggesterRegister = {
     val instance = clzz.getConstructor(classOf[LoadSuggester]).newInstance(this).asInstanceOf[StatementSuggester]
@@ -114,6 +115,27 @@ class LoadOptionsSuggester(loadSuggester: LoadSuggester) extends StatementSugges
   }
 
   override def name: String = "options"
+
+  override def tokens: List[Token] = loadSuggester._tokens
+
+  override def tokenPos: TokenPos = loadSuggester._tokenPos
+}
+
+class LoadPathQuoteSuggester(loadSuggester: LoadSuggester) extends StatementSuggester with StatementUtils {
+  override def name: String = "pathQuote"
+
+  override def isMatch(): Boolean = {
+    val temp = TokenMatcher(tokens, tokenPos.pos).back.
+      eat(Food(None, MLSQLTokenTypeWrapper.DOT)).
+      eat(Food(None, DSLSQLLexer.IDENTIFIER)).
+      eat(Food(None, DSLSQLLexer.LOAD)).build
+    temp.isSuccess
+  }
+
+  override def suggest(): List[SuggestItem] = {
+    LexerUtils.filterPrefixIfNeeded(List(SuggestItem("``", SpecialTableConst.OTHER_TABLE, Map("desc" -> "path or table"))),
+      tokens, tokenPos)
+  }
 
   override def tokens: List[Token] = loadSuggester._tokens
 

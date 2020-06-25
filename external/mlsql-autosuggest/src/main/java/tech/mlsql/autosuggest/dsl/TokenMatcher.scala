@@ -157,27 +157,36 @@ class TokenMatcher(tokens: List[Token], val start: Int) {
     var isFail = false
 
 
-    foods.map { foodw =>
-      val stepSize = foodw.foods.count
-      var matchValue = 0
-      foodw.foods.foods.zipWithIndex.foreach { case (food, idx) =>
-        if (matchValue == 0 && matchToken(food, currentIndex + idx) == -1) {
-          matchValue = -1
-        }
-      }
-      if (foodw.optional) {
-        if (matchValue != -1) {
-          currentIndex = currentIndex + stepSize
-        }
-      } else {
-        if (matchValue != -1) {
-          currentIndex = currentIndex + stepSize
+    foods.foreach { foodw =>
 
+      if (currentIndex >= tokens.size) {
+        isFail = true
+      } else {
+        val stepSize = foodw.foods.count
+        var matchValue = 0
+        foodw.foods.foods.zipWithIndex.foreach { case (food, idx) =>
+          if (matchValue == 0 && matchToken(food, currentIndex + idx) == -1) {
+            matchValue = -1
+          }
+        }
+        if (foodw.optional) {
+          if (matchValue != -1) {
+            currentIndex = currentIndex + stepSize
+          }
         } else {
-          //mark fail
-          isFail = true
+          if (matchValue != -1) {
+            currentIndex = currentIndex + stepSize
+
+          } else {
+            //mark fail
+            isFail = true
+          }
         }
       }
+    }
+
+    if (!isFail && currentIndex == tokens.size) {
+      currentIndex = tokens.size - 1
     }
     val targetIndex = if (isFail) -1 else currentIndex
     cacheResult = targetIndex
@@ -189,27 +198,37 @@ class TokenMatcher(tokens: List[Token], val start: Int) {
     var isFail = false
 
 
-    foods.map { foodw =>
-      val stepSize = foodw.foods.count
-      var matchValue = 0
-      foodw.foods.foods.zipWithIndex.foreach { case (food, idx) =>
-        if (matchValue == 0 && matchToken(food, currentIndex - idx) == -1) {
-          matchValue = -1
-        }
-      }
-      if (foodw.optional) {
-        if (matchValue != -1) {
-          currentIndex = currentIndex - stepSize
-        }
+    foods.foreach { foodw =>
+      // if out of bound then mark fail
+      if (currentIndex <= -1) {
+        isFail = true
       } else {
-        if (matchValue != -1) {
-          currentIndex = currentIndex - stepSize
-
+        val stepSize = foodw.foods.count
+        var matchValue = 0
+        foodw.foods.foods.zipWithIndex.foreach { case (food, idx) =>
+          if (matchValue == 0 && matchToken(food, currentIndex - idx) == -1) {
+            matchValue = -1
+          }
+        }
+        if (foodw.optional) {
+          if (matchValue != -1) {
+            currentIndex = currentIndex - stepSize
+          }
         } else {
-          //mark fail
-          isFail = true
+          if (matchValue != -1) {
+            currentIndex = currentIndex - stepSize
+
+          } else {
+            //mark fail
+            isFail = true
+          }
         }
       }
+
+    }
+
+    if (!isFail && currentIndex == -1) {
+      currentIndex = 0
     }
     val targetIndex = if (isFail) -1 else currentIndex
     cacheResult = targetIndex
