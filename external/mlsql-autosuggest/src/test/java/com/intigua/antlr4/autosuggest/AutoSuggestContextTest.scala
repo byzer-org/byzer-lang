@@ -181,6 +181,18 @@ class AutoSuggestContextTest extends BaseTest with BeforeAndAfterEach {
     println(items)
 
   }
+  test("table alias with temp table") {
+    val sql =
+      """
+        |select a,b,c from table1 as table1;
+        |select aa,bb,cc from table2 as table2;
+        |select from table1 t1  left join table2 t2  on t1.a = t2.
+        |""".stripMargin
+
+    val items = context.buildFromString(sql).suggest(4, 58)
+    assert(items.map(_.name) == List("aa", "bb", "cc"))
+
+  }
 }
 
 

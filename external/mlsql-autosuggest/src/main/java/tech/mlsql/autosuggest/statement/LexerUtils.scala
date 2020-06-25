@@ -81,7 +81,12 @@ object LexerUtils {
       return TokenPos(lastToken._2, TokenPosType.NEXT, 0)
     }
 
-    if (colNum > lastToken._1.getCharPositionInLine && colNum <= lastToken._1.getCharPositionInLine + lastToken._1.getText.size) {
+    if (colNum > lastToken._1.getCharPositionInLine
+      && colNum <= lastToken._1.getCharPositionInLine + lastToken._1.getText.size
+      &&
+      (lastToken._1.getType != DSLSQLLexer.UNRECOGNIZED
+        && lastToken._1.getType != MLSQLTokenTypeWrapper.DOT)
+    ) {
       return TokenPos(lastToken._2, TokenPosType.CURRENT, colNum - lastToken._1.getCharPositionInLine)
     }
     oneLineTokens.map { case (token, index) =>
@@ -146,7 +151,11 @@ object LexerUtils {
       return TokenPos(lastToken._2, TokenPosType.NEXT, 0)
     }
 
-    if (colNum > lastToken._1.getCharPositionInLine && colNum <= lastToken._1.getCharPositionInLine + lastToken._1.getText.size) {
+    if (colNum > lastToken._1.getCharPositionInLine
+      && colNum <= lastToken._1.getCharPositionInLine + lastToken._1.getText.size
+      && !TokenTypeWrapper.MAP.contains(lastToken._1.getType)
+
+    ) {
       return TokenPos(lastToken._2, TokenPosType.CURRENT, colNum - lastToken._1.getCharPositionInLine)
     }
     oneLineTokens.map { case (token, index) =>
@@ -156,13 +165,7 @@ object LexerUtils {
       //这个token是 [(,).]等，则不算
       if (colNum == end && (1 <= token.getType)
         && (
-        token.getType == DSLSQLLexer.UNRECOGNIZED
-          || token.getType == TokenTypeWrapper.COLON
-          || token.getType == TokenTypeWrapper.DOT
-          || token.getType == TokenTypeWrapper.LEFT_BRACKET
-          || token.getType == TokenTypeWrapper.RIGHT_BRACKET
-          || token.getType == TokenTypeWrapper.LEFT_SQUARE_BRACKET
-          || token.getType == TokenTypeWrapper.RIGHT_SQUARE_BRACKET
+        TokenTypeWrapper.MAP.contains(token.getType)
         )) {
         TokenPos(index, TokenPosType.NEXT, 0)
       } else if (start < colNum && colNum <= end) {

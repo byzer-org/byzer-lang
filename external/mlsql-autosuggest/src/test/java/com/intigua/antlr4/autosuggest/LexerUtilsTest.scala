@@ -38,4 +38,9 @@ class LexerUtilsTest extends BaseTest {
     assert(LexerUtils.toTokenPos(context.rawTokens, 1, 14) == TokenPos(3, TokenPosType.CURRENT, 3))
   }
 
+  test("load csv.") {
+    context.buildFromString("load csv.")
+    assert(LexerUtils.toTokenPos(context.rawTokens, 1, 9) == TokenPos(2, TokenPosType.NEXT, 0))
+  }
+
 }
