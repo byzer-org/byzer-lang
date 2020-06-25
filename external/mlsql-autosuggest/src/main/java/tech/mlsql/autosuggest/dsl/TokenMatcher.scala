@@ -159,7 +159,7 @@ class TokenMatcher(tokens: List[Token], val start: Int) {
 
     foods.foreach { foodw =>
 
-      if (currentIndex >= tokens.size) {
+      if (currentIndex >= tokens.size && !foodw.optional) {
         isFail = true
       } else {
         val stepSize = foodw.foods.count
@@ -184,10 +184,7 @@ class TokenMatcher(tokens: List[Token], val start: Int) {
         }
       }
     }
-
-    if (!isFail && currentIndex == tokens.size) {
-      currentIndex = tokens.size - 1
-    }
+    
     val targetIndex = if (isFail) -1 else currentIndex
     cacheResult = targetIndex
     this
@@ -200,7 +197,7 @@ class TokenMatcher(tokens: List[Token], val start: Int) {
 
     foods.foreach { foodw =>
       // if out of bound then mark fail
-      if (currentIndex <= -1) {
+      if (currentIndex <= -1 && !foodw.optional) {
         isFail = true
       } else {
         val stepSize = foodw.foods.count
@@ -276,6 +273,9 @@ object TokenTypeWrapper {
   val LEFT_SQUARE_BRACKET = SqlBaseLexer.T__7 //[
   val RIGHT_SQUARE_BRACKET = SqlBaseLexer.T__8 //]
   val COLON = SqlBaseLexer.T__9 //:
+
+  val LIST = List(LEFT_BRACKET, RIGHT_BRACKET, COMMA, DOT, LEFT_SQUARE_BRACKET, RIGHT_SQUARE_BRACKET, COLON)
+  val MAP = LIST.map((_, 1)).toMap
 }
 
 object MLSQLTokenTypeWrapper {

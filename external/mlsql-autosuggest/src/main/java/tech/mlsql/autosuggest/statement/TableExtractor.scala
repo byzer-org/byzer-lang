@@ -24,19 +24,22 @@ class TableExtractor(autoSuggestContext: AutoSuggestContext, ast: SingleStatemen
 
   override def extractor(start: Int, end: Int): List[MetaTableKeyWrapper] = {
     val dbTableTokens = tokens.slice(start, end)
-    val dbTable = if (dbTableTokens.length == 3) {
-      val List(dbToken, _, tableToken) = dbTableTokens
-      MetaTableKeyWrapper(MetaTableKey(None, Option(dbToken.getText), tableToken.getText), None)
-    } else if (dbTableTokens.length == 4) {
-      val List(dbToken, _, tableToken, aliasToken) = dbTableTokens
-      MetaTableKeyWrapper(MetaTableKey(None, Option(dbToken.getText), tableToken.getText), Option(aliasToken.getText))
-    } else if (dbTableTokens.length == 5) {
-      val List(dbToken, _, tableToken, _, aliasToken) = dbTableTokens
-      MetaTableKeyWrapper(MetaTableKey(None, Option(dbToken.getText), tableToken.getText), Option(aliasToken.getText))
+    val dbTable = dbTableTokens.length match {
+      case 2 =>
+        val List(tableToken, aliasToken) = dbTableTokens
+        MetaTableKeyWrapper(MetaTableKey(None, None, tableToken.getText), Option(aliasToken.getText))
+      case 3 =>
+        val List(dbToken, _, tableToken) = dbTableTokens
+        MetaTableKeyWrapper(MetaTableKey(None, Option(dbToken.getText), tableToken.getText), None)
+      case 4 =>
+        val List(dbToken, _, tableToken, aliasToken) = dbTableTokens
+        MetaTableKeyWrapper(MetaTableKey(None, Option(dbToken.getText), tableToken.getText), Option(aliasToken.getText))
+      case 5 =>
+        val List(dbToken, _, tableToken, _, aliasToken) = dbTableTokens
+        MetaTableKeyWrapper(MetaTableKey(None, Option(dbToken.getText), tableToken.getText), Option(aliasToken.getText))
+      case _ => MetaTableKeyWrapper(MetaTableKey(None, None, dbTableTokens.head.getText), None)
     }
-    else {
-      MetaTableKeyWrapper(MetaTableKey(None, None, dbTableTokens.head.getText), None)
-    }
+
     List(dbTable)
   }
 
