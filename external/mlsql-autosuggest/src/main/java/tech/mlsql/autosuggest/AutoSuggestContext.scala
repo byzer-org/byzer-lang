@@ -186,8 +186,6 @@ class AutoSuggestContext(val session: SparkSession,
   }
 
   private val firstWords = List("load", "select", "include", "register", "run", "train", "save", "set").map(SuggestItem(_, SpecialTableConst.KEY_WORD_TABLE, Map())).toList
-
-
 }
 
 class UpperCaseCharStream(wrapped: CodePointCharStream) extends CharStream {

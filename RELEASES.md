@@ -1,3 +1,48 @@
+MLSQL Version 1.6.0 (2020-06-29)
+==========================
+
+这次版本憋了大半年了。核心code已经基本不变，并且稳定下来。更多的是新插件扩展MLSQL的生态。这次时间很长的最主要原因是希望能多积累点bug,然后fix掉，获取一个更稳定的版本。
+
+## 语言层面
+
+新增代码提示插件，配合新版本的console,大家就可以体验到MLSQL的代码提示了。我们发现他也可以单独部署，所以同时也独立出一个项目。
+
+[sql-code-intelligence](https://github.com/allwefantasy/sql-code-intelligence)
+
+## 接口层面
+
+我们新增加了 [mlsql-jdbc](https://github.com/allwefantasy/mlsql-jdbc),这样除了http以外，MLSQL也能对接jdbc请求了。
+
+另外对于Rest接口，我们新增了 `includeSchema`参数,会返回json的schema信息，而无需使用端通过json进行推测。
+
+
+## 插件体系
+
+1. 插件元信息存储支持delta和MySQL了。MySQL能够获得更好的启动性能。
+2. 插件安装可以指定版本安装
+
+## 启动保护
+
+启动时，可能系统还没有完全初始化好，这个时候如果请求进来可能会导致部分初始化功能无法完成。1.6.0版本提供了保护，会hang住请求直到初始化完成。
+
+## 适配了Spark 3.0.0版本
+
+目前只是MLSQL Core进行了适配，目前MLSQL的很多插件比如spark-binlog/delta-plus/pyjava等都还没有完成适配。但是普通的流批是没有问题的。我们将在1.7.0版本完成插件的适配。
+
+## 较为完善的Python支持
+
+MLSQL Engine可以支持执行Python项目，以及支持Ray的数据互通。
+
+## 以及很多Bug修复
+不再列举
+
+MLSQL Version 1.5.0 (2020-01-xx)
+==========================
+
+
+
+
+
 MLSQL Version 1.4.0 (2019-09-xx)
 ==========================
 

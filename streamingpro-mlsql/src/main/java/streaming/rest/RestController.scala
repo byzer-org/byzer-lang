@@ -89,7 +89,8 @@ class RestController extends ApplicationController with WowLog {
     new Parameter(name = "skipInclude", required = false, description = "disable include statement. default: false", `type` = "boolean", allowEmptyValue = false),
     new Parameter(name = "skipAuth", required = false, description = "disable table authorize . default: true", `type` = "boolean", allowEmptyValue = false),
     new Parameter(name = "skipGrammarValidate", required = false, description = "validate mlsql grammar. default: true", `type` = "boolean", allowEmptyValue = false),
-    new Parameter(name = "includeSchema", required = false, description = "the return value should contains schema info. default: false", `type` = "boolean", allowEmptyValue = false)
+    new Parameter(name = "includeSchema", required = false, description = "the return value should contains schema info. default: false", `type` = "boolean", allowEmptyValue = false),
+    new Parameter(name = "fetchType", required = false, description = "take/collect. default: collect", `type` = "string", allowEmptyValue = false)
   ))
   @Responses(Array(
     new ApiResponse(responseCode = "200", description = "", content = new Content(mediaType = "application/json",
@@ -197,6 +198,7 @@ class RestController extends ApplicationController with WowLog {
   private def getScriptResult(context: ScriptSQLExecListener, sparkSession: SparkSession): String = {
     val result = new StringBuffer()
     val includeSchema = param("includeSchema", "false").toBoolean
+    val fetchType = param("fetchType","collect")
     if (includeSchema) {
       result.append("{")
     }
@@ -210,9 +212,14 @@ class RestController extends ApplicationController with WowLog {
         if (context.env().getOrElse(MLSQLEnvKey.CONTEXT_SYSTEM_TABLE, "false").toBoolean) {
           result.append("[" + WowJsonInferSchema.toJson(df).mkString(",") + "]")
         } else {
-          val scriptJsonStringResult = limitOrNot {
-            sparkSession.sql(s"select * from $table limit " + paramAsInt("outputSize", 5000))
-          }.toJSON.collect().mkString(",")
+          val outputSize = paramAsInt("outputSize", 5000)
+          val jsonDF = limitOrNot {
+            sparkSession.sql(s"select * from $table limit " + outputSize)
+          }.toJSON
+          val scriptJsonStringResult = fetchType match {
+            case "collect"=> jsonDF.collect().mkString(",")
+            case "take"=> jsonDF.take(outputSize).mkString(",")
+          }
           result.append("[" + scriptJsonStringResult + "]")
         }
       case None => result.append("[]")
