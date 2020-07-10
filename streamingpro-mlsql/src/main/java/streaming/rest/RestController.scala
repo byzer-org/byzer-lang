@@ -218,7 +218,7 @@ class RestController extends ApplicationController with WowLog {
           }.toJSON
           val scriptJsonStringResult = fetchType match {
             case "collect"=> jsonDF.collect().mkString(",")
-            case "take"=> jsonDF.take(outputSize).mkString(",")
+            case "take"=> sparkSession.table(table).toJSON.take(outputSize).mkString(",")
           }
           result.append("[" + scriptJsonStringResult + "]")
         }
