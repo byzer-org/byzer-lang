@@ -8,6 +8,7 @@ import tech.mlsql.autosuggest.meta.MetaTable
 trait FuncReg {
   val DOC = "doc"
   val COLUMN = "column"
+  val IS_AGG = "agg"
   val YES = "yes"
   val NO = "no"
   val DEFAULT_VALUE = "default"
