@@ -39,7 +39,7 @@ object AutoSuggestContext {
  */
 class AutoSuggestContext(val session: SparkSession,
                          val lexer: LexerWrapper,
-                         val rawSQLLexer: LexerWrapper) extends Logging {
+                         val rawSQLLexer: LexerWrapper, val options: Map[String, String] = Map()) extends Logging {
 
   private var _debugMode = false
 

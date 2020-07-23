@@ -41,6 +41,9 @@ class TablePreprocessor(context: AutoSuggestContext) extends PreProcessStatement
               Food(None, MLSQLTokenTypeWrapper.DOT),
               Food(None, DSLSQLLexer.BACKQUOTED_IDENTIFIER)).build
           if (formatMatcher.isSuccess) {
+//            if (context.options.getOrElse("schemaInfer", "false").toBoolean && context.session != null) {
+//              context.session.sql()
+//            }
             formatMatcher.getMatchTokens.map(_.getText) match {
               case List(format, _, path) =>
                 cleanStr(path).split("\\.", 2) match {

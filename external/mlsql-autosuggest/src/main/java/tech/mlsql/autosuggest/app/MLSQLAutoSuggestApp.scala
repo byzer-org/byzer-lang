@@ -85,11 +85,13 @@ class AutoSuggestController extends CustomController {
     val size = params.getOrElse("size", "30").toInt
     val includeTableMeta = params.getOrElse("includeTableMeta", "false").toBoolean
 
+    val schemaInfer =   params.getOrElse("schemaInfer", "true").toBoolean
+
     val enableMemoryProvider = params.getOrElse("enableMemoryProvider", "true").toBoolean
     val session = AutoSuggestController.getSession
     val context = new AutoSuggestContext(session,
       AutoSuggestController.mlsqlLexer,
-      AutoSuggestController.sqlLexer)
+      AutoSuggestController.sqlLexer,Map("schemaInfer"->schemaInfer.toString))
     context.setDebugMode(isDebug)
     if (enableMemoryProvider) {
       context.setUserDefinedMetaProvider(AutoSuggestContext.memoryMetaProvider)
