@@ -1,5 +1,6 @@
 package tech.mlsql.autosuggest.meta
 
+import org.apache.http.Header
 import org.apache.http.client.fluent.{Form, Request}
 import org.apache.http.util.EntityUtils
 import tech.mlsql.common.utils.serder.json.JSONTool
@@ -29,7 +30,7 @@ class RestMetaProvider(searchUrl: String, listUrl: String) extends MetaProvider 
     extra.foreach { case (k, v) =>
       form.add(k, v)
     }
-    val resp = Request.Post(listUrl).bodyForm(form.build()).execute().returnResponse()
+    val resp = Request.Post(listUrl).addHeader("","").bodyForm(form.build()).execute().returnResponse()
     if (resp.getStatusLine.getStatusCode == 200) {
       val metaTables = JSONTool.parseJson[List[MetaTable]](EntityUtils.toString(resp.getEntity))
       metaTables

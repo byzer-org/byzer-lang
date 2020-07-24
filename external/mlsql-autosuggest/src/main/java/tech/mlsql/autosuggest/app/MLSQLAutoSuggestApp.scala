@@ -5,8 +5,8 @@ import org.apache.spark.sql.catalyst.parser.{SqlBaseLexer, SqlBaseParser}
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.parser.{DSLSQLLexer, DSLSQLParser}
 import tech.mlsql.app.CustomController
-import tech.mlsql.autosuggest.AutoSuggestContext
 import tech.mlsql.autosuggest.meta.RestMetaProvider
+import tech.mlsql.autosuggest.{AutoSuggestContext, MLSQLSQLFunction}
 import tech.mlsql.common.utils.serder.json.JSONTool
 import tech.mlsql.runtime.AppRuntimeStore
 import tech.mlsql.version.VersionCompatibility
@@ -19,6 +19,7 @@ class MLSQLAutoSuggestApp extends tech.mlsql.app.App with VersionCompatibility {
     AutoSuggestContext.init
     AppRuntimeStore.store.registerController("autoSuggest", classOf[AutoSuggestController].getName)
     AppRuntimeStore.store.registerController("registerTable", classOf[RegisterTableController].getName)
+    AppRuntimeStore.store.registerController("sqlFunctions", classOf[SQLFunctionController].getName)
   }
 
   override def supportedVersions: Seq[String] = {
@@ -41,6 +42,12 @@ object AutoSuggestController {
   def getSession = {
     val session = if (ScriptSQLExec.context() != null) ScriptSQLExec.context().execListener.sparkSession else Standalone.sparkSession
     session
+  }
+}
+
+class SQLFunctionController extends CustomController {
+  override def run(params: Map[String, String]): String = {
+    JSONTool.toJsonStr(MLSQLSQLFunction.funcMetaProvider.list(Map()))
   }
 }
 

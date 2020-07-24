@@ -45,6 +45,11 @@ class SuggestController extends ApplicationController {
       render(200, respStr, ViewType.json)
 
     }
+    if (param("executeMode", "") == "sqlFunctions") {
+      val respStr = new SQLFunctionController().run(params().asScala.toMap)
+      render(200, respStr, ViewType.json)
+
+    }
     val respStr = new AutoSuggestController().run(params.asScala.toMap)
     render(200, respStr, ViewType.json)
   }
