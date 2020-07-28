@@ -64,6 +64,10 @@ class AutoSuggestContext(val session: SparkSession,
     this._debugMode = isDebug
   }
 
+  def isSchemaInferEnabled = {
+    !options.getOrElse("schemaInferUrl","").isEmpty && session != null
+  }
+
   def isInDebugMode = _debugMode
 
   def metaProvider = _metaProvider

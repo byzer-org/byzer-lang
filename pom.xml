@@ -98,13 +98,13 @@
         <scope>provided</scope>
         <hadoop-client-version>2.6.5</hadoop-client-version>
 
-        <common-utils-version>0.3.5</common-utils-version>
+        <common-utils-version>0.3.6</common-utils-version>
         <serviceframework.version>2.0.6</serviceframework.version>
 
         <pyjava-version>0.2.8.5</pyjava-version>
         <mlsql-scheduler-version>0.1.3</mlsql-scheduler-version>
 
-        <delta-plus-version>0.2.0</delta-plus-version>
+        <delta-plus-version>0.3.0</delta-plus-version>
         <mysql-binlog-version>1.0.1</mysql-binlog-version>
         <spark-adhoc-kafka.version>0.1.2</spark-adhoc-kafka.version>
     </properties>
@@ -259,6 +259,18 @@
                     <artifactId>serviceframework-jetty-9-server_${scala.binary.version}</artifactId>
                     <version>${serviceframework.version}</version>
                     <exclusions>
+                        <exclusion>
+                            <groupId>org.scala-lang</groupId>
+                            <artifactId>jline</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>org.scala-lang</groupId>
+                            <artifactId>scala-compiler</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>org.scala-lang</groupId>
+                            <artifactId>scala-library</artifactId>
+                        </exclusion>
                         <!--<exclusion>-->
                         <!--<groupId>org.eclipse.jetty</groupId>-->
                         <!--<artifactId>jetty-server</artifactId>-->
@@ -339,6 +351,18 @@
                     <artifactId>serviceframework-jetty-9-server_${scala.binary.version}</artifactId>
                     <version>${serviceframework.version}</version>
                     <exclusions>
+                        <exclusion>
+                            <groupId>org.scala-lang</groupId>
+                            <artifactId>jline</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>org.scala-lang</groupId>
+                            <artifactId>scala-compiler</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>org.scala-lang</groupId>
+                            <artifactId>scala-library</artifactId>
+                        </exclusion>
                         <!--<exclusion>-->
                         <!--<groupId>org.eclipse.jetty</groupId>-->
                         <!--<artifactId>jetty-server</artifactId>-->
@@ -635,6 +659,14 @@
                     <artifactId>jline</artifactId>
                 </exclusion>
                 <exclusion>
+                    <groupId>org.scala-lang</groupId>
+                    <artifactId>scala-compiler</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.scala-lang</groupId>
+                    <artifactId>scala-library</artifactId>
+                </exclusion>
+                <exclusion>
                     <groupId>junit</groupId>
                     <artifactId>junit</artifactId>
                 </exclusion>
@@ -667,6 +699,18 @@
             <artifactId>serviceframework-web_${scala.binary.version}</artifactId>
             <version>${serviceframework.version}</version>
             <exclusions>
+                <exclusion>
+                    <groupId>org.scala-lang</groupId>
+                    <artifactId>jline</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.scala-lang</groupId>
+                    <artifactId>scala-compiler</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.scala-lang</groupId>
+                    <artifactId>scala-library</artifactId>
+                </exclusion>
                 <exclusion>
                     <groupId>org.slf4j</groupId>
                     <artifactId>slf4j-api</artifactId>
