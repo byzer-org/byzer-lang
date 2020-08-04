@@ -100,8 +100,26 @@ class RestController extends ApplicationController with WowLog {
   @At(path = Array("/run/script"), types = Array(GET, POST))
   def script = {
     setAccessControlAllowOrigin
+
     val silence = paramAsBoolean("silence", false)
     val sparkSession = getSession
+
+    val accessToken = sparkSession.conf.get("spark.mlsql.auth.access_token", "")
+    if (!accessToken.isEmpty) {
+      if (param("access_token") != accessToken) {
+        render(403, JSONTool.toJsonStr(Map("msg" -> "access_token is not right")))
+      }
+    }
+
+    val customAuth = sparkSession.conf.get("spark.mlsql.auth.custom", "")
+    if (!customAuth.isEmpty) {
+      import scala.collection.JavaConverters._
+      val restParams = params().asScala.toMap
+      val (isOk, message) = Class.forName(customAuth).asInstanceOf[ {def auth(params: Map[String, String]): (Boolean, String)}].auth(restParams)
+      if (!isOk) {
+        render(403, JSONTool.toJsonStr(Map("msg" -> message)))
+      }
+    }
 
     val htp = findService(classOf[HttpTransportService])
     if (paramAsBoolean("async", false) && !params().containsKey("callback")) {
@@ -198,7 +216,7 @@ class RestController extends ApplicationController with WowLog {
   private def getScriptResult(context: ScriptSQLExecListener, sparkSession: SparkSession): String = {
     val result = new StringBuffer()
     val includeSchema = param("includeSchema", "false").toBoolean
-    val fetchType = param("fetchType","collect")
+    val fetchType = param("fetchType", "collect")
     if (includeSchema) {
       result.append("{")
     }
@@ -217,8 +235,8 @@ class RestController extends ApplicationController with WowLog {
             sparkSession.sql(s"select * from $table limit " + outputSize)
           }.toJSON
           val scriptJsonStringResult = fetchType match {
-            case "collect"=> jsonDF.collect().mkString(",")
-            case "take"=> sparkSession.table(table).toJSON.take(outputSize).mkString(",")
+            case "collect" => jsonDF.collect().mkString(",")
+            case "take" => sparkSession.table(table).toJSON.take(outputSize).mkString(",")
           }
           result.append("[" + scriptJsonStringResult + "]")
         }
