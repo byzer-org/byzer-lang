@@ -1,0 +1,8 @@
+{
+  "title": "MLSQL Engine 文档",
+  "description": "MLSQL Engine 官方文档",
+  "plugins" : [ "image-class","lightbox"],
+  "styles": {
+    "website": "styles/image.css"
+  }
+}

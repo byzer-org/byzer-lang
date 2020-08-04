@@ -27,7 +27,6 @@
 * 用户指南
     * [编译&运行&部署](installation/README.md)
         * [使用Docker安装体验](installation/docker.md)
-        * [登录我们的体验站点](installation/trymlsql.md)
         * [下载预编译的安装包](installation/downloa_prebuild_package.md)
         * [自助下载源码编译打包](installation/compile.md)
     * [MLSQL语法指南](grammar/README.md)

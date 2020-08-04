@@ -1,0 +1,17 @@
+.image-wrapper {
+    text-align: center;
+    padding: 30px 30px;
+}
+
+.image-wrapper img {
+    border-radius: 8px;
+    width: 80%;
+    background-color: white;
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+}
+
+
+img[src*="#donate"] {
+ width: 200px;
+}
+

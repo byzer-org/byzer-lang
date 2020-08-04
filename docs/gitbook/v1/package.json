@@ -1,0 +1,15 @@
+{
+  "name": "v1",
+  "version": "1.0.0",
+  "description": "> MLSQL Engine 是MLSQL语言的官方实现，是一个分布式MLSQL执行引擎。 搭配[MLSQL Console](http://docs.mlsql.tech/mlsql-console/) 使用，可以获得良好的交互体验。",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "gitbook-plugin-image-class": "^1.0.5",
+    "gitbook-plugin-lightbox": "^1.2.0"
+  }
+}
