@@ -2,14 +2,18 @@ package tech.mlsql.plugins.sql.profiler
 
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.{DataFrame, MLSQLUtils, SparkSession}
+import streaming.dsl.ScriptSQLExec
+import streaming.dsl.auth._
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.param.WowParams
 import tech.mlsql.common.utils.serder.json.JSONTool
+import tech.mlsql.dsl.auth.ETAuth
+import tech.mlsql.dsl.auth.dsl.mmlib.ETMethod.ETMethod
 
 /**
  * 27/3/2020 WilliamZhu(allwefantasy@gmail.com)
  */
-class ProfilerCommand(override val uid: String) extends SQLAlg with WowParams {
+class ProfilerCommand(override val uid: String) extends SQLAlg with ETAuth with WowParams {
   def this() = this(WowParams.randomUID())
 
   override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
@@ -48,9 +52,27 @@ class ProfilerCommand(override val uid: String) extends SQLAlg with WowParams {
     df.sparkSession.createDataset[Plan](Seq(Plan("doc", items))).toDF()
   }
 
+  override def auth(etMethod: ETMethod, path: String, params: Map[String, String]): List[TableAuthResult] = {
+    val vtable = MLSQLTable(
+      Option(DB_DEFAULT.MLSQL_SYSTEM.toString),
+      Option("__profiler__"),
+      OperateType.SELECT,
+      Option("_mlsql_"),
+      TableType.SYSTEM)
+
+    val context = ScriptSQLExec.contextGetOrForTest()
+    context.execListener.getTableAuth match {
+      case Some(tableAuth) =>
+        tableAuth.auth(List(vtable))
+      case None => List(TableAuthResult(true, ""))
+    }
+  }
+
   override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = ???
 
   override def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = ???
+
+
 }
 
 case class Plan(name: String, info: String)
