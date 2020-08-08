@@ -2,7 +2,7 @@ package tech.mlsql.plugins.ets
 
 import org.apache.spark.ml.util.Identifiable
 import org.apache.spark.sql.expressions.UserDefinedFunction
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.{DataFrame, SparkSession,functions=>F}
 import streaming.dsl.auth.TableAuthResult
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.param.WowParams
@@ -20,10 +20,8 @@ class Pivot(override val uid: String) extends SQLAlg with ETAuth with WowParams 
       .groupBy(params("columnLeft"))
       .pivot(params("columnHeader"))
 
-    params("sunFunc") match {
-      case "sum" => temp.sum(params("columnSum"))
-      case "count" => temp.count()
-    }
+    val aggs = params("sunFunc").split(",").map(item=>F.expr(item).as(s"""${params("columnSum")}_${item.split("\\(").head}"""))
+    temp.agg(aggs.head,aggs.drop(1):_*)
 
   }
 
