@@ -13,7 +13,7 @@ import tech.mlsql.dsl.auth.dsl.mmlib.ETMethod.ETMethod
  * 8/8/2020 WilliamZhu(allwefantasy@gmail.com)
  */
 class Pivot(override val uid: String) extends SQLAlg with ETAuth with WowParams {
-  def this() = this(Identifiable.randomUID(this.getClass.getName))
+  def this() = this(Identifiable.randomUID("tech.mlsql.plugins.ets.pivot"))
 
   override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
     val temp = df
