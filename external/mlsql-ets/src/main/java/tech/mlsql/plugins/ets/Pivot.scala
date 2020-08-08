@@ -20,7 +20,7 @@ class Pivot(override val uid: String) extends SQLAlg with ETAuth with WowParams 
       .groupBy(params("columnLeft"))
       .pivot(params("columnHeader"))
 
-    params("columnSum") match {
+    params("sunFunc") match {
       case "sum" => temp.sum(params("columnSum"))
       case "count" => temp.count()
     }
