@@ -21,7 +21,7 @@ class Pivot(override val uid: String) extends SQLAlg with ETAuth with WowParams 
     var temp = df.groupBy(groupBys.head, groupBys.drop(1): _*)
 
     if (params.get("columnHeaderFields").isDefined) {
-      val columnHeaderFields = params().split(",")
+      val columnHeaderFields = params("columnHeaderFields").split(",")
       temp = temp.pivot(params("columnHeader"), columnHeaderFields)
     } else {
       temp = temp.pivot(params("columnHeader"))
