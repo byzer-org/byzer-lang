@@ -53,11 +53,42 @@ class ProfilerCommand(override val uid: String) extends SQLAlg with ETAuth with 
   }
 
   override def auth(etMethod: ETMethod, path: String, params: Map[String, String]): List[TableAuthResult] = {
+
+    // show databases
+    // use
+    // show tables
+    // show partitions
+
+    val args = JSONTool.parseJson[List[String]](params("parameters"))
+    val defaultOperate = args match {
+      case List("conf", left@_*) =>
+        "conf"
+      case List("sql", _command) =>
+        val command = _command.replaceAll("\n", " ")
+        if (command.stripMargin.startsWith("show databases")) {
+          "show"
+        }
+        else if (command.stripMargin.startsWith("use")) {
+          "show"
+        }
+        else if (command.stripMargin.startsWith("show tables")) {
+          "show"
+        }
+        else if (command.stripMargin.startsWith("show partitions")) {
+          "show"
+        } else if (command.stripMargin.startsWith("select")) {
+          "select"
+        } else "insert"
+
+      case List("explain", tableNameOrSQL, left@_*) =>
+        "explain"
+    }
+
     val vtable = MLSQLTable(
       Option(DB_DEFAULT.MLSQL_SYSTEM.toString),
       Option("__profiler__"),
       OperateType.SELECT,
-      Option("_mlsql_"),
+      Option(defaultOperate),
       TableType.SYSTEM)
 
     val context = ScriptSQLExec.contextGetOrForTest()
