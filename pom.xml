@@ -53,15 +53,19 @@
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
 
+        <!-- spark 2.4 start -->
         <scala.version>2.11.12</scala.version>
         <scala.binary.version>2.11</scala.binary.version>
         <spark.version>2.4.3</spark.version>
         <spark.bigversion>2.4</spark.bigversion>
+        <!-- spark 2.4 end -->
 
+        <!-- spark 3.0 start -->
         <!--        <scala.version>2.12.10</scala.version>-->
         <!--        <scala.binary.version>2.12</scala.binary.version>-->
         <!--        <spark.version>3.0.0</spark.version>-->
         <!--        <spark.bigversion>3.0</spark.bigversion>-->
+        <!-- spark 3.0 end -->
 
         <spark.streaming.kafka.artifactId>spark-streaming-kafka-0-8_${scala.binary.version}
         </spark.streaming.kafka.artifactId>
