@@ -4,7 +4,8 @@ import org.apache.spark.ml.param.Param
 import org.apache.spark.ml.util.Identifiable
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.{DataFrame, SparkSession, functions => F}
-import streaming.dsl.auth.TableAuthResult
+import streaming.dsl.ScriptSQLExec
+import streaming.dsl.auth.{DB_DEFAULT, MLSQLTable, OperateType, TableAuthResult, TableType}
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.param.WowParams
 import tech.mlsql.dsl.auth.ETAuth
@@ -39,7 +40,9 @@ class Pivot(override val uid: String) extends SQLAlg with ETAuth with WowParams 
 
   override def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = ???
 
-  override def auth(etMethod: ETMethod, path: String, params: Map[String, String]): List[TableAuthResult] = ???
+  override def auth(etMethod: ETMethod, path: String, params: Map[String, String]): List[TableAuthResult] = {
+    List()
+  }
 
   final val columnLeft: Param[String] = new Param[String](this, "columnLeft",
     """
