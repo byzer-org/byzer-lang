@@ -32,5 +32,7 @@ with open("pom.xml", "r") as reader:
 
         line = reader.readline()
 
+# for line in newlines:
+#     print(line)
 with open("pom.xml","w") as writer:
     writer.writelines(newlines)
