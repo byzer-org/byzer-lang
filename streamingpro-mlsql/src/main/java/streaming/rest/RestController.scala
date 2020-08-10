@@ -104,22 +104,7 @@ class RestController extends ApplicationController with WowLog {
     val silence = paramAsBoolean("silence", false)
     val sparkSession = getSession
 
-    val accessToken = sparkSession.conf.get("spark.mlsql.auth.access_token", "")
-    if (!accessToken.isEmpty) {
-      if (param("access_token") != accessToken) {
-        render(403, JSONTool.toJsonStr(Map("msg" -> "access_token is not right")))
-      }
-    }
-
-    val customAuth = sparkSession.conf.get("spark.mlsql.auth.custom", "")
-    if (!customAuth.isEmpty) {
-      import scala.collection.JavaConverters._
-      val restParams = params().asScala.toMap
-      val (isOk, message) = Class.forName(customAuth).asInstanceOf[ {def auth(params: Map[String, String]): (Boolean, String)}].auth(restParams)
-      if (!isOk) {
-        render(403, JSONTool.toJsonStr(Map("msg" -> message)))
-      }
-    }
+    accessAuth(sparkSession)
 
     val htp = findService(classOf[HttpTransportService])
     if (paramAsBoolean("async", false) && !params().containsKey("callback")) {
@@ -213,6 +198,25 @@ class RestController extends ApplicationController with WowLog {
     render(outputResult)
   }
 
+  private def accessAuth(sparkSession: SparkSession) = {
+    val accessToken = sparkSession.conf.get("spark.mlsql.auth.access_token", "")
+    if (!accessToken.isEmpty) {
+      if (param("access_token") != accessToken) {
+        render(403, JSONTool.toJsonStr(Map("msg" -> "access_token is not right")))
+      }
+    }
+
+    val customAuth = sparkSession.conf.get("spark.mlsql.auth.custom", "")
+    if (!customAuth.isEmpty) {
+      import scala.collection.JavaConverters._
+      val restParams = params().asScala.toMap
+      val (isOk, message) = Class.forName(customAuth).asInstanceOf[ {def auth(params: Map[String, String]): (Boolean, String)}].auth(restParams)
+      if (!isOk) {
+        render(403, JSONTool.toJsonStr(Map("msg" -> message)))
+      }
+    }
+  }
+
   private def getScriptResult(context: ScriptSQLExecListener, sparkSession: SparkSession): String = {
     val result = new StringBuffer()
     val includeSchema = param("includeSchema", "false").toBoolean
@@ -281,6 +285,7 @@ class RestController extends ApplicationController with WowLog {
   @At(path = Array("/download"), types = Array(GET, POST))
   def download = {
     intercept()
+    accessAuth(getSession)
     val filename = param("fileName", System.currentTimeMillis() + "")
     param("fileType", "raw") match {
       case "tar" =>
@@ -322,6 +327,7 @@ class RestController extends ApplicationController with WowLog {
   @At(path = Array("/runningjobs"), types = Array(GET, POST))
   def getRunningJobGroup = {
     setAccessControlAllowOrigin
+    accessAuth(getSession)
     val infoMap = JobManager.getJobInfo
     render(200, toJsonString(infoMap))
   }
@@ -382,7 +388,7 @@ class RestController extends ApplicationController with WowLog {
   @At(path = Array("/killjob"), types = Array(GET, POST))
   def killJob = {
     setAccessControlAllowOrigin
-
+    accessAuth(getSession)
     val groupId = param("groupId")
     if (groupId == null) {
       val jobName = param("jobName")
@@ -416,6 +422,7 @@ class RestController extends ApplicationController with WowLog {
   @At(path = Array("/user/logout"), types = Array(GET, POST))
   def userLogout = {
     setAccessControlAllowOrigin
+    accessAuth(getSession)
     require(hasParam("owner"), "owner is should be set ")
     if (paramAsBoolean("sessionPerUser", false)) {
       val sparkRuntime = runtime.asInstanceOf[SparkRuntime]
