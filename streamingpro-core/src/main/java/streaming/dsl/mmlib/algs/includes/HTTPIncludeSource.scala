@@ -18,11 +18,14 @@
 
 package streaming.dsl.mmlib.algs.includes
 
+import java.nio.charset.Charset
+
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.mlsql.session.MLSQLException
 import streaming.dsl.{IncludeSource, ScriptSQLExec}
 import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.crawler.HttpClientCrawler
+import org.apache.http.client.fluent.{Form, Request}
 
 /**
   * Created by allwefantasy on 30/8/2018.
@@ -52,7 +55,14 @@ class HTTPIncludeSource extends IncludeSource with Logging {
     }
 
     logInfo(s"""HTTPIncludeSource URL: ${fetch_url}  PARAMS:${params.map(f => s"${f._1}=>${f._2}").mkString(";")}""")
-    val res = HttpClientCrawler.requestByMethod(fetch_url, method, params.toMap)
+
+    val req = Request.Post(fetch_url).addHeader("access-token",context.userDefinedParam.getOrElse("__auth_secret__", ""))
+    val form = Form.form()
+    params.toMap.map{case (k,v)=>{
+       form.add(k,v)
+    }}
+
+    val res =  req.bodyForm(form.build()).execute().returnContent().asString(Charset.forName("utf-8"))
     if (res == null) {
       throw new MLSQLException(
         s"""
