@@ -5,7 +5,7 @@ import org.apache.spark.sql.catalyst.parser.{SqlBaseLexer, SqlBaseParser}
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.parser.{DSLSQLLexer, DSLSQLParser}
 import tech.mlsql.app.CustomController
-import tech.mlsql.autosuggest.meta.RestMetaProvider
+import tech.mlsql.autosuggest.meta.{MLSQLEngineMetaProvider, RestMetaProvider}
 import tech.mlsql.autosuggest.{AutoSuggestContext, MLSQLSQLFunction}
 import tech.mlsql.common.utils.serder.json.JSONTool
 import tech.mlsql.runtime.AppRuntimeStore
@@ -85,16 +85,20 @@ class AutoSuggestController extends CustomController {
     val size = params.getOrElse("size", "30").toInt
     val includeTableMeta = params.getOrElse("includeTableMeta", "false").toBoolean
 
-    val schemaInferUrl =   params.getOrElse("schemaInferUrl", "")
+    val schemaInferUrl = params.getOrElse("schemaInferUrl", "")
 
     val enableMemoryProvider = params.getOrElse("enableMemoryProvider", "true").toBoolean
     val session = AutoSuggestController.getSession
     val context = new AutoSuggestContext(session,
       AutoSuggestController.mlsqlLexer,
-      AutoSuggestController.sqlLexer,Map("schemaInferUrl"->schemaInferUrl))
+      AutoSuggestController.sqlLexer,Map("schemaInferUrl"->schemaInferUrl,"params"->JSONTool.toJsonStr(params)))
     context.setDebugMode(isDebug)
     if (enableMemoryProvider) {
       context.setUserDefinedMetaProvider(AutoSuggestContext.memoryMetaProvider)
+    }
+
+    if(!schemaInferUrl.isEmpty){
+      context.setUserDefinedMetaProvider(new MLSQLEngineMetaProvider())
     }
 
     val searchUrl = params.get("searchUrl")
@@ -104,6 +108,9 @@ class AutoSuggestController extends CustomController {
         context.setUserDefinedMetaProvider(new RestMetaProvider(searchUrl, listUrl))
       case (None, None) =>
     }
+
+
+
     var resItems = context.buildFromString(sql).suggest(lineNum, columnNum).take(size)
     if (!includeTableMeta) {
       resItems = resItems.map { item =>

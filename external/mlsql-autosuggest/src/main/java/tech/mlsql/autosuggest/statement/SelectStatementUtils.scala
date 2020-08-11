@@ -66,6 +66,7 @@ trait SelectStatementUtils extends Logging {
 
     if (temp.isSuccess) return List()
 
+    val searchPrefix = tokens(tokenPos.pos).getText.substring(0, tokenPos.offsetInToken)
 
     table_info match {
       case Some(tb) => tb.map { case (key, value) =>
@@ -73,7 +74,7 @@ trait SelectStatementUtils extends Logging {
       }.map { case (name, table) =>
         SuggestItem(name, table, Map())
       }.toList
-      case None => selectSuggester.context.metaProvider.list(Map()).map { item =>
+      case None => selectSuggester.context.metaProvider.list(Map("searchPrefix"->searchPrefix)).map { item =>
         SuggestItem(item.key.table, item, Map())
       }
     }

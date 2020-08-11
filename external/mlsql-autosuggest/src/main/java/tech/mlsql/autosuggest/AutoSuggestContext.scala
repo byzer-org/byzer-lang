@@ -14,6 +14,10 @@ import scala.collection.JavaConverters._
 import scala.collection.mutable.ArrayBuffer
 
 object AutoSuggestContext {
+  private[this] val autoSuggestContext: ThreadLocal[AutoSuggestContext] = new ThreadLocal[AutoSuggestContext]
+
+  def context(): AutoSuggestContext = autoSuggestContext.get
+  def setContext(ec: AutoSuggestContext): Unit = autoSuggestContext.set(ec)
 
   val memoryMetaProvider = new MemoryMetaProvider()
   var isInit = false
@@ -41,6 +45,7 @@ class AutoSuggestContext(val session: SparkSession,
                          val lexer: LexerWrapper,
                          val rawSQLLexer: LexerWrapper, val options: Map[String, String] = Map()) extends Logging {
 
+  AutoSuggestContext.setContext(this)
   private var _debugMode = false
 
   private var _rawTokens: List[Token] = List()
