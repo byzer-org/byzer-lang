@@ -9,6 +9,7 @@ import tech.mlsql.autosuggest.preprocess.TablePreprocessor
 import tech.mlsql.autosuggest.statement._
 import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.common.utils.reflect.ClassPath
+import tech.mlsql.common.utils.serder.json.JSONTool
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable.ArrayBuffer
@@ -79,6 +80,10 @@ class AutoSuggestContext(val session: SparkSession,
 
   def statements = {
     _statements
+  }
+
+  def reqParams = {
+    JSONTool.parseJson[Map[String,String]](AutoSuggestContext.context().options("params"))
   }
 
   def rawTokens = _rawTokens

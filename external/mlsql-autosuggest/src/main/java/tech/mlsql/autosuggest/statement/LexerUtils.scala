@@ -35,6 +35,10 @@ object LexerUtils {
     } else candidates
   }
 
+  def tokenPrefix(tokens: List[Token], tokenPos: TokenPos):String = {
+    tokens(tokenPos.pos).getText.substring(0, tokenPos.offsetInToken)
+  }
+
 
   /**
    *

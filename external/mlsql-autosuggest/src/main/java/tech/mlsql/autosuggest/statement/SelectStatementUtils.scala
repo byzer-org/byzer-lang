@@ -3,7 +3,7 @@ package tech.mlsql.autosuggest.statement
 import org.antlr.v4.runtime.Token
 import org.apache.spark.sql.catalyst.parser.SqlBaseLexer
 import tech.mlsql.autosuggest.dsl.{Food, TokenMatcher, TokenTypeWrapper}
-import tech.mlsql.autosuggest.{MLSQLSQLFunction, SpecialTableConst, TokenPos, TokenPosType}
+import tech.mlsql.autosuggest._
 import tech.mlsql.common.utils.log.Logging
 
 /**
@@ -66,17 +66,19 @@ trait SelectStatementUtils extends Logging {
 
     if (temp.isSuccess) return List()
 
-    val searchPrefix = tokens(tokenPos.pos).getText.substring(0, tokenPos.offsetInToken)
-
     table_info match {
       case Some(tb) => tb.map { case (key, value) =>
         (key.aliasName.getOrElse(key.metaTableKey.table), value)
       }.map { case (name, table) =>
         SuggestItem(name, table, Map())
       }.toList
-      case None => selectSuggester.context.metaProvider.list(Map("searchPrefix"->searchPrefix)).map { item =>
-        SuggestItem(item.key.table, item, Map())
-      }
+      case None =>
+        val tokenPrefix = LexerUtils.tokenPrefix(tokens, tokenPos)
+        val owner = AutoSuggestContext.context().reqParams.getOrElse("owner", "")
+        val extraParam = Map("searchPrefix" -> tokenPrefix, "owner" -> owner)
+        selectSuggester.context.metaProvider.list(extraParam).map { item =>
+          SuggestItem(item.key.table, item, Map())
+        }
     }
   }
 
