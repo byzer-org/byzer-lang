@@ -31,8 +31,8 @@ import tech.mlsql.sql.MLSQLSparkConf
 
 
 /**
-  * Created by allwefantasy on 27/8/2017.
-  */
+ * Created by allwefantasy on 27/8/2017.
+ */
 class SelectAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdaptor {
 
   def analyze(ctx: SqlContext): SelectStatement = {
@@ -52,7 +52,12 @@ class SelectAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAda
 
     val chunks = wowText.split("\\s+")
     val tableName = chunks.last.replace(";", "")
-    val sql = wowText.replaceAll(s"((?i)as)[\\s|\\n]+${tableName}\\s*\\n*$$", "")
+    val sql = try {
+      wowText.replaceAll(s"((?i)as)[\\s|\\n]+${tableName}\\s*\\n*$$", "")
+    } catch {
+      case e: Exception =>
+        wowText.split("(?i)as").dropRight(1).mkString("as")
+    }
 
     SelectStatement(originalText, sql, tableName)
 
