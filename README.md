@@ -17,8 +17,8 @@ Find more examples on [our user guide](http://docs.mlsql.tech/en).
 
 ## Get PreBuild Distribution
 
-* The lasted version is MLSQL v1.6.0
-* You can download from [MLSQL Website](http://download.mlsql.tech/1.6.0/)
+* The lasted version is MLSQL v2.0.0
+* You can download from [MLSQL Website](http://download.mlsql.tech/2.0.0/)
 * Spark 2.3.2/2.4.3 are tested
 * Spark 3.0.0 is partially supported.
 
@@ -32,7 +32,7 @@ cd /tmp/streamingpro-spark_2.x-x.x.x
 
 ## make sure spark distribution is available
 ## visit http://127.0.0.1:9003
-export SPARK_HOME="....." ; ./start-local.sh
+export SPARK_HOME="....." ; ./start-default.sh
 ```
 
 ## Build Distribution
