@@ -73,7 +73,7 @@ trait SelectStatementUtils extends Logging {
         SuggestItem(name, table, Map())
       }.toList
       case None =>
-        val tokenPrefix = LexerUtils.tokenPrefix(tokens, tokenPos)
+        val tokenPrefix = LexerUtils.tableTokenPrefix(tokens, tokenPos)
         val owner = AutoSuggestContext.context().reqParams.getOrElse("owner", "")
         val extraParam = Map("searchPrefix" -> tokenPrefix, "owner" -> owner)
         selectSuggester.context.metaProvider.list(extraParam).map { item =>
