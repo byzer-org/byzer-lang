@@ -7,15 +7,14 @@
     * [Local](howtouse/deploy.md)
     * [K8s部署](howtouse/k8s_deploy.md)
     * [Yarn部署](howtouse/yarn_deploy.md)
-    * [Docker部署](howtouse/docker_deploy.md)
 
 * [MLSQL Engine安全加固](security/README.md)
     * [接口访问Token设置](security/token_control.md)
     * [自定义接口访问策略](security/custom_control.md)
 
 * [MLSQL Engine数据访问控制](auth/README.md)
-    * [编译时表权限]()
-    * [运行时权限表以及列权限]()
+    * [解析时表权限]()
+    * [运行时表权限表以及列权限]()
     * [客户端开发]()
     * [服务端开发]()
     

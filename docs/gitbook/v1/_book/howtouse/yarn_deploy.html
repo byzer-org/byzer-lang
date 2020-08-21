@@ -4,7 +4,7 @@
     <head>
         <meta charset="UTF-8">
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
-        <title>自定义接口访问策略 · MLSQL Engine 文档</title>
+        <title>Yarn部署 · MLSQL Engine 文档</title>
         <meta http-equiv="X-UA-Compatible" content="IE=edge" />
         <meta name="description" content="">
         <meta name="generator" content="GitBook 3.2.3">
@@ -53,10 +53,10 @@
     <link rel="shortcut icon" href="../gitbook/images/favicon.ico" type="image/x-icon">
 
     
-    <link rel="next" href="../auth/" />
+    <link rel="next" href="../security/README.md" />
     
     
-    <link rel="prev" href="token_control.html" />
+    <link rel="prev" href="k8s_deploy.html" />
     
 
     </head>
@@ -98,9 +98,9 @@
             
         </li>
     
-        <li class="chapter " data-level="1.2" data-path="../howtouse/">
+        <li class="chapter " data-level="1.2" data-path="./">
             
-                <a href="../howtouse/">
+                <a href="./">
             
                     
                     MLSQL Engine基本安装
@@ -112,9 +112,9 @@
             <ul class="articles">
                 
     
-        <li class="chapter " data-level="1.2.1" data-path="../howtouse/configuration.html">
+        <li class="chapter " data-level="1.2.1" data-path="configuration.html">
             
-                <a href="../howtouse/configuration.html">
+                <a href="configuration.html">
             
                     
                     启动参数详解
@@ -125,9 +125,9 @@
             
         </li>
     
-        <li class="chapter " data-level="1.2.2" data-path="../howtouse/deploy.html">
+        <li class="chapter " data-level="1.2.2" data-path="deploy.html">
             
-                <a href="../howtouse/deploy.html">
+                <a href="deploy.html">
             
                     
                     Local
@@ -138,9 +138,9 @@
             
         </li>
     
-        <li class="chapter " data-level="1.2.3" data-path="../howtouse/k8s_deploy.html">
+        <li class="chapter " data-level="1.2.3" data-path="k8s_deploy.html">
             
-                <a href="../howtouse/k8s_deploy.html">
+                <a href="k8s_deploy.html">
             
                     
                     K8s部署
@@ -151,9 +151,9 @@
             
         </li>
     
-        <li class="chapter " data-level="1.2.4" data-path="../howtouse/yarn_deploy.html">
+        <li class="chapter active" data-level="1.2.4" data-path="yarn_deploy.html">
             
-                <a href="../howtouse/yarn_deploy.html">
+                <a href="yarn_deploy.html">
             
                     
                     Yarn部署
@@ -169,7 +169,7 @@
             
         </li>
     
-        <li class="chapter " data-level="1.3" data-path="README.md">
+        <li class="chapter " data-level="1.3" data-path="../security/README.md">
             
                 <span>
             
@@ -183,9 +183,9 @@
             <ul class="articles">
                 
     
-        <li class="chapter " data-level="1.3.1" data-path="token_control.html">
+        <li class="chapter " data-level="1.3.1" data-path="../security/token_control.html">
             
-                <a href="token_control.html">
+                <a href="../security/token_control.html">
             
                     
                     接口访问Token设置
@@ -196,9 +196,9 @@
             
         </li>
     
-        <li class="chapter active" data-level="1.3.2" data-path="custom_control.html">
+        <li class="chapter " data-level="1.3.2" data-path="../security/custom_control.html">
             
-                <a href="custom_control.html">
+                <a href="../security/custom_control.html">
             
                     
                     自定义接口访问策略
@@ -347,7 +347,7 @@
     <!-- Title -->
     <h1>
         <i class="fa fa-circle-o-notch fa-spin"></i>
-        <a href=".." >自定义接口访问策略</a>
+        <a href=".." >Yarn部署</a>
     </h1>
 </div>
 
@@ -362,15 +362,34 @@
     
                                 <section class="normal markdown-section">
                                 
-                                <h1 id="&#x81EA;&#x5B9A;&#x4E49;&#x63A5;&#x53E3;&#x8BBF;&#x95EE;&#x7B56;&#x7565;">&#x81EA;&#x5B9A;&#x4E49;&#x63A5;&#x53E3;&#x8BBF;&#x95EE;&#x7B56;&#x7565;</h1>
-<p>&#x9664;&#x4E86;&#x524D;&#x9762;&#x63D0;&#x5230;&#x7684;Token&#x9A8C;&#x8BC1;&#xFF0C;&#x7528;&#x6237;&#x4E5F;&#x53EF;&#x4EE5;&#x5F00;&#x53D1;&#x81EA;&#x5DF1;&#x7684;&#x9A8C;&#x8BC1;&#x903B;&#x8F91;&#xFF0C;&#x6BD4;&#x5982;&#x8BF7;&#x6C42;&#x9A8C;&#x8BC1;&#x670D;&#x52A1;&#x5668;&#x7B49;&#x3002;
-&#x53EF;&#x4EE5;&#x5728;&#x542F;&#x52A8;&#x811A;&#x672C;&#x91CC;&#x914D;&#x7F6E;&#x5982;&#x4E0B;&#x53C2;&#x6570;&#xFF1A;</p>
-<pre><code>--jars your-jar-contains-auth-class
---conf spark.mlsql.auth.custom=your-auth-class-name
-</code></pre><p>&#x73B0;&#x9636;&#x6BB5;&#xFF08;2.0.0&#xFF09;&#x7248;&#x672C;&#xFF0C;&#x4F60;&#x9700;&#x8981;&#x7528;scala&#x5F00;&#x53D1;&#xFF0C;&#x4FDD;&#x8BC1;&#x9A8C;&#x8BC1;auth-class&#x91CC;&#x6709;&#x5982;&#x4E0B;&#x51FD;&#x6570;&#xFF1A;</p>
-<pre><code class="lang-scala"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">auth</span></span>(params: <span class="hljs-type">Map</span>[<span class="hljs-type">String</span>, <span class="hljs-type">String</span>]): (<span class="hljs-type">Boolean</span>, <span class="hljs-type">String</span>)
+                                <h1 id="yarn&#x90E8;&#x7F72;">Yarn&#x90E8;&#x7F72;</h1>
+<p>Yarn&#x90E8;&#x7F72;&#x975E;&#x5E38;&#x7B80;&#x5355;&#x3002;&#x6211;&#x4EEC;&#x63A8;&#x8350;&#x4F7F;&#x7528;yarn-client&#x6A21;&#x5F0F;&#x90E8;&#x7F72;&#x3002;&#x6839;&#x636E;<a href="http://docs.mlsql.tech/mlsql-engine/howtouse/deploy.html" target="_blank">Local&#x90E8;&#x7F72;</a>&#x7684;&#x9700;&#x6C42;&#xFF0C;&#x4E0B;&#x8F7D;Spark/Engine&#xFF0C;&#x7136;&#x540E;&#x6309;&#x5982;&#x4E0B;&#x6B65;&#x9AA4;&#x5373;&#x53EF;&#x542F;&#x52A8;&#x3002;</p>
+<ol>
+<li>&#x5C06;hdfs/yarn/hive&#x76F8;&#x5173;xml&#x914D;&#x7F6E;&#x6587;&#x4EF6;&#x653E;&#x5230; SPARK_HOME/conf&#x76EE;&#x5F55;&#x4E0B;&#x3002;</li>
+<li>&#x4FEE;&#x6539;Engine&#x7684;<code>start-local.sh</code></li>
+</ol>
+<h2 id="&#x4FEE;&#x6539;engine&#x7684;start-localsh">&#x4FEE;&#x6539;Engine&#x7684;<code>start-local.sh</code></h2>
+<p>&#x627E;&#x5230;&#x6587;&#x4EF6;&#x91CC;&#x5982;&#x4E0B;&#x4EE3;&#x7801;&#x7247;&#x6BB5;&#xFF1A;</p>
+<pre><code class="lang-shell">$SPARK_HOME/bin/spark-submit --class streaming.core.StreamingApp \
+        --driver-memory ${DRIVER_MEMORY} \
+        --jars ${JARS} \
+        --master local[*] \
+        --name mlsql \
+        --conf &quot;spark.sql.hive.thriftServer.singleSession=true&quot; \
 </code></pre>
-<p>params&#x4F1A;&#x5305;&#x542B;owner,sql&#x7B49;&#x5404;&#x79CD;&#x76F8;&#x5173;&#x4FE1;&#x606F;&#x3002; &#x7B2C;&#x4E00;&#x4E2A;&#x8FD4;&#x56DE;&#x503C;&#x662F;&#x5E03;&#x5C14;&#x503C;&#xFF0C;true&#x8868;&#x793A;&#x901A;&#x8FC7;&#x9A8C;&#x8BC1;&#xFF0C;false&#x8868;&#x793A;&#x6CA1;&#x6709;&#x901A;&#x8FC7;&#x9A8C;&#x8BC1;&#x3002;&#x7B2C;&#x4E8C;&#x4E2A;&#x8FD4;&#x56DE;&#x503C;&#x662F;&#x5F53;&#x7B2C;&#x4E00;&#x4E2A;&#x8FD4;&#x56DE;&#x503C;&#x4E3A;false&#x7684;&#x60C5;&#x51B5;&#x4E0B;&#xFF0C;&#x7ED9;&#x51FA;&#x7684;&#x539F;&#x56E0;&#x8BF4;&#x660E;&#x3002;</p>
+<p>&#x5C06;--master&#x7684;local[*] &#x6362;&#x6210; yarn-client, &#x7136;&#x540E;&#x6DFB;&#x52A0;excuctor&#x914D;&#x7F6E;,&#x6700;&#x540E;&#x5927;&#x6982;&#x5982;&#x4E0B;&#x9762;&#x7684;&#x6837;&#x5B50;&#xFF1A;</p>
+<pre><code class="lang-shell">$SPARK_HOME/bin/spark-submit --class streaming.core.StreamingApp \
+        --driver-memory ${DRIVER_MEMORY} \
+        --jars ${JARS} \
+        --master yarn \
+        --deploy-mode client \
+        --executor-memory 2g \
+        --executor-cores 1 \
+        --num-executors 1 \
+        --name mlsql \
+        --conf &quot;spark.sql.hive.thriftServer.singleSession=true&quot; \
+</code></pre>
+<p>&#x7136;&#x540E;&#x6307;&#x5B9A;SPARK_HOME&#x8FD0;&#x884C;&#x5373;&#x53EF;&#x3002;</p>
 
                                 
                                 </section>
@@ -398,12 +417,12 @@
 
             
                 
-                <a href="token_control.html" class="navigation navigation-prev " aria-label="Previous page: 接口访问Token设置">
+                <a href="k8s_deploy.html" class="navigation navigation-prev " aria-label="Previous page: K8s部署">
                     <i class="fa fa-angle-left"></i>
                 </a>
                 
                 
-                <a href="../auth/" class="navigation navigation-next " aria-label="Next page: MLSQL Engine数据访问控制">
+                <a href="../security/README.md" class="navigation navigation-next " aria-label="Next page: MLSQL Engine安全加固">
                     <i class="fa fa-angle-right"></i>
                 </a>
                 
@@ -414,7 +433,7 @@
     <script>
         var gitbook = gitbook || [];
         gitbook.push(function() {
-            gitbook.page.hasChanged({"page":{"title":"自定义接口访问策略","level":"1.3.2","depth":2,"next":{"title":"MLSQL Engine数据访问控制","level":"1.4","depth":1,"path":"auth/README.md","ref":"auth/README.md","articles":[{"title":"解析时表权限","level":"1.4.1","depth":2,"ref":"","articles":[]},{"title":"运行时表权限表以及列权限","level":"1.4.2","depth":2,"ref":"","articles":[]},{"title":"客户端开发","level":"1.4.3","depth":2,"ref":"","articles":[]},{"title":"服务端开发","level":"1.4.4","depth":2,"ref":"","articles":[]}]},"previous":{"title":"接口访问Token设置","level":"1.3.1","depth":2,"path":"security/token_control.md","ref":"security/token_control.md","articles":[]},"dir":"ltr"},"config":{"plugins":["image-class","lightbox"],"styles":{"website":"styles/image.css"},"pluginsConfig":{"image-class":{},"lightbox":{"jquery":true,"sameUuid":false},"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"theme":"default","pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"variables":{},"title":"MLSQL Engine 文档","gitbook":"*","description":"MLSQL Engine 官方文档"},"file":{"path":"security/custom_control.md","mtime":"2020-08-18T04:03:27.000Z","type":"markdown"},"gitbook":{"version":"3.2.3","time":"2020-08-19T07:33:11.009Z"},"basePath":"..","book":{"language":""}});
+            gitbook.page.hasChanged({"page":{"title":"Yarn部署","level":"1.2.4","depth":2,"next":{"title":"MLSQL Engine安全加固","level":"1.3","depth":1,"path":"security/README.md","ref":"security/README.md","articles":[{"title":"接口访问Token设置","level":"1.3.1","depth":2,"path":"security/token_control.md","ref":"security/token_control.md","articles":[]},{"title":"自定义接口访问策略","level":"1.3.2","depth":2,"path":"security/custom_control.md","ref":"security/custom_control.md","articles":[]}]},"previous":{"title":"K8s部署","level":"1.2.3","depth":2,"path":"howtouse/k8s_deploy.md","ref":"howtouse/k8s_deploy.md","articles":[]},"dir":"ltr"},"config":{"plugins":["image-class","lightbox"],"styles":{"website":"styles/image.css"},"pluginsConfig":{"image-class":{},"lightbox":{"jquery":true,"sameUuid":false},"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"theme":"default","pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"variables":{},"title":"MLSQL Engine 文档","gitbook":"*","description":"MLSQL Engine 官方文档"},"file":{"path":"howtouse/yarn_deploy.md","mtime":"2020-08-18T03:27:44.000Z","type":"markdown"},"gitbook":{"version":"3.2.3","time":"2020-08-19T07:33:11.009Z"},"basePath":"..","book":{"language":""}});
         });
     </script>
 </div>
