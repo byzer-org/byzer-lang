@@ -1,5 +1,10 @@
 # 基本安装
 
+> 目前经过测试的兼容版本如下：
+> 1. Spark 2.4.3
+> 2. Spark 3.0.0
+
+
 该章节为 【MLSQL Engine】 多种部署方式说明。 MLSQL Engine复用了Spark的部署工具，使用spark-submit命令进行部署。
 
 这意味着：
@@ -20,4 +25,4 @@ MLSQL Engine 的发行包可以在 [MLSQL官方下载站点](http://download.mls
 1. 2.4以及3.0 都表示依赖的Spark版本
 2. 2.0.0 表示MLSQL Engine的自身的版本
 
-MLSQL Engine 通常支持两个Spark版本。一个最新版本和一个稳定版本。在使用时，用户需要注意与之匹配的Spark 版本，否则会报错。
+
