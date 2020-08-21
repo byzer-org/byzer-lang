@@ -95,12 +95,14 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
 
     var targetLen = df.rdd.partitions.length
 
+
     val tempdf = TryTool.tryOrElse {
       val resource = new SparkInstanceService(session).resources
       val jobInfo = new MLSQLJobCollect(session, context.owner)
       val leftResource = resource.totalCores - jobInfo.resourceSummary(null).activeTasks
-      if (leftResource <= targetLen) {
-        df.repartition(Math.max(Math.floor(leftResource / 2), 1).toInt)
+      logInfo(s"RayMode: Resource:[${leftResource}(${resource.totalCores}-${jobInfo.resourceSummary(null).activeTasks})] TargetLen:[${targetLen}]")
+      if (leftResource/2 <= targetLen) {
+        df.repartition(Math.max(Math.floor(leftResource / 2)-1, 1).toInt)
       } else df
     } {
       //      WriteLog.write(List("Warning: Fail to detect instance resource. Setup 4 data server for Python.").toIterator, runnerConf)
@@ -110,8 +112,8 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
       } else df
     }
 
-
     targetLen = tempdf.rdd.partitions.length
+    logInfo(s"RayMode: Final TargetLen ${targetLen}")
 
     val thread = new Thread("temp-data-server-in-spark") {
       override def run(): Unit = {
