@@ -4,7 +4,7 @@
     <head>
         <meta charset="UTF-8">
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
-        <title>自定义接口访问策略 · MLSQL Engine 文档</title>
+        <title>MLSQL Engine数据访问控制 · MLSQL Engine 文档</title>
         <meta http-equiv="X-UA-Compatible" content="IE=edge" />
         <meta name="description" content="">
         <meta name="generator" content="GitBook 3.2.3">
@@ -53,10 +53,8 @@
     <link rel="shortcut icon" href="../gitbook/images/favicon.ico" type="image/x-icon">
 
     
-    <link rel="next" href="../auth/" />
     
-    
-    <link rel="prev" href="token_control.html" />
+    <link rel="prev" href="../security/custom_control.html" />
     
 
     </head>
@@ -169,7 +167,7 @@
             
         </li>
     
-        <li class="chapter " data-level="1.3" data-path="README.md">
+        <li class="chapter " data-level="1.3" data-path="../security/README.md">
             
                 <span>
             
@@ -183,9 +181,9 @@
             <ul class="articles">
                 
     
-        <li class="chapter " data-level="1.3.1" data-path="token_control.html">
+        <li class="chapter " data-level="1.3.1" data-path="../security/token_control.html">
             
-                <a href="token_control.html">
+                <a href="../security/token_control.html">
             
                     
                     接口访问Token设置
@@ -196,9 +194,9 @@
             
         </li>
     
-        <li class="chapter active" data-level="1.3.2" data-path="custom_control.html">
+        <li class="chapter " data-level="1.3.2" data-path="../security/custom_control.html">
             
-                <a href="custom_control.html">
+                <a href="../security/custom_control.html">
             
                     
                     自定义接口访问策略
@@ -214,9 +212,9 @@
             
         </li>
     
-        <li class="chapter " data-level="1.4" data-path="../auth/">
+        <li class="chapter active" data-level="1.4" data-path="./">
             
-                <a href="../auth/">
+                <a href="./">
             
                     
                     MLSQL Engine数据访问控制
@@ -347,7 +345,7 @@
     <!-- Title -->
     <h1>
         <i class="fa fa-circle-o-notch fa-spin"></i>
-        <a href=".." >自定义接口访问策略</a>
+        <a href=".." >MLSQL Engine数据访问控制</a>
     </h1>
 </div>
 
@@ -362,15 +360,7 @@
     
                                 <section class="normal markdown-section">
                                 
-                                <h1 id="&#x81EA;&#x5B9A;&#x4E49;&#x63A5;&#x53E3;&#x8BBF;&#x95EE;&#x7B56;&#x7565;">&#x81EA;&#x5B9A;&#x4E49;&#x63A5;&#x53E3;&#x8BBF;&#x95EE;&#x7B56;&#x7565;</h1>
-<p>&#x9664;&#x4E86;&#x524D;&#x9762;&#x63D0;&#x5230;&#x7684;Token&#x9A8C;&#x8BC1;&#xFF0C;&#x7528;&#x6237;&#x4E5F;&#x53EF;&#x4EE5;&#x5F00;&#x53D1;&#x81EA;&#x5DF1;&#x7684;&#x9A8C;&#x8BC1;&#x903B;&#x8F91;&#xFF0C;&#x6BD4;&#x5982;&#x8BF7;&#x6C42;&#x9A8C;&#x8BC1;&#x670D;&#x52A1;&#x5668;&#x7B49;&#x3002;
-&#x53EF;&#x4EE5;&#x5728;&#x542F;&#x52A8;&#x811A;&#x672C;&#x91CC;&#x914D;&#x7F6E;&#x5982;&#x4E0B;&#x53C2;&#x6570;&#xFF1A;</p>
-<pre><code>--jars your-jar-contains-auth-class
---conf spark.mlsql.auth.custom=your-auth-class-name
-</code></pre><p>&#x73B0;&#x9636;&#x6BB5;&#xFF08;2.0.0&#xFF09;&#x7248;&#x672C;&#xFF0C;&#x4F60;&#x9700;&#x8981;&#x7528;scala&#x5F00;&#x53D1;&#xFF0C;&#x4FDD;&#x8BC1;&#x9A8C;&#x8BC1;auth-class&#x91CC;&#x6709;&#x5982;&#x4E0B;&#x51FD;&#x6570;&#xFF1A;</p>
-<pre><code class="lang-scala"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">auth</span></span>(params: <span class="hljs-type">Map</span>[<span class="hljs-type">String</span>, <span class="hljs-type">String</span>]): (<span class="hljs-type">Boolean</span>, <span class="hljs-type">String</span>)
-</code></pre>
-<p>params&#x4F1A;&#x5305;&#x542B;owner,sql&#x7B49;&#x5404;&#x79CD;&#x76F8;&#x5173;&#x4FE1;&#x606F;&#x3002; &#x7B2C;&#x4E00;&#x4E2A;&#x8FD4;&#x56DE;&#x503C;&#x662F;&#x5E03;&#x5C14;&#x503C;&#xFF0C;true&#x8868;&#x793A;&#x901A;&#x8FC7;&#x9A8C;&#x8BC1;&#xFF0C;false&#x8868;&#x793A;&#x6CA1;&#x6709;&#x901A;&#x8FC7;&#x9A8C;&#x8BC1;&#x3002;&#x7B2C;&#x4E8C;&#x4E2A;&#x8FD4;&#x56DE;&#x503C;&#x662F;&#x5F53;&#x7B2C;&#x4E00;&#x4E2A;&#x8FD4;&#x56DE;&#x503C;&#x4E3A;false&#x7684;&#x60C5;&#x51B5;&#x4E0B;&#xFF0C;&#x7ED9;&#x51FA;&#x7684;&#x539F;&#x56E0;&#x8BF4;&#x660E;&#x3002;</p>
+                                <h1 id="mlsql-engine&#x6570;&#x636E;&#x8BBF;&#x95EE;&#x63A7;&#x5236;">MLSQL Engine&#x6570;&#x636E;&#x8BBF;&#x95EE;&#x63A7;&#x5236;</h1>
 
                                 
                                 </section>
@@ -398,14 +388,10 @@
 
             
                 
-                <a href="token_control.html" class="navigation navigation-prev " aria-label="Previous page: 接口访问Token设置">
+                <a href="../security/custom_control.html" class="navigation navigation-prev navigation-unique" aria-label="Previous page: 自定义接口访问策略">
                     <i class="fa fa-angle-left"></i>
                 </a>
                 
-                
-                <a href="../auth/" class="navigation navigation-next " aria-label="Next page: MLSQL Engine数据访问控制">
-                    <i class="fa fa-angle-right"></i>
-                </a>
                 
             
         
@@ -414,7 +400,7 @@
     <script>
         var gitbook = gitbook || [];
         gitbook.push(function() {
-            gitbook.page.hasChanged({"page":{"title":"自定义接口访问策略","level":"1.3.2","depth":2,"next":{"title":"MLSQL Engine数据访问控制","level":"1.4","depth":1,"path":"auth/README.md","ref":"auth/README.md","articles":[{"title":"解析时表权限","level":"1.4.1","depth":2,"ref":"","articles":[]},{"title":"运行时表权限表以及列权限","level":"1.4.2","depth":2,"ref":"","articles":[]},{"title":"客户端开发","level":"1.4.3","depth":2,"ref":"","articles":[]},{"title":"服务端开发","level":"1.4.4","depth":2,"ref":"","articles":[]}]},"previous":{"title":"接口访问Token设置","level":"1.3.1","depth":2,"path":"security/token_control.md","ref":"security/token_control.md","articles":[]},"dir":"ltr"},"config":{"plugins":["image-class","lightbox"],"styles":{"website":"styles/image.css"},"pluginsConfig":{"image-class":{},"lightbox":{"jquery":true,"sameUuid":false},"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"theme":"default","pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"variables":{},"title":"MLSQL Engine 文档","gitbook":"*","description":"MLSQL Engine 官方文档"},"file":{"path":"security/custom_control.md","mtime":"2020-08-18T04:03:27.000Z","type":"markdown"},"gitbook":{"version":"3.2.3","time":"2020-08-19T07:33:11.009Z"},"basePath":"..","book":{"language":""}});
+            gitbook.page.hasChanged({"page":{"title":"MLSQL Engine数据访问控制","level":"1.4","depth":1,"next":{"title":"解析时表权限","level":"1.4.1","depth":2,"ref":"","articles":[]},"previous":{"title":"自定义接口访问策略","level":"1.3.2","depth":2,"path":"security/custom_control.md","ref":"security/custom_control.md","articles":[]},"dir":"ltr"},"config":{"plugins":["image-class","lightbox"],"styles":{"website":"styles/image.css"},"pluginsConfig":{"image-class":{},"lightbox":{"jquery":true,"sameUuid":false},"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"theme":"default","pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"variables":{},"title":"MLSQL Engine 文档","gitbook":"*","description":"MLSQL Engine 官方文档"},"file":{"path":"auth/README.md","mtime":"2020-08-18T04:18:13.000Z","type":"markdown"},"gitbook":{"version":"3.2.3","time":"2020-08-19T07:33:11.009Z"},"basePath":"..","book":{"language":""}});
         });
     </script>
 </div>

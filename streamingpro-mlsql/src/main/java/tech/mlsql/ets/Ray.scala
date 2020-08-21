@@ -4,7 +4,6 @@ import java.net.ServerSocket
 import java.util
 import java.util.concurrent.atomic.AtomicReference
 
-import org.apache.spark.sql.catalyst.encoders.RowEncoder
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.mlsql.session.MLSQLException
 import org.apache.spark.sql.types._
@@ -247,14 +246,16 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
 
     if (dataMode == "data") {
       val rows = outputDF.collect()
-      val rdd = session.sparkContext.makeRDD[Row](rows)
-      val stage2_schema_encoder= WowRowEncoder.fromRow(stage2_schema)
+      val rdd = session.sparkContext.makeRDD[Row](rows,numSlices = rows.length)
+      val stage2_schema_encoder = WowRowEncoder.fromRow(stage2_schema)
       val newRDD = if (rdd.partitions.length > 0 && rows.length > 0) {
-        rdd.repartition(rows.length).flatMap { row =>
-
+        rdd.flatMap { row =>
           val socketRunner = new SparkSocketRunner("readFromStreamWithArrow", NetUtils.getHost, timezoneID)
           val commonTaskContext = new SparkContextImp(TaskContext.get(), null)
-          val iter = socketRunner.readFromStreamWithArrow(row.getAs[String]("host"), row.getAs[Long]("port").toInt, commonTaskContext)
+          val pythonWorkerHost = row.getAs[String]("host")
+          val pythonWorkerPort = row.getAs[Long]("port").toInt
+          logInfo(s" Ray On Data Mode: connect python worker[${pythonWorkerHost}:${pythonWorkerPort}] ")
+          val iter = socketRunner.readFromStreamWithArrow(pythonWorkerHost, pythonWorkerPort, commonTaskContext)
           iter.map(f => f.copy())
         }
       } else rdd.map(f => stage2_schema_encoder(f))
@@ -263,8 +264,7 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
     } else {
       outputDF
     }
-
-
+    
   }
 
   def isLocalMaster(conf: Map[String, String]): Boolean = {
