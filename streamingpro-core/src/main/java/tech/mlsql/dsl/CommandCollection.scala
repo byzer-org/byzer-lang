@@ -56,7 +56,7 @@ object CommandCollection {
     context.addEnv("delta", """run command as DeltaCommandWrapper.`` where parameters='''{:all}'''""")
     context.addEnv("scheduler", """run command as SchedulerCommand.`` where parameters='''{:all}'''""")
 
-    context.addEnv("python", """run command as PythonCommand.`` where parameters='''{:all}'''""")
+    context.addEnv("python", """run command as PythonCommand.`` where parameters='''{:all}''' as {-1:next(named,uuid())}""")
     context.addEnv("ray", """run command as Ray.`` where inputTable='''{1}''' and code='''{2}''' and outputTable="{4}" as {4:uuid()}""")
     context.addEnv("plugin", """run command as PluginCommand.`` where parameters='''{:all}'''""")
 

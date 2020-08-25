@@ -103,7 +103,7 @@
         <scope>provided</scope>
         <hadoop-client-version>2.6.5</hadoop-client-version>
 
-        <common-utils-version>0.3.7</common-utils-version>
+        <common-utils-version>0.3.8</common-utils-version>
         <serviceframework.version>2.0.6</serviceframework.version>
 
         <pyjava-version>0.3.0</pyjava-version>
