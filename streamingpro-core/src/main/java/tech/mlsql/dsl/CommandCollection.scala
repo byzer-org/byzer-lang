@@ -57,7 +57,7 @@ object CommandCollection {
     context.addEnv("scheduler", """run command as SchedulerCommand.`` where parameters='''{:all}'''""")
 
     context.addEnv("python", """run command as PythonCommand.`` where parameters='''{:all}'''""")
-    context.addEnv("ray", """run command as Ray.`` where parameters='''{:all}'''""")
+    context.addEnv("ray", """run command as Ray.`` where inputTable='''{1}''' and code='''{2}''' and outputTable="{4}" as {4:uuid()}""")
     context.addEnv("plugin", """run command as PluginCommand.`` where parameters='''{:all}'''""")
 
     context.addEnv("kafkaTool",

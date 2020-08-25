@@ -5,6 +5,7 @@ import java.net.Socket
 import java.util
 import java.util.concurrent.atomic.AtomicReference
 
+import org.apache.spark.ml.param.Param
 import org.apache.spark.sql.catalyst.encoders.RowEncoder
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.mlsql.session.MLSQLException
@@ -34,6 +35,10 @@ import scala.collection.mutable.ArrayBuffer
  */
 class PythonCommand(override val uid: String) extends SQLAlg with Functions with WowParams {
   def this() = this(BaseParams.randomUID())
+
+  final val inputTable: Param[String] = new Param[String](this, "inputTable", " ")
+  final val code: Param[String] = new Param[String](this, "code", " ")
+  final val outputTable: Param[String] = new Param[String](this, "outputTable", " ")
 
   override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
 

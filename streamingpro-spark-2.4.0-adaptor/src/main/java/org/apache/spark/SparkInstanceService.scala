@@ -44,6 +44,7 @@ class SparkInstanceService(session: SparkSession) {
       case sb if sb.isInstanceOf[CoarseGrainedSchedulerBackend] =>
         ReflectHelper.field(sb, "totalCoreCount").asInstanceOf[AtomicInteger].get()
       case sb if sb.isInstanceOf[LocalSchedulerBackend] =>
+        //val k8sDetect = System.getenv().get("KUBERNETES_SERVICE_HOST")
         java.lang.Runtime.getRuntime.availableProcessors
       case sb if sb.isInstanceOf[StandaloneSchedulerBackend] => -1
     }

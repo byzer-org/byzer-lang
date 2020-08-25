@@ -4,6 +4,7 @@ import java.net.ServerSocket
 import java.util
 import java.util.concurrent.atomic.AtomicReference
 
+import org.apache.spark.ml.param.Param
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.mlsql.session.MLSQLException
 import org.apache.spark.sql.types._
@@ -51,15 +52,14 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
     val envSession = new SetSession(spark, ScriptSQLExec.context().owner)
     envSession.set("pythonMode", "ray", Map(SetSession.__MLSQL_CL__ -> SetSession.PYTHON_RUNNER_CONF_CL))
 
-    val command = JSONTool.parseJson[List[String]](params("parameters")).toArray
-    val newdf = command match {
-      case Array("on", tableName, code) =>
 
-        distribute_execute(spark, genCode(code), tableName)
+    val newdf = Array(params(inputTable.name),params(code.name),params(outputTable.name)) match {
+      case Array(input, code,"") =>
+        distribute_execute(spark, genCode(code), input)
 
-      case Array("on", tableName, code, "named", targetTable) =>
-        val resDf = distribute_execute(spark, genCode(code), tableName)
-        resDf.createOrReplaceTempView(targetTable)
+      case Array(input, code, output) =>
+        val resDf = distribute_execute(spark, genCode(code), input)
+        resDf.createOrReplaceTempView(output)
         resDf
     }
     newdf
@@ -266,7 +266,7 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
     } else {
       outputDF
     }
-    
+
   }
 
   def isLocalMaster(conf: Map[String, String]): Boolean = {
@@ -321,6 +321,10 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
     runnerConf
   }
 
+
+  final val inputTable: Param[String] = new Param[String](this, "inputTable", " ")
+  final val code: Param[String] = new Param[String](this, "code", " ")
+  final val outputTable: Param[String] = new Param[String](this, "outputTable", " ")
 
   override def supportedVersions: Seq[String] = {
     Seq("1.5.0-SNAPSHOT", "1.5.0")
