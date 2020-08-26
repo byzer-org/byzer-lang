@@ -1,5 +1,7 @@
 #K8S部署
 
+> 目前实测Spark 3.0 通过。建议使用3.0 进行K8s部署。
+
 目前K8s部署有两种方式：
 
 1. Spark官方的 [spark-submit方式](http://spark.apache.org/docs/latest/running-on-kubernetes.html)
