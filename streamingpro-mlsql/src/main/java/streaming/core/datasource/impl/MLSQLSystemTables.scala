@@ -87,7 +87,7 @@ class MLSQLSystemTables extends MLSQLSource with MLSQLSourceInfo with MLSQLRegis
 
   }
 
-  override def sourceInfo(config: DataAuthConfig): SourceInfo = SourceInfo(fullFormat, fullFormat, "jobs")
+  override def sourceInfo(config: DataAuthConfig): SourceInfo = SourceInfo(fullFormat, "mlsql_system_db", "system_info")
 
   override def register(): Unit = {
     DataSourceRegistry.register(MLSQLDataSourceKey(fullFormat, MLSQLSparkDataSourceType), this)
