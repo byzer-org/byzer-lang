@@ -76,6 +76,14 @@ UDF的编写需要符合MLSQL的规范。我们推荐直接在Console里动态�
 |----|----|-----|
 | streaming.udf.clzznames  |  支持多个class,用逗号分隔  |     |
 
+## 离线插件安装
+
+确保插件的jar包都是用`--jars`带上。并且目前只支持app插件。
+
+| 参数 | 说明 | 示例值 |
+|----|----|-----|
+| streaming.plugin.clzznames  |  支持多个class,用逗号分隔  |     |
+
 ## session设置
 
 MLSQL支持用户级别Session,请求级别Session。每个Session相当于构建了一个沙盒，避免不同请求之间发生冲突。默认是用户级别Session,如果希望使用请求级别Session，需要在请求上带上 `sessionPerRequest` 参数。对此参看[Rest接口详解](http://docs.mlsql.tech/mlsql-engine/api/run-script.html)。

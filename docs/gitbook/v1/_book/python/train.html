@@ -4,7 +4,7 @@
     <head>
         <meta charset="UTF-8">
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
-        <title>接口访问Token设置 · MLSQL Engine 文档</title>
+        <title>模型训练 · MLSQL Engine 文档</title>
         <meta http-equiv="X-UA-Compatible" content="IE=edge" />
         <meta name="description" content="">
         <meta name="generator" content="GitBook 3.2.3">
@@ -53,10 +53,10 @@
     <link rel="shortcut icon" href="../gitbook/images/favicon.ico" type="image/x-icon">
 
     
-    <link rel="next" href="custom_control.html" />
+    <link rel="next" href="pyjava.html" />
     
     
-    <link rel="prev" href="README.md" />
+    <link rel="prev" href="etl.html" />
     
 
     </head>
@@ -169,7 +169,7 @@
             
         </li>
     
-        <li class="chapter " data-level="1.3" data-path="README.md">
+        <li class="chapter " data-level="1.3" data-path="../security/README.md">
             
                 <span>
             
@@ -183,9 +183,9 @@
             <ul class="articles">
                 
     
-        <li class="chapter active" data-level="1.3.1" data-path="token_control.html">
+        <li class="chapter " data-level="1.3.1" data-path="../security/token_control.html">
             
-                <a href="token_control.html">
+                <a href="../security/token_control.html">
             
                     
                     接口访问Token设置
@@ -196,9 +196,9 @@
             
         </li>
     
-        <li class="chapter " data-level="1.3.2" data-path="custom_control.html">
+        <li class="chapter " data-level="1.3.2" data-path="../security/custom_control.html">
             
-                <a href="custom_control.html">
+                <a href="../security/custom_control.html">
             
                     
                     自定义接口访问策略
@@ -317,9 +317,9 @@
             
         </li>
     
-        <li class="chapter " data-level="1.6" data-path="../python/">
+        <li class="chapter " data-level="1.6" data-path="./">
             
-                <a href="../python/">
+                <a href="./">
             
                     
                     MLSQL Python支持
@@ -331,9 +331,9 @@
             <ul class="articles">
                 
     
-        <li class="chapter " data-level="1.6.1" data-path="../python/env.html">
+        <li class="chapter " data-level="1.6.1" data-path="env.html">
             
-                <a href="../python/env.html">
+                <a href="env.html">
             
                     
                     环境依赖
@@ -344,9 +344,9 @@
             
         </li>
     
-        <li class="chapter " data-level="1.6.2" data-path="../python/etl.html">
+        <li class="chapter " data-level="1.6.2" data-path="etl.html">
             
-                <a href="../python/etl.html">
+                <a href="etl.html">
             
                     
                     数据处理
@@ -357,9 +357,9 @@
             
         </li>
     
-        <li class="chapter " data-level="1.6.3" data-path="../python/train.html">
+        <li class="chapter active" data-level="1.6.3" data-path="train.html">
             
-                <a href="../python/train.html">
+                <a href="train.html">
             
                     
                     模型训练
@@ -370,9 +370,9 @@
             
         </li>
     
-        <li class="chapter " data-level="1.6.4" data-path="../python/pyjava.html">
+        <li class="chapter " data-level="1.6.4" data-path="pyjava.html">
             
-                <a href="../python/pyjava.html">
+                <a href="pyjava.html">
             
                     
                     PyJava API简介
@@ -418,7 +418,7 @@
     <!-- Title -->
     <h1>
         <i class="fa fa-circle-o-notch fa-spin"></i>
-        <a href=".." >接口访问Token设置</a>
+        <a href=".." >模型训练</a>
     </h1>
 </div>
 
@@ -433,14 +433,37 @@
     
                                 <section class="normal markdown-section">
                                 
-                                <h1 id="&#x63A5;&#x53E3;&#x8BBF;&#x95EE;token&#x8BBE;&#x7F6E;">&#x63A5;&#x53E3;&#x8BBF;&#x95EE;Token&#x8BBE;&#x7F6E;</h1>
-<p>MLSQL Engine &#x5BF9;&#x5916;&#x63D0;&#x4F9B;HTTP&#x670D;&#x52A1;&#x9ED8;&#x8BA4;&#x662F;&#x6CA1;&#x6709;&#x6743;&#x9650;&#x9A8C;&#x8BC1;&#x7684;&#xFF0C;&#x539F;&#x56E0;&#x662F;&#x6211;&#x4EEC;&#x5047;&#x8BBE;&#x4ED6;&#x662F;&#x5728;&#x4E00;&#x4E2A;&#x5185;&#x7F51;&#x5B89;&#x5168;&#x73AF;&#x5883;&#xFF0C;&#x53EA;&#x6709;&#x7279;&#x5B9A;&#x5E94;&#x7528;&#x624D;&#x80FD;&#x8BBF;&#x95EE;&#x8BE5;&#x670D;&#x52A1;&#x3002;MLSQL Engine&#x4ECE;2.0.0&#x7248;&#x672C;&#x5F00;&#x59CB;&#x5BF9;&#x63A5;&#x53E3;&#x8BBF;&#x95EE;&#x63D0;&#x4F9B;&#x4E86;Token&#x9A8C;&#x8BC1;&#x3002;</p>
-<h2 id="&#x8BBE;&#x7F6E;&#x542F;&#x52A8;token">&#x8BBE;&#x7F6E;&#x542F;&#x52A8;Token</h2>
-<p>&#x5728;spark-submit &#x547D;&#x4EE4;&#x884C;&#x91CC;&#xFF0C;&#x6DFB;&#x52A0;</p>
-<pre><code>--conf spark.mlsql.auth.access_token=your-token-string
-</code></pre><p>&#x6700;&#x540E;&#x5982;&#x679C;&#x7528;&#x6237;&#x8981;&#x8BBF;&#x95EE;Engine&#x63A5;&#x53E3;&#xFF0C;&#x5FC5;&#x987B;&#x5728;&#x8BF7;&#x6C42;&#x53C2;&#x6570;&#x91CC;&#x5E26;&#x4E0A; your-token-string&#x624D;&#x80FD;&#x8BBF;&#x95EE;&#x3002;
-&#x5BF9;&#x4E8E;MLSQL Console,&#x5219;&#x9700;&#x8981;&#x5728;&#x5EFA;&#x7ACB;Engine&#x7684;&#x65F6;&#x5019;&#xFF0C;&#x586B;&#x5199; token:</p>
-<p></p><div class="image-wrapper security-token_control"><a href="http://docs.mlsql.tech/upload_images/ff318bc1-e126-465f-ae57-8753712816f0.png" data-lightbox="957ec1fb-2c91-462e-bf1c-d39f82dd1607" data-title="" target="_blank"><img src="http://docs.mlsql.tech/upload_images/ff318bc1-e126-465f-ae57-8753712816f0.png" alt=""></a></div><p></p>
+                                <h1 id="&#x6A21;&#x578B;&#x8BAD;&#x7EC3;">&#x6A21;&#x578B;&#x8BAD;&#x7EC3;</h1>
+<p>&#x4E0B;&#x9762;&#x662F;&#x4E00;&#x4E2A;&#x6A21;&#x578B;&#x8BAD;&#x7EC3;&#x7684;python&#x4EE3;&#x7801;&#xFF1A;</p>
+<pre><code class="lang-python"><span class="hljs-keyword">import</span> ray
+<span class="hljs-keyword">from</span> pyjava <span class="hljs-keyword">import</span> rayfix
+<span class="hljs-keyword">from</span> pyjava.api.mlsql <span class="hljs-keyword">import</span> RayContext
+
+<span class="hljs-comment">## &#x5982;&#x679C;&#x9700;&#x8981;&#x627E;Ray&#x8282;&#x70B9;&#x505A;&#x8BAD;&#x7EC3;&#xFF0C;&#x5219;&#x7B2C;&#x4E8C;&#x4E2A;&#x53C2;&#x6570;&#x5FC5;&#x987B;&#x586B;&#x5199;</span>
+ray_context = RayContext.connect(globals(),<span class="hljs-string">&quot;192.168.31.80:17019&quot;</span>)
+
+data_servers = ray_context.data_servers()
+<span class="hljs-comment"># &#x5728;&#x67D0;&#x4E2A;Ray&#x8282;&#x70B9;&#x4E0A;&#x83B7;&#x53D6;&#x6240;&#x6709;&#x6570;&#x636E;&#x5E76;&#x4E14;&#x8FDB;&#x884C;&#x8BAD;&#x7EC3;,&#x4E0A;&#x4F20;&#x6A21;&#x578B;</span>
+<span class="hljs-meta">@ray.remote</span>
+<span class="hljs-meta">@rayfix.last</span>
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">train</span><span class="hljs-params">(servers)</span>:</span>
+    <span class="hljs-keyword">import</span> time
+    time.sleep(<span class="hljs-number">1</span>)
+    data = RayContext.collect_from(servers)
+    <span class="hljs-comment">## &#x8FD9;&#x91CC;&#x5BF9;&#x6570;&#x636E;&#x8FDB;&#x884C;&#x6A21;&#x578B;&#x8BAD;&#x7EC3;</span>
+    model_train(data)
+    <span class="hljs-comment">## &#x4E0A;&#x4F20;&#x6A21;&#x578B;&#x5230;&#x6A21;&#x578B;&#x4ED3;&#x5E93;&#x4E4B;&#x7C7B;&#x7684;&#x8FDC;&#x7A0B;&#x5730;&#x5740;</span>
+    path = upload_model()
+    <span class="hljs-comment">## &#x8FD4;&#x56DE;&#x5730;&#x5740;</span>
+    <span class="hljs-keyword">return</span> path
+
+path = ray.get(train.remote(data_servers))
+context.build_result([{<span class="hljs-string">&quot;path&quot;</span>:path}])
+</code></pre>
+<p>&#x7406;&#x8BBA;&#x4E0A;&#x7528;&#x6237;&#x53EF;&#x4EE5;&#x901A;&#x8FC7;Ray API &#x5B9E;&#x73B0;&#x5206;&#x5E03;&#x5F0F;&#x8BAD;&#x7EC3;&#x3002;&#x4E4B;&#x540E;&#x53EF;&#x4EE5;&#x5728;MLSQL&#x811A;&#x672C;&#x91CC;&#x5F15;&#x7528;&#x8BE5;&#x811A;&#x672C;&#x8FDB;&#x884C;&#x6570;&#x636E;&#x5904;&#x7406;&#x3002;</p>
+<pre><code class="lang-sql"><span class="hljs-keyword">load</span> delta.<span class="hljs-string">`public.example_data`</span> <span class="hljs-keyword">as</span> cc;
+!ray on cc py.wow1 named mlsql_temp_table2;
+</code></pre>
 
                                 
                                 </section>
@@ -468,12 +491,12 @@
 
             
                 
-                <a href="README.md" class="navigation navigation-prev " aria-label="Previous page: MLSQL Engine安全加固">
+                <a href="etl.html" class="navigation navigation-prev " aria-label="Previous page: 数据处理">
                     <i class="fa fa-angle-left"></i>
                 </a>
                 
                 
-                <a href="custom_control.html" class="navigation navigation-next " aria-label="Next page: 自定义接口访问策略">
+                <a href="pyjava.html" class="navigation navigation-next " aria-label="Next page: PyJava API简介">
                     <i class="fa fa-angle-right"></i>
                 </a>
                 
@@ -484,7 +507,7 @@
     <script>
         var gitbook = gitbook || [];
         gitbook.push(function() {
-            gitbook.page.hasChanged({"page":{"title":"接口访问Token设置","level":"1.3.1","depth":2,"next":{"title":"自定义接口访问策略","level":"1.3.2","depth":2,"path":"security/custom_control.md","ref":"security/custom_control.md","articles":[]},"previous":{"title":"MLSQL Engine安全加固","level":"1.3","depth":1,"path":"security/README.md","ref":"security/README.md","articles":[{"title":"接口访问Token设置","level":"1.3.1","depth":2,"path":"security/token_control.md","ref":"security/token_control.md","articles":[]},{"title":"自定义接口访问策略","level":"1.3.2","depth":2,"path":"security/custom_control.md","ref":"security/custom_control.md","articles":[]}]},"dir":"ltr"},"config":{"plugins":["image-class","lightbox"],"styles":{"website":"styles/image.css"},"pluginsConfig":{"image-class":{},"lightbox":{"jquery":true,"sameUuid":false},"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"theme":"default","pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"variables":{},"title":"MLSQL Engine 文档","gitbook":"*","description":"MLSQL Engine 官方文档"},"file":{"path":"security/token_control.md","mtime":"2020-08-26T10:15:54.000Z","type":"markdown"},"gitbook":{"version":"3.2.3","time":"2020-08-28T08:46:32.575Z"},"basePath":"..","book":{"language":""}});
+            gitbook.page.hasChanged({"page":{"title":"模型训练","level":"1.6.3","depth":2,"next":{"title":"PyJava API简介","level":"1.6.4","depth":2,"path":"python/pyjava.md","ref":"python/pyjava.md","articles":[]},"previous":{"title":"数据处理","level":"1.6.2","depth":2,"path":"python/etl.md","ref":"python/etl.md","articles":[]},"dir":"ltr"},"config":{"plugins":["image-class","lightbox"],"styles":{"website":"styles/image.css"},"pluginsConfig":{"image-class":{},"lightbox":{"jquery":true,"sameUuid":false},"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"theme":"default","pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"variables":{},"title":"MLSQL Engine 文档","gitbook":"*","description":"MLSQL Engine 官方文档"},"file":{"path":"python/train.md","mtime":"2020-08-28T08:43:32.000Z","type":"markdown"},"gitbook":{"version":"3.2.3","time":"2020-08-28T08:46:32.575Z"},"basePath":"..","book":{"language":""}});
         });
     </script>
 </div>

@@ -119,6 +119,31 @@ spark.driver.host 需要配置成 $POD_IP,具体方式如下：
 
 同样可以使用K8s Volumn进行挂载，然后设置环境变量。也可以将相关配置放到SPARK_HOME/conf里之后再执行镜像构建命令。
 
+###  Spark 3.0版本如何兼容hive 1.2
+
+Spark3.0默认不兼容 hive 1.2 需要自己从Spark源码重新打包。譬如下面的编译参数就指定了hive-1.2的支持，然后再使用这个发型包构建镜像。
+
+```
+git checkout -b v3.0.0 v3.0.0
+./dev/make-distribution.sh \
+--name hadoop2.7 \
+--tgz \
+-Pyarn -Phadoop-2.7 -Phive-1.2 -Phive-thriftserver -Pkubernetes \
+-DskipTests
+```
+
+### LZO/Snappy的问题
+
+LZO的jar包直接丢SPARK_HOME/jars里即可。
+
+Snappy需要通过--conf java参数指定：
+
+```
+--conf spark.executor.extraJavaOptions=-Djava.library.path=/opt/.../lib/native/
+```
+
+请确保所有的镜像里都有配置的路径。
+
 
 ## 如何配置Service实现外部访问
 

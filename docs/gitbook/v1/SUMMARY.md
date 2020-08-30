@@ -20,4 +20,14 @@
     
 * [MLSQL Engine Rest接口详解](api/README.md) 
     * [/run/script](api/run-script.md)
+
+* [MLSQL Python支持](python/README.md) 
+    * [环境依赖](python/env.md) 
+    * [数据处理](python/etl.md)    
+    * [模型训练](python/train.md)  
+    * [PyJava API简介](python/pyjava.md)  
+
+* [插件](plugin/README.md)
+   * [网络安装插件](plugin/install.md)
+   * [本地安装插件](plugin/install.md)      
     
