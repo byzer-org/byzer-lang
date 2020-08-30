@@ -84,6 +84,12 @@ UDF的编写需要符合MLSQL的规范。我们推荐直接在Console里动态�
 |----|----|-----|
 | streaming.plugin.clzznames  |  支持多个class,用逗号分隔  |     |
 
+可通过如下地址下载插件(填写插件名和版本)：
+
+```
+http://store.mlsql.tech/run?action=downloadPlugin&pluginType=MLSQL_PLUGIN&pluginName=mlsql-excel-2.4&version=0.1.0-SNAPSHOT
+```
+
 ## session设置
 
 MLSQL支持用户级别Session,请求级别Session。每个Session相当于构建了一个沙盒，避免不同请求之间发生冲突。默认是用户级别Session,如果希望使用请求级别Session，需要在请求上带上 `sessionPerRequest` 参数。对此参看[Rest接口详解](http://docs.mlsql.tech/mlsql-engine/api/run-script.html)。
