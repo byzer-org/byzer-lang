@@ -4,7 +4,7 @@
     <head>
         <meta charset="UTF-8">
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
-        <title>Yarn部署 · MLSQL Engine 文档</title>
+        <title>结合Python保存Excel · MLSQL Engine 文档</title>
         <meta http-equiv="X-UA-Compatible" content="IE=edge" />
         <meta name="description" content="">
         <meta name="generator" content="GitBook 3.2.3">
@@ -53,10 +53,10 @@
     <link rel="shortcut icon" href="../gitbook/images/favicon.ico" type="image/x-icon">
 
     
-    <link rel="next" href="../security/README.md" />
+    <link rel="next" href="../plugin/" />
     
     
-    <link rel="prev" href="k8s_deploy.html" />
+    <link rel="prev" href="read_excel.html" />
     
 
     </head>
@@ -98,9 +98,9 @@
             
         </li>
     
-        <li class="chapter " data-level="1.2" data-path="./">
+        <li class="chapter " data-level="1.2" data-path="../howtouse/">
             
-                <a href="./">
+                <a href="../howtouse/">
             
                     
                     MLSQL Engine基本安装
@@ -112,9 +112,9 @@
             <ul class="articles">
                 
     
-        <li class="chapter " data-level="1.2.1" data-path="configuration.html">
+        <li class="chapter " data-level="1.2.1" data-path="../howtouse/configuration.html">
             
-                <a href="configuration.html">
+                <a href="../howtouse/configuration.html">
             
                     
                     启动参数详解
@@ -125,9 +125,9 @@
             
         </li>
     
-        <li class="chapter " data-level="1.2.2" data-path="deploy.html">
+        <li class="chapter " data-level="1.2.2" data-path="../howtouse/deploy.html">
             
-                <a href="deploy.html">
+                <a href="../howtouse/deploy.html">
             
                     
                     Local
@@ -138,9 +138,9 @@
             
         </li>
     
-        <li class="chapter " data-level="1.2.3" data-path="k8s_deploy.html">
+        <li class="chapter " data-level="1.2.3" data-path="../howtouse/k8s_deploy.html">
             
-                <a href="k8s_deploy.html">
+                <a href="../howtouse/k8s_deploy.html">
             
                     
                     K8s部署
@@ -151,9 +151,9 @@
             
         </li>
     
-        <li class="chapter active" data-level="1.2.4" data-path="yarn_deploy.html">
+        <li class="chapter " data-level="1.2.4" data-path="../howtouse/yarn_deploy.html">
             
-                <a href="yarn_deploy.html">
+                <a href="../howtouse/yarn_deploy.html">
             
                     
                     Yarn部署
@@ -317,9 +317,9 @@
             
         </li>
     
-        <li class="chapter " data-level="1.6" data-path="../python/">
+        <li class="chapter " data-level="1.6" data-path="./">
             
-                <a href="../python/">
+                <a href="./">
             
                     
                     MLSQL Python支持
@@ -331,9 +331,9 @@
             <ul class="articles">
                 
     
-        <li class="chapter " data-level="1.6.1" data-path="../python/env.html">
+        <li class="chapter " data-level="1.6.1" data-path="env.html">
             
-                <a href="../python/env.html">
+                <a href="env.html">
             
                     
                     环境依赖
@@ -344,9 +344,9 @@
             
         </li>
     
-        <li class="chapter " data-level="1.6.2" data-path="../python/etl.html">
+        <li class="chapter " data-level="1.6.2" data-path="etl.html">
             
-                <a href="../python/etl.html">
+                <a href="etl.html">
             
                     
                     数据处理
@@ -357,9 +357,9 @@
             
         </li>
     
-        <li class="chapter " data-level="1.6.3" data-path="../python/train.html">
+        <li class="chapter " data-level="1.6.3" data-path="train.html">
             
-                <a href="../python/train.html">
+                <a href="train.html">
             
                     
                     模型训练
@@ -370,9 +370,9 @@
             
         </li>
     
-        <li class="chapter " data-level="1.6.4" data-path="../python/pyjava.html">
+        <li class="chapter " data-level="1.6.4" data-path="pyjava.html">
             
-                <a href="../python/pyjava.html">
+                <a href="pyjava.html">
             
                     
                     PyJava API简介
@@ -383,9 +383,9 @@
             
         </li>
     
-        <li class="chapter " data-level="1.6.5" data-path="../python/read_excel.html">
+        <li class="chapter " data-level="1.6.5" data-path="read_excel.html">
             
-                <a href="../python/read_excel.html">
+                <a href="read_excel.html">
             
                     
                     结合Python读取Excel
@@ -396,9 +396,9 @@
             
         </li>
     
-        <li class="chapter " data-level="1.6.6" data-path="../python/write_excel.html">
+        <li class="chapter active" data-level="1.6.6" data-path="write_excel.html">
             
-                <a href="../python/write_excel.html">
+                <a href="write_excel.html">
             
                     
                     结合Python保存Excel
@@ -489,7 +489,7 @@
     <!-- Title -->
     <h1>
         <i class="fa fa-circle-o-notch fa-spin"></i>
-        <a href=".." >Yarn部署</a>
+        <a href=".." >结合Python保存Excel</a>
     </h1>
 </div>
 
@@ -504,34 +504,100 @@
     
                                 <section class="normal markdown-section">
                                 
-                                <h1 id="yarn&#x90E8;&#x7F72;">Yarn&#x90E8;&#x7F72;</h1>
-<p>Yarn&#x90E8;&#x7F72;&#x975E;&#x5E38;&#x7B80;&#x5355;&#x3002;&#x6211;&#x4EEC;&#x63A8;&#x8350;&#x4F7F;&#x7528;yarn-client&#x6A21;&#x5F0F;&#x90E8;&#x7F72;&#x3002;&#x6839;&#x636E;<a href="http://docs.mlsql.tech/mlsql-engine/howtouse/deploy.html" target="_blank">Local&#x90E8;&#x7F72;</a>&#x7684;&#x9700;&#x6C42;&#xFF0C;&#x4E0B;&#x8F7D;Spark/Engine&#xFF0C;&#x7136;&#x540E;&#x6309;&#x5982;&#x4E0B;&#x6B65;&#x9AA4;&#x5373;&#x53EF;&#x542F;&#x52A8;&#x3002;</p>
-<ol>
-<li>&#x5C06;hdfs/yarn/hive&#x76F8;&#x5173;xml&#x914D;&#x7F6E;&#x6587;&#x4EF6;&#x653E;&#x5230; SPARK_HOME/conf&#x76EE;&#x5F55;&#x4E0B;&#x3002;</li>
-<li>&#x4FEE;&#x6539;Engine&#x7684;<code>start-local.sh</code></li>
-</ol>
-<h2 id="&#x4FEE;&#x6539;engine&#x7684;start-localsh">&#x4FEE;&#x6539;Engine&#x7684;<code>start-local.sh</code></h2>
-<p>&#x627E;&#x5230;&#x6587;&#x4EF6;&#x91CC;&#x5982;&#x4E0B;&#x4EE3;&#x7801;&#x7247;&#x6BB5;&#xFF1A;</p>
-<pre><code class="lang-shell">$SPARK_HOME/bin/spark-submit --class streaming.core.StreamingApp \
-        --driver-memory ${DRIVER_MEMORY} \
-        --jars ${JARS} \
-        --master local[*] \
-        --name mlsql \
-        --conf &quot;spark.sql.hive.thriftServer.singleSession=true&quot; \
+                                <h1 id="&#x7ED3;&#x5408;python&#x4FDD;&#x5B58;excel">&#x7ED3;&#x5408;Python&#x4FDD;&#x5B58;Excel</h1>
+<p>MLSQL 2.0.1-SNAPSHOT/2.0.1 &#x4EE5;&#x53CA;&#x4EE5;&#x4E0A;&#x7248;&#x672C;&#x53EF;&#x7528;</p>
+<blockquote>
+<p>MLSQL &#x63D0;&#x4F9B;&#x4E86; <a href="https://github.com/allwefantasy/mlsql-plugins/tree/master/mlsql-excel" target="_blank">excel&#x63D2;&#x4EF6;</a>&#xFF0C;&#x53EF;&#x4EE5;&#x8BA9;&#x7528;&#x6237;&#x8BFB;&#x5199;Excel&#x3002;&#x66F4;&#x591A;&#x8BE6;&#x60C5;&#x53C2;&#x8003;<a href="http://docs.mlsql.tech/mlsql-engine/plugin/" target="_blank">&#x63D2;&#x4EF6;</a></p>
+</blockquote>
+<h2 id="&#x52A0;&#x8F7D;&#x6570;&#x636E;">&#x52A0;&#x8F7D;&#x6570;&#x636E;</h2>
+<p>&#x9996;&#x5148;&#x52A0;&#x8F7D;&#x6570;&#x636E;</p>
+<pre><code class="lang-sql"><span class="hljs-keyword">load</span> delta.<span class="hljs-string">`public.simpleData`</span> <span class="hljs-keyword">as</span> simpleData;
 </code></pre>
-<p>&#x5C06;--master&#x7684;local[*] &#x6362;&#x6210; yarn-client, &#x7136;&#x540E;&#x6DFB;&#x52A0;excuctor&#x914D;&#x7F6E;,&#x6700;&#x540E;&#x5927;&#x6982;&#x5982;&#x4E0B;&#x9762;&#x7684;&#x6837;&#x5B50;&#xFF1A;</p>
-<pre><code class="lang-shell">$SPARK_HOME/bin/spark-submit --class streaming.core.StreamingApp \
-        --driver-memory ${DRIVER_MEMORY} \
-        --jars ${JARS} \
-        --master yarn \
-        --deploy-mode client \
-        --executor-memory 2g \
-        --executor-cores 1 \
-        --num-executors 1 \
-        --name mlsql \
-        --conf &quot;spark.sql.hive.thriftServer.singleSession=true&quot; \
+<p>&#x5982;&#x4E0B;&#xFF1A;</p>
+<p></p><div class="image-wrapper python-write_excel"><a href="http://docs.mlsql.tech/upload_images/4b50b955-3efe-4ade-beee-dbbac8cf4c3b.png" data-lightbox="4dc6b608-c265-4e5d-95e1-667be49808c1" data-title="" target="_blank"><img src="http://docs.mlsql.tech/upload_images/4b50b955-3efe-4ade-beee-dbbac8cf4c3b.png" alt=""></a></div><p></p>
+<h2 id="ray&#x914D;&#x7F6E;">Ray&#x914D;&#x7F6E;</h2>
+<pre><code>-- python&#x5904;&#x7406;&#x5B8C;&#x540E;&#x7684;&#x6570;&#x636E;&#x7684;schema
+!python conf &quot;schema=st(field(file,binary))&quot;;
+-- Python&#x8DD1;&#x5728;driver&#x7AEF;&#xFF0C;
+!python conf &quot;runIn=driver&quot;;
+-- &#x4E0D;&#x9700;&#x8981;&#x4ECE;Ray&#x96C6;&#x7FA4;&#x83B7;&#x53D6;&#x6570;&#x636E;&#xFF0C;&#x9700;&#x8981;&#x5C06;dataMode&#x8BBE;&#x7F6E;&#x4E3A;model.
+!python conf &quot;dataMode=model&quot;;
+</code></pre><h2 id="&#x4F7F;&#x7528;python&#x4EE3;&#x7801;&#x5904;&#x7406;&#x6570;&#x636E;&#xFF0C;&#x751F;&#x6210;excel">&#x4F7F;&#x7528;Python&#x4EE3;&#x7801;&#x5904;&#x7406;&#x6570;&#x636E;&#xFF0C;&#x751F;&#x6210;Excel</h2>
+<pre><code class="lang-python">!ray on simpleData <span class="hljs-string">&apos;&apos;&apos;
+
+import io
+import ray
+from pyjava.api.mlsql import RayContext
+import pandas as pd
+
+ray_context = RayContext.connect(globals(),None)
+
+rows = [item for item in RayContext.collect_from(ray_context.data_servers())]
+
+df = pd.DataFrame(data=rows)
+output = io.BytesIO()
+writer = pd.ExcelWriter(output, engine=&apos;xlsxwriter&apos;)
+df.to_excel(writer)
+writer.save()
+xlsx_data = output.getvalue()
+context.build_result([{&quot;file&quot;:xlsx_data}])
+
+&apos;&apos;&apos;</span> named excel_data;
 </code></pre>
-<p>&#x7136;&#x540E;&#x6307;&#x5B9A;SPARK_HOME&#x8FD0;&#x884C;&#x5373;&#x53EF;&#x3002;</p>
+<p>&#x7B80;&#x5355;&#x89E3;&#x91CA;&#x4E0B;&#x3002;</p>
+<pre><code class="lang-python">ray_context = RayContext.connect(globals(),<span class="hljs-keyword">None</span>)
+</code></pre>
+<p>&#x83B7;&#x53D6;ray_context,&#x7B2C;&#x4E8C;&#x4E2A;&#x53C2;&#x6570;&#x4E3A;None&#x8868;&#x793A;&#x4E0D;&#x9002;&#x7528;Ray&#x96C6;&#x7FA4;&#x3002;</p>
+<pre><code class="lang-python">rows = [item <span class="hljs-keyword">for</span> item <span class="hljs-keyword">in</span> RayContext.collect_from(ray_context.data_servers())]
+
+df = pd.DataFrame(data=rows)
+</code></pre>
+<p>&#x83B7;&#x53D6;&#x8868;&#x6570;&#x636E;&#xFF0C;&#x5E76;&#x4E14;&#x5C06;&#x5176;&#x8F6C;&#x5316;&#x4E3A;Pandas DataFrame.</p>
+<p>&#x5269;&#x4E0B;&#x7684;&#x4EE3;&#x7801;&#x662F;&#x5177;&#x4F53;&#x5C06;&#x6570;&#x636E;&#x8F6C;&#x5316;&#x4E3A;excel&#x7684;&#x4EE3;&#x7801;&#xFF0C;&#x5F97;&#x5230;&#x4E00;&#x4E2A;&#x4E8C;&#x8FDB;&#x5236;&#x6570;&#x7EC4;&#x3002;&#x4F7F;&#x7528;</p>
+<pre><code class="lang-python">context.build_result([{<span class="hljs-string">&quot;file&quot;</span>:xlsx_data}])
+</code></pre>
+<p>&#x8F93;&#x51FA;&#x5230; excel_data &#x8868;&#x4E2D;&#x3002;</p>
+<p>Pandas&#x5BF9;Excel&#x66F4;&#x591A;&#x64CD;&#x4F5C;&#x53C2;&#x8003;&#x8FD9;&#x91CC;<a href="https://xlsxwriter.readthedocs.io/working_with_pandas.html" target="_blank">working_with_pandas</a></p>
+<h2 id="&#x4FDD;&#x5B58;&#x6587;&#x4EF6;">&#x4FDD;&#x5B58;&#x6587;&#x4EF6;</h2>
+<p>&#x6700;&#x540E;&#xFF0C;&#x6211;&#x4EEC;&#x4F7F;&#x7528;<code>!saveFile</code> &#x5C06;excel&#x4FDD;&#x5B58;&#x8D77;&#x6765;.</p>
+<pre><code class="lang-shell">!saveFile _ -i excel_data -o /tmp/wow.xlsx;
+</code></pre>
+<p>&#x7B2C;&#x4E00;&#x4E2A;&#x53C2;&#x6570;  <code>_</code> &#x8868;&#x793A;&#x8FD9;&#x91CC;&#x4F1A;&#x4F7F;&#x7528;&#x547D;&#x4EE4;&#x884C;&#x6A21;&#x5F0F;&#x89E3;&#x6790;&#x3002; <code>-i</code> &#x8868;&#x793A;&#x8F93;&#x5165;&#x7684;&#x8868;&#xFF0C; <code>-o</code> &#x8868;&#x793A;&#x8F93;&#x51FA;&#x8DEF;&#x5F84;&#x3002;</p>
+<h2 id="&#x9644;&#x5F55;">&#x9644;&#x5F55;</h2>
+<p>&#x5B8C;&#x6574;&#x4EE3;&#x7801;&#x5982;&#x4E0B;&#xFF1A;</p>
+<pre><code class="lang-sql">load delta.`public.simpleData` as simpleData;
+
+-- !pyInclude &quot;excel.save.py&quot; named save_excel;
+
+-- ray &#x914D;&#x7F6E;
+!python env &quot;PYTHON_ENV=source activate dev&quot;;
+!python conf &quot;schema=st(field(file,binary))&quot;;
+!python conf &quot;runIn=driver&quot;;
+!python conf &quot;dataMode=model&quot;;
+
+!ray on simpleData &apos;&apos;&apos;
+
+import io
+import ray
+from pyjava.api.mlsql import RayContext
+import pandas as pd
+
+ray_context = RayContext.connect(globals(),None)
+
+rows = [item for item in RayContext.collect_from(ray_context.data_servers())]
+
+df = pd.DataFrame(data=rows)
+output = io.BytesIO()
+writer = pd.ExcelWriter(output, engine=&apos;xlsxwriter&apos;)
+df.to_excel(writer)
+writer.save()
+xlsx_data = output.getvalue()
+context.build_result([{&quot;file&quot;:xlsx_data}])
+
+&apos;&apos;&apos; named excel_data;
+
+!saveFile _ -i excel_data -o /tmp/wow.xlsx;
+</code></pre>
 
                                 
                                 </section>
@@ -559,12 +625,12 @@
 
             
                 
-                <a href="k8s_deploy.html" class="navigation navigation-prev " aria-label="Previous page: K8s部署">
+                <a href="read_excel.html" class="navigation navigation-prev " aria-label="Previous page: 结合Python读取Excel">
                     <i class="fa fa-angle-left"></i>
                 </a>
                 
                 
-                <a href="../security/README.md" class="navigation navigation-next " aria-label="Next page: MLSQL Engine安全加固">
+                <a href="../plugin/" class="navigation navigation-next " aria-label="Next page: 插件">
                     <i class="fa fa-angle-right"></i>
                 </a>
                 
@@ -575,7 +641,7 @@
     <script>
         var gitbook = gitbook || [];
         gitbook.push(function() {
-            gitbook.page.hasChanged({"page":{"title":"Yarn部署","level":"1.2.4","depth":2,"next":{"title":"MLSQL Engine安全加固","level":"1.3","depth":1,"path":"security/README.md","ref":"security/README.md","articles":[{"title":"接口访问Token设置","level":"1.3.1","depth":2,"path":"security/token_control.md","ref":"security/token_control.md","articles":[]},{"title":"自定义接口访问策略","level":"1.3.2","depth":2,"path":"security/custom_control.md","ref":"security/custom_control.md","articles":[]}]},"previous":{"title":"K8s部署","level":"1.2.3","depth":2,"path":"howtouse/k8s_deploy.md","ref":"howtouse/k8s_deploy.md","articles":[]},"dir":"ltr"},"config":{"plugins":["image-class","lightbox"],"styles":{"website":"styles/image.css"},"pluginsConfig":{"image-class":{},"lightbox":{"jquery":true,"sameUuid":false},"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"theme":"default","pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"variables":{},"title":"MLSQL Engine 文档","gitbook":"*","description":"MLSQL Engine 官方文档"},"file":{"path":"howtouse/yarn_deploy.md","mtime":"2020-08-26T10:15:54.000Z","type":"markdown"},"gitbook":{"version":"3.2.3","time":"2020-08-31T10:26:05.526Z"},"basePath":"..","book":{"language":""}});
+            gitbook.page.hasChanged({"page":{"title":"结合Python保存Excel","level":"1.6.6","depth":2,"next":{"title":"插件","level":"1.7","depth":1,"path":"plugin/README.md","ref":"plugin/README.md","articles":[{"title":"网络安装插件","level":"1.7.1","depth":2,"path":"plugin/online_install.md","ref":"plugin/online_install.md","articles":[]},{"title":"离线安装插件","level":"1.7.2","depth":2,"path":"plugin/offline_install.md","ref":"plugin/offline_install.md","articles":[]}]},"previous":{"title":"结合Python读取Excel","level":"1.6.5","depth":2,"path":"python/read_excel.md","ref":"python/read_excel.md","articles":[]},"dir":"ltr"},"config":{"plugins":["image-class","lightbox"],"styles":{"website":"styles/image.css"},"pluginsConfig":{"image-class":{},"lightbox":{"jquery":true,"sameUuid":false},"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"theme":"default","pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"variables":{},"title":"MLSQL Engine 文档","gitbook":"*","description":"MLSQL Engine 官方文档"},"file":{"path":"python/write_excel.md","mtime":"2020-08-31T10:26:02.000Z","type":"markdown"},"gitbook":{"version":"3.2.3","time":"2020-08-31T10:26:05.526Z"},"basePath":"..","book":{"language":""}});
         });
     </script>
 </div>

@@ -25,7 +25,9 @@
     * [环境依赖](python/env.md) 
     * [数据处理](python/etl.md)    
     * [模型训练](python/train.md)  
-    * [PyJava API简介](python/pyjava.md)  
+    * [PyJava API简介](python/pyjava.md) 
+    * [结合Python读取Excel](python/read_excel.md) 
+    * [结合Python保存Excel](python/write_excel.md)  
 
 * [插件](plugin/README.md)
    * [网络安装插件](plugin/online_install.md)
