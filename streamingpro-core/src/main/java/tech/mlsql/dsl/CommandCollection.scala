@@ -24,7 +24,10 @@ object CommandCollection {
 
   def fill(context: ScriptSQLExecListener): Unit = {
     commandMapping.asScala.foreach { k =>
-      context.addEnv(k._1, s"""run command as ${k._2}.`` where parameters='''{:all}'''""")
+      val value = k._2.toLowerCase
+      if (value.contains("run") && value.contains("where") && value.contains("as")) {
+        context.addEnv(k._1, k._2)
+      } else context.addEnv(k._1, s"""run command as ${k._2}.`` where parameters='''{:all}'''""")
     }
     context.addEnv("desc", """run command as ShowTableExt.`` where parameters='''{:all}''' """)
     context.addEnv("kill", """run command as Kill.`{}`""")

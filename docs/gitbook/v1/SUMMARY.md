@@ -28,6 +28,6 @@
     * [PyJava API简介](python/pyjava.md)  
 
 * [插件](plugin/README.md)
-   * [网络安装插件](plugin/install.md)
-   * [本地安装插件](plugin/install.md)      
+   * [网络安装插件](plugin/online_install.md)
+   * [离线安装插件](plugin/offline_install.md)      
     

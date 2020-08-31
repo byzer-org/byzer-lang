@@ -388,6 +388,51 @@
             
         </li>
     
+        <li class="chapter " data-level="1.7" data-path="../plugin/">
+            
+                <a href="../plugin/">
+            
+                    
+                    插件
+            
+                </a>
+            
+
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.7.1" data-path="../plugin/online_install.html">
+            
+                <a href="../plugin/online_install.html">
+            
+                    
+                    网络安装插件
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.7.2" data-path="../plugin/offline_install.html">
+            
+                <a href="../plugin/offline_install.html">
+            
+                    
+                    离线安装插件
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
 
     
 
@@ -603,7 +648,26 @@ UDF&#x7684;&#x7F16;&#x5199;&#x9700;&#x8981;&#x7B26;&#x5408;MLSQL&#x7684;&#x89C4;
 </tr>
 </tbody>
 </table>
-<h2 id="session&#x8BBE;&#x7F6E;">session&#x8BBE;&#x7F6E;</h2>
+<h2 id="&#x79BB;&#x7EBF;&#x63D2;&#x4EF6;&#x5B89;&#x88C5;">&#x79BB;&#x7EBF;&#x63D2;&#x4EF6;&#x5B89;&#x88C5;</h2>
+<p>&#x786E;&#x4FDD;&#x63D2;&#x4EF6;&#x7684;jar&#x5305;&#x90FD;&#x662F;&#x7528;<code>--jars</code>&#x5E26;&#x4E0A;&#x3002;&#x5E76;&#x4E14;&#x76EE;&#x524D;&#x53EA;&#x652F;&#x6301;app&#x63D2;&#x4EF6;&#x3002;</p>
+<table>
+<thead>
+<tr>
+<th>&#x53C2;&#x6570;</th>
+<th>&#x8BF4;&#x660E;</th>
+<th>&#x793A;&#x4F8B;&#x503C;</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>streaming.plugin.clzznames</td>
+<td>&#x652F;&#x6301;&#x591A;&#x4E2A;class,&#x7528;&#x9017;&#x53F7;&#x5206;&#x9694;</td>
+</tr>
+</tbody>
+</table>
+<p>&#x53EF;&#x901A;&#x8FC7;&#x5982;&#x4E0B;&#x5730;&#x5740;&#x4E0B;&#x8F7D;&#x63D2;&#x4EF6;(&#x586B;&#x5199;&#x63D2;&#x4EF6;&#x540D;&#x548C;&#x7248;&#x672C;)&#xFF1A;</p>
+<pre><code>http://store.mlsql.tech/run?action=downloadPlugin&amp;pluginType=MLSQL_PLUGIN&amp;pluginName=mlsql-excel-2.4&amp;version=0.1.0-SNAPSHOT
+</code></pre><h2 id="session&#x8BBE;&#x7F6E;">session&#x8BBE;&#x7F6E;</h2>
 <p>MLSQL&#x652F;&#x6301;&#x7528;&#x6237;&#x7EA7;&#x522B;Session,&#x8BF7;&#x6C42;&#x7EA7;&#x522B;Session&#x3002;&#x6BCF;&#x4E2A;Session&#x76F8;&#x5F53;&#x4E8E;&#x6784;&#x5EFA;&#x4E86;&#x4E00;&#x4E2A;&#x6C99;&#x76D2;&#xFF0C;&#x907F;&#x514D;&#x4E0D;&#x540C;&#x8BF7;&#x6C42;&#x4E4B;&#x95F4;&#x53D1;&#x751F;&#x51B2;&#x7A81;&#x3002;&#x9ED8;&#x8BA4;&#x662F;&#x7528;&#x6237;&#x7EA7;&#x522B;Session,&#x5982;&#x679C;&#x5E0C;&#x671B;&#x4F7F;&#x7528;&#x8BF7;&#x6C42;&#x7EA7;&#x522B;Session&#xFF0C;&#x9700;&#x8981;&#x5728;&#x8BF7;&#x6C42;&#x4E0A;&#x5E26;&#x4E0A; <code>sessionPerRequest</code> &#x53C2;&#x6570;&#x3002;&#x5BF9;&#x6B64;&#x53C2;&#x770B;<a href="http://docs.mlsql.tech/mlsql-engine/api/run-script.html" target="_blank">Rest&#x63A5;&#x53E3;&#x8BE6;&#x89E3;</a>&#x3002;</p>
 <table>
 <thead>
@@ -718,7 +782,7 @@ UDF&#x7684;&#x7F16;&#x5199;&#x9700;&#x8981;&#x7B26;&#x5408;MLSQL&#x7684;&#x89C4;
     <script>
         var gitbook = gitbook || [];
         gitbook.push(function() {
-            gitbook.page.hasChanged({"page":{"title":"启动参数详解","level":"1.2.1","depth":2,"next":{"title":"Local","level":"1.2.2","depth":2,"path":"howtouse/deploy.md","ref":"howtouse/deploy.md","articles":[]},"previous":{"title":"MLSQL Engine基本安装","level":"1.2","depth":1,"path":"howtouse/README.md","ref":"howtouse/README.md","articles":[{"title":"启动参数详解","level":"1.2.1","depth":2,"path":"howtouse/configuration.md","ref":"howtouse/configuration.md","articles":[]},{"title":"Local","level":"1.2.2","depth":2,"path":"howtouse/deploy.md","ref":"howtouse/deploy.md","articles":[]},{"title":"K8s部署","level":"1.2.3","depth":2,"path":"howtouse/k8s_deploy.md","ref":"howtouse/k8s_deploy.md","articles":[]},{"title":"Yarn部署","level":"1.2.4","depth":2,"path":"howtouse/yarn_deploy.md","ref":"howtouse/yarn_deploy.md","articles":[]}]},"dir":"ltr"},"config":{"plugins":["image-class","lightbox"],"styles":{"website":"styles/image.css"},"pluginsConfig":{"image-class":{},"lightbox":{"jquery":true,"sameUuid":false},"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"theme":"default","pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"variables":{},"title":"MLSQL Engine 文档","gitbook":"*","description":"MLSQL Engine 官方文档"},"file":{"path":"howtouse/configuration.md","mtime":"2020-08-14T03:36:12.000Z","type":"markdown"},"gitbook":{"version":"3.2.3","time":"2020-08-28T08:46:32.575Z"},"basePath":"..","book":{"language":""}});
+            gitbook.page.hasChanged({"page":{"title":"启动参数详解","level":"1.2.1","depth":2,"next":{"title":"Local","level":"1.2.2","depth":2,"path":"howtouse/deploy.md","ref":"howtouse/deploy.md","articles":[]},"previous":{"title":"MLSQL Engine基本安装","level":"1.2","depth":1,"path":"howtouse/README.md","ref":"howtouse/README.md","articles":[{"title":"启动参数详解","level":"1.2.1","depth":2,"path":"howtouse/configuration.md","ref":"howtouse/configuration.md","articles":[]},{"title":"Local","level":"1.2.2","depth":2,"path":"howtouse/deploy.md","ref":"howtouse/deploy.md","articles":[]},{"title":"K8s部署","level":"1.2.3","depth":2,"path":"howtouse/k8s_deploy.md","ref":"howtouse/k8s_deploy.md","articles":[]},{"title":"Yarn部署","level":"1.2.4","depth":2,"path":"howtouse/yarn_deploy.md","ref":"howtouse/yarn_deploy.md","articles":[]}]},"dir":"ltr"},"config":{"plugins":["image-class","lightbox"],"styles":{"website":"styles/image.css"},"pluginsConfig":{"image-class":{},"lightbox":{"jquery":true,"sameUuid":false},"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"theme":"default","pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"variables":{},"title":"MLSQL Engine 文档","gitbook":"*","description":"MLSQL Engine 官方文档"},"file":{"path":"howtouse/configuration.md","mtime":"2020-08-30T10:44:10.000Z","type":"markdown"},"gitbook":{"version":"3.2.3","time":"2020-08-31T03:31:56.714Z"},"basePath":"..","book":{"language":""}});
         });
     </script>
 </div>
