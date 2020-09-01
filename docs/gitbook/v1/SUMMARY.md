@@ -27,9 +27,11 @@
     * [模型训练](python/train.md)  
     * [PyJava API简介](python/pyjava.md) 
     * [结合Python读取Excel](python/read_excel.md) 
-    * [结合Python保存Excel](python/write_excel.md)  
+    * [结合Python保存Excel](python/write_excel.md) 
+    * [K8s下的Python资源限制](python/resource.md)  
 
 * [插件](plugin/README.md)
    * [网络安装插件](plugin/online_install.md)
-   * [离线安装插件](plugin/offline_install.md)      
+   * [离线安装插件](plugin/offline_install.md)  
+      
     

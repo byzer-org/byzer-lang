@@ -10,14 +10,16 @@ import org.apache.spark.sql.types.StructType
  */
 object WowRowEncoder {
   def toRow(schema: StructType) = {
+    val rab = RowEncoder.apply(schema).resolveAndBind()
     (irow: InternalRow) => {
-      RowEncoder.apply(schema).resolveAndBind().fromRow(irow)
+      rab.fromRow(irow)
     }
   }
 
   def fromRow(schema: StructType) = {
+    val rab = RowEncoder.apply(schema).resolveAndBind()
     (row: Row) => {
-      RowEncoder.apply(schema).resolveAndBind().toRow(row)
+      rab.toRow(row)
     }
   }
 }
