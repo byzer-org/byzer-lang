@@ -16,6 +16,12 @@ class ETApp  extends tech.mlsql.app.App with VersionCompatibility {
       """
         |run ${i} as SaveBinaryAsFile.`` where filePath="${o}"
         |""".stripMargin))
+
+    ETRegister.register("TableRepartition", classOf[TableRepartition].getName)
+    CommandCollection.refreshCommandMapping(Map("tableRepartition" ->
+      """
+        |run ${i} as TableRepartition.`` where partitionNum=${num} as ${o}
+        |""".stripMargin))
   }
 
 
