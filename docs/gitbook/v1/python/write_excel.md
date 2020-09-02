@@ -9,7 +9,9 @@ MLSQL 2.0.1-SNAPSHOT/2.0.1 以及以上版本可用
 首先加载数据
 
 ```sql
-load delta.`public.simpleData` as simpleData;
+load delta.`public.simpleData` as simpleDataTemp;
+-- simpleDataTemp转化成只有一个分片数据的新表simpleData; 
+!tableRepartition _ -i simpleDataTemp -num 1 -o simpleData;
 ```
 
 如下：

@@ -422,6 +422,19 @@
             
         </li>
     
+        <li class="chapter " data-level="1.6.8" data-path="datamode.html">
+            
+                <a href="datamode.html">
+            
+                    
+                    dataMode 详解
+            
+                </a>
+            
+
+            
+        </li>
+    
 
             </ul>
             
@@ -545,7 +558,7 @@
 <p>&#x6700;&#x7B80;&#x5355;&#x7684;&#x6A21;&#x5F0F;&#xFF1A;</p>
 <pre><code class="lang-sql">RayContext.collect_from(ray_context.data_servers())
 </code></pre>
-<p>&#x8BE5;&#x4EE3;&#x7801;&#x4F1A;&#x904D;&#x5386;&#x6BCF;&#x4E2A;&#x5730;&#x5740;&#xFF0C;&#x7136;&#x540E;&#x8FD4;&#x56DE;&#x4E00;&#x4E2A;generator. </p>
+<p>&#x8BE5;&#x4EE3;&#x7801;&#x4F1A;&#x904D;&#x5386;&#x6BCF;&#x4E2A;&#x5730;&#x5740;&#xFF0C;&#x7136;&#x540E;&#x8FD4;&#x56DE;&#x4E00;&#x4E2A;generator.  </p>
 <p>&#x5982;&#x679C;&#x5DF2;&#x7ECF;&#x8FDE;&#x63A5;&#x4E86;Ray,&#x90A3;&#x4E48;&#x53EF;&#x4EE5;&#x76F4;&#x63A5;&#x4F7F;&#x7528;&#x9AD8;&#x9636;API <code>ray_context.foreach</code></p>
 <pre><code class="lang-python"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">echo</span><span class="hljs-params">(row)</span>:</span>
     row1 = {}
@@ -556,7 +569,64 @@
 
 buffer = ray_context.foreach(echo)
 </code></pre>
-<p>foreach&#x63A5;&#x53D7;&#x4E00;&#x4E2A;&#x56DE;&#x8C03;&#x51FD;&#x6570;&#xFF0C;&#x51FD;&#x6570;&#x7684;&#x5165;&#x53C2;&#x662F;&#x4E00;&#x6761;&#x8BB0;&#x5F55;&#x3002;&#x7528;&#x6237;&#x65E0;&#x9700;&#x663E;&#x793A;&#x7684;&#x7533;&#x660E;&#x5982;&#x4F55;&#x83B7;&#x53D6;&#x6570;&#x636E;&#xFF0C;&#x53EA;&#x8981;&#x5B9E;&#x73B0;&#x56DE;&#x8C03;&#x51FD;&#x6570;&#x5373;&#x53EF;&#x3002;&#x6211;&#x4EEC;&#x4E5F;&#x53EF;&#x4EE5;&#x83B7;&#x5F97;&#x4E00;&#x6279;&#x6570;&#x636E;&#xFF0C;&#x53EF;&#x4EE5;&#x4F7F;&#x7528;<code>ray_context.foreach.map_iter</code>&#x3002; &#x7CFB;&#x7EDF;&#x4F1A;&#x81EA;&#x52A8;&#x8C03;&#x5EA6;&#x591A;&#x4E2A;&#x4EFB;&#x52A1;&#x5230;Ray&#x4E0A;&#x5E76;&#x884C;&#x8FD0;&#x884C;&#x3002;</p>
+<p>foreach&#x63A5;&#x53D7;&#x4E00;&#x4E2A;&#x56DE;&#x8C03;&#x51FD;&#x6570;&#xFF0C;&#x51FD;&#x6570;&#x7684;&#x5165;&#x53C2;&#x662F;&#x4E00;&#x6761;&#x8BB0;&#x5F55;&#x3002;&#x7528;&#x6237;&#x65E0;&#x9700;&#x663E;&#x793A;&#x7684;&#x7533;&#x660E;&#x5982;&#x4F55;&#x83B7;&#x53D6;&#x6570;&#x636E;&#xFF0C;&#x53EA;&#x8981;&#x5B9E;&#x73B0;&#x56DE;&#x8C03;&#x51FD;&#x6570;&#x5373;&#x53EF;&#x3002;&#x6211;&#x4EEC;&#x4E5F;&#x53EF;&#x4EE5;&#x83B7;&#x5F97;&#x4E00;&#x6279;&#x6570;&#x636E;&#xFF0C;&#x53EF;&#x4EE5;&#x4F7F;&#x7528;<code>ray_context.map_iter</code>&#x3002; &#x7CFB;&#x7EDF;&#x4F1A;&#x81EA;&#x52A8;&#x8C03;&#x5EA6;&#x591A;&#x4E2A;&#x4EFB;&#x52A1;&#x5230;Ray&#x4E0A;&#x5E76;&#x884C;&#x8FD0;&#x884C;&#x3002; map_iter&#x4F1A;&#x6839;&#x636E;&#x8868;&#x7684;&#x5206;&#x7247;&#x5927;&#x5C0F;&#x542F;&#x52A8;&#x76F8;&#x5E94;&#x4E2A;&#x6570;&#x7684;task,&#x5982;&#x679C;&#x4F60;&#x5E0C;&#x671B;&#x901A;&#x8FC7;map_iter&#x62FF;&#x5230;&#x6240;&#x6709;&#x7684;&#x6570;&#x636E;&#xFF0C;&#x800C;&#x975E;&#x90E8;&#x5206;&#x6570;&#x636E;&#xFF0C;&#x53EF;&#x4EE5;&#x5148;&#x5BF9;&#x8868;&#x505A;&#x91CD;&#x65B0;&#x5206;&#x533A;&#xFF1A;</p>
+<pre><code>-- simpleDataTemp&#x8F6C;&#x5316;&#x6210;&#x53EA;&#x6709;&#x4E00;&#x4E2A;&#x5206;&#x7247;&#x6570;&#x636E;&#x7684;&#x65B0;&#x8868;simpleData; 
+!tableRepartition _ -i simpleDataTemp -num 1 -o simpleData;
+</code></pre><p>&#x4E00;&#x4E2A;&#x4F7F;&#x7528;map_iter&#x7684;&#x4F8B;&#x5B50;&#xFF1A;</p>
+<pre><code class="lang-python">
+
+!pyInclude ray_data.foreach.py named wow1;
+
+-- load delta.`public.consumer_complains` <span class="hljs-keyword">as</span> cc;
+-- select * <span class="hljs-keyword">from</span> cc 
+-- union all select * <span class="hljs-keyword">from</span> cc 
+-- union all select * <span class="hljs-keyword">from</span> cc 
+-- union all select * <span class="hljs-keyword">from</span> cc 
+-- <span class="hljs-keyword">as</span> newcc;
+
+-- save overwrite newcc <span class="hljs-keyword">as</span> parquet.`/tmp/newcc`  where fileNum=<span class="hljs-string">&quot;1&quot;</span>;
+load parquet.`/tmp/newcc` <span class="hljs-keyword">as</span> newcc_temp;
+!tableRepartition _ -i newcc_temp -num <span class="hljs-number">1</span> -o newcc;
+-- select count(*) <span class="hljs-keyword">from</span> newcc <span class="hljs-keyword">as</span> output;
+
+-- ray &#x914D;&#x7F6E;
+!python env <span class="hljs-string">&quot;PYTHON_ENV=source activate dev&quot;</span>;
+!python conf <span class="hljs-string">&quot;schema=st(field(ProductName,string),field(SubProduct,string))&quot;</span>;
+!python conf <span class="hljs-string">&quot;runIn=driver&quot;</span>;
+!python conf <span class="hljs-string">&quot;dataMode=data&quot;</span>;
+
+-- ray&#x5904;&#x7406;&#x6570;&#x636E;&#x4EE3;&#x7801;
+!ray on newcc <span class="hljs-string">&apos;&apos;&apos;
+import ray
+from pyjava.api.mlsql import RayContext
+import numpy as np;
+import time
+
+
+ray_context = RayContext.connect(globals(),&quot;xxxx:xxxx&quot;)
+
+
+def echo(rows):
+    count = 0
+    for row in rows:
+      row1 = {}
+      row1[&quot;ProductName&quot;]=&quot;jackm&quot;
+      row1[&quot;SubProduct&quot;] = row[&quot;SubProduct&quot;]
+      count = count + 1
+      if count%1000 == 0:
+          print(&quot;=====&gt; &quot; + str(time.time()) + &quot; ====&gt;&quot; + str(count))
+      yield row1
+
+
+ray_context.map_iter(echo)
+
+
+&apos;&apos;&apos;</span> named mlsql_temp_table2;
+
+--&#x7ED3;&#x679C;
+save overwrite mlsql_temp_table2 <span class="hljs-keyword">as</span> parquet.`/tmp/mlsql_temp_table2`;
+load  parquet.`/tmp/mlsql_temp_table2` <span class="hljs-keyword">as</span> mlsql_temp_table3;
+</code></pre>
 <p>&#x5982;&#x679C;&#x7528;&#x6237;&#x5E0C;&#x671B;&#x81EA;&#x5DF1;&#x638C;&#x63A7;&#x4EFB;&#x52A1;&#x7684;&#x8C03;&#x5EA6;&#xFF0C;&#x90A3;&#x4E48;&#x53EF;&#x4EE5;&#x4F7F;&#x7528;Ray &#x7684;remote&#x65B9;&#x6CD5;</p>
 <pre><code class="lang-python">data_servers = ray_context.data_servers()
 
@@ -624,7 +694,7 @@ items = [ray.get(process(server)) <span class="hljs-keyword">for</span> server <
     <script>
         var gitbook = gitbook || [];
         gitbook.push(function() {
-            gitbook.page.hasChanged({"page":{"title":"PyJava API简介","level":"1.6.4","depth":2,"next":{"title":"结合Python读取Excel","level":"1.6.5","depth":2,"path":"python/read_excel.md","ref":"python/read_excel.md","articles":[]},"previous":{"title":"模型训练","level":"1.6.3","depth":2,"path":"python/train.md","ref":"python/train.md","articles":[]},"dir":"ltr"},"config":{"plugins":["image-class","lightbox"],"styles":{"website":"styles/image.css"},"pluginsConfig":{"image-class":{},"lightbox":{"jquery":true,"sameUuid":false},"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"theme":"default","pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"variables":{},"title":"MLSQL Engine 文档","gitbook":"*","description":"MLSQL Engine 官方文档"},"file":{"path":"python/pyjava.md","mtime":"2020-08-31T10:51:02.000Z","type":"markdown"},"gitbook":{"version":"3.2.3","time":"2020-09-01T08:02:55.505Z"},"basePath":"..","book":{"language":""}});
+            gitbook.page.hasChanged({"page":{"title":"PyJava API简介","level":"1.6.4","depth":2,"next":{"title":"结合Python读取Excel","level":"1.6.5","depth":2,"path":"python/read_excel.md","ref":"python/read_excel.md","articles":[]},"previous":{"title":"模型训练","level":"1.6.3","depth":2,"path":"python/train.md","ref":"python/train.md","articles":[]},"dir":"ltr"},"config":{"plugins":["image-class","lightbox"],"styles":{"website":"styles/image.css"},"pluginsConfig":{"image-class":{},"lightbox":{"jquery":true,"sameUuid":false},"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"theme":"default","pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"variables":{},"title":"MLSQL Engine 文档","gitbook":"*","description":"MLSQL Engine 官方文档"},"file":{"path":"python/pyjava.md","mtime":"2020-09-02T02:49:32.000Z","type":"markdown"},"gitbook":{"version":"3.2.3","time":"2020-09-02T02:53:07.734Z"},"basePath":"..","book":{"language":""}});
         });
     </script>
 </div>

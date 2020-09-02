@@ -206,7 +206,7 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
           )
 
           val newIter = iter.map { irow =>
-            convert(irow)
+            convert(irow).copy()
           }
           val commonTaskContext = new SparkContextImp(TaskContext.get(), batch)
           val columnarBatchIter = batch.compute(Iterator(newIter), TaskContext.getPartitionId(), commonTaskContext)
@@ -230,7 +230,7 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
         )
 
         val newIter = dataServers.map { irow =>
-          convert(Row.fromSeq(Seq(irow.host, irow.port, irow.timezone)))
+          convert(Row.fromSeq(Seq(irow.host, irow.port, irow.timezone))).copy()
         }.iterator
         val javaContext = new JavaContext()
         val commonTaskContext = new AppContextImpl(javaContext, batch)

@@ -70,6 +70,12 @@
             <groupId>net.csdn</groupId>
             <artifactId>serviceframework-orm_${scala.binary.version}</artifactId>
             <version>${serviceframework.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>tech.mlsql</groupId>
+                    <artifactId>common-utils_${scala.binary.version}</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <dependency>
