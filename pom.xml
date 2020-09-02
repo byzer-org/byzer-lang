@@ -361,6 +361,10 @@
                     <version>${serviceframework.version}</version>
                     <exclusions>
                         <exclusion>
+                            <groupId>tech.mlsql</groupId>
+                            <artifactId>common-utils_${scala.binary.version}</artifactId>
+                        </exclusion>
+                        <exclusion>
                             <groupId>org.scala-lang</groupId>
                             <artifactId>jline</artifactId>
                         </exclusion>
@@ -487,6 +491,10 @@
                         <!--<artifactId>jetty-util</artifactId>-->
                         <!--</exclusion>-->
                         <exclusion>
+                            <groupId>tech.mlsql</groupId>
+                            <artifactId>common-utils_${scala.binary.version}</artifactId>
+                        </exclusion>
+                        <exclusion>
                             <groupId>org.eclipse.jetty</groupId>
                             <artifactId>jetty-servlet</artifactId>
                         </exclusion>
@@ -533,6 +541,12 @@
                     <groupId>net.csdn</groupId>
                     <artifactId>serviceframework-jetty-9-server_${scala.binary.version}</artifactId>
                     <version>${serviceframework.version}</version>
+                    <exclusions>
+                        <exclusion>
+                            <groupId>tech.mlsql</groupId>
+                            <artifactId>common-utils_${scala.binary.version}</artifactId>
+                        </exclusion>
+                    </exclusions>
                 </dependency>
             </dependencies>
         </profile>
