@@ -294,7 +294,7 @@ class PythonCommand(override val uid: String) extends SQLAlg with Functions with
         )
 
         val newIter = iter.map { irow =>
-          encoder(irow)
+          encoder(irow).copy()
         }
         val commonTaskContext = new SparkContextImp(TaskContext.get(), batch)
         val columnarBatchIter = batch.compute(Iterator(newIter), TaskContext.getPartitionId(), commonTaskContext)
