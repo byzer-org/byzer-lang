@@ -6,7 +6,6 @@ import java.util
 import java.util.concurrent.atomic.AtomicReference
 
 import org.apache.spark.ml.param.Param
-import org.apache.spark.sql.catalyst.encoders.RowEncoder
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.mlsql.session.MLSQLException
 import org.apache.spark.sql.types.{DataType, StructType}
