@@ -73,11 +73,7 @@
             <exclusions>
                 <exclusion>
                     <groupId>tech.mlsql</groupId>
-                    <artifactId>common-utils_2.11</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>tech.mlsql</groupId>
-                    <artifactId>common-utils_2.12</artifactId>
+                    <artifactId>common-utils_${scala.binary.version}</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
