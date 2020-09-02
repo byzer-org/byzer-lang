@@ -265,6 +265,10 @@
                     <version>${serviceframework.version}</version>
                     <exclusions>
                         <exclusion>
+                            <groupId>tech.mlsql</groupId>
+                            <artifactId>common-utils_${scala.binary.version}</artifactId>
+                        </exclusion>
+                        <exclusion>
                             <groupId>org.scala-lang</groupId>
                             <artifactId>jline</artifactId>
                         </exclusion>

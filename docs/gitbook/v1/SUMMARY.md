@@ -29,7 +29,8 @@
     * [结合Python读取Excel](python/read_excel.md) 
     * [结合Python保存Excel](python/write_excel.md) 
     * [K8s下的Python资源限制](python/resource.md)  
-    * [dataMode 详解](python/datamode.md)  
+    * [dataMode 详解](python/datamode.md)
+    * [Python并行度你所需要知道的](python/py_paralell.md)    
 
 * [插件](plugin/README.md)
    * [网络安装插件](plugin/online_install.md)
