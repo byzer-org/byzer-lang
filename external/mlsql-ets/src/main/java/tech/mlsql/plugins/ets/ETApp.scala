@@ -25,6 +25,9 @@ class ETApp extends tech.mlsql.app.App with VersionCompatibility {
 
     ETRegister.register("LastTableName", classOf[LastTableName].getName)
     CommandCollection.refreshCommandMapping(Map("lastTableName" -> "LastTableName"))
+
+    ETRegister.register("LastCommand", classOf[LastCommand].getName)
+    CommandCollection.refreshCommandMapping(Map("lastCommand" -> "LastCommand"))
   }
 
 

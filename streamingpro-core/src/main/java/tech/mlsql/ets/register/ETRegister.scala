@@ -35,5 +35,6 @@ object ETRegister {
   wow("SchedulerCommand")
   wow("PluginCommand")
   wow("Ray")
+  wow("RunScript")
 
 }
