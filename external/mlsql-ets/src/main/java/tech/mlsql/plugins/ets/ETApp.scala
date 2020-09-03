@@ -7,7 +7,7 @@ import tech.mlsql.version.VersionCompatibility
 /**
  * 6/8/2020 WilliamZhu(allwefantasy@gmail.com)
  */
-class ETApp  extends tech.mlsql.app.App with VersionCompatibility {
+class ETApp extends tech.mlsql.app.App with VersionCompatibility {
   override def run(args: Seq[String]): Unit = {
     ETRegister.register("Pivot", classOf[Pivot].getName)
     //CommandCollection.refreshCommandMapping(Map(ProfilerApp.COMMAND_NAME -> ProfilerApp.MODULE_NAME))
@@ -24,10 +24,7 @@ class ETApp  extends tech.mlsql.app.App with VersionCompatibility {
         |""".stripMargin))
 
     ETRegister.register("LastTableName", classOf[LastTableName].getName)
-    CommandCollection.refreshCommandMapping(Map("lastTableName" ->
-      """
-        |run command as LastTableName.``
-        |""".stripMargin))
+    CommandCollection.refreshCommandMapping(Map("lastTableName" -> "LastTableName"))
   }
 
 
@@ -36,5 +33,5 @@ class ETApp  extends tech.mlsql.app.App with VersionCompatibility {
 
 
 object ETApp {
-  
+
 }
