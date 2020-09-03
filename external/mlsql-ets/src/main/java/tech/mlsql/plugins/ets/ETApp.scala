@@ -22,6 +22,12 @@ class ETApp  extends tech.mlsql.app.App with VersionCompatibility {
       """
         |run ${i} as TableRepartition.`` where partitionNum="${num}" as ${o}
         |""".stripMargin))
+
+    ETRegister.register("LastTableName", classOf[LastTableName].getName)
+    CommandCollection.refreshCommandMapping(Map("lastTableName" ->
+      """
+        |run command as LastTableName.``
+        |""".stripMargin))
   }
 
 

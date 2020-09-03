@@ -8,14 +8,14 @@ Python环境最好是3.6版本，并且请安装如下依赖：
 pip install Cython
 pip install pyarrow==0.10.0
 pip install ray==0.8.0
-pip install aiohttp psutil setproctitle grpcio pandas
+pip install aiohttp psutil setproctitle grpcio pandas xlsxwriter
 pip install watchdog requests click uuid sfcli  pyjava
 ```
 
 如果你要使用Ray做计算，请确保Driver节点（Executor节点可选）按如下方式启动ray worker:
 
 ```
-ray start --address=<address> --num-cpus=0 --num-gpus=0
+ray start --address=<address> --num-cpus=0 --num-cpus=0
 ```
 
 其中address地址为Ray集群地址，类似123.45.67.89:6379这样。同时我们将cpu,gpus等资源设置为0. 启动一个没有资源的ray worker ,是因为我们需要通过ray worker提交任务。
