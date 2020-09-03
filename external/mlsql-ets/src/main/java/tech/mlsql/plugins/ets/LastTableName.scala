@@ -24,7 +24,7 @@ class LastTableName(override val uid: String) extends SQLAlg with DslTool with E
     val context = ScriptSQLExec.contextGetOrForTest()
     context.execListener.getLastSelectTable() match {
       case Some(tableName) =>
-        context.execListener.addEnv("__last_table__", tableName)
+        context.execListener.addEnv("__last_table_name__", tableName)
       case None => throw new MLSQLException("!lastTableName cannot found table")
     }
     df.sparkSession.emptyDataFrame
