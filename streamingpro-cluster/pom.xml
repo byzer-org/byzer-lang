@@ -82,7 +82,7 @@
         </dependency>
         <dependency>
             <groupId>net.csdn</groupId>
-            <artifactId>serviceframework-web_2.11</artifactId>
+            <artifactId>serviceframework-web_${scala.binary.version}</artifactId>
             <version>${serviceframework.version}</version>
             <exclusions>
                 <exclusion>
@@ -136,7 +136,7 @@
         </dependency>
         <dependency>
             <groupId>net.csdn</groupId>
-            <artifactId>serviceframework-orm_2.11</artifactId>
+            <artifactId>serviceframework-orm_${scala.binary.version}</artifactId>
             <version>${serviceframework.version}</version>
         </dependency>
 
