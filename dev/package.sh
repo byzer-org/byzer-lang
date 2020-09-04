@@ -127,7 +127,7 @@ if [[ "${COMMAND}" == "deploy" ]];then
 fi
 
 if [[ "${OSS_ENABLE}" == "true" ]];then
-   BASE_PROFILES="$BASE_PROFILES -Poss-support"
+   BASE_PROFILES="$BASE_PROFILES -Paliyun-oss"
 fi
 
 if [[ "$DATASOURCE_INCLUDED" == "true" ]];then
