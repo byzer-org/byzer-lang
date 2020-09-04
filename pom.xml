@@ -129,6 +129,12 @@
     <!--    </repositories>-->
 
     <profiles>
+        <profile>
+            <id>hadoop-3.0</id>
+            <properties>
+                <hadoop-client-version>3.2.0</hadoop-client-version>
+            </properties>
+        </profile>
 
         <profile>
             <id>release-sign-artifacts</id>
@@ -670,7 +676,7 @@
                     <artifactId>scala-compiler</artifactId>
                 </exclusion>
             </exclusions>
-        </dependency>         
+        </dependency>
         <dependency>
             <groupId>net.csdn</groupId>
             <artifactId>serviceframework-dispatcher_${scala.binary.version}</artifactId>
