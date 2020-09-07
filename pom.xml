@@ -130,21 +130,6 @@
 
     <profiles>
         <profile>
-            <id>aliyun-oss</id>
-            <properties>
-                <hadoop-client-version>3.2.0</hadoop-client-version>
-            </properties>
-            <dependencies>
-                <dependency>
-                    <groupId>org.apache.hadoop</groupId>
-                    <artifactId>hadoop-aliyun</artifactId>
-                    <version>3.2.0</version>
-                </dependency>
-
-            </dependencies>
-        </profile>
-
-        <profile>
             <id>release-sign-artifacts</id>
             <activation>
                 <property>
