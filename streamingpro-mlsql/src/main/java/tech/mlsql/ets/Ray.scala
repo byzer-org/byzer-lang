@@ -133,7 +133,7 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
               Map("PY_EXECUTE_USER" -> owner))
             NetTool.localHostName()
           }
-          else MLSQLSparkUtils.rpcEnv().address.host
+          else MLSQLSparkUtils.blockManager.blockManagerId.host
 
           val socketRunner = new SparkSocketRunner("serveToStreamWithArrow", host, timezoneID)
           val commonTaskContext = new SparkContextImp(TaskContext.get(), null)

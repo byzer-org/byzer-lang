@@ -8,4 +8,8 @@ object MLSQLSparkUtils {
     SparkEnv.get.rpcEnv
   }
 
+  def blockManager = {
+    SparkEnv.get.blockManager
+  }
+
 }
