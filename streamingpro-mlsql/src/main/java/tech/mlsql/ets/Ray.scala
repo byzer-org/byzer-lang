@@ -116,7 +116,7 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
 
     targetLen = tempdf.rdd.partitions.length
     logInfo(s"RayMode: Final TargetLen ${targetLen}")
-    val owner = ScriptSQLExec.context().owner
+    val _owner = ScriptSQLExec.context().owner
 
     val thread = new Thread("temp-data-server-in-spark") {
       override def run(): Unit = {
@@ -125,7 +125,7 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
         val tempSocketServerHost = tempSocketServerInDriver._host
         val tempSocketServerPort = tempSocketServerInDriver._port
         val timezoneID = session.sessionState.conf.sessionLocalTimeZone
-
+        val owner = _owner
         tempdf.rdd.mapPartitions { iter =>
 
           val host: String = if (SparkEnv.get == null || MLSQLSparkUtils.blockManager == null || MLSQLSparkUtils.blockManager.blockManagerId == null) {
