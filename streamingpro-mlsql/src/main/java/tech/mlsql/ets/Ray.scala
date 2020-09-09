@@ -9,7 +9,7 @@ import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.mlsql.session.MLSQLException
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Row, SparkSession, SparkUtils}
-import org.apache.spark.{MLSQLSparkUtils, SparkInstanceService, TaskContext, WowRowEncoder}
+import org.apache.spark.{MLSQLSparkUtils, SparkEnv, SparkInstanceService, TaskContext, WowRowEncoder}
 import streaming.core.datasource.util.MLSQLJobCollect
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib._
@@ -22,9 +22,11 @@ import tech.mlsql.arrow.python.runner._
 import tech.mlsql.common.utils.base.TryTool
 import tech.mlsql.common.utils.distribute.socket.server.{ReportHostAndPort, SocketServerInExecutor}
 import tech.mlsql.common.utils.lang.sc.ScalaMethodMacros
+import tech.mlsql.common.utils.net.NetTool
 import tech.mlsql.common.utils.network.NetUtils
 import tech.mlsql.common.utils.serder.json.JSONTool
 import tech.mlsql.ets.ray.{CollectServerInDriver, DataServer}
+import tech.mlsql.log.WriteLog
 import tech.mlsql.schema.parser.SparkSimpleSchemaParser
 import tech.mlsql.session.SetSession
 import tech.mlsql.version.VersionCompatibility
@@ -53,8 +55,8 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
     envSession.set("pythonMode", "ray", Map(SetSession.__MLSQL_CL__ -> SetSession.PYTHON_RUNNER_CONF_CL))
 
 
-    val newdf = Array(params(inputTable.name),params(code.name),params(outputTable.name)) match {
-      case Array(input, code,"") =>
+    val newdf = Array(params(inputTable.name), params(code.name), params(outputTable.name)) match {
+      case Array(input, code, "") =>
         distribute_execute(spark, genCode(code), input)
 
       case Array(input, code, output) =>
@@ -101,8 +103,8 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
       val jobInfo = new MLSQLJobCollect(session, context.owner)
       val leftResource = resource.totalCores - jobInfo.resourceSummary(null).activeTasks
       logInfo(s"RayMode: Resource:[${leftResource}(${resource.totalCores}-${jobInfo.resourceSummary(null).activeTasks})] TargetLen:[${targetLen}]")
-      if (leftResource/2 <= targetLen) {
-        df.repartition(Math.max(Math.floor(leftResource / 2)-1, 1).toInt)
+      if (leftResource / 2 <= targetLen) {
+        df.repartition(Math.max(Math.floor(leftResource / 2) - 1, 1).toInt)
       } else df
     } {
       //      WriteLog.write(List("Warning: Fail to detect instance resource. Setup 4 data server for Python.").toIterator, runnerConf)
@@ -114,6 +116,7 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
 
     targetLen = tempdf.rdd.partitions.length
     logInfo(s"RayMode: Final TargetLen ${targetLen}")
+    val owner = ScriptSQLExec.context().owner
 
     val thread = new Thread("temp-data-server-in-spark") {
       override def run(): Unit = {
@@ -125,7 +128,11 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
 
         tempdf.rdd.mapPartitions { iter =>
 
-          val host: String = if (MLSQLSparkUtils.rpcEnv().address == null) NetUtils.getHost
+          val host: String = if (SparkEnv.get == null || MLSQLSparkUtils.rpcEnv().address == null) {
+            WriteLog.write(List("Ray: Cannot get MLSQLSparkUtils.rpcEnv().address, using NetTool.localHostName()").iterator,
+              Map("PY_EXECUTE_USER" -> owner))
+            NetTool.localHostName()
+          }
           else MLSQLSparkUtils.rpcEnv().address.host
 
           val socketRunner = new SparkSocketRunner("serveToStreamWithArrow", host, timezoneID)
@@ -248,7 +255,7 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
 
     if (dataMode == "data") {
       val rows = outputDF.collect()
-      val rdd = session.sparkContext.makeRDD[Row](rows,numSlices = rows.length)
+      val rdd = session.sparkContext.makeRDD[Row](rows, numSlices = rows.length)
       val stage2_schema_encoder = WowRowEncoder.fromRow(stage2_schema)
       val newRDD = if (rdd.partitions.length > 0 && rows.length > 0) {
         rdd.flatMap { row =>
