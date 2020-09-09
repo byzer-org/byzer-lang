@@ -128,7 +128,7 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
 
         tempdf.rdd.mapPartitions { iter =>
 
-          val host: String = if (SparkEnv.get == null || MLSQLSparkUtils.rpcEnv().address == null) {
+          val host: String = if (SparkEnv.get == null || MLSQLSparkUtils.blockManager == null || MLSQLSparkUtils.blockManager.blockManagerId == null) {
             WriteLog.write(List("Ray: Cannot get MLSQLSparkUtils.rpcEnv().address, using NetTool.localHostName()").iterator,
               Map("PY_EXECUTE_USER" -> owner))
             NetTool.localHostName()
