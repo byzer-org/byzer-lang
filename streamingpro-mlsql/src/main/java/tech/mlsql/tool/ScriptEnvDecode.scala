@@ -8,11 +8,11 @@ import streaming.dsl.ScriptSQLExec
   */
 object ScriptEnvDecode {
 
-  lazy val envMap = ScriptSQLExec.context().execListener.env()
-
   def decode(code:String):String = {
 
     if (code == null || code.isEmpty) return code
+
+    val envMap = ScriptSQLExec.context().execListener.env()
 
     val codes = code.split(" ")
 
