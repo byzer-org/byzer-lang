@@ -28,6 +28,7 @@ import tech.mlsql.schema.parser.SparkSimpleSchemaParser
 import tech.mlsql.session.SetSession
 
 import scala.collection.mutable.ArrayBuffer
+import tech.mlsql.tool.ScriptEnvDecode._
 
 /**
  * 2019-08-16 WilliamZhu(allwefantasy@gmail.com)
@@ -195,12 +196,12 @@ class PythonCommand(override val uid: String) extends SQLAlg with Functions with
         emptyDataFrame(spark, "value")
 
       case Array("env", kv) => // !python env a=b
-        val Array(k, v) = kv.split("=", 2)
+        val Array(k, v) = decode(kv).split("=", 2)
         envSession.set(k, v, Map(SetSession.__MLSQL_CL__ -> SetSession.PYTHON_ENV_CL))
         envSession.fetchPythonEnv.get.toDF()
 
       case Array("conf", kv) => // !python env a=b
-        val Array(k, v) = kv.split("=", 2)
+        val Array(k, v) = decode(kv).split("=", 2)
         envSession.set(k, v, Map(SetSession.__MLSQL_CL__ -> SetSession.PYTHON_RUNNER_CONF_CL))
         envSession.fetchPythonRunnerConf.get.toDF()
 
