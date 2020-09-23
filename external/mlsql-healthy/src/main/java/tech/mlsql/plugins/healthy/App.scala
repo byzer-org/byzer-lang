@@ -12,6 +12,7 @@ import tech.mlsql.version.VersionCompatibility
 class App extends tech.mlsql.app.App with VersionCompatibility {
   override def run(args: Seq[String]): Unit = {
     AppRuntimeStore.store.registerController("/plugins/healthy", classOf[HealthyController].getName)
+    AppRuntimeStore.store.registerRequestCleaner("/plugins/cleaner/healthy",classOf[ShutdownOnSparkContextStoppedCleaner].getName)
   }
 
   override def supportedVersions: Seq[String] = Seq("1.5.0-SNAPSHOT", "1.5.0", "1.6.0-SNAPSHOT", "1.6.0")
