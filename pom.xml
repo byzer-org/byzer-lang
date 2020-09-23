@@ -44,6 +44,7 @@
         <module>streamingpro-core</module>
         <module>streamingpro-cluster</module>
         <module>external/mlsql-ets</module>
+        <module>external/mlsql-healthy</module>
     </modules>
 
     <properties>
