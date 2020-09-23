@@ -94,7 +94,8 @@ object PluginHook extends Logging {
     "tech.mlsql.plugins.mlsql_watcher.MLSQLWatcher",
     "tech.mlsql.plugins.sql.profiler.ProfilerApp",
     "tech.mlsql.autosuggest.app.MLSQLAutoSuggestApp",
-    "tech.mlsql.plugins.ets.ETApp"
+    "tech.mlsql.plugins.ets.ETApp",
+    "tech.mlsql.plugins.healthy.App"
   )
 
   def startBuildIn(extra: Array[String]): Unit = {
