@@ -1,5 +1,5 @@
 # MLSQL Cheatsheet
-快速脏手指南  
+快速上手指南  
 
 ## 数据读写
 

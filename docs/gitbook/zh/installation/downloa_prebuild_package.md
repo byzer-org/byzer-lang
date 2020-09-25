@@ -89,7 +89,7 @@ MLSQL Console也需要依赖MySQL,所以，同cluster一样，你需要经过相
 3. 修改application.docker.yml,将"MYSQL_HOST" 占位符替换成MySQL地址，同时如果有必要，修改对应的数据库，用户名称，密码等。 
 4. 现在可以调用`./start-default.sh` 启动了
 
-启动后，默认监听的是9002端口。你也可以修改，具体配置卫浴修改application.docker.yml. MLSQL Console提供了一个较为完善的界面。
+启动后，默认监听的是9002端口。你也可以修改，具体配置修改位于application.docker.yml. MLSQL Console提供了一个较为完善的界面。
 用户可自助注册和登录。 
 
 打开start-default.sh,其展示的内容类似下面：
