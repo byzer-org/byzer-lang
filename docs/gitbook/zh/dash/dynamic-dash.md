@@ -119,7 +119,7 @@ build_result接受一个list,里面是一个map.
 select content as html,"" as dash from mlsql_temp_table2 as output;
 ```
 
-核心是，一个标记指端dash,表示这个表可以被渲染成图标，一个内容字段，html,表示把内容直接当做html进行渲染。
+核心是，一个标记指端dash,表示这个表可以被渲染成图表，一个内容字段，html,表示把内容直接当做html进行渲染。
 
 
 
