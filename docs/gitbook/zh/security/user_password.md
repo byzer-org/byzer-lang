@@ -27,7 +27,7 @@ connect jdbc.`` where user="${user}"
 and password=${password};
 ```
 
-这样既可避免敏文密码存在在脚本中。
+这样既可避免明文密码存在在脚本中。
 
 第二种方式是：
 
