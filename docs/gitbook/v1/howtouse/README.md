@@ -14,7 +14,7 @@
 
 MLSQL Engine 的发行包可以在 [MLSQL官方下载站点](http://download.mlsql.tech/)知道。目前最新版本为[2.0.0](http://download.mlsql.tech/2.0.0/).
 
-在对应版本的下载目录里，你应该会看到两个发型包:
+在对应版本的下载目录里，你应该会看到两个发行包:
 
 1. mlsql-engine_2.4-2.0.0.tar.gz      
 2. mlsql-engine_3.0-2.0.0.tar.gz 

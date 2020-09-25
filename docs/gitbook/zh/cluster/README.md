@@ -12,7 +12,7 @@ MLSQL-Instance 就是一个MLSQL实例，但是不管什么原因，我们总是
 ## 部署MLSQL-Cluster
 
 ### 下载
-首先下载[MLSQL-Cluster发型包](http://download.mlsql.tech/mlsql_cluster-1.2.0-SNAPSHOT/),解压后目录结构如下：
+首先下载[MLSQL-Cluster发行包](http://download.mlsql.tech/mlsql_cluster-1.2.0-SNAPSHOT/),解压后目录结构如下：
 
 ```
 -rw-r--r--   1 allwefantasy  wheel   957 Jan 24 10:01 application.yml

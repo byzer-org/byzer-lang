@@ -121,7 +121,7 @@ spark.driver.host 需要配置成 $POD_IP,具体方式如下：
 
 ###  Spark 3.0版本如何兼容hive 1.2
 
-Spark3.0默认不兼容 hive 1.2 需要自己从Spark源码重新打包。譬如下面的编译参数就指定了hive-1.2的支持，然后再使用这个发型包构建镜像。
+Spark3.0默认不兼容 hive 1.2 需要自己从Spark源码重新打包。譬如下面的编译参数就指定了hive-1.2的支持，然后再使用这个发行包构建镜像。
 
 ```
 git checkout -b v3.0.0 v3.0.0

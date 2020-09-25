@@ -16,7 +16,7 @@
 !kafkaTool schemaInfer 10 records from "127.0.0.1:9092" wow;
 ```
 
-句法格式和前面一致，唯一是换了个命令，把sampleData换成schemaInfer.目前只支持json格式。
+句法格式和前面一致，唯一区别是换了个命令，把sampleData换成schemaInfer.目前只支持json格式。
 
 ## 查看流式程序的checkpoint目录的最新offset
 

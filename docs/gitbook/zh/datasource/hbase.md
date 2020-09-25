@@ -2,7 +2,7 @@
 
 HBase 是一个应用很广泛的存储系统。MLSQL也支持将其中的某个索引加载为表。
 
-注意，HBase的包并没有包含在MLSQL默认发型包里，所以你需要通过 --jars 带上相关的依赖才能使用。用户有三种种方式获得
+注意，HBase的包并没有包含在MLSQL默认发行包里，所以你需要通过 --jars 带上相关的依赖才能使用。用户有三种种方式获得
 HBase Jar包：
 
 第一种，访问[spark-hbase](https://github.com/allwefantasy/spark-hbase),然后自己进行编译。

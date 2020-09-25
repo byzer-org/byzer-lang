@@ -19,7 +19,7 @@
 对于文件系统中，可以这样使用：
 
 ```sql
-load json.`user/password信息路劲` as auth_info_table;
+load json.`user/password信息路径` as auth_info_table;
 set user="select user from auth_info_table" where type="sql";
 set password="select password from auth_info_table" where type="sql";
 
