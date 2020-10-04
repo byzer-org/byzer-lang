@@ -142,7 +142,8 @@ object Parser {
 
 class StatementParser(tokenizer: Tokenizer) extends Parser(tokenizer) {
   def parseStatement(): TreeNode[_] = {
-    if (_match(Scanner.Semi)) return parseStatement()1、`  if (_match(Scanner._SELECT)) return parseSelect()
+    if (_match(Scanner.Semi)) return parseStatement()
+    if (_match(Scanner._SELECT)) return parseSelect()
     if (matchFuncCall) return parseFuncCall()
     parseExpression()
   }
