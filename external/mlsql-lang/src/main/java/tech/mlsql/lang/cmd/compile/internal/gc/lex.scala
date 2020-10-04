@@ -1,5 +1,7 @@
 package tech.mlsql.lang.cmd.compile.internal.gc
 
+import scala.collection.mutable.ArrayBuffer
+
 
 case class Position(
                      filename: Option[String], // filename, if any
@@ -42,13 +44,15 @@ object Scanner extends Enumeration {
   val Assign = Value("=") // .
   val DotDotDot = Value("...") // ...
 
+
   // keywords
-  val _And = Value("and")
-  val _Or = Value("or")
   val _SELECT = Value("select")
+  val _WHERE = Value("where")
+
   // internal use only
   val skipComment = Value("skipComment")
 
+  // operator
   val AndAnd = Value("&&") // &&
   val OrOr = Value("||") // ||
   val Not = Value("!") // !
@@ -70,18 +74,56 @@ object Scanner extends Enumeration {
   val Shl = Value("<<") // <<
   val Shr = Value(">>") // >>
 
+  val _Or = Value("or")
+  val _Not = Value("not")
+  val _And = Value("and")
+  val _As = Value("as")
+
+  val OPERATOR_MAP = Map(
+    "&&" -> Scanner.AndAnd,
+    "||" -> Scanner.OrOr,
+    "!" -> Scanner.Not,
+    "==" -> Scanner.Eql,
+    "!=" -> Scanner.Neq,
+    "<" -> Scanner.Lss,
+    "<=" -> Scanner.Leq,
+    ">" -> Scanner.Gtr,
+    ">=" -> Scanner.Geq,
+    "+" -> Scanner.Add,
+    "-" -> Scanner.Sub,
+    "|" -> Scanner.Or,
+    "^" -> Scanner.Xor,
+    "*" -> Scanner.Mul,
+    "/" -> Scanner.Div,
+    "%" -> Scanner.Rem,
+    "&" -> Scanner.And,
+    "&^" -> Scanner.AndNot,
+    "<<" -> Scanner.Shl,
+    ">>" -> Scanner.Shr,
+    "or" -> Scanner._Or,
+    "and" -> Scanner._And,
+    "as" -> Scanner._As
+  )
+
+  val OPERATOR_SET = OPERATOR_MAP.values.toSet
+
   val KEYWORD_MAP = Map(
     "select" -> Scanner._SELECT,
-    "or" -> Scanner._Or,
-    "and" -> Scanner._And
+    "where" -> Scanner._WHERE
   )
+
+  val KEYWORD_SET = KEYWORD_MAP.values.toSet
 }
 
 
 case class Token(t: Scanner.TokenType,
                  srcPos: Int, srcEnd: Int,
                  line: Int, column: Int,
-                 scanner: Scanner)
+                 scanner: Scanner) {
+  def text = {
+    (srcPos to srcEnd).map(scanner.srcChars(_)).mkString("")
+  }
+}
 
 class Scanner(src: String) {
 
@@ -275,12 +317,17 @@ class Scanner(src: String) {
           return Scanner.EOF
         }
 
-      case s if isIdent(s,1) =>
+      case s if isIdent(s, 1) =>
         ch = scanIdent
         tok = Scanner.Ident
         val possibleKeyword = Scanner.KEYWORD_MAP.get(tokenString().toLowerCase())
         if (possibleKeyword.isDefined) {
           tok = possibleKeyword.get
+        } else {
+          val possibaleOperator = Scanner.OPERATOR_MAP.get(tokenString().toLowerCase)
+          if (possibaleOperator.isDefined) {
+            tok = possibaleOperator.get
+          }
         }
       case s if s.isDigit =>
         val (__tok, __ch) = scanNumber(ch, false)
@@ -387,11 +434,38 @@ class Scanner(src: String) {
   }
 }
 
-class Tokenizer {
+object Tokenizer {
   def tokenize(str: String): List[Token] = {
-    //    val scanner = new Scanner(str)
-    //    scanner.scan
-    List()
+    val tokens = new ArrayBuffer[Token]()
+    val scanner = new Scanner(str)
+    scanner.scan
+    while (scanner.aheadChar != Scanner.EOF_INT) {
+      tokens.append(Token(scanner.tok, scanner.lastTokenPos + 1, scanner.srcPos, scanner.line, scanner.column, scanner))
+      scanner.scan
+    }
+    tokens.toList
+  }
+}
+
+class Tokenizer(scanner: Scanner) {
+  var step = 0
+
+  def next: Token = {
+    if (step == 0) {
+      scanner.scan
+    }
+    if (scanner.aheadChar == Scanner.EOF_INT) {
+      return Token(Scanner.EOF, scanner.lastTokenPos + 1, scanner.srcPos, scanner.line, scanner.column, scanner)
+    }
+    if (step > 0) {
+      scanner.scan
+    }
+    step += 1
+    val lastPos = if(scanner.lastTokenPos ==0){
+      0
+    }  else scanner.lastTokenPos + 1
+    val token = Token(scanner.tok, lastPos, scanner.srcPos, scanner.line, scanner.column, scanner)
+    token
   }
 }
 
