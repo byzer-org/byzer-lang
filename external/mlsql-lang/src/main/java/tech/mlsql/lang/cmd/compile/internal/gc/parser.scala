@@ -142,8 +142,10 @@ object Parser {
 
 class StatementParser(tokenizer: Tokenizer) extends Parser(tokenizer) {
   def parseStatement(): TreeNode[_] = {
-    if (_match(Scanner.Semi)) return parseStatement()
-    if (_match(Scanner._SELECT)) return parseSelect()
+    if (_match(Scanner.Semi))
+      return parseStatement()
+    if (_match(Scanner._SELECT))
+      return parseSelect()
     if (matchFuncCall) return parseFuncCall()
     parseExpression()
   }
@@ -160,26 +162,36 @@ class StatementParser(tokenizer: Tokenizer) extends Parser(tokenizer) {
     lookAhead(0).t == Scanner.Ident && lookAhead(1).t == Scanner.Lparen
   }
 
-
-  def parseFuncParams: Seq[Expression] = {
-    var exprs = new ArrayBuffer[Expression]()
-    exprs += parseStatement().asInstanceOf[Expression]
-    while (_match(Scanner.Comma)) {
-      exprs += parseStatement().asInstanceOf[Expression]
-    }
-    exprs
-  }
-
   /**
    * split(:abc,jack,2+3)
    */
-  def parseFuncCall() = {
+  def parseFuncCall(): Expression = {
+
+    def parseFuncParams: Seq[Expression] = {
+      var exprs = new ArrayBuffer[Expression]()
+      exprs += parseStatement().asInstanceOf[Expression]
+      while (_match(Scanner.Comma)) {
+        exprs += parseStatement().asInstanceOf[Expression]
+      }
+      exprs
+    }
+
     val funcName = consume
     // consume Lparent
     consume
-    val funcCall = FuncCall(Literal(funcName, Types.String), parseFuncParams)
+
+
+    val funcCall = FuncCall(Literal(funcName.text, Types.String), parseFuncParams)
     // consume Rparent
-    consume
+    consume // (
+    //check split(...)[0]
+    if (lookAhead(Scanner.Lbrack)) {
+      consume //[
+      val token = consume //int 
+      val temp = ArrayIndexer(funcCall, Literal(token.text, Types.Int))
+      consume
+      return temp
+    }
     funcCall
   }
 
@@ -230,16 +242,17 @@ class StatementParser(tokenizer: Tokenizer) extends Parser(tokenizer) {
     left
   }
 
-  def parseAssign(): As = {
-    val leftExpr = parseStatement()
-    if (_match(Scanner._As)) {
-      val variable = parseStatement()
-      return As(variable.asInstanceOf[Expression], leftExpr.asInstanceOf[Expression])
-    }
-    throw new ParserException("parse assign fail")
-  }
 
   def parseSelect(): Select = {
+    def parseAssign(): As = {
+      val leftExpr = parseStatement()
+      if (_match(Scanner._As)) {
+        val variable = parseStatement()
+        return As(variable.asInstanceOf[Expression], leftExpr.asInstanceOf[Expression])
+      }
+      throw new ParserException("parse assign fail")
+    }
+
     var exprs = new ArrayBuffer[As]()
     exprs += parseAssign()
     while (_match(Scanner.Comma)) {
@@ -279,7 +292,15 @@ class LiteralParser extends PrefixParser {
 class VariableParser extends PrefixParser {
   def parse(parser: StatementParser, token: Token): Expression = {
     token.t match {
-      case Scanner.Variable => Variable(token.text, Types.Any)
+      case Scanner.Variable =>
+        if (parser.lookAhead(Scanner.Lbrack)) {
+          parser.consume //[
+          val indexer = Literal(parser.consume.text, Types.Int)
+          parser.consume // ]
+          return ArrayIndexer(Variable(token.text, Types.Any), indexer)
+        }
+        Variable(token.text, Types.Any)
+
     }
   }
 }

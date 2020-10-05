@@ -171,7 +171,7 @@ class Scanner(src: String) {
 
   private def digits(ch0: Char) = {
     var ch = ch0
-    while (ch.isDigit) {
+    while (peek.isDigit) {
       ch = next
     }
     ch
@@ -428,8 +428,10 @@ class Scanner(src: String) {
   }
 
   def tokenString(): String = {
-    val start = lastTokenPos + 1
-    (start to srcPos).map(src(_)).mkString("")
+    val lastPos = if(lastTokenPos ==0){
+      0
+    }  else lastTokenPos + 1
+    (lastPos to srcPos).map(src(_)).mkString("")
 
   }
 }
@@ -440,7 +442,10 @@ object Tokenizer {
     val scanner = new Scanner(str)
     scanner.scan
     while (scanner.aheadChar != Scanner.EOF_INT) {
-      tokens.append(Token(scanner.tok, scanner.lastTokenPos + 1, scanner.srcPos, scanner.line, scanner.column, scanner))
+      val lastPos = if(scanner.lastTokenPos ==0){
+        0
+      }  else scanner.lastTokenPos + 1
+      tokens.append(Token(scanner.tok, lastPos, scanner.srcPos, scanner.line, scanner.column, scanner))
       scanner.scan
     }
     tokens.toList

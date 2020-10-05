@@ -573,13 +573,13 @@ class TreeNodeException[TreeType <: TreeNode[_]](
 
 case class ExprCode(var code: String)
 
-class CodegenContext {}
+trait CodegenContext {
+  //def execute()
+}
 
 abstract class Expression extends TreeNode[Expression] {
-  //  def eval(input: Map[String,Any]): Any
-  def genCode(ctx: CodegenContext): ExprCode = {
-    null
-  }
+  def eval(input: Map[String,Any]): Any  = null
+  def genCode(ctx: CodegenContext): ExprCode = null
 
   lazy val resolved: Boolean = childrenResolved
 
@@ -661,10 +661,14 @@ case class OrOr(left: Expression, right: Expression) extends BinaryOperator {
   override def dataType: DataType = Types.Boolean
 }
 
+case class ArrayIndexer(left:Expression,right: Expression) extends BinaryOperator {
+  override def dataType: DataType = Types.Any
+}
+
 case class FuncCall(left: Literal, right: Seq[Expression]) extends Expression {
   override def dataType: DataType = Types.Any
   
-  override def children: Seq[Expression] = Seq(left) ++ right
+  override def children: Seq[Expression] = right
 }
 
 case class Select(items: Seq[As]) extends Expression {

@@ -42,6 +42,7 @@ import tech.mlsql.dsl.scope.SetScopeParameter
 import tech.mlsql.job.MLSQLJobProgressListener
 
 import scala.collection.JavaConverters._
+import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
 
@@ -157,8 +158,20 @@ object ScriptSQLExec extends Logging with WowLog {
   }
 }
 
+case class BranchContextHolder(contexts: mutable.Stack[BranchContext])
+
+trait BranchContext
+
+case class IfContext(sqls: mutable.ArrayBuffer[DslAdaptor],
+                     ctxs: mutable.ArrayBuffer[SqlContext],
+                     shouldExecute: Boolean,haveMatched:Boolean) extends BranchContext
+
+case class ForContext() extends BranchContext
+
 
 class ScriptSQLExecListener(val _sparkSession: SparkSession, val _defaultPathPrefix: String, val _allPathPrefix: Map[String, String]) extends BaseParseListener {
+
+  private val _branchContext = BranchContextHolder(new mutable.Stack[BranchContext]())
 
   private val _env = new scala.collection.mutable.HashMap[String, String]
 
@@ -168,6 +181,10 @@ class ScriptSQLExecListener(val _sparkSession: SparkSession, val _defaultPathPre
 
   private val lastSelectTable = new AtomicReference[String]()
   private[this] var _tableAuth: AtomicReference[TableAuth] = new AtomicReference[TableAuth]()
+
+  def branchContext = {
+    _branchContext
+  }
 
   def addJobProgressListener(l: MLSQLJobProgressListener) = {
     _jobListeners += l
@@ -282,35 +299,62 @@ class ScriptSQLExecListener(val _sparkSession: SparkSession, val _defaultPathPre
     }
 
 
+    def execute(adaptor: DslAdaptor) = {
+      val bc = branchContext.contexts
+      if (!bc.isEmpty) {
+        bc.pop() match {
+          case ifC:IfContext =>
+            if(ifC.shouldExecute){
+              ifC.sqls += adaptor
+              ifC.ctxs += ctx
+              bc.push(ifC)
+            }else {
+              adaptor.parse(ctx)
+            }
+          case forC:ForContext =>
+        }
+      }
+    }
+
     val PREFIX = ctx.getChild(0).getText.toLowerCase()
 
     before(PREFIX)
     PREFIX match {
       case "load" =>
-        new LoadAdaptor(this).parse(ctx)
+        val adaptor = new LoadAdaptor(this)
+        execute(adaptor)
 
       case "select" =>
-        new SelectAdaptor(this).parse(ctx)
+        val adaptor = new SelectAdaptor(this)
+        execute(adaptor)
 
       case "save" =>
-        new SaveAdaptor(this).parse(ctx)
-
+        val adaptor = new SaveAdaptor(this)
+        execute(adaptor)
       case "connect" =>
-        new ConnectAdaptor(this).parse(ctx)
+        val adaptor = new ConnectAdaptor(this)
+        execute(adaptor)
       case "create" =>
-        new CreateAdaptor(this).parse(ctx)
+        val adaptor = new CreateAdaptor(this)
+        execute(adaptor)
       case "insert" =>
-        new InsertAdaptor(this).parse(ctx)
+        val adaptor = new InsertAdaptor(this)
+        execute(adaptor)
       case "drop" =>
-        new DropAdaptor(this).parse(ctx)
+        val adaptor = new DropAdaptor(this)
+        execute(adaptor)
       case "refresh" =>
-        new RefreshAdaptor(this).parse(ctx)
+        val adaptor = new RefreshAdaptor(this)
+        execute(adaptor)
       case "set" =>
-        new SetAdaptor(this, Stage.physical).parse(ctx)
+        val adaptor = new SetAdaptor(this, Stage.physical)
+        execute(adaptor)
       case "train" | "run" | "predict" =>
-        new TrainAdaptor(this).parse(ctx)
+        val adaptor = new TrainAdaptor(this)
+        execute(adaptor)
       case "register" =>
-        new RegisterAdaptor(this).parse(ctx)
+        val adaptor = new RegisterAdaptor(this)
+        execute(adaptor)
       case _ => throw new RuntimeException(s"Unknow statement:${ctx.getText}")
     }
     after(PREFIX)
@@ -351,7 +395,8 @@ case class MLSQLExecuteContext(@transient execListener: ScriptSQLExecListener,
                                owner: String,
                                home: String,
                                groupId: String,
-                               userDefinedParam: Map[String, String] = Map())
+                               userDefinedParam: Map[String, String] = Map()
+                              )
 
 case class DBMappingKey(format: String, db: String)
 
