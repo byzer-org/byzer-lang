@@ -67,7 +67,9 @@ class SQLGenContext(session: SparkSession) extends CodegenContext {
           }
           res
 
-        case  _ => executeSingleComputeInRuntime(expr.genCode(this).code, uuid).asInstanceOf[Boolean]
+        case  _ =>
+          val item = executeSingleComputeInRuntime(expr.genCode(this).code, uuid).asInstanceOf[Boolean]
+          Literal(item, Types.Boolean)
       }
 
     }.last

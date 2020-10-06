@@ -304,19 +304,7 @@ class ScriptSQLExecListener(val _sparkSession: SparkSession, val _defaultPathPre
       if (!bc.isEmpty) {
         bc.pop() match {
           case ifC: IfContext =>
-            val isBranchCommand = adaptor match {
-              case a: TrainAdaptor =>
-                val TrainStatement(_, _, format, _, _, _) = a.analyze(ctx)
-                val isBranchCommand = (format == "IfCommand"
-                  || format == "ElseCommand"
-                  || format == "ElifCommand"
-                  || format == "FiCommand"
-                  || format == "ThenCommand")
-                isBranchCommand
-              case _ => false
-            }
-
-            if (ifC.shouldExecute && !isBranchCommand) {
+            if (ifC.shouldExecute) {
               ifC.sqls += adaptor
               ifC.ctxs += ctx
               bc.push(ifC)
