@@ -19,6 +19,13 @@ class ElseCommand (override val uid: String) extends SQLAlg with BranchCommand w
   override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
 
     val ifContext = branchContext.pop().asInstanceOf[IfContext]
+
+    if (ifContext.skipAll) {
+      branchContext.push(ifContext)
+      println(s"Skip Else :: ")
+      return emptyDF
+    }
+    println(s"Else ::")
     if (ifContext.haveMatched) {
       val newIfContext = ifContext.copy(shouldExecute = false)
       branchContext.push(newIfContext)

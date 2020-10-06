@@ -18,6 +18,14 @@ class ElifCommand(override val uid: String) extends SQLAlg with BranchCommand wi
 
   override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
     val ifContext = branchContext.pop().asInstanceOf[IfContext]
+    if (ifContext.skipAll) {
+      branchContext.push(ifContext)
+
+      println(s"Skip Elif :: ${params}")
+      
+      return emptyDF
+    }
+
     if (ifContext.haveMatched) {
       val newIfContext = ifContext.copy(shouldExecute = false)
       branchContext.push(newIfContext)
@@ -27,7 +35,7 @@ class ElifCommand(override val uid: String) extends SQLAlg with BranchCommand wi
     val args = JSONTool.parseJson[List[String]](params("parameters"))
     val command = args.mkString(" ")
     val conditionValue = evaluate(command)
-
+    println(s"Elif :: ${conditionValue} :: ${command}")
     val newIfContext = ifContext.asInstanceOf[IfContext].copy(shouldExecute = conditionValue, haveMatched = conditionValue)
     branchContext.push(newIfContext)
     emptyDF

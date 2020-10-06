@@ -164,7 +164,9 @@ trait BranchContext
 
 case class IfContext(sqls: mutable.ArrayBuffer[DslAdaptor],
                      ctxs: mutable.ArrayBuffer[SqlContext],
-                     shouldExecute: Boolean, haveMatched: Boolean) extends BranchContext
+                     shouldExecute: Boolean,
+                     haveMatched: Boolean,
+                     skipAll: Boolean) extends BranchContext
 
 case class ForContext() extends BranchContext
 
@@ -304,13 +306,36 @@ class ScriptSQLExecListener(val _sparkSession: SparkSession, val _defaultPathPre
       if (!bc.isEmpty) {
         bc.pop() match {
           case ifC: IfContext =>
-            if (ifC.shouldExecute) {
-              ifC.sqls += adaptor
-              ifC.ctxs += ctx
+            val isBranchCommand = adaptor match {
+              case a: TrainAdaptor =>
+                val TrainStatement(_, _, format, _, _, _) = a.analyze(ctx)
+                val isBranchCommand = (format == "IfCommand"
+                  || format == "ElseCommand"
+                  || format == "ElifCommand"
+                  || format == "FiCommand"
+                  || format == "ThenCommand")
+                isBranchCommand
+              case _ => false
+            }
+            println(s"Adaptor ${adaptor} shouldExecute ${ifC.shouldExecute} isBranchCommand:${isBranchCommand}")
+            if (ifC.skipAll) {
               bc.push(ifC)
+              if(isBranchCommand){
+                adaptor.parse(ctx)
+              }
             } else {
-              bc.push(ifC)
-              adaptor.parse(ctx)
+              if (ifC.shouldExecute && !isBranchCommand) {
+                ifC.sqls += adaptor
+                ifC.ctxs += ctx
+                bc.push(ifC)
+              } else if (!ifC.shouldExecute && !isBranchCommand) {
+                bc.push(ifC)
+                // skip
+              }
+              else {
+                bc.push(ifC)
+                adaptor.parse(ctx)
+              }
             }
           case forC: ForContext =>
         }

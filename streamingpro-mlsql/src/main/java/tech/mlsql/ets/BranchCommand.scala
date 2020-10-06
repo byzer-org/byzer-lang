@@ -3,7 +3,7 @@ package tech.mlsql.ets
 import streaming.dsl.parser.DSLSQLParser.SqlContext
 import streaming.dsl.{IfContext, ScriptSQLExec}
 import tech.mlsql.dsl.adaptor.DslAdaptor
-import tech.mlsql.lang.cmd.compile.internal.gc.{Expression, Literal, Scanner, StatementParser, Tokenizer, Types}
+import tech.mlsql.lang.cmd.compile.internal.gc._
 
 import scala.collection.mutable
 
@@ -28,6 +28,7 @@ trait BranchCommand {
     ScriptSQLExec.context().execListener.branchContext.contexts.push(IfContext(
       new mutable.ArrayBuffer[DslAdaptor](),
       new mutable.ArrayBuffer[SqlContext](),
+      false,
       false,
       false
     ))

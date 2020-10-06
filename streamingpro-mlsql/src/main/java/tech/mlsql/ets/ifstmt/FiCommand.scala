@@ -17,7 +17,13 @@ class FiCommand(override val uid: String) extends SQLAlg with BranchCommand with
 
   override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
     val ifContext = branchContext.pop().asInstanceOf[IfContext]
-    ifContext.sqls.zipWithIndex.foreach { case(adaptor,index) =>
+
+    if (ifContext.skipAll) {
+      println(s"Skip FI :: ")
+      return emptyDF
+    }
+    println(s"FI ::")
+    ifContext.sqls.zipWithIndex.foreach { case (adaptor, index) =>
       adaptor.parse(ifContext.ctxs(index))
     }
     emptyDF
