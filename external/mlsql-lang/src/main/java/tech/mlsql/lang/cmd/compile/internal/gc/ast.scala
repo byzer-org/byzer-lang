@@ -571,15 +571,12 @@ class TreeNodeException[TreeType <: TreeNode[_]](
   }
 }
 
-case class ExprCode(var code: String)
-
-trait CodegenContext {
-  //def execute()
-}
+case class ExprCode(var code: String) 
 
 abstract class Expression extends TreeNode[Expression] {
-  def eval(input: Map[String,Any]): Any  = null
-  def genCode(ctx: CodegenContext): ExprCode = null
+  def eval(ctx: CodegenContext): Any
+
+  def genCode(ctx: CodegenContext): ExprCode
 
   lazy val resolved: Boolean = childrenResolved
 
@@ -621,54 +618,158 @@ trait NamedExpression extends Expression {}
 
 
 case class ParentGroup(expr: Expression) extends UnaryExpression {
+
+
   override def child: Expression = expr
 
   override def dataType: DataType = expr.dataType
+
+
+  override def eval(ctx: CodegenContext): Any = {
+    child.eval(ctx)
+  }
+
+  override def genCode(ctx: CodegenContext): ExprCode = {
+    ExprCode(s"""(${child.genCode(ctx).code})""")
+  }
 }
 
 case class Variable(name: String, dataType: Types.DataType) extends LeafExpression with NamedExpression {
+  override def eval(ctx: CodegenContext): Any = {
+    null
+  }
+
+  override def genCode(ctx: CodegenContext): ExprCode = {
+    ExprCode(name.split(":").last)
+  }
 }
 
 case class Literal(value: Any, dataType: Types.DataType) extends LeafExpression {
+  override def eval(ctx: CodegenContext): Any = {
+    dataType match {
+      case Types.Int => value.toString.toInt
+      case Types.Float => value.toString.toFloat
+      case Types.String => value.toString
+      case Types.Boolean => value.toString.toBoolean
+      case Types.Any => value
+    }
+  }
 
+  override def genCode(ctx: CodegenContext): ExprCode = {
+    ExprCode(value.toString)
+  }
 }
 
 case class Eql(left: Expression, right: Expression) extends BinaryComparison {
   override def dataType: DataType = Types.Boolean
+
+  override def eval(ctx: CodegenContext): Any = {
+    null
+  }
+
+  override def genCode(ctx: CodegenContext): ExprCode = {
+    ExprCode(s"""${left.genCode(ctx).code} == ${right.genCode(ctx).code}""")
+  }
 }
 
 case class As(left: Expression, right: Expression) extends BinaryComparison {
   override def dataType: DataType = Types.Any
+
+  override def eval(ctx: CodegenContext): Any = {
+     left match {
+       case a@Eql(_,_)=>
+     }
+  }
+
+  override def genCode(ctx: CodegenContext): ExprCode = {
+    ExprCode(s"""${right.genCode(ctx).code} as ${left.genCode(ctx).code}""")
+  }
 }
 
 case class Geq(left: Expression, right: Expression) extends BinaryComparison {
   override def dataType: DataType = Types.Boolean
+
+  override def eval(ctx: CodegenContext): Any = {
+    null
+  }
+
+  override def genCode(ctx: CodegenContext): ExprCode = {
+    ExprCode(s"""${left.genCode(ctx).code} >= ${right.genCode(ctx).code}""")
+  }
 }
 
 case class Add(left: Expression, right: Expression) extends BinaryComparison {
   override def dataType: DataType = Types.Float
+
+  override def eval(ctx: CodegenContext): Any = {
+    null
+  }
+
+  override def genCode(ctx: CodegenContext): ExprCode = {
+    ExprCode(s"""${left.genCode(ctx).code} + ${right.genCode(ctx).code}""")
+  }
 }
 
 case class Mul(left: Expression, right: Expression) extends BinaryComparison {
   override def dataType: DataType = Types.Float
+
+  override def eval(ctx: CodegenContext): Any = {
+    null
+  }
+
+  override def genCode(ctx: CodegenContext): ExprCode = {
+    ExprCode(s"""${left.genCode(ctx).code} * ${right.genCode(ctx).code}""")
+  }
 }
 
 case class AndAnd(left: Expression, right: Expression) extends BinaryOperator {
   override def dataType: DataType = Types.Boolean
+
+  override def eval(ctx: CodegenContext): Any = {
+    null
+  }
+
+  override def genCode(ctx: CodegenContext): ExprCode = {
+    ExprCode(s"""${left.genCode(ctx).code} and ${right.genCode(ctx).code}""")
+  }
 }
 
 case class OrOr(left: Expression, right: Expression) extends BinaryOperator {
   override def dataType: DataType = Types.Boolean
+
+  override def eval(ctx: CodegenContext): Any = {
+    null
+  }
+
+  override def genCode(ctx: CodegenContext): ExprCode = {
+    ExprCode(s"""${left.genCode(ctx).code} or ${right.genCode(ctx).code}""")
+  }
 }
 
-case class ArrayIndexer(left:Expression,right: Expression) extends BinaryOperator {
+case class ArrayIndexer(left: Expression, right: Expression) extends BinaryOperator {
   override def dataType: DataType = Types.Any
+
+  override def eval(ctx: CodegenContext): Any = {
+    null
+  }
+
+  override def genCode(ctx: CodegenContext): ExprCode = {
+    ExprCode(s"""${left.genCode(ctx).code}[${right.genCode(ctx).code}]""")
+  }
 }
 
 case class FuncCall(left: Literal, right: Seq[Expression]) extends Expression {
   override def dataType: DataType = Types.Any
-  
+
   override def children: Seq[Expression] = right
+
+  override def eval(ctx: CodegenContext): Any = {
+    null
+  }
+
+  override def genCode(ctx: CodegenContext): ExprCode = {
+    ExprCode(s"""${left.genCode(ctx).code}(${right.map(_.genCode(ctx).code).mkString(",")})""")
+  }
 }
 
 case class Select(items: Seq[As]) extends Expression {
@@ -679,6 +780,14 @@ case class Select(items: Seq[As]) extends Expression {
    * Children should not change. Immutability required for containsChild optimization
    */
   override def children: Seq[Expression] = items
+
+  override def eval(ctx: CodegenContext): Any = {
+    null
+  }
+
+  override def genCode(ctx: CodegenContext): ExprCode = {
+    ExprCode(s"""select ${items.map(_.genCode(ctx).code).mkString(",")}""")
+  }
 }
 
 

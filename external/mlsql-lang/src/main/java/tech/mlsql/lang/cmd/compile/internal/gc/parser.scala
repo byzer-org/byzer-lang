@@ -206,7 +206,9 @@ class StatementParser(tokenizer: Tokenizer) extends Parser(tokenizer) {
       return null
     }
     val parserOpt = Parser.getPrefixParser(token.t)
-    if (parserOpt.isEmpty) throw new ParserException(String.format("Cannot parse an expression that starts with \"%s\".", token))
+    if (parserOpt.isEmpty) {
+      throw new ParserException(String.format("Cannot parse an expression that starts with \"%s\".", token))
+    }
     val left = parserOpt.get.parse(this, token)
     left match {
       case ParentGroup(expr) =>

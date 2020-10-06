@@ -64,6 +64,12 @@ object CommandCollection {
     context.addEnv("plugin", """run command as PluginCommand.`` where parameters='''{:all}'''""")
     context.addEnv("runScript", """run command as RunScript.`` where parameters='''{:all}'''""")
 
+    context.addEnv("if", """run command as IfCommand.`` where parameters='''{:all}'''""")
+    context.addEnv("elif", """run command as ElifCommand.`` where parameters='''{:all}'''""")
+    context.addEnv("then", """run command as ThenCommand.`` where parameters='''{:all}'''""")
+    context.addEnv("else", """run command as ElseCommand.`` where parameters='''{:all}'''""")
+    context.addEnv("fi", """run command as FiCommand.`` where parameters='''{:all}'''""")
+
     context.addEnv("kafkaTool",
       """ run command as KafkaCommand.`kafka` where
         |parameters='''{:all}''' """.stripMargin)

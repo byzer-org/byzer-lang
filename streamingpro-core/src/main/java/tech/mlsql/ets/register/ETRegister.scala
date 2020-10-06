@@ -36,5 +36,11 @@ object ETRegister {
   wow("PluginCommand")
   wow("Ray")
   wow("RunScript")
+  
+  wow("IfCommand")
+  wow("ElseCommand")
+  wow("ThenCommand")
+  wow("FiCommand")
+  wow("ElseCommand")
 
 }

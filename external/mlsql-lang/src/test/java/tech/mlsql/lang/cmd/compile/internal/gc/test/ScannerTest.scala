@@ -1,7 +1,7 @@
 package tech.mlsql.lang.cmd.compile.internal.gc.test
 
 import org.scalatest.FunSuite
-import tech.mlsql.lang.cmd.compile.internal.gc.{Expression, Scanner, Select, StatementParser, Tokenizer, Variable}
+import tech.mlsql.lang.cmd.compile.internal.gc.{CodegenContext, Expression, Scanner, Select, StatementParser, Tokenizer, Variable}
 
 /**
  * 2/10/2020 WilliamZhu(allwefantasy@gmail.com)
@@ -89,21 +89,20 @@ class ScannerTest extends FunSuite {
 
   }
 
-  test("transformDown") {
-    val scanner = new Scanner("""select split(:a,",") as :jack,"" as :jack1; (:jack=="jack") and :bj>=24 """)
+  test("ast10") {
+    val scanner = new Scanner("""
+                                |select split(:a,",")[0] as :jack,"" as :jack1;
+                                |(:jack=="jack" and 1==1) and :bj>=24
+                                |""".stripMargin)
     val tokenizer = new Tokenizer(scanner)
+//    val items = Tokenizer.tokenize("""
+//                         |select split(:a,",")[0] as :jack,"" as :jack1;
+//                         |(:jack=="jack" and 1==1) and :bj>=24
+//                         |""".stripMargin)
+//    items.foreach(item=>println(item.text))
     val parser = new StatementParser(tokenizer)
-    val exprs = parser.parse()
-    exprs.foreach { item =>
-      item.collect[Expression]{
-        case a@Variable(name,_)=>
-          println(name)
-          a
-      }
-//      item.transformDown{
-//        case Select(items)=>items
-//
-//      }
-    }
+    println(parser.parse())
+
   }
+  
 }
