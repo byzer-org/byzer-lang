@@ -22,7 +22,9 @@ class IfCommand(override val uid: String) extends SQLAlg with BranchCommand with
     val command = args.mkString(" ")
     val conditionValue = evaluate(command)
     val ifContext = branchContext.pop()
-    val newIfContext = ifContext.asInstanceOf[IfContext].copy(shouldExecute = conditionValue)
+    val newIfContext = ifContext.asInstanceOf[IfContext].copy(
+      shouldExecute = conditionValue,
+      haveMatched = conditionValue)
     branchContext.push(newIfContext)
     emptyDF
 

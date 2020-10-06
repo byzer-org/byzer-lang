@@ -36,11 +36,12 @@ class SQLGenContext(session: SparkSession) extends CodegenContext {
       fields.zip(row).toMap
   }
   private def buildBaseTable(_values: Map[String, Any]) = {
-    val fields = _values.keys.map { key =>
+    val fields = _values.keys.toList.map { key =>
       StructField(key, StringType)
     }
     val schema = StructType(fields.toSeq)
-    val row = Row.fromSeq(fields.map(item => _values(item.name)).toSeq)
+    val rowItems = fields.map(item => _values(item.name))
+    val row = Row.fromSeq(rowItems)
     session.createDataFrame(session.sparkContext.makeRDD(Seq(row)), schema)
   }
 

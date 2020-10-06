@@ -3,7 +3,7 @@ package tech.mlsql.ets
 import streaming.dsl.parser.DSLSQLParser.SqlContext
 import streaming.dsl.{IfContext, ScriptSQLExec}
 import tech.mlsql.dsl.adaptor.DslAdaptor
-import tech.mlsql.lang.cmd.compile.internal.gc.{Expression, Scanner, StatementParser, Tokenizer}
+import tech.mlsql.lang.cmd.compile.internal.gc.{Expression, Literal, Scanner, StatementParser, Tokenizer, Types}
 
 import scala.collection.mutable
 
@@ -43,6 +43,9 @@ trait BranchCommand {
     val exprs = parser.parse()
     val sQLGenContext = new SQLGenContext(session)
     val item = sQLGenContext.execute(exprs.map(_.asInstanceOf[Expression]), baseInput.toMap)
-    item.asInstanceOf[Boolean]
+    val lit = item.asInstanceOf[Literal]
+    lit.dataType match {
+      case Types.Boolean => lit.value.toString.toBoolean
+    }
   }
 }

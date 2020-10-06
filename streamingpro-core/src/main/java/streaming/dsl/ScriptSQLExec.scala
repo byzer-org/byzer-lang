@@ -164,7 +164,7 @@ trait BranchContext
 
 case class IfContext(sqls: mutable.ArrayBuffer[DslAdaptor],
                      ctxs: mutable.ArrayBuffer[SqlContext],
-                     shouldExecute: Boolean,haveMatched:Boolean) extends BranchContext
+                     shouldExecute: Boolean, haveMatched: Boolean) extends BranchContext
 
 case class ForContext() extends BranchContext
 
@@ -303,16 +303,31 @@ class ScriptSQLExecListener(val _sparkSession: SparkSession, val _defaultPathPre
       val bc = branchContext.contexts
       if (!bc.isEmpty) {
         bc.pop() match {
-          case ifC:IfContext =>
-            if(ifC.shouldExecute){
+          case ifC: IfContext =>
+            val isBranchCommand = adaptor match {
+              case a: TrainAdaptor =>
+                val TrainStatement(_, _, format, _, _, _) = a.analyze(ctx)
+                val isBranchCommand = (format == "IfCommand"
+                  || format == "ElseCommand"
+                  || format == "ElifCommand"
+                  || format == "FiCommand"
+                  || format == "ThenCommand")
+                isBranchCommand
+              case _ => false
+            }
+
+            if (ifC.shouldExecute && !isBranchCommand) {
               ifC.sqls += adaptor
               ifC.ctxs += ctx
               bc.push(ifC)
-            }else {
+            } else {
+              bc.push(ifC)
               adaptor.parse(ctx)
             }
-          case forC:ForContext =>
+          case forC: ForContext =>
         }
+      } else {
+        adaptor.parse(ctx)
       }
     }
 

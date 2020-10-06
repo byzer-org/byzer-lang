@@ -17,13 +17,6 @@ class ThenCommand (override val uid: String) extends SQLAlg with BranchCommand w
   def this() = this(BaseParams.randomUID())
 
   override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
-    ifContextInit
-    val args = JSONTool.parseJson[List[String]](params("parameters"))
-    val command = args.mkString(" ")
-    val conditionValue = evaluate(command)
-    val ifContext = branchContext.pop()
-    val newIfContext = ifContext.asInstanceOf[IfContext].copy(shouldExecute = conditionValue,haveMatched = false)
-    branchContext.push(newIfContext)
     emptyDF
 
   }
