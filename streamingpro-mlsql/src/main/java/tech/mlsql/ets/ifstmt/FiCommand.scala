@@ -24,6 +24,7 @@ class FiCommand(override val uid: String) extends SQLAlg with BranchCommand with
     }
     println(s"FI ::")
     ifContext.sqls.zipWithIndex.foreach { case (adaptor, index) =>
+      println(s"execute: ${ifContext.ctxs(index).getText}")
       adaptor.parse(ifContext.ctxs(index))
     }
     emptyDF
