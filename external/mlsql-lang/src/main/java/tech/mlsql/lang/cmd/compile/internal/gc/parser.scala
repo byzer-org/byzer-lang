@@ -146,7 +146,6 @@ class StatementParser(tokenizer: Tokenizer) extends Parser(tokenizer) {
       return parseStatement()
     if (_match(Scanner._SELECT))
       return parseSelect()
-    if (matchFuncCall) return parseFuncCall()
     parseExpression()
   }
 
@@ -158,6 +157,27 @@ class StatementParser(tokenizer: Tokenizer) extends Parser(tokenizer) {
     exprs.toList
   }
 
+  def matchCast: Boolean = {
+    lookAhead(0).t == Scanner.Ident &&
+      lookAhead(0).text.toLowerCase() == "cast" &&
+      lookAhead(1).t == Scanner.Lparen
+  }
+
+  // cast(:a as float)
+  def parseCast: Expression = {
+    val funcName = consume
+    // consume Lparent
+    consume
+    val left = parseStatement().asInstanceOf[Expression]
+    // consume as
+    consume
+    val t = consume
+    val right = Literal(t.text, Types.String)
+    // consume Rparent
+    consume // (
+    Cast(left, right)
+  }
+
   def matchFuncCall = {
     lookAhead(0).t == Scanner.Ident && lookAhead(1).t == Scanner.Lparen
   }
@@ -167,6 +187,9 @@ class StatementParser(tokenizer: Tokenizer) extends Parser(tokenizer) {
    */
   def parseFuncCall(): Expression = {
 
+
+    val funcName = consume
+
     def parseFuncParams: Seq[Expression] = {
       var exprs = new ArrayBuffer[Expression]()
       exprs += parseStatement().asInstanceOf[Expression]
@@ -175,8 +198,6 @@ class StatementParser(tokenizer: Tokenizer) extends Parser(tokenizer) {
       }
       exprs
     }
-
-    val funcName = consume
     // consume Lparent
     consume
 
@@ -201,15 +222,23 @@ class StatementParser(tokenizer: Tokenizer) extends Parser(tokenizer) {
   }
 
   def parsePrecedence(precedence: Int): Expression = {
-    val token = consume
-    if (token.t == Scanner.EOF) {
-      return null
+
+    val left = if (matchCast) {
+      parseCast
+    } else if (matchFuncCall) {
+      parseFuncCall()
+    } else {
+      val token = consume
+      if (token.t == Scanner.EOF) {
+        return null
+      }
+      val parserOpt = Parser.getPrefixParser(token.t)
+      if (parserOpt.isEmpty) {
+        throw new ParserException(String.format("Cannot parse an expression that starts with \"%s\".", token))
+      }
+      parserOpt.get.parse(this, token)
     }
-    val parserOpt = Parser.getPrefixParser(token.t)
-    if (parserOpt.isEmpty) {
-      throw new ParserException(String.format("Cannot parse an expression that starts with \"%s\".", token))
-    }
-    val left = parserOpt.get.parse(this, token)
+
     left match {
       case ParentGroup(expr) =>
         if (lookAheadAny(Scanner.AndAnd, Scanner._And)) {
@@ -247,7 +276,13 @@ class StatementParser(tokenizer: Tokenizer) extends Parser(tokenizer) {
 
   def parseSelect(): Select = {
     def parseAssign(): As = {
-      val leftExpr = parseStatement()
+      val leftExpr = if (matchCast) {
+        parseCast
+      } else if (matchFuncCall) {
+        parseFuncCall()
+      } else {
+        parseStatement()
+      }
       if (_match(Scanner._As)) {
         val variable = parseStatement()
         return As(variable.asInstanceOf[Expression], leftExpr.asInstanceOf[Expression])
@@ -262,6 +297,7 @@ class StatementParser(tokenizer: Tokenizer) extends Parser(tokenizer) {
     }
     Select(exprs.toList)
   }
+
 }
 
 trait PrefixParser {
@@ -338,12 +374,28 @@ class InfixOperatorParser(mPrecedence: Int) extends InfixParser {
     token.t match {
       case Scanner.Eql =>
         Eql(left, value)
+      case Scanner.Neq =>
+        Neq(left, value)
       case Scanner.Add =>
         Add(left, value)
       case Scanner.Mul =>
         Mul(left, value)
+      case Scanner.Sub =>
+        Sub(left, value)
+      case Scanner.Div =>
+        Div(left, value)
+      case Scanner.Rem =>
+        Rem(left, value)
+      case Scanner.Mul =>
+        Mul(left, value)
       case Scanner.Geq =>
         Geq(left, value)
+      case Scanner.Gtr =>
+        Gtr(left, value)
+      case Scanner.Lss =>
+        Lss(left, value)
+      case Scanner.Leq =>
+        Leq(left, value)
 
     }
 

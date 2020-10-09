@@ -672,17 +672,15 @@ case class Eql(left: Expression, right: Expression) extends BinaryComparison {
   }
 }
 
-case class As(left: Expression, right: Expression) extends BinaryComparison {
-  override def dataType: DataType = Types.Any
+case class Neq(left: Expression, right: Expression) extends BinaryComparison {
+  override def dataType: DataType = Types.Boolean
 
   override def eval(ctx: CodegenContext): Any = {
-     left match {
-       case a@Eql(_,_)=>
-     }
+    null
   }
 
   override def genCode(ctx: CodegenContext): ExprCode = {
-    ExprCode(s"""${right.genCode(ctx).code} as ${left.genCode(ctx).code}""")
+    ExprCode(s"""${left.genCode(ctx).code} != ${right.genCode(ctx).code}""")
   }
 }
 
@@ -697,6 +695,58 @@ case class Geq(left: Expression, right: Expression) extends BinaryComparison {
     ExprCode(s"""${left.genCode(ctx).code} >= ${right.genCode(ctx).code}""")
   }
 }
+
+case class Gtr(left: Expression, right: Expression) extends BinaryComparison {
+  override def dataType: DataType = Types.Boolean
+
+  override def eval(ctx: CodegenContext): Any = {
+    null
+  }
+
+  override def genCode(ctx: CodegenContext): ExprCode = {
+    ExprCode(s"""${left.genCode(ctx).code} > ${right.genCode(ctx).code}""")
+  }
+}
+
+case class Lss(left: Expression, right: Expression) extends BinaryComparison {
+  override def dataType: DataType = Types.Boolean
+
+  override def eval(ctx: CodegenContext): Any = {
+    null
+  }
+
+  override def genCode(ctx: CodegenContext): ExprCode = {
+    ExprCode(s"""${left.genCode(ctx).code} < ${right.genCode(ctx).code}""")
+  }
+}
+
+case class Leq(left: Expression, right: Expression) extends BinaryComparison {
+  override def dataType: DataType = Types.Boolean
+
+  override def eval(ctx: CodegenContext): Any = {
+    null
+  }
+
+  override def genCode(ctx: CodegenContext): ExprCode = {
+    ExprCode(s"""${left.genCode(ctx).code} <= ${right.genCode(ctx).code}""")
+  }
+}
+
+case class As(left: Expression, right: Expression) extends BinaryComparison {
+  override def dataType: DataType = Types.Any
+
+  override def eval(ctx: CodegenContext): Any = {
+     left match {
+       case a@Eql(_,_)=>
+     }
+  }
+
+  override def genCode(ctx: CodegenContext): ExprCode = {
+    ExprCode(s"""${right.genCode(ctx).code} as ${left.genCode(ctx).code}""")
+  }
+}
+
+
 
 case class Add(left: Expression, right: Expression) extends BinaryComparison {
   override def dataType: DataType = Types.Float
@@ -719,6 +769,54 @@ case class Mul(left: Expression, right: Expression) extends BinaryComparison {
 
   override def genCode(ctx: CodegenContext): ExprCode = {
     ExprCode(s"""${left.genCode(ctx).code} * ${right.genCode(ctx).code}""")
+  }
+}
+
+case class Div(left: Expression, right: Expression) extends BinaryComparison {
+  override def dataType: DataType = Types.Float
+
+  override def eval(ctx: CodegenContext): Any = {
+    null
+  }
+
+  override def genCode(ctx: CodegenContext): ExprCode = {
+    ExprCode(s"""${left.genCode(ctx).code} / ${right.genCode(ctx).code}""")
+  }
+}
+
+case class Rem(left: Expression, right: Expression) extends BinaryComparison {
+  override def dataType: DataType = Types.Float
+
+  override def eval(ctx: CodegenContext): Any = {
+    null
+  }
+
+  override def genCode(ctx: CodegenContext): ExprCode = {
+    ExprCode(s"""${left.genCode(ctx).code} % ${right.genCode(ctx).code}""")
+  }
+}
+
+case class Sub(left: Expression, right: Expression) extends BinaryComparison {
+  override def dataType: DataType = Types.Float
+
+  override def eval(ctx: CodegenContext): Any = {
+    null
+  }
+
+  override def genCode(ctx: CodegenContext): ExprCode = {
+    ExprCode(s"""${left.genCode(ctx).code} - ${right.genCode(ctx).code}""")
+  }
+}
+
+case class Cast(left: Expression, right: Expression) extends BinaryComparison {
+  override def dataType: DataType = Types.Float
+
+  override def eval(ctx: CodegenContext): Any = {
+    null
+  }
+
+  override def genCode(ctx: CodegenContext): ExprCode = {
+    ExprCode(s"""cast(${left.genCode(ctx).code} as ${right.genCode(ctx).code})""")
   }
 }
 

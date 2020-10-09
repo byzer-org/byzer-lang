@@ -128,4 +128,26 @@ class ScannerTest extends FunSuite {
 
   }
 
+  test("ast11") {
+    val scanner = new Scanner(
+      """
+        |select cast(:a as int) as :jack;
+        |""".stripMargin)
+    val tokenizer = new Tokenizer(scanner)
+    val parser = new StatementParser(tokenizer)
+    println(parser.parse())
+
+  }
+
+  test("ast12") {
+    val scanner = new Scanner(
+      """
+        |split(:a,",")[0] == "jack"
+        |""".stripMargin)
+    val tokenizer = new Tokenizer(scanner)
+    val parser = new StatementParser(tokenizer)
+    println(parser.parse())
+
+  }
+
 }

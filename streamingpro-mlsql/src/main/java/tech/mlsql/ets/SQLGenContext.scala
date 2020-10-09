@@ -2,7 +2,7 @@ package tech.mlsql.ets
 
 import java.util.UUID
 
-import org.apache.spark.sql.types.{StringType, StructField, StructType}
+import org.apache.spark.sql.types.{DataType, StringType, StructField, StructType}
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import tech.mlsql.lang.cmd.compile.internal.gc._
 
@@ -24,20 +24,24 @@ class SQLGenContext(session: SparkSession) extends CodegenContext {
   private def executeAssignComputeInRuntime(code: String, table: String): Unit = {
     val newTable = session.sql(s"""${code} from ${table}""")
     val originTable = session.table(table)
-
-    val rowMap = rowToMap(originTable) ++ rowToMap(newTable)
-    val newDf = buildBaseTable(rowMap)
+    val (oDataMap, oSchemaMap) = rowToMap(originTable)
+    val (nDataMap, nSchemaMap) = rowToMap(newTable)
+    val rowMap = oDataMap ++ nDataMap
+    val rowSchemaMap = oSchemaMap ++ nSchemaMap
+    val newDf = buildBaseTable(rowMap, rowSchemaMap)
     newDf.createOrReplaceTempView(table)
   }
 
-  private def  rowToMap(df:DataFrame) = {
-      val row = df.collect().head.toSeq
-      val fields = df.schema.map(_.name).toSeq
-      fields.zip(row).toMap
+  private def rowToMap(df: DataFrame) = {
+    val row = df.collect().head.toSeq
+    val fields = df.schema.map(_.name).toSeq
+    val schema = df.schema.map(_.dataType).toSeq
+    (fields.zip(row).toMap, fields.zip(schema).toMap)
   }
-  private def buildBaseTable(_values: Map[String, Any]) = {
+
+  private def buildBaseTable(_values: Map[String, Any], rowSchemaMap: Map[String, DataType] = Map()) = {
     val fields = _values.keys.toList.map { key =>
-      StructField(key, StringType)
+      StructField(key, rowSchemaMap.getOrElse(key, StringType))
     }
     val schema = StructType(fields.toSeq)
     val rowItems = fields.map(item => _values(item.name))
@@ -67,7 +71,7 @@ class SQLGenContext(session: SparkSession) extends CodegenContext {
           }
           res
 
-        case  _ =>
+        case _ =>
           val item = executeSingleComputeInRuntime(expr.genCode(this).code, uuid).asInstanceOf[Boolean]
           Literal(item, Types.Boolean)
       }
