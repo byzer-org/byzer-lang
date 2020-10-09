@@ -34,7 +34,7 @@ class FiCommand(override val uid: String) extends SQLAlg with BranchCommand with
       adaptor.parse(ifContext.ctxs(index))
     }
     if(branchContext.isEmpty){
-     logInfo("\n"+format( getTraces.mkString("\n")))
+     logInfo(format( "\n"+getTraces.mkString("\n")))
     }
     emptyDF
   }
