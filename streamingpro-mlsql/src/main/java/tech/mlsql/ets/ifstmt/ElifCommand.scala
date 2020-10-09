@@ -21,7 +21,9 @@ class ElifCommand(override val uid: String) extends SQLAlg with BranchCommand wi
     if (ifContext.skipAll) {
       branchContext.push(ifContext)
 
-      println(s"Skip Elif :: ${params}")
+      if(traceBC){
+        pushTrace(s"Skip Elif :: ${params}")
+      }
       
       return emptyDF
     }
@@ -35,7 +37,9 @@ class ElifCommand(override val uid: String) extends SQLAlg with BranchCommand wi
     val args = JSONTool.parseJson[List[String]](params("parameters"))
     val command = args.mkString(" ")
     val conditionValue = evaluate(command)
-    println(s"Elif :: ${conditionValue} :: ${command}")
+    if(traceBC){
+      pushTrace(s"Elif :: ${params} :: ${conditionValue}")
+    }
     val newIfContext = ifContext.asInstanceOf[IfContext].copy(shouldExecute = conditionValue, haveMatched = conditionValue)
     branchContext.push(newIfContext)
     emptyDF

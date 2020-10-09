@@ -19,13 +19,22 @@ class FiCommand(override val uid: String) extends SQLAlg with BranchCommand with
     val ifContext = branchContext.pop().asInstanceOf[IfContext]
 
     if (ifContext.skipAll) {
-      println(s"Skip FI :: ")
+      if(traceBC){
+        pushTrace(s"Skip Fi :: ${params}")
+      }
       return emptyDF
     }
-    println(s"FI ::")
+    if(traceBC){
+      pushTrace(s"Fi :: ${params}")
+    }
     ifContext.sqls.zipWithIndex.foreach { case (adaptor, index) =>
-      println(s"execute: ${ifContext.ctxs(index).getText}")
+      if(traceBC){
+        pushTrace(s"Final execute :: ${str(ifContext.ctxs(index))}")
+      }
       adaptor.parse(ifContext.ctxs(index))
+    }
+    if(branchContext.isEmpty){
+     logInfo("\n"+format( getTraces.mkString("\n")))
     }
     emptyDF
   }

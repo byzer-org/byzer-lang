@@ -158,7 +158,7 @@ object ScriptSQLExec extends Logging with WowLog {
   }
 }
 
-case class BranchContextHolder(contexts: mutable.Stack[BranchContext])
+case class BranchContextHolder(contexts: mutable.Stack[BranchContext],traces:ArrayBuffer[String])
 
 trait BranchContext
 
@@ -171,9 +171,9 @@ case class IfContext(sqls: mutable.ArrayBuffer[DslAdaptor],
 case class ForContext() extends BranchContext
 
 
-class ScriptSQLExecListener(val _sparkSession: SparkSession, val _defaultPathPrefix: String, val _allPathPrefix: Map[String, String]) extends BaseParseListener {
+class ScriptSQLExecListener(val _sparkSession: SparkSession, val _defaultPathPrefix: String, val _allPathPrefix: Map[String, String]) extends BaseParseListener with Logging with WowLog {
 
-  private val _branchContext = BranchContextHolder(new mutable.Stack[BranchContext]())
+  private val _branchContext = BranchContextHolder(new mutable.Stack[BranchContext](),new ArrayBuffer[String]())
 
   private val _env = new scala.collection.mutable.HashMap[String, String]
 
@@ -300,7 +300,20 @@ class ScriptSQLExecListener(val _sparkSession: SparkSession, val _defaultPathPre
       _jobListeners.foreach(_.after(clzz, getText))
     }
 
+    def traceBC = {
+      ScriptSQLExec.context().execListener.env().getOrElse("__debug__","false").toBoolean
+    }
 
+    def str(ctx:SqlContext)  = {
+
+      val input = ctx.start.getTokenSource().asInstanceOf[DSLSQLLexer]._input
+
+      val start = ctx.start.getStartIndex()
+      val stop = ctx.stop.getStopIndex()
+      val interval = new Interval(start, stop)
+      input.getText(interval)
+    }
+    
     def execute(adaptor: DslAdaptor) = {
       val bc = branchContext.contexts
       if (!bc.isEmpty) {
@@ -317,7 +330,7 @@ class ScriptSQLExecListener(val _sparkSession: SparkSession, val _defaultPathPre
                 isBranchCommand
               case _ => false
             }
-            println(s"Adaptor ${adaptor} shouldExecute ${ifC.shouldExecute} isBranchCommand:${isBranchCommand}")
+            
             if (ifC.skipAll) {
               bc.push(ifC)
               if(isBranchCommand){
@@ -340,6 +353,9 @@ class ScriptSQLExecListener(val _sparkSession: SparkSession, val _defaultPathPre
           case forC: ForContext =>
         }
       } else {
+        if(traceBC) {
+          logInfo(format(s"SQL:: ${str(ctx)}"))
+        }
         adaptor.parse(ctx)
       }
     }

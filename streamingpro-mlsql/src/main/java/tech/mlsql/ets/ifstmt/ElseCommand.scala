@@ -22,10 +22,16 @@ class ElseCommand (override val uid: String) extends SQLAlg with BranchCommand w
 
     if (ifContext.skipAll) {
       branchContext.push(ifContext)
-      println(s"Skip Else :: ")
+      if(traceBC){
+        pushTrace(s"Skip Else :: ${params}")
+      }
       return emptyDF
     }
-    println(s"Else ::")
+    
+    if(traceBC){
+      pushTrace(s"Else :: ${params} :: ${!ifContext.haveMatched}")
+    }
+
     if (ifContext.haveMatched) {
       val newIfContext = ifContext.copy(shouldExecute = false)
       branchContext.push(newIfContext)

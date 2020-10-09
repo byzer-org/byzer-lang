@@ -31,16 +31,22 @@ class IfCommand(override val uid: String) extends SQLAlg with BranchCommand with
     if (skipThisIf) {
       val newIfContext = branchContext.pop().asInstanceOf[IfContext]
       branchContext.push(newIfContext.copy(skipAll = true))
-      
-      println(s"Skip If :: ${params}")
+
+      if(traceBC){
+        pushTrace(s"Skip If :: ${params}")
+      }
+
       return emptyDF
 
     }
     val args = JSONTool.parseJson[List[String]](params("parameters"))
     val command = args.mkString(" ")
     val conditionValue = evaluate(command)
-    println(s"If :: ${conditionValue} :: ${command}")
+    
     val ifContext = branchContext.pop()
+    if(traceBC){
+      pushTrace(s"If :: ${params} :: ${conditionValue}")
+    }
     val newIfContext = ifContext.asInstanceOf[IfContext].copy(
       shouldExecute = conditionValue,
       haveMatched = conditionValue)
