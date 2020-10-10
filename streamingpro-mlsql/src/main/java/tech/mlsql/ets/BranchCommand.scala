@@ -1,6 +1,7 @@
 package tech.mlsql.ets
 
 import org.antlr.v4.runtime.misc.Interval
+import org.apache.spark.sql.mlsql.session.MLSQLException
 import streaming.dsl.parser.DSLSQLLexer
 import streaming.dsl.parser.DSLSQLParser.SqlContext
 import streaming.dsl.{IfContext, ScriptSQLExec}
@@ -14,7 +15,7 @@ import scala.collection.mutable
  */
 trait BranchCommand {
 
-  def str(ctx:SqlContext)  = {
+  def str(ctx: SqlContext) = {
 
     val input = ctx.start.getTokenSource().asInstanceOf[DSLSQLLexer]._input
 
@@ -23,14 +24,15 @@ trait BranchCommand {
     val interval = new Interval(start, stop)
     input.getText(interval)
   }
+
   def indent = {
     val n = ScriptSQLExec.context().execListener.branchContext.contexts.size
     " " * n
   }
 
-  def pushTrace(s:String):Unit = {
-      val newstr =  indent + s
-      ScriptSQLExec.context().execListener.branchContext.traces.append(newstr)
+  def pushTrace(s: String): Unit = {
+    val newstr = indent + s
+    ScriptSQLExec.context().execListener.branchContext.traces.append(newstr)
   }
 
   def getTraces = {
@@ -38,7 +40,7 @@ trait BranchCommand {
   }
 
   def traceBC = {
-    ScriptSQLExec.context().execListener.env().getOrElse("__debug__","false").toBoolean
+    ScriptSQLExec.context().execListener.env().getOrElse("__debug__", "false").toBoolean
   }
 
   def branchContext = {
@@ -64,13 +66,20 @@ trait BranchCommand {
     this
   }
 
-  def evaluate(str: String) = {
+  def evaluate(str: String, options: Map[String, String] = Map()) = {
     val baseInput = ScriptSQLExec.context().execListener.env()
     val session = ScriptSQLExec.context().execListener.sparkSession
     val scanner = new Scanner(str)
     val tokenizer = new Tokenizer(scanner)
     val parser = new StatementParser(tokenizer)
-    val exprs = parser.parse()
+    val exprs = try {
+      parser.parse()
+    } catch {
+      case e: ParserException =>
+        throw new MLSQLException(s"Error in Line:${options.getOrElse("__LINE__", "-1")} ${e.getMessage}")
+      case e:Exception => throw e
+
+    }
     val sQLGenContext = new SQLGenContext(session)
     val item = sQLGenContext.execute(exprs.map(_.asInstanceOf[Expression]), baseInput.toMap)
     val lit = item.asInstanceOf[Literal]

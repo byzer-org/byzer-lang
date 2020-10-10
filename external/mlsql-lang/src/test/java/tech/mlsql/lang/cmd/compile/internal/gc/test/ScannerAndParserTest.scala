@@ -3,10 +3,12 @@ package tech.mlsql.lang.cmd.compile.internal.gc.test
 import org.scalatest.FunSuite
 import tech.mlsql.lang.cmd.compile.internal.gc._
 
+import scala.collection.mutable.ArrayBuffer
+
 /**
  * 2/10/2020 WilliamZhu(allwefantasy@gmail.com)
  */
-class ScannerTest extends FunSuite {
+class ScannerAndParserTest extends FunSuite {
 
   def want(items: List[Token], index: Int, t: Scanner.TokenType, str: String) = {
     assert(items(index).t == t && items(index).text == str)
@@ -74,7 +76,7 @@ class ScannerTest extends FunSuite {
     val tokenizer = new Tokenizer(scanner)
     val parser = new StatementParser(tokenizer)
     val ast = parser.parse().asInstanceOf[List[Expression]]
-    assert(ast.toString == List(Eql(Variable(":dj",Types.Any),Literal("\"\"",Types.String)),AndAnd(
+    assert(ast.toString == List(Eql(Variable(":dj", Types.Any), Literal("\"\"", Types.String)), AndAnd(
       Eql(Variable(":jack", Types.Any), Literal("\"jack\"", Types.String)),
       Geq(Variable(":bj", Types.Any), Literal(24, Types.Int)))).toString)
 
@@ -84,22 +86,33 @@ class ScannerTest extends FunSuite {
     val scanner = new Scanner("""select split(:a,",") as :jack; (:jack=="jack") and :bj>=24 """)
     val tokenizer = new Tokenizer(scanner)
     val parser = new StatementParser(tokenizer)
-    println(parser.parse())
+    val ast = parser.parse()
+    assert(ast.toString() == List(
+      Select(
+        List(As(
+          Variable(":jack", Types.Any),
+          FuncCall(Literal("split", Types.String), ArrayBuffer(Variable(":a", Types.Any), Literal("\",\"", Types.String)))
+        ))),
+      AndAnd(Eql(Variable(":jack", Types.Any),
+        Literal("\"jack\"", Types.String)),
+        Geq(Variable(":bj", Types.Any), Literal(24, Types.Int)))).toString())
 
   }
-  test("ast7") {
-    val scanner = new Scanner("""select split(:a,",") as :jack,"" as :jack1; (:jack=="jack") and :bj>=24 """)
-    val tokenizer = new Tokenizer(scanner)
-    val parser = new StatementParser(tokenizer)
-    println(parser.parse())
 
-  }
 
   test("ast8") {
     val scanner = new Scanner("""select split(:a,",")[0] as :jack """)
     val tokenizer = new Tokenizer(scanner)
     val parser = new StatementParser(tokenizer)
-    println(parser.parse())
+    val ast = parser.parse()
+    assert(ast.toString() == List(
+      Select(
+        List(As(
+          Variable(":jack", Types.Any),
+          ArrayIndexer(FuncCall(Literal("split", Types.String), ArrayBuffer(Variable(":a", Types.Any), Literal("\",\"", Types.String))), Literal(0, Types.Int))
+        ))
+      )
+    ).toString())
 
   }
 
@@ -107,7 +120,11 @@ class ScannerTest extends FunSuite {
     val scanner = new Scanner("""select :table[0] as :jack """)
     val tokenizer = new Tokenizer(scanner)
     val parser = new StatementParser(tokenizer)
-    println(parser.parse())
+    val ast = parser.parse()
+    assert(ast.toString() == List(
+      Select(List(As(Variable(":jack", Types.Any), ArrayIndexer(Variable(":table", Types.Any), Literal(0, Types.Int)))))
+    ).toString()
+    )
 
   }
 
@@ -118,13 +135,21 @@ class ScannerTest extends FunSuite {
         |(:jack=="jack" and 1==1) and :bj>=24
         |""".stripMargin)
     val tokenizer = new Tokenizer(scanner)
-    //    val items = Tokenizer.tokenize("""
-    //                         |select split(:a,",")[0] as :jack,"" as :jack1;
-    //                         |(:jack=="jack" and 1==1) and :bj>=24
-    //                         |""".stripMargin)
-    //    items.foreach(item=>println(item.text))
     val parser = new StatementParser(tokenizer)
-    println(parser.parse())
+    val ast = parser.parse()
+    assert(
+      ast.toString() == List(
+        Select(List(
+          As(Variable(":jack", Types.Any),
+            ArrayIndexer(FuncCall(Literal("split", Types.String), ArrayBuffer(Variable(":a", Types.Any),
+              Literal("\",\"", Types.String))), Literal(0, Types.Int))),
+          As(Variable(":jack1", Types.Any), Literal("\"\"", Types.String)))),
+        AndAnd(
+          AndAnd(
+            Eql(Variable(":jack", Types.Any), Literal("\"jack\"", Types.String)),
+            Eql(Literal(1, Types.Int), Literal(1, Types.Int))),
+          Geq(Variable(":bj", Types.Any), Literal(24, Types.Int)))).toString()
+    )
 
   }
 
@@ -135,7 +160,15 @@ class ScannerTest extends FunSuite {
         |""".stripMargin)
     val tokenizer = new Tokenizer(scanner)
     val parser = new StatementParser(tokenizer)
-    println(parser.parse())
+    val ast = parser.parse()
+    assert(ast.toString() ==
+      List(
+        Select(List(
+          As(
+            Variable(":jack", Types.Any),
+            Cast(Variable(":a", Types.Any), Literal("int", Types.String)))
+        ))).toString()
+    )
 
   }
 
@@ -146,8 +179,42 @@ class ScannerTest extends FunSuite {
         |""".stripMargin)
     val tokenizer = new Tokenizer(scanner)
     val parser = new StatementParser(tokenizer)
-    println(parser.parse())
+    val ast = parser.parse()
+    assert(ast.toString() ==
+      List(Eql(
+        ArrayIndexer(
+          FuncCall(Literal("split", Types.String), ArrayBuffer(Variable(":a", Types.Any), Literal("\",\"", Types.String))), Literal(0, Types.Int)),
+        Literal("\"jack\"", Types.String))
+      ).toString()
+    )
 
+  }
+
+  def buildParser(str: String) = {
+    val scanner = new Scanner(str)
+    val tokenizer = new Tokenizer(scanner)
+    val parser = new StatementParser(tokenizer)
+    parser
+  }
+
+  test("ast13") {
+    val parser = buildParser(
+      """
+        |split(:a,",")[0] = "jack"
+        |""".stripMargin)
+    val thrown = intercept[ParserException] {
+      parser.parse()
+    }
+    assert(thrown.getMessage == "Error[2:18]: operator is required instead of '=' ")
+  }
+
+  test("ast14") {
+    val parser = buildParser(
+      " split(:a,\",)[0] = \"jack\" ")
+    val thrown = intercept[ParserException] {
+      parser.parse()
+    }
+    assert(thrown.getMessage == "Error[3:0]: literal not terminated")
   }
 
 }

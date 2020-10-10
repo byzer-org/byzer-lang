@@ -178,7 +178,7 @@ class Scanner(src: String) {
   }
 
   private def error(msg: String) = {
-    println(s"error: ${msg}")
+    throw new ParserException(s"Error[${line}:${column}]: ${msg}")
   }
 
   private def scanNumber(_ch: Char, _seenDot: Boolean): (Scanner.TokenType, Char) = {
@@ -428,9 +428,9 @@ class Scanner(src: String) {
   }
 
   def tokenString(): String = {
-//    val lastPos = if (lastTokenPos == 0) {
-//      0
-//    } else lastTokenPos + 1
+    //    val lastPos = if (lastTokenPos == 0) {
+    //      0
+    //    } else lastTokenPos + 1
     val lastPos = lastTokenPos + 1
     (lastPos to srcPos).map(src(_)).mkString("")
 
@@ -443,9 +443,9 @@ object Tokenizer {
     val scanner = new Scanner(str)
     scanner.scan
     while (scanner.aheadChar != Scanner.EOF_INT) {
-//      val lastPos = if (scanner.lastTokenPos == 0) {
-//        0
-//      } else scanner.lastTokenPos + 1
+      //      val lastPos = if (scanner.lastTokenPos == 0) {
+      //        0
+      //      } else scanner.lastTokenPos + 1
       val lastPos = scanner.lastTokenPos + 1
       tokens.append(Token(scanner.tok, lastPos, scanner.srcPos, scanner.line, scanner.column, scanner))
       scanner.scan

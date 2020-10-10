@@ -396,6 +396,7 @@ class InfixOperatorParser(mPrecedence: Int) extends InfixParser {
         Lss(left, value)
       case Scanner.Leq =>
         Leq(left, value)
+      case _ => throw new ParserException(s"Error[${token.line}:${token.column}]: operator is required instead of '${token.text}' ")
 
     }
 

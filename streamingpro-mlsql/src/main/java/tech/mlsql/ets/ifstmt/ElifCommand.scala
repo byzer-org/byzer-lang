@@ -36,7 +36,7 @@ class ElifCommand(override val uid: String) extends SQLAlg with BranchCommand wi
 
     val args = JSONTool.parseJson[List[String]](params("parameters"))
     val command = args.mkString(" ")
-    val conditionValue = evaluate(command)
+    val conditionValue = evaluate(command,params)
     if(traceBC){
       pushTrace(s"Elif :: ${params} :: ${conditionValue}")
     }
