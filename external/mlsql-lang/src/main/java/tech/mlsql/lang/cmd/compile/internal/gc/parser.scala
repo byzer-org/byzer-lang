@@ -200,6 +200,9 @@ class StatementParser(tokenizer: Tokenizer) extends Parser(tokenizer) {
 
     def parseFuncParams: Seq[Expression] = {
       var exprs = new ArrayBuffer[Expression]()
+      if (lookAhead(Scanner.Rparen)) {
+        return exprs
+      }
       exprs += parseStatement().asInstanceOf[Expression]
       while (_match(Scanner.Comma)) {
         exprs += parseStatement().asInstanceOf[Expression]
