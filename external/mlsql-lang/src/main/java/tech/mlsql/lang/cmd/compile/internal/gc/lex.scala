@@ -215,7 +215,7 @@ class Scanner(src: String) {
     var ch = next // read character after quote
     var n = 1
     while (peek != quote) {
-      if (ch == '\n') {
+      if (ch == '\n' || ch == Scanner.EOF_INT) {
         error("literal not terminated")
         return n
       }
@@ -274,7 +274,7 @@ class Scanner(src: String) {
     }
     ch = next
     var stop = false
-    while (!stop) {
+    while (!stop && peek != Scanner.EOF_INT) {
       val ch0 = ch
       ch = next
       if (ch0 == '*' && ch == '/') {
@@ -289,7 +289,11 @@ class Scanner(src: String) {
   private def scanRawString: Unit = {
 
     while (peek != '`') {
-      next
+      val ch = next
+      if (ch == Scanner.EOF_INT) {
+        error("rawString not terminated")
+        return
+      }
     }
     srcChars(srcPos)
   }

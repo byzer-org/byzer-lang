@@ -76,8 +76,8 @@ trait BranchCommand {
       parser.parse()
     } catch {
       case e: ParserException =>
-        throw new MLSQLException(s"Error in Line:${options.getOrElse("__LINE__", "-1")} ${e.getMessage}")
-      case e:Exception => throw e
+        throw new MLSQLException(s"Error in MLSQL Line:${options.getOrElse("__LINE__", "-1").toInt + 1} \n Expression:${e.getMessage}")
+      case e: Exception => throw e
 
     }
     val sQLGenContext = new SQLGenContext(session)

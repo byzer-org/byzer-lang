@@ -211,10 +211,11 @@ class ScannerAndParserTest extends FunSuite {
   test("ast14") {
     val parser = buildParser(
       " split(:a,\",)[0] = \"jack\" ")
+
     val thrown = intercept[ParserException] {
       parser.parse()
     }
-    assert(thrown.getMessage == "Error[3:0]: literal not terminated")
+    assert(thrown.getMessage == "Error[1:26]: literal not terminated")
   }
 
 }

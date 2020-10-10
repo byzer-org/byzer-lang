@@ -57,9 +57,17 @@ class Parser(tokenizer: Tokenizer) {
 
   def lookAhead(distance: Int): Token = {
     // Read in as many as needed.
-    while (distance >= readTokens.size) {
-      readTokens.add(tokenizer.next)
+    var eofToken: Token = null
+    while (distance >= readTokens.size && eofToken == null) {
+      val token = tokenizer.next
+      if (token.t == Scanner.EOF) {
+        eofToken = token
+      } else {
+        readTokens.add(token)
+      }
+
     }
+    if (eofToken != null) return eofToken
     // Get the queued token.
     readTokens.get(distance);
   }
