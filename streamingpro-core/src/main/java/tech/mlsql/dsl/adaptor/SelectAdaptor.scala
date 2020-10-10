@@ -21,11 +21,11 @@ package tech.mlsql.dsl.adaptor
 import org.antlr.v4.runtime.misc.Interval
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.catalyst.plans.logical.MLSQLDFParser
-import streaming.dsl.ScriptSQLExecListener
 import streaming.dsl.auth.{MLSQLTable, OperateType, TableType}
 import streaming.dsl.parser.DSLSQLLexer
 import streaming.dsl.parser.DSLSQLParser.SqlContext
 import streaming.dsl.template.TemplateMerge
+import streaming.dsl.{ForContext, IfContext, ScriptSQLExecListener}
 import tech.mlsql.dsl.scope.ParameterScope
 import tech.mlsql.sql.MLSQLSparkConf
 
@@ -33,7 +33,7 @@ import tech.mlsql.sql.MLSQLSparkConf
 /**
  * Created by allwefantasy on 27/8/2017.
  */
-class SelectAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdaptor {
+class SelectAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdaptor with DslTool {
 
   def analyze(ctx: SqlContext): SelectStatement = {
     val input = ctx.start.getTokenSource().asInstanceOf[DSLSQLLexer]._input
@@ -64,7 +64,7 @@ class SelectAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAda
   }
 
   override def parse(ctx: SqlContext): Unit = {
-
+    
     val SelectStatement(originalText, sql, tableName) = analyze(ctx)
 
     val df = scriptSQLExecListener.sparkSession.sql(sql)

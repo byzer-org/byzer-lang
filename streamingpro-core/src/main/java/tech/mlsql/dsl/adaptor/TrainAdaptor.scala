@@ -87,6 +87,8 @@ class TrainAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdap
       options = options ++ Map("__dfname__" -> tableName)
     }
 
+    options = options ++ Map("__LINE__" -> ctx.getStart.getLine.toString)
+
     val firstKeywordInStatement = ctx.getChild(0).getText
 
     val isTrain = ETMethod.withName(firstKeywordInStatement) match {
