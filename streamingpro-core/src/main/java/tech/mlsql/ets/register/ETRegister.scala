@@ -36,6 +36,7 @@ object ETRegister {
   wow("PluginCommand")
   wow("Ray")
   wow("RunScript")
+  wow("PrintCommand")
 
   register("IfCommand","tech.mlsql.ets.ifstmt.IfCommand")
   register("ElifCommand","tech.mlsql.ets.ifstmt.ElifCommand")

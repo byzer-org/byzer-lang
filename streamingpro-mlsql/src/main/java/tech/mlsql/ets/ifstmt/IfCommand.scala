@@ -41,13 +41,13 @@ class IfCommand(override val uid: String) extends SQLAlg with BranchCommand with
     }
     val args = JSONTool.parseJson[List[String]](params("parameters"))
     val command = args.mkString(" ")
-    val conditionValue = evaluate(command,params)
-    
-    val ifContext = branchContext.pop()
+    val _ifContext = branchContext.pop().asInstanceOf[IfContext]
+    val (conditionValue,ifContext) = evaluateIfElse(_ifContext,command,params)
+
     if(traceBC){
       pushTrace(s"If :: ${params} :: ${conditionValue}")
     }
-    val newIfContext = ifContext.asInstanceOf[IfContext].copy(
+    val newIfContext = ifContext.copy(
       shouldExecute = conditionValue,
       haveMatched = conditionValue)
     branchContext.push(newIfContext)

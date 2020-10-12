@@ -4,6 +4,7 @@ import java.util.UUID
 
 import org.apache.spark.sql.types.{DataType, StringType, StructField, StructType}
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
+import streaming.dsl.BranchContext
 import tech.mlsql.lang.cmd.compile.internal.gc._
 
 /**
@@ -49,9 +50,10 @@ class SQLGenContext(session: SparkSession) extends CodegenContext {
     session.createDataFrame(session.sparkContext.makeRDD(Seq(row)), schema)
   }
 
-  override def execute(exprs: List[Expression], _values: Map[String, Any]): Any = {
-    val baseTable = buildBaseTable(_values)
-    val uuid = UUID.randomUUID().toString.replaceAll("-", "")
+  override def execute(exprs: List[Expression], variableTable: VariableTable): Any = {
+    val baseTable = buildBaseTable(variableTable.variables.toMap,
+      variableTable.types.map(a=>(a._1,a._2.asInstanceOf[DataType])).toMap)
+    val uuid = variableTable.name
     baseTable.createOrReplaceTempView(uuid)
     exprs.map { expr =>
       expr match {

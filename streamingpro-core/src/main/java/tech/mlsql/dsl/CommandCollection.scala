@@ -70,6 +70,8 @@ object CommandCollection {
     context.addEnv("else", """run command as ElseCommand.`` where parameters='''{:all}'''""")
     context.addEnv("fi", """run command as FiCommand.`` where parameters='''{:all}'''""")
 
+    context.addEnv("println", """run command as PrintCommand.`` where parameters='''{:all}'''""")
+
     context.addEnv("kafkaTool",
       """ run command as KafkaCommand.`kafka` where
         |parameters='''{:all}''' """.stripMargin)
