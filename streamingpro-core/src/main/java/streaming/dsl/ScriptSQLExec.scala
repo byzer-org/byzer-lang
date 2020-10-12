@@ -32,6 +32,7 @@ import org.antlr.v4.runtime.misc.Interval
 import org.antlr.v4.runtime.tree.ParseTreeWalker
 import org.apache.spark.MLSQLSyntaxErrorListener
 import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.types.DataTypes
 import tech.mlsql.Stage
 import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.dsl.CommandCollection
@@ -40,6 +41,7 @@ import tech.mlsql.dsl.parser.MLSQLErrorStrategy
 import tech.mlsql.dsl.processor.{AuthProcessListener, GrammarProcessListener, PreProcessListener}
 import tech.mlsql.dsl.scope.SetScopeParameter
 import tech.mlsql.job.MLSQLJobProgressListener
+import tech.mlsql.lang.cmd.compile.internal.gc.VariableTable
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable
@@ -164,6 +166,7 @@ trait BranchContext
 
 case class IfContext(sqls: mutable.ArrayBuffer[DslAdaptor],
                      ctxs: mutable.ArrayBuffer[SqlContext],
+                     variableTable: VariableTable,
                      shouldExecute: Boolean,
                      haveMatched: Boolean,
                      skipAll: Boolean) extends BranchContext

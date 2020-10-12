@@ -19,7 +19,9 @@
 package streaming.dsl.template
 
 import org.joda.time.DateTime
+import streaming.dsl.{IfContext, ScriptSQLExec}
 import tech.mlsql.common.utils.evaluate.RenderEngine
+import tech.mlsql.lang.cmd.compile.internal.gc.TextTemplate
 import tech.mlsql.template.SQLSnippetTemplate
 
 
@@ -28,7 +30,7 @@ import tech.mlsql.template.SQLSnippetTemplate
  */
 object TemplateMerge {
 
-  def merge(sql: String, root: Map[String, String]) = {
+  def merge(sql: String, root: Map[String, String]): String = {
 
     val dformat = "yyyy-MM-dd"
     //2018-03-24
@@ -39,7 +41,19 @@ object TemplateMerge {
       "theDayBeforeYesterday" -> DateTime.now().minusDays(2).toString(dformat)
     )
     val newRoot = Map("date" -> new DateTime(), "template" -> new SQLSnippetTemplate()) ++ predified_variables ++ root
+    val wow = RenderEngine.render(sql, newRoot)
 
-    RenderEngine.render(sql, newRoot)
+    if (ScriptSQLExec.context() != null) {
+      if (!ScriptSQLExec.context().execListener.branchContext.contexts.isEmpty) {
+        ScriptSQLExec.context().execListener.branchContext.contexts.head match {
+          case s: IfContext =>
+//            return new TextTemplate(s.variableTable.variables.toMap, wow).parse
+              return  RenderEngine.render(wow, s.variableTable.variables.map(item=>(item._1,item._2.asInstanceOf[Object])).toMap)
+          case _ =>
+        }
+
+      }
+    }
+    wow
   }
 }

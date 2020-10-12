@@ -218,4 +218,24 @@ class ScannerAndParserTest extends FunSuite {
     assert(thrown.getMessage == "Error[1:26]: literal not terminated")
   }
 
+  test("texttemplate") {
+    var str = "select :jack as :name as b;"
+    var item = new TextTemplate(Map("jack" -> "wow"), str).parse
+    assert(item == "select wow as :name as b;")
+
+    str = "select : as :name as b;"
+    item = new TextTemplate(Map("jack" -> "wow"), str).parse
+    assert(item == "select : as :name as b;")
+
+
+    str = "select ''':jack''' as :name as b;"
+    item = new TextTemplate(Map("jack" -> "wow"), str).parse
+    assert(item == "select '''wow''' as :name as b;")
+
+    str = "select a:jack''' as :name as b;"
+    item = new TextTemplate(Map("jack" -> "wow"), str).parse
+    println(item)
+    
+  }
+
 }

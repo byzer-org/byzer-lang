@@ -5,6 +5,8 @@ import org.scalatest.{BeforeAndAfterAll, FunSuite}
 import tech.mlsql.ets.SQLGenContext
 import tech.mlsql.lang.cmd.compile.internal.gc._
 
+import scala.collection.mutable
+
 /**
  * 6/10/2020 WilliamZhu(allwefantasy@gmail.com)
  */
@@ -30,7 +32,10 @@ class ExprTest extends FunSuite with BeforeAndAfterAll {
     val parser = new StatementParser(tokenizer)
     val exprs = parser.parse()
     val sQLGenContext = new SQLGenContext(spark)
-    val item = sQLGenContext.execute(exprs.map(_.asInstanceOf[Expression]), input)
+    var variables = new mutable.HashMap[String, Any]()
+    variables ++= input
+    val variableTable = VariableTable("wow", variables, new mutable.HashMap[String, Any]())
+    val item = sQLGenContext.execute(exprs.map(_.asInstanceOf[Expression]), variableTable)
     return item
   }
 
