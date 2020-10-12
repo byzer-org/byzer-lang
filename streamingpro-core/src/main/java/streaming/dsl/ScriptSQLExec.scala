@@ -185,11 +185,14 @@ class ScriptSQLExecListener(val _sparkSession: SparkSession, val _defaultPathPre
   private[this] val _jobListeners = ArrayBuffer[MLSQLJobProgressListener]()
 
   private val lastSelectTable = new AtomicReference[String]()
+  private val _declaredTables = new ArrayBuffer[String]()
   private[this] var _tableAuth: AtomicReference[TableAuth] = new AtomicReference[TableAuth]()
 
   def branchContext = {
     _branchContext
   }
+
+  def declaredTables = _declaredTables
 
   def addJobProgressListener(l: MLSQLJobProgressListener) = {
     _jobListeners += l
@@ -238,6 +241,9 @@ class ScriptSQLExecListener(val _sparkSession: SparkSession, val _defaultPathPre
   }
 
   def setLastSelectTable(table: String) = {
+    if(table != null){
+      _declaredTables += table
+    }
     lastSelectTable.set(table)
   }
 
