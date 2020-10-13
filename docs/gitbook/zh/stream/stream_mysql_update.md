@@ -34,7 +34,7 @@ as patientKafkaData;
 ```
 
 因为kafka里的数据是json格式的，我希望直接展开成json表，所以配置了valueFormat和valueSchema，更多细节
-参看前面的章节。
+参考前面的章节。
 
 接着我要链接一个数据库：
 

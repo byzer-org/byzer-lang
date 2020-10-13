@@ -79,7 +79,7 @@ valueFormat告诉系统，Kafka value的存储格式是什么，在示例中是c
 st(field(column1,string),field(column2,string),field(column3,string))
 ```
 
-st 表示StructType, field表示StructField。 分别表示表和字段，里面则是表明和数据类型。schema支持如下的数据结构：
+st 表示StructType, field表示StructField。 分别表示表和字段，里面则是表名和数据类型。schema支持如下的数据结构：
 
 1. st
 1. field

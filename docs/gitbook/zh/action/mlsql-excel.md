@@ -40,7 +40,7 @@ MLSQL Console 是一款集数据研发，数据分析，机器学习等于一体
 1. 将excel文档上传，上传完成后下载到自己的工作区得到操作路径
 2. 加载excel文件，然后给他们取表名
 3. 使用SQL对这些excel进行数据操作
-4. 使用SQL生成图标
+4. 使用SQL生成图表
 
 下面我们看下具体步骤：
 
@@ -110,7 +110,7 @@ as finalTable;
 
 ![image.png](https://docs.mlsql.tech/upload_images/1063603-8940cbefc9f48cb9.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
-点击 Tools/Dashboard 查看图标：
+点击 Tools/Dashboard 查看图表：
 
 ![image.png](https://docs.mlsql.tech/upload_images/1063603-778c4038efc64fe9.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
@@ -120,7 +120,7 @@ as finalTable;
 
 ## 任务二
 
-因为我们已经做完了文件上传和加载excel文件等，所以任务二里，我们只要做数据预处理和生成图标即可。
+因为我们已经做完了文件上传和加载excel文件等，所以任务二里，我们只要做数据预处理和生成图表即可。
 
 ### Step1: 数据预处理
 那么现在，第一个任务已经做好了，我们接着做第二任务，第二个任务核心就是要关联两张表,

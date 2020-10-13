@@ -29,7 +29,7 @@
 | `context.__default__fileserver_upload_url__` | 上传文件服务器地址，一般默认也是console地址|   |
 | `context.__auth_client__` | 数据访问客户端的class类|  默认是streaming.dsl.auth.meta.client.MLSQLConsoleClient |
 | `context.__auth_server_url__` | 数据访问验证服务器地址|   |
-| `context.__auth_secret__` | engine回访请求服务器的秘钥。比如console调用了engine，需要传递这个参数， 然后engine要回调console,那么需要将这个参数带回|   |
+| `context.__auth_secret__` | engine回访请求服务器的密钥。比如console调用了engine，需要传递这个参数， 然后engine要回调console,那么需要将这个参数带回|   |
 
 
 

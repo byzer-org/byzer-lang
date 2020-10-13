@@ -19,7 +19,7 @@ MLSQL Stack 提供了对各个版本的预编译版本。 用户可以在[下载
 ![](http://docs.mlsql.tech/upload_images/WX20190818-111503@2x.png)
 
 从图中实例，我们发现有有四个文件，分别是cluster,console,和engine。 其中engine根据底层的Spark版本，又区分为2.3/2.4两个版本。
-所以，大家在下载engine的时候，需要根据自己要运行的Spark版本选择合适的版本。通常，我们建议大家下载基于最新的spark版本的发型包，
+所以，大家在下载engine的时候，需要根据自己要运行的Spark版本选择合适的版本。通常，我们建议大家下载基于最新的spark版本的发行包，
 因为MLSQL新功能特性都会优先体现在最近的Spark版本之上。
 
 ## 启动和配置 MLSQL Engine
@@ -71,7 +71,7 @@ chmod u+x start-default.sh
 3. 修改application.docker.yml,将"MYSQL_HOST" 占位符替换成MySQL地址，同时如果有必要，修改对应的数据库，用户名称，密码等。 
 4. 现在可以调用`./start-default.sh` 启动了
 
-启动后，默认监听的是8080端口。你也可以修改，具体配置卫浴修改application.docker.yml. MLSQL Cluster 并没有Web页面，它主要是衔接
+启动后，默认监听的是8080端口。你也可以修改，具体配置位于修改application.docker.yml. MLSQL Cluster 并没有Web页面，它主要是衔接
 MLSQL Console 和Engine的。
 
 > MySQL 5.7经过测试，如发生java.math.BigInteger can not cast to java.lang.Long等错误，可尝试降级MySQL的版本。
@@ -89,7 +89,7 @@ MLSQL Console也需要依赖MySQL,所以，同cluster一样，你需要经过相
 3. 修改application.docker.yml,将"MYSQL_HOST" 占位符替换成MySQL地址，同时如果有必要，修改对应的数据库，用户名称，密码等。 
 4. 现在可以调用`./start-default.sh` 启动了
 
-启动后，默认监听的是9002端口。你也可以修改，具体配置卫浴修改application.docker.yml. MLSQL Console提供了一个较为完善的界面。
+启动后，默认监听的是9002端口。你也可以修改，具体配置修改位于application.docker.yml. MLSQL Console提供了一个较为完善的界面。
 用户可自助注册和登录。 
 
 打开start-default.sh,其展示的内容类似下面：
