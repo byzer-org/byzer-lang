@@ -5,7 +5,7 @@
     <groupId>tech.mlsql</groupId>
     <artifactId>streamingpro_2.11</artifactId>
     <packaging>pom</packaging>
-    <version>2.0.1-SNAPSHOT</version>
+    <version>2.1.0-SNAPSHOT</version>
 
     <name>StreamingPro Parent POM</name>
     <url>https://github.com/allwefantasy/streamingpro</url>
@@ -45,6 +45,7 @@
         <module>streamingpro-cluster</module>
         <module>external/mlsql-ets</module>
         <module>external/mlsql-healthy</module>
+        <module>external/mlsql-lang</module>
     </modules>
 
     <properties>

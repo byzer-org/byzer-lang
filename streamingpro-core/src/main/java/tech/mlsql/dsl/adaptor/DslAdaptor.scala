@@ -21,7 +21,7 @@ package tech.mlsql.dsl.adaptor
 import org.antlr.v4.runtime.misc.Interval
 import streaming.dsl.parser.DSLSQLLexer
 import streaming.dsl.parser.DSLSQLParser.{ExpressionContext, SqlContext}
-import streaming.dsl.{ConnectMeta, DBMappingKey, MLSQLExecuteContext, ScriptSQLExecListener}
+import streaming.dsl.{ConnectMeta, DBMappingKey, ForContext, IfContext, MLSQLExecuteContext, ScriptSQLExec, ScriptSQLExecListener}
 
 /**
   * Created by allwefantasy on 27/8/2017.
@@ -31,6 +31,10 @@ trait DslAdaptor extends DslTool {
 }
 
 trait DslTool {
+
+  def branchContext = {
+    ScriptSQLExec.context().execListener.branchContext.contexts
+  }
 
   def currentText(ctx: SqlContext) = {
     val input = ctx.start.getTokenSource().asInstanceOf[DSLSQLLexer]._input

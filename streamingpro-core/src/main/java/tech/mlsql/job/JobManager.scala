@@ -10,6 +10,7 @@ import streaming.log.WowLog
 import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.job.JobListener.{JobFinishedEvent, JobStartedEvent}
 import tech.mlsql.job.listeners.{CleanCacheListener, EngineMDCLogListener}
+import tech.mlsql.runtime.plugins.request_cleaner.RequestCleanerManager
 
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
@@ -92,6 +93,7 @@ object JobManager extends Logging {
           case e: Exception =>
             logInfo("Async Job Exception", e)
         } finally {
+          RequestCleanerManager.call()
           ScriptSQLExec.unset
           SparkSession.clearActiveSession()
         }
