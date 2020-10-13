@@ -1,14 +1,14 @@
 ## 如何让 MLSQL Engine 7*24小时稳定运行
 
 MLSQL可以让你的生活变得轻松很多，但是任何一个系统稳定的运行，也是需要花一些时间和精力的。在这个章节里，我们会罗列一些需要注意的事项，
-帮助我们去面对实际上线MLSQL之后可能存在的一些不稳定因数。
+帮助我们去面对实际上线MLSQL之后可能存在的一些不稳定因素。
 
 ### Driver僵死
 
 Driver 僵死可能有两个情况：
 
-1. MLSQL Driver存在缓慢的内存泄露，导致程序Full GC 而没有响应。
-2. 使用了类似excel之类的比较占用内存的格式亦或者是 MLSQL Driver内存太小，都可能导致GC问题
+1. MLSQL Driver存在缓慢的内存泄露，导致程序Full GC 而没有响应；
+2. 使用了类似excel之类的比较占用内存的格式亦或者是 MLSQL Driver内存太小，都可能导致GC问题。
 
 如果是缓慢的内存泄露，可以查询具体的原因有的放矢解决，也可以定时重启让释放内存得到释放。如果用户采用定期重启机制，需要考虑的是，
 如何让用户无感知重启过程。具体做法可以是：
@@ -33,7 +33,7 @@ Driver 僵死可能有两个情况：
 
 ### 初始化
 
-connect语句等不少信息，生命周期是和MLSQL Instance一样的。如果发生了重启，这些信息就会丢失，用户需要从新注册。我们既可以安装[connect persist](https://github.com/allwefantasy/mlsql-plugins/tree/master/connect-persist)插件
+connect语句等不少信息，生命周期是和MLSQL Instance一样的。如果发生了重启，这些信息就会丢失，用户需要重新注册。我们既可以安装[connect persist](https://github.com/allwefantasy/mlsql-plugins/tree/master/connect-persist)插件
 来保证connect语句得到持久化，也可以自己写一段json脚本，然后在MLSQL启动时配置上，参考[如何执行初始化脚本](http://docs.mlsql.tech/zh/include/init.html)
 
 ### 充分利用调度

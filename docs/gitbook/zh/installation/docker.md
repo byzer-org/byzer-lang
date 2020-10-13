@@ -10,7 +10,7 @@
 ## 注意
 
 因为我们将镜像发布在了Docker Hub,不同网络情况下不是很稳定。
-如果docker镜像拉去缓慢，可以设置阿里云镜像。首先去阿里云开通镜像服务，然后进入
+如果docker镜像拉取缓慢，可以设置阿里云镜像。首先去阿里云开通镜像服务，然后进入
 https://cr.console.aliyun.com/cn-hangzhou/instances/mirrors 页面，里面会教你做镜像加速。
 
 具体操作如下：

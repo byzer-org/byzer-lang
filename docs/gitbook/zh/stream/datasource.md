@@ -1,6 +1,6 @@
 # Kafka和MockStream
 
-MLSQL 目前显示支持Kafka 以及MockStream. MockStream主要用于模拟数据源，测试场景中应用的比较多。
+MLSQL 目前显式支持Kafka 以及MockStream. MockStream主要用于模拟数据源，测试场景中应用的比较多。
 
 
 > 值得注意的是，MLSQL支持 Kafka 0.8,0.9以及1.x版本，而原生的struectured streaming只支持0.10版本的Kafka.
