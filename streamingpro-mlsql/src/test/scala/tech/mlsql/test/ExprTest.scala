@@ -26,6 +26,11 @@ class ExprTest extends FunSuite with BeforeAndAfterAll {
     }
   }
 
+  test("spark codegen"){
+    spark.sql("SELECT A.B FROM A JOIN C ON A.B = C.B").queryExecution.debug.codegen()
+    
+  }
+
   def evaluate(str: String, input: Map[String, String]): Any = {
     val scanner = new Scanner(str)
     val tokenizer = new Tokenizer(scanner)
