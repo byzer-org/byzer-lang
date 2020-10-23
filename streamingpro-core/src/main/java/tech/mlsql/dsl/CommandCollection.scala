@@ -63,6 +63,7 @@ object CommandCollection {
     context.addEnv("ray", """run command as Ray.`` where inputTable='''{1}''' and code='''{2}''' and outputTable="{4}" as {4:uuid()}""")
     context.addEnv("plugin", """run command as PluginCommand.`` where parameters='''{:all}'''""")
     context.addEnv("runScript", """run command as RunScript.`` where parameters='''{:all}'''""")
+    context.addEnv("iterator", """run command as IteratorCommand.`` where parameters='''{:all}'''""")
 
     context.addEnv("if", """run command as IfCommand.`` where parameters='''{:all}'''""")
     context.addEnv("elif", """run command as ElifCommand.`` where parameters='''{:all}'''""")
