@@ -131,12 +131,7 @@ class IteratorCommand(override val uid: String) extends SQLAlg
   override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = ???
 
   override def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = ???
-
-  override def supportedVersions: Seq[String] =
-
-  override
-
-  def supportedVersions: Seq[String] = {
+  override def supportedVersions: Seq[String] = {
     Seq("1.5.0-SNAPSHOT", "1.5.0", "1.6.0-SNAPSHOT", "1.6.0")
   }
 }
