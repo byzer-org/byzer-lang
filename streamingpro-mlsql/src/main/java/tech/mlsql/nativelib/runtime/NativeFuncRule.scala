@@ -11,7 +11,6 @@ object NativeFuncRule extends Rule[LogicalPlan] {
   override def apply(plan: LogicalPlan): LogicalPlan = {
     plan transformAllExpressions {
       case Lower(c) => {
-        println(c)
         NativeLower(c)
       }
   }

@@ -28,9 +28,14 @@ public class JniUtils {
     public static final String MLSQL_NATIVE_LIB = "MlsqlNativeLib";
 
     public static synchronized void loadLibrary(String libraryName) {
-        loadLibrary(libraryName, false, null);
-    }
+        try {
+            loadLibrary(libraryName, true, null);
+        } catch (Exception e) {
+            LOGGER.info("Fail to loading native library {}.", libraryName);
+        }
 
+    }
+    
     public static synchronized void loadLibrary(String libraryName, boolean exportSymbols, String testPath) {
         if (!loadedLibs.contains(libraryName)) {
             LOGGER.info("Loading native library {}.", libraryName);
