@@ -4,7 +4,7 @@ import net.csdn.annotation.rest.At
 import net.csdn.common.collections.WowCollections
 import net.csdn.modules.http.ApplicationController
 import net.csdn.modules.http.RestRequest.Method.{GET, POST}
-import streaming.core.strategy.platform.PlatformManager
+import streaming.core.strategy.platform.{PlatformManager, SparkRuntime}
 import tech.mlsql.common.utils.serder.json.JSONTool
 
 /**
@@ -24,6 +24,19 @@ class HealthController extends ApplicationController {
    */
   @At(path = Array("/health/liveness"), types = Array(GET, POST))
   def liveness = {
+    val r = runtime
+    if(r!=null){
+      val sr = r.asInstanceOf[SparkRuntime]
+      if(sr.sparkSession.sparkContext.isStopped){
+        render(500, JSONTool.toJsonStr(Map(
+          "status" -> "DOWN",
+          "components" -> Map(
+            "livenessProbe" -> Map("status" -> "DOWN")
+          )
+        )))
+      }
+    }
+
     render(200, JSONTool.toJsonStr(Map(
       "status" -> "UP",
       "components" -> Map(
@@ -61,4 +74,5 @@ class HealthController extends ApplicationController {
     )))
 
   }
+  def runtime = PlatformManager.getRuntime
 }
