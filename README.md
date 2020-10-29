@@ -11,16 +11,15 @@ MLSQL is a Programming Language Designed For Big Data and AI, and it also have a
 
 Find more examples on [our user guide](http://docs.mlsql.tech/en).
 
-1. [中文文档](http://docs.mlsql.tech/zh)
+1. [中文文档](http://docs.mlsql.tech/mlsql-stack/)
 2. [English Docs](http://docs.mlsql.tech/en)
 
 
 ## Get PreBuild Distribution
 
-* The lasted version is MLSQL v2.0.0
-* You can download from [MLSQL Website](http://download.mlsql.tech/2.0.0/)
-* Spark 2.3.2/2.4.3 are tested
-* Spark 3.0.0 is partially supported.
+* The lasted version is MLSQL v2.0.1
+* You can download from [MLSQL Website](http://download.mlsql.tech/2.0.1/)
+* Spark 2.4.3/3.0.0 are tested
 
 
 Run PreBuild Distribution:

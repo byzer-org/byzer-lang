@@ -443,7 +443,7 @@ class RestController extends ApplicationController with WowLog {
     render(WowCollections.map())
   }
 
-
+ 
   @At(path = Array("/debug/executor/ping"), types = Array(GET, POST))
   def pingExecuotrs = {
     val pongs = runtime match {
