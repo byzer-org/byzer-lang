@@ -111,7 +111,8 @@ class MLSQLResource(spark: SparkSession, owner: String, getGroupId: String => St
     val finalJobGroupId = getGroupId(jobGroupId)
     val items = store.jobsList(null).filter(f => f.jobGroup.isDefined).filter(f => f.jobGroup.get == finalJobGroupId).map { f =>
       //val (activeStages, completedStages, failedStages) = fetchStageByJob(f)
-      val duration = f.submissionTime.map(date => (System.currentTimeMillis() - date.getTime()) / 1000).getOrElse(0l)
+      val endTime = f.completionTime.map(date => date.getTime()).getOrElse(System.currentTimeMillis())
+      val duration = f.submissionTime.map(date => (endTime - date.getTime()) / 1000).getOrElse(0L)
       MLSQLScriptJob(
         f.jobId,
         f.submissionTime.map(date => new java.sql.Date(date.getTime())),
