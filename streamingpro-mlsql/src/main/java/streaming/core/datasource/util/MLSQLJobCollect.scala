@@ -6,8 +6,8 @@ import tech.mlsql.job.JobManager
 
 
 /**
-  * 2019-01-22 WilliamZhu(allwefantasy@gmail.com)
-  */
+ * 2019-01-22 WilliamZhu(allwefantasy@gmail.com)
+ */
 class MLSQLJobCollect(spark: SparkSession, owner: String) {
   val resource = new MLSQLResource(spark, owner, getGroupId)
 
@@ -35,8 +35,14 @@ class MLSQLJobCollect(spark: SparkSession, owner: String) {
   }
 
 
-  def jobDetail(jobGroupId: String) = {
-    resource.jobDetail(jobGroupId)
+  def jobDetail(jobGroupId: String, version: Int = 1) = {
+    if (version == 1) {
+      resource.jobDetail(jobGroupId)
+    }
+    else {
+      resource.jobDetail2(jobGroupId)
+    }
+
   }
 
   def jobProgress(jobGroupId: String) = {
