@@ -5,7 +5,7 @@ import java.sql.Types
 import org.apache.spark.ml.util.Identifiable
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.types._
-import org.apache.spark.sql.{DataFrame, Row, SparkSession}
+import org.apache.spark.sql.{DataFrame, Row, SparkSession, functions => F}
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.param.WowParams
 
@@ -16,8 +16,21 @@ class SchemaCommand(override val uid: String) extends SQLAlg with WowParams {
   def this() = this(Identifiable.randomUID("tech.mlsql.plugins.ets.SchemaCommand"))
 
   override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
-
+    val session = df.sparkSession
     params("operate") match {
+      case "show tables" => {
+        val catalog = params("catalog")
+        session.sql(s"show tables from ${catalog}").
+          select(
+            F.lit(catalog).as("TABLE_CAT"),
+            F.lit("").as("TABLE_SCHEM"),
+            F.col("tableName").as("TABLE_NAME"),
+            F.lit("").as("TABLE_TYPE")
+          )
+      }
+      case "show databases" => {
+        session.sql("show databases").select(F.col("databaseName").as("TABLE_CAT"))
+      }
       case "tableSchema" =>
         val fields = df.sparkSession.table(params("tableName")).schema.fields.map { item =>
           Row.fromSeq(Seq(item.name, item.dataType.typeName, SchemaCommand.sqlType(item.dataType.typeName), item.nullable))
@@ -117,6 +130,7 @@ object SchemaCommand {
       case "decimal" => Types.DECIMAL
     }
   }
+
   def sqlType2(t: String) = {
     t match {
       case "integer" => Types.INTEGER
