@@ -379,6 +379,12 @@
 
                 <dependency>
                     <groupId>tech.mlsql</groupId>
+                    <artifactId>mlsql-healthy-${spark.bigversion}_${scala.binary.version}</artifactId>
+                    <version>${project.parent.version}</version>
+                </dependency>
+
+                <dependency>
+                    <groupId>tech.mlsql</groupId>
                     <artifactId>mlsql-autosuggest-${spark.bigversion}_${scala.binary.version}</artifactId>
                     <version>${project.parent.version}</version>
                 </dependency>
