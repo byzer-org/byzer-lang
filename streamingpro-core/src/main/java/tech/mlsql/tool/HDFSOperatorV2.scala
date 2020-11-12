@@ -138,7 +138,7 @@ object HDFSOperatorV2 {
 
   }
 
-  def ceateEmptyFile(conf:Configuration,,path: String) = {
+  def ceateEmptyFile(conf:Configuration,path: String) = {
     val fs = FileSystem.get(conf)
     val dos = fs.create(new Path(path))
     dos.close()
