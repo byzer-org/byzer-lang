@@ -26,6 +26,9 @@ class MLSQLCSV(override val uid: String) extends MLSQLBaseFileSource with WowPar
   override def shortFormat: String = "csv"
 
   final val header: Param[String] = new Param[String](this, "header", " when set to true the first line of files will be used to name columns and will not be included in data. All types will be assumed string. Default value is false.")
+  final val encoding: Param[String] = new Param[String](this, "encoding", "default UFT-8")
+  final val charToEscapeQuoteEscaping: Param[String] = new Param[String](this, "charToEscapeQuoteEscaping", "")
+  
   final val delimiter: Param[String] = new Param[String](this, "delimiter", "by default columns are delimited using ,, but delimiter can be set to any character")
   final val quote: Param[String] = new Param[String](this, "quote", "by default the quote character is \", but can be set to any character. Delimiters inside quotes are ignored")
   final val escape: Param[String] = new Param[String](this, "escape", "by default the escape character is \\, but can be set to any character. Escaped quote characters are ignored")

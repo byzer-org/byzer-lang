@@ -31,8 +31,8 @@ import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib.algs.{Functions, SQLPythonAlg, SQLPythonFunc}
 import streaming.log.WowLog
 import tech.mlsql.common.utils.env.python.BasicCondaEnvManager
-import tech.mlsql.common.utils.hdfs.HDFSOperator
 import tech.mlsql.common.utils.log.Logging
+import tech.mlsql.tool.HDFSOperatorV2
 
 import scala.collection.JavaConverters._
 
@@ -65,8 +65,8 @@ class BatchPredict extends Logging with WowLog with Serializable {
     val modelPath = modelMeta.modelEntityPaths.head
 
     val outoutFile = SQLPythonFunc.getAlgTmpPath(_path) + "/output"
-    HDFSOperator.deleteDir(outoutFile)
-    HDFSOperator.createDir(outoutFile)
+    HDFSOperatorV2.deleteDir(outoutFile)
+    HDFSOperatorV2.createDir(outoutFile)
 
 
     val trainParams = modelMeta.trainParams
@@ -105,7 +105,7 @@ class BatchPredict extends Logging with WowLog with Serializable {
       val paramMap = new util.HashMap[String, Object]()
 
       val localModelPath = localPathConfig.localModelPath + s"/${index}"
-      HDFSOperator.copyToLocalFile(localModelPath, modelPath, true)
+      HDFSOperatorV2.copyToLocalFile(localModelPath, modelPath, true)
 
       val localOutputFileStr = localPathConfig.localOutputPath + s"/output-${index}.json"
 
@@ -154,7 +154,7 @@ class BatchPredict extends Logging with WowLog with Serializable {
         )
         res.foreach(f => logInfo(format(f)))
 
-        HDFSOperator.copyToHDFS(localOutputFileStr, outoutFile, cleanTarget = false, cleanSource = false)
+        HDFSOperatorV2.copyToHDFS(localOutputFileStr, outoutFile, cleanTarget = false, cleanSource = false)
 
       } catch {
         case e: Exception =>

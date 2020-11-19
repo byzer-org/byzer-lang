@@ -15,7 +15,6 @@ import org.apache.spark.sql.mlsql.session.MLSQLException
 import streaming.core.datasource.MLSQLRegistry
 import streaming.log.WowLog
 import tech.mlsql.common.utils.classloader.ClassLoaderTool
-import tech.mlsql.common.utils.hdfs.HDFSOperator
 import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.common.utils.path.PathFun
 import tech.mlsql.common.utils.serder.json.JSONTool
@@ -23,6 +22,7 @@ import tech.mlsql.core.version.MLSQLVersion
 import tech.mlsql.datalake.DataLake
 import tech.mlsql.dsl.CommandCollection
 import tech.mlsql.ets.register.ETRegister
+import tech.mlsql.tool.HDFSOperatorV2
 import tech.mlsql.version.VersionCompatibility
 
 /**
@@ -95,7 +95,7 @@ object PluginUtils extends Logging with WowLog {
 
     val hdfsPath = PathFun(dataLake.identifyToPath(TABLE_FILES)).add("store").add("plugins")
     saveStream(pluginName, fileLen, hdfsPath.toPath, fieldValue, inputStream,spark.sparkContext.hadoopConfiguration)
-    HDFSOperator.deleteDir("." + hdfsPath.toPath + ".crc")
+    HDFSOperatorV2.deleteDir("." + hdfsPath.toPath + ".crc")
     (fieldValue, PathFun(hdfsPath.toPath).add(fieldValue).toPath)
 
   }

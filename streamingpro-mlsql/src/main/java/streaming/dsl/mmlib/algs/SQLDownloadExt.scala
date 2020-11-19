@@ -32,9 +32,9 @@ import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
 import streaming.log.WowLog
-import tech.mlsql.common.utils.hdfs.HDFSOperator
 import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.common.utils.path.PathFun
+import tech.mlsql.tool.HDFSOperatorV2
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -124,7 +124,7 @@ class SQLDownloadExt(override val uid: String) extends SQLAlg with Logging with 
             val dir = entry.getName.split("/").filterNot(f => f.isEmpty).dropRight(1).mkString("/")
             downloadResultRes += DownloadResult(PathFun(originalTo).add(dir).add(entry.getName.split("/").last).toPath)
             logInfo(format(s"extracting ${downloadResultRes.last.hdfsPath}"))
-            HDFSOperator.saveStream($(to) + "/" + dir, entry.getName.split("/").last, tarIS)
+            HDFSOperatorV2.saveStream($(to) + "/" + dir, entry.getName.split("/").last, tarIS)
           }
           entry = tarIS.getNextEntry
         }

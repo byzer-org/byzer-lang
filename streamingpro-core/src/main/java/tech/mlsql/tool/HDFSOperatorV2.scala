@@ -6,7 +6,7 @@ import org.apache.commons.io.FileUtils
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FSDataInputStream, FSDataOutputStream, FileStatus, FileSystem, Path}
 import org.apache.hadoop.io.IOUtils
-import streaming.dsl.ScriptSQLExec
+import org.apache.spark.deploy.SparkHadoopUtil
 import tech.mlsql.common.utils.Md5
 
 import scala.collection.mutable.ArrayBuffer
@@ -16,10 +16,15 @@ import scala.collection.mutable.ArrayBuffer
  */
 object HDFSOperatorV2 {
 
-  def hadoopConfiguration = ScriptSQLExec.context().execListener.sparkSession.sparkContext.hadoopConfiguration
+  def hadoopConfiguration:Configuration = {
+    if(SparkHadoopUtil.get != null){
+      SparkHadoopUtil.get.conf
+    } else new Configuration()
 
-  def readFile(conf:Configuration,path: String): String = {
-    val fs = FileSystem.get(conf)
+  }
+
+  def readFile(path: String): String = {
+    val fs = FileSystem.get(hadoopConfiguration)
     var br: BufferedReader = null
     var line: String = null
     val result = new ArrayBuffer[String]()
@@ -37,15 +42,15 @@ object HDFSOperatorV2 {
 
   }
 
-  def getFileStatus(conf:Configuration,path: String) = {
-    val fs = FileSystem.get(conf)
+  def getFileStatus(path: String) = {
+    val fs = FileSystem.get(hadoopConfiguration)
     val file = fs.getFileStatus(new Path(path))
     file
   }
 
 
-  def readAsInputStream(conf:Configuration,fileName: String): InputStream = {
-    val fs = FileSystem.get(conf)
+  def readAsInputStream(fileName: String): InputStream = {
+    val fs = FileSystem.get(hadoopConfiguration)
     val src: Path = new Path(fileName)
     var in: FSDataInputStream = null
     try {
@@ -58,8 +63,8 @@ object HDFSOperatorV2 {
   }
 
 
-  def readBytes(conf:Configuration,fileName: String): Array[Byte] = {
-    val fs = FileSystem.get(conf)
+  def readBytes(fileName: String): Array[Byte] = {
+    val fs = FileSystem.get(hadoopConfiguration)
     val src: Path = new Path(fileName)
     var in: FSDataInputStream = null
     try {
@@ -72,22 +77,22 @@ object HDFSOperatorV2 {
     }
   }
 
-  def listModelDirectory(conf:Configuration,path: String): Seq[FileStatus] = {
-    val fs = FileSystem.get(conf)
+  def listModelDirectory(path: String): Seq[FileStatus] = {
+    val fs = FileSystem.get(hadoopConfiguration)
     fs.listStatus(new Path(path)).filter(f => f.isDirectory)
   }
 
   def listFiles(path: String): Seq[FileStatus] = {
-    val fs = FileSystem.get(new Configuration())
+    val fs = FileSystem.get(hadoopConfiguration)
     fs.listStatus(new Path(path))
   }
 
-  def saveBytesFile(conf:Configuration,path: String, fileName: String, bytes: Array[Byte]) = {
+  def saveBytesFile(path: String, fileName: String, bytes: Array[Byte]) = {
 
     var dos: FSDataOutputStream = null
     try {
 
-      val fs = FileSystem.get(conf:Configuration)
+      val fs = FileSystem.get(hadoopConfiguration)
       if (!fs.exists(new Path(path))) {
         fs.mkdirs(new Path(path))
       }
@@ -110,12 +115,12 @@ object HDFSOperatorV2 {
 
   }
 
-  def saveStream(conf:Configuration,path: String, fileName: String, inputStream: InputStream) = {
+  def saveStream(path: String, fileName: String, inputStream: InputStream) = {
 
     var dos: FSDataOutputStream = null
     try {
 
-      val fs = FileSystem.get(conf)
+      val fs = FileSystem.get(hadoopConfiguration)
       if (!fs.exists(new Path(path))) {
         fs.mkdirs(new Path(path))
       }
@@ -138,18 +143,18 @@ object HDFSOperatorV2 {
 
   }
 
-  def ceateEmptyFile(conf:Configuration,path: String) = {
-    val fs = FileSystem.get(conf)
+  def ceateEmptyFile(path: String) = {
+    val fs = FileSystem.get(hadoopConfiguration)
     val dos = fs.create(new Path(path))
     dos.close()
   }
 
-  def saveFile(conf:Configuration,path: String, fileName: String, iterator: Iterator[(String, String)]) = {
+  def saveFile(path: String, fileName: String, iterator: Iterator[(String, String)]) = {
 
     var dos: FSDataOutputStream = null
     try {
 
-      val fs = FileSystem.get(conf)
+      val fs = FileSystem.get(hadoopConfiguration)
       if (!fs.exists(new Path(path))) {
         fs.mkdirs(new Path(path))
       }
@@ -178,8 +183,8 @@ object HDFSOperatorV2 {
     new Path(path).toString
   }
 
-  def copyToHDFS(conf:Configuration,tempLocalPath: String, path: String, cleanTarget: Boolean, cleanSource: Boolean) = {
-    val fs = FileSystem.get(conf)
+  def copyToHDFS(tempLocalPath: String, path: String, cleanTarget: Boolean, cleanSource: Boolean) = {
+    val fs = FileSystem.get(hadoopConfiguration)
     if (cleanTarget) {
       fs.delete(new Path(path), true)
     }
@@ -191,8 +196,8 @@ object HDFSOperatorV2 {
 
   }
 
-  def copyToLocalFile(conf:Configuration,tempLocalPath: String, path: String, clean: Boolean) = {
-    val fs = FileSystem.get(conf)
+  def copyToLocalFile(tempLocalPath: String, path: String, clean: Boolean) = {
+    val fs = FileSystem.get(hadoopConfiguration)
     val tmpFile = new File(tempLocalPath)
     if (tmpFile.exists()) {
       FileUtils.forceDelete(tmpFile)
@@ -200,28 +205,28 @@ object HDFSOperatorV2 {
     fs.copyToLocalFile(new Path(path), new Path(tempLocalPath))
   }
 
-  def deleteDir(conf:Configuration,path: String) = {
-    val fs = FileSystem.get(conf)
+  def deleteDir(path: String) = {
+    val fs = FileSystem.get(hadoopConfiguration)
     fs.delete(new Path(path), true)
   }
 
-  def isDir(conf:Configuration,path: String) = {
-    val fs = FileSystem.get(conf)
+  def isDir(path: String) = {
+    val fs = FileSystem.get(hadoopConfiguration)
     fs.isDirectory(new Path(path))
   }
 
-  def isFile(conf:Configuration,path: String) = {
-    val fs = FileSystem.get(conf)
+  def isFile(path: String) = {
+    val fs = FileSystem.get(hadoopConfiguration)
     fs.isFile(new Path(path))
   }
 
-  def fileExists(conf:Configuration,path: String) = {
-    val fs = FileSystem.get(conf)
+  def fileExists(path: String) = {
+    val fs = FileSystem.get(hadoopConfiguration)
     fs.exists(new Path(path))
   }
 
-  def createDir(conf:Configuration,path: String) = {
-    val fs = FileSystem.get(conf)
+  def createDir(path: String) = {
+    val fs = FileSystem.get(hadoopConfiguration)
     fs.mkdirs(new Path(path))
   }
 
@@ -233,8 +238,8 @@ object HDFSOperatorV2 {
     dir
   }
 
-  def iteratorFiles(conf:Configuration,path: String, recursive: Boolean) = {
-    val fs = FileSystem.get(conf)
+  def iteratorFiles(path: String, recursive: Boolean) = {
+    val fs = FileSystem.get(hadoopConfiguration)
     val files = ArrayBuffer[String]()
     _iteratorFiles(fs, path, files)
     files

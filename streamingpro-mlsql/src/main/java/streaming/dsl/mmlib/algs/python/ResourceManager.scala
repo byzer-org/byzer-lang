@@ -21,8 +21,8 @@ package streaming.dsl.mmlib.algs.python
 import org.apache.spark.sql.SparkSession
 import streaming.dsl.mmlib.algs.{Functions, SQLPythonAlg, SQLPythonFunc}
 import streaming.log.WowLog
-import tech.mlsql.common.utils.hdfs.HDFSOperator
 import tech.mlsql.common.utils.log.Logging
+import tech.mlsql.tool.HDFSOperatorV2
 
 class ResourceManager(params: Map[String, String]) extends Logging with WowLog {
   def loadResourceInTrain = {
@@ -34,7 +34,7 @@ class ResourceManager(params: Map[String, String]) extends Logging with WowLog {
           val tempResourceLocalPath = SQLPythonFunc.getLocalTempResourcePath(resourcePath, resourceName)
           var msg = s"resource paramter found,system will load resource ${resourcePath} in ${tempResourceLocalPath} in executor."
           logInfo(format(msg))
-          HDFSOperator.copyToLocalFile(tempResourceLocalPath, resourcePath, true)
+          HDFSOperatorV2.copyToLocalFile(tempResourceLocalPath, resourcePath, true)
           resourceParams += (resourceName -> tempResourceLocalPath)
           msg = s"resource loaded."
           logInfo(format(msg))

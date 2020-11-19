@@ -30,7 +30,7 @@ import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
 import streaming.dsl.mmlib.{Code, SQLAlg, SQLCode}
 import tech.mlsql.common.utils.env.python.BasicCondaEnvManager
-import tech.mlsql.common.utils.hdfs.HDFSOperator
+import tech.mlsql.tool.HDFSOperatorV2
 
 /**
  * 2019-01-16 WilliamZhu(allwefantasy@gmail.com)
@@ -57,7 +57,7 @@ class SQLPythonEnvExt(override val uid: String) extends SQLAlg with WowParams {
         val condaContent = spark.table(s).head().getString(0)
         val baseFile = path + "/__mlsql_temp_dir__/conda"
         val fileName = "conda.yaml"
-        HDFSOperator.saveFile(baseFile, fileName, Seq(("", condaContent)).iterator)
+        HDFSOperatorV2.saveFile(baseFile, fileName, Seq(("", condaContent)).iterator)
         set(condaYamlFilePath, baseFile + "/" + fileName)
       }.getOrElse {
         throw new MLSQLException(s"${condaFile.name} || ${condaYamlFilePath} is required")
