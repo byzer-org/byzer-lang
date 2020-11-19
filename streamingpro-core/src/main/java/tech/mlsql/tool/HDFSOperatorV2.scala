@@ -6,6 +6,7 @@ import org.apache.commons.io.FileUtils
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FSDataInputStream, FSDataOutputStream, FileStatus, FileSystem, Path}
 import org.apache.hadoop.io.IOUtils
+import org.apache.spark.MLSQLSparkUtils
 import org.apache.spark.deploy.SparkHadoopUtil
 import tech.mlsql.common.utils.Md5
 
@@ -17,8 +18,8 @@ import scala.collection.mutable.ArrayBuffer
 object HDFSOperatorV2 {
 
   def hadoopConfiguration:Configuration = {
-    if(SparkHadoopUtil.get != null){
-      SparkHadoopUtil.get.conf
+    if(MLSQLSparkUtils.sparkHadoopUtil != null){
+      MLSQLSparkUtils.sparkHadoopUtil.conf
     } else new Configuration()
 
   }
