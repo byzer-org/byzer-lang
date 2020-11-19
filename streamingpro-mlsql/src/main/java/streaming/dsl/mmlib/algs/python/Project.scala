@@ -26,8 +26,8 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.mlsql.session.MLSQLException
 import streaming.log.WowLog
 import tech.mlsql.common.utils.env.python.BasicCondaEnvManager
-import tech.mlsql.common.utils.hdfs.HDFSOperator
 import tech.mlsql.common.utils.log.Logging
+import tech.mlsql.tool.HDFSOperatorV2
 
 object PythonAlgProject extends Logging with WowLog {
 
@@ -41,12 +41,12 @@ object PythonAlgProject extends Logging with WowLog {
 
     getPythonScriptPath(params) match {
       case Some(path) =>
-        if (HDFSOperator.isDir(path) && HDFSOperator.fileExists(Paths.get(path, "MLproject").toString)) {
+        if (HDFSOperatorV2.isDir(path) && HDFSOperatorV2.fileExists(Paths.get(path, "MLproject").toString)) {
           val project = path.split("/").last
           Some(PythonScript("", "", path, project, MLFlow))
 
         } else {
-          if (!HDFSOperator.isFile(path)) {
+          if (!HDFSOperatorV2.isFile(path)) {
             throw new MLSQLException(s"pythonScriptPath=$path should be a directory which contains MLproject file " +
               s"or directly a python file.")
           }
@@ -112,7 +112,7 @@ object MLProject {
   val MLPROJECT = "MLproject"
 
   def loadProject(projectDir: String, options: Map[String, String]) = {
-    val projectContent = HDFSOperator.readFile(projectDir + s"/${MLPROJECT}")
+    val projectContent = HDFSOperatorV2.readFile(projectDir + s"/${MLPROJECT}")
     val projectDesc = ImmutableSettings.settingsBuilder().loadFromSource(projectContent).build()
     new MLProject(projectDir, projectDesc, options)
   }
@@ -129,11 +129,11 @@ class AutoCreateMLproject(scripts: String, condaFile: String, entryPoint: String
     val projectPath = path + s"/${projectName}"
     scripts.split(",").foreach { script =>
       val content = sparkSession.table(script).head().getString(0)
-      HDFSOperator.saveFile(projectPath, script + ".py", Seq(("", content)).iterator)
+      HDFSOperatorV2.saveFile(projectPath, script + ".py", Seq(("", content)).iterator)
     }
-    HDFSOperator.saveFile(projectPath, "MLproject", Seq(("", MLprojectTemplate)).iterator)
+    HDFSOperatorV2.saveFile(projectPath, "MLproject", Seq(("", MLprojectTemplate)).iterator)
     val condaContent = sparkSession.table(condaFile).head().getString(0)
-    HDFSOperator.saveFile(projectPath, "conda.yaml", Seq(("", condaContent)).iterator)
+    HDFSOperatorV2.saveFile(projectPath, "conda.yaml", Seq(("", condaContent)).iterator)
     projectPath
   }
 

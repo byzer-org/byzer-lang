@@ -33,9 +33,9 @@ import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib.algs.SQLPythonFunc._
 import streaming.dsl.mmlib.algs.{Functions, SQLPythonAlg, SQLPythonFunc}
 import tech.mlsql.common.utils.env.python.BasicCondaEnvManager
-import tech.mlsql.common.utils.hdfs.HDFSOperator
 import tech.mlsql.common.utils.lang.sc.ScalaMethodMacros._
 import tech.mlsql.common.utils.network.NetUtils
+import tech.mlsql.tool.HDFSOperatorV2
 
 import scala.collection.JavaConverters._
 
@@ -104,7 +104,7 @@ class PythonTrain extends Functions with Serializable {
       if (path.contains("..") || path == "/" || path.split("/").length < 3) {
         throw new MLSQLException("path should at least three layer")
       }
-      HDFSOperator.deleteDir(SQLPythonFunc.getAlgModelPath(path, keepVersion))
+      HDFSOperatorV2.deleteDir(SQLPythonFunc.getAlgModelPath(path, keepVersion))
     }
 
     val wowRDD = df.toJSON.rdd.mapPartitionsWithIndex { case (algIndex, iter) =>
@@ -383,7 +383,7 @@ class PythonTrain extends Functions with Serializable {
         tempDataLocalPathWithAlgSuffix = tempDataLocalPathWithAlgSuffix + "/" + algIndex
         val msg = s"dataLocalFormat enabled ,system will generate data in ${tempDataLocalPathWithAlgSuffix} "
         logInfo(format(msg))
-        HDFSOperator.copyToLocalFile(tempLocalPath = tempDataLocalPathWithAlgSuffix, path = dataHDFSPath, true)
+        HDFSOperatorV2.copyToLocalFile(tempLocalPath = tempDataLocalPathWithAlgSuffix, path = dataHDFSPath, true)
       }
 
       val paramMap = new util.HashMap[String, Object]()

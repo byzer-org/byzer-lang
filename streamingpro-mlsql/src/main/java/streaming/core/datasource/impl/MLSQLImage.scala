@@ -6,7 +6,7 @@ import org.apache.spark.sql.{DataFrameWriter, Row, SaveMode}
 import streaming.core.datasource._
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
-import tech.mlsql.common.utils.hdfs.HDFSOperator
+import tech.mlsql.tool.HDFSOperatorV2
 
 /**
   * 2019-03-20 WilliamZhu(allwefantasy@gmail.com)
@@ -19,9 +19,9 @@ class MLSQLImage(override val uid: String) extends MLSQLBaseFileSource with WowP
     val context = ScriptSQLExec.contextGetOrForTest()
     val baseDir = resourceRealPath(context.execListener, Option(context.owner), config.path)
 
-    if (HDFSOperator.fileExists(baseDir)) {
+    if (HDFSOperatorV2.fileExists(baseDir)) {
       if (config.mode == SaveMode.Overwrite) {
-        HDFSOperator.deleteDir(baseDir)
+        HDFSOperatorV2.deleteDir(baseDir)
       }
       if (config.mode == SaveMode.ErrorIfExists) {
         throw new MLSQLException(s"${baseDir} is exists")
@@ -44,7 +44,7 @@ class MLSQLImage(override val uid: String) extends MLSQLBaseFileSource with WowP
     val _imageColumn = $(imageColumn)
 
     val saveImage = (fileName: String, buffer: Array[Byte]) => {
-      HDFSOperator.saveBytesFile(baseDir, fileName, buffer)
+      HDFSOperatorV2.saveBytesFile(baseDir, fileName, buffer)
       baseDir + "/" + fileName
     }
 

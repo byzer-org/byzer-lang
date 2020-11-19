@@ -1,7 +1,7 @@
 package tech.mlsql.ets.alg
 
-import tech.mlsql.common.utils.hdfs.HDFSOperator
 import tech.mlsql.common.utils.path.PathFun
+import tech.mlsql.tool.HDFSOperatorV2
 
 
 /**
@@ -13,7 +13,7 @@ trait BaseAlg {
       item.split("/").last
     }
 
-    val paths = HDFSOperator.listFiles(path).map(file => PathFun(path).add(file.getPath.getName).toPath)
+    val paths = HDFSOperatorV2.listFiles(path).map(file => PathFun(path).add(file.getPath.getName).toPath)
 
     !paths.isEmpty && (paths.filter(splitPath(_).startsWith("_model_")).size > 0 ||
       (paths.filter(splitPath(_) == "model").size > 0 &&
