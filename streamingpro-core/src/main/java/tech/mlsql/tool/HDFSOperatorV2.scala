@@ -129,6 +129,7 @@ object HDFSOperatorV2 {
       IOUtils.copyBytes(inputStream, dos, 4 * 1024 * 1024)
     } catch {
       case ex: Exception =>
+        ex.printStackTrace()
         println("file save exception")
     } finally {
       if (null != dos) {

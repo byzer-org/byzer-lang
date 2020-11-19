@@ -125,8 +125,7 @@ class SQLDownloadExt(override val uid: String) extends SQLAlg with DslTool with 
             val dir = entry.getName.split("/").filterNot(f => f.isEmpty).dropRight(1).mkString("/")
             downloadResultRes += DownloadResult(PathFun(originalTo).add(dir).add(entry.getName.split("/").last).toPath)
             logInfo(format(s"extracting ${downloadResultRes.last.hdfsPath}"))
-            val hdfsPath = resourceRealPath(context.execListener, Option(context.owner), $(to))
-            HDFSOperatorV2.saveStream(hdfsPath + "/" + dir, entry.getName.split("/").last, tarIS)
+            HDFSOperatorV2.saveStream($(to) + "/" + dir, entry.getName.split("/").last, tarIS)
           }
           entry = tarIS.getNextEntry
         }
