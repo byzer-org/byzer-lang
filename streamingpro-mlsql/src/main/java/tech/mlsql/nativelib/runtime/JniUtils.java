@@ -25,7 +25,7 @@ public class JniUtils {
     private static final Logger LOGGER = LoggerFactory.getLogger(JniUtils.class);
     private static Set<String> loadedLibs = Sets.newHashSet();
 
-    public static final String MLSQL_NATIVE_LIB = "MlsqlNativeLib";
+    public static final String MLSQL_NATIVE_LIB = "mlsql_runtime_native_lib";
 
     public static synchronized void loadLibrary(String libraryName) {
         try {
