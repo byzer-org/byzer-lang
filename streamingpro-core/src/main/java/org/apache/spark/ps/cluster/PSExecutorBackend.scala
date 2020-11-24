@@ -13,6 +13,7 @@ import org.apache.spark.security.CryptoStreamUtils
 import org.apache.spark.util.ThreadUtils
 import tech.mlsql.common.utils.exception.ExceptionTool
 import tech.mlsql.log.WriteLog
+import tech.mlsql.nativelib.runtime.MLSQLNativeRuntime
 import tech.mlsql.python.BasicCondaEnvManager
 import tech.mlsql.tool.HDFSOperatorV2
 
@@ -69,6 +70,11 @@ class PSExecutorBackend(env: SparkEnv, override val rpcEnv: RpcEnv, psDriverUrl:
       context.reply(true)
     }
 
+    case Message.ExecutorMsgRequest() => {
+      val cpuLoad = MLSQLNativeRuntime.getCPULoad()
+      context.reply(Message.ExecutorMsgResponse(cpuLoad))
+    }
+      
     case Message.CreateOrRemovePythonEnv(user, groupId, condaYamlFile, options, command) => {
       var message = ""
       val success = try {

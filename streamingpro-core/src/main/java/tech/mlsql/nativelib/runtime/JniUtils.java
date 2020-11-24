@@ -35,7 +35,7 @@ public class JniUtils {
         }
 
     }
-    
+
     public static synchronized void loadLibrary(String libraryName, boolean exportSymbols, String testPath) {
         if (!loadedLibs.contains(libraryName)) {
             LOGGER.info("Loading native library {}.", libraryName);
@@ -100,5 +100,9 @@ public class JniUtils {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public static void loadLibrary(String mlsqlNativeLib, String s) {
+        loadLibrary(mlsqlNativeLib, true, s);
     }
 }

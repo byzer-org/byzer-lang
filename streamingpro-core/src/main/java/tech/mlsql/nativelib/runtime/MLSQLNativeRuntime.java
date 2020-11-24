@@ -12,5 +12,8 @@ public class MLSQLNativeRuntime {
     public static native String funcLower(String str);
 
     public static native String funcUpper(String str);
+
+    public static native float getCPULoad();
+
 }
 

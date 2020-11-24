@@ -457,6 +457,20 @@ class RestController extends ApplicationController with WowLog {
     render(JSONTool.toJsonStr(pongs))
   }
 
+
+  @At(path = Array("/debug/executor/ping2"), types = Array(GET, POST))
+  def pingExecuotrs2 = {
+    val pongs = runtime match {
+      case sparkRuntime: SparkRuntime =>
+        val endpoint = sparkRuntime.psDriverBackend.psDriverRpcEndpointRef
+        val pongs = endpoint.askSync[List[Message.ExecutorMsgResponse]](Message.ExecutorMsgRequest())
+        pongs
+      case _ =>
+        throw new RuntimeException(s"unsupport runtime ${runtime.getClass} !")
+    }
+    render(JSONTool.toJsonStr(pongs))
+  }
+
   @At(path = Array("/instance/resource"), types = Array(GET, POST))
   def instanceResource = {
     val session = getSession

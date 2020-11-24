@@ -40,6 +40,10 @@ object Message {
 
   case class CopyModelToLocal(modelPath: String, destPath: String)
 
+  case class ExecutorMsgRequest()
+
+  case class ExecutorMsgResponse(cpu: Float)
+
   case class CreateOrRemovePythonEnv(user: String,
                                      groupId: String,
                                      condaYamlFile: String,
