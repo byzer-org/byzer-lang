@@ -161,3 +161,4 @@ streamingpro-jython/logs/
 streamingpro-jython/metastore_db
 __mlsql__/
 native/
+streamingpro-mlsql/native
