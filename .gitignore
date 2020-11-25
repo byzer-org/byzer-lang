@@ -162,3 +162,5 @@ streamingpro-jython/metastore_db
 __mlsql__/
 native/
 streamingpro-mlsql/native
+streamingpro-mlsql/logs
+streamingpro-mlsql/spark-warehouse
