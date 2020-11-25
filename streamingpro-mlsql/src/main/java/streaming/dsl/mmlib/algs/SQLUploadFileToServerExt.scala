@@ -30,7 +30,7 @@ import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
 import streaming.log.WowLog
-import tech.mlsql.common.utils.hdfs.HDFSOperator
+import tech.mlsql.tool.HDFSOperatorV2
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -89,7 +89,7 @@ class SQLUploadFileToServerExt(override val uid: String) extends SQLAlg with Fun
     }
 
     def uploadFile(forUploadPath: String, fileName: String) = {
-      val inputStream = HDFSOperator.readAsInputStream(forUploadPath)
+      val inputStream = HDFSOperatorV2.readAsInputStream(forUploadPath)
       try {
         val entity = MultipartEntityBuilder.create.
           setMode(HttpMultipartMode.BROWSER_COMPATIBLE).
@@ -115,14 +115,14 @@ class SQLUploadFileToServerExt(override val uid: String) extends SQLAlg with Fun
     val targetDir = path.split("/").filterNot(f => f.isEmpty).last
 
     var downloadResult = ArrayBuffer[UploadFileToServerRes]()
-    if (HDFSOperator.isDir(path)) {
-      val files = HDFSOperator.iteratorFiles(path, true)
+    if (HDFSOperatorV2.isDir(path)) {
+      val files = HDFSOperatorV2.iteratorFiles(path, true)
       files.foreach { file =>
         downloadResult += UploadFileToServerRes(uploadFile(file, findSubDirectory(file, targetDir)), targetDir)
       }
     }
 
-    if (HDFSOperator.isFile(path)) {
+    if (HDFSOperatorV2.isFile(path)) {
       downloadResult += UploadFileToServerRes(uploadFile(path, targetDir), targetDir)
     }
 

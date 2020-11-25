@@ -6,10 +6,10 @@ import java.util.UUID
 
 import net.sf.json.JSONObject
 import org.apache.commons.io.FileUtils
-import tech.mlsql.common.utils.hdfs.HDFSOperator
 import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.common.utils.shell.ShellCommand
 import tech.mlsql.log.WriteLog
+import tech.mlsql.tool.HDFSOperatorV2
 
 import scala.collection.JavaConverters._
 
@@ -131,7 +131,7 @@ class BasicCondaEnvManager(user: String, groupId: String, executorHostAndPort: S
       case Some(cep) =>
         // we should read from local ,but for now, we read from hdfs
         // scala.io.Source.fromFile(new File(cep)).getLines().mkString("\n")
-        HDFSOperator.readFile(cep)
+        HDFSOperatorV2.readFile(cep)
       case None => ""
     }
     s"mlflow-${prefix}-${sha1(condaEnvContents)}"
@@ -142,7 +142,7 @@ class BasicCondaEnvManager(user: String, groupId: String, executorHostAndPort: S
       case Some(cep) =>
         // we should read from local ,but for now, we read from hdfs
         // scala.io.Source.fromFile(new File(cep)).getLines().mkString("\n")
-        HDFSOperator.readFile(cep)
+        HDFSOperatorV2.readFile(cep)
       case None => ""
     }
     condaEnvContents

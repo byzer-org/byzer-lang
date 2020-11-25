@@ -8,9 +8,9 @@ import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.param.BaseParams
 import streaming.dsl.mmlib.algs.{Functions, MllibFunctions}
-import tech.mlsql.common.utils.hdfs.HDFSOperator
 import tech.mlsql.common.utils.path.PathFun
 import tech.mlsql.ets.alg.BaseAlg
+import tech.mlsql.tool.HDFSOperatorV2
 
 
 /**
@@ -26,7 +26,7 @@ class ModelCommand(override val uid: String) extends SQLAlg with MllibFunctions 
 
     if (!isModelPath(path)) throw new MLSQLException(s"$path is not a validate model path")
 
-    val paths = HDFSOperator.listFiles(path).map(file => PathFun(path).add(file.getPath.getName).toPath)
+    val paths = HDFSOperatorV2.listFiles(path).map(file => PathFun(path).add(file.getPath.getName).toPath)
 
     var modelPaths = paths.filter(f => f.split("/").last.startsWith("_model_"))
     val keepVersion = modelPaths.size > 0
@@ -34,7 +34,7 @@ class ModelCommand(override val uid: String) extends SQLAlg with MllibFunctions 
 
     def getModelMetaData(spark: SparkSession, path: String): Option[DataFrame] = {
       val metaDataPath = PathFun(path).add("meta").add("0").toPath
-      if (HDFSOperator.fileExists(metaDataPath) && HDFSOperator.listFiles(metaDataPath).
+      if (HDFSOperatorV2.fileExists(metaDataPath) && HDFSOperatorV2.listFiles(metaDataPath).
         filter(f => f.getPath.getName.endsWith(".parquet")).size > 0) {
         return Option(spark.read.parquet(metaDataPath))
       }

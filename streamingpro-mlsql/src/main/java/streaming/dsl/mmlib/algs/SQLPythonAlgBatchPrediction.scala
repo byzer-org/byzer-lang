@@ -34,7 +34,7 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.util.ExternalCommandRunner
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.SQLPythonFunc._
-import tech.mlsql.common.utils.hdfs.HDFSOperator
+import tech.mlsql.tool.HDFSOperatorV2
 
 import scala.collection.JavaConverters._
 
@@ -66,7 +66,7 @@ class SQLPythonAlgBatchPrediction extends SQLAlg with Functions {
         case (resourceName, resourcePath) =>
           val tempResourceLocalPath = SQLPythonFunc.getLocalTempResourcePath(resourcePath, resourceName)
           recordSingleLineLog(kafkaParam, s"resource paramter found,system will load resource ${resourcePath} in ${tempResourceLocalPath} in executor.")
-          HDFSOperator.copyToLocalFile(tempResourceLocalPath, resourcePath, true)
+          HDFSOperatorV2.copyToLocalFile(tempResourceLocalPath, resourcePath, true)
           resourceParams += (resourceName -> tempResourceLocalPath)
           recordSingleLineLog(kafkaParam, s"resource loaded.")
       }

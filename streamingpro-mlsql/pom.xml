@@ -379,6 +379,12 @@
 
                 <dependency>
                     <groupId>tech.mlsql</groupId>
+                    <artifactId>mlsql-healthy-${spark.bigversion}_${scala.binary.version}</artifactId>
+                    <version>${project.parent.version}</version>
+                </dependency>
+
+                <dependency>
+                    <groupId>tech.mlsql</groupId>
                     <artifactId>mlsql-autosuggest-${spark.bigversion}_${scala.binary.version}</artifactId>
                     <version>${project.parent.version}</version>
                 </dependency>
@@ -649,12 +655,6 @@
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-sql-kafka-0-10_${scala.binary.version}</artifactId>
             <version>${spark.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>net.java.dev.jna</groupId>
-            <artifactId>jna</artifactId>
-            <version>5.5.0</version>
         </dependency>
 
 

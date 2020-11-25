@@ -7,8 +7,8 @@ import tech.mlsql.render.protocal.{MLSQLResourceRender, MLSQLScriptJob, MLSQLScr
 import scala.collection.mutable.{Buffer, ListBuffer}
 
 /**
-  * 2019-01-28 WilliamZhu(allwefantasy@gmail.com)
-  */
+ * 2019-01-28 WilliamZhu(allwefantasy@gmail.com)
+ */
 class MLSQLResource(spark: SparkSession, owner: String, getGroupId: String => String) {
 
   def resourceSummary(jobGroupId: String) = {
@@ -105,6 +105,37 @@ class MLSQLResource(spark: SparkSession, owner: String, getGroupId: String => St
     (activeStages, completedStages, failedStages)
   }
 
+  def jobDetail2(jobGroupId: String) = {
+    val store = MLSQLUtils.getAppStatusStore(spark)
+    val appInfo = store.applicationInfo()
+    val finalJobGroupId = getGroupId(jobGroupId)
+    val items = store.jobsList(null).filter(f => f.jobGroup.isDefined).filter(f => f.jobGroup.get == finalJobGroupId).map { f =>
+      //val (activeStages, completedStages, failedStages) = fetchStageByJob(f)
+      val endTime = f.completionTime.map(date => date.getTime()).getOrElse(System.currentTimeMillis())
+      val duration = f.submissionTime.map(date => (endTime - date.getTime())).getOrElse(0L)
+      MLSQLScriptJob(
+        f.jobId,
+        f.submissionTime.map(date => new java.sql.Date(date.getTime())),
+        f.completionTime.map(date => new java.sql.Date(date.getTime())),
+        f.numTasks,
+        f.numActiveTasks, //activeStages.map(f => f.numActiveTasks).sum,
+        f.numCompletedTasks,
+        f.numSkippedTasks,
+        f.numFailedTasks,
+        f.numKilledTasks,
+        f.numCompletedIndices,
+        f.numActiveStages,
+        f.numCompletedStages,
+        f.numSkippedStages,
+        f.numFailedStages, duration
+      )
+    }
+
+    MLSQLScriptJobGroup(
+      finalJobGroupId, 0, 0, 0, items
+    )
+  }
+
   def jobDetail(jobGroupId: String) = {
     val store = MLSQLUtils.getAppStatusStore(spark)
     val appInfo = store.applicationInfo()
@@ -145,7 +176,7 @@ class MLSQLResource(spark: SparkSession, owner: String, getGroupId: String => St
         f.numActiveStages,
         f.numCompletedStages,
         f.numSkippedStages,
-        f.numFailedStages
+        f.numFailedStages, 0
       )
     }
     MLSQLScriptJobGroup(

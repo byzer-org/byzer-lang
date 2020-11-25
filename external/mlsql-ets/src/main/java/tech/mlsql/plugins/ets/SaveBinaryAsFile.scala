@@ -10,10 +10,10 @@ import streaming.dsl.ScriptSQLExec
 import streaming.dsl.auth.TableAuthResult
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.param.WowParams
-import tech.mlsql.common.utils.hdfs.HDFSOperator
 import tech.mlsql.dsl.adaptor.{DslAdaptor, DslTool}
 import tech.mlsql.dsl.auth.ETAuth
 import tech.mlsql.dsl.auth.dsl.mmlib.ETMethod.ETMethod
+import tech.mlsql.tool.HDFSOperatorV2
 
 /**
  * 31/8/2020 WilliamZhu(allwefantasy@gmail.com)
@@ -28,7 +28,7 @@ class SaveBinaryAsFile(override val uid: String) extends SQLAlg with DslTool wit
     val finalPath = resourceRealPath(context.execListener, Option(context.owner), _filePath)
     val bytes = df.collect().head.getAs[Array[Byte]](0)
     val file = new File(finalPath)
-    HDFSOperator.saveBytesFile(file.getParentFile.getPath, file.getName, bytes)
+    HDFSOperatorV2.saveBytesFile(file.getParentFile.getPath, file.getName, bytes)
     df.sparkSession.emptyDataFrame
 
   }

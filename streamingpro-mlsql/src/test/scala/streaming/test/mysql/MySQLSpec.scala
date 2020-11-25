@@ -23,8 +23,8 @@ import org.scalatest.BeforeAndAfterAll
 import streaming.core.strategy.platform.SparkRuntime
 import streaming.core.{BasicMLSQLConfig, SpecFunctions}
 import streaming.dsl.ScriptSQLExec
-import tech.mlsql.common.utils.hdfs.HDFSOperator
 import tech.mlsql.common.utils.log.Logging
+import tech.mlsql.tool.HDFSOperatorV2
 
 /**
   * Created by allwefantasy on 12/9/2018.
@@ -162,7 +162,7 @@ class MySQLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLCo
 
       val baseHome = "/tmp/william/tmp/_jdbc_cache_"
       val mysql_wow_tod_boss_dashboard_sheet_2 = s"${baseHome}/mysql_wow_tod_boss_dashboard_sheet_2"
-      HDFSOperator.deleteDir(baseHome)
+      HDFSOperatorV2.deleteDir(baseHome)
       ScriptSQLExec.parse(
         s"""
            |save overwrite tod_boss_dashboard_sheet_1
@@ -171,9 +171,9 @@ class MySQLSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLCo
            |load jdbc.`tableau.tod_boss_dashboard_sheet_2` as tbs;
          """.stripMargin, sq)
 
-      assume(HDFSOperator.fileExists(mysql_wow_tod_boss_dashboard_sheet_2 + "/data"))
+      assume(HDFSOperatorV2.fileExists(mysql_wow_tod_boss_dashboard_sheet_2 + "/data"))
 
-      HDFSOperator.deleteDir(baseHome)
+      HDFSOperatorV2.deleteDir(baseHome)
 
       val threads = (0 until 10).map { i =>
         new Thread(new Runnable {

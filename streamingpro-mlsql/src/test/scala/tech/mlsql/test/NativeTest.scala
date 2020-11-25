@@ -8,6 +8,6 @@ import tech.mlsql.nativelib.runtime.MLSQLNativeRuntime
  */
 class NativeTest  extends FunSuite with BeforeAndAfterAll {
   test("wow"){
-     println(MLSQLNativeRuntime.funcLower("Dj"))
+     println(MLSQLNativeRuntime.getCPULoad())
   }
 }

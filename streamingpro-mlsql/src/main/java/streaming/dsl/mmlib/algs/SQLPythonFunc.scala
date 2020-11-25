@@ -23,7 +23,7 @@ import java.util.UUID
 
 import org.apache.spark.sql.SparkSession
 import streaming.dsl.mmlib.algs.python.{MLFlow, PythonScript}
-import tech.mlsql.common.utils.hdfs.HDFSOperator
+import tech.mlsql.tool.HDFSOperatorV2
 
 /**
  * Created by allwefantasy on 1/2/2018.
@@ -39,7 +39,7 @@ object SQLPythonFunc {
   def loadUserDefinePythonScript(params: Map[String, String], spark: SparkSession) = {
     getPath(params) match {
       case Some(path) =>
-        if (HDFSOperator.isDir(path) && HDFSOperator.fileExists(Paths.get(path, "MLproject").toString)) {
+        if (HDFSOperatorV2.isDir(path) && HDFSOperatorV2.fileExists(Paths.get(path, "MLproject").toString)) {
           val project = path.split("/").last
           Some(PythonScript("", project, path, "", MLFlow))
 
@@ -155,7 +155,7 @@ object SQLPythonFunc {
         case Some(v) => s"${basePath}/_model_${v + 1}"
         case None => s"${basePath}/_model_0"
       }
-      HDFSOperator.createDir(path)
+      HDFSOperatorV2.createDir(path)
     }
   }
 
@@ -180,7 +180,7 @@ object SQLPythonFunc {
 
   def getModelVersion(basePath: String) = {
     try {
-      HDFSOperator.listModelDirectory(basePath).filter(f => f.getPath.getName.startsWith("_model_")).
+      HDFSOperatorV2.listModelDirectory(basePath).filter(f => f.getPath.getName.startsWith("_model_")).
         map(f => f.getPath.getName.split("_").last.toInt).sorted.reverse.headOption
     } catch {
       case e: Exception =>
