@@ -1,8 +1,8 @@
 package tech.mlsql.render.protocal
 
 /**
-  * 2019-01-28 WilliamZhu(allwefantasy@gmail.com)
-  */
+ * 2019-01-28 WilliamZhu(allwefantasy@gmail.com)
+ */
 case class MLSQLScriptJobGroup(groupId: String,
                                activeJobsNum: Int,
                                completedJobsNum: Int,
@@ -24,7 +24,8 @@ case class MLSQLScriptJob(
                            val numActiveStages: Int,
                            val numCompletedStages: Int,
                            val numSkippedStages: Int,
-                           val numFailedStages: Int
+                           val numFailedStages: Int,
+                           val duration: Long
                          )
 
 case class MLSQLResourceRender(

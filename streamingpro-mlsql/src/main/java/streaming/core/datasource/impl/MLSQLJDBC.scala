@@ -28,8 +28,9 @@ import org.apache.spark.ml.param.{BooleanParam, LongParam, Param}
 import org.apache.spark.sql._
 import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
 import tech.mlsql.common.utils.lang.sc.ScalaReflect
-import tech.mlsql.common.utils.hdfs.{DistrLocker, HDFSOperator}
+import tech.mlsql.common.utils.hdfs.DistrLocker
 import tech.mlsql.common.utils.log.Logging
+import tech.mlsql.tool.HDFSOperatorV2
 
 class MLSQLJDBC(override val uid: String) extends MLSQLSource with MLSQLSink with MLSQLSourceInfo with MLSQLRegistry with WowParams with Logging with WowLog {
   def this() = this(BaseParams.randomUID())
@@ -121,7 +122,7 @@ class MLSQLJDBC(override val uid: String) extends MLSQLSource with MLSQLSink wit
         val finalPath = s"${home}/tmp/_jdbc_cache_/${newtableName}"
 
         try {
-          HDFSOperator.createDir(finalPath)
+          HDFSOperatorV2.createDir(finalPath)
         } catch {
           case e: Exception =>
         }
@@ -130,7 +131,7 @@ class MLSQLJDBC(override val uid: String) extends MLSQLSource with MLSQLSink wit
         def isExpire = {
           // we should check the data dir instead of the finalPath since the final path
           // will be written with lock file which may make the modification time changed
-          HDFSOperator.fileExists(finalPath + "/data") && System.currentTimeMillis() - HDFSOperator.getFileStatus(finalPath + "/data").getModificationTime > $(cacheToHDFSExpireTime) * 1000
+          HDFSOperatorV2.fileExists(finalPath + "/data") && System.currentTimeMillis() - HDFSOperatorV2.getFileStatus(finalPath + "/data").getModificationTime > $(cacheToHDFSExpireTime) * 1000
         }
 
         val hdfsLocker = new DistrLocker(finalPath)
@@ -151,7 +152,7 @@ class MLSQLJDBC(override val uid: String) extends MLSQLSource with MLSQLSink wit
             // if not exits or the table have expire, then remove it and create new one.
             // finally release the lock
             logInfo(format(s"${finalPath} is locked by this service and we will create the data if it not exists"))
-            if (!HDFSOperator.fileExists(finalPath + "/data") || isExpire) {
+            if (!HDFSOperatorV2.fileExists(finalPath + "/data") || isExpire) {
               table.write.mode(SaveMode.Overwrite).save(finalPath + "/data")
             }
             try {

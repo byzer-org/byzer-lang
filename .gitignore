@@ -164,3 +164,8 @@ __mlsql__/
 # C++
 cmake-build-debug/
 
+native/
+streamingpro-mlsql/native
+streamingpro-mlsql/logs
+streamingpro-mlsql/spark-warehouse
+

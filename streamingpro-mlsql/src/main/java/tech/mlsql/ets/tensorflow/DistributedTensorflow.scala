@@ -19,11 +19,11 @@ import streaming.dsl.mmlib.algs.{Functions, SQLPythonFunc}
 import tech.mlsql.arrow.python.PythonWorkerFactory
 import tech.mlsql.arrow.python.runner.{PythonConf, PythonProjectRunner}
 import tech.mlsql.common.utils.cluster.ml._
-import tech.mlsql.common.utils.hdfs.HDFSOperator
 import tech.mlsql.common.utils.lang.sc.ScalaMethodMacros
 import tech.mlsql.common.utils.network.NetUtils
 import tech.mlsql.ets.ml.cluster._
 import tech.mlsql.log.WriteLog
+import tech.mlsql.tool.HDFSOperatorV2
 
 class DistributedTensorflow(override val uid: String) extends SQLAlg with SQLPythonAlgParams with Functions {
   def this() = this(BaseParams.randomUID())
@@ -260,10 +260,10 @@ class DistributedTensorflow(override val uid: String) extends SQLAlg with SQLPyt
       try {
         //模型保存到hdfs上
         if (!keepVersion) {
-          HDFSOperator.deleteDir(modelHDFSPath)
+          HDFSOperatorV2.deleteDir(modelHDFSPath)
         }
         if (new File(tempModelLocalPath).exists() && chiefIndex == tfContext.currentRole.taskIndex) {
-          HDFSOperator.copyToHDFS(tempModelLocalPath, modelHDFSPath, true, false)
+          HDFSOperatorV2.copyToHDFS(tempModelLocalPath, modelHDFSPath, true, false)
         }
       } catch {
         case e: Exception =>

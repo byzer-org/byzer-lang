@@ -210,7 +210,7 @@ class RestController extends ApplicationController with WowLog {
     if (!customAuth.isEmpty) {
       import scala.collection.JavaConverters._
       val restParams = params().asScala.toMap
-      val (isOk, message) = Class.forName(customAuth).asInstanceOf[ {def auth(params: Map[String, String]): (Boolean, String)}].auth(restParams)
+      val (isOk, message) = Class.forName(customAuth).newInstance().asInstanceOf[ {def auth(params: Map[String, String]): (Boolean, String)}].auth(restParams)
       if (!isOk) {
         render(403, JSONTool.toJsonStr(Map("msg" -> message)))
       }
@@ -456,6 +456,7 @@ class RestController extends ApplicationController with WowLog {
     }
     render(JSONTool.toJsonStr(pongs))
   }
+  
 
   @At(path = Array("/instance/resource"), types = Array(GET, POST))
   def instanceResource = {

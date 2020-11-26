@@ -38,8 +38,8 @@ import org.apache.spark.{MLSQLConf, Partitioner, SparkConf}
 import streaming.core.message.MLSQLMessage
 import streaming.core.strategy.platform.{PlatformManager, SparkRuntime}
 import streaming.log.WowLog
-import tech.mlsql.common.utils.hdfs.HDFSOperator
 import tech.mlsql.common.utils.log.Logging
+import tech.mlsql.tool.HDFSOperatorV2
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -183,7 +183,7 @@ trait Functions extends SQlBaseFunc with Logging with WowLog with Serializable {
   }
 
   def loadModels(path: String, modelType: (String) => Any) = {
-    val files = HDFSOperator.listModelDirectory(path).filterNot(_.getPath.getName.startsWith("__"))
+    val files = HDFSOperatorV2.listModelDirectory(path).filterNot(_.getPath.getName.startsWith("__"))
     val models = ArrayBuffer[Any]()
     files.foreach { f =>
       val model = modelType(f.getPath.toString)
@@ -427,7 +427,7 @@ trait Functions extends SQlBaseFunc with Logging with WowLog with Serializable {
 
 
   def createTempModelLocalPath(path: String, autoCreateParentDir: Boolean = true) = {
-    HDFSOperator.createTempModelLocalPath(path, autoCreateParentDir)
+    HDFSOperatorV2.createTempModelLocalPath(path, autoCreateParentDir)
   }
 
 

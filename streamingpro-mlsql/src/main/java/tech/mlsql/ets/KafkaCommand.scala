@@ -15,11 +15,11 @@ import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.Functions
 import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
 import tech.mlsql.MLSQLEnvKey
-import tech.mlsql.common.utils.hdfs.HDFSOperator
 import tech.mlsql.common.utils.path.PathFun
 import tech.mlsql.common.utils.serder.json.JSONTool
 import tech.mlsql.dsl.auth.ETAuth
 import tech.mlsql.dsl.auth.dsl.mmlib.ETMethod.ETMethod
+import tech.mlsql.tool.HDFSOperatorV2
 
 import scala.util.Try
 
@@ -52,14 +52,14 @@ class KafkaCommand(override val uid: String) extends SQLAlg with ETAuth with Fun
       case List("streamOffset", ckPath, _*) =>
         val context = ScriptSQLExec.contextGetOrForTest()
         val offsetPath = PathFun(context.home).add(ckPath).add("offsets").toPath
-        val lastFile = HDFSOperator.listFiles(offsetPath)
+        val lastFile = HDFSOperatorV2.listFiles(offsetPath)
           .filterNot(_.getPath.getName.endsWith(".tmp.crc"))
           .map { fileName =>
             (fileName.getPath.getName.split("/").last.toInt, fileName.getPath)
           }
           .sortBy(f => f._1).last._2
 
-        val content = HDFSOperator.readFile(lastFile.toString)
+        val content = HDFSOperatorV2.readFile(lastFile.toString)
         val offsets = content.split("\n").last
         val desc =
           """

@@ -12,9 +12,10 @@ import org.apache.spark.rpc.{RpcCallContext, RpcEnv, ThreadSafeRpcEndpoint}
 import org.apache.spark.security.CryptoStreamUtils
 import org.apache.spark.util.ThreadUtils
 import tech.mlsql.common.utils.exception.ExceptionTool
-import tech.mlsql.common.utils.hdfs.HDFSOperator
 import tech.mlsql.log.WriteLog
+import tech.mlsql.nativelib.runtime.MLSQLNativeRuntime
 import tech.mlsql.python.BasicCondaEnvManager
+import tech.mlsql.tool.HDFSOperatorV2
 
 import scala.collection.mutable
 import scala.util.{Failure, Success}
@@ -65,10 +66,15 @@ class PSExecutorBackend(env: SparkEnv, override val rpcEnv: RpcEnv, psDriverUrl:
   override def receiveAndReply(context: RpcCallContext): PartialFunction[Any, Unit] = {
     case Message.CopyModelToLocal(modelPath, destPath) => {
       logInfo(s"copying model: ${modelPath} -> ${destPath}")
-      HDFSOperator.copyToLocalFile(destPath, modelPath, true)
+      HDFSOperatorV2.copyToLocalFile(destPath, modelPath, true)
       context.reply(true)
     }
 
+    case Message.ExecutorMsgRequest() => {
+      val cpuLoad = MLSQLNativeRuntime.getCPULoad()
+      context.reply(Message.ExecutorMsgResponse(cpuLoad))
+    }
+      
     case Message.CreateOrRemovePythonEnv(user, groupId, condaYamlFile, options, command) => {
       var message = ""
       val success = try {

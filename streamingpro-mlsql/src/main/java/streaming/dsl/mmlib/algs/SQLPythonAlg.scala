@@ -30,9 +30,9 @@ import streaming.dsl.mmlib._
 import streaming.dsl.mmlib.algs.param.{BaseParams, SQLPythonAlgParams}
 import streaming.dsl.mmlib.algs.python._
 import streaming.log.WowLog
-import tech.mlsql.common.utils.hdfs.HDFSOperator
 import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.ets.alg.BaseAlg
+import tech.mlsql.tool.HDFSOperatorV2
 
 import scala.collection.JavaConverters._
 
@@ -166,7 +166,7 @@ object SQLPythonAlg extends Logging with WowLog {
       logInfo(format(s"system load python project into directory: [ ${
         localProjectDirectory
       } ]."))
-      HDFSOperator.copyToLocalFile(localProjectDirectory, pythonProjectPath.get, true)
+      HDFSOperatorV2.copyToLocalFile(localProjectDirectory, pythonProjectPath.get, true)
       logInfo(format("python project loaded!"))
       Some(localProjectDirectory)
     }
