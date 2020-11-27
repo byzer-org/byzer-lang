@@ -5,9 +5,7 @@ package tech.mlsql.nativelib.runtime;
  */
 public class MLSQLNativeRuntime {
     static {
-        //"/Volumes/Samsung_T5/projects/MlsqlNativeLib/build"
-        JniUtils.loadLibrary(JniUtils.MLSQL_NATIVE_LIB, true,
-                "/Users/qingwang/workspace/opensource/mlsql/external/mlsql-native-operators/cmake-build-debug");
+        JniUtils.loadLibrary(JniUtils.MLSQL_NATIVE_LIB);
     }
 
     public static native String funcLower(String str);

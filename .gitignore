@@ -169,3 +169,6 @@ streamingpro-mlsql/native
 streamingpro-mlsql/logs
 streamingpro-mlsql/spark-warehouse
 
+external/mlsql-native-operators/cmake-build-debug-ubuntu/
+external/mlsql-native-operators/.clion.source.upload.marker
+
