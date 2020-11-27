@@ -160,7 +160,12 @@ streamingpro-api/spark-warehouse
 streamingpro-jython/logs/
 streamingpro-jython/metastore_db
 __mlsql__/
+
+# C++
+cmake-build-debug/
+
 native/
 streamingpro-mlsql/native
 streamingpro-mlsql/logs
 streamingpro-mlsql/spark-warehouse
+
