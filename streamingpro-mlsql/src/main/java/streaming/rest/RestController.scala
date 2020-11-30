@@ -456,6 +456,7 @@ class RestController extends ApplicationController with WowLog {
     }
     render(JSONTool.toJsonStr(pongs))
   }
+  
 
   @At(path = Array("/instance/resource"), types = Array(GET, POST))
   def instanceResource = {

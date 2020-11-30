@@ -70,6 +70,15 @@ class PSDriverEndpoint(sc: SparkContext, override val rpcEnv: RpcEnv)
         // Note: some tests expect the reply to come after we put the executor in the map
         context.reply(true)
       }
+    case Message.ExecutorMsgRequest() =>
+      val ks = getAllExecutorIDs
+      val buffer = new ArrayBuffer[Message.ExecutorMsgResponse]()
+      filterDuplicateHost.par.foreach { ed =>
+        if (ks.contains(ed._1)) {
+          buffer += ed._2.executorEndpoint.askSync[Message.ExecutorMsgResponse](Message.ExecutorMsgRequest(), PSDriverEndpoint.MLSQL_DEFAULT_RPC_TIMEOUT(sc.conf))
+        }
+      }
+      context.reply(buffer.toList)
     case Message.CopyModelToLocal(modelPath, destPath) =>
       val ks = getAllExecutorIDs
       val counter = new AtomicInteger(0)

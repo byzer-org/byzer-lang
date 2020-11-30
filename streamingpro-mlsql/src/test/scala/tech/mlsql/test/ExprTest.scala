@@ -13,10 +13,10 @@ import scala.collection.mutable
  * 6/10/2020 WilliamZhu(allwefantasy@gmail.com)
  */
 class ExprTest extends FunSuite with BeforeAndAfterAll {
-  var ssession: SparkSession = null
+  var session: SparkSession = null
 
   override def beforeAll(): Unit = {
-    ssession = SparkSession.builder().withExtensions(extensions => {
+    session = SparkSession.builder().withExtensions(extensions => {
       extensions.injectResolutionRule(session => NativeFuncRule)
     }).
       master("local[*]").
@@ -25,20 +25,23 @@ class ExprTest extends FunSuite with BeforeAndAfterAll {
   }
 
   override def afterAll(): Unit = {
-    if (ssession != null) {
-      ssession.close()
+    if (session != null) {
+      session.close()
     }
   }
 
   test("spark codegen") {
     //    session.experimental.extraOptimizations = Seq(NativeFuncRule)
     //
-    val rdd = ssession.sparkContext.parallelize(Seq(Row.fromSeq(Seq("DD中国"))))
-    ssession.createDataFrame(rdd,StructType(Seq(StructField("value", StringType)))).createOrReplaceTempView("jack")
+    // TODO(qwang): We now didn't handle the non-ascii chars.
+    val rdd = session.sparkContext.parallelize(Seq(Row.fromSeq(Seq("中国DD"))))
+    session.createDataFrame(rdd,StructType(Seq(StructField("value", StringType)))).createOrReplaceTempView("jack")
 //    ssession.createDataset[String](Seq("DD"))(ssession.implicits.newStringEncoder).createOrReplaceTempView("jack")
     import org.apache.spark.sql.execution.debug._
-    ssession.sql(""" select lower(value) from jack""").debugCodegen()
-    ssession.sql(""" select lower(value) from jack""").show(false)
+    session.sql(""" select lower(value) from jack""").debugCodegen()
+    session.sql(""" select lower(value) from jack""").show(false)
+    val result = session.sql(""" select lower(value) from jack""").collect()
+    assert("中国dd".equals(result.apply(0).get(0)))
   }
 
   def evaluate(str: String, input: Map[String, String]): Any = {
@@ -46,7 +49,7 @@ class ExprTest extends FunSuite with BeforeAndAfterAll {
     val tokenizer = new Tokenizer(scanner)
     val parser = new StatementParser(tokenizer)
     val exprs = parser.parse()
-    val sQLGenContext = new SQLGenContext(ssession)
+    val sQLGenContext = new SQLGenContext(session)
     var variables = new mutable.HashMap[String, Any]()
     variables ++= input
     val variableTable = VariableTable("wow", variables, new mutable.HashMap[String, Any]())
