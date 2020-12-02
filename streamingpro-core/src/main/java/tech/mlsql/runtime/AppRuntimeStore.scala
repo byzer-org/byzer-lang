@@ -11,7 +11,7 @@ class AppRuntimeStore(val store: KVStore, val listener: Option[AppSRuntimeListen
   extends ControllerRuntimeStore
     with LoadSaveRuntimeStore
     with RequestCleanerRuntimeStore
-    with ExceptionRenderRuntimeStore {
+    with ExceptionRenderRuntimeStore with ResultRenderRuntimeStore {
 
 }
 
@@ -63,6 +63,31 @@ trait RequestCleanerRuntimeStore {
 
 }
 
+trait ResultRenderRuntimeStore {
+  self: AppRuntimeStore =>
+  def registerResultRender(name: String, className: String) = {
+    store.write(ResultRenderItemWrapper(CustomClassItem(name, className)))
+  }
+
+  def removeResultRender(name: String) = {
+    store.delete(classOf[ResultRenderItemWrapper], name)
+  }
+
+  def getResultRenders(): List[ResultRenderItemWrapper] = {
+    try {
+      import scala.collection.JavaConverters._
+      val items = store.view(classOf[ResultRenderItemWrapper]).iterator().asScala.toList
+      items
+    } catch {
+      case e: NoSuchElementException =>
+        List()
+      case e: Exception => throw e
+    }
+
+  }
+
+}
+
 trait ExceptionRenderRuntimeStore {
   self: AppRuntimeStore =>
   def registerExceptionRender(name: String, className: String) = {
@@ -70,7 +95,7 @@ trait ExceptionRenderRuntimeStore {
   }
 
   def removeExceptionRender(name: String) = {
-    store.delete(classOf[ExceptionRenderItemWrapper], name)
+    store.delete(classOf[ResultRenderItemWrapper], name)
   }
 
   def getExceptionRenders(): List[ExceptionRenderItemWrapper] = {
@@ -140,6 +165,12 @@ case class CustomClassItemWrapper(customClassItem: CustomClassItem) {
 }
 
 case class ExceptionRenderItemWrapper(customClassItem: CustomClassItem) {
+  @JsonIgnore
+  @KVIndex
+  def id = customClassItem.name
+}
+
+case class ResultRenderItemWrapper(customClassItem: CustomClassItem) {
   @JsonIgnore
   @KVIndex
   def id = customClassItem.name

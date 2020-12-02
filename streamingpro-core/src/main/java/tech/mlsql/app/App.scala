@@ -1,5 +1,7 @@
 package tech.mlsql.app
 
+import org.apache.spark.sql.DataFrame
+
 
 trait App {
   def run(args: Seq[String]): Unit
@@ -41,6 +43,12 @@ trait ExceptionRender {
     }
 
   }
+}
+
+case class ResultResp(df: DataFrame,name:String)
+
+trait ResultRender {
+  def call(d: ResultResp): ResultResp
 }
 
 case class ExceptionResult(e: Exception, str: Option[String])
