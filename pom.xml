@@ -456,7 +456,7 @@
                 <module>external/python-controller</module>
                 <module>external/mlsql-watcher</module>
                 <module>external/mlsql-mysql-store</module>
-                <module>external/mlsql-sql-profiler</module>
+                <module>external/mlsql-sql-profiler-30</module>
                 <module>external/mlsql-autosuggest</module>
             </modules>
             <dependencies>
