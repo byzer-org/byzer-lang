@@ -65,10 +65,10 @@ class LogicalPlanSQL(plan: LogicalPlan, dialect: SQLDialect) {
 
     // pull up the filter out of the join and combine all where conditions
     val plan = _plan transformUp {
-      case a@Join(l@Filter(lc, lchild), r@Filter(rc, rchild), joinType, condition) =>
-        Filter(And(lc, rc), Join(lchild, rchild, joinType, condition))
-      case a@Join(f@Filter(lc, lchild), r, joinType, condition) => Filter(lc, Join(lchild, r, joinType, condition))
-      case a@Join(l, r@Filter(rc, rchild), joinType, condition) => Filter(rc, Join(l, rchild, joinType, condition))
+      case a@Join(l@Filter(lc, lchild), r@Filter(rc, rchild), joinType, condition,h@JoinHint(_, _)) =>
+        Filter(And(lc, rc), Join(lchild, rchild, joinType, condition,h))
+      case a@Join(f@Filter(lc, lchild), r, joinType, condition,h@JoinHint(_, _)) => Filter(lc, Join(lchild, r, joinType, condition,h))
+      case a@Join(l, r@Filter(rc, rchild), joinType, condition,h@JoinHint(_, _)) => Filter(rc, Join(l, rchild, joinType, condition,h))
     } transformDown {
       case Filter(con, Filter(con1, child)) => Filter(And(con, con1), child)
     }
@@ -107,15 +107,15 @@ class LogicalPlanSQL(plan: LogicalPlan, dialect: SQLDialect) {
     case SubqueryAlias(alias, child) =>
       // here we can reduce too much subquery
       val tableName = child match {
-        case a@LogicalRelation(_, _, _, _) => dialect.relation(alias.identifier, a)
-        case a@LogicalRDD(_, _, _, _, _) => dialect.relation2(alias.identifier, a)
+        case a@LogicalRelation(_, _, _, _) => dialect.relation(alias.name, a)
+        case a@LogicalRDD(_, _, _, _, _) => dialect.relation2(alias.name, a)
         case _ => null
       }
       if (tableName != null) {
         tableName
       } else {
         val childSql = logicalPlanToSQL(child)
-        dialect.subqueryAliasToSQL(alias.identifier, childSql)
+        dialect.subqueryAliasToSQL(alias.name, childSql)
       }
 
     case a: Aggregate =>
@@ -225,18 +225,18 @@ class LogicalPlanSQL(plan: LogicalPlan, dialect: SQLDialect) {
       "CASE" + cases + elseCase + " END"
     case UnscaledValue(child) =>
       expressionToSQL(child)
-    case AggregateExpression(aggFunc, _, isDistinct, _) =>
+    case AggregateExpression(aggFunc, _, isDistinct, _,_) =>
       val distinct = if (isDistinct) "DISTINCT " else ""
       s"${aggFunc.prettyName}($distinct${aggFunc.children.map(expressionToSQL).mkString(", ")})"
     case a: AggregateFunction =>
       s"${a.prettyName}(${a.children.map(expressionToSQL).mkString(", ")})"
     case literal@Literal(v, t) =>
       dialect.literalToSQL(v, t)
-    case MakeDecimal(child, precision, scala) =>
+    case MakeDecimal(child, precision, scala,_) =>
       s"CAST(${expressionToSQL(child)} AS DECIMAL($precision, $scala))"
     case Not(EqualTo(left, right)) =>
       s"${expressionToSQL(left)} <> ${expressionToSQL(right)}"
-    case Not(Like(left, right)) =>
+    case Not(Like(left, right,_)) =>
       s"${expressionToSQL(left)} NOT LIKE ${expressionToSQL(right)}"
     case Not(child) =>
       s"(NOT ${expressionToSQL(child)})"
@@ -259,7 +259,7 @@ class LogicalPlanSQL(plan: LogicalPlan, dialect: SQLDialect) {
       s"${expressionToSQL(b.left)} ${b.sqlOperator} ${expressionToSQL(b.right)}"
     case s: StringPredicate =>
       stringPredicate(s)
-    case c@CheckOverflow(child, _) =>
+    case c@CheckOverflow(child, _,_) =>
       expressionToSQL(child)
     case s@SortOrder(child, direction, nullOrdering, _) =>
       s"${expressionToSQL(child)} ${direction.sql}"
@@ -510,7 +510,7 @@ class LogicalPlanSQL(plan: LogicalPlan, dialect: SQLDialect) {
             points.add(p -> p.child)
             true
           } else true
-        case j@Join(left, right, _, _) =>
+        case j@Join(left, right, _, _,_) =>
           if (hasSelect.head) {
             points.add(j -> left)
           }
