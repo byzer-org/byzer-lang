@@ -21,7 +21,7 @@ object Test2 {
 //    println("===")
 //    ScalaReflect.fromInstance[BaseJack](jack2)
 //      .method("extraOptions").invoke().getClass.getMethods.map(item=>println(item))
-    println(extraOptions.toMap)
+    println(extraOptions.toMap[String,String])
   }
 }
 

@@ -209,8 +209,8 @@ class MLSQLJDBC(override val uid: String) extends MLSQLSource with MLSQLSink wit
       import org.apache.spark.sql.jdbc.DataFrameWriterExtensions._
       val extraOptions = ScalaReflect.fromInstance[DataFrameWriter[Row]](writer)
         .method("extraOptions").invoke()
-        .asInstanceOf[scala.collection.mutable.HashMap[String, String]]
-      val jdbcOptions = new JDBCOptions(extraOptions.toMap + ("dbtable" -> dbtable))
+        .asInstanceOf[{def toMap[T, U](implicit ev: _ <:< (T, U)): scala.collection.immutable.Map[T, U] }].toMap[String,String]
+      val jdbcOptions = new JDBCOptions(extraOptions + ("dbtable" -> dbtable))
       writer.upsert(Option(item), jdbcOptions, config.df.get)
     }.getOrElse {
       writer.option("dbtable", dbtable)
