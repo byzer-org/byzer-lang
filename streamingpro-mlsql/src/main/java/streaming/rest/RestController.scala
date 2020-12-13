@@ -37,12 +37,13 @@ import org.apache.spark.sql.execution.datasources.json.WowJsonInferSchema
 import org.apache.spark.sql.mlsql.session.{MLSQLSparkSession, SparkSessionCacheManager}
 import org.apache.spark.{MLSQLConf, SparkInstanceService}
 import tech.mlsql.MLSQLEnvKey
-import tech.mlsql.app.CustomController
+import tech.mlsql.app.{CustomController, ResultResp}
 import tech.mlsql.common.utils.serder.json.JSONTool
 import tech.mlsql.job.{JobManager, MLSQLJobType}
 import tech.mlsql.runtime.AppRuntimeStore
 import tech.mlsql.runtime.plugins.exception_render.ExceptionRenderManager
 import tech.mlsql.runtime.plugins.request_cleaner.RequestCleanerManager
+import tech.mlsql.runtime.plugins.result_render.ResultRenderManager
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable.ArrayBuffer
@@ -182,7 +183,7 @@ class RestController extends ApplicationController with WowLog {
           AppRuntimeStore.store.getController(executeMode) match {
             case Some(item) =>
               outputResult = Class.forName(item.customClassItem.className).
-                newInstance().asInstanceOf[CustomController].run(params().toMap)
+                newInstance().asInstanceOf[CustomController].run(params().toMap + ("__jobinfo__" -> JSONTool.toJsonStr(jobInfo)))
             case None => throw new RuntimeException(s"no executeMode named ${executeMode}")
           }
       }
@@ -226,7 +227,9 @@ class RestController extends ApplicationController with WowLog {
     }
     context.getLastSelectTable() match {
       case Some(table) =>
-        val df = sparkSession.table(table)
+        // result hook
+        var df = sparkSession.table(table)
+        df = ResultRenderManager.call(ResultResp(df, table)).df
         if (includeSchema) {
           result.append(s""" "schema":${df.schema.json},"data": """)
         }
@@ -259,8 +262,10 @@ class RestController extends ApplicationController with WowLog {
     val defaultPathPrefix = param("defaultPathPrefix", "")
     val context = new ScriptSQLExecListener(sparkSession, defaultPathPrefix, allPathPrefix)
     val ownerOption = if (params.containsKey("owner")) Some(param("owner")) else None
-    var userDefineParams = params.toMap.filter(f => f._1.startsWith("context.")).map(f => (f._1.substring("context.".length), f._2))
-    ScriptSQLExec.setContext(new MLSQLExecuteContext(context, param("owner"), context.pathPrefix(None), groupId, userDefineParams))
+    val userDefineParams = params.toMap.filter(f => f._1.startsWith("context.")).map(f => (f._1.substring("context.".length), f._2))
+    ScriptSQLExec.setContext(new MLSQLExecuteContext(context, param("owner"), context.pathPrefix(None), groupId,
+      userDefineParams ++ Map("__PARAMS__" -> JSONTool.toJsonStr(params()))
+    ))
     context.addEnv("SKIP_AUTH", param("skipAuth", "true"))
     context.addEnv("HOME", context.pathPrefix(None))
     context.addEnv("OWNER", ownerOption.getOrElse("anonymous"))
@@ -443,7 +448,7 @@ class RestController extends ApplicationController with WowLog {
     render(WowCollections.map())
   }
 
- 
+
   @At(path = Array("/debug/executor/ping"), types = Array(GET, POST))
   def pingExecuotrs = {
     val pongs = runtime match {
@@ -456,7 +461,7 @@ class RestController extends ApplicationController with WowLog {
     }
     render(JSONTool.toJsonStr(pongs))
   }
-  
+
 
   @At(path = Array("/instance/resource"), types = Array(GET, POST))
   def instanceResource = {

@@ -50,6 +50,10 @@ JNIEXPORT jstring JNICALL Java_tech_mlsql_nativelib_runtime_MLSQLNativeRuntime_f
     return NativeStringToJavaString(env, native_str);
 }
 
+JNIEXPORT jfloat JNICALL Java_tech_mlsql_nativelib_runtime_MLSQLNativeRuntime_getCPULoad
+        (JNIEnv *env, jclass cls) {
+    return GetCPULoad();
+}
 
 
 #ifdef __cplusplus

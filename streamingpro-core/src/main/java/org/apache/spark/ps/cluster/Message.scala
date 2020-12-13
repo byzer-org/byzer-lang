@@ -40,9 +40,9 @@ object Message {
 
   case class CopyModelToLocal(modelPath: String, destPath: String)
 
-  case class ExecutorMsgRequest()
+  case class ExecutorMsgRequest(id:String)
 
-  case class ExecutorMsgResponse(cpu: Float)
+  case class ExecutorMsgResponse(id:String,cpu: Float)
 
   case class CreateOrRemovePythonEnv(user: String,
                                      groupId: String,

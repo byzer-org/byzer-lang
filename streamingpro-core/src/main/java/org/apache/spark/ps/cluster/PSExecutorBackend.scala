@@ -70,11 +70,11 @@ class PSExecutorBackend(env: SparkEnv, override val rpcEnv: RpcEnv, psDriverUrl:
       context.reply(true)
     }
 
-    case Message.ExecutorMsgRequest() => {
+    case Message.ExecutorMsgRequest(id) => {
       val cpuLoad = MLSQLNativeRuntime.getCPULoad()
-      context.reply(Message.ExecutorMsgResponse(cpuLoad))
+      context.reply(Message.ExecutorMsgResponse(id, cpuLoad))
     }
-      
+
     case Message.CreateOrRemovePythonEnv(user, groupId, condaYamlFile, options, command) => {
       var message = ""
       val success = try {

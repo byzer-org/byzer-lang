@@ -360,7 +360,7 @@
 
                 <dependency>
                     <groupId>tech.mlsql</groupId>
-                    <artifactId>mlsql-sql-profiler-${spark.bigversion}_${scala.binary.version}</artifactId>
+                    <artifactId>mlsql-sql-profiler-30-${spark.bigversion}_${scala.binary.version}</artifactId>
                     <version>${project.parent.version}</version>
                 </dependency>
 
