@@ -11,7 +11,6 @@ import org.apache.spark.sql.{DataFrame, SparkSession, functions => F}
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
-import tech.mlsql.common.utils.path.PathFun
 import tech.mlsql.common.utils.serder.json.JSONTool
 import tech.mlsql.runtime.AsSchedulerService
 import tech.mlsql.scheduler.{DependencyJob, TimerJob}
@@ -49,7 +48,7 @@ class SchedulerCommand(override val uid: String) extends SQLAlg with WowParams {
         URLEncoder.encode(str, "utf-8")
       }
 
-      val script = Request.Get(PathFun(consoleUrl).add(s"/api_v1/script_file/path/id?path=${encode(path)}&owner=${encode(context.owner)}").toPath)
+      val script = Request.Get(consoleUrl.stripSuffix("/") + s"/api_v1/script_file/path/id?path=${encode(path)}&owner=${encode(context.owner)}")
         .connectTimeout(60 * 1000)
         .socketTimeout(10 * 60 * 1000).addHeader("access-token", authSecret)
         .execute().returnContent().asString()
