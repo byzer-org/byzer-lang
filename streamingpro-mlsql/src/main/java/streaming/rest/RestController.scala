@@ -262,8 +262,10 @@ class RestController extends ApplicationController with WowLog {
     val defaultPathPrefix = param("defaultPathPrefix", "")
     val context = new ScriptSQLExecListener(sparkSession, defaultPathPrefix, allPathPrefix)
     val ownerOption = if (params.containsKey("owner")) Some(param("owner")) else None
-    var userDefineParams = params.toMap.filter(f => f._1.startsWith("context.")).map(f => (f._1.substring("context.".length), f._2))
-    ScriptSQLExec.setContext(new MLSQLExecuteContext(context, param("owner"), context.pathPrefix(None), groupId, userDefineParams))
+    val userDefineParams = params.toMap.filter(f => f._1.startsWith("context.")).map(f => (f._1.substring("context.".length), f._2))
+    ScriptSQLExec.setContext(new MLSQLExecuteContext(context, param("owner"), context.pathPrefix(None), groupId,
+      userDefineParams ++ Map("__PARAMS__" -> JSONTool.toJsonStr(params()))
+    ))
     context.addEnv("SKIP_AUTH", param("skipAuth", "true"))
     context.addEnv("HOME", context.pathPrefix(None))
     context.addEnv("OWNER", ownerOption.getOrElse("anonymous"))
