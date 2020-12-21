@@ -19,13 +19,13 @@ class BasicSQLDialect extends SQLDialect {
   override def explainSQL(sql: String): String = s"EXPLAIN $sql"
 
   override def relation(alias: String, relation: LogicalRelation): String = {
-    val temp = ViewCatalyst.meta.getTableNameByViewName(alias).tableWithDB
+    val temp = ViewCatalyst.meta.getTableNameByViewName(alias).path
     s"(${temp})  ${alias}"
 
   }
 
   override def relation2(alias: String, relation: LogicalRDD): String = {
-    val temp = ViewCatalyst.meta.getTableNameByViewName(alias).tableWithDB
+    val temp = ViewCatalyst.meta.getTableNameByViewName(alias).path
     s"(${temp})  ${alias}"
   }
 

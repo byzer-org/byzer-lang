@@ -1,27 +1,28 @@
 package tech.mlsql.sqlbooster.meta
 
+import tech.mlsql.dsl.adaptor.DslTool
+import tech.mlsql.indexer.MlsqlOriTable
+
 /**
  * 2019-07-11 WilliamZhu(allwefantasy@gmail.com)
  */
 
-case class TableHolder(tableWithDB: String, dbType: String)
-
 trait ViewCatalyst {
   def register(name: String, tableWithDB: String, dbType: String): ViewCatalyst
 
-  def getTableNameByViewName(name: String): TableHolder
+  def getTableNameByViewName(name: String): MlsqlOriTable
 
 }
 
-class SimpleViewCatalyst extends ViewCatalyst {
-  private val mapping = new java.util.concurrent.ConcurrentHashMap[String, TableHolder]()
+class SimpleViewCatalyst extends ViewCatalyst with DslTool {
+  private val mapping = new java.util.concurrent.ConcurrentHashMap[String, MlsqlOriTable]()
 
-  def register(name: String, tableWithDB: String, dbType: String): ViewCatalyst = {
-    mapping.put(name, TableHolder(tableWithDB, dbType))
+  def register(name: String, path: String, format: String): ViewCatalyst = {
+    mapping.put(name, MlsqlOriTable(format, cleanStr(path), ""))
     this
   }
 
-  def getTableNameByViewName(name: String): TableHolder = {
+  def getTableNameByViewName(name: String): MlsqlOriTable = {
     mapping.get(name)
   }
 
