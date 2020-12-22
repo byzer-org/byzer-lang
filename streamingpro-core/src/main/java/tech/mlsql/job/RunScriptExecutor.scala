@@ -28,6 +28,7 @@ import scala.collection.mutable.ArrayBuffer
  */
 class RunScriptExecutor(_params: Map[String, String]) extends Logging with WowLog {
   private val extraParams = mutable.HashMap[String, String]()
+  private var _autoClean = false
 
   def sql(sql: String) = {
     extraParams += ("sql" -> sql)
@@ -51,6 +52,11 @@ class RunScriptExecutor(_params: Map[String, String]) extends Logging with WowLo
 
   def executeMode(executeMode: String) = {
     extraParams += ("executeMode" -> executeMode)
+    this
+  }
+
+  def autoClean(autoClean: Boolean) = {
+    this._autoClean = autoClean
     this
   }
 
@@ -78,8 +84,10 @@ class RunScriptExecutor(_params: Map[String, String]) extends Logging with WowLo
           None
       }
     } finally {
-      RequestCleanerManager.call()
-      cleanActiveSessionInSpark
+      if(this._autoClean){
+        RequestCleanerManager.call()
+        cleanActiveSessionInSpark
+      }
     }
   }
 
@@ -169,8 +177,10 @@ class RunScriptExecutor(_params: Map[String, String]) extends Logging with WowLo
         val msg = ExceptionRenderManager.call(e)
         return (500, msg.str.get)
     } finally {
-      RequestCleanerManager.call()
-      cleanActiveSessionInSpark
+      if(this._autoClean){
+        RequestCleanerManager.call()
+        cleanActiveSessionInSpark
+      }
     }
     return (200, outputResult)
   }

@@ -18,7 +18,7 @@ class SimpleViewCatalyst extends ViewCatalyst with DslTool {
   private val mapping = new java.util.concurrent.ConcurrentHashMap[String, MlsqlOriTable]()
 
   def register(name: String, path: String, format: String): ViewCatalyst = {
-    mapping.put(name, MlsqlOriTable(format, cleanStr(path), ""))
+    mapping.put(name, MlsqlOriTable(name,format, cleanStr(path), ""))
     this
   }
 

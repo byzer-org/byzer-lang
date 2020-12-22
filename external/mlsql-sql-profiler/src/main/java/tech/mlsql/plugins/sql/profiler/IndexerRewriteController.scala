@@ -36,7 +36,7 @@ class IndexerRewriteController extends CustomController {
       mlsqlAnalyzer.executeAndGetLastTable() match {
         case Some(tableName) =>
           val lp = mlsqlAnalyzer.getSession.table(tableName).queryExecution.analyzed
-          val indexer = new NestedDataIndexer(new TestIndexerMeta)
+          val indexer = new NestedDataIndexer(new TestIndexerMeta())
           val newPL = indexer.rewrite(lp, Map())
           temp = new LogicalPlanSQL(newPL, new BasicSQLDialect).toSQL
         case None =>

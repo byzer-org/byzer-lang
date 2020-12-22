@@ -10,6 +10,7 @@ import org.apache.spark.sql.execution.datasources.LogicalRelation
 import streaming.dsl.ScriptSQLExec
 import tech.mlsql.common.utils.serder.json.JSONTool
 import tech.mlsql.job.RunScriptExecutor
+import tech.mlsql.sqlbooster.meta.ViewCatalyst
 import tech.mlsql.tool.LPUtils
 
 import scala.collection.mutable
@@ -19,10 +20,13 @@ case class IndexerQueryReWriterContext(session: SparkSession,
                                        tableToIndexMapping: Map[MlsqlOriTable, MlsqlIndexer]
                                       ) {
 
-  private lazy val _arMapping = getARMapping
-  private lazy val _uuid = UUID.randomUUID().toString.replaceAll("-", "")
-  private lazy val _indexerLRDDMapping = new mutable.HashMap[String, LogicalRDD]()
-  private lazy val _indexerLRelationMapping = new mutable.HashMap[String, LogicalRelation]()
+  private def uuid = UUID.randomUUID().toString.replaceAll("-", "")
+
+  private val _indexerLRDDMapping = new mutable.HashMap[String, LogicalRDD]()
+  private val _indexerLRelationMapping = new mutable.HashMap[String, LogicalRelation]()
+  private val _viewLoadMapping = new mutable.HashMap[String, (String, String)]()
+  private val _arMapping = getARMapping
+
 
   def rewriteWithIndexer: LogicalPlan = {
 
@@ -40,6 +44,18 @@ case class IndexerQueryReWriterContext(session: SparkSession,
     temp
   }
 
+  def getARByName(name: String) = {
+    _arMapping.values.filter(_.name == name).toList
+  }
+
+  def fixViewCatalyst = {
+    _viewLoadMapping.foreach {
+      case (viewName, (format, path)) =>
+        ViewCatalyst.meta.register(viewName, path, format)
+    }
+
+  }
+
   private def getARMapping = {
     val tableWitchColumns = LPUtils.getTableAndColumns(lp)
     val arMapping = new mutable.HashMap[AttributeReference, AttributeReference]()
@@ -47,7 +63,7 @@ case class IndexerQueryReWriterContext(session: SparkSession,
       val nameToArMapping = tableWitchColumns(oriTable.name).map(item => (item.name, item)).toMap
       val (_, indexerAttributes) = getIndexerColumns(oriTable.name, indexer)
       indexerAttributes.foreach { item => {
-        arMapping += (nameToArMapping(item.name) -> item)
+        arMapping += (nameToArMapping.getOrElse(item.name, item) -> item)
       }
       }
 
@@ -64,14 +80,14 @@ case class IndexerQueryReWriterContext(session: SparkSession,
       Map("owner" -> "__system__")
     }
 
-    val tableName = indexer.path + "_" + _uuid
+    val tableName = uuid
     val sql =
       s"""
-         |load ${indexer.format}.`_mlsql_indexer_.${indexer.oriFormat}_${indexer.path.replace(".", "_")}`  as ${tableName};
+         |load ${indexer.format}.`${indexer.path}`  as ${tableName};
          |""".stripMargin
     val executor = new RunScriptExecutor(params ++ Map("sql" -> sql))
-    val tempT = executor.simpleExecute().get.queryExecution.analyzed
-
+    val tempT = executor.autoClean(false).simpleExecute().get.queryExecution.analyzed
+    _viewLoadMapping.put(tempViewName, (indexer.format, indexer.path))
     tempT.transformUp {
       case a@SubqueryAlias(name, r@LogicalRDD(_, _, _, _, _)) =>
         _indexerLRDDMapping.put(tempViewName, r)
