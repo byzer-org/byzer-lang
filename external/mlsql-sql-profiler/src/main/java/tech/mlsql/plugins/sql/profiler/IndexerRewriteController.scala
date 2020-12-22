@@ -3,7 +3,7 @@ package tech.mlsql.plugins.sql.profiler
 import org.apache.spark.sql.catalyst.sqlgenerator.{BasicSQLDialect, LogicalPlanSQL}
 import tech.mlsql.app.CustomController
 import tech.mlsql.dsl.adaptor.{LoadStatement, SelectStatement}
-import tech.mlsql.indexer.impl.{NestedDataIndexer, RestIndexerMeta, TestIndexerMeta}
+import tech.mlsql.indexer.impl.{LinearTryIndexerSelector, NestedDataIndexer, RestIndexerMeta, TestIndexerMeta}
 import tech.mlsql.sqlbooster.meta.ViewCatalyst
 import tech.mlsql.tool.MLSQLAnalyzer
 
@@ -36,7 +36,8 @@ class IndexerRewriteController extends CustomController {
       mlsqlAnalyzer.executeAndGetLastTable() match {
         case Some(tableName) =>
           val lp = mlsqlAnalyzer.getSession.table(tableName).queryExecution.analyzed
-          val indexer = new NestedDataIndexer(new TestIndexerMeta())
+          val metaClient = if (params.getOrElse("isTest", "false").toBoolean) new TestIndexerMeta() else new RestIndexerMeta()
+          val indexer = new LinearTryIndexerSelector(Seq(new NestedDataIndexer(metaClient)), metaClient)
           val newPL = indexer.rewrite(lp, Map())
           temp = new LogicalPlanSQL(newPL, new BasicSQLDialect).toSQL
         case None =>
