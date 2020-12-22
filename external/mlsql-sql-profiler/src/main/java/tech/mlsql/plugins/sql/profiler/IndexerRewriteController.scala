@@ -7,8 +7,6 @@ import tech.mlsql.indexer.impl._
 import tech.mlsql.sqlbooster.meta.ViewCatalyst
 import tech.mlsql.tool.{LoadUtils, MLSQLAnalyzer}
 
-import scala.collection.mutable.ArrayBuffer
-
 /**
  * 2/12/2020 WilliamZhu(allwefantasy@gmail.com)
  */
