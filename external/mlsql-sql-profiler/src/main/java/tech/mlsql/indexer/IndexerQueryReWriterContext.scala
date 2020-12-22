@@ -51,7 +51,7 @@ case class IndexerQueryReWriterContext(session: SparkSession,
   def fixViewCatalyst = {
     _viewLoadMapping.foreach {
       case (viewName, (format, path)) =>
-        ViewCatalyst.meta.register(viewName, path, format)
+        ViewCatalyst.meta.register(viewName, path, format,Map())
     }
 
   }

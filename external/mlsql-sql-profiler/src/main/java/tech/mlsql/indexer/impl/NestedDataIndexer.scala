@@ -66,6 +66,15 @@ class NestedDataIndexer(metaClient: MLSQLIndexerMeta) extends MLSQLIndexer with 
         }
     }
     if (isFail) return lp
+
+    newLP = newLP.transformAllExpressions {
+      case field@AttributeReference(_, _, _, _) =>
+        if (fieldIds.contains(field.exprId)) {
+          isFail = true
+        }
+        field
+    }
+    if (isFail) return lp
     // for generating sql
     indexerQueryReWriterContext.fixViewCatalyst
     return newLP

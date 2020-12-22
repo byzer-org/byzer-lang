@@ -1,6 +1,6 @@
 package tech.mlsql.indexer
 
-case class MlsqlOriTable(name:String,format:String,path:String,storageName:String)
+case class MlsqlOriTable(name:String,format:String,path:String,storageName:String,options:Map[String,String])
 case class MlsqlIndexer(name: String,
                         oriFormat: String,
                         oriPath: String,

@@ -3,28 +3,34 @@ package tech.mlsql.sqlbooster.meta
 import tech.mlsql.dsl.adaptor.DslTool
 import tech.mlsql.indexer.MlsqlOriTable
 
+import scala.collection.JavaConverters._
+
 /**
  * 2019-07-11 WilliamZhu(allwefantasy@gmail.com)
  */
 
 trait ViewCatalyst {
-  def register(name: String, tableWithDB: String, dbType: String): ViewCatalyst
+  def register(name: String, tableWithDB: String, dbType: String, options: Map[String, String]): ViewCatalyst
 
   def getTableNameByViewName(name: String): MlsqlOriTable
+
+  def values: List[MlsqlOriTable]
 
 }
 
 class SimpleViewCatalyst extends ViewCatalyst with DslTool {
   private val mapping = new java.util.concurrent.ConcurrentHashMap[String, MlsqlOriTable]()
 
-  def register(name: String, path: String, format: String): ViewCatalyst = {
-    mapping.put(name, MlsqlOriTable(name,format, cleanStr(path), ""))
+  override def register(name: String, path: String, format: String,options: Map[String, String]): ViewCatalyst = {
+    mapping.put(name, MlsqlOriTable(name, format, cleanStr(path), "",options))
     this
   }
 
-  def getTableNameByViewName(name: String): MlsqlOriTable = {
+  override def getTableNameByViewName(name: String): MlsqlOriTable = {
     mapping.get(name)
   }
+
+  override def values: List[MlsqlOriTable] = mapping.values().asScala.toList
 
 }
 

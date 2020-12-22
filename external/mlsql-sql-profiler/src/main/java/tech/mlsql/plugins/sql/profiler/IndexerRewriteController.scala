@@ -1,11 +1,13 @@
 package tech.mlsql.plugins.sql.profiler
 
-import org.apache.spark.sql.catalyst.sqlgenerator.{BasicSQLDialect, LogicalPlanSQL}
+import org.apache.spark.sql.catalyst.sqlgenerator.LogicalPlanSQL
 import tech.mlsql.app.CustomController
 import tech.mlsql.dsl.adaptor.{LoadStatement, SelectStatement}
-import tech.mlsql.indexer.impl.{LinearTryIndexerSelector, NestedDataIndexer, RestIndexerMeta, TestIndexerMeta}
+import tech.mlsql.indexer.impl._
 import tech.mlsql.sqlbooster.meta.ViewCatalyst
-import tech.mlsql.tool.MLSQLAnalyzer
+import tech.mlsql.tool.{LoadUtils, MLSQLAnalyzer}
+
+import scala.collection.mutable.ArrayBuffer
 
 /**
  * 2/12/2020 WilliamZhu(allwefantasy@gmail.com)
@@ -24,7 +26,7 @@ class IndexerRewriteController extends CustomController {
         singleSt match {
           case a: LoadStatement =>
             val LoadStatement(_, format, path, option, tableName) = a
-            ViewCatalyst.meta.register(tableName, path, format)
+            ViewCatalyst.meta.register(tableName, path, format, option)
           case _: SelectStatement =>
           case None => throw new RuntimeException("Only load/select are supported in gen sql interface")
 
@@ -33,13 +35,19 @@ class IndexerRewriteController extends CustomController {
       }
 
       var temp = ""
+
       mlsqlAnalyzer.executeAndGetLastTable() match {
         case Some(tableName) =>
           val lp = mlsqlAnalyzer.getSession.table(tableName).queryExecution.analyzed
           val metaClient = if (params.getOrElse("isTest", "false").toBoolean) new TestIndexerMeta() else new RestIndexerMeta()
           val indexer = new LinearTryIndexerSelector(Seq(new NestedDataIndexer(metaClient)), metaClient)
           val newPL = indexer.rewrite(lp, Map())
-          temp = new LogicalPlanSQL(newPL, new BasicSQLDialect).toSQL
+          //          val sparkSession = ScriptSQLExec.context().execListener.sparkSession
+          //          val ds = DataSetHelper.create(sparkSession,newPL)
+          val loads = ViewCatalyst.meta.values.map(item => LoadUtils.from(item)).mkString("\n")
+          temp += loads
+          temp += new LogicalPlanSQL(newPL, new MLSQLSQLDialect).toSQL
+          temp += "as output;"
         case None =>
       }
 

@@ -16,6 +16,5 @@ class LinearTryIndexerSelector(indexers: Seq[MLSQLIndexer], indexerMeta: MLSQLIn
       }
     }
     return lp
-    return
   }
 }

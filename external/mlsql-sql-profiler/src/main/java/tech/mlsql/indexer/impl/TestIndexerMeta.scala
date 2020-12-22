@@ -9,7 +9,7 @@ class TestIndexerMeta extends MLSQLIndexerMeta {
   override def fetchIndexers(tableNames: List[MlsqlOriTable], options: Map[String, String]): Map[MlsqlOriTable, MlsqlIndexer] = {
     Map(
       MlsqlOriTable(
-        "newtable", "delta", "tmp.newtable", ""
+        "newtable", "delta", "tmp.newtable", "",Map()
       ) -> MlsqlIndexer(
         name = "xxxxx",
         oriFormat = "delta",
@@ -18,6 +18,7 @@ class TestIndexerMeta extends MLSQLIndexerMeta {
         format = "delta",
         path = "_mlsql_indexer_.delta_tmp_newtable",
         storageName = "",
+        owner="",
         status = 0,
         lastStatus = 0,
         lastFailMsg = "",
