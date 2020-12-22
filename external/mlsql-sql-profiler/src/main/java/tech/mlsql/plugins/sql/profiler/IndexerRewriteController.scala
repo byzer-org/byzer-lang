@@ -1,6 +1,7 @@
 package tech.mlsql.plugins.sql.profiler
 
 import org.apache.spark.sql.catalyst.sqlgenerator.LogicalPlanSQL
+import streaming.dsl.ScriptSQLExec
 import tech.mlsql.app.CustomController
 import tech.mlsql.dsl.adaptor.{LoadStatement, SelectStatement}
 import tech.mlsql.indexer.impl._
@@ -37,7 +38,14 @@ class IndexerRewriteController extends CustomController {
       mlsqlAnalyzer.executeAndGetLastTable() match {
         case Some(tableName) =>
           val lp = mlsqlAnalyzer.getSession.table(tableName).queryExecution.analyzed
-          val metaClient = if (params.getOrElse("isTest", "false").toBoolean) new TestIndexerMeta() else new RestIndexerMeta()
+
+          val consoleUrl = ScriptSQLExec.context().userDefinedParam.getOrElse("__default__console_url__","")
+
+          val auth_secret = ScriptSQLExec.context().userDefinedParam.getOrElse("__auth_secret__","")
+
+          val metaClient = if (params.getOrElse("isTest", "false").toBoolean) new TestIndexerMeta()
+          else new RestIndexerMeta(consoleUrl,auth_secret)
+
           val indexer = new LinearTryIndexerSelector(Seq(new NestedDataIndexer(metaClient)), metaClient)
           val newPL = indexer.rewrite(lp, Map())
           //          val sparkSession = ScriptSQLExec.context().execListener.sparkSession

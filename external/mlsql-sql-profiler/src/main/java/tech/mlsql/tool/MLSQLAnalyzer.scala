@@ -40,7 +40,7 @@ class MLSQLAnalyzer(params: Map[String, String]) {
           //              case SubqueryAlias(alias, child) => child
           //              case _ => view
           //            }
-          ViewCatalyst.meta.register(tableName, path, format)
+          ViewCatalyst.meta.register(tableName, path, format,option)
         case _: SelectStatement =>
         case None => throw new RuntimeException("Only load/select are supported in gen sql interface")
 

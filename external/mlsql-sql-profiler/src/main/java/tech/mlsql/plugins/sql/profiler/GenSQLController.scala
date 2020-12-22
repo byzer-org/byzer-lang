@@ -23,7 +23,7 @@ class GenSQLController extends CustomController {
         singleSt match {
           case a: LoadStatement =>
             val LoadStatement(_, format, path, option, tableName) = a
-            ViewCatalyst.meta.register(tableName, path, format)
+            ViewCatalyst.meta.register(tableName, path, format,Map())
           case _: SelectStatement =>
           case None => throw new RuntimeException("Only load/select are supported in gen sql interface")
 

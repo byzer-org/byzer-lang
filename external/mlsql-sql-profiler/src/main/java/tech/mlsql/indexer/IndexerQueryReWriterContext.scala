@@ -17,7 +17,7 @@ import scala.collection.mutable
 
 case class IndexerQueryReWriterContext(session: SparkSession,
                                        lp: LogicalPlan,
-                                       tableToIndexMapping: Map[MlsqlOriTable, MlsqlIndexer]
+                                       tableToIndexMapping: Map[MlsqlOriTable, List[MlsqlIndexer]]
                                       ) {
 
   private def uuid = UUID.randomUUID().toString.replaceAll("-", "")
@@ -61,7 +61,7 @@ case class IndexerQueryReWriterContext(session: SparkSession,
     val arMapping = new mutable.HashMap[AttributeReference, AttributeReference]()
     tableToIndexMapping.foreach { case (oriTable, indexer) => {
       val nameToArMapping = tableWitchColumns(oriTable.name).map(item => (item.name, item)).toMap
-      val (_, indexerAttributes) = getIndexerColumns(oriTable.name, indexer)
+      val (_, indexerAttributes) = getIndexerColumns(oriTable.name, indexer.head)
       indexerAttributes.foreach { item => {
         arMapping += (nameToArMapping.getOrElse(item.name, item) -> item)
       }
