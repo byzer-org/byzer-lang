@@ -1,9 +1,8 @@
 package tech.mlsql.runtime.metastore
 
-import java.util.Date
-
 import net.csdn.common.settings.ImmutableSettings
 import net.csdn.modules.persist.mysql.MysqlClient
+import net.sf.json.{JSONArray, JSONObject}
 import org.apache.spark.sql.types.{MapType, StringType, StructType}
 import org.apache.spark.sql.{DataFrame, Row, SparkSession, functions => F}
 import tech.mlsql.common.utils.base.CaseFormat
@@ -79,19 +78,19 @@ class MySQLDBStore extends DBStore {
     val Array(db, table) = tableName.split("\\.")
     val db_table = "w_" + CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_UNDERSCORE, table)
     val schema = data.schema.fields.map(_.name)
-    val appRecords = data.collect().toList
+    val appRecords = data.toJSON.collect().toList
     appRecords.foreach { _item =>
 
-      val item = MySQLDBStore.wipeOutComplexStruct(schema, _item)
+      val item = JSONObject.fromObject(_item)
 
       updateCol match {
         case Some(idCols) =>
           val condition = idCols.split(",").map(name => s" ${NameConvert.lowerCamelToLowerUnderScore(name)}=? ").mkString("and")
-          val condParams = idCols.split(",").map(name => item.get(schema.indexOf(name))).toList.asJava.toArray
+          val condParams = idCols.split(",").map(name => item.get(name)).toList.asJava.toArray
 
 
           val updateCond = schema.map(name => s" ${NameConvert.lowerCamelToLowerUnderScore(name)}=? ").mkString(",")
-          val updateParams = schema.map(name => item.get(schema.indexOf(name))).toList.asJava.toArray
+          val updateParams = schema.map(name => cleanValue(item,name)).toList.asJava.toArray
 
           if (isDelete) {
             client.execute(s"delete from $db_table where ${condition}", condParams: _*)
@@ -103,18 +102,20 @@ class MySQLDBStore extends DBStore {
             } else {
               val insertCond = schema.map(name => s" ${NameConvert.lowerCamelToLowerUnderScore(name)} ").mkString(",")
               val insertCond2 = schema.map(name => s" ? ").mkString(",")
-              val insertParams = schema.map(name => item.get(schema.indexOf(name))).toList.asJava.toArray
+              val insertParams = schema.map(name => cleanValue(item,name)).toList.asJava.toArray
               client.execute(s"INSERT INTO $db_table (${insertCond}) VALUES (${insertCond2})", insertParams: _*)
             }
           }
 
         case None =>
           val condition = schema.map(name => s" ${NameConvert.lowerCamelToLowerUnderScore(name)}=? ").mkString("and")
-          val condParams = schema.map(name => item.get(schema.indexOf(name))).toList.asJava.toArray
+          val condParams = schema.map(name => item.get(name)).toList.asJava.toArray
 
           val insertCond = schema.map(name => s" ${NameConvert.lowerCamelToLowerUnderScore(name)} ").mkString(",")
           val insertCond2 = schema.map(name => s" ? ").mkString(",")
-          val insertParams = schema.map(name => item.get(schema.indexOf(name))).toList.asJava.toArray
+          val insertParams = schema.map { name =>
+            cleanValue(item,name)
+          }.toList.asJava.toArray
 
           if (isDelete) {
             client.execute(s"delete from $db_table where ${condition}", condParams: _*)
@@ -124,6 +125,15 @@ class MySQLDBStore extends DBStore {
       }
 
     }
+  }
+
+  def cleanValue(item: JSONObject, name: String) = {
+
+    val value = item.get(name)
+    if (value.isInstanceOf[JSONObject] || value.isInstanceOf[JSONArray]) {
+      value.toString
+    } else value
+
   }
 
   override def saveConfig(spark: SparkSession, appPrefix: String, name: String, value: String, dictType: DictType): Unit = {
@@ -159,30 +169,31 @@ object MySQLDBStore {
   }
 
 
-  def wipeOutComplexStruct(schema: Array[String], _item: Row) = {
-    val item = schema.map { name =>
-      val index = schema.indexOf(name)
-      val col = _item.get(index)
-      if (col == null) null
-      else {
-        col match {
-          case a: Long => a
-          case a: Int => a
-          case a: String => a
-          case a: Date => a
-          case a: java.sql.Date => a
-          case a: Boolean => a
-          case a: Double => a
-          case a: Float => a
-          case _ => try {
-            JSONTool.toJsonStr(col.asInstanceOf[AnyRef])
-          } catch {
-            case e: Exception => col
-          }
-        }
-      }
+  //  def wipeOutComplexStruct(schema: Array[String], _item: Row) = {
+  //    val item = schema.map { name =>
+  //      val index = schema.indexOf(name)
+  //      val col = _item.get(index)
+  //      if (col == null) null
+  //      else {
+  //        col match {
+  //          case a: Long => a
+  //          case a: Int => a
+  //          case a: String => a
+  //          case a: Date => a
+  //          case a: java.sql.Date => a
+  //          case a: Boolean => a
+  //          case a: Double => a
+  //          case a: Float => a
+  //          case _ => try {
+  //            WowJsonInferSchema
+  //          } catch {
+  //            case e: Exception => col
+  //          }
+  //        }
+  //      }
+  //
+  //    }
+  //    Row.fromSeq(item.toSeq)
+  //  }
 
-    }
-    Row.fromSeq(item.toSeq)
-  }
 }
