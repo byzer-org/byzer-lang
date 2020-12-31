@@ -13,6 +13,12 @@
     <artifactId>mlsql-sql-profiler-30-${spark.bigversion}_${scala.binary.version}</artifactId>
     <dependencies>
         <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>fluent-hc</artifactId>
+            <version>4.5.7</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
             <groupId>tech.mlsql</groupId>
             <artifactId>streamingpro-core-${spark.bigversion}_${scala.binary.version}</artifactId>
             <version>${project.version}</version>

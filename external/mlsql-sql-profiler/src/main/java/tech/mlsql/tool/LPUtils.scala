@@ -1,10 +1,12 @@
 package tech.mlsql.tool
 
 import org.apache.spark.sql.catalyst.AliasIdentifier
+import org.apache.spark.sql.catalyst.catalog.CatalogTable
 import org.apache.spark.sql.catalyst.expressions.{AttributeReference, Expression, GetJsonObject, NamedExpression}
 import org.apache.spark.sql.catalyst.plans.logical.{LogicalPlan, SubqueryAlias}
 import org.apache.spark.sql.execution.LogicalRDD
 import org.apache.spark.sql.execution.datasources.LogicalRelation
+import org.apache.spark.sql.types.StructType
 import tech.mlsql.indexer.MlsqlIndexer
 
 import scala.collection.mutable
@@ -35,6 +37,16 @@ object LPUtils {
         a
       case a@SubqueryAlias(name, r@LogicalRelation(_, _, _, _)) =>
         tableWithColumns += (name.identifier -> r.output.map(item => item.asInstanceOf[AttributeReference]))
+        a
+    }
+    tableWithColumns
+  }
+
+  def getTableAndSchema(lp: LogicalPlan) = {
+    val tableWithColumns = new mutable.HashMap[String, StructType]()
+    lp.transformUp {
+      case a@SubqueryAlias(name, r@LogicalRelation(_, _, _, _)) =>
+        tableWithColumns += (name.identifier -> a.schema)
         a
     }
     tableWithColumns

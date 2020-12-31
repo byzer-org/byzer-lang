@@ -14,6 +14,7 @@ class ProfilerApp extends tech.mlsql.app.App with VersionCompatibility {
     AppRuntimeStore.store.registerController("genSQL", classOf[GenSQLController].getName)
     AppRuntimeStore.store.registerController("indexRewrite", classOf[IndexerRewriteController].getName)
     ETRegister.register(ProfilerApp.MODULE_NAME, classOf[ProfilerCommand].getName)
+    ETRegister.register("ZOrdering", classOf[ZOrdering].getName)
     CommandCollection.refreshCommandMapping(Map(ProfilerApp.COMMAND_NAME -> ProfilerApp.MODULE_NAME))
   }
 

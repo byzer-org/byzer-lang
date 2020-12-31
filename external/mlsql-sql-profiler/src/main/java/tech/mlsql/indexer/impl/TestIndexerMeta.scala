@@ -32,4 +32,6 @@ class TestIndexerMeta extends MLSQLIndexerMeta {
     )
 
   }
+
+  override def registerIndexer(indexer: MlsqlIndexer): Unit = ???
 }
