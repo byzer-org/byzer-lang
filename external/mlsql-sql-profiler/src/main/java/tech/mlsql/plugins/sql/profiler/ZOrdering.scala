@@ -22,12 +22,16 @@ class ZOrdering(override val uid: String) extends SQLAlg with ETAuth with WowPar
       return df.sparkSession.createDataset[String](Seq(df.schema.json)).toDF("value")
     }
 
-    if(params.contains("test")){
-      val maps = LPUtils.getTableAndSchema(df.queryExecution.analyzed)
+    val indexer = new ZOrderingIndexer()
+    if(params.contains("sql")){
+      val newdf = df.sqlContext.sql(params("sql"))
+      val maps = indexer.rewrite(newdf.queryExecution.analyzed,Map())
+      println(newdf.queryExecution.analyzed)
       println(maps)
+      return newdf
     }
 
-    val indexer = new ZOrderingIndexer()
+
     val newDF = indexer.write(df, params)
     newDF.get
   }

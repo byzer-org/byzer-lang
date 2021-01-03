@@ -205,7 +205,7 @@ public class ZOrderingBytesUtil {
         return sb.toString();
     }
 
-
+    //来自HBase的代码
     public static int compareTo(byte[] buffer1, int offset1, int length1,
                                 byte[] buffer2, int offset2, int length2) {
 
