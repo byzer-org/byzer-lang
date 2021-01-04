@@ -79,8 +79,25 @@ class ZOrderingIndexer extends MLSQLIndexer {
         val newAnds = zOrderingInfos.map { info =>
           //构建索引查询
           val fieldsWithValue = info.fields.map { item =>
-            targetFields.filter(tf => tf.attribute == item.attribute).headOption.
-              map(tf => ZOrderingFieldWithMinMax(tf.attribute, tf.value, tf.value)).
+            val targetField = targetFields.filter(tf => tf.attribute.exprId == item.attribute.exprId).headOption
+            targetField.map { tf =>
+              val v = tf.attribute.dataType match {
+                case LongType =>
+                  tf.value.toString.toLong
+                case DoubleType =>
+                  tf.value.toString.toDouble
+
+                case IntegerType =>
+                  tf.value.toString.toLong
+
+                case FloatType =>
+                  tf.value.toString.toDouble
+
+                case StringType =>
+                  tf.value.toString
+              }
+              ZOrderingFieldWithMinMax(tf.attribute, v, v)
+            }.
               getOrElse {
 
                 val (min, max) = item.attribute.dataType match {
@@ -117,30 +134,30 @@ class ZOrderingIndexer extends MLSQLIndexer {
               case LongType =>
                 (
                   ZOrderingBytesUtil.longTo8Byte(item.min.asInstanceOf[Long]),
-                  ZOrderingBytesUtil.longTo8Byte(item.max.asInstanceOf[Long]),
+                  ZOrderingBytesUtil.longTo8Byte(item.max.asInstanceOf[Long])
                 )
               case DoubleType =>
                 (
                   ZOrderingBytesUtil.doubleTo8Byte(item.min.asInstanceOf[Double]),
-                  ZOrderingBytesUtil.doubleTo8Byte(item.max.asInstanceOf[Double]),
+                  ZOrderingBytesUtil.doubleTo8Byte(item.max.asInstanceOf[Double])
                 )
 
               case IntegerType =>
                 (
                   ZOrderingBytesUtil.longTo8Byte(item.min.asInstanceOf[Long]),
-                  ZOrderingBytesUtil.longTo8Byte(item.max.asInstanceOf[Long]),
+                  ZOrderingBytesUtil.longTo8Byte(item.max.asInstanceOf[Long])
                 )
 
               case FloatType =>
                 (
                   ZOrderingBytesUtil.doubleTo8Byte(item.min.asInstanceOf[Double]),
-                  ZOrderingBytesUtil.doubleTo8Byte(item.max.asInstanceOf[Double]),
+                  ZOrderingBytesUtil.doubleTo8Byte(item.max.asInstanceOf[Double])
                 )
 
               case StringType =>
                 (
                   ZOrderingBytesUtil.utf8To8Byte(item.min.asInstanceOf[String]),
-                  ZOrderingBytesUtil.utf8To8Byte(item.max.asInstanceOf[String]),
+                  ZOrderingBytesUtil.utf8To8Byte(item.max.asInstanceOf[String])
                 )
 
             }
@@ -148,11 +165,12 @@ class ZOrderingIndexer extends MLSQLIndexer {
           val indexerAttr = tableWithColumns(info.table).filter(_.name.startsWith("__mlsql_indexer_zordering")).head
           val minBytes = ZOrderingBytesUtil.interleaveMulti8Byte(minMaxBytesZip.map(_._1).toArray)
           val maxBytes = ZOrderingBytesUtil.interleaveMulti8Byte(minMaxBytesZip.map(_._2).toArray)
-          And(LessThanOrEqual(indexerAttr, Literal(maxBytes, BinaryType)), GreaterThanOrEqual(Literal(minBytes, BinaryType), indexerAttr))
+          And(LessThanOrEqual(indexerAttr, Literal(maxBytes, BinaryType)), LessThanOrEqual(Literal(minBytes, BinaryType), indexerAttr))
         }
         Filter((newAnds ++ ands).reduce(And), child)
+//        Filter((newAnds ).reduce(And), child)
     }
-    
+
     newlp
   }
 
@@ -204,11 +222,11 @@ class ZOrderingIndexer extends MLSQLIndexer {
           metabuilder.putDouble(s"min_${field._2.name}", minMax(0).asInstanceOf[Double])
           metabuilder.putDouble(s"max_${field._2.name}", minMax(1).asInstanceOf[Double])
         case IntegerType =>
-          metabuilder.putLong(s"min_${field._2.name}", minMax(0).asInstanceOf[Int])
-          metabuilder.putLong(s"max_${field._2.name}", minMax(1).asInstanceOf[Int])
+          metabuilder.putLong(s"min_${field._2.name}", minMax(0).asInstanceOf[Int].toLong)
+          metabuilder.putLong(s"max_${field._2.name}", minMax(1).asInstanceOf[Int].toLong)
         case FloatType =>
-          metabuilder.putDouble(s"min_${field._2.name}", minMax(0).asInstanceOf[Float])
-          metabuilder.putDouble(s"max_${field._2.name}", minMax(1).asInstanceOf[Float])
+          metabuilder.putDouble(s"min_${field._2.name}", minMax(0).asInstanceOf[Float].toDouble)
+          metabuilder.putDouble(s"max_${field._2.name}", minMax(1).asInstanceOf[Float].toDouble)
         case StringType =>
           metabuilder.putString(s"min_${field._2.name}", minMax(0).asInstanceOf[String])
           metabuilder.putString(s"max_${field._2.name}", minMax(1).asInstanceOf[String])

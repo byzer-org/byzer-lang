@@ -1,14 +1,14 @@
 package tech.mlsql.plugins.sql.profiler
 
 import org.apache.spark.sql.expressions.UserDefinedFunction
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.{DataFrame, DataSetHelper, SparkSession}
+import streaming.dsl.ScriptSQLExec
 import streaming.dsl.auth.TableAuthResult
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.param.WowParams
 import tech.mlsql.dsl.auth.ETAuth
 import tech.mlsql.dsl.auth.dsl.mmlib.ETMethod.ETMethod
 import tech.mlsql.indexer.impl.ZOrderingIndexer
-import tech.mlsql.tool.LPUtils
 
 /**
  * 31/12/2020 WilliamZhu(allwefantasy@gmail.com)
@@ -23,17 +23,22 @@ class ZOrdering(override val uid: String) extends SQLAlg with ETAuth with WowPar
     }
 
     val indexer = new ZOrderingIndexer()
-    if(params.contains("sql")){
+    if (params.contains("sql")) {
       val newdf = df.sqlContext.sql(params("sql"))
-      val maps = indexer.rewrite(newdf.queryExecution.analyzed,Map())
+      val finalLP = indexer.rewrite(newdf.queryExecution.analyzed, Map())
       println(newdf.queryExecution.analyzed)
-      println(maps)
-      return newdf
+      println(finalLP)
+      val sparkSession = ScriptSQLExec.context().execListener.sparkSession
+      val ds = DataSetHelper.create(sparkSession, finalLP)
+      ds.explain(extended = true)
+      ds.explain
+      return ds
     }
 
 
-    val newDF = indexer.write(df, params)
-    newDF.get
+    val newDF = indexer.write(df.repartition(5), params)
+    val temp =newDF.get
+    temp
   }
 
   override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = ???
