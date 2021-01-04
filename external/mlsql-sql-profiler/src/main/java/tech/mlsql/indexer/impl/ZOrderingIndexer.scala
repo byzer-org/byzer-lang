@@ -1,6 +1,6 @@
 package tech.mlsql.indexer.impl
 
-import org.apache.spark.sql.catalyst.expressions.{And, AttributeReference, Cast, EqualTo, Expression, GreaterThanOrEqual, LessThanOrEqual, Literal}
+import org.apache.spark.sql.catalyst.expressions.{And, AttributeReference, Cast, EqualTo, Expression, GreaterThanOrEqual, LessThanOrEqual, Literal, SortOrder}
 import org.apache.spark.sql.catalyst.plans.logical.{Filter, LogicalPlan}
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Row, functions => F}
@@ -239,7 +239,7 @@ class ZOrderingIndexer extends MLSQLIndexer {
         StructField(s"__mlsql_indexer_zordering_${newFiledName}",
           BinaryType, false, meta))
     ))
-
+    //newDF.repartitionByRange(F.col(s"__mlsql_indexer_zordering_${newFiledName}"))
     Option(newDF)
   }
 }
@@ -250,6 +250,7 @@ case class ZOrderingBinarySort(v: Array[Byte]) extends Ordered[ZOrderingBinarySo
     ZOrderingBytesUtil.compareTo(this.v, 0, len, that.v, 0, len)
   }
 }
+
 
 case class ZOrderingField(attribute: AttributeReference, meta: Metadata)
 
