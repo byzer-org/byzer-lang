@@ -11,7 +11,7 @@ import org.apache.spark.sql.mlsql.session.MLSQLException
 import org.apache.spark.sql.types.{DataType, StructType}
 import org.apache.spark.sql.{DataFrame, Row, SparkSession, SparkUtils}
 import org.apache.spark.util.{TaskCompletionListener, TaskFailureListener}
-import org.apache.spark.{MLSQLSparkUtils, TaskContext, WowRowEncoder}
+import org.apache.spark.{MLSQLSparkUtils, SparkEnv, TaskContext, WowRowEncoder}
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.Functions
@@ -21,14 +21,14 @@ import tech.mlsql.arrow.python.ispark.SparkContextImp
 import tech.mlsql.arrow.python.runner.{ArrowPythonRunner, ChainedPythonFunctions, PythonConf, PythonFunction}
 import tech.mlsql.common.utils.distribute.socket.server.{ReportHostAndPort, SocketServerInExecutor, SocketServerSerDer, TempSocketServerInDriver}
 import tech.mlsql.common.utils.lang.sc.ScalaMethodMacros
-import tech.mlsql.common.utils.network.NetUtils
+import tech.mlsql.common.utils.net.NetTool
 import tech.mlsql.common.utils.serder.json.JSONTool
 import tech.mlsql.ets.python._
 import tech.mlsql.schema.parser.SparkSimpleSchemaParser
 import tech.mlsql.session.SetSession
+import tech.mlsql.tool.ScriptEnvDecode._
 
 import scala.collection.mutable.ArrayBuffer
-import tech.mlsql.tool.ScriptEnvDecode._
 
 /**
  * 2019-08-16 WilliamZhu(allwefantasy@gmail.com)
@@ -50,8 +50,12 @@ class PythonCommand(override val uid: String) extends SQLAlg with Functions with
 
     val hostAndPortContext = new AtomicReference[ReportHostAndPort]()
     val tempServer = new TempSocketServerInDriver(hostAndPortContext) {
-      override def host: String = if (MLSQLSparkUtils.rpcEnv().address == null) NetUtils.getHost
-      else MLSQLSparkUtils.rpcEnv().address.host
+      override def host: String = {
+        if (SparkEnv.get == null || MLSQLSparkUtils.blockManager == null || MLSQLSparkUtils.blockManager.blockManagerId == null) {
+          NetTool.localHostName()
+        }
+        else MLSQLSparkUtils.blockManager.blockManagerId.host
+      }
     }
 
     val tempSocketServerHost = tempServer._host
@@ -275,7 +279,7 @@ class PythonCommand(override val uid: String) extends SQLAlg with Functions with
       case _ =>
         StructType.fromDDL(runnerConf("schema"))
     }
-    
+
     val pythonVersion = runnerConf.getOrElse("pythonVersion", "3.6")
     val timezoneID = session.sessionState.conf.sessionLocalTimeZone
     val df = session.table(sourceTable)
