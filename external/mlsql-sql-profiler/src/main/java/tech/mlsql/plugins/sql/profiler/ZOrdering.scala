@@ -21,6 +21,9 @@ class ZOrdering(override val uid: String) extends SQLAlg with ETAuth with WowPar
       import df.sparkSession.implicits._
       return df.sparkSession.createDataset[String](Seq(df.schema.json)).toDF("value")
     }
+    if(!params.contains("indexFields")){
+      return batchPredict(df,path,params)
+    }
     val indexer = new ZOrderingIndexer()
     val newDF = indexer.write(df.repartition(params.getOrElse("fileNum", df.rdd.partitions.length + "").toInt), params)
     val temp = newDF.get
