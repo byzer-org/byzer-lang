@@ -10,7 +10,7 @@ import tech.mlsql.indexer.impl.{LinearTryIndexerSelector, RestIndexerMeta, ZOrde
 class IndexerPlugin extends ResultRender {
   override def call(d: ResultResp): ResultResp = {
     val params = JSONTool.parseJson[Map[String, String]](ScriptSQLExec.context().userDefinedParam.getOrElse("__PARAMS__", "{}"))
-    if (!params.getOrElse("enableIndexer", "false").toBoolean) {
+    if (!params.getOrElse("enableQueryWithIndexer", "false").toBoolean) {
       return d
     }
     val consoleUrl = ScriptSQLExec.context().userDefinedParam.getOrElse("__default__console_url__", "")
