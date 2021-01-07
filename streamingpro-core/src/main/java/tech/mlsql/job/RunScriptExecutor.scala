@@ -1,4 +1,4 @@
-package tech.mlsql
+package tech.mlsql.job
 
 import net.csdn.ServiceFramwork
 import net.csdn.common.path.Url
@@ -6,14 +6,14 @@ import net.csdn.modules.transport.HttpTransportService
 import org.apache.spark.MLSQLConf
 import org.apache.spark.sql.execution.datasources.json.WowJsonInferSchema
 import org.apache.spark.sql.mlsql.session.MLSQLSparkSession
-import org.apache.spark.sql.{Dataset, SparkSession}
+import org.apache.spark.sql.{DataFrame, Dataset, SparkSession}
 import streaming.core.strategy.platform.{PlatformManager, SparkRuntime}
 import streaming.dsl.{MLSQLExecuteContext, ScriptSQLExec, ScriptSQLExecListener}
 import streaming.log.WowLog
+import tech.mlsql.MLSQLEnvKey
 import tech.mlsql.app.{CustomController, ResultResp}
 import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.common.utils.serder.json.JSONTool
-import tech.mlsql.job.{JobManager, MLSQLJobType}
 import tech.mlsql.runtime.AppRuntimeStore
 import tech.mlsql.runtime.plugins.exception_render.ExceptionRenderManager
 import tech.mlsql.runtime.plugins.request_cleaner.RequestCleanerManager
@@ -28,6 +28,7 @@ import scala.collection.mutable.ArrayBuffer
  */
 class RunScriptExecutor(_params: Map[String, String]) extends Logging with WowLog {
   private val extraParams = mutable.HashMap[String, String]()
+  private var _autoClean = false
 
   def sql(sql: String) = {
     extraParams += ("sql" -> sql)
@@ -52,6 +53,42 @@ class RunScriptExecutor(_params: Map[String, String]) extends Logging with WowLo
   def executeMode(executeMode: String) = {
     extraParams += ("executeMode" -> executeMode)
     this
+  }
+
+  def autoClean(autoClean: Boolean) = {
+    this._autoClean = autoClean
+    this
+  }
+
+  def simpleExecute(): Option[DataFrame] = {
+    val sparkSession = getSession
+    try {
+      val jobInfo = JobManager.getJobInfo(
+        param("owner"), param("jobType", MLSQLJobType.SCRIPT), param("jobName"), param("sql"),
+        paramAsLong("timeout", -1L)
+      )
+      val context = createScriptSQLExecListener(sparkSession, jobInfo.groupId)
+
+      JobManager.run(sparkSession, jobInfo, () => {
+        ScriptSQLExec.parse(param("sql"), context,
+          skipInclude = paramAsBoolean("skipInclude", false),
+          skipAuth = paramAsBoolean("skipAuth", true),
+          skipPhysicalJob = paramAsBoolean("skipPhysicalJob", false),
+          skipGrammarValidate = paramAsBoolean("skipGrammarValidate", true)
+        )
+      })
+      context.getLastSelectTable() match {
+        case Some(tableName) =>
+          Option(sparkSession.table(tableName))
+        case None =>
+          None
+      }
+    } finally {
+      if(this._autoClean){
+        RequestCleanerManager.call()
+        cleanActiveSessionInSpark
+      }
+    }
   }
 
   def execute(): (Int, String) = {
@@ -140,8 +177,10 @@ class RunScriptExecutor(_params: Map[String, String]) extends Logging with WowLo
         val msg = ExceptionRenderManager.call(e)
         return (500, msg.str.get)
     } finally {
-      RequestCleanerManager.call()
-      cleanActiveSessionInSpark
+      if(this._autoClean){
+        RequestCleanerManager.call()
+        cleanActiveSessionInSpark
+      }
     }
     return (200, outputResult)
   }

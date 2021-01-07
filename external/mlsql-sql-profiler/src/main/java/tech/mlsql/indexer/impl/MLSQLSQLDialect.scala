@@ -1,15 +1,16 @@
-package org.apache.spark.sql.catalyst.sqlgenerator
+package tech.mlsql.indexer.impl
 
 import java.sql.Connection
 
+import org.apache.spark.sql.catalyst.sqlgenerator.SQLDialect
 import org.apache.spark.sql.execution.LogicalRDD
 import org.apache.spark.sql.execution.datasources.LogicalRelation
 import tech.mlsql.sqlbooster.meta.ViewCatalyst
 
 /**
- * 2019-07-14 WilliamZhu(allwefantasy@gmail.com)
+ * 22/12/2020 WilliamZhu(allwefantasy@gmail.com)
  */
-class BasicSQLDialect extends SQLDialect {
+class MLSQLSQLDialect extends SQLDialect {
   override def canHandle(url: String): Boolean = url.toLowerCase().startsWith("jdbc:mysql")
 
   override def quote(name: String): String = {
@@ -20,13 +21,13 @@ class BasicSQLDialect extends SQLDialect {
 
   override def relation(alias: String, relation: LogicalRelation): String = {
     val temp = ViewCatalyst.meta.getTableNameByViewName(alias).path
-    s"(${temp})  ${alias}"
+    s"${alias}"
 
   }
 
   override def relation2(alias: String, relation: LogicalRDD): String = {
     val temp = ViewCatalyst.meta.getTableNameByViewName(alias).path
-    s"(${temp})  ${alias}"
+    s"${alias}"
   }
 
   override def maybeQuote(name: String): String = {
@@ -45,3 +46,4 @@ class BasicSQLDialect extends SQLDialect {
 
 
 }
+

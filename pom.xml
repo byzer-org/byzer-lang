@@ -90,7 +90,7 @@
         <jtar.version>2.2</jtar.version>
         <zkclient.version>0.5</zkclient.version>
 
-        <mysql-connector.version>5.1.22</mysql-connector.version>
+        <mysql-connector.version>5.1.46</mysql-connector.version>
         <commons-exec.version>1.3</commons-exec.version>
         <joda-time.version>2.9.3</joda-time.version>
         <joda-convert.version>1.8.1</joda-convert.version>
@@ -111,7 +111,7 @@
         <pyjava-version>0.3.0</pyjava-version>
         <mlsql-scheduler-version>0.1.3</mlsql-scheduler-version>
 
-        <delta-plus-version>0.3.0</delta-plus-version>
+        <delta-plus-version>0.4.0</delta-plus-version>
         <mysql-binlog-version>1.0.1</mysql-binlog-version>
         <spark-adhoc-kafka.version>0.1.2</spark-adhoc-kafka.version>
     </properties>

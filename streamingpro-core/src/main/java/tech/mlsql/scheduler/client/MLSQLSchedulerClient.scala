@@ -1,29 +1,34 @@
 package tech.mlsql.scheduler.client
 
+import java.net.URLEncoder
 import java.nio.charset.Charset
 
 import net.sf.json.JSONObject
 import org.apache.http.client.fluent.{Form, Request}
 import org.apache.http.util.EntityUtils
-import tech.mlsql.common.utils.path.PathFun
 import tech.mlsql.scheduler.JobNode
 
 /**
-  * 2019-09-05 WilliamZhu(allwefantasy@gmail.com)
-  */
+ * 2019-09-05 WilliamZhu(allwefantasy@gmail.com)
+ */
 class MLSQLSchedulerClient[T <% Ordered[T]](
                                              consoleUrl: String,
                                              owner: String,
                                              auth_secret: String
                                            ) extends ExecutorClient[T] {
+
+
   override def execute(job: JobNode[T]): Unit = {
-    val script = Request.Get(PathFun(consoleUrl).add(s"/api_v1/script_file/get?id=${job.id}").toPath)
+    val owner = job.owner
+
+    val script = Request.Get(consoleUrl.stripSuffix("/")
+      + s"/api_v1/script_file/get?id=${job.id}&owner=${URLEncoder.encode(owner,"utf-8")}")
       .connectTimeout(60 * 1000)
       .socketTimeout(10 * 60 * 1000).addHeader("access-token", auth_secret)
       .execute().returnContent().asString()
     val scriptContent = JSONObject.fromObject(script).getString("content")
 
-    val res = Request.Post(PathFun(consoleUrl).add("/api_v1/run/script").toPath).
+    val res = Request.Post(consoleUrl.stripSuffix("/") + "/api_v1/run/script").
       connectTimeout(60 * 1000).socketTimeout(12 * 60 * 60 * 1000).
       addHeader("access-token", auth_secret).
       bodyForm(Form.form().add("sql", scriptContent).

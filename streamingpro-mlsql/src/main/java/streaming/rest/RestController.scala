@@ -91,7 +91,8 @@ class RestController extends ApplicationController with WowLog {
     new Parameter(name = "skipAuth", required = false, description = "disable table authorize . default: true", `type` = "boolean", allowEmptyValue = false),
     new Parameter(name = "skipGrammarValidate", required = false, description = "validate mlsql grammar. default: true", `type` = "boolean", allowEmptyValue = false),
     new Parameter(name = "includeSchema", required = false, description = "the return value should contains schema info. default: false", `type` = "boolean", allowEmptyValue = false),
-    new Parameter(name = "fetchType", required = false, description = "take/collect. default: collect", `type` = "string", allowEmptyValue = false)
+    new Parameter(name = "fetchType", required = false, description = "take/collect. default: collect", `type` = "string", allowEmptyValue = false),
+    new Parameter(name = "enableQueryWithIndexer", required = false, description = "try query with indexer to speed. default: false", `type` = "boolean", allowEmptyValue = false)
   ))
   @Responses(Array(
     new ApiResponse(responseCode = "200", description = "", content = new Content(mediaType = "application/json",

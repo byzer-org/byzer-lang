@@ -12,8 +12,11 @@ import tech.mlsql.version.VersionCompatibility
 class ProfilerApp extends tech.mlsql.app.App with VersionCompatibility {
   override def run(args: Seq[String]): Unit = {
     AppRuntimeStore.store.registerController("genSQL", classOf[GenSQLController].getName)
+    AppRuntimeStore.store.registerController("indexRewrite", classOf[IndexerRewriteController].getName)
     ETRegister.register(ProfilerApp.MODULE_NAME, classOf[ProfilerCommand].getName)
+    ETRegister.register("ZOrdering", classOf[ZOrdering].getName)
     CommandCollection.refreshCommandMapping(Map(ProfilerApp.COMMAND_NAME -> ProfilerApp.MODULE_NAME))
+    AppRuntimeStore.store.registerResultRender("IndexerPlugin", classOf[IndexerPlugin].getName)
   }
 
   override def supportedVersions: Seq[String] = Seq("1.5.0-SNAPSHOT", "1.5.0", "1.6.0-SNAPSHOT", "1.6.0")
