@@ -21,24 +21,18 @@ class ZOrdering(override val uid: String) extends SQLAlg with ETAuth with WowPar
       import df.sparkSession.implicits._
       return df.sparkSession.createDataset[String](Seq(df.schema.json)).toDF("value")
     }
-
     val indexer = new ZOrderingIndexer()
-    if (params.contains("sql")) {
-      val newdf = df.sqlContext.sql(params("sql"))
-      val finalLP = indexer.rewrite(newdf.queryExecution.analyzed, Map())
-      println(newdf.queryExecution.analyzed)
-      println(finalLP)
-      val sparkSession = ScriptSQLExec.context().execListener.sparkSession
-      val ds = DataSetHelper.create(sparkSession, finalLP)
-      ds.explain(extended = true)
-      ds.explain
-      return ds
-    }
-
-
-    val newDF = indexer.write(df.repartition(5), params)
-    val temp =newDF.get
+    val newDF = indexer.write(df.repartition(params.getOrElse("fileNum", df.rdd.partitions.length + "").toInt), params)
+    val temp = newDF.get
     temp
+  }
+
+  override def batchPredict(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
+    val indexer = new ZOrderingIndexer()
+    val finalLP = indexer.rewrite(df.queryExecution.analyzed, Map())
+    val sparkSession = ScriptSQLExec.context().execListener.sparkSession
+    val ds = DataSetHelper.create(sparkSession, finalLP)
+    ds
   }
 
   override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = ???

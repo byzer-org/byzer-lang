@@ -16,6 +16,7 @@ class ProfilerApp extends tech.mlsql.app.App with VersionCompatibility {
     ETRegister.register(ProfilerApp.MODULE_NAME, classOf[ProfilerCommand].getName)
     ETRegister.register("ZOrdering", classOf[ZOrdering].getName)
     CommandCollection.refreshCommandMapping(Map(ProfilerApp.COMMAND_NAME -> ProfilerApp.MODULE_NAME))
+    AppRuntimeStore.store.registerResultRender("IndexerPlugin", classOf[IndexerPlugin].getName)
   }
 
   override def supportedVersions: Seq[String] = Seq("1.5.0-SNAPSHOT", "1.5.0", "1.6.0-SNAPSHOT", "1.6.0")

@@ -17,6 +17,10 @@ class ByteUtilTest extends FunSuite with BeforeAndAfterAll {
     assert(ZOrderingBytesUtil.toString(ZOrderingBytesUtil.toBytes(c)).stripSuffix(" ") == "00000000 00000000 00000000 00000000 00000000 00000000 00000000 00001100")
   }
 
+  test("func"){
+    println(ZOrderingBytesUtil.toString(ZOrderingBytesUtil.toBytes(-1)))
+  }
+
   test("intTo8Byte") {
     val a = 3
     val aStr = ZOrderingBytesUtil.toString(ZOrderingBytesUtil.intTo8Byte(a))
