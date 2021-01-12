@@ -85,7 +85,7 @@ class NestedDataIndexer(metaClient: MLSQLIndexerMeta) extends MLSQLIndexer with 
 
   }
 
-  override def write(df: DataFrame, options: Map[String, String]): Unit = ???
+  override def write(df: DataFrame, options: Map[String, String]): Option[DataFrame] = ???
 
 
   //  def rewrite: LogicalPlan = {

@@ -11,5 +11,5 @@ trait MLSQLIndexer {
 
   def read(sql:LogicalPlan,options: Map[String, String]): Option[DataFrame]
 
-  def write(df: DataFrame, options: Map[String, String]): Unit
+  def write(df: DataFrame, options: Map[String, String]): Option[DataFrame]
 }
