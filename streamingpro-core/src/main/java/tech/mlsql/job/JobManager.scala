@@ -89,11 +89,13 @@ object JobManager extends Logging {
         ScriptSQLExec.setContext(context)
         try {
           JobManager.run(session, job, f)
+          context.execListener.addEnv("__MarkAsyncRunFinish__","true")
         } catch {
           case e: Exception =>
             logInfo("Async Job Exception", e)
         } finally {
           RequestCleanerManager.call()
+          context.execListener.env.remove("__MarkAsyncRunFinish__")
           ScriptSQLExec.unset
           SparkSession.clearActiveSession()
         }
