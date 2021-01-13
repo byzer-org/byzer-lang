@@ -16,8 +16,10 @@ class SessionCleaner extends RequestCleaner with Logging with WowLog {
     val bus = CleanerUtils.listenerBus(session.sparkContext)
     val removeListener = CleanerUtils.filterExecutionListenerBusWithSession(bus, session)
     logInfo(s"clean ${session} ${removeListener.toList}")
-    removeListener.foreach { removeListener =>
-      session.sparkContext.removeSparkListener(removeListener)
+    synchronized {
+      removeListener.foreach { removeListener =>
+        session.sparkContext.removeSparkListener(removeListener)
+      }
     }
   }
 }
