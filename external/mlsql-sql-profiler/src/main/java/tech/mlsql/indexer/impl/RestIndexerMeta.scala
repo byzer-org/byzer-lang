@@ -4,13 +4,13 @@ import java.nio.charset.Charset
 
 import org.apache.http.client.fluent.{Form, Request}
 import tech.mlsql.common.utils.serder.json.JSONTool
-import tech.mlsql.indexer.{MLSQLIndexerMeta, MlsqlIndexer, MlsqlOriTable}
+import tech.mlsql.indexer.{MLSQLIndexerMeta, MlsqlIndexerItem, MlsqlOriTable}
 
 /**
  * 21/12/2020 WilliamZhu(allwefantasy@gmail.com)
  */
 class RestIndexerMeta(url: String, token: String,timeout:Int=2000) extends MLSQLIndexerMeta {
-  override def fetchIndexers(tableNames: List[MlsqlOriTable], options: Map[String, String]): Map[MlsqlOriTable, List[MlsqlIndexer]] = {
+  override def fetchIndexers(tableNames: List[MlsqlOriTable], options: Map[String, String]): Map[MlsqlOriTable, List[MlsqlIndexerItem]] = {
     val form = Form.form()
     form.add("data", JSONTool.toJsonStr(tableNames))
     form.add("auth_secret", token)
@@ -20,7 +20,7 @@ class RestIndexerMeta(url: String, token: String,timeout:Int=2000) extends MLSQL
         .socketTimeout(timeout).bodyForm(form.build())
         .execute()
       val value = resp.returnContent().asString(Charset.forName("UTF-8"))
-      JSONTool.parseJson[Map[MlsqlOriTable, List[MlsqlIndexer]]](value)
+      JSONTool.parseJson[Map[MlsqlOriTable, List[MlsqlIndexerItem]]](value)
     } catch {
       case e: Exception =>
         e.printStackTrace()
@@ -29,7 +29,7 @@ class RestIndexerMeta(url: String, token: String,timeout:Int=2000) extends MLSQL
 
   }
 
-  override def registerIndexer(indexer: MlsqlIndexer): Unit = {
+  override def registerIndexer(indexer: MlsqlIndexerItem): Unit = {
     val form = Form.form()
     form.add("data", JSONTool.toJsonStr(indexer))
     form.add("auth_secret", token)
