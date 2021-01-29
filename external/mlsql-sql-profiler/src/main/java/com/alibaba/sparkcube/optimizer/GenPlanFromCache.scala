@@ -593,10 +593,12 @@ sealed trait FuncPlaceHolder extends NamedExpression {
 
 object TableLike {
   def unapply(plan: LogicalPlan): Option[TableIdentifier] = plan match {
-    case HiveTableRelation(tableMeta, _, _) => Some(tableMeta.identifier)
-    case View(catalogTable, _, _) => Some(catalogTable.identifier)
-    case LogicalRelation(_, _, Some(catalogTable), _) => Some(catalogTable.identifier)
-    case SubqueryAlias(_, TableLike(ident)) => Some(ident)
+    case HiveTableRelation(tableMeta, _, _) =>
+      Some(tableMeta.identifier)
+    case View(catalogTable, _, _) =>
+      Some(catalogTable.identifier)
+    case SubqueryAlias(name, LogicalRelation(_, _, _, _)) =>
+      Some(TableIdentifier(name.identifier,None))
     case _ => None
   }
 }

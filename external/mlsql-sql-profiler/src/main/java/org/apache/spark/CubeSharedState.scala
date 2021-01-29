@@ -21,7 +21,6 @@ import java.util.concurrent.atomic.AtomicReference
 
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.internal.StaticSQLConf.CATALOG_IMPLEMENTATION
-import org.apache.spark.ui.SparkCubeTab
 
 import com.alibaba.sparkcube.CubeManager
 import com.alibaba.sparkcube.catalog.{CubeHiveExternalCatalog, CubeInMemoryCatalog}
@@ -41,14 +40,6 @@ private[spark] class CubeSharedState(val session: SparkSession) extends Logging 
       case _ => new CubeInMemoryCatalog(session.sharedState.externalCatalog)
     }
 
-  if (session.sparkContext.getConf.getBoolean("spark.sql.cache.tab.display", false)) {
-    logInfo("Initializing SparkCube web UI")
-    val statusStore = session.sharedState.statusStore
-    session.sparkContext.ui.foreach(new SparkCubeTab(statusStore, _, this))
-    session.sparkContext.ui.foreach(_.attachHandler(
-      SparkCubeSource.getServletHandler(cubeManager)))
-  }
-
 }
 
 object CubeSharedState {
@@ -65,7 +56,7 @@ object CubeSharedState {
     activeCubeSharedState.get
   }
 
-  private[spark] def setActiveState(
+  def setActiveState(
       state: CubeSharedState): Unit = CUBE_STATE_LOCK.synchronized {
     activeCubeSharedState.set(state)
   }

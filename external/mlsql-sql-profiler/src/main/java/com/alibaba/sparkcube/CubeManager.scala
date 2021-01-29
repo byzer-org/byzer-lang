@@ -20,11 +20,13 @@ package com.alibaba.sparkcube
 import java.util.UUID
 import java.util.concurrent._
 
+import com.alibaba.sparkcube.catalog._
+import com.alibaba.sparkcube.conf.CubeConf
+import com.alibaba.sparkcube.execution._
+import com.alibaba.sparkcube.optimizer._
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import org.apache.hadoop.fs.Path
-
 import org.apache.spark.internal.Logging
-import org.apache.spark.sql.{Column, _}
 import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.expressions.aggregate._
@@ -32,11 +34,7 @@ import org.apache.spark.sql.catalyst.plans.logical._
 import org.apache.spark.sql.functions.{col, lit, max, row_number}
 import org.apache.spark.sql.internal.SQLConf
 import org.apache.spark.sql.types.StructType
-
-import com.alibaba.sparkcube.catalog._
-import com.alibaba.sparkcube.conf.CubeConf
-import com.alibaba.sparkcube.execution._
-import com.alibaba.sparkcube.optimizer._
+import org.apache.spark.sql.{Column, _}
 
 /**
  * Provides support in a SQLContext for caching query results and automatically using these cached
@@ -62,13 +60,14 @@ class CubeManager extends Logging {
 
   /**
    * Create Cube Management, add cache metadata to view properties in external catalog.
-   * @param viewName   The table/view name which represent the data to cache.
-   * @param cacheInfo  Cache data metadata information(location, format, partition, order, ...).
+   *
+   * @param viewName  The table/view name which represent the data to cache.
+   * @param cacheInfo Cache data metadata information(location, format, partition, order, ...).
    */
   def createCache(
-      session: SparkSession,
-      viewName: String,
-      cacheInfo: CacheFormatInfo): Boolean = {
+                   session: SparkSession,
+                   viewName: String,
+                   cacheInfo: CacheFormatInfo): Boolean = {
     if (isCacheExists(session, viewName, cacheInfo)) {
       logWarning(s"Cache already exists for $viewName.")
       false
@@ -77,7 +76,8 @@ class CubeManager extends Logging {
       verifyCacheFormatInfo(cacheInfo, dataset.schema)
       verifyCachePlan(SparkAgent.getLogicalPlan(dataset))
       val tableIdentifier = parseTableName(session, viewName)
-      val dbName = tableIdentifier.database.get
+      val dbName = tableIdentifier.database.getOrElse("temp_view")
+      //这里需要改成可配置的，比如数据湖位置
       val defaultPath = new Path(getCacheDefaultPath(session, dbName), tableIdentifier.table)
       val cacheStoragePath = cacheInfo.cacheSchema match {
         case _: CacheRawSchema => new Path(defaultPath, RAW_CACHE_PATH).toString
@@ -94,17 +94,18 @@ class CubeManager extends Logging {
   /**
    * Build Cube Management data, persist cache data to spark datasource, new view data would
    * append to exists cache data.
-   * @param cacheId    cache identifier.
-   * @param buildInfo  Optional, buildInfo would be transformed to a filter condition on view data,
-   *                   which represent new partial/incremental view data.
+   *
+   * @param cacheId   cache identifier.
+   * @param buildInfo Optional, buildInfo would be transformed to a filter condition on view data,
+   *                  which represent new partial/incremental view data.
    */
   def buildCache(
-      session: SparkSession,
-      cacheId: CacheIdentifier,
-      buildInfo: Option[BuildInfo] = None): Unit = {
+                  session: SparkSession,
+                  cacheId: CacheIdentifier,
+                  buildInfo: Option[BuildInfo] = None): Unit = {
     buildInfo.map { info =>
       val viewSchema = session.sessionState.catalog
-        .getTableMetadata(TableIdentifier(cacheId.viewName, Some(cacheId.db))).schema
+        .getTableMetadata(TableIdentifier(cacheId.viewName, cacheId.db)).schema
       info.verify(cacheId, viewSchema)
     }
     doCacheBuild(session, cacheId, buildInfo, SaveMode.Append)
@@ -112,14 +113,15 @@ class CubeManager extends Logging {
 
   /**
    * Asynchronously build cache data.
+   *
    * @param session
    * @param cacheId
    * @param buildInfo
    */
   def asyncBuildCache(
-      session: SparkSession,
-      cacheId: CacheIdentifier,
-      buildInfo: Option[BuildInfo] = None): Unit = {
+                       session: SparkSession,
+                       cacheId: CacheIdentifier,
+                       buildInfo: Option[BuildInfo] = None): Unit = {
     cacheBuildExecutor.execute(new Runnable {
       override def run(): Unit = {
         buildCache(session, cacheId, buildInfo)
@@ -130,16 +132,17 @@ class CubeManager extends Logging {
   /**
    * Refresh Cube Management data, persist view data to spark datasource, new view data would
    * overwrite all exists cache data.
-   * @param cacheId    cache identifier.
-   * @param buildInfo  Optional, buildInfo would be transformed to a filter condition on view data.
+   *
+   * @param cacheId   cache identifier.
+   * @param buildInfo Optional, buildInfo would be transformed to a filter condition on view data.
    */
   def refreshCache(
-      session: SparkSession,
-      cacheId: CacheIdentifier,
-      buildInfo: Option[BuildInfo] = None): Unit = {
+                    session: SparkSession,
+                    cacheId: CacheIdentifier,
+                    buildInfo: Option[BuildInfo] = None): Unit = {
     buildInfo.map { info =>
       val viewSchema = session.sessionState.catalog
-        .getTableMetadata(TableIdentifier(cacheId.viewName, Some(cacheId.db))).schema
+        .getTableMetadata(TableIdentifier(cacheId.viewName, cacheId.db)).schema
       info.verify(cacheId, viewSchema)
     }
     doCacheBuild(session, cacheId, buildInfo, SaveMode.Overwrite)
@@ -147,19 +150,20 @@ class CubeManager extends Logging {
 
   /**
    * Asynchronous refresh cache data.
+   *
    * @param session
    * @param cacheId
    * @param buildInfo
    */
   def asyncRefreshCache(
-      session: SparkSession,
-      cacheId: CacheIdentifier,
-      buildInfo: Option[BuildInfo] = None): Unit = {
+                         session: SparkSession,
+                         cacheId: CacheIdentifier,
+                         buildInfo: Option[BuildInfo] = None): Unit = {
     cacheBuildExecutor.execute(new Runnable {
       override def run(): Unit = {
         refreshCache(session, cacheId, buildInfo)
       }
-    } )
+    })
   }
 
   /**
@@ -168,11 +172,11 @@ class CubeManager extends Logging {
    * used as the filter condition to represent incremental view data.
    */
   def autoBuildCache(
-      session: SparkSession,
-      cacheId: CacheIdentifier,
-      periodBuildInfo: PeriodBuildInfo): Unit = {
+                      session: SparkSession,
+                      cacheId: CacheIdentifier,
+                      periodBuildInfo: PeriodBuildInfo): Unit = {
     val viewSchema = session.sessionState.catalog
-      .getTableMetadata(TableIdentifier(cacheId.viewName, Some(cacheId.db))).schema
+      .getTableMetadata(TableIdentifier(cacheId.viewName, cacheId.db)).schema
     periodBuildInfo.verify(cacheId, viewSchema)
     doAutoBuildCache(session, cacheId, periodBuildInfo)
   }
@@ -243,8 +247,8 @@ class CubeManager extends Logging {
    * List cache build history information.
    */
   def listBuildHistory(
-      session: SparkSession,
-      cacheId: CacheIdentifier): Seq[BuildHistory] = {
+                        session: SparkSession,
+                        cacheId: CacheIdentifier): Seq[BuildHistory] = {
     buildCacheHistories.getOrDefault(cacheId, Nil)
   }
 
@@ -261,9 +265,9 @@ class CubeManager extends Logging {
    * Enable/Disable cache to be used for query rewriting.
    */
   def alterCacheRewrite(
-      spark: SparkSession,
-      cacheId: CacheIdentifier,
-      queryRewriteEnabled: Boolean): Unit = {
+                         spark: SparkSession,
+                         cacheId: CacheIdentifier,
+                         queryRewriteEnabled: Boolean): Unit = {
     val f = (cacheInfo: BasicCacheInfo) => cacheInfo match {
       case rawCacheInfo: RawCacheInfo => rawCacheInfo.copy(enableRewrite = queryRewriteEnabled)
       case cubeCacheInfo: CubeCacheInfo => cubeCacheInfo.copy(enableRewrite = queryRewriteEnabled)
@@ -276,9 +280,9 @@ class CubeManager extends Logging {
    * Clear existed cache, remove its metadata and cached data.
    */
   def dropCache(
-      spark: SparkSession,
-      cacheId: CacheIdentifier): Unit = {
-    val viewIdentifier = TableIdentifier(cacheId.viewName, Some(cacheId.db))
+                 spark: SparkSession,
+                 cacheId: CacheIdentifier): Unit = {
+    val viewIdentifier = TableIdentifier(cacheId.viewName, cacheId.db)
     getCacheInfo(spark, cacheId) match {
       case Some(basicCacheInfo) =>
         val cacheInfo = cubeCatalog(spark).getCacheInfo(viewIdentifier).get
@@ -313,18 +317,18 @@ class CubeManager extends Logging {
         if (cacheInfo.rawCacheInfo.isDefined) {
           deleteCacheData(
             spark, cacheInfo.rawCacheInfo.get.storageInfo.storagePath, None, true)
-          clearRelatedInfo(CacheIdentifier(viewIdentifier.database.get, viewIdentifier.table,
+          clearRelatedInfo(CacheIdentifier(viewIdentifier.database, viewIdentifier.table,
             cacheInfo.rawCacheInfo.get.cacheName))
         }
         if (cacheInfo.cubeCacheInfo.isDefined) {
           deleteCacheData(
             spark, cacheInfo.cubeCacheInfo.get.storageInfo.storagePath, None, true)
-          clearRelatedInfo(CacheIdentifier(viewIdentifier.database.get, viewIdentifier.table,
+          clearRelatedInfo(CacheIdentifier(viewIdentifier.database, viewIdentifier.table,
             cacheInfo.cubeCacheInfo.get.cacheName))
         }
         logInfo(s"Successfully drop all caches of $viewName")
       case None =>
-        throw new NotCachedException(viewIdentifier.database.get, viewIdentifier.table)
+        throw new NotCachedException(viewIdentifier.database.getOrElse(""), viewIdentifier.table)
     }
   }
 
@@ -333,9 +337,9 @@ class CubeManager extends Logging {
    * useless cache data partitions.
    */
   def dropCachePartition(
-      spark: SparkSession,
-      cacheId: CacheIdentifier,
-      specs: Seq[String]): Unit = {
+                          spark: SparkSession,
+                          cacheId: CacheIdentifier,
+                          specs: Seq[String]): Unit = {
     getCacheInfo(spark, cacheId) match {
       case Some(basicCacheInfo) =>
         specs.foreach { partitionPath =>
@@ -353,8 +357,8 @@ class CubeManager extends Logging {
    * List all cache data partitions if cache data is partitioned.
    */
   def listCachePartitions(
-      spark: SparkSession,
-      cacheId: CacheIdentifier): Seq[String] = {
+                           spark: SparkSession,
+                           cacheId: CacheIdentifier): Seq[String] = {
     getCacheInfo(spark, cacheId) match {
       case Some(basicCacheInfo) =>
         val storageInfo = basicCacheInfo.getStorageInfo
@@ -381,7 +385,7 @@ class CubeManager extends Logging {
    */
   def isCached(spark: SparkSession, tableName: String): Boolean = {
     val cache = parseTableName(spark, tableName)
-    cubeCatalog(spark).isCached(cache.database.get, cache.table)
+    cubeCatalog(spark).isCached(cache.database.getOrElse("temp_view"), cache.table)
   }
 
   def getViewCacheInfo(spark: SparkSession, viewName: String): Option[CacheInfo] = {
@@ -390,8 +394,8 @@ class CubeManager extends Logging {
   }
 
   def getCacheInfo(
-      spark: SparkSession,
-      cacheIdentifier: CacheIdentifier): Option[BasicCacheInfo] = {
+                    spark: SparkSession,
+                    cacheIdentifier: CacheIdentifier): Option[BasicCacheInfo] = {
     cubeCatalog(spark).getCacheInfo(cacheIdentifier) match {
       case Some(cacheInfo) =>
         if (cacheInfo.rawCacheInfo.isDefined &&
@@ -421,9 +425,9 @@ class CubeManager extends Logging {
   }
 
   private def isCacheExists(
-      spark: SparkSession,
-      viewName: String,
-      formatInfo: CacheFormatInfo): Boolean = {
+                             spark: SparkSession,
+                             viewName: String,
+                             formatInfo: CacheFormatInfo): Boolean = {
     val viewId = parseTableName(spark, viewName)
     cubeCatalog(spark).getCacheInfo(viewId) match {
       case Some(cacheInfo) =>
@@ -441,15 +445,15 @@ class CubeManager extends Logging {
   }
 
   private def doCacheBuild(
-      session: SparkSession,
-      cacheId: CacheIdentifier,
-      buildInfo: Option[BuildInfo],
-      mode: SaveMode): Unit = {
+                            session: SparkSession,
+                            cacheId: CacheIdentifier,
+                            buildInfo: Option[BuildInfo],
+                            mode: SaveMode): Unit = {
     val startTime = System.currentTimeMillis
     try {
       getCacheInfo(session, cacheId) match {
         case Some(cacheInfo) =>
-          val viewId = TableIdentifier(cacheId.viewName, Some(cacheId.db))
+          val viewId = TableIdentifier(cacheId.viewName, cacheId.db)
           val dataSet = buildInfo match {
             case Some(build) =>
               SparkAgent.getDataFrame(session, viewId).filter(build.expr)
@@ -505,10 +509,10 @@ class CubeManager extends Logging {
   }
 
   private def writeCacheData(
-      viewData: Dataset[_],
-      viewName: TableIdentifier,
-      cacheInfo: BasicCacheInfo,
-      saveMode: SaveMode): Unit = {
+                              viewData: Dataset[_],
+                              viewName: TableIdentifier,
+                              cacheInfo: BasicCacheInfo,
+                              saveMode: SaveMode): Unit = {
     val spark = viewData.sparkSession
     val cacheSchema = cacheInfo.getCacheSchema
     val storageInfo = cacheInfo.getStorageInfo
@@ -538,7 +542,11 @@ class CubeManager extends Logging {
         dataRow = dataRow.repartition(partitionList: _*)
       }
     }
-    val cur = dataRow
+    val finalPlan = GenPlanFromCache(dataRow.sparkSession).apply(dataRow.queryExecution.analyzed)
+
+    logInfo(s"Build cache for ${cacheInfo.getCacheName} with final plan:\n$finalPlan")
+    val newDataRow = SparkAgent.getDataFrame(dataRow.sparkSession, finalPlan)
+    val cur = newDataRow
       .write
       .format(storageInfo.provider)
       .mode(saveMode)
@@ -602,10 +610,10 @@ class CubeManager extends Logging {
   }
 
   private def addCacheMetaInExternalCatalog(
-      session: SparkSession,
-      tableIdentifier: TableIdentifier,
-      cacheInfo: CacheFormatInfo,
-      storageInfo: CacheStorageInfo): Unit = {
+                                             session: SparkSession,
+                                             tableIdentifier: TableIdentifier,
+                                             cacheInfo: CacheFormatInfo,
+                                             storageInfo: CacheStorageInfo): Unit = {
     val lastUpdateTime = System.currentTimeMillis()
     val oldCacheInfo = cubeCatalog(session).getCacheInfo(tableIdentifier)
     val updatedCacheInfo = cacheInfo.cacheSchema match {
@@ -635,17 +643,17 @@ class CubeManager extends Logging {
     tableIdentifier.database match {
       case Some(_) => tableIdentifier
       case None =>
-        tableIdentifier.copy(database = Some(spark.sessionState.catalog.getCurrentDatabase))
+        tableIdentifier.copy(database = None)
     }
   }
 
   private def alterCachePropertyInExternalCatalog(
-      spark: SparkSession,
-      cacheId: CacheIdentifier,
-      f: (BasicCacheInfo) => BasicCacheInfo): Unit = {
+                                                   spark: SparkSession,
+                                                   cacheId: CacheIdentifier,
+                                                   f: (BasicCacheInfo) => BasicCacheInfo): Unit = {
     val cacheInfoOpt = cubeCatalog(spark).getCacheInfo(cacheId)
     if (cacheInfoOpt.isEmpty || cacheInfoOpt.get.isEmpty) {
-      throw new NotCachedException(cacheId.db, cacheId.viewName)
+      throw new NotCachedException(cacheId.db.getOrElse(""), cacheId.viewName)
     }
 
     val cacheInfo = cacheInfoOpt.get
@@ -664,10 +672,10 @@ class CubeManager extends Logging {
   }
 
   private def deleteCacheData(
-      session: SparkSession,
-      storagePath: String,
-      partitionPath: Option[String],
-      ifExists: Boolean): Unit = {
+                               session: SparkSession,
+                               storagePath: String,
+                               partitionPath: Option[String],
+                               ifExists: Boolean): Unit = {
     val path = partitionPath match {
       case Some(partPath) =>
         new Path(storagePath, partPath)
@@ -682,9 +690,9 @@ class CubeManager extends Logging {
   }
 
   private def buildGlobalDictionary(
-      spark: SparkSession,
-      cache: TableIdentifier,
-      plan: LogicalPlan): LogicalPlan = transformPreCountDistinct(spark, plan) transform {
+                                     spark: SparkSession,
+                                     cache: TableIdentifier,
+                                     plan: LogicalPlan): LogicalPlan = transformPreCountDistinct(spark, plan) transform {
     case GlobalDictionaryPlaceHolder(expr: String, child: LogicalPlan) =>
       val dictPath = getDictionaryPath(spark, cache, expr)
       val fs = dictPath.getFileSystem(spark.sessionState.newHadoopConf)
@@ -724,9 +732,9 @@ class CubeManager extends Logging {
   }
 
   private def getDictionaryPath(
-      session: SparkSession,
-      cache: TableIdentifier,
-      exprName: String): Path = {
+                                 session: SparkSession,
+                                 cache: TableIdentifier,
+                                 exprName: String): Path = {
     new Path(new Path(new Path(new Path(session.sessionState.conf.warehousePath,
       cache.database.get), "_DICTIONARY"), cache.table), exprName)
   }
@@ -747,15 +755,15 @@ class CubeManager extends Logging {
       case nd: Expression if !nd.deterministic =>
         throw SparkAgent.analysisException(
           s"Should not cache with non-deterministic expression($nd)")
-      case current@ (_: CurrentDate | _: CurrentTimestamp | _: CurrentDatabase) =>
+      case current@(_: CurrentDate | _: CurrentTimestamp | _: CurrentDatabase) =>
         throw SparkAgent.analysisException(
           s"Should not cache with ${current.prettyName} expression.")
     }
   }
 
   private def verifyCacheFormatInfo(
-      cacheFormatInfo: CacheFormatInfo,
-      schema: StructType): Unit = {
+                                     cacheFormatInfo: CacheFormatInfo,
+                                     schema: StructType): Unit = {
     assert(cacheFormatInfo.cacheName != null, "Cache name should not be null.")
     val validFieldNames = schema.fields.map(_.name)
     val validFieldStr = validFieldNames.mkString(", ")
@@ -814,15 +822,15 @@ class CubeManager extends Logging {
     }
 
     if (cacheFormatInfo.partitionColumns.isDefined &&
-         cacheFormatInfo.zorderColumns.isDefined &&
-         cacheFormatInfo.partitionColumns.get
-         .intersect(cacheFormatInfo.zorderColumns.get)
-         .nonEmpty) {
-         val partColStr = cacheFormatInfo.partitionColumns.get.mkString(", ")
-         val zorderColStr = cacheFormatInfo.zorderColumns.get.mkString(",")
-         throw SparkAgent.analysisException(s"Zorder columns[${zorderColStr}]" +
-            s" should not intersect with partition columns [$partColStr]")
-        }
+      cacheFormatInfo.zorderColumns.isDefined &&
+      cacheFormatInfo.partitionColumns.get
+        .intersect(cacheFormatInfo.zorderColumns.get)
+        .nonEmpty) {
+      val partColStr = cacheFormatInfo.partitionColumns.get.mkString(", ")
+      val zorderColStr = cacheFormatInfo.zorderColumns.get.mkString(",")
+      throw SparkAgent.analysisException(s"Zorder columns[${zorderColStr}]" +
+        s" should not intersect with partition columns [$partColStr]")
+    }
   }
 
   /** Copied from InMemoryFileIndex. */
@@ -847,9 +855,9 @@ class CubeManager extends Logging {
 
 
   private def doAutoBuildCache(
-      session: SparkSession,
-      cacheId: CacheIdentifier,
-      periodBuildInfo: PeriodBuildInfo): Unit = {
+                                session: SparkSession,
+                                cacheId: CacheIdentifier,
+                                periodBuildInfo: PeriodBuildInfo): Unit = {
     val task = new Runnable {
       override def run(): Unit = {
         periodBuildInfo.getSaveMode match {
@@ -864,7 +872,7 @@ class CubeManager extends Logging {
         }
       }
     }
-    val delay = (periodBuildInfo.getTriggerTime - System.currentTimeMillis())/1000
+    val delay = (periodBuildInfo.getTriggerTime - System.currentTimeMillis()) / 1000
 
     val future = cacheBuildExecutor
       .scheduleAtFixedRate(task, delay, periodBuildInfo.getPeriod, TimeUnit.SECONDS)
@@ -874,6 +882,6 @@ class CubeManager extends Logging {
   }
 
   private implicit def cacheIdToTableIdent(cacheIdentifier: CacheIdentifier): TableIdentifier = {
-    TableIdentifier(cacheIdentifier.viewName, Some(cacheIdentifier.db))
+    TableIdentifier(cacheIdentifier.viewName, cacheIdentifier.db)
   }
 }

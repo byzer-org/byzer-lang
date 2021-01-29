@@ -23,11 +23,6 @@ import javax.ws.rs._
 import javax.ws.rs.core.{Context, MediaType}
 
 import org.apache.hadoop.conf.Configuration
-import org.eclipse.jetty.server.handler.ContextHandler
-import org.eclipse.jetty.servlet.{ServletContextHandler, ServletHolder}
-import org.glassfish.jersey.server.ServerProperties
-import org.glassfish.jersey.servlet.ServletContainer
-
 import org.apache.spark.sql.{SaveMode, SparkAgent, SparkSession}
 
 import com.alibaba.sparkcube.CubeManager
@@ -52,13 +47,13 @@ class SparkCubeSource extends CacheApiRequestContext {
         val cacheInfo = cache._2
         val optionalRaw = cacheInfo.rawCacheInfo.map {
           rawCacheInfo =>
-            CacheBasicInfo(tableId.database.get, tableId.table, rawCacheInfo.cacheName,
+            CacheBasicInfo(tableId.database, tableId.table, rawCacheInfo.cacheName,
               rawCacheInfo.enableRewrite, getFileSize(rawCacheInfo.storageInfo.storagePath),
               SparkAgent.formatDate(rawCacheInfo.lastUpdateTime))
         }
         val optionalCube = cacheInfo.cubeCacheInfo.map {
           cubeCacheInfo =>
-            CacheBasicInfo(tableId.database.get, tableId.table, cubeCacheInfo.cacheName,
+            CacheBasicInfo(tableId.database, tableId.table, cubeCacheInfo.cacheName,
               cubeCacheInfo.enableRewrite, getFileSize(cubeCacheInfo.storageInfo.storagePath),
               SparkAgent.formatDate(cubeCacheInfo.lastUpdateTime))
         }
@@ -249,13 +244,13 @@ class SparkCubeSourceV2 extends CacheApiRequestContext {
         val cacheInfo = cache._2
         val optionalRaw = cacheInfo.rawCacheInfo.map {
           rawCacheInfo =>
-            CacheBasicInfo(tableId.database.get, tableId.table, rawCacheInfo.cacheName,
+            CacheBasicInfo(tableId.database, tableId.table, rawCacheInfo.cacheName,
               rawCacheInfo.enableRewrite, getFileSize(rawCacheInfo.storageInfo.storagePath),
               SparkAgent.formatDate(rawCacheInfo.lastUpdateTime))
         }
         val optionalCube = cacheInfo.cubeCacheInfo.map {
           cubeCacheInfo =>
-            CacheBasicInfo(tableId.database.get, tableId.table, cubeCacheInfo.cacheName,
+            CacheBasicInfo(tableId.database, tableId.table, cubeCacheInfo.cacheName,
               cubeCacheInfo.enableRewrite, getFileSize(cubeCacheInfo.storageInfo.storagePath),
               SparkAgent.formatDate(cubeCacheInfo.lastUpdateTime))
         }
@@ -449,50 +444,14 @@ class SparkCubeSourceV2 extends CacheApiRequestContext {
 
 object SparkCubeSource {
 
-  def getServletHandler(cacheManager: CubeManager): ServletContextHandler = {
-    val jerseyContext = new ServletContextHandler(ServletContextHandler.NO_SESSIONS)
-    jerseyContext.setContextPath("/rcApi")
-//    val config = new ResourceConfig().packages("org.apache.spark.sql.execution.api")
-//      .register(classOf[JacksonFeature])
-//    val holder: ServletHolder = new ServletHolder(new ServletContainer(config))
-    val holder: ServletHolder = new ServletHolder(classOf[ServletContainer])
-    holder.setInitParameter(ServerProperties.PROVIDER_CLASSNAMES,
-        "com.fasterxml.jackson.jaxrs.json.JacksonJaxbJsonProvider")
-    holder.setInitParameter(ServerProperties.PROVIDER_PACKAGES,
-      "com.alibaba.sparkcube.execution.api")
-    CacheRootFromServletContext.setCacheManager(jerseyContext, cacheManager)
-    jerseyContext.addServlet(holder, "/*")
-    jerseyContext
-  }
-}
-
-private[api] object CacheRootFromServletContext {
-
-  private val attribute = getClass.getCanonicalName
-
-  def setCacheManager(
-      contextHandler: ContextHandler,
-      cacheManager: CubeManager): Unit = {
-    contextHandler.setAttribute(attribute, cacheManager)
-  }
-
-  def getCacheManager(context: ServletContext): CubeManager = {
-    context.getAttribute(attribute).asInstanceOf[CubeManager]
-  }
 }
 
 private[api] trait CacheApiRequestContext {
-  @Context
-  protected var servletContext: ServletContext = _
-
-  @Context
-  protected var httpRequest: HttpServletRequest = _
 
   val sparkSession = SparkSession.builder().getOrCreate()
   val conf = new Configuration()
 
-  def cacheManager: CubeManager =
-    CacheRootFromServletContext.getCacheManager(servletContext)
+  def cacheManager: CubeManager = null
 
   def getFileSize(path: String): String = {
     val cachePath = new org.apache.hadoop.fs.Path(path)

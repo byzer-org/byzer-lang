@@ -18,7 +18,7 @@
 package com.alibaba.sparkcube.execution.api
 
 case class CacheBasicInfo(
-    viewDatabase: String,
+    viewDatabase: Option[String],
     viewName: String,
     cacheName: String,
     enableRewrite: Boolean,
@@ -28,7 +28,7 @@ case class CacheBasicInfo(
 trait CacheDetailInfo
 
 case class RawCacheDetailInfo(
-    viewDatabase: String,
+    viewDatabase: Option[String],
     viewName: String,
     cacheName: String,
     enableRewrite: Boolean,
@@ -42,7 +42,7 @@ case class RawCacheDetailInfo(
     zorderBy: Seq[String]) extends CacheDetailInfo
 
 case class CubeCacheDetailInfo(
-    viewDatabase: String,
+    viewDatabase: Option[String],
     viewName: String,
     cacheName: String,
     enableRewrite: Boolean,

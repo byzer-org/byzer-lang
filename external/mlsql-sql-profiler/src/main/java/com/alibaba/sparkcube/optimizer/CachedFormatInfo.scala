@@ -42,18 +42,18 @@ object Measure {
 }
 
 case class CacheFormatInfo(
-    cacheName: String,
-    rewriteEnabled: Boolean = true,
-    partitionColumns: Option[Seq[String]] = None,
-    zorderColumns: Option[Seq[String]] = None,
-    provider: String = "PARQUET",
-    bucketSpec: Option[BucketSpec] = None,
-    cacheSchema: CacheSchema = CacheRawSchema())
+                            cacheName: String,
+                            rewriteEnabled: Boolean = true,
+                            partitionColumns: Option[Seq[String]] = None,
+                            zorderColumns: Option[Seq[String]] = None,
+                            provider: String = "PARQUET",
+                            bucketSpec: Option[BucketSpec] = None,
+                            cacheSchema: CacheSchema = CacheRawSchema())
 
 case class CacheIdentifier(
-    db: String,
-    viewName: String,
-    cacheName: String) extends java.lang.Comparable[CacheIdentifier] {
+                            db: Option[String],
+                            viewName: String,
+                            cacheName: String) extends java.lang.Comparable[CacheIdentifier] {
 
   override def compareTo(o: CacheIdentifier): Int = {
     return hashCode - o.hashCode
@@ -82,7 +82,11 @@ case class CacheIdentifier(
 object CacheIdentifier {
   def apply(str: String): CacheIdentifier = {
     val splits = str.split("\\.")
-    require(splits.length == 3, s"Invalid cache identifier[$str].")
-    CacheIdentifier(splits(0), splits(1), splits(2))
+    splits match {
+      case Array(db, table, view) => CacheIdentifier(Some(db), table, view)
+      case Array(table, view) => CacheIdentifier(None, table, view)
+      case _ => throw new RuntimeException(s"Invalid cache identifier[$str].")
+    }
+
   }
 }

@@ -65,6 +65,8 @@ object SparkAgent {
     dt.isInstanceOf[IntegralType]
   }
 
+  
+
   object DecimalResolve {
     def unapply(dt: DecimalType): Option[(Int, Int)] = dt match {
       case DecimalType.Fixed(precision, scale) => Some((precision, scale))
