@@ -1,6 +1,6 @@
 package tech.mlsql.ets
 
-import java.net.ServerSocket
+import java.net.{InetAddress, ServerSocket}
 import java.util
 import java.util.concurrent.atomic.AtomicReference
 
@@ -132,6 +132,8 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
             WriteLog.write(List("Ray: Cannot get MLSQLSparkUtils.rpcEnv().address, using NetTool.localHostName()").iterator,
               Map("PY_EXECUTE_USER" -> owner))
             NetTool.localHostName()
+          } else if (SparkEnv.get != null && SparkEnv.get.conf.getBoolean("spark.mlsql.deploy.on.k8s", false)) {
+            InetAddress.getLocalHost.getHostAddress
           }
           else MLSQLSparkUtils.blockManager.blockManagerId.host
 
