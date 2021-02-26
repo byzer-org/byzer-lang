@@ -10,6 +10,13 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
+    <repositories>
+        <repository>
+            <id>swoop-inc</id>
+            <url>https://dl.bintray.com/swoop-inc/maven/</url>
+        </repository>
+    </repositories>
+
     <artifactId>mlsql-sql-profiler-${spark.bigversion}_${scala.binary.version}</artifactId>
     <dependencies>
         <dependency>
