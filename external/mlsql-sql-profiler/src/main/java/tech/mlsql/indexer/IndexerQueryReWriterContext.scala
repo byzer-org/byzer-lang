@@ -17,7 +17,7 @@ import scala.collection.mutable
 
 case class IndexerQueryReWriterContext(session: SparkSession,
                                        lp: LogicalPlan,
-                                       tableToIndexMapping: Map[MlsqlOriTable, List[MlsqlIndexer]]
+                                       tableToIndexMapping: Map[MlsqlOriTable, List[MlsqlIndexerItem]]
                                       ) {
 
   private def uuid = UUID.randomUUID().toString.replaceAll("-", "")
@@ -72,7 +72,7 @@ case class IndexerQueryReWriterContext(session: SparkSession,
     arMapping.toMap
   }
 
-  private def getIndexerColumns(tempViewName: String, indexer: MlsqlIndexer) = {
+  private def getIndexerColumns(tempViewName: String, indexer: MlsqlIndexerItem) = {
 
     val params = if (ScriptSQLExec.context() != null) {
       JSONTool.parseJson[Map[String, String]](ScriptSQLExec.context().userDefinedParam("__PARAMS__"))
