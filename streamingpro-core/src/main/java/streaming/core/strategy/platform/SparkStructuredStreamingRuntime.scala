@@ -118,8 +118,8 @@ object SparkStructuredStreamingRuntime {
       if (lastInstantiatedContext.get() == null) {
         new SparkStructuredStreamingRuntime(params)
       }
+      PlatformManager.getOrCreate.register(lastInstantiatedContext.get())
     }
-    PlatformManager.getOrCreate.register(lastInstantiatedContext.get())
     lastInstantiatedContext.get()
   }
 

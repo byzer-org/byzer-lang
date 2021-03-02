@@ -114,6 +114,7 @@
         <delta-plus-version>0.4.0</delta-plus-version>
         <mysql-binlog-version>1.0.1</mysql-binlog-version>
         <spark-adhoc-kafka.version>0.1.2</spark-adhoc-kafka.version>
+        <kylin-jdbc.version>3.1.0</kylin-jdbc.version>
     </properties>
 
     <!--    <repositories>-->
@@ -588,7 +589,6 @@
         </profile>
     </profiles>
     <dependencies>
-
         <dependency>
             <groupId>net.java.dev.jna</groupId>
             <artifactId>jna</artifactId>

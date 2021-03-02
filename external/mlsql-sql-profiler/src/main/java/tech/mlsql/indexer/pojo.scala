@@ -1,23 +1,23 @@
 package tech.mlsql.indexer
 
 case class MlsqlOriTable(name:String,format:String,path:String,storageName:String,options:Map[String,String])
-case class MlsqlIndexer(name: String,
-                        oriFormat: String,
-                        oriPath: String,
-                        oriStorageName: String,
-                        format: String,
-                        path: String,
-                        storageName: String,                        
-                        status: Int,
-                        owner:String,
-                        lastStatus: Int,
-                        lastFailMsg: String,
-                        lastExecuteTime: Long,
-                        syncInterval: Long,
-                        content: String,
-                        indexerConfig: String,
-                        lastJobId: String,
-                        indexerType: String
+case class MlsqlIndexerItem(name: String,
+                            oriFormat: String,
+                            oriPath: String,
+                            oriStorageName: String,
+                            format: String,
+                            path: String,
+                            storageName: String,
+                            status: Int,
+                            owner:String,
+                            lastStatus: Int,
+                            lastFailMsg: String,
+                            lastExecuteTime: Long,
+                            syncInterval: Long,
+                            content: String,
+                            indexerConfig: String,
+                            lastJobId: String,
+                            indexerType: String
                        ) {
   def isRealTime = syncInterval == -1
 
@@ -26,7 +26,7 @@ case class MlsqlIndexer(name: String,
   def isRepeat = syncInterval > 0
 }
 
-object MlsqlIndexer {
+object MlsqlIndexerItem {
   val STATUS_NONE = 0
   val STATUS_INDEXING = 1
 

@@ -474,6 +474,14 @@
         </profile>
     </profiles>
     <dependencies>
+
+        <dependency>
+            <groupId>org.apache.kylin</groupId>
+            <artifactId>kylin-jdbc</artifactId>
+            <version>${kylin-jdbc.version}</version>
+        </dependency>
+
+        
         <dependency>
             <groupId>tech.mlsql</groupId>
             <artifactId>common-utils_${scala.binary.version}</artifactId>
