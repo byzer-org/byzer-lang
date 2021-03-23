@@ -138,7 +138,10 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
       conf.set(DataLake.RUNTIME_KEY, params.get(DataLake.USER_KEY).toString)
     }
 
-    registerLifeCyleCallback("tech.mlsql.runtime.MetaStoreService")
+    val buildInRuntimeHooks = List("tech.mlsql.runtime.MetaStoreService")
+    val runtimeHooks = buildInRuntimeHooks ++ params.asScala.get("streaming.runtime_hooks").map(item => item.toString.split(",").toList).getOrElse(List())
+    runtimeHooks.foreach(hook => registerLifeCyleCallback(hook))
+
 
     lifeCyleCallback.foreach { callback =>
       callback.beforeRuntimeStarted(params.map(f => (f._1.toString, f._2.toString)).toMap, conf)
