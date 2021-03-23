@@ -1,7 +1,6 @@
 package tech.mlsql.ets
 
 
-import org.apache.spark.sql.catalyst.parser.LegacyTypeStringParser
 import org.apache.spark.sql.execution.datasources.json.WowJsonInferSchema
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.kafka010.MLSQLKafkaOffsetInfo
@@ -21,11 +20,9 @@ import tech.mlsql.dsl.auth.ETAuth
 import tech.mlsql.dsl.auth.dsl.mmlib.ETMethod.ETMethod
 import tech.mlsql.tool.HDFSOperatorV2
 
-import scala.util.Try
-
 /**
-  * 2019-06-03 WilliamZhu(allwefantasy@gmail.com)
-  */
+ * 2019-06-03 WilliamZhu(allwefantasy@gmail.com)
+ */
 class KafkaCommand(override val uid: String) extends SQLAlg with ETAuth with Functions with WowParams {
   def this() = this(BaseParams.randomUID())
 
@@ -56,8 +53,7 @@ class KafkaCommand(override val uid: String) extends SQLAlg with ETAuth with Fun
           .filterNot(_.getPath.getName.endsWith(".tmp.crc"))
           .map { fileName =>
             (fileName.getPath.getName.split("/").last.toInt, fileName.getPath)
-          }
-          .sortBy(f => f._1).last._2
+          }.maxBy(f => f._1)._2
 
         val content = HDFSOperatorV2.readFile(lastFile.toString)
         val offsets = content.split("\n").last
@@ -80,21 +76,24 @@ class KafkaCommand(override val uid: String) extends SQLAlg with ETAuth with Fun
     }
 
     //action: sampleData,schemaInfer
-    val action = command(0)
+    val action = command.head
 
     val parameters = Map("sampleNum" -> command(1), "subscribe" -> command(5), "kafka.bootstrap.servers" -> command(4))
     val (startOffset, endOffset) = MLSQLKafkaOffsetInfo.getKafkaInfo(spark, parameters)
 
-
-    val newdf = spark
+    var reader = spark
       .read
       .format("kafka")
       .options(parameters)
-      .option("startingOffsets", startOffset.json)
-      .option("endingOffsets", endOffset.json)
-      .option("failOnDataLoss", "false")
-      .load()
-    val res = newdf.selectExpr("CAST(key AS STRING)", "CAST(value AS STRING)")
+    if (startOffset != null) {
+      reader = reader.option("startingOffsets", startOffset.json)
+    }
+    if (endOffset != null) {
+      reader = reader.option("endingOffsets", endOffset.json)
+    }
+
+    val newDF = reader.option("failOnDataLoss", "false").load()
+    val res = newDF.selectExpr("CAST(key AS STRING)", "CAST(value AS STRING)")
       .as[(String, String)]
 
     val context = ScriptSQLExec.contextGetOrForTest()
@@ -143,7 +142,7 @@ class KafkaCommand(override val uid: String) extends SQLAlg with ETAuth with Fun
 
   override def auth(etMethod: ETMethod, path: String, params: Map[String, String]): List[TableAuthResult] = {
     val command = JSONTool.parseJson[List[String]](params("parameters"))
-    val action = command(0)
+    val action = command.head
     if (Set("streamOffset", "help", "").contains(action)) return List()
     val parameters = Map("sampleNum" -> command(1), "subscribe" -> command(5), "kafka.bootstrap.servers" -> command(4))
     val vtable = MLSQLTable(
