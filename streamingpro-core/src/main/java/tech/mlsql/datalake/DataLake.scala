@@ -1,5 +1,6 @@
 package tech.mlsql.datalake
 
+import io.delta.tables.DeltaTable
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.spark.sql.SparkSession
@@ -44,14 +45,25 @@ class DataLake(sparkSession: SparkSession) {
     }
   }
 
-  def listTables = {
+  def listTables: Array[WowTableIdentifier] = {
     listPath(new Path(value)).flatMap { db =>
-      val dbName = db.getPath.getName
-      listPath(db.getPath).map { tablePath =>
-        val tableName = tablePath.getPath.getName
-        WowTableIdentifier(tableName, Option(dbName), None)
-      }
+      listTables(db.getPath, db.getPath)
     }
+  }
+
+  def listTables(dbPath: Path, folder: Path): Array[WowTableIdentifier] = {
+    val dbName = dbPath.getName
+    val dbPathName = dbPath.toUri.getPath
+    listPath(folder)
+      .filter(filePath => DeltaTable.isDeltaTable(filePath.getPath.toUri.getPath))
+      .map(filePath => {
+        val tablePathName = filePath.getPath.toUri.getPath
+        val tableName = tablePathName.substring(dbPathName.length)
+        WowTableIdentifier(tableName, Option(dbName), None)
+      }) ++
+      listPath(folder)
+        .filter(filePath => filePath.isDirectory && !DeltaTable.isDeltaTable(filePath.getPath.toUri.getPath))
+        .flatMap(filePath => listTables(dbPath, filePath.getPath))
   }
 
   private def listPath(path: Path) = {
