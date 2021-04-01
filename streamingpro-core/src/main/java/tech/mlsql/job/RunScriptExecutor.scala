@@ -7,6 +7,7 @@ import org.apache.spark.MLSQLConf
 import org.apache.spark.sql.execution.datasources.json.WowJsonInferSchema
 import org.apache.spark.sql.mlsql.session.MLSQLSparkSession
 import org.apache.spark.sql.{DataFrame, Dataset, SparkSession}
+import serviceframework.dispatcher.StrategyDispatcher
 import streaming.core.strategy.platform.{PlatformManager, SparkRuntime}
 import streaming.dsl.{MLSQLExecuteContext, ScriptSQLExec, ScriptSQLExecListener}
 import streaming.log.WowLog
@@ -177,9 +178,79 @@ class RunScriptExecutor(_params: Map[String, String]) extends Logging with WowLo
         val msg = ExceptionRenderManager.call(e)
         return (500, msg.str.get)
     } finally {
-      if(this._autoClean){
+      if (this._autoClean) {
         RequestCleanerManager.call()
         cleanActiveSessionInSpark
+      }
+    }
+    return (200, outputResult)
+  }
+
+  def execute(sparkSession: SparkSession): (Int, String) = {
+    val silence = paramAsBoolean("silence", false)
+    val includeSchema = param("includeSchema", "false").toBoolean
+    var outputResult: String = if (includeSchema) "{}" else "[]"
+    try {
+      JobManager.init(sparkSession)
+      val jobInfo = JobManager.getJobInfo(
+        param("owner"), param("jobType", MLSQLJobType.SCRIPT), param("jobName"), param("sql"),
+        paramAsLong("timeout", -1L)
+      )
+      val context = createScriptSQLExecListener(sparkSession, jobInfo.groupId)
+
+      def query = {
+        JobManager.run(sparkSession, jobInfo, () => {
+          ScriptSQLExec.parse(param("sql"), context,
+            skipInclude = paramAsBoolean("skipInclude", false),
+            skipAuth = paramAsBoolean("skipAuth", true),
+            skipPhysicalJob = paramAsBoolean("skipPhysicalJob", false),
+            skipGrammarValidate = paramAsBoolean("skipGrammarValidate", true)
+          )
+          if (!silence) {
+            outputResult = getScriptResult(context, sparkSession)
+          }
+        })
+      }
+
+      def analyze = {
+        ScriptSQLExec.parse(param("sql"), context,
+          skipInclude = false,
+          skipAuth = true,
+          skipPhysicalJob = true,
+          skipGrammarValidate = true)
+        context.preProcessListener.map(f => JSONTool.toJsonStr(f.analyzedStatements.map(_.unwrap))) match {
+          case Some(i) => outputResult = i
+          case None =>
+        }
+      }
+
+      params.getOrElse("executeMode", "query") match {
+        case "query" => query
+        case "analyze" => analyze
+        case executeMode: String =>
+          AppRuntimeStore.store.getController(executeMode) match {
+            case Some(item) =>
+              outputResult = Class.forName(item.customClassItem.className).
+                newInstance().asInstanceOf[CustomController].run(params().toMap + ("__jobinfo__" -> JSONTool.toJsonStr(jobInfo)))
+            case None => throw new RuntimeException(s"no executeMode named ${executeMode}")
+          }
+      }
+      val result = getScriptResult(context, sparkSession)
+      logInfo("execute mlsql script result :" + result)
+    } catch {
+      case e: Exception =>
+        val msg = ExceptionRenderManager.call(e)
+        return (500, msg.str.get)
+    } finally {
+      try {
+        if (this._autoClean) {
+          RequestCleanerManager.call()
+          cleanActiveSessionInSpark
+        }
+        JobManager.shutdown
+      } catch {
+        case e: Exception =>
+          e.printStackTrace()
       }
     }
     return (200, outputResult)
