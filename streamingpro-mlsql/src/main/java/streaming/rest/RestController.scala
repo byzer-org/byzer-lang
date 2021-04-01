@@ -240,11 +240,11 @@ class RestController extends ApplicationController with WowLog {
         } else {
           val outputSize = paramAsInt("outputSize", 5000)
           val jsonDF = limitOrNot {
-            sparkSession.sql(s"select * from $table limit " + outputSize)
+            df.limit(outputSize)
           }.toJSON
           val scriptJsonStringResult = fetchType match {
             case "collect" => jsonDF.collect().mkString(",")
-            case "take" => sparkSession.table(table).toJSON.take(outputSize).mkString(",")
+            case "take" => df.toJSON.take(outputSize).mkString(",")
           }
           result.append("[" + scriptJsonStringResult + "]")
         }
