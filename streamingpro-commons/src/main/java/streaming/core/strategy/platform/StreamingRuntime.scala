@@ -43,6 +43,7 @@ trait StreamingRuntime {
 
   def params: JMap[Any, Any]
 
+  def afterRuntimeStarted
 }
 
 trait StreamingRuntimeInfo

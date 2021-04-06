@@ -94,7 +94,6 @@ class RunScriptExecutor(_params: Map[String, String]) extends Logging with WowLo
   def execute(): (Int, String) = {
     val silence = paramAsBoolean("silence", false)
     val sparkSession = getSession
-    val htp = findService[HttpTransportService](classOf[HttpTransportService])
     val includeSchema = param("includeSchema", "false").toBoolean
     var outputResult: String = if (includeSchema) "{}" else "[]"
     try {
@@ -106,6 +105,7 @@ class RunScriptExecutor(_params: Map[String, String]) extends Logging with WowLo
 
       def query = {
         if (paramAsBoolean("async", false)) {
+          val htp = findService[HttpTransportService](classOf[HttpTransportService])
           JobManager.asyncRun(sparkSession, jobInfo, () => {
             try {
               ScriptSQLExec.parse(param("sql"), context,
@@ -177,7 +177,7 @@ class RunScriptExecutor(_params: Map[String, String]) extends Logging with WowLo
         val msg = ExceptionRenderManager.call(e)
         return (500, msg.str.get)
     } finally {
-      if(this._autoClean){
+      if (this._autoClean) {
         RequestCleanerManager.call()
         cleanActiveSessionInSpark
       }

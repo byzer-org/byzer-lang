@@ -120,14 +120,12 @@ class PlatformManager extends Logging{
       lifeCycleCallback.foreach(f => f.afterRuntime(runtime, params.getParamsMap.asScala.toMap))
     }
 
-
     val dispatcher = findDispatcher
 
     var jobs: Array[String] = dispatcher.strategies.asScala.filter(f => f._2.isInstanceOf[JobStrategy]).keys.toArray
 
     if (params.hasParam("streaming.jobs"))
       jobs = params.getParam("streaming.jobs").split(",")
-
 
     lastStreamingRuntimeInfo match {
       case Some(ssri) =>
@@ -150,7 +148,6 @@ class PlatformManager extends Logging{
       registerToZk(params)
     }
 
-
     /*
         Once streaming.mode.application.fails_all is set true,
         Any job fails will result the others not be executed.
@@ -163,7 +160,6 @@ class PlatformManager extends Logging{
     TryTool.tryLogNonFatalError {
       lifeCycleCallback.foreach(f => f.beforeDispatcher(runtime, params.getParamsMap.asScala.toMap))
     }
-
 
     jobs.foreach {
       jobName =>
@@ -193,10 +189,7 @@ class PlatformManager extends Logging{
     if (params.getBooleanParam("streaming.unitest.awaitTermination", true)) {
       runtime.awaitTermination
     }
-
-
   }
-
 
   PlatformManager.setLastInstantiatedContext(self)
 }

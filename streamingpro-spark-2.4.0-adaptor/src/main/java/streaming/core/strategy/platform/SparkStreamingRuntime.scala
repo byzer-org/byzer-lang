@@ -141,9 +141,9 @@ class SparkStreamingRuntime(_params: JMap[Any, Any]) extends StreamingRuntime wi
     }
   }
 
+  override def afterRuntimeStarted: Unit = {}
+
   SparkStreamingRuntime.setLastInstantiatedContext(self)
-
-
 }
 
 class SparkStreamingRuntimeInfo(ssr: SparkStreamingRuntime) extends StreamingRuntimeInfo {

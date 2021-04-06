@@ -142,7 +142,6 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
     val runtimeHooks = buildInRuntimeHooks ++ params.asScala.get("streaming.runtime_hooks").map(item => item.toString.split(",").toList).getOrElse(List())
     runtimeHooks.foreach(hook => registerLifeCyleCallback(hook))
 
-
     lifeCyleCallback.foreach { callback =>
       callback.beforeRuntimeStarted(params.map(f => (f._1.toString, f._2.toString)).toMap, conf)
     }
@@ -169,10 +168,6 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
       ReflectHelper.method(sparkSession, "sparkContext", wfsc)
     }
     val ss = sparkSession.getOrCreate()
-
-    lifeCyleCallback.foreach { callback =>
-      callback.afterRuntimeStarted(params.map(f => (f._1.toString, f._2.toString)).toMap, conf, ss)
-    }
 
     if (MLSQLConf.MLSQL_SPARK_SERVICE.readFrom(configReader)) {
       JobManager.init(ss)
@@ -201,7 +196,6 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
     MLSQLStreamManager.start(sparkSession)
     createTables
   }
-
 
   def createTables = {
     sparkSession.sql("select 1 as a").createOrReplaceTempView("command")
@@ -235,7 +229,6 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
           e.printStackTrace()
       }
     }
-
   }
 
   override def startRuntime: StreamingRuntime = {
@@ -248,7 +241,6 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
     }
   }
 
-
   override def streamingRuntimeInfo: StreamingRuntimeInfo = null
 
   override def destroyRuntime(stopGraceful: Boolean, stopContext: Boolean): Boolean = {
@@ -257,18 +249,24 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
     true
   }
 
-
   override def configureStreamingRuntimeInfo(streamingRuntimeInfo: StreamingRuntimeInfo): Unit = {}
 
-  override def resetRuntimeOperator(runtimeOperator: RuntimeOperator): Unit = {
-
-  }
+  override def resetRuntimeOperator(runtimeOperator: RuntimeOperator): Unit = {}
 
   override def params: JMap[Any, Any] = _params
 
   override def processEvent(event: Event): Unit = {}
 
+  override def afterRuntimeStarted: Unit = {
+    lifeCyleCallback.foreach { callback =>
+      callback.afterRuntimeStarted(params.map(f => (f._1.toString, f._2.toString)).toMap,
+        sparkSession.sparkContext.getConf, sparkSession)
+    }
+  }
+
   SparkRuntime.setLastInstantiatedContext(this)
+
+  afterRuntimeStarted
 
   override def startThriftServer: Unit = {
     val (clzz, instance) = ScalaObjectReflect.findObjectMethod("org.apache.spark.sql.hive.thriftserver.HiveThriftServer2")
