@@ -32,8 +32,8 @@ import tech.mlsql.indexer.impl.{KylinSQLDialect, MysqlSQLDialect}
 import java.sql.DriverManager
 
 
-case class MysqlPushdownSourceInfo(props: Map[String, String],sparkSession: SparkSession) extends PushdownSourceInfo(props) with Pushdownable {
-  override val supportedOperators: Seq[Class[_]] = Seq(
+case class MysqlPushdownSourceInfo(props: Map[String, String], sparkSession: SparkSession, lr:LogicalRelation) extends PushdownSourceInfo(props) with Pushdownable {
+  override val supportedOperators: Set[Class[_]] = Set(
     classOf[Project],
     classOf[Filter],
     classOf[Aggregate],
@@ -45,9 +45,9 @@ case class MysqlPushdownSourceInfo(props: Map[String, String],sparkSession: Spar
     classOf[SubqueryAlias]
   )
 
-  override val supportedUDF: Seq[String] = Seq()
+  override val supportedUDF: Set[String] = Set()
 
-  override val supportedExpressions: Seq[Class[_]] = Seq(
+  override val supportedExpressions: Set[Class[_]] = Set(
     classOf[Literal], classOf[AttributeReference], classOf[Alias], classOf[AggregateExpression],
     classOf[Abs], classOf[Coalesce], classOf[Greatest], classOf[If], classOf[IfNull],
     classOf[IsNull], classOf[IsNotNull], classOf[Least], classOf[NullIf],
@@ -75,14 +75,14 @@ case class MysqlPushdownSourceInfo(props: Map[String, String],sparkSession: Spar
     classOf[BitwiseNot], classOf[BitwiseOr], classOf[BitwiseXor], classOf[Cast], classOf[CaseWhen]
   )
 
-  override val beGoodAtOperators: Seq[Class[_]] = Seq(
+  override val beGoodAtOperators: Set[Class[_]] = Set(
     classOf[Join],
     classOf[GlobalLimit],
     classOf[LocalLimit],
     classOf[Aggregate]
   )
 
-  override val supportedJoinTypes: Seq[JoinType] = Seq(
+  override val supportedJoinTypes: Set[JoinType] = Set(
     Inner, Cross, LeftOuter, RightOuter
   )
 
@@ -154,6 +154,7 @@ case class MysqlPushdownSourceInfo(props: Map[String, String],sparkSession: Spar
       }
     }
 
+    // mlsql 生成的jdbc数据源的逻辑计划都会有这个子树
     val newlp2 = newlp1.transformDown{
       case sub@SubqueryAlias(name,pj@Project(pl, lr@LogicalRelation(_, _, _, _))) =>
         lr
@@ -188,14 +189,11 @@ case class MysqlPushdownSourceInfo(props: Map[String, String],sparkSession: Spar
     var newsub = newlp
     lp match {
       case sub1@SubqueryAlias(name1,child) =>
-        child.transform{
-          case lr1@LogicalRelation(_, _, _, _) =>
-            val newr = createRelationFromOld(sql, lr1.relation)
-            val newlr = LogicalRelation(newr)
-            newsub = SubqueryAlias(name1, newlr)
-            lr1
-        }
+        val newr = createRelationFromOld(sql, lr.relation)
+        val newlr = LogicalRelation(newr)
+        newsub = SubqueryAlias(name1, newlr)
     }
+
     newsub
   }
 
