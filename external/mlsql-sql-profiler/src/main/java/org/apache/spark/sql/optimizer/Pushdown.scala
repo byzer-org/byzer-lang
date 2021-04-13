@@ -20,14 +20,19 @@ package org.apache.spark.sql.optimizer
 import org.apache.spark.sql.catalyst.expressions.{AttributeReference, ExprId}
 import org.apache.spark.sql.catalyst.plans.logical.{BinaryNode, Join, LeafNode, LogicalPlan, UnaryNode, Union}
 import org.apache.spark.sql.execution.datasources.LogicalRelation
+import streaming.dsl.ScriptSQLExec
+import tech.mlsql.common.utils.log.Logging
+import tech.mlsql.common.utils.serder.json.JSONTool
 
 import scala.collection.mutable
 
-object Pushdown{
+object Pushdown extends Logging{
   def apply(lp: LogicalPlan): LogicalPlan = {
     val tree = tagTreeNode(lp)
     val replaceNodes = findPushdownNodes(tree)
-    replacePushdownSubtree(tree,replaceNodes)
+    if(replaceNodes.nonEmpty){
+      replacePushdownSubtree(tree,replaceNodes)
+    }else lp
   }
 
   def tagTreeNode(lp: LogicalPlan):TagTreeNode = {
@@ -39,7 +44,7 @@ object Pushdown{
         pds match{
           case ds:Pushdownable if ds.canPushdown(lr)=>
             TagTreeNode(lr,pds,Nil,true)
-          case _ => TagTreeNode(lr,pds,Nil,false)
+          case _ => TagTreeNode(lr,new NoPushdownSourceInfo(Map()),Nil,false)
         }
       case lf:LeafNode =>
         TagTreeNode(lf, new NoPushdownSourceInfo(Map()),Nil,false)
@@ -98,23 +103,53 @@ object Pushdown{
   }
 
   def replacePushdownSubtree(tree:TagTreeNode, replaceNodes:mutable.HashSet[TagTreeNode]): LogicalPlan ={
+    val rootStartTime = System.currentTimeMillis()
+    val httpParams = getHttpParams()
+    val scriptParams = getScriptParams()
+    val enableLog = httpParams.getOrElse("enableQueryWithIndexer", "false").toBoolean ||
+      scriptParams.getOrElse("enableQueryWithIndexer", "false").toBoolean
+
     val newlp = tree.lp.transformDown{
       case lp:LogicalPlan if replaceNodes.map(_.lp).contains(lp) =>
-        val treeNode = replaceNodes.find(_.lp.equals(lp)).get
-        val oldAttrs = lp.output
-        val newsub = treeNode.dataSource.asInstanceOf[Pushdownable].buildScan2(lp)
-        val newAttrs = newsub.output
-        val newIdToOldId = mutable.Map.empty[ExprId, ExprId]
-        newAttrs.zip(oldAttrs).foreach(elem => newIdToOldId += (elem._1.exprId -> elem._2.exprId))
-        newsub.transform {
-          case x:LogicalPlan =>
-            x.transformExpressions {
-              case a: AttributeReference =>
-                if (newIdToOldId.contains(a.exprId)) {
-                  a.copy()(exprId = newIdToOldId(a.exprId), a.qualifier)
-                } else a
-            }
+        val startTime = System.currentTimeMillis()
+        try {
+          val treeNode = replaceNodes.find(_.lp.equals(lp)).get
+          val oldAttrs = lp.output
+          val newsub = treeNode.dataSource.asInstanceOf[Pushdownable].buildScan2(lp)
+          val newAttrs = newsub.output
+          val newIdToOldId = mutable.Map.empty[ExprId, ExprId]
+          newAttrs.zip(oldAttrs).foreach(elem => newIdToOldId += (elem._1.exprId -> elem._2.exprId))
+          val newnewsub = newsub.transform {
+            case x: LogicalPlan =>
+              x.transformExpressions {
+                case a: AttributeReference =>
+                  if (newIdToOldId.contains(a.exprId)) {
+                    a.copy()(exprId = newIdToOldId(a.exprId), a.qualifier)
+                  } else a
+              }
+          }
+          if(enableLog) {
+            logInfo("----Old sub Logicplan:" + lp.toString())
+            logInfo("----New sub Logicplan:" + newnewsub.toString())
+          }
+          newnewsub
+        } catch {
+          case ex:Exception =>
+            logError("----Sub Logicplan Trans Error:"+ ex.getMessage)
+            lp
+        }finally{
+          val endTime = System.currentTimeMillis()
+          if(enableLog) {
+            logInfo("----Sub Logicplan Trans Time Cost:" + (endTime - startTime) + "ms")
+          }
         }
+    }
+
+    if(enableLog) {
+      val rootEndTime = System.currentTimeMillis()
+      logInfo("--Old Logicplan:" + tree.lp.toString())
+      logInfo("--New Logicplan:" + tree.lp.toString())
+      logInfo("--Logicplan Trans Time Cost:" + (rootEndTime - rootStartTime) + "ms")
     }
     newlp
   }
@@ -139,4 +174,13 @@ object Pushdown{
       }
     }
   }
+
+  def getHttpParams()={
+    JSONTool.parseJson[Map[String, String]](ScriptSQLExec.context().userDefinedParam.getOrElse("__PARAMS__", "{}"))
+  }
+
+  def getScriptParams()={
+    ScriptSQLExec.context().execListener.env()
+  }
+
 }

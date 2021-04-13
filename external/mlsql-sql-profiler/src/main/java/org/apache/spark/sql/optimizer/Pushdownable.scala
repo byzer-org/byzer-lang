@@ -45,11 +45,11 @@ import org.apache.spark.sql.execution.datasources.jdbc.{JDBCRelation, JdbcRelati
 import org.apache.spark.sql.sources.BaseRelation
 
 trait Pushdownable { self: PushdownSourceInfo =>
-  val supportedOperators: Seq[Class[_]]
-  val supportedJoinTypes: Seq[JoinType]
-  val supportedExpressions: Seq[Class[_]]
-  val beGoodAtOperators: Seq[Class[_]]
-  val supportedUDF: Seq[String]
+  val supportedOperators: Set[Class[_]]
+  val supportedJoinTypes: Set[JoinType]
+  val supportedExpressions: Set[Class[_]]
+  val beGoodAtOperators: Set[Class[_]]
+  val supportedUDF: Set[String]
 
   def isGoodAt(operator: Class[_]): Boolean = {
     beGoodAtOperators.contains(operator)
