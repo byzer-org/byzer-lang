@@ -13,7 +13,7 @@ class IndexerPlugin extends ResultRender {
     val setParams = ScriptSQLExec.context().execListener.env()
 
     if (!params.getOrElse("enableQueryWithIndexer", "false").toBoolean &&
-      setParams.getOrElse("enableQueryWithIndexer", "false").toBoolean) {
+      !setParams.getOrElse("enableQueryWithIndexer", "false").toBoolean) {
       return d
     }
     val consoleUrl = ScriptSQLExec.context().userDefinedParam.getOrElse("__default__console_url__", "")
