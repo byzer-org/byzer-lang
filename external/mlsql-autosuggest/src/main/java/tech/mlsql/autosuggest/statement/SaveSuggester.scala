@@ -37,7 +37,7 @@ class SaveSuggester(val context: AutoSuggestContext, val _tokens: List[Token], v
 }
 
 /**
- * 提示存储的方式，包括overwrite、append、errorIfExists、ignore
+ * Suggests saving modes, including "overwrite", "append", "errorIfExists", and "ignore".
  */
 private class SaveModeSuggester(saveSuggester: SaveSuggester) extends SaveSuggesterBase(saveSuggester) {
   override def name: String = "mode"
@@ -67,7 +67,7 @@ private object SaveModeSuggester {
 }
 
 /**
- * 提示存储格式
+ * Suggests saving formats.
  */
 private class SaveFormatSuggester(saveSuggester: SaveSuggester) extends SaveSuggesterBase(saveSuggester) {
   override def name: String = "format"
@@ -90,7 +90,7 @@ private class SaveFormatSuggester(saveSuggester: SaveSuggester) extends SaveSugg
 }
 
 /**
- * 提示存储的参数，即where或options子句的内容
+ * Suggests saving options, i.e. where/options statement contents.
  */
 private class SaveOptionsSuggester(saveSuggester: SaveSuggester) extends SaveSuggesterBase(saveSuggester) {
   override def name: String = "options"
@@ -103,10 +103,10 @@ private class SaveOptionsSuggester(saveSuggester: SaveSuggester) extends SaveSug
     val asToken = firstAhead(DSLSQLLexer.AS)
     asToken match {
       case Some(pos) =>
-        // 取得当前保存的类型
+        // Fetch the saving format.
         val formatToken = tokens(pos + 1)
 
-        // 取得需要提示的所有数据源名称及描述
+        // Fetch the names and descriptions of all data sources which will be suggested.
         val dataSources = DataSourceRegistry.fetch(formatToken.getText, Map.empty) match {
           case Some(sourceInfo: MLSQLSourceInfo) =>
             sourceInfo.explainParams(saveSuggester.context.session)
@@ -125,7 +125,8 @@ private class SaveOptionsSuggester(saveSuggester: SaveSuggester) extends SaveSug
 }
 
 /**
- * 在输入存储类型后提示&#96;&#96;<br>由于前端在输入点号时不会发出请求，目前未生效
+ * Suggests "&#96;&#96;" after entering the saving format.
+ * <br>Currently not effective since the front end does not send suggestion requests after typing a dot.
  */
 private class SavePathQuoteSuggester(saveSuggester: SaveSuggester) extends SaveSuggesterBase(saveSuggester) {
   override def name: String = "pathQuote"
