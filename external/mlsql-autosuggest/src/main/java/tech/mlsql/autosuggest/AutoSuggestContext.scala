@@ -193,6 +193,9 @@ class AutoSuggestContext(val session: SparkSession,
         }
         val suggester = new SelectSuggester(this, selectTokens, relativeTokenPos)
         suggester.suggest()
+      case Some("save") =>
+        val suggester = new SaveSuggester(this, _statements(index), relativeTokenPos)
+        suggester.suggest()
       case Some(value) => firstWords.filter(_.name.startsWith(value))
       case None => firstWords
     }
