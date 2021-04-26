@@ -95,6 +95,8 @@ class SparkStructuredStreamingRuntime(_params: JMap[Any, Any]) extends Streaming
   override def startThriftServer: Unit = {}
 
   override def startHttpServer: Unit = {}
+
+  override def afterRuntimeStarted: Unit = {}
 }
 
 object SparkStructuredStreamingRuntime {
