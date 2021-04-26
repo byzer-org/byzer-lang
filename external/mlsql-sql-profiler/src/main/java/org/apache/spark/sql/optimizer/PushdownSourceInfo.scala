@@ -43,9 +43,9 @@ object PushdownSourceInfo {
     lr.relation match {
       case l: JDBCRelation if (l.jdbcOptions.url.toLowerCase.startsWith("jdbc:mysql:")) =>
         val x= l.jdbcOptions.parameters.toMap
-        new MysqlPushdownSourceInfo(l.jdbcOptions.parameters,l.sparkSession)
+        new MysqlPushdownSourceInfo(l.jdbcOptions.parameters,l.sparkSession,lr)
       case l: JDBCRelation if (l.jdbcOptions.url.toLowerCase.startsWith("jdbc:kylin:")) =>
-        new KylinPushdownSourceInfo(l.jdbcOptions.parameters,l.sparkSession)
+        new KylinPushdownSourceInfo(l.jdbcOptions.parameters,l.sparkSession,lr)
       case _ =>
         new NoPushdownSourceInfo(Map())
     }

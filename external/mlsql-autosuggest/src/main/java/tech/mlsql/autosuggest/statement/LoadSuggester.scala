@@ -75,10 +75,7 @@ class LoadFormatSuggester(loadSuggester: LoadSuggester) extends StatementSuggest
 
   override def suggest(): List[SuggestItem] = {
     // datasource type suggest
-    val sources = (DataSourceRegistry.allSourceNames.toSet.toSeq ++ Seq(
-      "parquet", "csv", "jsonStr", "csvStr", "json", "text", "orc", "kafka", "kafka8", "kafka9", "crawlersql", "image",
-      "script", "hive", "xml", "mlsqlAPI", "mlsqlConf"
-    )).toList
+    val sources = (DataSourceRegistry.allSourceNames.toSet.toSeq ++ StatementUtils.SUGGEST_FORMATS).toList
     LexerUtils.filterPrefixIfNeeded(
       sources.map(SuggestItem(_, SpecialTableConst.DATA_SOURCE_TABLE,
         Map("desc" -> "DataSource"))),
