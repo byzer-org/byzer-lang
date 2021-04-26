@@ -32,8 +32,8 @@ import tech.mlsql.indexer.impl.KylinSQLDialect
 import java.sql.DriverManager
 
 
-case class KylinPushdownSourceInfo(props: Map[String, String],sparkSession: SparkSession) extends PushdownSourceInfo(props) with Pushdownable {
-  override val supportedOperators: Seq[Class[_]] = Seq(
+case class KylinPushdownSourceInfo(props: Map[String, String], sparkSession: SparkSession, lr:LogicalRelation) extends PushdownSourceInfo(props) with Pushdownable {
+  override val supportedOperators: Set[Class[_]] = Set(
     classOf[Project],
     classOf[Filter],
     classOf[Aggregate],
@@ -45,9 +45,9 @@ case class KylinPushdownSourceInfo(props: Map[String, String],sparkSession: Spar
     classOf[SubqueryAlias]
   )
 
-  override val supportedUDF: Seq[String] = Seq()
+  override val supportedUDF: Set[String] = Set()
 
-  override val supportedExpressions: Seq[Class[_]] = Seq(
+  override val supportedExpressions: Set[Class[_]] = Set(
     classOf[Literal], classOf[AttributeReference], classOf[Alias], classOf[AggregateExpression],
     classOf[Abs], classOf[Coalesce], classOf[Greatest], classOf[If], classOf[IfNull],
     classOf[IsNull], classOf[IsNotNull], classOf[Least], classOf[NullIf],
@@ -75,14 +75,14 @@ case class KylinPushdownSourceInfo(props: Map[String, String],sparkSession: Spar
     classOf[BitwiseNot], classOf[BitwiseOr], classOf[BitwiseXor], classOf[Cast], classOf[CaseWhen]
   )
 
-  override val beGoodAtOperators: Seq[Class[_]] = Seq(
+  override val beGoodAtOperators: Set[Class[_]] = Set(
     //    classOf[Join],
     classOf[GlobalLimit],
     classOf[LocalLimit],
     classOf[Aggregate]
   )
 
-  override val supportedJoinTypes: Seq[JoinType] = Seq(
+  override val supportedJoinTypes: Set[JoinType] = Set(
     //    Inner, Cross, LeftOuter
   )
 
@@ -144,18 +144,7 @@ case class KylinPushdownSourceInfo(props: Map[String, String],sparkSession: Spar
 
   override def buildScan2(lp: LogicalPlan, sparkSession: SparkSession): LogicalPlan = {
     val newqualifier = Seq.empty[String]
-    val newlp1 = lp transform {
-      case x:LogicalPlan => x transformExpressions {
-        case c@Cast(car@AttributeReference(_, _, _, _), _, _) =>
-          car.copy()(exprId = NamedExpression.newExprId, qualifier=car.qualifier)
-        case c@Cast(ltr@Literal(_, _), _, _) =>
-          ltr
-        case ar@AttributeReference(_, _, _, _) =>
-          ar.copy()(exprId = NamedExpression.newExprId, qualifier=ar.qualifier)
-      }
-    }
-
-    val newlp2 = newlp1.transformDown{
+    val newlp2 = lp transformDown{
       case sub@SubqueryAlias(name,pj@Project(pl, lr@LogicalRelation(_, _, _, _))) =>
         lr
     }
