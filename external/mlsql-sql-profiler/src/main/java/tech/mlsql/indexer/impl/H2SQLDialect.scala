@@ -17,11 +17,12 @@
  */
 
 package tech.mlsql.indexer.impl
+
 import org.apache.spark.sql.catalyst.sqlgenerator.SQLDialect
 import org.apache.spark.sql.execution.LogicalRDD
 import org.apache.spark.sql.execution.datasources.LogicalRelation
 import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
-import org.apache.spark.sql.types.{DataType, StringType}
+import org.apache.spark.sql.types.{ByteType, DataType, StringType}
 import tech.mlsql.common.ScalaReflect
 
 import java.sql.Connection
@@ -29,9 +30,9 @@ import java.sql.Connection
 /**
  * 21/03/2021 LiuYongheng(liuyonghengheng@gmail.com)
  */
-class KylinSQLDialect extends SQLDialect {
+class H2SQLDialect extends SQLDialect {
 
-  override def canHandle(url: String): Boolean = url.toLowerCase().startsWith("jdbc:kylin")
+  override def canHandle(url: String): Boolean = url.toLowerCase().startsWith("jdbc:h2:")
 
   override def quote(name: String): String = {
     name
@@ -51,7 +52,6 @@ class KylinSQLDialect extends SQLDialect {
 
   override def dataTypeToSQL(dataType: DataType): String = {
     dataType match {
-      case StringType => "CHAR"
       case _ => dataType.sql
     }
   }
