@@ -10,6 +10,7 @@ import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import streaming.dsl.{IncludeSource, ScriptSQLExec}
 import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.common.utils.path.PathFun
+import tech.mlsql.session.SetSession
 
 /**
  * 6/5/2021 WilliamZhu(allwefantasy@gmail.com)
@@ -69,9 +70,11 @@ class LibIncludeSource extends IncludeSource with Logging {
       FileUtils.deleteQuietly(new File(finalProjectPath))
       throw new IllegalArgumentException(s"${libValue} is not a valid MLSQL project.")
     }
-    context.execListener.env().put(s"__lib__${aliasValue}", finalProjectPath)
+    val envSession = new SetSession(sparkSession, context.owner)
+    envSession.set(s"__lib__${aliasValue}",finalProjectPath,Map(SetSession.__MLSQL_CL__ -> SetSession.SET_STATEMENT_CL))
+//    context.execListener.env().put(s"__lib__${aliasValue}", finalProjectPath)
     logInfo(s"Clone project ${libValue} alias ${aliasValue} to ${finalProjectPath} ")
-    ""
+    "run command as EmptyTable.``;"
   }
 
   override def skipPathPrefix: Boolean = true
