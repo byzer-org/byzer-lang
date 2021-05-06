@@ -12,6 +12,12 @@
     <artifactId>streamingpro-core-${spark.bigversion}_${scala.binary.version}</artifactId>
     <dependencies>
         <dependency>
+            <groupId>org.eclipse.jgit</groupId>
+            <artifactId>org.eclipse.jgit</artifactId>
+            <version>5.11.0.202103091610-r</version>
+        </dependency>
+        
+        <dependency>
             <groupId>org.python</groupId>
             <artifactId>jython-standalone</artifactId>
             <version>${jython.version}</version>
