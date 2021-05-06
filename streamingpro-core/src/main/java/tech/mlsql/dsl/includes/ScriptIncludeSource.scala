@@ -15,18 +15,26 @@ import scala.io.Source
 class ScriptIncludeSource extends IncludeSource with Logging {
   override def fetchSource(sparkSession: SparkSession, path: String, options: Map[String, String]): String = {
     val context = ScriptSQLExec.context()
-    val pathChunk = path.split("\\.")
+    val pathChunk = if (path.contains("/")) {
+      val temp = path.split("/")
+      val header = temp.dropRight(1) ++ Array(temp.last.split("\\.").head)
+      Array(header.mkString("/")) ++ temp.last.split("\\.").drop(1)
+
+    } else {
+      path.split("\\.")
+    }
     val libAlias = pathChunk.head
 
     var libPath = context.execListener.env().get(s"__lib__${libAlias}")
 
     if (!libPath.isDefined) {
-      val projectPath = PathFun(".").add("__mlsql__").add("deps").add(libAlias).toPath
+      val Array(website, user, repo) = libAlias.split("/")
+      val projectPath = PathFun("/").add("tmp").add("__mlsql__").add("deps").add(website).add(user).add(repo).toPath
       val dep = new File(projectPath)
       if (dep.exists()) {
         libPath = Option(projectPath)
       } else {
-        throw new RuntimeException(s"Lib ${libAlias} is not imported")
+        throw new RuntimeException(s"Lib ${libAlias} is not imported. This may caused by fail to download the project.")
       }
     }
     val rootPath = PathFun(libPath.get)
