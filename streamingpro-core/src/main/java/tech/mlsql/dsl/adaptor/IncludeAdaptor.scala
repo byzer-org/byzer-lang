@@ -23,8 +23,8 @@ import streaming.dsl.parser.DSLSQLParser._
 import streaming.dsl.template.TemplateMerge
 
 /**
-  * Created by allwefantasy on 12/1/2018.
-  */
+ * Created by allwefantasy on 12/1/2018.
+ */
 class IncludeAdaptor(preProcessListener: PreProcessIncludeListener) extends DslAdaptor {
 
   def evaluate(value: String) = {
@@ -75,6 +75,8 @@ object IncludeAdaptor {
     "http" -> "streaming.dsl.mmlib.algs.includes.HTTPIncludeSource",
     "store" -> "tech.mlsql.dsl.includes.StoreIncludeSource",
     "plugin" -> "tech.mlsql.dsl.includes.PluginIncludeSource",
+    "lib" -> "tech.mlsql.dsl.includes.LibIncludeSource",
+    "local" -> "tech.mlsql.dsl.includes.ScriptIncludeSource",
 
     "function" -> "streaming.dsl.mmlib.algs.includes.analyst.HttpBaseDirIncludeSource",
     "view" -> "streaming.dsl.mmlib.algs.includes.analyst.HttpBaseDirIncludeSource",
