@@ -1,5 +1,7 @@
 package tech.mlsql.dsl.includes
 
+import java.io.File
+
 import org.apache.spark.sql.SparkSession
 import streaming.dsl.{IncludeSource, ScriptSQLExec}
 import tech.mlsql.common.utils.log.Logging
@@ -16,19 +18,27 @@ class ScriptIncludeSource extends IncludeSource with Logging {
     val pathChunk = path.split("\\.")
     val libAlias = pathChunk.head
 
-    val libPath = context.execListener.env().get(s"__lib__${libAlias}")
+    var libPath = context.execListener.env().get(s"__lib__${libAlias}")
+
     if (!libPath.isDefined) {
-      throw new RuntimeException(s"Lib ${libAlias} is not imported")
+      val projectPath = PathFun(".").add("__mlsql__").add("deps").add(libAlias).toPath
+      val dep = new File(projectPath)
+      if (dep.exists()) {
+        libPath = Option(projectPath)
+      } else {
+        throw new RuntimeException(s"Lib ${libAlias} is not imported")
+      }
     }
     val rootPath = PathFun(libPath.get)
+
     pathChunk.drop(1).foreach { item =>
       rootPath.add(item)
     }
-
     var finalPath = rootPath.toPath
     if (!finalPath.endsWith(".mlsql")) {
       finalPath += ".mlsql"
     }
+
     Source.fromFile(finalPath).getLines().mkString("\n")
   }
 
