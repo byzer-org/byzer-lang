@@ -6,6 +6,7 @@ import org.apache.spark.sql.SparkSession
 import streaming.dsl.{IncludeSource, ScriptSQLExec}
 import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.common.utils.path.PathFun
+import tech.mlsql.session.SetSession
 
 import scala.io.Source
 
@@ -25,7 +26,12 @@ class ScriptIncludeSource extends IncludeSource with Logging {
     }
     val libAlias = pathChunk.head
 
-    var libPath = context.execListener.env().get(s"__lib__${libAlias}")
+    var libPath:Option[String] = None
+    val envSession = new SetSession(sparkSession, context.owner)
+    val libPathOpt = envSession.fetchSetStatement.map{item=>item.collect().filter(setItem=>setItem.k==s"__lib__${libAlias}").headOption}
+    if(libPathOpt.isDefined && libPathOpt.get.isDefined){
+      libPath = libPathOpt.get.map(item=>item.v)
+    }
 
     if (!libPath.isDefined) {
       val Array(website, user, repo) = libAlias.split("/")
