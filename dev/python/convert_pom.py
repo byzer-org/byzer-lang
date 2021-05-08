@@ -3,7 +3,7 @@ newlines = []
 meet = False
 meet1 = False
 
-with open("pom.xml", "r") as reader:
+with open("pom.xml", "r",encoding='UTF-8') as reader:
     line = reader.readline()
     while line:
 
@@ -19,14 +19,14 @@ with open("pom.xml", "r") as reader:
 
         if "<!-- spark 3.0 end -->" in line:
             meet1 = False
-            
+
         if meet1:
             newlines.append(line.lstrip().lstrip("<!--").rstrip().rstrip("\n").rstrip("-->") + "\n")
 
         if "<!-- spark 3.0 start -->" in line:
             newlines.append(line)
             meet1 = True
-            
+
         if not meet and not meet1:
             newlines.append(line)
 
@@ -34,5 +34,5 @@ with open("pom.xml", "r") as reader:
 
 # for line in newlines:
 #     print(line)
-with open("pom.xml","w") as writer:
+with open("pom.xml","w",encoding='UTF-8') as writer:
     writer.writelines(newlines)
