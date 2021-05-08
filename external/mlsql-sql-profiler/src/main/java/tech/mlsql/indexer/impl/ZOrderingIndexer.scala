@@ -242,10 +242,10 @@ class ZOrderingIndexer extends MLSQLIndexer {
     ))
     //    import df.sparkSession.implicits._
     val sort = SparkAgent.createColumn(SortOrder(F.col(s"__mlsql_indexer_zordering_${newFiledName}").expr, Descending, NullsLast, Set.empty))
-    newDF = if (!options.contains("num")) {
+    newDF = if (!options.contains("fileNum")) {
       newDF.repartitionByRange(sort)
     } else {
-      newDF.repartitionByRange(options("num").toInt, sort)
+      newDF.repartitionByRange(options("fileNum").toInt, sort)
     }
 
     Option(newDF)
