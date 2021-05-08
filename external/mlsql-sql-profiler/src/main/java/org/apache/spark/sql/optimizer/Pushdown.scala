@@ -104,10 +104,7 @@ object Pushdown extends Logging{
 
   def replacePushdownSubtree(tree:TagTreeNode, replaceNodes:mutable.HashSet[TagTreeNode]): LogicalPlan ={
     val rootStartTime = System.currentTimeMillis()
-    val httpParams = getHttpParams()
-    val scriptParams = getScriptParams()
-    val enableLog = httpParams.getOrElse("enableQueryWithIndexer", "false").toBoolean ||
-      scriptParams.getOrElse("enableQueryWithIndexer", "false").toBoolean
+    val enableLog = isEnableLog()
 
     val newlp = tree.lp.transformDown{
       case lp:LogicalPlan if replaceNodes.map(_.lp).contains(lp) =>
@@ -181,6 +178,19 @@ object Pushdown extends Logging{
 
   def getScriptParams()={
     ScriptSQLExec.context().execListener.env()
+  }
+
+  def isEnableLog(): Boolean ={
+    try{
+        val httpParams = getHttpParams()
+        val scriptParams = getScriptParams()
+        httpParams.getOrElse("enableQueryWithIndexer", "false").toBoolean ||
+              scriptParams.getOrElse("enableQueryWithIndexer", "false").toBoolean
+    }catch {
+      case ex:Exception =>
+        logError("----Get PARAMS Error:"+ ex.getMessage)
+        false
+    }
   }
 
 }

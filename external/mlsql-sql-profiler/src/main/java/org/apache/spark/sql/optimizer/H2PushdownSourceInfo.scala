@@ -17,19 +17,19 @@
  */
 package org.apache.spark.sql.optimizer
 
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.catalyst.expressions.aggregate._
 import org.apache.spark.sql.catalyst.expressions.{Abs, Acos, Add, Alias, And, Ascii, Asin, Atan, Atan2, AttributeReference, Base64, Bin, BitwiseAnd, BitwiseNot, BitwiseOr, BitwiseXor, CaseWhen, Cast, Ceil, Coalesce, Concat, ConcatWs, Cos, Crc32, CurrentDate, CurrentTimestamp, DateAdd, DateDiff, DateFormatClass, DateSub, DayOfMonth, DayOfYear, Decode, Divide, Elt, Encode, EqualNullSafe, EqualTo, Exp, FindInSet, Floor, FromUnixTime, GreaterThan, GreaterThanOrEqual, Greatest, Hex, Hour, If, IfNull, In, IsNotNull, IsNull, LastDay, Least, Length, LessThan, LessThanOrEqual, Like, Literal, Log, Log10, Log2, Logarithm, Lower, Md5, Minute, Month, Multiply, NamedExpression, Not, NullIf, Or, ParseToDate, Pi, Pow, Quarter, RLike, Rand, Remainder, Round, Second, Sha1, Sha2, Signum, Sin, SoundEx, Sqrt, StringInstr, StringLPad, StringLocate, StringRPad, StringRepeat, StringSpace, StringTrim, StringTrimLeft, StringTrimRight, Substring, SubstringIndex, Subtract, Tan, ToDegrees, ToRadians, UnBase64, Unhex, UnixTimestamp, Upper, WeekOfYear, Year}
-import org.apache.spark.sql.catalyst.expressions.aggregate.{AggregateExpression, Average, Count, Max, Min, StddevPop, StddevSamp, Sum, VariancePop, VarianceSamp}
-import org.apache.spark.sql.catalyst.plans.{Cross, Inner, JoinType, LeftOuter, RightOuter}
-import org.apache.spark.sql.catalyst.plans.logical.{Aggregate, Filter, GlobalLimit, Join, LocalLimit, LogicalPlan, Project, Sort, Subquery, SubqueryAlias}
+import org.apache.spark.sql.catalyst.plans.logical._
+import org.apache.spark.sql.catalyst.plans._
 import org.apache.spark.sql.catalyst.sqlgenerator.LogicalPlanSQL
 import org.apache.spark.sql.execution.datasources.LogicalRelation
 import org.apache.spark.sql.execution.datasources.jdbc.{JDBCOptions, JDBCRelation}
+import org.apache.spark.sql.{DataFrame, SparkSession}
 import tech.mlsql.common.ScalaReflect
-import tech.mlsql.indexer.impl.MysqlSQLDialect
+import tech.mlsql.indexer.impl.H2SQLDialect
 
 
-case class MysqlPushdownSourceInfo(props: Map[String, String], sparkSession: SparkSession, lr:LogicalRelation) extends PushdownSourceInfo(props) with Pushdownable {
+case class H2PushdownSourceInfo(props: Map[String, String], sparkSession: SparkSession, lr:LogicalRelation) extends PushdownSourceInfo(props) with Pushdownable {
   override val supportedOperators: Set[Class[_]] = Set(
     classOf[Project],
     classOf[Filter],
@@ -103,7 +103,7 @@ case class MysqlPushdownSourceInfo(props: Map[String, String], sparkSession: Spa
 
   override def fastEquals(other: PushdownSourceInfo): Boolean = {
     other match {
-      case mysql: MysqlPushdownSourceInfo =>
+      case mysql: H2PushdownSourceInfo =>
         connHostDBInfo == mysql.connHostDBInfo
       case _ => false
     }
@@ -135,6 +135,8 @@ case class MysqlPushdownSourceInfo(props: Map[String, String], sparkSession: Spa
     val newlp2 = newlp1.transformDown{
       case sub@SubqueryAlias(name,pj@Project(pl, lr@LogicalRelation(_, _, _, _))) =>
         lr
+      case sub@SubqueryAlias(name,lr@LogicalRelation(_, _, _, _)) =>
+        lr
     }
 
     // TODO :这里要找一下更好的办法，目前这种方法可能不能列举所有的情况
@@ -161,7 +163,7 @@ case class MysqlPushdownSourceInfo(props: Map[String, String], sparkSession: Spa
         }
     }
 
-    val sqlBuilder = new LogicalPlanSQL(newlp, new MysqlSQLDialect)
+    val sqlBuilder = new LogicalPlanSQL(newlp, new H2SQLDialect)
     val sql = sqlBuilder.toSQL
     var newsub = newlp
     lp match {

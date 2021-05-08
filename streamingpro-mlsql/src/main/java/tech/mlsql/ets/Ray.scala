@@ -57,17 +57,17 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
 
     val newdf = Array(params(inputTable.name), params(code.name), params(outputTable.name)) match {
       case Array(input, code, "") =>
-        distribute_execute(spark, genCode(code), input)
+        distribute_execute(spark, genCode(code), input, params)
 
       case Array(input, code, output) =>
-        val resDf = distribute_execute(spark, genCode(code), input)
+        val resDf = distribute_execute(spark, genCode(code), input, params)
         resDf.createOrReplaceTempView(output)
         resDf
     }
     newdf
   }
 
-  private def distribute_execute(session: SparkSession, code: String, sourceTable: String) = {
+  private def distribute_execute(session: SparkSession, code: String, sourceTable: String, etParams: Map[String, String]) = {
     import scala.collection.JavaConverters._
     val context = ScriptSQLExec.context()
     val envSession = new SetSession(session, context.owner)
@@ -84,7 +84,12 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
 
       }.toMap
 
-    val runnerConf = getSchemaAndConf(envSession) ++ configureLogConf
+
+    val confTableValue = etParams.get(confTable.name).map(t=>session.table(t).collect().map{r=>
+      (r.getString(0),r.getString(1))
+    }.toMap).getOrElse(Map[String,String]())
+    
+    val runnerConf = getSchemaAndConf(envSession) ++ configureLogConf ++ confTableValue
     val timezoneID = session.sessionState.conf.sessionLocalTimeZone
     val df = session.table(sourceTable)
 
@@ -334,6 +339,7 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
   final val inputTable: Param[String] = new Param[String](this, "inputTable", " ")
   final val code: Param[String] = new Param[String](this, "code", " ")
   final val outputTable: Param[String] = new Param[String](this, "outputTable", " ")
+  final val confTable: Param[String] = new Param[String](this, "confTable", " ")
 
   override def supportedVersions: Seq[String] = {
     Seq("1.5.0-SNAPSHOT", "1.5.0")

@@ -28,5 +28,23 @@ trait StatementUtils {
     if (tokens(temp).getType == t) return true
     return false
   }
+
+  def firstAhead(targetType: Int*): Option[Int] = {
+    val targetFoods = targetType.map(Food(None, _)).toArray
+    val matchingResult = TokenMatcher(tokens, tokenPos.pos)
+      .back
+      .orIndex(targetFoods)
+    if (matchingResult >= 0) {
+      Some(matchingResult)
+    } else {
+      None
+    }
+  }
 }
 
+object StatementUtils {
+  val SUGGEST_FORMATS = Seq(
+    "parquet", "csv", "jsonStr", "csvStr", "json", "text", "orc", "kafka", "kafka8", "kafka9", "crawlersql", "image",
+    "script", "hive", "xml", "mlsqlAPI", "mlsqlConf"
+  )
+}

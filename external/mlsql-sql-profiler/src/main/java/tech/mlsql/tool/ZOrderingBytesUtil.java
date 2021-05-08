@@ -112,6 +112,12 @@ public class ZOrderingBytesUtil {
     }
 
     public static byte[] utf8To8Byte(String a) {
+        /**
+         * if is null, treat like empty string.
+         */
+        if(a==null){
+            return paddingTo8Byte("".getBytes(Charset.forName("utf-8")));
+        }
         return paddingTo8Byte(a.getBytes(Charset.forName("utf-8")));
     }
 

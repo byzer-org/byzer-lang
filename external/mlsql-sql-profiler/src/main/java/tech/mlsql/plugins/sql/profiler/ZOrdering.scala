@@ -25,7 +25,7 @@ class ZOrdering(override val uid: String) extends SQLAlg with ETAuth with WowPar
       throw new RuntimeException("indexFields is required")
     }
     val indexer = new ZOrderingIndexer()
-    val newDF = indexer.write(df.repartition(params.getOrElse("fileNum", df.rdd.partitions.length + "").toInt), params)
+    val newDF = indexer.write(df, params)
     val temp = newDF.get
     temp
   }
