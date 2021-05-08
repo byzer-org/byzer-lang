@@ -1,9 +1,9 @@
 package tech.mlsql.indexer.impl
 
-import org.apache.spark.sql.catalyst.expressions.{And, AttributeReference, Cast, EqualTo, Expression, GreaterThanOrEqual, LessThanOrEqual, Literal, SortOrder}
+import org.apache.spark.sql.catalyst.expressions.{And, AttributeReference, Cast, Descending, EqualTo, Expression, LessThanOrEqual, Literal, NullsLast, SortOrder}
 import org.apache.spark.sql.catalyst.plans.logical.{Filter, LogicalPlan}
 import org.apache.spark.sql.types._
-import org.apache.spark.sql.{DataFrame, Row, functions => F}
+import org.apache.spark.sql.{DataFrame, Row, SparkAgent, functions => F}
 import streaming.dsl.ScriptSQLExec
 import tech.mlsql.common.utils.Md5
 import tech.mlsql.indexer.MLSQLIndexer
@@ -168,7 +168,7 @@ class ZOrderingIndexer extends MLSQLIndexer {
           And(LessThanOrEqual(indexerAttr, Literal(maxBytes, BinaryType)), LessThanOrEqual(Literal(minBytes, BinaryType), indexerAttr))
         }
         Filter((newAnds ++ ands).reduce(And), child)
-//        Filter((newAnds ).reduce(And), child)
+      //        Filter((newAnds ).reduce(And), child)
     }
 
     newlp
@@ -204,12 +204,13 @@ class ZOrderingIndexer extends MLSQLIndexer {
       }
       val zOrderingValue = ZOrderingBytesUtil.interleaveMulti8Byte(values)
       Row.fromSeq(row.toSeq ++ Seq(zOrderingValue))
-    }.sortBy(x => ZOrderingBinarySort(x.getAs[Array[Byte]](fieldNum)))
+    }
+    //.sortBy(x => ZOrderingBinarySort(x.getAs[Array[Byte]](fieldNum)))
 
     val newFiledName = Md5.md5Hash(indexFields.map(_._2.name).mkString(""))
     val metabuilder = new MetadataBuilder()
 
-    //收集min/max值
+    //collect min/max value in every field
     val values = indexFields.flatMap(item => Seq(F.min(F.col(item._2.name)), F.max(F.col(item._2.name))))
     val minMaxCols = df.agg(values(0), values.slice(1, values.length): _*).collect().head
     val colMinMaxGroups = minMaxCols.toSeq.grouped(2).toList
@@ -234,12 +235,19 @@ class ZOrderingIndexer extends MLSQLIndexer {
     }
 
     val meta = metabuilder.putStringArray("indexFields", indexFields.map(_._2.name)).build()
-    val newDF = df.sparkSession.createDataFrame(newRDD, StructType(
+    var newDF = df.sparkSession.createDataFrame(newRDD, StructType(
       df.schema.fields ++ Seq(
         StructField(s"__mlsql_indexer_zordering_${newFiledName}",
           BinaryType, false, meta))
     ))
-    //newDF.repartitionByRange(F.col(s"__mlsql_indexer_zordering_${newFiledName}"))
+    //    import df.sparkSession.implicits._
+    val sort = SparkAgent.createColumn(SortOrder(F.col(s"__mlsql_indexer_zordering_${newFiledName}").expr, Descending, NullsLast, Set.empty))
+    newDF = if (!options.contains("num")) {
+      newDF.repartitionByRange(sort)
+    } else {
+      newDF.repartitionByRange(options("num").toInt, sort)
+    }
+
     Option(newDF)
   }
 }
