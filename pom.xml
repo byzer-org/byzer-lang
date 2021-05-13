@@ -65,7 +65,7 @@
         <!-- spark 3.0 start -->
         <!--        <scala.version>2.12.10</scala.version> -->
         <!--        <scala.binary.version>2.12</scala.binary.version> -->
-        <!--        <spark.version>3.0.0</spark.version> -->
+        <!--        <spark.version>3.1.1</spark.version> -->
         <!--        <spark.bigversion>3.0</spark.bigversion> -->
         <!-- spark 3.0 end -->
 
@@ -447,7 +447,7 @@
                 <spark.streaming.kafka.artifactId>spark-streaming-kafka-0-8_${scala.binary.version}
                 </spark.streaming.kafka.artifactId>
                 <spark.sql.kafka.artifactId>spark-sql-kafka-0-10_${scala.binary.version}</spark.sql.kafka.artifactId>
-                <spark.version>3.0.0</spark.version>
+                <spark.version>3.1.1</spark.version>
                 <spark.bigversion>3.0</spark.bigversion>
             </properties>
             <modules>
