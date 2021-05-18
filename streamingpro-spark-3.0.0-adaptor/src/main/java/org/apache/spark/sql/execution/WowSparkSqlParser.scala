@@ -30,10 +30,10 @@ import scala.collection.mutable.ArrayBuffer
 /**
   * Concrete parser for Spark SQL statements.
   */
-class WowSparkSqlParser(conf: SQLConf) extends AbstractSqlParser(conf) {
+class WowSparkSqlParser(conf: SQLConf) extends AbstractSqlParser {
   val astBuilder = new WowSparkSqlAstBuilder(conf)
 
-  private val substitutor = new VariableSubstitution(conf)
+  private val substitutor = new VariableSubstitution
 
   protected override def parse[T](command: String)(toResult: SqlBaseParser => T): T = {
     super.parse(substitutor.substitute(command))(toResult)
@@ -61,7 +61,7 @@ class WowSparkSqlParser(conf: SQLConf) extends AbstractSqlParser(conf) {
 /**
   * Builder that converts an ANTLR ParseTree into a LogicalPlan/Expression/TableIdentifier.
   */
-class WowSparkSqlAstBuilder(conf: SQLConf) extends SparkSqlAstBuilder(conf) {
+class WowSparkSqlAstBuilder(conf: SQLConf) extends SparkSqlAstBuilder {
   override def visitTableIdentifier(ctx: TableIdentifierContext): TableIdentifier = {
     val ti = super.visitTableIdentifier(ctx)
 

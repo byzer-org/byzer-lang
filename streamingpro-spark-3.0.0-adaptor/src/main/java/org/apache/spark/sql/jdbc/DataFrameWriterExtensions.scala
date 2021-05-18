@@ -19,12 +19,11 @@
 package org.apache.spark.sql.jdbc
 
 import org.apache.spark.sql.execution.datasources.jdbc.{JDBCOptions, JdbcOptionsInWrite, JdbcUtils}
-import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.{DataFrame, DataFrameWriter, Row, SaveMode}
 
 /**
-  * Created by allwefantasy on 26/4/2018.
-  */
+ * Created by allwefantasy on 26/4/2018.
+ */
 object DataFrameWriterExtensions {
 
   implicit class Upsert(w: DataFrameWriter[Row]) {
@@ -57,7 +56,8 @@ object DataFrameWriterExtensions {
 
         // Create the table if the table didn't exist.
         if (!tableExists) {
-          val schema = JdbcUtils.schemaString(df, url, jdbcOptions.createTableColumnTypes)
+          val isCaseSensitive = df.sparkSession.sqlContext.conf.caseSensitiveAnalysis
+          val schema = JdbcUtils.schemaString(df.schema, isCaseSensitive, url, jdbcOptions.createTableColumnTypes)
           val dialect = JdbcDialects.get(url)
           val pk = idColumn.map { f =>
             val key = f.map(c => s"${dialect.quoteIdentifier(c.name)}").mkString(",")
