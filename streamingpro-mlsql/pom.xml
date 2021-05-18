@@ -624,24 +624,21 @@
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-catalyst_${scala.binary.version}</artifactId>
             <version>${spark.version}</version>
-            <classifier>tests</classifier>
-            <scope>test</scope>
+            <scope>${scope}</scope>
         </dependency>
 
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-core_${scala.binary.version}</artifactId>
             <version>${spark.version}</version>
-            <classifier>tests</classifier>
-            <scope>test</scope>
+            <scope>${scope}</scope>
         </dependency>
 
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-sql_${scala.binary.version}</artifactId>
             <version>${spark.version}</version>
-            <classifier>tests</classifier>
-            <scope>test</scope>
+            <scope>${scope}</scope>
             <exclusions>
                 <exclusion>
                     <groupId>org.apache.arrow</groupId>
