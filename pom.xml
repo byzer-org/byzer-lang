@@ -60,6 +60,7 @@
         <scala.binary.version>2.11</scala.binary.version>
         <spark.version>2.4.3</spark.version>
         <spark.bigversion>2.4</spark.bigversion>
+        <scalatest.version>3.0.3</scalatest.version>
         <!-- spark 2.4 end -->
 
         <!-- spark 3.0 start -->
@@ -67,6 +68,7 @@
         <!--        <scala.binary.version>2.12</scala.binary.version> -->
         <!--        <spark.version>3.1.1</spark.version> -->
         <!--        <spark.bigversion>3.0</spark.bigversion> -->
+        <!--        <scalatest.version>3.0.3</scalatest.version> -->
         <!-- spark 3.0 end -->
 
         <spark.streaming.kafka.artifactId>spark-streaming-kafka-0-8_${scala.binary.version}
@@ -100,7 +102,7 @@
         <slf4j.version>1.7.5</slf4j.version>
         <logback.version>1.1.8</logback.version>
 
-        <scalatest.version>3.0.3</scalatest.version>
+        
 
         <scope>provided</scope>
         <hadoop-client-version>2.6.5</hadoop-client-version>
