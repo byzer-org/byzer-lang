@@ -26,7 +26,7 @@ object MLSQLKafkaOffsetInfo extends Logging  {
         .toMap
     val uniqueGroupId = UUID.randomUUID().toString
 
-    val kafkaOffsetReader = new KafkaOffsetReader(
+    val kafkaOffsetReader = new KafkaOffsetReaderConsumer(
       strategy(caseInsensitiveParams),
       KafkaSourceProvider.kafkaParamsForDriver(specifiedKafkaParams),
       CaseInsensitiveMap(parameters),
@@ -80,7 +80,7 @@ object MLSQLKafkaOffsetInfo extends Logging  {
       partitionOffsets
     }
 
-    val partitions = kafkaReader.fetchTopicPartitions()
+    val partitions = kafkaReader.fetchEarliestOffsets().map(_._1)
     // Obtain TopicPartition offsets with late binding support
     kafkaOffsets match {
       case EarliestOffsetRangeLimit => partitions.map {
@@ -90,7 +90,7 @@ object MLSQLKafkaOffsetInfo extends Logging  {
         case tp => tp -> KafkaOffsetRangeLimit.LATEST
       }.toMap
       case SpecificOffsetRangeLimit(partitionOffsets) =>
-        validateTopicPartitions(partitions, partitionOffsets)
+        validateTopicPartitions(partitions.toSet, partitionOffsets)
     }
   }
 

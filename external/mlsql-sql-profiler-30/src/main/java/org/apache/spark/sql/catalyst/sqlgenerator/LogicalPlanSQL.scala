@@ -197,7 +197,7 @@ class LogicalPlanSQL(plan: LogicalPlan, dialect: SQLDialect) {
       s"${dialect.expressionToSQL(r)}(${expressionToSQL(left)}, ${expressionToSQL(right)})"
     case extract@RegExpExtract(subject, regexp, Literal(1, IntegerType)) =>
       s"${dialect.expressionToSQL(extract)}(${expressionToSQL(subject)}, ${expressionToSQL(regexp)})"
-    case replace@RegExpReplace(subject, regexp, rep) =>
+    case replace@RegExpReplace(subject, regexp, rep,pos) =>
       s"${dialect.expressionToSQL(replace)}(${expressionToSQL(subject)}, ${expressionToSQL(regexp)}, ${expressionToSQL(rep)})"
     case last@Last(child, _) =>
       s"${dialect.expressionToSQL(last)}(${expressionToSQL(child)})"
@@ -526,7 +526,7 @@ class LogicalPlanSQL(plan: LogicalPlan, dialect: SQLDialect) {
             points.add(j -> right)
           }
           false
-        case u@Union(children) =>
+        case u@Union(children,byName,allowMissingCol) =>
           hasSelect.zip(children).foreach {
             case (has, p) if has => points.add(u -> p)
             case _ =>

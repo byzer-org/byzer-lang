@@ -49,6 +49,7 @@ case class WowScalaUDF(function: AnyRef,
       dataType,
       children,
       Nil,
+      None,
       udfName,
       nullable,
       udfDeterministic
