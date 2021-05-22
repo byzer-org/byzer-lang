@@ -26,11 +26,11 @@ class ScriptIncludeSource extends IncludeSource with Logging {
     }
     val libAlias = pathChunk.head
 
-    var libPath:Option[String] = None
+    var libPath: Option[String] = None
     val envSession = new SetSession(sparkSession, context.owner)
-    val libPathOpt = envSession.fetchSetStatement.map{item=>item.collect().filter(setItem=>setItem.k==s"__lib__${libAlias}").headOption}
-    if(libPathOpt.isDefined && libPathOpt.get.isDefined){
-      libPath = libPathOpt.get.map(item=>item.v)
+    val libPathOpt = envSession.fetchSetStatement.map { item => item.collect().filter(setItem => setItem.k == s"__lib__${libAlias}").headOption }
+    if (libPathOpt.isDefined && libPathOpt.get.isDefined) {
+      libPath = libPathOpt.get.map(item => item.v)
     }
 
     if (!libPath.isDefined) {
@@ -44,18 +44,23 @@ class ScriptIncludeSource extends IncludeSource with Logging {
       }
     }
     val rootPath = PathFun(libPath.get)
-
-    pathChunk.drop(1).foreach { item =>
+    var suffix = "mlsql"
+    var newPathChunk = pathChunk
+    if (pathChunk.last == "mlsql") {
+      newPathChunk = newPathChunk.dropRight(1)
+    }
+    if (pathChunk.last == "py") {
+      newPathChunk = newPathChunk.dropRight(1)
+      suffix = "py"
+    }
+    newPathChunk.drop(1).foreach { item =>
       rootPath.add(item)
     }
+    rootPath.add(suffix)
     var finalPath = rootPath.toPath
-    if (!finalPath.endsWith(".mlsql") && !finalPath.endsWith(".py")) {
-      finalPath += ".mlsql"
-    }
 
     Source.fromFile(finalPath).getLines().mkString("\n")
   }
 
   override def skipPathPrefix: Boolean = true
 }
-
