@@ -9,6 +9,7 @@ import streaming.dsl.mmlib.algs.param.WowParams
 import tech.mlsql.common.utils.serder.json.JSONTool
 import tech.mlsql.dsl.auth.ETAuth
 import tech.mlsql.dsl.auth.dsl.mmlib.ETMethod.ETMethod
+import tech.mlsql.dsl.includes.ScriptIncludeSource
 import tech.mlsql.version.VersionCompatibility
 
 /**
@@ -32,8 +33,16 @@ class PythonInclude(override val uid: String) extends SQLAlg with VersionCompati
         val newdf = session.createDataset[String](Seq(item))
         newdf.createOrReplaceTempView(tableName)
         newdf.toDF()
+      case Array("local", path, tableName) =>
+        val includer = new ScriptIncludeSource()
+        val pythonCode = includer.fetchSource(session, path, Map())
+        val item = JSONTool.toJsonStr(Map("content" -> pythonCode))
+        val newdf = session.createDataset[String](Seq(item))
+        newdf.createOrReplaceTempView(tableName)
+        newdf.toDF()
       case _ => throw new RuntimeException("example: !pyInclude python-example.wow.py named wow;")
     }
+
 
   }
 
