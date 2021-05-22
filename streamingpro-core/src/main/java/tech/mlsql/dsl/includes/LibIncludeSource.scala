@@ -29,6 +29,7 @@ class LibIncludeSource extends IncludeSource with Logging {
     }
 
     val Array(website, user, repo) = libValue.split("/")
+    val libMirror = context.execListener.env().getOrElse("libMirror",website)
 
     val commitValue = options.getOrElse("commit", "")
     val aliasValue = options.getOrElse("alias", "")
@@ -43,7 +44,7 @@ class LibIncludeSource extends IncludeSource with Logging {
     libValue += ".git"
     libValue = "https://" + libValue
 
-    val finalProjectPath = PathFun(targetPath).add(website).add(user).add(repo).toPath
+    val finalProjectPath = PathFun(targetPath).add(libMirror).add(user).add(repo).toPath
 
     def cloneRepo = {
 
