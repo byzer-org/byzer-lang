@@ -85,11 +85,15 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
       }.toMap
 
 
-    val confTableValue = etParams.get(confTable.name).map(t=>session.table(t).collect().map{r=>
-      (r.getString(0),r.getString(1))
-    }.toMap).getOrElse(Map[String,String]())
-    
-    val runnerConf = getSchemaAndConf(envSession) ++ configureLogConf ++ confTableValue
+    val confTableValue = etParams.get(confTable.name).map(t => session.table(t).collect().map { r =>
+      (r.getString(0), r.getString(1))
+    }.toMap).getOrElse(Map[String, String]())
+
+    val runnerConf = Map(
+      "HOME" -> context.home,
+      "OWNER" -> context.owner,
+      "GROUP_ID" -> context.groupId) ++ getSchemaAndConf(envSession) ++ configureLogConf ++ confTableValue
+
     val timezoneID = session.sessionState.conf.sessionLocalTimeZone
     val df = session.table(sourceTable)
 
