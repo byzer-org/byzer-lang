@@ -49,7 +49,7 @@ class ScriptIncludeSource extends IncludeSource with Logging {
       rootPath.add(item)
     }
     var finalPath = rootPath.toPath
-    if (!finalPath.endsWith(".mlsql")) {
+    if (!finalPath.endsWith(".mlsql") && !finalPath.endsWith(".py")) {
       finalPath += ".mlsql"
     }
 
