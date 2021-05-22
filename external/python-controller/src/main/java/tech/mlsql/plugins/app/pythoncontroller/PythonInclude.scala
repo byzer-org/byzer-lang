@@ -33,7 +33,7 @@ class PythonInclude(override val uid: String) extends SQLAlg with VersionCompati
         val newdf = session.createDataset[String](Seq(item))
         newdf.createOrReplaceTempView(tableName)
         newdf.toDF()
-      case Array("local", path, tableName) =>
+      case Array("local", path, "named", tableName) =>
         val includer = new ScriptIncludeSource()
         val pythonCode = includer.fetchSource(session, path, Map())
         val item = JSONTool.toJsonStr(Map("content" -> pythonCode))
