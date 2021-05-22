@@ -56,8 +56,8 @@ class ScriptIncludeSource extends IncludeSource with Logging {
     newPathChunk.drop(1).foreach { item =>
       rootPath.add(item)
     }
-    rootPath.add(suffix)
-    var finalPath = rootPath.toPath
+
+    val finalPath = rootPath.toPath + "." + suffix
 
     Source.fromFile(finalPath).getLines().mkString("\n")
   }
