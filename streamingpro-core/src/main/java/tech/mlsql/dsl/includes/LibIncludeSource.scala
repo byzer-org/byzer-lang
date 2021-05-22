@@ -29,7 +29,7 @@ class LibIncludeSource extends IncludeSource with Logging {
     }
 
     val Array(website, user, repo) = libValue.split("/")
-    val libMirror = context.execListener.env().getOrElse("libMirror", website)
+    val libMirror = options.getOrElse("libMirror", website)
 
     val commitValue = options.getOrElse("commit", "")
     val aliasValue = options.getOrElse("alias", "")
