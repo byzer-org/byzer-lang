@@ -1,5 +1,6 @@
 package tech.mlsql.tool;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
@@ -21,11 +22,16 @@ public class TarfileUtil {
     private static Logger logger = Logger.getLogger(TarfileUtil.class);
 
     public static void walk(FileSystem fs, List<FileStatus> files, Path p) throws IOException {
-
         if (fs.isFile(p)) {
             files.add(fs.getFileStatus(p));
         } else if (fs.isDirectory(p)) {
-            walk(fs, files, p);
+            FileStatus[] fileStatusArr = fs.listStatus(p);
+            if (fileStatusArr != null && fileStatusArr.length > 0) {
+                for (FileStatus cur : fileStatusArr) {
+                    walk(fs, files, cur.getPath());
+                }
+            }
+
         }
     }
 
@@ -69,8 +75,8 @@ public class TarfileUtil {
                 for (FileStatus cur : files) {
                     logger.info("[" + i++ + "/" + len + "]" + ",读取文件" + cur);
                     inputStream = fs.open(cur.getPath());
-
-                    tarOutputStream.putNextEntry(new HDFSTarEntry(cur, cur.getPath().getName()));
+                    String entryName = StringUtils.stripStart(cur.getPath().toUri().getPath(),pathStr);
+                    tarOutputStream.putNextEntry(new HDFSTarEntry(cur, entryName));
                     org.apache.commons.io.IOUtils.copyLarge(inputStream, tarOutputStream);
                     inputStream.close();
 
