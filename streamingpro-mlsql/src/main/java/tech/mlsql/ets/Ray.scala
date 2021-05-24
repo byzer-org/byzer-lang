@@ -8,7 +8,7 @@ import org.apache.spark.ml.param.Param
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.mlsql.session.MLSQLException
 import org.apache.spark.sql.types._
-import org.apache.spark.sql.{DataFrame, Row, SparkSession, SparkUtils}
+import org.apache.spark.sql.{DataFrame, Row, SparkSession, SparkUtils, functions => f}
 import org.apache.spark.{MLSQLSparkUtils, SparkEnv, SparkInstanceService, TaskContext, WowRowEncoder}
 import streaming.core.datasource.util.MLSQLJobCollect
 import streaming.dsl.ScriptSQLExec
@@ -67,11 +67,6 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
     newdf
   }
 
-  private def isFileTypeTable(df: DataFrame): Boolean = {
-    if (df.schema.fields.length != 3) return false
-    val fields = df.schema.fields
-    fields(0).name == "start" && fields(1).name == "offset" && fields(2).name == "value" && fields(2).dataType == BinaryType
-  }
 
   private def distribute_execute(session: SparkSession, code: String, sourceTable: String, etParams: Map[String, String]) = {
     import scala.collection.JavaConverters._
@@ -113,7 +108,7 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
     var targetLen = df.rdd.partitions.length
 
 
-    val tempdf = if (!isFileTypeTable(df)) {
+    val tempdf = if (!MLSQLSparkUtils.isFileTypeTable(df)) {
       TryTool.tryOrElse {
         val resource = new SparkInstanceService(session).resources
         val jobInfo = new MLSQLJobCollect(session, context.owner)
@@ -130,7 +125,7 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
         } else df
       }
     } else {
-      df.repartition(1)
+      df.repartition(1).sortWithinPartitions(f.col("start").asc)
     }
 
     targetLen = tempdf.rdd.partitions.length
@@ -203,6 +198,8 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
         DataType.fromJson(runnerConf("schema")).asInstanceOf[StructType]
       case item if item.startsWith("st") =>
         SparkSimpleSchemaParser.parse(runnerConf("schema")).asInstanceOf[StructType]
+      case item if item == "file" =>
+        SparkSimpleSchemaParser.parse("st(field(start,long),field(offset,long),field(value,binary))").asInstanceOf[StructType]
       case _ =>
         StructType.fromDDL(runnerConf("schema"))
     }
