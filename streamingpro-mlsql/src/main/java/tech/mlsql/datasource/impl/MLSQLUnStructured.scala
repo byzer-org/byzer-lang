@@ -12,7 +12,7 @@ import org.apache.spark.sql.types.{BinaryType, LongType, StructField, StructType
 import org.apache.spark.sql.{functions => f, _}
 import org.kamranzafar.jtar.{TarEntry, TarInputStream}
 import tech.mlsql.common.utils.path.PathFun
-import tech.mlsql.tool.{HDFSOperatorV2, TarfileUtil, YieldByteArrayOutputStream}
+import tech.mlsql.tool.{HDFSOperatorV2, SparkTarfileUtil, TarfileUtil, YieldByteArrayOutputStream}
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -62,35 +62,12 @@ class MLSQLUnStructured(override val uid: String) extends MLSQLBaseFileSource wi
     val context = ScriptSQLExec.contextGetOrForTest()
     val targetPath = resourceRealPath(context.execListener, Option(context.owner), config.path)
     val rdd = config.df.get.repartition(1).sortWithinPartitions(f.col("start").asc).rdd
+    assert(rdd.partitions.length == 1,"rdd partition num should be 1")
     rdd.foreachPartition { iter =>
       if (!iter.hasNext) Seq[Row]().toIterator
       else {
         val fs = FileSystem.get(HDFSOperatorV2.hadoopConfiguration)
-        var currentBlockRow = iter.next()
-        var currentBuf = currentBlockRow.getAs[Array[Byte]]("value")
-        var currentBufPos = 0
-        val inputStream = new InputStream {
-          override def read(): Int = {
-            if (currentBufPos == currentBuf.length) {
-              val hasNext = iter.hasNext
-              if (hasNext) {
-                currentBlockRow = iter.next()
-                currentBuf = currentBlockRow.getAs[Array[Byte]]("value")
-                currentBufPos = 0
-              } else {
-                return -1
-              }
-            }
-            val b = currentBuf(currentBufPos)
-            currentBufPos += 1
-            b & 0xFF
-          }
-        }
-
-        //        val fio =  new FileOutputStream(new File("/tmp/wowowowow.tar"))
-        //        IOUtils.copy(inputStream,fio)
-        //        fio.close()
-        //        inputStream.close()
+        val inputStream = SparkTarfileUtil.buildInputStreamFromIterator(iter)
 
         val fileNames = new ArrayBuffer[String]()
         val tarInputStream = new TarInputStream(inputStream)
