@@ -67,6 +67,12 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
     newdf
   }
 
+  private def isFileTypeTable(df: DataFrame): Boolean = {
+    if (df.schema.fields.length != 3) return false
+    val fields = df.schema.fields
+    fields(0).name == "start" && fields(1).name == "offset" && fields(2).name == "value" && fields(2).dataType == BinaryType
+  }
+
   private def distribute_execute(session: SparkSession, code: String, sourceTable: String, etParams: Map[String, String]) = {
     import scala.collection.JavaConverters._
     val context = ScriptSQLExec.context()
@@ -107,20 +113,24 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
     var targetLen = df.rdd.partitions.length
 
 
-    val tempdf = TryTool.tryOrElse {
-      val resource = new SparkInstanceService(session).resources
-      val jobInfo = new MLSQLJobCollect(session, context.owner)
-      val leftResource = resource.totalCores - jobInfo.resourceSummary(null).activeTasks
-      logInfo(s"RayMode: Resource:[${leftResource}(${resource.totalCores}-${jobInfo.resourceSummary(null).activeTasks})] TargetLen:[${targetLen}]")
-      if (leftResource / 2 <= targetLen) {
-        df.repartition(Math.max(Math.floor(leftResource / 2) - 1, 1).toInt)
-      } else df
-    } {
-      //      WriteLog.write(List("Warning: Fail to detect instance resource. Setup 4 data server for Python.").toIterator, runnerConf)
-      logWarning(format("Warning: Fail to detect instance resource. Setup 4 data server for Python."))
-      if (targetLen > 4) {
-        df.repartition(4)
-      } else df
+    val tempdf = if (!isFileTypeTable(df)) {
+      TryTool.tryOrElse {
+        val resource = new SparkInstanceService(session).resources
+        val jobInfo = new MLSQLJobCollect(session, context.owner)
+        val leftResource = resource.totalCores - jobInfo.resourceSummary(null).activeTasks
+        logInfo(s"RayMode: Resource:[${leftResource}(${resource.totalCores}-${jobInfo.resourceSummary(null).activeTasks})] TargetLen:[${targetLen}]")
+        if (leftResource / 2 <= targetLen) {
+          df.repartition(Math.max(Math.floor(leftResource / 2) - 1, 1).toInt)
+        } else df
+      } {
+        //      WriteLog.write(List("Warning: Fail to detect instance resource. Setup 4 data server for Python.").toIterator, runnerConf)
+        logWarning(format("Warning: Fail to detect instance resource. Setup 4 data server for Python."))
+        if (targetLen > 4) {
+          df.repartition(4)
+        } else df
+      }
+    } else {
+      df.repartition(1)
     }
 
     targetLen = tempdf.rdd.partitions.length
