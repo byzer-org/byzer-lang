@@ -8,7 +8,7 @@ import org.apache.spark.ml.param.Param
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.mlsql.session.MLSQLException
 import org.apache.spark.sql.types._
-import org.apache.spark.sql.{DataFrame, Row, SparkSession, SparkUtils}
+import org.apache.spark.sql.{DataFrame, Row, SparkSession, SparkUtils, functions => f}
 import org.apache.spark.{MLSQLSparkUtils, SparkEnv, SparkInstanceService, TaskContext, WowRowEncoder}
 import streaming.core.datasource.util.MLSQLJobCollect
 import streaming.dsl.ScriptSQLExec
@@ -67,6 +67,7 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
     newdf
   }
 
+
   private def distribute_execute(session: SparkSession, code: String, sourceTable: String, etParams: Map[String, String]) = {
     import scala.collection.JavaConverters._
     val context = ScriptSQLExec.context()
@@ -107,20 +108,24 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
     var targetLen = df.rdd.partitions.length
 
 
-    val tempdf = TryTool.tryOrElse {
-      val resource = new SparkInstanceService(session).resources
-      val jobInfo = new MLSQLJobCollect(session, context.owner)
-      val leftResource = resource.totalCores - jobInfo.resourceSummary(null).activeTasks
-      logInfo(s"RayMode: Resource:[${leftResource}(${resource.totalCores}-${jobInfo.resourceSummary(null).activeTasks})] TargetLen:[${targetLen}]")
-      if (leftResource / 2 <= targetLen) {
-        df.repartition(Math.max(Math.floor(leftResource / 2) - 1, 1).toInt)
-      } else df
-    } {
-      //      WriteLog.write(List("Warning: Fail to detect instance resource. Setup 4 data server for Python.").toIterator, runnerConf)
-      logWarning(format("Warning: Fail to detect instance resource. Setup 4 data server for Python."))
-      if (targetLen > 4) {
-        df.repartition(4)
-      } else df
+    val tempdf = if (!MLSQLSparkUtils.isFileTypeTable(df)) {
+      TryTool.tryOrElse {
+        val resource = new SparkInstanceService(session).resources
+        val jobInfo = new MLSQLJobCollect(session, context.owner)
+        val leftResource = resource.totalCores - jobInfo.resourceSummary(null).activeTasks
+        logInfo(s"RayMode: Resource:[${leftResource}(${resource.totalCores}-${jobInfo.resourceSummary(null).activeTasks})] TargetLen:[${targetLen}]")
+        if (leftResource / 2 <= targetLen) {
+          df.repartition(Math.max(Math.floor(leftResource / 2) - 1, 1).toInt)
+        } else df
+      } {
+        //      WriteLog.write(List("Warning: Fail to detect instance resource. Setup 4 data server for Python.").toIterator, runnerConf)
+        logWarning(format("Warning: Fail to detect instance resource. Setup 4 data server for Python."))
+        if (targetLen > 4) {
+          df.repartition(4)
+        } else df
+      }
+    } else {
+      df.repartition(1).sortWithinPartitions(f.col("start").asc)
     }
 
     targetLen = tempdf.rdd.partitions.length
@@ -193,6 +198,8 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
         DataType.fromJson(runnerConf("schema")).asInstanceOf[StructType]
       case item if item.startsWith("st") =>
         SparkSimpleSchemaParser.parse(runnerConf("schema")).asInstanceOf[StructType]
+      case item if item == "file" =>
+        SparkSimpleSchemaParser.parse("st(field(start,long),field(offset,long),field(value,binary))").asInstanceOf[StructType]
       case _ =>
         StructType.fromDDL(runnerConf("schema"))
     }

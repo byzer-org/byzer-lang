@@ -1,5 +1,7 @@
 package tech.mlsql.ets.register
 
+import tech.mlsql.runtime.AppRuntimeStore
+
 import scala.collection.JavaConverters._
 
 
@@ -44,5 +46,6 @@ object ETRegister {
   register("ThenCommand", "tech.mlsql.ets.ifstmt.ThenCommand")
   register("FiCommand", "tech.mlsql.ets.ifstmt.FiCommand")
   register("ElseCommand", "tech.mlsql.ets.ifstmt.ElseCommand")
+  AppRuntimeStore.store.registerResultRender("ShowFileTable", "tech.mlsql.ets.ShowFileTable")
 
 }
