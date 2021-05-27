@@ -8,7 +8,7 @@ import org.apache.spark.ml.param.Param
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.mlsql.session.MLSQLException
 import org.apache.spark.sql.types._
-import org.apache.spark.sql.{DataFrame, Row, SparkSession, SparkUtils, functions => f}
+import org.apache.spark.sql.{DataFrame, Row, SparkSession, SparkUtils}
 import org.apache.spark.{MLSQLSparkUtils, SparkEnv, SparkInstanceService, TaskContext, WowRowEncoder}
 import streaming.core.datasource.util.MLSQLJobCollect
 import streaming.dsl.ScriptSQLExec
@@ -29,6 +29,7 @@ import tech.mlsql.ets.ray.{CollectServerInDriver, DataServer}
 import tech.mlsql.log.WriteLog
 import tech.mlsql.schema.parser.SparkSimpleSchemaParser
 import tech.mlsql.session.SetSession
+import tech.mlsql.tool.MasterSlaveInSpark
 import tech.mlsql.version.VersionCompatibility
 
 import scala.collection.mutable.ArrayBuffer
@@ -68,69 +69,40 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
   }
 
 
-  private def distribute_execute(session: SparkSession, code: String, sourceTable: String, etParams: Map[String, String]) = {
-    import scala.collection.JavaConverters._
+  private def computeSplits(session: SparkSession, df: DataFrame) = {
+    var targetLen = df.rdd.partitions.length
+    var sort = false
     val context = ScriptSQLExec.context()
-    val envSession = new SetSession(session, context.owner)
-    val envs = Map(
-      ScalaMethodMacros.str(PythonConf.PY_EXECUTE_USER) -> context.owner,
-      ScalaMethodMacros.str(PythonConf.PYTHON_ENV) -> "export ARROW_PRE_0_15_IPC_FORMAT=1"
-    ) ++
-      envSession.fetchPythonEnv.get.collect().map { f =>
-        if (f.k == ScalaMethodMacros.str(PythonConf.PYTHON_ENV)) {
-          (f.k, f.v + " && export ARROW_PRE_0_15_IPC_FORMAT=1")
-        } else {
-          (f.k, f.v)
+
+    MLSQLSparkUtils.isFileTypeTable(df) match {
+      case true =>
+        targetLen = 1
+        sort = true
+      case false =>
+        TryTool.tryOrElse {
+          val resource = new SparkInstanceService(session).resources
+          val jobInfo = new MLSQLJobCollect(session, context.owner)
+          val leftResource = resource.totalCores - jobInfo.resourceSummary(null).activeTasks
+          logInfo(s"RayMode: Resource:[${leftResource}(${resource.totalCores}-${jobInfo.resourceSummary(null).activeTasks})] TargetLen:[${targetLen}]")
+          if (leftResource / 2 <= targetLen) {
+            targetLen = Math.max(Math.floor(leftResource / 2) - 1, 1).toInt
+          }
+        } {
+          logWarning(format("Warning: Fail to detect instance resource. Setup 4 data server for Python."))
+          if (targetLen > 4) targetLen = 4
         }
+    }
 
-      }.toMap
+    (targetLen, sort)
+  }
 
-
-    val confTableValue = etParams.get(confTable.name).map(t => session.table(t).collect().map { r =>
-      (r.getString(0), r.getString(1))
-    }.toMap).getOrElse(Map[String, String]())
-
-    val runnerConf = Map(
-      "HOME" -> context.home,
-      "OWNER" -> context.owner,
-      "GROUP_ID" -> context.groupId) ++ getSchemaAndConf(envSession) ++ configureLogConf ++ confTableValue
-
-    val timezoneID = session.sessionState.conf.sessionLocalTimeZone
-    val df = session.table(sourceTable)
-
+  private def buildDataSocketServers(session: SparkSession, df: DataFrame, tempdf: DataFrame, _owner: String): CollectServerInDriver[String] = {
     val refs = new AtomicReference[ArrayBuffer[ReportHostAndPort]]()
     refs.set(ArrayBuffer[ReportHostAndPort]())
     val stopFlag = new AtomicReference[String]()
     stopFlag.set("false")
+
     val tempSocketServerInDriver = new CollectServerInDriver(refs, stopFlag)
-
-
-    var targetLen = df.rdd.partitions.length
-
-
-    val tempdf = if (!MLSQLSparkUtils.isFileTypeTable(df)) {
-      TryTool.tryOrElse {
-        val resource = new SparkInstanceService(session).resources
-        val jobInfo = new MLSQLJobCollect(session, context.owner)
-        val leftResource = resource.totalCores - jobInfo.resourceSummary(null).activeTasks
-        logInfo(s"RayMode: Resource:[${leftResource}(${resource.totalCores}-${jobInfo.resourceSummary(null).activeTasks})] TargetLen:[${targetLen}]")
-        if (leftResource / 2 <= targetLen) {
-          df.repartition(Math.max(Math.floor(leftResource / 2) - 1, 1).toInt)
-        } else df
-      } {
-        //      WriteLog.write(List("Warning: Fail to detect instance resource. Setup 4 data server for Python.").toIterator, runnerConf)
-        logWarning(format("Warning: Fail to detect instance resource. Setup 4 data server for Python."))
-        if (targetLen > 4) {
-          df.repartition(4)
-        } else df
-      }
-    } else {
-      df.repartition(1).sortWithinPartitions(f.col("start").asc)
-    }
-
-    targetLen = tempdf.rdd.partitions.length
-    logInfo(s"RayMode: Final TargetLen ${targetLen}")
-    val _owner = ScriptSQLExec.context().owner
 
     val thread = new Thread("temp-data-server-in-spark") {
       override def run(): Unit = {
@@ -174,24 +146,55 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
     }
     thread.setDaemon(true)
     thread.start()
+    tempSocketServerInDriver
+  }
 
-    var clockTimes = 120
-    while (targetLen != refs.get().length && clockTimes >= 0) {
-      Thread.sleep(500)
-      clockTimes -= 1
-    }
-    if (clockTimes < 0) {
-      throw new RuntimeException(s"fail to start data socket server. targetLen:${targetLen} actualLen:${refs.get().length}")
-    }
-    tempSocketServerInDriver.shutdown
 
-    def isSchemaJson() = {
-      runnerConf("schema").trim.startsWith("{")
+  private def distribute_execute(session: SparkSession, code: String, sourceTable: String, etParams: Map[String, String]) = {
+    import scala.collection.JavaConverters._
+    val context = ScriptSQLExec.context()
+    val envSession = new SetSession(session, context.owner)
+    val envs = Map(
+      ScalaMethodMacros.str(PythonConf.PY_EXECUTE_USER) -> context.owner,
+      ScalaMethodMacros.str(PythonConf.PYTHON_ENV) -> "export ARROW_PRE_0_15_IPC_FORMAT=1"
+    ) ++
+      envSession.fetchPythonEnv.get.collect().map { f =>
+        if (f.k == ScalaMethodMacros.str(PythonConf.PYTHON_ENV)) {
+          (f.k, f.v + " && export ARROW_PRE_0_15_IPC_FORMAT=1")
+        } else {
+          (f.k, f.v)
+        }
+
+      }.toMap
+
+
+    val confTableValue = etParams.get(confTable.name).map(t => session.table(t).collect().map { r =>
+      (r.getString(0), r.getString(1))
+    }.toMap).getOrElse(Map[String, String]())
+
+    var runnerConf = Map(
+      "HOME" -> context.home,
+      "OWNER" -> context.owner,
+      "GROUP_ID" -> context.groupId) ++ getSchemaAndConf(envSession) ++ configureLogConf ++ confTableValue
+
+    val timezoneID = session.sessionState.conf.sessionLocalTimeZone
+    val df = session.table(sourceTable)
+
+    // start spark data servers for model if user configure model table in et params.
+    val modelTableOpt = etParams.get("model")
+    if (modelTableOpt.isDefined) {
+      val modelDf = session.table(modelTableOpt.get)
+      val modelServer = new MasterSlaveInSpark("temp-model-server-in-spark", session, context.owner)
+      modelServer.build(modelDf, MasterSlaveInSpark.defaultDataServerImpl)
+      modelServer.waitWithTimeout(60)
+      runnerConf ++= Map("modelServers" -> modelServer.dataServers.get().map(item => s"${item.host}:${item.port}").mkString(","))
     }
 
-    def isSimpleSchema() = {
-      runnerConf("schema").trim.startsWith("st")
-    }
+    // start spark data servers for dataset
+    val masterSlaveInSpark = new MasterSlaveInSpark("temp-data-server-in-spark", session, context.owner)
+    masterSlaveInSpark.build(df, MasterSlaveInSpark.defaultDataServerImpl)
+    masterSlaveInSpark.waitWithTimeout(60)
+
 
     val targetSchema = runnerConf("schema").trim match {
       case item if item.startsWith("{") =>
@@ -210,12 +213,10 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
 
     val stage1_schema = if (dataMode == "data") dataModeSchema else targetSchema
     val stage2_schema = targetSchema
-
-
-    import session.implicits._
     val runIn = runnerConf.getOrElse("runIn", "executor")
     val pythonVersion = runnerConf.getOrElse("pythonVersion", "3.6")
-    val newdf = session.createDataset[DataServer](refs.get().map(f => DataServer(f.host, f.port, timezoneID))).repartition(1)
+    import session.implicits._
+    val newdf = session.createDataset[DataServer](masterSlaveInSpark.dataServers.get().map(f => DataServer(f.host, f.port, timezoneID))).repartition(1)
     val sourceSchema = newdf.schema
     val outputDF = runIn match {
       case "executor" =>
@@ -242,7 +243,7 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
 
         SparkUtils.internalCreateDataFrame(session, data, stage1_schema, false)
       case "driver" =>
-        val dataServers = refs.get().map(f => DataServer(f.host, f.port, timezoneID))
+        val dataServers = masterSlaveInSpark.dataServers.get().map(f => DataServer(f.host, f.port, timezoneID))
         val convert = WowRowEncoder.fromRow(sourceSchema)
         val stage1_schema_encoder = WowRowEncoder.toRow(stage1_schema)
         val envs4j = new util.HashMap[String, String]()
