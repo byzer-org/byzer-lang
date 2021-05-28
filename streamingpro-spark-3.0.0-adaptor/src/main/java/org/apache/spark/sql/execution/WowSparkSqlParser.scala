@@ -19,6 +19,7 @@
 package org.apache.spark.sql.execution
 
 import org.apache.spark.sql.catalyst.TableIdentifier
+import org.apache.spark.sql.catalyst.parser.ParserUtils.withOrigin
 import org.apache.spark.sql.catalyst.parser.SqlBaseParser._
 import org.apache.spark.sql.catalyst.parser._
 import org.apache.spark.sql.catalyst.plans.logical._
@@ -64,19 +65,40 @@ class WowSparkSqlParser(conf: SQLConf) extends AbstractSqlParser {
 class WowSparkSqlAstBuilder(conf: SQLConf) extends SparkSqlAstBuilder {
   override def visitTableIdentifier(ctx: TableIdentifierContext): TableIdentifier = {
     val ti = super.visitTableIdentifier(ctx)
+    TableHolder.tables.get() += WowTableIdentifier(ti.table, ti.database, None)
+    ti
+  }
 
-    val ifInsert = ctx.parent.getChild(0).getText match {
+  override def visitCreateTableHeader(ctx: CreateTableHeaderContext): TableHeader = withOrigin(ctx) {
+    val tableHeader = super.visitCreateTableHeader(ctx)
+
+    TableHolder.tablesSet(tableHeader._1, None)
+    tableHeader
+  }
+
+  override def visitMultipartIdentifier(ctx: MultipartIdentifierContext): Seq[String] = {
+    val multipartIdentifier = super.visitMultipartIdentifier(ctx)
+
+    val ifInsert = ctx.parent.getChild(0).getText.toLowerCase match {
       case "insert" => Some("insert")
       case _ => None
     }
 
-    TableHolder.tables.get() += WowTableIdentifier(ti.table, ti.database, ifInsert)
-    ti
+    TableHolder.tablesSet(multipartIdentifier, ifInsert)
+    multipartIdentifier
   }
+
 }
 
 object TableHolder {
   val tables: ThreadLocal[ArrayBuffer[WowTableIdentifier]] = new ThreadLocal[ArrayBuffer[WowTableIdentifier]]
+
+  def tablesSet(multipartIdentifier: Seq[String], oprationType: Option[String]) = multipartIdentifier.size match {
+    case 2 => TableHolder.tables.get() += WowTableIdentifier(multipartIdentifier(1), Option(multipartIdentifier.head), oprationType)
+    case 1 => TableHolder.tables.get() += WowTableIdentifier(multipartIdentifier.head, None, oprationType)
+    case _ =>
+  }
+
 }
 
 case class WowTableIdentifier(table: String, database: Option[String], operator: Option[String]) {
