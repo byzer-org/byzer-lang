@@ -2,17 +2,24 @@ package tech.mlsql.plugins.app.pythoncontroller
 
 import java.io.File
 import java.nio.charset.Charset
+import java.util
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicReference
 
+import net.sf.json.{JSONArray, JSONObject}
 import org.apache.commons.io.FileUtils
-import org.apache.spark.TaskContext
+import org.apache.spark.sql.Row
+import org.apache.spark.sql.types.{StringType, StructField, StructType}
 import org.apache.spark.util.TaskCompletionListener
+import org.apache.spark.{TaskContext, WowRowEncoder}
 import streaming.dsl.ScriptSQLExec
 import tech.mlsql.app.CustomController
 import tech.mlsql.arrow.python.PythonWorkerFactory
-import tech.mlsql.arrow.python.runner.{PythonConf, PythonErrException, PythonProjectRunner}
+import tech.mlsql.arrow.python.iapp.{AppContextImpl, JavaContext}
+import tech.mlsql.arrow.python.runner._
 import tech.mlsql.common.utils.lang.sc.ScalaMethodMacros
+import tech.mlsql.common.utils.lang.sc.ScalaMethodMacros.str
+import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.common.utils.path.PathFun
 import tech.mlsql.common.utils.serder.json.JSONTool
 import tech.mlsql.dsl.CommandCollection
@@ -23,18 +30,79 @@ import tech.mlsql.runtime.AppRuntimeStore
 import tech.mlsql.session.SetSession
 import tech.mlsql.version.VersionCompatibility
 
+import scala.collection.JavaConverters._
+
 /**
  * 15/1/2020 WilliamZhu(allwefantasy@gmail.com)
  */
 class PythonApp extends tech.mlsql.app.App with VersionCompatibility {
   override def run(args: Seq[String]): Unit = {
     AppRuntimeStore.store.registerController("python", classOf[PythonController].getName)
+    AppRuntimeStore.store.registerController("pyPredict", classOf[PredictController].getName)
+    AppRuntimeStore.store.registerController("pyRegister", classOf[RegisterCodeController].getName)
     ETRegister.register("PythonInclude", classOf[PythonInclude].getName)
     CommandCollection.refreshCommandMapping(Map("pyInclude" -> "PythonInclude"))
   }
 
-  override def supportedVersions: Seq[String] = Seq("1.5.0-SNAPSHOT", "1.5.0", "1.6.0-SNAPSHOT", "1.6.0")
+  override def supportedVersions: Seq[String] = Seq()
 }
+
+object RegisterCodeController {
+  val CODE_CACHE = new java.util.concurrent.ConcurrentHashMap[String, String]()
+}
+
+class RegisterCodeController extends CustomController with Logging {
+
+  override def run(params: Map[String, String]): String = {
+    val name = params("codeName")
+    val code = params("code")
+    RegisterCodeController.CODE_CACHE.put(name, code)
+    JSONTool.toJsonStr(Map())
+  }
+}
+
+class PredictController extends CustomController with Logging {
+  override def run(params: Map[String, String]): String = {
+    val env = params.getOrElse("env", ":") + " && export ARROW_PRE_0_15_IPC_FORMAT=1 "
+    val codeName = params.getOrElse("codeName", "")
+    val code = RegisterCodeController.CODE_CACHE.get(codeName)
+    if (code == null) {
+      throw new IllegalArgumentException(s"codeName ${codeName} is not register yet")
+    }
+
+    val envs = new util.HashMap[String, String]()
+    envs.put(str(PythonConf.PYTHON_ENV), env)
+
+    val pythonVersion = params.getOrElse("pythonVersion", "3.6")
+
+
+    val inputSchema = StructType(Seq(StructField("key", StringType), StructField("value", StringType)))
+    val decoder = WowRowEncoder.fromRow(inputSchema)
+
+    //val outputSchema = StructType(Seq(StructField("value", StringType)))
+    val pythonStartTime = System.currentTimeMillis()
+    val batch = new ArrowPythonRunner(
+      Seq(ChainedPythonFunctions(Seq(PythonFunction(
+        code, envs, "python", pythonVersion)))), inputSchema,
+      "GMT", Map()
+    )
+    val newIter = params.map(r => Row.fromSeq(Seq(r._1, r._2))).map { irow =>
+      decoder(irow).copy()
+    }.iterator
+    val javaConext = new JavaContext
+    val commonTaskContext = new AppContextImpl(javaConext, batch)
+    val columnarBatchIter = batch.compute(Iterator(newIter), TaskContext.getPartitionId(), commonTaskContext)
+    val content = new JSONArray()
+    columnarBatchIter.flatMap { batch =>
+      batch.rowIterator.asScala
+    }.map(r => r.copy()).toList.foreach(item => content.add(JSONObject.fromObject(item.getString(0))))
+    javaConext.markComplete
+    javaConext.close
+    logInfo(s"Python execute time:${System.currentTimeMillis() - pythonStartTime}")
+    content.toString()
+  }
+}
+
 
 class PythonController extends CustomController {
   override def run(params: Map[String, String]): String = {
