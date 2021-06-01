@@ -117,6 +117,7 @@
         <mysql-binlog-version>1.0.1</mysql-binlog-version>
         <spark-adhoc-kafka.version>0.1.2</spark-adhoc-kafka.version>
         <kylin-jdbc.version>3.1.0</kylin-jdbc.version>
+        <fastjson.version>1.2.32</fastjson.version>
     </properties>
 
     <!--    <repositories>-->
@@ -888,6 +889,12 @@
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-core</artifactId>
             <version>${logback.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>fastjson</artifactId>
+            <version>${fastjson.version}</version>
         </dependency>
 
     </dependencies>

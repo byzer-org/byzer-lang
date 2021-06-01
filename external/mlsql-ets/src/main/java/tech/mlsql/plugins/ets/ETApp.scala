@@ -35,6 +35,8 @@ class ETApp extends tech.mlsql.app.App with VersionCompatibility {
 
     ETRegister.register("SchemaCommand", classOf[SchemaCommand].getName)
     ETRegister.register("StreamJobs", classOf[StreamJobs].getName)
+    ETRegister.register("AutoModel", classOf[AutoModel].getName)
+    ETRegister.register("BuildSegment", classOf[BuildSegment].getName)
     //    CommandCollection.refreshCommandMapping(Map("emptyTable" -> "SchemaCommand"))
   }
 
