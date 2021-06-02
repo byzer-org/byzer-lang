@@ -80,7 +80,10 @@ object MLSQLUtils {
       accumulatorUpdates = Nil,
       tasks = None,
       executorSummary = None,
-      killedTasksSummary = Map())
+      killedTasksSummary = Map(),
+      resourceProfileId=0,
+      peakExecutorMetrics=None
+    )
 
   }
 

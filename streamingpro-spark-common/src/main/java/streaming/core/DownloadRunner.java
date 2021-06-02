@@ -28,6 +28,7 @@ import org.kamranzafar.jtar.TarOutputStream;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.BufferedOutputStream;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -39,10 +40,10 @@ public class DownloadRunner {
 
     private static Logger logger = Logger.getLogger(DownloadRunner.class);
 
-    public static int getTarFileByPath(HttpServletResponse res, String pathStr) {
+    public static int createTarFileStream(OutputStream output, String pathStr) {
         String[] paths = pathStr.split(",");
         try {
-            OutputStream outputStream = res.getOutputStream();
+            OutputStream outputStream = output;
 
             TarOutputStream tarOutputStream = new TarOutputStream(new BufferedOutputStream(outputStream));
 
@@ -91,6 +92,15 @@ public class DownloadRunner {
             e.printStackTrace();
             return 500;
 
+        }
+    }
+
+    public static int getTarFileByPath(HttpServletResponse res, String pathStr) {
+        try {
+            return createTarFileStream(res.getOutputStream(), pathStr);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return 500;
         }
     }
 

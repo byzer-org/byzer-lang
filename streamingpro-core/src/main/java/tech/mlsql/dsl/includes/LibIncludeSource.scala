@@ -29,6 +29,7 @@ class LibIncludeSource extends IncludeSource with Logging {
     }
 
     val Array(website, user, repo) = libValue.split("/")
+    val libMirror = options.getOrElse("libMirror", website)
 
     val commitValue = options.getOrElse("commit", "")
     val aliasValue = options.getOrElse("alias", "")
@@ -40,8 +41,8 @@ class LibIncludeSource extends IncludeSource with Logging {
     if (!targetFile.exists()) {
       targetFile.mkdirs()
     }
-    libValue += ".git"
-    libValue = "https://" + libValue
+
+    libValue = s"https://${libMirror}/${user}/${repo}.git"
 
     val finalProjectPath = PathFun(targetPath).add(website).add(user).add(repo).toPath
 
@@ -71,8 +72,8 @@ class LibIncludeSource extends IncludeSource with Logging {
       throw new IllegalArgumentException(s"${libValue} is not a valid MLSQL project.")
     }
     val envSession = new SetSession(sparkSession, context.owner)
-    envSession.set(s"__lib__${aliasValue}",finalProjectPath,Map(SetSession.__MLSQL_CL__ -> SetSession.SET_STATEMENT_CL))
-//    context.execListener.env().put(s"__lib__${aliasValue}", finalProjectPath)
+    envSession.set(s"__lib__${aliasValue}", finalProjectPath, Map(SetSession.__MLSQL_CL__ -> SetSession.SET_STATEMENT_CL))
+    //    context.execListener.env().put(s"__lib__${aliasValue}", finalProjectPath)
     logInfo(s"Clone project ${libValue} alias ${aliasValue} to ${finalProjectPath} ")
     "run command as EmptyTable.``;"
   }
