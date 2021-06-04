@@ -80,7 +80,7 @@
         <guava.version>16.0</guava.version>
         <jetty.version>9.2.16.v20160414</jetty.version>
 
-        <httpclient.version>4.5.3</httpclient.version>
+        <httpclient.version>4.5.13</httpclient.version>
         <lift-json.version>3.4.1</lift-json.version>
         <jsoup.version>1.11.2</jsoup.version>
         <druid.version>1.1.16</druid.version>
