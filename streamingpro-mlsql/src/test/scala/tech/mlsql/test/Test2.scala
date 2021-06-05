@@ -1,39 +1,32 @@
 package tech.mlsql.test
 
-import org.apache.spark.sql.{DataFrameWriter, Row}
-import org.apache.spark.sql.catalyst.util.CaseInsensitiveMap
-import tech.mlsql.common.utils.lang.sc.ScalaReflect
-import scala.collection.JavaConversions._
+import org.apache.spark.streaming.BasicSparkOperation
+import streaming.core.strategy.platform.SparkRuntime
+import streaming.core.{BasicMLSQLConfig, SpecFunctions}
 
 /**
  * 10/11/2020 WilliamZhu(allwefantasy@gmail.com)
  */
-object Test2 {
-  def main(args: Array[String]): Unit = {
-    val jack1 = new Jack()
-    val jack2 = new Jack2()
-    val extraOptions = ScalaReflect.fromInstance[BaseJack](jack2)
-      .method("extraOptions").invoke()
-      .asInstanceOf[{def toMap[T, U](implicit ev: _ <:< (T, U)): scala.collection.immutable.Map[T, U] }]
+class Test2 extends BasicSparkOperation with SpecFunctions with BasicMLSQLConfig {
 
-//    ScalaReflect.fromInstance[BaseJack](jack1)
-//      .method("extraOptions").invoke().getClass.getMethods.map(item=>println(item))
-//    println("===")
-//    ScalaReflect.fromInstance[BaseJack](jack2)
-//      .method("extraOptions").invoke().getClass.getMethods.map(item=>println(item))
-    println(extraOptions.toMap[String,String])
+
+  "data-drive" should "framework" in {
+    withContext(setupBatchContext(batchParamsWithoutHive)) { runtime: SparkRuntime =>
+      val session = runtime.sparkSession
+      //RDD
+      session.sparkContext.
+        parallelize(Seq(10), 2).
+        mapPartitions { iter =>
+        iter.foreach(item => println(item))
+        iter
+      }.
+        collect()
+
+
+    }
   }
+
+
 }
 
-class BaseJack {
-  
-}
-class Jack extends BaseJack {
-  private var extraOptions = CaseInsensitiveMap[String](Map.empty)
-  extraOptions.toMap
-}
 
-class Jack2 extends BaseJack{
-  private var extraOptions = scala.collection.mutable.HashMap[String, String]()
-  extraOptions.toMap
-}
