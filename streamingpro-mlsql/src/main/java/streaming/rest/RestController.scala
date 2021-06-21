@@ -110,8 +110,7 @@ class RestController extends ApplicationController with WowLog {
     val sparkSession = getSession
 
     accessAuth(sparkSession)
-
-    val htp = findService(classOf[HttpTransportService])
+    
     if (paramAsBoolean("async", false) && !params().containsKey("callback")) {
       render(400, "when async is set true ,then you should set callback url")
     }
@@ -139,7 +138,7 @@ class RestController extends ApplicationController with WowLog {
               outputResult = getScriptResult(context, sparkSession)
 
               val maxTries = Math.max(0, paramAsInt("maxRetries", -1)) + 1
-              val response = RestUtils.executeWithRetrying[HttpResponse](maxTries)(
+              RestUtils.executeWithRetrying[HttpResponse](maxTries)(
                 RestUtils.httpClientPost(urlString,
                   Map("stat" -> s"""succeeded""",
                     "res" -> outputResult,
@@ -148,7 +147,6 @@ class RestController extends ApplicationController with WowLog {
                 response => logger.error(s"Succeeded SQL callback request failed after ${maxTries} attempts, " +
                   s"the last response status is: ${response.getStatusLine.getStatusCode}.")
               )
-              RestUtils.convertResponse(response, urlString)
             } catch {
               case e: Exception =>
                 e.printStackTrace()
@@ -156,11 +154,10 @@ class RestController extends ApplicationController with WowLog {
                 if (paramAsBoolean("show_stack", false)) {
                   format_full_exception(msgBuffer, e)
                 }
-                val response = RestUtils.httpClientPost(urlString,
+                RestUtils.httpClientPost(urlString,
                   Map("stat" -> s"""failed""",
                     "res" -> (e.getMessage + "\n" + msgBuffer.mkString("\n")),
                     "jobInfo" -> JSONTool.toJsonStr(jobInfo)))
-                RestUtils.convertResponse(response, urlString)
             }
           })
         } else {
