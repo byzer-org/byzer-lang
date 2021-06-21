@@ -127,7 +127,7 @@ class RestController extends ApplicationController with WowLog {
         if (paramAsBoolean("async", false)) {
           JobManager.asyncRun(sparkSession, jobInfo, () => {
             val urlString = param("callback")
-
+            val maxTries = Math.max(0, paramAsInt("maxRetries", -1)) + 1
             try {
               ScriptSQLExec.parse(param("sql"), context,
                 skipInclude = paramAsBoolean("skipInclude", false),
@@ -137,7 +137,6 @@ class RestController extends ApplicationController with WowLog {
 
               outputResult = getScriptResult(context, sparkSession)
 
-              val maxTries = Math.max(0, paramAsInt("maxRetries", -1)) + 1
               RestUtils.executeWithRetrying[HttpResponse](maxTries)(
                 RestUtils.httpClientPost(urlString,
                   Map("stat" -> s"""succeeded""",
@@ -154,10 +153,18 @@ class RestController extends ApplicationController with WowLog {
                 if (paramAsBoolean("show_stack", false)) {
                   format_full_exception(msgBuffer, e)
                 }
-                RestUtils.httpClientPost(urlString,
-                  Map("stat" -> s"""failed""",
-                    "res" -> (e.getMessage + "\n" + msgBuffer.mkString("\n")),
-                    "jobInfo" -> JSONTool.toJsonStr(jobInfo)))
+
+                RestUtils.executeWithRetrying[HttpResponse](maxTries)(
+                  RestUtils.httpClientPost(urlString,
+                    Map("stat" -> s"""failed""",
+                      "res" -> (e.getMessage + "\n" + msgBuffer.mkString("\n")),
+                      "jobInfo" -> JSONTool.toJsonStr(jobInfo))),
+                  HttpStatus.SC_OK == _.getStatusLine.getStatusCode,
+                  response => logger.error(s"Fail SQL callback request failed after ${maxTries} attempts, " +
+                    s"the last response status is: ${response.getStatusLine.getStatusCode}.")
+                )
+
+
             }
           })
         } else {
