@@ -2,7 +2,6 @@ package tech.mlsql.plugins.sql.profiler
 
 import tech.mlsql.dsl.CommandCollection
 import tech.mlsql.ets.register.ETRegister
-import tech.mlsql.indexer.{CubeIndexerBuilder, CubeIndexerQuery}
 import tech.mlsql.runtime.AppRuntimeStore
 import tech.mlsql.version.VersionCompatibility
 
@@ -15,8 +14,6 @@ class ProfilerApp extends tech.mlsql.app.App with VersionCompatibility {
     AppRuntimeStore.store.registerController("indexRewrite", classOf[IndexerRewriteController].getName)
     ETRegister.register(ProfilerApp.MODULE_NAME, classOf[ProfilerCommand].getName)
     ETRegister.register("ZOrdering", classOf[ZOrdering].getName)
-    ETRegister.register("CubeIndexerBuilder", classOf[CubeIndexerBuilder].getName)
-    ETRegister.register("CubeIndexerQuery", classOf[CubeIndexerQuery].getName)
     CommandCollection.refreshCommandMapping(Map(ProfilerApp.COMMAND_NAME -> ProfilerApp.MODULE_NAME))
     AppRuntimeStore.store.registerResultRender("IndexerPlugin", classOf[IndexerPlugin].getName)
   }
