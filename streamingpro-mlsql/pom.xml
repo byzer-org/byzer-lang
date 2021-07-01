@@ -267,6 +267,9 @@
 
         <profile>
             <id>streamingpro-spark-2.4.0-adaptor</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
             <dependencies>
 
                 <dependency>
