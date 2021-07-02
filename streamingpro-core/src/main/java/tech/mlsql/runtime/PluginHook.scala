@@ -4,13 +4,15 @@ import org.apache.spark.SparkCoreVersion
 import streaming.core.strategy.platform.{SparkRuntime, StreamingRuntime}
 import tech.mlsql.common.utils.classloader.ClassLoaderTool
 import tech.mlsql.common.utils.log.Logging
+import tech.mlsql.common.utils.reflect.ClassPath
 import tech.mlsql.dsl.includes.PluginIncludeSource
 import tech.mlsql.runtime.plugins._
 import tech.mlsql.store.DBStore
+import scala.collection.JavaConverters._
 
 /**
- * 2019-09-12 WilliamZhu(allwefantasy@gmail.com)
- */
+  * 2019-09-12 WilliamZhu(allwefantasy@gmail.com)
+  */
 class PluginHook extends MLSQLPlatformLifecycle with Logging {
 
   override def beforeRuntime(params: Map[String, String]): Unit = {}
@@ -35,6 +37,10 @@ class PluginHook extends MLSQLPlatformLifecycle with Logging {
       params.get("streaming.plugin.clzznames").
         map(item => item.split(",")).
         getOrElse(Array[String]()))
+
+    PluginHook.startExtendedApps(params.get("streaming.plugin.packages")
+      .map(item => item.split(","))
+      .getOrElse(Array[String]()))
 
 
     if (!params.contains("streaming.datalake.path")) return
@@ -113,4 +119,30 @@ object PluginHook extends Logging {
     }
 
   }
+
+  def startExtendedApps(packages: Array[String]): Unit = {
+    if (SparkCoreVersion.is_2_3_X()) {
+      return
+    }
+    packages.foreach { pkgName => startAppInPackage(pkgName)}
+  }
+
+
+  private def startAppInPackage(name: String): Unit = {
+    ClassPath.from(getClass.getClassLoader).getTopLevelClasses(name).asScala.foreach { clazzInfo =>
+      try {
+        val app = ClassLoaderTool.classForName(clazzInfo.getName).newInstance()
+        if (app.isInstanceOf[tech.mlsql.app.App]) {
+          app.asInstanceOf[tech.mlsql.app.App].run(Seq[String]())
+        }
+      } catch {
+        case e: Exception =>
+          logInfo("Fail to start plugin from given package", e)
+      }
+    }
+  }
+
+
+
+
 }
