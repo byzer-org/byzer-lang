@@ -19,9 +19,9 @@
 package streaming.dsl.mmlib.algs
 
 import java.net.URLEncoder
-
 import net.csdn.common.reflect.ReflectHelper
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
+import org.apache.commons.io.IOUtils
 import org.apache.http.HttpResponse
 import org.apache.http.client.fluent.Request
 import org.apache.spark.ml.param.Param
@@ -35,8 +35,9 @@ import streaming.log.WowLog
 import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.common.utils.path.PathFun
 import tech.mlsql.dsl.adaptor.DslTool
-import tech.mlsql.tool.HDFSOperatorV2
+import tech.mlsql.tool.{DecompressUtil, HDFSOperatorV2}
 
+import java.io.ByteArrayInputStream
 import scala.collection.mutable.ArrayBuffer
 
 /**
@@ -123,9 +124,15 @@ class SQLDownloadExt(override val uid: String) extends SQLAlg with DslTool with 
         if (tarIS.canReadEntryData(entry)) {
           if (!entry.isDirectory) {
             val dir = entry.getName.split("/").filterNot(f => f.isEmpty).dropRight(1).mkString("/")
-            downloadResultRes += DownloadResult(PathFun(originalTo).add(dir).add(entry.getName.split("/").last).toPath)
+            val fileName = entry.getName.split("/").last
+            downloadResultRes += DownloadResult(PathFun(originalTo).add(dir).add(fileName).toPath)
             logInfo(format(s"extracting ${downloadResultRes.last.hdfsPath}"))
-            HDFSOperatorV2.saveStream($(to) + "/" + dir, entry.getName.split("/").last, tarIS)
+            if (DecompressUtil.isArchiveFile(fileName)){
+              val baIS = new ByteArrayInputStream(IOUtils.toByteArray(tarIS))
+              DecompressUtil.decompressAndSaveStream($(to) + "/" + dir, fileName, baIS)
+            }else{
+              HDFSOperatorV2.saveStream($(to) + "/" + dir,fileName , tarIS)
+            }
           }
           entry = tarIS.getNextEntry
         }
