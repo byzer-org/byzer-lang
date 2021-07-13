@@ -40,28 +40,28 @@ import scala.collection.mutable.ArrayBuffer
 class Ray(override val uid: String) extends SQLAlg with VersionCompatibility with Functions with WowParams {
   def this() = this(BaseParams.randomUID())
 
-  //
+  def genCode(spark: SparkSession, code: String) = {
+    if (code.startsWith("py.")) {
+      val content = spark.table(code.split("\\.").last).collect().head.getString(0)
+      val value = JSONTool.parseJson[Map[String, String]](content)
+      value("content")
+    } else code
+  }
+
+
   override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
     val spark = df.sparkSession
 
-    def genCode(code: String) = {
-      if (code.startsWith("py.")) {
-        val content = spark.table(code.split("\\.").last).collect().head.getString(0)
-        val value = JSONTool.parseJson[Map[String, String]](content)
-        value("content")
-      } else code
-    }
 
     val envSession = new SetSession(spark, ScriptSQLExec.context().owner)
     envSession.set("pythonMode", "ray", Map(SetSession.__MLSQL_CL__ -> SetSession.PYTHON_RUNNER_CONF_CL))
 
-
     val newdf = Array(params(inputTable.name), params(code.name), params(outputTable.name)) match {
       case Array(input, code, "") =>
-        distribute_execute(spark, genCode(code), input, params)
+        distribute_execute(spark, genCode(spark, code), input, params)
 
       case Array(input, code, output) =>
-        val resDf = distribute_execute(spark, genCode(code), input, params)
+        val resDf = distribute_execute(spark, genCode(spark, code), input, params)
         resDf.createOrReplaceTempView(output)
         resDf
     }
@@ -367,10 +367,89 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
 
   override def batchPredict(df: DataFrame, path: String, params: Map[String, String]): DataFrame = train(df, path, params)
 
-  override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = ???
+  override def load(session: SparkSession, path: String, params: Map[String, String]): Any = {
+    val registerCode = params.getOrElse("registerCode", "")
+    val envSession = new SetSession(session, ScriptSQLExec.context().owner)
+    envSession.set("pythonMode", "ray", Map(SetSession.__MLSQL_CL__ -> SetSession.PYTHON_RUNNER_CONF_CL))
+    distribute_execute(session, genCode(session, registerCode), "command", params ++ Map("model" -> path))
+    return null
+  }
 
-  override def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = ???
+  override def predict(session: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = {
 
+    val predictCode = params.getOrElse("predictCode", "")
+    val context = ScriptSQLExec.context()
+    val envSession = new SetSession(session, context.owner)
+    envSession.set("pythonMode", "ray", Map(SetSession.__MLSQL_CL__ -> SetSession.PYTHON_RUNNER_CONF_CL))
+    val envs = Map(
+      ScalaMethodMacros.str(PythonConf.PY_EXECUTE_USER) -> context.owner,
+      ScalaMethodMacros.str(PythonConf.PYTHON_ENV) -> "export ARROW_PRE_0_15_IPC_FORMAT=1"
+    ) ++
+      envSession.fetchPythonEnv.get.collect().map { f =>
+        if (f.k == ScalaMethodMacros.str(PythonConf.PYTHON_ENV)) {
+          (f.k, f.v + " && export ARROW_PRE_0_15_IPC_FORMAT=1")
+        } else {
+          (f.k, f.v)
+        }
+
+      }.toMap
+
+    val envs4j = new util.HashMap[String, String]()
+    envs.foreach(f => envs4j.put(f._1, f._2))
+
+    val timezoneID = session.sessionState.conf.sessionLocalTimeZone
+
+    val runnerConf = Map(
+      "HOME" -> context.home,
+      "OWNER" -> context.owner,
+      "GROUP_ID" -> context.groupId,
+      "directData" -> "true"
+    ) ++ getSchemaAndConf(envSession) ++ configureLogConf
+
+    val pythonVersion = runnerConf.getOrElse("pythonVersion", "3.6")
+
+    session.udf.register(name, (vectors: Seq[Seq[Double]]) => {
+      val sourceSchema = StructType(Seq(StructField("value", ArrayType(DoubleType))))
+      val outputSchema = StructType(Seq(StructField("value", ArrayType(ArrayType(DoubleType)))))
+      val rows = vectors.map(vector => Row.fromSeq(Seq(vector)))
+      val newRows = executePythonCode(predictCode, envs4j,
+        rows.toIterator, sourceSchema, outputSchema, runnerConf, timezoneID, pythonVersion)
+      newRows.map(_.getAs[Seq[Seq[Double]]](0)).head
+    })
+    null
+  }
+
+  def executePythonCode(code: String, envs: util.HashMap[String, String],
+                        input: Iterator[Row], inputSchema: StructType,
+                        outputSchema: StructType, conf: Map[String, String], timezoneID: String, pythonVersion: String): List[Row] = {
+    import scala.collection.JavaConverters._
+    val batch = new ArrowPythonRunner(
+      Seq(ChainedPythonFunctions(Seq(PythonFunction(code, envs, "python", pythonVersion)))), inputSchema,
+      timezoneID, conf
+    )
+
+    val sourceEnconder = WowRowEncoder.fromRow(inputSchema)
+    val newIter = input.map { irow =>
+      sourceEnconder(irow).copy()
+    }
+
+    // run the code and get the return result
+    val javaConext = new JavaContext
+    val commonTaskContext = new AppContextImpl(javaConext, batch)
+    val columnarBatchIter = batch.compute(Iterator(newIter), TaskContext.getPartitionId(), commonTaskContext)
+
+    val outputEnconder = WowRowEncoder.toRow(outputSchema)
+    val items = columnarBatchIter.flatMap { batch =>
+      batch.rowIterator.asScala
+    }.map { r =>
+      outputEnconder(r)
+    }.toList
+    javaConext.markComplete
+    javaConext.close
+    return items
+  }
+
+  override def skipPathPrefix: Boolean = true
 }
 
 
