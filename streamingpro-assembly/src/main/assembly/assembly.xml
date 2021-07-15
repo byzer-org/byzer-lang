@@ -3,34 +3,70 @@
     <formats>
         <format>tgz</format>
     </formats>
+    <includeBaseDirectory>true</includeBaseDirectory>
+
     <moduleSets>
         <moduleSet>
-
             <!-- Enable access to all projects in the current multimodule build! -->
             <useAllReactorProjects>true</useAllReactorProjects>
 
             <!-- Now, select which projects to include in this module-set. -->
             <includes>
-                <include>tech.msql:*</include>
+                <include>tech.mlsql:streamingpro-mlsql-spark_${spark.bigversion}_${scala.binary.version}</include>
             </includes>
-            <!--<excludes>-->
-                <!--<exclude>tech.msql:streamingpro-manager</exclude>-->
-                <!--<exclude>tech.msql:streamingpro-dl4j</exclude>-->
-            <!--</excludes>-->
+            <excludes>
+<!--                <exclude>tech.mlsql:streamingpro-common-${spark.bigversion}_${scala.binary.version}</exclude>-->
+<!--                <exclude>tech.msql:streamingpro-dl4j</exclude>-->
+            </excludes>
             <binaries>
                 <outputDirectory>libs</outputDirectory>
+                <includeDependencies>false</includeDependencies>
                 <unpack>false</unpack>
             </binaries>
         </moduleSet>
     </moduleSets>
     <fileSets>
         <fileSet>
+            <!-- Executables -->
             <directory>${project.parent.basedir}/dev</directory>
-            <outputDirectory>.</outputDirectory>
             <includes>
                 <include>start-local.sh</include>
+            </includes>
+            <outputDirectory>bin</outputDirectory>
+        </fileSet>
+
+        <fileSet>
+        <!-- Config files -->
+            <directory>${project.parent.basedir}/streamingpro-mlsql/src/main/resources-online/</directory>
+            <includes>
+                <include>log4j.properties</include>
+            </includes>
+            <outputDirectory>conf</outputDirectory>
+        </fileSet>
+
+        <fileSet>
+            <directory>${project.parent.basedir}/dev/</directory>
+            <!-- Include empty.json as a placeholder, to avoid every other files being copied -->
+            <includes>
                 <include>empty.json</include>
             </includes>
+            <outputDirectory>plugin</outputDirectory>
         </fileSet>
+
+        <fileSet>
+            <!-- Examples -->
+            <directory>${project.parent.basedir}/examples</directory>
+            <outputDirectory>examples</outputDirectory>
+        </fileSet>
+
+        <fileSet>
+            <directory>${project.parent.basedir}/dev</directory>
+            <!-- Include empty.json as a placeholder, to avoid every other files being copied -->
+            <includes>
+                <include>empty.json</include>
+            </includes>
+            <outputDirectory>data</outputDirectory>
+        </fileSet>
+
     </fileSets>
 </assembly>

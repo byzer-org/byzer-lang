@@ -6,7 +6,7 @@ usage: package
 run package command based on different spark version.
 Inputs are specified with the following environment variables:
 
-MLSQL_SPARK_VERSION - the spark version, 2.2/2.3/2.4/3.0 default 2.4
+MLSQL_SPARK_VERSION - the spark version, 2.3/2.4/3.0 default 2.4
 DRY_RUN true|false               default false
 DISTRIBUTION true|false          default false
 DATASOURCE_INCLUDED true|false   default false
@@ -23,11 +23,10 @@ fi
 
 SELF=$(cd $(dirname $0) && pwd)
 cd $SELF
-
 cd ..
 
 MLSQL_SPARK_VERSION=${MLSQL_SPARK_VERSION:-2.4}
-SCALA_VERSION=${SCALA_VERSION:-2.11}
+# SCALA_VERSION=${SCALA_VERSION:-2.11}
 DRY_RUN=${DRY_RUN:-false}
 DISTRIBUTION=${DISTRIBUTION:-false}
 OSS_ENABLE=${OSS_ENABLE:-false}
@@ -74,7 +73,7 @@ else
 fi
 #---------------------
 
-BASE_PROFILES="-Pscala-${SCALA_VERSION} -Ponline  "
+BASE_PROFILES="-Ponline  "
 
 if [[ "${ENABLE_HIVE_THRIFT_SERVER}" == "true" ]]; then
   BASE_PROFILES="$BASE_PROFILES -Phive-thrift-server"
@@ -89,10 +88,10 @@ if [[ "${ENABLE_CHINESE_ANALYZER}" == "true" ]]; then
 fi
 
 
-if [[ "$MLSQL_SPARK_VERSION" > "2.2" ]]; then
-  BASE_PROFILES="$BASE_PROFILES"
+if [[ "$MLSQL_SPARK_VERSION" == "2.3" ||  "$MLSQL_SPARK_VERSION" == "2.4" ]]; then
+  BASE_PROFILES="$BASE_PROFILES -Pscala-2.11"
 else
-  BASE_PROFILES="$BASE_PROFILES"
+  BASE_PROFILES="$BASE_PROFILES -Pscala-2.12"
 fi
 
 BASE_PROFILES="$BASE_PROFILES -Pspark-$MLSQL_SPARK_VERSION.0 -Pstreamingpro-spark-$MLSQL_SPARK_VERSION.0-adaptor"
@@ -146,6 +145,4 @@ mvn clean ${COMMAND}  ${SKIPTEST} ${BASE_PROFILES}  ${TESTPROFILE}
 EOF
 mvn clean ${COMMAND}  ${SKIPTEST} ${BASE_PROFILES} ${TESTPROFILE}
 fi
-
-
 
