@@ -157,7 +157,7 @@ class RestController extends ApplicationController with WowLog {
                 RestUtils.executeWithRetrying[HttpResponse](maxTries)(
                   RestUtils.httpClientPost(urlString,
                     Map("stat" -> s"""failed""",
-                      "res" -> (e.getMessage + "\n" + msgBuffer.mkString("\n")),
+                      "msg" -> (e.getMessage + "\n" + msgBuffer.mkString("\n")),
                       "jobInfo" -> JSONTool.toJsonStr(jobInfo))),
                   HttpStatus.SC_OK == _.getStatusLine.getStatusCode,
                   response => logger.error(s"Fail SQL callback request failed after ${maxTries} attempts, " +
