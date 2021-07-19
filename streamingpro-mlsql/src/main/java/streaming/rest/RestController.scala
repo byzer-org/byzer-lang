@@ -26,10 +26,12 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import net.csdn.annotation.rest.{At, _}
 import net.csdn.common.collections.WowCollections
-import net.csdn.common.path.Url
 import net.csdn.modules.http.ApplicationController
 import net.csdn.modules.http.RestRequest.Method._
 import net.csdn.modules.transport.HttpTransportService
+import org.apache.commons.httpclient.HttpStatus
+import org.apache.http.HttpResponse
+import org.apache.http.client.fluent.Request
 import org.apache.spark.ps.cluster.Message
 import org.apache.spark.ps.cluster.Message.Pong
 import org.apache.spark.sql._
@@ -87,6 +89,7 @@ class RestController extends ApplicationController with WowLog {
     new Parameter(name = "sessionPerRequest", required = false, description = "by default false", `type` = "boolean", allowEmptyValue = false),
     new Parameter(name = "async", required = false, description = "If set true ,please also provide a callback url use `callback` parameter and the job will run in background and the API will return.  default: false", `type` = "boolean", allowEmptyValue = false),
     new Parameter(name = "callback", required = false, description = "Used when async is set true. callback is a url. default: false", `type` = "string", allowEmptyValue = false),
+    new Parameter(name = "maxRetries", required = false, description = "Max retries of request callback.", `type` = "int", allowEmptyValue = false),
     new Parameter(name = "skipInclude", required = false, description = "disable include statement. default: false", `type` = "boolean", allowEmptyValue = false),
     new Parameter(name = "skipAuth", required = false, description = "disable table authorize . default: true", `type` = "boolean", allowEmptyValue = false),
     new Parameter(name = "skipGrammarValidate", required = false, description = "validate mlsql grammar. default: true", `type` = "boolean", allowEmptyValue = false),
@@ -107,8 +110,7 @@ class RestController extends ApplicationController with WowLog {
     val sparkSession = getSession
 
     accessAuth(sparkSession)
-
-    val htp = findService(classOf[HttpTransportService])
+    
     if (paramAsBoolean("async", false) && !params().containsKey("callback")) {
       render(400, "when async is set true ,then you should set callback url")
     }
@@ -124,6 +126,8 @@ class RestController extends ApplicationController with WowLog {
       def query = {
         if (paramAsBoolean("async", false)) {
           JobManager.asyncRun(sparkSession, jobInfo, () => {
+            val urlString = param("callback")
+            val maxTries = Math.max(0, paramAsInt("maxRetries", -1)) + 1
             try {
               ScriptSQLExec.parse(param("sql"), context,
                 skipInclude = paramAsBoolean("skipInclude", false),
@@ -132,10 +136,16 @@ class RestController extends ApplicationController with WowLog {
                 skipGrammarValidate = paramAsBoolean("skipGrammarValidate", true))
 
               outputResult = getScriptResult(context, sparkSession)
-              htp.post(new Url(param("callback")),
-                Map("stat" -> s"""succeeded""",
-                  "res" -> outputResult,
-                  "jobInfo" -> JSONTool.toJsonStr(jobInfo)))
+
+              RestUtils.executeWithRetrying[HttpResponse](maxTries)(
+                RestUtils.httpClientPost(urlString,
+                  Map("stat" -> s"""succeeded""",
+                    "res" -> outputResult,
+                    "jobInfo" -> JSONTool.toJsonStr(jobInfo))),
+                HttpStatus.SC_OK == _.getStatusLine.getStatusCode,
+                response => logger.error(s"Succeeded SQL callback request failed after ${maxTries} attempts, " +
+                  s"the last response status is: ${response.getStatusLine.getStatusCode}.")
+              )
             } catch {
               case e: Exception =>
                 e.printStackTrace()
@@ -143,11 +153,18 @@ class RestController extends ApplicationController with WowLog {
                 if (paramAsBoolean("show_stack", false)) {
                   format_full_exception(msgBuffer, e)
                 }
-                htp.post(new Url(param("callback")),
-                  Map("stat" -> s"""failed""",
-                    "msg" -> (e.getMessage + "\n" + msgBuffer.mkString("\n")),
-                    "jobInfo" -> JSONTool.toJsonStr(jobInfo)
-                  ))
+
+                RestUtils.executeWithRetrying[HttpResponse](maxTries)(
+                  RestUtils.httpClientPost(urlString,
+                    Map("stat" -> s"""failed""",
+                      "msg" -> (e.getMessage + "\n" + msgBuffer.mkString("\n")),
+                      "jobInfo" -> JSONTool.toJsonStr(jobInfo))),
+                  HttpStatus.SC_OK == _.getStatusLine.getStatusCode,
+                  response => logger.error(s"Fail SQL callback request failed after ${maxTries} attempts, " +
+                    s"the last response status is: ${response.getStatusLine.getStatusCode}.")
+                )
+
+
             }
           })
         } else {
