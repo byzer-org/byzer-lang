@@ -35,15 +35,26 @@ class MLSQLDelta(override val uid: String) extends MLSQLBaseFileSource with WowP
       val reader = config.df.get.sparkSession.read
 
       val dataLake = new DataLake(config.df.get.sparkSession)
-      val finalPath = if (dataLake.isEnable) {
-        dataLake.identifyToPath(config.path)
-      } else {
-        resourceRealPath(context.execListener, Option(owner), config.path)
+      val loadPath = (dataLake.isEnable, config.config.get("mode").map(_.toLowerCase())) match {
+        case (true, None) =>
+          if (config.path.contains("/")) {
+            throw new MLSQLException(
+              """Delta path mode is not enabled, you can use table mode like "load delta.`public.test` as t1" or add parameter like
+                | load delta.`/mlsql/delta/public/test` where mode= "path" """.stripMargin)
+          }
+          dataLake.identifyToPath(config.path)
+        case (true, Some("path")) | (false, _)  =>
+          resourceRealPath(context.execListener, Option(owner), config.path)
+        case (_, _) =>
+          throw new MLSQLException(
+            """ Can not resolve mode argument, you can add parameter like
+              | load delta.`/mlsql/delta/public/test` where mode= "path"
+            """.stripMargin)
       }
 
       reader.options(rewriteConfig(config.config) ++ newOpt).
         format(format).
-        load(finalPath)
+        load(loadPath)
     }
 
     (parameters.get("startingVersion").map(_.toLong), parameters.get("endingVersion").map(_.toLong)) match {
@@ -67,11 +78,29 @@ class MLSQLDelta(override val uid: String) extends MLSQLBaseFileSource with WowP
     }
 
     val dataLake = new DataLake(config.df.get.sparkSession)
-    val finalPath = if (dataLake.isEnable) {
-      dataLake.identifyToPath(config.path)
-    } else {
-      resourceRealPath(context.execListener, Option(context.owner), config.path)
+    val finalPath = (dataLake.isEnable, config.config.get("mode").map(_.toLowerCase())) match {
+      case (true, None) =>
+        if (config.path.contains("/")) {
+          throw new MLSQLException(
+            """Delta path mode is not enabled, you can use table mode like "save overwrite test as delta.`public.test`" or add parameter like
+              | save overwrite test as delta.`/mlsql/delta/public/test` where mode= "path" """.stripMargin)
+        }
+        dataLake.identifyToPath(config.path)
+      case (true, Some("path")) =>
+        if (config.path.startsWith(dataLake.value)) {
+          throw new MLSQLException(
+            s""" Can not save delta in table mode directory ${dataLake.value}""")
+        }
+        resourceRealPath(context.execListener, Option(context.owner), config.path)
+      case (false, _) =>
+        resourceRealPath(context.execListener, Option(context.owner), config.path)
+      case (_, _) =>
+        throw new MLSQLException(
+          """ Can not resolve mode argument, you can add parameter like
+            | save test as delta.`/mlsql/delta/public/test` where mode= "path"
+          """.stripMargin)
     }
+
     writer.options(rewriteConfig(config.config)).mode(config.mode).format(format).save(finalPath)
   }
 
