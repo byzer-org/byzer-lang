@@ -1,7 +1,7 @@
 <assembly>
     <id>bin-${project.version}</id>
     <formats>
-        <format>tgz</format>
+        <format>tar.gz</format>
     </formats>
     <includeBaseDirectory>true</includeBaseDirectory>
 
@@ -31,6 +31,7 @@
             <directory>${project.parent.basedir}/dev</directory>
             <includes>
                 <include>start-local.sh</include>
+                <include>stop-local.sh</include>
             </includes>
             <outputDirectory>bin</outputDirectory>
         </fileSet>

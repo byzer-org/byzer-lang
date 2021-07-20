@@ -1,5 +1,22 @@
 #!/usr/bin/env bash
 
+#
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
 function exit_with_usage {
   cat << EOF
 usage: package
@@ -26,7 +43,6 @@ cd $SELF
 cd ..
 
 MLSQL_SPARK_VERSION=${MLSQL_SPARK_VERSION:-2.4}
-# SCALA_VERSION=${SCALA_VERSION:-2.11}
 DRY_RUN=${DRY_RUN:-false}
 DISTRIBUTION=${DISTRIBUTION:-false}
 OSS_ENABLE=${OSS_ENABLE:-false}
@@ -44,6 +60,12 @@ for env in MLSQL_SPARK_VERSION DRY_RUN DISTRIBUTION; do
     exit 1
   fi
 done
+
+if [[ ${ENABLE_CHINESE_ANALYZER} = true && ! -f $SELF/../dev/ansj_seg-5.1.6.jar  && ! -f $SELF/../dev/nlp-lang-1.7.8.jar ]]
+then
+  echo "When ENABLE_CHINESE_ANALYZER=true, ansj_seg-5.1.6.jar && nlp-lang-1.7.8.jar should be in ./dev/"
+  exit 1
+fi
 
 # before we compile and package, correct the version in MLSQLVersion
 #---------------------
