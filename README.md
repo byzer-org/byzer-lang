@@ -2,7 +2,7 @@
 
 MLSQL is a Programming Language Designed For Big Data and AI, and it also have a distributed runtime.
 
-![](http://docs.mlsql.tech/upload_images/WechatIMG67.png)
+![](http://store.mlsql.tech/upload_images/54ce86bc-4d5d-4b76-897f-9497512b2d09.png)
 
 ## Official WebSite
 
@@ -12,7 +12,7 @@ MLSQL is a Programming Language Designed For Big Data and AI, and it also have a
 Find more examples on [our user guide](http://docs.mlsql.tech/en).
 
 1. [中文文档](http://docs.mlsql.tech/mlsql-stack/)
-2. [English Docs](http://docs.mlsql.tech/en)
+2. [Video](https://space.bilibili.com/22610047)
 
 
 ## Get PreBuild Distribution
@@ -84,7 +84,7 @@ and we are always open to people who want to use this system or contribute to it
 
 ##  WeChat Group
 
-扫码添加小可爱微信号，添加成功后，发送  mlsql  这5个英文字母进群。
+扫码添加K小助微信号，添加成功后，发送  mlsql  这5个英文字母进群。
 
-![](http://docs.mlsql.tech/upload_images/WX20200505-090326@2x.png)
+![](http://store.mlsql.tech/upload_images/dc0f4493-570f-4660-ab41-0e487b17a517.png)
 
