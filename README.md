@@ -2,7 +2,7 @@
 
 MLSQL is a Programming Language Designed For Big Data and AI, and it also have a distributed runtime.
 
-![](http://store.mlsql.tech/upload_images/54ce86bc-4d5d-4b76-897f-9497512b2d09.png)
+![](http://store.mlsql.tech/upload_images/bb566ae9-65e7-4a98-82a0-827a23161b0e.png)
 
 ## Official WebSite
 
