@@ -14,11 +14,11 @@ Find more examples on [our user guide](http://docs.mlsql.tech/en).
 2. [English Docs](http://docs.mlsql.tech/en)
 
 ## <a id="Download"></a>Download MLSQL
-* The lasted version is MLSQL v2.0.1
+* The latest stable version is v2.0.1; snapshot version is 2.1.0-SNAPSHOT
 * You can download from [MLSQL Website](http://download.mlsql.tech/2.0.1/)
-* Spark 2.4.3/3.0.0 are tested
+* Spark 2.4.3/3.1.1 are tested
 
-***Naming conventions***
+***Naming Convention***
 
 mlsql-engine_${spark_major_version}-${mlsql_version}.tgz
 ```shell
@@ -72,10 +72,11 @@ export OSS_ENABLE=true
 
 ## Deploying
 1. [Download](#Download) or [build a distribution](#Build) 
-2. Install Spark and set environment variable SPARK_HOME
+2. Install Spark and set environment variable SPARK_HOME, make sure Spark version matches that of MLSQL
 3. Deploy tgz
 - Set environment variable MLSQL_HOME
 - Copy distribution tar ball over and untar it
+
 4.Start MLSQL in local mode
 ```shell
 cd $MLSQL_HOME
@@ -83,6 +84,19 @@ cd $MLSQL_HOME
 nohup ./bin/start-local.sh 2>&1 > ./local_mlsql.log &
 ```
 5. Open a browser and type in http://localhost:9003, have fun.
+
+Directory structure
+```shell
+|-- mlsql
+    |-- bin        
+    |-- conf       
+    |-- data       
+    |-- examples   
+    |-- libs       
+    |-- README.md  
+    |-- LICENSE
+    |-- RELEASE
+```
 
 ## Contributing to MLSQL
 
