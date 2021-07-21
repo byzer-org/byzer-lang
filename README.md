@@ -2,7 +2,45 @@
 
 MLSQL is a Programming Language designed For Big Data and AI, it also has a distributed runtime.
 
-![](http://store.mlsql.tech/upload_images/bb566ae9-65e7-4a98-82a0-827a23161b0e.png)
+```sql
+load hive.`raw.stripe_discounts` as discounts;
+load hive.`raw.stripe_invoice_items` as invoice_items;
+
+select
+        invoice_items.*,
+        case
+            when discounts.discount_type = 'percent'
+                then amount * (1.0 - discounts.discount_value::float / 100)
+            else amount - discounts.discount_value
+        end as discounted_amount
+
+    from invoice_items
+
+    left outer join discounts
+        on invoice_items.customer_id = discounts.customer_id
+        and invoice_items.invoice_date > discounts.discount_start
+        and (invoice_items.invoice_date < discounts.discount_end
+             or discounts.discount_end is null)
+as joined;
+
+
+
+select
+
+        id,
+        invoice_id,
+        customer_id,
+        coalesce(discounted_amount, amount) as discounted_amount,
+        currency,
+        description,
+        created_at,
+        deleted_at
+
+    from joined
+as final;
+
+select * from final as output;
+```
 
 ## Official WebSite
 
@@ -134,5 +172,5 @@ and we are always open to people who want to use this system or contribute to it
 
 扫码添加K小助微信号，添加成功后，发送  mlsql  这5个英文字母进群。
 
-![](http://store.mlsql.tech/upload_images/dc0f4493-570f-4660-ab41-0e487b17a517.png)
+![](https://github.com/allwefantasy/mlsql/blob/master/images/dc0f4493-570f-4660-ab41-0e487b17a517.png)
 
