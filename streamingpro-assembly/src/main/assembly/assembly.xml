@@ -63,12 +63,10 @@
 
         <fileSet>
             <!-- Data -->
-            <directory>${project.parent.basedir}/</directory>
+            <directory>${project.parent.basedir}/dev/</directory>
             <!-- Include empty.json as a placeholder, to avoid every other files being copied -->
             <includes>
-                <include>RELEASES.md</include>
-                <include>README.md</include>
-                <include>LICENSE</include>
+                <include>empty.json</include>
             </includes>
             <outputDirectory>data</outputDirectory>
         </fileSet>
