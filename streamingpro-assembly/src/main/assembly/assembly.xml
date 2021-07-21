@@ -1,7 +1,7 @@
 <assembly>
     <id>bin-${project.version}</id>
     <formats>
-        <format>tgz</format>
+        <format>tar.gz</format>
     </formats>
     <includeBaseDirectory>true</includeBaseDirectory>
 
@@ -31,6 +31,7 @@
             <directory>${project.parent.basedir}/dev</directory>
             <includes>
                 <include>start-local.sh</include>
+                <include>stop-local.sh</include>
             </includes>
             <outputDirectory>bin</outputDirectory>
         </fileSet>
@@ -45,6 +46,7 @@
         </fileSet>
 
         <fileSet>
+            <!-- Plugins -->
             <directory>${project.parent.basedir}/dev/</directory>
             <!-- Include empty.json as a placeholder, to avoid every other files being copied -->
             <includes>
@@ -60,12 +62,25 @@
         </fileSet>
 
         <fileSet>
-            <directory>${project.parent.basedir}/dev</directory>
+            <!-- Data -->
+            <directory>${project.parent.basedir}/dev/</directory>
             <!-- Include empty.json as a placeholder, to avoid every other files being copied -->
             <includes>
                 <include>empty.json</include>
             </includes>
             <outputDirectory>data</outputDirectory>
+        </fileSet>
+
+        <fileSet>
+            <!-- Bylaws -->
+            <directory>${project.parent.basedir}/</directory>
+            <!-- Include empty.json as a placeholder, to avoid every other files being copied -->
+            <includes>
+                <include>RELEASES.md</include>
+                <include>README.md</include>
+                <include>LICENSE</include>
+            </includes>
+            <outputDirectory>./</outputDirectory>
         </fileSet>
 
     </fileSets>

@@ -1,5 +1,30 @@
-#!/bin/bash
-#set -x
+#!/usr/bin/env bash
+
+#
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+## 环境变量:
+## SPARK_HOME
+## MLSQL_HOME
+##
+
+set -u
+set -e
+set -o pipefail
 
 for env in SPARK_HOME ; do
   if [ -z "${!env}" ]; then
@@ -8,8 +33,10 @@ for env in SPARK_HOME ; do
   fi
 done
 
+## 本脚本部署在${MLSQL_HOME}/bin 目录
 if [ -z "${MLSQL_HOME}" ]; then
-  export MLSQL_HOME="$(cd "`dirname "$0"`"/.; pwd)"
+  export MLSQL_HOME="$(cd "`dirname "$0"`"/..; pwd)"
+  echo "MLSQL_HOME is not set, default to ${MLSQL_HOME}"
 fi
 
 JARS=$(echo ${MLSQL_HOME}/libs/*.jar | tr ' ' ',')
@@ -20,7 +47,6 @@ echo
 echo "#############"
 echo "Run with spark : $SPARK_HOME"
 echo "With DRIVER_MEMORY=${DRIVER_MEMORY:-2g}"
-echo "Try mannualy to copy https://github.com/allwefantasy/mlsql/blob/master/streamingpro-mlsql/src/main/resources-online/log4j.properties to your SPARK_HOME/CONF"
 echo
 echo "JARS: ${JARS}"
 echo "MAIN_JAR: ${MLSQL_HOME}/libs/${MAIN_JAR}"
