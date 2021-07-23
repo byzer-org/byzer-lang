@@ -13,7 +13,7 @@
     <packaging>pom</packaging>
 
     <build>
-        <finalName>${project.parent.artifactId}_${version}</finalName>
+        <finalName>mlsql-engine_${spark.bigversion}-${project.version}</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

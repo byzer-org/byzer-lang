@@ -4,8 +4,8 @@ import org.apache.spark.sql.mlsql.session.MLSQLException
 import streaming.dsl.parser.DSLSQLParser
 import streaming.dsl.parser.DSLSQLParser._
 import streaming.dsl.template.TemplateMerge
-import tech.mlsql.common.utils.base.Templates
 import tech.mlsql.dsl.processor.PreProcessListener
+import tech.mlsql.tool.Templates2
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -63,7 +63,7 @@ class CommandAdaptor(preProcessListener: PreProcessListener) extends DslAdaptor 
         throw new MLSQLException(s"Command `${command}` is not found.")
       case e: Exception => throw e
     }
-    val renderContent = Templates.evaluate(tempCommand, parameters)
+    val renderContent = Templates2.evaluate(tempCommand, parameters)
     preProcessListener.addStatement(renderContent)
 
   }
