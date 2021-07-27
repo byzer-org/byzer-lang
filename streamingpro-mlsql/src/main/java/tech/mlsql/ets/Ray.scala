@@ -164,7 +164,7 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
   }
 
 
-  private def distribute_execute(session: SparkSession, code: String, sourceTable: String, etParams: Map[String, String]) = {
+  private def distribute_execute(session: SparkSession, code: String, sourceTable: String, etParams: Map[String, String], extraConf: Map[String, String] = Map()) = {
     import scala.collection.JavaConverters._
     val context = ScriptSQLExec.context()
     val envSession = new SetSession(session, context.owner)
@@ -189,7 +189,7 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
     var runnerConf = Map(
       "HOME" -> context.home,
       "OWNER" -> context.owner,
-      "GROUP_ID" -> context.groupId) ++ getSchemaAndConf(envSession) ++ configureLogConf ++ confTableValue
+      "GROUP_ID" -> context.groupId) ++ getSchemaAndConf(envSession) ++ configureLogConf ++ confTableValue ++ extraConf
 
     val timezoneID = session.sessionState.conf.sessionLocalTimeZone
     val df = session.table(sourceTable)
@@ -373,18 +373,23 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
   override def batchPredict(df: DataFrame, path: String, params: Map[String, String]): DataFrame = train(df, path, params)
 
   override def load(session: SparkSession, path: String, params: Map[String, String]): Any = {
-    val registerCode = params.getOrElse("registerCode", "")
-    val envSession = new SetSession(session, ScriptSQLExec.context().owner)
-    envSession.set("pythonMode", "ray", Map(SetSession.__MLSQL_CL__ -> SetSession.PYTHON_RUNNER_CONF_CL))
-    distribute_execute(
-      session,
-      genCode(session, registerCode),
-      "command",
-      params ++ Map("model" -> path))
-    return null
+    return path
   }
 
   override def predict(session: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = {
+
+    def _load = {
+      val registerCode = params.getOrElse("registerCode", "")
+      val envSession = new SetSession(session, ScriptSQLExec.context().owner)
+      envSession.set("pythonMode", "ray", Map(SetSession.__MLSQL_CL__ -> SetSession.PYTHON_RUNNER_CONF_CL))
+      distribute_execute(
+        session,
+        genCode(session, registerCode),
+        "command",
+        params ++ Map("model" -> _model.toString), extraConf = Map("UDF_CLIENT" -> name))
+    }
+
+    _load
 
     val predictCode = params.getOrElse("predictCode", "")
     val context = ScriptSQLExec.context()
