@@ -39,7 +39,17 @@ select
     from joined
 as final;
 
-select * from final as output;
+
+
+set allColumns = "all,wow";
+
+!if ''' split(:allColumns,",")[0] == "all" ''';
+   select * from final as final2;
+!else;
+   select id,invoice from final as final2;
+!fi;
+
+select * from final2 as output;
 ```
 
 ## Official WebSite
