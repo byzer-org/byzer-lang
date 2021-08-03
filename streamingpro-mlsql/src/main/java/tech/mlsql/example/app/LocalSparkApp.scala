@@ -5,7 +5,7 @@ import streaming.core.StreamingApp
 /**
  * 2019-03-20 WilliamZhu(allwefantasy@gmail.com)
  */
-object LocalExampleSparkApp {
+object LocalSparkApp {
   def main(args: Array[String]): Unit = {
     StreamingApp.main(Array(
       "-streaming.master", "local[*]",
