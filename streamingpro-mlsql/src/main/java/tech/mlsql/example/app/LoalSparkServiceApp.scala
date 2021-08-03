@@ -1,4 +1,6 @@
-package streaming.core
+package tech.mlsql.example.app
+
+import streaming.core.StreamingApp
 
 /**
  * 2019-03-20 WilliamZhu(allwefantasy@gmail.com)
