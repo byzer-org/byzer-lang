@@ -13,10 +13,10 @@ object LocalSparkServiceApp {
       "-streaming.platform", "spark",
       "-spark.mlsql.enable.runtime.directQuery.auth", "true",
       //      "-streaming.ps.cluster.enable","false",
-      "-streaming.enableHiveSupport", "false",
+      "-streaming.enableHiveSupport","false",
       "-spark.mlsql.datalake.overwrite.hive", "true",
       "-spark.mlsql.auth.access_token", "mlsql",
-      "-spark.hadoop.parquet.strings.signed-min-max.enabled", "true",
+      "-spark.hadoop.parquet.strings.signed-min-max.enabled","true",
       //"-spark.mlsql.enable.max.result.limit", "true",
       //"-spark.mlsql.restful.api.max.result.size", "7",
       //      "-spark.mlsql.enable.datasource.rewrite", "true",
@@ -40,15 +40,15 @@ object LocalSparkServiceApp {
       "-spark.driver.maxResultSize", "2g",
       "-spark.serializer", "org.apache.spark.serializer.KryoSerializer",
       //      "-spark.sql.codegen.wholeStage", "true",
-      "-spark.ui.allowFramingFrom", "*",
+      "-spark.ui.allowFramingFrom","*",
       "-spark.kryoserializer.buffer.max", "2000m",
-      "-streaming.driver.port", "9003"
+      "-streaming.driver.port", "9003",
       //      "-spark.files.maxPartitionBytes", "10485760"
 
       //meta store
-      //      "-streaming.metastore.db.type", "mysql",
-      //      "-streaming.metastore.db.name", "app_runtime_full",
-      //      "-streaming.metastore.db.config.path", "./__mlsql__/db.yml"
+      "-streaming.metastore.db.type", "mysql",
+      "-streaming.metastore.db.name", "app_runtime_full",
+      "-streaming.metastore.db.config.path", "./__mlsql__/db.yml"
 
       //      "-spark.sql.shuffle.partitions", "1",
       //      "-spark.hadoop.mapreduce.job.run-local", "true"
