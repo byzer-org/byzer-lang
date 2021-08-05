@@ -39,7 +39,17 @@ select
     from joined
 as final;
 
-select * from final as output;
+
+
+set allColumns = "all,wow";
+
+!if ''' split(:allColumns,",")[0] == "all" ''';
+   select * from final as final2;
+!else;
+   select id,invoice from final as final2;
+!fi;
+
+select * from final2 as output;
 ```
 
 ## Official WebSite
@@ -50,6 +60,36 @@ Find more examples on:
 
 1. [中文文档](http://docs.mlsql.tech/mlsql-stack/)
 2. [Video](https://space.bilibili.com/22610047)
+
+## Docker
+
+### Pulling Sandbox Docker Image
+
+For Spark 2.4.3 bundle:
+
+```shell
+docker pull techmlsql/mlsql-sandbox:2.4.3-2.1.0-SNAPSHOT
+```
+
+For Spark 3.1.1 bundle：
+
+```shell
+docker pull techmlsql/mlsql-sandbox:3.1.1-2.1.0-SNAPSHOT
+```
+
+### Start Container
+
+
+```
+docker run -d \
+-p 3306:3306 \
+-p 9002:9002 \
+-e MYSQL_ROOT_PASSWORD=mlsql \
+--name mlsql-sandbox-2.4.3-2.1.0-SNAPSHOT \
+techmlsql/mlsql-sandbox:2.4.3-2.1.0-SNAPSHOT
+```
+
+
 
 ## <a id="Download"></a>Download MLSQL
 * The latest stable version is v2.0.1; snapshot version is 2.1.0-SNAPSHOT
@@ -158,11 +198,6 @@ and we are always open to people who want to use this system or contribute to it
 * Slash-Wong/523935329#qq.com
 * anan0120/158989903#qq.com
 
-
-----------
-[![HitCount](http://hits.dwyl.io/allwefantasy/streamingpro.svg)](http://hits.dwyl.io/allwefantasy/streamingpro)
-
-----------
 
 ##  WeChat Group
 

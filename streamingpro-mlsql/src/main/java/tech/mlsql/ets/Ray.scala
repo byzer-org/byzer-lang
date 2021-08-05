@@ -149,8 +149,22 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
     tempSocketServerInDriver
   }
 
+  private def schemaFromStr(schemaStr: String) = {
+    val targetSchema = schemaStr.trim match {
+      case item if item.startsWith("{") =>
+        DataType.fromJson(schemaStr).asInstanceOf[StructType]
+      case item if item.startsWith("st") =>
+        SparkSimpleSchemaParser.parse(schemaStr).asInstanceOf[StructType]
+      case item if item == "file" =>
+        SparkSimpleSchemaParser.parse("st(field(start,long),field(offset,long),field(value,binary))").asInstanceOf[StructType]
+      case _ =>
+        StructType.fromDDL(schemaStr)
+    }
+    targetSchema
+  }
 
-  private def distribute_execute(session: SparkSession, code: String, sourceTable: String, etParams: Map[String, String]) = {
+
+  private def distribute_execute(session: SparkSession, code: String, sourceTable: String, etParams: Map[String, String], extraConf: Map[String, String] = Map()) = {
     import scala.collection.JavaConverters._
     val context = ScriptSQLExec.context()
     val envSession = new SetSession(session, context.owner)
@@ -175,7 +189,7 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
     var runnerConf = Map(
       "HOME" -> context.home,
       "OWNER" -> context.owner,
-      "GROUP_ID" -> context.groupId) ++ getSchemaAndConf(envSession) ++ configureLogConf ++ confTableValue
+      "GROUP_ID" -> context.groupId) ++ getSchemaAndConf(envSession) ++ configureLogConf ++ confTableValue ++ extraConf
 
     val timezoneID = session.sessionState.conf.sessionLocalTimeZone
     val df = session.table(sourceTable)
@@ -196,16 +210,7 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
     masterSlaveInSpark.waitWithTimeout(60)
 
 
-    val targetSchema = runnerConf("schema").trim match {
-      case item if item.startsWith("{") =>
-        DataType.fromJson(runnerConf("schema")).asInstanceOf[StructType]
-      case item if item.startsWith("st") =>
-        SparkSimpleSchemaParser.parse(runnerConf("schema")).asInstanceOf[StructType]
-      case item if item == "file" =>
-        SparkSimpleSchemaParser.parse("st(field(start,long),field(offset,long),field(value,binary))").asInstanceOf[StructType]
-      case _ =>
-        StructType.fromDDL(runnerConf("schema"))
-    }
+    val targetSchema = schemaFromStr(runnerConf("schema"))
 
 
     val dataModeSchema = StructType(Seq(StructField("host", StringType), StructField("port", LongType), StructField("server_id", StringType)))
@@ -368,14 +373,23 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
   override def batchPredict(df: DataFrame, path: String, params: Map[String, String]): DataFrame = train(df, path, params)
 
   override def load(session: SparkSession, path: String, params: Map[String, String]): Any = {
-    val registerCode = params.getOrElse("registerCode", "")
-    val envSession = new SetSession(session, ScriptSQLExec.context().owner)
-    envSession.set("pythonMode", "ray", Map(SetSession.__MLSQL_CL__ -> SetSession.PYTHON_RUNNER_CONF_CL))
-    distribute_execute(session, genCode(session, registerCode), "command", params ++ Map("model" -> path))
-    return null
+    return path
   }
 
   override def predict(session: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = {
+
+    def _load = {
+      val registerCode = params.getOrElse("registerCode", "")
+      val envSession = new SetSession(session, ScriptSQLExec.context().owner)
+      envSession.set("pythonMode", "ray", Map(SetSession.__MLSQL_CL__ -> SetSession.PYTHON_RUNNER_CONF_CL))
+      distribute_execute(
+        session,
+        genCode(session, registerCode),
+        "command",
+        params ++ Map("model" -> _model.toString), extraConf = Map("UDF_CLIENT" -> name))
+    }
+
+    _load
 
     val predictCode = params.getOrElse("predictCode", "")
     val context = ScriptSQLExec.context()
@@ -397,24 +411,53 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
     val envs4j = new util.HashMap[String, String]()
     envs.foreach(f => envs4j.put(f._1, f._2))
 
+    // this code make sure we get different python factory to create python worker.
+    envs4j.put("UDF_CLIENT", name)
+
     val timezoneID = session.sessionState.conf.sessionLocalTimeZone
 
     val runnerConf = Map(
       "HOME" -> context.home,
       "OWNER" -> context.owner,
       "GROUP_ID" -> context.groupId,
-      "directData" -> "true"
+      "directData" -> "true",
+      "UDF_CLIENT" -> name
     ) ++ getSchemaAndConf(envSession) ++ configureLogConf
 
     val pythonVersion = runnerConf.getOrElse("pythonVersion", "3.6")
 
+
+    val sourceSchema = params.get("sourceSchema") match {
+      case Some(schemaStr) => schemaFromStr(schemaStr)
+      case None => StructType(Seq(StructField("value", ArrayType(DoubleType))))
+    }
+
+    val outputSchema = params.get("outputSchema") match {
+      case Some(schemaStr) => schemaFromStr(schemaStr)
+      case None => StructType(Seq(StructField("value", ArrayType(ArrayType(DoubleType)))))
+    }
+
+    val debug = params.get("debugMode")
+
     session.udf.register(name, (vectors: Seq[Seq[Double]]) => {
-      val sourceSchema = StructType(Seq(StructField("value", ArrayType(DoubleType))))
-      val outputSchema = StructType(Seq(StructField("value", ArrayType(ArrayType(DoubleType)))))
+      val startTime = System.currentTimeMillis()
       val rows = vectors.map(vector => Row.fromSeq(Seq(vector)))
-      val newRows = executePythonCode(predictCode, envs4j,
-        rows.toIterator, sourceSchema, outputSchema, runnerConf, timezoneID, pythonVersion)
-      newRows.map(_.getAs[Seq[Seq[Double]]](0)).head
+      try {
+        val newRows = executePythonCode(predictCode, envs4j,
+          rows.toIterator, sourceSchema, outputSchema, runnerConf, timezoneID, pythonVersion)
+        val res = newRows.map(_.getAs[Seq[Seq[Double]]](0)).head
+        if (debug.isDefined) {
+          logInfo(s"Execute predict code time:${System.currentTimeMillis() - startTime}")
+        }
+        res
+      } catch {
+        case e: Exception =>
+          if (debug.isDefined) {
+            logError("Fail to execute predict code", e)
+          }
+          null
+      }
+
     })
     null
   }
