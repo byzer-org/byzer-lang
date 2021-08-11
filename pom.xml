@@ -258,6 +258,7 @@
                 <module>streamingpro-spark-2.3.0-adaptor</module>
                 <module>streamingpro-dsl</module>
                 <module>streamingpro-mlsql</module>
+                <module>streamingpro-it</module>
                 <module>external/python-controller</module>
             </modules>
             <dependencies>
@@ -352,6 +353,7 @@
                 <module>streamingpro-spark-2.4.0-adaptor</module>
                 <module>streamingpro-dsl</module>
                 <module>streamingpro-mlsql</module>
+                <module>streamingpro-it</module>
                 <module>external/python-controller</module>
                 <module>external/mlsql-watcher</module>
                 <module>external/mlsql-mysql-store</module>
@@ -462,6 +464,7 @@
                 <module>streamingpro-spark-3.0.0-adaptor</module>
                 <module>streamingpro-dsl</module>
                 <module>streamingpro-mlsql</module>
+                <module>streamingpro-it</module>
                 <module>external/python-controller</module>
                 <module>external/mlsql-watcher</module>
                 <module>external/mlsql-mysql-store</module>

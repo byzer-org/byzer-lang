@@ -1,0 +1,3 @@
+save overwrite t2 as delta.`public.t1`;
+load delta.`public.t1` as t3;
+select * from t3 limit 5 as output;
