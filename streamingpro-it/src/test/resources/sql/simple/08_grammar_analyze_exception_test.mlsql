@@ -1,0 +1,4 @@
+--%exception=java.lang.RuntimeException
+--%msg=MLSQL Parser error.*
+
+!hdfs -ls tmp

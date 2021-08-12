@@ -1,0 +1,2 @@
+--%comparator=tech.mlsql.it.IgnoreResultComparator
+!show version;

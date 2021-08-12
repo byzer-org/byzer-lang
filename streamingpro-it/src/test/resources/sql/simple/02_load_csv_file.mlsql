@@ -1,0 +1,2 @@
+load csv.`/tmp/employee.csv` where header="true" as t1;
+select * from t1 limit 5 as output;
