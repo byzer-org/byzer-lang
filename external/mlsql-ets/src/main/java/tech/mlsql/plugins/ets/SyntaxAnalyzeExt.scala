@@ -96,13 +96,16 @@ class SyntaxAnalyzeExt(override val uid: String) extends SQLAlg with WowParams w
 
   final val sql: Param[String] = new Param[String](this, "sql",
     """
-      |SQL to be analyzed
+      |Required. SQL to be analyzed
+      |e.g. sql = "select * from table"
     """.stripMargin
   )
 
   final val action: Param[String] = new Param[String](this, "action",
     """
-      |Action for syntax analysis
+      |Required. action for syntax analysis
+      |Optional parameter: extractTables
+      |e.g. action = "extractTables"
     """.stripMargin
   )
 
