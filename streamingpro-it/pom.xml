@@ -9,6 +9,10 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
+    <properties>
+        <breeze-version>0.13.2</breeze-version>
+    </properties>
+
     <artifactId>streamingpro-it</artifactId>
     <dependencies>
 
@@ -23,6 +27,23 @@
             <artifactId>scalatest_${scala.binary.version}</artifactId>
             <version>3.0.0</version>
             <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.scalanlp</groupId>
+            <artifactId>breeze_${scala.binary.version}</artifactId>
+            <version>${breeze-version}</version>
+            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <artifactId>junit</artifactId>
+                    <groupId>junit</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>commons-math3</artifactId>
+                    <groupId>org.apache.commons</groupId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
     </dependencies>
