@@ -20,8 +20,11 @@ trait LocalBaseTestSuite extends FunSuite with SparkOperationUtil with BeforeAnd
   var home: String = _
   val user = "admin"
   var initialPlugins: Seq[String] = Seq("mlsql-assert-2.4")
+  var originClassLoader = Thread.currentThread().getContextClassLoader
 
   def initPlugins(): Unit = {
+    // set plugin context loader
+    Thread.currentThread().setContextClassLoader(ClassLoader.getSystemClassLoader)
     initialPlugins.foreach(name => {
       executeCode2(home, user, runtime, s"""!plugin app remove "${name}";""")
       executeCode2(home, user, runtime, s"""!plugin app add - "${name}";""")
@@ -64,6 +67,7 @@ trait LocalBaseTestSuite extends FunSuite with SparkOperationUtil with BeforeAnd
       StrategyDispatcher.clear
       PlatformManager.clear
       TestManager.clear()
+      Thread.currentThread().setContextClassLoader(originClassLoader)
       runtime.destroyRuntime(false, true)
       val db = new File("./metastore_db")
       if (db.exists()) {
