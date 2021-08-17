@@ -32,7 +32,7 @@ object LocalSparkServiceApp {
 
       // scheduler
       "-streaming.workAs.schedulerService", "false",
-      "-streaming.workAs.schedulerService.consoleUrl", "http://127.0.0.1:9002",
+      "-streaming.workAs.schedulerService.consoleUrl", "http://127.0.0.1:19002",
       "-streaming.workAs.schedulerService.consoleToken", "mlsql",
 
 
@@ -44,7 +44,7 @@ object LocalSparkServiceApp {
       //      "-spark.sql.codegen.wholeStage", "true",
       "-spark.ui.allowFramingFrom", "*",
       "-spark.kryoserializer.buffer.max", "2000m",
-      "-streaming.driver.port", "9003"
+      "-streaming.driver.port", "19003"
       //      "-spark.files.maxPartitionBytes", "10485760"
 
       //meta store

@@ -1,11 +1,11 @@
 package tech.mlsql.it
 
 import java.io.File
-
 import org.apache.commons.io.FileUtils
 import org.apache.spark.streaming.SparkOperationUtil
 import org.scalatest.{BeforeAndAfterAll, FunSuite}
 import serviceframework.dispatcher.StrategyDispatcher
+import streaming.core.StreamingApp
 import streaming.core.strategy.platform.{PlatformManager, SparkRuntime}
 import tech.mlsql.common.utils.shell.command.ParamsUtil
 import tech.mlsql.job.JobManager
@@ -51,7 +51,8 @@ trait LocalBaseTestSuite extends FunSuite with SparkOperationUtil with BeforeAnd
     setupRunParams()
     copyDataToUserHome(user)
     TestManager.loadTestCase(new File(testCaseDirPath))
-    PlatformManager.getOrCreate.run(new ParamsUtil(runParams))
+    // Load built-in and external plug-ins and start PlatformManager
+    StreamingApp.main(runParams)
     runtime = PlatformManager.getRuntime.asInstanceOf[SparkRuntime]
     JobManager.init(runtime.sparkSession)
 
