@@ -147,11 +147,11 @@ class RestController extends ApplicationController with WowLog {
                   s"the last response status is: ${response.getStatusLine.getStatusCode}.")
               )
             } catch {
-              case e: Exception =>
+              case e: Throwable =>
                 e.printStackTrace()
                 val msgBuffer = ArrayBuffer[String]()
                 if (paramAsBoolean("show_stack", false)) {
-                  format_full_exception(msgBuffer, e)
+                  format_full_throwable(msgBuffer, e)
                 }
 
                 RestUtils.executeWithRetrying[HttpResponse](maxTries)(

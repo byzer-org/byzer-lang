@@ -57,4 +57,14 @@ object LogUtils {
     }
 
   }
+
+  def format_full_throwable(buffer: ArrayBuffer[String], e: Throwable, skipPrefix: Boolean = true) = {
+    var cause = e
+    buffer += format_throwable(cause, skipPrefix)
+    while (cause.getCause != null) {
+      cause = cause.getCause
+      buffer += "caused by：\n" + format_throwable(cause, skipPrefix)
+    }
+  }
+
 }

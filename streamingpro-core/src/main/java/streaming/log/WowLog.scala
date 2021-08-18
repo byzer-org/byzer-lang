@@ -50,4 +50,8 @@ trait WowLog {
   def format_full_exception(buffer: ArrayBuffer[String], e: Exception, skipPrefix: Boolean = true) = {
     LogUtils.format_full_exception(buffer, e, skipPrefix)
   }
+
+  def format_full_throwable(buffer: ArrayBuffer[String], e: Throwable, skipPrefix: Boolean = true) = {
+    LogUtils.format_full_throwable(buffer, e, skipPrefix)
+  }
 }
