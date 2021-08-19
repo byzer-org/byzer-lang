@@ -1,0 +1,5 @@
+load csv. `D:\opensource\mlsql\streamingpro-mlsql\src\main\resources-local\data\mllib\titanic.csv` as data;
+select * from data as output;
+
+
+

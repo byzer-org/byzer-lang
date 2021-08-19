@@ -23,7 +23,7 @@ object LocalSparkApp {
       "-streaming.runtime_hooks", "tech.mlsql.runtime.SparkSubmitMLSQLScriptRuntimeLifecycle",
       "-streaming.mlsql.script.owner", "admin",
       "-streaming.mlsql.sctipt.jobName", "test.mlsql",
-      "-streaming.mlsql.script.path", "/tmp/test.mlsql"
+      "-streaming.mlsql.script.path", "D:\\opensource\\mlsql\\streamingpro-mlsql\\src\\main\\java\\tech\\mlsql\\example\\app\\select.mlsql"
 
     ))
   }
