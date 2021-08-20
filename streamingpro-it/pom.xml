@@ -9,6 +9,137 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
+    <profiles>
+        <profile>
+            <id>streamingpro-spark-2.4.0-adaptor</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <dependencies>
+
+                <dependency>
+                    <groupId>tech.mlsql</groupId>
+                    <artifactId>streamingpro-spark-2.4.0-adaptor_${scala.binary.version}</artifactId>
+                    <version>${project.parent.version}</version>
+                </dependency>
+
+                <dependency>
+                    <groupId>tech.mlsql</groupId>
+                    <artifactId>python-controller-${spark.bigversion}_${scala.binary.version}</artifactId>
+                    <version>${project.parent.version}</version>
+                </dependency>
+
+                <dependency>
+                    <groupId>tech.mlsql</groupId>
+                    <artifactId>mlsql-sql-profiler-${spark.bigversion}_${scala.binary.version}</artifactId>
+                    <version>${project.parent.version}</version>
+                </dependency>
+
+                <dependency>
+                    <groupId>tech.mlsql</groupId>
+                    <artifactId>mlsql-ets-${spark.bigversion}_${scala.binary.version}</artifactId>
+                    <version>${project.parent.version}</version>
+                </dependency>
+
+
+                <dependency>
+                    <groupId>tech.mlsql</groupId>
+                    <artifactId>mlsql-mysql-store-${spark.bigversion}_${scala.binary.version}</artifactId>
+                    <version>${project.parent.version}</version>
+                </dependency>
+
+                <dependency>
+                    <groupId>tech.mlsql</groupId>
+                    <artifactId>mlsql-watcher-${spark.bigversion}_${scala.binary.version}</artifactId>
+                    <version>${project.parent.version}</version>
+                </dependency>
+                <dependency>
+                    <groupId>tech.mlsql</groupId>
+                    <artifactId>mlsql-healthy-${spark.bigversion}_${scala.binary.version}</artifactId>
+                    <version>${project.parent.version}</version>
+                </dependency>
+
+                <dependency>
+                    <groupId>org.apache.spark</groupId>
+                    <artifactId>spark-streaming-kafka-0-8_${scala.binary.version}</artifactId>
+                    <version>${spark.version}</version>
+                    <exclusions>
+                        <exclusion>
+                            <groupId>org.apache.kafka</groupId>
+                            <artifactId>kafka-clients</artifactId>
+                        </exclusion>
+                    </exclusions>
+                </dependency>
+                <dependency>
+                    <groupId>com.databricks</groupId>
+                    <artifactId>spark-xml_${scala.binary.version}</artifactId>
+                    <version>0.4.1</version>
+                </dependency>
+
+                <dependency>
+                    <groupId>tech.mlsql</groupId>
+                    <artifactId>mlsql-autosuggest-${spark.bigversion}_${scala.binary.version}</artifactId>
+                    <version>${project.parent.version}</version>
+                </dependency>
+            </dependencies>
+        </profile>
+
+        <profile>
+            <id>streamingpro-spark-3.0.0-adaptor</id>
+            <dependencies>
+
+                <dependency>
+                    <groupId>tech.mlsql</groupId>
+                    <artifactId>streamingpro-spark-3.0.0-adaptor_${scala.binary.version}</artifactId>
+                    <version>${project.parent.version}</version>
+                </dependency>
+
+                <dependency>
+                    <groupId>tech.mlsql</groupId>
+                    <artifactId>mlsql-ets-${spark.bigversion}_${scala.binary.version}</artifactId>
+                    <version>${project.parent.version}</version>
+                </dependency>
+
+                <dependency>
+                    <groupId>tech.mlsql</groupId>
+                    <artifactId>python-controller-${spark.bigversion}_${scala.binary.version}</artifactId>
+                    <version>${project.parent.version}</version>
+                </dependency>
+
+                <dependency>
+                    <groupId>tech.mlsql</groupId>
+                    <artifactId>mlsql-sql-profiler-30-${spark.bigversion}_${scala.binary.version}</artifactId>
+                    <version>${project.parent.version}</version>
+                </dependency>
+
+
+                <dependency>
+                    <groupId>tech.mlsql</groupId>
+                    <artifactId>mlsql-mysql-store-${spark.bigversion}_${scala.binary.version}</artifactId>
+                    <version>${project.parent.version}</version>
+                </dependency>
+
+                <dependency>
+                    <groupId>tech.mlsql</groupId>
+                    <artifactId>mlsql-watcher-${spark.bigversion}_${scala.binary.version}</artifactId>
+                    <version>${project.parent.version}</version>
+                </dependency>
+
+                <dependency>
+                    <groupId>tech.mlsql</groupId>
+                    <artifactId>mlsql-healthy-${spark.bigversion}_${scala.binary.version}</artifactId>
+                    <version>${project.parent.version}</version>
+                </dependency>
+
+                <dependency>
+                    <groupId>tech.mlsql</groupId>
+                    <artifactId>mlsql-autosuggest-${spark.bigversion}_${scala.binary.version}</artifactId>
+                    <version>${project.parent.version}</version>
+                </dependency>
+            </dependencies>
+        </profile>
+    </profiles>
+
     <properties>
         <breeze-version>0.13.2</breeze-version>
     </properties>
