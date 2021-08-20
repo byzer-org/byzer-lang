@@ -13,7 +13,7 @@
         <breeze-version>0.13.2</breeze-version>
     </properties>
 
-    <artifactId>streamingpro-it</artifactId>
+    <artifactId>streamingpro-it-${spark.bigversion}_${scala.binary.version}</artifactId>
     <dependencies>
 
         <dependency>
