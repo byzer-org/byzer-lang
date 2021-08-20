@@ -45,7 +45,7 @@ class SyntaxAnalyzeExt(override val uid: String) extends SQLAlg with WowParams w
       .map(s => if (s != "" && s.last.equals(';')) s.dropRight(1) else s)
       .filter(_ != "")
       .map { s =>
-        params(action.name) match {
+        params.getOrElse(action.name, getOrDefault(action)) match {
           case "extractTables" =>
             import df.sparkSession.implicits._
             MLSQLAuthParser.filterTables(s, context.execListener.sparkSession).map(_.table).toDF("tableName")
@@ -68,12 +68,7 @@ class SyntaxAnalyzeExt(override val uid: String) extends SQLAlg with WowParams w
   override def modelType: ModelType = ProcessType
 
   override def auth(etMethod: ETMethod, path: String, params: Map[String, String]): List[TableAuthResult] = {
-    params.get(action.name) match {
-      case Some(ac) =>
-      case None => set(action.name, "extractTables")
-    }
-
-    val vtable = params(action.name) match {
+    val vtable = params.getOrElse(action.name, getOrDefault(action)) match {
       case "extractTables" =>
         MLSQLTable(
           Option(DB_DEFAULT.MLSQL_SYSTEM.toString),
@@ -96,24 +91,37 @@ class SyntaxAnalyzeExt(override val uid: String) extends SQLAlg with WowParams w
 
   final val sql: Param[String] = new Param[String](this, "sql",
     """
-      |Required. SQL to be analyzed
-      |e.g. sql = "select * from table"
+      | Required. SQL to be analyzed
+      | e.g. sql = "select * from table"
     """.stripMargin
   )
+  setDefault(sql, "")
 
   final val action: Param[String] = new Param[String](this, "action",
     """
-      |Required. action for syntax analysis
-      |Optional parameter: extractTables
-      |e.g. action = "extractTables"
-    """.stripMargin
+      | Required. action for syntax analysis
+      | Optional parameter: extractTables
+      | Notice: Currently, the only supported action is `extractTables`,
+      | and other parameters of the action are under construction.
+      | e.g. action = "extractTables"
+    """.stripMargin,
+    isValid = (m: String) => {
+      m == "extractTables"
+    }
   )
+  setDefault(action, "extractTables")
 
+  override def explainParams(sparkSession: SparkSession): DataFrame = {
+    _explainParams(sparkSession)
+  }
 
   override def doc: Doc = Doc(HtmlDoc,
     """
       | SyntaxAnalyzeExt is used to parse the SQL grammar in the statement, please
       | check the codeExample to see how to use it.
+      |
+      | Use "load modelParams.`SyntaxAnalyzeExt` as output;"
+      | to check the available parameters;
       |
       | Use "load modelExample.`SyntaxAnalyzeExt` as output;"
       | get example.
@@ -122,29 +130,25 @@ class SyntaxAnalyzeExt(override val uid: String) extends SQLAlg with WowParams w
 
   override def codeExample: Code = Code(SQLCode,
     """
-      |First generate two tables, table1 and table2. Then execute SyntaxAnalyzeExt to
-      |parse a nested SQL. As follows:
-      |```sql
-      |select "stub" as table1;
-      |select "stub" as table2;
+      | Execute SyntaxAnalyzeExt to parse a nested SQL. As follows:
+      | ```sql
+      | run command as SyntaxAnalyzeExt.`` where
+      | action = "extractTables" and sql='''
+      | select * from (select * from table1 as c) as d left join table2 as e on d.id=e.id
+      | ''' as extractedTables;
       |
-      |run command as SyntaxAnalyzeExt.`` where
-      |action = "extractTables" and sql='''
-      |select * from (select * from table1 as c) as d left join table2 as e on d.id=e.id
-      |''' as extractedTables;
+      | select * from extractedTables as output;
+      | ```
       |
-      |select * from extractedTables as output;
-      |```
-      |
-      |then the result is:
-      |```
-      |+----------+
-      ||tableName |
-      |+----------+
-      ||table1    |
-      ||table2    |
-      |+----------+
-      |```
+      | then the result is:
+      | ```
+      | +----------+
+      | |tableName |
+      | +----------+
+      | |table1    |
+      | |table2    |
+      | +----------+
+      | ```
       |""".stripMargin)
 }
 
