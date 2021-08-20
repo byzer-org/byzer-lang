@@ -4,8 +4,8 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>tech.mlsql</groupId>
-        <artifactId>streamingpro</artifactId>
-        <version>1.6.0-SNAPSHOT</version>
+        <artifactId>streamingpro_2.11</artifactId>
+        <version>2.1.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -13,7 +13,7 @@
     <packaging>pom</packaging>
 
     <build>
-        <finalName>${project.parent.artifactId}</finalName>
+        <finalName>mlsql-engine_${spark.bigversion}-${project.version}</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -27,6 +27,8 @@
                     <outputDirectory>
                         ${project.parent.basedir}
                     </outputDirectory>
+                    <tarLongFileMode>posix</tarLongFileMode>
+                    <appendAssemblyId>false</appendAssemblyId>
                 </configuration>
                 <executions>
                     <execution>

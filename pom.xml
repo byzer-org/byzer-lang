@@ -9,7 +9,7 @@
 
     <name>StreamingPro Parent POM</name>
     <url>https://github.com/allwefantasy/streamingpro</url>
-    <description>With MLSQL,you can unifies big data and machine learning,one language, one platform.
+    <description>With MLSQL,you can unify big data and machine learning,one language, one platform.
     </description>
     <licenses>
         <license>
@@ -258,6 +258,7 @@
                 <module>streamingpro-spark-2.3.0-adaptor</module>
                 <module>streamingpro-dsl</module>
                 <module>streamingpro-mlsql</module>
+                <module>streamingpro-it</module>
                 <module>external/python-controller</module>
             </modules>
             <dependencies>
@@ -352,6 +353,7 @@
                 <module>streamingpro-spark-2.4.0-adaptor</module>
                 <module>streamingpro-dsl</module>
                 <module>streamingpro-mlsql</module>
+                <module>streamingpro-it</module>
                 <module>external/python-controller</module>
                 <module>external/mlsql-watcher</module>
                 <module>external/mlsql-mysql-store</module>
@@ -462,6 +464,7 @@
                 <module>streamingpro-spark-3.0.0-adaptor</module>
                 <module>streamingpro-dsl</module>
                 <module>streamingpro-mlsql</module>
+                <module>streamingpro-it</module>
                 <module>external/python-controller</module>
                 <module>external/mlsql-watcher</module>
                 <module>external/mlsql-mysql-store</module>
@@ -746,7 +749,7 @@
                 </exclusion>
                 <exclusion>
                     <groupId>tech.mlsql</groupId>
-                    <artifactId>common-utils_2.12</artifactId>
+                    <artifactId>common-utils_2.11</artifactId>
                 </exclusion>
                 <exclusion>
                     <groupId>org.scala-lang</groupId>

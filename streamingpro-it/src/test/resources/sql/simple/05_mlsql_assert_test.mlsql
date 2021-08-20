@@ -1,0 +1,45 @@
+--%exception=java.lang.RuntimeException
+--%msg=all model status should be success
+
+-- !plugin app remove "mlsql-assert-2.4";
+-- !plugin app add - "mlsql-assert-2.4";
+-- create test data
+set jsonStr='''
+{"features":[5.1,3.5,1.4,0.2],"label":0.0},
+{"features":[5.1,3.5,1.4,0.2],"label":1.0}
+{"features":[5.1,3.5,1.4,0.2],"label":0.0}
+{"features":[4.4,2.9,1.4,0.2],"label":0.0}
+{"features":[5.1,3.5,1.4,0.2],"label":1.0}
+{"features":[5.1,3.5,1.4,0.2],"label":0.0}
+{"features":[5.1,3.5,1.4,0.2],"label":0.0}
+{"features":[4.7,3.2,1.3,0.2],"label":1.0}
+{"features":[5.1,3.5,1.4,0.2],"label":0.0}
+{"features":[5.1,3.5,1.4,0.2],"label":0.0}
+''';
+load jsonStr.`jsonStr` as data;
+select vec_dense(features) as features ,label as label from data
+as data1;
+
+-- use RandomForest
+train data1 as RandomForest.`/tmp/model` where
+
+-- once set true,every time you run this script, MLSQL will generate new directory for you model
+keepVersion="true"
+
+-- specicy the test dataset which will be used to feed evaluator to generate some metrics e.g. F1, Accurate
+and evaluateTable="data1"
+
+-- specify group 0 parameters
+and `fitParam.0.labelCol`="features"
+and `fitParam.0.featuresCol`="label"
+and `fitParam.0.maxDepth`="2"
+
+-- specify group 1 parameters
+and `fitParam.1.featuresCol`="features"
+and `fitParam.1.labelCol`="label"
+and `fitParam.1.maxDepth`="10"
+as model_result;
+
+select name,value from model_result where name="status" as result;
+-- make sure status of  all models are success.
+!assert result ''':value=="success"'''  "all model status should be success";

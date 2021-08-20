@@ -1,16 +1,14 @@
 package tech.mlsql.ets
 
-import java.net.{InetAddress, ServerSocket}
+
 import java.util
-import java.util.concurrent.atomic.AtomicReference
 
 import org.apache.spark.ml.param.Param
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.mlsql.session.MLSQLException
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Row, SparkSession, SparkUtils}
-import org.apache.spark.{MLSQLSparkUtils, SparkEnv, SparkInstanceService, TaskContext, WowRowEncoder}
-import streaming.core.datasource.util.MLSQLJobCollect
+import org.apache.spark.{TaskContext, WowRowEncoder}
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib._
 import streaming.dsl.mmlib.algs.Functions
@@ -19,20 +17,14 @@ import tech.mlsql.arrow.python.PythonWorkerFactory
 import tech.mlsql.arrow.python.iapp.{AppContextImpl, JavaContext}
 import tech.mlsql.arrow.python.ispark.SparkContextImp
 import tech.mlsql.arrow.python.runner._
-import tech.mlsql.common.utils.base.TryTool
-import tech.mlsql.common.utils.distribute.socket.server.{ReportHostAndPort, SocketServerInExecutor}
 import tech.mlsql.common.utils.lang.sc.ScalaMethodMacros
-import tech.mlsql.common.utils.net.NetTool
 import tech.mlsql.common.utils.network.NetUtils
 import tech.mlsql.common.utils.serder.json.JSONTool
-import tech.mlsql.ets.ray.{CollectServerInDriver, DataServer}
-import tech.mlsql.log.WriteLog
+import tech.mlsql.ets.ray.DataServer
 import tech.mlsql.schema.parser.SparkSimpleSchemaParser
 import tech.mlsql.session.SetSession
 import tech.mlsql.tool.MasterSlaveInSpark
 import tech.mlsql.version.VersionCompatibility
-
-import scala.collection.mutable.ArrayBuffer
 
 /**
  * 24/12/2019 WilliamZhu(allwefantasy@gmail.com)
@@ -40,117 +32,50 @@ import scala.collection.mutable.ArrayBuffer
 class Ray(override val uid: String) extends SQLAlg with VersionCompatibility with Functions with WowParams {
   def this() = this(BaseParams.randomUID())
 
-  //
+  def genCode(spark: SparkSession, code: String) = {
+    if (code.startsWith("py.")) {
+      val content = spark.table(code.split("\\.").last).collect().head.getString(0)
+      val value = JSONTool.parseJson[Map[String, String]](content)
+      value("content")
+    } else code
+  }
+
+
   override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
     val spark = df.sparkSession
 
-    def genCode(code: String) = {
-      if (code.startsWith("py.")) {
-        val content = spark.table(code.split("\\.").last).collect().head.getString(0)
-        val value = JSONTool.parseJson[Map[String, String]](content)
-        value("content")
-      } else code
-    }
 
     val envSession = new SetSession(spark, ScriptSQLExec.context().owner)
     envSession.set("pythonMode", "ray", Map(SetSession.__MLSQL_CL__ -> SetSession.PYTHON_RUNNER_CONF_CL))
 
-
     val newdf = Array(params(inputTable.name), params(code.name), params(outputTable.name)) match {
       case Array(input, code, "") =>
-        distribute_execute(spark, genCode(code), input, params)
+        distribute_execute(spark, genCode(spark, code), input, params)
 
       case Array(input, code, output) =>
-        val resDf = distribute_execute(spark, genCode(code), input, params)
+        val resDf = distribute_execute(spark, genCode(spark, code), input, params)
         resDf.createOrReplaceTempView(output)
         resDf
     }
     newdf
   }
 
-
-  private def computeSplits(session: SparkSession, df: DataFrame) = {
-    var targetLen = df.rdd.partitions.length
-    var sort = false
-    val context = ScriptSQLExec.context()
-
-    MLSQLSparkUtils.isFileTypeTable(df) match {
-      case true =>
-        targetLen = 1
-        sort = true
-      case false =>
-        TryTool.tryOrElse {
-          val resource = new SparkInstanceService(session).resources
-          val jobInfo = new MLSQLJobCollect(session, context.owner)
-          val leftResource = resource.totalCores - jobInfo.resourceSummary(null).activeTasks
-          logInfo(s"RayMode: Resource:[${leftResource}(${resource.totalCores}-${jobInfo.resourceSummary(null).activeTasks})] TargetLen:[${targetLen}]")
-          if (leftResource / 2 <= targetLen) {
-            targetLen = Math.max(Math.floor(leftResource / 2) - 1, 1).toInt
-          }
-        } {
-          logWarning(format("Warning: Fail to detect instance resource. Setup 4 data server for Python."))
-          if (targetLen > 4) targetLen = 4
-        }
+  private def schemaFromStr(schemaStr: String) = {
+    val targetSchema = schemaStr.trim match {
+      case item if item.startsWith("{") =>
+        DataType.fromJson(schemaStr).asInstanceOf[StructType]
+      case item if item.startsWith("st") =>
+        SparkSimpleSchemaParser.parse(schemaStr).asInstanceOf[StructType]
+      case item if item == "file" =>
+        SparkSimpleSchemaParser.parse("st(field(start,long),field(offset,long),field(value,binary))").asInstanceOf[StructType]
+      case _ =>
+        StructType.fromDDL(schemaStr)
     }
-
-    (targetLen, sort)
-  }
-
-  private def buildDataSocketServers(session: SparkSession, df: DataFrame, tempdf: DataFrame, _owner: String): CollectServerInDriver[String] = {
-    val refs = new AtomicReference[ArrayBuffer[ReportHostAndPort]]()
-    refs.set(ArrayBuffer[ReportHostAndPort]())
-    val stopFlag = new AtomicReference[String]()
-    stopFlag.set("false")
-
-    val tempSocketServerInDriver = new CollectServerInDriver(refs, stopFlag)
-
-    val thread = new Thread("temp-data-server-in-spark") {
-      override def run(): Unit = {
-
-        val dataSchema = df.schema
-        val tempSocketServerHost = tempSocketServerInDriver._host
-        val tempSocketServerPort = tempSocketServerInDriver._port
-        val timezoneID = session.sessionState.conf.sessionLocalTimeZone
-        val owner = _owner
-        tempdf.rdd.mapPartitions { iter =>
-
-          val host: String = if (SparkEnv.get == null || MLSQLSparkUtils.blockManager == null || MLSQLSparkUtils.blockManager.blockManagerId == null) {
-            WriteLog.write(List("Ray: Cannot get MLSQLSparkUtils.rpcEnv().address, using NetTool.localHostName()").iterator,
-              Map("PY_EXECUTE_USER" -> owner))
-            NetTool.localHostName()
-          } else if (SparkEnv.get != null && SparkEnv.get.conf.getBoolean("spark.mlsql.deploy.on.k8s", false)) {
-            InetAddress.getLocalHost.getHostAddress
-          }
-          else MLSQLSparkUtils.blockManager.blockManagerId.host
-
-          val socketRunner = new SparkSocketRunner("serveToStreamWithArrow", host, timezoneID)
-          val commonTaskContext = new SparkContextImp(TaskContext.get(), null)
-          val convert = WowRowEncoder.fromRow(dataSchema)
-          val newIter = iter.map { irow =>
-            convert(irow)
-          }
-          val Array(_server, _host, _port) = socketRunner.serveToStreamWithArrow(newIter, dataSchema, 1000, commonTaskContext)
-
-          // send server info back
-          SocketServerInExecutor.reportHostAndPort(tempSocketServerHost,
-            tempSocketServerPort,
-            ReportHostAndPort(_host.toString, _port.toString.toInt))
-
-          while (_server != null && !_server.asInstanceOf[ServerSocket].isClosed) {
-            Thread.sleep(1 * 1000)
-          }
-          List[String]().iterator
-        }.count()
-        logInfo("Exit all data server")
-      }
-    }
-    thread.setDaemon(true)
-    thread.start()
-    tempSocketServerInDriver
+    targetSchema
   }
 
 
-  private def distribute_execute(session: SparkSession, code: String, sourceTable: String, etParams: Map[String, String]) = {
+  private def distribute_execute(session: SparkSession, code: String, sourceTable: String, etParams: Map[String, String], extraConf: Map[String, String] = Map()) = {
     import scala.collection.JavaConverters._
     val context = ScriptSQLExec.context()
     val envSession = new SetSession(session, context.owner)
@@ -175,7 +100,7 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
     var runnerConf = Map(
       "HOME" -> context.home,
       "OWNER" -> context.owner,
-      "GROUP_ID" -> context.groupId) ++ getSchemaAndConf(envSession) ++ configureLogConf ++ confTableValue
+      "GROUP_ID" -> context.groupId) ++ getSchemaAndConf(envSession) ++ configureLogConf ++ confTableValue ++ extraConf
 
     val timezoneID = session.sessionState.conf.sessionLocalTimeZone
     val df = session.table(sourceTable)
@@ -196,16 +121,7 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
     masterSlaveInSpark.waitWithTimeout(60)
 
 
-    val targetSchema = runnerConf("schema").trim match {
-      case item if item.startsWith("{") =>
-        DataType.fromJson(runnerConf("schema")).asInstanceOf[StructType]
-      case item if item.startsWith("st") =>
-        SparkSimpleSchemaParser.parse(runnerConf("schema")).asInstanceOf[StructType]
-      case item if item == "file" =>
-        SparkSimpleSchemaParser.parse("st(field(start,long),field(offset,long),field(value,binary))").asInstanceOf[StructType]
-      case _ =>
-        StructType.fromDDL(runnerConf("schema"))
-    }
+    val targetSchema = schemaFromStr(runnerConf("schema"))
 
 
     val dataModeSchema = StructType(Seq(StructField("host", StringType), StructField("port", LongType), StructField("server_id", StringType)))
@@ -367,10 +283,127 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
 
   override def batchPredict(df: DataFrame, path: String, params: Map[String, String]): DataFrame = train(df, path, params)
 
-  override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = ???
+  override def load(session: SparkSession, path: String, params: Map[String, String]): Any = {
+    return path
+  }
 
-  override def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = ???
+  override def predict(session: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = {
 
+    def _load = {
+      val registerCode = params.getOrElse("registerCode", "")
+      val envSession = new SetSession(session, ScriptSQLExec.context().owner)
+      envSession.set("pythonMode", "ray", Map(SetSession.__MLSQL_CL__ -> SetSession.PYTHON_RUNNER_CONF_CL))
+      distribute_execute(
+        session,
+        genCode(session, registerCode),
+        "command",
+        params ++ Map("model" -> _model.toString), extraConf = Map("UDF_CLIENT" -> name))
+    }
+
+    _load
+
+    val predictCode = params.getOrElse("predictCode", "")
+    val context = ScriptSQLExec.context()
+    val envSession = new SetSession(session, context.owner)
+    envSession.set("pythonMode", "ray", Map(SetSession.__MLSQL_CL__ -> SetSession.PYTHON_RUNNER_CONF_CL))
+    val envs = Map(
+      ScalaMethodMacros.str(PythonConf.PY_EXECUTE_USER) -> context.owner,
+      ScalaMethodMacros.str(PythonConf.PYTHON_ENV) -> "export ARROW_PRE_0_15_IPC_FORMAT=1"
+    ) ++
+      envSession.fetchPythonEnv.get.collect().map { f =>
+        if (f.k == ScalaMethodMacros.str(PythonConf.PYTHON_ENV)) {
+          (f.k, f.v + " && export ARROW_PRE_0_15_IPC_FORMAT=1")
+        } else {
+          (f.k, f.v)
+        }
+
+      }.toMap
+
+    val envs4j = new util.HashMap[String, String]()
+    envs.foreach(f => envs4j.put(f._1, f._2))
+
+    // this code make sure we get different python factory to create python worker.
+    envs4j.put("UDF_CLIENT", name)
+
+    val timezoneID = session.sessionState.conf.sessionLocalTimeZone
+
+    val runnerConf = Map(
+      "HOME" -> context.home,
+      "OWNER" -> context.owner,
+      "GROUP_ID" -> context.groupId,
+      "directData" -> "true",
+      "UDF_CLIENT" -> name
+    ) ++ getSchemaAndConf(envSession) ++ configureLogConf
+
+    val pythonVersion = runnerConf.getOrElse("pythonVersion", "3.6")
+
+
+    val sourceSchema = params.get("sourceSchema") match {
+      case Some(schemaStr) => schemaFromStr(schemaStr)
+      case None => StructType(Seq(StructField("value", ArrayType(DoubleType))))
+    }
+
+    val outputSchema = params.get("outputSchema") match {
+      case Some(schemaStr) => schemaFromStr(schemaStr)
+      case None => StructType(Seq(StructField("value", ArrayType(ArrayType(DoubleType)))))
+    }
+
+    val debug = params.get("debugMode")
+
+    session.udf.register(name, (vectors: Seq[Seq[Double]]) => {
+      val startTime = System.currentTimeMillis()
+      val rows = vectors.map(vector => Row.fromSeq(Seq(vector)))
+      try {
+        val newRows = executePythonCode(predictCode, envs4j,
+          rows.toIterator, sourceSchema, outputSchema, runnerConf, timezoneID, pythonVersion)
+        val res = newRows.map(_.getAs[Seq[Seq[Double]]](0)).head
+        if (debug.isDefined) {
+          logInfo(s"Execute predict code time:${System.currentTimeMillis() - startTime}")
+        }
+        res
+      } catch {
+        case e: Exception =>
+          if (debug.isDefined) {
+            logError("Fail to execute predict code", e)
+          }
+          null
+      }
+
+    })
+    null
+  }
+
+  def executePythonCode(code: String, envs: util.HashMap[String, String],
+                        input: Iterator[Row], inputSchema: StructType,
+                        outputSchema: StructType, conf: Map[String, String], timezoneID: String, pythonVersion: String): List[Row] = {
+    import scala.collection.JavaConverters._
+    val batch = new ArrowPythonRunner(
+      Seq(ChainedPythonFunctions(Seq(PythonFunction(code, envs, "python", pythonVersion)))), inputSchema,
+      timezoneID, conf
+    )
+
+    val sourceEnconder = WowRowEncoder.fromRow(inputSchema)
+    val newIter = input.map { irow =>
+      sourceEnconder(irow).copy()
+    }
+
+    // run the code and get the return result
+    val javaConext = new JavaContext
+    val commonTaskContext = new AppContextImpl(javaConext, batch)
+    val columnarBatchIter = batch.compute(Iterator(newIter), TaskContext.getPartitionId(), commonTaskContext)
+
+    val outputEnconder = WowRowEncoder.toRow(outputSchema)
+    val items = columnarBatchIter.flatMap { batch =>
+      batch.rowIterator.asScala
+    }.map { r =>
+      outputEnconder(r)
+    }.toList
+    javaConext.markComplete
+    javaConext.close
+    return items
+  }
+
+  override def skipPathPrefix: Boolean = true
 }
 
 
