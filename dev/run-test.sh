@@ -3,6 +3,7 @@
 ## ./dev/run-test.sh
 
 V=${1:-2.4}
+SKIP_INSTALL=${2:-NO}
 
 if [ $V == "3.0" ];then
    ./dev/change-scala-version.sh 2.12
@@ -15,5 +16,7 @@ else
   exit -1
 fi
 
-mvn clean install -DskipTests 
+if [ ${SKIP_INSTALL} != "skipInstall" ];then
+  mvn clean install -DskipTests
+fi
 mvn test  -pl streamingpro-it
