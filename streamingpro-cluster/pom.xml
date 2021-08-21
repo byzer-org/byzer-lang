@@ -8,7 +8,23 @@
         <version>2.1.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
+    <properties>
+        <!-- spark 2.4 start -->
+        <scala.version>2.11.12</scala.version>
+        <scala.binary.version>2.11</scala.binary.version>
+        <spark.version>2.4.3</spark.version>
+        <spark.bigversion>2.4</spark.bigversion>
+        <scalatest.version>3.0.3</scalatest.version>
+        <!-- spark 2.4 end -->
 
+        <!-- spark 3.0 start -->
+        <!--        <scala.version>2.12.10</scala.version> -->
+        <!--        <scala.binary.version>2.12</scala.binary.version> -->
+        <!--        <spark.version>3.1.1</spark.version> -->
+        <!--        <spark.bigversion>3.0</spark.bigversion> -->
+        <!--        <scalatest.version>3.0.3</scalatest.version> -->
+        <!-- spark 3.0 end -->
+    </properties>
     <artifactId>streamingpro-cluster-${spark.bigversion}_${scala.binary.version}</artifactId>
     <profiles>
         <profile>
