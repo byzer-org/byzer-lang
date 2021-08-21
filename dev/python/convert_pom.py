@@ -11,7 +11,7 @@ def uncomment(line: str):
 
 def comment(line: str):
     if line.lstrip().startswith("<!--"):
-        return str
+        return line
     return "<!-- " + line.rstrip("\n") + " -->" + "\n"
 
 
