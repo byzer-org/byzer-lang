@@ -1,3 +1,4 @@
+import sys
 from typing import Any, NoReturn, Callable, Dict, List
 import os
 
@@ -58,9 +59,12 @@ def apply(path: str, target: str) -> NoReturn:
         writer.writelines(newlines)
 
 
+target = 2.4
+if len(sys.argv) > 0:
+    target = sys.argv[1]
 for root, dirs, files in os.walk("."):
     for file in files:
         if file.endswith("pom.xml"):
             file_path = os.path.join(root, file)
-            print(f"Apply {file_path}")
-            apply(file_path)
+            print(f"Apply {target} in  {file_path}")
+            apply(file_path, target)
