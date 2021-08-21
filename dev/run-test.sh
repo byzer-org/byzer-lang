@@ -4,13 +4,16 @@
 
 V=${1:-2.4}
 
-OPTS="-Pscala-2.11 -Pspark-${V}.0 -Pstreamingpro-spark-${V}.0-adaptor"
+OPTS=""
 
-if [ $V == "3.0" ]
-then
+if [ $V == "3.0" ];then
    ./dev/change-scala-version.sh 2.12
-   python ./dev/python/convert_pom.py
-   OPTS="-Pscala-2.12 -Pspark-${V}.0 -Pstreamingpro-spark-${V}.0-adaptor"
+   python ./dev/python/convert_pom.py 3.0
+   OPTS="-Pscala-2.12 -Pspark-3.0.0 -Pstreamingpro-spark-3.0.0-adaptor"
+elif [ $V == "2.4" ]; then
+    ./dev/change-scala-version.sh 2.11
+   python ./dev/python/convert_pom.py 2.4
+   OPTS="-Pscala-2.11 -Pspark-2.4.0 -Pstreamingpro-spark-2.4.0-adaptor"
 else
   echo "Only accept 2.4|3.0"
   exit -1
