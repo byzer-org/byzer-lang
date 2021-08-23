@@ -16,6 +16,8 @@ else
   exit -1
 fi
 
+mvn clean
+
 if [ ${SKIP_INSTALL} != "skipInstall" ];then
   mvn clean install -DskipTests
 fi
