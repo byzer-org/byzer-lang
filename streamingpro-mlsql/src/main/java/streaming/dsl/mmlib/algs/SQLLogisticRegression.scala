@@ -135,7 +135,6 @@ class SQLLogisticRegression(override val uid: String) extends SQLAlg with MllibF
         Seq("uid", model.uid),
         Seq("numFeatures", model.numFeatures.toString),
         Seq("numClasses", model.numClasses.toString),
-        Seq("binarySummary", model.binarySummary.toString()),
         Seq("intercept", model.intercept.toString()),
         Seq("coefficients", model.coefficients.toString())
       ) ++ modelParams
@@ -148,18 +147,18 @@ class SQLLogisticRegression(override val uid: String) extends SQLAlg with MllibF
   override def modelType: ModelType = AlgType
 
   override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = {
-    val model = LogisticRegressionModel.load(path)
-    model
+    val (bestModelPath, baseModelPath, metaPath) = mllibModelAndMetaPath(path, params, sparkSession)
+    val model = LogisticRegressionModel.load(bestModelPath(0))
+    ArrayBuffer(model)
   }
 
   override def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = {
-    val model = sparkSession.sparkContext.broadcast(_model.asInstanceOf[LogisticRegressionModel])
+    predict_classification(sparkSession, _model, name)
+  }
 
-    val f = (vec: Vector) => {
-      val result = model.value.getClass.getMethod("predict", classOf[Vector]).invoke(model.value, vec)
-      result
-    }
-    MLSQLUtils.createUserDefinedFunction(f, DoubleType, Some(Seq(VectorType)))
+  override def batchPredict(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
+    val model = load(df.sparkSession, path, params).asInstanceOf[ArrayBuffer[LogisticRegressionModel]].head
+    model.transform(df)
   }
 
   override def auth(etMethod: ETMethod, path: String, params: Map[String, String]): List[TableAuthResult] = {
