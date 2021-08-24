@@ -42,3 +42,6 @@ as model_result;
 select name,value from model_result where name="status" as result;
 -- make sure status of  all models are success.
 !assert result ''':value=="success"'''  "all model status should be success";
+predict data1 as LogisticRegression.`/tmp/model`;
+register LogisticRegression.`/tmp/model` as lr_predict;
+select lr_predict(features) as predict_label, label from data1 as output;
