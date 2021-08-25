@@ -1,0 +1,13 @@
+--%comparator=tech.mlsql.it.IgnoreResultComparator
+
+SELECT '{"key": "value", "key_2":"value_2"}' AS col_1
+, "hangzhou" AS city
+AS table_1;
+run table_1 as JsonExpandExt.`` where inputCol="col_1" AND samplingRatio="1.0" as result;
+-- result
+-- |------|--------|--------|
+-- |key   | key_2  |city    |
+-- |value | value_2|hangzhou|
+-- |------|--------|--------|
+
+!assert result ''':key=="value" AND :key_2=="value_2" AND :city=="hangzhou" '''  "Json should be expanded correctly.";
