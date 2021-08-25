@@ -61,20 +61,23 @@ ENABLE_JYTHON ${ENABLE_JYTHON}
 ENABLE_CHINESE_ANALYZER ${ENABLE_CHINESE_ANALYZER}
 ENABLE_HIVE_THRIFT_SERVER ${ENABLE_HIVE_THRIFT_SERVER}"
 
-SELF=$(cd $(dirname $0) && pwd)
-cd $SELF
+## Change directory to mlsql base directory
+base=$(cd $(dirname $0)/.. && pwd)
+cd $base/
 
-if [[ ${MLSQL_SPARK_VERSION} = "2.3" || ${MLSQL_SPARK_VERSION} = "2.4" ]]
+## Needs to call convert_pom.py from ${base} directory
+if [[ ${MLSQL_SPARK_VERSION} == "2.4" ]]
 then
-  ./change-scala-version.sh 2.11
-elif [[ ${MLSQL_SPARK_VERSION} = "3.0" ]]
+  ./dev/change-scala-version.sh 2.11
+  python ./dev/python/convert_pom.py 2.4
+elif [[ ${MLSQL_SPARK_VERSION} == "3.0" ]]
 then
-  ./change-scala-version.sh 2.12
+  ./dev/change-scala-version.sh 2.12
+  python ./dev/python/convert_pom.py 3.0
 else
   echo "Spark-${MLSQL_SPARK_VERSION} is not supported"
   exit_with_usage
-  exit 1
 fi
 
 ## Start building
-./package.sh
+./dev/package.sh
