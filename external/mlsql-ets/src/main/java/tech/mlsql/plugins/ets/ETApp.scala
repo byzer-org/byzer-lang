@@ -36,6 +36,8 @@ class ETApp extends tech.mlsql.app.App with VersionCompatibility {
     ETRegister.register("SchemaCommand", classOf[SchemaCommand].getName)
     ETRegister.register("StreamJobs", classOf[StreamJobs].getName)
     ETRegister.register("SyntaxAnalyzeExt", classOf[SyntaxAnalyzeExt].getName)
+    ETRegister.register("JsonExpandExt", classOf[JsonExpandExt].getName)
+
     //    CommandCollection.refreshCommandMapping(Map("emptyTable" -> "SchemaCommand"))
   }
 
