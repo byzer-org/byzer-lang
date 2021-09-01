@@ -1,0 +1,31 @@
+--%comparator=tech.mlsql.it.IgnoreResultComparator
+-- !plugin app add - "mlsql-shell-2.4";
+
+!sh script '''
+conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/msys2/
+conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/conda-forge/
+conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/free/
+conda init
+source activate
+conda deactivate
+if test -z "$(conda env list |grep it_env)"; then
+    echo "Start to create a conda environment with python version 3.6.7: it_env..."
+    conda create --name it_env python=3.6.7
+    echo "The conda environment is created."
+else
+    echo "Conda environment already exists."
+fi
+conda activate it_env
+echo "Start to install pip dependencies..."
+pip config set global.trusted-host  mirrors.aliyun.com
+pip config set global.index-url http://mirrors.aliyun.com/pypi/simple/
+pip install Cython
+pip install pytest-runner
+pip install pyarrow==4.0.1
+pip install ray==1.3.0
+pip install aiohttp psutil grpcio pandas xlsxwriter
+pip install watchdog requests click uuid sfcli  pyjava vega_datasets
+pip install plotly
+pip install aioredis==1.3.1
+echo "Conda environment initialization is complete!"
+''';
