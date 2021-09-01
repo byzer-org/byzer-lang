@@ -78,8 +78,6 @@ docker pull techmlsql/mlsql-sandbox:3.1.1-2.1.0-SNAPSHOT
 ```
 
 ### Start Container
-
-
 ```
 docker run -d \
 -p 3306:3306 \
@@ -88,8 +86,13 @@ docker run -d \
 --name mlsql-sandbox-2.4.3-2.1.0-SNAPSHOT \
 techmlsql/mlsql-sandbox:2.4.3-2.1.0-SNAPSHOT
 ```
+Launch a browser, enter http://localhost:9002, and "Setup MLSQL Console in 2 Steps" page shows.
 
+Enter admin username and password, click "Go" button.
 
+Enter spark for "Engine Name", http://localhost:9003 for "Engine Url", leave "Access Token" blank, click "Go" button.
+ 
+Click "Go to Console Page", and you're all set to play with mlsql.
 
 ## <a id="Download"></a>Download MLSQL
 * The latest stable version is v2.0.1; snapshot version is 2.1.0-SNAPSHOT
