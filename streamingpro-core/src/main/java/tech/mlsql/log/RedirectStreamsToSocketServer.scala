@@ -1,13 +1,25 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package tech.mlsql.log
 
-import java.io.{DataOutputStream, InputStream}
-import java.net.Socket
-
-import tech.mlsql.arrow.Utils
+import java.io.InputStream
 import tech.mlsql.arrow.api.RedirectStreams
-import tech.mlsql.arrow.python.runner.PythonConf
-import tech.mlsql.common.utils.lang.sc.ScalaMethodMacros
-import tech.mlsql.common.utils.log.Logging
 
 /**
  * 2019-08-21 WilliamZhu(allwefantasy@gmail.com)
@@ -33,96 +45,14 @@ class RedirectStreamsToSocketServer extends RedirectStreams {
 class RedirectLogThread(
                          in: InputStream,
                          conf: Map[String, String],
-                         name: String,
-                         propagateEof: Boolean = false)
+                         name: String)
   extends Thread(name) {
 
   setDaemon(true)
-  WriteLog.init(conf)
 
-  override def run() {
+  override def run(): Unit = {
     WriteLog.write(scala.io.Source.fromInputStream(in).getLines(), conf)
   }
 }
 
-class WriteLogPool(size: Int, conf: Map[String, String]) {
-  val pool = new java.util.concurrent.ConcurrentLinkedQueue[WriteLog]()
-
-  def init(): Unit = {
-    (0 until size).foreach { item =>
-      pool.add(createObj())
-    }
-  }
-
-  def borrowObj() = {
-    pool.poll()
-  }
-
-  def returnObj(writeLog: WriteLog) = {
-    pool.offer(writeLog)
-  }
-
-  private def createObj() = {
-    new WriteLog(conf)
-  }
-
-}
-
-class WriteLog(conf: Map[String, String]) extends Logging {
-
-  val host = conf("spark.mlsql.log.driver.host")
-  val port = conf("spark.mlsql.log.driver.port")
-  val token = conf("spark.mlsql.log.driver.token")
-
-  logInfo(s"Init WriteLog in executor. The target DriverLogServer is ${host}:${port} with token ${token}")
-  val socket = new Socket(host, port.toInt)
-
-  def write(in: Iterator[String], params: Map[String, String]) = {
-    val dOut = new DataOutputStream(socket.getOutputStream)
-    in.foreach { line =>
-      val client = new DriverLogClient()
-      val owner = params.getOrElse(ScalaMethodMacros.str(PythonConf.PY_EXECUTE_USER), "")
-      val groupId = params.getOrElse("groupId", "")
-      client.sendRequest(dOut, SendLog(token, LogUtils.formatWithOwner(line, owner, groupId)))
-    }
-  }
-
-  def close = {
-    socket.close()
-  }
-}
-
-object WriteLog {
-
-  var POOL: WriteLogPool = null
-
-  def init(conf: Map[String, String]) = {
-    synchronized {
-      if (POOL == null) {
-        POOL = new WriteLogPool(30, conf)
-        POOL.init()
-      }
-    }
-
-  }
-
-  def write(in: Iterator[String], params: Map[String, String]): Unit = {
-    if (POOL == null) {
-      in.foreach(println(_))
-      return
-      //throw new RuntimeException("WriteLog Pool is not init")
-    }
-    val obj = POOL.borrowObj()
-    Utils.tryWithSafeFinally {
-      if (obj == null) {
-        throw new RuntimeException("Cannot get connection for task writing log to driver")
-      }
-      obj.write(in, params)
-
-    } {
-      if (obj != null) {
-        POOL.returnObj(obj)
-      }
-    }
-  }
-}
+object WriteLog extends BaseHttpLogClient
