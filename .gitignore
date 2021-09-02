@@ -173,3 +173,5 @@ external/mlsql-native-operators/cmake-build-debug-ubuntu/
 external/mlsql-native-operators/.clion.source.upload.marker
 external/mlsql-native-operators/build/
 *.tgz
+
+streamingpro-it/src/test/home/

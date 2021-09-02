@@ -8,7 +8,6 @@ import org.scalatest.{BeforeAndAfterAll, FunSuite}
 import serviceframework.dispatcher.StrategyDispatcher
 import streaming.core.StreamingApp
 import streaming.core.strategy.platform.{PlatformManager, SparkRuntime}
-import tech.mlsql.common.utils.shell.command.ParamsUtil
 import tech.mlsql.job.JobManager
 
 
@@ -20,15 +19,25 @@ trait LocalBaseTestSuite extends FunSuite with SparkOperationUtil with BeforeAnd
   var dataDirPath: String = _
   var home: String = _
   val user = "admin"
-  var initialPlugins: Seq[String] = Seq("mlsql-assert-2.4")
+  var initialPlugins: Seq[String] = Seq("mlsql-assert")
   var originClassLoader = Thread.currentThread().getContextClassLoader
 
   def initPlugins(): Unit = {
+    // 3.1.1 => v1=3 v2=1 v3=1
+    val Array(v1, _, _) = runtime.sparkSession.version.split("\\.")
+
+    def convert_plugin_name(name: String) = {
+      val suffix = v1 match {
+        case "2" => "2.4"
+        case "3" => "3.0"
+      }
+      s"${name}-${suffix}"
+    }
     // set plugin context loader
     Thread.currentThread().setContextClassLoader(ClassLoader.getSystemClassLoader)
     initialPlugins.foreach(name => {
-      executeCode2(home, user, runtime, s"""!plugin app remove "${name}";""")
-      executeCode2(home, user, runtime, s"""!plugin app add - "${name}";""")
+      executeCode2(home, user, runtime, s"""!plugin app remove "${convert_plugin_name(name)}";""")
+      executeCode2(home, user, runtime, s"""!plugin app add - "${convert_plugin_name(name)}";""")
     })
   }
 
@@ -79,7 +88,8 @@ trait LocalBaseTestSuite extends FunSuite with SparkOperationUtil with BeforeAnd
       if (homeDir.exists()) {
         FileUtils.deleteDirectory(homeDir)
       }
-    } catch {
+    }
+    catch {
       case e: Exception =>
         e.printStackTrace()
     }
