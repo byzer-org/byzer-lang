@@ -2,7 +2,6 @@ package org.apache.spark.ps.cluster
 
 import java.net.URL
 import java.util.Locale
-
 import _root_.streaming.core.strategy.platform.{PlatformManager, SparkRuntime}
 import org.apache.spark._
 import org.apache.spark.api.MLSQLExecutorPlugin
@@ -12,7 +11,7 @@ import org.apache.spark.rpc.{RpcCallContext, RpcEnv, ThreadSafeRpcEndpoint}
 import org.apache.spark.security.CryptoStreamUtils
 import org.apache.spark.util.ThreadUtils
 import tech.mlsql.common.utils.exception.ExceptionTool
-import tech.mlsql.log.WriteLog
+import tech.mlsql.log.BaseHttpLogClient
 import tech.mlsql.nativelib.runtime.MLSQLNativeRuntime
 import tech.mlsql.python.BasicCondaEnvManager
 import tech.mlsql.tool.HDFSOperatorV2
@@ -216,7 +215,7 @@ class PSExecutorPlugin(conf: SparkConf) extends MLSQLExecutorPlugin with Logging
   override def _init(config: Map[Any, Any]): Unit = {
     logInfo("PSExecutorPlugin starting.....")
     try {
-      WriteLog.init(conf.getAll.toMap)
+      BaseHttpLogClient.init(conf.getAll.toMap)
     } catch {
       case e: Exception => logInfo("Fail to connect DriverLogServer", e)
     }

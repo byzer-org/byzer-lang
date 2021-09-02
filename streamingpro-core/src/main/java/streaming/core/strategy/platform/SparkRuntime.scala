@@ -21,7 +21,6 @@ package streaming.core.strategy.platform
 import java.lang.reflect.Modifier
 import java.util.concurrent.atomic.AtomicReference
 import java.util.{UUID, Map => JMap}
-
 import _root_.streaming.core.stream.MLSQLStreamManager
 import net.csdn.common.reflect.ReflectHelper
 import org.apache.spark.ps.cluster.PSDriverBackend
@@ -35,7 +34,7 @@ import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.common.utils.network.NetUtils
 import tech.mlsql.datalake.DataLake
 import tech.mlsql.job.JobManager
-import tech.mlsql.log.DriverLogServer
+import tech.mlsql.log.BaseHttpLogServer
 import tech.mlsql.runtime.{AsSchedulerService, MLSQLRuntimeLifecycle}
 
 import scala.collection.JavaConversions._
@@ -59,7 +58,7 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
   )
   var psDriverBackend: PSDriverBackend = null
 
-  var driverLogServer: DriverLogServer[String] = null
+  var driverLogServer: BaseHttpLogServer = null
 
   var sparkSession: SparkSession = createRuntime
 
@@ -126,12 +125,20 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
     val confLogInDriver = params.asScala.getOrElse("streaming.executor.log.in.driver", "true").toString.toBoolean
     if ((confSparkService && confLogInDriver) ||
       params.getOrDefault("streaming.unittest", "false").toString.toBoolean) {
-      val token = UUID.randomUUID().toString
-      driverLogServer = new DriverLogServer[String](new AtomicReference[String](token))
-      logInfo(s"DriverLogServer is started in ${driverLogServer._host}:${driverLogServer._port.toString} with token:${token}")
-      conf.set("spark.mlsql.log.driver.host", driverLogServer._host)
-      conf.set("spark.mlsql.log.driver.port", driverLogServer._port.toString)
-      conf.set("spark.mlsql.log.driver.token", token)
+      conf.setIfMissing("spark.mlsql.log.driver.token", UUID.randomUUID().toString)
+      val token = conf.get("spark.mlsql.log.driver.token")
+      driverLogServer = Class.forName(
+        params.getOrElse("spark.mlsql.log.driver.implClass", "tech.mlsql.log.DriverLogServer").toString)
+        .getConstructor(classOf[String]).newInstance(token).asInstanceOf[BaseHttpLogServer]
+
+      //Starts on random ports of local IP by default
+      conf.setIfMissing("spark.mlsql.log.driver.host", driverLogServer.getHost)
+      val host = conf.get("spark.mlsql.log.driver.host")
+      val port = conf.getInt("spark.mlsql.log.driver.port", 0)
+      driverLogServer.build(host, port)
+      conf.setIfMissing("spark.mlsql.log.driver.port", driverLogServer.port.toString)
+      conf.setIfMissing("spark.mlsql.log.driver.url", driverLogServer.url)
+      logInfo(s"DriverLogServer is started in ${driverLogServer.url} with token:${token}")
     }
 
     if (params.containsKey(DataLake.USER_KEY)) {

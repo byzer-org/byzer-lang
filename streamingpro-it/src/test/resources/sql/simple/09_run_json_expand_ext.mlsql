@@ -1,0 +1,2 @@
+SELECT '{"key": "value", "key_2":"value_2"}' AS col_1 AS table_1;
+run table_1 as JsonExpandExt.`` where inputCol="col_1" as A2;
