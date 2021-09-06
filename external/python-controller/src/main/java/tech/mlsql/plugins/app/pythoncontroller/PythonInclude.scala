@@ -23,20 +23,22 @@ class PythonInclude(override val uid: String) extends SQLAlg with VersionCompati
     val session = df.sparkSession
     import session.implicits._
     val command = JSONTool.parseJson[List[String]](params("parameters")).toArray
+
+    def projectInclude(path: String, tableName: String): DataFrame = {
+      val pythonCode = new ProjectIncludeSource().fetchSource(df.sparkSession, path, Map())
+      val item = JSONTool.toJsonStr(Map("content" -> pythonCode))
+      val newdf = session.createDataset[String](Seq(item))
+      newdf.createOrReplaceTempView(tableName)
+      newdf.toDF()
+    }
+
+
     command match {
       case Array("project", path, "named", tableName) =>
-        val pythonCode = new ProjectIncludeSource().fetchSource(df.sparkSession, path, Map())
-        val item = JSONTool.toJsonStr(Map("content" -> pythonCode))
-        val newdf = session.createDataset[String](Seq(item))
-        newdf.createOrReplaceTempView(tableName)
-        newdf.toDF()
+        projectInclude(path, tableName)
 
       case Array("project", path, tableName) =>
-        val pythonCode = new ProjectIncludeSource().fetchSource(df.sparkSession, path, Map())
-        val item = JSONTool.toJsonStr(Map("content" -> pythonCode))
-        val newdf = session.createDataset[String](Seq(item))
-        newdf.createOrReplaceTempView(tableName)
-        newdf.toDF()
+        projectInclude(path, tableName)
 
       case Array(path, "named", tableName) =>
         val format = path.split("\\.").head
