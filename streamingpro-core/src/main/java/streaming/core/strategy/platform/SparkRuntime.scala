@@ -34,7 +34,7 @@ import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.common.utils.network.NetUtils
 import tech.mlsql.datalake.DataLake
 import tech.mlsql.job.JobManager
-import tech.mlsql.log.BaseHttpLogServer
+import tech.mlsql.log.{BaseHttpLogClient, BaseHttpLogServer}
 import tech.mlsql.runtime.{AsSchedulerService, MLSQLRuntimeLifecycle}
 
 import scala.collection.JavaConversions._
@@ -139,6 +139,13 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
       conf.setIfMissing("spark.mlsql.log.driver.port", driverLogServer.port.toString)
       conf.setIfMissing("spark.mlsql.log.driver.url", driverLogServer.url)
       logInfo(s"DriverLogServer is started in ${driverLogServer.url} with token:${token}")
+
+      // Init LogClient request conf.
+      try {
+        BaseHttpLogClient.init(conf.getAll.toMap)
+      } catch {
+        case e: Exception => logError("Fail to init LogClient conf.", e)
+      }
     }
 
     if (params.containsKey(DataLake.USER_KEY)) {
