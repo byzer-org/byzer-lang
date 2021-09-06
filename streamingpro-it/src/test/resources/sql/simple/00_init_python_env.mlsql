@@ -2,12 +2,52 @@
 -- !plugin app add - "mlsql-shell-2.4";
 
 !sh script '''
-conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/msys2/
-conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/conda-forge/
-conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/free/
-conda init
-source activate
+# Install conda environment
+#---------------------
+echo "Start to install conda..."
+unameOut="$(uname -s)"
+case "${unameOut}" in
+    Linux*)     machine=Linux;;
+    Darwin*)    machine=Mac;;
+    CYGWIN*)    machine=Cygwin;;
+    MINGW*)     machine=MinGw;;
+    *)          machine="UNKNOWN:${unameOut}"
+esac
+echo ${machine}
+if test -z "$(conda --version)";
+then
+    repo="https://repo.anaconda.com/miniconda/Miniconda3-4.5.11-Linux-x86_64.sh"
+    if [[ "${machine}" == "Mac" ]]
+    then
+        repo="https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh"
+    else
+        echo "Windows  is not supported yet"
+        exit 0
+    fi
+    wget --quiet ${repo} -O ~/miniconda.sh && \
+        /bin/bash ~/miniconda.sh -b -p /opt/conda && \
+        rm ~/miniconda.sh && \
+        /opt/conda/bin/conda clean -tipsy && \
+        ln -s /opt/conda/etc/profile.d/conda.sh /etc/profile.d/conda.sh && \
+        echo ". /opt/conda/etc/profile.d/conda.sh" >> ~/.bash_profile && \
+        echo "conda activate base" >> ~/.bash_profile && \
+        . ~/.bash_profile
+    echo "Conda initialization is complete!"
+else
+    echo "Conda environment already exists!"
+fi
+#---------------------
+
+# Init conda config
+conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/msys2/ && \
+conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/conda-forge/ && \
+conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/free/ && \
+conda config --set show_channel_urls yes && \
+conda init && \
+source activate && \
 conda deactivate
+
+# Check if it is installed
 if test -z "$(conda env list |grep it_env)"; then
     echo "Start to create a conda environment with python version 3.6.7: it_env..."
     conda create --name it_env python=3.6.7
@@ -15,17 +55,14 @@ if test -z "$(conda env list |grep it_env)"; then
 else
     echo "Conda environment already exists."
 fi
-conda activate it_env
-echo "Start to install pip dependencies..."
-pip config set global.trusted-host  mirrors.aliyun.com
-pip config set global.index-url http://mirrors.aliyun.com/pypi/simple/
-pip install Cython
-pip install pytest-runner
-pip install pyarrow==4.0.1
-pip install ray==1.3.0
-pip install aiohttp psutil grpcio pandas xlsxwriter
-pip install watchdog requests click uuid sfcli  pyjava vega_datasets
-pip install plotly
-pip install aioredis==1.3.1
+
+conda activate it_env && \
+echo "Start to install pip dependencies..." && \
+pip install --upgrade pip  && \
+pip config set global.trusted-host  mirrors.aliyun.com && \
+pip config set global.index-url http://mirrors.aliyun.com/pypi/simple/ && \
+pip install --upgrade Cython pytest-runner pyarrow==5.0.0 ray[default]==1.3.0 \
+aiohttp psutil grpcio pandas xlsxwriter watchdog requests click uuid sfcli \
+pyjava vega_datasets plotly aioredis==1.3.1
 echo "Conda environment initialization is complete!"
 ''';
