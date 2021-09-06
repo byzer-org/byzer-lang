@@ -77,6 +77,7 @@ object IncludeAdaptor {
     "plugin" -> "tech.mlsql.dsl.includes.PluginIncludeSource",
     "lib" -> "tech.mlsql.dsl.includes.LibIncludeSource",
     "local" -> "tech.mlsql.dsl.includes.ScriptIncludeSource",
+    "project" -> "tech.mlsql.dsl.includes.ProjectIncludeSource",
 
     "function" -> "streaming.dsl.mmlib.algs.includes.analyst.HttpBaseDirIncludeSource",
     "view" -> "streaming.dsl.mmlib.algs.includes.analyst.HttpBaseDirIncludeSource",

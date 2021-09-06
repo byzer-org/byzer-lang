@@ -9,7 +9,7 @@ import streaming.dsl.mmlib.algs.param.WowParams
 import tech.mlsql.common.utils.serder.json.JSONTool
 import tech.mlsql.dsl.auth.ETAuth
 import tech.mlsql.dsl.auth.dsl.mmlib.ETMethod.ETMethod
-import tech.mlsql.dsl.includes.ScriptIncludeSource
+import tech.mlsql.dsl.includes.{ProjectIncludeSource, ScriptIncludeSource}
 import tech.mlsql.version.VersionCompatibility
 
 /**
@@ -23,7 +23,23 @@ class PythonInclude(override val uid: String) extends SQLAlg with VersionCompati
     val session = df.sparkSession
     import session.implicits._
     val command = JSONTool.parseJson[List[String]](params("parameters")).toArray
+
+    def projectInclude(path: String, tableName: String): DataFrame = {
+      val pythonCode = new ProjectIncludeSource().fetchSource(df.sparkSession, path, Map())
+      val item = JSONTool.toJsonStr(Map("content" -> pythonCode))
+      val newdf = session.createDataset[String](Seq(item))
+      newdf.createOrReplaceTempView(tableName)
+      newdf.toDF()
+    }
+
+
     command match {
+      case Array("project", path, "named", tableName) =>
+        projectInclude(path, tableName)
+
+      case Array("project", path, tableName) =>
+        projectInclude(path, tableName)
+
       case Array(path, "named", tableName) =>
         val format = path.split("\\.").head
         val newPath = path.split("\\.").drop(1).mkString(".")
