@@ -1,0 +1,3 @@
+--%comparator=tech.mlsql.it.IgnoreResultComparator
+include project.`./src/test/resources/sql/simple//06_if_else_test.mlsql`;
+!assert output ''' :a==2 ''' "a should be 2";

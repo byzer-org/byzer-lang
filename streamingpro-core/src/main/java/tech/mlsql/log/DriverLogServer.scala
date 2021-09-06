@@ -1,99 +1,116 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package tech.mlsql.log
 
-import java.io.{DataInputStream, DataOutputStream}
-import java.net.Socket
-import java.util.concurrent.atomic.{AtomicBoolean, AtomicReference}
-
-import org.apache.spark.{MLSQLSparkUtils, SparkEnv}
+import java.util.concurrent.atomic.AtomicBoolean
+import org.eclipse.jetty.server.{Request => JettyRequest}
+import org.eclipse.jetty.server.Server
 import tech.mlsql.common.utils.base.TryTool
-import tech.mlsql.common.utils.distribute.socket.server.{Request, Response, SocketServerInExecutor, SocketServerSerDer}
+import tech.mlsql.common.utils.distribute.socket.server.Request
 import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.common.utils.net.NetTool
-import tech.mlsql.common.utils.network.NetUtils
+import tech.mlsql.common.utils.serder.json.JsonUtils
+import java.net.InetSocketAddress
+import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
 
 /**
  * 2019-08-21 WilliamZhu(allwefantasy@gmail.com)
  */
-class DriverLogServer[T](taskContextRef: AtomicReference[T]) extends SocketServerInExecutor[T](taskContextRef, "driver-log-server-in-driver") with Logging {
+class DriverLogServer(accessToken: String) extends BaseHttpLogServer with Logging {
 
+  override var requestMapping: String = "/v2/writelog"
   @volatile private var markClose: AtomicBoolean = new AtomicBoolean(false)
-  val client = new DriverLogClient()
 
-  override def close() = {
-    // make sure we only close once
-    if (markClose.compareAndSet(false, true)) {
-      logInfo(s"Shutdown ${host}. This may caused by the task is killed.")
+  def init(host: String, port: Int): (Server, String, String, Int) = {
+
+    val startService = (_port: Int) => {
+      val server = new Server(new InetSocketAddress(host, _port))
+      server.setHandler(this)
+      server.start()
+      (server, server.getURI.getPort)
     }
-  }
 
-  override def handleConnection(socket: Socket): Unit = {
-    socket.setKeepAlive(true)
-    val dIn = new DataInputStream(socket.getInputStream)
-    val dOut = new DataOutputStream(socket.getOutputStream)
-
+    var server: Server = null
+    var newPort = port
     TryTool.tryOrElse {
-      while (true) {
-        client.readRequest(dIn) match {
-          case SendLog(token, logLine) =>
-            if (token != taskContextRef.get()) {
-              logInfo(s"${socket} auth fail. token:${token}")
-              socket.close()
-            } else {
-              logInfo(logLine)
-            }
-
-        }
+      // Check if it is the specified port
+      if (port == 0) {
+        val (_server, _newPort) = NetTool.startServiceOnPort[Server](0, startService, 10, "driver-log-server")
+        server = _server
+        newPort = _newPort
+      } else {
+        val (_server, _) = startService(port)
+        server = _server
       }
+
     } {
       TryTool.tryOrNull {
-        socket.close()
+        close()
+        if (server != null && server.isRunning) {
+          server.stop()
+        }
       }
     }
-
-
+    val uri = if (server.getURI.toString.last.equals('/')) server.getURI.toString.dropRight(1) else server.getURI.toString
+    (server, s"$uri$requestMapping", host, newPort)
   }
 
-  override def host: String = {
-    if (SparkEnv.get == null || MLSQLSparkUtils.rpcEnv().address == null) NetTool.localHostName()
-    else MLSQLSparkUtils.rpcEnv().address.host
+  override def close(): Unit = {
+    // Make sure we only close once
+    if (markClose.compareAndSet(false, true)) {
+      logInfo(s"Shutdown ${this.getServer.getURI}. This may caused by the task is killed.")
+    }
+  }
+
+  override def handle(url: String,
+                      baseRequest: JettyRequest,
+                      request: HttpServletRequest,
+                      response: HttpServletResponse): Unit = {
+    request.setCharacterEncoding("UTF-8")
+    url match {
+      case x: String if url.contains(requestMapping) =>
+        try {
+          import scala.collection.JavaConverters._
+          val params = request.getParameterMap.asScala
+          var response: Any = null
+          // We always set the complete sendLog in the key of the request parameters.
+          if (params != null && params.nonEmpty) {
+            response = JsonUtils.fromJson[LogRequest](params.keySet.head).
+              asInstanceOf[ {def unwrap: Request[_]}].unwrap
+          }
+          response match {
+            case SendLog(token, logLine) =>
+              if (token != accessToken) {
+                logInfo(s"$url auth fail. token:$token")
+              } else {
+                logInfo(logLine)
+              }
+
+            case _ =>
+          }
+        } catch {
+          case e: Exception =>
+            logError("DriverLogServer caught an exception when executing a handle. ", e)
+        }
+
+      case _ =>
+    }
+
   }
 }
-
-class DriverLogClient extends SocketServerSerDer[LogRequest, LogResponse]
-
-case class SendLog(token: String, logLine: String) extends Request[LogRequest] {
-  override def wrap = LogRequest(sendLog = this)
-}
-
-case class StopSendLog() extends Request[LogRequest] {
-  override def wrap = LogRequest(stopSendLog = this)
-}
-
-case class Ok() extends Response[LogResponse] {
-  override def wrap = LogResponse(ok = this)
-}
-
-case class Negative() extends Response[LogResponse] {
-  override def wrap = LogResponse(negative = this)
-}
-
-case class LogResponse(
-                        ok: Ok = null,
-                        negative: Negative = null
-                      ) {
-  def unwrap: Response[_] = {
-    if (ok != null) ok
-    else if (negative != null) negative
-    else null
-  }
-}
-
-case class LogRequest(sendLog: SendLog = null, stopSendLog: StopSendLog = null) {
-  def unwrap: Request[_] = {
-    if (sendLog != null) sendLog
-    else if (stopSendLog != null) stopSendLog
-    else null
-  }
-}
-
-

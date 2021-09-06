@@ -133,7 +133,7 @@ if [[ "${COMMAND}" == "package" ]];then
   BASE_PROFILES="$BASE_PROFILES -Pshade"
 fi
 
-if [[ "${COMMAND}" == "package" || "${COMMAND}" == "deploy" ]];then
+if [[ "${COMMAND}" == "package" || "${COMMAND}" == "install" || "${COMMAND}" == "deploy" ]];then
    SKIPTEST="-DskipTests"
 fi
 
