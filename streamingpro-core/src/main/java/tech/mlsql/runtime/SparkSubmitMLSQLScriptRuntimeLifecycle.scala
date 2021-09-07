@@ -1,22 +1,6 @@
 package tech.mlsql.runtime
-/*
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 
+import net.sf.json.JSONArray
 import org.apache.commons.lang3.StringUtils
 import streaming.core.strategy.platform.{SparkRuntime, StreamingRuntime}
 import tech.mlsql.common.utils.log.Logging
@@ -35,20 +19,13 @@ import scala.io.Source
  */
 class SparkSubmitMLSQLScriptRuntimeLifecycle extends MLSQLPlatformLifecycle with Logging {
 
-  override def beforeRuntime(params: Map[String, String]): Unit = {}
-
-  override def afterRuntime(runtime: StreamingRuntime, params: Map[String, String]): Unit = {  }
-
-
-  override def beforeDispatcher(runtime: StreamingRuntime, params: Map[String, String]): Unit = {}
-
   override def afterDispatcher(runtime: StreamingRuntime, params: Map[String, String]): Unit = {
+    val rootSparkSession = runtime.asInstanceOf[SparkRuntime].sparkSession
     val mlsql_path = params.getOrElse("streaming.mlsql.script.path", "")
     if (StringUtils.isEmpty(mlsql_path)) {
       logWarning(s"The value of parameter 'streaming.mlsql.script.path' is empty.")
       return
     }
-    val rootSparkSession = runtime.asInstanceOf[SparkRuntime].sparkSession
     JobManager.init(rootSparkSession)
     try {
       val sql = new StringBuffer()
@@ -73,11 +50,23 @@ class SparkSubmitMLSQLScriptRuntimeLifecycle extends MLSQLPlatformLifecycle with
 
       val executor = new RunScriptExecutor(
         params ++ Map("sql" -> sql.toString,
+          "outputSize" -> "200",
+          "fetchType" -> "take",
           "owner" -> params.getOrElse("streaming.mlsql.script.owner", "admin"),
           "async" -> "false",
           "executeMode" -> params.getOrElse("streaming.mlsql.script.executeMode", "query"),
           "jobName" -> params.getOrElse("streaming.mlsql.script.jobName", "SparkSubmitMLSQLScriptRuntimeJob")))
-      executor.execute()
+      val (status, res) = executor.execute()
+      if (status != 200) {
+        throw new RuntimeException(res)
+      }
+      import rootSparkSession.implicits._
+
+      import scala.collection.JavaConverters._
+      val jsonArray = JSONArray.fromObject(res).asScala.map(item => item.toString)
+      val df = rootSparkSession.read.json(rootSparkSession.createDataset[String](jsonArray))
+      df.show(200, false)
+
     } catch {
       case e: Exception =>
         logError(s"Run script ${mlsql_path} error: ", e)
@@ -85,4 +74,10 @@ class SparkSubmitMLSQLScriptRuntimeLifecycle extends MLSQLPlatformLifecycle with
       JobManager.shutdown
     }
   }
+
+  override def beforeRuntime(params: Map[String, String]): Unit = {}
+
+  override def afterRuntime(runtime: StreamingRuntime, params: Map[String, String]): Unit = {}
+
+  override def beforeDispatcher(runtime: StreamingRuntime, params: Map[String, String]): Unit = {}
 }
