@@ -44,8 +44,8 @@ trait BaseHttpLogClient extends Logging with WowLog {
       val token = _conf.getOrElse("spark.mlsql.log.driver.token", "mlsql")
       iter.foreach { line =>
         val body = SendLog(token, LogUtils.formatWithOwner(line, owner, groupId)).json
-        Request.Post(url).addHeader("Content-Type", "application/x-www-form-urlencoded")
-          .bodyForm(Form.form().add(body, null).build())
+        Request.Post(url).addHeader("Content-Type", "application/json")
+          .bodyString(body, ContentType.APPLICATION_JSON.withCharset("utf8"))
           .execute()
       }
 
