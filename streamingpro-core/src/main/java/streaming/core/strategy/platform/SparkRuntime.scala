@@ -27,7 +27,7 @@ import org.apache.spark.ps.cluster.PSDriverBackend
 import org.apache.spark.sql.jdbc.{JdbcDialect, JdbcDialects}
 import org.apache.spark.sql.mlsql.session.{SessionIdentifier, SessionManager}
 import org.apache.spark.sql.{MLSQLUtils, SQLContext, SparkSession}
-import org.apache.spark.{MLSQLConf, SparkConf, SparkRuntimeOperator, WowFastSparkContext}
+import org.apache.spark.{MLSQLConf, MLSQLSparkConst, SparkConf, SparkCoreVersion, SparkRuntimeOperator, WowFastSparkContext}
 import tech.mlsql.common.utils.classloader.ClassLoaderTool
 import tech.mlsql.common.utils.lang.sc.ScalaObjectReflect
 import tech.mlsql.common.utils.log.Logging
@@ -106,7 +106,14 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
     if (MLSQLConf.MLSQL_CLUSTER_PS_ENABLE.readFrom(configReader)) {
       logInfo("PSExecutor configured...")
       conf.set("spark.network.timeout", MLSQLConf.MLSQL_PS_NETWORK_TIMEOUT.readFrom(configReader) + "s")
-      conf.set("spark.executor.plugins", "org.apache.spark.ps.cluster.PSExecutorPlugin")
+      // In spark3, The org.apache.spark.ExecutorPlugin interface and related configuration has been
+      // replaced with org.apache.spark.api.plugin.SparkPlugin.
+      MLSQLSparkConst.majorVersion(SparkCoreVersion.exactVersion) match {
+        case 2 =>
+          conf.set("spark.executor.plugins", "org.apache.spark.ps.cluster.PSExecutorPlugin")
+        case _ =>
+          conf.set("spark.plugins", "org.apache.spark.ps.cluster.PSExecutorPlugin")
+      }
 
 
       val port = NetUtils.availableAndReturn(MLSQLUtils.localCanonicalHostName, 7778, 7999)
