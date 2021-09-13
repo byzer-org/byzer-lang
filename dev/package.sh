@@ -23,7 +23,7 @@ usage: package
 run package command based on different spark version.
 Inputs are specified with the following environment variables:
 
-MLSQL_SPARK_VERSION - the spark version, 2.3/2.4/3.0 default 2.4
+MLSQL_SPARK_VERSION - the spark version, 2.4/3.0 default 2.4
 DRY_RUN true|false               default false
 DISTRIBUTION true|false          default false
 DATASOURCE_INCLUDED true|false   default false
@@ -110,7 +110,7 @@ if [[ "${ENABLE_CHINESE_ANALYZER}" == "true" ]]; then
 fi
 
 
-if [[ "$MLSQL_SPARK_VERSION" == "2.3" ||  "$MLSQL_SPARK_VERSION" == "2.4" ]]; then
+if [[ "$MLSQL_SPARK_VERSION" == "2.4" ]]; then
   BASE_PROFILES="$BASE_PROFILES -Pscala-2.11"
 else
   BASE_PROFILES="$BASE_PROFILES -Pscala-2.12"

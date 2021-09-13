@@ -20,7 +20,7 @@
 function exit_with_usage {
   cat << EOF
 Environment variables
-MLSQL_SPARK_VERSION              Spark major version 2.3 2.4 3.0  default 2.4
+MLSQL_SPARK_VERSION              Spark major version 2.4 3.0      default 2.4
 OSS_ENABLE                       Aliyun OSS                       default false
 ENABLE_JYTHON                    Jython                           default true
 ENABLE_CHINESE_ANALYZER          Chinese NLP                      default true
