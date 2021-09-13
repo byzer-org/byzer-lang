@@ -18,7 +18,7 @@
 
 package tech.mlsql.log
 
-import org.apache.http.client.fluent.Request
+import org.apache.http.client.fluent.{Form, Request}
 import org.apache.http.entity.ContentType
 import org.apache.spark.SparkEnv
 import streaming.log.WowLog
@@ -44,8 +44,8 @@ trait BaseHttpLogClient extends Logging with WowLog {
       val token = _conf.getOrElse("spark.mlsql.log.driver.token", "mlsql")
       iter.foreach { line =>
         val body = SendLog(token, LogUtils.formatWithOwner(line, owner, groupId)).json
-        Request.Post(url).bodyString(body, ContentType.APPLICATION_JSON.withCharset("utf8"))
-          .addHeader("Content-Type", "application/x-www-form-urlencoded")
+        Request.Post(url).addHeader("Content-Type", "application/json")
+          .bodyString(body, ContentType.APPLICATION_JSON.withCharset("utf8"))
           .execute()
       }
 

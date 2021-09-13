@@ -18,6 +18,8 @@
 
 package tech.mlsql.log
 
+import net.csdn.common.io.Streams
+
 import java.util.concurrent.atomic.AtomicBoolean
 import org.eclipse.jetty.server.{Request => JettyRequest}
 import org.eclipse.jetty.server.Server
@@ -26,6 +28,8 @@ import tech.mlsql.common.utils.distribute.socket.server.Request
 import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.common.utils.net.NetTool
 import tech.mlsql.common.utils.serder.json.JsonUtils
+
+import java.io.InputStreamReader
 import java.net.InetSocketAddress
 import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
 
@@ -86,15 +90,15 @@ class DriverLogServer(accessToken: String) extends BaseHttpLogServer with Loggin
     url match {
       case x: String if url.contains(requestMapping) =>
         try {
-          import scala.collection.JavaConverters._
-          val params = request.getParameterMap.asScala
-          var response: Any = null
+          val context = Streams.copyToString(new InputStreamReader(request.getInputStream, "UTF-8"))
+
+          var logRequest: Any = null
           // We always set the complete sendLog in the key of the request parameters.
-          if (params != null && params.nonEmpty) {
-            response = JsonUtils.fromJson[LogRequest](params.keySet.head).
+          if (context != null && context.nonEmpty) {
+            logRequest = JsonUtils.fromJson[LogRequest](context).
               asInstanceOf[ {def unwrap: Request[_]}].unwrap
           }
-          response match {
+          logRequest match {
             case SendLog(token, logLine) =>
               if (token != accessToken) {
                 logInfo(s"$url auth fail. token:$token")
