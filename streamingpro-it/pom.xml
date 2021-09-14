@@ -3,7 +3,7 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
-        <artifactId>streamingpro_2.11</artifactId>
+        <artifactId>streamingpro_2.12</artifactId>
         <groupId>tech.mlsql</groupId>
         <version>2.2.0-SNAPSHOT</version>
     </parent>
@@ -11,19 +11,19 @@
     <properties>
         <breeze-version>0.13.2</breeze-version>
         <!-- spark 2.4 start -->
-        <scala.version>2.11.12</scala.version>
-        <scala.binary.version>2.11</scala.binary.version>
-        <spark.version>2.4.3</spark.version>
-        <spark.bigversion>2.4</spark.bigversion>
-        <scalatest.version>3.0.3</scalatest.version>
+<!--         <scala.version>2.11.12</scala.version> -->
+<!--         <scala.binary.version>2.11</scala.binary.version> -->
+<!--         <spark.version>2.4.3</spark.version> -->
+<!--         <spark.bigversion>2.4</spark.bigversion> -->
+<!--         <scalatest.version>3.0.3</scalatest.version> -->
         <!-- spark 2.4 end -->
 
         <!-- spark 3.0 start -->
-        <!--        <scala.version>2.12.10</scala.version> -->
-        <!--        <scala.binary.version>2.12</scala.binary.version> -->
-        <!--        <spark.version>3.1.1</spark.version> -->
-        <!--        <spark.bigversion>3.0</spark.bigversion> -->
-        <!--        <scalatest.version>3.0.3</scalatest.version> -->
+        <scala.version>2.12.10</scala.version> 
+        <scala.binary.version>2.12</scala.binary.version> 
+        <spark.version>3.1.1</spark.version> 
+        <spark.bigversion>3.0</spark.bigversion> 
+        <scalatest.version>3.0.3</scalatest.version> 
         <!-- spark 3.0 end -->
 
     </properties>
