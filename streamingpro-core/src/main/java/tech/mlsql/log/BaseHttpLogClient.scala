@@ -18,8 +18,9 @@
 
 package tech.mlsql.log
 
-import org.apache.http.client.fluent.Request
+import org.apache.http.client.fluent.{Form, Request}
 import org.apache.http.entity.ContentType
+import org.apache.spark.SparkEnv
 import streaming.log.WowLog
 import tech.mlsql.arrow.python.runner.PythonConf
 import tech.mlsql.common.utils.lang.sc.ScalaMethodMacros
@@ -28,9 +29,14 @@ import tech.mlsql.common.utils.net.NetTool
 
 trait BaseHttpLogClient extends Logging with WowLog {
 
-  val _conf: Map[String, String] = BaseHttpLogClient.conf
+  var _conf: Map[String, String] = _
 
   def write(iter: Iterator[String], params: Map[String, String]): Unit = {
+    synchronized {
+      if (_conf == null) {
+        _conf = SparkEnv.get.conf.getAll.toMap
+      }
+    }
     val owner = params.getOrElse(ScalaMethodMacros.str(PythonConf.PY_EXECUTE_USER), "")
     val groupId = params.getOrElse("groupId", "")
     try {
@@ -38,8 +44,8 @@ trait BaseHttpLogClient extends Logging with WowLog {
       val token = _conf.getOrElse("spark.mlsql.log.driver.token", "mlsql")
       iter.foreach { line =>
         val body = SendLog(token, LogUtils.formatWithOwner(line, owner, groupId)).json
-        Request.Post(url).bodyString(body, ContentType.APPLICATION_JSON.withCharset("utf8"))
-          .addHeader("Content-Type", "application/x-www-form-urlencoded")
+        Request.Post(url).addHeader("Content-Type", "application/json")
+          .bodyString(body, ContentType.APPLICATION_JSON.withCharset("utf8"))
           .execute()
       }
 
@@ -49,12 +55,4 @@ trait BaseHttpLogClient extends Logging with WowLog {
     }
   }
 
-}
-
-object BaseHttpLogClient {
-  var conf: Map[String, String] = _
-
-  def init(conf: Map[String, String]): Any = {
-    this.conf = conf
-  }
 }

@@ -1,6 +1,6 @@
 ## MLSQL
 
-MLSQL is a Programming Language designed For Big Data and AI, it also has a distributed runtime.
+MLSQL is a distributed Programming Language designed For Big Data and AI.
 
 ```sql
 load hive.`raw.stripe_discounts` as discounts;
@@ -54,27 +54,29 @@ select * from final2 as output;
 
 ## Official WebSite
 
-[https://mlsql.ai](https://mlsql.ai)
+[https://mlsql.tech](https://mlsql.tech)
 
-Find more examples on:
+## Desktop（MacOS、Linux）
 
-1. [中文文档](http://docs.mlsql.tech/mlsql-stack/)
-2. [Video](https://space.bilibili.com/22610047)
+[mlsql-lang-vscode-plugin](https://github.com/allwefantasy/mlsql-lang-vscode-plugin)
 
-## Docker
+[more document about mlsql lang desktop/Chinese](https://mlsql-docs.kyligence.io/latest/zh-hans/howtouse/mlsql_desktop_install.html)
+
+## Docker Sandbox
+
 
 ### Pulling Sandbox Docker Image
 
 For Spark 2.4.3 bundle:
 
 ```shell
-docker pull techmlsql/mlsql-sandbox:2.4.3-2.1.0-SNAPSHOT
+docker pull techmlsql/mlsql-sandbox:2.4.3-2.1.0
 ```
 
 For Spark 3.1.1 bundle：
 
 ```shell
-docker pull techmlsql/mlsql-sandbox:3.1.1-2.1.0-SNAPSHOT
+docker pull techmlsql/mlsql-sandbox:3.1.1-2.1.0
 ```
 
 ### Start Container
@@ -83,20 +85,19 @@ docker run -d \
 -p 3306:3306 \
 -p 9002:9002 \
 -e MYSQL_ROOT_PASSWORD=mlsql \
---name mlsql-sandbox-2.4.3-2.1.0-SNAPSHOT \
-techmlsql/mlsql-sandbox:2.4.3-2.1.0-SNAPSHOT
+--name mlsql-sandbox-2.4.3-2.1.0 \
+techmlsql/mlsql-sandbox:2.4.3-2.1.0
 ```
-Launch a browser, enter http://localhost:9002, and "Setup MLSQL Console in 2 Steps" page shows.
 
-Enter admin username and password, click "Go" button.
-
-Enter spark for "Engine Name", http://localhost:9003 for "Engine Url", leave "Access Token" blank, click "Go" button.
- 
-Click "Go to Console Page", and you're all set to play with mlsql.
+1. Launch a browser, enter http://localhost:9002, and "Setup MLSQL Console in 2 Steps" page shows.
+2. Enter admin username and password, click "Go" button.
+3. Enter spark for "Engine Name", http://localhost:9003 for "Engine Url", leave "Access Token" blank, click "Go" button.
+4. Click "Go to Console Page", and you're all set to play with mlsql.
 
 ## <a id="Download"></a>Download MLSQL
-* The latest stable version is v2.0.1; snapshot version is 2.1.0-SNAPSHOT
-* You can download from [MLSQL Website](http://download.mlsql.tech)
+
+* The latest stable version is release-2.1.0
+* You can download from [MLSQL Website](https://mlsql-downloads.kyligence.io/2.1.0/)
 * Spark 2.4.3/3.1.1 are tested
 
 ***Naming Convention***
@@ -104,10 +105,10 @@ Click "Go to Console Page", and you're all set to play with mlsql.
 mlsql-engine_${spark_major_version}-${mlsql_version}.tgz
 ```shell
 ## Pre-built for Spark 2.4.3
-mlsql-engine_2.4-2.1.0-SNAPSHOT.tar.gz 
+mlsql-engine_2.4-2.1.0.tar.gz
 
 ## Pre-built for Spark 3.1.1
-mlsql-engine_3.0-2.1.0-SNAPSHOT.tar.gz  
+mlsql-engine_3.0-2.1.0.tar.gz
 ```  
 
 ## <a id="Build"></a>Building a Distribution
