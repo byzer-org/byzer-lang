@@ -13,6 +13,7 @@ import org.apache.http.client.fluent.{Form, Request}
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.mlsql.session.MLSQLException
 import streaming.core.datasource.MLSQLRegistry
+import streaming.core.strategy.platform.{PlatformManager, SparkRuntime}
 import streaming.log.WowLog
 import tech.mlsql.common.utils.classloader.ClassLoaderTool
 import tech.mlsql.common.utils.log.Logging
@@ -210,13 +211,23 @@ object PluginUtils extends Logging with WowLog {
   }
 
   def checkVersionCompatibility(pluginName: String, className: String) = {
-    val versions = ClassLoaderTool.classForName(className).newInstance().asInstanceOf[VersionCompatibility].supportedVersions
-    if (!versions.contains(MLSQLVersion.version().version) || MLSQLVersion.version().version.compareTo(versions.sorted.head) < 0) {
+    val versionPatterns = ClassLoaderTool.classForName(className).newInstance().asInstanceOf[VersionCompatibility].supportedVersions
+    val mlsqlVersion = MLSQLVersion.version().version
+    val sparkVersion = PlatformManager.getRuntime.asInstanceOf[SparkRuntime].sparkSession.version
+    var compatible: Boolean = false
+
+    versionPatterns.foreach(versionPattern => {
+      if (!compatible) {
+        compatible = VersionRangeChecker.isComposedVersionCompatible(versionPattern, mlsqlVersion, sparkVersion)
+      }
+    })
+
+    if (!compatible) {
       throw new MLSQLException(
         s"""
            |Plugins ${pluginName} supports:
            |
-           |${versions.mkString(",")}
+           |${versionPatterns.mkString(",")}
            |
            |Current MLSQL Engine version: ${MLSQLVersion.version().version}
             """.stripMargin)
@@ -270,3 +281,5 @@ object PluginUtils extends Logging with WowLog {
 }
 
 case class PluginStoreItem(id: Int, name: String, path: String, version: String, pluginType: Int, extraParams: String)
+
+
