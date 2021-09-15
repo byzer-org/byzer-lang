@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>tech.mlsql</groupId>
-    <artifactId>streamingpro_2.11</artifactId>
+    <artifactId>streamingpro_2.12</artifactId>
     <packaging>pom</packaging>
     <version>2.2.0-SNAPSHOT</version>
 
@@ -56,19 +56,19 @@
         <maven.compiler.target>${java.version}</maven.compiler.target>
 
         <!-- spark 2.4 start -->
-        <scala.version>2.11.12</scala.version>
-        <scala.binary.version>2.11</scala.binary.version>
-        <spark.version>2.4.3</spark.version>
-        <spark.bigversion>2.4</spark.bigversion>
-        <scalatest.version>3.0.3</scalatest.version>
+<!--         <scala.version>2.11.12</scala.version> -->
+<!--         <scala.binary.version>2.12</scala.binary.version> -->
+<!--         <spark.version>2.4.3</spark.version> -->
+<!--         <spark.bigversion>2.4</spark.bigversion> -->
+<!--         <scalatest.version>3.0.3</scalatest.version> -->
         <!-- spark 2.4 end -->
 
         <!-- spark 3.0 start -->
-        <!--        <scala.version>2.12.10</scala.version> -->
-        <!--        <scala.binary.version>2.12</scala.binary.version> -->
-        <!--        <spark.version>3.1.1</spark.version> -->
-        <!--        <spark.bigversion>3.0</spark.bigversion> -->
-        <!--        <scalatest.version>3.0.3</scalatest.version> -->
+        <scala.version>2.12.10</scala.version> 
+        <scala.binary.version>2.12</scala.binary.version> 
+        <spark.version>3.1.1</spark.version> 
+        <spark.bigversion>3.0</spark.bigversion> 
+        <scalatest.version>3.0.3</scalatest.version> 
         <!-- spark 3.0 end -->
 
         <spark.streaming.kafka.artifactId>spark-streaming-kafka-0-8_${scala.binary.version}
@@ -174,9 +174,6 @@
         </profile>
         <profile>
             <id>scala-2.11</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
             <properties>
                 <scala.version>2.11.12</scala.version>
                 <scala.binary.version>2.11</scala.binary.version>
@@ -211,6 +208,10 @@
 
         <profile>
             <id>scala-2.12</id>
+
+                <activation>
+                    <activeByDefault>true</activeByDefault>
+                </activation>
             <properties>
                 <scala.version>2.12.10</scala.version>
                 <scala.binary.version>2.12</scala.binary.version>
@@ -245,9 +246,6 @@
 
         <profile>
             <id>spark-2.4.0</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
             <properties>
                 <spark.streaming.kafka.artifactId>spark-streaming-kafka-0-8_${scala.binary.version}
                 </spark.streaming.kafka.artifactId>
@@ -360,6 +358,10 @@
 
         <profile>
             <id>spark-3.0.0</id>
+
+                <activation>
+                    <activeByDefault>true</activeByDefault>
+                </activation>
             <properties>
                 <spark.streaming.kafka.artifactId>spark-streaming-kafka-0-8_${scala.binary.version}
                 </spark.streaming.kafka.artifactId>
@@ -652,11 +654,11 @@
             <exclusions>
                 <exclusion>
                     <groupId>tech.mlsql</groupId>
-                    <artifactId>common-utils_2.11</artifactId>
+                    <artifactId>common-utils_2.12</artifactId>
                 </exclusion>
                 <exclusion>
                     <groupId>tech.mlsql</groupId>
-                    <artifactId>common-utils_2.11</artifactId>
+                    <artifactId>common-utils_2.12</artifactId>
                 </exclusion>
                 <exclusion>
                     <groupId>org.scala-lang</groupId>
