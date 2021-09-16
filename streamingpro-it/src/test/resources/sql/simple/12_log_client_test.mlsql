@@ -1,5 +1,5 @@
 --%comparator=tech.mlsql.it.IgnoreResultComparator
-!python env "PYTHON_ENV=source activate it_env";
+!python env "PYTHON_ENV=. activate it_env";
 !python conf "schema=st(field(petalLength,double),field(petalWidth,double),field(sepalLength,double),field(sepalWidth,double),field(species,string))";
 !python conf "dataMode=model";
 
