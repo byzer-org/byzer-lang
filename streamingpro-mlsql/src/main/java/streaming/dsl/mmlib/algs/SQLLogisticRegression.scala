@@ -23,6 +23,7 @@ import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.ml.classification.{LogisticRegression, LogisticRegressionModel}
 import org.apache.spark.ml.linalg.SQLDataTypes.VectorType
 import org.apache.spark.ml.linalg.Vector
+import org.apache.spark.ml.regression.LinearRegression
 import org.apache.spark.sql.types.{DoubleType, StringType, StructField, StructType}
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.auth.{DB_DEFAULT, MLSQLTable, OperateType, TableAuthResult, TableType}
@@ -160,6 +161,12 @@ class SQLLogisticRegression(override val uid: String) extends SQLAlg with MllibF
       result
     }
     MLSQLUtils.createUserDefinedFunction(f, DoubleType, Some(Seq(VectorType)))
+  }
+
+  override def explainParams(sparkSession: SparkSession): DataFrame = {
+    _explainParams(sparkSession, () => {
+      new LinearRegression()
+    })
   }
 
   override def auth(etMethod: ETMethod, path: String, params: Map[String, String]): List[TableAuthResult] = {

@@ -69,6 +69,12 @@ class SQLLinearRegressionExt(override val uid: String) extends SQLAlg with Mllib
     formatOutput(getModelMetaData(spark, path))
   }
 
+  override def explainParams(sparkSession: SparkSession): DataFrame = {
+    _explainParams(sparkSession, () => {
+      new LinearRegression()
+    })
+  }
+
   override def doc: Doc = Doc(HtmlDoc,
     """
       | <a href="https://en.wikipedia.org/wiki/Linear_Regression">Linear Regression</a> learning algorithm for
