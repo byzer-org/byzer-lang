@@ -10,6 +10,7 @@ import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FSDataInputStream, FSDataOutputStream, FileSystem, Path}
 import org.apache.http.HttpResponse
 import org.apache.http.client.fluent.{Form, Request}
+import org.apache.spark.SparkCoreVersion
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.mlsql.session.MLSQLException
 import streaming.core.datasource.MLSQLRegistry
@@ -213,7 +214,7 @@ object PluginUtils extends Logging with WowLog {
   def checkVersionCompatibility(pluginName: String, className: String) = {
     val versionPatterns = ClassLoaderTool.classForName(className).newInstance().asInstanceOf[VersionCompatibility].supportedVersions
     val mlsqlVersion = MLSQLVersion.version().version
-    val sparkVersion = PlatformManager.getRuntime.asInstanceOf[SparkRuntime].sparkSession.version
+    val sparkVersion = SparkCoreVersion.exactVersion
     var compatible: Boolean = false
 
     versionPatterns.foreach(versionPattern => {

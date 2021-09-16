@@ -23,7 +23,7 @@ import org.apache.spark.ml.linalg.SQLDataTypes.VectorType
 import org.apache.spark.ml.linalg.Vector
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.{DataFrame, MLSQLUtils, Row, SparkSession}
-import streaming.dsl.mmlib.{AlgType, Code, CoreVersion, Core_2_2_x, Core_2_3_x, Core_2_4_x, Doc, HtmlDoc, ModelType, SQLAlg, SQLCode}
+import streaming.dsl.mmlib.{AlgType, Code, CoreVersion,Doc, HtmlDoc, ModelType, SQLAlg, SQLCode}
 import org.apache.spark.mllib.clustering.{LocalLDAModel => OldLocalLDAModel}
 import org.apache.spark.mllib.linalg.{Vectors => OldVectors}
 import streaming.dsl.mmlib.algs.classfication.BaseClassification
@@ -144,12 +144,7 @@ class SQLLDA(override val uid: String) extends SQLAlg with MllibFunctions with F
     }
     MLSQLUtils.createUserDefinedFunction(f, VectorType, Some(Seq(IntegerType)))
   }
-
-
-  override def coreCompatibility: Seq[CoreVersion] = {
-    Seq(Core_2_3_x)
-  }
-
+  
   override def modelType: ModelType = AlgType
 
   override def doc: Doc = Doc(HtmlDoc,

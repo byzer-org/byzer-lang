@@ -113,37 +113,14 @@ class APIPredict extends Logging with WowLog with Serializable {
       case e: Exception =>
         logError(s"API predict command is not stored in ${funcSerLocation}. Maybe there are something wrong when serializable predict command?", e)
     }
-
-
-    def coreVersion = {
-      if (SparkCoreVersion.is_2_2_X) {
-        "22"
-      } else if (SparkCoreVersion.is_2_3_2()) {
-        "232"
-      }
-      else if (SparkCoreVersion.is_2_3_1()) {
-        "23"
-      } else if (SparkCoreVersion.is_2_4_X()) {
-        "24"
-      } else {
-        throw new RuntimeException(s"No such spark version ${SparkCoreVersion.exactVersion}")
-      }
-
-    }
-
-    val customDeamon = true
+    
 
     def daemon = {
-      if (customDeamon)
-        s"-m daemon${coreVersion}"
-      else "-m pyspark.daemon"
+      "-m pyspark.daemon"
     }
 
     def worker: String = {
-      if (customDeamon)
-        s"-m worker${coreVersion}"
-      else
-        "-m pyspark.worker"
+      "-m pyspark.worker"       
     }
 
     val (daemonCommand, workerCommand) = pythonProject.get.scriptType match {

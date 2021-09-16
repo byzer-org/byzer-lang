@@ -73,12 +73,7 @@ class TrainAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdap
     val owner = options.get("owner")
     val df = scriptSQLExecListener.sparkSession.table(tableName)
     val sqlAlg = MLMapping.findAlg(format)
-    //2.3.1
-    val coreVersion = SparkCoreVersion.version
-    if (sqlAlg.coreCompatibility.filter(f => f.coreVersion == coreVersion).size == 0) {
-      throw new RuntimeException(s"name: $format class:${sqlAlg.getClass.getName} is not compatible with current core version:$coreVersion")
-    }
-
+    
     if (!sqlAlg.skipPathPrefix) {
       path = withPathPrefix(scriptSQLExecListener.pathPrefix(owner), path)
     }
