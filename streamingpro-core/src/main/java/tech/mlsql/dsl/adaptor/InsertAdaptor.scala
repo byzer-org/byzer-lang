@@ -42,12 +42,7 @@ class InsertAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAda
 
   override def parse(ctx: SqlContext): Unit = {
     val InsertStatement(originalText, sql) = analyze(ctx)
-    if (SparkCoreVersion.is_2_2_X()) {
-      scriptSQLExecListener.sparkSession.sql(sql).count()
-    } else {
-      scriptSQLExecListener.sparkSession.sql(sql)
-    }
-
+    scriptSQLExecListener.sparkSession.sql(sql)
     scriptSQLExecListener.setLastSelectTable(null)
   }
 }

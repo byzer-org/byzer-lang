@@ -99,9 +99,6 @@ object PluginHook extends Logging {
   )
 
   def startBuildIn(extra: Array[String]): Unit = {
-    if (SparkCoreVersion.is_2_3_X()) {
-      return
-    }
     (apps ++ extra).foreach { app =>
       try {
         ClassLoaderTool.classForName(app).newInstance().
