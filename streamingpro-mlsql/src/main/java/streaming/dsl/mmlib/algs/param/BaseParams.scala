@@ -22,6 +22,7 @@ import org.apache.spark.ml.param.{BooleanParam, Param}
 import org.apache.spark.ml.util.Identifiable
 import org.apache.spark.sql.SparkSession
 import streaming.dsl.mmlib.algs.SQLPythonFunc
+import tech.mlsql.common.form._
 
 /**
  * Created by allwefantasy on 14/9/2018.
@@ -30,16 +31,40 @@ trait BaseParams extends WowParams {
 
 
   final val evaluateTable: Param[String] = new Param[String](this, "evaluateTable",
-    "The table name of test dataset when tranning",
-    (value: String) => true)
+    FormParams.toJson(
+      Text(
+        name = "evaluateTable",
+        value = "",
+        extra = Extra(doc = "The table name to evaluate the model performance in training stage", label = "", options = Map()),
+        valueProvider = Option(() => {
+          ""
+        })
+      )
+    )
+  )
 
 
   final def getEvaluateTable: String = $(evaluateTable)
 
   def setEvaluateTable(value: String): this.type = set(evaluateTable, value)
 
-  final val keepVersion: BooleanParam = new BooleanParam(this, "keepVersion", "If set true, then every time you run the " +
-    "algorithm, it will generate a new directory to save the model.")
+  final val keepVersion: BooleanParam = new BooleanParam(this, "keepVersion",
+    FormParams.toJson(
+      Select(
+        name = "keepVersion",
+        values = List(),
+        extra = Extra(
+          doc = "If set true, then every time you run the \" +\n    \"algorithm, it will generate a new directory to save the model.",
+          label = "",
+          options = Map()), valueProvider = Option(() => {
+          List(
+            KV(Some("keepVersion"), Some("true")),
+            KV(Some("keepVersion"), Some("false"))
+          )
+        })
+      )
+    )
+  )
 
   setDefault(keepVersion -> true)
 
