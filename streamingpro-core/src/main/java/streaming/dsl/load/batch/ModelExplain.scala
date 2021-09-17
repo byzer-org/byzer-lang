@@ -22,6 +22,7 @@ import org.apache.spark.sql.types.{StringType, StructField, StructType}
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import tech.mlsql.common.utils.reflect.ClassPath
 import tech.mlsql.dsl.adaptor.MLMapping
+import tech.mlsql.ets.register.ETRegister
 
 import scala.collection.JavaConversions._
 
@@ -117,22 +118,46 @@ class ModelList(format: String, path: String, option: Map[String, String])(spark
 
   override def explain: DataFrame = {
 
-    def getAlgName(fullName: String) = {
+    def getAlgName(fullName: String): String = {
       if (fullName.contains(".") && fullName.startsWith("SQL")) {
         fullName
       } else {
-        fullName.split("\\.").last.replace("SQL", "")
+        var _fullName = fullName.split("\\.").last
+        if (_fullName.startsWith("SQL")) {
+          _fullName = _fullName.replaceFirst("SQL", "")
+        }
+        _fullName
       }
     }
 
-    val items = ClassPath.from(getClass.getClassLoader).getTopLevelClasses("streaming.dsl.mmlib.algs").map { f =>
-      getAlgName(f.getName)
-    }.toSet ++ MLMapping.mapping.keys.toSet
+    def getAlgUsageName(className: String, fullName: String): String = {
+      if ((ETRegister.getMapping ++ MLMapping.mapping).containsKey(fullName)) {
+        return fullName
+      }
+      if (fullName.contains(".") && fullName.startsWith("SQL")) {
+        return fullName
+      }
+      var _fullName = className.split("\\.").last
+      if (_fullName.startsWith("SQL") && (_fullName.endsWith("InPlace") || _fullName.endsWith("Ext"))) {
+        _fullName = _fullName.replaceFirst("SQL", "")
+        if (_fullName.endsWith("Ext")) {
+          _fullName = _fullName.substring(0, _fullName.length - 3)
+        } else if (_fullName.endsWith("InPlace")) {
+          _fullName = _fullName.substring(0, _fullName.length - 7)
+        }
+      }
+      _fullName
+    }
+
+    val mappingItems = MLMapping.mapping ++ ETRegister.getMapping
+    val items = ClassPath.from(getClass.getClassLoader).getTopLevelClasses("streaming.dsl.mmlib.algs")
+      .filterNot(f => mappingItems.containsValue(f.getName))
+      .map(f => getAlgName(f.getName)).toSet ++ mappingItems.keys.toSet
 
     val rows = sparkSession.sparkContext.parallelize(items.toSeq.sorted, 1)
     sparkSession.createDataFrame(rows.filter(f => ModelSelfExplain.findAlg(f).isDefined).map { algName =>
       val sqlAlg = ModelSelfExplain.findAlg(algName).get
-      Row.fromSeq(Seq(algName, sqlAlg.modelType.humanFriendlyName,
+      Row.fromSeq(Seq(getAlgUsageName(sqlAlg.getClass.getName, algName), sqlAlg.modelType.humanFriendlyName,
         sqlAlg.coreCompatibility.map(f => f.coreVersion).mkString(","),
         sqlAlg.doc.doc, sqlAlg.doc.docType.docType
       )
