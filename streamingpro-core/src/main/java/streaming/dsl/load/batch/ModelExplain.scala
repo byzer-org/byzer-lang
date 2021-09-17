@@ -117,20 +117,9 @@ class ModelList(format: String, path: String, option: Map[String, String])(spark
 
   override def explain: DataFrame = {
 
-    def getAlgName(fullName: String) = {
-      if (fullName.contains(".") && fullName.startsWith("SQL")) {
-        fullName
-      } else {
-        fullName.split("\\.").last.replace("SQL", "")
-      }
-    }
-
-    val items = ClassPath.from(getClass.getClassLoader).getTopLevelClasses("streaming.dsl.mmlib.algs").map { f =>
-      getAlgName(f.getName)
-    }.toSet ++ MLMapping.mapping.keys.toSet
-
+    val items = MLMapping.getAllETNames
     val rows = sparkSession.sparkContext.parallelize(items.toSeq.sorted, 1)
-    sparkSession.createDataFrame(rows.filter(f => ModelSelfExplain.findAlg(f).isDefined).map { algName =>
+    sparkSession.createDataFrame(rows.map { algName =>
       val sqlAlg = ModelSelfExplain.findAlg(algName).get
       Row.fromSeq(Seq(algName, sqlAlg.modelType.humanFriendlyName,
         sqlAlg.coreCompatibility.map(f => f.coreVersion).mkString(","),
