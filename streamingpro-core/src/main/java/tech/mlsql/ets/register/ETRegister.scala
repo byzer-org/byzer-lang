@@ -3,6 +3,7 @@ package tech.mlsql.ets.register
 import tech.mlsql.runtime.AppRuntimeStore
 
 import scala.collection.JavaConverters._
+import scala.collection.concurrent
 
 
 /**
@@ -17,7 +18,12 @@ object ETRegister {
 
   def remove(name: String) = mapping.remove(name)
 
-  def getMapping = {
+  /**
+   * @return et mapping
+   * @see If you need to get all the ET, you should use the function [[tech.mlsql.dsl.adaptor.MLMapping.getETMapping]],
+   *      because there are still registrations using MLMapping.
+   */
+  def getMapping: concurrent.Map[String, String] = {
     mapping.asScala
   }
 
