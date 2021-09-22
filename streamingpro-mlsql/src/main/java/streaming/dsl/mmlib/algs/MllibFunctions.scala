@@ -25,11 +25,15 @@ import org.joda.time.DateTime
 import streaming.log.WowLog
 import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.common.utils.path.PathFun
+import tech.mlsql.dsl.adaptor.MLMapping
 import tech.mlsql.ets.alg.BaseAlg
+import tech.mlsql.ets.algs.SQLAutoML
+
+import java.io.File
 
 /**
-  * Created by allwefantasy on 25/7/2018.
-  */
+ * Created by allwefantasy on 25/7/2018.
+ */
 trait MllibFunctions extends BaseAlg with Logging with WowLog with Serializable {
 
   def formatOutput(newDF: DataFrame) = {
@@ -94,31 +98,8 @@ trait MllibFunctions extends BaseAlg with Logging with WowLog with Serializable 
 
   }
 
-  def mllibModelAndMetaPath(path: String, params: Map[String, String], sparkSession: SparkSession) = {
-
-    if (!isModelPath(path)) throw new MLSQLException(s"$path is not a validate model path")
-
-    val maxVersion = SQLPythonFunc.getModelVersion(path)
-    var algIndex = params.get("algIndex").map(f => f.toInt)
-
-    val versionEnabled = maxVersion match {
-      case Some(v) => true
-      case None => false
-    }
-    val modelVersion = params.getOrElse("modelVersion", maxVersion.getOrElse(-1).toString).toInt
-
-    val baseModelPath = if (modelVersion == -1) SQLPythonFunc.getAlgModelPath(path, versionEnabled)
-    else SQLPythonFunc.getAlgModelPathWithVersion(path, modelVersion)
-
-
-    val metaPath = if (modelVersion == -1) SQLPythonFunc.getAlgMetalPath(path, versionEnabled)
-    else SQLPythonFunc.getAlgMetalPathWithVersion(path, modelVersion)
-
-
-    val autoSelectByMetric = params.getOrElse("autoSelectByMetric", "f1")
-
-    val modelList = sparkSession.read.parquet(metaPath + "/0").collect()
-
+  def findBestModelPath(modelList: Array[Row], algoIndex: Option[Int], baseModelPath: String, autoSelectByMetric: String) = {
+    var algIndex = algoIndex
     val bestModelPath = algIndex match {
       case Some(i) => Seq(baseModelPath + "/" + i)
       case None =>
@@ -140,20 +121,87 @@ trait MllibFunctions extends BaseAlg with Logging with WowLog with Serializable 
           } else {
             metric.getAs[Double](1)
           }
-
-          (metricScore, row(0).asInstanceOf[String], row(1).asInstanceOf[Int])
+          // if the model path contain __auto_ml__ that means, it is trained by autoML
+          var baseModelPathTmp = PathFun.joinPath(baseModelPath, row(0).asInstanceOf[String].split("/").last)
+          if (row(0).asInstanceOf[String].split("/")(1).contains(SQLAutoML.pathPrefix)) {
+            baseModelPathTmp = baseModelPath + row(0).asInstanceOf[String]
+          }
+          (metricScore, row(0).asInstanceOf[String], row(1).asInstanceOf[Int], baseModelPathTmp)
         }
           .toSeq
           .sortBy(f => f._1)(Ordering[Double].reverse)
           .take(1)
           .map(f => {
             algIndex = Option(f._3)
-            baseModelPath + "/" + f._2.split("/").last
+            val baseModelPathTmp = f._4
+            baseModelPathTmp
           })
     }
+    bestModelPath
+  }
+
+  def autoMLfindBestModelPath(basePath: String, params: Map[String, String], sparkSession: SparkSession): Seq[String] = {
+    val d = new File(basePath)
+    if (!d.exists || !d.isDirectory) {
+      return Seq.empty
+    }
+    val allETName = MLMapping.getAllETNames
+    val algo_paths = d.listFiles().filter(f => {
+      val path = f.getPath.split("__").last
+      f.isDirectory && f.getPath.contains(SQLAutoML.pathPrefix) && allETName.contains(path)
+    }).map(_.getPath).toList
+    val autoSelectByMetric = params.getOrElse("autoSelectByMetric", "f1")
+    var allModels = Array[Row]()
+    allModels = algo_paths.map(path => {
+      val (baseModelPath, metaPath) = getBaseModelPathAndMetaPath(path, params)
+      val algo_name = path.split("/").last
+      (baseModelPath, metaPath, algo_name)
+    }).map(paths => {
+      val baseModelPath = paths._1
+      val metaModelPath = paths._2
+      val modelList = sparkSession.read.parquet(metaModelPath + "/0").collect()
+      modelList.map(t => {
+        val s = t.toSeq
+        Row.fromSeq((s.take(0) :+ "/" + paths._3 + s(0).asInstanceOf[String]) ++ s.drop(1))
+      })
+    }).reduce((x, y) => {
+      x ++ y
+    })
+    val algIndex = params.get("algIndex").map(f => f.toInt)
+    val bestModelPath = findBestModelPath(allModels, algIndex, basePath, autoSelectByMetric)
+    bestModelPath
+  }
+
+  def getBaseModelPathAndMetaPath(path: String, params: Map[String, String]): (String, String) = {
+    val maxVersion = SQLPythonFunc.getModelVersion(path)
+    val versionEnabled = maxVersion match {
+      case Some(v) => true
+      case None => false
+    }
+    val modelVersion = params.getOrElse("modelVersion", maxVersion.getOrElse(-1).toString).toInt
+
+    val baseModelPath = if (modelVersion == -1) SQLPythonFunc.getAlgModelPath(path, versionEnabled)
+    else SQLPythonFunc.getAlgModelPathWithVersion(path, modelVersion)
 
 
+    val metaPath = if (modelVersion == -1) SQLPythonFunc.getAlgMetalPath(path, versionEnabled)
+    else SQLPythonFunc.getAlgMetalPathWithVersion(path, modelVersion)
+    (baseModelPath, metaPath)
+  }
+
+  def mllibModelAndMetaPath(path: String, params: Map[String, String], sparkSession: SparkSession) = {
+    if (!isModelPath(path)) throw new MLSQLException(s"$path is not a validate model path")
+    var algIndex = params.get("algIndex").map(f => f.toInt)
+    val (baseModelPath, metaPath) = getBaseModelPathAndMetaPath(path, params)
+    val autoSelectByMetric = params.getOrElse("autoSelectByMetric", "f1")
+    val modelList = sparkSession.read.parquet(metaPath + "/0").collect()
+    val bestModelPath = findBestModelPath(modelList, algIndex, baseModelPath, autoSelectByMetric)
     (bestModelPath, baseModelPath, metaPath)
+  }
+
+  def refMetaPathFromModelPath(modelPath: String) = {
+    val splitedPaths = modelPath.split("/")
+    splitedPaths.last
   }
 
   def saveMllibTrainAndSystemParams(sparkSession: SparkSession, params: Map[String, String], metaPath: String) = {
