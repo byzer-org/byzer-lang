@@ -118,7 +118,6 @@ class TrainAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdap
 
 object MLMapping extends Logging with WowLog {
   private val mapping = Map[String, String](
-    "Word2vec" -> "streaming.dsl.mmlib.algs.SQLWord2Vec",
     "NaiveBayes" -> "streaming.dsl.mmlib.algs.SQLNaiveBayes",
     "RandomForest" -> "streaming.dsl.mmlib.algs.SQLRandomForest",
     "GBTRegressor" -> "streaming.dsl.mmlib.algs.SQLGBTRegressor",
@@ -129,7 +128,6 @@ object MLMapping extends Logging with WowLog {
     "GBTs" -> "streaming.dsl.mmlib.algs.SQLGBTs",
     "LSVM" -> "streaming.dsl.mmlib.algs.SQLLSVM",
     "HashTfIdf" -> "streaming.dsl.mmlib.algs.SQLHashTfIdf",
-    "TfIdf" -> "streaming.dsl.mmlib.algs.SQLTfIdf",
     "LogisticRegression" -> "streaming.dsl.mmlib.algs.SQLLogisticRegression",
     "LinearRegression" -> "streaming.dsl.mmlib.algs.SQLLinearRegressionExt",
     "RowMatrix" -> "streaming.dsl.mmlib.algs.SQLRowMatrix",
