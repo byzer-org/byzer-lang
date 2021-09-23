@@ -7,11 +7,10 @@ import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.Functions
 import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
-import tech.mlsql.dsl.CommandCollection
 
 /**
-  * 2019-04-12 WilliamZhu(allwefantasy@gmail.com)
-  */
+ * 2019-04-12 WilliamZhu(allwefantasy@gmail.com)
+ */
 class ShowCommand(override val uid: String) extends SQLAlg with Functions with WowParams {
   def this() = this(BaseParams.randomUID())
 
@@ -37,6 +36,7 @@ class ShowCommand(override val uid: String) extends SQLAlg with Functions with W
           |!show "progress/[groupId]";
           |!show et;
           |!show et [ETName];
+          |!show "et/params/[ETName]";
           |!show functions;
           |!show function [functionName];
           |!show tables;
@@ -55,17 +55,24 @@ class ShowCommand(override val uid: String) extends SQLAlg with Functions with W
     val sql = newPath match {
       case Array("et", name) => s"load modelExample.`${name}` as __output__;"
       case Array("et") => s"load modelList.`` as __output__;"
+      case Array("et", "params", etName) => s"load modelParams.`${etName}` as __output__;"
       case Array("functions") => s"run command as ShowFunctionsExt.``;"
       case Array("function", name) => s"run command as ShowFunctionsExt.`${name}`;"
       case Array("tables") => s"run command as ShowTablesExt.``;"
-      case Array("tables" ,"named" ,aliasName) => s"run command as ShowTablesExt.`` as ${aliasName};"
-      case Array("tables" ,"from" ,name) => s"run command as ShowTablesExt.`${name}`;"
-      case Array("tables" ,"from" ,name ,"named" ,aliasName) => s"run command as ShowTablesExt.`` as ${aliasName};"
+      case Array("tables", "named", aliasName) => s"run command as ShowTablesExt.`` as ${aliasName};"
+      case Array("tables", "from", name) => s"run command as ShowTablesExt.`${name}`;"
+      case Array("tables", "from", name, "named", aliasName) => s"run command as ShowTablesExt.`` as ${aliasName};"
       case Array("commands") | Array() | Array("help") | Array("-help") =>
         help
       case _ => s"load _mlsql_.`${newPath.mkString("/")}` as output;"
     }
-    CommandCollection.evaluateMLSQL(df.sparkSession, sql)
+
+    var newdf = df
+    ScriptRunner.rubSubJob(sql, (_df) => {
+      newdf = _df
+    }, Option(df.sparkSession), true, true)
+
+    newdf
   }
 
 

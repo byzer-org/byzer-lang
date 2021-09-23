@@ -89,10 +89,4 @@ object CommandCollection {
         |run command as ShowCommand.`{}/{}/{}/{}/{}/{}/{}/{}/{}/{}/{}/{}`
       """.stripMargin)
   }
-
-  def evaluateMLSQL(spark: SparkSession, mlsql: String) = {
-    val context = new ScriptSQLExecListener(spark, null, null)
-    ScriptSQLExec.parse(mlsql, context, true, true)
-    spark.table(context.getLastSelectTable().get)
-  }
 }
