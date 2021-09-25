@@ -118,6 +118,7 @@ trait WowParams extends Params {
             })
           )
         ))
+        
       case a: FloatParam =>
 
         Array(param.name, a.doc, obj.explainParam(param), FormParams.toJson(
@@ -207,7 +208,7 @@ trait WowParams extends Params {
             name = a.name, values = List(), extra = Extra(doc = a.doc, label = "", Map(
               "defaultValue" -> obj.getDefault(param).getOrElse("undefined").toString,
               "currentValue" -> obj.get(param).getOrElse("undefined").toString,
-              "valueType" -> "array[string]"
+              "valueType" -> "boolean"
             )), valueProvider = Option(() => {
               List(KV(Option(param.name), Option("true")), KV(Option(param.name), Option("false")))
             })
