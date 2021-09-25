@@ -35,7 +35,9 @@ class MLSQLCSV(override val uid: String) extends MLSQLBaseFileSource with WowPar
           |when set to true the first line of files will be used to name columns and will not be included in data.
           |All types will be assumed string.
           |Default value is false.
-          |""".stripMargin, label = "", options = Map()), valueProvider = Option(() => {
+          |""".stripMargin, label = "", options = Map(
+          "valueType"->"boolean"
+        )), valueProvider = Option(() => {
         List(
           KV(Option("header"), Option("true")),
           KV(Option("header"), Option("false")),
@@ -55,7 +57,9 @@ class MLSQLCSV(override val uid: String) extends MLSQLBaseFileSource with WowPar
         """
           |automatically infers column types.
           |It requires one extra pass over the data and is false by default
-          |""".stripMargin, label = "", options = Map()), valueProvider = Option(() => {
+          |""".stripMargin, label = "", options = Map(
+          "valueType"->"boolean"
+        )), valueProvider = Option(() => {
         List(
           KV(Option("inferSchema"), Option("true")),
           KV(Option("inferSchema"), Option("false")),

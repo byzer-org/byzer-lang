@@ -35,7 +35,9 @@ trait BaseParams extends WowParams {
       Text(
         name = "evaluateTable",
         value = "",
-        extra = Extra(doc = "The table name to evaluate the model performance in training stage", label = "", options = Map()),
+        extra = Extra(doc = "The table name to evaluate the model performance in training stage", label = "", options = Map(
+          
+        )),
         valueProvider = Option(() => {
           ""
         })
@@ -56,7 +58,9 @@ trait BaseParams extends WowParams {
         extra = Extra(
           doc = "If set true, then every time you run the \" +\n    \"algorithm, it will generate a new directory to save the model.",
           label = "",
-          options = Map()), valueProvider = Option(() => {
+          options = Map(
+            "valueType"->"boolean"
+          )), valueProvider = Option(() => {
           List(
             KV(Some("keepVersion"), Some("true")),
             KV(Some("keepVersion"), Some("false"))
