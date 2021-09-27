@@ -163,6 +163,13 @@
         </dependency>
 
         <dependency>
+            <groupId>org.scalatest</groupId>
+            <artifactId>scalatest_${scala.binary.version}</artifactId>
+            <version>${scalatest.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
             <groupId>tech.mlsql</groupId>
             <artifactId>mlsql-lang-${spark.bigversion}_${scala.binary.version}</artifactId>
             <version>${project.parent.version}</version>

@@ -133,34 +133,6 @@ class MLLibSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLCo
     }
   }
 
-  "SQLLDA" should "work fine" in {
-    copySampleLibsvmData
-    withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>
-      val coreCompatibility = new SQLLDA().coreCompatibility.filter(f => f.coreVersion == SparkCoreVersion.version).size > 0
-      if (coreCompatibility) {
-        implicit val spark = runtime.sparkSession
-        val sqlLDA = new SQLLDA()
-        ScriptSQLExec.contextGetOrForTest()
-
-        val df = spark.read.format("libsvm").load("/tmp/william/sample_lda_libsvm_data.txt")
-        df.createOrReplaceTempView("data")
-        sqlLDA.train(df, "/tmp/SQLLDA", Map(
-          "k" -> "3",
-          "topicConcentration" -> "3.0",
-          "docConcentration" -> "3.0",
-          "optimizer" -> "online",
-          "checkpointInterval" -> "10",
-          "maxIter" -> "100"
-        ))
-        val models = sqlLDA.load(spark, "/tmp/SQLLDA", Map())
-        val udf = sqlLDA.predict(spark, models, "jack", Map())
-        spark.udf.register("jack", udf)
-        spark.sql("select label,jack(4) topicsMatrix,jack_doc(features) TopicDistribution,jack_topic(label,4) describeTopics " +
-          "from data as result").show()
-      }
-    }
-  }
-
   "KMeans" should "work fine" in {
     copySampleLibsvmData
     withBatchContext(setupBatchContext(batchParams, "classpath:///test/empty.json")) { runtime: SparkRuntime =>

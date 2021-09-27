@@ -8,7 +8,7 @@ import org.apache.spark.sql.mlsql.session.MLSQLException
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import streaming.dsl.mmlib.algs.Functions
 import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
-import streaming.dsl.mmlib.{Core_2_3_x, SQLAlg}
+import streaming.dsl.mmlib.{ SQLAlg}
 import tech.mlsql.common.utils.path.PathFun
 import tech.mlsql.common.utils.serder.json.JSONTool
 import tech.mlsql.datalake.DataLake
@@ -24,10 +24,6 @@ class DeltaCommandWrapper(override val uid: String) extends SQLAlg with Function
   override def batchPredict(df: DataFrame, path: String, params: Map[String, String]): DataFrame = train(df, path, params)
 
   override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
-
-    require(SparkCoreVersion.version > Core_2_3_x.coreVersion,
-      s"Spark ${SparkCoreVersion.exactVersion} not support delta"
-    )
 
     val spark = df.sparkSession
     import spark.implicits._

@@ -69,6 +69,12 @@ class SQLLinearRegressionExt(override val uid: String) extends SQLAlg with Mllib
     formatOutput(getModelMetaData(spark, path))
   }
 
+  override def explainParams(sparkSession: SparkSession): DataFrame = {
+    _explainParams(sparkSession, () => {
+      new LinearRegression()
+    })
+  }
+
   override def doc: Doc = Doc(HtmlDoc,
     """
       | <a href="https://en.wikipedia.org/wiki/Linear_Regression">Linear Regression</a> learning algorithm for
@@ -144,23 +150,18 @@ class SQLLinearRegressionExt(override val uid: String) extends SQLAlg with Mllib
 
 
   override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = {
-    val (bestModelPath, baseModelPath, metaPath) = mllibModelAndMetaPath(path, params, sparkSession)
-    val model = LinearRegressionModel.load(bestModelPath(0))
-    ArrayBuffer(model)
+    val model = LinearRegressionModel.load(path)
+    model
   }
 
   override def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = {
-    val model = sparkSession.sparkContext.broadcast(_model.asInstanceOf[ArrayBuffer[LinearRegressionModel]].head)
+    val model = sparkSession.sparkContext.broadcast(_model.asInstanceOf[LinearRegressionModel])
+
     val f = (vec: Vector) => {
       val result = model.value.getClass.getMethod("predict", classOf[Vector]).invoke(model.value, vec)
       result
     }
     MLSQLUtils.createUserDefinedFunction(f, DoubleType, Some(Seq(VectorType)))
-  }
-
-  override def batchPredict(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
-    val model = load(df.sparkSession, path, params).asInstanceOf[ArrayBuffer[LinearRegressionModel]].head
-    model.transform(df)
   }
 
   override def auth(etMethod: ETMethod, path: String, params: Map[String, String]): List[TableAuthResult] = {
