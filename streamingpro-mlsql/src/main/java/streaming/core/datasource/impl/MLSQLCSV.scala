@@ -40,7 +40,7 @@ class MLSQLCSV(override val uid: String) extends MLSQLBaseFileSource with WowPar
         )), valueProvider = Option(() => {
         List(
           KV(Option("header"), Option("true")),
-          KV(Option("header"), Option("false")),
+          KV(Option("header"), Option("false"))
         )
       })
     ))
@@ -62,7 +62,7 @@ class MLSQLCSV(override val uid: String) extends MLSQLBaseFileSource with WowPar
         )), valueProvider = Option(() => {
         List(
           KV(Option("inferSchema"), Option("true")),
-          KV(Option("inferSchema"), Option("false")),
+          KV(Option("inferSchema"), Option("false"))
         )
       })
     ))
