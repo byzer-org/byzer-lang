@@ -45,7 +45,7 @@ trait WowParams extends Params {
           )), valueProvider = Option(() => {
 
             Array("auto", "all", "onethird", "sqrt", "log2", "(0.0-1.0]", "[1-n]").map(item =>
-              KV(Option(param.name), Option(item)),
+              KV(Option(param.name), Option(item))
             ).toList
           })
         )
