@@ -51,7 +51,7 @@ class DataSourceRepository(url: String) extends Logging with WowLog {
     var fieldValue = response.getFirstHeader("Content-Disposition").getValue
     val inputStream = response.getEntity.getContent
     fieldValue = fieldValue.substring(fieldValue.indexOf("filename=\"") + 10, fieldValue.length() - 1);
-    val tmpLocation = new File("./dataousrce_upjars")
+    val tmpLocation = new File(PathFun.current.add("dataousrce_upjars").toPath)
     if (!tmpLocation.exists()) {
       tmpLocation.mkdirs()
     }

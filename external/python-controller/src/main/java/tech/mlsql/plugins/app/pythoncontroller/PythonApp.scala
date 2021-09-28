@@ -219,8 +219,8 @@ object PyRunner {
     val pythonProjectCode = JSONTool.parseJson[List[FullPathAndScriptFile]](item)
     var projectName = ""
     pythonProjectCode.foreach { item =>
-      val home = PathFun("/tmp/__mlsql__").add(uuid)
-      val tempPath = item.path.split("/").drop(1)
+      val home = PathFun.tmp.add("__mlsql__").add(uuid)
+      val tempPath = item.path.split(PathFun.pathSeparator).drop(1)
       projectName = tempPath.head
       tempPath.dropRight(1).foreach(home.add(_))
       val file = new File(home.toPath)
@@ -237,7 +237,7 @@ object PyRunner {
       withM = " -m "
     }
 
-    val pythonPackage = currentScript.path.split("/").drop(2).dropRight(1).mkString(".")
+    val pythonPackage = currentScript.path.split(PathFun.pathSeparator).drop(2).dropRight(1).mkString(".")
     var executePythonPath = if (pythonPackage.isEmpty) {
       currentScript.scriptFile.name
     } else {
@@ -250,7 +250,7 @@ object PyRunner {
 
 
     try {
-      val projectPath = PathFun("/tmp/__mlsql__").add(uuid).add(projectName).toPath
+      val projectPath = PathFun.tmp.add("__mlsql__").add(uuid).add(projectName).toPath
       val envCommand = envs.get(ScalaMethodMacros.str(PythonConf.PYTHON_ENV)).getOrElse("")
       val command = Seq("bash", "-c", envCommand + s" && cd ${projectPath} &&  python -u ${withM} ${executePythonPath}")
 
@@ -266,7 +266,7 @@ object PyRunner {
       case e: Exception =>
         JSONTool.toJsonStr(e.getStackTrace.map(f => f.toString).toList)
     } finally {
-      FileUtils.deleteQuietly(new File(PathFun("/tmp/__mlsql__").add(uuid).toPath))
+      FileUtils.deleteQuietly(new File(PathFun.tmp.add("__mlsql__").add(uuid).toPath))
     }
 
   }

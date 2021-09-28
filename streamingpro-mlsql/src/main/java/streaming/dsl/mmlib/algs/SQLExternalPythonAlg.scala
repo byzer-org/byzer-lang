@@ -20,6 +20,7 @@ package streaming.dsl.mmlib.algs
 
 import org.apache.spark.sql.SparkSession
 import streaming.dsl.mmlib.algs.python._
+import tech.mlsql.common.utils.path.PathFun
 
 import scala.collection.JavaConverters._
 
@@ -71,7 +72,7 @@ class SQLExternalPythonAlg extends SQLPythonAlg {
         resourceParams += ("pythonProjectPath" -> path)
       })
     }
-    val taskDirectory = localPathConfig.localRunPath + params("pythonProjectPath").split("/").last
+    val taskDirectory = localPathConfig.localRunPath + params("pythonProjectPath").split(PathFun.pathSeparator).last
     val pythonScript = PythonAlgProject.loadProject(params, sparkSession)
     val resources = selectedFitParam + ("resource" -> resourceParams.asJava)
     ModelMeta(pythonScript.get, params, Seq(""), resources, localPathConfig, Map(), Option(taskDirectory))

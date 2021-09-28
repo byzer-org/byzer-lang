@@ -18,6 +18,8 @@
 
 package streaming.dsl.mmlib.algs
 
+import java.io.File
+
 import org.apache.spark.sql.mlsql.session.MLSQLException
 import org.apache.spark.sql.types.{MapType, StringType, StructField, StructType}
 import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession, functions => F}
@@ -28,8 +30,6 @@ import tech.mlsql.common.utils.path.PathFun
 import tech.mlsql.dsl.adaptor.MLMapping
 import tech.mlsql.ets.alg.BaseAlg
 import tech.mlsql.ets.algs.SQLAutoML
-
-import java.io.File
 
 /**
  * Created by allwefantasy on 25/7/2018.
@@ -122,8 +122,8 @@ trait MllibFunctions extends BaseAlg with Logging with WowLog with Serializable 
             metric.getAs[Double](1)
           }
           // if the model path contain __auto_ml__ that means, it is trained by autoML
-          var baseModelPathTmp = PathFun.joinPath(baseModelPath, row(0).asInstanceOf[String].split("/").last)
-          if (row(0).asInstanceOf[String].split("/")(1).contains(SQLAutoML.pathPrefix)) {
+          var baseModelPathTmp = PathFun.joinPath(baseModelPath, row(0).asInstanceOf[String].split(PathFun.pathSeparator).last)
+          if (row(0).asInstanceOf[String].split(PathFun.pathSeparator)(1).contains(SQLAutoML.pathPrefix)) {
             baseModelPathTmp = baseModelPath + row(0).asInstanceOf[String]
           }
           (metricScore, row(0).asInstanceOf[String], row(1).asInstanceOf[Int], baseModelPathTmp)
@@ -154,15 +154,15 @@ trait MllibFunctions extends BaseAlg with Logging with WowLog with Serializable 
     var allModels = Array[Row]()
     allModels = algo_paths.map(path => {
       val (baseModelPath, metaPath) = getBaseModelPathAndMetaPath(path, params)
-      val algo_name = path.split("/").last
+      val algo_name = path.split(PathFun.pathSeparator).last
       (baseModelPath, metaPath, algo_name)
     }).map(paths => {
       val baseModelPath = paths._1
       val metaModelPath = paths._2
-      val modelList = sparkSession.read.parquet(metaModelPath + "/0").collect()
+      val modelList = sparkSession.read.parquet(PathFun(metaModelPath).add("0").toPath).collect()
       modelList.map(t => {
         val s = t.toSeq
-        Row.fromSeq((s.take(0) :+ "/" + paths._3 + s(0).asInstanceOf[String]) ++ s.drop(1))
+        Row.fromSeq((s.take(0) :+ PathFun.pathSeparator + paths._3 + s(0).asInstanceOf[String]) ++ s.drop(1))
       })
     }).reduce((x, y) => {
       x ++ y
@@ -200,7 +200,7 @@ trait MllibFunctions extends BaseAlg with Logging with WowLog with Serializable 
   }
 
   def refMetaPathFromModelPath(modelPath: String) = {
-    val splitedPaths = modelPath.split("/")
+    val splitedPaths = modelPath.split(PathFun.pathSeparator)
     splitedPaths.last
   }
 

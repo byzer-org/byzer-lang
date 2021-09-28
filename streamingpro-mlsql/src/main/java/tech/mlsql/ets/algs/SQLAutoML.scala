@@ -40,11 +40,11 @@ class SQLAutoML(override val uid: String) extends SQLAlg with Functions with Mll
       val tempPath = getAutoMLPath(path, algo_name)
       SQLPythonFunc.incrementVersion(tempPath, keepVersion)
       val sqlAlg = MLMapping.findAlg(algo_name)
-      (tempPath.split("/").last, sqlAlg.train(df, tempPath, params))
+      (tempPath.split(PathFun.pathSeparator).last, sqlAlg.train(df, tempPath, params))
     })
     val updatedDF = classifier_list.map(obj => {
       (obj._1, obj._2.withColumn("value", regexp_replace(obj._2("value"),
-        "/_model_", obj._1 + "/_model_")))
+        PathFun.pathSeparator+"_model_", obj._1 +PathFun.pathSeparator + "_model_")))
     }).map(d => {
       d._2.withColumn("value",
         when(d._2("name") === "algIndex",
@@ -72,7 +72,7 @@ class SQLAutoML(override val uid: String) extends SQLAlg with Functions with Mll
         algIndex.substring(0, algIndex.indexOf("."))
       case None =>
         val bestModelPathAmongModels = autoMLfindBestModelPath(path, params, sparkSession)
-        bestModelPathAmongModels(0).split("__").last.split("/")(0)
+        bestModelPathAmongModels(0).split("__").last.split(PathFun.pathSeparator)(0)
     }
     (newParam, algoName)
   }

@@ -30,6 +30,7 @@ import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
 import streaming.log.WowLog
+import tech.mlsql.common.utils.path.PathFun
 import tech.mlsql.tool.HDFSOperatorV2
 
 import scala.collection.mutable.ArrayBuffer
@@ -108,11 +109,11 @@ class SQLUploadFileToServerExt(override val uid: String) extends SQLAlg with Fun
     }
 
     def findSubDirectory(path: String, targetDir: String) = {
-      val pathChunks = path.split("/").filterNot(f => f.isEmpty)
-      pathChunks.drop(pathChunks.indexOf(targetDir)).mkString("/")
+      val pathChunks = path.split(PathFun.pathSeparator).filterNot(f => f.isEmpty)
+      pathChunks.drop(pathChunks.indexOf(targetDir)).mkString(PathFun.pathSeparator)
     }
 
-    val targetDir = path.split("/").filterNot(f => f.isEmpty).last
+    val targetDir = path.split(PathFun.pathSeparator).filterNot(f => f.isEmpty).last
 
     var downloadResult = ArrayBuffer[UploadFileToServerRes]()
     if (HDFSOperatorV2.isDir(path)) {
