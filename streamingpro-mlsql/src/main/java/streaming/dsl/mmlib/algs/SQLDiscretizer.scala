@@ -19,9 +19,11 @@
 package streaming.dsl.mmlib.algs
 
 import org.apache.spark.ml.feature.{Bucketizer, DiscretizerFeature, QuantileDiscretizer}
+import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.expressions.UserDefinedFunction
+import org.apache.spark.sql.functions.monotonically_increasing_id
 import org.apache.spark.sql.types._
-import org.apache.spark.sql.{DataFrame, MLSQLUtils, SaveMode, SparkSession}
+import org.apache.spark.sql.{DataFrame, MLSQLUtils, Row, SaveMode, SparkSession}
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.MetaConst._
 import streaming.dsl.mmlib.algs.meta.DiscretizerMeta
@@ -41,17 +43,23 @@ class SQLDiscretizer extends SQLAlg with Functions {
 
     val fitParamsWithIndex = arrayParamsWithIndex(DiscretizerParamsConstrant.PARAMS_PREFIX, params)
     require(fitParamsWithIndex.size > 0, "fitParams should be configured")
-
+    val dfWithId = df.withColumn("id", monotonically_increasing_id)
+    var transformedDF = dfWithId
     // we need save metadatas with index, because we need index
     val metas: Array[(Int, DiscretizerTrainData)] =
       method match {
         case DiscretizerFeature.BUCKETIZER_METHOD =>
           fitParamsWithIndex.map {
             case (index, map) =>
+              val bucketizer = new Bucketizer()
               val splitArray = DiscretizerFeature.getSplits(
                 map.getOrElse(DiscretizerParamsConstrant.SPLIT_ARRAY, "")
               )
-              (index, DiscretizerFeature.parseParams(map, splitArray))
+              configureModel(bucketizer, map)
+              val tmpDF = bucketizer.transform(dfWithId).select("id", map.getOrElse("outputCol", ""))
+              transformedDF = transformedDF.join(tmpDF, tmpDF("id") === transformedDF("id")).drop(tmpDF("id"))
+              val splits = bucketizer.getSplits
+              (index, DiscretizerFeature.parseParams(map, splits))
           }
 
         case DiscretizerFeature.QUANTILE_METHOD =>
@@ -60,17 +68,20 @@ class SQLDiscretizer extends SQLAlg with Functions {
               val discretizer = new QuantileDiscretizer()
               configureModel(discretizer, map)
               val discretizerModel = discretizer.fit(df)
+              val tmpDF = discretizerModel.transform(df).select("id", map.getOrElse("outputCol", ""))
+              transformedDF = transformedDF.join(tmpDF, tmpDF("id") === transformedDF("id")).drop(tmpDF("id"))
               val splits = discretizerModel.getSplits
               (index, DiscretizerFeature.parseParams(map, splits))
           }
-    }
+      }
     spark.createDataset(metas).write.mode(SaveMode.Overwrite).
       parquet(DISCRETIZER_PATH(metaPath))
+    transformedDF.drop("id")
   }
 
   override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
     internal_train(df, params + ("path" -> path))
-    emptyDataFrame()(df)
+    //    emptyDataFrame()(df)
   }
 
   override def load(spark: SparkSession, _path: String, params: Map[String, String]): Any = {
@@ -95,26 +106,26 @@ class SQLDiscretizer extends SQLAlg with Functions {
 }
 
 case class DiscretizerTrainData(
-    inputCol: String,
-    splits: Array[Double],
-    handleInvalid: Boolean,
-    params: Map[String, String])
+                                 inputCol: String,
+                                 splits: Array[Double],
+                                 handleInvalid: Boolean,
+                                 params: Map[String, String])
 
 object DiscretizerParamsConstrant {
   /**
-   * 参数数组前缀
+   *  The prefix of the group of params
    */
   val PARAMS_PREFIX = "fitParam"
   /**
-   * 输入列名
+   * The name of the input column
    */
   val INPUT_COLUMN = "inputCol"
   /**
-   * split参数数组
+   * the array that defines the splits param
    */
-  val SPLIT_ARRAY = "splitArray"
+  val SPLIT_ARRAY = "splitsArray"
   /**
-   * 散列化的方法，支持：bucketizer,quantile
+   * The way to discretize the input, bucketizer,quantile are allowed
    */
   val METHOD = "method"
   /**
