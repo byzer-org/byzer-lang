@@ -175,3 +175,4 @@ external/mlsql-native-operators/build/
 *.tgz
 
 streamingpro-it/src/test/home/
+gc.log.*
