@@ -2,7 +2,8 @@ package tech.mlsql.ets.algs
 
 import org.apache.spark.ml.param.Param
 import org.apache.spark.sql.expressions.UserDefinedFunction
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.functions.{lit, regexp_replace, when}
+import org.apache.spark.sql.{DataFrame, SparkSession, functions}
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.auth._
 import streaming.dsl.mmlib._
@@ -13,6 +14,8 @@ import tech.mlsql.common.utils.path.PathFun
 import tech.mlsql.dsl.adaptor.MLMapping
 import tech.mlsql.dsl.auth.ETAuth
 import tech.mlsql.dsl.auth.dsl.mmlib.ETMethod.ETMethod
+
+import scala.collection.mutable.ArrayBuffer
 
 class SQLAutoML(override val uid: String) extends SQLAlg with Functions with MllibFunctions with BaseClassification with ETAuth {
 
@@ -32,14 +35,23 @@ class SQLAutoML(override val uid: String) extends SQLAlg with Functions with Mll
     setEvaluateTable(evaluateTable.getOrElse("None"))
     val sortedKey = params.getOrElse(sortedBy.name, "f1")
     val algo_list = params.getOrElse("algos", "GBTs,LinearRegression,LogisticRegression,NaiveBayes,RandomForest")
-      .split(",")
+      .split(",").map(algo => algo.stripMargin)
     val classifier_list = algo_list.map(algo_name => {
       val tempPath = getAutoMLPath(path, algo_name)
       SQLPythonFunc.incrementVersion(tempPath, keepVersion)
       val sqlAlg = MLMapping.findAlg(algo_name)
-      sqlAlg.train(df, tempPath, params)
+      (tempPath.split("/").last, sqlAlg.train(df, tempPath, params))
     })
-    val classifier_df = classifier_list.map(obj => {
+    val updatedDF = classifier_list.map(obj => {
+      (obj._1, obj._2.withColumn("value", regexp_replace(obj._2("value"),
+        "/_model_", obj._1 + "/_model_")))
+    }).map(d => {
+      d._2.withColumn("value",
+        when(d._2("name") === "algIndex",
+          functions.concat(lit(d._1.split(SQLAutoML.pathPrefix).last), lit("."), d._2("value")))
+          .otherwise(d._2("value")))
+    })
+    val classifier_df = updatedDF.map(obj => {
       val metrics = obj.filter(obj("name").equalTo("metrics")).select("value").collectAsList().get(0).get(0)
       val metrics_map = metrics.toString().split("\\n").map(metric => {
         val name = metric.split(":")(0)
@@ -52,12 +64,24 @@ class SQLAutoML(override val uid: String) extends SQLAlg with Functions with Mll
     classifier_df
   }
 
+  def getBestModelAlgoName(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = {
+    var newParam = params
+    val algoName = params.get("algIndex") match {
+      case Some(algIndex) =>
+        newParam = params.updated("algIndex", algIndex.substring(algIndex.indexOf(".") + 1))
+        algIndex.substring(0, algIndex.indexOf("."))
+      case None =>
+        val bestModelPathAmongModels = autoMLfindBestModelPath(path, params, sparkSession)
+        bestModelPathAmongModels(0).split("__").last.split("/")(0)
+    }
+    (newParam, algoName)
+  }
+
   override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = {
-    val bestModelPathAmongModels = autoMLfindBestModelPath(path, params, sparkSession)
-    val algoName = bestModelPathAmongModels(0).split("__").last.split("/")(0)
+    val (newParam, algoName) = getBestModelAlgoName(sparkSession, path, params)
     val bestModelBasePath = getAutoMLPath(path, algoName.asInstanceOf[String])
-    val bestModel = MLMapping.findAlg(algoName).load(sparkSession, bestModelBasePath, params)
-    (bestModel, algoName)
+    val bestModel = MLMapping.findAlg(algoName.asInstanceOf[String]).load(sparkSession, bestModelBasePath, newParam.asInstanceOf[Map[String, String]])
+    bestModel
   }
 
   override def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = {
@@ -69,15 +93,15 @@ class SQLAutoML(override val uid: String) extends SQLAlg with Functions with Mll
   }
 
   override def batchPredict(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
-    val (model, algoName) = load(df.sparkSession, path, params)
+    val (newParam, algoName) = getBestModelAlgoName(df.sparkSession, path, params)
     val basModelPath = getAutoMLPath(path, algoName.asInstanceOf[String])
-    MLMapping.findAlg(algoName.asInstanceOf[String]).batchPredict(df, basModelPath, params)
+    MLMapping.findAlg(algoName.asInstanceOf[String]).batchPredict(df, basModelPath, newParam.asInstanceOf[Map[String, String]])
   }
 
   override def explainModel(sparkSession: SparkSession, path: String, params: Map[String, String]): DataFrame = {
-    val (bestModel, algoName) = load(sparkSession, path, params)
+    val (newParam, algoName) = getBestModelAlgoName(sparkSession, path, params)
     val basModelPath = getAutoMLPath(path, algoName.asInstanceOf[String])
-    MLMapping.findAlg(algoName.asInstanceOf[String]).explainModel(sparkSession, basModelPath, params)
+    MLMapping.findAlg(algoName.asInstanceOf[String]).explainModel(sparkSession, basModelPath, newParam.asInstanceOf[Map[String, String]])
   }
 
   override def modelType: ModelType = AlgType

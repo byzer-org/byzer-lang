@@ -17,11 +17,16 @@ select vec_dense(features) as features , label as label from data
 as data1;
 
 train data1 as AutoML.`/tmp/auto_ml` where
-algos="LogisticRegression,NaiveBayes"
+algos="RandomForest,NaiveBayes"
 and sortedBy='f1'
 and keepVersion="true"
 and evaluateTable="data1"
 as model_result;
+
+register AutoML.`/tmp/auto_ml` as autoML_predict;
+register AutoML.`/tmp/auto_ml` as autoML_predict where algIndex="RandomForest.0";
+register AutoML.`/tmp/auto_ml` as autoML_predict where autoSelectByMetric="f1";
+select autoML_predict(features) as predict_label, label from data1 as output;
 
 select name,value from model_result where name="status" as result;
 -- make sure status of  all models are success.
