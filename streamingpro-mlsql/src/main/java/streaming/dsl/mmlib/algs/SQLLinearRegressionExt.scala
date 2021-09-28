@@ -150,18 +150,20 @@ class SQLLinearRegressionExt(override val uid: String) extends SQLAlg with Mllib
 
 
   override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = {
-    val model = LinearRegressionModel.load(path)
-    model
+    val (bestModelPath, baseModelPath, metaPath) = mllibModelAndMetaPath(path, params, sparkSession)
+    val model = LinearRegressionModel.load(bestModelPath(0))
+    ArrayBuffer(model)
   }
 
   override def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = {
-    val model = sparkSession.sparkContext.broadcast(_model.asInstanceOf[LinearRegressionModel])
-
-    val f = (vec: Vector) => {
-      val result = model.value.getClass.getMethod("predict", classOf[Vector]).invoke(model.value, vec)
-      result
-    }
-    MLSQLUtils.createUserDefinedFunction(f, DoubleType, Some(Seq(VectorType)))
+    predict_classification(sparkSession, _model, name)
+    //    val model = sparkSession.sparkContext.broadcast(_model.asInstanceOf[ArrayBuffer[LinearRegressionModel]](0))
+    //
+    //    val f = (vec: Vector) => {
+    //      val result = model.value.getClass.getMethod("predict", classOf[Vector]).invoke(model.value, vec)
+    //      result
+    //    }
+    //    MLSQLUtils.createUserDefinedFunction(f, DoubleType, Some(Seq(VectorType)))
   }
 
   override def auth(etMethod: ETMethod, path: String, params: Map[String, String]): List[TableAuthResult] = {
