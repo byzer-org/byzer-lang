@@ -28,10 +28,8 @@ import net.csdn.annotation.rest.{At, _}
 import net.csdn.common.collections.WowCollections
 import net.csdn.modules.http.ApplicationController
 import net.csdn.modules.http.RestRequest.Method._
-import net.csdn.modules.transport.HttpTransportService
 import org.apache.commons.httpclient.HttpStatus
 import org.apache.http.HttpResponse
-import org.apache.http.client.fluent.Request
 import org.apache.spark.ps.cluster.Message
 import org.apache.spark.ps.cluster.Message.Pong
 import org.apache.spark.sql._
@@ -110,7 +108,7 @@ class RestController extends ApplicationController with WowLog {
     val sparkSession = getSession
 
     accessAuth(sparkSession)
-    
+
     if (paramAsBoolean("async", false) && !params().containsKey("callback")) {
       render(400, "when async is set true ,then you should set callback url")
     }
@@ -265,7 +263,11 @@ class RestController extends ApplicationController with WowLog {
           }
           result.append("[" + scriptJsonStringResult + "]")
         }
-      case None => result.append("[]")
+      case None =>
+        if (!includeSchema) {
+          result.append("[]")
+        }
+
     }
     if (includeSchema) {
       result.append("}")
