@@ -28,7 +28,7 @@ class ModelCommand(override val uid: String) extends SQLAlg with MllibFunctions 
 
     val paths = HDFSOperatorV2.listFiles(path).map(file => PathFun(path).add(file.getPath.getName).toPath)
 
-    var modelPaths = paths.filter(f => f.split("/").last.startsWith("_model_"))
+    var modelPaths = paths.filter(f => f.split(PathFun.pathSeparator).last.startsWith("_model_"))
     val keepVersion = modelPaths.size > 0
 
 

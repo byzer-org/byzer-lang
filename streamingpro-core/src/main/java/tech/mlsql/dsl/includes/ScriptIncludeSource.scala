@@ -35,7 +35,7 @@ class ScriptIncludeSource extends IncludeSource with Logging {
 
     if (!libPath.isDefined) {
       val Array(website, user, repo) = libAlias.split("/")
-      val projectPath = PathFun("/").add("tmp").add("__mlsql__").add("deps").add(website).add(user).add(repo).toPath
+      val projectPath = PathFun.tmp.add("tmp").add("__mlsql__").add("deps").add(website).add(user).add(repo).toPath
       val dep = new File(projectPath)
       if (dep.exists()) {
         libPath = Option(projectPath)

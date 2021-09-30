@@ -6,6 +6,7 @@ import org.apache.commons.io.FileUtils
 import streaming.dsl.mmlib.algs.python.{LocalPathConfig, MLFlow, PythonScriptType}
 import streaming.dsl.mmlib.algs.{SQLPythonAlg, SQLPythonFunc}
 import tech.mlsql.common.utils.log.Logging
+import tech.mlsql.common.utils.path.PathFun
 
 /**
   * 2019-08-26 WilliamZhu(allwefantasy@gmail.com)
@@ -31,7 +32,7 @@ object LocalDirectoryManager extends Logging {
         if (projectType == MLFlow) {
           SQLPythonAlg.downloadPythonProject(taskDirectory, pythonProjectPath)
         } else {
-          val localPath = taskDirectory + "/" + pythonProjectPath.get.split("/").last
+          val localPath = taskDirectory +PathFun.pathSeparator + pythonProjectPath.get.split(PathFun.pathSeparator).last
           SQLPythonAlg.downloadPythonProject(localPath, pythonProjectPath)
         }
 

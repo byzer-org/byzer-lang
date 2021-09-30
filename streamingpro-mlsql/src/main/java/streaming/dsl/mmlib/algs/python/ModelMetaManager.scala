@@ -65,9 +65,9 @@ class ModelMetaManager(sparkSession: SparkSession, _path: String, params: Map[St
 
   def modelEntityPaths = {
     var algIndex = params.getOrElse("algIndex", "-1").toInt
-    val modelList = sparkSession.read.parquet(metaPath + "/0").collect()
+    val modelList = sparkSession.read.parquet(metaPath + PathFun.pathSeparator + "0").collect()
     val models = if (algIndex != -1) {
-      Seq(modelPath + "/" + algIndex)
+      Seq(modelPath + PathFun.pathSeparator + algIndex)
     } else {
       modelList.map(f => (f(3).asInstanceOf[Double], f(0).asInstanceOf[String], f(1).asInstanceOf[Int]))
         .toSeq
@@ -75,7 +75,7 @@ class ModelMetaManager(sparkSession: SparkSession, _path: String, params: Map[St
         .take(1)
         .map(f => {
           algIndex = f._3
-          modelPath + "/" + f._2.split("/").last
+          modelPath + PathFun.pathSeparator + f._2.split(PathFun.pathSeparator).last
         })
     }
     models

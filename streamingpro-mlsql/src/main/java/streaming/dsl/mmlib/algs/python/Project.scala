@@ -27,6 +27,7 @@ import org.apache.spark.sql.mlsql.session.MLSQLException
 import streaming.log.WowLog
 import tech.mlsql.common.utils.env.python.BasicCondaEnvManager
 import tech.mlsql.common.utils.log.Logging
+import tech.mlsql.common.utils.path.PathFun
 import tech.mlsql.tool.HDFSOperatorV2
 
 object PythonAlgProject extends Logging with WowLog {
@@ -42,7 +43,7 @@ object PythonAlgProject extends Logging with WowLog {
     getPythonScriptPath(params) match {
       case Some(path) =>
         if (HDFSOperatorV2.isDir(path) && HDFSOperatorV2.fileExists(Paths.get(path, "MLproject").toString)) {
-          val project = path.split("/").last
+          val project = path.split(PathFun.pathSeparator).last
           Some(PythonScript("", "", path, project, MLFlow))
 
         } else {
@@ -50,7 +51,7 @@ object PythonAlgProject extends Logging with WowLog {
             throw new MLSQLException(s"pythonScriptPath=$path should be a directory which contains MLproject file " +
               s"or directly a python file.")
           }
-          val pythonScriptFileName = path.split("/").last
+          val pythonScriptFileName = path.split(PathFun.pathSeparator).last
           val pythonScriptContent = spark.sparkContext.textFile(path, 1).collect().mkString("\n")
           Some(PythonScript(pythonScriptFileName, pythonScriptContent, path, UUID.randomUUID().toString, NormalProject))
         }

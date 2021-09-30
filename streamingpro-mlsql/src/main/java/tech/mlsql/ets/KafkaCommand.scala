@@ -52,7 +52,7 @@ class KafkaCommand(override val uid: String) extends SQLAlg with ETAuth with Fun
         val lastFile = HDFSOperatorV2.listFiles(offsetPath)
           .filterNot(_.getPath.getName.endsWith(".tmp.crc"))
           .map { fileName =>
-            (fileName.getPath.getName.split("/").last.toInt, fileName.getPath)
+            (fileName.getPath.getName.split(PathFun.pathSeparator).last.toInt, fileName.getPath)
           }.maxBy(f => f._1)._2
 
         val content = HDFSOperatorV2.readFile(lastFile.toString)

@@ -23,6 +23,7 @@ import java.util.UUID
 
 import org.apache.spark.sql.SparkSession
 import streaming.dsl.mmlib.algs.python.{MLFlow, PythonScript}
+import tech.mlsql.common.utils.path.PathFun
 import tech.mlsql.tool.HDFSOperatorV2
 
 /**
@@ -40,11 +41,11 @@ object SQLPythonFunc {
     getPath(params) match {
       case Some(path) =>
         if (HDFSOperatorV2.isDir(path) && HDFSOperatorV2.fileExists(Paths.get(path, "MLproject").toString)) {
-          val project = path.split("/").last
+          val project = path.split(PathFun.pathSeparator).last
           Some(PythonScript("", project, path, "", MLFlow))
 
         } else {
-          val pathChunk = path.split("/")
+          val pathChunk = path.split(PathFun.pathSeparator)
           val userFileName = pathChunk.last
           val userPythonScriptList = spark.sparkContext.textFile(path, 1).collect().mkString("\n")
           Some(PythonScript(userFileName, userPythonScriptList, "", path))
@@ -57,7 +58,7 @@ object SQLPythonFunc {
 
   def recordUserLog(algIndex: Int, pythonScript: PythonScript, kafkaParam: Map[String, String], res: Iterator[String],
                     logCallback: (String) => Unit = (msg: String) => {}) = {
-    val logPrefix = algIndex + "/" + pythonScript.filePath + ":  "
+    val logPrefix = algIndex + PathFun.pathSeparator + pythonScript.filePath + ":  "
     val scores = writeLog(logPrefix, kafkaParam, res, logCallback)
     val score = if (scores.size > 0) scores.head else 0d
     score

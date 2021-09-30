@@ -7,8 +7,8 @@ import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FSDataInputStream, FSDataOutputStream, FileStatus, FileSystem, Path}
 import org.apache.hadoop.io.IOUtils
 import org.apache.spark.MLSQLSparkUtils
-import org.apache.spark.deploy.SparkHadoopUtil
 import tech.mlsql.common.utils.Md5
+import tech.mlsql.common.utils.path.PathFun
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -160,7 +160,7 @@ object HDFSOperatorV2 {
       if (!fs.exists(new Path(path))) {
         fs.mkdirs(new Path(path))
       }
-      dos = fs.create(new Path(path + s"/$fileName"), true)
+      dos = fs.create(new Path(path, fileName), true)
       iterator.foreach { x =>
         dos.writeBytes(x._2 + "\n")
       }
@@ -233,7 +233,7 @@ object HDFSOperatorV2 {
   }
 
   def createTempModelLocalPath(path: String, autoCreateParentDir: Boolean = true) = {
-    val dir = "/tmp/train/" + Md5.md5Hash(path)
+    val dir = PathFun.tmp.add("train").add(Md5.md5Hash(path)).toPath
     if (autoCreateParentDir) {
       FileUtils.forceMkdir(new File(dir))
     }

@@ -188,7 +188,7 @@ object PluginUtils extends Logging with WowLog {
   def downloadFromHDFSToLocal(fileName: String, pluginPath: String, conf: Configuration) = {
     val inputStream = readAsInputStream(pluginPath, conf)
 
-    val tmpLocation = new File("./__mlsql__/store/plugins")
+    val tmpLocation = new File(PathFun.current.add("store").add("plugins").toPath)
     if (!tmpLocation.exists()) {
       tmpLocation.mkdirs()
     }
