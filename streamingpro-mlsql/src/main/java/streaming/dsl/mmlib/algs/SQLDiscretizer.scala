@@ -19,26 +19,32 @@
 package streaming.dsl.mmlib.algs
 
 import org.apache.spark.ml.feature.{Bucketizer, DiscretizerFeature, QuantileDiscretizer}
-import org.apache.spark.rdd.RDD
+import org.apache.spark.ml.param.Param
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.functions.monotonically_increasing_id
 import org.apache.spark.sql.types._
-import org.apache.spark.sql.{DataFrame, MLSQLUtils, Row, SaveMode, SparkSession}
+import org.apache.spark.sql.{DataFrame, MLSQLUtils, SaveMode, SparkSession}
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.MetaConst._
 import streaming.dsl.mmlib.algs.meta.DiscretizerMeta
+import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
+import tech.mlsql.common.form.{Extra, FormParams, KV, Select}
+import tech.mlsql.dsl.TagParamName
+import tech.mlsql.dsl.auth.BaseETAuth
+import tech.mlsql.version.VersionCompatibility
 
-/**
- * Created by dxy_why on 2018/5/29.
- */
-class SQLDiscretizer extends SQLAlg with Functions {
+class SQLDiscretizer(override val uid: String) extends SQLAlg with Functions with VersionCompatibility with WowParams with BaseETAuth {
+  def this() = this(BaseParams.randomUID())
 
   def internal_train(df: DataFrame, params: Map[String, String]) = {
     val spark = df.sparkSession
     import spark.implicits._
     val path = params("path")
     val metaPath = getMetaPath(path)
-    val method = params.getOrElse(DiscretizerParamsConstrant.METHOD, DiscretizerFeature.BUCKETIZER_METHOD)
+
+    val _method = params.getOrElse(method.name, DiscretizerFeature.BUCKETIZER_METHOD)
+    set(method, _method)
+
     saveTraningParams(df.sparkSession, params, metaPath)
 
     val fitParamsWithIndex = arrayParamsWithIndex(DiscretizerParamsConstrant.PARAMS_PREFIX, params)
@@ -47,7 +53,7 @@ class SQLDiscretizer extends SQLAlg with Functions {
     var transformedDF = dfWithId
     // we need save metadatas with index, because we need index
     val metas: Array[(Int, DiscretizerTrainData)] =
-      method match {
+      _method match {
         case DiscretizerFeature.BUCKETIZER_METHOD =>
           fitParamsWithIndex.map {
             case (index, map) =>
@@ -81,7 +87,6 @@ class SQLDiscretizer extends SQLAlg with Functions {
 
   override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
     internal_train(df, params + ("path" -> path))
-    //    emptyDataFrame()(df)
   }
 
   override def load(spark: SparkSession, _path: String, params: Map[String, String]): Any = {
@@ -103,6 +108,37 @@ class SQLDiscretizer extends SQLAlg with Functions {
     val meta = _model.asInstanceOf[DiscretizerMeta]
     MLSQLUtils.createUserDefinedFunction(meta.discretizerFunc, ArrayType(DoubleType), Some(Seq(ArrayType(DoubleType))))
   }
+
+  override def supportedVersions: Seq[String] = Seq(">=1.6.0")
+
+  override def etName() = "discretizer"
+
+
+  override def explainParams(sparkSession: SparkSession): DataFrame = {
+    _explainTagParams(sparkSession, () => {
+      Map(
+        TagParamName(method.name, DiscretizerFeature.BUCKETIZER_METHOD) -> new Bucketizer(),
+        TagParamName(method.name, DiscretizerFeature.QUANTILE_METHOD) -> new QuantileDiscretizer()
+      )
+    })
+  }
+
+  val method:Param[String] = new Param[String](this, "method", FormParams.toJson(
+    Select(
+      name = "method",
+      values = List(),
+      extra = Extra(
+        doc = "",
+        label = "",
+        options = Map(
+        )), valueProvider = Option(() => {
+        List(
+          KV(Some("method"), Some(DiscretizerFeature.BUCKETIZER_METHOD)),
+          KV(Some("method"), Some(DiscretizerFeature.QUANTILE_METHOD))
+        )
+      })
+    )
+  ))
 }
 
 case class DiscretizerTrainData(
@@ -113,7 +149,7 @@ case class DiscretizerTrainData(
 
 object DiscretizerParamsConstrant {
   /**
-   *  The prefix of the group of params
+   * The prefix of the group of params
    */
   val PARAMS_PREFIX = "fitParam"
   /**
