@@ -399,6 +399,16 @@ class Scanner(src: String) {
       case '*' =>
         ch = next
         tok = Scanner.Mul
+
+      case '!' =>
+        ch = next
+        tok = Scanner._Not
+        val ch0 = peek
+        if (ch0 == '=') {
+          ch = next
+          tok = Scanner.Neq
+        }
+        
       case '<' =>
         ch = next
         tok = Scanner.Lss
