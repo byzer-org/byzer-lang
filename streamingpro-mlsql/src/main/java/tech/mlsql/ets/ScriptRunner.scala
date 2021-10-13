@@ -1,15 +1,22 @@
 package tech.mlsql.ets
 
+import java.util
 import java.util.concurrent.{Callable, Executors}
 
+import net.csdn.common.exception.RenderFinish
+import net.csdn.modules.http.DefaultRestRequest
+import net.csdn.modules.mock.MockRestResponse
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import streaming.dsl.{MLSQLExecuteContext, ScriptSQLExec}
+import streaming.rest.RestController
+import tech.mlsql.common.utils.lang.sc.{ScalaMethodMacros => LIT}
+import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.job.{JobManager, MLSQLJobInfo, MLSQLJobType}
 
 /**
-  * 2019-06-06 WilliamZhu(allwefantasy@gmail.com)
-  */
-object ScriptRunner {
+ * 2019-06-06 WilliamZhu(allwefantasy@gmail.com)
+ */
+object ScriptRunner extends Logging {
 
   private val executors = Executors.newFixedThreadPool(10)
 
@@ -91,23 +98,74 @@ object ScriptRunner {
   }
 
   /**
-    * Example:
-    *
-    * val timeout = JobManager.getJobInfo.get(context.groupId).get.timeout
-    * val code =
-    * """
-    * |
-    * """.stripMargin
-    * val jobInfo = JobManager.getJobInfo(context.owner, MLSQLJobType.SCRIPT, "", code, timeout)
-    *         ScriptRunner.runJob(code, jobInfo, (df) => {
-    *
-    * })
-    *
-    */
+   * Example:
+   *
+   * val timeout = JobManager.getJobInfo.get(context.groupId).get.timeout
+   * val code =
+   * """
+   * |
+   * """.stripMargin
+   * val jobInfo = JobManager.getJobInfo(context.owner, MLSQLJobType.SCRIPT, "", code, timeout)
+   *         ScriptRunner.runJob(code, jobInfo, (df) => {
+   *
+   * })
+   *
+   */
   def runJob(code: String, jobInfo: MLSQLJobInfo, fetchResult: (DataFrame) => Unit) = {
     val context = ScriptSQLExec.contextGetOrForTest()
     _run(code, context, jobInfo, context.execListener.sparkSession, fetchResult, true, true)
 
   }
 
+  def jRunLikeAction(params: java.util.Map[String, String], skipGetResult: Boolean) = {
+    try {
+      params.put("silence", skipGetResult.toString)
+      val restRequest = new DefaultRestRequest("POST", params)
+      val restReponse = new MockRestResponse()
+      val controller = new RestController()
+      net.csdn.modules.http.RestController.enhanceApplicationController(controller, restRequest, restReponse)
+      try {
+        controller.script
+      } catch {
+        case _: RenderFinish =>
+      }
+      if (skipGetResult) {
+        val context = ScriptSQLExec.context().execListener
+        val value = context.getLastSelectTable() match {
+          case Some(tableName) =>
+            Some(context.sparkSession.table(tableName))
+          case None =>
+            None
+        }
+        Right(value)
+      } else {
+        val jsonStr = restReponse.content()
+        Left(jsonStr)
+      }
+
+    } catch {
+      case e: Exception =>
+        logInfo("MLSQL execution fails", e)
+        if (skipGetResult) Left("{}") else Right(None)
+    }
+  }
+
+  def runLikeAction(params: Map[String, String], skipGetResult: Boolean): Either[String, Option[DataFrame]] = {
+    val newParams = new util.HashMap[String, String]()
+    params.foreach(kv => newParams.put(kv._1, kv._2))
+    jRunLikeAction(newParams, skipGetResult)
+  }
+
+  def runLikeAction(actionParams: ActionParams, skipGetResult: Boolean): Either[String, Option[DataFrame]] = {
+    val newParams = new util.HashMap[String, String]()
+    actionParams.options.foreach(kv => newParams.put(kv._1, kv._2))
+
+    newParams.put(LIT.str(actionParams.sql), actionParams.sql)
+    newParams.put(LIT.str(actionParams.owner), actionParams.owner)
+    newParams.put(LIT.str(actionParams.jobName), actionParams.jobName)
+    newParams.put(LIT.str(actionParams.includeSchema), if (actionParams.includeSchema) "true" else "false")
+    newParams.put(LIT.str(actionParams.fetchType), actionParams.fetchType)
+
+    jRunLikeAction(newParams, skipGetResult)
+  }
 }
