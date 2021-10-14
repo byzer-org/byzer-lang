@@ -18,19 +18,21 @@
 
 package streaming.dsl.mmlib.algs
 
+import MetaConst._
+
 import org.apache.spark.sql.{DataFrame, MLSQLUtils, SaveMode, SparkSession}
 import org.apache.spark.sql.expressions.UserDefinedFunction
-import streaming.dsl.mmlib.SQLAlg
-import MetaConst._
-import org.apache.spark.ml.linalg.Vectors
-import streaming.dsl.mmlib.algs.feature.{DoubleFeature, StringFeature}
-import streaming.dsl.mmlib.algs.meta.ScaleMeta
-import org.apache.spark.ml.linalg.SQLDataTypes._
-import org.apache.spark.ml.param.Param
 import org.apache.spark.sql.types.{ArrayType, DoubleType}
+import org.apache.spark.ml.linalg.Vectors
+import org.apache.spark.ml.param.Param
+
+import streaming.dsl.mmlib.SQLAlg
+import streaming.dsl.mmlib.algs.feature.DoubleFeature
+import streaming.dsl.mmlib.algs.meta.ScaleMeta
 import streaming.dsl.mmlib.algs.classfication.BaseClassification
 import streaming.dsl.mmlib.algs.param.BaseParams
-import tech.mlsql.common.form.{Dynamic, Extra, FormParams, KV, Select, Text}
+
+import tech.mlsql.common.form.{Extra, FormParams, KV, Select, Text}
 
 /**
  * Created by allwefantasy on 24/5/2018.

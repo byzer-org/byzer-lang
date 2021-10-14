@@ -205,7 +205,10 @@ class SQLTfIdfInPlace(override val uid: String) extends SQLAlg with MllibFunctio
           |""".stripMargin,
       label = "",
       options = Map(
-        "valueType" -> "string"
+        "valueType" -> "string",
+        "defaultValue" -> "",
+        "required" -> "true",
+        "derivedType" -> "NONE"
       )))
   ))
   final val stopWordPath: Param[String] = new Param[String](this, "stopWordPath", FormParams.toJson(Text(
