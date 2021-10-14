@@ -23,15 +23,22 @@ import streaming.dsl.mmlib.algs.param.BaseParams
 import org.apache.spark.ml.linalg.SQLDataTypes._
 import org.apache.spark.ml.linalg.Vector
 import org.apache.spark.ml.regression.{GBTRegressionModel, GBTRegressor}
+import streaming.dsl.mmlib.{AlgType, Code, Doc, HtmlDoc, ModelType, SQLAlg, SQLCode}
+import streaming.dsl.auth.{DB_DEFAULT, MLSQLTable, OperateType, TableAuthResult, TableType}
 import streaming.dsl.mmlib.SQLAlg
+import streaming.dsl.ScriptSQLExec
 import org.apache.spark.sql._
 import org.apache.spark.sql.expressions.UserDefinedFunction
-import org.apache.spark.sql.types.DoubleType
+import org.apache.spark.sql.types.{DoubleType, StringType, StructField, StructType}
+import tech.mlsql.dsl.auth.ETAuth
+import tech.mlsql.dsl.auth.dsl.mmlib.ETMethod.ETMethod
+
+import scala.collection.mutable.ArrayBuffer
 
 /**
-  * Created by allwefantasy on 13/1/2018.
-  */
-class SQLGBTRegressor(override val uid: String) extends SQLAlg with Functions with MllibFunctions with BaseRegression {
+ * Created by allwefantasy on 13/1/2018.
+ */
+class SQLGBTRegressor(override val uid: String) extends SQLAlg with Functions with MllibFunctions with BaseRegression with ETAuth {
   def this() = this(BaseParams.randomUID())
 
   override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
@@ -67,6 +74,28 @@ class SQLGBTRegressor(override val uid: String) extends SQLAlg with Functions wi
     formatOutput(getModelMetaData(spark, path))
   }
 
+  override def explainModel(sparkSession: SparkSession, path: String, params: Map[String, String]): DataFrame = {
+    val models = load(sparkSession, path, params).asInstanceOf[ArrayBuffer[GBTRegressionModel]]
+    val rows = models.flatMap { model =>
+      val modelParams = model.params.filter(param => model.isSet(param)).map { param =>
+        val tmp = model.get(param).get
+        val str = if (tmp == null) {
+          "null"
+        } else tmp.toString
+        Seq(("fitParam.[group]." + param.name), str)
+      }
+      Seq(
+        Seq("uid", model.uid),
+        Seq("numFeatures", model.numFeatures.toString),
+        Seq("getNumTrees", model.getNumTrees.toString),
+        Seq("featureImportance", model.featureImportances.toString()),
+        Seq("totalNumNodes", model.totalNumNodes.toString())
+      ) ++ modelParams
+    }.map(Row.fromSeq(_))
+    sparkSession.createDataFrame(sparkSession.sparkContext.parallelize(rows, 1),
+      StructType(Seq(StructField("name", StringType), StructField("value", StringType))))
+  }
+
   override def explainParams(sparkSession: SparkSession): DataFrame = {
     _explainParams(sparkSession, () => {
       new GBTRegressor()
@@ -74,16 +103,86 @@ class SQLGBTRegressor(override val uid: String) extends SQLAlg with Functions wi
   }
 
   override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = {
-    val model = GBTRegressionModel.load(path)
-    model
+    val (bestModelPath, baseModelPath, metaPath) = mllibModelAndMetaPath(path, params, sparkSession)
+    val model = GBTRegressionModel.load(bestModelPath(0))
+    ArrayBuffer(model)
   }
 
   override def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = {
-    val model = sparkSession.sparkContext.broadcast(_model.asInstanceOf[GBTRegressionModel])
+    val model = sparkSession.sparkContext.broadcast(_model.asInstanceOf[ArrayBuffer[GBTRegressionModel]](0))
 
     val f = (vec: Vector) => {
       model.value.getClass.getMethod("predict", classOf[Vector]).invoke(model.value, vec)
     }
     MLSQLUtils.createUserDefinedFunction(f, DoubleType, Some(Seq(VectorType)))
   }
+
+  override def auth(etMethod: ETMethod, path: String, params: Map[String, String]): List[TableAuthResult] = {
+    val vtable = MLSQLTable(
+      Option(DB_DEFAULT.MLSQL_SYSTEM.toString),
+      Option("__algo_gbt_regressor_operator__"),
+      OperateType.SELECT,
+      Option("select"),
+      TableType.SYSTEM)
+
+    val context = ScriptSQLExec.contextGetOrForTest()
+    context.execListener.getTableAuth match {
+      case Some(tableAuth) =>
+        tableAuth.auth(List(vtable))
+      case None =>
+        List(TableAuthResult(granted = true, ""))
+    }
+
+  }
+
+  override def doc: Doc = Doc(HtmlDoc,
+    """
+      | <a href="https://en.wikipedia.org/wiki/Gradient_boosting">Gradient Boosting</a> is a
+      | machine learning technique for regression, classification and other tasks,
+      | which produces a prediction model in the form of an ensemble of weak prediction models, typically decision trees
+      |
+      | Use "load modelParams.`GBTRegressor` as output;"
+      |
+      | to check the available hyper parameters;
+      |
+      | Use "load modelExample.`GBTRegressor` as output;"
+      | get example.
+      |
+      | If you wanna check the params of model you have trained, use this command:
+      |
+      | ```
+      | load modelExplain.`/tmp/model` where alg="GBTRegressor" as outout;
+      | ```
+      |
+    """.stripMargin)
+
+  override def modelType: ModelType = AlgType
+
+
+  override def codeExample: Code = Code(SQLCode, CodeExampleText.jsonStr +
+    """
+      |load jsonStr.`jsonStr` as data;
+      |select vec_dense(features) as features ,label as label from data
+      |as data1;
+      |
+      |-- use GBTRegressor
+      |train data1 as GBTRegressor.`/tmp/model` where
+      |
+      |-- once set true,every time you run this script, MLSQL will generate new directory for you model
+      |keepVersion="true"
+      |
+      |-- specify the test dataset which will be used to feed evaluator to generate some metrics e.g. F1, Accurate
+      |and evaluateTable="data1"
+      |
+      |-- specify group 0 parameters
+      |and `fitParam.0.labelCol`="features"
+      |and `fitParam.0.featuresCol`="label"
+      |and `fitParam.0.elasticNetParam`="0.1"
+      |
+      |-- specify group 1 parameters
+      |and `fitParam.1.featuresCol`="features"
+      |and `fitParam.1.labelCol`="label"
+      |and `fitParam.1.elasticNetParam`="0.7"
+      |;
+    """.stripMargin)
 }
