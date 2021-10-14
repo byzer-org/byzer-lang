@@ -23,11 +23,13 @@ import org.apache.spark.ml.param.Param
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.types.{ArrayType, DoubleType}
 import org.apache.spark.sql.{DataFrame, MLSQLUtils, SaveMode, SparkSession}
+
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.MetaConst._
 import streaming.dsl.mmlib.algs.feature.DoubleFeature
 import streaming.dsl.mmlib.algs.meta.ScaleMeta
 import streaming.dsl.mmlib.algs.param.BaseParams
+
 import tech.mlsql.common.form.{Extra, FormParams, KV, Select, Text}
 
 /**
@@ -36,14 +38,14 @@ import tech.mlsql.common.form.{Extra, FormParams, KV, Select, Text}
 class SQLNormalizeInPlace(override val uid: String) extends SQLAlg with Functions with BaseParams {
   def this() = this(BaseParams.randomUID())
 
-  def internal_train(df: DataFrame, params: Map[String, String]) = {
+  private def internal_train(df: DataFrame, params: Map[String, String]) = {
     val path = params("path")
     val metaPath = getMetaPath(path)
     saveTraningParams(df.sparkSession, params, metaPath)
     val inputCols = params.getOrElse(this.inputCols.name, "").split(",")
     val method = params.getOrElse(this.method.name, "standard")
     val removeOutlierValue = params.getOrElse(this.removeOutlierValue.name, "false").toBoolean
-    require(!inputCols.isEmpty, "inputCols is required when use SQLScalerInPlace")
+    require(inputCols.nonEmpty, "inputCols is required when use SQLNormalizeInPlace")
     var newDF = df
     if (removeOutlierValue) {
       newDF = DoubleFeature.killOutlierValue(df, metaPath, inputCols)
@@ -61,7 +63,7 @@ class SQLNormalizeInPlace(override val uid: String) extends SQLAlg with Function
   override def load(spark: SparkSession, _path: String, params: Map[String, String]): Any = {
     //load train params
     val path = getMetaPath(_path)
-    val (trainParams, df) = getTranningParams(spark, path)
+    val (trainParams, _) = getTranningParams(spark, path)
     val inputCols = trainParams.getOrElse(this.inputCols.name, "").split(",").toSeq
     val method = trainParams.getOrElse(this.method.name, "standard")
     val removeOutlierValue = trainParams.getOrElse(this.removeOutlierValue.name, "false").toBoolean
@@ -104,7 +106,7 @@ class SQLNormalizeInPlace(override val uid: String) extends SQLAlg with Function
     extra = Extra(
       doc =
         """
-          |Which text column you want to process.
+          |Which text columns you want to process.
           |""".stripMargin,
       label = "",
       options = Map(
