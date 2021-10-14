@@ -26,20 +26,25 @@ import org.apache.spark.ml.linalg.Vectors
 import streaming.dsl.mmlib.algs.feature.{DoubleFeature, StringFeature}
 import streaming.dsl.mmlib.algs.meta.ScaleMeta
 import org.apache.spark.ml.linalg.SQLDataTypes._
+import org.apache.spark.ml.param.Param
 import org.apache.spark.sql.types.{ArrayType, DoubleType}
+import streaming.dsl.mmlib.algs.classfication.BaseClassification
+import streaming.dsl.mmlib.algs.param.BaseParams
+import tech.mlsql.common.form.{Dynamic, Extra, FormParams, KV, Select, Text}
 
 /**
-  * Created by allwefantasy on 24/5/2018.
-  */
-class SQLScalerInPlace extends SQLAlg with Functions {
+ * Created by allwefantasy on 24/5/2018.
+ */
+class SQLScalerInPlace(override val uid: String) extends SQLAlg with MllibFunctions with Functions with BaseClassification {
+  def this() = this(BaseParams.randomUID())
 
   def internal_train(df: DataFrame, params: Map[String, String]) = {
     val path = params("path")
     val metaPath = getMetaPath(path)
     saveTraningParams(df.sparkSession, params, metaPath)
-    val inputCols = params.getOrElse("inputCols", "").split(",")
-    val scaleMethod = params.getOrElse("scaleMethod", "log2")
-    val removeOutlierValue = params.getOrElse("removeOutlierValue", "false").toBoolean
+    val inputCols = params.getOrElse(this.inputCols.name, "").split(",")
+    val scaleMethod = params.getOrElse(this.scaleMethod.name, "log2")
+    val removeOutlierValue = params.getOrElse(this.removeOutlierValue.name, "false").toBoolean
     require(!inputCols.isEmpty, "inputCols is required when use SQLScalerInPlace")
     var newDF = df
     if (removeOutlierValue) {
@@ -91,6 +96,9 @@ class SQLScalerInPlace extends SQLAlg with Functions {
     }
     meta
   }
+  override def explainParams(sparkSession: SparkSession): DataFrame = {
+    _explainParams(sparkSession)
+  }
 
   override def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = {
     val meta = _model.asInstanceOf[ScaleMeta]
@@ -106,4 +114,63 @@ class SQLScalerInPlace extends SQLAlg with Functions {
     }
     MLSQLUtils.createUserDefinedFunction(f, ArrayType(DoubleType), Some(Seq(ArrayType(DoubleType))))
   }
+
+  final val inputCols: Param[String] = new Param[String](this, "inputCols", FormParams.toJson(Text(
+    name = "inputCols",
+    value = "",
+    extra = Extra(
+      doc =
+        """
+          |Which text column you want to process.
+          |""".stripMargin,
+      label = "",
+      options = Map(
+        "valueType" -> "string"
+      )))
+  ))
+
+  final val scaleMethod: Param[String] = new Param[String](this, "scaleMethod", FormParams.toJson(Select(
+    name = "scaleMethod",
+    values = List(),
+    extra = Extra(
+      doc =
+        """
+          |What kind of scale method you want to process.
+          |""".stripMargin,
+      label = "",
+      options = Map(
+        "valueType" -> "string",
+        "defaultValue"-> "log2",
+      )),valueProvider= Option(()=>{
+      List(
+        KV(Option("scaledMethod"), Option("log2")),
+        KV(Option("scaledMethod"), Option("min-max")),
+        KV(Option("scaledMethod"), Option("logn")),
+        KV(Option("scaledMethod"), Option("log10")),
+        KV(Option("scaledMethod"), Option("sqrt")),
+        KV(Option("scaledMethod"), Option("abs"))
+      )
+    }))
+  ))
+
+  final val removeOutlierValue: Param[String] = new Param[String](this, "removeOutlierValue", FormParams.toJson(Select(
+    name = "removeOutlierValue",
+    values= List(),
+    extra = Extra(
+      doc =
+        """
+          |Whether to remove outlier values.
+          |""".stripMargin,
+      label = "",
+      options = Map(
+        "valueType" -> "string",
+        "defaultValue"-> "false",
+      )), valueProvider = Option(()=>{
+      List(
+        KV(Option("removeOutlierValue"),Option("true")),
+        KV(Option("removeOutlierValue"),Option("false"))
+      )
+    }))
+  ))
+
 }

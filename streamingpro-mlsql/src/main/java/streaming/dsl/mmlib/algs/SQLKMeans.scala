@@ -86,4 +86,9 @@ class SQLKMeans(override val uid: String) extends SQLAlg with MllibFunctions wit
     }
     MLSQLUtils.createUserDefinedFunction(f, IntegerType, Some(Seq(VectorType)))
   }
+
+  override def batchPredict(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
+    val model = load(df.sparkSession, path, params).asInstanceOf[BisectingKMeansModel]
+    model.transform(df)
+  }
 }

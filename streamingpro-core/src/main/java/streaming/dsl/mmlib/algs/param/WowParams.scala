@@ -118,7 +118,7 @@ trait WowParams extends Params {
             })
           )
         ))
-        
+
       case a: FloatParam =>
 
         Array(param.name, a.doc, obj.explainParam(param), FormParams.toJson(
@@ -247,12 +247,15 @@ trait WowParams extends Params {
   }
 
 
-  def _explainParams(sparkSession: SparkSession, f: () => Params) = {
+  def _explainParams(sparkSession: SparkSession, f: () => Params, isGroup: Boolean = true) = {
 
     val rfcParams2 = this.params.map(this.paramToJSon(_, this)).map(f => Row.fromSeq(f))
     val model = f()
     val rfcParams = model.params.map(this.buildInAlgParamToJson(_, model)).map { f =>
-      Row.fromSeq(Seq("fitParam.[group]." + f(0), f(1), f(2), f(3)))
+      isGroup match {
+        case true=>Row.fromSeq(Seq("fitParam.[group]." + f(0), f(1), f(2), f(3)))
+        case _=>Row.fromSeq(Seq(f(0), f(1), f(2), f(3)))
+      }
     }
     sparkSession.createDataFrame(sparkSession.sparkContext.parallelize(rfcParams2 ++ rfcParams, 1),
       StructType(
