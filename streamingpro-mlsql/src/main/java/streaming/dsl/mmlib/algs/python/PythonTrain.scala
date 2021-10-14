@@ -35,6 +35,7 @@ import streaming.dsl.mmlib.algs.{Functions, SQLPythonAlg, SQLPythonFunc}
 import tech.mlsql.common.utils.env.python.BasicCondaEnvManager
 import tech.mlsql.common.utils.lang.sc.ScalaMethodMacros._
 import tech.mlsql.common.utils.network.NetUtils
+import tech.mlsql.common.utils.path.PathFun
 import tech.mlsql.tool.HDFSOperatorV2
 
 import scala.collection.JavaConverters._
@@ -101,7 +102,7 @@ class PythonTrain extends Functions with Serializable {
 
 
     if (!keepVersion) {
-      if (path.contains("..") || path == "/" || path.split("/").length < 3) {
+      if (path.contains("..") || path == "/" || path.split(PathFun.pathSeparator).length < 3) {
         throw new MLSQLException("path should at least three layer")
       }
       HDFSOperatorV2.deleteDir(SQLPythonFunc.getAlgModelPath(path, keepVersion))
@@ -165,7 +166,7 @@ class PythonTrain extends Functions with Serializable {
             logInfo(format(s"'${pythonProjectPath.get}' is MLflow project. download it from [${pythonProject}] to local [${taskDirectory}]"))
             SQLPythonAlg.downloadPythonProject(taskDirectory, pythonProjectPath)
           } else {
-            val localPath = taskDirectory + "/" + pythonProjectPath.get.split("/").last
+            val localPath = taskDirectory + PathFun.pathSeparator + pythonProjectPath.get.split(PathFun.pathSeparator).last
             logInfo(format(s"'${pythonProjectPath.get}' is Normal project. download it from [${pythonProject}] to local [${localPath}]"))
             SQLPythonAlg.downloadPythonProject(localPath, pythonProjectPath)
           }
@@ -420,7 +421,7 @@ class PythonTrain extends Functions with Serializable {
             logInfo(format(s"'${pythonProjectPath.get}' is MLflow project. download it from [${pythonProject}] to local [${taskDirectory}]"))
             SQLPythonAlg.downloadPythonProject(taskDirectory, pythonProjectPath)
           } else {
-            val localPath = taskDirectory + "/" + pythonProjectPath.get.split("/").last
+            val localPath = taskDirectory + PathFun.pathSeparator + pythonProjectPath.get.split(PathFun.pathSeparator).last
             logInfo(format(s"'${pythonProjectPath.get}' is Normal project. download it from [${pythonProject}] to local [${localPath}]"))
             SQLPythonAlg.downloadPythonProject(localPath, pythonProjectPath)
           }

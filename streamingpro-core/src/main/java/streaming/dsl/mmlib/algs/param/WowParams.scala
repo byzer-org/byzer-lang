@@ -26,6 +26,7 @@ import org.apache.spark.sql.types.{StringType, StructField, StructType}
 import org.apache.spark.sql.{Row, SparkSession}
 import tech.mlsql.common.form._
 import tech.mlsql.common.utils.serder.json.JSONTool
+import tech.mlsql.dsl.TagParamName
 
 /**
  * Created by allwefantasy on 20/9/2018.
@@ -41,7 +42,9 @@ trait WowParams extends Params {
           name = param.name, values = List(), extra = Extra(doc = param.doc, label = "", Map(
             "defaultValue" -> obj.getDefault(param).getOrElse("undefined").toString,
             "currentValue" -> obj.get(param).getOrElse("undefined").toString,
-            "valueType" -> "string"
+            "valueType" -> "string",
+            "required" -> "false",
+            "derivedType" -> "NONE"
           )), valueProvider = Option(() => {
 
             Array("auto", "all", "onethird", "sqrt", "log2", "(0.0-1.0]", "[1-n]").map(item =>
@@ -89,7 +92,10 @@ trait WowParams extends Params {
       case Some(item) =>
         val newItem = item.copy(options = item.options ++ Map(
           "defaultValue" -> defaultValueStr.getOrElse("undefined").toString,
-          "currentValue" -> currentValueStr.getOrElse("undefined").toString
+          "currentValue" -> currentValueStr.getOrElse("undefined").toString,
+          "valueType" -> extraOpt.map(_.options).map(_.getOrElse("valueType","string")).getOrElse("string"),
+          "required" -> extraOpt.map(_.options).map(_.getOrElse("required","false")).getOrElse("false"),
+          "derivedType" -> extraOpt.map(_.options).map(_.getOrElse("derivedType","NONE")).getOrElse("NONE")
         ))
         rawOpt.get.put("extra", JSONObject.fromObject(JSONTool.toJsonStr(newItem)))
         rawOpt.get.toString()
@@ -112,13 +118,15 @@ trait WowParams extends Params {
             name = a.name, value = obj.explainParam(param), extra = Extra(doc = a.doc, label = "", Map(
               "defaultValue" -> obj.getDefault(param).getOrElse("undefined").toString,
               "currentValue" -> obj.get(param).getOrElse("undefined").toString,
-              "valueType" -> "int"
+              "valueType" -> "int",
+              "required" -> "false",
+              "derivedType" -> "NONE"
             )), valueProvider = Option(() => {
               obj.getDefault(param).toString
             })
           )
         ))
-        
+
       case a: FloatParam =>
 
         Array(param.name, a.doc, obj.explainParam(param), FormParams.toJson(
@@ -126,7 +134,9 @@ trait WowParams extends Params {
             name = a.name, value = obj.explainParam(param), extra = Extra(doc = a.doc, label = "", Map(
               "defaultValue" -> obj.getDefault(param).getOrElse("undefined").toString,
               "currentValue" -> obj.get(param).getOrElse("undefined").toString,
-              "valueType" -> "float"
+              "valueType" -> "float",
+              "required" -> "false",
+              "derivedType" -> "NONE"
             )), valueProvider = Option(() => {
               obj.getDefault(param).toString
             })
@@ -140,7 +150,9 @@ trait WowParams extends Params {
             name = a.name, value = obj.explainParam(param), extra = Extra(doc = a.doc, label = "", Map(
               "defaultValue" -> obj.getDefault(param).getOrElse("undefined").toString,
               "currentValue" -> obj.get(param).getOrElse("undefined").toString,
-              "valueType" -> "double"
+              "valueType" -> "double",
+              "required" -> "false",
+              "derivedType" -> "NONE"
             )), valueProvider = Option(() => {
               obj.getDefault(param).toString
             })
@@ -154,7 +166,9 @@ trait WowParams extends Params {
             name = a.name, value = obj.explainParam(param), extra = Extra(doc = a.doc, label = "", Map(
               "defaultValue" -> obj.getDefault(param).getOrElse("undefined").toString,
               "currentValue" -> obj.get(param).getOrElse("undefined").toString,
-              "valueType" -> "array[int]"
+              "valueType" -> "array[int]",
+              "required" -> "false",
+              "derivedType" -> "NONE"
             )), valueProvider = Option(() => {
               obj.getDefault(param).toString
             })
@@ -168,7 +182,10 @@ trait WowParams extends Params {
             name = a.name, value = obj.explainParam(param), extra = Extra(doc = a.doc, label = "", Map(
               "defaultValue" -> obj.getDefault(param).getOrElse("undefined").toString,
               "currentValue" -> obj.get(param).getOrElse("undefined").toString,
-              "valueType" -> "array[double]"
+              "valueType" -> "array[double]",
+              "required" -> "true",
+              "required" -> "false",
+              "derivedType" -> "NONE"
             )), valueProvider = Option(() => {
               obj.getDefault(param).toString
             })
@@ -182,7 +199,9 @@ trait WowParams extends Params {
             name = a.name, value = obj.explainParam(param), extra = Extra(doc = a.doc, label = "", Map(
               "defaultValue" -> obj.getDefault(param).getOrElse("undefined").toString,
               "currentValue" -> obj.get(param).getOrElse("undefined").toString,
-              "valueType" -> "array[array[double]]"
+              "valueType" -> "array[array[double]]",
+              "required" -> "false",
+              "derivedType" -> "NONE"
             )), valueProvider = Option(() => {
               obj.getDefault(param).toString
             })
@@ -195,7 +214,9 @@ trait WowParams extends Params {
             name = a.name, value = obj.explainParam(param), extra = Extra(doc = a.doc, label = "", Map(
               "defaultValue" -> obj.getDefault(param).getOrElse("undefined").toString,
               "currentValue" -> obj.get(param).getOrElse("undefined").toString,
-              "valueType" -> "array[string]"
+              "valueType" -> "array[string]",
+              "required" -> "false",
+              "derivedType" -> "NONE"
             )), valueProvider = Option(() => {
               obj.getDefault(param).toString
             })
@@ -208,7 +229,9 @@ trait WowParams extends Params {
             name = a.name, values = List(), extra = Extra(doc = a.doc, label = "", Map(
               "defaultValue" -> obj.getDefault(param).getOrElse("undefined").toString,
               "currentValue" -> obj.get(param).getOrElse("undefined").toString,
-              "valueType" -> "boolean"
+              "valueType" -> "boolean",
+              "required" -> "false",
+              "derivedType" -> "NONE"
             )), valueProvider = Option(() => {
               List(KV(Option(param.name), Option("true")), KV(Option(param.name), Option("false")))
             })
@@ -222,7 +245,9 @@ trait WowParams extends Params {
             name = a.name, value = obj.explainParam(param), extra = Extra(doc = a.doc, label = "", Map(
               "defaultValue" -> obj.getDefault(param).getOrElse("undefined").toString,
               "currentValue" -> obj.get(param).getOrElse("undefined").toString,
-              "valueType" -> "long"
+              "valueType" -> "long",
+              "required" -> "false",
+              "derivedType" -> "NONE"
             )), valueProvider = Option(() => {
               obj.getDefault(param).toString
             })
@@ -236,7 +261,9 @@ trait WowParams extends Params {
             name = a.name, value = obj.explainParam(param), extra = Extra(doc = a.doc, label = "", Map(
               "defaultValue" -> obj.getDefault(param).getOrElse("undefined").toString,
               "currentValue" -> obj.get(param).getOrElse("undefined").toString,
-              "valueType" -> "string"
+              "valueType" -> "string",
+              "required" -> "false",
+              "derivedType" -> "NONE"
             )), valueProvider = Option(() => {
               obj.getDefault(param).toString
             })
@@ -253,6 +280,25 @@ trait WowParams extends Params {
     val model = f()
     val rfcParams = model.params.map(this.buildInAlgParamToJson(_, model)).map { f =>
       Row.fromSeq(Seq("fitParam.[group]." + f(0), f(1), f(2), f(3)))
+    }
+    sparkSession.createDataFrame(sparkSession.sparkContext.parallelize(rfcParams2 ++ rfcParams, 1),
+      StructType(
+        Seq(
+          StructField("param", StringType),
+          StructField("description", StringType),
+          StructField("value", StringType),
+          StructField("extra", StringType)
+        )))
+  }
+
+  def _explainTagParams(sparkSession: SparkSession, f: () => Map[TagParamName, Params]) = {
+
+    val rfcParams2 = this.params.map(this.paramToJSon(_, this)).map(f => Row.fromSeq(f))
+    val models = f()
+    val rfcParams = models.toList.flatMap { case (tag, model) =>
+      model.params.map(this.buildInAlgParamToJson(_, model)).map { f =>
+        Row.fromSeq(Seq(s"fitParam.[tag__${tag.field}__${tag.tag}]." + f(0), f(1), f(2), f(3)))
+      }
     }
     sparkSession.createDataFrame(sparkSession.sparkContext.parallelize(rfcParams2 ++ rfcParams, 1),
       StructType(

@@ -14,10 +14,17 @@ object TestManager {
 
   var failedCases: ListBuffer[(TestCase, String)] = ListBuffer()
 
+  var matchesReg = ".*"
+
   def loadTestCase(testCaseDir: File): Unit = {
+    matchesReg = System.getProperty("matches")
     if (testCaseDir.exists() && testCaseDir.isDirectory) {
       testCaseDir.listFiles().sortBy(_.getName).foreach(file => {
-        if (file.isFile && file.getName.endsWith("mlsql")) {
+        if (file.isFile &&
+          file.getName.endsWith("mlsql") &&
+          file.getName.stripSuffix(".mlsql").matches(matchesReg)
+        ) {
+          println(s"collect test file: ${file.getName}; matches=${matchesReg}")
           val expectedFileName = s"""${file.getName}.expected"""
           val expectedFile = new File(file.getParent, expectedFileName)
           val content = FileUtils.readFileToString(file)
@@ -61,6 +68,7 @@ object TestManager {
       }
       t1.getMessage
     }
+
     recordError(testCase, getRootCause(t))
     t.printStackTrace()
   }
@@ -85,7 +93,7 @@ object TestManager {
 
   def report(): Unit = {
     println("========================= Test Result =========================")
-    if(failedCases.isEmpty) {
+    if (failedCases.isEmpty) {
       println(s"All tests (${testCases.size} total) passed.")
       assert(true)
     } else {
@@ -102,7 +110,7 @@ case class TestCase(name: String, sql: String, expected: File) {
     sql.split("\n")
       .filter(_.stripMargin.startsWith("--%"))
       .filter(_.contains("="))
-      .map{ item =>
+      .map { item =>
         val Array(k, v) = item.stripMargin.stripPrefix("--%").split("=", 2)
         k -> v
       }.toMap

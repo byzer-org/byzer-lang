@@ -10,7 +10,7 @@ import tech.mlsql.tool.HDFSOperatorV2
 trait BaseAlg {
   def isModelPath(path: String) = {
     def splitPath(item: String) = {
-      item.split("/").last
+      item.split(PathFun.pathSeparator).last
     }
 
     val paths = HDFSOperatorV2.listFiles(path).map(file => PathFun(path).add(file.getPath.getName).toPath)
