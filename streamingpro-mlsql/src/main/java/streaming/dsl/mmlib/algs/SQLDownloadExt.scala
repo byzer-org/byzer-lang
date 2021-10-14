@@ -18,6 +18,7 @@
 
 package streaming.dsl.mmlib.algs
 
+import java.io.InputStream
 import java.net.URLEncoder
 
 import net.csdn.common.reflect.ReflectHelper
@@ -38,6 +39,7 @@ import tech.mlsql.dsl.adaptor.DslTool
 import tech.mlsql.tool.HDFSOperatorV2
 
 import scala.collection.mutable.ArrayBuffer
+
 
 /**
  * 2019-02-18 WilliamZhu(allwefantasy@gmail.com)
@@ -107,17 +109,17 @@ class SQLDownloadExt(override val uid: String) extends SQLAlg with DslTool with 
     logInfo(format(s"download file from src:${$(from)} to dst:${$(to)}"))
 
     val getUrl = fromUrl + s"?userName=${urlencode(context.owner)}&fileName=${urlencode($(from))}&auth_secret=${urlencode(auth_secret)}"
-
-    val response = Request.Get(getUrl)
-      .connectTimeout(60 * 1000)
-      .socketTimeout(10 * 60 * 1000)
-      .execute()
-    // Since response always consume the inputstream and return new stream, this will cost too much memory.
-    val stream = ReflectHelper.field(response, "response").asInstanceOf[HttpResponse].getEntity.getContent
-    val tarIS = new TarArchiveInputStream(stream)
-
-    var downloadResultRes = ArrayBuffer[DownloadResult]()
+    var tarIS : TarArchiveInputStream = null
+    var stream : InputStream = null
+    val downloadResultRes = ArrayBuffer[DownloadResult]()
     try {
+      val response = Request.Get(getUrl)
+        .connectTimeout(60 * 1000)
+        .socketTimeout(10 * 60 * 1000)
+        .execute()
+      // Since response always consume the inputstream and return new stream, this will cost too much memory.
+      stream = ReflectHelper.field(response, "response").asInstanceOf[HttpResponse].getEntity.getContent
+      tarIS = new TarArchiveInputStream(stream)
       var entry = tarIS.getNextEntry
       while (entry != null) {
         if (tarIS.canReadEntryData(entry)) {
@@ -130,9 +132,14 @@ class SQLDownloadExt(override val uid: String) extends SQLAlg with DslTool with 
           entry = tarIS.getNextEntry
         }
       }
-    } finally {
-      tarIS.close()
-      stream.close()
+      logInfo(s"Downloaded to ${to}")
+    }
+    catch {
+      case e: Exception => e.printStackTrace()
+    }
+    finally {
+      if( tarIS != null )  tarIS.close()
+      if( stream != null ) stream.close()
     }
     import spark.implicits._
     spark.createDataset[DownloadResult](downloadResultRes).toDF()

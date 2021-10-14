@@ -21,31 +21,59 @@ import org.apache.spark.ml.param.Param
 import org.apache.spark.ml.util.Identifiable
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.expressions.UserDefinedFunction
-import streaming.dsl.mmlib.{Code, Doc, HtmlDoc, ModelType, ProcessType, SQLAlg, SQLCode}
-import streaming.dsl.mmlib.algs.param.WowParams
-import streaming.log.WowLog
-import tech.mlsql.common.utils.log.Logging
 import org.apache.spark.sql.functions._
+import streaming.dsl.mmlib._
+import streaming.dsl.mmlib.algs.param.WowParams
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.auth.OperateType.SELECT
 import streaming.dsl.auth.TableType.SYSTEM
 import streaming.dsl.auth.{DB_DEFAULT, MLSQLTable, TableAuthResult}
+import streaming.log.WowLog
+import tech.mlsql.common.utils.log.Logging
+import tech.mlsql.common.form.{Extra, FormParams, Text}
 import tech.mlsql.dsl.auth.ETAuth
 import tech.mlsql.dsl.auth.dsl.mmlib.ETMethod.ETMethod
 
 class JsonExpandExt (override val uid: String) extends SQLAlg with WowParams with Logging with WowLog with ETAuth {
   def this() = this(Identifiable.randomUID("tech.mlsql.plugins.ets.JsonExpandExt"))
 
-  final val inputCol: Param[String] = new Param[String](parent = "JsonExpandExt"
+  final val inputCol: Param[String] = new Param[String](parent = this
     , name = "inputCol"
-    , doc = """Required. Json column to be expanded
-              |e.g. WHERE inputCol = col_1 """.stripMargin
+    , doc = FormParams.toJson( Text(
+        name = "inputCol"
+        , value = ""
+        , extra = Extra(
+          doc = "Json column to be expanded"
+          , label = "inputCol"
+          , options = Map(
+            "valueType" -> "string",
+            "defaultValue" -> "",
+            "required" -> "true",
+            "derivedType" -> "NONE"
+          )
+        )
+      )
+    )
   )
 
-  final val samplingRatio: Param[String] = new Param[String](parent = "JsonExpandExt"
+  final val samplingRatio: Param[String] = new Param[String](parent = this
     , name = "samplingRatio"
-    , doc = """Optional. SamplingRatio used by Spark to infer schema from json, 1.0 by default.
-              |e.g. WHERE sampleRatio = "0.2" """.stripMargin)
+    , doc = FormParams.toJson( Text(
+        name = "samplingRatio"
+        , value = ""
+        , extra = Extra(
+          doc = "SamplingRatio used by Spark to infer schema from json"
+          , label = "samplingRatio"
+          , options = Map(
+            "valueType" -> "string",
+            "defaultValue" -> "1.0",
+            "required" -> "false",
+            "derivedType" -> "NONE"
+          )
+        )
+      )
+    )
+  )
 
   /**
    * Expands a json column to multiple columns. Json column name is addressed by parameter inputCol's value
@@ -126,7 +154,7 @@ class JsonExpandExt (override val uid: String) extends SQLAlg with WowParams wit
   override def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String])
   : UserDefinedFunction = ???
 
-  override def doc: Doc = Doc(HtmlDoc,
+  override def doc: Doc = Doc(MarkDownDoc,
     """
       | JsonExpandExt is used to expand json strings, please
       | see the codeExample to learn its usage.
@@ -139,7 +167,7 @@ class JsonExpandExt (override val uid: String) extends SQLAlg with WowParams wit
     """
       |```sql
       |## Generate a table named "table_1" with one json column "col_1"
-      |SELECT '{"key": "value", "key_2":"value_2"}' AS col_1 AS table_1;
+      |SELECT '{"city": "hangzhou", "country":"China"}' AS col_1 AS table_1;
       |
       |##  Expand json from col_1, please note that there are 2 columns
       |##  in the result set
@@ -147,17 +175,17 @@ class JsonExpandExt (override val uid: String) extends SQLAlg with WowParams wit
       |```
       |output:
       |```
-      |+---------------+
-      |key    |key_2   |
-      |+---------------+
-      |value  |value_2 |
-      |+---------------+
+      |+-----------------+
+      |city     |country |
+      |+-----------------+
+      |hangzhou |China   |
+      |+-----------------+
       |```
       |""".stripMargin)
 
   /**
    * Explanation to each parameter's name and doc
-   * @param sparkSession
+   * @param sparkSession The SparkSQL Session
    * @return
    */
   override def explainParams(sparkSession: SparkSession): DataFrame = {

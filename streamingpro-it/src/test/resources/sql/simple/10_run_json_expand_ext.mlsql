@@ -1,13 +1,29 @@
 --%comparator=tech.mlsql.it.IgnoreResultComparator
 
-SELECT '{"key": "value", "key_2":"value_2"}' AS col_1
+SELECT '{"address": "11 Street", "name":"jack"}' AS col_1
 , "hangzhou" AS city
 AS table_1;
 run table_1 as JsonExpandExt.`` where inputCol="col_1" AND samplingRatio="1.0" as result;
 -- result
--- |------|--------|--------|
--- |key   | key_2  |city    |
--- |value | value_2|hangzhou|
--- |------|--------|--------|
+-- |----------|------|--------|
+-- |address   | name |city    |
+-- |11 Street | jack |hangzhou|
+-- |------|----------|--------|
 
-!assert result ''':key=="value" AND :key_2=="value_2" AND :city=="hangzhou" '''  "Json should be expanded correctly.";
+!assert result ''':address=="11 Street" AND :name=="jack" AND :city=="hangzhou" '''  "Json should be expanded correctly.";
+
+load modelParams.`JsonExpandExt` as output_1;
+select extra AS extra_1 from output_1 AS extra_output;
+run extra_output as JsonExpandExt.`` where inputCol="extra_1" as result_1;
+run result_1 as JsonExpandExt.`` where inputCol="extra" as result_2;
+run result_2 as JsonExpandExt.`` where inputCol="options" as result_3;
+select required from result_3 where name='inputCol' AS required_result;
+-- result
+-- name	         |tpe	 |value	doc	                                                  |label	    |currentValue |defaultValue | derivedType | required | valueType
+-- inputCol	     | Text	 |     |Json column to be expanded	                          |inputCol	    |undefined	  |undefined	| NONE	      | true	 | string
+-- samplingRatio | Text	 |     |SamplingRatio used by Spark to infer schema from json |samplingRatio|undefined	  |undefined	| NONE	      | false	 | string
+
+!assert required_result ''':required == "true" ''' "inputCol is required";
+
+select required from result_3 where name='samplingRatio' AS required_result_1;
+!assert required_result_1 ''':required == "false" ''' "inputCol is not required";
