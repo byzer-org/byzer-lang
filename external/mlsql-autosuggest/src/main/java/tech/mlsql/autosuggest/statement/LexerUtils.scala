@@ -97,7 +97,7 @@ object LexerUtils {
     ) {
       return TokenPos(lastToken._2, TokenPosType.CURRENT, colNum - lastToken._1.getCharPositionInLine)
     }
-    oneLineTokens.map { case (token, index) =>
+    val poses = oneLineTokens.map { case (token, index) =>
       val start = token.getCharPositionInLine
       val end = token.getCharPositionInLine + token.getText.size
       //紧邻一个token的后面，没有空格,一般情况下是当做前一个token的一部分，用户还没写完，但是如果
@@ -118,7 +118,12 @@ object LexerUtils {
       }
 
 
-    }.filterNot(_.pos == -2).head
+    }.filterNot(_.pos == -2)
+    // If the result after the filter is empty, get the head directly to get the NPE
+    if (poses.isEmpty) {
+      return TokenPos(-1, TokenPosType.NEXT, -1)
+    }
+    poses.head
   }
 
   def toTokenPosForSparkSQL(tokens: List[Token], lineNum: Int, colNum: Int): TokenPos = {
