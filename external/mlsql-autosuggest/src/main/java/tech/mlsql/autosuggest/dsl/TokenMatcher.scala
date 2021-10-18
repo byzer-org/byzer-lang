@@ -184,7 +184,7 @@ class TokenMatcher(tokens: List[Token], val start: Int) {
         }
       }
     }
-    
+
     val targetIndex = if (isFail) -1 else currentIndex
     cacheResult = targetIndex
     this
@@ -266,13 +266,27 @@ object MatcherDirection {
 }
 
 object TokenTypeWrapper {
-  val LEFT_BRACKET = SqlBaseLexer.T__0 //(
-  val RIGHT_BRACKET = SqlBaseLexer.T__1 //)
-  val COMMA = SqlBaseLexer.T__2 //,
-  val DOT = SqlBaseLexer.T__3 //.
-  val LEFT_SQUARE_BRACKET = SqlBaseLexer.T__7 //[
-  val RIGHT_SQUARE_BRACKET = SqlBaseLexer.T__8 //]
-  val COLON = SqlBaseLexer.T__9 //:
+
+  private def getValues = {
+    val field = classOf[SqlBaseLexer].getDeclaredField("_LITERAL_NAMES")
+    field.setAccessible(true)
+    field.get(null).asInstanceOf[Array[String]]
+  }
+
+  private val values = getValues
+
+  def tokenType(value: String) = {
+    values.indexOf(value)
+  }
+
+
+  val LEFT_BRACKET = tokenType("'('") // SqlBaseLexer.T__0 //(
+  val RIGHT_BRACKET = tokenType("')'") // SqlBaseLexer.T__1 //)
+  val COMMA = tokenType("','") // SqlBaseLexer.T__2 //,
+  val DOT = tokenType("'.'") // SqlBaseLexer.T__3 //.
+  val LEFT_SQUARE_BRACKET = tokenType("'['") // SqlBaseLexer.T__7 //[
+  val RIGHT_SQUARE_BRACKET = tokenType("']'") //SqlBaseLexer.T__8 // ]
+  val COLON = tokenType("':'") //SqlBaseLexer.T__9//:
 
   val LIST = List(LEFT_BRACKET, RIGHT_BRACKET, COMMA, DOT, LEFT_SQUARE_BRACKET, RIGHT_SQUARE_BRACKET, COLON)
   val MAP = LIST.map((_, 1)).toMap
