@@ -55,7 +55,7 @@ class TableExtractor(autoSuggestContext: AutoSuggestContext, ast: SingleStatemen
     while (matchRes.isSuccess && whileLimit > 0) {
       tables ++= extractor(matchRes.start, matchRes.get)
       whileLimit -= 1
-      val temp = TokenMatcher(tokens, matchRes.get).eat(Food(None, SqlBaseLexer.T__2)).build
+      val temp = TokenMatcher(tokens, matchRes.get).eat(Food(None, TokenTypeWrapper.COMMA)).build
       if (temp.isSuccess) {
         matchRes = matcher(temp.get)
       } else whileLimit = 0

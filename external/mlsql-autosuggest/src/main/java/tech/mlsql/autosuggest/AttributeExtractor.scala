@@ -2,7 +2,7 @@ package tech.mlsql.autosuggest
 
 import org.antlr.v4.runtime.Token
 import org.apache.spark.sql.catalyst.parser.SqlBaseLexer
-import tech.mlsql.autosuggest.dsl.{Food, TokenMatcher}
+import tech.mlsql.autosuggest.dsl.{Food, TokenMatcher, TokenTypeWrapper}
 import tech.mlsql.autosuggest.meta.MetaTableKey
 import tech.mlsql.autosuggest.statement.{MatchAndExtractor, MetaTableKeyWrapper, SingleStatementAST}
 
@@ -19,7 +19,7 @@ class AttributeExtractor(autoSuggestContext: AutoSuggestContext, ast: SingleStat
 
   private def attributeM(start: Int): TokenMatcher = {
     val temp = TokenMatcher(tokens, start).
-      eat(Food(None, SqlBaseLexer.IDENTIFIER), Food(None, SqlBaseLexer.T__3)).optional.
+      eat(Food(None, SqlBaseLexer.IDENTIFIER), Food(None, TokenTypeWrapper.DOT)).optional.
       eat(Food(None, SqlBaseLexer.IDENTIFIER)).
       eat(Food(None, SqlBaseLexer.AS)).optional.
       eat(Food(None, SqlBaseLexer.IDENTIFIER)).optional.
@@ -37,13 +37,13 @@ class AttributeExtractor(autoSuggestContext: AutoSuggestContext, ast: SingleStat
 
   private def funcitonM(start: Int): TokenMatcher = {
     // deal with something like: sum(a[1],fun(b)) as a
-    val temp = TokenMatcher(tokens, start).eat(Food(None, SqlBaseLexer.IDENTIFIER), Food(None, SqlBaseLexer.T__0)).build
+    val temp = TokenMatcher(tokens, start).eat(Food(None, SqlBaseLexer.IDENTIFIER), Food(None, TokenTypeWrapper.LEFT_BRACKET)).build
     // function match
     if (temp.isSuccess) {
       // try to find AS
       // we need to take care of situation like this: cast(a as int) as b
       // In future, we should get first function and get the return type so we can get the b type.
-      val index = TokenMatcher(tokens, start).index(Array(Food(None, SqlBaseLexer.T__1), Food(None, SqlBaseLexer.AS), Food(None, SqlBaseLexer.IDENTIFIER)))
+      val index = TokenMatcher(tokens, start).index(Array(Food(None, TokenTypeWrapper.RIGHT_BRACKET), Food(None, SqlBaseLexer.AS), Food(None, SqlBaseLexer.IDENTIFIER)))
       if (index != -1) {
         //index + 1 to skip )
         val aliasName = TokenMatcher(tokens, index + 1).eat(Food(None, SqlBaseLexer.AS)).
@@ -61,7 +61,7 @@ class AttributeExtractor(autoSuggestContext: AutoSuggestContext, ast: SingleStat
 
   private def asterriskM(start: Int): TokenMatcher = {
     val temp = TokenMatcher(tokens, start).
-      eat(Food(None, SqlBaseLexer.IDENTIFIER), Food(None, SqlBaseLexer.T__3)).optional.
+      eat(Food(None, SqlBaseLexer.IDENTIFIER), Food(None, TokenTypeWrapper.DOT)).optional.
       eat(Food(None, SqlBaseLexer.ASTERISK)).build
     if (temp.isSuccess) {
       return TokenMatcher.resultMatcher(tokens, start, temp.get)
@@ -121,7 +121,8 @@ class AttributeExtractor(autoSuggestContext: AutoSuggestContext, ast: SingleStat
     while (matchRes.isSuccess && whileLimit > 0) {
       attributes ++= extractor(matchRes.start, matchRes.get)
       whileLimit -= 1
-      val temp = TokenMatcher(tokens, matchRes.get).eat(Food(None, SqlBaseLexer.T__2)).build
+      // T__2  == )
+      val temp = TokenMatcher(tokens, matchRes.get).eat(Food(None, TokenTypeWrapper.COMMA)).build
       if (temp.isSuccess) {
         matchRes = matcher(temp.get)
       } else whileLimit = 0
