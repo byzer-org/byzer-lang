@@ -110,7 +110,9 @@ class SQLNormalizeInPlace(override val uid: String) extends SQLAlg with Function
           |""".stripMargin,
       label = "",
       options = Map(
-        "valueType" -> "string"
+        "valueType" -> "string",
+        "required" -> "true",
+        "derivedType" -> "NONE"
       )))
   ))
 
