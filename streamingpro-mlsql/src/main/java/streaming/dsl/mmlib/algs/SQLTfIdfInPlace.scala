@@ -30,12 +30,14 @@ import streaming.dsl.mmlib.algs.feature.StringFeature
 import streaming.dsl.mmlib.algs.meta.TFIDFMeta
 import streaming.dsl.mmlib.algs.param.BaseParams
 import streaming.dsl.mmlib.{CoreVersion, SQLAlg}
+import tech.mlsql.common.form.FormParams
+import tech.mlsql.common.form.{Dynamic, Extra, FormParams, KV, Select, Text}
 
 import scala.collection.mutable.ArrayBuffer
 
 /**
-  * Created by allwefantasy on 7/5/2018.
-  */
+ * Created by allwefantasy on 7/5/2018.
+ */
 class SQLTfIdfInPlace(override val uid: String) extends SQLAlg with MllibFunctions with Functions with BaseClassification {
   def this() = this(BaseParams.randomUID())
 
@@ -174,16 +176,113 @@ class SQLTfIdfInPlace(override val uid: String) extends SQLAlg with MllibFunctio
   }
 
   override def explainParams(sparkSession: SparkSession): DataFrame = {
+
     _explainParams(sparkSession)
   }
 
   override def coreCompatibility: Seq[CoreVersion] = super.coreCompatibility
 
-  final val dicPaths: Param[String] = new Param[String](this, "dicPaths", "user-defined dictionary")
-  final val inputCol: Param[String] = new Param[String](this, "inputCol", "Which text column you want to process")
-  final val stopWordPath: Param[String] = new Param[String](this, "stopWordPath", "user-defined stop word dictionary")
-  final val priorityDicPath: Param[String] = new Param[String](this, "priorityDicPath", "user-defined dictionary")
-  final val priority: DoubleParam = new DoubleParam(this, "priority", "how much weight should be applied in priority words")
-  final val nGrams: Param[String] = new Param[String](this, "nGrams", "ngram，we can compose 2 or 3 words together so maby the new complex features can more succinctly capture importtant information in raw data. Note that too much ngram composition may increase feature space too much , this makes it hard to compute.")
+  final val dicPaths: Param[String] = new Param[String](this, "dicPaths", FormParams.toJson(Text(
+    name = "dicPaths",
+    value = "",
+    extra = Extra(
+      doc =
+        """
+          |user-defined dictionary.
+          |""".stripMargin,
+      label = "",
+      options = Map(
+        "valueType" -> "string"
+      )))
+  ))
+  final val inputCol: Param[String] = new Param[String](this, "inputCol", FormParams.toJson(Text(
+    name = "inputCol",
+    value = "",
+    extra = Extra(
+      doc =
+        """
+          |Which text column you want to process.
+          |""".stripMargin,
+      label = "",
+      options = Map(
+        "valueType" -> "string",
+        "defaultValue" -> "",
+        "required" -> "true",
+        "derivedType" -> "NONE"
+      )))
+  ))
+  final val stopWordPath: Param[String] = new Param[String](this, "stopWordPath", FormParams.toJson(Text(
+    name = "stopWordPath",
+    value = "",
+    extra = Extra(
+      doc =
+        """
+          |user-defined stop word dictionary.
+          |""".stripMargin,
+      label = "",
+      options = Map(
+        "valueType" -> "string"
+      )))
+  ))
+  final val priorityDicPath: Param[String] = new Param[String](this, "priorityDicPath", FormParams.toJson(Text(
+    name = "priorityDicPath",
+    value = "",
+    extra = Extra(
+      doc =
+        """
+          |user-defined dictionary.
+          |""".stripMargin,
+      label = "",
+      options = Map(
+        "valueType" -> "string"
+      )))
+  ))
+  final val priority: DoubleParam = new DoubleParam(this, "priority", FormParams.toJson(Text(
+    name = "priority",
+    value = "",
+    extra = Extra(
+      doc =
+        """
+          |how much weight should be applied in priority words
+          |""".stripMargin,
+      label = "",
+      options = Map(
+        "valueType" -> "int"
+      )))
+  ))
+  final val nGrams: Param[String] = new Param[String](this, "nGrams", FormParams.toJson(Text(
+    name = "nGrams",
+    value = "",
+    extra = Extra(
+      doc =
+        """
+          |ngram，we can compose 2 or 3 words together so maby the new complex
+          |features can more succinctly capture importtant information in raw data.
+          |Note that too much ngram composition may increase feature space too much , this makes it hard to compute.
+          |""".stripMargin,
+      label = "",
+      options = Map(
+        "valueType" -> "string"
+      )))
+  ))
+  final val ignoreNature: Param[String] = new Param[String](this, "ignoreNature", FormParams.toJson(Select(
+    name = "ignoreNature",
+    values = List(),
+    extra = Extra(
+      doc =
+        """
+          |Whether to take part of speech on each word after word segmentation. Please set to true.
+          |""".stripMargin,
+      label = "",
+      options = Map(
+        "valueType" -> "string",
+        "defaultValue" -> "true"
+      )),valueProvider = Option(()=>{
+      List(
+        KV(Option("ignoreNature"),Option("true")),
+        KV(Option("ignoreNature"),Option("false"))
+      )
+    }))
+  ))
 
 }

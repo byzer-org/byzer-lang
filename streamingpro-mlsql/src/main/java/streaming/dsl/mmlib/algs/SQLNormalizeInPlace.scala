@@ -19,27 +19,33 @@
 package streaming.dsl.mmlib.algs
 
 import org.apache.spark.ml.linalg.Vectors
+import org.apache.spark.ml.param.Param
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.types.{ArrayType, DoubleType}
 import org.apache.spark.sql.{DataFrame, MLSQLUtils, SaveMode, SparkSession}
+
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.MetaConst._
 import streaming.dsl.mmlib.algs.feature.DoubleFeature
 import streaming.dsl.mmlib.algs.meta.ScaleMeta
+import streaming.dsl.mmlib.algs.param.BaseParams
+
+import tech.mlsql.common.form.{Extra, FormParams, KV, Select, Text}
 
 /**
-  * Created by allwefantasy on 24/5/2018.
-  */
-class SQLNormalizeInPlace extends SQLAlg with Functions {
+ * Created by allwefantasy on 24/5/2018.
+ */
+class SQLNormalizeInPlace(override val uid: String) extends SQLAlg with Functions with BaseParams {
+  def this() = this(BaseParams.randomUID())
 
-  def internal_train(df: DataFrame, params: Map[String, String]) = {
+  private def internal_train(df: DataFrame, params: Map[String, String]) = {
     val path = params("path")
     val metaPath = getMetaPath(path)
     saveTraningParams(df.sparkSession, params, metaPath)
-    val inputCols = params.getOrElse("inputCols", "").split(",")
-    val method = params.getOrElse("method", "standard")
-    val removeOutlierValue = params.getOrElse("removeOutlierValue", "false").toBoolean
-    require(!inputCols.isEmpty, "inputCols is required when use SQLScalerInPlace")
+    val inputCols = params.getOrElse(this.inputCols.name, "").split(",")
+    val method = params.getOrElse(this.method.name, "standard")
+    val removeOutlierValue = params.getOrElse(this.removeOutlierValue.name, "false").toBoolean
+    require(inputCols.nonEmpty, "inputCols is required when use SQLNormalizeInPlace")
     var newDF = df
     if (removeOutlierValue) {
       newDF = DoubleFeature.killOutlierValue(df, metaPath, inputCols)
@@ -57,10 +63,10 @@ class SQLNormalizeInPlace extends SQLAlg with Functions {
   override def load(spark: SparkSession, _path: String, params: Map[String, String]): Any = {
     //load train params
     val path = getMetaPath(_path)
-    val (trainParams, df) = getTranningParams(spark, path)
-    val inputCols = trainParams.getOrElse("inputCols", "").split(",").toSeq
-    val method = trainParams.getOrElse("method", "standard")
-    val removeOutlierValue = trainParams.getOrElse("removeOutlierValue", "false").toBoolean
+    val (trainParams, _) = getTranningParams(spark, path)
+    val inputCols = trainParams.getOrElse(this.inputCols.name, "").split(",").toSeq
+    val method = trainParams.getOrElse(this.method.name, "standard")
+    val removeOutlierValue = trainParams.getOrElse(this.removeOutlierValue.name, "false").toBoolean
 
     val scaleFunc = DoubleFeature.getModelNormalizeForPredict(spark, path, inputCols, method, trainParams)
 
@@ -76,8 +82,8 @@ class SQLNormalizeInPlace extends SQLAlg with Functions {
   override def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = {
 
     val meta = _model.asInstanceOf[ScaleMeta]
-    val removeOutlierValue = meta.trainParams.getOrElse("removeOutlierValue", "false").toBoolean
-    val inputCols = meta.trainParams.getOrElse("inputCols", "").split(",").toSeq
+    val removeOutlierValue = meta.trainParams.getOrElse(this.removeOutlierValue.name, "false").toBoolean
+    val inputCols = meta.trainParams.getOrElse(this.inputCols.name, "").split(",").toSeq
 
     val f = (values: Seq[Double]) => {
       val newValues = if (removeOutlierValue) {
@@ -89,4 +95,65 @@ class SQLNormalizeInPlace extends SQLAlg with Functions {
     }
     MLSQLUtils.createUserDefinedFunction(f, ArrayType(DoubleType), Some(Seq(ArrayType(DoubleType))))
   }
+
+  override def explainParams(sparkSession: SparkSession): DataFrame = {
+    _explainParams(sparkSession)
+  }
+
+  final val inputCols: Param[String] = new Param[String](this, "inputCols", FormParams.toJson(Text(
+    name = "inputCols",
+    value = "",
+    extra = Extra(
+      doc =
+        """
+          |Which text columns you want to process.
+          |""".stripMargin,
+      label = "",
+      options = Map(
+        "valueType" -> "string",
+        "required" -> "true",
+        "derivedType" -> "NONE"
+      )))
+  ))
+
+  final val removeOutlierValue: Param[String] = new Param[String](this, "removeOutlierValue", FormParams.toJson(Select(
+    name = "removeOutlierValue",
+    values= List(),
+    extra = Extra(
+      doc =
+        """
+          |Whether to remove outlier values.
+          |""".stripMargin,
+      label = "",
+      options = Map(
+        "valueType" -> "string",
+        "defaultValue"-> "false",
+      )), valueProvider = Option(()=>{
+      List(
+        KV(Option("removeOutlierValue"),Option("true")),
+        KV(Option("removeOutlierValue"),Option("false"))
+      )
+    }))
+  ))
+
+  final val method: Param[String] = new Param[String](this, "method", FormParams.toJson(Select(
+    name = "method",
+    values= List(),
+    extra = Extra(
+      doc =
+        """
+          |Specify the method to do the normalization.
+          |""".stripMargin,
+      label = "",
+      options = Map(
+        "valueType" -> "string",
+        "defaultValue"-> "standard",
+      )), valueProvider = Option(()=>{
+      List(
+        KV(Option("method"),Option("standard")),
+        KV(Option("method"),Option("p-norm"))
+      )
+    }))
+  ))
+
 }
