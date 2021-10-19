@@ -1,5 +1,6 @@
 package tech.mlsql.ets
 
+import org.apache.spark.ml.param.Param
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import streaming.dsl.ScriptSQLExec
@@ -7,6 +8,7 @@ import streaming.dsl.auth.TableAuthResult
 import streaming.dsl.mmlib._
 import streaming.dsl.mmlib.algs.Functions
 import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
+import tech.mlsql.common.form.{Extra, FormParams, Text}
 import tech.mlsql.common.utils.serder.json.JSONTool
 import tech.mlsql.dsl.auth.ETAuth
 import tech.mlsql.dsl.auth.dsl.mmlib.ETMethod.ETMethod
@@ -46,6 +48,30 @@ class RunScript(override val uid: String) extends SQLAlg with VersionCompatibili
   }
 
 
+  override def explainParams(sparkSession: SparkSession): DataFrame = _explainParams(sparkSession)
+
+  final val parameters: Param[String]  = new Param[String] (this, "parameters",
+    FormParams.toJson(Text(
+      name = "parameters",
+      value = "",
+      extra = Extra(
+        doc =
+          """
+            | Required. The RunScripts parameters.
+          """,
+        label = "The RunScripts parameters.",
+        options = Map(
+          "valueType" -> "string",
+          "defaultValue" -> "",
+          "required" -> "true",
+          "derivedType" -> "NONE"
+        )), valueProvider = Option(() => {
+        ""
+      })
+    )
+    )
+  )
+
   override def doc: Doc = Doc(MarkDownDoc,
     s"""
        |When you want to get the result from command and used
@@ -61,9 +87,7 @@ class RunScript(override val uid: String) extends SQLAlg with VersionCompatibili
 
   override def codeExample: Code = Code(SQLCode,
     """
-      |!hdfs /tmp;
-      |!last named hdfsTmpTable;
-      |select * from hdfsTmpTable;
+      |!runScript ''' select 1 as a as b; ''' named output;
     """.stripMargin)
 
   override def batchPredict(df: DataFrame, path: String, params: Map[String, String]): DataFrame = train(df, path, params)

@@ -28,6 +28,7 @@ import streaming.dsl.auth._
 import streaming.dsl.mmlib._
 import streaming.dsl.mmlib.algs.param.WowParams
 import streaming.log.WowLog
+import tech.mlsql.common.form.{Extra, FormParams, KV, Select, Text}
 import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.dsl.auth.ETAuth
 import tech.mlsql.dsl.auth.dsl.mmlib.ETMethod.ETMethod
@@ -89,25 +90,54 @@ class SyntaxAnalyzeExt(override val uid: String) extends SQLAlg with WowParams w
     }
   }
 
-  final val sql: Param[String] = new Param[String](this, "sql",
-    """
-      | Required. SQL to be analyzed
-      | e.g. sql = "select * from table"
-    """.stripMargin
+  final val sql: Param[String]  = new Param[String] (this, "sql",
+    FormParams.toJson(Text(
+      name = "sql",
+      value = "",
+      extra = Extra(
+        doc =
+          """
+            | Required. SQL to be analyzed
+            | e.g. sql = "select * from table"
+          """,
+        label = "sql",
+        options = Map(
+          "valueType" -> "string",
+          "defaultValue" -> "",
+          "required" -> "true",
+          "derivedType" -> "NONE"
+        )), valueProvider = Option(() => {
+        ""
+      })
+    )
+    )
   )
   setDefault(sql, "")
 
-  final val action: Param[String] = new Param[String](this, "action",
-    """
-      | Required. action for syntax analysis
-      | Optional parameter: extractTables
-      | Notice: Currently, the only supported action is `extractTables`,
-      | and other parameters of the action are under construction.
-      | e.g. action = "extractTables"
-    """.stripMargin,
-    isValid = (m: String) => {
-      m == "extractTables"
-    }
+  final val action: Param[String]  = new Param[String] (this, "action",
+    FormParams.toJson(Select(
+      name = "action",
+      values = List(),
+      extra = Extra(
+        doc =
+          """
+            | Action for syntax analysis
+            | Optional parameter: extractTables
+            | Notice: Currently, the only supported action is `extractTables`,
+            | and other parameters of the action are under construction.
+            | e.g. action = "extractTables"
+          """,
+        label = "action for syntax analysis",
+        options = Map(
+          "valueType" -> "string",
+          "defaultValue" -> "",
+          "required" -> "false",
+          "derivedType" -> "NONE"
+        )), valueProvider = Option(() => {
+        List(KV(Option("action"), Option("extractTables")))
+      })
+    )
+    )
   )
   setDefault(action, "extractTables")
 
