@@ -123,11 +123,13 @@ class SQLScalerInPlace(override val uid: String) extends SQLAlg with MllibFuncti
     extra = Extra(
       doc =
         """
-          |Which text column you want to process.
+          |Which text columns you want to process.
           |""".stripMargin,
       label = "",
       options = Map(
-        "valueType" -> "string"
+        "valueType" -> "string",
+        "required" -> "true",
+        "derivedType" -> "NONE"
       )))
   ))
 
@@ -143,6 +145,8 @@ class SQLScalerInPlace(override val uid: String) extends SQLAlg with MllibFuncti
       options = Map(
         "valueType" -> "string",
         "defaultValue"-> "log2",
+        "required" -> "false",
+        "derivedType" -> "NONE"
       )),valueProvider= Option(()=>{
       List(
         KV(Option("scaledMethod"), Option("log2")),
@@ -167,6 +171,8 @@ class SQLScalerInPlace(override val uid: String) extends SQLAlg with MllibFuncti
       options = Map(
         "valueType" -> "string",
         "defaultValue"-> "false",
+        "required" -> "false",
+        "derivedType" -> "NONE"
       )), valueProvider = Option(()=>{
       List(
         KV(Option("removeOutlierValue"),Option("true")),
