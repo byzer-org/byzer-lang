@@ -1,5 +1,6 @@
 --%comparator=tech.mlsql.it.IgnoreResultComparator
 -- !plugin app add - "mlsql-shell-2.4";
+-- !plugin app add - "mlsql-shell-3.0";
 
 !sh script '''
 #!/bin/bash
@@ -10,7 +11,7 @@
 #############################################
 
 _UNAME_OUT="$(uname -s)"
-_HOME_PATH="${HOME-~}"
+_HOME_PATH="${HOME}"
 _CONDA_HOME="${1-${_HOME_PATH}/conda}"
 
 # Install conda environment
@@ -23,10 +24,10 @@ MINGW*) _MACHINE=MinGw ;;
 *) _MACHINE="UNKNOWN:${_UNAME_OUT}" ;;
 esac
 echo "${_MACHINE}"
-if [ ! -x "$(command -v conda)" ]; then
+if [ -z "$(command -v conda)" ]; then
   if [ -x "${_CONDA_HOME}"/etc/profile.d/conda.sh ]; then
     . "${_CONDA_HOME}"/etc/profile.d/conda.sh
-    if [ ! -x "$(command -v conda)" ]; then
+    if [ -z "$(command -v conda)" ]; then
       echo "Error: installation failed! The ${_CONDA_HOME} directory already exists, but command of conda cannot be used. Please try to repair or delete it and try again."
       exit 1
     fi
@@ -35,8 +36,8 @@ if [ ! -x "$(command -v conda)" ]; then
   if [ "${_MACHINE}" = "Mac" ]; then
     _MINICONDA3_DOWNLOAD_URL="https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh"
     # miniconda requires bzip2
-    if [ ! -x "$(command -v bzip2)" ]; then
-      if [ ! -x "$(command -v brew)" ]; then
+    if [ -z "$(command -v bzip2)" ]; then
+      if [ -z "$(command -v brew)" ]; then
         echo "" &&
           echo "Error: Please install homebrew to your macOs first. You can run the following commands:" &&
           echo "" &&
@@ -49,7 +50,7 @@ if [ ! -x "$(command -v conda)" ]; then
   elif [ "${_MACHINE}" = "Linux" ]; then
     _MINICONDA3_DOWNLOAD_URL="https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh"
     # miniconda requires bzip2
-    if [ ! -x "$(command -v bzip2)" ]; then
+    if [ -z "$(command -v bzip2)" ]; then
       apt-get update
       apt-get install bzip2
     fi
@@ -84,7 +85,7 @@ else
 fi
 
 # export PATH of activate
-if [ ! -x "$(command -v activate)" ]; then
+if [ -z "$(command -v activate)" ]; then
   _CONDA_ENV="\n# conda environment\n. ${_CONDA_HOME}/etc/profile.d/conda.sh\n. ${_CONDA_HOME}/bin/activate\nexport PATH=${_CONDA_HOME}/bin:"'$PATH'
   if whoami |grep -q 'root';then
     (echo "$_CONDA_ENV" >>/etc/profile &&
@@ -102,7 +103,7 @@ if [ ! -x "$(command -v activate)" ]; then
       echo "export  PATH of activate success.") ||
       (echo "Error: can not export path of activate!")
   fi
-  export PATH=${_CONDA_HOME}/bin:'$PATH'
+  export PATH=${_CONDA_HOME}/bin:$PATH
 fi
 
 # Add official channels
@@ -129,10 +130,14 @@ else
 fi
 
 source deactivate
+
+# used by anaconda
 source activate it_env
 
-(. "${_CONDA_HOME}"/bin/activate it_env &&
-  echo "Start to install pip dependencies..." &&
+# If _CONDA_HOME is set correctly, used by anaconda and miniconda
+. "${_CONDA_HOME}"/bin/activate it_env
+
+( echo "Start to install pip dependencies..." &&
   pip install --upgrade pip &&
   pip config set global.trusted-host mirrors.aliyun.com &&
   pip config set global.index-url http://mirrors.aliyun.com/pypi/simple/ &&
