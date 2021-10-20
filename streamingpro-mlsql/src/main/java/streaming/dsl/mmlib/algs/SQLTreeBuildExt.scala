@@ -27,6 +27,7 @@ import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Row, SparkSession, functions => F}
 import streaming.dsl.mmlib._
 import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
+import tech.mlsql.common.form.{Extra, FormParams, KV, Select, Text}
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
@@ -201,7 +202,13 @@ class SQLTreeBuildExt(override val uid: String) extends SQLAlg with Functions wi
       |''';
       |
       |load jsonStr.`jsonStr` as data;
+      |set spark.sql.legacy.allowUntypedScalaUDF=true where type="conf";
       |run data as TreeBuildExt.`` where idCol="id" and parentIdCol="parentId" and treeType="nodeTreePerRow" as result;
+      |```
+      |If you are currently using spark3 version, you need to set the following parameters:
+      |
+      |```
+      |set spark.sql.legacy.allowUntypedScalaUDF=true where type="conf";
       |```
       |
       |Here are the result:
@@ -253,13 +260,113 @@ class SQLTreeBuildExt(override val uid: String) extends SQLAlg with Functions wi
 
   override def coreCompatibility: Seq[CoreVersion] = super.coreCompatibility
 
-  final val idCol: Param[String] = new Param[String](this, "idCol", "")
-  final val parentIdCol: Param[String] = new Param[String](this, "parentIdCol", "")
-  final val topLevelMark: Param[String] = new Param[String](this, "topLevelMark", "")
-  final val treeType: Param[String] = new Param[String](this, "treeType", "treePerRow|nodeTreePerRow")
+  final val idCol: Param[String] = new Param[String](this, "idCol",
+    FormParams.toJson(Text(
+      name = "idCol",
+      value = "",
+      extra = Extra(
+        doc =
+          """
+            | Required. Id used column
+          """,
+        label = "Id used column",
+        options = Map(
+          "valueType" -> "string",
+          "defaultValue" -> "",
+          "required" -> "true",
+          "derivedType" -> "NONE"
+        )), valueProvider = Option(() => {
+        ""
+      }))))
+
+  final val parentIdCol: Param[String] = new Param[String](this, "parentIdCol",
+    FormParams.toJson(Text(
+      name = "parentIdCol",
+      value = "",
+      extra = Extra(
+        doc =
+          """
+            | Required. Parent id used column
+          """,
+        label = "Parent id used column",
+        options = Map(
+          "valueType" -> "string",
+          "defaultValue" -> "",
+          "required" -> "true",
+          "derivedType" -> "NONE"
+        )), valueProvider = Option(() => {
+        ""
+      }))))
+
+  final val topLevelMark: Param[String] = new Param[String](this, "topLevelMark",
+    FormParams.toJson(Text(
+      name = "topLevelMark",
+      value = "",
+      extra = Extra(
+        doc =
+          """
+            | The mark of top level
+          """,
+        label = "The mark of top level",
+        options = Map(
+          "valueType" -> "string",
+          "defaultValue" -> "",
+          "required" -> "false",
+          "derivedType" -> "NONE"
+        )), valueProvider = Option(() => {
+        ""
+      })
+    )
+    )
+  )
+
+  final val treeType: Param[String] = new Param[String](this, "treeType",
+    FormParams.toJson(Select(
+      name = "treeType",
+      values = List(),
+      extra = Extra(
+        doc =
+          """
+            | The type of parent-child relationship SQL tree.
+            | - treePerRow: Need to display the hierarchical relationship as a nested row structure
+            | - nodeTreePerRow: Each layer is displayed as a line
+          """,
+        label = "action for syntax analysis",
+        options = Map(
+          "valueType" -> "string",
+          "defaultValue" -> "",
+          "required" -> "false",
+          "derivedType" -> "NONE"
+        )), valueProvider = Option(() => {
+        List(KV(Option("treeType"), Option("treePerRow")))
+        List(KV(Option("treeType"), Option("nodeTreePerRow")))
+      })
+    )
+    )
+  )
+
   final val recurringDependencyBreakTimes: Param[Int] = new Param[Int](this, "recurringDependencyBreakTimes",
-    "default:1000  the max level should lower than this value; " +
-      "When travel a tree, once a node is found two times, then the subtree will be ignore")
+    FormParams.toJson(Text(
+      name = "recurringDependencyBreakTimes",
+      value = "",
+      extra = Extra(
+        doc =
+          """
+            | default:1000  the max level should lower than this value;
+            | When travel a tree, once a node is found two times, then the subtree will be ignore
+          """,
+        label = "Recurring dependency break times",
+        options = Map(
+          "valueType" -> "int",
+          "defaultValue" -> "",
+          "required" -> "false",
+          "derivedType" -> "NONE"
+        )), valueProvider = Option(() => {
+        ""
+      })
+    )
+    )
+  )
 }
 
 case class IDParentID(id: Any, parentID: Any, children: scala.collection.mutable.ArrayBuffer[IDParentID])
