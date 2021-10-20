@@ -313,25 +313,6 @@ trait WowParams extends Params {
         )))
   }
 
-  def _explainTagParams(sparkSession: SparkSession, f: () => Map[TagParamName, Params]) = {
-
-    val rfcParams2 = this.params.map(this.paramToJSon(_, this)).map(f => Row.fromSeq(f))
-    val models = f()
-    val rfcParams = models.toList.flatMap { case (tag, model) =>
-      model.params.map(this.buildInAlgParamToJson(_, model)).map { f =>
-        Row.fromSeq(Seq(s"fitParam.[tag__${tag.field}__${tag.tag}]." + f(0), f(1), f(2), f(3)))
-      }
-    }
-    sparkSession.createDataFrame(sparkSession.sparkContext.parallelize(rfcParams2 ++ rfcParams, 1),
-      StructType(
-        Seq(
-          StructField("param", StringType),
-          StructField("description", StringType),
-          StructField("value", StringType),
-          StructField("extra", StringType)
-        )))
-  }
-
   def _explainParams(sparkSession: SparkSession) = {
 
     val rfcParams2 = this.params.map(this.paramToJSon(_, this)).map(f => Row.fromSeq(f))
