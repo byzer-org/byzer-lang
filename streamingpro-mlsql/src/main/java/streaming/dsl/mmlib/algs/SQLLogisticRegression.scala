@@ -136,7 +136,6 @@ class SQLLogisticRegression(override val uid: String) extends SQLAlg with MllibF
         Seq("uid", model.uid),
         Seq("numFeatures", model.numFeatures.toString),
         Seq("numClasses", model.numClasses.toString),
-        Seq("binarySummary", model.binarySummary.toString()),
         Seq("intercept", model.intercept.toString()),
         Seq("coefficients", model.coefficients.toString())
       ) ++ modelParams
