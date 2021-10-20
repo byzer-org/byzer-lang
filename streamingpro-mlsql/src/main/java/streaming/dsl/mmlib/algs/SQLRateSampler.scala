@@ -19,19 +19,28 @@
 package streaming.dsl.mmlib.algs
 
 import org.apache.spark.Partitioner
+import org.apache.spark.ml.param.Param
+import org.apache.spark.ml.util.Identifiable
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.mlsql.session.MLSQLException
 import org.apache.spark.sql.types.{IntegerType, StructField, StructType}
 import org.apache.spark.sql.{DataFrame, Row, SparkSession, functions => F}
-import streaming.dsl.mmlib.SQLAlg
+import streaming.dsl.auth.TableAuthResult
+import streaming.dsl.mmlib.{Code, Doc, MarkDownDoc, ModelType, ProcessType, SQLAlg, SQLCode}
+import streaming.dsl.mmlib.algs.param.WowParams
+import streaming.log.WowLog
+import tech.mlsql.common.form.{Extra, FormParams, Text}
+import tech.mlsql.common.utils.log.Logging
+import tech.mlsql.dsl.auth.ETAuth
+import tech.mlsql.dsl.auth.dsl.mmlib.ETMethod.ETMethod
 
-/**
-  * Created by allwefantasy on 7/5/2018.
-  */
-class SQLRateSampler extends SQLAlg with Functions {
 
+private class SQLRateSampler(override val uid: String) extends SQLAlg with Functions with WowParams with Logging
+  with WowLog with ETAuth {
 
-  def internal_train(df: DataFrame, params: Map[String, String]) = {
+  def this() = this(Identifiable.randomUID("streaming.dsl.mmlib.algs.SQLRateSampler"))
+
+  private def internal_train(df: DataFrame, params: Map[String, String]) = {
 
     val getIntFromRow = (row: Row, i: Int) => {
       row.get(i) match {
@@ -141,4 +150,91 @@ class SQLRateSampler extends SQLAlg with Functions {
   override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = ???
 
   override def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = ???
+
+  override def auth(etMethod: ETMethod, path: String, params: Map[String, String]): List[TableAuthResult] = {
+    List.empty[TableAuthResult]
+  }
+
+  final val labelCol: Param[String] = new Param[String](parent = this
+    , name = "labelCol"
+    , doc = FormParams.toJson( Text(
+      name = "labelCol"
+      , value = ""
+      , extra = Extra(
+        doc = "The grouping column in the dataset"
+        , label = "labelCol"
+        , options = Map(
+          "valueType" -> "string",
+          "defaultValue" -> "label",
+          "required" -> "true",
+          "derivedType" -> "NONE"
+        )
+      )
+    )
+    )
+  )
+
+  final val sampleRate: Param[String] = new Param[String](parent = this, name = "sampleRate",
+    doc = FormParams.toJson( Text ( name = "sampleRate", value = "", extra = Extra(
+      doc = "comma delimited doubles, i.e 0.9,0.1"
+      , label = "sampleRate"
+      , options = Map(
+        "valueType" -> "string",
+        "defaultValue" -> "0.9,0.1",
+        "required" -> "true",
+        "derivedType" -> "NONE"
+      ))
+    ))
+  )
+
+  final val isSplitWithSubLabel: Param[String] = new Param[String](parent = this, name = "isSplitWithSubLabel",
+    doc = FormParams.toJson( Text(name = "isSplitWithSubLabel", value = "", extra = Extra(
+      doc = "Exact splitting if true"
+      , label = "isSplitWithSubLabel"
+      , options= Map(
+        "valueType" -> "string",
+        "defaultValue" -> "",
+        "required" -> "false",
+        "derivedType" -> "NONE"
+      )
+    )))
+  )
+
+  override def modelType: ModelType = ProcessType
+
+  override def explainParams(sparkSession: SparkSession): DataFrame = {
+    _explainParams(sparkSession)
+  }
+
+  override def doc: Doc = Doc(MarkDownDoc,
+    """
+      | Splits dataset into train and test, splitting ratio is specified
+      | by parameter sampleRate.
+    """.stripMargin)
+
+  override def codeExample: Code = Code(SQLCode,
+    """
+      |Load a JSON data to the `data` table:
+      |
+      |```sql
+      |set jsonStr='''
+      |{"features":[5.1,3.5,1.4,0.2],"label":0.0},
+      |{"features":[5.1,3.5,1.4,0.2],"label":1.0}
+      |{"features":[5.1,3.5,1.4,0.2],"label":0.0}
+      |{"features":[4.4,2.9,1.4,0.2],"label":0.0}
+      |{"features":[5.1,3.5,1.4,0.2],"label":1.0}
+      |{"features":[5.1,3.5,1.4,0.2],"label":0.0}
+      |{"features":[5.1,3.5,1.4,0.2],"label":0.0}
+      |{"features":[4.7,3.2,1.3,0.2],"label":1.0}
+      |{"features":[5.1,3.5,1.4,0.2],"label":0.0}
+      |{"features":[5.1,3.5,1.4,0.2],"label":0.0}
+      |''';
+      |load jsonStr.`jsonStr` as data;
+      |
+      |
+      |train data as RateSampler.``
+      |where labelCol="label"
+      |and sampleRate="0.7,0.3" as marked_dataset;;
+      |```
+    """.stripMargin)
 }
