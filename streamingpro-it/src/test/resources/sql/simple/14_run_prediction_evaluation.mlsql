@@ -1,0 +1,16 @@
+--%comparator=tech.mlsql.it.IgnoreResultComparator
+-- create test data
+set jsonStr='''
+{"probability":{"type":1,"values":[0,1]},"label":0.0},
+{"probability":{"type":1,"values":[1.1747056153273105e-18,1]},"label":1.0}
+{"probability":{"type":1,"values":[1,0]},"label":0.0}
+{"probability":{"type":1,"values":[0.2,0.8]},"label":1.0}
+{"probability":{"type":1,"values":[0.5,0.5]},"label":1.0}
+{"probability":{"type":1,"values":[0.1,0.9]},"label":1.0}
+''';
+load jsonStr.`jsonStr` as data;
+-- extract the probability from the values
+select replace(String(probability), "[","") as prob, label from data as res1;
+select replace(prob, "]", "") as prob, label from res1 as res2;
+select Double(split(prob, ",")[1]) as prob, label from res2 as res3;
+run res3 as PredictionEva.`` where labelCol='label' and probCol='prob';

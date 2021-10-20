@@ -175,7 +175,8 @@ object MLMapping extends Logging with WowLog {
     "UploadFileToServerExt" -> "streaming.dsl.mmlib.algs.SQLUploadFileToServerExt",
     "WaterMarkInPlace" -> "streaming.dsl.mmlib.algs.SQLWaterMarkInPlace",
     "Word2ArrayInPlace" -> "streaming.dsl.mmlib.algs.SQLWord2ArrayInPlace",
-    "AutoML" -> "tech.mlsql.ets.algs.SQLAutoML"
+    "AutoML" -> "tech.mlsql.ets.algs.SQLAutoML",
+    "PredictionEva"->"streaming.dsl.mmlib.algs.SQLPredictionEva"
   )
 
   /**
