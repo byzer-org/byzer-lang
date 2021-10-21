@@ -59,6 +59,17 @@ class SetSuggesterTest extends BaseTest {
     assert(suggestions.map(_.name).toSet == Set("where"))
   }
 
+  test("set hello='''world''' o[cursor]") {
+    val statement = context.lexer.tokenizeNonDefaultChannel(
+      """
+        | -- yes
+        | set hello='''world''' o
+        |""".stripMargin).tokens.asScala.toList
+
+    val suggestions = new SetSuggester(context, statement, TokenPos(4, TokenPosType.CURRENT, 1)).suggest()
+    assert(suggestions.map(_.name).toSet == Set("options"))
+  }
+
   test("set date=`date` w[cursor]") {
     val statement = context.lexer.tokenizeNonDefaultChannel(
       """
@@ -78,7 +89,7 @@ class SetSuggesterTest extends BaseTest {
         |""".stripMargin).tokens.asScala.toList
 
     val suggestions = new SetSuggester(context, statement, TokenPos(5, TokenPosType.CURRENT, 1)).suggest()
-    assert(suggestions.map(_.name).toSet == Set("mode", "type"))
+    assert(suggestions.map(_.name).toSet == Set("mode", "type", "and "))
   }
 
   test("set date=`date` where type=[cursor]") {
@@ -133,7 +144,7 @@ class SetSuggesterTest extends BaseTest {
         | set hello='world' where type="text" a
         |""".stripMargin).tokens.asScala.toList
 
-    val suggestions = new SetSuggester(context, statement, TokenPos(7, TokenPosType.CURRENT, 1)).suggest()
-    assert(suggestions.map(_.name).toSet == Set("and "))
+    val suggestions = new SetSuggester(context, statement, TokenPos(8, TokenPosType.CURRENT, 1)).suggest()
+    assert(suggestions.map(_.name).toSet == Set("and ", "mode"))
   }
 }
