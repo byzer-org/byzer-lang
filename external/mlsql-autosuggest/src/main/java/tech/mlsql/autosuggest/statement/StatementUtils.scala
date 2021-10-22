@@ -55,6 +55,11 @@ trait StatementUtils {
       None
     }
   }
+
+  def getOptionsIndex: Int = {
+    TokenMatcher(tokens, tokenPos.pos).back.orIndex(List(Food(None, DSLSQLLexer.WHERE),
+      Food(None, DSLSQLLexer.OPTIONS)).toArray)
+  }
 }
 
 object StatementUtils {

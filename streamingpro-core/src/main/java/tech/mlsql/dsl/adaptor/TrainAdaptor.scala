@@ -117,6 +117,8 @@ class TrainAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdap
 }
 
 object MLMapping extends Logging with WowLog {
+  private val mappingCache = new java.util.concurrent.ConcurrentHashMap[String, SQLAlg]()
+
   private val mapping = Map[String, String](
     "NaiveBayes" -> "streaming.dsl.mmlib.algs.SQLNaiveBayes",
     "RandomForest" -> "streaming.dsl.mmlib.algs.SQLRandomForest",
@@ -210,6 +212,27 @@ object MLMapping extends Logging with WowLog {
   }
 
   /**
+   * Get all ET instances for the mapping class. Including locally loaded classes and code registered.
+   *
+   * @return The Map of ET instances, for example:
+   *         [[scala.collection.immutable.Map("Word2vec" -> class[Word2vec], "Kill" -> class[SQLMLSQLJobExt])]]
+   */
+  def getETInstanceMapping: Map[String, SQLAlg] = {
+    getRegisteredMapping.map(f =>
+      try {
+        f._1 -> findET(f._1)
+      } catch {
+        case e: Exception =>
+          logError(format("load ET class failed!" + format_throwable(e)))
+          null
+        case e1: NoClassDefFoundError =>
+          logError(format("load ET class failed!" + format_throwable(e1)))
+          null
+        case _ => null
+      }).filter(_ != null)
+  }
+
+  /**
    * In this method, we combine the `mappings` registered in two different ways, MLMapping and ETRegister.
    * Consistent with [[tech.mlsql.dsl.adaptor.MLMapping#findET(java.lang.String)]] usage.
    *
@@ -225,7 +248,11 @@ object MLMapping extends Logging with WowLog {
    * @return ET instance
    */
   def findET(name: String): SQLAlg = {
-    getRegisteredMapping.get(name.capitalize) match {
+    if (mappingCache.contains(name)) {
+      return mappingCache.get(name)
+    }
+
+    val res: SQLAlg = getRegisteredMapping.get(name.capitalize) match {
       case Some(clzz) =>
         Class.forName(clzz).newInstance().asInstanceOf[SQLAlg]
       case None =>
@@ -243,6 +270,8 @@ object MLMapping extends Logging with WowLog {
           }
         }
     }
+    mappingCache.putIfAbsent(name, res)
+    res
   }
 
   private def getRegisteredMapping: Map[String, String] = {
