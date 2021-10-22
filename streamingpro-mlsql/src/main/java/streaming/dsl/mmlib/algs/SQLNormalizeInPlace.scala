@@ -127,7 +127,7 @@ class SQLNormalizeInPlace(override val uid: String) extends SQLAlg with Function
       label = "",
       options = Map(
         "valueType" -> "string",
-        "defaultValue"-> "false",
+        "defaultValue"-> "false"
       )), valueProvider = Option(()=>{
       List(
         KV(Option("removeOutlierValue"),Option("true")),
@@ -147,7 +147,7 @@ class SQLNormalizeInPlace(override val uid: String) extends SQLAlg with Function
       label = "",
       options = Map(
         "valueType" -> "string",
-        "defaultValue"-> "standard",
+        "defaultValue"-> "standard"
       )), valueProvider = Option(()=>{
       List(
         KV(Option("method"),Option("standard")),
