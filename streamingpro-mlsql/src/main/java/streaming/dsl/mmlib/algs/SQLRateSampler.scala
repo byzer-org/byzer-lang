@@ -176,10 +176,10 @@ private class SQLRateSampler(override val uid: String) extends SQLAlg with Funct
 
   final val sampleRate: Param[String] = new Param[String](parent = this, name = "sampleRate",
     doc = FormParams.toJson( Text ( name = "sampleRate", value = "", extra = Extra(
-      doc = "comma delimited doubles, i.e 0.9,0.1"
+      doc = "comma delimited double array, i.e 0.9,0.1"
       , label = "sampleRate"
       , options = Map(
-        "valueType" -> "string",
+        "valueType" -> "array[double]",
         "required" -> "true",
         "derivedType" -> "NONE"
       ))

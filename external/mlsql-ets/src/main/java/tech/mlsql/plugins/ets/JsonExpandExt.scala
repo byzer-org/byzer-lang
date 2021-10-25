@@ -64,7 +64,7 @@ class JsonExpandExt (override val uid: String) extends SQLAlg with WowParams wit
           doc = "SamplingRatio used by Spark to infer schema from json"
           , label = "samplingRatio"
           , options = Map(
-            "valueType" -> "string",
+            "valueType" -> "double",
             "required" -> "false",
             "derivedType" -> "NONE"
           )
