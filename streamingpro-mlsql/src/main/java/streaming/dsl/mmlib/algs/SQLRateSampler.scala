@@ -165,7 +165,6 @@ private class SQLRateSampler(override val uid: String) extends SQLAlg with Funct
         , label = "labelCol"
         , options = Map(
           "valueType" -> "string",
-          "defaultValue" -> "label",
           "required" -> "true",
           "derivedType" -> "NONE"
         )
@@ -173,6 +172,7 @@ private class SQLRateSampler(override val uid: String) extends SQLAlg with Funct
     )
     )
   )
+  setDefault(labelCol, "label")
 
   final val sampleRate: Param[String] = new Param[String](parent = this, name = "sampleRate",
     doc = FormParams.toJson( Text ( name = "sampleRate", value = "", extra = Extra(
@@ -180,12 +180,12 @@ private class SQLRateSampler(override val uid: String) extends SQLAlg with Funct
       , label = "sampleRate"
       , options = Map(
         "valueType" -> "string",
-        "defaultValue" -> "0.9,0.1",
         "required" -> "true",
         "derivedType" -> "NONE"
       ))
     ))
   )
+  setDefault(sampleRate, "0.9,0.1")
 
   final val isSplitWithSubLabel: Param[String] = new Param[String](parent = this, name = "isSplitWithSubLabel",
     doc = FormParams.toJson( Text(name = "isSplitWithSubLabel", value = "", extra = Extra(
@@ -193,7 +193,6 @@ private class SQLRateSampler(override val uid: String) extends SQLAlg with Funct
       , label = "isSplitWithSubLabel"
       , options= Map(
         "valueType" -> "string",
-        "defaultValue" -> "",
         "required" -> "false",
         "derivedType" -> "NONE"
       )

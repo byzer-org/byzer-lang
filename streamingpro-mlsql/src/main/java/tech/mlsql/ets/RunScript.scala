@@ -62,7 +62,6 @@ class RunScript(override val uid: String) extends SQLAlg with VersionCompatibili
         label = "The RunScripts parameters.",
         options = Map(
           "valueType" -> "string",
-          "defaultValue" -> "",
           "required" -> "true",
           "derivedType" -> "NONE"
         )), valueProvider = Option(() => {
@@ -71,6 +70,7 @@ class RunScript(override val uid: String) extends SQLAlg with VersionCompatibili
     )
     )
   )
+  setDefault(parameters, "")
 
   override def doc: Doc = Doc(MarkDownDoc,
     s"""

@@ -91,7 +91,7 @@ trait WowParams extends Params {
     val extraJson = extraOpt match {
       case Some(item) =>
         val newItem = item.copy(options = item.options ++ Map(
-          "defaultValue" -> defaultValueStr.getOrElse("undefined").toString,
+          "defaultValue" -> defaultValueStr.getOrElse(extraOpt.map(_.options).map(_.getOrElse("defaultValue","undefined")).getOrElse("undefined")).toString,
           "currentValue" -> currentValueStr.getOrElse("undefined").toString,
           "valueType" -> extraOpt.map(_.options).map(_.getOrElse("valueType","string")).getOrElse("string"),
           "required" -> extraOpt.map(_.options).map(_.getOrElse("required","false")).getOrElse("false"),

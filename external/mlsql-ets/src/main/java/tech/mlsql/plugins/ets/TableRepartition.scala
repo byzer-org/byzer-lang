@@ -151,7 +151,6 @@ class TableRepartition(override val uid: String) extends SQLAlg with VersionComp
         label = "Type of repartition",
         options = Map(
           "valueType" -> "string",
-          "defaultValue" -> "hash",
           "required" -> "false",
           "derivedType" -> "NONE"
         )), valueProvider = Option(() => {
@@ -162,6 +161,7 @@ class TableRepartition(override val uid: String) extends SQLAlg with VersionComp
       })
     )
     ))
+  setDefault(partitionType, "hash")
 
   final val partitionCols: Param[String] = new Param[String](this, "partitionCols",
     FormParams.toJson(Dynamic(
@@ -172,7 +172,6 @@ class TableRepartition(override val uid: String) extends SQLAlg with VersionComp
           | e.g. partitionCols = "col1"
           |""".stripMargin, label = "", options = Map(
           "valueType" -> "string",
-          "defaultValue" -> "",
           "required" -> "false",
           "derivedType" -> "VALUE_BIND"
         )),
@@ -201,7 +200,6 @@ class TableRepartition(override val uid: String) extends SQLAlg with VersionComp
           | e.g. shuffle = "true"
           |""".stripMargin, label = "", options = Map(
           "valueType" -> "string",
-          "defaultValue" -> "",
           "required" -> "false",
           "derivedType" -> "VALUE_BIND"
         )),
@@ -220,6 +218,7 @@ class TableRepartition(override val uid: String) extends SQLAlg with VersionComp
           |""".stripMargin
     )
     ))
+  setDefault(shuffle, "true")
 
   override def explainParams(sparkSession: SparkSession): DataFrame = _explainParams(sparkSession)
 
