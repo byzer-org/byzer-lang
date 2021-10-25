@@ -126,8 +126,7 @@ class SQLNormalizeInPlace(override val uid: String) extends SQLAlg with Function
           |""".stripMargin,
       label = "",
       options = Map(
-        "valueType" -> "string",
-        "defaultValue"-> "false"
+        "valueType" -> "string"
       )), valueProvider = Option(()=>{
       List(
         KV(Option("removeOutlierValue"),Option("true")),
@@ -135,6 +134,7 @@ class SQLNormalizeInPlace(override val uid: String) extends SQLAlg with Function
       )
     }))
   ))
+  setDefault(removeOutlierValue, "false")
 
   final val method: Param[String] = new Param[String](this, "method", FormParams.toJson(Select(
     name = "method",
@@ -146,8 +146,7 @@ class SQLNormalizeInPlace(override val uid: String) extends SQLAlg with Function
           |""".stripMargin,
       label = "",
       options = Map(
-        "valueType" -> "string",
-        "defaultValue"-> "standard"
+        "valueType" -> "string"
       )), valueProvider = Option(()=>{
       List(
         KV(Option("method"),Option("standard")),
@@ -155,5 +154,6 @@ class SQLNormalizeInPlace(override val uid: String) extends SQLAlg with Function
       )
     }))
   ))
+  setDefault(method, "standard")
 
 }

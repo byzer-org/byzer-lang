@@ -47,7 +47,6 @@ class JsonExpandExt (override val uid: String) extends SQLAlg with WowParams wit
           , label = "inputCol"
           , options = Map(
             "valueType" -> "string",
-            "defaultValue" -> "",
             "required" -> "true",
             "derivedType" -> "NONE"
           )
@@ -66,7 +65,6 @@ class JsonExpandExt (override val uid: String) extends SQLAlg with WowParams wit
           , label = "samplingRatio"
           , options = Map(
             "valueType" -> "string",
-            "defaultValue" -> "1.0",
             "required" -> "false",
             "derivedType" -> "NONE"
           )
@@ -74,6 +72,7 @@ class JsonExpandExt (override val uid: String) extends SQLAlg with WowParams wit
       )
     )
   )
+  setDefault(samplingRatio, "1.0")
 
   /**
    * Expands a json column to multiple columns. Json column name is addressed by parameter inputCol's value
