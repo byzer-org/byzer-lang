@@ -20,11 +20,14 @@ package streaming.dsl.mmlib.algs
 
 
 import org.apache.spark.ml.evaluation.RegressionEvaluator
+import org.apache.spark.ml.feature.DiscretizerFeature
+import org.apache.spark.ml.param.Param
 import org.apache.spark.ml.recommendation.{ALS, ALSModel}
 import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.param.BaseParams
+import tech.mlsql.common.form.{Extra, FormParams, KV, Select, Text}
 
 /**
   * Created by allwefantasy on 24/7/2018.
@@ -97,5 +100,39 @@ class SQLALSInPlace(override val uid: String) extends SQLAlg with MllibFunctions
   override def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = {
     throw new RuntimeException("register is not supported in ALSInPlace")
   }
+
+  val userRec:Param[String] = new Param[String](this, "userRec", FormParams.toJson(
+    Text(
+      name = "userRec",
+      value = "",
+      extra = Extra(
+        doc = "",
+        label = "",
+        options = Map(
+          "valueType" -> "int",
+          "required" -> "false",
+          "derivedType" -> "NONE"
+        )), valueProvider = Option(() => {
+        ""
+      })
+    )
+  ))
+
+  val itemRec:Param[String] = new Param[String](this, "itemRec", FormParams.toJson(
+    Text(
+      name = "itemRec",
+      value = "",
+      extra = Extra(
+        doc = "",
+        label = "",
+        options = Map(
+          "valueType" -> "int",
+          "required" -> "false",
+          "derivedType" -> "NONE"
+        )), valueProvider = Option(() => {
+        ""
+      })
+    )
+  ))
 
 }
