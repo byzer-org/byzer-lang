@@ -96,6 +96,12 @@ class TrainAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdap
       sqlAlg.asInstanceOf[ETAuth].auth(ETMethod.withName(firstKeywordInStatement), path, options)
     }
 
+    val tempTable = if (asTableName.isEmpty) UUID.randomUUID().toString.replace("-", "") else asTableName
+
+    if (!sqlAlg.skipOriginalDFName) {
+      options = options ++ Map("__newdfname__" -> tableName)
+    }
+
     // RUN and TRAIN are the same. TRAIN is normally used for algorithm.
     // RUN is used for other situation.
     val newdf = if (isTrain) {
@@ -104,7 +110,7 @@ class TrainAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdap
       sqlAlg.batchPredict(df, path, options)
     }
 
-    val tempTable = if (asTableName.isEmpty) UUID.randomUUID().toString.replace("-", "") else asTableName
+
     newdf.createOrReplaceTempView(tempTable)
     scriptSQLExecListener.setLastSelectTable(tempTable)
   }
