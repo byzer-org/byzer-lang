@@ -1,5 +1,7 @@
 package tech.mlsql.autosuggest.statement
 
+import org.antlr.v4.runtime.Token
+import tech.mlsql.autosuggest.TokenPos
 import tech.mlsql.autosuggest.meta.MetaTable
 import tech.mlsql.common.utils.log.Logging
 
@@ -27,3 +29,9 @@ trait StatementSuggester extends Logging{
 }
 
 case class SuggestItem(name: String, metaTable: MetaTable, extra: Map[String, String])
+
+abstract class SuggesterBase(_tokens: List[Token], _tokenPos: TokenPos) extends StatementSuggester with StatementUtils {
+  override def tokens: List[Token] = _tokens
+
+  override def tokenPos: TokenPos = _tokenPos
+}
