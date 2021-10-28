@@ -52,6 +52,10 @@ object ETRegister {
   register("ThenCommand", "tech.mlsql.ets.ifstmt.ThenCommand")
   register("FiCommand", "tech.mlsql.ets.ifstmt.FiCommand")
   register("ElseCommand", "tech.mlsql.ets.ifstmt.ElseCommand")
+
+  register("XGBoostExt", "tech.mlsql.ets.XGBoostExt")
+
+  
   AppRuntimeStore.store.registerResultRender("ShowFileTable", "tech.mlsql.ets.ShowFileTable")
 
 }

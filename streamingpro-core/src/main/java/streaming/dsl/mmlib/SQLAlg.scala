@@ -50,6 +50,7 @@ trait SQLAlg extends Serializable {
   def skipPathPrefix: Boolean = false
 
   def skipOriginalDFName: Boolean = true
+  def skipResultDFName: Boolean = true
 
   def modelType: ModelType = UndefinedType
 
