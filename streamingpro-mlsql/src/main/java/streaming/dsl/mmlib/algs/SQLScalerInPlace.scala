@@ -19,19 +19,16 @@
 package streaming.dsl.mmlib.algs
 
 import MetaConst._
-
 import org.apache.spark.sql.{DataFrame, MLSQLUtils, SaveMode, SparkSession}
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.types.{ArrayType, DoubleType}
 import org.apache.spark.ml.linalg.Vectors
 import org.apache.spark.ml.param.Param
-
-import streaming.dsl.mmlib.SQLAlg
+import streaming.dsl.mmlib.{Code, Doc, HtmlDoc, SQLAlg, SQLCode}
 import streaming.dsl.mmlib.algs.feature.DoubleFeature
 import streaming.dsl.mmlib.algs.meta.ScaleMeta
 import streaming.dsl.mmlib.algs.classfication.BaseClassification
 import streaming.dsl.mmlib.algs.param.BaseParams
-
 import tech.mlsql.common.form.{Extra, FormParams, KV, Select, Text}
 
 /**
@@ -116,6 +113,43 @@ class SQLScalerInPlace(override val uid: String) extends SQLAlg with MllibFuncti
     }
     MLSQLUtils.createUserDefinedFunction(f, ArrayType(DoubleType), Some(Seq(ArrayType(DoubleType))))
   }
+
+  override def doc: Doc = Doc(HtmlDoc,
+    """
+      | <a href="https://en.wikipedia.org/wiki/Feature_scaling">Feature scaling</a>
+      |
+      | Feature scaling is a method used to normalize the range of independent variables or features of data.
+      | In data processing, it is also known as data normalization and
+      | is generally performed during the data preprocessing step.
+      |
+      | Use "load modelParams.`ScalerInPlace` as output;"
+      |
+      | to check the available hyper parameters;
+      |
+      |
+    """.stripMargin)
+
+  override def codeExample: Code = Code(SQLCode, CodeExampleText.jsonStr +
+    """
+      |set jsonStr='''
+      |{"a":1,    "b":100, "label":0.0},
+      |{"a":100,  "b":100, "label":1.0}
+      |{"a":1000, "b":100, "label":0.0}
+      |{"a":10,   "b":100, "label":0.0}
+      |{"a":1,    "b":100, "label":1.0}
+      |''';
+      |load jsonStr.`jsonStr` as data;
+      |
+      |train data as ScalerInPlace.`/tmp/scaler`
+      |where inputCols="a,b"
+      |and scaleMethod="min-max"
+      |and removeOutlierValue="false"
+      |;
+      |
+      |load parquet.`/tmp/scaler/data`
+      |as featurize_table;
+      |;
+    """.stripMargin)
 
   final val inputCols: Param[String] = new Param[String](this, "inputCols", FormParams.toJson(Text(
     name = "inputCols",

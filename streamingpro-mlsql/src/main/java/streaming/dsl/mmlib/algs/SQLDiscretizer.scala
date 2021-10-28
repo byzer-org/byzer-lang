@@ -24,7 +24,7 @@ import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.functions.monotonically_increasing_id
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, MLSQLUtils, SaveMode, SparkSession}
-import streaming.dsl.mmlib.SQLAlg
+import streaming.dsl.mmlib.{Code, Doc, HtmlDoc, SQLAlg, SQLCode}
 import streaming.dsl.mmlib.algs.MetaConst._
 import streaming.dsl.mmlib.algs.meta.DiscretizerMeta
 import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
@@ -122,6 +122,51 @@ class SQLDiscretizer(override val uid: String) extends SQLAlg with Functions wit
       )
     })
   }
+
+  override def doc: Doc = Doc(HtmlDoc,
+    """
+      | <a href="https://en.wikipedia.org/wiki/Discretization">Discretization</a>
+      |In applied mathematics, discretization is the process of transferring continuous functions,
+      |models, variables, and equations into discrete counterparts.
+      |This process is usually carried out as a first step toward making them suitable for numerical
+      |evaluation and implementation on digital computers. Dichotomization is the special case of
+      |discretization in which the number of discrete classes is 2,
+      |which can approximate a continuous variable as a binary variable
+      |(creating a dichotomy for modeling purposes, as in binary classification).
+      |
+      | Use "load modelParams.`Discretizer` as output;"
+      |
+      | to check the available hyper parameters;
+      |
+      |
+    """.stripMargin)
+
+  override def codeExample: Code = Code(SQLCode, CodeExampleText.jsonStr +
+    """
+      |set jsonStr='''
+      |{"features":[5.1,3.5,1.4,0.2],"label":0.0},
+      |{"features":[5.1,3.5,1.4,0.2],"label":1.0}
+      |{"features":[5.1,3.5,1.4,0.2],"label":0.0}
+      |{"features":[4.4,2.9,1.4,0.2],"label":0.0}
+      |{"features":[5.1,3.5,1.4,0.2],"label":1.0}
+      |{"features":[5.1,3.5,1.4,0.2],"label":0.0}
+      |{"features":[5.1,3.5,1.4,0.2],"label":0.0}
+      |{"features":[4.7,3.2,1.3,0.2],"label":1.0}
+      |{"features":[5.1,3.5,1.4,0.2],"label":0.0}
+      |{"features":[5.1,3.5,1.4,0.2],"label":0.0}
+      |''';
+      |load jsonStr.`jsonStr` as data;
+      |select features[0] as a ,features[1] as b from data
+      |as data1;
+      |
+      |train data1 as Discretizer.`/tmp/model`
+      |where method="bucketizer"
+      |and `fitParam.0.inputCol`="a"
+      |and `fitParam.0.splitArray`="-inf,0.0,1.0,inf"
+      |and `fitParam.1.inputCol`="b"
+      |and `fitParam.1.splitArray`="-inf,0.0,1.0,inf";
+      |;
+    """.stripMargin)
 
   val method:Param[String] = new Param[String](this, "method", FormParams.toJson(
     Select(

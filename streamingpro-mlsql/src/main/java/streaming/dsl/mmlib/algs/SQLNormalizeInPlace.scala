@@ -23,13 +23,11 @@ import org.apache.spark.ml.param.Param
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.types.{ArrayType, DoubleType}
 import org.apache.spark.sql.{DataFrame, MLSQLUtils, SaveMode, SparkSession}
-
-import streaming.dsl.mmlib.SQLAlg
+import streaming.dsl.mmlib.{Code, Doc, HtmlDoc, SQLAlg, SQLCode}
 import streaming.dsl.mmlib.algs.MetaConst._
 import streaming.dsl.mmlib.algs.feature.DoubleFeature
 import streaming.dsl.mmlib.algs.meta.ScaleMeta
 import streaming.dsl.mmlib.algs.param.BaseParams
-
 import tech.mlsql.common.form.{Extra, FormParams, KV, Select, Text}
 
 /**
@@ -99,6 +97,49 @@ class SQLNormalizeInPlace(override val uid: String) extends SQLAlg with Function
   override def explainParams(sparkSession: SparkSession): DataFrame = {
     _explainParams(sparkSession)
   }
+
+  override def doc: Doc = Doc(HtmlDoc,
+    """
+      | <a href="https://en.wikipedia.org/wiki/Normalization_(statistics)">Normalization</a>
+      |
+      | In statistics and applications of statistics,
+      | normalization can have a range of meanings.
+      | In the simplest cases, normalization of ratings means adjusting values measured on different scales to a
+      | notionally common scale, often prior to averaging. In more complicated cases, normalization may refer to
+      | more sophisticated adjustments where the intention is to bring the entire probability distributions of adjusted
+      | values into alignment. In the case of normalization of scores in educational assessment, there may be an
+      | intention to align distributions to a normal distribution.
+      | A different approach to normalization of probability distributions is quantile normalization, where the
+      | quantiles of the different measures are brought into alignment.
+      |
+      | Use "load modelParams.`NormalizeInPlace` as output;"
+      |
+      | to check the available hyper parameters;
+      |
+      |
+    """.stripMargin)
+
+  override def codeExample: Code = Code(SQLCode, CodeExampleText.jsonStr +
+    """
+      set jsonStr='''
+      |{"a":1,    "b":100, "label":0.0},
+      |{"a":100,  "b":100, "label":1.0}
+      |{"a":1000, "b":100, "label":0.0}
+      |{"a":10,   "b":100, "label":0.0}
+      |{"a":1,    "b":100, "label":1.0}
+      |''';
+      |load jsonStr.`jsonStr` as data;
+      |
+      |train data as NormalizeInPlace.`/tmp/model`
+      |where inputCols="a,b"
+      |and scaleMethod="standard"
+      |and removeOutlierValue="false"
+      |;
+      |
+      |load parquet.`/tmp/model/data`
+      |as output;
+      |;
+    """.stripMargin)
 
   final val inputCols: Param[String] = new Param[String](this, "inputCols", FormParams.toJson(Text(
     name = "inputCols",
