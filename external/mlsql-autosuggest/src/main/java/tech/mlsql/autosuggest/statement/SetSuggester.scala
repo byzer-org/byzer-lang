@@ -53,7 +53,7 @@ class SetSuggester(val context: AutoSuggestContext, val _tokens: List[Token], va
   private def keywordSuggest: List[SuggestItem] = {
     var items = List[SuggestItem]()
     // If the where keyword already exists, it will not prompt
-    if (backAndFirstIs(DSLSQLLexer.WHERE)) {
+    if (backAndFirstIs(DSLSQLLexer.WHERE) || backAndFirstIs(DSLSQLLexer.OPTIONS)) {
       return items
     }
 
@@ -62,6 +62,8 @@ class SetSuggester(val context: AutoSuggestContext, val _tokens: List[Token], va
         // The current pos is IDENTIFIER, and is the where prefix
         if ("where".startsWith(_tokens(pos).getText)) {
           items = List(SuggestItem("where", SpecialTableConst.KEY_WORD_TABLE, Map()))
+        }else if( "options".startsWith(_tokens(pos).getText)){
+          items = List(SuggestItem("options", SpecialTableConst.KEY_WORD_TABLE, Map()))
         }
         items
 
@@ -83,7 +85,8 @@ class SetSuggester(val context: AutoSuggestContext, val _tokens: List[Token], va
           .build
 
         if (temp.isSuccess) {
-          items = List(SuggestItem("where", SpecialTableConst.KEY_WORD_TABLE, Map()))
+          items = List(SuggestItem("where", SpecialTableConst.KEY_WORD_TABLE, Map()),
+            SuggestItem("options", SpecialTableConst.KEY_WORD_TABLE, Map()))
         }
         items
 
@@ -118,21 +121,25 @@ private class SetOptionsSuggester(setSuggester: SetSuggester) extends SetSuggest
       return false
     }
 
-    val temp = TokenMatcher(tokens, tokenPos.pos).back.orIndex(List(Food(None, DSLSQLLexer.WHERE)).toArray)
+    val temp = getOptionsIndex
     if (temp == -1) return false
-    if (tokens(temp).getType == DSLSQLLexer.WHERE) return true
+    if (tokens(temp).getType == DSLSQLLexer.WHERE || tokens(temp).getType == DSLSQLLexer.OPTIONS) return true
     false
-
   }
 
   override def suggest(): List[SuggestItem] = {
-    val temp = TokenMatcher(tokens, tokenPos.pos).back.orIndex(List(Food(None, DSLSQLLexer.WHERE)).toArray)
+    val temp = getOptionsIndex
     if (temp < tokens.length - 1) {
       val curOptionValue = tokens.slice(temp + 1, tokens.length).filter(item => item.getType == DSLSQLLexer.IDENTIFIER).map(_.getText)
       return SET_OPTION_SUGGESTIONS.filter(item => !curOptionValue.contains(item.name))
     }
 
     SET_OPTION_SUGGESTIONS
+  }
+
+  private def getOptionsIndex: Int = {
+    TokenMatcher(tokens, tokenPos.pos).back.orIndex(List(Food(None, DSLSQLLexer.WHERE),
+      Food(None, DSLSQLLexer.OPTIONS)).toArray)
   }
 }
 

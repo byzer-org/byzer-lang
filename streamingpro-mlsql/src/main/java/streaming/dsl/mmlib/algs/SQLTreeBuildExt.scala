@@ -272,7 +272,6 @@ class SQLTreeBuildExt(override val uid: String) extends SQLAlg with Functions wi
         label = "Id used column",
         options = Map(
           "valueType" -> "string",
-          "defaultValue" -> "",
           "required" -> "true",
           "derivedType" -> "NONE"
         )), valueProvider = Option(() => {
@@ -291,7 +290,6 @@ class SQLTreeBuildExt(override val uid: String) extends SQLAlg with Functions wi
         label = "Parent id used column",
         options = Map(
           "valueType" -> "string",
-          "defaultValue" -> "",
           "required" -> "true",
           "derivedType" -> "NONE"
         )), valueProvider = Option(() => {
@@ -310,7 +308,6 @@ class SQLTreeBuildExt(override val uid: String) extends SQLAlg with Functions wi
         label = "The mark of top level",
         options = Map(
           "valueType" -> "string",
-          "defaultValue" -> "",
           "required" -> "false",
           "derivedType" -> "NONE"
         )), valueProvider = Option(() => {
@@ -334,7 +331,6 @@ class SQLTreeBuildExt(override val uid: String) extends SQLAlg with Functions wi
         label = "action for syntax analysis",
         options = Map(
           "valueType" -> "string",
-          "defaultValue" -> "",
           "required" -> "false",
           "derivedType" -> "NONE"
         )), valueProvider = Option(() => {
@@ -358,7 +354,6 @@ class SQLTreeBuildExt(override val uid: String) extends SQLAlg with Functions wi
         label = "Recurring dependency break times",
         options = Map(
           "valueType" -> "int",
-          "defaultValue" -> "",
           "required" -> "false",
           "derivedType" -> "NONE"
         )), valueProvider = Option(() => {

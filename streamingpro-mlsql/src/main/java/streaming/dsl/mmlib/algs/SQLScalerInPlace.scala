@@ -144,7 +144,6 @@ class SQLScalerInPlace(override val uid: String) extends SQLAlg with MllibFuncti
       label = "",
       options = Map(
         "valueType" -> "string",
-        "defaultValue"-> "log2",
         "required" -> "false",
         "derivedType" -> "NONE"
       )),valueProvider= Option(()=>{
@@ -158,6 +157,7 @@ class SQLScalerInPlace(override val uid: String) extends SQLAlg with MllibFuncti
       )
     }))
   ))
+  setDefault(scaleMethod, "log2")
 
   final val removeOutlierValue: Param[String] = new Param[String](this, "removeOutlierValue", FormParams.toJson(Select(
     name = "removeOutlierValue",
@@ -170,7 +170,6 @@ class SQLScalerInPlace(override val uid: String) extends SQLAlg with MllibFuncti
       label = "",
       options = Map(
         "valueType" -> "string",
-        "defaultValue"-> "false",
         "required" -> "false",
         "derivedType" -> "NONE"
       )), valueProvider = Option(()=>{
@@ -180,5 +179,6 @@ class SQLScalerInPlace(override val uid: String) extends SQLAlg with MllibFuncti
       )
     }))
   ))
+  setDefault(removeOutlierValue, "false")
 
 }
