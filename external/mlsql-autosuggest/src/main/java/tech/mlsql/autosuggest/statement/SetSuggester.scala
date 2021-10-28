@@ -58,7 +58,7 @@ class SetSuggester(val context: AutoSuggestContext, val _tokens: List[Token], va
     }
 
     _tokenPos match {
-      case TokenPos(pos, TokenPosType.CURRENT, _) if pos > 0 =>
+      case TokenPos(pos, TokenPosType.CURRENT, offsetInToken) if pos > 0 =>
         // The current pos is IDENTIFIER, and is the where prefix
         if ("where".startsWith(_tokens(pos).getText)) {
           items = List(SuggestItem("where", SpecialTableConst.KEY_WORD_TABLE, Map()))
@@ -117,7 +117,7 @@ private class SetOptionsSuggester(setSuggester: SetSuggester) extends SetSuggest
 
   override def isMatch(): Boolean = {
     if (tokenPos.currentOrNext == TokenPosType.CURRENT && !SET_OPTION_SUGGESTIONS.exists(
-      _.name.startsWith(tokens(tokenPos.pos).getText))) {
+      _.name.toUpperCase.startsWith(tokens(tokenPos.pos).getText.toUpperCase))) {
       return false
     }
 
@@ -133,13 +133,7 @@ private class SetOptionsSuggester(setSuggester: SetSuggester) extends SetSuggest
       val curOptionValue = tokens.slice(temp + 1, tokens.length).filter(item => item.getType == DSLSQLLexer.IDENTIFIER).map(_.getText)
       return SET_OPTION_SUGGESTIONS.filter(item => !curOptionValue.contains(item.name))
     }
-
     SET_OPTION_SUGGESTIONS
-  }
-
-  private def getOptionsIndex: Int = {
-    TokenMatcher(tokens, tokenPos.pos).back.orIndex(List(Food(None, DSLSQLLexer.WHERE),
-      Food(None, DSLSQLLexer.OPTIONS)).toArray)
   }
 }
 

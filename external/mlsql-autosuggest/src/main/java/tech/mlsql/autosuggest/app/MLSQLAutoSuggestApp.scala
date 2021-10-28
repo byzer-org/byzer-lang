@@ -82,7 +82,7 @@ class AutoSuggestController extends CustomController {
     val lineNum = params("lineNum").toInt
     val columnNum = params("columnNum").toInt
     val isDebug = params.getOrElse("isDebug", "false").toBoolean
-    val size = params.getOrElse("size", "30").toInt
+    val size = params.getOrElse("size", "100").toInt
     val includeTableMeta = params.getOrElse("includeTableMeta", "false").toBoolean
 
     val schemaInferUrl = params.getOrElse("schemaInferUrl", "")

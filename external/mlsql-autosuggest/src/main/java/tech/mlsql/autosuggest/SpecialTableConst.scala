@@ -7,9 +7,14 @@ import tech.mlsql.autosuggest.meta.{MetaTable, MetaTableKey}
  */
 object SpecialTableConst {
   val KEY_WORD = "__KEY__WORD__"
+
   val DATA_SOURCE_KEY = "__DATA__SOURCE__"
+
   val OPTION_KEY = "__OPTION__"
+
   val TEMP_TABLE_DB_KEY = "__TEMP_TABLE__"
+
+  val ET_KEY = "__ET__"
 
   val OTHER_TABLE_KEY = "__OTHER__TABLE__"
 
@@ -18,6 +23,8 @@ object SpecialTableConst {
   def KEY_WORD_TABLE = MetaTable(MetaTableKey(None, None, SpecialTableConst.KEY_WORD), List())
 
   def DATA_SOURCE_TABLE = MetaTable(MetaTableKey(None, None, SpecialTableConst.DATA_SOURCE_KEY), List())
+
+  def ET_TABLE = MetaTable(MetaTableKey(None, None, SpecialTableConst.ET_KEY), List())
 
   def OPTION_TABLE = MetaTable(MetaTableKey(None, None, SpecialTableConst.OPTION_KEY), List())
 
