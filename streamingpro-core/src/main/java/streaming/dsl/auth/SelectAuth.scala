@@ -50,7 +50,8 @@ class SelectAuth(authProcessListener: AuthProcessListener) extends MLSQLAuth wit
 
     val chunks = wowText.split("\\s+")
     val tableName = chunks.last.replace(";", "")
-    val sql = wowText.replaceAll(s"as[\\s|\\n]+${tableName}", "")
+    val sql = wowText.replaceAll(s"((?i)as)[\\s|\\n]+${tableName}", "")
+
 
     def isTempTable(name: String) = {
       authProcessListener.listener.sparkSession.catalog.tableExists(name)
