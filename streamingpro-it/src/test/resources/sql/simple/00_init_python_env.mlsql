@@ -15,7 +15,7 @@ _HOME_PATH="${HOME}"
 _CONDA_HOME="${1-${_HOME_PATH}/conda}"
 
 # Install conda environment
-echo "Start to install conda, the current OS Kernel is: ${_UNAME_OUT}, the conda installation path is: ${_CONDA_HOME}, the environment variable address is: ${_HOME_PATH}/.bashrc"
+echo "Start to install conda, the current OS Kernel is: ${_UNAME_OUT}, the conda installation path is: ${_CONDA_HOME}, the environment variable address is: ${_HOME_PATH}/.bashrc"| perl -ne 'print STDERR'
 case "${_UNAME_OUT}" in
 Linux*) _MACHINE=Linux ;;
 Darwin*) _MACHINE=Mac ;;
@@ -23,12 +23,12 @@ CYGWIN*) _MACHINE=Cygwin ;;
 MINGW*) _MACHINE=MinGw ;;
 *) _MACHINE="UNKNOWN:${_UNAME_OUT}" ;;
 esac
-echo "${_MACHINE}"
+echo "${_MACHINE}"| perl -ne 'print STDERR'
 if [ -z "$(command -v conda)" ]; then
   if [ -x "${_CONDA_HOME}"/etc/profile.d/conda.sh ]; then
     . "${_CONDA_HOME}"/etc/profile.d/conda.sh
     if [ -z "$(command -v conda)" ]; then
-      echo "Error: installation failed! The ${_CONDA_HOME} directory already exists, but command of conda cannot be used. Please try to repair or delete it and try again."
+      echo "Error: installation failed! The ${_CONDA_HOME} directory already exists, but command of conda cannot be used. Please try to repair or delete it and try again."| perl -ne 'print STDERR'
       exit 1
     fi
   fi
@@ -38,11 +38,11 @@ if [ -z "$(command -v conda)" ]; then
     # miniconda requires bzip2
     if [ -z "$(command -v bzip2)" ]; then
       if [ -z "$(command -v brew)" ]; then
-        echo "" &&
-          echo "Error: Please install homebrew to your macOs first. You can run the following commands:" &&
-          echo "" &&
-          echo '      /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"' &&
-          echo "" &&
+        echo ""| perl -ne 'print STDERR' &&
+          echo "Error: Please install homebrew to your macOs first. You can run the following commands:"| perl -ne 'print STDERR' &&
+          echo ""| perl -ne 'print STDERR' &&
+          echo '      /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"'| perl -ne 'print STDERR' &&
+          echo ""| perl -ne 'print STDERR' &&
           exit 1
       fi
       brew install bzip2
@@ -55,7 +55,7 @@ if [ -z "$(command -v conda)" ]; then
       apt-get install bzip2
     fi
   else
-    echo "Error: Windows  is not supported yet!"
+    echo "Error: Windows  is not supported yet!"| perl -ne 'print STDERR'
     exit 0
   fi
   (wget --quiet ${_MINICONDA3_DOWNLOAD_URL} -O "$_HOME_PATH"/miniconda.sh &&
@@ -66,8 +66,8 @@ if [ -z "$(command -v conda)" ]; then
     _CONDA_ENV="\n# conda environment\n. ${_CONDA_HOME}/etc/profile.d/conda.sh\n. ${_CONDA_HOME}/bin/activate\nexport PATH=${_CONDA_HOME}/bin:"'$PATH' &&
     echo "$_CONDA_ENV" >>"$_HOME_PATH"/.bashrc &&
     . "$_HOME_PATH"/.bashrc &&
-    echo "Conda initialization is complete!") ||
-    (echo "Error: installation failed, please check the environment!" && exit 1)
+    echo "Conda initialization is complete!"| perl -ne 'print STDERR') ||
+    (echo "Error: installation failed, please check the environment!"| perl -ne 'print STDERR' && exit 1)
 else
   if [ ! -d "${_CONDA_HOME}" ];then
     if conda info -e | grep -q 'base';then
@@ -77,33 +77,37 @@ else
         _CONDA_HOME="$(echo "${_CONDA_PREFIX}" | awk -F '[ ]+' '{print $3}')"
       fi
     else
-      echo "Error: can not find any path of conda!" && exit 1
+      echo "Error: can not find any path of conda!"| perl -ne 'print STDERR' && exit 1
     fi
-    echo "Conda HOME is : ${_CONDA_HOME}"
+    echo "Conda HOME is : ${_CONDA_HOME}"| perl -ne 'print STDERR'
   fi
-  echo "Conda environment already exists, skipping..."
+  echo "Conda environment already exists, skipping..."| perl -ne 'print STDERR'
 fi
 
 # export PATH of activate
 if [ -z "$(command -v activate)" ]; then
+  echo "Start to export PATH of activate..."| perl -ne 'print STDERR'
   _CONDA_ENV="\n# conda environment\n. ${_CONDA_HOME}/etc/profile.d/conda.sh\n. ${_CONDA_HOME}/bin/activate\nexport PATH=${_CONDA_HOME}/bin:"'$PATH'
   if whoami |grep -q 'root';then
     (echo "$_CONDA_ENV" >>/etc/profile &&
       . /etc/profile &&
-      echo "export  PATH of activate success.") ||
-      (echo "Error: can not export path of activate!")
+      echo "export root PATH of activate success."| perl -ne 'print STDERR') ||
+      (echo "Error: can not export root path of activate!"| perl -ne 'print STDERR')
   elif echo "$SHELL" |grep -q 'zsh'; then
     (echo "$_CONDA_ENV" >>"$_HOME_PATH"/.zshrc &&
       . "$_HOME_PATH"/.zshrc &&
-      echo "export  PATH of activate success.") ||
-      (echo "Error: can not export path of activate!")
-  elif echo "$SHELL" |grep -q 'bash'; then
+      echo "export zsh PATH of activate success."| perl -ne 'print STDERR') ||
+      (echo "Error: can not export zsh path of activate!"| perl -ne 'print STDERR')
+  else
     (echo "$_CONDA_ENV" >>"$_HOME_PATH"/.bashrc &&
       . "$_HOME_PATH"/.bashrc &&
-      echo "export  PATH of activate success.") ||
-      (echo "Error: can not export path of activate!")
+      echo "export bash PATH of activate success. CONDA_HOME is : ${_CONDA_HOME}"| perl -ne 'print STDERR') ||
+      (echo "Error: can not export bash path of activate!"| perl -ne 'print STDERR')
   fi
+  echo "Current CONDA_HOME is : ${_CONDA_HOME}"| perl -ne 'print STDERR'
   export PATH=${_CONDA_HOME}/bin:$PATH
+else
+  echo "conda activate already init, skipping..."| perl -ne 'print STDERR'
 fi
 
 # Add official channels
@@ -122,14 +126,12 @@ conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/f
 
 # Check if it is installed
 if conda env list | grep -q 'it_env'; then
-  echo "Conda environment already exists, skipping..."
+  echo "Conda environment already exists, skipping..."| perl -ne 'print STDERR'
 else
-  echo "Start to create a conda environment with python version 3.6.7: it_env..." &&
+  echo "Start to create a conda environment with python version 3.6.7: it_env..."| perl -ne 'print STDERR' &&
       conda create --name it_env python=3.6.7 &&
-      echo "The conda environment is created."
+      echo "The conda environment is created."| perl -ne 'print STDERR'
 fi
-
-source deactivate
 
 # used by anaconda
 source activate it_env
@@ -137,13 +139,13 @@ source activate it_env
 # If _CONDA_HOME is set correctly, used by anaconda and miniconda
 . "${_CONDA_HOME}"/bin/activate it_env
 
-( echo "Start to install pip dependencies..." &&
+( echo "Start to install pip dependencies..."| perl -ne 'print STDERR' &&
   pip install --upgrade pip &&
   pip config set global.trusted-host mirrors.aliyun.com &&
   pip config set global.index-url http://mirrors.aliyun.com/pypi/simple/ &&
   pip install --upgrade Cython pytest-runner aioredis==1.3.1 pyarrow==5.0.0 ray==1.3.0 \
     aiohttp psutil grpcio pandas xlsxwriter watchdog requests click uuid sfcli \
     pyjava vega_datasets plotly &&
-  echo "Conda environment initialization is complete!") ||
-  (echo "Error: installation failed, please check the environment!" && exit 1)
+  echo "Conda environment initialization is complete!"| perl -ne 'print STDERR') ||
+  (echo "Error: installation failed, please check the environment!"| perl -ne 'print STDERR' && exit 1)
 ''';
