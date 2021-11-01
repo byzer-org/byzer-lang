@@ -171,7 +171,7 @@ class SQLLogisticRegression(override val uid: String) extends SQLAlg with MllibF
 
   override def explainParams(sparkSession: SparkSession): DataFrame = {
     _explainParams(sparkSession, () => {
-      new LinearRegression()
+      new LogisticRegression()
     })
   }
 

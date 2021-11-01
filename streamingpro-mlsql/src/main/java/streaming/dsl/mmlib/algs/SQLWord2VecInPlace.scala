@@ -23,17 +23,18 @@ import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, MLSQLUtils, Row, SaveMode, SparkSession, functions => F}
 import streaming.core.shared.SharedObjManager
-import streaming.dsl.mmlib.SQLAlg
+import streaming.dsl.mmlib.{Code, Doc, HtmlDoc, SQLAlg, SQLCode}
 import streaming.dsl.mmlib.algs.MetaConst._
 import streaming.dsl.mmlib.algs.classfication.BaseClassification
 import streaming.dsl.mmlib.algs.feature.StringFeature
 import streaming.dsl.mmlib.algs.feature.StringFeature.loadWordvecs
 import streaming.dsl.mmlib.algs.meta.Word2VecMeta
 import streaming.dsl.mmlib.algs.param.BaseParams
+import tech.mlsql.common.form.{Extra, FormParams, KV, Select, Text}
 
 /**
-  * Created by allwefantasy on 7/5/2018.
-  */
+ * Created by allwefantasy on 7/5/2018.
+ */
 class SQLWord2VecInPlace(override val uid: String) extends SQLAlg with MllibFunctions with Functions with BaseClassification {
   def this() = this(BaseParams.randomUID())
 
@@ -42,15 +43,152 @@ class SQLWord2VecInPlace(override val uid: String) extends SQLAlg with MllibFunc
     emptyDataFrame()(df)
   }
 
-  final val dicPaths: Param[String] = new Param[String](this, "dicPaths", "user-defined dictionary")
-  final val inputCol: Param[String] = new Param[String](this, "inputCol", "Which text column you want to process")
-  final val stopWordPath: Param[String] = new Param[String](this, "stopWordPath", "user-defined stop word dictionary")
-  final val wordvecPaths: Param[String] = new Param[String](this, "wordvecPaths", "you can specify the location of existed word2vec model")
-  final val vectorSize: IntParam = new IntParam(this, "vectorSize", "the word vector size you expect")
-  final val minCount: IntParam = new IntParam(this, "minCount", "")
-  final val split: Param[String] = new Param[String](this, "split", "optinal, a token specifying how to analysis the text string")
-  final val length: IntParam = new IntParam(this, "length", "input sentence length")
-  final val resultFeature: Param[String] = new Param[String](this, "resultFeature", "flag:concat m n-dim arrays to one m*n-dim array;merge: merge multi n-dim arrays into one n-dim array；index: output of conword sequence")
+  final val dicPaths: Param[String] = new Param[String](this, "dicPaths", FormParams.toJson(Text(
+    name = "dicPaths",
+    value = "",
+    extra = Extra(
+      doc =
+        """
+          |user-defined dictionary
+          |""".stripMargin,
+      label = "",
+      options = Map(
+        "valueType" -> "string",
+        "required" -> "false",
+        "derivedType" -> "NONE"
+      )
+    )
+  )))
+  final val inputCol: Param[String] = new Param[String](this, "inputCol", FormParams.toJson(Text(
+    name = "inputCol",
+    value = "",
+    extra = Extra(
+      doc =
+        """
+          |"Which text column you want to process"
+          |""".stripMargin,
+      label = "",
+      options = Map(
+        "valueType" -> "string",
+        "required" -> "true",
+        "derivedType" -> "NONE"
+      )
+    )
+  )))
+  final val stopWordPath: Param[String] = new Param[String](this, "stopWordPath", FormParams.toJson(Text(
+    name = "stopWordPath",
+    value = "",
+    extra = Extra(
+      doc =
+        """
+          |user-defined dictionary
+          |""".stripMargin,
+      label = "",
+      options = Map(
+        "valueType" -> "string",
+        "required" -> "false",
+        "derivedType" -> "NONE"
+      )
+    )
+  )))
+  final val wordvecPaths: Param[String] = new Param[String](this, "wordvecPaths", FormParams.toJson(Text(
+    name = "wordvecPaths",
+    value = "",
+    extra = Extra(
+      doc =
+        """
+          |you can specify the location of existed word2vec model
+          |""".stripMargin,
+      label = "",
+      options = Map(
+        "valueType" -> "string",
+        "required" -> "false",
+        "derivedType" -> "NONE"
+      )
+    )
+  )))
+  final val vectorSize: IntParam = new IntParam(this, "vectorSize", FormParams.toJson(Text(
+    name = "vectorSize",
+    value = "",
+    extra = Extra(
+      doc =
+        """
+          |the word vector size you expect
+          |""".stripMargin,
+      label = "",
+      options = Map(
+        "valueType" -> "int",
+        "required" -> "false",
+        "derivedType" -> "NONE"
+      )
+    )
+  )))
+  final val minCount: IntParam = new IntParam(this, "minCount", FormParams.toJson(Text(
+    name = "minCount",
+    value = "",
+    extra = Extra(
+      doc =
+        """
+          |the minimum count of the frequency of words.
+          |A word whose frequency under the minCount will not generate related vector.
+          |""".stripMargin,
+      label = "",
+      options = Map(
+        "valueType" -> "int",
+        "required" -> "false",
+        "derivedType" -> "NONE"
+      )
+    )
+  )))
+  final val split: Param[String] = new Param[String](this, "split", FormParams.toJson(Text(
+    name = "split",
+    value = "",
+    extra = Extra(
+      doc =
+        """
+          |optinal, a token specifying how to analysis the text string
+          |""".stripMargin,
+      label = "",
+      options = Map(
+        "valueType" -> "string",
+        "required" -> "false",
+        "derivedType" -> "NONE"
+      )
+    )
+  )))
+  final val length: IntParam = new IntParam(this, "length", FormParams.toJson(Text(
+    name = "length",
+    value = "",
+    extra = Extra(
+      doc =
+        """
+          | input sentence length
+          |""".stripMargin,
+      label = "",
+      options = Map(
+        "valueType" -> "int",
+        "required" -> "false",
+        "derivedType" -> "NONE"
+      )
+    )
+  )))
+  final val resultFeature: Param[String] = new Param[String](this, "resultFeature", FormParams.toJson(Text(
+    name = "length",
+    value = "",
+    extra = Extra(
+      doc =
+        """
+          | flag:concat m n-dim arrays to one m*n-dim array;merge: merge multi n-dim arrays into one n-dim array；
+          | index: output of conword sequence
+          |""".stripMargin,
+      label = "",
+      options = Map(
+        "valueType" -> "string",
+        "required" -> "false",
+        "derivedType" -> "NONE"
+      )
+    )
+  )))
 
   def interval_train(df: DataFrame, params: Map[String, String]) = {
 
@@ -254,5 +392,47 @@ class SQLWord2VecInPlace(override val uid: String) extends SQLAlg with MllibFunc
     _explainParams(sparkSession)
   }
 
+  override def doc: Doc = Doc(HtmlDoc,
+    """
+      | <a href="https://en.wikipedia.org/wiki/Word2vec">Word2vec</a>
+      |
+      | Word2vec is a technique for natural language processing published in 2013.
+      | The word2vec algorithm uses a neural network model to learn word associations from a large corpus of text.
+      | Once trained, such a model can detect synonymous words or suggest additional words for a partial sentence.
+      | As the name implies, word2vec represents each distinct word with a particular list of numbers called a vector.
+      | The vectors are chosen carefully such that a simple mathematical function (the cosine similarity between
+      | the vectors) indicates the level of semantic similarity between the words represented by those vectors.
+      |
+      | Use "load modelParams.`Word2VecInPlace-` as output;"
+      |
+      | to check the available hyper parameters;
+      |
+      |
+    """.stripMargin)
+
+  override def codeExample: Code = Code(SQLCode, CodeExampleText.jsonStr +
+    """
+      |set rawText='''
+      |{"content":"MLSQL是一个好的语言","label":0.0},
+      |{"content":"Spark是一个好的语言","label":1.0}
+      |{"content":"MLSQL语言","label":0.0}
+      |{"content":"MLSQL是一个好的语言","label":0.0}
+      |{"content":"MLSQL是一个好的语言","label":1.0}
+      |{"content":"MLSQL是一个好的语言","label":0.0}
+      |{"content":"MLSQL是一个好的语言","label":0.0}
+      |{"content":"MLSQL是一个好的语言","label":1.0}
+      |{"content":"Spark好的语言","label":0.0}
+      |{"content":"MLSQL是一个好的语言","label":0.0}
+      |''';
+      |
+      |load jsonStr.`rawText` as orginal_text_corpus;
+      |
+      |train orginal_text_corpus as Word2VecInPlace.`/tmp/word2vec`
+      |where inputCol="content"
+      |and ignoreNature="true"
+      |and resultFeature="merge";
+      |
+      |;
+    """.stripMargin)
 
 }
