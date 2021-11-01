@@ -20,15 +20,18 @@ package streaming.dsl.mmlib.algs
 
 
 import org.apache.spark.ml.evaluation.RegressionEvaluator
+import org.apache.spark.ml.feature.DiscretizerFeature
+import org.apache.spark.ml.param.Param
 import org.apache.spark.ml.recommendation.{ALS, ALSModel}
 import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
 import org.apache.spark.sql.expressions.UserDefinedFunction
-import streaming.dsl.mmlib.SQLAlg
+import streaming.dsl.mmlib.{Code, Doc, HtmlDoc, SQLAlg, SQLCode}
 import streaming.dsl.mmlib.algs.param.BaseParams
+import tech.mlsql.common.form.{Extra, FormParams, KV, Select, Text}
 
 /**
-  * Created by allwefantasy on 24/7/2018.
-  */
+ * Created by allwefantasy on 24/7/2018.
+ */
 class SQLALSInPlace(override val uid: String) extends SQLAlg with MllibFunctions with Functions with BaseParams {
 
   def this() = this(BaseParams.randomUID())
@@ -97,5 +100,82 @@ class SQLALSInPlace(override val uid: String) extends SQLAlg with MllibFunctions
   override def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = {
     throw new RuntimeException("register is not supported in ALSInPlace")
   }
+
+  override def doc: Doc = Doc(HtmlDoc,
+    """
+      |<a href="https://en.wikipedia.org/wiki/Matrix_completion">Alternating Least Squares (ALS)</a>
+      |
+      |The alternating least squares (ALS) algorithm factorizes a given matrix R into two factors U and
+      |V such that R≈UTV. The unknown row dimension is given as a parameter to the algorithm and is
+      |called latent factors. Since matrix factorization can be used in the context of recommendation,
+      |the matrices U and V can be called user and item matrix, respectively.
+      |
+      | Use "load modelParams.`ALSInPlace` as output;"
+      |
+      | to check the available hyper parameters;
+      |
+      |""".stripMargin
+  )
+
+  override def codeExample: Code = Code(SQLCode, CodeExampleText.jsonStr +
+    """
+      |
+      |train data as ALSInPlace.`/tmp/model` where
+      |
+      |-- the first group of parameters
+      |`fitParam.0.maxIter`="5"
+      |and `fitParam.0.regParam` = "0.01"
+      |and `fitParam.0.userCol` = "a"
+      |and `fitParam.0.itemCol` = "i"
+      |and `fitParam.0.ratingCol` = "rate"
+      |
+      |- compute rmse
+      |and evaluateTable="data"
+      |and ratingCol="rate"
+      |
+      |-- size of recommending items for user
+      |and `userRec` = "10"
+      |
+      |-- size of recommending users for item
+      |-- and `itemRec` = "10"
+      |and coldStartStrategy="drop";
+      |
+      |
+      |""".stripMargin
+  )
+
+  val userRec: Param[String] = new Param[String](this, "userRec", FormParams.toJson(
+    Text(
+      name = "userRec",
+      value = "",
+      extra = Extra(
+        doc = "",
+        label = "",
+        options = Map(
+          "valueType" -> "int",
+          "required" -> "false",
+          "derivedType" -> "NONE"
+        )), valueProvider = Option(() => {
+        ""
+      })
+    )
+  ))
+
+  val itemRec: Param[String] = new Param[String](this, "itemRec", FormParams.toJson(
+    Text(
+      name = "itemRec",
+      value = "",
+      extra = Extra(
+        doc = "",
+        label = "",
+        options = Map(
+          "valueType" -> "int",
+          "required" -> "false",
+          "derivedType" -> "NONE"
+        )), valueProvider = Option(() => {
+        ""
+      })
+    )
+  ))
 
 }
