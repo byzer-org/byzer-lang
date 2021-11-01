@@ -65,8 +65,15 @@ import scala.util.control.NonFatal
   servers = Array()
 )
 class RestController extends ApplicationController with WowLog {
+  private def contentToParams(): Unit = {
+    val jsonStr = this.contentAsString()
+    if( jsonStr != null && jsonStr.nonEmpty ) {
+      val params = fromJson(jsonStr, classOf[Map[String, String]])
+      this.params().putAll(params)
+    }
+  }
 
-  // mlsql script execute api, support async and sysn
+  // mlsql script execute api, support async and sync
   // begin -------------------------------------------
 
   @Action(
@@ -106,6 +113,12 @@ class RestController extends ApplicationController with WowLog {
 
     val silence = paramAsBoolean("silence", false)
     val sparkSession = getSession
+    // DefaultRestRequest ignores request body for "application/json"
+    // Save request body in params here.
+    if( request.httpServletRequest().getHeader("content-type") == "application/json") {
+      logger.info( "Setup param map for application/json" )
+      contentToParams()
+    }
 
     accessAuth(sparkSession)
 
@@ -567,6 +580,5 @@ class RestController extends ApplicationController with WowLog {
     }
     result
   }
-
   // end --------------------------------------------------------
 }
