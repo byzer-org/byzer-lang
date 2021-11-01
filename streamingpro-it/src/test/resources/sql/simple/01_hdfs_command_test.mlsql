@@ -1,1 +1,2 @@
+--%comparator=tech.mlsql.it.IgnoreResultComparator
 !hdfs -ls /tmp;
