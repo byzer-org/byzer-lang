@@ -1,12 +1,14 @@
 package tech.mlsql.it
 
 import java.io.File
-
 import org.apache.commons.io.FileUtils
+import org.apache.spark.SparkCoreVersion
+import tech.mlsql.common.utils.log.Logging
+import tech.mlsql.core.version.MLSQLVersion
 
 import scala.collection.mutable.ListBuffer
 
-object TestManager {
+object TestManager extends Logging {
 
   val nl: String = System.lineSeparator()
 
@@ -14,17 +16,20 @@ object TestManager {
 
   var failedCases: ListBuffer[(TestCase, String)] = ListBuffer()
 
-  var matchesReg = ".*"
+  var matchesReg:String = ".*"
 
   def loadTestCase(testCaseDir: File): Unit = {
-    matchesReg = System.getProperty("matches")
+    matchesReg = Option( System.getProperty("matches") ) match {
+      case Some(m) => m
+      case None => matchesReg
+    }
     if (testCaseDir.exists() && testCaseDir.isDirectory) {
       testCaseDir.listFiles().sortBy(_.getName).foreach(file => {
         if (file.isFile &&
           file.getName.endsWith("mlsql") &&
           file.getName.stripSuffix(".mlsql").matches(matchesReg)
         ) {
-          println(s"collect test file: ${file.getName}; matches=${matchesReg}")
+          logInfo(s"collect test file: ${file.getName}; matches=${matchesReg}")
           val expectedFileName = s"""${file.getName}.expected"""
           val expectedFile = new File(file.getParent, expectedFileName)
           val content = FileUtils.readFileToString(file)
@@ -49,8 +54,8 @@ object TestManager {
 
   def recordError(testCase: TestCase, msg: String): Unit = {
     failedCases += Tuple2(testCase, msg)
-    println("========================= Error Test Case =========================")
-    println(s"Error: TestCase ${testCase.name} failed, error msg is: $msg")
+    logInfo("========================= Error Test Case =========================")
+    logInfo(s"Error: TestCase ${testCase.name} failed, error msg is: $msg")
   }
 
 
@@ -81,7 +86,7 @@ object TestManager {
       try {
         comparator = Class.forName(clazzName).newInstance().asInstanceOf[Comparator]
       } catch {
-        case _: ClassNotFoundException => println(s"Warn: can not load comparator $clazzName, use default.")
+        case _: ClassNotFoundException => logInfo(s"Warn: can not load comparator $clazzName, use default.")
       }
     }
     val compareResult: (Boolean, String) = comparator.compare(testCase, result, exception)
@@ -92,13 +97,37 @@ object TestManager {
 
 
   def report(): Unit = {
-    println("========================= Test Result =========================")
+    logInfo("========================= Test Result =========================")
     if (failedCases.isEmpty) {
-      println(s"All tests (${testCases.size} total) passed.")
+      logInfo(s"All tests (${testCases.size} total) passed.")
       assert(true)
     } else {
-      println(s"There are ${failedCases.size} failed tests (${testCases.size} total), please check above.")
-      assert(false)
+      val failedCaseCount = failedCases.size
+      logInfo(s"There are $failedCaseCount failed tests (${testCases.size} total), please check above.")
+      var index = 1
+      failedCases.foreach { failedCase => {
+        val testCase: TestCase = failedCase._1
+        val stackTrace = failedCase._2
+        val projectName = System.getProperty("user.dir")
+        var pn = projectName
+        if(projectName.contains("/")){
+          pn = projectName.substring(pn.lastIndexOf("/") + 1, projectName.length())
+        }else if(projectName.contains("\\")){
+          pn = pn.substring(projectName.lastIndexOf('\\') + 1, projectName.length())
+        }
+        val mlsqlVersion = MLSQLVersion.version().version
+        val sparkVersion = SparkCoreVersion.exactVersion
+        val scalaVersion = Option(util.Properties.versionNumberString) match {
+          case Some(version) if version.nonEmpty => "-" + version
+          case _ => ""
+        }
+        logInfo(s"Failed to execute goal ${testCase.name} on project ${pn}-${sparkVersion}${scalaVersion}:mlsql-engine_${sparkVersion}_${mlsqlVersion}                 [$index/$failedCaseCount]")
+        logInfo(s"sql: ${testCase.sql}")
+        logInfo(s"Here is the test failed stack trace: $stackTrace")
+        index += 1
+      }
+      }
+      System.exit(1)
     }
   }
 
