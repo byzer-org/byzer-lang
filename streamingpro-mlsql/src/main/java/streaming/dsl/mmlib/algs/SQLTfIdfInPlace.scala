@@ -29,7 +29,7 @@ import streaming.dsl.mmlib.algs.classfication.BaseClassification
 import streaming.dsl.mmlib.algs.feature.StringFeature
 import streaming.dsl.mmlib.algs.meta.TFIDFMeta
 import streaming.dsl.mmlib.algs.param.BaseParams
-import streaming.dsl.mmlib.{CoreVersion, SQLAlg}
+import streaming.dsl.mmlib.{Code, CoreVersion, Doc, HtmlDoc, SQLAlg, SQLCode}
 import tech.mlsql.common.form.FormParams
 import tech.mlsql.common.form.{Dynamic, Extra, FormParams, KV, Select, Text}
 
@@ -179,6 +179,56 @@ class SQLTfIdfInPlace(override val uid: String) extends SQLAlg with MllibFunctio
 
     _explainParams(sparkSession)
   }
+
+  override def doc: Doc = Doc(HtmlDoc,
+    """
+      |<a href="https://en.wikipedia.org/wiki/Tf%E2%80%93idf"> tf–idf </a>
+      |
+      |In information retrieval, tf–idf, TF*IDF, or TFIDF, short for term frequency–inverse document frequency,
+      |is a numerical statistic that is intended to reflect how important a word is to a document in a collection
+      |or corpus. It is often used as a weighting factor in searches of information retrieval, text mining,
+      |and user modeling. The tf–idf value increases proportionally to the number of times a word appears
+      |in the document and is offset by the number of documents in the corpus that contain the word, which
+      |helps to adjust for the fact that some words appear more frequently in general. tf–idf is one of
+      |the most popular term-weighting schemes today. A survey conducted in 2015 showed that 83% of
+      |text-based recommender systems in digital libraries use tf–idf.
+      |
+      |
+      | Use "load modelParams.`TfIdfInPlace` as output;"
+      |
+      | to check the available hyper parameters;
+      |
+      |""".stripMargin
+  )
+
+  override def codeExample: Code = Code(SQLCode, CodeExampleText.jsonStr +
+    """
+      |set rawText='''
+      |{"content":"MLSQL是一个好的语言","label":0.0},
+      |{"content":"Spark是一个好的语言","label":1.0}
+      |{"content":"MLSQL语言","label":0.0}
+      |{"content":"MLSQL是一个好的语言","label":0.0}
+      |{"content":"MLSQL是一个好的语言","label":1.0}
+      |{"content":"MLSQL是一个好的语言","label":0.0}
+      |{"content":"MLSQL是一个好的语言","label":0.0}
+      |{"content":"MLSQL是一个好的语言","label":1.0}
+      |{"content":"Spark好的语言","label":0.0}
+      |{"content":"MLSQL是一个好的语言","label":0.0}
+      |''';
+      |
+      |load jsonStr.`rawText` as orginal_text_corpus;
+      |train orginal_text_corpus as TfIdfInPlace.`/tmp/tfidfinplace`
+      |where inputCol="content"
+      |and ignoreNature="true"
+      |and nGrams="2,3"
+      |as tfTable;
+      |
+      |select * from tfTable as output;
+      |
+      |
+      |""".stripMargin
+  )
+
 
   override def coreCompatibility: Seq[CoreVersion] = super.coreCompatibility
 
