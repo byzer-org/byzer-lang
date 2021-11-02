@@ -61,6 +61,10 @@ private class SQLRateSampler(override val uid: String) extends SQLAlg with Funct
 
     // 0.8 0.1 0.1
     val sampleRates = params.getOrElse("sampleRate", "0.9,0.1").split(",").map(f => f.toDouble)
+    // sampleRates validation
+    if ( (sampleRates.sum - 1.000) > 0.001 || sampleRates.length != 2)
+      throw new RuntimeException("Sum of sampleRates should equal to 1 and number of elements should be 2")
+
     var basicRate = sampleRates.head
     val newSampleRates = sampleRates.zipWithIndex.map { sr =>
       if (sr._2 > 0) {
@@ -69,8 +73,6 @@ private class SQLRateSampler(override val uid: String) extends SQLAlg with Funct
       }
       else sr
     }
-
-
     val labelToCountSeq = df.groupBy(labelCol).agg(F.count(labelCol).as("subLabelCount")).orderBy(F.asc("subLabelCount")).
       select(labelCol, "subLabelCount").collect().map { f =>
       (getIntFromRow(f, 0), f.getLong(1))
