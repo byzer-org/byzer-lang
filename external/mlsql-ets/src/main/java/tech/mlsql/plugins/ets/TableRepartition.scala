@@ -173,9 +173,9 @@ class TableRepartition(override val uid: String) extends SQLAlg with VersionComp
           |""".stripMargin, label = "", options = Map(
           "valueType" -> "string",
           "required" -> "false",
-          "derivedType" -> "VALUE_BIND"
+          "derivedType" -> "DYNAMIC_BIND"
         )),
-      subTpe = "Select",
+      subTpe = "Text",
       depends = List("partitionType"),
       valueProviderName =
         """
@@ -201,7 +201,7 @@ class TableRepartition(override val uid: String) extends SQLAlg with VersionComp
           |""".stripMargin, label = "", options = Map(
           "valueType" -> "string",
           "required" -> "false",
-          "derivedType" -> "VALUE_BIND"
+          "derivedType" -> "DYNAMIC_BIND"
         )),
       subTpe = "Select",
       depends = List("partitionType"),
