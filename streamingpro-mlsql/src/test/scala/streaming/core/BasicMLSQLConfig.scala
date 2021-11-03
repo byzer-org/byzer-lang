@@ -86,13 +86,11 @@ trait BasicMLSQLConfig {
   )
 
   def mlsqlParams = Array(
-    "-streaming.master", "local[2]",
+    "-streaming.master", "local[*]",
     "-streaming.name", "unit-test",
     "-streaming.rest", "false",
-    "-streaming.platform", "mlsql",
+    "-streaming.platform", "spark",
     "-streaming.spark.service", "false",
     "-streaming.unittest", "true"
-
   )
-
 }
