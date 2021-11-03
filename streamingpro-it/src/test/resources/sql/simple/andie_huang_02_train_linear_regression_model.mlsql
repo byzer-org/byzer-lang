@@ -18,8 +18,8 @@ select vec_dense(features) as features , label as label from data
 as data1;
 
 -- select * from data1 as output1;
--- -- use RandomForest
-train data1 as LogisticRegression.`/tmp/model` where
+-- -- use LinearRegression
+train data1 as LinearRegression.`/tmp/linearregression` where
 
 -- -- once set true,every time you run this script, MLSQL will generate new directory for you model
 keepVersion="true"
@@ -37,6 +37,14 @@ and `fitParam.1.featuresCol`="features"
 and `fitParam.1.labelCol`="label"
 and `fitParam.1.elasticNetParam`="0.7"
 as model_result;
+
+predict data1 as LinearRegression.`/tmp/linearregression` as res;
+
+register  LinearRegression.`/tmp/linearregression` as pred_func;
+register LinearRegression.`/tmp/linearregression` as pred_func where algIndex="0";
+register LinearRegression.`/tmp/linearregression` as pred_func where autoSelectByMetric="f1";
+
+select pred_func(features) as predict_label, label from data1 as output;
 
 select name,value from model_result where name="status" as result;
 -- make sure status of  all models are success.

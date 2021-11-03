@@ -129,6 +129,7 @@ object MLMapping extends Logging with WowLog {
     "NaiveBayes" -> "streaming.dsl.mmlib.algs.SQLNaiveBayes",
     "RandomForest" -> "streaming.dsl.mmlib.algs.SQLRandomForest",
     "GBTRegressor" -> "streaming.dsl.mmlib.algs.SQLGBTRegressor",
+    "GBTClassifier" -> "streaming.dsl.mmlib.algs.SQLGBTClassifier",
     "LDA" -> "streaming.dsl.mmlib.algs.SQLLDA",
     "KMeans" -> "streaming.dsl.mmlib.algs.SQLKMeans",
     "FPGrowth" -> "streaming.dsl.mmlib.algs.SQLFPGrowth",
