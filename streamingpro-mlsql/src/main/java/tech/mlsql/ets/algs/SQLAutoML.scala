@@ -34,8 +34,8 @@ class SQLAutoML(override val uid: String) extends SQLAlg with Functions with Mll
     val evaluateTable = params.get("evaluateTable")
     setEvaluateTable(evaluateTable.getOrElse("None"))
     val sortedKey = params.getOrElse(sortedBy.name, "f1")
-    val algo_list = params.getOrElse("algos", "GBTs,LinearRegression,LogisticRegression,NaiveBayes,RandomForest")
-      .split(",").map(algo => algo.stripMargin)
+    val algo_list = params.getOrElse("algos", "GBTClassifier,LogisticRegression,NaiveBayes,RandomForest")
+      .split(",").map(algo => algo.trim())
     val classifier_list = algo_list.map(algo_name => {
       val tempPath = getAutoMLPath(path, algo_name)
       SQLPythonFunc.incrementVersion(tempPath, keepVersion)

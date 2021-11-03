@@ -21,6 +21,8 @@ keepVersion="true"
 and evaluateTable="data1"
 as model_result;
 
+predict data1 as GBTRegressor.`/tmp/test` as res;
+
 register GBTRegressor.`/tmp/test` as gbt_prf;
 register GBTRegressor.`/tmp/test` as gbt_prf where algIndex="0";
 register GBTRegressor.`/tmp/test` as gbt_prf where autoSelectByMetric="f1";
