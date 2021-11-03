@@ -4,8 +4,8 @@ import java.io.{IOException, InputStream}
 import java.util.Properties
 
 /**
-  * 2019-04-07 WilliamZhu(allwefantasy@gmail.com)
-  */
+ * 2019-04-07 WilliamZhu(allwefantasy@gmail.com)
+ */
 object MLSQLVersion {
 
   private val versionFile: String = "mlsql-version-info.properties"
@@ -28,7 +28,7 @@ object MLSQLVersion {
 
 
   def version() = {
-    VersionInfo(_getVersion, _getUser, _getDate, _getSrcChecksum, _getRevision, _getBranch, _getUrl)
+    VersionInfo(_getVersion, _getUser, _getDate, _getSrcChecksum, _getRevision, _getBranch, _getUrl,org.apache.spark.SPARK_VERSION)
   }
 
   def load(): Properties = {
@@ -68,4 +68,12 @@ object MLSQLVersion {
   }
 }
 
-case class VersionInfo(version: String, buildBy: String, date: String, srcChecksum: String, revision: String, branch: String, url: String)
+case class VersionInfo(version: String,
+                       buildBy: String,
+                       date: String,
+                       srcChecksum: String,
+                       revision: String,
+                       branch: String,
+                       url: String,
+                       core: String
+                      )
