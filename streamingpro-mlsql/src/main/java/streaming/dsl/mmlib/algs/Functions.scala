@@ -20,7 +20,6 @@ package streaming.dsl.mmlib.algs
 
 import java.io.ByteArrayOutputStream
 import java.util.Properties
-
 import net.csdn.common.reflect.ReflectHelper
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
 import org.apache.spark.ml.linalg.SQLDataTypes._
@@ -39,6 +38,7 @@ import streaming.core.message.MLSQLMessage
 import streaming.core.strategy.platform.{PlatformManager, SparkRuntime}
 import streaming.log.WowLog
 import tech.mlsql.common.utils.log.Logging
+import tech.mlsql.common.utils.serder.json.JSONTool
 import tech.mlsql.tool.HDFSOperatorV2
 
 import scala.collection.mutable.ArrayBuffer
@@ -120,6 +120,22 @@ trait Functions extends SQlBaseFunc with Logging with WowLog with Serializable {
     }
   }
 
+  def infinityConvert(number: String): String = {
+    val convertValue = number match {
+      case i if i.toLowerCase().equals("inf") => "Infinity"
+      case i if i.toLowerCase().equals("+inf") => "Infinity"
+      case i if i.toLowerCase().equals("infinity") => "Infinity"
+      case i if i.toLowerCase().equals("-inf") => "-Infinity"
+      case i if i.toLowerCase().equals("-infinity") => "-Infinity"
+      case _ => number
+    }
+    convertValue
+  }
+
+  def nestedArrayConvert(param: String): Array[Array[Object]] = {
+    JSONTool.jParseJsonArray(param).toArray().map(_.asInstanceOf[net.sf.json.JSONArray].toArray)
+  }
+
   def configureModel(model: Params, params: Map[String, String]) = {
     model.params.map { f =>
       if (params.contains(f.name)) {
@@ -128,17 +144,35 @@ trait Functions extends SQlBaseFunc with Logging with WowLog with Serializable {
         val pt = m.getParameterTypes.head
         val v2 = pt match {
           case i if i.isAssignableFrom(classOf[Int]) => v.toInt
-          case i if i.isAssignableFrom(classOf[Double]) => v.toDouble
+          case i if i.isAssignableFrom(classOf[Double]) => infinityConvert(v).toDouble
           case i if i.isAssignableFrom(classOf[Float]) => v.toFloat
           case i if i.isAssignableFrom(classOf[Long]) => v.toLong
           case i if i.isAssignableFrom(classOf[Boolean]) => v.toBoolean
           case i if i.isAssignableFrom(classOf[String]) => v
           case i if i.isAssignableFrom(classOf[Array[Int]]) => v.split(",").map(_.toInt)
-          case i if i.isAssignableFrom(classOf[Array[Double]]) => v.split(",").map(_.toDouble)
+          case i if i.isAssignableFrom(classOf[Array[Double]]) => v.split(",").map(infinityConvert(_).toDouble)
           case i if i.isAssignableFrom(classOf[Array[Float]]) => v.split(",").map(_.toFloat)
           case i if i.isAssignableFrom(classOf[Array[Long]]) => v.split(",").map(_.toLong)
           case i if i.isAssignableFrom(classOf[Array[Boolean]]) => v.split(",").map(_.toBoolean)
           case i if i.isAssignableFrom(classOf[Array[String]]) => v.split(",")
+          case i if i.isAssignableFrom(classOf[Array[Array[Int]]]) => nestedArrayConvert(v).map(_.map(t => {
+            t.toString.toInt
+          }))
+          case i if i.isAssignableFrom(classOf[Array[Array[Double]]]) => nestedArrayConvert(v).map(_.map(t => {
+            infinityConvert(t.toString).toDouble
+          }))
+          case i if i.isAssignableFrom(classOf[Array[Array[Float]]]) => nestedArrayConvert(v).map(_.map(t => {
+            t.toString.toFloat
+          }))
+          case i if i.isAssignableFrom(classOf[Array[Array[Long]]]) => nestedArrayConvert(v).map(_.map(t => {
+            t.toString.toLong
+          }))
+          case i if i.isAssignableFrom(classOf[Array[Array[Boolean]]]) => nestedArrayConvert(v).map(_.map(t => {
+            t.toString.toBoolean
+          }))
+          case i if i.isAssignableFrom(classOf[Array[Array[String]]]) => nestedArrayConvert(v).map(_.map(t => {
+            t.toString
+          }))
           case _ => logWarning(format(s"Can not assign value to model: ${f.name} -> ${v}"))
         }
         m.invoke(model, v2.asInstanceOf[AnyRef])
