@@ -5,19 +5,13 @@ import streaming.dsl.parser.DSLSQLLexer
 import tech.mlsql.autosuggest.SpecialTableConst.TEMP_TABLE_DB_KEY
 import tech.mlsql.autosuggest.dsl.{Food, MLSQLTokenTypeWrapper, TokenMatcher}
 import tech.mlsql.autosuggest.meta.{MetaTable, MetaTableColumn, MetaTableKey}
-import tech.mlsql.autosuggest.statement.{PreProcessStatement, SelectSuggester}
+import tech.mlsql.autosuggest.statement.{LexerUtils, PreProcessStatement, SelectSuggester}
 import tech.mlsql.autosuggest.{AutoSuggestContext, SpecialTableConst, TokenPos, TokenPosType}
 
 /**
  * 10/6/2020 WilliamZhu(allwefantasy@gmail.com)
  */
 class TablePreprocessor(context: AutoSuggestContext) extends PreProcessStatement {
-
-  def cleanStr(str: String) = {
-    if (str.startsWith("`") || str.startsWith("\"") || (str.startsWith("'") && !str.startsWith("'''")))
-      str.substring(1, str.length - 1)
-    else str
-  }
 
   /**
    *
@@ -44,7 +38,7 @@ class TablePreprocessor(context: AutoSuggestContext) extends PreProcessStatement
 
             formatMatcher.getMatchTokens.map(_.getText) match {
               case List(format, _, path) =>
-                cleanStr(path).split("\\.", 2) match {
+                LexerUtils.cleanStr(path).split("\\.", 2) match {
                   case Array(db, table) =>
 //                    if(context.isSchemaInferEnabled){
 //

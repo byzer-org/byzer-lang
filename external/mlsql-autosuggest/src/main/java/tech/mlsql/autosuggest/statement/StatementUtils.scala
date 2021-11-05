@@ -20,7 +20,7 @@ package tech.mlsql.autosuggest.statement
 import org.antlr.v4.runtime.Token
 import streaming.dsl.parser.DSLSQLLexer
 import tech.mlsql.autosuggest.{TokenPos, TokenPosType}
-import tech.mlsql.autosuggest.dsl.{Food, TokenMatcher}
+import tech.mlsql.autosuggest.dsl.{DSLWrapper, Food, TokenMatcher}
 
 /**
  * 9/6/2020 WilliamZhu(allwefantasy@gmail.com)
@@ -60,6 +60,7 @@ trait StatementUtils {
     TokenMatcher(tokens, tokenPos.pos).back.orIndex(List(Food(None, DSLSQLLexer.WHERE),
       Food(None, DSLSQLLexer.OPTIONS)).toArray)
   }
+
 }
 
 object StatementUtils {
@@ -67,4 +68,63 @@ object StatementUtils {
     "parquet", "csv", "jsonStr", "csvStr", "json", "text", "orc", "kafka", "kafka8", "kafka9", "crawlersql", "image",
     "script", "hive", "xml", "mlsqlAPI", "mlsqlConf"
   )
+
+  val LOAD_STRING_FORMATS = Seq(
+    "jsonStr", "csvStr", "script"
+  )
+
+  def extractSetStatement(statements: List[List[Token]], format: String): Option[List[List[Token]]] = {
+    var currentIndex = -1
+    for (i <- statements.indices) {
+      if (currentIndex == -1) {
+        val tokens = statements(i)
+        tokens.headOption.map(_.getText) match {
+          case Some("set") =>
+          //continue
+          case Some(_) =>
+            if (tokens.map(_.getText.equals(format)).nonEmpty) {
+              currentIndex = i
+            }
+          case None =>
+          //continue
+        }
+      }
+    } //for
+
+    if (currentIndex == -1) {
+      return None
+    }
+
+    val slice = statements.slice(0, currentIndex).filter(_.headOption.map(_.getText.equals("set")).isDefined)
+      .filter(tokens => {
+        var res: Boolean = false
+        val index = TokenMatcher(tokens, tokens.length - 1).back.orIndex(Array(Food(None, DSLSQLLexer.WHERE)))
+        if (index == -1) {
+          res = true
+        } else {
+          res = (
+            TokenMatcher(tokens, tokens.length - 1).back
+              .eat(Food(None, DSLWrapper.SEMICOLON))
+              .eat(Food(None, DSLSQLLexer.BLOCK_STRING), Food(None, DSLWrapper.EQUAL))
+              .eat(Food(None, DSLSQLLexer.IDENTIFIER))
+              .build.isSuccess ||
+              TokenMatcher(tokens, tokens.length - 1).back
+                .eat(Food(None, DSLWrapper.SEMICOLON))
+                .eat(Food(None, DSLSQLLexer.STRING), Food(None, DSLWrapper.EQUAL))
+                .eat(Food(None, DSLSQLLexer.IDENTIFIER))
+                .build.isSuccess
+            ) &&
+            // The `set` syntax has type, and it is not of `text` or `defaultParam` type, so there is no syntax hint.
+            (!tokens.exists(_.getText.equals("type")) || tokens.exists(token => LexerUtils.cleanStr(token.getText).equals("text") || token.getText.equals("defaultParam"))) &&
+            // The `set` syntax has mode, and it is not of `compile` type, so there is no syntax hint.
+            (!tokens.exists(_.getText.equals("mode")) || tokens.exists(token => LexerUtils.cleanStr(token.getText).equals("compile")))
+        }
+        res
+      })
+    if (slice.isEmpty) {
+      return None
+    }
+
+    Option(slice)
+  }
 }
