@@ -2,6 +2,7 @@ package tech.mlsql.autosuggest.statement
 
 import org.antlr.v4.runtime.Token
 import org.antlr.v4.runtime.misc.Interval
+import org.apache.commons.lang3.StringUtils
 import streaming.dsl.parser.DSLSQLLexer
 import tech.mlsql.autosuggest.dsl.{MLSQLTokenTypeWrapper, TokenTypeWrapper}
 import tech.mlsql.autosuggest.{AutoSuggestContext, TokenPos, TokenPosType}
@@ -216,5 +217,14 @@ object LexerUtils {
   def isWhereKey(tokens: List[Token], tokenPos: Int): Boolean = {
     LexerUtils.isInWhereContext(tokens, tokenPos) && (tokens(tokenPos).getText == "and" || tokens(tokenPos - 1).getText == "and")
 
+  }
+
+  def cleanStr(str: String): String = {
+    if (StringUtils.isEmpty(str)) {
+      return str
+    }
+    if (str.startsWith("`") || str.startsWith("\"") || (str.startsWith("'") && !str.startsWith("'''")))
+      str.substring(1, str.length - 1)
+    else str
   }
 }

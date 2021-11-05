@@ -17,9 +17,10 @@
  */
 package tech.mlsql.autosuggest.dsl
 
-import org.antlr.v4.runtime.Token
+import org.antlr.v4.runtime.{Lexer, Token}
 import org.apache.spark.sql.catalyst.parser.SqlBaseLexer
 import streaming.dsl.parser.DSLSQLLexer
+import tech.mlsql.autosuggest.dsl.TokenTypeWrapper.getValues
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -104,7 +105,7 @@ class TokenMatcher(tokens: List[Token], val start: Int) {
 
   }
 
-  // find the first match 
+  // find the first match
   def index(_foods: Array[Food], upperBound: Int = tokens.size) = {
     if (foods.size != 0) {
       throw new RuntimeException("eat/optional/asStart should not before index")
@@ -292,21 +293,43 @@ object TokenTypeWrapper {
 
   private val values = getValues
 
-  def tokenType(value: String) = {
+  def tokenType(value: String): Int = {
+    values.indexOf(value)
+  }
+    def getList: List[Int] = List(LEFT_BRACKET, RIGHT_BRACKET, COMMA, DOT, LEFT_SQUARE_BRACKET, RIGHT_SQUARE_BRACKET, COLON, SEMICOLON)
+
+  val COMMA: Int = tokenType("','") // spark-catalyst_2.11-2.4.3.jar:SqlBaseLexer.T__2 //,
+  val DOT: Int = tokenType("'.'") // spark-catalyst_2.11-2.4.3.jar:SqlBaseLexer.T__3 //.
+  val COLON: Int = tokenType("':'") //spark-catalyst_2.11-2.4.3.jar:SqlBaseLexer.T__9//:
+  val SEMICOLON: Int = tokenType("';'") //spark-catalyst_2.12-3.1.1.jar:SqlBaseLexer.T__1//;
+  val LEFT_BRACKET: Int = tokenType("'('") // spark-catalyst_2.11-2.4.3.jar:SqlBaseLexer.T__0 //(
+  val RIGHT_BRACKET: Int = tokenType("')'") // spark-catalyst_2.11-2.4.3.jar:SqlBaseLexer.T__1 //)
+  val LEFT_SQUARE_BRACKET: Int = tokenType("'['") // spark-catalyst_2.11-2.4.3.jar:SqlBaseLexer.T__7 //[
+  val RIGHT_SQUARE_BRACKET: Int = tokenType("']'") //spark-catalyst_2.11-2.4.3.jar:SqlBaseLexer.T__8 // ]
+  val MAP: Map[Int, Int] = getList.map((_, 1)).toMap
+}
+
+object DSLWrapper {
+  def getList: List[Int] = List(COMMA, DOT, COLON, SEMICOLON, EQUAL)
+
+  def tokenType(value: String): Int = {
     values.indexOf(value)
   }
 
+  def getValues: Array[String] = {
+    val field = classOf[DSLSQLLexer].getDeclaredField("_LITERAL_NAMES")
+    field.setAccessible(true)
+    field.get(null).asInstanceOf[Array[String]]
+  }
 
-  val LEFT_BRACKET = tokenType("'('") // SqlBaseLexer.T__0 //(
-  val RIGHT_BRACKET = tokenType("')'") // SqlBaseLexer.T__1 //)
-  val COMMA = tokenType("','") // SqlBaseLexer.T__2 //,
-  val DOT = tokenType("'.'") // SqlBaseLexer.T__3 //.
-  val LEFT_SQUARE_BRACKET = tokenType("'['") // SqlBaseLexer.T__7 //[
-  val RIGHT_SQUARE_BRACKET = tokenType("']'") //SqlBaseLexer.T__8 // ]
-  val COLON = tokenType("':'") //SqlBaseLexer.T__9//:
+  val COMMA: Int = tokenType("','")
+  val DOT: Int = tokenType("'.'")
+  val COLON: Int = tokenType("':'")
+  val SEMICOLON: Int = tokenType("';'")
+  val EQUAL: Int = tokenType("'='")
 
-  val LIST = List(LEFT_BRACKET, RIGHT_BRACKET, COMMA, DOT, LEFT_SQUARE_BRACKET, RIGHT_SQUARE_BRACKET, COLON)
-  val MAP = LIST.map((_, 1)).toMap
+  val MAP: Map[Int, Int] = getList.map((_, 1)).toMap
+  private val values = getValues
 }
 
 object MLSQLTokenTypeWrapper {
