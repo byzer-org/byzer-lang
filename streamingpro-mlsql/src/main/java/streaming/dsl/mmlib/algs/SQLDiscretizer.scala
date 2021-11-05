@@ -62,7 +62,14 @@ class SQLDiscretizer(override val uid: String) extends SQLAlg with Functions wit
                 map.getOrElse(DiscretizerParamsConstrant.SPLIT_ARRAY, "")
               )
               configureModel(bucketizer, map)
-              val tmpDF = bucketizer.transform(dfWithId).select("id", map.getOrElse("outputCol", ""))
+              val outputCols = bucketizer match {
+                case i if i.isSet(i.outputCol) => Array("id", bucketizer.getOutputCol) // if the outputCol is setted then get value from the setted outputCol
+                case i if i.isSet(i.outputCols) => Array("id") ++ bucketizer.getOutputCols // if the outputCols are settedm
+                case i if i.isDefined(i.outputCol) => Array("id", bucketizer.getOutputCol)
+                case i if i.isDefined(i.outputCols) => Array("id") ++ bucketizer.getOutputCols
+                case _ => Array("")
+              }
+              val tmpDF = bucketizer.transform(dfWithId).select(outputCols.toList.head, outputCols.tail: _*)
               transformedDF = transformedDF.join(tmpDF, tmpDF("id") === transformedDF("id")).drop(tmpDF("id"))
               val splits = bucketizer.getSplits
               (index, DiscretizerFeature.parseParams(map, splits))
@@ -73,8 +80,13 @@ class SQLDiscretizer(override val uid: String) extends SQLAlg with Functions wit
             case (index, map) =>
               val discretizer = new QuantileDiscretizer()
               configureModel(discretizer, map)
+              val outputCols = discretizer match {
+                case i if i.isDefined(i.outputCol) => Array("id", discretizer.getOutputCol)
+                case i if i.isDefined(i.outputCols) => Array("id") ++ discretizer.getOutputCols
+                case _ => Array("")
+              }
               val discretizerModel = discretizer.fit(df)
-              val tmpDF = discretizerModel.transform(df).select("id", map.getOrElse("outputCol", ""))
+              val tmpDF = discretizerModel.transform(dfWithId).select(outputCols.toList.head, outputCols.tail: _*)
               transformedDF = transformedDF.join(tmpDF, tmpDF("id") === transformedDF("id")).drop(tmpDF("id"))
               val splits = discretizerModel.getSplits
               (index, DiscretizerFeature.parseParams(map, splits))
@@ -168,7 +180,7 @@ class SQLDiscretizer(override val uid: String) extends SQLAlg with Functions wit
       |;
     """.stripMargin)
 
-  val method:Param[String] = new Param[String](this, "method", FormParams.toJson(
+  val method: Param[String] = new Param[String](this, "method", FormParams.toJson(
     Select(
       name = "method",
       values = List(),
