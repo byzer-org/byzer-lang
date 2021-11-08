@@ -18,12 +18,9 @@ as data1;
 
 train data1 as Discretizer.`/tmp/discretizer`
 where method="quantile"
-and `fitParam.0.inputCol`="a"
-and `fitParam.0.outputCol`="a_v"
-and `fitParam.0.numBuckets`="3"
-and `fitParam.1.inputCol`="b"
-and `fitParam.1.outputCol`="b_v"
-and `fitParam.1.numBuckets`="3";
+and `inputCol`="a"
+and `outputCol`="a_v"
+and `numBuckets`="3";
 
 register Discretizer.`/tmp/discretizer` as convert;
 select convert(array(double(7),double(8))) as features as output;
