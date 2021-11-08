@@ -57,7 +57,7 @@ class TableRepartition(override val uid: String) extends SQLAlg with VersionComp
           }
           return df.coalesce($(partitionNum))
         }
-        if (params.contains(partitionCols.name)) {
+        if (!params.contains(partitionCols.name)) {
           df.repartition($(partitionNum))
         } else {
           df.repartition($(partitionNum), $(partitionCols).split(",").map(name => F.col(name)): _*)
@@ -84,6 +84,7 @@ class TableRepartition(override val uid: String) extends SQLAlg with VersionComp
 
   override def codeExample: Code = Code(SQLCode,
     """
+      |### Example 1: Use of partitionNum
       |Load a JSON data to the `data` table:
       |
       |```sql
@@ -106,6 +107,77 @@ class TableRepartition(override val uid: String) extends SQLAlg with VersionComp
       |```
       |run data as TableRepartition.`` where partitionNum="2"
       |as newdata;
+      |```
+      |
+      |### Example 2: Use of partitionType
+      |
+      |partitionType supports the following two configurations:
+      |
+      |  -hash: repartition uses `HashPartitioner`, the purpose is to evenly distribute data on the number of partitions provided. If one column (or more columns) is provided, these values ​​will be hashed and the partition number will be determined by calculating `partition = hash(columns)% numberOfPartitions`.
+      |
+      |  -range: The repartition application `RangePartitioner` will partition the data according to the range of column values. This is usually used for continuous (non-discrete) values, such as any type of number.
+      |
+      |Here are some demos to demonstrate this difference.
+      |
+      |
+      |**Test Dataframes**
+      |
+      |The following JSON data is used in this demo:
+      |
+      |```
+      |set jsonStr ='''
+      |{"id":0,"parentId":null}
+      |{"id":1,"parentId":null}
+      |{"id":2,"parentId":1}
+      |{"id":3,"parentId":3}
+      |{"id":7,"parentId":0}
+      |{"id":199,"parentId":1}
+      |{"id":200,"parentId":199}
+      |{"id":201,"parentId":199}
+      |''';
+      |
+      |load jsonStr.`jsonStr` as data;
+      |
+      |```
+      |
+      |
+      |
+      |All test results use the following retrieve data logic (the SQL should be placed after the TableRepartition statement for retrieve data):
+      |
+      |```
+      |!profiler sql'''
+      |select spark_partition_id() as partition,min(id) as min_id,max(id) as max_id,count(id) as count
+      |from simpleData
+      |group by partition
+      |order by partition;''';
+      |```
+      |
+      |The partitionType="hash" code is as follows:
+      |```
+      |run data as TableRepartition.`` where partitionNum="3" and partitionType="hash" as simpleData;
+      |```
+      |
+      |As expected, we got 3 partitions, and the ids were hashed to different partitions. The results are as follows:
+      |
+      || partition | min_id | max_id | count |
+      || :-------- | :----- | :----- | :---- |
+      || 0 | 2 | 7 | 3 |
+      || 1 | 0 | 0 | 1 |
+      || 2 | 1 | 201 | 4 |
+      |
+      |The partitionType="range" code is as follows:
+      |
+      |```
+      |run data as TableRepartition.`` where partitionNum="3" and partitionType="range" and partitionCols="id" as simpleData;
+      |```
+      |
+      |Also in this example, we got 3 partitions, but this time the minimum and maximum values clearly show the range of values in the partitions. The results are as follows:
+      |
+      || partition | min_id | max_id | count |
+      || :-------- | :----- | :----- | :---- |
+      || 0 | 0 | 2 | 3 |
+      || 1 | 3 | 199 | 3 |
+      || 2 | 200 | 201 | 2 |
       |```
     """.stripMargin)
 
