@@ -18,6 +18,7 @@
 
 package streaming.dsl.mmlib.algs
 
+import org.apache.spark
 import org.apache.spark.ml.feature.{Bucketizer, DiscretizerFeature, QuantileDiscretizer}
 import org.apache.spark.ml.param.Param
 import org.apache.spark.sql.expressions.UserDefinedFunction
@@ -36,23 +37,13 @@ import tech.mlsql.version.VersionCompatibility
 class SQLDiscretizer(override val uid: String) extends SQLAlg with Functions with VersionCompatibility with WowParams with BaseETAuth {
   def this() = this(BaseParams.randomUID())
 
-  def internal_train(df: DataFrame, params: Map[String, String]) = {
-    val spark = df.sparkSession
-    import spark.implicits._
-    val path = params("path")
-    val metaPath = getMetaPath(path)
-
-    val _method = params.getOrElse(method.name, DiscretizerFeature.BUCKETIZER_METHOD)
-    set(method, _method)
-
-    saveTraningParams(df.sparkSession, params, metaPath)
-
+  def trainByGroup(df: DataFrame, params: Map[String, String], _method: String): Unit = {
     val fitParamsWithIndex = arrayParamsWithIndex(DiscretizerParamsConstrant.PARAMS_PREFIX, params)
     require(fitParamsWithIndex.size > 0, "fitParams should be configured")
     val dfWithId = df.withColumn("id", monotonically_increasing_id)
     var transformedDF = dfWithId
     // we need save metadatas with index, because we need index
-    val metas: Array[(Int, DiscretizerTrainData)] =
+    val metas: Array[(Int, DiscretizerTrainData)] = {
       _method match {
         case DiscretizerFeature.BUCKETIZER_METHOD =>
           fitParamsWithIndex.map {
@@ -92,9 +83,65 @@ class SQLDiscretizer(override val uid: String) extends SQLAlg with Functions wit
               (index, DiscretizerFeature.parseParams(map, splits))
           }
       }
-    spark.createDataset(metas).write.mode(SaveMode.Overwrite).
-      parquet(DISCRETIZER_PATH(metaPath))
+    }
+    return metas
+  }
+
+  def trainWithoutGroup(df: DataFrame, params: Map[String, String], _method: String, metaPath: String): DataFrame = {
+    val dfWithId = df.withColumn("id", monotonically_increasing_id)
+    var transformedDF = dfWithId
+    // we need save metadatas with index, because we need index
+    val metas: Array[(Int, DiscretizerTrainData)] = {
+      _method match {
+        case DiscretizerFeature.BUCKETIZER_METHOD => {
+          val bucketizer = new Bucketizer()
+          configureModel(bucketizer, params)
+          val outputCols = bucketizer match {
+            case i if i.isSet(i.outputCol) => Array("id", bucketizer.getOutputCol) // if the outputCol is setted then get value from the setted outputCol
+            case i if i.isSet(i.outputCols) => Array("id") ++ bucketizer.getOutputCols // if the outputCols are settedm
+            case i if i.isDefined(i.outputCol) => Array("id", bucketizer.getOutputCol)
+            case i if i.isDefined(i.outputCols) => Array("id") ++ bucketizer.getOutputCols
+            case _ => Array("")
+          }
+          val tmpDF = bucketizer.transform(dfWithId).select(outputCols.toList.head, outputCols.tail: _*)
+          transformedDF = transformedDF.join(tmpDF, tmpDF("id") === transformedDF("id")).drop(tmpDF("id"))
+          val splits = bucketizer.getSplits
+          Array((0, DiscretizerFeature.parseParams(params, splits)))
+        }
+
+        case DiscretizerFeature.QUANTILE_METHOD => {
+          val discretizer = new QuantileDiscretizer()
+          configureModel(discretizer, params)
+          val outputCols = discretizer match {
+            case i if i.isDefined(i.outputCol) => Array("id", discretizer.getOutputCol)
+            case i if i.isDefined(i.outputCols) => Array("id") ++ discretizer.getOutputCols
+            case _ => Array("")
+          }
+          val discretizerModel = discretizer.fit(df)
+          val tmpDF = discretizerModel.transform(dfWithId).select(outputCols.toList.head, outputCols.tail: _*)
+          transformedDF = transformedDF.join(tmpDF, tmpDF("id") === transformedDF("id")).drop(tmpDF("id"))
+          val splits = discretizerModel.getSplits
+          Array((0, DiscretizerFeature.parseParams(params, splits)))
+        }
+      }
+    }
+    val spark = df.sparkSession
+    import spark.implicits._
+    spark.createDataset(metas).write.mode(SaveMode.Overwrite).parquet(DISCRETIZER_PATH(metaPath))
     transformedDF.drop("id")
+  }
+
+  def internal_train(df: DataFrame, params: Map[String, String]) = {
+    val spark = df.sparkSession
+    import spark.implicits._
+    val path = params("path")
+    val metaPath = getMetaPath(path)
+
+    val _method = params.getOrElse(method.name, DiscretizerFeature.BUCKETIZER_METHOD)
+    set(method, _method)
+
+    saveTraningParams(df.sparkSession, params, metaPath)
+    trainWithoutGroup(df, params, _method, metaPath)
   }
 
   override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
