@@ -17,10 +17,8 @@ as data1;
 
 train data1 as Discretizer.`/tmp/model`
 where method="bucketizer"
-and `fitParam.0.inputCol`="a"
-and `fitParam.0.splits`="-inf,0.0,1.0,inf"
-and `fitParam.1.inputCol`="b"
-and `fitParam.1.splits`="-inf,0.0,1.0,inf";
+and `inputCol`="a"
+and `splits`="-inf,0.0,1.0,inf";
 
 register Discretizer.`/tmp/model` as convert;
 select convert(array(double(7),double(8))) as features as output;
