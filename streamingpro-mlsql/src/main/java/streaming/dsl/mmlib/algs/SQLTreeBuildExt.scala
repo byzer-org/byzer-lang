@@ -334,8 +334,8 @@ class SQLTreeBuildExt(override val uid: String) extends SQLAlg with Functions wi
           "required" -> "false",
           "derivedType" -> "NONE"
         )), valueProvider = Option(() => {
-        List(KV(Option("treeType"), Option("treePerRow")))
-        List(KV(Option("treeType"), Option("nodeTreePerRow")))
+        List(KV(Option("treeType"), Option("treePerRow")),
+        KV(Option("treeType"), Option("nodeTreePerRow")))
       })
     )
     )

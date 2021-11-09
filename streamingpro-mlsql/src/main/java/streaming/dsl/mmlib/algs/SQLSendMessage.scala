@@ -209,12 +209,14 @@ class SQLSendMessage(override val uid: String) extends SQLAlg with Functions wit
           "required" -> "true",
           "derivedType" -> "NONE"
         )), valueProvider = Option(() => {
-        List(KV(Option("mailType"), Option("config")))
-        List(KV(Option("mailType"), Option("local_server")))
+        List(KV(Option("mailType"), Option("config")),
+          KV(Option("mailType"), Option("local")))
       })
     )
     )
   )
+  setDefault(mailType, "config")
+
   val userName: Param[String] = new Param[String](this, "userName",
     FormParams.toJson(Dynamic(
       name = "userName",
@@ -249,7 +251,7 @@ class SQLSendMessage(override val uid: String) extends SQLAlg with Functions wit
       valueProviderName = ""
     )
     ))
-  setDefault(mailType, "config")
+
   val content: Param[String] = new Param[String](this, "content",
     FormParams.toJson(Text(
       name = "content",
@@ -285,12 +287,13 @@ class SQLSendMessage(override val uid: String) extends SQLAlg with Functions wit
           "required" -> "false",
           "derivedType" -> "NONE"
         )), valueProvider = Option(() => {
-        List(KV(Option("contentType"), Option(MailContentTypeEnum.MIXED.toString)))
-        List(KV(Option("contentType"), Option(MailContentTypeEnum.TEXT.toString)))
-        List(KV(Option("contentType"), Option(MailContentTypeEnum.HTML.toString)))
-        List(KV(Option("contentType"), Option(MailContentTypeEnum.CSV.toString)))
-        List(KV(Option("contentType"), Option(MailContentTypeEnum.JPEG.toString)))
-        List(KV(Option("contentType"), Option(MailContentTypeEnum.DEFAULT_ATTACHMENT.toString)))
+        List(KV(Option("contentType"), Option(MailContentTypeEnum.MIXED.toString)),
+          KV(Option("contentType"), Option(MailContentTypeEnum.TEXT.toString)),
+          KV(Option("contentType"), Option(MailContentTypeEnum.HTML.toString)),
+          KV(Option("contentType"), Option(MailContentTypeEnum.CSV.toString)),
+          KV(Option("contentType"), Option(MailContentTypeEnum.JPEG.toString)),
+          KV(Option("contentType"), Option(MailContentTypeEnum.DEFAULT_ATTACHMENT.toString))
+        )
       })
     )
     )
@@ -311,12 +314,12 @@ class SQLSendMessage(override val uid: String) extends SQLAlg with Functions wit
           "required" -> "false",
           "derivedType" -> "NONE"
         )), valueProvider = Option(() => {
-        List(KV(Option("attachmentContentType"), Option(MailContentTypeEnum.MIXED.toString)))
-        List(KV(Option("attachmentContentType"), Option(MailContentTypeEnum.TEXT.toString)))
-        List(KV(Option("attachmentContentType"), Option(MailContentTypeEnum.HTML.toString)))
-        List(KV(Option("attachmentContentType"), Option(MailContentTypeEnum.CSV.toString)))
-        List(KV(Option("attachmentContentType"), Option(MailContentTypeEnum.JPEG.toString)))
-        List(KV(Option("attachmentContentType"), Option(MailContentTypeEnum.DEFAULT_ATTACHMENT.toString)))
+        List(KV(Option("attachmentContentType"), Option(MailContentTypeEnum.MIXED.toString)),
+          KV(Option("attachmentContentType"), Option(MailContentTypeEnum.TEXT.toString)),
+          KV(Option("attachmentContentType"), Option(MailContentTypeEnum.HTML.toString)),
+          KV(Option("attachmentContentType"), Option(MailContentTypeEnum.CSV.toString)),
+          KV(Option("attachmentContentType"), Option(MailContentTypeEnum.JPEG.toString)),
+          KV(Option("attachmentContentType"), Option(MailContentTypeEnum.DEFAULT_ATTACHMENT.toString)))
       })
     )
     )
@@ -443,12 +446,11 @@ class SQLSendMessage(override val uid: String) extends SQLAlg with Functions wit
       | set EMAIL_BODY = "body";
       | set EMAIL_TO = "do_not_reply@gmail.com";
       |
-      | select "${EMAIL_BODY}" as content as data;
-      |
       |- Use the configuration account method
-      |run data as SendMessage.``
+      |run command as SendMessage.``
       |where method="mail"
       |and from = "do_not_reply@gmail.com"
+      |and content = "${EMAIL_BODY}"
       |and to = "${EMAIL_TO}"
       |and subject = "${EMAIL_TITLE}"
       |and smtpHost = "smtp.gmail.com"
@@ -464,6 +466,7 @@ class SQLSendMessage(override val uid: String) extends SQLAlg with Functions wit
       |run data as SendMessage.``
       |where method="mail"
       | and `mailType`="local"
+      |and content = "${EMAIL_BODY}"
       | and from = "do_not_reply@gmail.com"
       | and to = "${EMAIL_TO}"
       | and subject = "${EMAIL_TITLE}"
@@ -475,6 +478,33 @@ class SQLSendMessage(override val uid: String) extends SQLAlg with Functions wit
       | ```
       | Email sent successfully!
       | ```
+      | 
+      |- Below we introduce how to use email to send HTML formatted text and carry attachments.
+      |
+      |1) First, upload two CSV files `employee.csv` and `company.csv` through MLSQL Api Console as attachment content.
+      |
+      |2) Then, send the email through the following SQL, an example is shown below:
+      |
+      |```sql
+      |set EMAIL_TITLE = "This is the title of the email";
+      |set EMAIL_BODY ='''<div>This is the first line</div><br/><hr/><div>This is the second line</div>''';
+      |set EMAIL_TO = "137297351@qq.com";
+      |
+      |run command as SendMessage.
+      |where method="mail"
+      |and content="${EMAIL_BODY}"
+      |and from = "137297351@qq.com"
+      |and to = "${EMAIL_TO}"
+      |and subject = "${EMAIL_TITLE}"
+      |and contentType="text/html"
+      |and attachmentContentType="text/csv"
+      |and attachmentPaths="/tmp/employee.csv,/tmp/employee.csv"
+      |and smtpHost = "smtp.qq.com"
+      |and smtpPort="587"
+      |and `userName`="137297351@qq.com"
+      |and password="---"
+      |;
+      |```
       |""".stripMargin)
 }
 
