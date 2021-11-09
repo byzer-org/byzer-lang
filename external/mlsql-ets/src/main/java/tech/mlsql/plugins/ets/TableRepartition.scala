@@ -199,7 +199,7 @@ class TableRepartition(override val uid: String) extends SQLAlg with VersionComp
           """,
         label = "Number of repartition",
         options = Map(
-          "valueType" -> "string",
+          "valueType" -> "int",
           "defaultValue" -> "",
           "required" -> "true",
           "derivedType" -> "NONE"
