@@ -173,7 +173,7 @@ class SQLWord2VecInPlace(override val uid: String) extends SQLAlg with MllibFunc
     )
   )))
   final val resultFeature: Param[String] = new Param[String](this, "resultFeature", FormParams.toJson(Text(
-    name = "length",
+    name = "resultFeature",
     value = "",
     extra = Extra(
       doc =
