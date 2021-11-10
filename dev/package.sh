@@ -63,8 +63,9 @@ done
 
 if [[ ${ENABLE_CHINESE_ANALYZER} = true && ! -f $SELF/../dev/ansj_seg-5.1.6.jar  && ! -f $SELF/../dev/nlp-lang-1.7.8.jar ]]
 then
-  echo "When ENABLE_CHINESE_ANALYZER=true, ansj_seg-5.1.6.jar && nlp-lang-1.7.8.jar should be in ./dev/"
-  exit 1
+  echo "Downloading ansj & nlp jars"
+  wget --no-check-certificate https://mlsql-downloads.kyligence.io/nlp/nlp-lang-1.7.8.jar -P ${SELF}/../dev/
+  wget --no-check-certificate https://mlsql-downloads.kyligence.io/nlp/ansj_seg-5.1.6.jar -P ${SELF}/../dev/
 fi
 
 # before we compile and package, correct the version in MLSQLVersion
@@ -167,4 +168,3 @@ mvn clean ${COMMAND}  ${SKIPTEST} ${BASE_PROFILES}  ${TESTPROFILE}
 EOF
 mvn clean ${COMMAND}  ${SKIPTEST} ${BASE_PROFILES} ${TESTPROFILE}
 fi
-

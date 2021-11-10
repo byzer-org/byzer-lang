@@ -26,6 +26,17 @@
         </moduleSet>
     </moduleSets>
     <fileSets>
+        <!-- 3rd-party jars -->
+        <fileSet>
+            <!-- Executables -->
+            <directory>${project.parent.basedir}/dev</directory>
+            <includes>
+                <include>ansj_seg-5.1.6.jar</include>
+                <include>nlp-lang-1.7.8.jar</include>
+            </includes>
+            <outputDirectory>libs</outputDirectory>
+        </fileSet>
+
         <fileSet>
             <!-- Executables -->
             <directory>${project.parent.basedir}/dev</directory>
