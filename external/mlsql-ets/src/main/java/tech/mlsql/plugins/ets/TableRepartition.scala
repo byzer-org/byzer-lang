@@ -279,10 +279,10 @@ class TableRepartition(override val uid: String) extends SQLAlg with VersionComp
       depends = List("partitionType"),
       valueProviderName =
         """
-          |set  partitionType="" where type="defaultParam";
+          |set partitionType="" where type="defaultParam";
           |!if ''' :partitionType == "hash" ''';
           |!then;
-          |   select true as enabled  as result;
+          |   select true as enabled,'''[{"name":"suffle","value":"true"},{"name":"suffle","value":"false"}]''' as values as result;
           |!else;
           |   select false as enabled  as result;
           |!fi;
