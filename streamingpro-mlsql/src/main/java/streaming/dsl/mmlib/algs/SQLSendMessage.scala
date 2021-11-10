@@ -19,12 +19,14 @@
 package streaming.dsl.mmlib.algs
 
 import org.apache.commons.lang.StringUtils
+
 import java.util.{Date, Properties}
 import javax.mail.internet.{ContentType, InternetAddress, MimeBodyPart, MimeMessage, MimeMultipart, MimeUtility}
 import javax.mail.{Address, Authenticator, BodyPart, Message, Multipart, PasswordAuthentication, Session, Transport}
 import org.apache.spark.ml.param.Param
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.{DataFrame, SparkSession}
+import streaming.core.DownloadRunner
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib.{Code, Doc, HtmlDoc, SQLAlg, SQLCode}
 import streaming.dsl.mmlib.algs.SQLSendMessage.MailTypeEnum.MailTypeEnum
@@ -36,7 +38,7 @@ import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.dsl.adaptor.DslTool
 import tech.mlsql.tool.HDFSOperatorV2
 
-import java.io.File
+import java.io.{ByteArrayInputStream, ByteArrayOutputStream, File, InputStream, OutputStream}
 import java.nio.file.Paths
 import javax.activation.DataHandler
 import javax.mail.util.ByteArrayDataSource
@@ -536,10 +538,18 @@ class MailAgent() extends Logging with WowLog with DslTool {
     if (attachmentMap != null && attachmentMap.nonEmpty) {
       import scala.collection.JavaConversions._
       for (entry <- attachmentMap.entrySet) {
-        val (filePath, fileName) = entry.getValue
         val context = ScriptSQLExec.contextGetOrForTest()
+        val allPath = resourceRealPath(context.execListener, Option(context.owner), entry.getKey)
+        val (filePath, fileName) = entry.getValue
+
         val baseDir = resourceRealPath(context.execListener, Option(context.owner), filePath)
-        if (HDFSOperatorV2.isDir(baseDir) && HDFSOperatorV2.fileExists(Paths.get(baseDir, fileName).toString)) {
+        // If `allPath` is a dir, we need to package and upload the file.
+        if (HDFSOperatorV2.isDir(allPath)) {
+          val output: OutputStream = new ByteArrayOutputStream
+          if (DownloadRunner.createTarFileStream(output, allPath) == 200) {
+            body.addBodyPart(buildAttachmentBody(parseOutputToInput(output), s"$fileName.tar", attachmentContentType))
+          }
+        } else if (HDFSOperatorV2.isDir(baseDir) && HDFSOperatorV2.fileExists(Paths.get(baseDir, fileName).toString)) {
           body.addBodyPart(buildAttachmentBody(baseDir, fileName, attachmentContentType))
         }
       }
@@ -557,6 +567,11 @@ class MailAgent() extends Logging with WowLog with DslTool {
     ct
   }
 
+  def parseOutputToInput(out: OutputStream): InputStream = {
+    val bytes = out.asInstanceOf[ByteArrayOutputStream]
+    new ByteArrayInputStream(bytes.toByteArray)
+  }
+
   /**
    * Build the attachment body of the email
    *
@@ -571,6 +586,15 @@ class MailAgent() extends Logging with WowLog with DslTool {
     val body: BodyPart = new MimeBodyPart
     body.setDataHandler(new DataHandler(new ByteArrayDataSource(
       HDFSOperatorV2.readAsInputStream(Paths.get(filePath, fileName).toString), attachmentContentType)))
+    body.setFileName(MimeUtility.encodeWord(fileName))
+    body
+  }
+
+  @throws[Exception]
+  private def buildAttachmentBody(attachmentStream: InputStream, fileName: String, attachmentContentType: String): BodyPart = {
+    val body: BodyPart = new MimeBodyPart
+    body.setDataHandler(new DataHandler(new ByteArrayDataSource(
+      attachmentStream, attachmentContentType)))
     body.setFileName(MimeUtility.encodeWord(fileName))
     body
   }
