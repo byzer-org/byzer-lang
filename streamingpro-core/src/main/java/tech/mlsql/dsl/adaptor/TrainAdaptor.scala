@@ -129,6 +129,7 @@ object MLMapping extends Logging with WowLog {
     "NaiveBayes" -> "streaming.dsl.mmlib.algs.SQLNaiveBayes",
     "RandomForest" -> "streaming.dsl.mmlib.algs.SQLRandomForest",
     "GBTRegressor" -> "streaming.dsl.mmlib.algs.SQLGBTRegressor",
+    "GBTClassifier" -> "streaming.dsl.mmlib.algs.SQLGBTClassifier",
     "LDA" -> "streaming.dsl.mmlib.algs.SQLLDA",
     "KMeans" -> "streaming.dsl.mmlib.algs.SQLKMeans",
     "FPGrowth" -> "streaming.dsl.mmlib.algs.SQLFPGrowth",
@@ -184,6 +185,7 @@ object MLMapping extends Logging with WowLog {
     "WaterMarkInPlace" -> "streaming.dsl.mmlib.algs.SQLWaterMarkInPlace",
     "Word2ArrayInPlace" -> "streaming.dsl.mmlib.algs.SQLWord2ArrayInPlace",
     "AutoML" -> "tech.mlsql.ets.algs.SQLAutoML",
+    "ShowTableExt" -> "streaming.dsl.mmlib.algs.SQLShowTableExt",
     "PredictionEva"->"streaming.dsl.mmlib.algs.SQLPredictionEva"
   )
 

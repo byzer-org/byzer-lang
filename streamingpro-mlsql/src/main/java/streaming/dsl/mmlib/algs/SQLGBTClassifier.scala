@@ -1,44 +1,27 @@
-/*
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package streaming.dsl.mmlib.algs
 
-import streaming.dsl.mmlib.algs.regression.BaseRegression
-import streaming.dsl.mmlib.algs.param.BaseParams
-import org.apache.spark.ml.linalg.SQLDataTypes._
-import org.apache.spark.ml.linalg.Vector
-import org.apache.spark.ml.regression.{GBTRegressionModel, GBTRegressor}
-import streaming.dsl.mmlib.{AlgType, Code, Doc, HtmlDoc, ModelType, SQLAlg, SQLCode}
-import streaming.dsl.auth.{DB_DEFAULT, MLSQLTable, OperateType, TableAuthResult, TableType}
-import streaming.dsl.mmlib.SQLAlg
-import streaming.dsl.ScriptSQLExec
-import org.apache.spark.sql._
+import org.apache.spark.ml.classification.{GBTClassificationModel, GBTClassifier}
 import org.apache.spark.sql.expressions.UserDefinedFunction
-import org.apache.spark.sql.types.{DoubleType, StringType, StructField, StructType}
+import org.apache.spark.sql.types.{StringType, StructField, StructType}
+import org.apache.spark.sql.{DataFrame, Row, SparkSession}
+import streaming.dsl.ScriptSQLExec
+import streaming.dsl.auth._
+import streaming.dsl.mmlib.algs.param.BaseParams
+import streaming.dsl.mmlib.algs.regression.BaseRegression
+import streaming.dsl.mmlib._
+import streaming.dsl.mmlib.algs.classfication.BaseClassification
 import tech.mlsql.dsl.auth.ETAuth
 import tech.mlsql.dsl.auth.dsl.mmlib.ETMethod.ETMethod
 
 import scala.collection.mutable.ArrayBuffer
 
 /**
- * Created by allwefantasy on 13/1/2018.
+ *
+ * @Author; Andie Huang
+ * @Date: 2021/11/4 10:49 上午
+ *
  */
-class SQLGBTRegressor(override val uid: String) extends SQLAlg with Functions with MllibFunctions with BaseRegression with ETAuth {
+class SQLGBTClassifier(override val uid: String) extends SQLAlg with Functions with MllibFunctions with BaseClassification with ETAuth {
   def this() = this(BaseParams.randomUID())
 
   override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
@@ -53,15 +36,15 @@ class SQLGBTRegressor(override val uid: String) extends SQLAlg with Functions wi
     SQLPythonFunc.incrementVersion(path, keepVersion)
     val spark = df.sparkSession
 
-    trainModelsWithMultiParamGroup[GBTRegressionModel](df, path, params, () => {
-      new GBTRegressor()
+    trainModelsWithMultiParamGroup[GBTClassificationModel](df, path, params, () => {
+      new GBTClassifier()
     }, (_model, fitParam) => {
       evaluateTable match {
         case Some(etable) =>
-          val model = _model.asInstanceOf[GBTRegressionModel]
+          val model = _model.asInstanceOf[GBTClassificationModel]
           val evaluateTableDF = spark.table(etable)
           val predictions = model.transform(evaluateTableDF)
-          regressionEvaluate(predictions, evaluator => {
+          multiclassClassificationEvaluate(predictions, evaluator => {
             evaluator.setLabelCol(fitParam.getOrElse("labelCol", "label"))
             evaluator.setPredictionCol("prediction")
           })
@@ -75,7 +58,7 @@ class SQLGBTRegressor(override val uid: String) extends SQLAlg with Functions wi
   }
 
   override def explainModel(sparkSession: SparkSession, path: String, params: Map[String, String]): DataFrame = {
-    val models = load(sparkSession, path, params).asInstanceOf[ArrayBuffer[GBTRegressionModel]]
+    val models = load(sparkSession, path, params).asInstanceOf[ArrayBuffer[GBTClassificationModel]]
     val rows = models.flatMap { model =>
       val modelParams = model.params.filter(param => model.isSet(param)).map { param =>
         val tmp = model.get(param).get
@@ -98,33 +81,29 @@ class SQLGBTRegressor(override val uid: String) extends SQLAlg with Functions wi
 
   override def explainParams(sparkSession: SparkSession): DataFrame = {
     _explainParams(sparkSession, () => {
-      new GBTRegressor()
+      new GBTClassifier()
     })
   }
 
   override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = {
     val (bestModelPath, baseModelPath, metaPath) = mllibModelAndMetaPath(path, params, sparkSession)
-    val model = GBTRegressionModel.load(bestModelPath(0))
+    val model = GBTClassificationModel.load(bestModelPath(0))
     ArrayBuffer(model)
   }
 
   override def predict(sparkSession: SparkSession, _model: Any, name: String, params: Map[String, String]): UserDefinedFunction = {
-    val model = sparkSession.sparkContext.broadcast(_model.asInstanceOf[ArrayBuffer[GBTRegressionModel]](0))
-    val f = (vec: Vector) => {
-      model.value.getClass.getMethod("predict", classOf[Vector]).invoke(model.value, vec)
-    }
-    MLSQLUtils.createUserDefinedFunction(f, DoubleType, Some(Seq(VectorType)))
+    predict_classification(sparkSession, _model, name)
   }
 
   override def batchPredict(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
-    val model = load(df.sparkSession, path, params).asInstanceOf[ArrayBuffer[GBTRegressionModel]].head
+    val model = load(df.sparkSession, path, params).asInstanceOf[ArrayBuffer[GBTClassificationModel]].head
     model.transform(df)
   }
 
   override def auth(etMethod: ETMethod, path: String, params: Map[String, String]): List[TableAuthResult] = {
     val vtable = MLSQLTable(
       Option(DB_DEFAULT.MLSQL_SYSTEM.toString),
-      Option("__algo_gbt_regressor_operator__"),
+      Option("__algo_gbt_classifier_operator__"),
       OperateType.SELECT,
       Option("select"),
       TableType.SYSTEM)
@@ -145,17 +124,17 @@ class SQLGBTRegressor(override val uid: String) extends SQLAlg with Functions wi
       | machine learning technique for regression, classification and other tasks,
       | which produces a prediction model in the form of an ensemble of weak prediction models, typically decision trees
       |
-      | Use "load modelParams.`GBTRegressor` as output;"
+      | Use "load modelParams.`GBTClassifier` as output;"
       |
       | to check the available hyper parameters;
       |
-      | Use "load modelExample.`GBTRegressor` as output;"
+      | Use "load modelExample.`GBTClassifier` as output;"
       | get example.
       |
       | If you wanna check the params of model you have trained, use this command:
       |
       | ```
-      | load modelExplain.`/tmp/model` where alg="GBTRegressor" as outout;
+      | load modelExplain.`/tmp/model` where alg="GBTClassifier" as outout;
       | ```
       |
     """.stripMargin)
@@ -169,8 +148,8 @@ class SQLGBTRegressor(override val uid: String) extends SQLAlg with Functions wi
       |select vec_dense(features) as features ,label as label from data
       |as data1;
       |
-      |-- use GBTRegressor
-      |train data1 as GBTRegressor.`/tmp/model` where
+      |-- use GBTClassifier
+      |train data1 as GBTClassifier.`/tmp/model` where
       |
       |-- once set true,every time you run this script, MLSQL will generate new directory for you model
       |keepVersion="true"

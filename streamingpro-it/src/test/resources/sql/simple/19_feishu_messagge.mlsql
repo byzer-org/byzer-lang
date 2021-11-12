@@ -1,0 +1,8 @@
+--%comparator=tech.mlsql.it.IgnoreResultComparator
+
+SELECT 1 AS id AS dummy;
+run dummy as FeishuMessageExt.`` where text="Your message" AND webhook = "https://open.feishu.cn/open-apis/bot/v2/hook/0b97ecc1-32f4-4322-a038-7b7074d" as output_1;
+
+select value from output_1 as result;
+
+!assert result ''':value=="Failed 19001 param invalid: incoming webhook access token invalid"''' "Invalid FeishuMessageExt param";

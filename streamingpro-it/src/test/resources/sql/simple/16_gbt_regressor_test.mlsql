@@ -16,17 +16,18 @@ load jsonStr.`jsonStr` as data;
 select vec_dense(features) as features , label as label from data
 as data1;
 
-train data1 as AutoML.`/tmp/auto_ml` where
-algos="RandomForest,NaiveBayes,GBTClassifier"
-and sortedBy='f1'
-and keepVersion="true"
+train data1 as GBTRegressor.`/tmp/test` where
+keepVersion="true"
 and evaluateTable="data1"
 as model_result;
 
-register AutoML.`/tmp/auto_ml` as autoML_predict;
-register AutoML.`/tmp/auto_ml` as autoML_predict where algIndex="RandomForest.0";
-register AutoML.`/tmp/auto_ml` as autoML_predict where autoSelectByMetric="f1";
-select autoML_predict(features) as predict_label, label from data1 as output;
+predict data1 as GBTRegressor.`/tmp/test` as res;
+
+register GBTRegressor.`/tmp/test` as gbt_prf;
+register GBTRegressor.`/tmp/test` as gbt_prf where algIndex="0";
+register GBTRegressor.`/tmp/test` as gbt_prf where autoSelectByMetric="f1";
+
+select gbt_prf(features) as predict_label, label from data1 as output;
 
 select name,value from model_result where name="status" as result;
 -- make sure status of  all models are success.
