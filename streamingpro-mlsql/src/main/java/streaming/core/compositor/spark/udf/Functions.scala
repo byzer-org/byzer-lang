@@ -21,6 +21,7 @@ package streaming.core.compositor.spark.udf
 import java.util.UUID
 
 import breeze.linalg.{DenseVector => BDV, SparseVector => BSV, Vector => BV}
+import net.sf.json.JSONArray
 import org.apache.spark.ml.linalg.{DenseVector, Matrices, Matrix, SparseVector, Vector, Vectors}
 import org.apache.spark.mllib.linalg.{Vectors => OldVectors}
 import org.apache.spark.sql.UDFRegistration
@@ -458,6 +459,12 @@ object Functions {
   def byteStringAs(uDFRegistration: UDFRegistration) = {
     uDFRegistration.register("byteStringAsGb", (item: String, unit: String) => {
       Measurement.byteStringAs(item, ByteUnit.valueOf(unit))
+    })
+  }
+
+  def json_object_array(uDFRegistration: UDFRegistration) = {
+    uDFRegistration.register("json_object_array", (json: String) => {
+      JSONArray.fromObject(json).toSeq.map(_.toString)
     })
   }
 
