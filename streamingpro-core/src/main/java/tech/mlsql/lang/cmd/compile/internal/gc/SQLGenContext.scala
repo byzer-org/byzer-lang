@@ -1,11 +1,7 @@
-package tech.mlsql.ets
-
-import java.util.UUID
+package tech.mlsql.lang.cmd.compile.internal.gc
 
 import org.apache.spark.sql.types.{DataType, StringType, StructField, StructType}
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
-import streaming.dsl.BranchContext
-import tech.mlsql.lang.cmd.compile.internal.gc._
 
 /**
  * 6/10/2020 WilliamZhu(allwefantasy@gmail.com)
@@ -52,7 +48,7 @@ class SQLGenContext(session: SparkSession) extends CodegenContext {
 
   override def execute(exprs: List[Expression], variableTable: VariableTable): Any = {
     val baseTable = buildBaseTable(variableTable.variables.toMap,
-      variableTable.types.map(a=>(a._1,a._2.asInstanceOf[DataType])).toMap)
+      variableTable.types.map(a => (a._1, a._2.asInstanceOf[DataType])).toMap)
     val uuid = variableTable.name
     baseTable.createOrReplaceTempView(uuid)
     exprs.map { expr =>
@@ -72,7 +68,9 @@ class SQLGenContext(session: SparkSession) extends CodegenContext {
               Literal((leftValue || rightValue), Types.Boolean)
           }
           res
-
+        case Variable(_, dataType) =>
+          val item = executeSingleComputeInRuntime(expr.genCode(this).code, uuid)
+          Literal(item, dataType)
         case _ =>
           val item = executeSingleComputeInRuntime(expr.genCode(this).code, uuid).asInstanceOf[Boolean]
           Literal(item, Types.Boolean)

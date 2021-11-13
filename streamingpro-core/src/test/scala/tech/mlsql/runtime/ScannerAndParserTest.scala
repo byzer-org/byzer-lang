@@ -1,4 +1,4 @@
-package tech.mlsql.lang.cmd.compile.internal.gc.test
+package tech.mlsql.runtime
 
 import org.scalatest.FunSuite
 import tech.mlsql.lang.cmd.compile.internal.gc._
@@ -219,23 +219,11 @@ class ScannerAndParserTest extends FunSuite {
   }
 
   test("texttemplate") {
-    var str = "select :jack as :name as b;"
-    var item = new TextTemplate(Map("jack" -> "wow"), str).parse
-    assert(item == "select wow as :name as b;")
+    val str = "select :{:jack} as :name as b;"
+    val textTemplate = new TextTemplate(Map("jack" -> "wow"), str)
+    val tokens = textTemplate.parse
+    println(tokens.map(_.chars.mkString("")))
 
-    str = "select : as :name as b;"
-    item = new TextTemplate(Map("jack" -> "wow"), str).parse
-    assert(item == "select : as :name as b;")
-
-
-    str = "select ''':jack''' as :name as b;"
-    item = new TextTemplate(Map("jack" -> "wow"), str).parse
-    assert(item == "select '''wow''' as :name as b;")
-
-    str = "select a:jack''' as :name as b;"
-    item = new TextTemplate(Map("jack" -> "wow"), str).parse
-    println(item)
-    
   }
 
 }
