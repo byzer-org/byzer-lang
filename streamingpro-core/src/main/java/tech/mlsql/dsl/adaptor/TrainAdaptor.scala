@@ -19,19 +19,21 @@
 package tech.mlsql.dsl.adaptor
 
 import java.util.UUID
-import streaming.dsl.ScriptSQLExecListener
+
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.parser.DSLSQLParser._
 import streaming.dsl.template.TemplateMerge
+import streaming.dsl.{ScriptSQLExec, ScriptSQLExecListener}
 import streaming.log.WowLog
 import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.dsl.auth.ETAuth
 import tech.mlsql.dsl.auth.dsl.mmlib.ETMethod
 import tech.mlsql.ets.register.ETRegister
+import tech.mlsql.tool.Templates2
 
 /**
-  * Created by allwefantasy on 12/1/2018.
-  */
+ * Created by allwefantasy on 12/1/2018.
+ */
 class TrainAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdaptor {
 
   def evaluate(value: String) = {
@@ -69,11 +71,14 @@ class TrainAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdap
   override def parse(ctx: SqlContext): Unit = {
     val TrainStatement(_, tableName, format, _path, _options, asTableName) = analyze(ctx)
     var path = _path
-    var options = _options
+    var options = _options.map { case (k, v) =>
+      val newV = Templates2.dynamicEvaluateExpression(v, ScriptSQLExec.context().execListener.env().toMap)
+      (k, newV)
+    }
     val owner = options.get("owner")
     val df = scriptSQLExecListener.sparkSession.table(tableName)
     val sqlAlg = MLMapping.findAlg(format)
-    
+
     if (!sqlAlg.skipPathPrefix) {
       path = withPathPrefix(scriptSQLExecListener.pathPrefix(owner), path)
     }
@@ -186,7 +191,7 @@ object MLMapping extends Logging with WowLog {
     "Word2ArrayInPlace" -> "streaming.dsl.mmlib.algs.SQLWord2ArrayInPlace",
     "AutoML" -> "tech.mlsql.ets.algs.SQLAutoML",
     "ShowTableExt" -> "streaming.dsl.mmlib.algs.SQLShowTableExt",
-    "PredictionEva"->"streaming.dsl.mmlib.algs.SQLPredictionEva"
+    "PredictionEva" -> "streaming.dsl.mmlib.algs.SQLPredictionEva"
   )
 
   /**

@@ -21,7 +21,6 @@ package streaming.dsl.template
 import org.joda.time.DateTime
 import streaming.dsl.{IfContext, ScriptSQLExec}
 import tech.mlsql.common.utils.evaluate.RenderEngine
-import tech.mlsql.lang.cmd.compile.internal.gc.TextTemplate
 import tech.mlsql.template.SQLSnippetTemplate
 
 
@@ -29,7 +28,7 @@ import tech.mlsql.template.SQLSnippetTemplate
  * Created by allwefantasy on 29/3/2018.
  */
 object TemplateMerge {
-
+  
   def merge(sql: String, root: Map[String, String]): String = {
 
     val dformat = "yyyy-MM-dd"
@@ -47,8 +46,8 @@ object TemplateMerge {
       if (!ScriptSQLExec.context().execListener.branchContext.contexts.isEmpty) {
         ScriptSQLExec.context().execListener.branchContext.contexts.head match {
           case s: IfContext =>
-//            return new TextTemplate(s.variableTable.variables.toMap, wow).parse
-              return  RenderEngine.render(wow, s.variableTable.variables.map(item=>(item._1,item._2.asInstanceOf[Object])).toMap)
+            //            return new TextTemplate(s.variableTable.variables.toMap, wow).parse
+            return RenderEngine.render(wow, s.variableTable.variables.map(item => (item._1, item._2.asInstanceOf[Object])).toMap)
           case _ =>
         }
 

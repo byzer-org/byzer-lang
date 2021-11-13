@@ -4,13 +4,17 @@ import java.io.{StringReader, StringWriter}
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicInteger
 
+import org.apache.spark.sql.mlsql.session.MLSQLException
 import org.apache.velocity.VelocityContext
 import org.apache.velocity.app.Velocity
+import streaming.dsl.ScriptSQLExec
 import tech.mlsql.common.utils.func.{WowFuncParser, WowSymbol}
 import tech.mlsql.common.utils.serder.json.JSONTool
 import tech.mlsql.common.utils.shell.command.ParamsUtil
+import tech.mlsql.lang.cmd.compile.internal.gc._
 
 import scala.collection.JavaConverters._
+import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
 /**
@@ -19,9 +23,53 @@ import scala.collection.mutable.ArrayBuffer
  * may destroy the {:all} content.
  */
 object Templates2 {
+
+  def dynamicEvaluateExpression(str: String, kvs: Map[String, String]): String = {
+    def mapToVariableTable(maps: Map[String, String]): VariableTable = {
+      val uuid = UUID.randomUUID().toString.replaceAll("-", "")
+      val variables = new mutable.HashMap[String, Any]
+      val types = new mutable.HashMap[String, Any]
+      variables ++= maps
+      VariableTable(uuid, variables, types)
+    }
+
+    def evaluate(str: String, options: Map[String, String] = Map()): Literal = {
+      val session = ScriptSQLExec.context().execListener.sparkSession
+      val scanner = new Scanner(str)
+      val tokenizer = new Tokenizer(scanner)
+      val parser = new StatementParser(tokenizer)
+      val exprs = try {
+        parser.parse()
+      } catch {
+        case e: ParserException =>
+          throw new MLSQLException(s"Error in MLSQL Line:${options.getOrElse("__LINE__", "-1").toInt + 1} \n Expression:${e.getMessage}")
+        case e: Exception => throw e
+
+      }
+      val sQLGenContext = new SQLGenContext(session)
+
+      val variableTable = mapToVariableTable(kvs)
+      val item = sQLGenContext.execute(exprs.map(_.asInstanceOf[Expression]), variableTable)
+      val lit = item.asInstanceOf[Literal]
+      //clean temp table
+      session.catalog.dropTempView(variableTable.name)
+      lit
+    }
+
+    val textTemplate = new TextTemplate(kvs, str)
+    val tokens = textTemplate.parse
+    tokens.map { item =>
+      if (item.name == "evaluate") {
+        evaluate(item.chars.drop(2).dropRight(1).mkString(""), Map()).value.toString
+      } else {
+        item.chars.mkString("")
+      }
+    }.mkString("")
+  }
+
   /**
-   *   Templates2.evaluate(" hello {} ",Seq("jack"))
-   *   Templates2.evaluate(" hello {0} {1} {0}",Seq("jack","wow"))
+   * Templates2.evaluate(" hello {} ",Seq("jack"))
+   * Templates2.evaluate(" hello {0} {1} {0}",Seq("jack","wow"))
    */
   def evaluate(_str: String, parameters: Seq[String]) = {
     val str = _str
