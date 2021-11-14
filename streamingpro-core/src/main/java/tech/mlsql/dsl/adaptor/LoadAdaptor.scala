@@ -32,6 +32,7 @@ import tech.mlsql.MLSQLEnvKey
 import tech.mlsql.dsl.auth.DatasourceAuth
 import tech.mlsql.runtime.AppRuntimeStore
 import tech.mlsql.sql.MLSQLSparkConf
+import tech.mlsql.tool.Templates2
 
 /**
  * Created by allwefantasy on 27/8/2017.
@@ -67,7 +68,12 @@ class LoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
   }
 
   override def parse(ctx: SqlContext): Unit = {
-    val LoadStatement(_, format, path, option, tableName) = analyze(ctx)
+    val LoadStatement(_, format, path, _option, tableName) = analyze(ctx)
+
+    val option = _option.map { case (k, v) =>
+      val newV = Templates2.dynamicEvaluateExpression(v, ScriptSQLExec.context().execListener.env().toMap)
+      (k, newV)
+    }
 
     def isStream = {
       scriptSQLExecListener.env().contains("streamName")

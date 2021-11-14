@@ -25,9 +25,10 @@ import streaming.dsl.auth.{MLSQLTable, OperateType, TableType}
 import streaming.dsl.parser.DSLSQLLexer
 import streaming.dsl.parser.DSLSQLParser.SqlContext
 import streaming.dsl.template.TemplateMerge
-import streaming.dsl.{ForContext, IfContext, ScriptSQLExecListener}
+import streaming.dsl.{ScriptSQLExec, ScriptSQLExecListener}
 import tech.mlsql.dsl.scope.ParameterScope
 import tech.mlsql.sql.MLSQLSparkConf
+import tech.mlsql.tool.Templates2
 
 
 /**
@@ -64,15 +65,24 @@ class SelectAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAda
   }
 
   override def parse(ctx: SqlContext): Unit = {
-    
-    val SelectStatement(originalText, sql, tableName) = analyze(ctx)
 
+    val SelectStatement(originalText, _sql, tableName) = analyze(ctx)
+    val sql = if (_conf().getBoolean("spark.mlsql.dynamic-string-interpolation.select", false)) {
+      Templates2.dynamicEvaluateExpression(_sql, ScriptSQLExec.context().execListener.env().toMap)
+    } else _sql
     val df = scriptSQLExecListener.sparkSession.sql(sql)
 
     runtimeTableAuth(df)
 
     df.createOrReplaceTempView(tableName)
     scriptSQLExecListener.setLastSelectTable(tableName)
+  }
+
+  private def _conf() = {
+    val context = ScriptSQLExec.contextGetOrForTest()
+    context.execListener.sparkSession
+      .sparkContext
+      .getConf
   }
 
   def runtimeTableAuth(df: DataFrame): Unit = {
