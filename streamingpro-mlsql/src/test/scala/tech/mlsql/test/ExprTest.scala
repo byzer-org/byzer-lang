@@ -3,7 +3,6 @@ package tech.mlsql.test
 import org.apache.spark.sql.{Row, SparkSession}
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
 import org.scalatest.{BeforeAndAfterAll, FunSuite}
-import tech.mlsql.ets.SQLGenContext
 import tech.mlsql.lang.cmd.compile.internal.gc._
 import tech.mlsql.nativelib.runtime.NativeFuncRule
 
