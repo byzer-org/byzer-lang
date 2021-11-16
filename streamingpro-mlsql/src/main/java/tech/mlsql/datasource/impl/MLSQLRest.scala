@@ -2,6 +2,8 @@ package tech.mlsql.datasource.impl
 
 import java.nio.charset.Charset
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import org.apache.http.client.entity.EntityBuilder
 import org.apache.http.client.fluent.{Form, Request}
 import org.apache.http.entity.ContentType
@@ -29,7 +31,7 @@ class MLSQLRest(override val uid: String) extends MLSQLSource with MLSQLSink wit
    * load Rest.`http://mlsql.tech/api` where
    * `config.connect-timeout`="10s"
    * and `config.method`="GET"
-   * and header.content-type`="application/json"
+   * and `header.content-type`="application/json"
    * and `body`='''
    * {
    * "query":"b"
@@ -52,7 +54,8 @@ class MLSQLRest(override val uid: String) extends MLSQLSource with MLSQLSink wit
    **/
   override def load(reader: DataFrameReader, config: DataSourceConfig): DataFrame = {
     val params = config.config
-    val request = params.getOrElse(configMethod.name, "get").toLowerCase match {
+    val httpMethod = params.getOrElse(configMethod.name, "get").toLowerCase
+    val request = httpMethod match {
       case "get" => Request.Get(config.path)
       case "post" => Request.Post(config.path)
       case "put" => Request.Put(config.path)
@@ -71,31 +74,23 @@ class MLSQLRest(override val uid: String) extends MLSQLSource with MLSQLSink wit
       request.addHeader(k.stripPrefix("header."), v)
     }
 
-    val response = params.getOrElse(headerContentType.name, "application/x-www-form-urlencoded") match {
-      case "application/json" =>
-//        request.setHeader("Content-Type","application/json")
+    val response = (httpMethod, params.getOrElse(headerContentType.name, "application/x-www-form-urlencoded") ) match {
+      case ("get", _) => request.execute()
+
+      case ("post", "application/json") =>
         if (params.contains(body.name))
           request.bodyString(params(body.name),ContentType.APPLICATION_JSON).execute()
         else
           request.execute()
 
-      case "application/x-www-form-urlencoded" =>
+      case ("post","application/x-www-form-urlencoded") =>
         val form = Form.form()
         params.filter(_._1.startsWith("form.")).foreach { case (k, v) =>
           form.add(k.stripPrefix("form."), v)
         }
         request.bodyForm(form.build(),Charset.forName("utf-8")).execute()
 
-      //      case Some("multipart/form-data") =>
-      //
-      //        val inputStream = HDFSOperatorV2.readAsInputStream(params("form.filePath"))
-      //
-      //        val entity = MultipartEntityBuilder.create.
-      //          setMode(HttpMultipartMode.BROWSER_COMPATIBLE).
-      //          setCharset(Charset.forName("utf-8")).
-      //          addBinaryBody("file", inputStream, ContentType.MULTIPART_FORM_DATA, fileName).build
-      //        request.body(entity).execute()
-      case v =>
+      case (_, v) =>
         throw new MLSQLException(s"content-type ${v}  is not support yet")
     }
 
@@ -124,7 +119,8 @@ class MLSQLRest(override val uid: String) extends MLSQLSource with MLSQLSink wit
    */
   override def save(writer: DataFrameWriter[Row], config: DataSinkConfig): Any = {
     val params = config.config
-    val request = params.getOrElse(configMethod.name, "get").toLowerCase match {
+    val httpMethod = params.getOrElse(configMethod.name, "get").toLowerCase
+    val request = httpMethod match {
       case "get" => Request.Get(config.path)
       case "post" => Request.Post(config.path)
       case "put" => Request.Put(config.path)
@@ -143,21 +139,23 @@ class MLSQLRest(override val uid: String) extends MLSQLSource with MLSQLSink wit
       request.addHeader(k.stripPrefix("header."), v)
     }
 
-    val response = params.getOrElse(headerContentType.name, "application/x-www-form-urlencoded") match {
-      case "application/json" =>
+    val response = (httpMethod, params.getOrElse(headerContentType.name, "application/x-www-form-urlencoded")) match {
+      case ("get", _) => request.execute()
+
+      case ("post", "application/json") =>
         if (params.contains(body.name))
           request.bodyString(params(body.name),ContentType.APPLICATION_JSON).execute()
         else
           request.execute()
 
-      case "application/x-www-form-urlencoded" =>
+      case ("post", "application/x-www-form-urlencoded") =>
         val form = Form.form()
         params.filter(_._1.startsWith("form.")).foreach { case (k, v) =>
           form.add(k.stripPrefix("form."), v)
         }
         request.bodyForm(form.build(),Charset.forName("utf-8")).execute()
 
-      case "multipart/form-data" =>
+      case ("post", "multipart/form-data") =>
 
         val context = ScriptSQLExec.contextGetOrForTest()
         val _filePath = params(params("form.file-path"))
@@ -177,7 +175,7 @@ class MLSQLRest(override val uid: String) extends MLSQLSource with MLSQLSink wit
           entity.addTextBody(k.stripPrefix("form."), v)
         }
         request.body(entity.build()).execute()
-      case v =>
+      case (_, v) =>
         throw new MLSQLException(s"content-type ${v}  is not support yet")
     }
 
