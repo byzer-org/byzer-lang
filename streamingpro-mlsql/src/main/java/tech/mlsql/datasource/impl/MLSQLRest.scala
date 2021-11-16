@@ -73,8 +73,9 @@ class MLSQLRest(override val uid: String) extends MLSQLSource with MLSQLSink wit
 
     val response = params.getOrElse(headerContentType.name, "application/x-www-form-urlencoded") match {
       case "application/json" =>
+//        request.setHeader("Content-Type","application/json")
         if (params.contains(body.name))
-          request.body(EntityBuilder.create.setText(params(body.name)).build()).execute()
+          request.bodyString(params(body.name),ContentType.APPLICATION_JSON).execute()
         else
           request.execute()
 
@@ -83,7 +84,7 @@ class MLSQLRest(override val uid: String) extends MLSQLSource with MLSQLSink wit
         params.filter(_._1.startsWith("form.")).foreach { case (k, v) =>
           form.add(k.stripPrefix("form."), v)
         }
-        request.bodyForm(form.build()).execute()
+        request.bodyForm(form.build(),Charset.forName("utf-8")).execute()
 
       //      case Some("multipart/form-data") =>
       //
@@ -145,7 +146,7 @@ class MLSQLRest(override val uid: String) extends MLSQLSource with MLSQLSink wit
     val response = params.getOrElse(headerContentType.name, "application/x-www-form-urlencoded") match {
       case "application/json" =>
         if (params.contains(body.name))
-          request.body(EntityBuilder.create.setText(params(body.name)).build()).execute()
+          request.bodyString(params(body.name),ContentType.APPLICATION_JSON).execute()
         else
           request.execute()
 
@@ -154,7 +155,7 @@ class MLSQLRest(override val uid: String) extends MLSQLSource with MLSQLSink wit
         params.filter(_._1.startsWith("form.")).foreach { case (k, v) =>
           form.add(k.stripPrefix("form."), v)
         }
-        request.bodyForm(form.build()).execute()
+        request.bodyForm(form.build(),Charset.forName("utf-8")).execute()
 
       case "multipart/form-data" =>
 
