@@ -34,7 +34,7 @@ class SetSuggesterTest extends BaseTest {
         |""".stripMargin).tokens.asScala.toList
 
     val suggestions = new SetSuggester(context, statement, TokenPos(4, TokenPosType.CURRENT, 1)).suggest()
-    assert(suggestions.map(_.name).toSet == Set("where"))
+    assert(suggestions.map(_.name).toSet == Set("where "))
   }
 
   test("set hello=\"world\" w[cursor]") {
@@ -45,7 +45,7 @@ class SetSuggesterTest extends BaseTest {
         |""".stripMargin).tokens.asScala.toList
 
     val suggestions = new SetSuggester(context, statement, TokenPos(4, TokenPosType.CURRENT, 1)).suggest()
-    assert(suggestions.map(_.name).toSet == Set("where"))
+    assert(suggestions.map(_.name).toSet == Set("where "))
   }
 
   test("set hello='''world''' w[cursor]") {
@@ -56,7 +56,7 @@ class SetSuggesterTest extends BaseTest {
         |""".stripMargin).tokens.asScala.toList
 
     val suggestions = new SetSuggester(context, statement, TokenPos(4, TokenPosType.CURRENT, 1)).suggest()
-    assert(suggestions.map(_.name).toSet == Set("where"))
+    assert(suggestions.map(_.name).toSet == Set("where "))
   }
 
   test("set hello='''world''' o[cursor]") {
@@ -67,7 +67,7 @@ class SetSuggesterTest extends BaseTest {
         |""".stripMargin).tokens.asScala.toList
 
     val suggestions = new SetSuggester(context, statement, TokenPos(4, TokenPosType.CURRENT, 1)).suggest()
-    assert(suggestions.map(_.name).toSet == Set("options"))
+    assert(suggestions.map(_.name).toSet == Set("options "))
   }
 
   test("set date=`date` w[cursor]") {
@@ -78,7 +78,7 @@ class SetSuggesterTest extends BaseTest {
         |""".stripMargin).tokens.asScala.toList
 
     val suggestions = new SetSuggester(context, statement, TokenPos(4, TokenPosType.CURRENT, 1)).suggest()
-    assert(suggestions.map(_.name).toSet == Set("where"))
+    assert(suggestions.map(_.name).toSet == Set("where "))
   }
 
   test("set date=`date` where m[cursor]") {

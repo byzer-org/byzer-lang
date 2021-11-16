@@ -1,6 +1,6 @@
 package tech.mlsql.autosuggest.meta
 
-case class MetaTableKey(prefix: Option[String], db: Option[String], table: String)
+case class MetaTableKey(prefix: Option[String], db: Option[String], table: String, pathQuote: String = "")
 
 case class MetaTable(key: MetaTableKey, columns: List[MetaTableColumn])
 
