@@ -40,7 +40,7 @@ class TrainSuggester(val context: AutoSuggestContext, val _tokens: List[Token], 
   private def keywordSuggest: List[SuggestItem] = {
     var items = List[SuggestItem]()
     // If the where keyword already exists, it will not prompt
-    if (backAndFirstIs(DSLSQLLexer.WHERE) || backAndFirstIs(DSLSQLLexer.OPTIONS)) {
+    if (backAndFirstIs(DSLSQLLexer.WHERE) || backAndFirstIs(DSLSQLLexer.OPTIONS) || backAndFirstIs(DSLSQLLexer.PREDICT)) {
       return items
     }
 
@@ -61,13 +61,25 @@ class TrainSuggester(val context: AutoSuggestContext, val _tokens: List[Token], 
           eat(Food(None, MLSQLTokenTypeWrapper.DOT)).
           build
         if (temp.isSuccess) {
-          items = List(SuggestItem("where ", SpecialTableConst.KEY_WORD_TABLE, Map()),
-            SuggestItem("options ", SpecialTableConst.KEY_WORD_TABLE, Map()))
+          // The current pos is IDENTIFIER, and is the where prefix
+          if ("where".startsWith(_tokens(pos).getText)) {
+            items = List(SuggestItem("where ", SpecialTableConst.KEY_WORD_TABLE, Map()))
+          } else if ("options".startsWith(_tokens(pos).getText)) {
+            items = List(SuggestItem("options ", SpecialTableConst.KEY_WORD_TABLE, Map()))
+          }
         }
         items
       case _ => List()
     }
 
+  }
+
+  def getAllETNames: Set[String] = {
+    MLMapping.getAllETNames
+  }
+
+  def getETInstanceMapping: Map[String, SQLAlg] = {
+    MLMapping.getETInstanceMapping
   }
 
   override def name: String = "train"
@@ -82,6 +94,7 @@ object TrainSuggester {
     _tokens.headOption.map(_.getType) match {
       case Some(DSLSQLLexer.TRAIN) => true
       case Some(DSLSQLLexer.RUN) => true
+      case Some(DSLSQLLexer.PREDICT) => true
       case _ => false
     }
   }
@@ -105,7 +118,8 @@ class TrainTempTableSuggester(trainSuggester: TrainSuggester) extends SuggesterB
       return false
     }
     TokenMatcher(tokens, tokenPos.pos - skipSize).back.eat(Food(None, DSLSQLLexer.TRAIN)).isSuccess ||
-      TokenMatcher(tokens, tokenPos.pos - skipSize).back.eat(Food(None, DSLSQLLexer.RUN)).isSuccess
+      TokenMatcher(tokens, tokenPos.pos - skipSize).back.eat(Food(None, DSLSQLLexer.RUN)).isSuccess ||
+      TokenMatcher(tokens, tokenPos.pos - skipSize).back.eat(Food(None, DSLSQLLexer.PREDICT)).isSuccess
   }
 
   override def suggest(): List[SuggestItem] = {
@@ -119,21 +133,16 @@ class TrainTempTableSuggester(trainSuggester: TrainSuggester) extends SuggesterB
 
 class TrainPathQuoteSuggester(trainSuggester: TrainSuggester) extends SuggesterBase(trainSuggester._tokens, trainSuggester._tokenPos) {
 
+  def isMatchPathQouted(headToken: Int): Boolean = TokenMatcher(tokens, tokenPos.pos).back.
+    eat(Food(None, MLSQLTokenTypeWrapper.DOT)).
+    eat(Food(None, DSLSQLLexer.IDENTIFIER)).
+    eat(Food(None, DSLSQLLexer.AS)).
+    eat(Food(None, DSLSQLLexer.IDENTIFIER)).
+    eat(Food(None, headToken))
+    .build.isSuccess
+
   override def isMatch(): Boolean = {
-    TokenMatcher(tokens, tokenPos.pos).back.
-      eat(Food(None, MLSQLTokenTypeWrapper.DOT)).
-      eat(Food(None, DSLSQLLexer.IDENTIFIER)).
-      eat(Food(None, DSLSQLLexer.AS)).
-      eat(Food(None, DSLSQLLexer.IDENTIFIER)).
-      eat(Food(None, DSLSQLLexer.RUN))
-      .build.isSuccess ||
-      TokenMatcher(tokens, tokenPos.pos).back.
-        eat(Food(None, MLSQLTokenTypeWrapper.DOT)).
-        eat(Food(None, DSLSQLLexer.IDENTIFIER)).
-        eat(Food(None, DSLSQLLexer.AS)).
-        eat(Food(None, DSLSQLLexer.IDENTIFIER)).
-        eat(Food(None, DSLSQLLexer.TRAIN))
-        .build.isSuccess
+    isMatchPathQouted(DSLSQLLexer.RUN) || isMatchPathQouted(DSLSQLLexer.TRAIN) || isMatchPathQouted(DSLSQLLexer.PREDICT)
   }
 
   override def suggest(): List[SuggestItem] = {
@@ -161,7 +170,7 @@ class TrainPathSuggester(trainSuggester: TrainSuggester) extends SuggesterBase(t
 
 class TrainFormatSuggester(trainSuggester: TrainSuggester) extends SuggesterBase(trainSuggester._tokens, trainSuggester._tokenPos) {
   override def isMatch(): Boolean = {
-    val etNames = MLMapping.getAllETNames
+    val etNames = trainSuggester.getAllETNames
     if (tokenPos.currentOrNext == TokenPosType.CURRENT && !etNames.exists(name =>
       name.startsWith(tokens(tokenPos.pos).getText))) {
       return false
@@ -177,12 +186,14 @@ class TrainFormatSuggester(trainSuggester: TrainSuggester) extends SuggesterBase
     TokenMatcher(tokens, tokenPos.pos - skipSize).back.eat(Food(None, DSLSQLLexer.AS), Food(None, DSLSQLLexer.IDENTIFIER))
       .eat(Food(None, DSLSQLLexer.RUN)).build.isSuccess ||
       TokenMatcher(tokens, tokenPos.pos - skipSize).back.eat(Food(None, DSLSQLLexer.AS), Food(None, DSLSQLLexer.IDENTIFIER))
-        .eat(Food(None, DSLSQLLexer.TRAIN)).build.isSuccess
+        .eat(Food(None, DSLSQLLexer.TRAIN)).build.isSuccess||
+      TokenMatcher(tokens, tokenPos.pos - skipSize).back.eat(Food(None, DSLSQLLexer.AS), Food(None, DSLSQLLexer.IDENTIFIER))
+        .eat(Food(None, DSLSQLLexer.PREDICT)).build.isSuccess
   }
 
   override def suggest(): List[SuggestItem] = {
     // ET type suggest
-    val etNames = MLMapping.getAllETNames
+    val etNames = trainSuggester.getAllETNames
     LexerUtils.filterPrefixIfNeeded(
       etNames.map(name => SuggestItem(s"$name.`` ", SpecialTableConst.ET_TABLE,
         Map("desc" -> "ET"))).toList,
@@ -196,16 +207,18 @@ class TrainFormatSuggester(trainSuggester: TrainSuggester) extends SuggesterBase
 class TrainOptionsSuggester(trainSuggester: TrainSuggester) extends SuggesterBase(trainSuggester._tokens, trainSuggester._tokenPos) {
 
   override def isMatch(): Boolean = {
-    backAndFirstIs(DSLSQLLexer.OPTIONS) || backAndFirstIs(DSLSQLLexer.WHERE)
+    !backAndFirstIs(DSLSQLLexer.PREDICT) && (backAndFirstIs(DSLSQLLexer.OPTIONS) || backAndFirstIs(DSLSQLLexer.WHERE))
   }
 
   override def suggest(): List[SuggestItem] = {
     var mapping: Map[String, SQLAlg] = null
     if (tokens.size > 4) {
-      mapping = MLMapping.getETInstanceMapping
+      mapping = trainSuggester.getETInstanceMapping
       if (!mapping.contains(tokens(3).getText)) {
         return List()
       }
+    } else {
+      return List()
     }
     val etName = tokens(3).getText
     val etParams = mapping(etName).explainParams(trainSuggester.context.session).collect().

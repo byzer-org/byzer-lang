@@ -52,6 +52,7 @@ class AutoSuggestContext(val session: SparkSession,
   private var _rawTokens: List[Token] = List()
   private var _statements = List[List[Token]]()
   private val _tempTableProvider: StatementTempTableProvider = new StatementTempTableProvider()
+  private val _modelProvider: ModelProvider = new ModelProvider()
   private var _rawLineNum = 0
   private var _rawColumnNum = 0
   private var userDefinedProvider: MetaProvider = new MetaProvider {
@@ -90,6 +91,10 @@ class AutoSuggestContext(val session: SparkSession,
 
   def tempTableProvider = {
     _tempTableProvider
+  }
+
+  def modelProvider = {
+    _modelProvider
   }
 
   def setStatementSplitter(_statementSplitter: StatementSplitter) = {
@@ -199,8 +204,11 @@ class AutoSuggestContext(val session: SparkSession,
       case Some("set") =>
         val suggester = new SetSuggester(this, _statements(index), relativeTokenPos)
         suggester.suggest()
-      case Some("run") | Some("train") =>
+      case Some("run") | Some("train")| Some("predict") =>
         val suggester = new TrainSuggester(this, _statements(index), relativeTokenPos)
+        suggester.suggest()
+      case Some("register") =>
+        val suggester = new RegisterSuggester(this, _statements(index), relativeTokenPos)
         suggester.suggest()
       case Some(value) => firstWords.filter(_.name.startsWith(value))
       case None => firstWords
@@ -208,7 +216,7 @@ class AutoSuggestContext(val session: SparkSession,
     items.distinct
   }
 
-  private val firstWords = List("load", "select", "include", "register", "run", "train", "save", "set").map(SuggestItem(_, SpecialTableConst.KEY_WORD_TABLE, Map())).toList
+  private val firstWords = List("load", "select", "include", "register", "run", "train", "predict", "save", "set").map(SuggestItem(_, SpecialTableConst.KEY_WORD_TABLE, Map())).toList
 }
 
 class UpperCaseCharStream(wrapped: CodePointCharStream) extends CharStream {

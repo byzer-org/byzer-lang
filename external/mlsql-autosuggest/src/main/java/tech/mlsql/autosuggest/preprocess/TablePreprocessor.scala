@@ -2,8 +2,8 @@ package tech.mlsql.autosuggest.preprocess
 
 import org.antlr.v4.runtime.Token
 import streaming.dsl.parser.DSLSQLLexer
-import tech.mlsql.autosuggest.SpecialTableConst.TEMP_TABLE_DB_KEY
-import tech.mlsql.autosuggest.dsl.{Food, MLSQLTokenTypeWrapper, TokenMatcher}
+import tech.mlsql.autosuggest.SpecialTableConst.{ET_TABLE, TEMP_TABLE_DB_KEY}
+import tech.mlsql.autosuggest.dsl.{DSLWrapper, Food, MLSQLTokenTypeWrapper, TokenMatcher}
 import tech.mlsql.autosuggest.meta.{MetaTable, MetaTableColumn, MetaTableKey}
 import tech.mlsql.autosuggest.statement.{LexerUtils, PreProcessStatement, SelectSuggester}
 import tech.mlsql.autosuggest.{AutoSuggestContext, SpecialTableConst, TokenPos, TokenPosType}
@@ -62,6 +62,28 @@ class TablePreprocessor(context: AutoSuggestContext) extends PreProcessStatement
       }
 
       tempTableProvider.register(tableName, table)
+    }
+    statement(0).getText.toLowerCase match {
+      case "train" | "run" =>
+        val tempTokenMatcher = TokenMatcher(statement, 1).forward
+          .eat(Food(None, DSLSQLLexer.IDENTIFIER), Food(None, DSLSQLLexer.AS))
+          .eat(Food(None, DSLSQLLexer.IDENTIFIER))
+          .eat(Food(None, DSLWrapper.DOT))
+          .eat(Food(None, DSLSQLLexer.BACKQUOTED_IDENTIFIER))
+          .build
+        if (!tempTokenMatcher.isSuccess) {
+          return
+        }
+        val pathQuote = LexerUtils.cleanStr(tempTokenMatcher.getMatchTokens.last.getText)
+        val modelProvider = context.modelProvider
+        var tableName: String = ET_TABLE.key.table
+        if (tempMatcher.isSuccess) {
+          tableName = tempMatcher.getMatchTokens.last.getText
+        }
+        val metaTable = MetaTable(MetaTableKey(None, Option(TEMP_TABLE_DB_KEY), tableName, pathQuote), List())
+        modelProvider.register(tableName, metaTable)
+
+      case _=>
     }
   }
 }

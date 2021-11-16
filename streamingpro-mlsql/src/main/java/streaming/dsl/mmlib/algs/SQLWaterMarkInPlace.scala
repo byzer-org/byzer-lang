@@ -18,14 +18,87 @@
 
 package streaming.dsl.mmlib.algs
 
+import org.apache.spark.ml.param.Param
+import org.apache.spark.ml.util.Identifiable
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import streaming.dsl.mmlib.SQLAlg
+import streaming.dsl.mmlib.algs.param.WowParams
+import tech.mlsql.common.form.{Extra, FormParams, Text}
 
 /**
   * Created by zhuml on 20/8/2018.
   */
-class SQLWaterMarkInPlace extends SQLAlg with Functions {
+class SQLWaterMarkInPlace(override val uid: String) extends SQLAlg with Functions with WowParams  {
+
+  final val inputTable: Param[String]  = new Param[String] (this, "inputTable",
+    FormParams.toJson(Text(
+      name = "inputTable",
+      value = "",
+      extra = Extra(
+        doc =
+          """
+            | The input table
+          """,
+        label = "the input table",
+        options = Map(
+          "valueType" -> "string",
+          "required" -> "false",
+          "derivedType" -> "NONE"
+        )), valueProvider = Option(() => {
+        ""
+      })
+    )
+    )
+  )
+
+  final val eventTimeCol: Param[String]  = new Param[String] (this, "eventTimeCol",
+    FormParams.toJson(Text(
+      name = "eventTimeCol",
+      value = "",
+      extra = Extra(
+        doc =
+          """
+            | Required. The name of the column that contains the event time of the row.
+          """,
+        label = "The name of the column that contains the event time of the row",
+        options = Map(
+          "valueType" -> "string",
+          "required" -> "true",
+          "derivedType" -> "NONE"
+        )), valueProvider = Option(() => {
+        ""
+      })
+    )
+    )
+  )
+  setDefault(eventTimeCol, "timestamp")
+
+  final val delayThreshold: Param[String]  = new Param[String] (this, "delayThreshold",
+    FormParams.toJson(Text(
+      name = "delayThreshold",
+      value = "",
+      extra = Extra(
+        doc =
+          """
+            | The minimum delay to wait to data to arrive late, relative to the latest record that has been processed
+            |  in the form of an interval (e.g. "1 minute" or "5 hours"). NOTE: This should not be negative.
+          """,
+        label = "the delay threshold",
+        options = Map(
+          "valueType" -> "string",
+          "required" -> "false",
+          "derivedType" -> "NONE"
+        )), valueProvider = Option(() => {
+        "10 seconds"
+      })
+    )
+    )
+  )
+  setDefault(delayThreshold, "10 seconds")
+
+  def this() = this(Identifiable.randomUID("streaming.dsl.mmlib.algs.SQLWaterMarkInPlace"))
+
   override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
     emptyDataFrame()(df)
   }
@@ -43,5 +116,10 @@ class SQLWaterMarkInPlace extends SQLAlg with Functions {
     null
   }
 
+  override def explainParams(sparkSession: SparkSession): DataFrame = {
+    _explainParams(sparkSession)
+  }
+
   override def skipPathPrefix: Boolean = true
+
 }
