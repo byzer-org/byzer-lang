@@ -225,6 +225,45 @@ object LexerUtils {
     }
     if (str.startsWith("`") || str.startsWith("\"") || (str.startsWith("'") && !str.startsWith("'''")))
       str.substring(1, str.length - 1)
-    else str
+    else if(str.startsWith("'''")){
+      str.substring(3, str.length - 3)
+    } else str
+  }
+
+  def cleanStrReturnStrAndSep(str: String): (String, String) = {
+    if (StringUtils.isEmpty(str)) {
+      return (str, "")
+    }
+    if (str.startsWith("`")) {
+      (str.substring(1, str.length - 1), "`")
+    } else if (str.startsWith("\"")) {
+      (str.substring(1, str.length - 1), "\"")
+    } else if (str.startsWith("'") && !str.startsWith("'''")) {
+      (str.substring(1, str.length - 1), "'")
+    } else if (str.startsWith("'''")) {
+      (str.substring(3, str.length - 3), "'''")
+    } else (str, "")
+  }
+
+
+  def cleanTokenPrefix(partialToken: String, suggestItems: List[SuggestItem]): List[SuggestItem] = {
+
+    val text = LexerUtils.cleanStr(partialToken)
+    suggestItems.map { item =>
+      var res: SuggestItem = null
+      val (itemName, sep) = LexerUtils.cleanStrReturnStrAndSep(item.name)
+      if (StringUtils.isBlank(text)) {
+        res = SuggestItem(itemName, item.metaTable, Map())
+      } else if (itemName.equals(text)) {
+        res = null
+      } else if (itemName.contains(text)) {
+        res = SuggestItem(itemName, item.metaTable, Map())
+      } else if (StringUtils.isBlank(text.split("\\s+").toList.head)) {
+        res = SuggestItem(itemName + sep, item.metaTable, Map())
+      } else if (itemName.contains(text.split("\\s+").toList.head)) {
+        res = SuggestItem(itemName + sep, item.metaTable, Map())
+      }
+      res
+    }.filter(_ != null)
   }
 }

@@ -61,9 +61,9 @@ class SetSuggester(val context: AutoSuggestContext, val _tokens: List[Token], va
       case TokenPos(pos, TokenPosType.CURRENT, offsetInToken) if pos > 0 =>
         // The current pos is IDENTIFIER, and is the where prefix
         if ("where".startsWith(_tokens(pos).getText)) {
-          items = List(SuggestItem("where", SpecialTableConst.KEY_WORD_TABLE, Map()))
+          items = List(SuggestItem("where ", SpecialTableConst.KEY_WORD_TABLE, Map()))
         }else if( "options".startsWith(_tokens(pos).getText)){
-          items = List(SuggestItem("options", SpecialTableConst.KEY_WORD_TABLE, Map()))
+          items = List(SuggestItem("options ", SpecialTableConst.KEY_WORD_TABLE, Map()))
         }
         items
 
@@ -85,8 +85,8 @@ class SetSuggester(val context: AutoSuggestContext, val _tokens: List[Token], va
           .build
 
         if (temp.isSuccess) {
-          items = List(SuggestItem("where", SpecialTableConst.KEY_WORD_TABLE, Map()),
-            SuggestItem("options", SpecialTableConst.KEY_WORD_TABLE, Map()))
+          items = List(SuggestItem("where ", SpecialTableConst.KEY_WORD_TABLE, Map()),
+            SuggestItem("options ", SpecialTableConst.KEY_WORD_TABLE, Map()))
         }
         items
 
@@ -223,21 +223,7 @@ private class SetOptionValuesSuggester(setSuggester: SetSuggester) extends SetSu
       }
     }
     if (isStringIdents) {
-      val startToken = tokens(startIndex)
-      val textWithIdent = startToken.getText
-      val text = textWithIdent.substring(1, textWithIdent.length - 1)
-      return suggestItems.map { item =>
-        var res: SuggestItem = null
-        val itemName = item.name.substring(1, item.name.length - 1)
-        if (itemName.equals(text)) {
-          res = null
-        } else if (StringUtils.isBlank(text) || itemName.startsWith(text)) {
-          res = SuggestItem(itemName, SpecialTableConst.OPTION_TABLE, Map())
-        } else if (!StringUtils.isBlank(text) && itemName.startsWith(text.split("\\s+").toList.head)) {
-          res = SuggestItem(itemName + TokenMatcher.SqlStringIdentsEnum(startToken.getType).toString, SpecialTableConst.OPTION_TABLE, Map())
-        }
-        res
-      }.filter(item => item != null)
+      suggestItems = LexerUtils.cleanTokenPrefix(tokens(startIndex).getText, suggestItems)
     }
 
     suggestItems

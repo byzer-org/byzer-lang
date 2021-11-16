@@ -310,17 +310,20 @@ object TokenTypeWrapper {
 }
 
 object DSLWrapper {
-  def getList: List[Int] = List(COMMA, DOT, COLON, SEMICOLON, EQUAL)
-
-  def tokenType(value: String): Int = {
-    values.indexOf(value)
-  }
 
   def getValues: Array[String] = {
     val field = classOf[DSLSQLLexer].getDeclaredField("_LITERAL_NAMES")
     field.setAccessible(true)
     field.get(null).asInstanceOf[Array[String]]
   }
+
+  private val values = getValues
+
+  def tokenType(value: String): Int = {
+    values.indexOf(value)
+  }
+
+  def getList: List[Int] = List(COMMA, DOT, COLON, SEMICOLON, EQUAL)
 
   val COMMA: Int = tokenType("','")
   val DOT: Int = tokenType("'.'")
@@ -329,7 +332,7 @@ object DSLWrapper {
   val EQUAL: Int = tokenType("'='")
 
   val MAP: Map[Int, Int] = getList.map((_, 1)).toMap
-  private val values = getValues
+
 }
 
 object MLSQLTokenTypeWrapper {
