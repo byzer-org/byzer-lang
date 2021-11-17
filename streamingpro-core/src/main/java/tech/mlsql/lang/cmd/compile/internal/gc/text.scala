@@ -30,11 +30,6 @@ class TextTemplate(template: Map[String, Any], str: String) {
   private def scan: Option[StringInterpolationToken] = {
     val buffer = new ArrayBuffer[Char]()
     var ch = peek
-    while (whiteSpace(peek)) {
-      ch = next
-      buffer += ch
-    }
-    ch = peek
     var t = "normal"
 
     ch match {
@@ -59,7 +54,6 @@ class TextTemplate(template: Map[String, Any], str: String) {
       case s: Char =>
         buffer += s
         next
-
     }
     Option(StringInterpolationToken(t, buffer.toArray))
   }
@@ -111,10 +105,6 @@ class TextTemplate(template: Map[String, Any], str: String) {
     }
 
     nextChar
-  }
-
-  private def whiteSpace(s: Char) = {
-    s == '\t' || s == '\n' || s == '\r' || s == ' ' || s == ';'
   }
 
 }

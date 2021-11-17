@@ -1,10 +1,8 @@
 package tech.mlsql.datasource.impl
 
+import java.net.URLEncoder
 import java.nio.charset.Charset
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.scala.DefaultScalaModule
-import org.apache.http.client.entity.EntityBuilder
 import org.apache.http.client.fluent.{Form, Request}
 import org.apache.http.entity.ContentType
 import org.apache.http.entity.mime.{HttpMultipartMode, MultipartEntityBuilder}
@@ -20,6 +18,8 @@ import tech.mlsql.common.form._
 import tech.mlsql.common.utils.distribute.socket.server.JavaUtils
 import tech.mlsql.dsl.adaptor.DslTool
 import tech.mlsql.tool.HDFSOperatorV2
+
+import scala.collection.mutable.ArrayBuffer
 
 class MLSQLRest(override val uid: String) extends MLSQLSource with MLSQLSink with MLSQLSourceInfo with MLSQLRegistry with DslTool with WowParams {
 
@@ -56,7 +56,24 @@ class MLSQLRest(override val uid: String) extends MLSQLSource with MLSQLSink wit
     val params = config.config
     val httpMethod = params.getOrElse(configMethod.name, "get").toLowerCase
     val request = httpMethod match {
-      case "get" => Request.Get(config.path)
+      case "get" =>
+
+        val paramsBuf = ArrayBuffer[(String, String)]()
+        params.filter(_._1.startsWith("form.")).foreach { case (k, v) =>
+          paramsBuf.append((k.stripPrefix("form."), URLEncoder.encode(v, "utf-8")))
+        }
+
+        val finalUrl = if (paramsBuf.length > 0) {
+          val urlParam = paramsBuf.map { case (k, v) => s"${k}=${v}" }.mkString("&")
+          if (config.path.contains("?")) {
+            config.path + urlParam
+          } else {
+            config.path + "?" + urlParam
+          }
+        } else config.path
+
+        Request.Get(finalUrl)
+
       case "post" => Request.Post(config.path)
       case "put" => Request.Put(config.path)
       case v => throw new MLSQLException(s"HTTP method ${v} is not support yet")
@@ -74,21 +91,22 @@ class MLSQLRest(override val uid: String) extends MLSQLSource with MLSQLSink wit
       request.addHeader(k.stripPrefix("header."), v)
     }
 
-    val response = (httpMethod, params.getOrElse(headerContentType.name, "application/x-www-form-urlencoded") ) match {
-      case ("get", _) => request.execute()
+    val response = (httpMethod, params.getOrElse(headerContentType.name, "application/x-www-form-urlencoded")) match {
+      case ("get", _) =>
+        request.execute()
 
       case ("post", "application/json") =>
         if (params.contains(body.name))
-          request.bodyString(params(body.name),ContentType.APPLICATION_JSON).execute()
+          request.bodyString(params(body.name), ContentType.APPLICATION_JSON).execute()
         else
           request.execute()
 
-      case ("post","application/x-www-form-urlencoded") =>
+      case ("post", "application/x-www-form-urlencoded") =>
         val form = Form.form()
         params.filter(_._1.startsWith("form.")).foreach { case (k, v) =>
           form.add(k.stripPrefix("form."), v)
         }
-        request.bodyForm(form.build(),Charset.forName("utf-8")).execute()
+        request.bodyForm(form.build(), Charset.forName("utf-8")).execute()
 
       case (_, v) =>
         throw new MLSQLException(s"content-type ${v}  is not support yet")
@@ -121,7 +139,24 @@ class MLSQLRest(override val uid: String) extends MLSQLSource with MLSQLSink wit
     val params = config.config
     val httpMethod = params.getOrElse(configMethod.name, "get").toLowerCase
     val request = httpMethod match {
-      case "get" => Request.Get(config.path)
+      case "get" =>
+
+        val paramsBuf = ArrayBuffer[(String, String)]()
+        params.filter(_._1.startsWith("form.")).foreach { case (k, v) =>
+          paramsBuf.append((k.stripPrefix("form."), URLEncoder.encode(v, "utf-8")))
+        }
+
+        val finalUrl = if (paramsBuf.length > 0) {
+          val urlParam = paramsBuf.map { case (k, v) => s"${k}=${v}" }.mkString("&")
+          if (config.path.contains("?")) {
+            config.path + urlParam
+          } else {
+            config.path + "?" + urlParam
+          }
+        } else config.path
+
+        Request.Get(finalUrl)
+
       case "post" => Request.Post(config.path)
       case "put" => Request.Put(config.path)
       case v => throw new MLSQLException(s"HTTP method ${v} is not support yet")
@@ -144,7 +179,7 @@ class MLSQLRest(override val uid: String) extends MLSQLSource with MLSQLSink wit
 
       case ("post", "application/json") =>
         if (params.contains(body.name))
-          request.bodyString(params(body.name),ContentType.APPLICATION_JSON).execute()
+          request.bodyString(params(body.name), ContentType.APPLICATION_JSON).execute()
         else
           request.execute()
 
@@ -153,7 +188,7 @@ class MLSQLRest(override val uid: String) extends MLSQLSource with MLSQLSink wit
         params.filter(_._1.startsWith("form.")).foreach { case (k, v) =>
           form.add(k.stripPrefix("form."), v)
         }
-        request.bodyForm(form.build(),Charset.forName("utf-8")).execute()
+        request.bodyForm(form.build(), Charset.forName("utf-8")).execute()
 
       case ("post", "multipart/form-data") =>
 
