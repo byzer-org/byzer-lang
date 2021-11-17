@@ -158,22 +158,25 @@ class MLSQLDirectJDBC extends MLSQLDirectSource with MLSQLDirectSink with MLSQLS
     }
     logInfo("Auth direct query tables.... ")
 
-    //second, we should extract all tables from the sql
-    val tableRefs = extractTablesFromSQL(sql, dbType)
-
     def isSkipAuth = {
       context.execListener.env()
         .getOrElse("SKIP_AUTH", "true")
         .toBoolean
     }
 
-    tableRefs.foreach { tableIdentify =>
-      if (tableIdentify.database.isDefined) {
-        throw new MLSQLException("JDBC direct query should not allow using db prefix. Please just use table")
-      }
-    }
+
 
     if (!isSkipAuth && context.execListener.getStage.get == Stage.auth && !MLSQLSparkConf.runtimeDirectQueryAuth) {
+
+      //second, we should extract all tables from the sql
+      val tableRefs = extractTablesFromSQL(sql, dbType)
+
+      tableRefs.foreach { tableIdentify =>
+        if (tableIdentify.database.isDefined) {
+          throw new MLSQLException("JDBC direct query should not allow using db prefix. Please just use table")
+        }
+      }
+
       val _params = loadConfigFromExternal(params, path)
       val tableList = tableRefs.map(_.identifier)
       val tableColsMap = JDBCUtils.queryTableWithColumnsInDriver(_params, tableList)
@@ -192,6 +195,16 @@ class MLSQLDirectJDBC extends MLSQLDirectSource with MLSQLDirectSink with MLSQLS
     }
 
     if (!isSkipAuth && context.execListener.getStage.get == Stage.physical && MLSQLSparkConf.runtimeDirectQueryAuth) {
+
+      //second, we should extract all tables from the sql
+      val tableRefs = extractTablesFromSQL(sql, dbType)
+
+      tableRefs.foreach { tableIdentify =>
+        if (tableIdentify.database.isDefined) {
+          throw new MLSQLException("JDBC direct query should not allow using db prefix. Please just use table")
+        }
+      }
+
       val _params = loadConfigFromExternal(params, path)
       //clone new sparksession so we will not affect current spark context catalog
       val spark = MLSQLSparkSession.cloneSession(context.execListener.sparkSession)
@@ -208,7 +221,6 @@ class MLSQLDirectJDBC extends MLSQLDirectSource with MLSQLDirectSink with MLSQLS
           mlsqlTables ::= MLSQLTable(Option(si.db), Option(table), Option(cols.toSet), OperateType.DIRECT_QUERY, Option(si.sourceType), TableType.JDBC)
       }
       context.execListener.getTableAuth.foreach { tableAuth =>
-        println(mlsqlTables)
         tableAuth.auth(mlsqlTables)
       }
 
