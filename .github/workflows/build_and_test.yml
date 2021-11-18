@@ -19,16 +19,16 @@
 
 name: Build and test
 
-on: pull_request
+on: [pull_request, workflow_dispatch]
 
 jobs:
-  # Build: build MLSQL and run the tests
+  # Build: build kolo-lang and run the tests
   build:
-    name: "Build MLSQL"
+    name: "Build kolo-lang"
     # Ubuntu 20.04 is the latest LTS. The next LTS is 22.04.
     runs-on: ubuntu-20.04
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
         include:
           - spark: 3.1.1
@@ -62,10 +62,3 @@ jobs:
       # Run the tests.
       - name: Run tests
         run: ./dev/run-test.sh ${{ matrix.spark-major }}
-
-      - name: Upload test results to report
-        if: always()
-        uses: actions/upload-artifact@v2
-        with:
-          name: test-results-${{ matrix.spark }}-${{ matrix.hadoop }}-${{ matrix.java }}
-          path: "**/target/test-reports/*.xml"
