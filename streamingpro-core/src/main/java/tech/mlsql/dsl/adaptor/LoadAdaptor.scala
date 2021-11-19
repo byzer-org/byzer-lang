@@ -68,12 +68,7 @@ class LoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
   }
 
   override def parse(ctx: SqlContext): Unit = {
-    val LoadStatement(_, format, path, _option, tableName) = analyze(ctx)
-
-    val option = _option.map { case (k, v) =>
-      val newV = Templates2.dynamicEvaluateExpression(v, ScriptSQLExec.context().execListener.env().toMap)
-      (k, newV)
-    }
+    val LoadStatement(_, format, path, option, tableName) = analyze(ctx)
 
     def isStream = {
       scriptSQLExecListener.env().contains("streamName")
@@ -82,7 +77,7 @@ class LoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
     if (isStream) {
       scriptSQLExecListener.addEnv("stream", "true")
     }
-    new LoadPRocessing(scriptSQLExecListener, option, path, tableName, format).parse
+    new LoadProcessing(scriptSQLExecListener, option, path, tableName, format).parse
 
     scriptSQLExecListener.setLastSelectTable(tableName)
 
@@ -91,8 +86,8 @@ class LoadAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
 
 case class LoadStatement(raw: String, format: String, path: String, option: Map[String, String] = Map[String, String](), tableName: String)
 
-class LoadPRocessing(scriptSQLExecListener: ScriptSQLExecListener,
-                     option: Map[String, String],
+class LoadProcessing(scriptSQLExecListener: ScriptSQLExecListener,
+                     _option: Map[String, String],
                      var path: String,
                      tableName: String,
                      format: String
@@ -100,6 +95,20 @@ class LoadPRocessing(scriptSQLExecListener: ScriptSQLExecListener,
   def parse = {
     var table: DataFrame = null
     val sparkSession = scriptSQLExecListener.sparkSession
+    var option = _option
+    val tempDS = DataSourceRegistry.fetch(format, option)
+
+    if (tempDS.isDefined ) {
+      // DataSource who is not MLSQLSourceConfig or if it's MLSQLSourceConfig then  skipDynamicEvaluation is false
+      // should evaluate the v with dynamic expression
+      if (!tempDS.isInstanceOf[MLSQLSourceConfig] || !tempDS.asInstanceOf[MLSQLSourceConfig].skipDynamicEvaluation) {
+        option = _option.map { case (k, v) =>
+          val newV = Templates2.dynamicEvaluateExpression(v, ScriptSQLExec.context().execListener.env().toMap)
+          (k, newV)
+        }
+      }
+    }
+
     val reader = scriptSQLExecListener.sparkSession.read
     reader.options(option)
     path = TemplateMerge.merge(path, scriptSQLExecListener.env().toMap)
@@ -113,8 +122,8 @@ class LoadPRocessing(scriptSQLExecListener: ScriptSQLExecListener,
     var sourceInfo: Option[SourceInfo] = None
 
     DataSourceRegistry.fetch(format, option).map { datasource =>
-      table = datasource.asInstanceOf[ {def load(reader: DataFrameReader, config: DataSourceConfig): DataFrame}].
-        load(reader, dsConf)
+      val ds = datasource.asInstanceOf[ {def load(reader: DataFrameReader, config: DataSourceConfig): DataFrame}]
+      table = ds.load(reader, dsConf)
 
       // extract source info if the datasource is  MLSQLSourceInfo
       if (datasource.isInstanceOf[MLSQLSourceInfo]) {
