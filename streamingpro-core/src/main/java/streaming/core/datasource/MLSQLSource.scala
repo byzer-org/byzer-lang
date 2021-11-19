@@ -22,8 +22,8 @@ import _root_.streaming.dsl.MLSQLExecuteContext
 import org.apache.spark.sql._
 
 /**
-  * 2018-12-20 WilliamZhu(allwefantasy@gmail.com)
-  */
+ * 2018-12-20 WilliamZhu(allwefantasy@gmail.com)
+ */
 
 trait MLSQLDataSource {
   def dbSplitter = {
@@ -42,6 +42,10 @@ trait MLSQLDataSource {
 
 trait MLSQLSource extends MLSQLDataSource with MLSQLSourceInfo {
   def load(reader: DataFrameReader, config: DataSourceConfig): DataFrame
+}
+
+trait MLSQLSourceConfig {
+  def skipDynamicEvaluation = false
 }
 
 trait RewriteableSource {
