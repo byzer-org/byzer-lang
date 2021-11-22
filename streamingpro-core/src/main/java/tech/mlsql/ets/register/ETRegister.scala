@@ -54,6 +54,7 @@ object ETRegister {
   register("ElseCommand", "tech.mlsql.ets.ifstmt.ElseCommand")
 
   register("XGBoostExt", "tech.mlsql.ets.XGBoostExt")
+  register("EmptyTableWithSchema","tech.mlsql.ets.EmptyTableWithSchema")
 
   
   AppRuntimeStore.store.registerResultRender("ShowFileTable", "tech.mlsql.ets.ShowFileTable")
