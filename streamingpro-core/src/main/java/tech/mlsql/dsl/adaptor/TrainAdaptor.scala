@@ -70,15 +70,18 @@ class TrainAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdap
 
   override def parse(ctx: SqlContext): Unit = {
     val TrainStatement(_, tableName, format, _path, _options, asTableName) = analyze(ctx)
-    var path = _path
-    var options = _options.map { case (k, v) =>
-      val newV = Templates2.dynamicEvaluateExpression(v, ScriptSQLExec.context().execListener.env().toMap)
-      (k, newV)
-    }
-    val owner = options.get("owner")
-    val df = scriptSQLExecListener.sparkSession.table(tableName)
     val sqlAlg = MLMapping.findAlg(format)
 
+    var path = _path
+
+    var options = _options.map { case (k, v) =>
+      val newV = if(sqlAlg.skipDynamicEvaluation) v else Templates2.dynamicEvaluateExpression(v, ScriptSQLExec.context().execListener.env().toMap)
+      (k, newV)
+    }
+
+    val owner = options.get("owner")
+    val df = scriptSQLExecListener.sparkSession.table(tableName)
+    
     if (!sqlAlg.skipPathPrefix) {
       path = withPathPrefix(scriptSQLExecListener.pathPrefix(owner), path)
     }

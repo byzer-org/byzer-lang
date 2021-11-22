@@ -2,26 +2,34 @@ package tech.mlsql.datasource.impl
 
 import java.net.URLEncoder
 import java.nio.charset.Charset
+import java.util.UUID
 
+import com.jayway.jsonpath.JsonPath
 import org.apache.http.client.fluent.{Form, Request}
 import org.apache.http.entity.ContentType
 import org.apache.http.entity.mime.{HttpMultipartMode, MultipartEntityBuilder}
 import org.apache.http.util.EntityUtils
 import org.apache.spark.ml.param.Param
 import org.apache.spark.sql.mlsql.session.MLSQLException
-import org.apache.spark.sql.types.{BinaryType, IntegerType, StructField, StructType}
-import org.apache.spark.sql.{DataFrame, DataFrameReader, DataFrameWriter, Row}
+import org.apache.spark.sql.types._
+import org.apache.spark.sql.{DataFrame, DataFrameReader, DataFrameWriter, Row, SaveMode, SparkSession, functions => F}
 import streaming.core.datasource._
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
+import streaming.rest.RestUtils
 import tech.mlsql.common.form._
 import tech.mlsql.common.utils.distribute.socket.server.JavaUtils
+import tech.mlsql.common.utils.path.PathFun
 import tech.mlsql.dsl.adaptor.DslTool
-import tech.mlsql.tool.HDFSOperatorV2
+import tech.mlsql.tool.{HDFSOperatorV2, Templates2}
 
 import scala.collection.mutable.ArrayBuffer
 
-class MLSQLRest(override val uid: String) extends MLSQLSource with MLSQLSink with MLSQLSourceInfo with MLSQLRegistry with DslTool with WowParams {
+class MLSQLRest(override val uid: String) extends MLSQLSource
+  with MLSQLSink
+  with MLSQLSourceInfo
+  with MLSQLSourceConfig
+  with MLSQLRegistry with DslTool with WowParams {
 
 
   def this() = this(BaseParams.randomUID())
@@ -32,6 +40,14 @@ class MLSQLRest(override val uid: String) extends MLSQLSource with MLSQLSink wit
    * `config.connect-timeout`="10s"
    * and `config.method`="GET"
    * and `header.content-type`="application/json"
+   *
+   * and `config.page.next`="http://mlsql.tech/api?cursor={0}&wow={1}"
+   * and `config.page.skip-params`="true" 
+   * and `config.page.values`="$.path,$.path2" -- json path
+   * and `config.page.interval`="10ms"
+   * and `config.page.retry`="3"
+   * and `config.page.limit`="100"
+   *
    * and `body`='''
    * {
    * "query":"b"
@@ -53,29 +69,94 @@ class MLSQLRest(override val uid: String) extends MLSQLSource with MLSQLSink wit
    * select * from table_3 as output;
    **/
   override def load(reader: DataFrameReader, config: DataSourceConfig): DataFrame = {
-    val params = config.config
+    val skipParams = config.config.getOrElse("config.page.skip-params", "false").toBoolean
+    (config.config.get("config.page.next"), config.config.get("config.page.values")) match {
+      case (Some(urlTemplate), Some(jsonPath)) =>
+        val maxSize = config.config.getOrElse("config.page.limit", "1").toInt
+        val maxTries = config.config.getOrElse("config.page.retry", "3").toInt
+        val pageInterval = JavaUtils.timeStringAsMs(config.config.getOrElse("config.page.interval", "10ms"))
+        var count = 0
+
+        var firstDf = _http(config.path, config.config, false, config.df.get.sparkSession)
+
+        val uuid = UUID.randomUUID().toString.replaceAll("-", "")
+        val context = ScriptSQLExec.context()
+        val tmpTablePath = resourceRealPath(context.execListener, Option(context.owner), PathFun("__tmp__").add(uuid).toPath)
+        firstDf.write.format("parquet").mode(SaveMode.Append).save(tmpTablePath)
+
+        while (count < maxSize) {
+          Thread.sleep(pageInterval)
+          count += 1
+          val row = firstDf.select(F.col("content").cast(StringType), F.col("status")).head
+          val content = row.getString(0)
+
+          val pageValues = try {
+            jsonPath.split(",").map(path => JsonPath.read[String](content, path))
+          } catch {
+            case _: com.jayway.jsonpath.PathNotFoundException =>
+              Array()
+            case e: Exception =>
+              throw e
+          }
+          val shouldStop = pageValues.size == 0 || pageValues.filter(value => value == null || value.isEmpty).size > 0
+          if (shouldStop) {
+            count = maxSize
+          } else {
+            val newUrl = Templates2.evaluate(urlTemplate, pageValues)
+            RestUtils.executeWithRetrying[(Int, Option[DataFrame])](maxTries)((() => {
+              try {
+                val tempDF = _http(newUrl, config.config, skipParams, config.df.get.sparkSession)
+                val row = firstDf.select(F.col("content").cast(StringType), F.col("status")).head
+                val status = row.getInt(1)
+                (status, Option(tempDF))
+              } catch {
+                case e: Exception =>
+                  (500, None)
+              }
+            }) (),
+              tempResp => {
+                tempResp._1 == 200
+              },
+              failResp => s"Fail request ${newUrl} failed after ${maxTries} attempts. the last response status is: ${failResp._1}. "
+            )
+            firstDf.write.format("parquet").mode(SaveMode.Append).save(tmpTablePath)
+          }
+
+        }
+        context.execListener.sparkSession.read.parquet(tmpTablePath)
+
+      case (None, None) =>
+        _http(config.path, config.config, skipParams, config.df.get.sparkSession)
+    }
+
+
+  }
+
+  override def skipDynamicEvaluation = true
+
+
+  private def _http(url: String, params: Map[String, String], skipParams: Boolean, session: SparkSession): DataFrame = {
     val httpMethod = params.getOrElse(configMethod.name, "get").toLowerCase
     val request = httpMethod match {
       case "get" =>
 
         val paramsBuf = ArrayBuffer[(String, String)]()
         params.filter(_._1.startsWith("form.")).foreach { case (k, v) =>
-          paramsBuf.append((k.stripPrefix("form."), URLEncoder.encode(v, "utf-8")))
+          paramsBuf.append((k.stripPrefix("form."), Templates2.dynamicEvaluateExpression(URLEncoder.encode(v, "utf-8"), ScriptSQLExec.context().execListener.env().toMap)))
         }
 
-        val finalUrl = if (paramsBuf.length > 0) {
+        val finalUrl = if (paramsBuf.length > 0 && !skipParams) {
           val urlParam = paramsBuf.map { case (k, v) => s"${k}=${v}" }.mkString("&")
-          if (config.path.contains("?")) {
-            config.path + urlParam
+          if (url.contains("?")) {
+            url + "&" + urlParam
           } else {
-            config.path + "?" + urlParam
+            url + "?" + urlParam
           }
-        } else config.path
-
+        } else url
         Request.Get(finalUrl)
 
-      case "post" => Request.Post(config.path)
-      case "put" => Request.Put(config.path)
+      case "post" => Request.Post(url)
+      case "put" => Request.Put(url)
       case v => throw new MLSQLException(s"HTTP method ${v} is not support yet")
     }
 
@@ -104,7 +185,7 @@ class MLSQLRest(override val uid: String) extends MLSQLSource with MLSQLSink wit
       case ("post", "application/x-www-form-urlencoded") =>
         val form = Form.form()
         params.filter(_._1.startsWith("form.")).foreach { case (k, v) =>
-          form.add(k.stripPrefix("form."), v)
+          form.add(k.stripPrefix("form."), Templates2.dynamicEvaluateExpression(v, ScriptSQLExec.context().execListener.env().toMap))
         }
         request.bodyForm(form.build(), Charset.forName("utf-8")).execute()
 
@@ -115,7 +196,7 @@ class MLSQLRest(override val uid: String) extends MLSQLSource with MLSQLSink wit
     val httpResponse = response.returnResponse()
     val status = httpResponse.getStatusLine.getStatusCode
     val content = EntityUtils.toByteArray(httpResponse.getEntity)
-    val session = config.df.get.sparkSession
+
     session.createDataFrame(session.sparkContext.makeRDD(Seq(Row.fromSeq(Seq(content, status))))
       , StructType(fields = Seq(
         StructField("content", BinaryType), StructField("status", IntegerType)
@@ -143,7 +224,7 @@ class MLSQLRest(override val uid: String) extends MLSQLSource with MLSQLSink wit
 
         val paramsBuf = ArrayBuffer[(String, String)]()
         params.filter(_._1.startsWith("form.")).foreach { case (k, v) =>
-          paramsBuf.append((k.stripPrefix("form."), URLEncoder.encode(v, "utf-8")))
+          paramsBuf.append((k.stripPrefix("form."), Templates2.dynamicEvaluateExpression(URLEncoder.encode(v, "utf-8"), ScriptSQLExec.context().execListener.env().toMap)))
         }
 
         val finalUrl = if (paramsBuf.length > 0) {
@@ -186,7 +267,7 @@ class MLSQLRest(override val uid: String) extends MLSQLSource with MLSQLSink wit
       case ("post", "application/x-www-form-urlencoded") =>
         val form = Form.form()
         params.filter(_._1.startsWith("form.")).foreach { case (k, v) =>
-          form.add(k.stripPrefix("form."), v)
+          form.add(k.stripPrefix("form."), Templates2.dynamicEvaluateExpression(v, ScriptSQLExec.context().execListener.env().toMap))
         }
         request.bodyForm(form.build(), Charset.forName("utf-8")).execute()
 
@@ -207,7 +288,7 @@ class MLSQLRest(override val uid: String) extends MLSQLSource with MLSQLSink wit
 
         params.filter(_._1.startsWith("form.")).
           filter(v => v._1 != "form.file-path" && v._1 != "form.file-name").foreach { case (k, v) =>
-          entity.addTextBody(k.stripPrefix("form."), v)
+          entity.addTextBody(k.stripPrefix("form."), Templates2.dynamicEvaluateExpression(v, ScriptSQLExec.context().execListener.env().toMap))
         }
         request.body(entity.build()).execute()
       case (_, v) =>
