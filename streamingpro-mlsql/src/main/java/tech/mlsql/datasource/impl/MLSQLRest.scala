@@ -195,7 +195,7 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
 
     val httpResponse = response.returnResponse()
     val status = httpResponse.getStatusLine.getStatusCode
-    val content = EntityUtils.toByteArray(httpResponse.getEntity)
+    val content = if (httpResponse.getEntity != null) EntityUtils.toByteArray(httpResponse.getEntity) else Array[Byte]()
 
     session.createDataFrame(session.sparkContext.makeRDD(Seq(Row.fromSeq(Seq(content, status))))
       , StructType(fields = Seq(
