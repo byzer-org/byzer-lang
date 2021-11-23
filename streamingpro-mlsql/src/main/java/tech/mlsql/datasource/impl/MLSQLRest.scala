@@ -77,7 +77,15 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
         val pageInterval = JavaUtils.timeStringAsMs(config.config.getOrElse("config.page.interval", "10ms"))
         var count = 0
 
-        var firstDf = _http(config.path, config.config, false, config.df.get.sparkSession)
+        var pageNum = -1
+        // if not json path then it should be auto increment page num
+        if (jsonPath.trim.toLowerCase.startsWith("auto-increment")) {
+          val Array(_, initialPageNum) = jsonPath.split(":")
+          pageNum = initialPageNum.toInt
+        }
+
+
+        val firstDf = _http(config.path, config.config, false, config.df.get.sparkSession)
 
         val uuid = UUID.randomUUID().toString.replaceAll("-", "")
         val context = ScriptSQLExec.context()
@@ -90,14 +98,18 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
           val row = firstDf.select(F.col("content").cast(StringType), F.col("status")).head
           val content = row.getString(0)
 
-          val pageValues = try {
-            jsonPath.split(",").map(path => JsonPath.read[String](content, path))
-          } catch {
-            case _: com.jayway.jsonpath.PathNotFoundException =>
-              Array()
-            case e: Exception =>
-              throw e
-          }
+          val pageValues = if (pageNum == -1) {
+            try {
+              jsonPath.split(",").map(path => JsonPath.read[String](content, path))
+            } catch {
+              case _: com.jayway.jsonpath.PathNotFoundException =>
+                Array()
+              case e: Exception =>
+                throw e
+            }
+          } else Array(pageNum.toString)
+
+
           val shouldStop = pageValues.size == 0 || pageValues.filter(value => value == null || value.isEmpty).size > 0
           if (shouldStop) {
             count = maxSize
@@ -120,6 +132,7 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
               failResp => s"Fail request ${newUrl} failed after ${maxTries} attempts. the last response status is: ${failResp._1}. "
             )
             firstDf.write.format("parquet").mode(SaveMode.Append).save(tmpTablePath)
+            pageNum += 1
           }
 
         }
