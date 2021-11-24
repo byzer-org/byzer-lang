@@ -184,18 +184,21 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
     params.filter(_._1.startsWith("header.")).foreach { case (k, v) =>
       request.addHeader(k.stripPrefix("header."), v)
     }
+    val contentTypeValue = params.getOrElse(headerContentType.name,
+      params.getOrElse("Content-Type", "application/x-www-form-urlencoded"))
+    request.addHeader("Content-Type", contentTypeValue)
 
-    val response = (httpMethod, params.getOrElse(headerContentType.name, "application/x-www-form-urlencoded")) match {
+    val response = (httpMethod, contentTypeValue) match {
       case ("get", _) =>
         request.execute()
 
-      case ("post", "application/json") =>
+      case ("post", contentType) if contentType.trim.startsWith("application/json") =>
         if (params.contains(body.name))
           request.bodyString(params(body.name), ContentType.APPLICATION_JSON).execute()
         else
           request.execute()
 
-      case ("post", "application/x-www-form-urlencoded") =>
+      case ("post", contentType) if contentType.trim.startsWith("application/x-www-form-urlencoded") =>
         val form = Form.form()
         params.filter(_._1.startsWith("form.")).foreach { case (k, v) =>
           form.add(k.stripPrefix("form."), Templates2.dynamicEvaluateExpression(v, ScriptSQLExec.context().execListener.env().toMap))
@@ -267,24 +270,27 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
     params.filter(_._1.startsWith("header.")).foreach { case (k, v) =>
       request.addHeader(k.stripPrefix("header."), v)
     }
+    val contentTypeValue = params.getOrElse(headerContentType.name,
+      params.getOrElse("Content-Type", "application/x-www-form-urlencoded"))
+    request.addHeader("Content-Type", contentTypeValue)
 
-    val response = (httpMethod, params.getOrElse(headerContentType.name, "application/x-www-form-urlencoded")) match {
+    val response = (httpMethod, contentTypeValue) match {
       case ("get", _) => request.execute()
 
-      case ("post", "application/json") =>
+      case ("post", contentType) if contentType.trim.startsWith("application/json") =>
         if (params.contains(body.name))
           request.bodyString(params(body.name), ContentType.APPLICATION_JSON).execute()
         else
           request.execute()
 
-      case ("post", "application/x-www-form-urlencoded") =>
+      case ("post", contentType) if contentType.trim.startsWith("application/x-www-form-urlencoded") =>
         val form = Form.form()
         params.filter(_._1.startsWith("form.")).foreach { case (k, v) =>
           form.add(k.stripPrefix("form."), Templates2.dynamicEvaluateExpression(v, ScriptSQLExec.context().execListener.env().toMap))
         }
         request.bodyForm(form.build(), Charset.forName("utf-8")).execute()
 
-      case ("post", "multipart/form-data") =>
+      case ("post", contentType) if contentType.trim.startsWith("multipart/form-data") =>
 
         val context = ScriptSQLExec.contextGetOrForTest()
         val _filePath = params("form.file-path")
