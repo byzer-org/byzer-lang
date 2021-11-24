@@ -2,18 +2,24 @@ package streaming.core.datasource.impl
 
 import org.apache.spark.ml.param.Param
 import org.apache.spark.sql.mlsql.session.MLSQLException
-import org.apache.spark.sql.{DataFrameWriter, Row, SaveMode}
-import streaming.core.datasource._
-import streaming.dsl.ScriptSQLExec
-import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
+import org.apache.spark.sql._
+import _root_.streaming.core.datasource._
+import _root_.streaming.dsl.ScriptSQLExec
+import _root_.streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
 import tech.mlsql.tool.HDFSOperatorV2
 
 /**
-  * 2019-03-20 WilliamZhu(allwefantasy@gmail.com)
-  */
+ * 2019-03-20 WilliamZhu(allwefantasy@gmail.com)
+ */
 class MLSQLImage(override val uid: String) extends MLSQLBaseFileSource with WowParams {
   def this() = this(BaseParams.randomUID())
 
+
+  override def load(reader: DataFrameReader, config: DataSourceConfig): DataFrame = {
+    val context = ScriptSQLExec.contextGetOrForTest()
+    val owner = config.config.get("owner").getOrElse(context.owner)
+    reader.options(rewriteConfig(config.config)).format("image").load(resourceRealPath(context.execListener, Option(owner), config.path))
+  }
 
   override def save(writer: DataFrameWriter[Row], config: DataSinkConfig): Unit = {
     val context = ScriptSQLExec.contextGetOrForTest()
