@@ -287,7 +287,7 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
       case ("post", "multipart/form-data") =>
 
         val context = ScriptSQLExec.contextGetOrForTest()
-        val _filePath = params(params("form.file-path"))
+        val _filePath = params("form.file-path")
         val finalPath = resourceRealPath(context.execListener, Option(context.owner), _filePath)
 
         val inputStream = HDFSOperatorV2.readAsInputStream(finalPath)
