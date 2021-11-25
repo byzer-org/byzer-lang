@@ -488,12 +488,12 @@ class SQLSendMessage(override val uid: String) extends SQLAlg with Functions wit
       |```sql
       |set EMAIL_TITLE = "This is the title of the email";
       |set EMAIL_BODY ='''<div>This is the first line</div><br/><hr/><div>This is the second line</div>''';
-      |set EMAIL_TO = "137297351@qq.com";
+      |set EMAIL_TO = "yourMailAddress@qq.com";
       |
-      |run command as SendMessage.
+      |run command as SendMessage.``
       |where method="mail"
       |and content="${EMAIL_BODY}"
-      |and from = "137297351@qq.com"
+      |and from = "yourMailAddress@qq.com"
       |and to = "${EMAIL_TO}"
       |and subject = "${EMAIL_TITLE}"
       |and contentType="text/html"
@@ -501,7 +501,8 @@ class SQLSendMessage(override val uid: String) extends SQLAlg with Functions wit
       |and attachmentPaths="/tmp/employee.csv,/tmp/employee.csv"
       |and smtpHost = "smtp.qq.com"
       |and smtpPort="587"
-      |and `userName`="137297351@qq.com"
+      |and `properties.mail.smtp.starttls.enable`= "true"
+      |and `userName`="yourMailAddress@qq.com"
       |and password="---"
       |;
       |```
@@ -649,14 +650,31 @@ class MailAgent() extends Logging with WowLog with DslTool {
       val smtpHost = params("smtpHost")
       val smtpPort = params.getOrElse("smtpPort", "465")
       require(smtpHost != null)
-      properties.put("mail.host", smtpHost)
-      properties.put("mail.localhost", smtpHost)
-      properties.put("mail.smtp.host", smtpHost)
-      properties.put("mail.smtp.localhost", smtpHost)
-      properties.put("mail.smtp.auth", "true")
+      properties.setProperty("mail.host", smtpHost)
+      properties.setProperty("mail.localhost", smtpHost)
+      properties.setProperty("mail.smtp.host", smtpHost)
+      properties.setProperty("mail.smtp.localhost", smtpHost)
+      properties.setProperty("mail.smtp.auth", "true")
       properties.setProperty("mail.smtp.socketFactory.fallback", "false")
       properties.setProperty("mail.smtp.port", smtpPort)
       properties.setProperty("mail.smtp.socketFactory.port", smtpPort)
+
+      params.filter(_._1.startsWith("properties.")).foreach { case (k, v) =>
+        properties.setProperty(k.stripPrefix("properties."), v)
+      }
+
+      /**
+       * In order to ensure account security and simple configuration, the default secure communication
+       * framework standard protocol is SSL. If your mail service provider requires a non-SSL method,
+       * please set `properties.mail.smtp.ssl.enable= "false"`, or `properties.mail.smtp.starttls.enable= "false"`
+       */
+      if (!smtpPort.equals("25") && !properties.containsKey("properties.mail.smtp.starttls.enable")
+        && !properties.containsKey("properties.mail.smtp.ssl.enable")) {
+        properties.setProperty("properties.mail.smtp.ssl.enable", smtpPort)
+        if (!properties.containsKey("properties.mail.smtp.starttls.enable")) {
+          properties.setProperty("mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory")
+        }
+      }
 
       val userName = params.getOrElse("userName", GLOBAL_USER_NAME)
       val password = params.getOrElse("password", GLOBAL_IDENTIFY_CODE)
