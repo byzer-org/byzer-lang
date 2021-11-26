@@ -182,11 +182,11 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
     }
 
     params.filter(_._1.startsWith("header.")).foreach { case (k, v) =>
-      request.addHeader(k.stripPrefix("header."), v)
+      request.setHeader(k.stripPrefix("header."), v)
     }
     val contentTypeValue = params.getOrElse(headerContentType.name,
       params.getOrElse("header.Content-Type", "application/x-www-form-urlencoded"))
-    request.addHeader("Content-Type", contentTypeValue)
+    request.setHeader("Content-Type", contentTypeValue)
 
     val response = (httpMethod, contentTypeValue) match {
       case ("get", _) =>
@@ -269,11 +269,11 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
     }
 
     params.filter(_._1.startsWith("header.")).foreach { case (k, v) =>
-      request.addHeader(k.stripPrefix("header."), v)
+      request.setHeader(k.stripPrefix("header."), v)
     }
     val contentTypeValue = params.getOrElse(headerContentType.name,
       params.getOrElse("header.Content-Type", "application/x-www-form-urlencoded"))
-    request.addHeader("Content-Type", contentTypeValue)
+    request.setHeader("Content-Type", contentTypeValue)
 
     val response = (httpMethod, contentTypeValue) match {
       case ("get", _) => request.execute()
