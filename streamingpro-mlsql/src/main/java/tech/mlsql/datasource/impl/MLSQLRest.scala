@@ -185,7 +185,7 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
       request.addHeader(k.stripPrefix("header."), v)
     }
     val contentTypeValue = params.getOrElse(headerContentType.name,
-      params.getOrElse("Content-Type", "application/x-www-form-urlencoded"))
+      params.getOrElse("header.Content-Type", "application/x-www-form-urlencoded"))
     request.addHeader("Content-Type", contentTypeValue)
 
     val response = (httpMethod, contentTypeValue) match {
@@ -193,10 +193,11 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
         request.execute()
 
       case ("post", contentType) if contentType.trim.startsWith("application/json") =>
-        if (params.contains(body.name))
+        if (params.contains(body.name)) {
           request.bodyString(params(body.name), ContentType.APPLICATION_JSON).execute()
-        else
+        } else {
           request.execute()
+        }
 
       case ("post", contentType) if contentType.trim.startsWith("application/x-www-form-urlencoded") =>
         val form = Form.form()
@@ -271,7 +272,7 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
       request.addHeader(k.stripPrefix("header."), v)
     }
     val contentTypeValue = params.getOrElse(headerContentType.name,
-      params.getOrElse("Content-Type", "application/x-www-form-urlencoded"))
+      params.getOrElse("header.Content-Type", "application/x-www-form-urlencoded"))
     request.addHeader("Content-Type", contentTypeValue)
 
     val response = (httpMethod, contentTypeValue) match {
@@ -280,8 +281,10 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
       case ("post", contentType) if contentType.trim.startsWith("application/json") =>
         if (params.contains(body.name))
           request.bodyString(params(body.name), ContentType.APPLICATION_JSON).execute()
-        else
+        else {
           request.execute()
+        }
+
 
       case ("post", contentType) if contentType.trim.startsWith("application/x-www-form-urlencoded") =>
         val form = Form.form()
