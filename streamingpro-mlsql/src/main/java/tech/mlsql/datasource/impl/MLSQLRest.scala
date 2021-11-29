@@ -75,17 +75,18 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
         val maxSize = config.config.getOrElse("config.page.limit", "1").toInt
         val maxTries = config.config.getOrElse("config.page.retry", "3").toInt
         val pageInterval = JavaUtils.timeStringAsMs(config.config.getOrElse("config.page.interval", "10ms"))
-        var count = 0
+        var count = 1
 
         var pageNum = -1
         // if not json path then it should be auto increment page num
-        if (jsonPath.trim.toLowerCase.startsWith("auto-increment")) {
+        val autoInc = jsonPath.trim.toLowerCase.startsWith("auto-increment")
+        if (autoInc) {
           val Array(_, initialPageNum) = jsonPath.split(":")
           pageNum = initialPageNum.toInt
         }
 
 
-        val firstDf = _http(config.path, config.config, false, config.df.get.sparkSession)
+        var firstDf = _http(config.path, config.config, false, config.df.get.sparkSession)
 
         val uuid = UUID.randomUUID().toString.replaceAll("-", "")
         val context = ScriptSQLExec.context()
@@ -98,7 +99,7 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
           val row = firstDf.select(F.col("content").cast(StringType), F.col("status")).head
           val content = row.getString(0)
 
-          val pageValues = if (pageNum == -1) {
+          val pageValues = if (autoInc) {
             try {
               jsonPath.split(",").map(path => JsonPath.read[String](content, path))
             } catch {
@@ -118,7 +119,8 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
             RestUtils.executeWithRetrying[(Int, Option[DataFrame])](maxTries)((() => {
               try {
                 val tempDF = _http(newUrl, config.config, skipParams, config.df.get.sparkSession)
-                val row = firstDf.select(F.col("content").cast(StringType), F.col("status")).head
+                val row = tempDF.select(F.col("content").cast(StringType), F.col("status")).head
+                firstDf = tempDF
                 val status = row.getInt(1)
                 (status, Option(tempDF))
               } catch {
