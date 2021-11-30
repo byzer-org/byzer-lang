@@ -5,8 +5,8 @@
    * [Docker Sandbox](#docker-sandbox)
       * [Pulling Sandbox Docker Image](#pulling-sandbox-docker-image)
       * [Start Container](#start-container)
-   * [<a id="user-content-Download"></a>Download Kolo](#download-kolo)
-   * [<a id="user-content-Build"></a>Building a Distribution](#building-a-distribution)
+   * [Download Kolo](#download-kolo)
+   * [Building a Distribution](#building-a-distribution)
       * [Prerequisites](#prerequisites)
       * [Downloading Source Code](#downloading-source-code)
       * [Building Spark 2.4.3 Bundle](#building-spark-243-bundle)
@@ -122,7 +122,7 @@ techmlsql/mlsql-sandbox:2.4.3-2.1.0
 3. Enter spark for "Engine Name", http://localhost:9003 for "Engine Url", leave "Access Token" blank, click "Go" button.
 4. Click "Go to Console Page", and you're all set to play with mlsql.
 
-## <a id="Download"></a>Download Kolo
+## Download Kolo
 
 * The latest stable version is release-2.1.0
 * You can download from [Kolo Website](https://mlsql-downloads.kyligence.io/2.1.0/)
@@ -139,7 +139,7 @@ mlsql-engine_2.4-2.1.0.tar.gz
 mlsql-engine_3.0-2.1.0.tar.gz
 ```  
 
-## <a id="Build"></a>Building a Distribution
+## Building a Distribution
 ### Prerequisites
 - JDK 8+
 - Maven
