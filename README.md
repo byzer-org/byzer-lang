@@ -1,4 +1,22 @@
-[TOC]
+   * [Kolo-Lang](#kolo-lang)
+      * [Kolo Code Example](#kolo-code-example)
+   * [Official WebSite](#official-website)
+   * [VSCode Extension（MacOS、Linux）](#vscode-extensionmacoslinux)
+   * [Docker Sandbox](#docker-sandbox)
+      * [Pulling Sandbox Docker Image](#pulling-sandbox-docker-image)
+      * [Start Container](#start-container)
+   * [<a id="user-content-Download"></a>Download Kolo](#download-kolo)
+   * [<a id="user-content-Build"></a>Building a Distribution](#building-a-distribution)
+      * [Prerequisites](#prerequisites)
+      * [Downloading Source Code](#downloading-source-code)
+      * [Building Spark 2.4.3 Bundle](#building-spark-243-bundle)
+      * [Building Spark 3.1.1 Bundle](#building-spark-311-bundle)
+      * [Building without Chinese Analyzer](#building-without-chinese-analyzer)
+      * [Building with Aliyun OSS Support](#building-with-aliyun-oss-support)
+   * [Deploying](#deploying)
+   * [How to contribute to Kolo-Lang](#how-to-contribute-to-kolo-lang)
+   * [Contributors](#contributors)
+   * [WeChat Group](#wechat-group)
 
 ## Kolo-Lang
 
