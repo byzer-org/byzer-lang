@@ -1,6 +1,16 @@
-## MLSQL
+[TOC]
 
-MLSQL is a distributed Programming Language designed For Big Data and AI.
+## Kolo-Lang
+
+**Kolo** (former MLSQL) is a low-code open-source programming language for data pipeline, analytics and AI in cloud native way. 
+
+**Deisgn protocol: Everything is a table.** Kolo is a SQL-like language, to simplify data pipeline, analytics and AI, combined with built-in algorithms and plugins.
+
+We believe that everything is a table, a simple and powerful SQL-like language can significantly reduce human efforts of data development without switching different tools.
+
+
+### Kolo Code Example
+
 
 ```sql
 load hive.`raw.stripe_discounts` as discounts;
@@ -54,13 +64,13 @@ select * from final2 as output;
 
 ## Official WebSite
 
-[https://mlsql.tech](https://mlsql.tech)
+[https://mlsql.tech](https://mlsql.tech) [New official website is coming soon]
 
-## Desktop（MacOS、Linux）
+## VSCode Extension（MacOS、Linux）
 
-[mlsql-lang-vscode-plugin](https://github.com/allwefantasy/mlsql-lang-vscode-plugin)
+[kolo-lang-vscode-extension](https://github.com/allwefantasy/mlsql-lang-vscode-plugin)
 
-[more document about mlsql lang desktop/Chinese](https://mlsql-docs.kyligence.io/latest/zh-hans/howtouse/mlsql_desktop_install.html)
+[More document about kolo-lang vscode extension（Chinese version）](https://mlsql-docs.kyligence.io/latest/zh-hans/howtouse/mlsql_desktop_install.html)
 
 ## Docker Sandbox
 
@@ -94,11 +104,11 @@ techmlsql/mlsql-sandbox:2.4.3-2.1.0
 3. Enter spark for "Engine Name", http://localhost:9003 for "Engine Url", leave "Access Token" blank, click "Go" button.
 4. Click "Go to Console Page", and you're all set to play with mlsql.
 
-## <a id="Download"></a>Download MLSQL
+## <a id="Download"></a>Download Kolo
 
 * The latest stable version is release-2.1.0
-* You can download from [MLSQL Website](https://mlsql-downloads.kyligence.io/2.1.0/)
-* Spark 2.4.3/3.1.1 are tested
+* You can download from [Kolo Website](https://mlsql-downloads.kyligence.io/2.1.0/)
+* Spark 2.4.3/3.1.1 have been tested
 
 ***Naming Convention***
 
@@ -120,7 +130,7 @@ mlsql-engine_3.0-2.1.0.tar.gz
 ### Downloading Source Code
 ```shell
 ## Clone the code base
-git clone https://github.com/allwefantasy/mlsql.git .
+git clone https://github.com/byzer-org/kolo-lang.git.
 cd mlsql
 ```
 
@@ -155,7 +165,7 @@ export OSS_ENABLE=true
 - Set environment variable MLSQL_HOME
 - Copy distribution tar ball over and untar it
 
-4.Start MLSQL in local mode
+4.Start Kolo in local mode
 ```shell
 cd $MLSQL_HOME
 ## Run process in background
@@ -176,9 +186,9 @@ Directory structure
     |-- RELEASE
 ```
 
-## Contributing to MLSQL
+## How to contribute to Kolo-Lang
 
-If you are planning to contribute to this repository, please create an issue at [our Issue page](https://github.com/allwefantasy/streamingpro/issues)
+If you are planning to contribute to this repository, please create an issue at [our Issue page](https://github.com/byzer-org/kolo-lang/issues)
 even if the topic is not related to source code itself (e.g., documentation, new idea and proposal).
 
 This is an active open source project for everyone,
