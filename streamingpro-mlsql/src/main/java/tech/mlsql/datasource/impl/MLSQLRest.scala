@@ -30,7 +30,7 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
   with MLSQLSink
   with MLSQLSourceInfo
   with MLSQLSourceConfig
-  with MLSQLRegistry with DslTool with WowParams with Logging{
+  with MLSQLRegistry with DslTool with WowParams with Logging {
 
 
   def this() = this(BaseParams.randomUID())
@@ -72,6 +72,8 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
    **/
   override def load(reader: DataFrameReader, config: DataSourceConfig): DataFrame = {
     val skipParams = config.config.getOrElse("config.page.skip-params", "false").toBoolean
+    val retryInterval = JavaUtils.timeStringAsMs(config.config.getOrElse("config.retry.interval", "1s"))
+
     (config.config.get("config.page.next"), config.config.get("config.page.values")) match {
       case (Some(urlTemplate), Some(jsonPath)) =>
         val maxSize = config.config.getOrElse("config.page.limit", "1").toInt
@@ -88,7 +90,32 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
         }
 
 
-        var firstDf = _http(config.path, config.config, false, config.df.get.sparkSession)
+        val (_, firstDfOpt) = RestUtils.executeWithRetrying[(Int, Option[DataFrame])](maxTries)((() => {
+          try {
+            val tempDF = _http(config.path, config.config, false, config.df.get.sparkSession)
+            val row = tempDF.select(F.col("content").cast(StringType), F.col("status")).head
+            val status = row.getInt(1)
+            (status, Option(tempDF))
+          } catch {
+            case e: Exception =>
+              (500, None)
+          }
+        }) (),
+          tempResp => {
+            val t = tempResp._1 == 200
+            if (!t) {
+              Thread.sleep(retryInterval)
+            }
+            t
+          },
+          failResp => logInfo(s"Fail request ${config.path} failed after ${maxTries} attempts. the last response status is: ${failResp._1}. ")
+        )
+
+        if(firstDfOpt.isEmpty){
+          throw new MLSQLException(s"Fail request ${config.path} failed after ${maxTries} attempts.")
+        }
+
+        var firstDf = firstDfOpt.get
 
         val uuid = UUID.randomUUID().toString.replaceAll("-", "")
         val context = ScriptSQLExec.context()
@@ -131,7 +158,11 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
               }
             }) (),
               tempResp => {
-                tempResp._1 == 200
+                val t = tempResp._1 == 200
+                if (!t) {
+                  Thread.sleep(retryInterval)
+                }
+                t
               },
               failResp => logInfo(s"Fail request ${newUrl} failed after ${maxTries} attempts. the last response status is: ${failResp._1}. ")
             )
@@ -143,10 +174,13 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
         context.execListener.sparkSession.read.parquet(tmpTablePath)
 
       case (None, None) =>
-        val maxTries = config.config.getOrElse("config.retry", "1").toInt
+
+        val maxTries = config.config.getOrElse("config.retry", config.config.getOrElse("config.page.retry", "3")).toInt
+
+
         val (_, resultDF) = RestUtils.executeWithRetrying[(Int, Option[DataFrame])](maxTries)((() => {
           try {
-            val tempDF = _http(config.path, config.config, skipParams, config.df.get.sparkSession)
+            val tempDF = _http(config.path, config.config, false, config.df.get.sparkSession)
             val row = tempDF.select(F.col("content").cast(StringType), F.col("status")).head
             val status = row.getInt(1)
             (status, Option(tempDF))
@@ -156,7 +190,11 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
           }
         }) (),
           tempResp => {
-            tempResp._1 == 200
+            val t = tempResp._1 == 200
+            if (!t) {
+              Thread.sleep(retryInterval)
+            }
+            t
           },
           failResp => logInfo(s"Fail request ${config.path} failed after ${maxTries} attempts. the last response status is: ${failResp._1}. ")
         )
