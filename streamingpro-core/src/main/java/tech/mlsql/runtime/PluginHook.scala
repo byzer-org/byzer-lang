@@ -37,7 +37,6 @@ class PluginHook extends MLSQLPlatformLifecycle with Logging {
         map(item => item.split(",")).
         getOrElse(Array[String]()))
 
-
     if (!params.contains("streaming.datalake.path")) return
     val spark = runtime.asInstanceOf[SparkRuntime].sparkSession
     import PluginUtils._

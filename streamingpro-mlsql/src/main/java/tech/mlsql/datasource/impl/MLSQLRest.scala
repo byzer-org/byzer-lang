@@ -111,7 +111,7 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
           failResp => logInfo(s"Fail request ${config.path} failed after ${maxTries} attempts. the last response status is: ${failResp._1}. ")
         )
 
-        if(firstDfOpt.isEmpty){
+        if (firstDfOpt.isEmpty) {
           throw new MLSQLException(s"Fail request ${config.path} failed after ${maxTries} attempts.")
         }
 
@@ -120,6 +120,7 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
         val uuid = UUID.randomUUID().toString.replaceAll("-", "")
         val context = ScriptSQLExec.context()
         val tmpTablePath = resourceRealPath(context.execListener, Option(context.owner), PathFun("__tmp__").add(uuid).toPath)
+        context.execListener.addEnv(classOf[MLSQLRest].getName, tmpTablePath)
         firstDf.write.format("parquet").mode(SaveMode.Append).save(tmpTablePath)
 
         while (count < maxSize) {
@@ -130,10 +131,10 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
 
           val pageValues = if (autoInc) {
             try {
-              jsonPath.split(",").map(path => JsonPath.read[String](content, path))
+              jsonPath.split(",").map(path => JsonPath.read[String](content, path)).toArray
             } catch {
               case _: com.jayway.jsonpath.PathNotFoundException =>
-                Array()
+                Array[String]()
               case e: Exception =>
                 throw e
             }

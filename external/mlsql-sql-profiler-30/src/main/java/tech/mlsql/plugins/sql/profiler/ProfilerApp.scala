@@ -2,7 +2,7 @@ package tech.mlsql.plugins.sql.profiler
 
 import tech.mlsql.dsl.CommandCollection
 import tech.mlsql.ets.register.ETRegister
-import tech.mlsql.plugins.cleaner.SessionCleaner
+import tech.mlsql.plugins.cleaner.{RestDataSourceTempFileCleaner, SessionCleaner}
 import tech.mlsql.runtime.AppRuntimeStore
 import tech.mlsql.version.VersionCompatibility
 
@@ -13,6 +13,7 @@ class ProfilerApp extends tech.mlsql.app.App with VersionCompatibility {
   override def run(args: Seq[String]): Unit = {
     AppRuntimeStore.store.registerController("genSQL", classOf[GenSQLController].getName)
     AppRuntimeStore.store.registerRequestCleaner("/plugins/cleaner/sessionListenerClean", classOf[SessionCleaner].getName)
+    AppRuntimeStore.store.registerRequestCleaner("/plugins/cleaner/restDataSourceTempFileCleaner", classOf[RestDataSourceTempFileCleaner].getName)
     ETRegister.register(ProfilerApp.MODULE_NAME, classOf[ProfilerCommand].getName)
     CommandCollection.refreshCommandMapping(Map(ProfilerApp.COMMAND_NAME -> ProfilerApp.MODULE_NAME))
   }
