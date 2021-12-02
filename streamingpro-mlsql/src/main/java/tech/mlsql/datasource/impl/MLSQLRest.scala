@@ -19,6 +19,7 @@ import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
 import streaming.rest.RestUtils
 import tech.mlsql.common.form._
 import tech.mlsql.common.utils.distribute.socket.server.JavaUtils
+import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.common.utils.path.PathFun
 import tech.mlsql.dsl.adaptor.DslTool
 import tech.mlsql.tool.{HDFSOperatorV2, Templates2}
@@ -29,7 +30,7 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
   with MLSQLSink
   with MLSQLSourceInfo
   with MLSQLSourceConfig
-  with MLSQLRegistry with DslTool with WowParams {
+  with MLSQLRegistry with DslTool with WowParams with Logging{
 
 
   def this() = this(BaseParams.randomUID())
@@ -39,6 +40,7 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
    * load Rest.`http://mlsql.tech/api` where
    * `config.connect-timeout`="10s"
    * and `config.method`="GET"
+   * and `config.retry`="3"
    * and `header.content-type`="application/json"
    *
    * and `config.page.next`="http://mlsql.tech/api?cursor={0}&wow={1}"
@@ -131,7 +133,7 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
               tempResp => {
                 tempResp._1 == 200
               },
-              failResp => s"Fail request ${newUrl} failed after ${maxTries} attempts. the last response status is: ${failResp._1}. "
+              failResp => logInfo(s"Fail request ${newUrl} failed after ${maxTries} attempts. the last response status is: ${failResp._1}. ")
             )
             firstDf.write.format("parquet").mode(SaveMode.Append).save(tmpTablePath)
             pageNum += 1
@@ -141,7 +143,31 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
         context.execListener.sparkSession.read.parquet(tmpTablePath)
 
       case (None, None) =>
-        _http(config.path, config.config, skipParams, config.df.get.sparkSession)
+        val maxTries = config.config.getOrElse("config.retry", "1").toInt
+        val (_, resultDF) = RestUtils.executeWithRetrying[(Int, Option[DataFrame])](maxTries)((() => {
+          try {
+            val tempDF = _http(config.path, config.config, skipParams, config.df.get.sparkSession)
+            val row = tempDF.select(F.col("content").cast(StringType), F.col("status")).head
+            val status = row.getInt(1)
+            (status, Option(tempDF))
+          } catch {
+            case e: Exception =>
+              (500, None)
+          }
+        }) (),
+          tempResp => {
+            tempResp._1 == 200
+          },
+          failResp => logInfo(s"Fail request ${config.path} failed after ${maxTries} attempts. the last response status is: ${failResp._1}. ")
+        )
+        if (resultDF.isEmpty) {
+          val session = ScriptSQLExec.context().execListener.sparkSession
+          return session.createDataFrame(session.sparkContext.makeRDD(Seq(Row.fromSeq(Seq(Array[Byte](), 0))))
+            , StructType(fields = Seq(
+              StructField("content", BinaryType), StructField("status", IntegerType)
+            )))
+        }
+        resultDF.get
     }
 
 
