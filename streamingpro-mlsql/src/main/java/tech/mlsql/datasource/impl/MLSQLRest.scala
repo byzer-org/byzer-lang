@@ -21,6 +21,7 @@ import tech.mlsql.common.form._
 import tech.mlsql.common.utils.distribute.socket.server.JavaUtils
 import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.common.utils.path.PathFun
+import tech.mlsql.datasource.helper.rest.PageStrategyDispatcher
 import tech.mlsql.dsl.adaptor.DslTool
 import tech.mlsql.tool.{HDFSOperatorV2, Templates2}
 
@@ -81,13 +82,7 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
         val pageInterval = JavaUtils.timeStringAsMs(config.config.getOrElse("config.page.interval", "10ms"))
         var count = 1
 
-        var pageNum = -1
-        // if not json path then it should be auto increment page num
-        val autoInc = jsonPath.trim.toLowerCase.startsWith("auto-increment")
-        if (autoInc) {
-          val Array(_, initialPageNum) = jsonPath.split(":")
-          pageNum = initialPageNum.toInt
-        }
+        val pageStrategy = PageStrategyDispatcher.get(config.config)
 
 
         val (_, firstDfOpt) = RestUtils.executeWithRetrying[(Int, Option[DataFrame])](maxTries)((() => {
@@ -129,23 +124,14 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
           val row = firstDf.select(F.col("content").cast(StringType), F.col("status")).head
           val content = row.getString(0)
 
-          val pageValues = if (autoInc) {
-            try {
-              jsonPath.split(",").map(path => JsonPath.read[String](content, path)).toArray
-            } catch {
-              case _: com.jayway.jsonpath.PathNotFoundException =>
-                Array[String]()
-              case e: Exception =>
-                throw e
-            }
-          } else Array(pageNum.toString)
+          val pageValues = pageStrategy.pageValues(Option(content))
 
 
           val shouldStop = pageValues.size == 0 || pageValues.filter(value => value == null || value.isEmpty).size > 0
           if (shouldStop) {
             count = maxSize
           } else {
-            val newUrl = Templates2.evaluate(urlTemplate, pageValues)
+            val newUrl = pageStrategy.pageUrl(Option(content))
             RestUtils.executeWithRetrying[(Int, Option[DataFrame])](maxTries)((() => {
               try {
                 val tempDF = _http(newUrl, config.config, skipParams, config.df.get.sparkSession)
@@ -168,7 +154,7 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
               failResp => logInfo(s"Fail request ${newUrl} failed after ${maxTries} attempts. the last response status is: ${failResp._1}. ")
             )
             firstDf.write.format("parquet").mode(SaveMode.Append).save(tmpTablePath)
-            pageNum += 1
+            pageStrategy.nexPage
           }
 
         }
