@@ -16,6 +16,12 @@ class RestDataSourceTempFileCleaner extends RequestCleaner with Logging with Wow
 
   override def run(): Unit = {
     val context = ScriptSQLExec.context()
+
+    val shouldCleanTempData = context.execListener.env().getOrElse("enableRestDataSourceRequestCleaner", "false").toBoolean
+    if (!shouldCleanTempData) {
+      return
+    }
+
     val ifAsync = JSONTool.parseJson[Map[String, String]](context.userDefinedParam("__PARAMS__")).getOrElse("async", "false").toBoolean
     if (ifAsync && !context.execListener.env().getOrElse("__MarkAsyncRunFinish__", "false").toBoolean) {
       return
