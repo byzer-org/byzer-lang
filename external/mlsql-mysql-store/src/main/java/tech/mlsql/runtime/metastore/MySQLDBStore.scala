@@ -53,7 +53,7 @@ class MySQLDBStore extends DBStore {
     val convertRowToMap = (row: Row) => {
       row.schema.fieldNames.filter(field => !row.isNullAt(row.fieldIndex(field))).map(field => field -> row.getAs[String](field)).toMap
     }
-    val udf = F.udf(convertRowToMap, MapType(StringType, StringType))
+    val udf = F.udf(convertRowToMap)
     data.schema.filter(f => f.dataType match {
       case StructType(_) => true
       case _ => false
