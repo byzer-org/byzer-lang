@@ -114,7 +114,7 @@ class SQLTreeBuildExt(override val uid: String) extends SQLAlg with Functions wi
       }
       computeLevel(a, level)
     }
-    val computeLevelUDF = F.udf(computeLevel1, IntegerType)
+    val computeLevelUDF = F.udf(computeLevel1)
     newdf = newdf.withColumn("level", computeLevelUDF(F.col("children"), F.lit(0)))
 
     $(treeType) match {
