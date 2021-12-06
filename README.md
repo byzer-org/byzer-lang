@@ -21,9 +21,9 @@
 
 ## Kolo-Lang
 
-**Kolo** (former MLSQL) is a low-code open-source programming language for data pipeline, analytics and AI in cloud native way. 
+**Kolo** (former MLSQL) is a low-code, open-sourced and distributed programming language for data pipeline, analytics and AI in cloud native way.
 
-**Deisgn protocol: Everything is a table.** Kolo is a SQL-like language, to simplify data pipeline, analytics and AI, combined with built-in algorithms and plugins.
+**Deisgn protocol: Everything is a table.** Kolo is a SQL-like language, to simplify data pipeline, analytics and AI, combined with built-in algorithms and extensions.
 
 We believe that everything is a table, a simple and powerful SQL-like language can significantly reduce human efforts of data development without switching different tools.
 
@@ -83,11 +83,16 @@ select * from final2 as output;
 
 ### Kolo Architecture
 
-![Kolo-lang Arch](images/kolo-arch.jpg)
+![Kolo-lang Arch](images/Kolo-arch.jpg)
 
 ## Official WebSite
 
 [https://mlsql.tech](https://mlsql.tech) [New official website is coming soon]
+
+## Notebook Support
+
+[byzer-notebook](https://github.com/byzer-org/byzer-notebook)
+
 
 ## VSCode Extension（MacOS、Linux、Windows）
 
@@ -95,37 +100,25 @@ select * from final2 as output;
 
 [More document about kolo-lang vscode extension（Chinese version）](https://mlsql-docs.kyligence.io/latest/zh-hans/howtouse/mlsql_desktop_install.html)
 
-## Docker Sandbox
+## Docker Sandbox  (With Notebook)
 
-
-### Pulling Sandbox Docker Image
-
-For Spark 2.4.3 bundle:
-
-```shell
-docker pull techmlsql/mlsql-sandbox:2.4.3-2.1.0
 ```
+export MYSQL_PASSWORD=${1:-root}
+export SPARK_VERSION=${SPARK_VERSION:-3.1.1}
+export MLSQL_VERSION=${MLSQL_VERSION:-2.2.0-SNAPSHOT}
 
-For Spark 3.1.1 bundle：
-
-```shell
-docker pull techmlsql/mlsql-sandbox:3.1.1-2.1.0
-```
-
-### Start Container
-```
 docker run -d \
 -p 3306:3306 \
 -p 9002:9002 \
--e MYSQL_ROOT_PASSWORD=mlsql \
---name mlsql-sandbox-2.4.3-2.1.0 \
-techmlsql/mlsql-sandbox:2.4.3-2.1.0
+-p 9003:9003 \
+-e MYSQL_ROOT_HOST=% \
+-e MYSQL_ROOT_PASSWORD="${MYSQL_PASSWORD}" \
+--name mlsql-sandbox-${SPARK_VERSION}-${MLSQL_VERSION} \
+mlsql-sandbox:${SPARK_VERSION}-${MLSQL_VERSION}
 ```
 
-1. Launch a browser, enter http://localhost:9002, and "Setup MLSQL Console in 2 Steps" page shows.
-2. Enter admin username and password, click "Go" button.
-3. Enter spark for "Engine Name", http://localhost:9003 for "Engine Url", leave "Access Token" blank, click "Go" button.
-4. Click "Go to Console Page", and you're all set to play with mlsql.
+Then you can visit `http://127.0.0.1:9002` .
+
 
 ## Download Kolo
 
@@ -172,12 +165,6 @@ export MLSQL_SPARK_VERSION=3.0
 ```shell
 ## Chinese analyzer is enabled by default.
 export ENABLE_CHINESE_ANALYZER=false
-./dev/make-distribution.sh <spark_version>
-```
-### Building with Aliyun OSS Support
-```shell
-## Aliyun OSS support is disabled by default
-export OSS_ENABLE=true
 ./dev/make-distribution.sh <spark_version>
 ```
 
