@@ -1,5 +1,6 @@
    * [Kolo-Lang](#kolo-lang)
       * [Kolo Code Example](#kolo-code-example)
+      * [Kolo Architecture](#kolo-aritchitechture)
    * [Official WebSite](#official-website)
    * [VSCode Extension（MacOS、Linux）](#vscode-extensionmacoslinux)
    * [Docker Sandbox](#docker-sandbox)
@@ -80,13 +81,17 @@ set allColumns = "all,wow";
 select * from final2 as output;
 ```
 
+### Kolo Architecture
+
+![Kolo-lang Arch](images/kolo-arch.jpg)
+
 ## Official WebSite
 
 [https://mlsql.tech](https://mlsql.tech) [New official website is coming soon]
 
-## VSCode Extension（MacOS、Linux）
+## VSCode Extension（MacOS、Linux、Windows）
 
-[kolo-lang-vscode-extension](https://github.com/allwefantasy/mlsql-lang-vscode-plugin)
+[VSCode IDE Extension](https://github.com/byzer-org/kolo-desktop)
 
 [More document about kolo-lang vscode extension（Chinese version）](https://mlsql-docs.kyligence.io/latest/zh-hans/howtouse/mlsql_desktop_install.html)
 
