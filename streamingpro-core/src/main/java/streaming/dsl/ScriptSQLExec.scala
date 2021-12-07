@@ -32,16 +32,17 @@ import org.antlr.v4.runtime.misc.Interval
 import org.antlr.v4.runtime.tree.ParseTreeWalker
 import org.apache.spark.MLSQLSyntaxErrorListener
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.types.DataTypes
-import tech.mlsql.Stage
 import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.dsl.CommandCollection
 import tech.mlsql.dsl.adaptor._
 import tech.mlsql.dsl.parser.MLSQLErrorStrategy
 import tech.mlsql.dsl.processor.{AuthProcessListener, GrammarProcessListener, PreProcessListener}
-import tech.mlsql.dsl.scope.SetScopeParameter
+import tech.mlsql.dsl.scope.ParameterVisibility.ParameterVisibility
+import tech.mlsql.dsl.scope.{ParameterVisibility, SetVisibilityParameter}
 import tech.mlsql.job.MLSQLJobProgressListener
 import tech.mlsql.lang.cmd.compile.internal.gc.VariableTable
+import tech.mlsql.session.SetSession
+import tech.mlsql.{Stage, session}
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable
@@ -160,7 +161,7 @@ object ScriptSQLExec extends Logging with WowLog {
   }
 }
 
-case class BranchContextHolder(contexts: mutable.Stack[BranchContext],traces:ArrayBuffer[String])
+case class BranchContextHolder(contexts: mutable.Stack[BranchContext], traces: ArrayBuffer[String])
 
 trait BranchContext
 
@@ -176,17 +177,56 @@ case class ForContext() extends BranchContext
 
 class ScriptSQLExecListener(val _sparkSession: SparkSession, val _defaultPathPrefix: String, val _allPathPrefix: Map[String, String]) extends BaseParseListener with Logging with WowLog {
 
-  private val _branchContext = BranchContextHolder(new mutable.Stack[BranchContext](),new ArrayBuffer[String]())
+  private val _branchContext = BranchContextHolder(new mutable.Stack[BranchContext](), new ArrayBuffer[String]())
 
   private val _env = new scala.collection.mutable.HashMap[String, String]
 
-  private val _env_scope = new scala.collection.mutable.HashMap[String, SetScopeParameter]
+  private val _env_visibility = new scala.collection.mutable.HashMap[String, SetVisibilityParameter]
 
   private[this] val _jobListeners = ArrayBuffer[MLSQLJobProgressListener]()
 
   private val lastSelectTable = new AtomicReference[String]()
   private val _declaredTables = new ArrayBuffer[String]()
   private[this] var _tableAuth: AtomicReference[TableAuth] = new AtomicReference[TableAuth]()
+
+  def envSession = new SetSession(_sparkSession, ScriptSQLExec.context().owner)
+
+  def addSessionEnv(k: String, v: String, visibility: String) = {
+    envSession.set(k, v, Map[String, String](
+      SetSession.__MLSQL_CL__ -> session.SetSession.SET_STATEMENT_CL,
+      "visibility" -> visibility
+    ))
+    this
+  }
+
+  def initFromSessionEnv = {
+
+    def getVisibility(_visibility: String) = {
+      val visibility = _visibility.split(",")
+      val visibilityParameter = visibility.foldLeft(mutable.Set[ParameterVisibility]())((x, y) => {
+        y match {
+          case "un_select" => x.add(ParameterVisibility.UN_SELECT)
+          case _ =>
+        }
+        x
+      })
+
+      if (visibilityParameter.size == 0) {
+        visibilityParameter.add(ParameterVisibility.ALL)
+      }
+      visibilityParameter
+    }
+
+    envSession.fetchSetStatement match {
+      case Some(items) =>
+        items.collect().foreach { item =>
+          addEnv(item.k, item.v)
+          addEnvVisibility(item.k, SetVisibilityParameter(item.v, getVisibility(item.config("visibility"))))
+        }
+      case None =>
+    }
+    this
+  }
 
   def branchContext = {
     _branchContext
@@ -209,7 +249,7 @@ class ScriptSQLExecListener(val _sparkSession: SparkSession, val _defaultPathPre
   def clone(sparkSession: SparkSession): ScriptSQLExecListener = {
     val ssel = new ScriptSQLExecListener(sparkSession, _defaultPathPrefix, _allPathPrefix)
     _env.foreach { case (a, b) => ssel.addEnv(a, b) }
-    _env_scope.foreach { case (a, b) => ssel.addEnvScpoe(a, b) }
+    _env_visibility.foreach { case (a, b) => ssel.addEnvVisibility(a, b) }
     if (getStage.isDefined) {
       ssel.setStage(getStage.get)
     }
@@ -241,7 +281,7 @@ class ScriptSQLExecListener(val _sparkSession: SparkSession, val _defaultPathPre
   }
 
   def setLastSelectTable(table: String) = {
-    if(table != null){
+    if (table != null) {
       _declaredTables += table
     }
     lastSelectTable.set(table)
@@ -259,12 +299,12 @@ class ScriptSQLExecListener(val _sparkSession: SparkSession, val _defaultPathPre
 
   def env() = _env
 
-  def addEnvScpoe(k: String, v: SetScopeParameter) = {
-    _env_scope(k) = v
+  def addEnvVisibility(k: String, v: SetVisibilityParameter) = {
+    _env_visibility(k) = v
     this
   }
 
-  def envScope() = _env_scope
+  def envVisibility() = _env_visibility
 
   def sparkSession = _sparkSession
 
@@ -310,10 +350,10 @@ class ScriptSQLExecListener(val _sparkSession: SparkSession, val _defaultPathPre
     }
 
     def traceBC = {
-      ScriptSQLExec.context().execListener.env().getOrElse("__debug__","false").toBoolean
+      ScriptSQLExec.context().execListener.env().getOrElse("__debug__", "false").toBoolean
     }
 
-    def str(ctx:SqlContext)  = {
+    def str(ctx: SqlContext) = {
 
       val input = ctx.start.getTokenSource().asInstanceOf[DSLSQLLexer]._input
 
@@ -322,7 +362,7 @@ class ScriptSQLExecListener(val _sparkSession: SparkSession, val _defaultPathPre
       val interval = new Interval(start, stop)
       input.getText(interval)
     }
-    
+
     def execute(adaptor: DslAdaptor) = {
       val bc = branchContext.contexts
       if (!bc.isEmpty) {
@@ -339,10 +379,10 @@ class ScriptSQLExecListener(val _sparkSession: SparkSession, val _defaultPathPre
                 isBranchCommand
               case _ => false
             }
-            
+
             if (ifC.skipAll) {
               bc.push(ifC)
-              if(isBranchCommand){
+              if (isBranchCommand) {
                 adaptor.parse(ctx)
               }
             } else {
@@ -362,7 +402,7 @@ class ScriptSQLExecListener(val _sparkSession: SparkSession, val _defaultPathPre
           case forC: ForContext =>
         }
       } else {
-        if(traceBC) {
+        if (traceBC) {
           logInfo(format(s"SQL:: ${str(ctx)}"))
         }
         adaptor.parse(ctx)

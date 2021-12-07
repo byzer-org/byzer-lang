@@ -23,14 +23,14 @@ import streaming.dsl.ScriptSQLExecListener
 import streaming.dsl.template.TemplateMerge
 import tech.mlsql.Stage
 import tech.mlsql.common.utils.shell.ShellCommand
-import tech.mlsql.dsl.scope.ParameterScope.ParameterScope
-import tech.mlsql.dsl.scope.{ParameterScope, SetScopeParameter}
+import tech.mlsql.dsl.scope.ParameterVisibility.ParameterVisibility
+import tech.mlsql.dsl.scope.{ParameterVisibility, SetScope, SetVisibilityOption, SetVisibilityParameter}
 
 import scala.collection.mutable
 
 /**
-  * Created by allwefantasy on 27/8/2017.
-  */
+ * Created by allwefantasy on 27/8/2017.
+ */
 class SetAdaptor(scriptSQLExecListener: ScriptSQLExecListener, stage: Stage.stage = Stage.physical) extends DslAdaptor {
   def analyze(ctx: SqlContext): SetStatement = {
     var key = ""
@@ -122,27 +122,34 @@ class SetAdaptor(scriptSQLExecListener: ScriptSQLExecListener, stage: Stage.stag
         value = cleanBlockStr(cleanStr(command))
     }
 
-    val scope = option.getOrElse("scope", "all").split(",")
-    val scopeParameter = scope.foldLeft(mutable.Set[ParameterScope]())((x, y) => {
+    val scope = option.getOrElse(SetScope.NAME, "request")
+    val visibility = option.getOrElse(SetVisibilityOption.NAME, "all").split(",")
+    val visibilityParameter = visibility.foldLeft(mutable.Set[ParameterVisibility]())((x, y) => {
       y match {
-        case "un_select" => x.add(ParameterScope.UN_SELECT)
+        case "un_select" => x.add(ParameterVisibility.UN_SELECT)
         case _ =>
       }
       x
     })
 
-    if (scopeParameter.size == 0) {
-      scopeParameter.add(ParameterScope.ALL)
+    if (visibilityParameter.size == 0) {
+      visibilityParameter.add(ParameterVisibility.ALL)
     }
 
     if (!overwrite) {
       if (!scriptSQLExecListener.env().contains(key)) {
         scriptSQLExecListener.addEnv(key, value)
-        scriptSQLExecListener.addEnvScpoe(key, SetScopeParameter(value, scopeParameter))
+        if (scope == "session"){
+          scriptSQLExecListener.addSessionEnv(key, value,visibility.mkString(","))
+        }         
+        scriptSQLExecListener.addEnvVisibility(key, SetVisibilityParameter(value, visibilityParameter))
       }
     } else {
       scriptSQLExecListener.addEnv(key, value)
-      scriptSQLExecListener.addEnvScpoe(key, SetScopeParameter(value, scopeParameter))
+      if (scope == "session"){
+        scriptSQLExecListener.addSessionEnv(key, value,visibility.mkString(","))
+      }
+      scriptSQLExecListener.addEnvVisibility(key, SetVisibilityParameter(value, visibilityParameter))
     }
 
     scriptSQLExecListener.env().view.foreach {
@@ -151,6 +158,9 @@ class SetAdaptor(scriptSQLExecListener: ScriptSQLExecListener, stage: Stage.stag
         val mergedValue = TemplateMerge.merge(v, scriptSQLExecListener.env().toMap)
         if (mergedValue != v) {
           scriptSQLExecListener.addEnv(k, mergedValue)
+          if (scope == "session"){
+            scriptSQLExecListener.addSessionEnv(key, value,visibility.mkString(","))
+          }
         }
     }
 
@@ -159,28 +169,28 @@ class SetAdaptor(scriptSQLExecListener: ScriptSQLExecListener, stage: Stage.stag
     //unselect的变量不能TemplateMerge.merge到普通变量里，
     //普通变量可以TemplateMerge.merge到任何变量里
 
-    val unSelect = scriptSQLExecListener.envScope
-      .filter(_._2.scope.contains(ParameterScope.UN_SELECT))
-      .map(f => (f._1 ,f._2.value)).toMap
+    val unSelect = scriptSQLExecListener.envVisibility
+      .filter(_._2.scope.contains(ParameterVisibility.UN_SELECT))
+      .map(f => (f._1, f._2.value)).toMap
 
-    val select = scriptSQLExecListener.envScope
-      .filter(!_._2.scope.contains(ParameterScope.UN_SELECT))
-      .map(f => (f._1 ,f._2.value)).toMap
+    val select = scriptSQLExecListener.envVisibility
+      .filter(!_._2.scope.contains(ParameterVisibility.UN_SELECT))
+      .map(f => (f._1, f._2.value)).toMap
 
 
-    scriptSQLExecListener.envScope().view.foreach {
+    scriptSQLExecListener.envVisibility().view.foreach {
       case (k, v) =>
 
         val scopedMergedValue = v.scope match {
-          case ParameterScope.UN_SELECT => TemplateMerge.merge(v.value, select ++ unSelect)
+          case ParameterVisibility.UN_SELECT => TemplateMerge.merge(v.value, select ++ unSelect)
           case _ => TemplateMerge.merge(v.value, select)
         }
 
         if (scopedMergedValue != v) {
-          scriptSQLExecListener.addEnvScpoe(k, SetScopeParameter(scopedMergedValue, v.scope))
+          scriptSQLExecListener.addEnvVisibility(k, SetVisibilityParameter(scopedMergedValue, v.scope))
           v.scope match {
-            case ParameterScope.UN_SELECT => unSelect.updated(k ,scopedMergedValue)
-            case _ => select.updated(k ,scopedMergedValue)
+            case ParameterVisibility.UN_SELECT => unSelect.updated(k, scopedMergedValue)
+            case _ => select.updated(k, scopedMergedValue)
           }
         }
     }

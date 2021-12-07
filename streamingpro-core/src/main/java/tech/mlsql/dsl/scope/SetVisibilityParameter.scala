@@ -18,7 +18,7 @@
 
 package tech.mlsql.dsl.scope
 
-import tech.mlsql.dsl.scope.ParameterScope.ParameterScope
+import tech.mlsql.dsl.scope.ParameterVisibility.ParameterVisibility
 
 import scala.collection.mutable
 
@@ -26,12 +26,16 @@ import scala.collection.mutable
   * Created by aston on 5/9/2019.
   */
 
-case class SetScopeParameter(value: String ,scope: mutable.Set[ParameterScope])
+case class SetVisibilityParameter(value: String, scope: mutable.Set[ParameterVisibility])
 
-object ParameterScope extends Enumeration {
-  type ParameterScope = Value
+object ParameterVisibility extends Enumeration {
+  type ParameterVisibility = Value
   val UN_SELECT = Value("un_select")
   val ALL = Value("all")
+}
+
+object SetVisibilityOption extends Enumeration {
+  val NAME="visible"
 }
 
 
