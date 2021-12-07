@@ -1,3 +1,8 @@
+ ![CI](https://github.com/byzer-org/kolo-lang/actions/workflows/build_and_test.yml/badge.svg)   [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+
+![Kolo](images/Kolo_Logo.png)
+
+## TOC   
    * [Kolo-Lang](#kolo-lang)
       * [Kolo Code Example](#kolo-code-example)
       * [Kolo Architecture](#kolo-aritchitechture)
@@ -27,6 +32,9 @@
 
 We believe that everything is a table, a simple and powerful SQL-like language can significantly reduce human efforts of data development without switching different tools.
 
+### Kolo Architecture
+
+![Kolo-lang Arch](images/Kolo-arch.jpg)
 
 ### Kolo Code Example
 
@@ -81,9 +89,6 @@ set allColumns = "all,wow";
 select * from final2 as output;
 ```
 
-### Kolo Architecture
-
-![Kolo-lang Arch](images/Kolo-arch.jpg)
 
 ## Official WebSite
 
@@ -204,24 +209,16 @@ even if the topic is not related to source code itself (e.g., documentation, new
 This is an active open source project for everyone,
 and we are always open to people who want to use this system or contribute to it.
 
+For more details about how to contribute to the Byzer Org, please refer to [How to Contribute](https://docs.byzer.org/#/kolo-lang/zh-cn/appendix/contribute)
+
 
 ## Contributors
 
-* Zhu William/allwefantasy#gmail.com
-* Chen Fu/cfmcgrady#gmail.com
-* Geng Yifei/pigeongeng#gmail.com
-* wanp1989/wanp1989#126.com
-* chenliang613
-* RebieKong
-* CoderOverflow
-* ghsuzzy
-* xubo245
-* zhuohuwu0603
-* liyubin117
-* 9bbword
-* Slash-Wong/523935329#qq.com
-* anan0120/158989903#qq.com
+<a href="https://github.com/byzer-org/kolo-lang/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=byzer-org/kolo-lang" />
+</a>
 
+Made with [contrib.rocks](https://contrib.rocks).
 
 ##  WeChat Group
 
