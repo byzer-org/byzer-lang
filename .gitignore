@@ -176,3 +176,5 @@ external/mlsql-native-operators/build/
 
 streamingpro-it/src/test/home/
 gc.log.*
+
+*.tar.gz
