@@ -305,6 +305,7 @@ class RestController extends ApplicationController with WowLog {
     ScriptSQLExec.setContext(new MLSQLExecuteContext(context, param("owner"), context.pathPrefix(None), groupId,
       userDefineParams ++ Map("__PARAMS__" -> JSONTool.toJsonStr(params().toMap))
     ))
+    context.initFromSessionEnv
     context.addEnv("SKIP_AUTH", param("skipAuth", "true"))
     context.addEnv("HOME", context.pathPrefix(None))
     context.addEnv("OWNER", ownerOption.getOrElse("anonymous"))

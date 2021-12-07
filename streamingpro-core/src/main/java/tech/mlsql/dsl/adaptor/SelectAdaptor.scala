@@ -26,7 +26,7 @@ import streaming.dsl.parser.DSLSQLLexer
 import streaming.dsl.parser.DSLSQLParser.SqlContext
 import streaming.dsl.template.TemplateMerge
 import streaming.dsl.{ScriptSQLExec, ScriptSQLExecListener}
-import tech.mlsql.dsl.scope.ParameterScope
+import tech.mlsql.dsl.scope.ParameterVisibility
 import tech.mlsql.sql.MLSQLSparkConf
 import tech.mlsql.tool.Templates2
 
@@ -44,8 +44,8 @@ class SelectAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAda
     val interval = new Interval(start, stop)
     val originalText = input.getText(interval)
 
-    val envScope = scriptSQLExecListener.envScope
-      .filter(!_._2.scope.contains(ParameterScope.UN_SELECT))
+    val envScope = scriptSQLExecListener.envVisibility
+      .filter(!_._2.scope.contains(ParameterVisibility.UN_SELECT))
       .mapValues(_.value)
       .toMap
 
