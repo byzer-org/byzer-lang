@@ -151,8 +151,8 @@ mlsql-engine_3.0-2.1.0.tar.gz
 ### Downloading Source Code
 ```shell
 ## Clone the code base
-git clone https://github.com/byzer-org/kolo-lang.git.
-cd mlsql
+git clone https://github.com/byzer-org/kolo-lang.git
+cd kolo-lang
 ```
 
 ### Building Spark 2.4.3 Bundle
