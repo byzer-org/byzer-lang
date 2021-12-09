@@ -1,6 +1,8 @@
  ![CI](https://github.com/byzer-org/kolo-lang/actions/workflows/build_and_test.yml/badge.svg)   [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-![Kolo](images/Kolo_Logo.png)
+<p align="center">
+    <img src="https://raw.githubusercontent.com/byzer-org/kolo-lang/master/images/Kolo_Logo.png" alt="drawing"  width="200"/>
+</p>
 
 ## TOC   
    * [Kolo-Lang](#kolo-lang)
