@@ -12,6 +12,10 @@ import streaming.dsl.mmlib.algs.param.WowParams
 import tech.mlsql.dsl.adaptor.DslTool
 import tech.mlsql.dsl.auth.ETAuth
 import tech.mlsql.dsl.auth.dsl.mmlib.ETMethod.ETMethod
+import tech.mlsql.dsl.scope.ParameterVisibility.ParameterVisibility
+import tech.mlsql.dsl.scope.{ParameterVisibility, SetVisibilityParameter}
+
+import scala.collection.mutable
 
 /**
  * 31/8/2020 WilliamZhu(allwefantasy@gmail.com)
@@ -25,6 +29,9 @@ class LastTableName(override val uid: String) extends SQLAlg with DslTool with E
     context.execListener.getLastSelectTable() match {
       case Some(tableName) =>
         context.execListener.addEnv("__last_table_name__", tableName)
+        val parameterVisibility = new mutable.HashSet[ParameterVisibility]
+        parameterVisibility.add(ParameterVisibility.ALL)
+        context.execListener.addEnvVisibility("__last_table_name__", SetVisibilityParameter(tableName, parameterVisibility))
       case None => throw new MLSQLException("!lastTableName cannot found table")
     }
     df.sparkSession.emptyDataFrame
