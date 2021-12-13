@@ -46,9 +46,16 @@ class ScriptIncludeSource extends IncludeSource with Logging {
     val rootPath = PathFun(libPath.get)
     var suffix = "mlsql"
     var newPathChunk = pathChunk
+
     if (pathChunk.last == "mlsql") {
       newPathChunk = newPathChunk.dropRight(1)
     }
+
+    if (pathChunk.last == "kolo") {
+      newPathChunk = newPathChunk.dropRight(1)
+      suffix = "kolo"
+    }
+
     if (pathChunk.last == "py") {
       newPathChunk = newPathChunk.dropRight(1)
       suffix = "py"
