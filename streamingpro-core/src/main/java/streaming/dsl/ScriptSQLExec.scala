@@ -221,7 +221,7 @@ class ScriptSQLExecListener(val _sparkSession: SparkSession, val _defaultPathPre
       case Some(items) =>
         items.collect().foreach { item =>
           addEnv(item.k, item.v)
-          addEnvVisibility(item.k, SetVisibilityParameter(item.v, getVisibility(item.config("visibility"))))
+          addEnvVisibility(item.k, SetVisibilityParameter(item.v, getVisibility(item.config.getOrElse("visibility","all"))))
         }
       case None =>
     }
