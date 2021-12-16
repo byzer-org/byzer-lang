@@ -671,7 +671,7 @@ class MailAgent() extends Logging with WowLog with DslTool {
       if (!smtpPort.equals("25") && !properties.containsKey("properties.mail.smtp.starttls.enable")
         && !properties.containsKey("properties.mail.smtp.ssl.enable")) {
         properties.setProperty("properties.mail.smtp.ssl.enable", smtpPort)
-        if (!properties.containsKey("properties.mail.smtp.starttls.enable")) {
+        if (!properties.containsKey("mail.smtp.socketFactory.class")) {
           properties.setProperty("mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory")
         }
       }

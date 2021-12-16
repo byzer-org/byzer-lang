@@ -74,12 +74,12 @@ class MLSQLJDBC(override val uid: String) extends MLSQLSource with MLSQLSink wit
       MLSQLSparkConst.majorVersion(SparkCoreVersion.exactVersion) match {
         case 1 | 2 =>
           reader.options(Map("fetchsize" -> "1000"))
+          url = url.map(x => if (x.contains("useCursorFetch")) x else s"$x&useCursorFetch=true")
         case _ =>
           reader.options(Map("fetchsize" -> s"${Integer.MIN_VALUE}"))
       }
 
-      url = url.map(x => if (x.contains("useCursorFetch")) x else s"$x&useCursorFetch=true")
-        .map(x => if (x.contains("autoReconnect")) x else s"$x&autoReconnect=true")
+      url = url.map(x => if (x.contains("autoReconnect")) x else s"$x&autoReconnect=true")
         .map(x => if (x.contains("failOverReadOnly")) x else s"$x&failOverReadOnly=false")
     }
 
