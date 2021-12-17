@@ -1,19 +1,19 @@
- ![CI](https://github.com/byzer-org/kolo-lang/actions/workflows/build_and_test.yml/badge.svg)   [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+ ![CI](https://github.com/byzer-org/byzer-lang/actions/workflows/build_and_test.yml/badge.svg)   [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 <p align="center">
-    <img src="https://raw.githubusercontent.com/byzer-org/kolo-lang/master/images/Kolo_Logo.png" alt="drawing"  width="200"/>
+    <img src="https://raw.githubusercontent.com/byzer-org/byzer-lang/master/images/Byzer_Logo.png" alt="drawing"  width="200"/>
 </p>
 
 ## TOC   
-   * [Kolo-Lang](#kolo-lang)
-      * [Kolo Code Example](#kolo-code-example)
-      * [Kolo Architecture](#kolo-aritchitechture)
+   * [Byzer-Lang](#byzer-lang)
+      * [Byzer Code Example](#byzer-code-example)
+      * [Byzer Architecture](#byzer-aritchitechture)
    * [Official WebSite](#official-website)
    * [VSCode Extension（MacOS、Linux）](#vscode-extensionmacoslinux)
    * [Docker Sandbox](#docker-sandbox)
       * [Pulling Sandbox Docker Image](#pulling-sandbox-docker-image)
       * [Start Container](#start-container)
-   * [Download Kolo](#download-kolo)
+   * [Download Byzer](#download-byzer)
    * [Building a Distribution](#building-a-distribution)
       * [Prerequisites](#prerequisites)
       * [Downloading Source Code](#downloading-source-code)
@@ -22,23 +22,23 @@
       * [Building without Chinese Analyzer](#building-without-chinese-analyzer)
       * [Building with Aliyun OSS Support](#building-with-aliyun-oss-support)
    * [Deploying](#deploying)
-   * [How to contribute to Kolo-Lang](#how-to-contribute-to-kolo-lang)
+   * [How to contribute to Byzer-Lang](#how-to-contribute-to-byzer-lang)
    * [Contributors](#contributors)
    * [WeChat Group](#wechat-group)
 
-## Kolo-Lang
+## Byzer-Lang
 
-**Kolo** (former MLSQL) is a low-code, open-sourced and distributed programming language for data pipeline, analytics and AI in cloud native way.
+**Byzer** (former MLSQL) is a low-code, open-sourced and distributed programming language for data pipeline, analytics and AI in cloud native way.
 
-**Deisgn protocol: Everything is a table.** Kolo is a SQL-like language, to simplify data pipeline, analytics and AI, combined with built-in algorithms and extensions.
+**Deisgn protocol: Everything is a table.** Byzer is a SQL-like language, to simplify data pipeline, analytics and AI, combined with built-in algorithms and extensions.
 
 We believe that everything is a table, a simple and powerful SQL-like language can significantly reduce human efforts of data development without switching different tools.
 
-### Kolo Architecture
+### Byzer Architecture
 
-![Kolo-lang Arch](images/Kolo-arch.jpg)
+![Byzer-lang Arch](images/Byzer-arch.jpg)
 
-### Kolo Code Example
+### Byzer Code Example
 
 
 ```sql
@@ -103,9 +103,9 @@ select * from final2 as output;
 
 ## VSCode Extension（MacOS、Linux、Windows）
 
-[VSCode IDE Extension](https://github.com/byzer-org/kolo-desktop)
+[VSCode IDE Extension](https://github.com/byzer-org/byzer-desktop)
 
-[More document about kolo-lang vscode extension（Chinese version）](https://mlsql-docs.kyligence.io/latest/zh-hans/howtouse/mlsql_desktop_install.html)
+[More document about byzer-lang vscode extension（Chinese version）](https://mlsql-docs.kyligence.io/latest/zh-hans/howtouse/mlsql_desktop_install.html)
 
 ## Docker Sandbox  (With Notebook)
 
@@ -127,10 +127,10 @@ mlsql-sandbox:${SPARK_VERSION}-${MLSQL_VERSION}
 Then you can visit `http://127.0.0.1:9002` .
 
 
-## Download Kolo
+## Download Byzer
 
 * The latest stable version is release-2.1.0
-* You can download from [Kolo Website](https://mlsql-downloads.kyligence.io/2.1.0/)
+* You can download from [Byzer Website](https://mlsql-downloads.kyligence.io/2.1.0/)
 * Spark 2.4.3/3.1.1 have been tested
 
 ***Naming Convention***
@@ -153,8 +153,8 @@ mlsql-engine_3.0-2.1.0.tar.gz
 ### Downloading Source Code
 ```shell
 ## Clone the code base
-git clone https://github.com/byzer-org/kolo-lang.git
-cd kolo-lang
+git clone https://github.com/byzer-org/byzer-lang.git
+cd byzer-lang
 ```
 
 ### Building Spark 2.4.3 Bundle
@@ -182,7 +182,7 @@ export ENABLE_CHINESE_ANALYZER=false
 - Set environment variable MLSQL_HOME
 - Copy distribution tar ball over and untar it
 
-4.Start Kolo in local mode
+4.Start Byzer in local mode
 ```shell
 cd $MLSQL_HOME
 ## Run process in background
@@ -203,21 +203,21 @@ Directory structure
     |-- RELEASE
 ```
 
-## How to contribute to Kolo-Lang
+## How to contribute to Byzer-Lang
 
-If you are planning to contribute to this repository, please create an issue at [our Issue page](https://github.com/byzer-org/kolo-lang/issues)
+If you are planning to contribute to this repository, please create an issue at [our Issue page](https://github.com/byzer-org/byzer-lang/issues)
 even if the topic is not related to source code itself (e.g., documentation, new idea and proposal).
 
 This is an active open source project for everyone,
 and we are always open to people who want to use this system or contribute to it.
 
-For more details about how to contribute to the Byzer Org, please refer to [How to Contribute](https://docs.byzer.org/#/kolo-lang/zh-cn/appendix/contribute)
+For more details about how to contribute to the Byzer Org, please refer to [How to Contribute](https://docs.byzer.org/#/byzer-lang/zh-cn/appendix/contribute)
 
 
 ## Contributors
 
-<a href="https://github.com/byzer-org/kolo-lang/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=byzer-org/kolo-lang" />
+<a href="https://github.com/byzer-org/byzer-lang/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=byzer-org/byzer-lang" />
 </a>
 
 Made with [contrib.rocks](https://contrib.rocks).
