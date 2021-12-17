@@ -1,7 +1,7 @@
  ![CI](https://github.com/byzer-org/byzer-lang/actions/workflows/build_and_test.yml/badge.svg)   [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 <p align="center">
-    <img src="https://raw.githubusercontent.com/byzer-org/byzer-lang/master/images/Byzer_Logo.png" alt="drawing"  width="200"/>
+    <img src="/images/Byzer_Logo.png" alt="drawing"  width="200"/>
 </p>
 
 ## TOC   
@@ -36,7 +36,7 @@ We believe that everything is a table, a simple and powerful SQL-like language c
 
 ### Byzer Architecture
 
-![Byzer-lang Arch](images/Byzer-arch.jpg)
+![Byzer-lang Arch](images/Byzer-arch.png)
 
 ### Byzer Code Example
 
@@ -94,7 +94,7 @@ select * from final2 as output;
 
 ## Official WebSite
 
-[https://mlsql.tech](https://mlsql.tech) [New official website is coming soon]
+[https://www.byzer.org](https://www.byzer.org)
 
 ## Notebook Support
 
@@ -105,7 +105,7 @@ select * from final2 as output;
 
 [VSCode IDE Extension](https://github.com/byzer-org/byzer-desktop)
 
-[More document about byzer-lang vscode extension（Chinese version）](https://mlsql-docs.kyligence.io/latest/zh-hans/howtouse/mlsql_desktop_install.html)
+[More document about byzer-lang vscode extension（Chinese version）](https://docs.byzer.org/#/byzer-lang/zh-cn/installation/desktop-installation)
 
 ## Docker Sandbox  (With Notebook)
 
@@ -129,8 +129,8 @@ Then you can visit `http://127.0.0.1:9002` .
 
 ## Download Byzer
 
-* The latest stable version is release-2.1.0
-* You can download from [Byzer Website](https://mlsql-downloads.kyligence.io/2.1.0/)
+* The latest stable version is release-2.2.0
+* You can download from [Byzer Download Website](https://download.byzer.org)
 * Spark 2.4.3/3.1.1 have been tested
 
 ***Naming Convention***
