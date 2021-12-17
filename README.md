@@ -34,7 +34,7 @@ We believe that everything is a table, a simple and powerful SQL-like language c
 
 ### Byzer Architecture
 
-![Byzer-Lang Arch](images/kolo-arch.jpg)
+![Byzer-Lang Arch](images/byzer-arch.png)
 
 ### Byzer Code Example
 
@@ -92,7 +92,7 @@ select * from final2 as output;
 
 ## Official WebSite
 
-[https://mlsql.tech](https://mlsql.tech) [New official website is coming soon]
+[https://www.byzer.org](https://www.byzer.org)
 
 ## Notebook Support
 
@@ -128,7 +128,7 @@ Then you can visit `http://127.0.0.1:9002` .
 ## Download Byzer
 
 * The latest stable version is release-2.1.0
-* You can download from [Byzer Website](https://mlsql-downloads.kyligence.io/2.1.0/)
+* You can download from [Byzer Download Website](https://download.byzer.org)
 * Spark 2.4.3/3.1.1 have been tested
 
 ***Naming Convention***
