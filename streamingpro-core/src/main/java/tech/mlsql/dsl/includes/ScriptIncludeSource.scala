@@ -47,19 +47,15 @@ class ScriptIncludeSource extends IncludeSource with Logging {
     var suffix = "mlsql"
     var newPathChunk = pathChunk
 
-    if (pathChunk.last == "mlsql") {
-      newPathChunk = newPathChunk.dropRight(1)
-    }
+    pathChunk.last.toLowerCase match {
+      case "mlsql" =>
+        newPathChunk = newPathChunk.dropRight(1)
+      case "byzer" | "byz" | "by" | "py" =>
+        newPathChunk = newPathChunk.dropRight(1)
+        suffix = pathChunk.last
 
-    if (pathChunk.last == "kolo") {
-      newPathChunk = newPathChunk.dropRight(1)
-      suffix = "kolo"
     }
-
-    if (pathChunk.last == "py") {
-      newPathChunk = newPathChunk.dropRight(1)
-      suffix = "py"
-    }
+    
     newPathChunk.drop(1).foreach { item =>
       rootPath.add(item)
     }
