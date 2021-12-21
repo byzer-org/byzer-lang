@@ -62,7 +62,17 @@ class ScriptIncludeSource extends IncludeSource with Logging {
 
     val finalPath = rootPath.toPath + "." + suffix
 
-    Source.fromFile(finalPath).getLines().mkString("\n")
+    val action = options.getOrElse("__action__", "set")
+    val leftParams = options - "__action__"
+
+    val generateCode = action match {
+      case _ => leftParams.map { item =>
+        s"""set ${item._1}='''${item._2}''';"""
+      }.mkString("\n")
+      case _ => ""
+    }
+
+    generateCode + Source.fromFile(finalPath).getLines().mkString("\n")
   }
 
   override def skipPathPrefix: Boolean = true
