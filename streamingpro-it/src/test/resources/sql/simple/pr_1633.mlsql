@@ -1,0 +1,8 @@
+--%comparator=tech.mlsql.it.IgnoreResultComparator
+
+include lib.`gitee.com/allwefantasy/lib-core`
+where alias="libCore";
+
+include local.`libCore.udf.hello`;
+select hello() as name as output;
+!assert output ''' :name == "hello world" ''' "output should be 'hello world'";
