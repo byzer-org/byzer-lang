@@ -1,5 +1,4 @@
---%exception=java.lang.RuntimeException
---%msg=output should be 'hello world'
+--%comparator=tech.mlsql.it.IgnoreResultComparator
 
 include lib.`gitee.com/allwefantasy/lib-core`
 where alias="libCore";
