@@ -53,9 +53,11 @@ class ScriptIncludeSource extends IncludeSource with Logging {
       case "byzer" | "byz" | "by" | "py" =>
         newPathChunk = newPathChunk.dropRight(1)
         suffix = pathChunk.last
+      case _ =>
+
 
     }
-    
+
     newPathChunk.drop(1).foreach { item =>
       rootPath.add(item)
     }
@@ -66,7 +68,7 @@ class ScriptIncludeSource extends IncludeSource with Logging {
     val leftParams = options - "__action__"
 
     val generateCode = action match {
-      case _ => leftParams.map { item =>
+      case "set" => leftParams.map { item =>
         s"""set ${item._1}='''${item._2}''';"""
       }.mkString("\n")
       case _ => ""
