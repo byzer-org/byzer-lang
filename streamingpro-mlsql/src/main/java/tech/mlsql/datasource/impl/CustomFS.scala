@@ -49,10 +49,9 @@ class CustomFS(override val uid: String) extends MLSQLSource
         ("spark.hadoop." + item._1, item._2)
       } else item
     }.foreach(item => session.conf.set(item._1, item._2))
-    
 
     val format = config.config.getOrElse("implClass", fullFormat)
-    writer.options(loadFileConf).format(format).save(config.path)
+    writer.options(loadFileConf).mode(config.mode).format(format).save(config.path)
   }
   
 
