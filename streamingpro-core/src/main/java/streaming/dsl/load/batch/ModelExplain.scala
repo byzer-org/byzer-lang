@@ -117,16 +117,17 @@ class ModelList(format: String, path: String, option: Map[String, String])(spark
 
   override def explain: DataFrame = {
 
-    val items = MLMapping.getAllETNames
-    val rows = sparkSession.sparkContext.parallelize(items.toSeq.sorted, 1)
-    sparkSession.createDataFrame(rows.map { algName =>
+    val items = MLMapping.getAllETNames.toSeq.sorted.map{algName=>
       val sqlAlg = ModelSelfExplain.findAlg(algName).get
       Row.fromSeq(Seq(algName, sqlAlg.modelType.humanFriendlyName,
         sqlAlg.coreCompatibility.map(f => f.coreVersion).mkString(","),
         sqlAlg.doc.doc, sqlAlg.doc.docType.docType
       )
       )
-    },
+    }
+    
+    val rows = sparkSession.sparkContext.parallelize(items, 1)
+    sparkSession.createDataFrame(rows,
       StructType(Seq(
         StructField(name = "name", dataType = StringType),
         StructField(name = "algType", dataType = StringType),
