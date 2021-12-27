@@ -160,6 +160,10 @@ object PSExecutorBackend {
           case ("--user-class-path") :: value :: tail =>
             userClassPath += new URL(value)
             argv = tail
+          case item::value::tail if item.startsWith("--")=>
+            System.out.println(s"ignore options: ${item} ${value--}")
+            argv = tail
+
           case Nil =>
           case tail =>
             System.err.println(s"Unrecognized options: ${tail.mkString(" ")}")
