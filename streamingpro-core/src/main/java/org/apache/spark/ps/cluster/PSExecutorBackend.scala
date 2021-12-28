@@ -161,7 +161,7 @@ object PSExecutorBackend {
             userClassPath += new URL(value)
             argv = tail
           case item::value::tail if item.startsWith("--")=>
-            System.out.println(s"ignore options: ${item} ${value--}")
+            System.out.println(s"ignore options: ${item} ${value}--")
             argv = tail
 
           case Nil =>
