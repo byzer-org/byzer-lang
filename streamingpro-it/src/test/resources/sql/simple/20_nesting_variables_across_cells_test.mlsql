@@ -9,5 +9,5 @@ select "${ods_table_name}" as name as `${ods_table_name}`;
 
 select name from `${ods_table_name}` as ccc;
 
--- make sure status of  all models are success.
-!assert result ''':name=="ODS_T_TableName"'''  "all model status should be success";
+-- make sure The variable ods_table_name should be ODS_T_TableName.
+assert(:name=="ODS_T_Table_Name", "The variable ods_table_name should be ODS_T_TableName")
