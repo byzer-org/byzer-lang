@@ -58,7 +58,7 @@ class DeltaCompactionCommand(override val uid: String) extends SQLAlg with Funct
   }
 
 
-  override def skipPathPrefix: Boolean = true
+  override def skipPathPrefix: Boolean = false
 
   override def load(sparkSession: SparkSession, path: String, params: Map[String, String]): Any = {
     throw new MLSQLException(s"${getClass.getName} not support register ")
