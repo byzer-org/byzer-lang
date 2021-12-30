@@ -1,0 +1,6 @@
+--%comparator=tech.mlsql.it.IgnoreResultComparator
+
+!show et;
+!lastCommand named ets;
+select * from ets where name="JsonExpandExt" as output;
+!assert output ''' :name == "JsonExpandExt" ''' "output should be JsonExpandExt";
