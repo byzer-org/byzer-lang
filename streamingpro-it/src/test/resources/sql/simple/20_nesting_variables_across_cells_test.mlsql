@@ -1,0 +1,13 @@
+--%comparator=tech.mlsql.it.IgnoreResultComparator
+-- first cell
+
+set table_name="T_TableName" where scope="session";
+set ods_table_name="ODS_${table_name}" where scope="session";
+select "${ods_table_name}" as name as `${ods_table_name}`;
+
+-- second cell
+
+select name from `${ods_table_name}` as result;
+
+-- make sure The variable name should be ODS_T_TableName.
+!assert result ''':name=="ODS_T_TableName"'''  "The variable name should be ODS_T_TableName";
