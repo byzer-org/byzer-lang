@@ -159,7 +159,7 @@ class SetAdaptor(scriptSQLExecListener: ScriptSQLExecListener, stage: Stage.stag
         if (mergedValue != v) {
           scriptSQLExecListener.addEnv(k, mergedValue)
           if (scope == "session"){
-            scriptSQLExecListener.addSessionEnv(key, value,visibility.mkString(","))
+            scriptSQLExecListener.addSessionEnv(key, mergedValue,visibility.mkString(","))
           }
         }
     }
