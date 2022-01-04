@@ -232,11 +232,18 @@ class SQLDiscretizer(override val uid: String) extends SQLAlg with Functions wit
       |and `inputCol`="a"
       |and `splits`="-inf,0.0,1.0,inf";
       |
-      |train data1 as Discretizer.`/tmp/discretizer`
-      |where method="quantile"
+      |register Discretizer.`/tmp/model` as convert;
+      |select convert(array(double(7))) as features as output;
+      |
+      |
+      |train data1 as Discretizer.`/tmp/model`
+      |where method="bucketizer"
       |and `inputCol`="a"
-      |and `outputCol`="a_v"
-      |and `numBuckets`="3";
+      |and `splits`="-inf,0.0,1.0,inf";
+      |
+      |register Discretizer.`/tmp/model` as convert1;
+      |select convert1(array(double(7))) as features as output;
+      |
       |;
     """.stripMargin)
 

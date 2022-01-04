@@ -23,7 +23,7 @@ and `outputCol`="a_v"
 and `numBuckets`="3";
 
 register Discretizer.`/tmp/discretizer` as convert;
-select convert(array(double(7),double(8))) as features as output;
+select convert(array(double(7))) as features as output;
 
 select name,value from model_result where name="status" as result;
 -- make sure status of  all models are success.
