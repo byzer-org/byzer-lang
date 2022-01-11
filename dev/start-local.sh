@@ -40,6 +40,7 @@ if [ -z "${MLSQL_HOME}" ]; then
 fi
 
 JARS=$(echo ${MLSQL_HOME}/libs/*.jar | tr ' ' ',')
+EXT_JARS=$(echo ${MLSQL_HOME}/libs/*.jar | tr ' ' ':')
 MAIN_JAR=$(ls ${MLSQL_HOME}/libs|grep 'streamingpro-mlsql')
 export DRIVER_MEMORY=${DRIVER_MEMORY:-2g}
 
@@ -60,14 +61,15 @@ $SPARK_HOME/bin/spark-submit --class streaming.core.StreamingApp \
         --driver-memory ${DRIVER_MEMORY} \
         --jars ${JARS} \
         --master local[*] \
-        --name mlsql \
+        --name byzer-lang \
         --conf "spark.sql.hive.thriftServer.singleSession=true" \
         --conf "spark.kryoserializer.buffer=256k" \
         --conf "spark.kryoserializer.buffer.max=1024m" \
         --conf "spark.serializer=org.apache.spark.serializer.KryoSerializer" \
         --conf "spark.scheduler.mode=FAIR" \
+        --conf "spark.driver.extraClassPath=${EXT_JARS}" \
         ${MLSQL_HOME}/libs/${MAIN_JAR}    \
-        -streaming.name mlsql    \
+        -streaming.name byzer-lang    \
         -streaming.platform spark   \
         -streaming.rest true   \
         -streaming.driver.port 9003   \
