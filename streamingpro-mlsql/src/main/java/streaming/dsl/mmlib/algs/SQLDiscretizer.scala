@@ -87,8 +87,17 @@ class SQLDiscretizer(override val uid: String) extends SQLAlg with Functions wit
     return metas
   }
 
+  def checkWithoutGroupParams(params: Map[String, String]): Unit = {
+    val group = params.map(p => {
+      val key = p._1
+      key.contains(DiscretizerParamsConstrant.PARAMS_PREFIX + ".")
+    }).filter(_ == true)
+    require(group.size == 0, "The multi-group params are not available for the Discretizer Et!")
+  }
+
   def trainWithoutGroup(df: DataFrame, params: Map[String, String], _method: String, metaPath: String): DataFrame = {
     val dfWithId = df.withColumn("id", monotonically_increasing_id)
+    checkWithoutGroupParams(params)
     var transformedDF = dfWithId
     // we need save metadatas with index, because we need index
     val metas: Array[(Int, DiscretizerTrainData)] = {
@@ -220,10 +229,21 @@ class SQLDiscretizer(override val uid: String) extends SQLAlg with Functions wit
       |
       |train data1 as Discretizer.`/tmp/model`
       |where method="bucketizer"
-      |and `fitParam.0.inputCol`="a"
-      |and `fitParam.0.splitArray`="-inf,0.0,1.0,inf"
-      |and `fitParam.1.inputCol`="b"
-      |and `fitParam.1.splitArray`="-inf,0.0,1.0,inf";
+      |and `inputCol`="a"
+      |and `splits`="-inf,0.0,1.0,inf";
+      |
+      |register Discretizer.`/tmp/model` as convert;
+      |select convert(array(double(7))) as features as output;
+      |
+      |
+      |train data1 as Discretizer.`/tmp/model`
+      |where method="bucketizer"
+      |and `inputCol`="a"
+      |and `splits`="-inf,0.0,1.0,inf";
+      |
+      |register Discretizer.`/tmp/model` as convert1;
+      |select convert1(array(double(7))) as features as output;
+      |
       |;
     """.stripMargin)
 
