@@ -668,9 +668,9 @@ class MailAgent() extends Logging with WowLog with DslTool {
        * framework standard protocol is SSL. If your mail service provider requires a non-SSL method,
        * please set `properties.mail.smtp.ssl.enable= "false"`, or `properties.mail.smtp.starttls.enable= "false"`
        */
-      if (!smtpPort.equals("25") && !properties.containsKey("mail.smtp.starttls.enable")
-        && !properties.containsKey("mail.smtp.ssl.enable")) {
-        properties.setProperty("mail.smtp.ssl.enable", smtpPort)
+      if (!smtpPort.equals("25") && !properties.containsKey("properties.mail.smtp.starttls.enable")
+        && !properties.containsKey("properties.mail.smtp.ssl.enable")) {
+        properties.setProperty("properties.mail.smtp.ssl.enable", smtpPort)
         if (!properties.containsKey("mail.smtp.socketFactory.class")) {
           properties.setProperty("mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory")
         }
