@@ -80,6 +80,7 @@ object HttpClientCrawler {
     }
   }
 
+
   def requestByMethod(url: String, method: String = "GET", params: Map[String, String], useProxy: Boolean = false): String = {
 
     var response: CloseableHttpResponse = null
