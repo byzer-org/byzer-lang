@@ -71,8 +71,8 @@ class DriverLogServer(accessToken: String) extends BaseHttpLogServer with Loggin
         }
       }
     }
-    val uri = if (server.getURI.toString.last.equals('/')) server.getURI.toString.dropRight(1) else server.getURI.toString
-    (server, s"$uri$requestMapping", host, newPort)
+
+    (server, s"http://$host:$newPort/$requestMapping", host, newPort)
   }
 
   override def close(): Unit = {
