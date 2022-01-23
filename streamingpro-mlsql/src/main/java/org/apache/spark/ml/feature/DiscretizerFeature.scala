@@ -57,6 +57,15 @@ object DiscretizerFeature {
     })
   }
 
+  def binarySearchForBuckets(splits: Array[Double], feature: Double, keepInvalid: Boolean): Double = {
+    Bucketizer.binarySearchForBuckets(splits, feature, keepInvalid)
+  }
+
+  def strColIndexSearch(labelArray: Array[String], feature: String): Double = {
+    val idx = labelArray.indexOf(feature)
+    idx.toDouble
+  }
+
   def getDiscretizerPredictFun(spark: SparkSession, metas: Array[DiscretizerTrainData]): Seq[Double] => Seq[Double] = {
 
     val metasbc = spark.sparkContext.broadcast(metas)
@@ -64,7 +73,7 @@ object DiscretizerFeature {
       features.zipWithIndex.map {
         case (feature, index) =>
           val meta = metasbc.value(index)
-          Bucketizer.binarySearchForBuckets(meta.splits, feature, meta.handleInvalid)
+          binarySearchForBuckets(meta.splits, feature, meta.handleInvalid)
       }
     }
     transformer
