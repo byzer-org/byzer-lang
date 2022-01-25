@@ -22,7 +22,7 @@ import org.apache.commons.lang3.math.NumberUtils
 import org.apache.spark.sql.SparkSession
 import streaming.dsl.mmlib.algs.{DiscretizerParamsConstrant, DiscretizerTrainData}
 
-/**streamingpro-mlsql/src/main/java/streaming/dsl/mmlib/algs/SQLDiscretizer.scalastreamingpro-mlsql/src/main/java/streaming/dsl/mmlib/algs/SQLDiscretizer.scala
+/**
  * Created by dxy_why on 2018/5/29.
  */
 object DiscretizerFeature {
