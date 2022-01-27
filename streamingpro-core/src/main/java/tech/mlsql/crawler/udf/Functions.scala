@@ -32,6 +32,7 @@ import streaming.dsl.mmlib.algs.param.WowParams
 import tech.mlsql.common.utils.distribute.socket.server.JavaUtils
 import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.crawler.HttpClientCrawler
+import tech.mlsql.crawler.udf.FunctionsUtils.{_http, executeWithRetrying}
 import tech.mlsql.dsl.adaptor.DslTool
 import tech.mlsql.tool.{HDFSOperatorV2, Templates2}
 import us.codecraft.xsoup.Xsoup
@@ -95,11 +96,10 @@ object Functions {
                                               headers: Map[String, String], config: Map[String, String]) => {
       val retryInterval = JavaUtils.timeStringAsMs(config.getOrElse("config.retry.interval", "1s"))
       val requestInterval = JavaUtils.timeStringAsMs(config.getOrElse("config.request.interval", "10ms"))
-      val func = new FunctionsUtils()
       val maxTries = config.getOrElse("config.retry", "3").toInt
-      val (_, content) = func.executeWithRetrying[(Int, String)](maxTries)((() => {
+      val (_, content) = executeWithRetrying[(Int, String)](maxTries)((() => {
         try {
-          val (status, content) = func._http(url, method, params, headers, config)
+          val (status, content) = _http(url, method, params, headers, config)
           Thread.sleep(requestInterval)
           (status, content)
         } catch {
@@ -149,11 +149,10 @@ object Functions {
 
 }
 
-class FunctionsUtils(override val uid: String) extends DslTool with  WowParams with Logging {
-  def this() = this(UUID.randomUUID().toString)
+object FunctionsUtils {
 
   def _http(url: String, method: String, params: Map[String, String],
-            headers: Map[String, String], config: Map[String, String]): (Int,String) = {
+            headers: Map[String, String], config: Map[String, String]): (Int, String) = {
     val httpMethod = new String(method).toLowerCase()
     val request = httpMethod match {
       case "get" =>
@@ -161,7 +160,7 @@ class FunctionsUtils(override val uid: String) extends DslTool with  WowParams w
         val finalUrl = if (params.nonEmpty) {
           val urlParam = params.map { case (k, v) => s"$k=$v" }.mkString("&")
           if (url.contains("?")) {
-            url + urlParam
+            if (url.endsWith("?"))  url + urlParam else url + "&" + urlParam
           } else {
             url + "?" + urlParam
           }
@@ -208,7 +207,7 @@ class FunctionsUtils(override val uid: String) extends DslTool with  WowParams w
 
         val context = ScriptSQLExec.contextGetOrForTest()
         val _filePath = params("file-path")
-        val finalPath = resourceRealPath(context.execListener, Option(context.owner), _filePath)
+        val finalPath = new DslTool(){}.resourceRealPath(context.execListener, Option(context.owner), _filePath)
 
         val inputStream = HDFSOperatorV2.readAsInputStream(finalPath)
 
@@ -236,19 +235,18 @@ class FunctionsUtils(override val uid: String) extends DslTool with  WowParams w
 
 
   def executeWithRetrying[T](maxTries: Int)(function: => T, checker: T => Boolean, failed: T => Unit): T = {
-    Stream.range(0, maxTries)
-      .map(i => (i, function))
-      // Keep trying until the first success or the retries limit has been reached.
-      .find { case (i, result) => checker(result) || {
+    var result: T = function
+    for (i <- 1 until maxTries) {
+      result = function
+      checker(result) || {
         if (i == maxTries - 1) {
           failed(result)
           true
         } else {
           false
-        }}
+        }
       }
-      .map(_._2)
-      .get
+    }
+    result
   }
-
 }
