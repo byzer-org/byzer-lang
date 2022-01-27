@@ -214,7 +214,7 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
         val finalUrl = if (paramsBuf.length > 0 && !skipParams) {
           val urlParam = paramsBuf.map { case (k, v) => s"${k}=${v}" }.mkString("&")
           if (url.contains("?")) {
-            url + "&" + urlParam
+            if (url.endsWith("?")) url + urlParam else url + "&" + urlParam
           } else {
             url + "?" + urlParam
           }
@@ -300,7 +300,7 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
         val finalUrl = if (paramsBuf.length > 0) {
           val urlParam = paramsBuf.map { case (k, v) => s"${k}=${v}" }.mkString("&")
           if (config.path.contains("?")) {
-            if (config.path.endsWith("?")) config.path + "&" + urlParam else config.path + urlParam
+            if (config.path.endsWith("?")) config.path + urlParam else config.path + "&" + urlParam
           } else {
             config.path + "?" + urlParam
           }
