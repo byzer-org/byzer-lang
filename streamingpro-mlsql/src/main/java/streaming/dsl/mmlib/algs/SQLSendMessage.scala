@@ -20,7 +20,7 @@ package streaming.dsl.mmlib.algs
 
 import org.apache.commons.lang.StringUtils
 
-import java.util.{Date, Properties}
+import java.util.{Base64, Date, Properties}
 import javax.mail.internet.{ContentType, InternetAddress, MimeBodyPart, MimeMessage, MimeMultipart, MimeUtility}
 import javax.mail.{Address, Authenticator, BodyPart, Message, Multipart, PasswordAuthentication, Session, Transport}
 import org.apache.spark.ml.param.Param
@@ -406,12 +406,11 @@ class SQLSendMessage(override val uid: String) extends SQLAlg with Functions wit
     }
 
     require(to != null, "the parameter [to] cannot be empty!")
-    val agent = new MailAgent()
     method.toUpperCase() match {
       case "MAIL" =>
         logInfo(format(s"send content: $content to $to"))
-        agent.sendMessage(to, cc, null, from, subject, content, params,
-          contentType, attachmentContentType, attachmentMap.toMap, charset)
+        MailAgent.sendMessage(to, cc, null, from, subject, content, params,
+          contentType, attachmentContentType, attachmentMap.toMap, null, charset)
       case _ =>
         throw new RuntimeException("unsupported method!")
     }
@@ -534,7 +533,7 @@ object SQLSendMessage {
   }
 }
 
-class MailAgent() extends Logging with WowLog with DslTool {
+object MailAgent extends Logging with WowLog with DslTool {
 
   // If the value is set, the parameter description can be changed to: required" -> "false"
   final val GLOBAL_USER_NAME: String = null
@@ -549,7 +548,8 @@ class MailAgent() extends Logging with WowLog with DslTool {
                   params: Map[String, String],
                   mailContentType: String,
                   attachmentContentType: String,
-                  attachmentMap: Map[String, (String, String)],
+                  attachmentMap: Map[String, (String, String)], // get attachment from paths
+                  attachment: String,  // get attachment from String
                   charset: String): Unit = {
     //Build the header
     val message: Message = buildMessageHead(params, from, to, cc, bcc)
@@ -586,6 +586,30 @@ class MailAgent() extends Logging with WowLog with DslTool {
       }
     }
 
+    // Set base64 attachment
+    if (attachment != null && attachment.nonEmpty) {
+      val bytes = {
+        var fixedAttach = attachment
+        if (attachment.contains("data:")) { // base64 string most likely start with 'data:text/csv,(real string)'
+          fixedAttach = attachment.substring(attachment.indexOf(",")+1)
+        }
+        Base64.getDecoder.decode(fixedAttach.replaceAll("\n|\r","").trim)
+      }
+      val attachmentStream = new ByteArrayInputStream(bytes)
+      val extension = {
+        if (!attachmentContentType.contains("/"))
+          throw new RuntimeException(s"not supported attachmentType [${attachmentContentType}] format!")
+        val tpe = attachmentContentType.split("/")(0)
+        val ext = attachmentContentType.split("/")(1)
+        (tpe,ext) match {
+          case ("image","jpeg"|"gif") | ("text","csv"|"html") => ext
+          case ("extension",_) => ext
+          case _ => "tar"
+        }
+      }
+      body.addBodyPart(buildAttachmentBody(attachmentStream, s"attachment.${extension}", attachmentContentType))
+    }
+
     // Set Multipart-Content to Message including the Content-Type
     message.setContent(body, buildContentType(MailContentTypeEnum.MIXED.toString, charset).toString)
     message.setSubject(subject)
@@ -613,7 +637,7 @@ class MailAgent() extends Logging with WowLog with DslTool {
    * @throws Exception
    */
   @throws[Exception]
-  private def buildAttachmentBody(filePath: String, fileName: String, attachmentContentType: String): BodyPart = {
+  protected def buildAttachmentBody(filePath: String, fileName: String, attachmentContentType: String): BodyPart = {
     val body: BodyPart = new MimeBodyPart
     body.setDataHandler(new DataHandler(new ByteArrayDataSource(
       HDFSOperatorV2.readAsInputStream(Paths.get(filePath, fileName).toString), attachmentContentType)))
@@ -622,7 +646,7 @@ class MailAgent() extends Logging with WowLog with DslTool {
   }
 
   @throws[Exception]
-  private def buildAttachmentBody(attachmentStream: InputStream, fileName: String, attachmentContentType: String): BodyPart = {
+  def buildAttachmentBody(attachmentStream: InputStream, fileName: String, attachmentContentType: String): BodyPart = {
     val body: BodyPart = new MimeBodyPart
     body.setDataHandler(new DataHandler(new ByteArrayDataSource(
       attachmentStream, attachmentContentType)))

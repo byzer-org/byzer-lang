@@ -163,6 +163,7 @@ object MLMapping extends Logging with WowLog {
     "ConfusionMatrix" -> "streaming.dsl.mmlib.algs.SQLConfusionMatrix",
     "Discretizer" -> "streaming.dsl.mmlib.algs.SQLDiscretizer",
     "SendMessage" -> "streaming.dsl.mmlib.algs.SQLSendMessage",
+    "SendMultiMails" -> "streaming.dsl.mmlib.algs.SQLSendMultiMails",
     "JDBC" -> "streaming.dsl.mmlib.algs.SQLJDBC",
     "VecMapInPlace" -> "streaming.dsl.mmlib.algs.SQLVecMapInPlace",
     "Map" -> "streaming.dsl.mmlib.algs.SQLMap",
