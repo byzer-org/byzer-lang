@@ -51,9 +51,17 @@ class FunctionsTest extends FunSuite {
     val responseMock = mock(classOf[Response])
     when(responseMock.returnResponse()).thenReturn(httpResp)
     // Get
-    reqStatic.when(() => Request.Get(anyString)).thenReturn(reqMock)
+    reqStatic.when(new MockedStatic.Verification() {
+      override def apply(): Unit = {
+        Request.Get(anyString)
+      }
+    }).thenReturn(reqMock)
     // Post json
-    reqStatic.when(() => Request.Post(anyString)).thenReturn(reqMock)
+    reqStatic.when(new MockedStatic.Verification() {
+      override def apply(): Unit = {
+        Request.Post(anyString)
+      }
+    }).thenReturn(reqMock)
     when(reqMock.bodyString(anyString, ArgumentMatchers.any())).thenReturn(reqMock)
     // Post bodyForm
     when(reqMock.bodyForm(anyList(), ArgumentMatchers.any())).thenReturn(reqMock)
@@ -73,7 +81,11 @@ class FunctionsTest extends FunSuite {
         assertEquals(status, 200)
         assertEquals(content, "{\"code\":\"200\",\"content\":\"ok\"}")
         // verify url concat is legal.
-        reqStatic.verify(() => Request.Get("http://www.byzer.org/home?foo=bar&foo1=bar"))
+        reqStatic.verify(new MockedStatic.Verification() {
+          override def apply(): Unit = {
+            Request.Get("http://www.byzer.org/home?foo=bar&foo1=bar")
+          }
+        })
         // verify config set illegal of socket-timeout.
         try {
           FunctionsUtils._http("http://www.byzer.org/home", "get",
@@ -106,7 +118,11 @@ class FunctionsTest extends FunSuite {
         assertEquals(status, 200)
         assertEquals(content, "{\"code\":\"200\",\"content\":\"ok\"}")
         // verify url concat is legal.
-        reqStatic.verify(() => Request.Post("http://www.byzer.org/home"))
+        reqStatic.verify(new MockedStatic.Verification() {
+          override def apply(): Unit = {
+            Request.Post("http://www.byzer.org/home")
+          }
+        })
 
         {
           val (status, content) = FunctionsUtils._http("http://www.byzer.org/home", "post",
