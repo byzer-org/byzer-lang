@@ -28,6 +28,16 @@ ENABLE_HIVE_THRIFT_SERVER        Hive ThriftServer                default true
 EOF
   exit 1
 }
+checkPython(){
+    python_version=3
+
+    user_py_version=`python -V 2>&1|awk '{print $2}'`
+    if [ "${user_py_version%%.*}" -lt $python_version ]; then
+        echo Your python version is : $user_py_version
+        echo 'Current python version is not supported! Requires python version is 3.x.x.'
+        exit 1
+    fi
+}
 
 if [[ $@ == *"help"* ]]; then
   exit_with_usage
