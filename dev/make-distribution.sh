@@ -20,7 +20,7 @@
 function exit_with_usage {
   cat << EOF
 Environment variables
-MLSQL_SPARK_VERSION              Spark major version 2.4 3.0      default 2.4
+MLSQL_SPARK_VERSION              Spark major version 2.4 3.0      default 3.0
 OSS_ENABLE                       Aliyun OSS                       default false
 ENABLE_JYTHON                    Jython                           default true
 ENABLE_CHINESE_ANALYZER          Chinese NLP                      default true
@@ -28,16 +28,18 @@ ENABLE_HIVE_THRIFT_SERVER        Hive ThriftServer                default true
 EOF
   exit 1
 }
+
 checkPython(){
     python_version=3
-
-    user_py_version=`python -V 2>&1|awk '{print $2}'`
+    user_py_version=`python -V 2>&1 | awk '{print $2}'`
     if [ "${user_py_version%%.*}" -lt $python_version ]; then
         echo Your python version is : $user_py_version
         echo 'Current python version is not supported! Requires python version is 3.x.x.'
         exit 1
     fi
 }
+
+checkPython
 
 if [[ $@ == *"help"* ]]; then
   exit_with_usage
@@ -47,7 +49,7 @@ export LC_ALL=zh_CN.UTF-8
 export LANG=zh_CN.UTF-8
 
 ## Spark major version
-export MLSQL_SPARK_VERSION=${MLSQL_SPARK_VERSION:-2.4}
+export MLSQL_SPARK_VERSION=${MLSQL_SPARK_VERSION:-3.0}
 ## Enable Aliyun OSS support, default to false
 export OSS_ENABLE=${OSS_ENABLE:-false}
 ## Enable Jython support
