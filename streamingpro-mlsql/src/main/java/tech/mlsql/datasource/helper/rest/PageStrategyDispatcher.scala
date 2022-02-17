@@ -8,6 +8,8 @@ object PageStrategyDispatcher {
     params("config.page.values").trim.toLowerCase match {
       case s if s.startsWith("auto-increment") =>
         new AutoIncrementPageStrategy(params)
+      case s if s.startsWith("offset") =>
+        new OffsetPageStrategy(params)
       case _ => new DefaultPageStrategy(params)
     }
   }
