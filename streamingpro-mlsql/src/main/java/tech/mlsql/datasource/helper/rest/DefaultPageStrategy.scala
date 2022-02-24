@@ -8,7 +8,7 @@ import tech.mlsql.tool.Templates2
  */
 class DefaultPageStrategy(params: Map[String, String]) extends PageStrategy {
 
-  override def pageValues(_content: Option[Any]): Array[String] = {
+  def pageValues(_content: Option[Any]): Array[String] = {
     try {
       val content = _content.get.toString
       params("config.page.values").split(",").map(path => JsonPath.read[String](content, path)).toArray
@@ -20,12 +20,17 @@ class DefaultPageStrategy(params: Map[String, String]) extends PageStrategy {
     }
   }
 
-  override def nexPage: DefaultPageStrategy = {
+  override def nexPage(_content: Option[Any]): DefaultPageStrategy = {
     this
   }
 
   override def pageUrl(_content: Option[Any]): String = {
     val urlTemplate = params("config.page.next")
     Templates2.evaluate(urlTemplate, pageValues(_content))
+  }
+
+  override def hasNextPage(_content: Option[Any]): Boolean = {
+    val pageValues = this.pageValues(_content)
+    pageValues.size == 0 || pageValues.filter(value => value == null || value.isEmpty).size > 0
   }
 }
