@@ -19,32 +19,28 @@
 package tech.mlsql.crawler.udf
 
 import cn.edu.hfut.dmic.contentextractor.ContentExtractor
+import org.apache.commons.lang3.exception.ExceptionUtils
 import org.apache.http.client.fluent.{Form, Request}
 import org.apache.http.entity.ContentType
 import org.apache.http.entity.mime.{HttpMultipartMode, MultipartEntityBuilder}
 import org.apache.http.util.EntityUtils
-import org.apache.spark.sql.{DataFrame, UDFRegistration}
-import org.apache.spark.sql.mlsql.session.MLSQLException
-import org.apache.spark.sql.types.StringType
+import org.apache.spark.sql.UDFRegistration
 import org.jsoup.Jsoup
 import streaming.dsl.ScriptSQLExec
-import streaming.dsl.mmlib.algs.param.WowParams
+import streaming.log.WowLog
 import tech.mlsql.common.utils.distribute.socket.server.JavaUtils
 import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.crawler.HttpClientCrawler
-import tech.mlsql.crawler.udf.FunctionsUtils.{_http, executeWithRetrying}
 import tech.mlsql.dsl.adaptor.DslTool
 import tech.mlsql.tool.{HDFSOperatorV2, Templates2}
 import us.codecraft.xsoup.Xsoup
 
-import java.net.URLEncoder
 import java.nio.charset.Charset
-import java.util.UUID
-import scala.collection.mutable.ArrayBuffer
+import scala.util.control.Breaks.{break, breakable}
 
 /**
-  * Created by allwefantasy on 3/4/2018.
-  */
+ * Created by allwefantasy on 3/4/2018.
+ */
 object Functions {
   def crawler_auto_extract_body(uDFRegistration: UDFRegistration) = {
     uDFRegistration.register("crawler_auto_extract_body", (co: String) => {
@@ -94,29 +90,7 @@ object Functions {
   def rest_request(uDFRegistration: UDFRegistration) = {
     uDFRegistration.register("rest_request", (url: String, method: String, params: Map[String, String],
                                               headers: Map[String, String], config: Map[String, String]) => {
-      val retryInterval = JavaUtils.timeStringAsMs(config.getOrElse("config.retry.interval", "1s"))
-      val requestInterval = JavaUtils.timeStringAsMs(config.getOrElse("config.request.interval", "10ms"))
-      val maxTries = config.getOrElse("config.retry", "3").toInt
-      val (_, content) = executeWithRetrying[(Int, String)](maxTries)((() => {
-        try {
-          val (status, content) = _http(url, method, params, headers, config)
-          Thread.sleep(requestInterval)
-          (status, content)
-        } catch {
-          case e: Exception =>
-            val message = "{\"code\":\"500\",\"msg\":\"" + e.getMessage + "\"}"
-            (500, message)
-        }
-      }) (),
-        tempResp => {
-          val t = tempResp._1 == 200
-          if (!t) {
-            Thread.sleep(retryInterval)
-          }
-          t
-        },
-        failResp => {}
-      )
+      val (_, content) = FunctionsUtils.rest_request(url, method, params, headers, config)
       content
     })
   }
@@ -149,11 +123,46 @@ object Functions {
 
 }
 
-object FunctionsUtils {
+object FunctionsUtils extends Logging with WowLog {
+
+  def rest_request(url: String, method: String, params: Map[String, String], headers: Map[String, String], config: Map[String, String]): (Int, String) ={
+    val retryInterval = JavaUtils.timeStringAsMs(config.getOrElse("config.retry.interval", "1s"))
+    val requestInterval = JavaUtils.timeStringAsMs(config.getOrElse("config.request.interval", "10ms"))
+    val maxTries = config.getOrElse("config.retry", "3").toInt
+    val debug = config.getOrElse("config.debug", "false").toBoolean
+    val (status, content) = executeWithRetrying[(Int, String)](maxTries)((() => {
+      try {
+        val (status, content) = _http(url, method, params, headers, config)
+        Thread.sleep(requestInterval)
+        (status, content)
+      } catch {
+        case e: Exception =>
+          if (debug) {
+            val message = "request url: " + url + ", msg:" + ExceptionUtils.getMessage(e) + "\r\n\"stackTrace:" +
+              ExceptionUtils.getStackTrace(e)
+            logError(format(message))
+          }
+          (500, null)
+      }
+    }) (),
+      tempResp => {
+        val t = tempResp!=null && tempResp._1 == 200
+        if (!t) {
+          Thread.sleep(retryInterval)
+        }
+        t
+      },
+      failResp => {}
+    )
+    (status, content)
+  }
 
   def _http(url: String, method: String, params: Map[String, String],
             headers: Map[String, String], config: Map[String, String]): (Int, String) = {
     val httpMethod = new String(method).toLowerCase()
+    val context = ScriptSQLExec.contextGetOrForTest()
+    val debug = config.getOrElse("config.debug", "false").toBoolean
+    val fetchTime = System.currentTimeMillis()
     val request = httpMethod match {
       case "get" =>
 
@@ -171,15 +180,23 @@ object FunctionsUtils {
       case "post" => Request.Post(url)
       case "put" => Request.Put(url)
       case v =>
-        throw new MLSQLException(s"HTTP method $v is not support yet")
+        if (debug) {
+          logError(format(s"request url: $url, Content-Type $v  is not support yet"))
+        }
+        return null
     }
 
-    if (config.contains("socket-timeout")) {
-      request.socketTimeout(JavaUtils.timeStringAsMs(config("socket-timeout")).toInt)
+    if (config.contains("config.socket-timeout")) {
+      request.socketTimeout(JavaUtils.timeStringAsMs(config("config.socket-timeout")).toInt)
+    } else {
+      //      config.socket-timeout
+      request.socketTimeout(JavaUtils.timeStringAsMs("360s").toInt)
     }
 
-    if (config.contains("connect-timeout")) {
-      request.connectTimeout(JavaUtils.timeStringAsMs(config("connect-timeout")).toInt)
+    if (config.contains("config.connect-timeout")) {
+      request.connectTimeout(JavaUtils.timeStringAsMs(config("config.connect-timeout")).toInt)
+    } else {
+      request.connectTimeout(JavaUtils.timeStringAsMs("360s").toInt)
     }
 
     headers foreach { case (k, v) => request.setHeader(k, v) }
@@ -204,8 +221,6 @@ object FunctionsUtils {
         request.bodyForm(form.build(), Charset.forName("utf-8")).execute()
 
       case ("post", contentType) if contentType.trim.startsWith("multipart/form-data") =>
-
-        val context = ScriptSQLExec.contextGetOrForTest()
         val _filePath = params("file-path")
         val finalPath = new DslTool(){}.resourceRealPath(context.execListener, Option(context.owner), _filePath)
 
@@ -223,27 +238,37 @@ object FunctionsUtils {
         }
         request.body(entity.build()).execute()
       case (_, v) =>
-        throw new MLSQLException(s"content-type $v  is not support yet")
+        if (debug) {
+          logError(format(s"Request url: $url , Content-Type $v  is not support yet"))
+        }
+        return null
     }
 
     val httpResponse = response.returnResponse()
     val status = httpResponse.getStatusLine.getStatusCode
     EntityUtils.consumeQuietly(httpResponse.getEntity)
     val content = if (httpResponse.getEntity != null) EntityUtils.toString(httpResponse.getEntity) else ""
+    if (debug) {
+      logInfo(format(s"Request url: $url, Consume:${System.currentTimeMillis() - fetchTime}ms"))
+    }
     (status, content)
   }
 
 
   def executeWithRetrying[T](maxTries: Int)(function: => T, checker: T => Boolean, failed: T => Unit): T = {
     var result: T = function
-    for (i <- 1 until maxTries) {
-      result = function
-      checker(result) || {
+    if (checker(result)) {
+      return result
+    }
+
+    breakable {
+      for (i <- 0 until maxTries) {
+        result = function
+        if (checker(result)) {
+          break
+        }
         if (i == maxTries - 1) {
           failed(result)
-          true
-        } else {
-          false
         }
       }
     }
