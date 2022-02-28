@@ -162,7 +162,6 @@ object FunctionsUtils extends Logging with WowLog {
     val httpMethod = new String(method).toLowerCase()
     val context = ScriptSQLExec.contextGetOrForTest()
     val debug = config.getOrElse("config.debug", "false").toBoolean
-    val fetchTime = System.currentTimeMillis()
     val request = httpMethod match {
       case "get" =>
 
@@ -186,17 +185,12 @@ object FunctionsUtils extends Logging with WowLog {
         return null
     }
 
-    if (config.contains("config.socket-timeout")) {
-      request.socketTimeout(JavaUtils.timeStringAsMs(config("config.socket-timeout")).toInt)
-    } else {
-      //      config.socket-timeout
-      request.socketTimeout(JavaUtils.timeStringAsMs("360s").toInt)
+    if (config.contains("socket-timeout")) {
+      request.socketTimeout(JavaUtils.timeStringAsMs(config("socket-timeout")).toInt)
     }
 
-    if (config.contains("config.connect-timeout")) {
-      request.connectTimeout(JavaUtils.timeStringAsMs(config("config.connect-timeout")).toInt)
-    } else {
-      request.connectTimeout(JavaUtils.timeStringAsMs("360s").toInt)
+    if (config.contains("connect-timeout")) {
+      request.connectTimeout(JavaUtils.timeStringAsMs(config("connect-timeout")).toInt)
     }
 
     headers foreach { case (k, v) => request.setHeader(k, v) }
@@ -248,9 +242,6 @@ object FunctionsUtils extends Logging with WowLog {
     val status = httpResponse.getStatusLine.getStatusCode
     EntityUtils.consumeQuietly(httpResponse.getEntity)
     val content = if (httpResponse.getEntity != null) EntityUtils.toString(httpResponse.getEntity) else ""
-    if (debug) {
-      logInfo(format(s"Request url: $url, Consume:${System.currentTimeMillis() - fetchTime}ms"))
-    }
     (status, content)
   }
 
