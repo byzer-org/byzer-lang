@@ -1,10 +1,5 @@
 package tech.mlsql.datasource.impl
 
-import java.net.URLEncoder
-import java.nio.charset.Charset
-import java.util.UUID
-
-import com.jayway.jsonpath.JsonPath
 import org.apache.http.client.fluent.{Form, Request}
 import org.apache.http.entity.ContentType
 import org.apache.http.entity.mime.{HttpMultipartMode, MultipartEntityBuilder}
@@ -16,6 +11,7 @@ import org.apache.spark.sql.{DataFrame, DataFrameReader, DataFrameWriter, Row, S
 import streaming.core.datasource._
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
+import streaming.log.WowLog
 import streaming.rest.RestUtils
 import tech.mlsql.common.form._
 import tech.mlsql.common.utils.distribute.socket.server.JavaUtils
@@ -25,13 +21,16 @@ import tech.mlsql.datasource.helper.rest.PageStrategyDispatcher
 import tech.mlsql.dsl.adaptor.DslTool
 import tech.mlsql.tool.{HDFSOperatorV2, Templates2}
 
+import java.net.URLEncoder
+import java.nio.charset.Charset
+import java.util.UUID
 import scala.collection.mutable.ArrayBuffer
 
 class MLSQLRest(override val uid: String) extends MLSQLSource
   with MLSQLSink
   with MLSQLSourceInfo
   with MLSQLSourceConfig
-  with MLSQLRegistry with DslTool with WowParams with Logging {
+  with MLSQLRegistry with DslTool with WowParams with Logging with WowLog {
 
 
   def this() = this(BaseParams.randomUID())
@@ -70,10 +69,12 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
    * run jsonTable AS JsonExpandExt.`` WHERE inputCol="jsonColumn" AS table_3;
    *
    * select * from table_3 as output;
-   **/
+   * */
   override def load(reader: DataFrameReader, config: DataSourceConfig): DataFrame = {
     val skipParams = config.config.getOrElse("config.page.skip-params", "false").toBoolean
     val retryInterval = JavaUtils.timeStringAsMs(config.config.getOrElse("config.retry.interval", "1s"))
+
+    val debug = config.config.getOrElse("config.debug", "false").toBoolean
 
     (config.config.get("config.page.next"), config.config.get("config.page.values")) match {
       case (Some(urlTemplate), Some(jsonPath)) =>
@@ -83,8 +84,10 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
         var count = 1
 
         val pageStrategy = PageStrategyDispatcher.get(config.config)
-
-
+        if (debug) {
+          logInfo(format(s"Get Page ${count} ${config.path} started"))
+        }
+        val firstPageFetchTime = System.currentTimeMillis()
         val (_, firstDfOpt) = RestUtils.executeWithRetrying[(Int, Option[DataFrame])](maxTries)((() => {
           try {
             val tempDF = _http(config.path, config.config, false, config.df.get.sparkSession)
@@ -118,9 +121,14 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
         context.execListener.addEnv(classOf[MLSQLRest].getName, tmpTablePath)
         firstDf.write.format("parquet").mode(SaveMode.Append).save(tmpTablePath)
 
+        if (debug) {
+          logInfo(format(s"Get Page 1 ${config.path} Consume:${System.currentTimeMillis() - firstPageFetchTime}ms"))
+        }
+
         while (count < maxSize) {
           Thread.sleep(pageInterval)
           count += 1
+
           val row = firstDf.select(F.col("content").cast(StringType), F.col("status")).head
           val content = row.getString(0)
 
@@ -132,8 +140,13 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
             count = maxSize
           } else {
             val newUrl = pageStrategy.pageUrl(Option(content))
+            val tempTime = System.currentTimeMillis()
             RestUtils.executeWithRetrying[(Int, Option[DataFrame])](maxTries)((() => {
               try {
+                if (debug) {
+                  logInfo(format(s"Get Page ${count} ${newUrl} started"))
+                }
+
                 val tempDF = _http(newUrl, config.config, skipParams, config.df.get.sparkSession)
                 val row = tempDF.select(F.col("content").cast(StringType), F.col("status")).head
                 firstDf = tempDF
@@ -155,6 +168,9 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
             )
             firstDf.write.format("parquet").mode(SaveMode.Append).save(tmpTablePath)
             pageStrategy.nexPage
+            if (debug) {
+              logInfo(format(s"Get Page ${count} ${newUrl} Consume: ${System.currentTimeMillis() - tempTime}"))
+            }
           }
 
         }

@@ -2,9 +2,10 @@ package tech.mlsql.it
 
 import java.io.File
 import org.apache.commons.io.FileUtils
-import org.apache.spark.SparkCoreVersion
+import org.apache.spark.{MLSQLSparkConst, SparkCoreVersion}
 import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.core.version.MLSQLVersion
+import tech.mlsql.it.utils.ExceptionUtils
 
 import scala.collection.mutable.ListBuffer
 
@@ -60,21 +61,7 @@ object TestManager extends Logging {
 
 
   def recordError(testCase: TestCase, t: Throwable): Unit = {
-    def getRootCause(t: Throwable): String = {
-      var t1 = t
-      if (t1 == null) return ""
-      while (t1 != null) {
-        if (t1.getCause == null) {
-          var msg = t1.getMessage
-          if (msg == null) msg = t1.toString
-          return msg
-        }
-        t1 = t1.getCause
-      }
-      t1.getMessage
-    }
-
-    recordError(testCase, getRootCause(t))
+    recordError(testCase, ExceptionUtils.getRootCause(t))
     t.printStackTrace()
   }
 
