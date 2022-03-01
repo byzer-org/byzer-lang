@@ -22,6 +22,7 @@ import org.apache.spark.sql.catalyst.expressions.{Expression, ScalaUDF, WowScala
 import org.apache.spark.sql.types.DataType
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib.algs.ScriptUDFCacheKey
+import tech.mlsql.common.utils.concurrent.ExecutionError
 
 /**
   * Created by fchen on 2018/11/15.
@@ -49,7 +50,12 @@ trait RuntimeCompileUDF extends RuntimeCompileScriptInterface[AnyRef] {
 
   override def generateFunction(scriptCacheKey: ScriptUDFCacheKey): AnyRef = {
     val runtimeFunction = invokeFunctionFromInstance(scriptCacheKey)
-    toPartialFunc(scriptCacheKey, runtimeFunction)
+    try {
+      toPartialFunc(scriptCacheKey, runtimeFunction)
+    }
+    catch {
+      case e: ExecutionError => throw new RuntimeException(e.getCause)
+    }
   }
 
   def udf(exp: Seq[Expression], scriptCacheKey: ScriptUDFCacheKey): ScalaUDF = {

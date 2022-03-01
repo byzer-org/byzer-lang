@@ -17,11 +17,6 @@ object RestUtils {
        .map{ case (name, value) => new BasicNameValuePair(name, value) }.toSeq
 
     Request.Post(urlString)
-      // Socket timeout is in milliseconds, default to 20 minutes
-      // TODO this should be configurable
-      .socketTimeout(20 * 60 * 1000 )
-      // Timeout to obtain Socket connection
-      .connectTimeout(10 * 1000)
       .addHeader("Content-Type", "application/x-www-form-urlencoded")
       .body(new UrlEncodedFormEntity(nameValuePairs.asJava, DefaultHttpTransportService.charset))
       .execute()
