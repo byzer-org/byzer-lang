@@ -182,4 +182,54 @@ class MLSQLRestTest extends FunSuite with SparkOperationUtil with BasicMLSQLConf
     }
 
   }
+
+  test("auto-increment page strategy stop with equals int value") {
+
+    withBatchContext(setupBatchContext(batchParams, null)) { runtime: SparkRuntime =>
+      val (reqStatic, reqMock) = mockStaticRequest
+      val responseMock = mock(classOf[Response])
+      tryWithResource(reqStatic) {
+
+        when(responseMock.returnResponse()).
+          thenReturn(buildResp(
+            """
+              |{"code":200,"content":[{"title":"wow"}]}
+              |""".stripMargin)).
+          thenReturn(buildResp(
+            """
+              |{"code":200,"content":[{"title":"wow"}]}
+              |""".stripMargin)).
+          thenReturn(buildResp(
+            """
+              |{"code":400,"content":[]}
+              |""".stripMargin)).
+          thenReturn(buildResp(
+            """
+              |{"code":200,"content":[]}
+              |""".stripMargin))
+
+        when(reqMock.execute()).thenReturn(responseMock)
+        reqStatic => {
+          autoGenerateContext(runtime)
+          val rest = new MLSQLRest()
+          val session = ScriptSQLExec.context().execListener.sparkSession
+          val res = rest.load(session.read, DataSourceConfig(
+            "http://www.byzer.org/list", Map(
+              "config.page.next" -> "http://www.byzer.org/list?{0}",
+              "config.page.values" -> "auto-increment:0",
+              "config.page.stop" -> "equals:$.code,400",
+              "config.page.limit" -> "4",
+              "config.debug" -> "true"
+            ), Option(session.emptyDataFrame)
+          ))
+          val rows = res.collect()
+          rows.foreach(println(_))
+          // the last one will also been append in the result with empty value
+          assertEquals(3, rows.length)
+        }
+      }
+
+    }
+
+  }
 }

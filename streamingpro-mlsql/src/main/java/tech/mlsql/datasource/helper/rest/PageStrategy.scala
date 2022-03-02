@@ -1,7 +1,6 @@
 package tech.mlsql.datasource.helper.rest
 
 import com.jayway.jsonpath.JsonPath
-import net.sf.json.JSONArray
 import org.apache.spark.sql.mlsql.session.MLSQLException
 
 /**
@@ -30,7 +29,7 @@ object PageStrategy {
     val Array(func, jsonPath) = stopPagingCondition.get.split(":")
 
     func match {
-      case "sizeZero" =>
+      case "size-zero" | "sizeZero" =>
         try {
           val targetValue = JsonPath.read[net.minidev.json.JSONArray](content, jsonPath)
           targetValue.size() > 0
@@ -39,8 +38,8 @@ object PageStrategy {
             false
         }
 
-      case "notExists" => try {
-        JsonPath.read[String](content, jsonPath)
+      case "not-exists" | "notExists" => try {
+        JsonPath.read[Object](content, jsonPath)
         true
       } catch {
         case _: com.jayway.jsonpath.PathNotFoundException =>
@@ -49,7 +48,7 @@ object PageStrategy {
       case "equals" =>
         try {
           val Array(realJsonPath, equalValue) = jsonPath.split(",")
-          val targetValue = JsonPath.read[String](content, realJsonPath)
+          val targetValue = JsonPath.read[Object](content, realJsonPath).toString
           targetValue != equalValue
         } catch {
           case _: com.jayway.jsonpath.PathNotFoundException =>

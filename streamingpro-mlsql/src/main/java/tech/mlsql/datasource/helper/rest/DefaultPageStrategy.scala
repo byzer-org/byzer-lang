@@ -11,7 +11,7 @@ class DefaultPageStrategy(params: Map[String, String]) extends PageStrategy {
   def pageValues(_content: Option[Any]): Array[String] = {
     try {
       val content = _content.get.toString
-      params("config.page.values").split(",").map(path => JsonPath.read[String](content, path)).toArray
+      params("config.page.values").split(",").map(path => JsonPath.read[Object](content, path).toString).toArray
     } catch {
       case _: com.jayway.jsonpath.PathNotFoundException =>
         Array[String]()
@@ -30,7 +30,12 @@ class DefaultPageStrategy(params: Map[String, String]) extends PageStrategy {
   }
 
   override def hasNextPage(_content: Option[Any]): Boolean = {
-    val pageValues = this.pageValues(_content)
-    pageValues.size == 0 || pageValues.filter(value => value == null || value.isEmpty).size > 0
+    if (params.get("config.page.stop").isDefined) {
+      PageStrategy.defaultHasNextPage(params, _content)
+    } else {
+      val pageValues = this.pageValues(_content)
+      !(pageValues.size == 0 || pageValues.filter(value => value == null || value.isEmpty).size > 0)
+    }
+
   }
 }
