@@ -44,7 +44,7 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
    * and `header.content-type`="application/json"
    *
    * and `config.page.next`="http://mlsql.tech/api?cursor={0}&wow={1}"
-   * and `config.page.skip-params`="true" 
+   * and `config.page.skip-params`="true"
    * and `config.page.values`="$.path,$.path2" -- json path
    * and `config.page.interval`="10ms"
    * and `config.page.retry`="3"
@@ -85,7 +85,7 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
 
         val pageStrategy = PageStrategyDispatcher.get(config.config)
         if (debug) {
-          logInfo(format(s"Get Page ${count} ${config.path} started"))
+          logInfo(format(s"Started to get Page ${count} ${config.path} "))
         }
         val firstPageFetchTime = System.currentTimeMillis()
         val (_, firstDfOpt) = RestUtils.executeWithRetrying[(Int, Option[DataFrame])](maxTries)((() => {
@@ -117,12 +117,13 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
 
         val uuid = UUID.randomUUID().toString.replaceAll("-", "")
         val context = ScriptSQLExec.context()
-        val tmpTablePath = resourceRealPath(context.execListener, Option(context.owner), PathFun("__tmp__").add(uuid).toPath)
+        val tmpTablePath = resourceRealPath(context.execListener, Option(context.owner),
+          PathFun("__tmp__").add("rest").add(uuid).toPath)
         context.execListener.addEnv(classOf[MLSQLRest].getName, tmpTablePath)
         firstDf.write.format("parquet").mode(SaveMode.Append).save(tmpTablePath)
 
         if (debug) {
-          logInfo(format(s"Get Page 1 ${config.path} Consume:${System.currentTimeMillis() - firstPageFetchTime}ms"))
+          logInfo(format(s"End to get Page ${count} ${config.path} Consume:${System.currentTimeMillis() - firstPageFetchTime}ms"))
         }
 
         while (count < maxSize) {
@@ -131,12 +132,13 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
 
           val row = firstDf.select(F.col("content").cast(StringType), F.col("status")).head
           val content = row.getString(0)
+          val status = row.getInt(1)
+          val hasNextPage = pageStrategy.hasNextPage(Option(content))
 
-          val pageValues = pageStrategy.pageValues(Option(content))
-
-
-          val shouldStop = pageValues.size == 0 || pageValues.filter(value => value == null || value.isEmpty).size > 0
-          if (shouldStop) {
+          if (status != 200 || !hasNextPage) {
+            if (debug) {
+              logInfo(s"Stop paging. The last Page ${count - 1} ${config.path} status: ${status} hasNextPage: ${hasNextPage} ")
+            }
             count = maxSize
           } else {
             val newUrl = pageStrategy.pageUrl(Option(content))
@@ -144,7 +146,7 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
             RestUtils.executeWithRetrying[(Int, Option[DataFrame])](maxTries)((() => {
               try {
                 if (debug) {
-                  logInfo(format(s"Get Page ${count} ${newUrl} started"))
+                  logInfo(format(s"Started get Page ${count} ${newUrl}"))
                 }
 
                 val tempDF = _http(newUrl, config.config, skipParams, config.df.get.sparkSession)
@@ -166,10 +168,16 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
               },
               failResp => logInfo(s"Fail request ${newUrl} failed after ${maxTries} attempts. the last response status is: ${failResp._1}. ")
             )
-            firstDf.write.format("parquet").mode(SaveMode.Append).save(tmpTablePath)
-            pageStrategy.nexPage
+
+            val row = firstDf.select(F.col("content").cast(StringType), F.col("status")).head
+            val status = row.getInt(1)
+            //page should be 200 otherwise should not save in parquet file
+            if (status == 200) {
+              firstDf.write.format("parquet").mode(SaveMode.Append).save(tmpTablePath)
+            }
+            pageStrategy.nexPage(Option(content))
             if (debug) {
-              logInfo(format(s"Get Page ${count} ${newUrl} Consume: ${System.currentTimeMillis() - tempTime}"))
+              logInfo(format(s"End to get Page ${count} ${newUrl} Consume: ${System.currentTimeMillis() - tempTime}"))
             }
           }
 
