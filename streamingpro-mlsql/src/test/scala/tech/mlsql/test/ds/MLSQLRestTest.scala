@@ -80,7 +80,7 @@ class MLSQLRestTest extends FunSuite with SparkOperationUtil with BasicMLSQLConf
               "config.page.values" -> "auto-increment:0",
               "config.page.stop" -> "equals:$.content,fail",
               "config.page.limit" -> "4",
-              "config.debug" -> "true",
+              "config.debug" -> "true"
             ), Option(session.emptyDataFrame)
           ))
           assertEquals(3, res.collect().length, "Page three times should have three rows")
@@ -121,7 +121,7 @@ class MLSQLRestTest extends FunSuite with SparkOperationUtil with BasicMLSQLConf
               "config.page.values" -> "offset:0,1",
               "config.page.stop" -> "equals:$.content,fail",
               "config.page.limit" -> "4",
-              "config.debug" -> "true",
+              "config.debug" -> "true"
             ), Option(session.emptyDataFrame)
           ))
           val rows = res.collect()
@@ -169,7 +169,7 @@ class MLSQLRestTest extends FunSuite with SparkOperationUtil with BasicMLSQLConf
               "config.page.values" -> "auto-increment:0",
               "config.page.stop" -> "sizeZero:$.content",
               "config.page.limit" -> "4",
-              "config.debug" -> "true",
+              "config.debug" -> "true"
             ), Option(session.emptyDataFrame)
           ))
           val rows = res.collect()
