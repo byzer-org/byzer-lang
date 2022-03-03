@@ -17,16 +17,17 @@ class OffsetPageStrategy(params: Map[String, String]) extends PageStrategy {
   var pageNum: Int = initialPageNum.trim.toInt
   val pageAddend: Int = pageIncrement.trim.toInt
 
-  override def pageValues(_content: Option[Any]) = Array[String](pageNum.toString)
-
-
-  override def nexPage: OffsetPageStrategy = {
+  override def nexPage(_content: Option[Any]): OffsetPageStrategy = {
     pageNum += pageAddend
     this
   }
 
   override def pageUrl(_content: Option[Any]): String = {
     val urlTemplate = params("config.page.next")
-    Templates2.evaluate(urlTemplate, pageValues(None))
+    Templates2.evaluate(urlTemplate, Array(pageNum.toString))
+  }
+
+  override def hasNextPage(_content: Option[Any]): Boolean = {
+    PageStrategy.defaultHasNextPage(params, _content)
   }
 }
