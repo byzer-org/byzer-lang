@@ -39,6 +39,8 @@ import org.apache.spark.{MLSQLConf, SparkInstanceService}
 import tech.mlsql.MLSQLEnvKey
 import tech.mlsql.app.{CustomController, ResultResp}
 import tech.mlsql.common.utils.serder.json.JSONTool
+import tech.mlsql.crawler.RestUtils
+import tech.mlsql.crawler.RestUtils.executeWithRetrying
 import tech.mlsql.job.{JobManager, MLSQLJobType}
 import tech.mlsql.runtime.AppRuntimeStore
 import tech.mlsql.runtime.plugins.exception_render.ExceptionRenderManager
@@ -154,7 +156,7 @@ class RestController extends ApplicationController with WowLog {
 
               outputResult = getScriptResult(context, sparkSession)
 
-              RestUtils.executeWithRetrying[HttpResponse](maxTries)(
+              executeWithRetrying[HttpResponse](maxTries)(
                 RestUtils.httpClientPost(urlString,
                   Map("stat" -> s"""succeeded""",
                     "res" -> outputResult,
@@ -171,7 +173,7 @@ class RestController extends ApplicationController with WowLog {
                   format_full_exception(msgBuffer, e)
                 }
 
-                RestUtils.executeWithRetrying[HttpResponse](maxTries)(
+                executeWithRetrying[HttpResponse](maxTries)(
                   RestUtils.httpClientPost(urlString,
                     Map("stat" -> s"""failed""",
                       "msg" -> (e.getMessage + "\n" + msgBuffer.mkString("\n")),

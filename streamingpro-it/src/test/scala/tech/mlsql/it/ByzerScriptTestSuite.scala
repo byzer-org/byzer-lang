@@ -2,7 +2,7 @@ package tech.mlsql.it
 
 import org.scalatest.{BeforeAndAfterAll, FlatSpec, Matchers, Suite}
 import tech.mlsql.common.utils.log.Logging
-import tech.mlsql.crawler.udf.FunctionsUtils
+import tech.mlsql.crawler.RestUtils
 import tech.mlsql.it.contiainer.ByzerCluster
 import tech.mlsql.it.utils.DockerUtils
 
@@ -53,8 +53,8 @@ class ByzerScriptTestSuite extends FlatSpec with Suite with Matchers with Before
       val owner = "admin"
       val jobName = UUID.randomUUID().toString
       logInfo(s"The test submits a script to the container through Rest, url:$url, sql:$sql")
-      val (status, result) = FunctionsUtils.rest_request(url, "post", Map("sql" -> sql, "owner" -> owner, "jobName" -> jobName),
-        Map("Content-Type" -> "application/x-www-form-urlencoded"), Map("config.socket-timeout"->"180s","config.connect-timeout"->"180s")
+      val (status, result) = RestUtils.rest_request_string(url, "post", Map("sql" -> sql, "owner" -> owner, "jobName" -> jobName),
+        Map("Content-Type" -> "application/x-www-form-urlencoded"), Map("socket-timeout"->"180s","connect-timeout"->"180s")
       )
       logInfo(s"status:$status,result:$result")
     }

@@ -1,10 +1,11 @@
 package tech.mlsql.runtime
 
-import org.scalatest.FunSuite
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should
 
-class VersionRangeCheckerTestSuite extends FunSuite {
+class VersionRangeCheckerTestSuite extends AnyFlatSpec with should.Matchers {
 
-  test("==") {
+  it should "==" in {
     val eq1 = EqDef.accept("==2.1.0")
     assert(eq1.inScope("2.1.0"))
 
@@ -16,7 +17,7 @@ class VersionRangeCheckerTestSuite extends FunSuite {
     assert(!eq3.inScope("2.1.0"))
   }
 
-  test(">") {
+  it should ">" in {
     val gt1 = GtDef.accept(">2.1.0")
     assert(gt1.inScope("2.1.1"))
 
@@ -33,7 +34,7 @@ class VersionRangeCheckerTestSuite extends FunSuite {
     assert(!gt5.inScope("2.2"))
   }
 
-  test(">=") {
+  it should ">=" in {
     val gt1 = GeDef.accept(">=2.1.0")
     assert(gt1.inScope("2.1.1"))
 
@@ -47,7 +48,7 @@ class VersionRangeCheckerTestSuite extends FunSuite {
     assert(!gt4.inScope("2.1.0-Dev"))
   }
 
-  test("<") {
+  it should "<" in {
     val lt1 = LtDef.accept("<2.1.0")
     assert(lt1.inScope("2.1.0-Alpha"))
 
@@ -55,7 +56,7 @@ class VersionRangeCheckerTestSuite extends FunSuite {
     assert(lt2.inScope("2.0.9"))
   }
 
-  test("<=") {
+  it should "<=" in {
     val le1 = LeDef.accept("<=2.1.0")
     assert(le1.inScope("2.1.0"))
 
@@ -63,7 +64,7 @@ class VersionRangeCheckerTestSuite extends FunSuite {
     assert(le2.inScope("2.1.0-Beta"))
   }
 
-  test(">v1 and <v2") {
+  it should ">v1 and <v2" in {
     val gtLt1 = GtLtDef.accept("(2.0.1, 2.1.5)")
     assert(gtLt1.inScope("2.1.0"))
 
@@ -72,7 +73,7 @@ class VersionRangeCheckerTestSuite extends FunSuite {
 
   }
 
-  test(">=v1 and <v2") {
+  it should ">=v1 and <v2" in {
     val geLt1 = GeLtDef.accept("[2.0.1, 2.1.5)")
     assert(!geLt1.inScope("2.0.1-dev"))
 
@@ -86,7 +87,7 @@ class VersionRangeCheckerTestSuite extends FunSuite {
     assert(geLt4.inScope("2.1.5-Beta"))
   }
 
-  test(">v1 and <=v2") {
+  it should ">v1 and <=v2" in {
     val gtLe1 = GtLeDef.accept("(2.0.1, 2.1.5]")
     assert(gtLe1.inScope("2.0.2"))
 
@@ -97,7 +98,7 @@ class VersionRangeCheckerTestSuite extends FunSuite {
     assert(gtLe3.inScope("2.1.5-Beta"))
   }
 
-  test(">=v1 and <=v2") {
+  it should ">=v1 and <=v2" in {
     val geLe1 = GeLeDef.accept("[2.0.1, 2.1.5]")
     assert(geLe1.inScope("2.1.5"))
 
@@ -108,7 +109,7 @@ class VersionRangeCheckerTestSuite extends FunSuite {
     assert(geLe3 == null)
   }
 
-  test("version checker") {
+  it should "version checker" in {
     assertThrows[RuntimeException](VersionRangeChecker.isVersionCompatible("[2.1.0, <= 2.2.0", "2.1.5"))
     assert(VersionRangeChecker.isVersionCompatible("[2.1.0, 2.2.0]", "2.1.5"))
     assert(VersionRangeChecker.isVersionCompatible("(2.1.0, 2.2.0-SNAPSHOT]", "2.2.0-SNAPSHOT"))
@@ -116,7 +117,7 @@ class VersionRangeCheckerTestSuite extends FunSuite {
     assert(VersionRangeChecker.isVersionCompatible(">=2.1.0", "2.1.3-Beta"))
   }
 
-  test("composed version checker") {
+  it should "composed version checker" in {
     assertThrows[RuntimeException](VersionRangeChecker.isComposedVersionCompatible("[2.1.0,  2.2.0)/<>2.10", "2.1.5", "2.10"))
     assert(!VersionRangeChecker.isComposedVersionCompatible("[2.1.0,  2.2.0)/>2.12", "2.1.5", "2.2"))
     assert(VersionRangeChecker.isComposedVersionCompatible("(2.1.0,  2.2.0)/<3.11", "2.1.5", "3.2.5"))

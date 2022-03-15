@@ -14,7 +14,6 @@
 <!--         <scala.binary.version>2.11</scala.binary.version> -->
 <!--         <spark.version>2.4.3</spark.version> -->
 <!--         <spark.bigversion>2.4</spark.bigversion> -->
-<!--         <scalatest.version>3.0.8</scalatest.version> -->
         <!-- spark 2.4 end -->
 
         <!-- spark 3.0 start -->
@@ -22,7 +21,6 @@
         <scala.binary.version>2.12</scala.binary.version> 
         <spark.version>3.1.1</spark.version> 
         <spark.bigversion>3.0</spark.bigversion> 
-        <scalatest.version>3.0.8</scalatest.version>
         <!-- spark 3.0 end -->
     </properties>
     <artifactId>streamingpro-core-${spark.bigversion}_${scala.binary.version}</artifactId>
@@ -165,7 +163,7 @@
         <dependency>
             <groupId>org.scalatest</groupId>
             <artifactId>scalatest_${scala.binary.version}</artifactId>
-            <version>${scalatest.version}</version>
+            <version>3.2.11</version>
             <scope>test</scope>
         </dependency>
         <dependency>
