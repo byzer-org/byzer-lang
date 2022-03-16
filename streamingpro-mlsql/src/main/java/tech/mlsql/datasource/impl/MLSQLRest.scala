@@ -12,11 +12,11 @@ import streaming.core.datasource._
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
 import streaming.log.WowLog
-import streaming.rest.RestUtils
 import tech.mlsql.common.form._
 import tech.mlsql.common.utils.distribute.socket.server.JavaUtils
 import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.common.utils.path.PathFun
+import tech.mlsql.crawler.RestUtils.executeWithRetrying
 import tech.mlsql.datasource.helper.rest.PageStrategyDispatcher
 import tech.mlsql.dsl.adaptor.DslTool
 import tech.mlsql.tool.{HDFSOperatorV2, Templates2}
@@ -88,7 +88,7 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
           logInfo(format(s"Started to get Page ${count} ${config.path} "))
         }
         val firstPageFetchTime = System.currentTimeMillis()
-        val (_, firstDfOpt) = RestUtils.executeWithRetrying[(Int, Option[DataFrame])](maxTries)((() => {
+        val (_, firstDfOpt) = executeWithRetrying[(Int, Option[DataFrame])](maxTries)((() => {
           try {
             val tempDF = _http(config.path, config.config, false, config.df.get.sparkSession)
             val row = tempDF.select(F.col("content").cast(StringType), F.col("status")).head
@@ -143,7 +143,7 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
           } else {
             val newUrl = pageStrategy.pageUrl(Option(content))
             val tempTime = System.currentTimeMillis()
-            RestUtils.executeWithRetrying[(Int, Option[DataFrame])](maxTries)((() => {
+            executeWithRetrying[(Int, Option[DataFrame])](maxTries)((() => {
               try {
                 if (debug) {
                   logInfo(format(s"Started get Page ${count} ${newUrl}"))
@@ -189,7 +189,7 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
         val maxTries = config.config.getOrElse("config.retry", config.config.getOrElse("config.page.retry", "3")).toInt
 
 
-        val (_, resultDF) = RestUtils.executeWithRetrying[(Int, Option[DataFrame])](maxTries)((() => {
+        val (_, resultDF) = executeWithRetrying[(Int, Option[DataFrame])](maxTries)((() => {
           try {
             val tempDF = _http(config.path, config.config, false, config.df.get.sparkSession)
             val row = tempDF.select(F.col("content").cast(StringType), F.col("status")).head
