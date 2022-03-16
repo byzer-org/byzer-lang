@@ -31,6 +31,7 @@ import org.mockito.{ArgumentMatchers, MockedStatic}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should
 import tech.mlsql.crawler.RestUtils
+import tech.mlsql.tool.CipherUtils
 
 import java.io.ByteArrayInputStream
 import scala.language.reflectiveCalls
@@ -131,6 +132,11 @@ class FunctionsTest extends AnyFlatSpec with should.Matchers {
 
       }
     }
+  }
+
+  it should "work on encrypt" in {
+    assertEquals("test_token", CipherUtils.aesDecrypt(CipherUtils.aesEncrypt("test_token",
+      null, null), null, null))
   }
 
   def tryWithResource[A <: {def close(): Unit}, B](a: A)(f: A => B): B = {
