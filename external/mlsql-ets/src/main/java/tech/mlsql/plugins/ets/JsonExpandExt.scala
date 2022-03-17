@@ -76,6 +76,23 @@ class JsonExpandExt(override val uid: String) extends SQLAlg with WowParams with
     )
   )
   setDefault(samplingRatio, "1.0")
+  final val structColumn: Param[String] = new Param[String](parent = this
+    , name = "structColumn"
+    , doc = FormParams.toJson( Text(
+      name = "structColumn"
+      , value = "false"
+      , extra = Extra(
+        doc = "turning the json string into Struct object"
+        , label = "structColumn"
+        , options = Map (
+          "valueType" -> "boolean"
+          , "required" -> "false"
+          , "derivedType" -> "NONE"
+        )
+      )
+    ) )
+  )
+  setDefault(structColumn, "false")
 
   /**
    * Expands a json column to multiple columns. Json column name is addressed by parameter inputCol's value
