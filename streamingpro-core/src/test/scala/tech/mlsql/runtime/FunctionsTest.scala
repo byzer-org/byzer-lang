@@ -28,16 +28,19 @@ import org.mockito.ArgumentMatchers.{anyList, anyString}
 import org.mockito.IdiomaticMockito.{DoSomethingOps, answered}
 import org.mockito.Mockito.{mock, mockStatic, when}
 import org.mockito.{ArgumentMatchers, MockedStatic}
-import org.scalatest.FunSuite
-import tech.mlsql.crawler.udf.FunctionsUtils
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should
+import tech.mlsql.crawler.RestUtils
+import tech.mlsql.tool.CipherUtils
 
 import java.io.ByteArrayInputStream
 import scala.language.reflectiveCalls
+
 /**
  * 22/01/2022 hellozepp(lisheng.zhanglin@163.com)
  */
 
-class FunctionsTest extends FunSuite {
+class FunctionsTest extends AnyFlatSpec with should.Matchers {
 
   def initRest(reqStatic: MockedStatic[Request]): Unit = {
     val reqMock = mock(classOf[Request])
@@ -66,12 +69,12 @@ class FunctionsTest extends FunSuite {
     responseMock willBe answered by reqMock.execute
   }
 
-  test("http get") {
+  "A http GET request" should "return then mock result" in {
     val reqStatic = mockStatic(classOf[Request])
     tryWithResource(reqStatic) {
       initRest(reqStatic)
       reqStatic => {
-        val (status, content) = FunctionsUtils.rest_request("http://www.byzer.org/home", "get",
+        val (status, content) = RestUtils.rest_request_string("http://www.byzer.org/home", "get",
           params = Map("foo" -> "bar", "foo1" -> "bar"), headers = Map("Content-Type" -> "application/x-www-form-urlencoded"), Map())
 
         println(s"status:$status, content:$content")
@@ -85,7 +88,7 @@ class FunctionsTest extends FunSuite {
         })
         // verify config set illegal of socket-timeout.
         try {
-          FunctionsUtils.rest_request("http://www.byzer.org/home", "get",
+          RestUtils.rest_request_string("http://www.byzer.org/home", "get",
             params = Map("foo" -> "bar", "foo1" -> "bar"), Map(), config = Map("socket-timeout" -> "a"))
           throw new MLSQLException("The configuration is illegal, but no exception is displayed!")
         } catch {
@@ -93,7 +96,7 @@ class FunctionsTest extends FunSuite {
         }
         // verify config set illegal of connect-timeout.
         try {
-          FunctionsUtils.rest_request("http://www.byzer.org/home", "get",
+          RestUtils.rest_request_string("http://www.byzer.org/home", "get",
             params = Map("foo" -> "bar", "foo1" -> "bar"), Map(), config = Map("connect-timeout" -> "a"))
           throw new MLSQLException("The configuration is illegal, but no exception is displayed!")
         } catch {
@@ -103,12 +106,12 @@ class FunctionsTest extends FunSuite {
     }
   }
 
-  test("http post with json body") {
+  "A http POST request" should "with json body" in {
     val reqStatic = mockStatic(classOf[Request])
     tryWithResource(reqStatic) {
       initRest(reqStatic)
       reqStatic => {
-        val (status, content) = FunctionsUtils.rest_request("http://www.byzer.org/home", "post",
+        val (status, content) = RestUtils.rest_request_string("http://www.byzer.org/home", "post",
           params = Map("body" -> "{\"a\":1,\"b\":2}"), headers = Map("Content-Type" -> "application/json"), Map())
 
         println(s"status:$status, content:$content")
@@ -122,13 +125,18 @@ class FunctionsTest extends FunSuite {
         })
 
         {
-          val (status, content) = FunctionsUtils.rest_request("http://www.byzer.org/home", "post",
+          val (status, content) = RestUtils.rest_request_string("http://www.byzer.org/home", "post",
             params = Map("foo" -> "bar", "foo1" -> "bar"), headers = Map("Content-Type" -> "application/x-www-form-urlencoded"), Map())
           println(s"status:$status, content:$content")
         }
 
       }
     }
+  }
+
+  it should "work on encrypt" in {
+    assertEquals("test_token", CipherUtils.aesDecrypt(CipherUtils.aesEncrypt("test_token",
+      null, null), null, null))
   }
 
   def tryWithResource[A <: {def close(): Unit}, B](a: A)(f: A => B): B = {

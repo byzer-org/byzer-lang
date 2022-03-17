@@ -19,24 +19,10 @@
 package tech.mlsql.crawler.udf
 
 import cn.edu.hfut.dmic.contentextractor.ContentExtractor
-import org.apache.commons.lang3.exception.ExceptionUtils
-import org.apache.http.client.fluent.{Form, Request}
-import org.apache.http.entity.ContentType
-import org.apache.http.entity.mime.{HttpMultipartMode, MultipartEntityBuilder}
-import org.apache.http.util.EntityUtils
 import org.apache.spark.sql.UDFRegistration
 import org.jsoup.Jsoup
-import streaming.dsl.ScriptSQLExec
-import streaming.log.WowLog
-import tech.mlsql.common.utils.distribute.socket.server.JavaUtils
-import tech.mlsql.common.utils.log.Logging
-import tech.mlsql.crawler.HttpClientCrawler
-import tech.mlsql.dsl.adaptor.DslTool
-import tech.mlsql.tool.{HDFSOperatorV2, Templates2}
+import tech.mlsql.crawler.{HttpClientCrawler, RestUtils}
 import us.codecraft.xsoup.Xsoup
-
-import java.nio.charset.Charset
-import scala.util.control.Breaks.{break, breakable}
 
 /**
  * Created by allwefantasy on 3/4/2018.
@@ -87,10 +73,18 @@ object Functions {
     })
   }
 
+  def rest_request_string(uDFRegistration: UDFRegistration) = {
+    uDFRegistration.register("rest_request", (url: String, method: String, params: Map[String, String],
+                                              headers: Map[String, String], config: Map[String, String]) => {
+      val (_, content) = RestUtils.rest_request_string(url, method, params, headers, config)
+      content
+    })
+  }
+
   def rest_request(uDFRegistration: UDFRegistration) = {
     uDFRegistration.register("rest_request", (url: String, method: String, params: Map[String, String],
                                               headers: Map[String, String], config: Map[String, String]) => {
-      val (_, content) = FunctionsUtils.rest_request(url, method, params, headers, config)
+      val (_, content) = RestUtils.rest_request_binary(url, method, params, headers, config)
       content
     })
   }
@@ -121,148 +115,4 @@ object Functions {
     })
   }
 
-}
-
-object FunctionsUtils extends Logging with WowLog {
-
-  def rest_request(url: String, method: String, params: Map[String, String], headers: Map[String, String], config: Map[String, String]): (Int, String) ={
-    val retryInterval = JavaUtils.timeStringAsMs(config.getOrElse("config.retry.interval", "1s"))
-    val requestInterval = JavaUtils.timeStringAsMs(config.getOrElse("config.request.interval", "10ms"))
-    val maxTries = config.getOrElse("config.retry", "3").toInt
-    val debug = config.getOrElse("config.debug", "false").toBoolean
-    val (status, content) = executeWithRetrying[(Int, String)](maxTries)((() => {
-      try {
-        val (status, content) = _http(url, method, params, headers, config)
-        Thread.sleep(requestInterval)
-        (status, content)
-      } catch {
-        case e: Exception =>
-          if (debug) {
-            val message = "request url: " + url + ", msg:" + ExceptionUtils.getMessage(e) + "\r\n\"stackTrace:" +
-              ExceptionUtils.getStackTrace(e)
-            logError(format(message))
-          }
-          (500, null)
-      }
-    }) (),
-      tempResp => {
-        val t = tempResp!=null && tempResp._1 == 200
-        if (!t) {
-          Thread.sleep(retryInterval)
-        }
-        t
-      },
-      failResp => {}
-    )
-    (status, content)
-  }
-
-  def _http(url: String, method: String, params: Map[String, String],
-            headers: Map[String, String], config: Map[String, String]): (Int, String) = {
-    val httpMethod = new String(method).toLowerCase()
-    val context = ScriptSQLExec.contextGetOrForTest()
-    val debug = config.getOrElse("config.debug", "false").toBoolean
-    val request = httpMethod match {
-      case "get" =>
-
-        val finalUrl = if (params.nonEmpty) {
-          val urlParam = params.map { case (k, v) => s"$k=$v" }.mkString("&")
-          if (url.contains("?")) {
-            if (url.endsWith("?"))  url + urlParam else url + "&" + urlParam
-          } else {
-            url + "?" + urlParam
-          }
-        } else url
-
-        Request.Get(finalUrl)
-
-      case "post" => Request.Post(url)
-      case "put" => Request.Put(url)
-      case v =>
-        if (debug) {
-          logError(format(s"request url: $url, Content-Type $v  is not support yet"))
-        }
-        return null
-    }
-
-    if (config.contains("socket-timeout")) {
-      request.socketTimeout(JavaUtils.timeStringAsMs(config("socket-timeout")).toInt)
-    }
-
-    if (config.contains("connect-timeout")) {
-      request.connectTimeout(JavaUtils.timeStringAsMs(config("connect-timeout")).toInt)
-    }
-
-    headers foreach { case (k, v) => request.setHeader(k, v) }
-    val contentTypeValue = headers.getOrElse("content-type", headers.getOrElse("Content-Type", "application/x-www-form-urlencoded"))
-    request.setHeader("Content-Type", contentTypeValue)
-
-    val response = (httpMethod, contentTypeValue) match {
-      case ("get", _) => request.execute()
-
-      case ("post", contentType) if contentType.trim.startsWith("application/json") =>
-        if (params.contains("body"))
-          request.bodyString(params("body"), ContentType.APPLICATION_JSON).execute()
-        else {
-          request.execute()
-        }
-
-      case ("post", contentType) if contentType.trim.startsWith("application/x-www-form-urlencoded") =>
-        val form = Form.form()
-        params.foreach { case (k, v) =>
-          form.add(k, Templates2.dynamicEvaluateExpression(v, ScriptSQLExec.context().execListener.env().toMap))
-        }
-        request.bodyForm(form.build(), Charset.forName("utf-8")).execute()
-
-      case ("post", contentType) if contentType.trim.startsWith("multipart/form-data") =>
-        val _filePath = params("file-path")
-        val finalPath = new DslTool(){}.resourceRealPath(context.execListener, Option(context.owner), _filePath)
-
-        val inputStream = HDFSOperatorV2.readAsInputStream(finalPath)
-
-        val fileName = params("file-name")
-
-        val entity = MultipartEntityBuilder.create.
-          setMode(HttpMultipartMode.BROWSER_COMPATIBLE).
-          setCharset(Charset.forName("utf-8")).
-          addBinaryBody(fileName, inputStream, ContentType.MULTIPART_FORM_DATA, fileName)
-
-        params.filter(v => v._1 != "file-path" && v._1 != "file-name").foreach { case (k, v) =>
-          entity.addTextBody(k, Templates2.dynamicEvaluateExpression(v, ScriptSQLExec.context().execListener.env().toMap))
-        }
-        request.body(entity.build()).execute()
-      case (_, v) =>
-        if (debug) {
-          logError(format(s"Request url: $url , Content-Type $v  is not support yet"))
-        }
-        return null
-    }
-
-    val httpResponse = response.returnResponse()
-    val status = httpResponse.getStatusLine.getStatusCode
-    EntityUtils.consumeQuietly(httpResponse.getEntity)
-    val content = if (httpResponse.getEntity != null) EntityUtils.toString(httpResponse.getEntity) else ""
-    (status, content)
-  }
-
-
-  def executeWithRetrying[T](maxTries: Int)(function: => T, checker: T => Boolean, failed: T => Unit): T = {
-    var result: T = function
-    if (checker(result)) {
-      return result
-    }
-
-    breakable {
-      for (i <- 0 until maxTries) {
-        result = function
-        if (checker(result)) {
-          break
-        }
-        if (i == maxTries - 1) {
-          failed(result)
-        }
-      }
-    }
-    result
-  }
 }

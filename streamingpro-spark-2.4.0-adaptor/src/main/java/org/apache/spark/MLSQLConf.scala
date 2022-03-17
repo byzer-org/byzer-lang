@@ -20,7 +20,6 @@ package org.apache.spark
 
 import java.util.concurrent.TimeUnit
 import java.util.{HashMap, Map => JMap}
-
 import org.apache.spark.internal.config._
 
 import scala.collection.JavaConverters._
@@ -199,6 +198,41 @@ object MLSQLConf {
     .doc("Executor send log msg to driver.")
     .booleanConf
     .createWithDefault(true)
+
+  val DRIVER_LOG_SERVER_TOKEN: OptionalConfigEntry[String] = MLSQLConfigBuilder("spark.mlsql.log.driver.token")
+    .doc("Unique identifier used by driverLogServer.")
+    .stringConf
+    .createOptional
+
+  val DRIVER_LOG_SERVER_IMPL_CLASS: ConfigEntry[String] = MLSQLConfigBuilder("spark.mlsql.log.driver.implClass")
+    .doc("Specifies the log service class for reflective startup.")
+    .stringConf
+    .createWithDefault("tech.mlsql.log.DriverLogServer")
+
+  val DRIVER_LOG_SERVER_HOST: ConfigEntry[String] = MLSQLConfigBuilder("spark.mlsql.log.driver.host")
+    .doc("Specifies the log service host.")
+    .stringConf
+    .createWithDefault("0.0.0.0")
+
+  val DRIVER_LOG_SERVER_PORT: OptionalConfigEntry[Int] = MLSQLConfigBuilder("spark.mlsql.log.driver.port")
+    .doc("Specifies the log service port.")
+    .intConf
+    .createOptional
+
+  val DRIVER_LOG_SERVER_URL: OptionalConfigEntry[String] = MLSQLConfigBuilder("spark.mlsql.log.driver.url")
+    .doc("Specifies the log service url.")
+    .stringConf
+    .createOptional
+
+  val BYZER_CIPHER_AES_IV: OptionalConfigEntry[String] = MLSQLConfigBuilder("spark.byzer.cipher.aes.iv")
+    .doc("Iv used for aes encryption and decryption.")
+    .stringConf
+    .createOptional
+
+  val BYZER_CIPHER_AES_KEY: OptionalConfigEntry[String] = MLSQLConfigBuilder("spark.byzer.cipher.aes.key")
+    .doc("Key used for aes encryption and decryption.")
+    .stringConf
+    .createOptional
 
 
   def getAllDefaults: Map[String, String] = {

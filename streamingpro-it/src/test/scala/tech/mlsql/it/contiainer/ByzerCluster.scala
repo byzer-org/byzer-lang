@@ -46,13 +46,12 @@ object ByzerCluster extends Logging {
   def forSpec(): ByzerCluster = {
     beforeAll()
     lazy val hadoopContainer: HadoopContainer = new HadoopContainer(clusterName).configure { c =>
-      c.addExposedPorts(9870, 8088, 19888)
+      c.addExposedPorts(9870, 8088, 19888, 10002, 8042)
       c.withNetwork(network)
       c.withNetworkAliases(ByzerCluster.appendClusterName(networkAliases))
       c.setWaitStrategy(new HttpWaitStrategy()
         .forPort(8088).forPath("/cluster").forStatusCode(200)
         .withStartupTimeout(Duration.of(600, SECONDS)))
-      c.withStartupAttempts(3)
       c.withCreateContainerCmdModifier(new Consumer[CreateContainerCmd]() {
         def accept(cmd: CreateContainerCmd): Unit = {
           cmd.withName("hadoop3")
@@ -66,7 +65,7 @@ object ByzerCluster extends Logging {
       c.addExposedPorts(9003, 4040, 8265, 10002)
       c.setWaitStrategy(new HttpWaitStrategy()
         .forPort(9003).forStatusCode(200)
-        .withStartupTimeout(Duration.of(800, SECONDS)))
+        .withStartupTimeout(Duration.of(1000, SECONDS)))
       c.withFileSystemBind(DockerUtils.getLibPath + DockerUtils.getJarName,
         "/home/deploy/kolo-lang/libs/" + DockerUtils.getJarName, BindMode.READ_WRITE)
       c.dependsOn(hadoopContainer)
