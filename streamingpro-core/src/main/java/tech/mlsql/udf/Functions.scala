@@ -13,18 +13,18 @@ object Functions {
 
   def aesDecrypt(uDFRegistration: UDFRegistration): UserDefinedFunction =
     uDFRegistration.register("aes_decrypt", (strToDecrypt: String) => {
-      CipherUtils.aesDecrypt(strToDecrypt,
-        sparkConf.getOrElse(MLSQLConf.BYZER_CIPHER_AES_KEY.key, null),
-        sparkConf.getOrElse(MLSQLConf.BYZER_CIPHER_AES_IV.key, null)
-      )
+        CipherUtils.aesDecrypt(strToDecrypt,
+          sparkConf.getOrElse(MLSQLConf.BYZER_CIPHER_AES_KEY.key, null),
+          sparkConf.getOrElse(MLSQLConf.BYZER_CIPHER_AES_IV.key, null)
+        )
     })
 
   def aesEncrypt(uDFRegistration: UDFRegistration): UserDefinedFunction =
     uDFRegistration.register("aes_encrypt", (strToEncrypt: String) => {
-      CipherUtils.aesEncrypt(strToEncrypt,
-        sparkConf.getOrElse(MLSQLConf.BYZER_CIPHER_AES_KEY.key, null),
-        sparkConf.getOrElse(MLSQLConf.BYZER_CIPHER_AES_IV.key, null)
-      )
+        CipherUtils.aesEncrypt(strToEncrypt,
+          sparkConf.getOrElse(MLSQLConf.BYZER_CIPHER_AES_KEY.key, null),
+          sparkConf.getOrElse(MLSQLConf.BYZER_CIPHER_AES_IV.key, null)
+        )
     })
 
 }

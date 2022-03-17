@@ -1,12 +1,12 @@
 package tech.mlsql.it
 
-import java.io.File
 import org.apache.commons.io.FileUtils
-import org.apache.spark.{MLSQLSparkConst, SparkCoreVersion}
+import org.apache.commons.lang3.exception.ExceptionUtils
+import org.apache.spark.SparkCoreVersion
 import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.core.version.MLSQLVersion
-import tech.mlsql.it.utils.ExceptionUtils
 
+import java.io.File
 import scala.collection.mutable.ListBuffer
 
 object TestManager extends Logging {
@@ -79,6 +79,16 @@ object TestManager extends Logging {
     val compareResult: (Boolean, String) = comparator.compare(testCase, result, exception)
     if (!compareResult._1) {
       recordError(testCase, compareResult._2)
+    }
+  }
+
+  def acceptRest(testCase: TestCase, status: Int, result: String, exception: Exception): Unit = {
+    if (status != 200) {
+      if (exception != null) {
+        recordError(testCase, result + "\n" + ExceptionUtils.getMessage(exception))
+      } else {
+        recordError(testCase, result)
+      }
     }
   }
 
