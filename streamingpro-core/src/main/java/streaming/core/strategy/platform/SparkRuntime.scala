@@ -132,19 +132,20 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
     val confLogInDriver = params.asScala.getOrElse("streaming.executor.log.in.driver", "true").toString.toBoolean
     if ((confSparkService && confLogInDriver) ||
       params.getOrDefault("streaming.unittest", "false").toString.toBoolean) {
-      conf.setIfMissing("spark.mlsql.log.driver.token", UUID.randomUUID().toString)
-      val token = conf.get("spark.mlsql.log.driver.token")
+      conf.setIfMissing(MLSQLConf.DRIVER_LOG_SERVER_TOKEN.key, UUID.randomUUID().toString)
+      val token = conf.get(MLSQLConf.DRIVER_LOG_SERVER_TOKEN.key)
       driverLogServer = Class.forName(
-        params.getOrElse("spark.mlsql.log.driver.implClass", "tech.mlsql.log.DriverLogServer").toString)
+        params.getOrElse(MLSQLConf.DRIVER_LOG_SERVER_IMPL_CLASS.key,
+          MLSQLConf.DRIVER_LOG_SERVER_IMPL_CLASS.defaultValueString).toString)
         .getConstructor(classOf[String]).newInstance(token).asInstanceOf[BaseHttpLogServer]
 
       //Starts on random ports of local IP by default
-      conf.setIfMissing("spark.mlsql.log.driver.host", driverLogServer.getHost)
-      val host = conf.get("spark.mlsql.log.driver.host")
-      val port = conf.getInt("spark.mlsql.log.driver.port", 0)
+      conf.setIfMissing(MLSQLConf.DRIVER_LOG_SERVER_HOST.key, driverLogServer.getHost)
+      val host = conf.get(MLSQLConf.DRIVER_LOG_SERVER_HOST.key)
+      val port = conf.getInt(MLSQLConf.DRIVER_LOG_SERVER_PORT.key, 0)
       driverLogServer.build(host, port)
-      conf.setIfMissing("spark.mlsql.log.driver.port", driverLogServer.port.toString)
-      conf.setIfMissing("spark.mlsql.log.driver.url", driverLogServer.url)
+      conf.setIfMissing(MLSQLConf.DRIVER_LOG_SERVER_PORT.key, driverLogServer.port.toString)
+      conf.setIfMissing(MLSQLConf.DRIVER_LOG_SERVER_URL.key, driverLogServer.url)
       logInfo(s"DriverLogServer is started in ${driverLogServer.url} with token:${token}")
     }
 

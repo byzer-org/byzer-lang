@@ -72,7 +72,7 @@ class DriverLogServer(accessToken: String) extends BaseHttpLogServer with Loggin
       }
     }
 
-    (server, s"http://$host:$newPort/$requestMapping", host, newPort)
+    (server, s"http://$host:$newPort$requestMapping", host, newPort)
   }
 
   override def close(): Unit = {
