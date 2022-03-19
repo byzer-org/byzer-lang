@@ -44,7 +44,7 @@ object PluginUtils extends Logging with WowLog {
     DBStore.store.readConfig(runtime.asInstanceOf[SparkRuntime].sparkSession, "", "proxy", DictType.MLSQL_CONFIG) match {
       case Some(item) =>
         item.value
-      case None => "https://market.byzer.org/run"
+      case None => "http://store.mlsql.tech/run"
     }
   }
 
