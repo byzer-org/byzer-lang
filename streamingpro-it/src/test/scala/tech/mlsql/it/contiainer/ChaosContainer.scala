@@ -14,7 +14,7 @@ import scala.util.Try
  */
 class ChaosContainer[SelfT <: ChaosContainer[SelfT]](clusterName: String, image: String) extends GenericContainer(image: String) with Logging {
 
-  val CONTAINERS_LEAVE_RUNNING: Boolean = Try(System.getenv("PULSAR_CONTAINERS_LEAVE_RUNNING"))
+  val CONTAINERS_LEAVE_RUNNING: Boolean = Try(System.getenv("BYZER_CONTAINERS_LEAVE_RUNNING"))
     .map(env => env.toBoolean).getOrElse(false)
 
   val _clusterName: String = clusterName
@@ -34,6 +34,7 @@ class ChaosContainer[SelfT <: ChaosContainer[SelfT]](clusterName: String, image:
     // use Testcontainers reuse containers feature to leave the container running
     if (CONTAINERS_LEAVE_RUNNING) {
       container.configure { c =>
+        c.addEnv("testcontainers.reuse.enable", "true")
         c.withReuse(true)
         // add label that can be used to find containers that are left running.
         c.withLabel("byzercontainer", "true")
