@@ -8,6 +8,7 @@ import tech.mlsql.autosuggest.dsl.{MLSQLTokenTypeWrapper, TokenTypeWrapper}
 import tech.mlsql.autosuggest.{AutoSuggestContext, TokenPos, TokenPosType}
 
 import scala.collection.JavaConverters._
+import scala.collection.mutable.ListBuffer
 
 /**
  * 1/6/2020 WilliamZhu(allwefantasy@gmail.com)
@@ -62,23 +63,32 @@ object LexerUtils {
     if (tokens.size == 0) {
       return TokenPos(-1, TokenPosType.NEXT, -1)
     }
-
     val oneLineTokens = tokens.zipWithIndex.filter { case (token, index) =>
       token.getLine == lineNum
     }
-
+    var lineNumList:ListBuffer[Int] = ListBuffer[Int]()
+    tokens.foreach(token => lineNumList += token.getLine)
+    lineNumList = lineNumList.distinct
+    var headTokenLineNum:Int = lineNum-1
+    var lastTokenLineNum:Int = lineNum+1
+    if(headTokenLineNum > lineNumList.last){
+      headTokenLineNum = lineNumList.last
+    }
+    if(lastTokenLineNum > lineNumList.last){
+      lastTokenLineNum = lineNumList.last
+    }
     val firstToken = oneLineTokens.headOption match {
       case Some(head) => head
       case None =>
         tokens.zipWithIndex.filter { case (token, index) =>
-          token.getLine == lineNum - 1
+          token.getLine == headTokenLineNum
         }.head
     }
     val lastToken = oneLineTokens.lastOption match {
       case Some(last) => last
       case None =>
         tokens.zipWithIndex.filter { case (token, index) =>
-          token.getLine == lineNum + 1
+          token.getLine == lastTokenLineNum
         }.last
     }
 
@@ -141,19 +151,29 @@ object LexerUtils {
     val oneLineTokens = tokens.zipWithIndex.filter { case (token, index) =>
       token.getLine == lineNum
     }
-
+    var lineNumList:ListBuffer[Int] = ListBuffer[Int]()
+    tokens.foreach(token => lineNumList += token.getLine)
+    lineNumList = lineNumList.distinct
+    var headTokenLineNum:Int = lineNum-1
+    var lastTokenLineNum:Int = lineNum+1
+    if(headTokenLineNum > lineNumList.last){
+      headTokenLineNum = lineNumList.last
+    }
+    if(lastTokenLineNum > lineNumList.last){
+      lastTokenLineNum = lineNumList.last
+    }
     val firstToken = oneLineTokens.headOption match {
       case Some(head) => head
       case None =>
         tokens.zipWithIndex.filter { case (token, index) =>
-          token.getLine == lineNum - 1
+          token.getLine == headTokenLineNum
         }.head
     }
     val lastToken = oneLineTokens.lastOption match {
       case Some(last) => last
       case None =>
         tokens.zipWithIndex.filter { case (token, index) =>
-          token.getLine == lineNum + 1
+          token.getLine == lastTokenLineNum
         }.last
     }
 
@@ -194,6 +214,7 @@ object LexerUtils {
 
     }.filterNot(_.pos == -2).head
   }
+
 
   def isInWhereContext(tokens: List[Token], tokenPos: Int): Boolean = {
     if (tokenPos < 1) return false
