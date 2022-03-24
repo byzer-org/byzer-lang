@@ -60,36 +60,30 @@ object LexerUtils {
      * load[cursor]         in token
      */
 
-    if (tokens.size == 0) {
+    if (tokens.isEmpty) {
       return TokenPos(-1, TokenPosType.NEXT, -1)
     }
+    val _lastToken: Token = tokens.last
+    var _lastTokenIndex = 0
+    var _lastLineHeadToken: Token = _lastToken
+    var _lastLineHeadTokenNum: Int = -1
+    var _lastLineHeadTokenIndex = 0
     val oneLineTokens = tokens.zipWithIndex.filter { case (token, index) =>
+      _lastTokenIndex = index
+      if (_lastLineHeadTokenNum != token.getLine) {
+        _lastLineHeadTokenIndex = index
+        _lastLineHeadToken = token
+        _lastLineHeadTokenNum = token.getLine
+      }
       token.getLine == lineNum
-    }
-    var lineNumList:ListBuffer[Int] = ListBuffer[Int]()
-    tokens.foreach(token => lineNumList += token.getLine)
-    lineNumList = lineNumList.distinct
-    var headTokenLineNum:Int = lineNum-1
-    var lastTokenLineNum:Int = lineNum+1
-    if(headTokenLineNum > lineNumList.last){
-      headTokenLineNum = lineNumList.last
-    }
-    if(lastTokenLineNum > lineNumList.last){
-      lastTokenLineNum = lineNumList.last
     }
     val firstToken = oneLineTokens.headOption match {
       case Some(head) => head
-      case None =>
-        tokens.zipWithIndex.filter { case (token, index) =>
-          token.getLine == headTokenLineNum
-        }.head
+      case None => (_lastLineHeadToken, _lastLineHeadTokenIndex)
     }
     val lastToken = oneLineTokens.lastOption match {
       case Some(last) => last
-      case None =>
-        tokens.zipWithIndex.filter { case (token, index) =>
-          token.getLine == lastTokenLineNum
-        }.last
+      case None => (_lastToken, _lastTokenIndex)
     }
 
     if (colNum < firstToken._1.getCharPositionInLine) {
@@ -144,37 +138,30 @@ object LexerUtils {
      * load[cursor]         in token
      */
 
-    if (tokens.size == 0) {
+    if (tokens.isEmpty) {
       return TokenPos(-1, TokenPosType.NEXT, -1)
     }
-
+    val _lastToken: Token = tokens.last
+    var _lastTokenIndex = 0
+    var _lastLineHeadToken: Token = _lastToken
+    var _lastLineHeadTokenNum: Int = -1
+    var _lastLineHeadTokenIndex = 0
     val oneLineTokens = tokens.zipWithIndex.filter { case (token, index) =>
+      _lastTokenIndex = index
+      if (_lastLineHeadTokenNum != token.getLine) {
+        _lastLineHeadTokenIndex = index
+        _lastLineHeadToken = token
+        _lastLineHeadTokenNum = token.getLine
+      }
       token.getLine == lineNum
-    }
-    var lineNumList:ListBuffer[Int] = ListBuffer[Int]()
-    tokens.foreach(token => lineNumList += token.getLine)
-    lineNumList = lineNumList.distinct
-    var headTokenLineNum:Int = lineNum-1
-    var lastTokenLineNum:Int = lineNum+1
-    if(headTokenLineNum > lineNumList.last){
-      headTokenLineNum = lineNumList.last
-    }
-    if(lastTokenLineNum > lineNumList.last){
-      lastTokenLineNum = lineNumList.last
     }
     val firstToken = oneLineTokens.headOption match {
       case Some(head) => head
-      case None =>
-        tokens.zipWithIndex.filter { case (token, index) =>
-          token.getLine == headTokenLineNum
-        }.head
+      case None => (_lastLineHeadToken, _lastLineHeadTokenIndex)
     }
     val lastToken = oneLineTokens.lastOption match {
       case Some(last) => last
-      case None =>
-        tokens.zipWithIndex.filter { case (token, index) =>
-          token.getLine == lastTokenLineNum
-        }.last
+      case None => (_lastToken, _lastTokenIndex)
     }
 
     if (colNum < firstToken._1.getCharPositionInLine) {
@@ -288,3 +275,4 @@ object LexerUtils {
     }.filter(_ != null)
   }
 }
+
