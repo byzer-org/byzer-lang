@@ -16,7 +16,7 @@ import tech.mlsql.dsl.auth.dsl.mmlib.ETMethod.ETMethod
 import tech.mlsql.dsl.includes.PluginIncludeSource
 import tech.mlsql.runtime.PluginUtils
 import tech.mlsql.runtime.plugins._
-import tech.mlsql.store.DBStore
+import tech.mlsql.store.{DBStore, DictType, WDictStore}
 
 
 /**
@@ -105,7 +105,10 @@ class PluginCommand(override val uid: String) extends SQLAlg with ETAuth with Wo
 
 
         val (pluginName, pluginVersion) = PluginUtils.getPluginNameAndVersion(_pluginName)
-        val plugin = PluginUtils.getPluginInfo(pluginName).filter(f => f.version == pluginVersion).head
+        val plugin = PluginUtils.getPluginInfo(pluginName).filter(f => f.version == pluginVersion).headOption match {
+          case Some(item)=> item
+          case None => throw new MLSQLException(s"Plugin name:${pluginName} version:${pluginVersion} is not found in market")
+        }
         val className = if (_className == "-") {
           val config = JSONTool.parseJson[Map[String, String]](plugin.extraParams)
           config("mainClass")
@@ -125,7 +128,7 @@ class PluginCommand(override val uid: String) extends SQLAlg with ETAuth with Wo
 
         val (fileName, pluginPath) = downloadJarFileToHDFS(spark, pluginName, pluginVersion)
 
-        val localPath = downloadFromHDFSToLocal(fileName, pluginPath,spark.sparkContext.hadoopConfiguration)
+        val localPath = downloadFromHDFSToLocal(fileName, pluginPath, spark.sparkContext.hadoopConfiguration)
 
         if (pluginType == PluginType.DS || pluginType == PluginType.ET || pluginType == PluginType.APP) {
           loadJarInDriver(localPath)
@@ -184,6 +187,25 @@ class PluginCommand(override val uid: String) extends SQLAlg with ETAuth with Wo
 
       case Seq("list", pluginType) =>
         DBStore.store.readTable(spark, TABLE_PLUGINS).where(s""" pluginType="${pluginType}" """)
+
+      case Seq("proxy", proxy) =>
+        DBStore.store.saveConfig(spark, "", "proxy", proxy, DictType.MLSQL_CONFIG)
+        DBStore.store.readConfig(spark, "", "proxy", DictType.MLSQL_CONFIG) match {
+          case Some(item) =>
+            import spark.implicits._
+            spark.createDataset[WDictStore](Seq(item)).toDF()
+          case None =>
+            spark.emptyDataFrame
+        }
+
+      case Seq("show", "proxy") =>
+        DBStore.store.readConfig(spark, "", "proxy", DictType.MLSQL_CONFIG) match {
+          case Some(item) =>
+            import spark.implicits._
+            spark.createDataset[WDictStore](Seq(item)).toDF()
+          case None =>
+            spark.emptyDataFrame
+        }
 
     }
 

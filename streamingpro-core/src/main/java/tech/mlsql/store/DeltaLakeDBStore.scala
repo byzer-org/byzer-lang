@@ -9,12 +9,12 @@ import tech.mlsql.store.DictType.DictType
  * 16/3/2020 WilliamZhu(allwefantasy@gmail.com)
  */
 class DeltaLakeDBStore extends DBStore {
-  private val configTableName = "__mlsql__.wDictStore"
+  private val configTableName = "__mlsql__.config"
 
   override def saveConfig(spark: SparkSession, appPrefix: String, name: String, value: String, dictType: DictType): Unit = {
     val key = s"${appPrefix}_${name}"
     import spark.implicits._
-    saveTable(spark, spark.createDataset[WDictStore](Seq(WDictStore(0, key, value, dictType.id))).toDF(), configTableName, Option(key), false)
+    saveTable(spark, spark.createDataset[WDictStore](Seq(WDictStore(0, key, value, dictType.id))).toDF(), configTableName, Option("name,dictType"), false)
   }
 
   override def readConfig(spark: SparkSession, appPrefix: String, name: String, dictType: DictType): Option[WDictStore] = {
@@ -47,6 +47,7 @@ class DeltaLakeDBStore extends DBStore {
       writer.mode(SaveMode.Append).save(finalPath)
     } catch {
       case e: Exception =>
+        e.printStackTrace()
     }
 
   }

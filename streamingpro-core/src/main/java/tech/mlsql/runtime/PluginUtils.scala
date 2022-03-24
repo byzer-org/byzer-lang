@@ -1,10 +1,5 @@
 package tech.mlsql.runtime
 
-import java.io.{File, InputStream, OutputStream}
-import java.net.{URL, URLClassLoader}
-import java.nio.charset.Charset
-import java.nio.file.{Files, StandardCopyOption}
-
 import net.csdn.common.reflect.ReflectHelper
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FSDataInputStream, FSDataOutputStream, FileSystem, Path}
@@ -14,6 +9,7 @@ import org.apache.spark.SparkCoreVersion
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.mlsql.session.MLSQLException
 import streaming.core.datasource.MLSQLRegistry
+import streaming.core.strategy.platform.{PlatformManager, SparkRuntime}
 import streaming.log.WowLog
 import tech.mlsql.common.utils.classloader.ClassLoaderTool
 import tech.mlsql.common.utils.log.Logging
@@ -23,8 +19,14 @@ import tech.mlsql.core.version.MLSQLVersion
 import tech.mlsql.datalake.DataLake
 import tech.mlsql.dsl.CommandCollection
 import tech.mlsql.ets.register.ETRegister
+import tech.mlsql.store.{DBStore, DictType}
 import tech.mlsql.tool.HDFSOperatorV2
 import tech.mlsql.version.VersionCompatibility
+
+import java.io.{File, InputStream, OutputStream}
+import java.net.{URL, URLClassLoader}
+import java.nio.charset.Charset
+import java.nio.file.{Files, StandardCopyOption}
 
 /**
  * 27/2/2020 WilliamZhu(allwefantasy@gmail.com)
@@ -36,7 +38,15 @@ object PluginUtils extends Logging with WowLog {
   val TABLE_PLUGINS = "__mlsql__.plugins"
   val TABLE_FILES = "__mlsql__.files"
 
-  val PLUGIN_STORE_URL = "http://store.mlsql.tech/run"
+  def runtime = PlatformManager.getRuntime
+
+  def PLUGIN_STORE_URL = {
+    DBStore.store.readConfig(runtime.asInstanceOf[SparkRuntime].sparkSession, "", "proxy", DictType.MLSQL_CONFIG) match {
+      case Some(item) =>
+        item.value
+      case None => "http://store.mlsql.tech/run"
+    }
+  }
 
   def getPluginInfo(name: String) = {
     val pluginListResponse = Request.Post(PLUGIN_STORE_URL).connectTimeout(60 * 1000)
@@ -51,12 +61,15 @@ object PluginUtils extends Logging with WowLog {
 
   def getLatestPluginInfo(name: String) = {
     val plugins = getPluginInfo(name)
+    if (plugins.size == 0) {
+      throw new MLSQLException(s"Plugin name:${name}  is not found in market")
+    }
     plugins.sortBy(_.version).last
   }
 
   def getPluginNameAndVersion(name: String): (String, String) = {
-    if (name.contains(":")) {
-      name.split(":") match {
+    if (name.contains(":") || name.contains("==")) {
+      name.split(":|==") match {
         case Array(name, version) => (name, version)
       }
     } else {
