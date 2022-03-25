@@ -11,6 +11,8 @@ import tech.mlsql.common.utils.serder.json.JSONTool
 import tech.mlsql.runtime.AppRuntimeStore
 import tech.mlsql.version.VersionCompatibility
 
+import scala.util.control.Breaks.{break, breakable}
+
 /**
  * 9/6/2020 WilliamZhu(allwefantasy@gmail.com)
  */
@@ -112,6 +114,23 @@ class AutoSuggestController extends CustomController {
 
 
     var resItems = context.buildFromString(sql).suggest(lineNum, columnNum).take(size)
+
+    var flag=false
+    breakable{
+      for(index<-sql){
+        if(index.equals(Character.toUpperCase(index))&&(!Character.isWhitespace(index))){
+          flag=true
+          break()
+        }
+      }
+    }
+    if(flag){
+      val sqlToLowerCase=sql.toLowerCase()
+      val resItemsToLowerCase = context.buildFromString(sqlToLowerCase).suggest(lineNum, columnNum).take(size)
+      resItems=resItems ++:resItemsToLowerCase
+      val resItemsHash= resItems.toSet
+      resItems=resItemsHash.toList
+    }
     if (!includeTableMeta) {
       resItems = resItems.map { item =>
         item.copy(metaTable = null)

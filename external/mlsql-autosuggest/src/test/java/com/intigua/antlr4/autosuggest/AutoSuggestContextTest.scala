@@ -5,8 +5,13 @@ import org.scalatest.BeforeAndAfterEach
 import tech.mlsql.autosuggest.meta.{MetaProvider, MetaTable, MetaTableColumn, MetaTableKey}
 import tech.mlsql.autosuggest.statement.{LexerUtils, SuggestItem}
 import tech.mlsql.autosuggest.{DataType, SpecialTableConst, TokenPos, TokenPosType}
-
+import tech.mlsql.autosuggest.app.AutoSuggestController
+import net.sf.json
 import scala.collection.JavaConverters._
+import scala.collection.mutable
+import net.sf.json.{JSONArray, JSONObject}
+
+import scala.collection.mutable.ListBuffer
 
 /**
  * 2/6/2020 WilliamZhu(allwefantasy@gmail.com)
@@ -192,6 +197,173 @@ class AutoSuggestContextTest extends BaseTest with BeforeAndAfterEach {
     val items = context.buildFromString(sql).suggest(4, 58)
     assert(items.map(_.name) == List("aa", "bb", "cc"))
 
+  }
+  test("Mixed case select statement test"){
+    var sql="SEle"
+    var lineNum:Int=1;
+    var columnNum:Int=5;
+    var params:mutable.HashMap[String,String]=mutable.HashMap.empty
+    params.+=("jobName"->"ce44384d-b200-4252-91b3-07b829b35e43")
+    params.+=("sql"->sql)
+    params.+=("schemaInferUrl"->"http://10.168.2.209:9003/run/script")
+    params.+=("access_token"->"mlsql")
+    params.+=("engine-name"->"mlsql-engine")
+    params.+=("skipAuth"->"false")
+    params.+=("context.__auth_client__"->"streaming.dsl.auth.client.DefaultConsoleClient")
+    params.+=("skipGrammarValidate"->"false")
+    params.+=("context.__auth_secret__"->"mlsql")
+    params.+=("tags"->"")
+    params.+=("sessionPerUser"->"true")
+    params.+=("isDebug"->"false")
+    params.+=("defaultPathPrefix"->"/mlsql/admin")
+    params.+=("callback"->"http://10.168.2.209:9002/api/job/callback")
+    params.+=("context.__default__fileserver_upload_url__"->"http://10.168.2.209:9002/api/upload_file")
+    params.+=("home"->"/mlsql")
+    params.+=("async"->"false")
+    params.+=("show_stack"->"true")
+    params.+=("columnNum"->columnNum.toString)
+    params.+=("context.__default__console_url__"->"http://10.168.2.209:9002")
+    params.+=("executeMode"->"autoSuggest")
+    params.+=("context.__default__fileserver_url__"->"http://10.168.2.209:9002/api/upload_file")
+    params.+=("owner"->"admin")
+    params.+=("context.__auth_server_url__"->"http://10.168.2.209:9002/table/auth")
+    params.+=("context.__default__include_fetch_url__"->"http://10.168.2.209:9002/api/script/include")
+    params.+=("timeout"->"172800000")
+    params.+=("lineNum"->lineNum.toString)
+    var autoSuggestController=new AutoSuggestController
+    val items=autoSuggestController.run(params.toMap)
+    var itemsList:ListBuffer[String]=ListBuffer[String]()
+    var itemsJsonArray:JSONArray=json.JSONArray.fromObject(items)
+    for(i <- 0 until itemsJsonArray.size()){
+      itemsList.+=(itemsJsonArray.getJSONObject(i).getString("name"))
+    }
+    assert(itemsList==ListBuffer("select"))
+  }
+  test("Mixed case where statement test"){
+    var sql=  "set hello=\"foo\";\nset hello=\"bar\" WH\n"
+    println(sql)
+    var lineNum:Int=2;
+    var columnNum:Int=17;
+    var params:mutable.HashMap[String,String]=mutable.HashMap.empty
+    params.+=("jobName"->"ce44384d-b200-4252-91b3-07b829b35e43")
+    params.+=("sql"->sql)
+    params.+=("schemaInferUrl"->"http://10.168.2.209:9003/run/script")
+    params.+=("access_token"->"mlsql")
+    params.+=("engine-name"->"mlsql-engine")
+    params.+=("skipAuth"->"false")
+    params.+=("context.__auth_client__"->"streaming.dsl.auth.client.DefaultConsoleClient")
+    params.+=("skipGrammarValidate"->"false")
+    params.+=("context.__auth_secret__"->"mlsql")
+    params.+=("tags"->"")
+    params.+=("sessionPerUser"->"true")
+    params.+=("isDebug"->"false")
+    params.+=("defaultPathPrefix"->"/mlsql/admin")
+    params.+=("callback"->"http://10.168.2.209:9002/api/job/callback")
+    params.+=("context.__default__fileserver_upload_url__"->"http://10.168.2.209:9002/api/upload_file")
+    params.+=("home"->"/mlsql")
+    params.+=("async"->"false")
+    params.+=("show_stack"->"true")
+    params.+=("columnNum"->columnNum.toString)
+    params.+=("context.__default__console_url__"->"http://10.168.2.209:9002")
+    params.+=("executeMode"->"autoSuggest")
+    params.+=("context.__default__fileserver_url__"->"http://10.168.2.209:9002/api/upload_file")
+    params.+=("owner"->"admin")
+    params.+=("context.__auth_server_url__"->"http://10.168.2.209:9002/table/auth")
+    params.+=("context.__default__include_fetch_url__"->"http://10.168.2.209:9002/api/script/include")
+    params.+=("timeout"->"172800000")
+    params.+=("lineNum"->lineNum.toString)
+    var autoSuggestController=new AutoSuggestController
+    val items=autoSuggestController.run(params.toMap)
+    var itemsList:ListBuffer[String]=ListBuffer[String]()
+    var itemsJsonArray:JSONArray=json.JSONArray.fromObject(items)
+    for(i <- 0 until itemsJsonArray.size()){
+      itemsList.+=(itemsJsonArray.getJSONObject(i).getString("name"))
+    }
+    assert(itemsList==List("where "))
+  }
+  test("Mixed case select、set、save statement test"){
+    var sql=  "S"
+    println(sql)
+    var lineNum:Int=1;
+    var columnNum:Int=2;
+    var params:mutable.HashMap[String,String]=mutable.HashMap.empty
+    params.+=("jobName"->"ce44384d-b200-4252-91b3-07b829b35e43")
+    params.+=("sql"->sql)
+    params.+=("schemaInferUrl"->"http://10.168.2.209:9003/run/script")
+    params.+=("access_token"->"mlsql")
+    params.+=("engine-name"->"mlsql-engine")
+    params.+=("skipAuth"->"false")
+    params.+=("context.__auth_client__"->"streaming.dsl.auth.client.DefaultConsoleClient")
+    params.+=("skipGrammarValidate"->"false")
+    params.+=("context.__auth_secret__"->"mlsql")
+    params.+=("tags"->"")
+    params.+=("sessionPerUser"->"true")
+    params.+=("isDebug"->"false")
+    params.+=("defaultPathPrefix"->"/mlsql/admin")
+    params.+=("callback"->"http://10.168.2.209:9002/api/job/callback")
+    params.+=("context.__default__fileserver_upload_url__"->"http://10.168.2.209:9002/api/upload_file")
+    params.+=("home"->"/mlsql")
+    params.+=("async"->"false")
+    params.+=("show_stack"->"true")
+    params.+=("columnNum"->columnNum.toString)
+    params.+=("context.__default__console_url__"->"http://10.168.2.209:9002")
+    params.+=("executeMode"->"autoSuggest")
+    params.+=("context.__default__fileserver_url__"->"http://10.168.2.209:9002/api/upload_file")
+    params.+=("owner"->"admin")
+    params.+=("context.__auth_server_url__"->"http://10.168.2.209:9002/table/auth")
+    params.+=("context.__default__include_fetch_url__"->"http://10.168.2.209:9002/api/script/include")
+    params.+=("timeout"->"172800000")
+    params.+=("lineNum"->lineNum.toString)
+    var autoSuggestController=new AutoSuggestController
+    val items=autoSuggestController.run(params.toMap)
+    var itemsList:ListBuffer[String]=ListBuffer[String]()
+    var itemsJsonArray:JSONArray=json.JSONArray.fromObject(items)
+    for(i <- 0 until itemsJsonArray.size()){
+      itemsList.+=(itemsJsonArray.getJSONObject(i).getString("name"))
+    }
+    assert(itemsList==List("select","save","set"))
+  }
+  test("Mixed case load statement test"){
+    var sql=  "LoA"
+    println(sql)
+    var lineNum:Int=1;
+    var columnNum:Int=2;
+    var params:mutable.HashMap[String,String]=mutable.HashMap.empty
+    params.+=("jobName"->"ce44384d-b200-4252-91b3-07b829b35e43")
+    params.+=("sql"->sql)
+    params.+=("schemaInferUrl"->"http://10.168.2.209:9003/run/script")
+    params.+=("access_token"->"mlsql")
+    params.+=("engine-name"->"mlsql-engine")
+    params.+=("skipAuth"->"false")
+    params.+=("context.__auth_client__"->"streaming.dsl.auth.client.DefaultConsoleClient")
+    params.+=("skipGrammarValidate"->"false")
+    params.+=("context.__auth_secret__"->"mlsql")
+    params.+=("tags"->"")
+    params.+=("sessionPerUser"->"true")
+    params.+=("isDebug"->"false")
+    params.+=("defaultPathPrefix"->"/mlsql/admin")
+    params.+=("callback"->"http://10.168.2.209:9002/api/job/callback")
+    params.+=("context.__default__fileserver_upload_url__"->"http://10.168.2.209:9002/api/upload_file")
+    params.+=("home"->"/mlsql")
+    params.+=("async"->"false")
+    params.+=("show_stack"->"true")
+    params.+=("columnNum"->columnNum.toString)
+    params.+=("context.__default__console_url__"->"http://10.168.2.209:9002")
+    params.+=("executeMode"->"autoSuggest")
+    params.+=("context.__default__fileserver_url__"->"http://10.168.2.209:9002/api/upload_file")
+    params.+=("owner"->"admin")
+    params.+=("context.__auth_server_url__"->"http://10.168.2.209:9002/table/auth")
+    params.+=("context.__default__include_fetch_url__"->"http://10.168.2.209:9002/api/script/include")
+    params.+=("timeout"->"172800000")
+    params.+=("lineNum"->lineNum.toString)
+    var autoSuggestController=new AutoSuggestController
+    val items=autoSuggestController.run(params.toMap)
+    var itemsList:ListBuffer[String]=ListBuffer[String]()
+    var itemsJsonArray:JSONArray=json.JSONArray.fromObject(items)
+    for(i <- 0 until itemsJsonArray.size()){
+      itemsList.+=(itemsJsonArray.getJSONObject(i).getString("name"))
+    }
+    assert(itemsList==List("load"))
   }
 }
 
