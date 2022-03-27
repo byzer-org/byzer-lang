@@ -167,7 +167,7 @@ class AutoSuggestContext(val session: SparkSession,
   private[autosuggest] def _suggest(tokenPos: TokenPos): List[SuggestItem] = {
     assert(_rawColumnNum != 0 || _rawLineNum != 0, "lineNum and columnNum should be set")
     if (isInDebugMode) {
-      logInfo("Global Pos::" + tokenPos.str + s"::${rawTokens(tokenPos.pos)}")
+      logInfo("Global Pos::" + tokenPos.str + s"::${if(tokenPos.pos == -1) null else rawTokens(tokenPos.pos)}")
     }
     if (tokenPos.pos == -1) {
       return firstWords
