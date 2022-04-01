@@ -17,6 +17,11 @@
 # limitations under the License.
 #
 
+set -e
+set -o pipefail
+
+BASE_DIR=$(cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)
+
 function exit_with_usage {
   cat << EOF
 usage: package
@@ -31,18 +36,32 @@ EOF
   exit 1
 }
 
-set -e
-set -o pipefail
+
+## Make sure packages built via mvn use the new byzer-lang naming format.
+function rename_byzer_lang_jar {
+  BYZER_LANG_TAR_PATH="$BASE_DIR/byzer-lang-${SPARK_VERSION}-${current_version}.tar.gz"
+  BYZER_LANG_UNZIP_PATH="$BASE_DIR/byzer-lang-${SPARK_VERSION}-${current_version}/"
+  echo "unzip byzer lang tar: $BYZER_LANG_TAR_PATH"
+  rm -rf "$BYZER_LANG_UNZIP_PATH" && tar -xvf "$BYZER_LANG_TAR_PATH" -C "$BASE_DIR"
+  BYZER_LANG_OLD_JAR_PATH="$BASE_DIR/byzer-lang-${SPARK_VERSION}-${current_version}/libs/streamingpro-mlsql-spark_${MLSQL_SPARK_VERSION}_${SCALA_BINARY_VERSION}-${current_version}.jar"
+  echo "the old byzer lang jar: $BYZER_LANG_OLD_JAR_PATH"
+  if [[ -f "$BYZER_LANG_OLD_JAR_PATH" ]]
+      then
+        echo "BYZER_LANG_OLD_JAR_PATH: $BYZER_LANG_OLD_JAR_PATH"
+        BYZER_LANG_NEW_JAR_PATH="$BASE_DIR/byzer-lang-${SPARK_VERSION}-${current_version}/libs/byzer-lang-${SPARK_VERSION}-${SCALA_BINARY_VERSION}-${current_version}.jar"
+        mv "$BYZER_LANG_OLD_JAR_PATH" "$BYZER_LANG_NEW_JAR_PATH"
+        rm -rf "$BYZER_LANG_TAR_PATH" && tar -cvf "$BYZER_LANG_TAR_PATH" "$BYZER_LANG_UNZIP_PATH"
+        echo "rename byzer-lang jar succeed"
+  fi
+}
 
 if [[ $@ == *"help"* ]]; then
   exit_with_usage
 fi
 
-SELF=$(cd $(dirname $0) && pwd)
-cd $SELF
-cd ..
+cd "$BASE_DIR"
 
-MLSQL_SPARK_VERSION=${MLSQL_SPARK_VERSION:-2.4}
+MLSQL_SPARK_VERSION=${MLSQL_SPARK_VERSION:-3.0}
 DRY_RUN=${DRY_RUN:-false}
 DISTRIBUTION=${DISTRIBUTION:-false}
 OSS_ENABLE=${OSS_ENABLE:-false}
@@ -61,7 +80,7 @@ for env in MLSQL_SPARK_VERSION DRY_RUN DISTRIBUTION; do
   fi
 done
 
-if [[ ${ENABLE_CHINESE_ANALYZER} = true && ! -f $SELF/../dev/ansj_seg-5.1.6.jar  && ! -f $SELF/../dev/nlp-lang-1.7.8.jar ]]
+if [[ ${ENABLE_CHINESE_ANALYZER} = true && ! -f $BASE_DIR/dev/ansj_seg-5.1.6.jar  && ! -f $BASE_DIR/dev/nlp-lang-1.7.8.jar ]]
 then
   echo "When ENABLE_CHINESE_ANALYZER=true, ansj_seg-5.1.6.jar && nlp-lang-1.7.8.jar should be in ./dev/"
   exit 1
@@ -81,6 +100,9 @@ esac
 echo ${machine}
 
 current_version=$(cat pom.xml|grep -e '<version>.*</version>' | head -n 1 | tail -n 1 | cut -d'>' -f2 | cut -d '<' -f1)
+
+echo "Parse the version of byzer lang, the version is:""$current_version"
+
 MLSQL_VERSION_FILE="./streamingpro-core/src/main/java/tech/mlsql/core/version/MLSQLVersion.scala"
 
 if [[ "${machine}" == "Linux" ]]
@@ -111,10 +133,13 @@ fi
 
 
 if [[ "$MLSQL_SPARK_VERSION" == "2.4" ]]; then
-  BASE_PROFILES="$BASE_PROFILES -Pscala-2.11"
+  SCALA_BINARY_VERSION="2.11"
+  SPARK_VERSION="2.4.3"
 else
-  BASE_PROFILES="$BASE_PROFILES -Pscala-2.12"
+  SCALA_BINARY_VERSION="2.12"
+  SPARK_VERSION="3.1.1"
 fi
+BASE_PROFILES="$BASE_PROFILES -Pscala-$SCALA_BINARY_VERSION"
 
 BASE_PROFILES="$BASE_PROFILES -Pspark-$MLSQL_SPARK_VERSION.0 -Pstreamingpro-spark-$MLSQL_SPARK_VERSION.0-adaptor"
 
@@ -167,4 +192,4 @@ mvn clean ${COMMAND}  ${SKIPTEST} ${BASE_PROFILES}  ${TESTPROFILE}
 EOF
 mvn clean ${COMMAND}  ${SKIPTEST} ${BASE_PROFILES} ${TESTPROFILE}
 fi
-
+rename_byzer_lang_jar

@@ -19,8 +19,8 @@ you have the uber-jar of mlsql placed in
 
 for exmaple:
 
---jars ./streamingpro-mlsql-spark_2.x-x.x.x-SNAPSHOT.jar
---conf "spark.executor.extraClassPath=streamingpro-mlsql-spark_2.x-x.x.x-SNAPSHOT.jar"
+--jars ./byzer-lang-3.1.1-2.x-x.x.x-SNAPSHOT.jar
+--conf "spark.executor.extraClassPath=byzer-lang-3.1.1-2.12-x.x.x-SNAPSHOT.jar"
 
 Otherwise the executor will
 fail to start and the whole application will fails.

@@ -45,7 +45,7 @@ object DockerUtils {
   private val LOG: Logger = LoggerFactory.getLogger(DockerUtils.getClass)
 
   /**
-   * e.g. streamingpro-mlsql-spark_3.0_2.12-2.3.0-SNAPSHOT.jar
+   * e.g. byzer-lang-3.1.1-2.12-2.3.0-SNAPSHOT.jar
    *
    * @return
    */
@@ -59,7 +59,7 @@ object DockerUtils {
       } else {
         "2.12"
       }
-      base = String.format("streamingpro-mlsql-spark_%s_%s-%s.jar", getSparkShortVersion, scalaVersion, mlsqlVersion)
+      base = String.format("byzer-lang-%s-%s-%s.jar", getSparkShortVersion, scalaVersion, mlsqlVersion)
     }
     base
   }
@@ -125,7 +125,7 @@ object DockerUtils {
     if (base == null) {
       val mlsqlVersion: String = MLSQLVersion.version().version
       val sparkVersion: String = getSparkShortVersion
-      base = String.format("mlsql-engine_%s-%s", sparkVersion, mlsqlVersion)
+      base = String.format("byzer-lang-%s-%s", sparkVersion, mlsqlVersion)
     }
     base
   }

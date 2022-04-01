@@ -118,7 +118,7 @@ object TestManager extends Logging {
           case Some(version) if version.nonEmpty => "-" + version
           case _ => ""
         }
-        logInfo(s"Failed to execute goal ${testCase.name} on project ${pn}-${sparkVersion}${scalaVersion}:mlsql-engine_${sparkVersion}_${mlsqlVersion}                 [$index/$failedCaseCount]")
+        logInfo(s"Failed to execute goal ${testCase.name} on project ${pn}-${sparkVersion}-${scalaVersion}:byzer-lang-${sparkVersion}-${mlsqlVersion}                 [$index/$failedCaseCount]")
         logInfo(s"sql: ${testCase.sql}")
         logInfo(s"Here is the test failed stack trace: $stackTrace")
         index += 1

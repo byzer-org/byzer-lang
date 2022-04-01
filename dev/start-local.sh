@@ -41,7 +41,7 @@ fi
 
 JARS=$(echo ${MLSQL_HOME}/libs/*.jar | tr ' ' ',')
 EXT_JARS=$(echo ${MLSQL_HOME}/libs/*.jar | tr ' ' ':')
-MAIN_JAR=$(ls ${MLSQL_HOME}/libs|grep 'streamingpro-mlsql')
+MAIN_JAR=$(ls ${MLSQL_HOME}/libs|grep 'byzer-lang')
 export DRIVER_MEMORY=${DRIVER_MEMORY:-2g}
 
 echo

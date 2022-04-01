@@ -66,7 +66,6 @@ class FunctionsTest extends AnyFlatSpec with should.Matchers {
     when(reqMock.bodyString(anyString, ArgumentMatchers.any())).thenReturn(reqMock)
     // Post bodyForm
     when(reqMock.bodyForm(anyList(), ArgumentMatchers.any())).thenReturn(reqMock)
-    responseMock willBe answered by reqMock.execute
   }
 
   "A http GET request" should "return then mock result" in {
