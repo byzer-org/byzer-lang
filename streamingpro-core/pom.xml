@@ -5,7 +5,7 @@
     <parent>
         <artifactId>streamingpro_2.12</artifactId>
         <groupId>tech.mlsql</groupId>
-        <version>2.3.0-SNAPSHOT</version>
+        <version>2.2.2</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <properties>
@@ -14,7 +14,6 @@
 <!--         <scala.binary.version>2.11</scala.binary.version> -->
 <!--         <spark.version>2.4.3</spark.version> -->
 <!--         <spark.bigversion>2.4</spark.bigversion> -->
-<!--         <scalatest.version>3.0.8</scalatest.version> -->
         <!-- spark 2.4 end -->
 
         <!-- spark 3.0 start -->
@@ -22,7 +21,6 @@
         <scala.binary.version>2.12</scala.binary.version> 
         <spark.version>3.1.1</spark.version> 
         <spark.bigversion>3.0</spark.bigversion> 
-        <scalatest.version>3.0.8</scalatest.version>
         <!-- spark 3.0 end -->
     </properties>
     <artifactId>streamingpro-core-${spark.bigversion}_${scala.binary.version}</artifactId>
@@ -139,10 +137,10 @@
                     <groupId>tech.mlsql</groupId>
                     <artifactId>common-utils_${scala.binary.version}</artifactId>
                 </exclusion>
-<!--                <exclusion>-->
-<!--                    <groupId>com.fasterxml.jackson.core</groupId>-->
-<!--                    <artifactId>jackson-core</artifactId>-->
-<!--                </exclusion>-->
+                <!--                <exclusion>-->
+                <!--                    <groupId>com.fasterxml.jackson.core</groupId>-->
+                <!--                    <artifactId>jackson-core</artifactId>-->
+                <!--                </exclusion>-->
             </exclusions>
         </dependency>
         <dependency>
@@ -165,26 +163,26 @@
         <dependency>
             <groupId>org.scalatest</groupId>
             <artifactId>scalatest_${scala.binary.version}</artifactId>
-            <version>${scalatest.version}</version>
+            <version>3.2.11</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-junit-jupiter</artifactId>
-            <version>3.8.0</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-core</artifactId>
-            <version>3.8.0</version>
+            <version>4.3.1</version>
             <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>org.mockito</groupId>
+            <artifactId>mockito-scala-scalatest_${scala.binary.version}</artifactId>
+            <version>1.17.5</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
             <artifactId>mockito-inline</artifactId>
-            <version>3.8.0</version>
+            <version>4.3.1</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

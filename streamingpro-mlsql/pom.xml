@@ -5,29 +5,29 @@
     <parent>
         <artifactId>streamingpro_2.12</artifactId>
         <groupId>tech.mlsql</groupId>
-        <version>2.3.0-SNAPSHOT</version>
+        <version>2.2.2</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <properties>
         <!-- spark 2.4 start -->
-<!--         <scala.version>2.11.12</scala.version> -->
-<!--         <scala.binary.version>2.11</scala.binary.version> -->
-<!--         <spark.version>2.4.3</spark.version> -->
-<!--         <spark.bigversion>2.4</spark.bigversion> -->
-<!--         <scalatest.version>3.0.3</scalatest.version> -->
+        <!--         <scala.version>2.11.12</scala.version> -->
+        <!--         <scala.binary.version>2.11</scala.binary.version> -->
+        <!--         <spark.version>2.4.3</spark.version> -->
+        <!--         <spark.bigversion>2.4</spark.bigversion> -->
+        <!--         <scalatest.version>3.0.3</scalatest.version> -->
         <!-- spark 2.4 end -->
 
         <!-- spark 3.0 start -->
-        <scala.version>2.12.10</scala.version> 
-        <scala.binary.version>2.12</scala.binary.version> 
-        <spark.version>3.1.1</spark.version> 
-        <spark.bigversion>3.0</spark.bigversion> 
-        <scalatest.version>3.0.3</scalatest.version> 
+        <scala.version>2.12.10</scala.version>
+        <scala.binary.version>2.12</scala.binary.version>
+        <spark.version>3.1.1</spark.version>
+        <spark.bigversion>3.0</spark.bigversion>
+        <scalatest.version>3.0.3</scalatest.version>
         <!-- spark 3.0 end -->
     </properties>
     <artifactId>streamingpro-mlsql-spark_${spark.bigversion}_${scala.binary.version}</artifactId>
     <profiles>
-        
+
         <profile>
             <id>aliyun-oss</id>
             <properties>
@@ -42,7 +42,7 @@
 
             </dependencies>
         </profile>
-        
+
         <profile>
             <id>shade</id>
             <build>
@@ -298,7 +298,7 @@
                     <artifactId>mlsql-healthy-${spark.bigversion}_${scala.binary.version}</artifactId>
                     <version>${project.parent.version}</version>
                 </dependency>
-                
+
                 <dependency>
                     <groupId>org.apache.spark</groupId>
                     <artifactId>spark-streaming-kafka-0-8_${scala.binary.version}</artifactId>
@@ -331,9 +331,9 @@
         <profile>
             <id>streamingpro-spark-3.0.0-adaptor</id>
 
-                <activation>
-                    <activeByDefault>true</activeByDefault>
-                </activation>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
             <dependencies>
 
                 <dependency>
@@ -481,7 +481,7 @@
             <version>${kylin-jdbc.version}</version>
         </dependency>
 
-        
+
         <dependency>
             <groupId>tech.mlsql</groupId>
             <artifactId>common-utils_${scala.binary.version}</artifactId>
@@ -547,18 +547,6 @@
             <version>${project.parent.version}</version>
         </dependency>
 
-        <dependency>
-            <groupId>org.scalactic</groupId>
-            <artifactId>scalactic_${scala.binary.version}</artifactId>
-            <version>3.0.0</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.scalatest</groupId>
-            <artifactId>scalatest_${scala.binary.version}</artifactId>
-            <version>3.0.0</version>
-            <scope>test</scope>
-        </dependency>
 
         <dependency>
             <groupId>org.apache.spark</groupId>
@@ -718,6 +706,32 @@
                     <artifactId>netty</artifactId>
                 </exclusion>
             </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>org.scalatest</groupId>
+            <artifactId>scalatest_${scala.binary.version}</artifactId>
+            <version>${scalatest.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-junit-jupiter</artifactId>
+            <version>3.8.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>3.8.0</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-inline</artifactId>
+            <version>3.8.0</version>
+            <scope>test</scope>
         </dependency>
 
 

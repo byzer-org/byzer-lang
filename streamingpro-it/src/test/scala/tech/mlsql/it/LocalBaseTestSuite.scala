@@ -41,25 +41,25 @@ trait LocalBaseTestSuite extends FunSuite with SparkOperationUtil with BeforeAnd
     })
   }
 
+  def setupWorkingDirectory(): Unit = {
+    val homeDir = new File("src/test/home")
+    if (!homeDir.exists()) {
+      homeDir.mkdirs()
+    }
+    home = homeDir.getAbsolutePath
+  }
+
+  def copyDataToUserHome(user: String): Unit = {
+    val userHomeDir = new File(home, user)
+    val dataDir = new File(dataDirPath)
+
+    if (!userHomeDir.exists()) {
+      userHomeDir.mkdirs()
+    }
+    FileUtils.copyDirectory(dataDir, userHomeDir)
+  }
+
   override def beforeAll(): Unit = {
-    def setupWorkingDirectory(): Unit = {
-      val homeDir = new File("src/test/home")
-      if (!homeDir.exists()) {
-        homeDir.mkdirs()
-      }
-      home = homeDir.getAbsolutePath
-    }
-
-    def copyDataToUserHome(user: String): Unit = {
-      val userHomeDir = new File(home, user)
-      val dataDir = new File(dataDirPath)
-
-      if (!userHomeDir.exists()) {
-        userHomeDir.mkdirs()
-      }
-      FileUtils.copyDirectory(dataDir, userHomeDir)
-    }
-
     setupWorkingDirectory()
     setupRunParams()
     copyDataToUserHome(user)

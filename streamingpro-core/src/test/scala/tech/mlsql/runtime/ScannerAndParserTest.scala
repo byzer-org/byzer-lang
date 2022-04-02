@@ -1,6 +1,7 @@
 package tech.mlsql.runtime
 
-import org.scalatest.FunSuite
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should
 import tech.mlsql.lang.cmd.compile.internal.gc._
 
 import scala.collection.mutable.ArrayBuffer
@@ -8,13 +9,13 @@ import scala.collection.mutable.ArrayBuffer
 /**
  * 2/10/2020 WilliamZhu(allwefantasy@gmail.com)
  */
-class ScannerAndParserTest extends FunSuite {
+class ScannerAndParserTest extends AnyFlatSpec with should.Matchers {
 
   def want(items: List[Token], index: Int, t: Scanner.TokenType, str: String) = {
     assert(items(index).t == t && items(index).text == str)
   }
 
-  test("tokenizer") {
+  "A tokenizer" should "return then mock result" in{
     val items = Tokenizer.tokenize(""" :jack=="jack" and :bj>=24 """)
     want(items, 0, Scanner.Variable, ":jack")
     want(items, 1, Scanner.Eql, "==")
@@ -26,7 +27,7 @@ class ScannerAndParserTest extends FunSuite {
 
   }
 
-  test("tokenizer2") {
+  "A tokenizer2" should "return then mock result" in{
     val items = Tokenizer.tokenize("""select split(:a,",") as :jack;""")
     want(items, 0, Scanner._SELECT, "select")
     want(items, 1, Scanner.Ident, "split")
@@ -40,7 +41,7 @@ class ScannerAndParserTest extends FunSuite {
     //want(items,9,Scanner.Semi,";")
   }
 
-  test("ast") {
+  "An ast" should "return then mock result" in{
     val scanner = new Scanner(""" :jack=="jack" and :bj>=24 """)
     val tokenizer = new Tokenizer(scanner)
     val parser = new StatementParser(tokenizer)
@@ -51,7 +52,7 @@ class ScannerAndParserTest extends FunSuite {
 
   }
 
-  test("ast2") {
+  "An ast2" should "return then mock result" in{
     val scanner = new Scanner(""" 1 + 2 * 3""")
     val tokenizer = new Tokenizer(scanner)
     val parser = new StatementParser(tokenizer)
@@ -60,7 +61,7 @@ class ScannerAndParserTest extends FunSuite {
 
   }
 
-  test("ast4") {
+  "An ast4" should "return then mock result" in{
     val scanner = new Scanner(""" (:jack=="jack") and :bj>=24 """)
     val tokenizer = new Tokenizer(scanner)
     val parser = new StatementParser(tokenizer)
@@ -71,7 +72,7 @@ class ScannerAndParserTest extends FunSuite {
 
   }
 
-  test("ast5") {
+  "An ast5" should "return then mock result" in{
     val scanner = new Scanner(""":dj == "" ; (:jack=="jack") and :bj>=24 """)
     val tokenizer = new Tokenizer(scanner)
     val parser = new StatementParser(tokenizer)
@@ -82,7 +83,7 @@ class ScannerAndParserTest extends FunSuite {
 
   }
 
-  test("ast6") {
+  "An ast6" should "return then mock result" in{
     val scanner = new Scanner("""select split(:a,",") as :jack; (:jack=="jack") and :bj>=24 """)
     val tokenizer = new Tokenizer(scanner)
     val parser = new StatementParser(tokenizer)
@@ -100,7 +101,7 @@ class ScannerAndParserTest extends FunSuite {
   }
 
 
-  test("ast8") {
+  "An ast8" should "return then mock result" in{
     val scanner = new Scanner("""select split(:a,",")[0] as :jack """)
     val tokenizer = new Tokenizer(scanner)
     val parser = new StatementParser(tokenizer)
@@ -116,7 +117,7 @@ class ScannerAndParserTest extends FunSuite {
 
   }
 
-  test("ast9") {
+  "An ast9" should "return then mock result" in{
     val scanner = new Scanner("""select :table[0] as :jack """)
     val tokenizer = new Tokenizer(scanner)
     val parser = new StatementParser(tokenizer)
@@ -128,7 +129,7 @@ class ScannerAndParserTest extends FunSuite {
 
   }
 
-  test("ast10") {
+  "An ast10" should "return then mock result" in{
     val scanner = new Scanner(
       """
         |select split(:a,",")[0] as :jack,"" as :jack1;
@@ -153,7 +154,7 @@ class ScannerAndParserTest extends FunSuite {
 
   }
 
-  test("ast11") {
+  "An ast11" should "return then mock result" in{
     val scanner = new Scanner(
       """
         |select cast(:a as int) as :jack;
@@ -172,7 +173,7 @@ class ScannerAndParserTest extends FunSuite {
 
   }
 
-  test("ast12") {
+  "An ast12" should "return then mock result" in{
     val scanner = new Scanner(
       """
         |split(:a,",")[0] == "jack"
@@ -197,7 +198,7 @@ class ScannerAndParserTest extends FunSuite {
     parser
   }
 
-  test("ast13") {
+  "An ast13" should "return then mock result" in{
     val parser = buildParser(
       """
         |split(:a,",")[0] = "jack"
@@ -208,7 +209,7 @@ class ScannerAndParserTest extends FunSuite {
     assert(thrown.getMessage == "Error[2:18]: operator is required instead of '=' ")
   }
 
-  test("ast14") {
+  "An ast14" should "return then mock result" in{
     val parser = buildParser(
       " split(:a,\",)[0] = \"jack\" ")
 
@@ -218,7 +219,7 @@ class ScannerAndParserTest extends FunSuite {
     assert(thrown.getMessage == "Error[1:26]: literal not terminated")
   }
 
-  test("texttemplate") {
+  "An text template" should "return then mock result" in{
     val str = "select :{:jack} as :name as b;"
     val textTemplate = new TextTemplate(Map("jack" -> "wow"), str)
     val tokens = textTemplate.parse

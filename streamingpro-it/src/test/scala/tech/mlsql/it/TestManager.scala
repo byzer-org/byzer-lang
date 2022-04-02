@@ -1,11 +1,12 @@
 package tech.mlsql.it
 
-import java.io.File
 import org.apache.commons.io.FileUtils
+import org.apache.commons.lang3.exception.ExceptionUtils
 import org.apache.spark.SparkCoreVersion
 import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.core.version.MLSQLVersion
 
+import java.io.File
 import scala.collection.mutable.ListBuffer
 
 object TestManager extends Logging {
@@ -60,21 +61,7 @@ object TestManager extends Logging {
 
 
   def recordError(testCase: TestCase, t: Throwable): Unit = {
-    def getRootCause(t: Throwable): String = {
-      var t1 = t
-      if (t1 == null) return ""
-      while (t1 != null) {
-        if (t1.getCause == null) {
-          var msg = t1.getMessage
-          if (msg == null) msg = t1.toString
-          return msg
-        }
-        t1 = t1.getCause
-      }
-      t1.getMessage
-    }
-
-    recordError(testCase, getRootCause(t))
+    recordError(testCase, ExceptionUtils.getRootCause(t))
     t.printStackTrace()
   }
 
@@ -92,6 +79,16 @@ object TestManager extends Logging {
     val compareResult: (Boolean, String) = comparator.compare(testCase, result, exception)
     if (!compareResult._1) {
       recordError(testCase, compareResult._2)
+    }
+  }
+
+  def acceptRest(testCase: TestCase, status: Int, result: String, exception: Exception): Unit = {
+    if (status != 200) {
+      if (exception != null) {
+        recordError(testCase, result + "\n" + ExceptionUtils.getMessage(exception))
+      } else {
+        recordError(testCase, result)
+      }
     }
   }
 

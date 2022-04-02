@@ -1,10 +1,5 @@
 package tech.mlsql.datasource.impl
 
-import java.net.URLEncoder
-import java.nio.charset.Charset
-import java.util.UUID
-
-import com.jayway.jsonpath.JsonPath
 import org.apache.http.client.fluent.{Form, Request}
 import org.apache.http.entity.ContentType
 import org.apache.http.entity.mime.{HttpMultipartMode, MultipartEntityBuilder}
@@ -16,22 +11,26 @@ import org.apache.spark.sql.{DataFrame, DataFrameReader, DataFrameWriter, Row, S
 import streaming.core.datasource._
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
-import streaming.rest.RestUtils
+import streaming.log.WowLog
 import tech.mlsql.common.form._
 import tech.mlsql.common.utils.distribute.socket.server.JavaUtils
 import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.common.utils.path.PathFun
+import tech.mlsql.crawler.RestUtils.executeWithRetrying
 import tech.mlsql.datasource.helper.rest.PageStrategyDispatcher
 import tech.mlsql.dsl.adaptor.DslTool
 import tech.mlsql.tool.{HDFSOperatorV2, Templates2}
 
+import java.net.URLEncoder
+import java.nio.charset.Charset
+import java.util.UUID
 import scala.collection.mutable.ArrayBuffer
 
 class MLSQLRest(override val uid: String) extends MLSQLSource
   with MLSQLSink
   with MLSQLSourceInfo
   with MLSQLSourceConfig
-  with MLSQLRegistry with DslTool with WowParams with Logging {
+  with MLSQLRegistry with DslTool with WowParams with Logging with WowLog {
 
 
   def this() = this(BaseParams.randomUID())
@@ -45,7 +44,7 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
    * and `header.content-type`="application/json"
    *
    * and `config.page.next`="http://mlsql.tech/api?cursor={0}&wow={1}"
-   * and `config.page.skip-params`="true" 
+   * and `config.page.skip-params`="true"
    * and `config.page.values`="$.path,$.path2" -- json path
    * and `config.page.interval`="10ms"
    * and `config.page.retry`="3"
@@ -70,10 +69,12 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
    * run jsonTable AS JsonExpandExt.`` WHERE inputCol="jsonColumn" AS table_3;
    *
    * select * from table_3 as output;
-   **/
+   * */
   override def load(reader: DataFrameReader, config: DataSourceConfig): DataFrame = {
     val skipParams = config.config.getOrElse("config.page.skip-params", "false").toBoolean
     val retryInterval = JavaUtils.timeStringAsMs(config.config.getOrElse("config.retry.interval", "1s"))
+
+    val debug = config.config.getOrElse("config.debug", "false").toBoolean
 
     (config.config.get("config.page.next"), config.config.get("config.page.values")) match {
       case (Some(urlTemplate), Some(jsonPath)) =>
@@ -83,9 +84,11 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
         var count = 1
 
         val pageStrategy = PageStrategyDispatcher.get(config.config)
-
-
-        val (_, firstDfOpt) = RestUtils.executeWithRetrying[(Int, Option[DataFrame])](maxTries)((() => {
+        if (debug) {
+          logInfo(format(s"Started to get Page ${count} ${config.path} "))
+        }
+        val firstPageFetchTime = System.currentTimeMillis()
+        val (_, firstDfOpt) = executeWithRetrying[(Int, Option[DataFrame])](maxTries)((() => {
           try {
             val tempDF = _http(config.path, config.config, false, config.df.get.sparkSession)
             val row = tempDF.select(F.col("content").cast(StringType), F.col("status")).head
@@ -114,26 +117,38 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
 
         val uuid = UUID.randomUUID().toString.replaceAll("-", "")
         val context = ScriptSQLExec.context()
-        val tmpTablePath = resourceRealPath(context.execListener, Option(context.owner), PathFun("__tmp__").add(uuid).toPath)
+        val tmpTablePath = resourceRealPath(context.execListener, Option(context.owner),
+          PathFun("__tmp__").add("rest").add(uuid).toPath)
         context.execListener.addEnv(classOf[MLSQLRest].getName, tmpTablePath)
         firstDf.write.format("parquet").mode(SaveMode.Append).save(tmpTablePath)
+
+        if (debug) {
+          logInfo(format(s"End to get Page ${count} ${config.path} Consume:${System.currentTimeMillis() - firstPageFetchTime}ms"))
+        }
 
         while (count < maxSize) {
           Thread.sleep(pageInterval)
           count += 1
+
           val row = firstDf.select(F.col("content").cast(StringType), F.col("status")).head
           val content = row.getString(0)
+          val status = row.getInt(1)
+          val hasNextPage = pageStrategy.hasNextPage(Option(content))
 
-          val pageValues = pageStrategy.pageValues(Option(content))
-
-
-          val shouldStop = pageValues.size == 0 || pageValues.filter(value => value == null || value.isEmpty).size > 0
-          if (shouldStop) {
+          if (status != 200 || !hasNextPage) {
+            if (debug) {
+              logInfo(s"Stop paging. The last Page ${count - 1} ${config.path} status: ${status} hasNextPage: ${hasNextPage} ")
+            }
             count = maxSize
           } else {
             val newUrl = pageStrategy.pageUrl(Option(content))
-            RestUtils.executeWithRetrying[(Int, Option[DataFrame])](maxTries)((() => {
+            val tempTime = System.currentTimeMillis()
+            executeWithRetrying[(Int, Option[DataFrame])](maxTries)((() => {
               try {
+                if (debug) {
+                  logInfo(format(s"Started get Page ${count} ${newUrl}"))
+                }
+
                 val tempDF = _http(newUrl, config.config, skipParams, config.df.get.sparkSession)
                 val row = tempDF.select(F.col("content").cast(StringType), F.col("status")).head
                 firstDf = tempDF
@@ -153,8 +168,17 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
               },
               failResp => logInfo(s"Fail request ${newUrl} failed after ${maxTries} attempts. the last response status is: ${failResp._1}. ")
             )
-            firstDf.write.format("parquet").mode(SaveMode.Append).save(tmpTablePath)
-            pageStrategy.nexPage
+
+            val row = firstDf.select(F.col("content").cast(StringType), F.col("status")).head
+            val status = row.getInt(1)
+            //page should be 200 otherwise should not save in parquet file
+            if (status == 200) {
+              firstDf.write.format("parquet").mode(SaveMode.Append).save(tmpTablePath)
+            }
+            pageStrategy.nexPage(Option(content))
+            if (debug) {
+              logInfo(format(s"End to get Page ${count} ${newUrl} Consume: ${System.currentTimeMillis() - tempTime}"))
+            }
           }
 
         }
@@ -165,7 +189,7 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
         val maxTries = config.config.getOrElse("config.retry", config.config.getOrElse("config.page.retry", "3")).toInt
 
 
-        val (_, resultDF) = RestUtils.executeWithRetrying[(Int, Option[DataFrame])](maxTries)((() => {
+        val (_, resultDF) = executeWithRetrying[(Int, Option[DataFrame])](maxTries)((() => {
           try {
             val tempDF = _http(config.path, config.config, false, config.df.get.sparkSession)
             val row = tempDF.select(F.col("content").cast(StringType), F.col("status")).head

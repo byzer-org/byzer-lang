@@ -241,4 +241,11 @@ trait SparkOperationUtil {
       }
     }
   }
+
+  def tryWithResource[A <: {def close(): Unit}, B](a: A)(f: A => B): B = {
+    try f(a)
+    finally {
+      if (a != null) a.close()
+    }
+  }
 }

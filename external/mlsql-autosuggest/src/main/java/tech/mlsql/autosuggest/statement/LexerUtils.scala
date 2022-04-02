@@ -8,6 +8,7 @@ import tech.mlsql.autosuggest.dsl.{MLSQLTokenTypeWrapper, TokenTypeWrapper}
 import tech.mlsql.autosuggest.{AutoSuggestContext, TokenPos, TokenPosType}
 
 import scala.collection.JavaConverters._
+import scala.collection.mutable.ListBuffer
 
 /**
  * 1/6/2020 WilliamZhu(allwefantasy@gmail.com)
@@ -59,27 +60,30 @@ object LexerUtils {
      * load[cursor]         in token
      */
 
-    if (tokens.size == 0) {
+    if (tokens.isEmpty) {
       return TokenPos(-1, TokenPosType.NEXT, -1)
     }
-
+    val _lastToken: Token = tokens.last
+    var _lastTokenIndex = 0
+    var _lastLineHeadToken: Token = _lastToken
+    var _lastLineHeadTokenNum: Int = -1
+    var _lastLineHeadTokenIndex = 0
     val oneLineTokens = tokens.zipWithIndex.filter { case (token, index) =>
+      _lastTokenIndex = index
+      if (_lastLineHeadTokenNum != token.getLine) {
+        _lastLineHeadTokenIndex = index
+        _lastLineHeadToken = token
+        _lastLineHeadTokenNum = token.getLine
+      }
       token.getLine == lineNum
     }
-
     val firstToken = oneLineTokens.headOption match {
       case Some(head) => head
-      case None =>
-        tokens.zipWithIndex.filter { case (token, index) =>
-          token.getLine == lineNum - 1
-        }.head
+      case None => (_lastLineHeadToken, _lastLineHeadTokenIndex)
     }
     val lastToken = oneLineTokens.lastOption match {
       case Some(last) => last
-      case None =>
-        tokens.zipWithIndex.filter { case (token, index) =>
-          token.getLine == lineNum + 1
-        }.last
+      case None => (_lastToken, _lastTokenIndex)
     }
 
     if (colNum < firstToken._1.getCharPositionInLine) {
@@ -134,27 +138,30 @@ object LexerUtils {
      * load[cursor]         in token
      */
 
-    if (tokens.size == 0) {
+    if (tokens.isEmpty) {
       return TokenPos(-1, TokenPosType.NEXT, -1)
     }
-
+    val _lastToken: Token = tokens.last
+    var _lastTokenIndex = 0
+    var _lastLineHeadToken: Token = _lastToken
+    var _lastLineHeadTokenNum: Int = -1
+    var _lastLineHeadTokenIndex = 0
     val oneLineTokens = tokens.zipWithIndex.filter { case (token, index) =>
+      _lastTokenIndex = index
+      if (_lastLineHeadTokenNum != token.getLine) {
+        _lastLineHeadTokenIndex = index
+        _lastLineHeadToken = token
+        _lastLineHeadTokenNum = token.getLine
+      }
       token.getLine == lineNum
     }
-
     val firstToken = oneLineTokens.headOption match {
       case Some(head) => head
-      case None =>
-        tokens.zipWithIndex.filter { case (token, index) =>
-          token.getLine == lineNum - 1
-        }.head
+      case None => (_lastLineHeadToken, _lastLineHeadTokenIndex)
     }
     val lastToken = oneLineTokens.lastOption match {
       case Some(last) => last
-      case None =>
-        tokens.zipWithIndex.filter { case (token, index) =>
-          token.getLine == lineNum + 1
-        }.last
+      case None => (_lastToken, _lastTokenIndex)
     }
 
     if (colNum < firstToken._1.getCharPositionInLine) {
@@ -194,6 +201,7 @@ object LexerUtils {
 
     }.filterNot(_.pos == -2).head
   }
+
 
   def isInWhereContext(tokens: List[Token], tokenPos: Int): Boolean = {
     if (tokenPos < 1) return false
@@ -267,3 +275,4 @@ object LexerUtils {
     }.filter(_ != null)
   }
 }
+

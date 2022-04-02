@@ -1,0 +1,23 @@
+--%exception=java.lang.RuntimeException
+--%msg=java.lang.ClassFormatError: Truncated class file
+
+
+REGISTER ScriptUDF.`` AS echoFun WHERE
+and lang="java"
+and udfType="udf"
+and className="Test"
+and methodName="test"
+and code='''
+import java.util.HashMap;
+import java.util.Map;
+public class Test {
+    public Map<String, String> test(String s) {
+      Map m = new HashMap<>();
+      m.put(s, s);
+      return m
+  }
+}
+''';
+
+select echoFun("a") as output;
+

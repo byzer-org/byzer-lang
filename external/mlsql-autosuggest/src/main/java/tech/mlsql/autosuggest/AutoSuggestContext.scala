@@ -165,7 +165,7 @@ class AutoSuggestContext(val session: SparkSession,
    * We need to convert it to the relative pos in every statement
    */
   private[autosuggest] def _suggest(tokenPos: TokenPos): List[SuggestItem] = {
-    assert(_rawColumnNum != 0 || _rawColumnNum != 0, "lineNum and columnNum should be set")
+    assert(_rawColumnNum != 0 || _rawLineNum != 0, "lineNum and columnNum should be set")
     if (isInDebugMode) {
       logInfo("Global Pos::" + tokenPos.str + s"::${rawTokens(tokenPos.pos)}")
     }
