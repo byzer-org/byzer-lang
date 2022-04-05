@@ -20,6 +20,7 @@ import tech.mlsql.dsl.adaptor.DslTool
 import tech.mlsql.tool.{HDFSOperatorV2, Templates2}
 
 import java.nio.charset.Charset
+import scala.annotation.tailrec
 import scala.collection.JavaConversions._
 import scala.util.control.Breaks.{break, breakable}
 
@@ -184,23 +185,23 @@ object RestUtils extends Logging with WowLog {
   }
 
   def executeWithRetrying[T](maxTries: Int)(function: => T, checker: T => Boolean, failed: T => Unit): T = {
-    var result: T = function
-    if (checker(result)) {
-      return result
-    }
+    _executeWithRetrying[T]( Math.max(maxTries -1, 0), 0)(function, checker, failed)
+  }
 
-    breakable {
-      for (i <- 0 until maxTries) {
-        result = function
-        if (checker(result)) {
-          break
-        }
-        if (i == maxTries - 1) {
-          failed(result)
-        }
-      }
+  @tailrec
+  private def _executeWithRetrying[T](maxTries: Int, curTry: Int)(function: => T, checker: T => Boolean, failed: T => Unit): T = {
+    assert( curTry <= maxTries )
+    val result = function
+    if( checker(result ) ) {
+      result
     }
-    result
+    else if( curTry < maxTries ) {
+      _executeWithRetrying(maxTries, curTry + 1)(function, checker, failed)
+    }
+    else {
+      failed(result)
+      result
+    }
   }
 
   def convertResponse(httpResponse: HttpResponse, urlString: String): SResponse =

@@ -125,7 +125,7 @@ class MLSQLRestTest extends FunSuite with SparkOperationUtil with BasicMLSQLConf
             ), Option(session.emptyDataFrame)
           ))
           val rows = res.collect()
-          // here why there are two
+
           assertEquals(1, rows.length)
           assertEquals(rows.head.getInt(1), 200)
         }
@@ -232,4 +232,127 @@ class MLSQLRestTest extends FunSuite with SparkOperationUtil with BasicMLSQLConf
     }
 
   }
+
+  test( "Default page strategy should stop if page.limit is reached") {
+    withBatchContext( setupBatchContext(batchParams, null)) { runtime : SparkRuntime =>
+      val (reqStatic, reqMock) = mockStaticRequest
+      val responseMock = mock(classOf[Response])
+      tryWithResource(reqStatic) {
+        when(responseMock.returnResponse()).
+          thenReturn(buildResp(
+            """
+              |{"code":200,"data":{"page_token":"1"}}
+              |""".stripMargin)).
+          thenReturn(buildResp(
+            """
+              |{"code":200,"data":{"page_token":"2"}}
+              |""".stripMargin)).
+          thenReturn(buildResp(
+            """
+              |{"code":200,"data":{"page_token":"3"}}
+              |""".stripMargin))
+        when(reqMock.execute()).thenReturn(responseMock)
+
+        reqStatic => {
+          autoGenerateContext(runtime)
+          val rest = new MLSQLRest()
+          val session = ScriptSQLExec.context().execListener.sparkSession
+          val res = rest.load(session.read, DataSourceConfig(
+            "http://www.byzer.org/list", Map(
+              "config.page.retry" -> "2",
+              "config.debug" -> "true",
+              "config.page.next" -> "https://byzer.org/?page_token={0}",
+              "config.page.values" -> "$.data.page_token",
+              "config.page.limit"-> "3"
+            ), Option(session.emptyDataFrame)
+          ))
+          val rows = res.collect()
+          assert( rows.size == 3 )
+
+        }
+      }
+    }
+  }
+
+  test("Non-pagination should try at most 2 times") {
+    withBatchContext( setupBatchContext(batchParams, null)) { runtime : SparkRuntime =>
+      val (reqStatic, reqMock) = mockStaticRequest
+      val responseMock = mock(classOf[Response])
+      tryWithResource(reqStatic) {
+        when(responseMock.returnResponse()).
+          thenReturn(buildResp(
+            """
+              |{"code":200,"content":[{"title":"wow"}]}
+              |""".stripMargin, status = 400))
+
+        when(reqMock.execute()).thenReturn(responseMock)
+
+        reqStatic => {
+          autoGenerateContext(runtime)
+          val rest = new MLSQLRest()
+          val session = ScriptSQLExec.context().execListener.sparkSession
+          val res = rest.load(session.read, DataSourceConfig(
+            "http://www.byzer.org/list", Map(
+              "config.page.retry" -> "2",
+              "config.debug" -> "true"
+            ), Option(session.emptyDataFrame)
+          ))
+          val row = res.collect().head
+          assert(row.getInt(1) == 400)
+        }
+      }
+    }
+  }
+
+  test("MLSQLRest should return error message if remote is not reachable") {
+    withBatchContext( setupBatchContext(batchParams, null)) { runtime : SparkRuntime =>
+      autoGenerateContext(runtime)
+      val rest = new MLSQLRest()
+      val session = ScriptSQLExec.context().execListener.sparkSession
+      val res = rest.load(session.read, DataSourceConfig(
+        "http://www.akjxcvzoixcv.dfasoidfkast", Map(
+          "config.page.retry" -> "1",
+          "config.debug" -> "true"
+        ), Option(session.emptyDataFrame)
+      ))
+      val row = res.collect().head
+      assert(row.getInt(1) == 0)
+    }
+  }
+
+  test("unsupported content-type yields 415 status code") {
+    withBatchContext( setupBatchContext(batchParams, null)) { runtime : SparkRuntime =>
+      autoGenerateContext(runtime)
+      val rest = new MLSQLRest()
+      val session = ScriptSQLExec.context().execListener.sparkSession
+      val res = rest.load(session.read, DataSourceConfig(
+        "http://www.byzer.org/list", Map(
+          "config.page.retry" -> "1",
+          "config.debug" -> "true",
+          "config.method" -> "put",
+          "header.content-type" -> "application/unsupported"
+        ), Option(session.emptyDataFrame)
+      ))
+      val row = res.collect().head
+      assert(row.getInt(1) == 415)
+    }
+  }
+
+  test("unsupported http method yields 405 status code") {
+    withBatchContext( setupBatchContext(batchParams, null)) { runtime : SparkRuntime =>
+      autoGenerateContext(runtime)
+      val rest = new MLSQLRest()
+      val session = ScriptSQLExec.context().execListener.sparkSession
+      val res = rest.load(session.read, DataSourceConfig(
+        "http://www.byzer.org/list", Map(
+          "config.page.retry" -> "1",
+          "config.debug" -> "true",
+          "config.method" -> "unknown"
+        ), Option(session.emptyDataFrame)
+      ))
+      val row = res.collect().head
+      assert(row.getInt(1) == 405)
+    }
+  }
+
 }
