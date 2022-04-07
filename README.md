@@ -198,6 +198,7 @@ Directory structure
     |-- data       
     |-- examples   
     |-- libs       
+    |-- main       
     |-- README.md  
     |-- LICENSE
     |-- RELEASE

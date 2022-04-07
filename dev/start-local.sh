@@ -41,7 +41,7 @@ fi
 
 JARS=$(echo ${MLSQL_HOME}/libs/*.jar | tr ' ' ',')
 EXT_JARS=$(echo ${MLSQL_HOME}/libs/*.jar | tr ' ' ':')
-MAIN_JAR=$(ls ${MLSQL_HOME}/libs|grep 'byzer-lang')
+MAIN_JAR=$(ls ${MLSQL_HOME}/main|grep 'byzer-lang')
 export DRIVER_MEMORY=${DRIVER_MEMORY:-2g}
 
 echo
@@ -50,7 +50,7 @@ echo "Run with spark : $SPARK_HOME"
 echo "With DRIVER_MEMORY=${DRIVER_MEMORY:-2g}"
 echo
 echo "JARS: ${JARS}"
-echo "MAIN_JAR: ${MLSQL_HOME}/libs/${MAIN_JAR}"
+echo "MAIN_JAR: ${MLSQL_HOME}/main/${MAIN_JAR}"
 echo "#############"
 echo
 echo
@@ -68,7 +68,7 @@ $SPARK_HOME/bin/spark-submit --class streaming.core.StreamingApp \
         --conf "spark.serializer=org.apache.spark.serializer.KryoSerializer" \
         --conf "spark.scheduler.mode=FAIR" \
         --conf "spark.driver.extraClassPath=${EXT_JARS}" \
-        ${MLSQL_HOME}/libs/${MAIN_JAR}    \
+        ${MLSQL_HOME}/main/${MAIN_JAR}    \
         -streaming.name byzer-lang    \
         -streaming.platform spark   \
         -streaming.rest true   \
