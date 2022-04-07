@@ -67,7 +67,7 @@ object ByzerCluster extends Logging {
         .forPort(9003).forStatusCode(200)
         .withStartupTimeout(Duration.of(1000, SECONDS)))
       c.withFileSystemBind(DockerUtils.getLibPath + DockerUtils.getJarName,
-        "/home/deploy/kolo-lang/libs/" + DockerUtils.getJarName, BindMode.READ_WRITE)
+        "/home/deploy/byzer-lang/main/" + DockerUtils.getJarName, BindMode.READ_WRITE)
       c.dependsOn(hadoopContainer)
       c.withStartupAttempts(3)
       c.withCreateContainerCmdModifier(new Consumer[CreateContainerCmd]() {

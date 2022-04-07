@@ -76,7 +76,7 @@ object DockerUtils {
   }
 
   def getLibPath: String = {
-    MessageFormat.format("{0}{1}/libs/", getRootPath, getFinalName)
+    MessageFormat.format("{0}{1}/main/", getRootPath, getFinalName)
   }
 
   /**
@@ -203,7 +203,7 @@ object DockerUtils {
       try {
         val testClassPath: String = DockerUtils.getClass.getResource("/").getPath
         val directory: File = new File(testClassPath + "../target/")
-        base = MessageFormat.format("{0}/{1}/libs/", directory.getCanonicalPath, getFinalName)
+        base = MessageFormat.format("{0}/{1}/main/", directory.getCanonicalPath, getFinalName)
       } catch {
         case e: IOException =>
           LOG.error("Can not get lib path, try to use absolute path. e:" + e.getMessage)
