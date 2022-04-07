@@ -63,7 +63,6 @@
                                 </filter>
                             </filters>
                             <createDependencyReducedPom>false</createDependencyReducedPom>
-                            <finalName>byzer-lang-${spark.version}-${scala.binary.version}-${project.version}</finalName>
                         </configuration>
                         <executions>
                             <execution>

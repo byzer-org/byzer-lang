@@ -36,25 +36,6 @@ EOF
   exit 1
 }
 
-
-## Make sure packages built via mvn use the new byzer-lang naming format.
-function rename_byzer_lang_jar {
-  BYZER_LANG_TAR_PATH="$BASE_DIR/byzer-lang-${SPARK_VERSION}-${current_version}.tar.gz"
-  BYZER_LANG_UNZIP_PATH="$BASE_DIR/byzer-lang-${SPARK_VERSION}-${current_version}/"
-  echo "unzip byzer lang tar: $BYZER_LANG_TAR_PATH"
-  rm -rf "$BYZER_LANG_UNZIP_PATH" && tar -xvf "$BYZER_LANG_TAR_PATH" -C "$BASE_DIR"
-  BYZER_LANG_OLD_JAR_PATH="$BASE_DIR/byzer-lang-${SPARK_VERSION}-${current_version}/libs/streamingpro-mlsql-spark_${MLSQL_SPARK_VERSION}_${SCALA_BINARY_VERSION}-${current_version}.jar"
-  echo "the old byzer lang jar: $BYZER_LANG_OLD_JAR_PATH"
-  if [[ -f "$BYZER_LANG_OLD_JAR_PATH" ]]
-      then
-        echo "BYZER_LANG_OLD_JAR_PATH: $BYZER_LANG_OLD_JAR_PATH"
-        BYZER_LANG_NEW_JAR_PATH="$BASE_DIR/byzer-lang-${SPARK_VERSION}-${current_version}/libs/byzer-lang-${SPARK_VERSION}-${SCALA_BINARY_VERSION}-${current_version}.jar"
-        mv "$BYZER_LANG_OLD_JAR_PATH" "$BYZER_LANG_NEW_JAR_PATH"
-        rm -rf "$BYZER_LANG_TAR_PATH" && tar -cvf "$BYZER_LANG_TAR_PATH" "$BYZER_LANG_UNZIP_PATH"
-        echo "rename byzer-lang jar succeed"
-  fi
-}
-
 if [[ $@ == *"help"* ]]; then
   exit_with_usage
 fi
@@ -192,4 +173,3 @@ mvn clean ${COMMAND}  ${SKIPTEST} ${BASE_PROFILES}  ${TESTPROFILE}
 EOF
 mvn clean ${COMMAND}  ${SKIPTEST} ${BASE_PROFILES} ${TESTPROFILE}
 fi
-rename_byzer_lang_jar

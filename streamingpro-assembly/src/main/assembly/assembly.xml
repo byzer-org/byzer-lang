@@ -5,26 +5,13 @@
     </formats>
     <includeBaseDirectory>true</includeBaseDirectory>
 
-    <moduleSets>
-        <moduleSet>
-            <!-- Enable access to all projects in the current multimodule build! -->
-            <useAllReactorProjects>true</useAllReactorProjects>
+    <files>
+        <file>
+            <source>${project.parent.basedir}/streamingpro-mlsql/target/byzer-lang-${spark.version}-${scala.binary.version}-${project.version}.jar</source>
+            <outputDirectory>main</outputDirectory>
+        </file>
+    </files>
 
-            <!-- Now, select which projects to include in this module-set. -->
-            <includes>
-                <include>tech.mlsql:streamingpro-mlsql-spark_${spark.bigversion}_${scala.binary.version}</include>
-            </includes>
-            <excludes>
-<!--                <exclude>tech.mlsql:streamingpro-common-${spark.bigversion}_${scala.binary.version}</exclude>-->
-<!--                <exclude>tech.msql:streamingpro-dl4j</exclude>-->
-            </excludes>
-            <binaries>
-                <outputDirectory>libs</outputDirectory>
-                <includeDependencies>false</includeDependencies>
-                <unpack>false</unpack>
-            </binaries>
-        </moduleSet>
-    </moduleSets>
     <fileSets>
         <fileSet>
             <!-- Executables -->
@@ -34,6 +21,14 @@
                 <include>stop-local.sh</include>
             </includes>
             <outputDirectory>bin</outputDirectory>
+        </fileSet>
+
+        <fileSet>
+            <directory>${project.parent.basedir}/dev</directory>
+            <includes>
+                <include>empty.json</include>
+            </includes>
+            <outputDirectory>libs</outputDirectory>
         </fileSet>
 
         <fileSet>
