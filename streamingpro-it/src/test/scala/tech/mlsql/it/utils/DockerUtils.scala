@@ -137,7 +137,8 @@ object DockerUtils {
       val os: OutputStream = new BufferedOutputStream(new FileOutputStream(output))
       try {
         val future: CompletableFuture[Boolean] = new CompletableFuture[Boolean]
-        dockerClient.logContainerCmd(containerName).withStdOut(true).withStdErr(true).withTimestamps(true).exec(new ResultCallback[Frame]() {
+        dockerClient.logContainerCmd(containerName).withStdOut(true).withStdErr(true)
+          .withTimestamps(true).exec(new ResultCallback[Frame]() {
           override def close(): Unit = {
           }
 
