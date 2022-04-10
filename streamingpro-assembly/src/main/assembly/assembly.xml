@@ -11,7 +11,6 @@
             <outputDirectory>main</outputDirectory>
         </file>
     </files>
-
     <fileSets>
         <fileSet>
             <!-- Executables -->

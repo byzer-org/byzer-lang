@@ -59,7 +59,7 @@ object DockerUtils {
       } else {
         "2.12"
       }
-      base = String.format("byzer-lang-%s-%s-%s.jar", getSparkShortVersion, scalaVersion, mlsqlVersion)
+      base = String.format("byzer-lang-%s-%s-%s.jar", getSparkLongVersion, scalaVersion, mlsqlVersion)
     }
     base
   }
@@ -71,6 +71,17 @@ object DockerUtils {
         "." + MLSQLSparkConst.minorVersion(SparkCoreVersion.exactVersion)
     } else {
       sparkVersion = MLSQLSparkConst.majorVersion(SparkCoreVersion.exactVersion) + ".0"
+    }
+    sparkVersion
+  }
+
+  def getSparkLongVersion: String = {
+    var sparkVersion: String = null
+    if (MLSQLSparkConst.majorVersion(SparkCoreVersion.exactVersion) == 2) {
+      sparkVersion = MLSQLSparkConst.majorVersion(SparkCoreVersion.exactVersion) +
+        ".4.3"
+    } else {
+      sparkVersion = MLSQLSparkConst.majorVersion(SparkCoreVersion.exactVersion) + ".1.1"
     }
     sparkVersion
   }
@@ -124,7 +135,7 @@ object DockerUtils {
     var base: String = System.getProperty("maven.finalName")
     if (base == null) {
       val mlsqlVersion: String = MLSQLVersion.version().version
-      val sparkVersion: String = getSparkShortVersion
+      val sparkVersion: String = getSparkLongVersion
       base = String.format("byzer-lang-%s-%s", sparkVersion, mlsqlVersion)
     }
     base
