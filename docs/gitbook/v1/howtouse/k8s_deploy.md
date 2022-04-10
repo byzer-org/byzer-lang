@@ -26,15 +26,15 @@
  template:
     metadata:
       labels:
-        app: spark-mlsql-3
+        app: spark-byzer-3
     spec:
       containers:
-      - name: spark-mlsql-3
+      - name: spark-byzer-3
         args:
           - >-
             echo "/opt/spark/bin/spark-submit --master k8s://https://xxx.xxx.xxx.xxx:xxxx 
             --deploy-mode client 
-            --jars local:///tmp/streamingpro-mlsql-spark_3.0_2.12-1.7.0-SNAPSHOT.jar 
+            --jars local:///tmp/byzer-lang-3.1.1_2.12-2.2.2.jar 
             --class streaming.core.StreamingApp 
             --conf spark.kubernetes.container.image=xxxxx/dev/spark-jdk-slim-14:v3.0.0 
             --conf spark.kubernetes.container.image.pullPolicy=Always 
@@ -57,7 +57,7 @@
             --conf spark.kryoserializer.buffer.max=200m 
             --conf "\"spark.executor.extraJavaOptions=-XX:+UnlockExperimentalVMOptions -XX:+UseZGC -XX:+UseContainerSupport  -Dio.netty.tryReflectionSetAccessible=true\""  
             --conf "\"spark.driver.extraJavaOptions=-XX:+UnlockExperimentalVMOptions -XX:+UseZGC -XX:+UseContainerSupport  -Dio.netty.tryReflectionSetAccessible=true\"" 
-            local:///tmp/streamingpro-mlsql-spark_3.0_2.12-1.7.0-SNAPSHOT.jar 
+            local:///tmp/byzer-lang-3.1.1_2.12-2.2.2.jar 
             -streaming.name spark-mlsql-3.0 
             -streaming.rest true 
             -streaming.thrift false 

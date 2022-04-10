@@ -22,9 +22,9 @@ name: Build and test
 on: [pull_request, workflow_dispatch]
 
 jobs:
-  # Build: build kolo-lang and run the tests
+  # Build: build byzer-lang and run the tests
   build:
-    name: "Build kolo-lang"
+    name: "Build byzer-lang"
     # Ubuntu 20.04 is the latest LTS. The next LTS is 22.04.
     runs-on: ubuntu-20.04
     strategy:

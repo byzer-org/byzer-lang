@@ -1,9 +1,9 @@
 echo "copy main jar to slave"
 
-MAIN_JAR=$(ls ${MLSQL_JAR_PATH}/libs|grep 'streamingpro-mlsql')
+MAIN_JAR=$(ls ${MLSQL_JAR_PATH}/main|grep 'byzer-lang')
 
 pymlsql copy-from-local --instance-id ${slave_instance_id} --execute-user root \
---source ${MLSQL_JAR_PATH}/libs/${MAIN_JAR} \
+--source ${MLSQL_JAR_PATH}/main/${MAIN_JAR} \
 --target /home/webuser
 
 pymlsql copy-from-local --instance-id ${slave_instance_id} --execute-user root \

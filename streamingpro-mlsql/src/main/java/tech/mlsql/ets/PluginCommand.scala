@@ -206,7 +206,8 @@ class PluginCommand(override val uid: String) extends SQLAlg with ETAuth with Wo
           case None =>
             spark.emptyDataFrame
         }
-
+      case _ =>
+        spark.emptyDataFrame
     }
 
 

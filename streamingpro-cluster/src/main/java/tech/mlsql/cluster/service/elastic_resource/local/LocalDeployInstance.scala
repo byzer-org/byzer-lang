@@ -123,14 +123,14 @@ object LocalDeployInstance extends Logging {
         sparkConfigBuffer += s"--${key} $value"
       }
     }
-    val configBuffer = sparkConfigBuffer ++ ArrayBuffer("${MLSQL_HOME}/libs/${MAIN_JAR}") ++ streamingConfigBuffer
+    val configBuffer = sparkConfigBuffer ++ ArrayBuffer("${MLSQL_HOME}/main/${MAIN_JAR}") ++ streamingConfigBuffer
     val startUpConfig = configBuffer.mkString(" \\\n")
 
     s"""
        |#/bin/bash
        |export MLSQL_HOME=${ecs.getMlsqlHome}
        |JARS=$$(echo $${MLSQL_HOME}/libs/*.jar | tr ' ' ',')
-       |MAIN_JAR=$$(ls $${MLSQL_HOME}/libs|grep 'streamingpro-mlsql')
+       |MAIN_JAR=$$(ls $${MLSQL_HOME}/main|grep 'byzer-lang')
        |
        |export SPARK_HOME=${ecs.getSparkHome}
        |cd $$SPARK_HOME

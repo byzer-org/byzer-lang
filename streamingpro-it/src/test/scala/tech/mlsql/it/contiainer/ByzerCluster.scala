@@ -51,7 +51,7 @@ object ByzerCluster extends Logging {
       c.withNetworkAliases(ByzerCluster.appendClusterName(networkAliases))
       c.setWaitStrategy(new HttpWaitStrategy()
         .forPort(8088).forPath("/cluster").forStatusCode(200)
-        .withStartupTimeout(Duration.of(600, SECONDS)))
+        .withStartupTimeout(Duration.of(1500, SECONDS)))
       c.withCreateContainerCmdModifier(new Consumer[CreateContainerCmd]() {
         def accept(cmd: CreateContainerCmd): Unit = {
           cmd.withName("hadoop3")
@@ -65,9 +65,9 @@ object ByzerCluster extends Logging {
       c.addExposedPorts(9003, 4040, 8265, 10002)
       c.setWaitStrategy(new HttpWaitStrategy()
         .forPort(9003).forStatusCode(200)
-        .withStartupTimeout(Duration.of(1000, SECONDS)))
+        .withStartupTimeout(Duration.of(3000, SECONDS)))
       c.withFileSystemBind(DockerUtils.getLibPath + DockerUtils.getJarName,
-        "/home/deploy/kolo-lang/libs/" + DockerUtils.getJarName, BindMode.READ_WRITE)
+        "/home/deploy/byzer-lang/main/" + DockerUtils.getJarName, BindMode.READ_WRITE)
       c.dependsOn(hadoopContainer)
       c.withStartupAttempts(3)
       c.withCreateContainerCmdModifier(new Consumer[CreateContainerCmd]() {
@@ -89,7 +89,7 @@ object ByzerCluster extends Logging {
     logInfo("The Byzer final jar path:" + finalPath)
     s"tar -xvf $packageFile -C $rootPath".!
     if (!new File(finalPath).exists) {
-      throw new RuntimeException("Please make sure byzer-lang tarball is exists!")
+      throw new RuntimeException("Please make sure byzer-lang final jar is exists!")
     }
   }
 
