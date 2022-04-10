@@ -69,7 +69,7 @@ $SPARK_HOME/bin/spark-submit --class streaming.core.StreamingApp \
         --conf "spark.serializer=org.apache.spark.serializer.KryoSerializer" \
         --conf "spark.scheduler.mode=FAIR" \
         --conf "spark.driver.extraClassPath=${EXT_JARS}" \
-        $MAIN_JAR_PATH    \
+        $MAIN_JAR_PATH \
         -streaming.name byzer-lang    \
         -streaming.platform spark   \
         -streaming.rest true   \
