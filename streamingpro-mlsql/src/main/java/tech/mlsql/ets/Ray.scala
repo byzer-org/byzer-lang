@@ -104,20 +104,21 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
 
     val timezoneID = session.sessionState.conf.sessionLocalTimeZone
     val df = session.table(sourceTable)
-
+    val maxIterCount = runnerConf.getOrElse("maxIterCount", "1000").toInt
+    session.conf.set("maxIterCount", maxIterCount.toString)
     // start spark data servers for model if user configure model table in et params.
     val modelTableOpt = etParams.get("model")
     if (modelTableOpt.isDefined) {
       val modelDf = session.table(modelTableOpt.get)
       val modelServer = new MasterSlaveInSpark("temp-model-server-in-spark", session, context.owner)
-      modelServer.build(modelDf, MasterSlaveInSpark.defaultDataServerImpl)
+      modelServer.build(modelDf, MasterSlaveInSpark.defaultDataServerWithIterCountImpl, runnerConf)
       modelServer.waitWithTimeout(60)
       runnerConf ++= Map("modelServers" -> modelServer.dataServers.get().map(item => s"${item.host}:${item.port}").mkString(","))
     }
 
     // start spark data servers for dataset
     val masterSlaveInSpark = new MasterSlaveInSpark("temp-data-server-in-spark", session, context.owner)
-    masterSlaveInSpark.build(df, MasterSlaveInSpark.defaultDataServerImpl)
+    masterSlaveInSpark.build(df, MasterSlaveInSpark.defaultDataServerWithIterCountImpl, runnerConf)
     masterSlaveInSpark.waitWithTimeout(60)
 
 

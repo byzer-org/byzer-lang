@@ -36,6 +36,7 @@ class MasterSlaveInSpark(name: String, session: SparkSession, _owner: String) ex
     StructType,
     Iterator[Row],
     String,
+    Int,
     Int) => Unit) = {
     val (_targetLen, shouldSort) = computeSplits(df)
     targetLen = _targetLen
@@ -45,6 +46,24 @@ class MasterSlaveInSpark(name: String, session: SparkSession, _owner: String) ex
     } else df.repartition(1).sortWithinPartitions(f.col("start").asc)
 
     buildDataSocketServers(tempdf, job)
+    this
+  }
+
+  def build(df: DataFrame, job: (String,
+    String,
+    StructType,
+    Iterator[Row],
+    String,
+    Int,
+    Int) => Unit, runnerConf: Map[String, String]) = {
+    val (_targetLen, shouldSort) = computeSplits(df)
+    targetLen = _targetLen
+
+    val tempdf = if (!shouldSort) {
+      df.repartition(targetLen)
+    } else df.repartition(1).sortWithinPartitions(f.col("start").asc)
+
+    buildDataSocketServers(tempdf, job, runnerConf)
     this
   }
 
@@ -68,7 +87,7 @@ class MasterSlaveInSpark(name: String, session: SparkSession, _owner: String) ex
     this
   }
 
-  private def computeSplits(df: DataFrame) = {
+  def computeSplits(df: DataFrame) = {
     var targetLen = df.rdd.partitions.length
     var sort = false
     val context = ScriptSQLExec.context()
@@ -95,12 +114,17 @@ class MasterSlaveInSpark(name: String, session: SparkSession, _owner: String) ex
     (targetLen, sort)
   }
 
+  def getRefs(): AtomicReference[ArrayBuffer[ReportHostAndPort]] = {
+    return refs
+  }
+
 
   private def buildDataSocketServers(tempdf: DataFrame, job: (String,
     String,
     StructType,
     Iterator[Row],
     String,
+    Int,
     Int) => Unit) = {
 
     refs = new AtomicReference[ArrayBuffer[ReportHostAndPort]]()
@@ -120,6 +144,7 @@ class MasterSlaveInSpark(name: String, session: SparkSession, _owner: String) ex
         val tempSocketServerPort = tempSocketServerInDriver._port
         val timezoneID = session.sessionState.conf.sessionLocalTimeZone
         val owner = _owner
+        val maxIterCount = session.conf.get("maxIterCount", "1000").toInt
         tempdf.rdd.mapPartitions { iter =>
 
           val host: String = if (SparkEnv.get == null || MLSQLSparkUtils.blockManager == null || MLSQLSparkUtils.blockManager.blockManagerId == null) {
@@ -130,7 +155,53 @@ class MasterSlaveInSpark(name: String, session: SparkSession, _owner: String) ex
             InetAddress.getLocalHost.getHostAddress
           }
           else MLSQLSparkUtils.blockManager.blockManagerId.host
-          _job(host, timezoneID, dataSchema, iter, tempSocketServerHost, tempSocketServerPort)
+          _job(host, timezoneID, dataSchema, iter, tempSocketServerHost, tempSocketServerPort, maxIterCount)
+          List[String]().iterator
+        }.collect()
+        logInfo("Exit all data server")
+      }
+    }
+    thread.setDaemon(true)
+    thread.start()
+  }
+
+  private def buildDataSocketServers(tempdf: DataFrame, job: (String,
+    String,
+    StructType,
+    Iterator[Row],
+    String,
+    Int,
+    Int) => Unit, runnerConf: Map[String, String]) = {
+
+    refs = new AtomicReference[ArrayBuffer[ReportHostAndPort]]()
+    refs.set(ArrayBuffer[ReportHostAndPort]())
+    val stopFlag = new AtomicReference[String]()
+    stopFlag.set("false")
+
+    tempSocketServerInDriver = new CollectServerInDriver(refs, stopFlag)
+
+    val thread = new Thread(name) {
+      override def run(): Unit = {
+        //make sure the thread reassign any variable ref  out of the scope.
+        //Otherwise spark will fail with task serialization
+        val _job = job
+        val dataSchema = tempdf.schema
+        val tempSocketServerHost = tempSocketServerInDriver._host
+        val tempSocketServerPort = tempSocketServerInDriver._port
+        val timezoneID = session.sessionState.conf.sessionLocalTimeZone
+        val owner = _owner
+        val maxIterCount = runnerConf.getOrElse("maxIterCount", "1000").toInt
+        tempdf.rdd.mapPartitions { iter =>
+
+          val host: String = if (SparkEnv.get == null || MLSQLSparkUtils.blockManager == null || MLSQLSparkUtils.blockManager.blockManagerId == null) {
+            WriteLog.write(List("Ray: Cannot get MLSQLSparkUtils.rpcEnv().address, using NetTool.localHostName()").iterator,
+              Map("PY_EXECUTE_USER" -> owner))
+            NetTool.localHostName()
+          } else if (SparkEnv.get != null && SparkEnv.get.conf.getBoolean("spark.mlsql.deploy.on.k8s", false)) {
+            InetAddress.getLocalHost.getHostAddress
+          }
+          else MLSQLSparkUtils.blockManager.blockManagerId.host
+          _job(host, timezoneID, dataSchema, iter, tempSocketServerHost, tempSocketServerPort, maxIterCount)
           List[String]().iterator
         }.collect()
         logInfo("Exit all data server")
@@ -142,21 +213,22 @@ class MasterSlaveInSpark(name: String, session: SparkSession, _owner: String) ex
 }
 
 object MasterSlaveInSpark {
-  def defaultDataServerImpl(
-                             host: String,
-                             timezoneID: String,
-                             dataSchema: StructType,
-                             iter: Iterator[Row],
-                             driverSocketServerHost: String,
-                             driverSocketServerPort: Int
-                           ): Unit = {
+  def defaultDataServerWithIterCountImpl(
+                                          host: String,
+                                          timezoneID: String,
+                                          dataSchema: StructType,
+                                          iter: Iterator[Row],
+                                          driverSocketServerHost: String,
+                                          driverSocketServerPort: Int,
+                                          maxIterCount: Int
+                                        ): Unit = {
     val socketRunner = new SparkSocketRunner("serveToStreamWithArrow", host, timezoneID)
     val commonTaskContext = new SparkContextImp(TaskContext.get(), null)
     val convert = WowRowEncoder.fromRow(dataSchema)
     val newIter = iter.map { irow =>
       convert(irow)
     }
-    val Array(_server, _host, _port) = socketRunner.serveToStreamWithArrow(newIter, dataSchema, 1000, commonTaskContext)
+    val Array(_server, _host, _port) = socketRunner.serveToStreamWithArrow(newIter, dataSchema, maxIterCount, commonTaskContext)
 
     // send server info back
     SocketServerInExecutor.reportHostAndPort(driverSocketServerHost,
@@ -166,5 +238,16 @@ object MasterSlaveInSpark {
     while (_server != null && !_server.asInstanceOf[ServerSocket].isClosed) {
       Thread.sleep(1 * 1000)
     }
+  }
+
+  def defaultDataServerImpl(
+                             host: String,
+                             timezoneID: String,
+                             dataSchema: StructType,
+                             iter: Iterator[Row],
+                             driverSocketServerHost: String,
+                             driverSocketServerPort: Int
+                           ): Unit = {
+    defaultDataServerWithIterCountImpl(host, timezoneID, dataSchema, iter, driverSocketServerHost, driverSocketServerPort, 1000)
   }
 }
