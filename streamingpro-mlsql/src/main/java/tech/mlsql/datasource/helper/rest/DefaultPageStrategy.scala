@@ -7,7 +7,11 @@ import tech.mlsql.tool.Templates2
  * 3/12/2021 WilliamZhu(allwefantasy@gmail.com)
  */
 class DefaultPageStrategy(params: Map[String, String]) extends PageStrategy {
-
+  /**
+   * Extracts page values from content by jsonPath.
+   * @param _content
+   * @return
+   */
   def pageValues(_content: Option[Any]): Array[String] = {
     try {
       val content = _content.get.toString
@@ -30,12 +34,12 @@ class DefaultPageStrategy(params: Map[String, String]) extends PageStrategy {
   }
 
   override def hasNextPage(_content: Option[Any]): Boolean = {
-    if (params.get("config.page.stop").isDefined) {
-      PageStrategy.defaultHasNextPage(params, _content)
-    } else {
-      val pageValues = this.pageValues(_content)
-      !(pageValues.size == 0 || pageValues.filter(value => value == null || value.isEmpty).size > 0)
+    params.get("config.page.stop") match {
+      case Some(_) =>
+        PageStrategy.defaultHasNextPage(params, _content)
+      case None =>
+        val pageValues = this.pageValues(_content)
+        !(pageValues.size == 0 || pageValues.exists(value => value == null || value.isEmpty))
     }
-
   }
 }
