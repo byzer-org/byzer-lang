@@ -38,6 +38,7 @@ import org.apache.spark.sql.mlsql.session.{MLSQLSparkSession, SparkSessionCacheM
 import org.apache.spark.{MLSQLConf, SparkInstanceService}
 import tech.mlsql.MLSQLEnvKey
 import tech.mlsql.app.{CustomController, ResultResp}
+import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.common.utils.serder.json.JSONTool
 import tech.mlsql.crawler.RestUtils
 import tech.mlsql.crawler.RestUtils.executeWithRetrying
@@ -66,7 +67,7 @@ import scala.util.control.NonFatal
     """),
   servers = Array()
 )
-class RestController extends ApplicationController with WowLog {
+class RestController extends ApplicationController with WowLog with Logging {
 
   private def ifJSonThenToParams(): Unit = {
     // Sometimes DefaultRestRequest do not have servletRequest attribute
@@ -227,6 +228,7 @@ class RestController extends ApplicationController with WowLog {
 
     } catch {
       case e: Exception =>
+        logError("An error occurred while the job manager was executing the task, ", e)
         val msg = ExceptionRenderManager.call(e)
         render(500, msg.str.get)
     } finally {

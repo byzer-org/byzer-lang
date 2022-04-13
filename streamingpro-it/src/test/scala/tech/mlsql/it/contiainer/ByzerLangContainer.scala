@@ -30,7 +30,7 @@ class ByzerLangContainer(clusterName: String, image: String) extends ChaosContai
 
   def afterStart(): Unit = {
     DockerUtils.runCommandAsyncWithLogging(container.getDockerClient, container.getContainerId,
-      Seq("tail", "-f", "/home/deploy/logs/mlsql_engine.log"))
+      Seq("tail", "-f", "/home/deploy/logs/byzer-lang.log"))
   }
 
   override def beforeStop(): Unit = {
