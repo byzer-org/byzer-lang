@@ -23,11 +23,12 @@ function isValidJavaVersion() {
     version=`java -version 2>&1 | awk -F\" '/version/ {print $2}'`
     version_first_part="$(echo ${version} | cut -d '.' -f1)"
     version_second_part="$(echo ${version} | cut -d '.' -f2)"
-
     if [[ "$version_first_part" -eq "1" ]] && [[ "$version_second_part" -eq "8" ]]; then
         echo "true"
+        exit 0
     elif [[ "$version_first_part" -ge "8" ]]; then
         echo "true"
+        exit 0
     fi
     echo "false"
     exit 0

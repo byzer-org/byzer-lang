@@ -139,14 +139,14 @@ function start(){
     sleep 3
     clearRedundantProcess
 
-    [ ! -f "${BYZER_HOME}/pid" ] && quit "Byzer-lang start failed, check via log: ${BYZER_HOME}/logs/mlsql_engine.log."
+    [ ! -f "${BYZER_HOME}/pid" ] && quit "Byzer-lang start failed, check via log: ${BYZER_HOME}/logs/byzer.log."
 
     PID=`cat ${BYZER_HOME}/pid`
     CUR_DATE=$(date "+%Y-%m-%d %H:%M:%S")
-    echo $CUR_DATE" new Byzer-lang process pid is "$PID >> ${BYZER_HOME}/logs/mlsql_engine.log
+    echo $CUR_DATE" new Byzer-lang process pid is "$PID >> ${BYZER_HOME}/logs/byzer.log
 
     echo "Byzer-lang is starting. It may take a while. For status, please visit http://$BYZER_IP:$port."
-    echo "You may also check status via: PID:`cat ${BYZER_HOME}/pid`, or Log: ${BYZER_HOME}/logs/mlsql_engine.log."
+    echo "You may also check status via: PID:`cat ${BYZER_HOME}/pid`, or Log: ${BYZER_HOME}/logs/byzer.log."
     recordStartOrStop "start success" "${START_TIME}"
 }
 

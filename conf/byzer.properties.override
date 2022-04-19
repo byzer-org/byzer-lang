@@ -1,6 +1,4 @@
-
-byzer.mode=local
-
+spark.master=local[*]
 streaming.name=byzer-lang
 streaming.rest=true
 streaming.platform=spark

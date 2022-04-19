@@ -63,7 +63,7 @@ public class ByzerConfigCLI {
             // get all properties
             for (Map.Entry<Object, Object> entry : config.entrySet()) {
                 String entryKey = (String) entry.getKey();
-                if (entryKey.startsWith("spark")) {
+                if (entryKey.startsWith("spark") && !entryKey.startsWith("spark.mlsql")) {
                     String prop = String.format(SPARK_CONF_TEMP, entryKey, entry.getValue());
                     System.out.println(prop);
                 }
