@@ -17,6 +17,10 @@
 # limitations under the License.
 #
 
+set -u
+set -e
+set -o pipefail
+
 function recordStartOrStop() {
     currentIp=${BYZER_IP}
     serverPort=`$BYZER_HOME/bin/get-properties.sh streaming.driver.port`
