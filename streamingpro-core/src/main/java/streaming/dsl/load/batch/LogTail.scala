@@ -17,7 +17,7 @@ object LogTail {
   private val pattern = Pattern.compile("\\d{2}/\\d{2}/\\d{2}\\s\\d{2}\\:\\d{2}\\:\\d{2}\\s")
 
   def log(owner: String, _filePath: String, offset: Long, size: Int = 1024 * 1024 - 1) = {
-    val filePath = s"${MLSQLEnvKey.realTimeLogHome}/mlsql_engine.log"
+    val filePath = s"${MLSQLEnvKey.realTimeLogHome}/byzer-lang.log"
     val (newOffset, msg, fileSize) = ShellCommand.progress(filePath, offset, size)
     val (lines, backoff) = TryTool.tryOrElse {
       merge(msg)
