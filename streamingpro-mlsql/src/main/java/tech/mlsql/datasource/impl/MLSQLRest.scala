@@ -371,7 +371,9 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
           filter(v => v._1 != "form.file-path" && v._1 != "form.file-name").foreach { case (k, v) =>
           entity.addTextBody(k.stripPrefix("form."), Templates2.dynamicEvaluateExpression(v, ScriptSQLExec.context().execListener.env().toMap))
         }
-        request.body(entity.build()).execute()      case (_, v) =>
+        request.body(entity.build()).execute()
+
+      case (_, v) =>
         throw new MLSQLException(s"content-type ${v}  is not support yet")
     }
 
