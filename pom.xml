@@ -922,6 +922,9 @@
                         </goals>
                     </execution>
                 </executions>
+                <configuration>
+                    <additionalOptions>-Xdoclint:none</additionalOptions>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.sonatype.plugins</groupId>
