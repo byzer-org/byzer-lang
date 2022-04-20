@@ -5,35 +5,37 @@
     </formats>
     <includeBaseDirectory>true</includeBaseDirectory>
 
-    <moduleSets>
-        <moduleSet>
-            <!-- Enable access to all projects in the current multimodule build! -->
-            <useAllReactorProjects>true</useAllReactorProjects>
-
-            <!-- Now, select which projects to include in this module-set. -->
-            <includes>
-                <include>tech.mlsql:streamingpro-mlsql-spark_${spark.bigversion}_${scala.binary.version}</include>
-            </includes>
-            <excludes>
-<!--                <exclude>tech.mlsql:streamingpro-common-${spark.bigversion}_${scala.binary.version}</exclude>-->
-<!--                <exclude>tech.msql:streamingpro-dl4j</exclude>-->
-            </excludes>
-            <binaries>
-                <outputDirectory>libs</outputDirectory>
-                <includeDependencies>false</includeDependencies>
-                <unpack>false</unpack>
-            </binaries>
-        </moduleSet>
-    </moduleSets>
+    <files>
+        <file>
+            <source>${project.parent.basedir}/streamingpro-mlsql/target/byzer-lang-${spark.version}-${scala.binary.version}-${project.version}.jar</source>
+            <outputDirectory>main</outputDirectory>
+        </file>
+    </files>
     <fileSets>
         <fileSet>
             <!-- Executables -->
             <directory>${project.parent.basedir}/dev</directory>
             <includes>
-                <include>start-local.sh</include>
-                <include>stop-local.sh</include>
+                <include>byzer.sh</include>
+                <include>bootstrap.sh</include>
+                <include>check-env.sh</include>
+                <include>check-1000-java.sh</include>
+                <include>check-1100-ports.sh</include>
+                <include>get-properties.sh</include>
+                <include>headers.sh</include>
+                <include>kill-process-tree.sh</include>
+                <include>log-rotate-cron.sh</include>
+                <include>rotate-logs.sh</include>
             </includes>
             <outputDirectory>bin</outputDirectory>
+        </fileSet>
+
+        <fileSet>
+            <directory>${project.parent.basedir}/dev</directory>
+            <includes>
+                <include>empty.json</include>
+            </includes>
+            <outputDirectory>libs</outputDirectory>
         </fileSet>
 
         <fileSet>
@@ -41,6 +43,18 @@
             <directory>${project.parent.basedir}/streamingpro-mlsql/src/main/resources-online/</directory>
             <includes>
                 <include>log4j.properties</include>
+            </includes>
+            <outputDirectory>conf</outputDirectory>
+        </fileSet>
+
+        <fileSet>
+            <!-- Properties -->
+            <directory>${project.parent.basedir}/conf</directory>
+            <includes>
+                <include>byzer.properties</include>
+                <include>byzer.properties.override</include>
+                <include>byzer-server-log4j.properties</include>
+                <include>byzer-tools-log4j.properties</include>
             </includes>
             <outputDirectory>conf</outputDirectory>
         </fileSet>

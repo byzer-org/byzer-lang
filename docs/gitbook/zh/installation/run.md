@@ -14,7 +14,7 @@ $SPARK_HOME/bin/spark-submit --class streaming.core.StreamingApp \
         --conf "spark.kryoserializer.buffer.max=1024m" \
         --conf "spark.serializer=org.apache.spark.serializer.KryoSerializer" \
         --conf "spark.scheduler.mode=FAIR" \
-        ${MLSQL_HOME}/libs/${MAIN_JAR}    \
+        ${MLSQL_HOME}/main/${MAIN_JAR}    \
         -streaming.name mlsql    \
         -streaming.platform spark   \
         -streaming.rest true   \

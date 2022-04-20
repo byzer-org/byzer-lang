@@ -45,7 +45,7 @@ object DockerUtils {
   private val LOG: Logger = LoggerFactory.getLogger(DockerUtils.getClass)
 
   /**
-   * e.g. streamingpro-mlsql-spark_3.0_2.12-2.3.0-SNAPSHOT.jar
+   * e.g. byzer-lang-3.1.1-2.12-2.3.0-SNAPSHOT.jar
    *
    * @return
    */
@@ -59,7 +59,7 @@ object DockerUtils {
       } else {
         "2.12"
       }
-      base = String.format("streamingpro-mlsql-spark_%s_%s-%s.jar", getSparkShortVersion, scalaVersion, mlsqlVersion)
+      base = String.format("byzer-lang-%s-%s-%s.jar", getSparkLongVersion, scalaVersion, mlsqlVersion)
     }
     base
   }
@@ -75,8 +75,19 @@ object DockerUtils {
     sparkVersion
   }
 
+  def getSparkLongVersion: String = {
+    var sparkVersion: String = null
+    if (MLSQLSparkConst.majorVersion(SparkCoreVersion.exactVersion) == 2) {
+      sparkVersion = MLSQLSparkConst.majorVersion(SparkCoreVersion.exactVersion) +
+        ".4.3"
+    } else {
+      sparkVersion = MLSQLSparkConst.majorVersion(SparkCoreVersion.exactVersion) + ".1.1"
+    }
+    sparkVersion
+  }
+
   def getLibPath: String = {
-    MessageFormat.format("{0}{1}/libs/", getRootPath, getFinalName)
+    MessageFormat.format("{0}{1}/main/", getRootPath, getFinalName)
   }
 
   /**
@@ -124,8 +135,8 @@ object DockerUtils {
     var base: String = System.getProperty("maven.finalName")
     if (base == null) {
       val mlsqlVersion: String = MLSQLVersion.version().version
-      val sparkVersion: String = getSparkShortVersion
-      base = String.format("mlsql-engine_%s-%s", sparkVersion, mlsqlVersion)
+      val sparkVersion: String = getSparkLongVersion
+      base = String.format("byzer-lang-%s-%s", sparkVersion, mlsqlVersion)
     }
     base
   }
@@ -137,7 +148,8 @@ object DockerUtils {
       val os: OutputStream = new BufferedOutputStream(new FileOutputStream(output))
       try {
         val future: CompletableFuture[Boolean] = new CompletableFuture[Boolean]
-        dockerClient.logContainerCmd(containerName).withStdOut(true).withStdErr(true).withTimestamps(true).exec(new ResultCallback[Frame]() {
+        dockerClient.logContainerCmd(containerName).withStdOut(true).withStdErr(true)
+          .withTimestamps(true).exec(new ResultCallback[Frame]() {
           override def close(): Unit = {
           }
 
@@ -203,7 +215,7 @@ object DockerUtils {
       try {
         val testClassPath: String = DockerUtils.getClass.getResource("/").getPath
         val directory: File = new File(testClassPath + "../target/")
-        base = MessageFormat.format("{0}/{1}/libs/", directory.getCanonicalPath, getFinalName)
+        base = MessageFormat.format("{0}/{1}/main/", directory.getCanonicalPath, getFinalName)
       } catch {
         case e: IOException =>
           LOG.error("Can not get lib path, try to use absolute path. e:" + e.getMessage)

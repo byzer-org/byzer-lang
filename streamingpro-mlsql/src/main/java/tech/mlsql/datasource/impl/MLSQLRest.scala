@@ -22,6 +22,7 @@ import tech.mlsql.dsl.adaptor.DslTool
 import tech.mlsql.tool.{HDFSOperatorV2, Templates2}
 
 import java.net.URLEncoder
+import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.charset.Charset
 import java.util.UUID
 import scala.collection.mutable.ArrayBuffer
@@ -73,158 +74,123 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
   override def load(reader: DataFrameReader, config: DataSourceConfig): DataFrame = {
     val skipParams = config.config.getOrElse("config.page.skip-params", "false").toBoolean
     val retryInterval = JavaUtils.timeStringAsMs(config.config.getOrElse("config.retry.interval", "1s"))
-
     val debug = config.config.getOrElse("config.debug", "false").toBoolean
 
-    (config.config.get("config.page.next"), config.config.get("config.page.values")) match {
-      case (Some(urlTemplate), Some(jsonPath)) =>
-        val maxSize = config.config.getOrElse("config.page.limit", "1").toInt
-        val maxTries = config.config.getOrElse("config.page.retry", "3").toInt
-        val pageInterval = JavaUtils.timeStringAsMs(config.config.getOrElse("config.page.interval", "10ms"))
-        var count = 1
+    def _error2DataFrame(errMsg: String, statusCode: Int, session: SparkSession) : DataFrame = {
+      session.createDataFrame(session.sparkContext.makeRDD(Seq(Row.fromSeq(Seq( errMsg.getBytes(UTF_8), statusCode))))
+        , StructType(fields = Seq(
+          StructField("content", BinaryType), StructField("status", IntegerType)
+        )))
+    }
 
-        val pageStrategy = PageStrategyDispatcher.get(config.config)
-        if (debug) {
-          logInfo(format(s"Started to get Page ${count} ${config.path} "))
-        }
-        val firstPageFetchTime = System.currentTimeMillis()
-        val (_, firstDfOpt) = executeWithRetrying[(Int, Option[DataFrame])](maxTries)((() => {
-          try {
-            val tempDF = _http(config.path, config.config, false, config.df.get.sparkSession)
-            val row = tempDF.select(F.col("content").cast(StringType), F.col("status")).head
-            val status = row.getInt(1)
-            (status, Option(tempDF))
-          } catch {
-            case e: Exception =>
-              (500, None)
+    /**
+     * Calling http rest endpoints with retrying
+     * @param url               http url
+     * @param skipParams        if true, not adding parameters to http get urls
+     * @maxTries                The max number of attempts
+     * @return                  http status code along with DataFrame
+     */
+    def _httpWithRetrying(url: String, skipParams: Boolean, maxTries: Int): (Int, DataFrame) = {
+      executeWithRetrying[(Int, DataFrame)](maxTries)((() => {
+        try {
+          if (debug) {
+            logInfo(format(s"Started to request Page ${url} "))
           }
-        }) (),
-          tempResp => {
-            val t = tempResp._1 == 200
-            if (!t) {
-              Thread.sleep(retryInterval)
-            }
-            t
-          },
-          failResp => logInfo(s"Fail request ${config.path} failed after ${maxTries} attempts. the last response status is: ${failResp._1}. ")
-        )
-
-        if (firstDfOpt.isEmpty) {
-          throw new MLSQLException(s"Fail request ${config.path} failed after ${maxTries} attempts.")
+          val df = _http(config.path, config.config, skipParams, config.df.get.sparkSession)
+          val row = df.select(F.col("content").cast(StringType), F.col("status")).head
+          val status = row.getInt(1)
+          (status, df)
+        } catch {
+          // According to _http function, it throws MLSQLException if any request parameter is invalid
+          case me: MLSQLException =>
+            if( me.getMessage.startsWith("content-type"))
+              (415, _error2DataFrame(me.getMessage, 415, config.df.get.sparkSession))
+            else if(me.getMessage.startsWith("HTTP method"))
+              (405, _error2DataFrame(me.getMessage,405, config.df.get.sparkSession))
+            else
+              (500, _error2DataFrame(me.getMessage, 500, config.df.get.sparkSession))
+          case e: Exception => (0, _error2DataFrame(e.getMessage, 0, config.df.get.sparkSession))
         }
+      }) (),
+        tempResp => {
+          val succeed = tempResp._1 == 200
+          if (! succeed) {
+            Thread.sleep(retryInterval)
+          }
+          succeed
+        },
+        failResp => {
+          logInfo(s"Request ${url} failed after ${maxTries} attempts. the last response status is: ${failResp._1}. ")
+        }
+      )
+    }
 
-        var firstDf = firstDfOpt.get
+    (config.config.get("config.page.next"), config.config.get("config.page.values")) match {
+      // Multiple-page request
+      case (Some(_), Some(_)) =>
+
+        // max page size
+        val maxSize = config.config.getOrElse("config.page.limit", "1").toInt
+        // sleep between each page request
+        val pageInterval = JavaUtils.timeStringAsMs(config.config.getOrElse("config.page.interval", "10ms"))
+        val pageStrategy = PageStrategyDispatcher.get(config.config)
+        // Max number of attempt for each page
+        val maxTries = config.config.getOrElse("config.page.retry", "3").toInt
 
         val uuid = UUID.randomUUID().toString.replaceAll("-", "")
         val context = ScriptSQLExec.context()
+        // each page's result is save in tmpTablePath
         val tmpTablePath = resourceRealPath(context.execListener, Option(context.owner),
           PathFun("__tmp__").add("rest").add(uuid).toPath)
         context.execListener.addEnv(classOf[MLSQLRest].getName, tmpTablePath)
-        firstDf.write.format("parquet").mode(SaveMode.Append).save(tmpTablePath)
 
-        if (debug) {
-          logInfo(format(s"End to get Page ${count} ${config.path} Consume:${System.currentTimeMillis() - firstPageFetchTime}ms"))
-        }
-
-        while (count < maxSize) {
-          Thread.sleep(pageInterval)
-          count += 1
-
-          val row = firstDf.select(F.col("content").cast(StringType), F.col("status")).head
+        var count = 0
+        var status: Int = 0
+        var hasNextPage: Boolean = false
+        var url = config.path
+        do {
+          val pageFetchTime = System.currentTimeMillis()
+          val _skipParams = if( count == 0 ) false else skipParams
+          val (_, dataFrame) = _httpWithRetrying(url, _skipParams, maxTries)
+          val row = dataFrame.select(F.col("content").cast(StringType), F.col("status")).head
           val content = row.getString(0)
-          val status = row.getInt(1)
-          val hasNextPage = pageStrategy.hasNextPage(Option(content))
+          // Reset status
+          status = row.getInt(1)
+          pageStrategy.nexPage(Option(content))
+          url = pageStrategy.pageUrl( Option(content) )
+          hasNextPage = pageStrategy.hasNextPage(Option(content))
 
-          if (status != 200 || !hasNextPage) {
-            if (debug) {
-              logInfo(s"Stop paging. The last Page ${count - 1} ${config.path} status: ${status} hasNextPage: ${hasNextPage} ")
-            }
-            count = maxSize
-          } else {
-            val newUrl = pageStrategy.pageUrl(Option(content))
-            val tempTime = System.currentTimeMillis()
-            executeWithRetrying[(Int, Option[DataFrame])](maxTries)((() => {
-              try {
-                if (debug) {
-                  logInfo(format(s"Started get Page ${count} ${newUrl}"))
-                }
-
-                val tempDF = _http(newUrl, config.config, skipParams, config.df.get.sparkSession)
-                val row = tempDF.select(F.col("content").cast(StringType), F.col("status")).head
-                firstDf = tempDF
-                val status = row.getInt(1)
-                (status, Option(tempDF))
-              } catch {
-                case e: Exception =>
-                  (500, None)
-              }
-            }) (),
-              tempResp => {
-                val t = tempResp._1 == 200
-                if (!t) {
-                  Thread.sleep(retryInterval)
-                }
-                t
-              },
-              failResp => logInfo(s"Fail request ${newUrl} failed after ${maxTries} attempts. the last response status is: ${failResp._1}. ")
-            )
-
-            val row = firstDf.select(F.col("content").cast(StringType), F.col("status")).head
-            val status = row.getInt(1)
-            //page should be 200 otherwise should not save in parquet file
-            if (status == 200) {
-              firstDf.write.format("parquet").mode(SaveMode.Append).save(tmpTablePath)
-            }
-            pageStrategy.nexPage(Option(content))
-            if (debug) {
-              logInfo(format(s"End to get Page ${count} ${newUrl} Consume: ${System.currentTimeMillis() - tempTime}"))
-            }
+          if( status != 200  ) {
+            // First page request failed, return immediately, otherwise return saved DataFrame
+            if( count == 0 ) return dataFrame else return context.execListener.sparkSession.read.parquet(tmpTablePath)
           }
-
+          dataFrame.write.format("parquet").mode(SaveMode.Append).save(tmpTablePath)
+          if (debug) {
+            logInfo(format(s"Getting Page ${count} ${url} Consume:${System.currentTimeMillis() - pageFetchTime}ms"))
+          }
+          if( count > 0 ) Thread.sleep( pageInterval)
+          count += 1
         }
+        while( count < maxSize && hasNextPage && status == 200 )
         context.execListener.sparkSession.read.parquet(tmpTablePath)
 
       case (None, None) =>
-
+        // One page http request
         val maxTries = config.config.getOrElse("config.retry", config.config.getOrElse("config.page.retry", "3")).toInt
-
-
-        val (_, resultDF) = executeWithRetrying[(Int, Option[DataFrame])](maxTries)((() => {
-          try {
-            val tempDF = _http(config.path, config.config, false, config.df.get.sparkSession)
-            val row = tempDF.select(F.col("content").cast(StringType), F.col("status")).head
-            val status = row.getInt(1)
-            (status, Option(tempDF))
-          } catch {
-            case e: Exception =>
-              (500, None)
-          }
-        }) (),
-          tempResp => {
-            val t = tempResp._1 == 200
-            if (!t) {
-              Thread.sleep(retryInterval)
-            }
-            t
-          },
-          failResp => logInfo(s"Fail request ${config.path} failed after ${maxTries} attempts. the last response status is: ${failResp._1}. ")
-        )
-        if (resultDF.isEmpty) {
-          val session = ScriptSQLExec.context().execListener.sparkSession
-          return session.createDataFrame(session.sparkContext.makeRDD(Seq(Row.fromSeq(Seq(Array[Byte](), 0))))
-            , StructType(fields = Seq(
-              StructField("content", BinaryType), StructField("status", IntegerType)
-            )))
-        }
-        resultDF.get
+        _httpWithRetrying(config.path, skipParams, maxTries)._2
     }
-
-
   }
 
   override def skipDynamicEvaluation = true
 
-
+  /**
+   * Send http request and return the result as a DataFrame
+   * @param url           http url
+   * @param params        http parameters, including content-type http method and others
+   * @param skipParams    if true, not adding parameters to http get url
+   * @param session       The Spark Session
+   * @return  DataFrame , is guaranteed to be not null, with 2 columns content: Array[String] status: Int
+   */
   private def _http(url: String, params: Map[String, String], skipParams: Boolean, session: SparkSession): DataFrame = {
     val httpMethod = params.getOrElse(configMethod.name, "get").toLowerCase
     val request = httpMethod match {
@@ -290,7 +256,7 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
     val httpResponse = response.returnResponse()
     val status = httpResponse.getStatusLine.getStatusCode
     val content = if (httpResponse.getEntity != null) EntityUtils.toByteArray(httpResponse.getEntity) else Array[Byte]()
-
+    logInfo(format(s"$url $status"))
     session.createDataFrame(session.sparkContext.makeRDD(Seq(Row.fromSeq(Seq(content, status))))
       , StructType(fields = Seq(
         StructField("content", BinaryType), StructField("status", IntegerType)
@@ -315,7 +281,6 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
     val httpMethod = params.getOrElse(configMethod.name, "get").toLowerCase
     val request = httpMethod match {
       case "get" =>
-
         val paramsBuf = ArrayBuffer[(String, String)]()
         params.filter(_._1.startsWith("form.")).foreach { case (k, v) =>
           paramsBuf.append((k.stripPrefix("form."), Templates2.dynamicEvaluateExpression(URLEncoder.encode(v, "utf-8"), ScriptSQLExec.context().execListener.env().toMap)))

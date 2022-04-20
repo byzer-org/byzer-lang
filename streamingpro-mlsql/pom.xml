@@ -5,7 +5,7 @@
     <parent>
         <artifactId>streamingpro_2.12</artifactId>
         <groupId>tech.mlsql</groupId>
-        <version>2.2.2</version>
+        <version>2.3.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <properties>
@@ -738,6 +738,7 @@
     </dependencies>
 
     <build>
+        <finalName>byzer-lang-${spark.version}-${scala.binary.version}-${project.version}</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.hadoop</groupId>

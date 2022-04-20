@@ -9,7 +9,7 @@ $SPARK_HOME/bin/spark-submit --class streaming.core.StreamingApp \
         --master local[*] \
         --name mlsql \        
         --conf "spark.scheduler.mode=FAIR" \
-       [1] ${MLSQL_HOME}/libs/${MAIN_JAR}    \ 
+       [1] ${MLSQL_HOME}/main/${MAIN_JAR}    \ 
         -streaming.name mlsql    \
         -streaming.platform spark   \
         -streaming.rest true   \

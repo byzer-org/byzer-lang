@@ -21,7 +21,7 @@ export MLSQL_SPARK_VERSION=2.4
 你会在如下目录发现一个jar包(注意，需要把x.x.x替换为实际的版本,后续相同)：
 
 ```
-streamingpro-mlsql/target/streamingpro-mlsql-spark_2.4_2.11-x.x.x-SNAPSHOT.jar
+streamingpro-mlsql/target/byzer-lang-3.1.1_2.12-x.x.x-SNAPSHOT.jar
 ```
 
 大概280多M。 接着手动创建一个发行包：
@@ -29,7 +29,7 @@ streamingpro-mlsql/target/streamingpro-mlsql-spark_2.4_2.11-x.x.x-SNAPSHOT.jar
 ```
 export VERSION=x.x.x-SNAPSHOT
 mkdir -p /tmp/mlsql-server/libs
-cp  streamingpro-mlsql/target/streamingpro-mlsql-spark_2.4_2.11-${VERSION}.jar /tmp/mlsql-server/libs
+cp  streamingpro-mlsql/target/byzer-lang-3.1.1_2.12-${VERSION}.jar /tmp/mlsql-server/libs
 cp dev/start-local.sh /tmp/mlsql-server
 cd /tmp/mlsql-server
 

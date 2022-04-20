@@ -13,11 +13,10 @@ import java.util.UUID
  * 23/02/2022 hellozepp(lisheng.zhanglin@163.com)
  */
 class ByzerScriptTestSuite extends LocalBaseTestSuite with Logging {
-
   val version: String = DockerUtils.getSparkShortVersion
   var url: String = ""
-  private var cluster: ByzerCluster = _
   var initialByzerPlugins: Seq[String] = Seq()
+  private var cluster: ByzerCluster = _
 
   def setupCluster(): ByzerCluster = {
     cluster = ByzerCluster.forSpec()
@@ -31,6 +30,15 @@ class ByzerScriptTestSuite extends LocalBaseTestSuite with Logging {
       cluster.stop()
       cluster = null
     }
+  }
+
+  override def beforeAll(): Unit = {
+    println("Initialize configuration before integration test execution...")
+    setupWorkingDirectory()
+    setupRunParams()
+    copyDataToUserHome(user)
+    TestManager.loadTestCase(new File(testCaseDirPath))
+    initPlugins()
   }
 
   override def copyDataToUserHome(user: String): Unit = {
@@ -49,8 +57,10 @@ class ByzerScriptTestSuite extends LocalBaseTestSuite with Logging {
   def runScript(url: String, user: String, code: String): (Int, String) = {
     val jobName = UUID.randomUUID().toString
     logInfo(s"The test submits a script to the container through Rest, url:$url, sql:$code")
-    val (status, result) = RestUtils.rest_request_string(url, "post", Map("sql" -> code, "owner" -> user, "jobName" -> jobName),
-      Map("Content-Type" -> "application/x-www-form-urlencoded"), Map("socket-timeout" -> "180s", "connect-timeout" -> "180s")
+    val (status, result) = RestUtils.rest_request_string(url, "post", Map("sql" -> code, "owner" -> user,
+      "jobName" -> jobName, "sessionPerUser" -> "true", "sessionPerRequest" -> "true"),
+      Map("Content-Type" -> "application/x-www-form-urlencoded"), Map("socket-timeout" -> "1800s",
+        "connect-timeout" -> "1800s", "retry" -> "1")
     )
     logInfo(s"status:$status,result:$result")
     (status, result)
@@ -60,15 +70,6 @@ class ByzerScriptTestSuite extends LocalBaseTestSuite with Logging {
     val path = getCurProjectRootPath
     testCaseDirPath = path + "/src/test/resources/sql/yarn"
     dataDirPath = path + "/src/test/resources/data"
-  }
-
-  override def beforeAll(): Unit = {
-    println("Initialize configuration before integration test execution...")
-    setupWorkingDirectory()
-    setupRunParams()
-    copyDataToUserHome(user)
-    TestManager.loadTestCase(new File(testCaseDirPath))
-    initPlugins()
   }
 
   def before(): Unit = {

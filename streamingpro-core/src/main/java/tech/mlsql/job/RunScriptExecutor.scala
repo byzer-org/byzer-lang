@@ -121,7 +121,7 @@ class RunScriptExecutor(_params: Map[String, String]) extends Logging with WowLo
                   "jobInfo" -> JSONTool.toJsonStr(jobInfo)).asJava)
             } catch {
               case e: Exception =>
-                e.printStackTrace()
+                logInfo("Async Job Exception", e)
                 val msgBuffer = ArrayBuffer[String]()
                 if (paramAsBoolean("show_stack", false)) {
                   format_full_exception(msgBuffer, e)

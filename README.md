@@ -138,10 +138,10 @@ Then you can visit `http://127.0.0.1:9002` .
 mlsql-engine_${spark_major_version}-${mlsql_version}.tgz
 ```shell
 ## Pre-built for Spark 2.4.3
-mlsql-engine_2.4-2.1.0.tar.gz
+byzer-lang-2.4.3-2.1.0.tar.gz
 
 ## Pre-built for Spark 3.1.1
-mlsql-engine_3.0-2.1.0.tar.gz
+byzer-lang-3.1.1-2.1.0.tar.gz
 ```  
 
 ## Building a Distribution
@@ -198,6 +198,7 @@ Directory structure
     |-- data       
     |-- examples   
     |-- libs       
+    |-- main       
     |-- README.md  
     |-- LICENSE
     |-- RELEASE

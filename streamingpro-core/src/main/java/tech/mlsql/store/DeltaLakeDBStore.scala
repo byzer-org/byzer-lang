@@ -11,7 +11,7 @@ import tech.mlsql.store.DictType.DictType
 class DeltaLakeDBStore extends DBStore {
   private val configTableName = "__mlsql__.config"
 
-  override def saveConfig(spark: SparkSession, appPrefix: String, name: String, value: String, dictType: DictType): Unit = {
+  override def saveConfig(spark: SparkSession, appPrefix: String, name: String, value: String, dictType: DictType): Unit = this.synchronized {
     val key = s"${appPrefix}_${name}"
     import spark.implicits._
     saveTable(spark, spark.createDataset[WDictStore](Seq(WDictStore(0, key, value, dictType.id))).toDF(), configTableName, Option("name,dictType"), false)
