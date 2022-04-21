@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 #
 # Licensed to the Apache Software Foundation (ASF) under one or more
@@ -17,10 +17,6 @@
 # limitations under the License.
 #
 
-set -u
-set -e
-set -o pipefail
-
 function recordStartOrStop() {
     currentIp=${BYZER_IP}
     serverPort=`$BYZER_HOME/bin/get-properties.sh streaming.driver.port`
@@ -29,7 +25,6 @@ function recordStartOrStop() {
 
 function prepareEnv {
     export BYZER_CONFIG_FILE="${BYZER_HOME}/conf/byzer.properties"
-
     echo "SPARK_HOME is:$SPARK_HOME"
     echo "BYZER_HOME is:${BYZER_HOME}"
     echo "BYZER_CONFIG_FILE is:${BYZER_CONFIG_FILE}"
@@ -38,8 +33,9 @@ function prepareEnv {
 }
 
 function checkRestPort() {
+    echo "Checking rest port on ${MACHINE_OS}"
     if [[ $MACHINE_OS == "Linux" ]]; then
-        used=`netstat -tpln | grep "\<$port\>" | awk '{print $7}' | sed "s/\// /g"`
+        used=`netstat -tpln | grep "$port" | awk '{print $7}' | sed "s/\// /g"`
     elif [[ $MACHINE_OS == "Mac" ]]; then
         used=`lsof -nP -iTCP:$port -sTCP:LISTEN | grep $port | awk '{print $2}'`
     fi
@@ -47,6 +43,7 @@ function checkRestPort() {
         echo "<$used> already listen on $port"
         exit 1
     fi
+    echo "${port} is available"
 }
 
 function checkIfStopUserSameAsStartUser() {
@@ -109,6 +106,7 @@ function prepareProp() {
 function start(){
     clearRedundantProcess
 
+    [[ -z ${BYZER_HOME} ]]  && echo "{BYZER_HOME} is not set, exit" && exit 1
     if [ -f "${BYZER_HOME}/pid" ]; then
         PID=`cat ${BYZER_HOME}/pid`
         if ps -p $PID > /dev/null; then
@@ -130,6 +128,14 @@ function start(){
     prepareProp
 
     echo "Starting Byzer-lang..."
+    echo "[Spark config]"
+    echo "$SPARK_PROP"
+
+    echo "[Byzer config]"
+    echo "${BYZER_PROP}"
+
+    echo "[Extra config]"
+    echo "${EXT_JARS}"
 
     cd $BYZER_HOME/
     nohup $SPARK_HOME/bin/spark-submit --class streaming.core.StreamingApp \
@@ -212,7 +218,7 @@ elif [ "$1" == "restart" ]; then
     if [[ $? != 0 ]]; then
         echo "    Byzer-lang is not running, now start it"
     fi
-    echo "--> Starting Byzer-lang..."
+    echo "--> Re-starting Byzer-lang..."
     start
 else
     quit "Usage: 'byzer.sh [-v] start' or 'byzer.sh [-v] stop' or 'byzer.sh [-v] restart'"

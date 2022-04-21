@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 #
 # Licensed to the Apache Software Foundation (ASF) under one or more
@@ -26,7 +26,7 @@ if [[ -z ${byzer_lang_port} ]]; then
     byzer_lang_port=9003
 fi
 if [[ $MACHINE_OS == "Linux" ]]; then
-    byzer_lang_port_in_use=`netstat -anvp tcp | grep "\b${byzer_lang_port}\b"`
+    byzer_lang_port_in_use=`netstat -nat | grep "${byzer_lang_port}"`
 fi
 if [[ $MACHINE_OS == "Mac" ]]; then
     byzer_lang_port_in_use=`lsof -nP -iTCP:${byzer_lang_port} -sTCP:LISTEN`

@@ -22,10 +22,8 @@
                 <include>check-1000-java.sh</include>
                 <include>check-1100-ports.sh</include>
                 <include>get-properties.sh</include>
-                <include>headers.sh</include>
+                <include>header.sh</include>
                 <include>kill-process-tree.sh</include>
-                <include>log-rotate-cron.sh</include>
-                <include>rotate-logs.sh</include>
             </includes>
             <outputDirectory>bin</outputDirectory>
         </fileSet>

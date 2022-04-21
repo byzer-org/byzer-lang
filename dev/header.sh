@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 #
 # Licensed to the Apache Software Foundation (ASF) under one or more
@@ -118,5 +118,4 @@ then
         *)          os="UNKNOWN:${unameOut}"
     esac
     export MACHINE_OS=$os
-
 fi
