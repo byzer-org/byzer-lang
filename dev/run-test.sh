@@ -48,7 +48,6 @@ fi
 
 TEST_MODULES_FLAG=${2:-it}
 MATCHES=${3:-.*}
-
 echo "Current parameters: $*"
 
 if [ "${MLSQL_SPARK_VERSION}" == "3.0" ]; then
