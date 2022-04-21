@@ -79,7 +79,8 @@ esac
 echo test moules is :"${TEST_MODULES}"
 
 if [ "${SKIP_INSTALL:-}" != "skipInstall" ]; then
-  mvn clean install test $TEST_MODULES
+  mvn clean install -DskipTests
 else
-  mvn clean test $TEST_MODULES
+  mvn clean
 fi
+mvn test $TEST_MODULES

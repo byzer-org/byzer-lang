@@ -966,6 +966,7 @@
                 <executions>
                     <execution>
                         <id>regex-property</id>
+                        <phase>test</phase>
                         <goals>
                             <goal>regex-property</goal>
                         </goals>
