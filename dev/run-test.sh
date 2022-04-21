@@ -76,7 +76,6 @@ case "${TEST_MODULES_FLAG}" in
     ut)      args=(-Dtest.regex='"(streamingpro-it-'"${MLSQL_SPARK_VERSION}""_""${SCALA_BINARY_VERSION}"')"') && TEST_MODULES=${args[@]};;
     *)       echo "Only support all|it|ut" && exit 1
 esac
-
 echo test moules is :"${TEST_MODULES}"
 
 if [ "${SKIP_INSTALL:-}" != "skipInstall" ]; then
