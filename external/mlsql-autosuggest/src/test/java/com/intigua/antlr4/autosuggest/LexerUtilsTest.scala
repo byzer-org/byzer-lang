@@ -1,13 +1,12 @@
 package com.intigua.antlr4.autosuggest
 
 import tech.mlsql.autosuggest.statement.LexerUtils
-import tech.mlsql.autosuggest.{TokenPos, TokenPosType}
+import tech.mlsql.autosuggest.{AutoSuggestContext, TokenPos, TokenPosType}
 
 /**
  * 2/6/2020 WilliamZhu(allwefantasy@gmail.com)
  */
 class LexerUtilsTest extends BaseTest {
-
   test(" load [cursor]hive.`` as -- jack") {
     assert(LexerUtils.toTokenPos(tokens, 3, 6) == TokenPos(0, TokenPosType.NEXT, 0))
 
@@ -42,5 +41,40 @@ class LexerUtilsTest extends BaseTest {
     context.buildFromString("load csv.")
     assert(LexerUtils.toTokenPos(context.rawTokens, 1, 9) == TokenPos(2, TokenPosType.NEXT, 0))
   }
-
+  test("select a,b,c from table1 as table1;select aa,bb,cc from table2 as table2;\\n \\n \\n select from table1 t1  left join table2 t2  on t1.a = t2."){
+    val sql ="""
+               |select a,b,c from table1 as table1;
+               |select aa,bb,cc from table2 as table2;
+               |
+               |
+               |
+               |select from table1 t1  left join table2 t2  on t1.a = t2.
+               |""".stripMargin
+    val items = context.buildFromString(sql).suggest(4, 0)
+    assert(items.map(_.name) == List("load", "select", "include","register","run","train","predict","save","set"))
+  }
+  test("select a,b,c from table1 as table1;select \\n \\n \\n select from table1 t1  left join table2 t2  on t1.a = t2."){
+    val sql ="""
+               |select a,b,c from table1 as table1;
+               |select
+               |
+               |
+               |
+               |select from table1 t1  left join table2 t2  on t1.a = t2.
+               |""".stripMargin
+    val items = context.buildFromString(sql).suggest(4, 0)
+    assert(items.map(_.name) == List("table1", "a", "b", "c"))
+  }
+  test("select a,b,c from table1 as table1;select aa,bb,cc from table2 as table2;select from table1 t1  left join table2 t2  on t1.a = t2. \\n"){
+    val sql ="""
+               |select a,b,c from table1 as table1;
+               |select aa,bb,cc from table2 as table2;
+               |select from table1 t1  left join table2 t2  on t1.a = t2
+               |
+               |
+               |""".stripMargin
+    AutoSuggestContext.init
+    val items = context.buildFromString(sql).suggest(5, 0)
+    assert(items.map(_.name) == List("table1", "table2", "aa", "bb", "cc", "a", "b", "c","count", "split"))
+  }
 }

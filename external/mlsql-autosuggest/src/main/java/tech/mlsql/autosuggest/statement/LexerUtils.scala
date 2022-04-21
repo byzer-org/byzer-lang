@@ -4,7 +4,7 @@ import org.antlr.v4.runtime.Token
 import org.antlr.v4.runtime.misc.Interval
 import org.apache.commons.lang3.StringUtils
 import streaming.dsl.parser.DSLSQLLexer
-import tech.mlsql.autosuggest.dsl.{MLSQLTokenTypeWrapper, TokenTypeWrapper}
+import tech.mlsql.autosuggest.dsl.{DSLWrapper, MLSQLTokenTypeWrapper, TokenTypeWrapper}
 import tech.mlsql.autosuggest.{AutoSuggestContext, TokenPos, TokenPosType}
 
 import scala.collection.JavaConverters._
@@ -47,6 +47,12 @@ object LexerUtils {
 
 
   /**
+   * In this method, three states of the cursor are judged in the code.
+   * The three states are: first, the cursor is at the end of the code,
+   * and the current line is empty, and there is no code statement under the cursor;
+   * second, the cursor is in the middle of the code, and the current line is empty,
+   * and there are code statements above and below the cursor; third Type,
+   * the cursor is in the code statement line, and this line is not empty.
    *
    * @param tokens
    * @param lineNum 行号，从1开始计数
@@ -63,29 +69,36 @@ object LexerUtils {
     if (tokens.isEmpty) {
       return TokenPos(-1, TokenPosType.NEXT, -1)
     }
-    val _lastToken: Token = tokens.last
+    // Whether to enter the flag value of the last word on the line above the record cursor
+    var notEndCodeFlag: Boolean = false
+    var _lastToken: Token = tokens.last
+    // Determine if there is code after the line where the cursor is located
+    if(_lastToken.getLine > lineNum){
+      notEndCodeFlag = true
+    }
     var _lastTokenIndex = 0
-    var _lastLineHeadToken: Token = _lastToken
-    var _lastLineHeadTokenNum: Int = -1
-    var _lastLineHeadTokenIndex = 0
     val oneLineTokens = tokens.zipWithIndex.filter { case (token, index) =>
-      _lastTokenIndex = index
-      if (_lastLineHeadTokenNum != token.getLine) {
-        _lastLineHeadTokenIndex = index
-        _lastLineHeadToken = token
-        _lastLineHeadTokenNum = token.getLine
+      //A block of code that records the last word of the line before the cursor
+      if(token.getLine < lineNum && notEndCodeFlag){
+        _lastToken = token
+        _lastTokenIndex = index
+      }
+      if(!notEndCodeFlag){
+        _lastTokenIndex = index
       }
       token.getLine == lineNum
-    }
-    val firstToken = oneLineTokens.headOption match {
-      case Some(head) => head
-      case None => (_lastLineHeadToken, _lastLineHeadTokenIndex)
     }
     val lastToken = oneLineTokens.lastOption match {
       case Some(last) => last
       case None => (_lastToken, _lastTokenIndex)
     }
-
+     if(oneLineTokens.isEmpty && lastToken._1.getType == DSLWrapper.SEMICOLON) {
+        return TokenPos(-1, TokenPosType.NEXT, -1)
+     }
+    val firstToken = oneLineTokens.headOption match {
+      case Some(head) => head
+      case None => (_lastToken, _lastTokenIndex)
+    }
     if (colNum < firstToken._1.getCharPositionInLine) {
       return TokenPos(firstToken._2 - 1, TokenPosType.NEXT, 0)
     }
@@ -94,7 +107,7 @@ object LexerUtils {
       return TokenPos(lastToken._2, TokenPosType.NEXT, 0)
     }
 
-    if (colNum > lastToken._1.getCharPositionInLine
+    if (colNum >= lastToken._1.getCharPositionInLine
       && colNum <= lastToken._1.getCharPositionInLine + lastToken._1.getText.size
       &&
       (lastToken._1.getType != DSLSQLLexer.UNRECOGNIZED
@@ -105,8 +118,8 @@ object LexerUtils {
     val poses = oneLineTokens.map { case (token, index) =>
       val start = token.getCharPositionInLine
       val end = token.getCharPositionInLine + token.getText.size
-      //紧邻一个token的后面，没有空格,一般情况下是当做前一个token的一部分，用户还没写完，但是如果
-      //这个token是 [(,).]等，则不算
+      /* Immediately after a "token", there is no "space". Generally, it is regarded as a part of the previous "token",
+      and the user has not finished writing it.But if this "token" is [(,).] etc, it doesn't count*/
       if (colNum == end && (1 <= token.getType)
         && (
         token.getType == DSLSQLLexer.UNRECOGNIZED
@@ -130,7 +143,9 @@ object LexerUtils {
     }
     poses.head
   }
-
+  /**
+  * Consistent with [[tech.mlsql.autosuggest.statement.LexerUtils.toTokenPos()]]
+  */
   def toTokenPosForSparkSQL(tokens: List[Token], lineNum: Int, colNum: Int): TokenPos = {
     /**
      * load hi[cursor]...   in token
@@ -141,29 +156,36 @@ object LexerUtils {
     if (tokens.isEmpty) {
       return TokenPos(-1, TokenPosType.NEXT, -1)
     }
-    val _lastToken: Token = tokens.last
+    // Whether to enter the flag value of the last word on the line above the record cursor
+    var notEndCodeFlag: Boolean = false
+    var _lastToken: Token = tokens.last
+    // Determine if there is code after the line where the cursor is located
+    if(_lastToken.getLine > lineNum){
+      notEndCodeFlag = true
+    }
     var _lastTokenIndex = 0
-    var _lastLineHeadToken: Token = _lastToken
-    var _lastLineHeadTokenNum: Int = -1
-    var _lastLineHeadTokenIndex = 0
     val oneLineTokens = tokens.zipWithIndex.filter { case (token, index) =>
-      _lastTokenIndex = index
-      if (_lastLineHeadTokenNum != token.getLine) {
-        _lastLineHeadTokenIndex = index
-        _lastLineHeadToken = token
-        _lastLineHeadTokenNum = token.getLine
+      /* A block of code that records the last word of the line before the cursor */
+      if(token.getLine < lineNum && notEndCodeFlag){
+        _lastToken = token
+        _lastTokenIndex = index
+      }
+      if(!notEndCodeFlag){
+        _lastTokenIndex = index
       }
       token.getLine == lineNum
-    }
-    val firstToken = oneLineTokens.headOption match {
-      case Some(head) => head
-      case None => (_lastLineHeadToken, _lastLineHeadTokenIndex)
     }
     val lastToken = oneLineTokens.lastOption match {
       case Some(last) => last
       case None => (_lastToken, _lastTokenIndex)
     }
-
+    if(oneLineTokens.isEmpty && lastToken._1.getType == DSLWrapper.SEMICOLON) {
+      return TokenPos(-1, TokenPosType.NEXT, -1)
+    }
+    val firstToken = oneLineTokens.headOption match {
+      case Some(head) => head
+      case None => (_lastToken, _lastTokenIndex)
+    }
     if (colNum < firstToken._1.getCharPositionInLine) {
       return TokenPos(firstToken._2 - 1, TokenPosType.NEXT, 0)
     }
@@ -172,18 +194,18 @@ object LexerUtils {
       return TokenPos(lastToken._2, TokenPosType.NEXT, 0)
     }
 
-    if (colNum > lastToken._1.getCharPositionInLine
+    if (colNum >=lastToken._1.getCharPositionInLine
       && colNum <= lastToken._1.getCharPositionInLine + lastToken._1.getText.size
       && !TokenTypeWrapper.MAP.contains(lastToken._1.getType)
 
     ) {
       return TokenPos(lastToken._2, TokenPosType.CURRENT, colNum - lastToken._1.getCharPositionInLine)
     }
-    oneLineTokens.map { case (token, index) =>
+    val poses = oneLineTokens.map { case (token, index) =>
       val start = token.getCharPositionInLine
       val end = token.getCharPositionInLine + token.getText.size
-      //紧邻一个token的后面，没有空格,一般情况下是当做前一个token的一部分，用户还没写完，但是如果
-      //这个token是 [(,).]等，则不算
+      /* Immediately after a "token", there is no "space". Generally, it is regarded as a part of the previous "token",
+      and the user has not finished writing it.But if this "token" is [(,).] etc, it doesn't count*/
       if (colNum == end && (1 <= token.getType)
         && (
         TokenTypeWrapper.MAP.contains(token.getType)
@@ -199,7 +221,12 @@ object LexerUtils {
       }
 
 
-    }.filterNot(_.pos == -2).head
+    }.filterNot(_.pos == -2)
+    // If the result after the filter is empty, get the head directly to get the NPE
+    if (poses.isEmpty) {
+      return TokenPos(-1, TokenPosType.NEXT, -1)
+    }
+    poses.head
   }
 
 
