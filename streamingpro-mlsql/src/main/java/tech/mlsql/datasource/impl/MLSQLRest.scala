@@ -336,7 +336,8 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
         request.bodyForm(form.build(), Charset.forName("utf-8")).execute()
 
       case ("post", contentType) if contentType.trim.startsWith("multipart/form-data") =>
-        request.removeHeaders("Content-Type") // Avoid setting boundary
+        // Avoid setting boundary
+        request.removeHeaders("Content-Type")
 
         val context = ScriptSQLExec.contextGetOrForTest()
         val _filePath = params("form.file-path")
