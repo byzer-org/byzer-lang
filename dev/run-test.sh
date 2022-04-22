@@ -25,13 +25,32 @@ DEV_DIR=$(cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)
 
 function exit_with_usage {
   cat << EOF
-usage: run-test
-Execute byzer's unit and integration testing.
-Inputs are specified with the following environment variables:
+USAGE
+      sh dev/run-test.sh [BYZER_SPARK_VERSION] [all | it | ut] [file regex matches rule]
 
-MLSQL_SPARK_VERSION                - the spark version, 2.4/3.0 default 2.4
-TEST_MODULES_FLAG all|it|ut        - type of test, default it
-matches                            - Specify a regular expression for testfile, default .*
+DESCRIPTION
+      Execute byzer's unit and integration testing.It supports tests of multiple spark versions, and can be executed
+      separately for unit test or integration test according to parameter settings. The integration test can support
+      the execution of a test script alone.
+
+      positional arguments:
+
+      BYZER_SPARK_VERSION [2.4 | 3.0]          - Specify the spark version supported by the test, default 3.0.
+      TEST_MODULES_FLAG [all | it | ut]        - The parameter `all` here means to execute all tests; `ut` means to
+                                                execute only unit tests excluding integration test cases; `it` means
+                                                to execute only integration tests under the streamingpro-it module,
+                                                not to execute unit test cases of other modules, default `it`.
+      matches                                  - Specify a regular expression for testfile, default `.*` .
+
+EXAMPLE
+      If you need to execute integration tests of the spark3 version (which is the default behavior), you can use the
+      following command:
+
+      $ sh dev/run-test.sh 3.0 it
+
+      Or if you want to execute spark2 version of unit tests, you can use the command:
+
+      $ sh dev/run-test.sh 2.4 ut
 EOF
   exit 1
 }
@@ -45,12 +64,13 @@ if [ -n "$1" ]; then
 else
   export MLSQL_SPARK_VERSION=${MLSQL_SPARK_VERSION:-3.0}
 fi
+BYZER_SPARK_VERSION=$MLSQL_SPARK_VERSION
 
 TEST_MODULES_FLAG=${2:-it}
 MATCHES=${3:-.*}
 echo "Current parameters: $*"
 
-if [ "${MLSQL_SPARK_VERSION}" == "3.0" ]; then
+if [ "${BYZER_SPARK_VERSION}" == "3.0" ]; then
   SCALA_BINARY_VERSION=2.12
   if [ ! -f "${DEV_DIR}"/ansj_seg-5.1.6.jar ]; then
     wget --no-check-certificate --no-verbose "http://download.mlsql.tech/nlp/ansj_seg-5.1.6.jar" --directory-prefix "${DEV_DIR}/"
@@ -59,9 +79,19 @@ if [ "${MLSQL_SPARK_VERSION}" == "3.0" ]; then
     wget --no-check-certificate --no-verbose http://download.mlsql.tech/nlp/nlp-lang-1.7.8.jar --directory-prefix "${DEV_DIR}/"
   fi
   echo "Download 3rd-party jars succeed"
-  ./dev/make-distribution.sh
 
-elif [ "${MLSQL_SPARK_VERSION}" == "2.4" ]; then
+  # When we try to test the spark3 version, build a tar package through `make-distribution.sh`, which is mounted to
+  # docker for integration testing. If the spark2 version is tested, it is not supported for now, so there is no need
+  # to package it.
+  case "${TEST_MODULES_FLAG}" in
+      all)     ./dev/make-distribution.sh;;
+      it)      ./dev/make-distribution.sh;;
+      ut)      echo "Current spark version is ${BYZER_SPARK_VERSION}. No need to pack, skip it.";;
+      *)       echo "Only support all|it|ut" && exit 1
+  esac
+
+
+elif [ "${BYZER_SPARK_VERSION}" == "2.4" ]; then
   SCALA_BINARY_VERSION=2.11
   ./dev/change-scala-version.sh 2.11
   python ./dev/python/convert_pom.py 2.4
@@ -72,8 +102,8 @@ fi
 
 case "${TEST_MODULES_FLAG}" in
     all)     TEST_MODULES=-DargLine='"'-Dmatches=${MATCHES}'"';;
-    it)   TEST_MODULES="-pl streamingpro-it -DargLine=-Dmatches=${MATCHES}";;
-    ut)      args=(-Dtest.regex='"(streamingpro-it-'"${MLSQL_SPARK_VERSION}""_""${SCALA_BINARY_VERSION}"')"') && TEST_MODULES=${args[@]};;
+    it)      TEST_MODULES="-pl streamingpro-it -DargLine=-Dmatches=${MATCHES}";;
+    ut)      args=(-Dtest.regex='"(streamingpro-it-'"${BYZER_SPARK_VERSION}""_""${SCALA_BINARY_VERSION}"')"') && TEST_MODULES=${args[@]};;
     *)       echo "Only support all|it|ut" && exit 1
 esac
 echo test moules is :"${TEST_MODULES}"
