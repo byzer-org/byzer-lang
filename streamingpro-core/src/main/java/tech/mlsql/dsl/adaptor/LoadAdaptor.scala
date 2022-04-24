@@ -101,7 +101,7 @@ class LoadProcessing(scriptSQLExecListener: ScriptSQLExecListener,
     if (tempDS.isDefined ) {
       // DataSource who is not MLSQLSourceConfig or if it's MLSQLSourceConfig then  skipDynamicEvaluation is false
       // should evaluate the v with dynamic expression
-      if (!tempDS.isInstanceOf[MLSQLSourceConfig] || !tempDS.asInstanceOf[MLSQLSourceConfig].skipDynamicEvaluation) {
+      if (tempDS.isInstanceOf[MLSQLSourceConfig] && !tempDS.asInstanceOf[MLSQLSourceConfig].skipDynamicEvaluation) {
         option = _option.map { case (k, v) =>
           val newV = Templates2.dynamicEvaluateExpression(v, ScriptSQLExec.context().execListener.env().toMap)
           (k, newV)

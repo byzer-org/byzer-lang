@@ -52,7 +52,7 @@ trait SQLAlg extends Serializable {
   def skipOriginalDFName: Boolean = true
   def skipResultDFName: Boolean = true
 
-  def skipDynamicEvaluation: Boolean = false
+  def skipDynamicEvaluation: Boolean = true
 
   def modelType: ModelType = UndefinedType
 
