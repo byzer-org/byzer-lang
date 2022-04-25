@@ -48,11 +48,11 @@ if [[ "$CHECKENV_ING" == "" ]]; then
 
 
 #        CHECK_FILES=
-        CHECK_FILES=(ls ${BYZER_HOME}/bin/check-*.sh)
+        CHECK_FILES=$(ls ${BYZER_HOME}/bin/check-*.sh)
         for f in ${CHECK_FILES[@]}
         do
             if [[ ! $f == *check-env.sh ]]; then
-                echo (getValueByKey ${TITLE} ${f})
+                echo $(getValueByKey ${TITLE} ${f})
                 echo ""                                                                             >>${LOG}
                 echo "============================================================================" >>${LOG}
                 echo "Checking $(basename $f)"                                                      >>${LOG}

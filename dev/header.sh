@@ -100,6 +100,12 @@ then
     fi
 
 
+    # set ServerMode
+    export BYZER_SERVER_MODE=$($BYZER_HOME/bin/get-properties.sh byzer.server.mode)
+    if [[ -z ${BYZER_SERVER_MODE} ]]; then
+        export BYZER_SERVER_MODE="server"
+    fi
+
     # set JAVA
     if [[ "${JAVA}" == "" ]]; then
         if [[ -z "$JAVA_HOME" ]]; then

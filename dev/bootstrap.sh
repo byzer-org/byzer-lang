@@ -103,10 +103,6 @@ function start(){
     fi
 
     # check $SPARK_HOME
-    BYZER_SERVER_MODE=$($BYZER_HOME/bin/get-properties.sh byzer.server.mode)
-    if [[ -z ${BYZER_SERVER_MODE} ]]; then
-        BYZER_SERVER_MODE="server"
-    fi
     if [ $BYZER_SERVER_MODE == "server" ]; then
         # only in server mode need check spark home
         [[ -z ${SPARK_HOME} ]]  && quit "{SPARK_HOME} is not set, exit" 
