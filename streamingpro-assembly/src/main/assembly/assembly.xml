@@ -51,6 +51,8 @@
             <includes>
                 <include>byzer.properties</include>
                 <include>byzer.properties.override</include>
+                <include>byzer.properties.all-in-one.example</include>
+                <include>byzer.properties.server.example</include>
                 <include>byzer-server-log4j.properties</include>
                 <include>byzer-tools-log4j.properties</include>
             </includes>

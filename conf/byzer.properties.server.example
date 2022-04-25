@@ -8,11 +8,3 @@ streaming.platform=spark
 streaming.spark.service=true
 streaming.driver.port=9003
 streaming.enableHiveSupport=false
-
-spark.master=local[*]
-spark.driver.memory=2g
-spark.scheduler.mode=FAIR
-spark.sql.hive.thriftServer.singleSession=true
-spark.kryoserializer.buffer=256k
-spark.kryoserializer.buffer.max=1024m
-spark.serializer=org.apache.spark.serializer.KryoSerializer
