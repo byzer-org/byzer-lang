@@ -20,7 +20,7 @@
 # source me
 
 function isValidJavaVersion() {
-    version=`java -version 2>&1 | awk -F\" '/version/ {print $2}'`
+    version=$(java -version 2>&1 | awk -F\" '/version/ {print $2}')
     version_first_part="$(echo ${version} | cut -d '.' -f1)"
     version_second_part="$(echo ${version} | cut -d '.' -f2)"
     if [[ "$version_first_part" -eq "1" ]] && [[ "$version_second_part" -eq "8" ]]; then
@@ -43,7 +43,7 @@ then
     function quit {
         echo "$@"
         if [[ -n "${QUIT_MESSAGE_LOG}" ]]; then
-            echo `setColor 31 "$@"` >> ${QUIT_MESSAGE_LOG}
+            echo $(setColor 31 "$@") >> ${QUIT_MESSAGE_LOG}
         fi
         exit 1
     }
@@ -92,10 +92,27 @@ then
     export BYZER_IP=$(ifconfig | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0.1' | head -n 1)
     fi
 
+    # set BYZER_PORT
+    export BYZER_LANG_PORT=$($BYZER_HOME/bin/get-properties.sh streaming.driver.port)
+
+    if [[ -z ${BYZER_LANG_PORT} ]]; then
+        export BYZER_LANG_PORT=9003
+    fi
+
+
+    # set ServerMode
+    export BYZER_SERVER_MODE=$($BYZER_HOME/bin/get-properties.sh byzer.server.mode)
+    if [[ -z ${BYZER_SERVER_MODE} ]]; then
+        export BYZER_SERVER_MODE="server"
+    fi
+
     # set JAVA
     if [[ "${JAVA}" == "" ]]; then
         if [[ -z "$JAVA_HOME" ]]; then
-            if [[ `isValidJavaVersion` == "true" ]]; then
+            if [[ ${BYZER_SERVER_MODE} == "all-in-one" ]]; then
+                # use embeded open jdk 8 in all-in-one
+                JAVA_HOME=${BYZER_HOME}/jdk8
+            elif [[ $(isValidJavaVersion) == "true" ]]; then
                 JAVA_HOME=$(dirname $(dirname $(readlink -f $(which java))))
             else
                 quit "Java 1.8 or above is required."
@@ -107,7 +124,7 @@ then
         [[ -e "${JAVA}" ]] || quit "${JAVA} does not exist. Please set JAVA_HOME correctly."
         verbose "java is ${JAVA}" 
     fi
-
+    
     # check Machine
     unameOut="$(uname -s)"
     case "${unameOut}" in
