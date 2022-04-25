@@ -16,6 +16,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+source $(cd -P -- "$(dirname -- "$0")" && pwd -P)/header.sh
 
 function recordStartOrStop() {
     currentIp=${BYZER_IP}
@@ -23,11 +24,13 @@ function recordStartOrStop() {
     echo `date '+%Y-%m-%d %H:%M:%S '`"INFO : [Operation: $1] user:`whoami`, start time:$2, ip and port:${currentIp}:${serverPort}" >> ${BYZER_HOME}/logs/security.log
 }
 
+
 function prepareEnv {
     export BYZER_CONFIG_FILE="${BYZER_HOME}/conf/byzer.properties"
-    echo "SPARK_HOME is:$SPARK_HOME"
-    echo "BYZER_HOME is:${BYZER_HOME}"
-    echo "BYZER_CONFIG_FILE is:${BYZER_CONFIG_FILE}"
+    echo "SPARK_HOME is: $SPARK_HOME"
+    echo "BYZER_HOME is: ${BYZER_HOME}"
+    echo "BYZER_CONFIG_FILE is: ${BYZER_CONFIG_FILE}"
+
 
     mkdir -p ${BYZER_HOME}/logs
 }
@@ -93,12 +96,23 @@ function prepareProp() {
 function start(){
     clearRedundantProcess
 
-    [[ -z ${BYZER_HOME} ]]  && echo "{BYZER_HOME} is not set, exit" && exit 1
+    # check $BYZER_HOME
+    [[ -z ${BYZER_HOME} ]] && quit "{BYZER_HOME} is not set, exit" 
     if [ -f "${BYZER_HOME}/pid" ]; then
         PID=`cat ${BYZER_HOME}/pid`
         if ps -p $PID > /dev/null; then
           quit "Byzer-lang is running, stop it first, PID is $PID"
         fi
+    fi
+
+    # check $SPARK_HOME
+    BYZER_SERVER_MODE=`$BYZER_HOME/bin/get-properties.sh byzer.server.mode`
+    if [[ -z ${BYZER_SERVER_MODE} ]]; then
+        BYZER_SERVER_MODE="server"
+    fi
+    if [ $BYZER_SERVER_MODE == "server" ]; then
+        # only in server mode need check spark home
+        [[ -z ${SPARK_HOME} ]]  && quit "{SPARK_HOME} is not set, exit" 
     fi
 
     ${BYZER_HOME}/bin/check-env.sh || exit 1
@@ -111,7 +125,7 @@ function start(){
 
     prepareProp
 
-    echo "Starting Byzer-lang..."
+    echo "Starting Byzer engine in ${BYZER_SERVER_MODE} mode..."
     echo "[Spark config]"
     echo "$SPARK_PROP"
 
@@ -133,13 +147,13 @@ function start(){
     sleep 3
     clearRedundantProcess
 
-    [ ! -f "${BYZER_HOME}/pid" ] && quit "Byzer-lang start failed, check via log: ${BYZER_HOME}/logs/byzer-lang.log."
+    [ ! -f "${BYZER_HOME}/pid" ] && quit "Byzer engine start failed, check via log: ${BYZER_HOME}/logs/byzer-lang.log."
 
     PID=`cat ${BYZER_HOME}/pid`
     CUR_DATE=$(date "+%Y-%m-%d %H:%M:%S")
-    echo $CUR_DATE" new Byzer-lang process pid is "$PID >> ${BYZER_HOME}/logs/byzer-lang.log
+    echo $CUR_DATE" new Byzer engine process pid is "$PID >> ${BYZER_HOME}/logs/byzer-lang.log
 
-    echo "Byzer-lang is starting. It may take a while. For status, please visit http://$BYZER_IP:$BYZER_LANG_PORT."
+    echo "Byzer engine is starting. It may take a while. For status, please visit http://$BYZER_IP:$BYZER_LANG_PORT."
     echo "You may also check status via: PID:`cat ${BYZER_HOME}/pid`, or Log: ${BYZER_HOME}/logs/byzer-lang.log."
     recordStartOrStop "start success" "${START_TIME}"
 }
@@ -183,26 +197,26 @@ function stop(){
 
 # start command
 if [ "$1" == "start" ]; then
-    echo "Starting Byzer-lang..."
+    echo "Starting Byzer engine..."
     start
 # stop command
 elif [ "$1" == "stop" ]; then
-    echo `date '+%Y-%m-%d %H:%M:%S '`"Stopping Byzer-lang..."
+    echo `date '+%Y-%m-%d %H:%M:%S '`"Stopping Byzer engine..."
     stop
     if [[ $? == 0 ]]; then
         exit 0
     else
-        quit "Byzer-lang is not running"
+        quit "Byzer engine is not running"
     fi
 # restart command
 elif [ "$1" == "restart" ]; then
-    echo "Restarting Byzer-lang..."
-    echo "--> Stopping Byzer-lang first if it's running..."
+    echo "Restarting Byzer engine..."
+    echo "--> Stopping Byzer engine first if it's running..."
     stop
     if [[ $? != 0 ]]; then
-        echo "    Byzer-lang is not running, now start it"
+        echo "    Byzer engine is not running, now start it"
     fi
-    echo "--> Re-starting Byzer-lang..."
+    echo "--> Re-starting Byzer engine..."
     start
 else
     quit "Usage: 'byzer.sh [-v] start' or 'byzer.sh [-v] stop' or 'byzer.sh [-v] restart'"
