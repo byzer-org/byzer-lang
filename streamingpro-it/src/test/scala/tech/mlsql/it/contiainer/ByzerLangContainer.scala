@@ -8,6 +8,8 @@ import tech.mlsql.it.utils.DockerUtils
  */
 class ByzerLangContainer(clusterName: String, image: String) extends ChaosContainer(clusterName: String, image: String) with Logging {
 
+  val BYZER_CONTAINER_HOME = "/home/deploy/byzer-lang/"
+
   def this(clusterName: String) {
     this(clusterName, ByzerLangContainer.DEFAULT_BYZER_IMAGE_NAME)
   }
@@ -30,13 +32,13 @@ class ByzerLangContainer(clusterName: String, image: String) extends ChaosContai
 
   def afterStart(): Unit = {
     DockerUtils.runCommandAsyncWithLogging(container.getDockerClient, container.getContainerId,
-      Seq("tail", "-f", "/home/deploy/logs/byzer-lang.log"))
+      Seq("tail", "-f", BYZER_CONTAINER_HOME + "logs/byzer-lang.log"))
   }
 
   override def beforeStop(): Unit = {
     super.beforeStop()
     if (null != container.getContainerId) DockerUtils.dumpContainerDirToTargetCompressed(container.getDockerClient,
-      container.getContainerId, "/home/deploy/logs")
+      container.getContainerId, BYZER_CONTAINER_HOME + "logs")
   }
 
 }

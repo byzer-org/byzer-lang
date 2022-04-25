@@ -29,6 +29,8 @@ import java.io.*;
 import java.util.Map;
 import java.util.Properties;
 
+import static tech.mlsql.tool.OrderedProperties.loadPropertiesFromInputStream;
+
 public class ByzerConfig {
 
     private static final Logger log = LoggerFactory.getLogger(ByzerConfig.class);
@@ -80,21 +82,6 @@ public class ByzerConfig {
             return orderedProperties;
         } catch (IOException e) {
             throw new RuntimeException(e);
-        }
-    }
-
-    private static OrderedProperties loadPropertiesFromInputStream(InputStream inputStream) {
-        BufferedReader confReader = null;
-        try {
-            confReader = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"));
-            OrderedProperties temp = new OrderedProperties();
-            temp.load(confReader);
-            return temp;
-
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        } finally {
-            IOUtils.closeQuietly(confReader);
         }
     }
 
