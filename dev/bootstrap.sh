@@ -131,8 +131,8 @@ function start(){
         
         nohup ${BYZER_HOME}/jdk8/bin/java -cp ${BYZER_HOME}/main/${MAIN_JAR}:${BYZER_HOME}/spark/*:${BYZER_HOME}/libs/*:${BYZER_HOME}/plugin/* \
             tech.mlsql.example.app.LocalSparkServiceApp \
-            $ALL_PROP >> ${BYZER_HOME}/logs/byzer.out \
-            & echo $! >> ${BYZER_HOME}/pid
+            $ALL_PROP >> ${BYZER_HOME}/logs/byzer.out &
+        echo $! >> ${BYZER_HOME}/pid
 
     elif [[ $BYZER_SERVER_MODE = "server" ]]; then
         echo ""
@@ -152,7 +152,8 @@ function start(){
             --driver-java-options "-Dlog4j.configuration=${BYZER_LOG_PATH}" \
             $SPARK_PROP \
             $MAIN_JAR_PATH  \
-            $BYZER_PROP >> ${BYZER_HOME}/logs/byzer.out & echo $! >> ${BYZER_HOME}/pid
+            $BYZER_PROP >> ${BYZER_HOME}/logs/byzer.out & 
+        echo $! >> ${BYZER_HOME}/pid
     fi
 
     sleep 3

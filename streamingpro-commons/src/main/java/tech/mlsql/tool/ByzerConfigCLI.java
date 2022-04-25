@@ -70,7 +70,7 @@ public class ByzerConfigCLI {
                     System.out.println(prop);
                 }
             }
-        } else if (key.equals("-args")) {
+        } else if ("-args".equals(key)) {
             // get all properties
             StringBuffer prop = new StringBuffer("");
             for (Map.Entry<Object, Object> entry : config.entrySet()) {
