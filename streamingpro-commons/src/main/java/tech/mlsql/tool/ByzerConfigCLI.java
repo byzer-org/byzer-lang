@@ -30,6 +30,8 @@ public class ByzerConfigCLI {
 
     private final static String BYZER_CONF_TEMP = "-%s %s";
 
+    private final static String ARGS_CONF_TEMP = "-%s %s ";
+
     public static void main(String[] args) {
         execute(args);
         Unsafe.systemExit(0);
@@ -51,7 +53,7 @@ public class ByzerConfigCLI {
 
         String key = args[0].trim();
         if (key.equals("-byzer")) {
-            // get all properties
+            // get byzer properties
             for (Map.Entry<Object, Object> entry : config.entrySet()) {
                 String entryKey = (String) entry.getKey();
                 if (entryKey.startsWith("streaming") || entryKey.startsWith("spark.mlsql")) {
@@ -60,7 +62,7 @@ public class ByzerConfigCLI {
                 }
             }
         } else if (key.equals("-spark")) {
-            // get all properties
+            // get spark properties
             for (Map.Entry<Object, Object> entry : config.entrySet()) {
                 String entryKey = (String) entry.getKey();
                 if (entryKey.startsWith("spark") && !entryKey.startsWith("spark.mlsql")) {
@@ -68,7 +70,16 @@ public class ByzerConfigCLI {
                     System.out.println(prop);
                 }
             }
-        } else if (!key.endsWith(".")) {
+        } else if (key.equals("-args")) {
+            // get all properties
+            StringBuffer prop = new StringBuffer("");
+            for (Map.Entry<Object, Object> entry : config.entrySet()) {
+                String entryKey = (String) entry.getKey();
+                prop.append(String.format(ARGS_CONF_TEMP, entryKey, entry.getValue()));
+            }
+            System.out.println(prop);
+        }
+        else if (!key.endsWith(".")) {
             String value = config.getProperty(key);
             if (value == null) {
                 value = "";
