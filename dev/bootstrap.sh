@@ -32,19 +32,6 @@ function prepareEnv {
     mkdir -p ${BYZER_HOME}/logs
 }
 
-function checkRestPort() {
-    echo "Checking rest port on ${MACHINE_OS}"
-    if [[ $MACHINE_OS == "Linux" ]]; then
-        used=`netstat -tpln | grep "$port" | awk '{print $7}' | sed "s/\// /g"`
-    elif [[ $MACHINE_OS == "Mac" ]]; then
-        used=`lsof -nP -iTCP:$port -sTCP:LISTEN | grep $port | awk '{print $2}'`
-    fi
-    if [ ! -z "$used" ]; then
-        echo "<$used> already listen on $port"
-        exit 1
-    fi
-    echo "${port} is available"
-}
 
 function checkIfStopUserSameAsStartUser() {
     startUser=`ps -p $1 -o user=`
@@ -122,9 +109,6 @@ function start(){
 
     prepareEnv
 
-    port=`$BYZER_HOME/bin/get-properties.sh streaming.driver.port`
-    checkRestPort
-
     prepareProp
 
     echo "Starting Byzer-lang..."
@@ -155,7 +139,7 @@ function start(){
     CUR_DATE=$(date "+%Y-%m-%d %H:%M:%S")
     echo $CUR_DATE" new Byzer-lang process pid is "$PID >> ${BYZER_HOME}/logs/byzer-lang.log
 
-    echo "Byzer-lang is starting. It may take a while. For status, please visit http://$BYZER_IP:$port."
+    echo "Byzer-lang is starting. It may take a while. For status, please visit http://$BYZER_IP:$BYZER_LANG_PORT."
     echo "You may also check status via: PID:`cat ${BYZER_HOME}/pid`, or Log: ${BYZER_HOME}/logs/byzer-lang.log."
     recordStartOrStop "start success" "${START_TIME}"
 }

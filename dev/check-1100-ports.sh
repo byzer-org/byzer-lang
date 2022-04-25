@@ -21,15 +21,24 @@
 
 source $(cd -P -- "$(dirname -- "$0")" && pwd -P)/header.sh
 
-byzer_lang_port=`$BYZER_HOME/bin/get-properties.sh streaming.driver.port`
-if [[ -z ${byzer_lang_port} ]]; then
-    byzer_lang_port=9003
-fi
-if [[ $MACHINE_OS == "Linux" ]]; then
-    byzer_lang_port_in_use=`netstat -nat | grep "${byzer_lang_port}"`
-fi
-if [[ $MACHINE_OS == "Mac" ]]; then
-    byzer_lang_port_in_use=`lsof -nP -iTCP:${byzer_lang_port} -sTCP:LISTEN`
-fi
 
-[[ -z ${byzer_lang_port_in_use} ]] || quit "ERROR: Port ${byzer_lang_port} is in use, another Byzer-lang is running?"
+function checkRestPort() {
+    echo "Checking rest port on ${MACHINE_OS}"
+    if [[ $MACHINE_OS == "Linux" ]]; then
+        used=`netstat -tpln | grep "$BYZER_LANG_PORT" | awk '{print $7}' | sed "s/\// /g"`
+    elif [[ $MACHINE_OS == "Mac" ]]; then
+        used=`lsof -nP -iTCP:$BYZER_LANG_PORT -sTCP:LISTEN | grep $BYZER_LANG_PORT | awk '{print $2}'`
+    fi
+    if [ ! -z "$used" ]; then
+        quit "ERROR: Port ${BYZER_LANG_PORT} is in use, another Byzer-lang is running?"
+    fi
+    echo "${BYZER_LANG_PORT} is available"
+}
+
+
+
+echo "Byzer engine port has been set as ${BYZER_LANG_PORT}"
+
+checkRestPort ${BYZER_LANG_PORT}
+
+

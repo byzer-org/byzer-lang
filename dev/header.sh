@@ -92,6 +92,14 @@ then
     export BYZER_IP=$(ifconfig | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0.1' | head -n 1)
     fi
 
+    # set BYZER_PORT
+    export BYZER_LANG_PORT=`$BYZER_HOME/bin/get-properties.sh streaming.driver.port`
+
+    if [[ -z ${BYZER_LANG_PORT} ]]; then
+        export BYZER_LANG_PORT=9003
+    fi
+
+
     # set JAVA
     if [[ "${JAVA}" == "" ]]; then
         if [[ -z "$JAVA_HOME" ]]; then
