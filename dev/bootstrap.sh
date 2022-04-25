@@ -88,7 +88,7 @@ function prepareProp() {
 
     BYZER_PROP=$($BYZER_HOME/bin/get-properties.sh -byzer)
     SPARK_PROP=$($BYZER_HOME/bin/get-properties.sh -spark)
-    ALL_PROP=$(BYZER_HOME/bin/get-properties.sh -args)
+    ALL_PROP=$($BYZER_HOME/bin/get-properties.sh -args)
 }
 
 function start(){
@@ -120,24 +120,32 @@ function start(){
     prepareProp
 
     echo "Starting Byzer engine in ${BYZER_SERVER_MODE} mode..."
-    echo "[Spark config]"
-    echo "$SPARK_PROP"
-
-    echo "[Byzer config]"
-    echo "${BYZER_PROP}"
-
-    echo "[Extra config]"
-    echo "${EXT_JARS}"
 
     cd $BYZER_HOME/
 
     if [[ $BYZER_SERVER_MODE = "all-in-one" ]]; then
+        echo ""
+        echo "[All Config]"
+        echo "${ALL_PROP}"
+        echo ""
+        
         nohup ${BYZER_HOME}/jdk8/bin/java -cp ${BYZER_HOME}/main/${MAIN_JAR}:${BYZER_HOME}/spark/*:${BYZER_HOME}/libs/*:${BYZER_HOME}/plugin/* \
             tech.mlsql.example.app.LocalSparkServiceApp \
             $ALL_PROP >> ${BYZER_HOME}/logs/byzer.out \
             & echo $! >> ${BYZER_HOME}/pid
 
     elif [[ $BYZER_SERVER_MODE = "server" ]]; then
+        echo ""
+        echo "[Spark Config]"
+        echo "$SPARK_PROP"
+
+        echo "[Byzer Config]"
+        echo "${BYZER_PROP}"
+
+        echo "[Extra Config]"
+        echo "${EXT_JARS}"
+        echo ""
+
         nohup $SPARK_HOME/bin/spark-submit --class streaming.core.StreamingApp \
             --jars ${JARS} \
             --conf "spark.driver.extraClassPath=${EXT_JARS}" \
@@ -156,7 +164,9 @@ function start(){
     CUR_DATE=$(date "+%Y-%m-%d %H:%M:%S")
     echo $CUR_DATE" new Byzer engine process pid is "$PID >> ${BYZER_HOME}/logs/byzer-lang.log
 
-    echo "Byzer engine is starting. It may take a while. For status, please visit http://$BYZER_IP:$BYZER_LANG_PORT."
+    echo ""
+    echo $(setColor 33 "Byzer engine is starting. It may take a while. For status, please visit http://$BYZER_IP:$BYZER_LANG_PORT.")
+    echo ""
     echo "You may also check status via: PID:$(cat ${BYZER_HOME}/pid), or Log: ${BYZER_HOME}/logs/byzer-lang.log."
     recordStartOrStop "start success" "${START_TIME}"
 }
