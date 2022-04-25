@@ -88,13 +88,14 @@ function prepareProp() {
 
     BYZER_PROP=$($BYZER_HOME/bin/get-properties.sh -byzer)
     SPARK_PROP=$($BYZER_HOME/bin/get-properties.sh -spark)
+    ALL_PROP=$($BYZER_HOME/bin/get-properties.sh -args)
 }
 
 function start(){
     clearRedundantProcess
 
     # check $BYZER_HOME
-    [[ -z ${BYZER_HOME} ]] && quit "{BYZER_HOME} is not set, exit" 
+    [[ -z ${BYZER_HOME} ]] && quit "{BYZER_HOME} is not set, exit"
     if [ -f "${BYZER_HOME}/pid" ]; then
         PID=$(cat ${BYZER_HOME}/pid)
         if ps -p $PID > /dev/null; then
@@ -105,7 +106,7 @@ function start(){
     # check $SPARK_HOME
     if [ $BYZER_SERVER_MODE == "server" ]; then
         # only in server mode need check spark home
-        [[ -z ${SPARK_HOME} ]]  && quit "{SPARK_HOME} is not set, exit" 
+        [[ -z ${SPARK_HOME} ]]  && quit "{SPARK_HOME} is not set, exit"
     fi
 
     ${BYZER_HOME}/bin/check-env.sh || exit 1
@@ -119,23 +120,41 @@ function start(){
     prepareProp
 
     echo "Starting Byzer engine in ${BYZER_SERVER_MODE} mode..."
-    echo "[Spark config]"
-    echo "$SPARK_PROP"
-
-    echo "[Byzer config]"
-    echo "${BYZER_PROP}"
-
-    echo "[Extra config]"
-    echo "${EXT_JARS}"
 
     cd $BYZER_HOME/
-    nohup $SPARK_HOME/bin/spark-submit --class streaming.core.StreamingApp \
-        --jars ${JARS} \
-        --conf "spark.driver.extraClassPath=${EXT_JARS}" \
-        --driver-java-options "-Dlog4j.configuration=${BYZER_LOG_PATH}" \
-        $SPARK_PROP \
-        $MAIN_JAR_PATH  \
-        $BYZER_PROP >> ${BYZER_HOME}/logs/byzer.out & echo $! >> ${BYZER_HOME}/pid
+
+    if [[ $BYZER_SERVER_MODE = "all-in-one" ]]; then
+        echo ""
+        echo "[All Config]"
+        echo "${ALL_PROP}"
+        echo ""
+        
+        nohup ${BYZER_HOME}/jdk8/bin/java -cp ${BYZER_HOME}/main/${MAIN_JAR}:${BYZER_HOME}/spark/*:${BYZER_HOME}/libs/*:${BYZER_HOME}/plugin/* \
+            tech.mlsql.example.app.LocalSparkServiceApp \
+            $ALL_PROP >> ${BYZER_HOME}/logs/byzer.out &
+        echo $! >> ${BYZER_HOME}/pid
+
+    elif [[ $BYZER_SERVER_MODE = "server" ]]; then
+        echo ""
+        echo "[Spark Config]"
+        echo "$SPARK_PROP"
+
+        echo "[Byzer Config]"
+        echo "${BYZER_PROP}"
+
+        echo "[Extra Config]"
+        echo "${EXT_JARS}"
+        echo ""
+
+        nohup $SPARK_HOME/bin/spark-submit --class streaming.core.StreamingApp \
+            --jars ${JARS} \
+            --conf "spark.driver.extraClassPath=${EXT_JARS}" \
+            --driver-java-options "-Dlog4j.configuration=${BYZER_LOG_PATH}" \
+            $SPARK_PROP \
+            $MAIN_JAR_PATH  \
+            $BYZER_PROP >> ${BYZER_HOME}/logs/byzer.out & 
+        echo $! >> ${BYZER_HOME}/pid
+    fi
 
     sleep 3
     clearRedundantProcess
@@ -146,7 +165,9 @@ function start(){
     CUR_DATE=$(date "+%Y-%m-%d %H:%M:%S")
     echo $CUR_DATE" new Byzer engine process pid is "$PID >> ${BYZER_HOME}/logs/byzer-lang.log
 
-    echo "Byzer engine is starting. It may take a while. For status, please visit http://$BYZER_IP:$BYZER_LANG_PORT."
+    echo ""
+    echo $(setColor 33 "Byzer engine is starting. It may take a while. For status, please visit http://$BYZER_IP:$BYZER_LANG_PORT.")
+    echo ""
     echo "You may also check status via: PID:$(cat ${BYZER_HOME}/pid), or Log: ${BYZER_HOME}/logs/byzer-lang.log."
     recordStartOrStop "start success" "${START_TIME}"
 }
