@@ -1,5 +1,7 @@
 # override example for server package
 
+byzer.server.mode=server
+
 streaming.master=local[*]
 streaming.name=Byzer-lang-server
 streaming.rest=true

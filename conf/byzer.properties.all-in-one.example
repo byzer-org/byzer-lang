@@ -1,5 +1,7 @@
 # override example for all-in-one package
 
+byzer.server.mode=all-in-one
+
 streaming.master=local[*]
 streaming.name=Byzer-lang-desktop
 streaming.rest=true
