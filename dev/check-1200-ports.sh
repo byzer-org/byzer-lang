@@ -17,24 +17,28 @@
 # limitations under the License.
 #
 
-if [ $# != 1 ]
-then
-    if [[ $# -lt 2 || $2 != 'DEC' ]]
-        then
-            echo 'invalid input'
-            exit 1
+#title=Checking Ports Availability
+
+source $(cd -P -- "$(dirname -- "$0")" && pwd -P)/header.sh
+
+
+function checkRestPort() {
+    echo "Checking rest port on ${MACHINE_OS}"
+    if [[ $MACHINE_OS == "Linux" ]]; then
+        used=$(netstat -tpln | grep "$BYZER_LANG_PORT" | awk '{print $7}' | sed "s/\// /g")
+    elif [[ $MACHINE_OS == "Mac" ]]; then
+        used=$(lsof -nP -iTCP:$BYZER_LANG_PORT -sTCP:LISTEN | grep $BYZER_LANG_PORT | awk '{print $2}')
     fi
-fi
+    if [ ! -z "$used" ]; then
+        quit "ERROR: Port ${BYZER_LANG_PORT} is in use, another Byzer-lang is running?"
+    fi
+    echo "${BYZER_LANG_PORT} is available"
+}
 
-if [ -z $BYZER_HOME ];then
-    export BYZER_HOME=$(cd -P -- "$(dirname -- "$0")"/../ && pwd -P)
-fi
 
-export SPARK_HOME=$BYZER_HOME/spark
 
-byzer_tools_log4j="${BYZER_HOME}/conf/byzer-tools-log4j.properties"
+echo "Byzer engine port has been set as ${BYZER_LANG_PORT}"
 
-mkdir -p ${BYZER_HOME}/logs
-result=$(java -Dlog4j.configuration=$byzer_tools_log4j -cp "${BYZER_HOME}/main/*" tech.mlsql.tool.ByzerConfigCLI $@ 2>>${BYZER_HOME}/logs/shell.stderr)
+checkRestPort ${BYZER_LANG_PORT}
 
-echo "$result"
+

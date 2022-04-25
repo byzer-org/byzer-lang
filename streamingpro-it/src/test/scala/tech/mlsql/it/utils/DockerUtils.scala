@@ -31,6 +31,8 @@ import org.apache.spark.{MLSQLSparkConst, SparkCoreVersion}
 import org.slf4j.{Logger, LoggerFactory}
 import tech.mlsql.core.version.MLSQLVersion
 import tech.mlsql.it.docker.beans.{ContainerExecException, ContainerExecResult, ContainerExecResultBytes}
+import tech.mlsql.tool.OrderedProperties
+import tech.mlsql.tool.OrderedProperties.loadPropertiesFromInputStream
 
 import java.io._
 import java.nio.charset.StandardCharsets.UTF_8
@@ -44,6 +46,21 @@ import java.util.zip.GZIPOutputStream
 object DockerUtils {
   private val LOG: Logger = LoggerFactory.getLogger(DockerUtils.getClass)
 
+  def getByzerVersion: String = {
+    var mlsqlVersion: String = MLSQLVersion.version().version
+    if (mlsqlVersion.equals("${pom.version}")) {
+      val testClassPath: String = DockerUtils.getClass.getResource(File.separator).getPath
+      val mavenArch: File = new File(testClassPath + ".." + File.separator + "maven-archiver")
+      val pomFile = new File(mavenArch.getCanonicalPath, "pom.properties")
+      if (pomFile == null || !pomFile.exists) {
+        throw new RuntimeException("fail to locate pom.properties")
+      }
+      val trimProps = OrderedProperties.copyAndTrim(loadPropertiesFromInputStream(new FileInputStream(pomFile)))
+      mlsqlVersion = trimProps.getProperty("version")
+    }
+    mlsqlVersion
+  }
+
   /**
    * e.g. byzer-lang-3.1.1-2.12-2.3.0-SNAPSHOT.jar
    *
@@ -52,14 +69,14 @@ object DockerUtils {
   def getJarName: String = {
     var base: String = System.getProperty("maven.finalJarName")
     if (base == null) {
-      val mlsqlVersion: String = MLSQLVersion.version().version
+      val byzerVersion = getByzerVersion
       var scalaVersion: String = scala.tools.nsc.Properties.versionNumberString
       scalaVersion = if (StringUtils.isNoneBlank(scalaVersion) && scalaVersion.length >= 4) {
         scalaVersion.substring(0, 4)
       } else {
         "2.12"
       }
-      base = String.format("byzer-lang-%s-%s-%s.jar", getSparkLongVersion, scalaVersion, mlsqlVersion)
+      base = String.format("byzer-lang-%s-%s-%s.jar", getSparkLongVersion, scalaVersion, byzerVersion)
     }
     base
   }
@@ -87,7 +104,7 @@ object DockerUtils {
   }
 
   def getLibPath: String = {
-    MessageFormat.format("{0}{1}/main/", getRootPath, getFinalName)
+    MessageFormat.format("{0}{1}" + File.separator + "main" + File.separator, getRootPath, getFinalName)
   }
 
   /**
@@ -98,15 +115,15 @@ object DockerUtils {
   def getRootPath: String = {
     var base: String = null
     try {
-      val testClassPath: String = DockerUtils.getClass.getResource("/").getPath
-      val directory: File = new File(testClassPath + "../../../")
-      base = directory.getCanonicalPath + "/"
+      val testClassPath: String = DockerUtils.getClass.getResource(File.separator).getPath
+      val directory: File = new File(testClassPath + ".." + File.separator + ".." + File.separator + ".." + File.separator)
+      base = directory.getCanonicalPath + File.separator
     } catch {
       case e: IOException =>
         LOG.error("Can not get lib path, try to use absolute path. e:" + e.getMessage)
     }
     if (base == null) {
-      base = "./"
+      base = "." + File.separator
     }
     base
   }
@@ -118,15 +135,15 @@ object DockerUtils {
   def getCurProjectRootPath: String = {
     var base: String = null
     try {
-      val testClassPath: String = DockerUtils.getClass.getResource("/").getPath
-      val directory: File = new File(testClassPath + "../../")
-      base = directory.getCanonicalPath + "/"
+      val testClassPath: String = DockerUtils.getClass.getResource(File.separator).getPath
+      val directory: File = new File(testClassPath + ".." + File.separator + ".." + File.separator)
+      base = directory.getCanonicalPath + File.separator
     } catch {
       case e: IOException =>
         LOG.error("Can not get lib path, try to use absolute path. e:" + e.getMessage)
     }
     if (base == null) {
-      base = "./"
+      base = "." + File.separator
     }
     base
   }
@@ -134,9 +151,9 @@ object DockerUtils {
   def getFinalName: String = {
     var base: String = System.getProperty("maven.finalName")
     if (base == null) {
-      val mlsqlVersion: String = MLSQLVersion.version().version
+      val byzerVersion = getByzerVersion
       val sparkVersion: String = getSparkLongVersion
-      base = String.format("byzer-lang-%s-%s", sparkVersion, mlsqlVersion)
+      base = String.format("byzer-lang-%s-%s", sparkVersion, byzerVersion)
     }
     base
   }
@@ -187,7 +204,7 @@ object DockerUtils {
 
   def dumpContainerDirToTargetCompressed(dockerClient: DockerClient, containerId: String, path: String): Unit = {
     val containerName: String = getContainerName(dockerClient, containerId)
-    val baseName: String = path.replace("/", "-").replaceAll("^-", "")
+    val baseName: String = path.replace(File.separator, "-").replaceAll("^-", "")
     val output: File = getUniqueFileInTargetDirectory(containerName, baseName, ".tar.gz")
     try {
       val dockerStream: InputStream = dockerClient.copyArchiveFromContainerCmd(containerId, path).exec
@@ -213,15 +230,16 @@ object DockerUtils {
     var base: String = System.getProperty("maven.buildDirectory")
     if (base == null) {
       try {
-        val testClassPath: String = DockerUtils.getClass.getResource("/").getPath
-        val directory: File = new File(testClassPath + "../target/")
-        base = MessageFormat.format("{0}/{1}/main/", directory.getCanonicalPath, getFinalName)
+        val testClassPath: String = DockerUtils.getClass.getResource(File.separator).getPath
+        val directory: File = new File(testClassPath + ".." + File.separator + "target" + File.separator)
+        base = MessageFormat.format("{0}" + File.separator + "{1}" + File.separator + "main" + File.separator,
+          directory.getCanonicalPath, getFinalName)
       } catch {
         case e: IOException =>
           LOG.error("Can not get lib path, try to use absolute path. e:" + e.getMessage)
       }
     }
-    val directory: File = new File(base + "/container-logs/" + containerId)
+    val directory: File = new File(base + "" + File.separator + "container-logs" + File.separator + containerId)
     if (!directory.exists && !directory.mkdirs) {
       LOG.error("Error creating directory for container logs.")
     }
@@ -252,7 +270,7 @@ object DockerUtils {
         var entry: TarArchiveEntry = stream.getNextTarEntry
         while (entry != null) {
           if (entry.isFile) {
-            val output: File = new File(targetDirectory, entry.getName.replace("/", "-"))
+            val output: File = new File(targetDirectory, entry.getName.replace(File.separator, "-"))
             Files.copy(stream, output.toPath, StandardCopyOption.REPLACE_EXISTING)
           }
           entry = stream.getNextTarEntry
@@ -452,9 +470,9 @@ object DockerUtils {
 
   private def getContainerName(dockerClient: DockerClient, containerId: String): String = {
     val inspectContainerResponse: InspectContainerResponse = dockerClient.inspectContainerCmd(containerId).exec
-    // docker api returns names prefixed with "/", it's part of it's legacy design,
+    // docker api returns names prefixed with File.separator, it's part of it's legacy design,
     // this removes it to be consistent with what docker ps shows.
-    inspectContainerResponse.getName.replace("/", "")
+    inspectContainerResponse.getName.replace(File.separator, "")
   }
 
   private def waitForExecCmdToFinish(dockerClient: DockerClient, execId: String): InspectExecResponse = {

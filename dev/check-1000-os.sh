@@ -17,19 +17,16 @@
 # limitations under the License.
 #
 
-#title=Checking Ports Availability
+#title=Checking OS
 
 source $(cd -P -- "$(dirname -- "$0")" && pwd -P)/header.sh
 
-byzer_lang_port=`$BYZER_HOME/bin/get-properties.sh streaming.driver.port`
-if [[ -z ${byzer_lang_port} ]]; then
-    byzer_lang_port=9003
-fi
-if [[ $MACHINE_OS == "Linux" ]]; then
-    byzer_lang_port_in_use=`netstat -nat | grep "${byzer_lang_port}"`
-fi
-if [[ $MACHINE_OS == "Mac" ]]; then
-    byzer_lang_port_in_use=`lsof -nP -iTCP:${byzer_lang_port} -sTCP:LISTEN`
-fi
+echo "Checking OS..."
 
-[[ -z ${byzer_lang_port_in_use} ]] || quit "ERROR: Port ${byzer_lang_port} is in use, another Byzer-lang is running?"
+if [[ $MACHINE_OS == "Linux" ]]; then
+    echo "The current operating system is Linux based distribution."
+elif [[ $MACHINE_OS == "Mac" ]]; then
+    echo "The current operating system is MacOS, please pay attention with the CPU types, M1 series have NOT been fully tested."
+else
+    quit "Not suppported operating system:  $MACHINE_OS"
+fi

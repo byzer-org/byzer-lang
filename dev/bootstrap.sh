@@ -16,42 +16,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+source $(cd -P -- "$(dirname -- "$0")" && pwd -P)/header.sh
 
 function recordStartOrStop() {
     currentIp=${BYZER_IP}
-    serverPort=`$BYZER_HOME/bin/get-properties.sh streaming.driver.port`
-    echo `date '+%Y-%m-%d %H:%M:%S '`"INFO : [Operation: $1] user:`whoami`, start time:$2, ip and port:${currentIp}:${serverPort}" >> ${BYZER_HOME}/logs/security.log
+    serverPort=$($BYZER_HOME/bin/get-properties.sh streaming.driver.port)
+    echo $(date '+%Y-%m-%d %H:%M:%S ')"INFO : [Operation: $1] user:$(whoami), start time:$2, ip and port:${currentIp}:${serverPort}" >> ${BYZER_HOME}/logs/security.log
 }
 
 function prepareEnv {
     export BYZER_CONFIG_FILE="${BYZER_HOME}/conf/byzer.properties"
-    echo "SPARK_HOME is:$SPARK_HOME"
-    echo "BYZER_HOME is:${BYZER_HOME}"
-    echo "BYZER_CONFIG_FILE is:${BYZER_CONFIG_FILE}"
+    echo "SPARK_HOME is: $SPARK_HOME"
+    echo "BYZER_HOME is: ${BYZER_HOME}"
+    echo "BYZER_CONFIG_FILE is: ${BYZER_CONFIG_FILE}"
 
     mkdir -p ${BYZER_HOME}/logs
 }
 
-function checkRestPort() {
-    echo "Checking rest port on ${MACHINE_OS}"
-    if [[ $MACHINE_OS == "Linux" ]]; then
-        used=`netstat -tpln | grep "$port" | awk '{print $7}' | sed "s/\// /g"`
-    elif [[ $MACHINE_OS == "Mac" ]]; then
-        used=`lsof -nP -iTCP:$port -sTCP:LISTEN | grep $port | awk '{print $2}'`
-    fi
-    if [ ! -z "$used" ]; then
-        echo "<$used> already listen on $port"
-        exit 1
-    fi
-    echo "${port} is available"
-}
-
 function checkIfStopUserSameAsStartUser() {
-    startUser=`ps -p $1 -o user=`
-    currentUser=`whoami`
+    startUser=$(ps -p $1 -o user=)
+    currentUser=$(whoami)
 
     if [ ${startUser} != ${currentUser} ]; then
-        echo `setColor 33 "Warning: You started Byzer-lang as user [${startUser}], please stop the instance as the same user."`
+        echo $(setColor 33 "Warning: You started Byzer-lang as user [${startUser}], please stop the instance as the same user.")
     fi
 }
 
@@ -60,9 +47,9 @@ function clearRedundantProcess {
     then
         pidKeep=0
         pidRedundant=0
-        for pid in `cat ${BYZER_HOME}/pid`
+        for pid in $(cat ${BYZER_HOME}/pid)
         do
-            pidActive=`ps -ef | grep $pid | grep ${BYZER_HOME} | wc -l`
+            pidActive=$(ps -ef | grep $pid | grep ${BYZER_HOME} | wc -l)
             if [ "$pidActive" -eq 1 ]
             then
                 if [ "$pidKeep" -eq 0 ]
@@ -99,19 +86,27 @@ function prepareProp() {
 
     BYZER_LOG_PATH="file:${BYZER_HOME}/conf/byzer-server-log4j.properties"
 
-    BYZER_PROP=`$BYZER_HOME/bin/get-properties.sh -byzer`
-    SPARK_PROP=`$BYZER_HOME/bin/get-properties.sh -spark`
+    BYZER_PROP=$($BYZER_HOME/bin/get-properties.sh -byzer)
+    SPARK_PROP=$($BYZER_HOME/bin/get-properties.sh -spark)
+    ALL_PROP=$($BYZER_HOME/bin/get-properties.sh -args)
 }
 
 function start(){
     clearRedundantProcess
 
-    [[ -z ${BYZER_HOME} ]]  && echo "{BYZER_HOME} is not set, exit" && exit 1
+    # check $BYZER_HOME
+    [[ -z ${BYZER_HOME} ]] && quit "{BYZER_HOME} is not set, exit"
     if [ -f "${BYZER_HOME}/pid" ]; then
-        PID=`cat ${BYZER_HOME}/pid`
+        PID=$(cat ${BYZER_HOME}/pid)
         if ps -p $PID > /dev/null; then
           quit "Byzer-lang is running, stop it first, PID is $PID"
         fi
+    fi
+
+    # check $SPARK_HOME
+    if [ $BYZER_SERVER_MODE == "server" ]; then
+        # only in server mode need check spark home
+        [[ -z ${SPARK_HOME} ]]  && quit "{SPARK_HOME} is not set, exit"
     fi
 
     ${BYZER_HOME}/bin/check-env.sh || exit 1
@@ -122,41 +117,58 @@ function start(){
 
     prepareEnv
 
-    port=`$BYZER_HOME/bin/get-properties.sh streaming.driver.port`
-    checkRestPort
-
     prepareProp
 
-    echo "Starting Byzer-lang..."
-    echo "[Spark config]"
-    echo "$SPARK_PROP"
-
-    echo "[Byzer config]"
-    echo "${BYZER_PROP}"
-
-    echo "[Extra config]"
-    echo "${EXT_JARS}"
+    echo "Starting Byzer engine in ${BYZER_SERVER_MODE} mode..."
 
     cd $BYZER_HOME/
-    nohup $SPARK_HOME/bin/spark-submit --class streaming.core.StreamingApp \
-        --jars ${JARS} \
-        --conf "spark.driver.extraClassPath=${EXT_JARS}" \
-        --driver-java-options "-Dlog4j.configuration=${BYZER_LOG_PATH}" \
-        $SPARK_PROP \
-        $MAIN_JAR_PATH  \
-        $BYZER_PROP >> ${BYZER_HOME}/logs/byzer.out & echo $! >> ${BYZER_HOME}/pid
+
+    if [[ $BYZER_SERVER_MODE = "all-in-one" ]]; then
+        echo ""
+        echo "[All Config]"
+        echo "${ALL_PROP}"
+        echo ""
+        
+        nohup ${BYZER_HOME}/jdk8/bin/java -cp ${BYZER_HOME}/main/${MAIN_JAR}:${BYZER_HOME}/spark/*:${BYZER_HOME}/libs/*:${BYZER_HOME}/plugin/* \
+            tech.mlsql.example.app.LocalSparkServiceApp \
+            $ALL_PROP >> ${BYZER_HOME}/logs/byzer.out &
+        echo $! >> ${BYZER_HOME}/pid
+
+    elif [[ $BYZER_SERVER_MODE = "server" ]]; then
+        echo ""
+        echo "[Spark Config]"
+        echo "$SPARK_PROP"
+
+        echo "[Byzer Config]"
+        echo "${BYZER_PROP}"
+
+        echo "[Extra Config]"
+        echo "${EXT_JARS}"
+        echo ""
+
+        nohup $SPARK_HOME/bin/spark-submit --class streaming.core.StreamingApp \
+            --jars ${JARS} \
+            --conf "spark.driver.extraClassPath=${EXT_JARS}" \
+            --driver-java-options "-Dlog4j.configuration=${BYZER_LOG_PATH}" \
+            $SPARK_PROP \
+            $MAIN_JAR_PATH  \
+            $BYZER_PROP >> ${BYZER_HOME}/logs/byzer.out & 
+        echo $! >> ${BYZER_HOME}/pid
+    fi
 
     sleep 3
     clearRedundantProcess
 
-    [ ! -f "${BYZER_HOME}/pid" ] && quit "Byzer-lang start failed, check via log: ${BYZER_HOME}/logs/byzer-lang.log."
+    [ ! -f "${BYZER_HOME}/pid" ] && quit "Byzer engine start failed, check via log: ${BYZER_HOME}/logs/byzer-lang.log."
 
-    PID=`cat ${BYZER_HOME}/pid`
+    PID=$(cat ${BYZER_HOME}/pid)
     CUR_DATE=$(date "+%Y-%m-%d %H:%M:%S")
-    echo $CUR_DATE" new Byzer-lang process pid is "$PID >> ${BYZER_HOME}/logs/byzer-lang.log
+    echo $CUR_DATE" new Byzer engine process pid is "$PID >> ${BYZER_HOME}/logs/byzer-lang.log
 
-    echo "Byzer-lang is starting. It may take a while. For status, please visit http://$BYZER_IP:$port."
-    echo "You may also check status via: PID:`cat ${BYZER_HOME}/pid`, or Log: ${BYZER_HOME}/logs/byzer-lang.log."
+    echo ""
+    echo $(setColor 33 "Byzer engine is starting. It may take a while. For status, please visit http://$BYZER_IP:$BYZER_LANG_PORT.")
+    echo ""
+    echo "You may also check status via: PID:$(cat ${BYZER_HOME}/pid), or Log: ${BYZER_HOME}/logs/byzer-lang.log."
     recordStartOrStop "start success" "${START_TIME}"
 }
 
@@ -165,19 +177,19 @@ function stop(){
 
     STOP_TIME=$(date "+%Y-%m-%d %H:%M:%S")
     if [ -f "${BYZER_HOME}/pid" ]; then
-        PID=`cat ${BYZER_HOME}/pid`
+        PID=$(cat ${BYZER_HOME}/pid)
         if ps -p $PID > /dev/null; then
 
            checkIfStopUserSameAsStartUser $PID
 
-           echo `date '+%Y-%m-%d %H:%M:%S '`"Stopping Byzer-lang: $PID"
+           echo $(date '+%Y-%m-%d %H:%M:%S ')"Stopping Byzer-lang: $PID"
            kill $PID
            for i in {1..10}; do
               sleep 3
               if ps -p $PID -f | grep byzer > /dev/null; then
                 echo "loop $i"
                  if [ "$i" == "10" ]; then
-                    echo `date '+%Y-%m-%d %H:%M:%S '`"Killing Byzer-lang: $PID"
+                    echo $(date '+%Y-%m-%d %H:%M:%S ')"Killing Byzer-lang: $PID"
                     kill -9 $PID
                  fi
                  continue
@@ -199,26 +211,26 @@ function stop(){
 
 # start command
 if [ "$1" == "start" ]; then
-    echo "Starting Byzer-lang..."
+    echo "Starting Byzer engine..."
     start
 # stop command
 elif [ "$1" == "stop" ]; then
-    echo `date '+%Y-%m-%d %H:%M:%S '`"Stopping Byzer-lang..."
+    echo $(date '+%Y-%m-%d %H:%M:%S ')"Stopping Byzer engine..."
     stop
     if [[ $? == 0 ]]; then
         exit 0
     else
-        quit "Byzer-lang is not running"
+        quit "Byzer engine is not running"
     fi
 # restart command
 elif [ "$1" == "restart" ]; then
-    echo "Restarting Byzer-lang..."
-    echo "--> Stopping Byzer-lang first if it's running..."
+    echo "Restarting Byzer engine..."
+    echo "--> Stopping Byzer engine first if it's running..."
     stop
     if [[ $? != 0 ]]; then
-        echo "    Byzer-lang is not running, now start it"
+        echo "    Byzer engine is not running, now start it"
     fi
-    echo "--> Re-starting Byzer-lang..."
+    echo "--> Re-starting Byzer engine..."
     start
 else
     quit "Usage: 'byzer.sh [-v] start' or 'byzer.sh [-v] stop' or 'byzer.sh [-v] restart'"

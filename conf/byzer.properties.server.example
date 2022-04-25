@@ -1,0 +1,12 @@
+# override example for server package
+
+byzer.server.mode=server
+
+streaming.master=local[*]
+streaming.name=Byzer-lang-server
+streaming.rest=true
+streaming.thrift=false
+streaming.platform=spark
+streaming.spark.service=true
+streaming.driver.port=9003
+streaming.enableHiveSupport=false
