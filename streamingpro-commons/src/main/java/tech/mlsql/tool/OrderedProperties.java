@@ -19,6 +19,7 @@
 package tech.mlsql.tool;
 
 import com.google.common.base.Preconditions;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 
 import javax.annotation.Nonnull;
@@ -62,6 +63,21 @@ public final class OrderedProperties implements Serializable {
 
     public OrderedProperties(Map<String, String> properties) {
         this.properties = properties;
+    }
+
+    public static OrderedProperties loadPropertiesFromInputStream(InputStream inputStream) {
+        BufferedReader confReader = null;
+        try {
+            confReader = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"));
+            OrderedProperties temp = new OrderedProperties();
+            temp.load(confReader);
+            return temp;
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        } finally {
+            IOUtils.closeQuietly(confReader);
+        }
     }
 
     /**
