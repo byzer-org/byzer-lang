@@ -20,7 +20,7 @@
 # source me
 
 function isValidJavaVersion() {
-    version=`java -version 2>&1 | awk -F\" '/version/ {print $2}'`
+    version=$(java -version 2>&1 | awk -F\" '/version/ {print $2}')
     version_first_part="$(echo ${version} | cut -d '.' -f1)"
     version_second_part="$(echo ${version} | cut -d '.' -f2)"
     if [[ "$version_first_part" -eq "1" ]] && [[ "$version_second_part" -eq "8" ]]; then
@@ -43,7 +43,7 @@ then
     function quit {
         echo "$@"
         if [[ -n "${QUIT_MESSAGE_LOG}" ]]; then
-            echo `setColor 31 "$@"` >> ${QUIT_MESSAGE_LOG}
+            echo $(setColor 31 "$@") >> ${QUIT_MESSAGE_LOG}
         fi
         exit 1
     }
@@ -93,7 +93,7 @@ then
     fi
 
     # set BYZER_PORT
-    export BYZER_LANG_PORT=`$BYZER_HOME/bin/get-properties.sh streaming.driver.port`
+    export BYZER_LANG_PORT=$($BYZER_HOME/bin/get-properties.sh streaming.driver.port)
 
     if [[ -z ${BYZER_LANG_PORT} ]]; then
         export BYZER_LANG_PORT=9003
@@ -103,7 +103,7 @@ then
     # set JAVA
     if [[ "${JAVA}" == "" ]]; then
         if [[ -z "$JAVA_HOME" ]]; then
-            if [[ `isValidJavaVersion` == "true" ]]; then
+            if [[ $(isValidJavaVersion) == "true" ]]; then
                 JAVA_HOME=$(dirname $(dirname $(readlink -f $(which java))))
             else
                 quit "Java 1.8 or above is required."

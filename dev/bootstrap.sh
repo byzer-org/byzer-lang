@@ -20,10 +20,9 @@ source $(cd -P -- "$(dirname -- "$0")" && pwd -P)/header.sh
 
 function recordStartOrStop() {
     currentIp=${BYZER_IP}
-    serverPort=`$BYZER_HOME/bin/get-properties.sh streaming.driver.port`
-    echo `date '+%Y-%m-%d %H:%M:%S '`"INFO : [Operation: $1] user:`whoami`, start time:$2, ip and port:${currentIp}:${serverPort}" >> ${BYZER_HOME}/logs/security.log
+    serverPort=$($BYZER_HOME/bin/get-properties.sh streaming.driver.port)
+    echo $(date '+%Y-%m-%d %H:%M:%S ')"INFO : [Operation: $1] user:$(whoami), start time:$2, ip and port:${currentIp}:${serverPort}" >> ${BYZER_HOME}/logs/security.log
 }
-
 
 function prepareEnv {
     export BYZER_CONFIG_FILE="${BYZER_HOME}/conf/byzer.properties"
@@ -31,17 +30,15 @@ function prepareEnv {
     echo "BYZER_HOME is: ${BYZER_HOME}"
     echo "BYZER_CONFIG_FILE is: ${BYZER_CONFIG_FILE}"
 
-
     mkdir -p ${BYZER_HOME}/logs
 }
 
-
 function checkIfStopUserSameAsStartUser() {
-    startUser=`ps -p $1 -o user=`
-    currentUser=`whoami`
+    startUser=$(ps -p $1 -o user=)
+    currentUser=$(whoami)
 
     if [ ${startUser} != ${currentUser} ]; then
-        echo `setColor 33 "Warning: You started Byzer-lang as user [${startUser}], please stop the instance as the same user."`
+        echo $(setColor 33 "Warning: You started Byzer-lang as user [${startUser}], please stop the instance as the same user.")
     fi
 }
 
@@ -50,9 +47,9 @@ function clearRedundantProcess {
     then
         pidKeep=0
         pidRedundant=0
-        for pid in `cat ${BYZER_HOME}/pid`
+        for pid in $(cat ${BYZER_HOME}/pid)
         do
-            pidActive=`ps -ef | grep $pid | grep ${BYZER_HOME} | wc -l`
+            pidActive=$(ps -ef | grep $pid | grep ${BYZER_HOME} | wc -l)
             if [ "$pidActive" -eq 1 ]
             then
                 if [ "$pidKeep" -eq 0 ]
@@ -89,8 +86,8 @@ function prepareProp() {
 
     BYZER_LOG_PATH="file:${BYZER_HOME}/conf/byzer-server-log4j.properties"
 
-    BYZER_PROP=`$BYZER_HOME/bin/get-properties.sh -byzer`
-    SPARK_PROP=`$BYZER_HOME/bin/get-properties.sh -spark`
+    BYZER_PROP=$($BYZER_HOME/bin/get-properties.sh -byzer)
+    SPARK_PROP=$($BYZER_HOME/bin/get-properties.sh -spark)
 }
 
 function start(){
@@ -99,14 +96,14 @@ function start(){
     # check $BYZER_HOME
     [[ -z ${BYZER_HOME} ]] && quit "{BYZER_HOME} is not set, exit" 
     if [ -f "${BYZER_HOME}/pid" ]; then
-        PID=`cat ${BYZER_HOME}/pid`
+        PID=$(cat ${BYZER_HOME}/pid)
         if ps -p $PID > /dev/null; then
           quit "Byzer-lang is running, stop it first, PID is $PID"
         fi
     fi
 
     # check $SPARK_HOME
-    BYZER_SERVER_MODE=`$BYZER_HOME/bin/get-properties.sh byzer.server.mode`
+    BYZER_SERVER_MODE=$($BYZER_HOME/bin/get-properties.sh byzer.server.mode)
     if [[ -z ${BYZER_SERVER_MODE} ]]; then
         BYZER_SERVER_MODE="server"
     fi
@@ -149,12 +146,12 @@ function start(){
 
     [ ! -f "${BYZER_HOME}/pid" ] && quit "Byzer engine start failed, check via log: ${BYZER_HOME}/logs/byzer-lang.log."
 
-    PID=`cat ${BYZER_HOME}/pid`
+    PID=$(cat ${BYZER_HOME}/pid)
     CUR_DATE=$(date "+%Y-%m-%d %H:%M:%S")
     echo $CUR_DATE" new Byzer engine process pid is "$PID >> ${BYZER_HOME}/logs/byzer-lang.log
 
     echo "Byzer engine is starting. It may take a while. For status, please visit http://$BYZER_IP:$BYZER_LANG_PORT."
-    echo "You may also check status via: PID:`cat ${BYZER_HOME}/pid`, or Log: ${BYZER_HOME}/logs/byzer-lang.log."
+    echo "You may also check status via: PID:$(cat ${BYZER_HOME}/pid), or Log: ${BYZER_HOME}/logs/byzer-lang.log."
     recordStartOrStop "start success" "${START_TIME}"
 }
 
@@ -163,19 +160,19 @@ function stop(){
 
     STOP_TIME=$(date "+%Y-%m-%d %H:%M:%S")
     if [ -f "${BYZER_HOME}/pid" ]; then
-        PID=`cat ${BYZER_HOME}/pid`
+        PID=$(cat ${BYZER_HOME}/pid)
         if ps -p $PID > /dev/null; then
 
            checkIfStopUserSameAsStartUser $PID
 
-           echo `date '+%Y-%m-%d %H:%M:%S '`"Stopping Byzer-lang: $PID"
+           echo $(date '+%Y-%m-%d %H:%M:%S ')"Stopping Byzer-lang: $PID"
            kill $PID
            for i in {1..10}; do
               sleep 3
               if ps -p $PID -f | grep byzer > /dev/null; then
                 echo "loop $i"
                  if [ "$i" == "10" ]; then
-                    echo `date '+%Y-%m-%d %H:%M:%S '`"Killing Byzer-lang: $PID"
+                    echo $(date '+%Y-%m-%d %H:%M:%S ')"Killing Byzer-lang: $PID"
                     kill -9 $PID
                  fi
                  continue
@@ -201,7 +198,7 @@ if [ "$1" == "start" ]; then
     start
 # stop command
 elif [ "$1" == "stop" ]; then
-    echo `date '+%Y-%m-%d %H:%M:%S '`"Stopping Byzer engine..."
+    echo $(date '+%Y-%m-%d %H:%M:%S ')"Stopping Byzer engine..."
     stop
     if [[ $? == 0 ]]; then
         exit 0

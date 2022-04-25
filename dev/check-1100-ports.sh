@@ -25,9 +25,9 @@ source $(cd -P -- "$(dirname -- "$0")" && pwd -P)/header.sh
 function checkRestPort() {
     echo "Checking rest port on ${MACHINE_OS}"
     if [[ $MACHINE_OS == "Linux" ]]; then
-        used=`netstat -tpln | grep "$BYZER_LANG_PORT" | awk '{print $7}' | sed "s/\// /g"`
+        used=$(netstat -tpln | grep "$BYZER_LANG_PORT" | awk '{print $7}' | sed "s/\// /g")
     elif [[ $MACHINE_OS == "Mac" ]]; then
-        used=`lsof -nP -iTCP:$BYZER_LANG_PORT -sTCP:LISTEN | grep $BYZER_LANG_PORT | awk '{print $2}'`
+        used=$(lsof -nP -iTCP:$BYZER_LANG_PORT -sTCP:LISTEN | grep $BYZER_LANG_PORT | awk '{print $2}')
     fi
     if [ ! -z "$used" ]; then
         quit "ERROR: Port ${BYZER_LANG_PORT} is in use, another Byzer-lang is running?"

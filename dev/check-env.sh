@@ -36,7 +36,7 @@ if [[ "$CHECKENV_ING" == "" ]]; then
     TITLE="#title"
 
         echo ""
-        echo `setColor 33 "Byzer-lang is checking installation environment, log is at ${LOG}"`
+        echo $(setColor 33 "Byzer-lang is checking installation environment, log is at ${LOG}")
         echo ""
 
         rm -rf ${BYZER_HOME}/logs/tmp
@@ -48,11 +48,11 @@ if [[ "$CHECKENV_ING" == "" ]]; then
 
 
 #        CHECK_FILES=
-        CHECK_FILES=`ls ${BYZER_HOME}/bin/check-*.sh`
+        CHECK_FILES=(ls ${BYZER_HOME}/bin/check-*.sh)
         for f in ${CHECK_FILES[@]}
         do
             if [[ ! $f == *check-env.sh ]]; then
-                echo `getValueByKey ${TITLE} ${f}`
+                echo (getValueByKey ${TITLE} ${f})
                 echo ""                                                                             >>${LOG}
                 echo "============================================================================" >>${LOG}
                 echo "Checking $(basename $f)"                                                      >>${LOG}
@@ -60,26 +60,26 @@ if [[ "$CHECKENV_ING" == "" ]]; then
                 bash $f >>${LOG} 2>&1
                 rtn=$?
                 if [[ $rtn == 0 ]]; then
-                    echo "...................................................[`setColor 32 PASS`]"
+                    echo "...................................................[$(setColor 32 PASS)]"
                 elif [[ $rtn == 3 ]]; then
-                    echo "...................................................[`setColor 33 SKIP`]"
+                    echo "...................................................[$(setColor 33 SKIP)]"
                 elif [[ $rtn == 4 ]];then
-                    echo "...................................................[`setColor 33 WARN`]"
-                    WARN_INFO=`tail -n 3 ${LOG}`
-                    echo `setColor 33 "WARNING:"`
+                    echo "...................................................[$(setColor 33 WARN)]"
+                    WARN_INFO=$(tail -n 3 ${LOG})
+                    echo $(setColor 33 "WARNING:")
                     echo -e "$WARN_INFO"  | sed 's/^/    &/g'
                 else
-                    echo "...................................................[`setColor 31 FAIL`]"
+                    echo "...................................................[$(setColor 31 FAIL)]"
                     cat  ${ERRORS} >> ${LOG}
                     tail ${ERRORS}
-                    echo `setColor 33 "Full log is at: ${LOG}"`
+                    echo $(setColor 33 "Full log is at: ${LOG}")
                     exit 1
                 fi
             fi
         done
         echo ""
         cat ${LOG} | grep "^${CHECKENV_REPORT_PFX}"
-        echo `setColor 33 "Checking environment finished successfully. To check again, run 'bin/check-env.sh' manually."`
+        echo $(setColor 33 "Checking environment finished successfully. To check again, run 'bin/check-env.sh' manually.")
         echo ""
 
     export CHECKENV_ING=

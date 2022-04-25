@@ -35,6 +35,6 @@ export SPARK_HOME=$BYZER_HOME/spark
 byzer_tools_log4j="${BYZER_HOME}/conf/byzer-tools-log4j.properties"
 
 mkdir -p ${BYZER_HOME}/logs
-result=`java -Dlog4j.configuration=$byzer_tools_log4j -cp "${BYZER_HOME}/main/*" tech.mlsql.tool.ByzerConfigCLI $@ 2>>${BYZER_HOME}/logs/shell.stderr`
+result=$(java -Dlog4j.configuration=$byzer_tools_log4j -cp "${BYZER_HOME}/main/*" tech.mlsql.tool.ByzerConfigCLI $@ 2>>${BYZER_HOME}/logs/shell.stderr)
 
 echo "$result"
