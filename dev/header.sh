@@ -109,7 +109,10 @@ then
     # set JAVA
     if [[ "${JAVA}" == "" ]]; then
         if [[ -z "$JAVA_HOME" ]]; then
-            if [[ $(isValidJavaVersion) == "true" ]]; then
+            if [[ ${BYZER_SERVER_MODE} == "all-in-one" ]]; then
+                # use embeded open jdk 8 in all-in-one
+                JAVA_HOME=${BYZER_HOME}/jdk8
+            elif [[ $(isValidJavaVersion) == "true" ]]; then
                 JAVA_HOME=$(dirname $(dirname $(readlink -f $(which java))))
             else
                 quit "Java 1.8 or above is required."
@@ -121,7 +124,7 @@ then
         [[ -e "${JAVA}" ]] || quit "${JAVA} does not exist. Please set JAVA_HOME correctly."
         verbose "java is ${JAVA}" 
     fi
-
+    
     # check Machine
     unameOut="$(uname -s)"
     case "${unameOut}" in
