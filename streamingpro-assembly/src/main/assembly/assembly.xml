@@ -19,8 +19,9 @@
                 <include>byzer.sh</include>
                 <include>bootstrap.sh</include>
                 <include>check-env.sh</include>
-                <include>check-1000-java.sh</include>
-                <include>check-1100-ports.sh</include>
+                <include>check-1000-os.sh</include>
+                <include>check-1100-java.sh</include>
+                <include>check-1200-ports.sh</include>
                 <include>get-properties.sh</include>
                 <include>header.sh</include>
                 <include>kill-process-tree.sh</include>
