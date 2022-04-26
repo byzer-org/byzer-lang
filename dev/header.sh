@@ -135,5 +135,4 @@ then
         *)          os="UNKNOWN:${unameOut}"
     esac
     export MACHINE_OS=$os
-    echo "Current mechine os is :$MACHINE_OS"
 fi
