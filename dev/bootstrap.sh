@@ -84,7 +84,7 @@ function prepareProp() {
     JARS=$(echo ${BYZER_HOME}/libs/*.jar | tr ' ' ',')",$MAIN_JAR_PATH"
     EXT_JARS=$(echo ${BYZER_HOME}/libs/*.jar | tr ' ' ':')":$MAIN_JAR_PATH"
     ## Put 3rd-third plugin jars in classpath
-    EXT_JARS=$(echo ${BYZER_HOME}/plugin/*.jar | tr ' ' ':')":$MAIN_JAR_PATH"
+    EXT_JARS=$(echo ${BYZER_HOME}/plugin/*.jar | tr ' ' ':')":$EXT_JARS"
 
     BYZER_LOG_PATH="file:${BYZER_HOME}/conf/byzer-server-log4j.properties"
 

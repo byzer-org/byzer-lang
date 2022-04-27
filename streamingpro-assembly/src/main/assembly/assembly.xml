@@ -72,19 +72,8 @@
         </fileSet>
 
         <fileSet>
-            <!-- Data -->
-            <directory>${project.parent.basedir}/dev/</directory>
-            <!-- Include empty.json as a placeholder, to avoid every other files being copied -->
-            <includes>
-                <include>empty.json</include>
-            </includes>
-            <outputDirectory>data</outputDirectory>
-        </fileSet>
-
-        <fileSet>
             <!-- Bylaws -->
             <directory>${project.parent.basedir}/</directory>
-            <!-- Include empty.json as a placeholder, to avoid every other files being copied -->
             <includes>
                 <include>RELEASES.md</include>
                 <include>README.md</include>
