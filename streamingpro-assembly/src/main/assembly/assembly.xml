@@ -32,7 +32,8 @@
         <fileSet>
             <directory>${project.parent.basedir}/dev</directory>
             <includes>
-                <include>empty.json</include>
+                <include>ansj_seg-5.1.6.jar</include>
+                <include>nlp-lang-1.7.8.jar</include>
             </includes>
             <outputDirectory>libs</outputDirectory>
         </fileSet>
@@ -68,12 +69,6 @@
                 <include>empty.json</include>
             </includes>
             <outputDirectory>plugin</outputDirectory>
-        </fileSet>
-
-        <fileSet>
-            <!-- Examples -->
-            <directory>${project.parent.basedir}/examples</directory>
-            <outputDirectory>examples</outputDirectory>
         </fileSet>
 
         <fileSet>
