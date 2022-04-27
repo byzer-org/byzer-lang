@@ -32,7 +32,8 @@
         <fileSet>
             <directory>${project.parent.basedir}/dev</directory>
             <includes>
-                <include>empty.json</include>
+                <include>ansj_seg-5.1.6.jar</include>
+                <include>nlp-lang-1.7.8.jar</include>
             </includes>
             <outputDirectory>libs</outputDirectory>
         </fileSet>
@@ -71,25 +72,8 @@
         </fileSet>
 
         <fileSet>
-            <!-- Examples -->
-            <directory>${project.parent.basedir}/examples</directory>
-            <outputDirectory>examples</outputDirectory>
-        </fileSet>
-
-        <fileSet>
-            <!-- Data -->
-            <directory>${project.parent.basedir}/dev/</directory>
-            <!-- Include empty.json as a placeholder, to avoid every other files being copied -->
-            <includes>
-                <include>empty.json</include>
-            </includes>
-            <outputDirectory>data</outputDirectory>
-        </fileSet>
-
-        <fileSet>
             <!-- Bylaws -->
             <directory>${project.parent.basedir}/</directory>
-            <!-- Include empty.json as a placeholder, to avoid every other files being copied -->
             <includes>
                 <include>RELEASES.md</include>
                 <include>README.md</include>
