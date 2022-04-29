@@ -22,8 +22,8 @@ import tech.mlsql.dsl.adaptor.DslTool
 import tech.mlsql.tool.{HDFSOperatorV2, Templates2}
 
 import java.net.URLEncoder
-import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.charset.Charset
+import java.nio.charset.StandardCharsets.UTF_8
 import java.util.UUID
 import scala.collection.mutable.ArrayBuffer
 
@@ -96,7 +96,7 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
           if (debug) {
             logInfo(format(s"Started to request Page ${url} "))
           }
-          val df = _http(config.path, config.config, skipParams, config.df.get.sparkSession)
+          val df = _http(url, config.config, skipParams, config.df.get.sparkSession)
           val row = df.select(F.col("content").cast(StringType), F.col("status")).head
           val status = row.getInt(1)
           (status, df)
