@@ -139,7 +139,7 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
 
         val uuid = UUID.randomUUID().toString.replaceAll("-", "")
         val context = ScriptSQLExec.context()
-        // each page's result is save in tmpTablePath
+        // each page's result is saved in tmpTablePath
         val tmpTablePath = resourceRealPath(context.execListener, Option(context.owner),
           PathFun("__tmp__").add("rest").add(uuid).toPath)
         context.execListener.addEnv(classOf[MLSQLRest].getName, tmpTablePath)

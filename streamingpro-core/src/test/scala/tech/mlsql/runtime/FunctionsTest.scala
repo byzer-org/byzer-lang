@@ -42,15 +42,15 @@ import scala.language.reflectiveCalls
 
 class FunctionsTest extends AnyFlatSpec with should.Matchers {
 
+  /**
+   * This function mocks a Request. For any request url, get & post, bodyForm & bodyString,
+   * A response is returned with http status 200
+   * @param reqStatic
+   */
   def initRest(reqStatic: MockedStatic[Request]): Unit = {
+
     val reqMock = mock(classOf[Request])
-    val httpResp: HttpResponse = new BasicHttpResponse(new BasicStatusLine(
-      new ProtocolVersion("HTTP", 1, 1), 200, ""))
-    val entity = new BasicHttpEntity()
-    entity.setContent(new ByteArrayInputStream("{\"code\":\"200\",\"content\":\"ok\"}".getBytes()))
-    httpResp.setEntity(entity)
-    val responseMock = mock(classOf[Response])
-    when(responseMock.returnResponse()).thenReturn(httpResp)
+
     // Get
     reqStatic.when(new MockedStatic.Verification() {
       override def apply(): Unit = {
@@ -66,6 +66,17 @@ class FunctionsTest extends AnyFlatSpec with should.Matchers {
     when(reqMock.bodyString(anyString, ArgumentMatchers.any())).thenReturn(reqMock)
     // Post bodyForm
     when(reqMock.bodyForm(anyList(), ArgumentMatchers.any())).thenReturn(reqMock)
+
+    // Mock Response
+    val httpResp: HttpResponse = new BasicHttpResponse(new BasicStatusLine(
+      new ProtocolVersion("HTTP", 1, 1), 200, ""))
+    val entity = new BasicHttpEntity()
+    entity.setContent(new ByteArrayInputStream("{\"code\":\"200\",\"content\":\"ok\"}".getBytes()))
+    httpResp.setEntity(entity)
+    val responseMock = mock(classOf[Response])
+    when(reqMock.execute()).thenReturn(responseMock)
+    when(responseMock.returnResponse()).thenReturn(httpResp)
+
   }
 
   "A http GET request" should "return then mock result" in {
@@ -114,7 +125,7 @@ class FunctionsTest extends AnyFlatSpec with should.Matchers {
           params = Map("body" -> "{\"a\":1,\"b\":2}"), headers = Map("Content-Type" -> "application/json"), Map())
 
         println(s"status:$status, content:$content")
-        assertEquals(status, 200)
+        assertEquals(200, status )
         assertEquals(content, "{\"code\":\"200\",\"content\":\"ok\"}")
         // verify url concat is legal.
         reqStatic.verify(new MockedStatic.Verification() {
