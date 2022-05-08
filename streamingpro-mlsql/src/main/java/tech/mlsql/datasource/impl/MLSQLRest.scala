@@ -75,6 +75,8 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
     val skipParams = config.config.getOrElse("config.page.skip-params", "false").toBoolean
     val retryInterval = JavaUtils.timeStringAsMs(config.config.getOrElse("config.retry.interval", "1s"))
     val debug = config.config.getOrElse("config.debug", "false").toBoolean
+    val enableRequestCleaner = config.config.getOrElse(configEnableRequestCleaner.name, "false")
+    ScriptSQLExec.context().execListener.addEnv("enableRestDataSourceRequestCleaner", enableRequestCleaner)
 
     def _error2DataFrame(errMsg: String, statusCode: Int, session: SparkSession) : DataFrame = {
       session.createDataFrame(session.sparkContext.makeRDD(Seq(Row.fromSeq(Seq( errMsg.getBytes(UTF_8), statusCode))))
@@ -142,7 +144,12 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
         // each page's result is saved in tmpTablePath
         val tmpTablePath = resourceRealPath(context.execListener, Option(context.owner),
           PathFun("__tmp__").add("rest").add(uuid).toPath)
-        context.execListener.addEnv(classOf[MLSQLRest].getName, tmpTablePath)
+
+        // If a user runs multiple Load Rest.`` statements in a single thread, we need to save all temp dirs
+        context.execListener.env().get(classOf[MLSQLRest].getName) match {
+          case Some(dirs) => context.execListener.addEnv( classOf[MLSQLRest].getName, s"${dirs},${tmpTablePath}" )
+          case None => context.execListener.addEnv( classOf[MLSQLRest].getName, tmpTablePath )
+        }
 
         var count = 0
         var status: Int = 0
@@ -401,6 +408,29 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
 
   override def shortFormat: String = "Rest"
 
+  final val configEnableRequestCleaner = new Param[String](parent = this, name = "config.enableRequestCleaner",
+    FormParams.toJson(Select(
+      name = "config.enableRequestCleaner",
+      values = List(),
+      extra = Extra(
+        doc =
+          """
+            | Enable temp data cleaner
+          """,
+        label = "enableRequestCleaner",
+        options = Map(
+          "valueType" -> "string",
+          "required" -> "false",
+          "derivedType" -> "NONE"
+        )), valueProvider = Option(() => {
+        List(
+          KV(Option("config.enableRequestCleaner"), Option("true")),
+          KV(Option("config.enableRequestCleaner"), Option("false"))
+        )
+      })
+    )
+    )
+  )
 
   final val configMethod = new Param[String](this, "config.method",
     FormParams.toJson(Select(
