@@ -16,9 +16,12 @@ import streaming.core.strategy.platform.SparkRuntime
 import streaming.dsl.ScriptSQLExec
 import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.datasource.impl.MLSQLRest
+import tech.mlsql.job.JobManager
+import tech.mlsql.runtime.plugins.request_cleaner.RequestCleanerManager
+import tech.mlsql.tool.HDFSOperatorV2
 
 import java.io.ByteArrayInputStream
-import java.net.URI
+
 
 /**
  * 26/2/2022 WilliamZhu(allwefantasy@gmail.com)
@@ -55,7 +58,56 @@ class MLSQLRestTest extends FunSuite with SparkOperationUtil with BasicMLSQLConf
     (reqStatic, reqMock)
   }
 
+  test("Temp data should be cleaned if config.enableRequestCleaner is true") {
+    withBatchContext(setupBatchContext(batchParamsWithoutHive, null)) { runtime: SparkRuntime =>
+      // Init JobManager so that it executes script
+      JobManager.init(runtime.sparkSession, initialDelay = 2 , checkTimeInterval = 3)
+      val (reqStatic, _, _) = mockOffsetPaginationRequest()
 
+      tryWithResource(reqStatic) {
+        _ => {
+          val script = """
+                         |LOAD Rest.`http://www.byzer.org/?range=10`
+                         |WHERE `config.connect-timeout`="10s"
+                         |AND `config.page.next`= "http://www.byzer.org/index={0}"
+                         |AND `config.method`="get"
+                         |AND `config.page.retry`="1"
+                         |AND `config.page.values`="offset:0,1"
+                         |AND `header.content-type`="application/json"
+                         |ANd `config.debug`="true"
+                         |AND `config.enableRequestCleaner`="true"
+                         |AS data_1;
+                         |
+                         |LOAD Rest.`http://www.byzer.org/?range=10`
+                         |WHERE `config.connect-timeout`="10s"
+                         |AND `config.page.next`= "http://www.byzer.org/index={0}"
+                         |AND `config.method`="get"
+                         |AND `config.page.retry`="1"
+                         |AND `config.page.values`="offset:0,1"
+                         |AND `header.content-type`="application/json"
+                         |ANd `config.debug`="true"
+                         |AND `config.enableRequestCleaner`="true"
+                         |AS data_2;
+                         |""".stripMargin
+
+          val params = Map( "__PARAMS__" ->  """{"async":"true"}""")
+          executeCode(runtime, script, params)
+          val context = ScriptSQLExec.context()
+          // Mark job finished
+          context.execListener.addEnv("__MarkAsyncRunFinish__", "true")
+          // Clean temp data
+          RequestCleanerManager.call()
+
+          // Assert that temp directories are deleted
+          context.execListener.env().get(classOf[MLSQLRest].getName) match {
+            case Some(dirs) =>
+              dirs.split(",").foreach( d => assert( ! HDFSOperatorV2.fileExists(d)) )
+            case None => throw new RuntimeException(s"Failed to find temp directory owner ${context.owner}")
+          }
+        }
+      }
+    }
+  }
 
   test("auto-increment page strategy stop with equals") {
 
@@ -319,26 +371,6 @@ class MLSQLRestTest extends FunSuite with SparkOperationUtil with BasicMLSQLConf
     }
   }
 
-  test("test status code 204 stop condition") {
-    withBatchContext( setupBatchContext(batchParams, null)) { runtime : SparkRuntime =>
-      autoGenerateContext(runtime)
-      val rest = new MLSQLRest()
-      val session = ScriptSQLExec.context().execListener.sparkSession
-      val res = rest.load(session.read, DataSourceConfig(
-        "https://projectsapi.zoho.com/restapi/portal/662111424/projects/?range=200", Map(
-          "config.page.next" -> "https://projectsapi.zoho.com/restapi/portal/${PORTAL_ID}/projects/?index={0}",
-          "config.page.values" -> "offset:1,200",
-          "config.page.limit" -> "100",
-          "config.page.interval" -> "1s",
-          "config.page.retry" -> "2",
-          "config.debug" -> "true",
-          "header.Authorization"-> "Zoho-oauthtoken 1000.a3379f34fadef801b61ac564b89af014.786220e400983348338f19c5948f2b2f"
-        ), Option(session.emptyDataFrame)
-      ))
-      val page = res.collect()
-      assert( page.size == 1 )
-    }
-  }
 
   test("Non-pagination should try at most 2 times") {
     withBatchContext( setupBatchContext(batchParams, null)) { runtime : SparkRuntime =>

@@ -3,7 +3,6 @@ package org.apache.spark.streaming
 import java.io.File
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicReference
-
 import net.csdn.common.reflect.ReflectHelper
 import org.apache.commons.io.FileUtils
 import org.apache.spark.sql.{DataFrame, Row}
@@ -13,6 +12,7 @@ import streaming.dsl.{MLSQLExecuteContext, ScriptSQLExec, ScriptSQLExecListener}
 import tech.mlsql.common.utils.shell.command.ParamsUtil
 import tech.mlsql.ets.ScriptRunner
 import tech.mlsql.job.{JobManager, MLSQLJobInfo, MLSQLJobProgress, MLSQLJobType}
+import tech.mlsql.runtime.MLSQLPlatformLifecycle
 
 trait SparkOperationUtil {
 
@@ -102,8 +102,8 @@ trait SparkOperationUtil {
     None
   }
 
-  def executeCode(runtime: SparkRuntime, code: String) = {
-    autoGenerateContext(runtime)
+  def executeCode(runtime: SparkRuntime, code: String, params: Map[String, String] = Map()) = {
+    autoGenerateContext(runtime, userDefinedParams = params)
     val jobInfo = createJobInfoFromExistGroupId(code)
     val holder = new AtomicReference[Array[Row]]()
     ScriptRunner.runJob(code, jobInfo, (df) => {
@@ -215,6 +215,13 @@ trait SparkOperationUtil {
     } else {
       params = new ParamsUtil(batchParams)
     }
+    // Start plugins
+    Seq("tech.mlsql.runtime.LogFileHook", "tech.mlsql.runtime.PluginHook").foreach{ c =>
+      PlatformManager.getOrCreate.registerMLSQLPlatformLifecycle(
+        Class.forName(c).
+          newInstance().asInstanceOf[MLSQLPlatformLifecycle])
+    }
+
     PlatformManager.getOrCreate.run(params, false)
     val runtime = PlatformManager.getRuntime.asInstanceOf[SparkRuntime]
     runtime
