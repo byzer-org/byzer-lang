@@ -47,12 +47,7 @@ object LexerUtils {
 
 
   /**
-   * In this method, three states of the cursor are judged in the code.
-   * The three states are: first, the cursor is at the end of the code,
-   * and the current line is empty, and there is no code statement under the cursor;
-   * second, the cursor is in the middle of the code, and the current line is empty,
-   * and there are code statements above and below the cursor; third Type,
-   * the cursor is in the code statement line, and this line is not empty.
+   * Returns token position based on cursor coordinates
    *
    * @param tokens
    * @param lineNum 行号，从1开始计数
@@ -95,6 +90,9 @@ object LexerUtils {
      if(oneLineTokens.isEmpty && lastToken._1.getType == DSLWrapper.SEMICOLON) {
         return TokenPos(-1, TokenPosType.NEXT, -1)
      }
+    if(lastToken._1.getType == DSLWrapper.SEMICOLON){
+      return TokenPos(-1, TokenPosType.NEXT, -1)
+    }
     val firstToken = oneLineTokens.headOption match {
       case Some(head) => head
       case None => (_lastToken, _lastTokenIndex)
@@ -134,7 +132,6 @@ object LexerUtils {
       } else {
         TokenPos(-2, -2, -2)
       }
-
 
     }.filterNot(_.pos == -2)
     // If the result after the filter is empty, get the head directly to get the NPE
@@ -180,6 +177,9 @@ object LexerUtils {
       case None => (_lastToken, _lastTokenIndex)
     }
     if(oneLineTokens.isEmpty && lastToken._1.getType == DSLWrapper.SEMICOLON) {
+      return TokenPos(-1, TokenPosType.NEXT, -1)
+    }
+    if(lastToken._1.getType == DSLWrapper.SEMICOLON){
       return TokenPos(-1, TokenPosType.NEXT, -1)
     }
     val firstToken = oneLineTokens.headOption match {
