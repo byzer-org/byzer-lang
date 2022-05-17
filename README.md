@@ -4,29 +4,8 @@
     <img src="/images/Byzer_Logo.png" alt="drawing"  width="200"/>
 </p>
 
-## TOC   
-   * [Byzer-Lang](#byzer-lang)
-      * [Byzer Code Example](#byzer-code-example)
-      * [Byzer Architecture](#byzer-aritchitechture)
-   * [Official WebSite](#official-website)
-   * [VSCode Extension（MacOS、Linux）](#vscode-extensionmacoslinux)
-   * [Docker Sandbox](#docker-sandbox)
-      * [Pulling Sandbox Docker Image](#pulling-sandbox-docker-image)
-      * [Start Container](#start-container)
-   * [Download Byzer](#download-byzer)
-   * [Building a Distribution](#building-a-distribution)
-      * [Prerequisites](#prerequisites)
-      * [Downloading Source Code](#downloading-source-code)
-      * [Building Spark 2.4.3 Bundle](#building-spark-243-bundle)
-      * [Building Spark 3.1.1 Bundle](#building-spark-311-bundle)
-      * [Building without Chinese Analyzer](#building-without-chinese-analyzer)
-      * [Building with Aliyun OSS Support](#building-with-aliyun-oss-support)
-   * [Deploying](#deploying)
-   * [How to contribute to Byzer-Lang](#how-to-contribute-to-byzer-lang)
-   * [Contributors](#contributors)
-   * [WeChat Group](#wechat-group)
 
-## Byzer-Lang
+## Byzer-lang
 
 **Byzer** (former MLSQL) is a low-code, open-sourced and distributed programming language for data pipeline, analytics and AI in cloud native way.
 
@@ -38,175 +17,110 @@ We believe that everything is a table, a simple and powerful SQL-like language c
 
 ![Byzer-lang Arch](images/Byzer-arch.png)
 
+You can build a data product based on Byzer engine & Byzer-lang without interacting with computing framework directly like Spark in your data APP. Thus will simplify your data app significantly. 
+
+For example, Byzer org contributes a data app [Byzer Notebook](https://github.com/byzer-org/byzer-notebook), which provides notebook interaction & workflow GUI interaction.
+
+### BIP (Byzer Improvement Proposal)
+
+Byzer project uses the [BIP](https://github.com/byzer-org/byzer-lang/wiki) for the community  collaboration, you can checkout the feature design or architecture design in BIP.
+
+### Online Trial
+
+You can access the official website [https://www.byzer.org/](https://www.byzer.org/) and try Byzer-lang & Byzer Notebook online.
+
+
+### Download 
+
+You can download Byzer engine via:
+- [https://download.byzer.org/](https://download.byzer.org/)
+- [Byzer Docker Hub](https://hub.docker.com/u/byzer)
+- [Github Release](https://github.com/byzer-org/byzer-lang/releases)
+
+For more details, please refer to the [docs](https://docs.byzer.org/#/byzer-lang/zh-cn/installation/README)
+
+### Install
+
+For **dev/test** purpose, you can download [Byzer All In One Package](https://docs.byzer.org/#/byzer-lang/zh-cn/installation/server/byzer-all-in-one-deployment), extract and then execute the command below
+
+```
+$ cd {BYZER_HOME}
+$ ./bin/byzer.sh start
+```
+
+
+And for **production** purpose, we recommend to use [Byzer Server Pacakge](https://docs.byzer.org/#/byzer-lang/zh-cn/installation/server/binary-installation) and deploy it on Hadoop.
+
+
+You can also install [Byzer VSCode Extension](https://docs.byzer.org/#/byzer-lang/zh-cn/installation/vscode/byzer-vscode-extension-installation) to use Byzer-lang. 
+
+For the Docker Image or , please refer to the [docs](https://docs.byzer.org/#/byzer-lang/zh-cn/installation/README)
+
+
+
 ### Byzer Code Example
 
+Below list an example that how to process Github API as a table to get the information of Byzer Org
 
 ```sql
-load hive.`raw.stripe_discounts` as discounts;
-load hive.`raw.stripe_invoice_items` as invoice_items;
+-- Get Github Organization Info
 
-select
-        invoice_items.*,
-        case
-            when discounts.discount_type = 'percent'
-                then amount * (1.0 - discounts.discount_value::float / 100)
-            else amount - discounts.discount_value
-        end as discounted_amount
+-- set API URL and params
+SET org_name="byzer-org";
+SET GITHUB_ORGANIZATION_URL="https://api.github.com/orgs/${org_name}";
 
-    from invoice_items
-
-    left outer join discounts
-        on invoice_items.customer_id = discounts.customer_id
-        and invoice_items.invoice_date > discounts.discount_start
-        and (invoice_items.invoice_date < discounts.discount_end
-             or discounts.discount_end is null)
-as joined;
+-- Load Github Organization API as table
+LOAD Rest.`$GITHUB_ORGANIZATION_URL` 
+ where `config.connect-timeout`="10s"
+ and `config.method`="GET"
+ and `header.accept`="application/vnd.github.v3+json"
+as github_org;
 
 
+-- decode API response from binary to a json string
+select string(content) as content from github_org as response_content;
 
-select
+-- expand the json string 
+run response_content as JsonExpandExt.`` where inputCol="content" and structColumn="true" as github_org;
 
-        id,
-        invoice_id,
-        customer_id,
-        coalesce(discounted_amount, amount) as discounted_amount,
-        currency,
-        description,
-        created_at,
-        deleted_at
+-- retrieve user infomation and process as a table
+select content.* from github_org as org_info;
 
-    from joined
-as final;
-
-
-
-set allColumns = "all,wow";
-
-!if ''' split(:allColumns,",")[0] == "all" ''';
-   select * from final as final2;
-!else;
-   select id,invoice from final as final2;
-!fi;
-
-select * from final2 as output;
+-- save the table to delta lake
+save overwrite org_info as delta.`github_info_db.byzer_org`;
 ```
 
 
-## Official WebSite
+For more details about the Byzer-lang grammer, please refer to the user manaual [Byzer-lang Grammer](https://docs.byzer.org/#/byzer-lang/zh-cn/grammar/outline)
 
-[https://www.byzer.org](https://www.byzer.org)
+### Development
 
-## Notebook Support
-
-[byzer-notebook](https://github.com/byzer-org/byzer-notebook)
-
-
-## VSCode Extension（MacOS、Linux、Windows）
-
-[VSCode IDE Extension](https://github.com/byzer-org/byzer-desktop)
-
-[More document about byzer-lang vscode extension（Chinese version）](https://docs.byzer.org/#/byzer-lang/zh-cn/installation/desktop-installation)
-
-## Docker Sandbox  (With Notebook)
+1. Fork the repository and clone
 
 ```
-export MYSQL_PASSWORD=${1:-root}
-export SPARK_VERSION=${SPARK_VERSION:-3.1.1}
-export MLSQL_VERSION=${MLSQL_VERSION:-2.2.0-SNAPSHOT}
-
-docker run -d \
--p 3306:3306 \
--p 9002:9002 \
--p 9003:9003 \
--e MYSQL_ROOT_HOST=% \
--e MYSQL_ROOT_PASSWORD="${MYSQL_PASSWORD}" \
---name mlsql-sandbox-${SPARK_VERSION}-${MLSQL_VERSION} \
-mlsql-sandbox:${SPARK_VERSION}-${MLSQL_VERSION}
+git clone https://github.com/{YOUR_GITHUB}/byzer-lang.git
 ```
 
-Then you can visit `http://127.0.0.1:9002` .
+2. Use Intellj Idea to open the project, choose the scala version `2.12.10`
 
+3. In Intellj Idea Maven Setting, check the profile below
+    - gpg
+    - local
+    - scala-2.12
+    - spark-3.0.0
+    - streamingpro-spark-3.0.0-adaptor
 
-## Download Byzer
+4. Click Maven Refresh and wait for Idea load finished
 
-* The latest stable version is release-2.2.0
-* You can download from [Byzer Download Website](https://download.byzer.org)
-* Spark 2.4.3/3.1.1 have been tested
+5. Find the class `tech.mlsql.example.app.LocalSparkServiceApp`, click Debug button then Byzer Engine will be started, then you can access the Byzer Web Console in [http://localhost:9003/](http://localhost:9003/#/)
 
-***Naming Convention***
+### Build
 
-mlsql-engine_${spark_major_version}-${mlsql_version}.tgz
-```shell
-## Pre-built for Spark 2.4.3
-byzer-lang-2.4.3-2.1.0.tar.gz
+You can refer to the project [byzer-org/byzer-build](https://github.com/byzer-org/byzer-build) to check how to build the Byzer engine binary pacakges and images
 
-## Pre-built for Spark 3.1.1
-byzer-lang-3.1.1-2.1.0.tar.gz
-```  
+### How to contribute to Byzer-Lang
 
-## Building a Distribution
-### Prerequisites
-- JDK 8+
-- Maven
-- Linux or MacOS
-
-### Downloading Source Code
-```shell
-## Clone the code base
-git clone https://github.com/byzer-org/byzer-lang.git
-cd byzer-lang
-```
-
-### Building Spark 2.4.3 Bundle
-```shell
-export MLSQL_SPARK_VERSION=2.4
-./dev/make-distribution.sh
-```
-
-### Building Spark 3.1.1 Bundle
-```shell
-export MLSQL_SPARK_VERSION=3.0
-./dev/make-distribution.sh
-```
-### Building without Chinese Analyzer
-```shell
-## Chinese analyzer is enabled by default.
-export ENABLE_CHINESE_ANALYZER=false
-./dev/make-distribution.sh <spark_version>
-```
-
-## Deploying
-1. [Download](#Download) or [build a distribution](#Build) 
-2. Install Spark and set environment variable SPARK_HOME, make sure Spark version matches that of MLSQL
-3. Deploy tgz
-- Set environment variable MLSQL_HOME
-- Copy distribution tar ball over and untar it
-
-4.Start Byzer in local mode
-```shell
-cd $MLSQL_HOME
-## Run process in background
-nohup ./bin/start-local.sh 2>&1 > ./local_mlsql.log &
-```
-5. Open a browser and type in http://localhost:9003, have fun.
-
-Directory structure
-```shell
-|-- mlsql
-    |-- bin        
-    |-- conf       
-    |-- data       
-    |-- examples   
-    |-- libs       
-    |-- main       
-    |-- README.md  
-    |-- LICENSE
-    |-- RELEASE
-```
-
-## How to contribute to Byzer-Lang
-
-If you are planning to contribute to this repository, please create an issue at [our Issue page](https://github.com/byzer-org/byzer-lang/issues)
+If you are planning to contribute to this project, please create an issue at [our Issue page](https://github.com/byzer-org/byzer-lang/issues)
 even if the topic is not related to source code itself (e.g., documentation, new idea and proposal).
 
 This is an active open source project for everyone,
@@ -215,7 +129,7 @@ and we are always open to people who want to use this system or contribute to it
 For more details about how to contribute to the Byzer Org, please refer to [How to Contribute](https://docs.byzer.org/#/byzer-lang/zh-cn/appendix/contribute)
 
 
-## Contributors
+### Contributors
 
 <a href="https://github.com/byzer-org/byzer-lang/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=byzer-org/byzer-lang" />
@@ -223,9 +137,10 @@ For more details about how to contribute to the Byzer Org, please refer to [How 
 
 Made with [contrib.rocks](https://contrib.rocks).
 
-##  WeChat Group
+###  Community
 
-扫码添加K小助微信号，添加成功后，发送  mlsql  这5个英文字母进群。
+- **Slack**: [byzer-org.slack.com](https://byzer-org.slack.com)
+- **Wechat Official Account:** Byzer Community
 
-![](https://github.com/allwefantasy/mlsql/blob/master/images/dc0f4493-570f-4660-ab41-0e487b17a517.png)
+
 
