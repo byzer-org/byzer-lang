@@ -91,11 +91,11 @@ save overwrite org_info as delta.`github_info_db.byzer_org`;
 ```
 
 
-For more details about the Byzer-lang grammer, please refer to the user manaual [Byzer-lang Grammer](https://docs.byzer.org/#/byzer-lang/zh-cn/grammar/outline)
+For more details about the Byzer-lang grammer, please refer to the user manaual [Byzer-lang Grammar](https://docs.byzer.org/#/byzer-lang/zh-cn/grammar/outline)
 
 ### Development
 
-1. Fork the repository and clone
+1. Fork this repository and clone to local machine
 
 ```
 git clone https://github.com/{YOUR_GITHUB}/byzer-lang.git
