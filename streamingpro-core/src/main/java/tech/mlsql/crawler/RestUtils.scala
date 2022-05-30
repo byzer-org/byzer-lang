@@ -4,13 +4,13 @@ import net.csdn.common.path.Url
 import net.csdn.modules.transport.HttpTransportService.SResponse
 import net.csdn.modules.transport.{DefaultHttpTransportService, HttpTransportService}
 import org.apache.commons.lang3.exception.ExceptionUtils
-import org.apache.http.{HttpEntity, HttpResponse}
 import org.apache.http.client.entity.UrlEncodedFormEntity
 import org.apache.http.client.fluent.{Form, Request}
 import org.apache.http.entity.ContentType
 import org.apache.http.entity.mime.{HttpMultipartMode, MultipartEntityBuilder}
 import org.apache.http.message.BasicNameValuePair
 import org.apache.http.util.EntityUtils
+import org.apache.http.{HttpEntity, HttpResponse}
 import streaming.dsl.ScriptSQLExec
 import streaming.log.WowLog
 import tech.mlsql.common.JsonUtils
@@ -22,17 +22,21 @@ import tech.mlsql.tool.{HDFSOperatorV2, Templates2}
 import java.nio.charset.Charset
 import scala.annotation.tailrec
 import scala.collection.JavaConversions._
-import scala.util.control.Breaks.{break, breakable}
 
 object RestUtils extends Logging with WowLog {
-  def httpClientPost(urlString: String, data: Map[String, String]): HttpResponse = {
+  def httpClientPost(urlString: String, data: Map[String, String], headers: Map[String, String]): HttpResponse = {
     val nameValuePairs = data.map { case (name, value) =>
       new BasicNameValuePair(name, value)
     }.toList
 
-    Request.Post(urlString)
+    val req = Request.Post(urlString)
       .addHeader("Content-Type", "application/x-www-form-urlencoded")
-      .body(new UrlEncodedFormEntity(nameValuePairs, DefaultHttpTransportService.charset))
+
+    headers foreach { case (name, value) =>
+      req.setHeader(name, value)
+    }
+
+    req.body(new UrlEncodedFormEntity(nameValuePairs, DefaultHttpTransportService.charset))
       .execute()
       .returnResponse()
   }
