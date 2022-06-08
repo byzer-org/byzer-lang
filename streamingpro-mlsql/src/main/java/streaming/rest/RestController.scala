@@ -38,6 +38,7 @@ import org.apache.spark.sql.mlsql.session.{MLSQLSparkSession, SparkSessionCacheM
 import org.apache.spark.{MLSQLConf, SparkInstanceService}
 import tech.mlsql.MLSQLEnvKey
 import tech.mlsql.app.{CustomController, ResultResp}
+import tech.mlsql.common.JsonUtils
 import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.common.utils.serder.json.JSONTool
 import tech.mlsql.crawler.RestUtils
@@ -105,6 +106,7 @@ class RestController extends ApplicationController with WowLog with Logging {
     new Parameter(name = "sessionPerRequest", required = false, description = "by default false", `type` = "boolean", allowEmptyValue = false),
     new Parameter(name = "async", required = false, description = "If set true ,please also provide a callback url use `callback` parameter and the job will run in background and the API will return.  default: false", `type` = "boolean", allowEmptyValue = false),
     new Parameter(name = "callback", required = false, description = "Used when async is set true. callback is a url. default: false", `type` = "string", allowEmptyValue = false),
+    new Parameter(name = "callbackHeader", required = false, description = "Provide a jsonString parameter to set the header parameter of the callback request. default: false", `type` = "string", allowEmptyValue = false),
     new Parameter(name = "maxRetries", required = false, description = "Max retries of request callback.", `type` = "int", allowEmptyValue = false),
     new Parameter(name = "skipInclude", required = false, description = "disable include statement. default: false", `type` = "boolean", allowEmptyValue = false),
     new Parameter(name = "skipAuth", required = false, description = "disable table authorize . default: true", `type` = "boolean", allowEmptyValue = false),
@@ -147,6 +149,12 @@ class RestController extends ApplicationController with WowLog with Logging {
         if (paramAsBoolean("async", false)) {
           JobManager.asyncRun(sparkSession, jobInfo, () => {
             val urlString = param("callback")
+            val callbackHeaderString = param("callbackHeader")
+            var callbackHeader = Map[String,String]()
+            if (callbackHeaderString != null && callbackHeaderString.nonEmpty){
+              callbackHeader = JsonUtils.fromJson[Map[String,String]](callbackHeaderString)
+            }
+
             val maxTries = Math.max(0, paramAsInt("maxRetries", -1)) + 1
             try {
               ScriptSQLExec.parse(param("sql"), context,
@@ -158,7 +166,7 @@ class RestController extends ApplicationController with WowLog with Logging {
               outputResult = getScriptResult(context, sparkSession)
 
               executeWithRetrying[HttpResponse](maxTries)(
-                RestUtils.httpClientPost(urlString,
+                RestUtils.httpClientPost(urlString, callbackHeader,
                   Map("stat" -> s"""succeeded""",
                     "res" -> outputResult,
                     "jobInfo" -> JSONTool.toJsonStr(jobInfo))),
@@ -175,7 +183,7 @@ class RestController extends ApplicationController with WowLog with Logging {
                 }
 
                 executeWithRetrying[HttpResponse](maxTries)(
-                  RestUtils.httpClientPost(urlString,
+                  RestUtils.httpClientPost(urlString, Map(),
                     Map("stat" -> s"""failed""",
                       "msg" -> (e.getMessage + "\n" + msgBuffer.mkString("\n")),
                       "jobInfo" -> JSONTool.toJsonStr(jobInfo))),
