@@ -20,10 +20,8 @@ package streaming.dsl.load.batch
 
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
-import tech.mlsql.common.utils.reflect.ClassPath
 import tech.mlsql.dsl.adaptor.MLMapping
 
-import scala.collection.JavaConversions._
 
 /**
   * Created by allwefantasy on 21/9/2018.
