@@ -49,3 +49,10 @@ select pred_func(features) as predict_label, label from data1 as output;
 select name,value from model_result where name="status" as result;
 -- make sure status of  all models are success.
 !assert result ''':value=="success"'''  "all model status should be success";
+
+
+load modelExplain.`/tmp/linearregression` WHERE `alg`="LinearRegression" as lr_model_explain;
+
+select `name` from lr_model_explain where name="uid" as result;
+
+!assert result ''':name=="uid"'''  "LinearRegression modelExplain should be successful";

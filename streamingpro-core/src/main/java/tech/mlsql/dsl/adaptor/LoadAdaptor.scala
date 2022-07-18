@@ -136,10 +136,16 @@ class LoadProcessing(scriptSQLExecListener: ScriptSQLExecListener,
       // return the load table
       table
     }.getOrElse {
-      // calculate resource real absolute path
+      // path could be:
+      // 1) fileSystem path; code example: load  modelExplain.`/tmp/model` where alg="RandomForest" as output;
+      // 2) ET name; code example: load modelExample.`JsonExpandExt` AS output_1;  load modelParams.`JsonExpandExt` as output;
+      // For FileSystem path, pass the real path to ModelSelfExplain; for ET name pass original path
       val resourcePath = resourceRealPath(scriptSQLExecListener, option.get("owner"), path)
-
-      table = ModelSelfExplain(format, cleanStr(path), option, sparkSession).isMatch.thenDo.orElse(() => {
+      val fsPathOrETName = format match {
+        case "modelExplain" => resourcePath
+        case _ => cleanStr(path)
+      }
+      table = ModelSelfExplain(format, fsPathOrETName, option, sparkSession).isMatch.thenDo.orElse(() => {
         reader.format(format).load(resourcePath)
       }).get
     }

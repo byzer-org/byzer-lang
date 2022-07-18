@@ -20,10 +20,9 @@ package streaming.dsl.load.batch
 
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
-import tech.mlsql.common.utils.reflect.ClassPath
 import tech.mlsql.dsl.adaptor.MLMapping
+import tech.mlsql.tool.HDFSOperatorV2
 
-import scala.collection.JavaConversions._
 
 /**
   * Created by allwefantasy on 21/9/2018.
@@ -219,7 +218,32 @@ class ModelExplain(format: String, path: String, option: Map[String, String])(sp
     if ((format == "model" && path == "explain"))
       option("path")
     else {
-      path
+      option.get("index") match {
+          // If user specifies index, try to find _model_n subdirectory
+        case Some(idx) =>
+          val subDirs = HDFSOperatorV2.listFiles(path)
+              .filter( _.isDirectory )
+          val _modelDirExists = subDirs.exists( _.getPath.getName.startsWith("_model_"))
+          val _modelIdxDirExists = subDirs.exists( s"_model_${idx}" == _.getPath.getName)
+          val metaDirExists =  subDirs.exists( "meta" == _.getPath.getName)
+          val modelDirExists = subDirs.exists( "model" == _.getPath.getName)
+          if( _modelDirExists && _modelIdxDirExists) {
+            s"${path}/_model_${idx}"
+          }
+          else if( _modelDirExists && ! _modelIdxDirExists ) {
+            throw new RuntimeException(s"model directory with index ${idx} does not exist")
+          }
+          else if( metaDirExists && modelDirExists ) {
+            // `keepVersion`="false", index option is ignored.
+            path
+          }
+          else {
+            throw new RuntimeException(s"${path}/_model_${idx} does not exist")
+          }
+
+          // If keepVersion is not enabled
+        case None => path
+      }
     }
   }
 
