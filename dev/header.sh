@@ -106,33 +106,37 @@ then
         export BYZER_SERVER_MODE="server"
     fi
 
-    # set JAVA
-    if [[ "${JAVA}" == "" ]]; then
-        if [[ -z "$JAVA_HOME" ]]; then
-            if [[ ${BYZER_SERVER_MODE} == "all-in-one" ]]; then
-                # use embeded open jdk 8 in all-in-one
-                JAVA_HOME=${BYZER_HOME}/jdk8
-            elif [[ $(isValidJavaVersion) == "true" ]]; then
-                JAVA_HOME=$(dirname $(dirname $(readlink -f $(which java))))
-            else
-                quit "Java 1.8 or above is required."
-            fi
-            [[ -z "$JAVA_HOME" ]] && quit "Please set JAVA_HOME"
-            export JAVA_HOME
-        fi
-        export JAVA=$JAVA_HOME/bin/java
-        [[ -e "${JAVA}" ]] || quit "${JAVA} does not exist. Please set JAVA_HOME correctly."
-        verbose "java is ${JAVA}" 
-    fi
-    
-    # check Machine
-    unameOut="$(uname -s)"
-    case "${unameOut}" in
-        Linux*)     os=Linux;;
-        Darwin*)    os=Mac;;
-        CYGWIN*)    os=Cygwin;;
-        MINGW*)     os=MinGw;;
-        *)          os="UNKNOWN:${unameOut}"
-    esac
-    export MACHINE_OS=$os
+   # check Machine
+   unameOut="$(uname -s)"
+   case "${unameOut}" in
+       Linux*)     os=Linux;;
+       Darwin*)    os=Mac;;
+       CYGWIN*)    os=Cygwin;;
+       MINGW*)     os=MinGw;;
+       *)          os="UNKNOWN:${unameOut}"
+   esac
+   export MACHINE_OS=$os
+   # set JAVA
+   if [[ "${JAVA}" == "" ]]; then
+       if [[ -z "$JAVA_HOME" ]]; then
+           if [[ ${BYZER_SERVER_MODE} == "all-in-one" ]]; then
+               if [[ "Mac" == "${MACHINE_OS}" ]]
+               then
+                  # use embedded open jdk 8 in all-in-one
+                  JAVA_HOME=${BYZER_HOME}/jdk8/Contents/Home/
+               else
+                  JAVA_HOME="${BYZER_HOME}"/jdk8
+               fi
+           elif [[ $(isValidJavaVersion) == "true" ]]; then
+               JAVA_HOME=$(dirname $(dirname $(readlink -f $(which java))))
+           else
+               quit "Java 1.8 or above is required."
+           fi
+           [[ -z "$JAVA_HOME" ]] && quit "Please set JAVA_HOME"
+           export JAVA_HOME
+       fi
+       export JAVA=$JAVA_HOME/bin/java
+       [[ -e "${JAVA}" ]] || quit "${JAVA} does not exist. Please set JAVA_HOME correctly."
+       verbose "java is ${JAVA}"
+   fi
 fi
