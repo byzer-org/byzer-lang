@@ -18,22 +18,22 @@
 
 package tech.mlsql.dsl.adaptor
 
-import java.util.UUID
-
 import org.apache.spark.sql.streaming.StreamingQuery
 import org.apache.spark.sql.{DataFrame, DataFrameWriter, Row, SaveMode}
-import streaming.core.datasource.{DataSinkConfig, DataSourceRegistry}
+import streaming.core.datasource.{DataSinkConfig, DataSourceRegistry, RewritableSinkConfig}
 import streaming.core.stream.MLSQLStreamManager
 import streaming.dsl.parser.DSLSQLParser._
 import streaming.dsl.template.TemplateMerge
-import streaming.dsl.{ScriptSQLExec, ScriptSQLExecListener}
+import streaming.dsl.{MLSQLExecuteContext, ScriptSQLExec, ScriptSQLExecListener}
 import tech.mlsql.job.{JobManager, MLSQLJobType}
+import tech.mlsql.runtime.AppRuntimeStore
 
+import java.util.UUID
 import scala.collection.mutable.ArrayBuffer
 
 /**
-  * Created by allwefantasy on 27/8/2017.
-  */
+ * Created by allwefantasy on 27/8/2017.
+ */
 class SaveAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdaptor {
 
   def evaluate(value: String) = {
@@ -84,18 +84,30 @@ class SaveAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
   override def parse(ctx: SqlContext): Unit = {
 
 
-    val SaveStatement(_, tableName, format, path, option, _mode, partitionByCol) = analyze(ctx)
-    val owner = option.get("owner")
-    val mode = SaveMode.valueOf(_mode)
-    var oldDF: DataFrame = scriptSQLExecListener.sparkSession.table(tableName)
+    val SaveStatement(_, tableName, format, _path, _option, _mode, partitionByCol) = analyze(ctx)
 
+
+    val context = ScriptSQLExec.context()
+
+    var oldDF: DataFrame = scriptSQLExecListener.sparkSession.table(tableName)
+    val spark = oldDF.sparkSession
+    import spark.implicits._
+
+
+    val mode = SaveMode.valueOf(_mode)
+
+    val dsc = optionsRewrite(AppRuntimeStore.SAVE_BEFORE_CONFIG_KEY, DataSinkConfig(_path, _option,
+      mode, Option(oldDF)), format, context)
+
+    val option = dsc.config
+    val owner = option.get("owner")
+    val path = dsc.path
+    
     def isStream = {
       MLSQLStreamManager.isStream
     }
 
-    val spark = oldDF.sparkSession
-    import spark.implicits._
-    val context = ScriptSQLExec.context()
+
     var job = JobManager.getJobInfo(context.groupId)
 
 
@@ -162,6 +174,23 @@ class SaveAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
     outputTable.createOrReplaceTempView(tempTable)
     scriptSQLExecListener.setLastSelectTable(tempTable)
   }
+
+  def optionsRewrite(orderKey: String,
+                     config: DataSinkConfig,
+                     format: String,
+                     context: MLSQLExecuteContext):DataSinkConfig = {
+    AppRuntimeStore.store.getLoadSave(orderKey) match {
+      case Some(item) =>
+        item.customClassItems.classNames.map { className =>
+          val instance = Class.forName(className).newInstance().asInstanceOf[RewritableSinkConfig]
+          instance.rewrite_0(config, format, context)
+        }.headOption.getOrElse(config)
+      case None =>
+        config
+    }
+  }
+
+
 }
 
 case class SaveStatement(raw: String, inputTableName: String, format: String, path: String, option: Map[String, String] = Map(), mode: String, partitionByCol: List[String])

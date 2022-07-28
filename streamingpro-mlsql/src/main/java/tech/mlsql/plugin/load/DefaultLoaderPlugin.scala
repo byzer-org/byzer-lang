@@ -1,13 +1,13 @@
 package tech.mlsql.plugin.load
 
 import org.apache.spark.sql.DataFrame
-import streaming.core.datasource.{DataSourceConfig, RewriteableSource, SourceInfo}
+import streaming.core.datasource.{DataSourceConfig, RewritableSource, SourceInfo}
 import streaming.dsl.MLSQLExecuteContext
 
 /**
  * 11/12/2019 WilliamZhu(allwefantasy@gmail.com)
  */
-class DefaultLoaderPlugin extends RewriteableSource {
+class DefaultLoaderPlugin extends RewritableSource {
   override def rewrite(df: DataFrame, config: DataSourceConfig, sourceInfo: Option[SourceInfo], context: MLSQLExecuteContext): DataFrame = {
     val conf = config.config
     var table = df
