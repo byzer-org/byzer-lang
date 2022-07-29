@@ -57,11 +57,11 @@ trait RewritableSource {
 }
 
 trait RewritableSourceConfig {
-  def rewrite_0(config: DataSourceConfig, format: String,
-                context: MLSQLExecuteContext): DataSourceConfig
+  def rewrite_conf(config: DataSourceConfig, format: String,
+                   context: MLSQLExecuteContext): DataSourceConfig
 
-  def rewrite_1(sourceInfo: SourceInfo, format: String,
-                context: MLSQLExecuteContext): SourceInfo
+  def rewrite_source(sourceInfo: SourceInfo, format: String,
+                     context: MLSQLExecuteContext): SourceInfo
 }
 
 trait MLSQLSink extends MLSQLDataSource {
@@ -69,15 +69,15 @@ trait MLSQLSink extends MLSQLDataSource {
 }
 
 trait RewritableSinkConfig {
-  def rewrite_0(config: DataSinkConfig, format: String,
-                context: MLSQLExecuteContext): DataSinkConfig
+  def rewrite(config: DataSinkConfig, format: String,
+              context: MLSQLExecuteContext): DataSinkConfig
 }
 
 case class FSConfig(conf: Configuration, path: String, params: Map[String, String])
 
 trait RewritableFSConfig {
-  def rewrite_0(config: FSConfig,
-                context: MLSQLExecuteContext): FSConfig
+  def rewrite(config: FSConfig,
+              context: MLSQLExecuteContext): FSConfig
 }
 
 trait MLSQLDirectSource extends MLSQLDataSource {

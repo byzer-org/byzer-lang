@@ -183,7 +183,7 @@ class SaveAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
       case Some(item) =>
         item.customClassItems.classNames.map { className =>
           val instance = Class.forName(className).newInstance().asInstanceOf[RewritableSinkConfig]
-          instance.rewrite_0(config, format, context)
+          instance.rewrite(config, format, context)
         }.headOption.getOrElse(config)
       case None =>
         config

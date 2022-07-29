@@ -264,7 +264,7 @@ class LoadProcessing(scriptSQLExecListener: ScriptSQLExecListener,
       case Some(item) =>
         item.customClassItems.classNames.map { className =>
           val instance = Class.forName(className).newInstance().asInstanceOf[RewritableSourceConfig]
-          instance.rewrite_0(config, format, context)
+          instance.rewrite_conf(config, format, context)
         }.headOption.getOrElse(config)
       case None =>
         config
@@ -279,7 +279,7 @@ class LoadProcessing(scriptSQLExecListener: ScriptSQLExecListener,
       case Some(item) =>
         item.customClassItems.classNames.map { className =>
           val instance = Class.forName(className).newInstance().asInstanceOf[RewritableSourceConfig]
-          instance.rewrite_1(sourceInfo, format, context)
+          instance.rewrite_source(sourceInfo, format, context)
         }.headOption.getOrElse(sourceInfo)
       case None =>
         sourceInfo
