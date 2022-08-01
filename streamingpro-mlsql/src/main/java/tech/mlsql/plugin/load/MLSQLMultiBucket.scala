@@ -13,7 +13,7 @@ class MLSQLMultiBucketSource extends RewritableSourceConfig with Logging {
 
   private val supportedFormats = Set("csv", "json", "excel", "xml", "parquet")
 
-  override def rewrite_0(config: DataSourceConfig, format: String, context: MLSQLExecuteContext): DataSourceConfig = {
+  override def rewrite_conf(config: DataSourceConfig, format: String, context: MLSQLExecuteContext): DataSourceConfig = {
     if (context.execListener.env().getOrElse("fileSystemMode", "default") != "multiBucket") {
       return config
     }
@@ -32,7 +32,7 @@ class MLSQLMultiBucketSource extends RewritableSourceConfig with Logging {
     config.copy(config.path, config.config + ("pathPrefix" -> pathPrefix))
   }
 
-  override def rewrite_1(sourceInfo: SourceInfo, format: String, context: MLSQLExecuteContext): SourceInfo = {
+  override def rewrite_source(sourceInfo: SourceInfo, format: String, context: MLSQLExecuteContext): SourceInfo = {
     sourceInfo
   }
 }
@@ -41,7 +41,7 @@ class MLSQLMultiBucketSink extends RewritableSinkConfig with Logging {
 
   private val supportedFormats = Set("csv", "json", "excel", "xml", "parquet")
 
-  override def rewrite_0(config: DataSinkConfig, format: String, context: MLSQLExecuteContext): DataSinkConfig = {
+  override def rewrite(config: DataSinkConfig, format: String, context: MLSQLExecuteContext): DataSinkConfig = {
     if (context.execListener.env().getOrElse("fileSystemMode", "default") != "multiBucket") {
       return config
     }
@@ -63,7 +63,7 @@ class MLSQLMultiBucketSink extends RewritableSinkConfig with Logging {
 
 class MLSQLMultiBucketFS extends RewritableFSConfig with Logging {
 
-  override def rewrite_0(config: FSConfig, context: MLSQLExecuteContext): FSConfig = {
+  override def rewrite(config: FSConfig, context: MLSQLExecuteContext): FSConfig = {
     if (context.execListener.env().getOrElse("fileSystemMode", "default") != "multiBucket") {
       return config
     }

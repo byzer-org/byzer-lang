@@ -56,7 +56,7 @@ class HDFSCommand(override val uid: String) extends SQLAlg with Functions with W
       case Some(item) =>
         item.customClassItems.classNames.map { className =>
           val instance = Class.forName(className).newInstance().asInstanceOf[RewritableFSConfig]
-          instance.rewrite_0(config, context)
+          instance.rewrite(config, context)
         }.headOption.getOrElse(config)
       case None =>
         config
