@@ -29,7 +29,7 @@ class MLSQLMultiBucketSource extends RewritableSourceConfig with Logging {
       MLSQLMultiBucket.configFS(options, context.execListener.sparkSession)
       pathPrefix = options("pathPrefix")
     })
-    config.copy(path = PathFun.joinPath(pathPrefix, config.path))
+    config.copy(config.path, config.config + ("pathPrefix" -> pathPrefix))
   }
 
   override def rewrite_1(sourceInfo: SourceInfo, format: String, context: MLSQLExecuteContext): SourceInfo = {
@@ -57,7 +57,7 @@ class MLSQLMultiBucketSink extends RewritableSinkConfig with Logging {
       MLSQLMultiBucket.configFS(options, context.execListener.sparkSession)
       pathPrefix = options("pathPrefix")
     })
-    config.copy(path = PathFun.joinPath(pathPrefix, config.path))
+    config.copy(config.path, config.config + ("pathPrefix" -> pathPrefix))
   }
 }
 
