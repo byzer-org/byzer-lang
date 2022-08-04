@@ -29,7 +29,6 @@ import streaming.dsl.{MLSQLExecuteContext, ScriptSQLExec, ScriptSQLExecListener}
 import streaming.source.parser.impl.JsonSourceParser
 import streaming.source.parser.{SourceParser, SourceSchema}
 import tech.mlsql.MLSQLEnvKey
-import tech.mlsql.common.PathFun
 import tech.mlsql.dsl.auth.DatasourceAuth
 import tech.mlsql.runtime.AppRuntimeStore
 import tech.mlsql.sql.MLSQLSparkConf
@@ -152,13 +151,7 @@ class LoadProcessing(scriptSQLExecListener: ScriptSQLExecListener,
       // 1) fileSystem path; code example: load  modelExplain.`/tmp/model` where alg="RandomForest" as output;
       // 2) ET name; code example: load modelExample.`JsonExpandExt` AS output_1;  load modelParams.`JsonExpandExt` as output;
       // For FileSystem path, pass the real path to ModelSelfExplain; for ET name pass original path
-      val _resourcePath = resourceRealPath(scriptSQLExecListener, option.get("owner"), path)
-
-      val resourcePath = dsConf.config.get("pathPrefix") match {
-        case Some(p) => PathFun.joinPath(p, _resourcePath)
-        case None => _resourcePath
-      }
-
+      val resourcePath = resourceRealPath(scriptSQLExecListener, option.get("owner"), path)
       val fsPathOrETName = format match {
         case "modelExplain" => resourcePath
         case _ => cleanStr(path)
@@ -169,7 +162,7 @@ class LoadProcessing(scriptSQLExecListener: ScriptSQLExecListener,
     }
 
     table = customRewrite(AppRuntimeStore.LOAD_BEFORE_KEY, table, dsConf, sourceInfo, ScriptSQLExec.context())
-    // In order to control the access of columns, we should rewrite the final sql (conver * to specify column names)
+    // In order to control the access of columns, we should rewrite the final sql (convert * to specify column names)
     table = authRewrite(table, dsConf, sourceInfo, ScriptSQLExec.context())
     // finally use the  build-in or third-party plugins to rewrite the table.
     table = customRewrite(AppRuntimeStore.LOAD_AFTER_KEY, table, dsConf, sourceInfo, ScriptSQLExec.context())

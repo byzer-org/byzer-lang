@@ -57,7 +57,7 @@ class MLSQLMultiBucketSink extends RewritableSinkConfig with Logging {
       MLSQLMultiBucket.configFS(options, context.execListener.sparkSession)
       pathPrefix = options("pathPrefix")
     })
-    config.copy(config.path, config.config + ("pathPrefix" -> pathPrefix))
+    config.copy(path = PathFun.joinPath(pathPrefix, config.path))
   }
 }
 

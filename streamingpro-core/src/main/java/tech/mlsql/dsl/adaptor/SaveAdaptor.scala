@@ -25,7 +25,6 @@ import streaming.core.stream.MLSQLStreamManager
 import streaming.dsl.parser.DSLSQLParser._
 import streaming.dsl.template.TemplateMerge
 import streaming.dsl.{MLSQLExecuteContext, ScriptSQLExec, ScriptSQLExecListener}
-import tech.mlsql.common.PathFun
 import tech.mlsql.job.{JobManager, MLSQLJobType}
 import tech.mlsql.runtime.AppRuntimeStore
 
@@ -149,12 +148,7 @@ class SaveAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
       if (path == "-" || path.isEmpty) {
         writer.format(option.getOrElse("implClass", format)).save()
       } else {
-        val _resourcePath = resourceRealPath(context.execListener, owner, path)
-        val resourcePath = option.get("pathPrefix") match {
-          case Some(p) => PathFun.joinPath(p, _resourcePath)
-          case None => _resourcePath
-        }
-        writer.format(option.getOrElse("implClass", format)).save( resourcePath )
+        writer.format(option.getOrElse("implClass", format)).save( resourceRealPath(context.execListener, owner, path) )
       }
     }
 
