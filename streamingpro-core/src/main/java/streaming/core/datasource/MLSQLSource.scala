@@ -19,6 +19,7 @@
 package streaming.core.datasource
 
 import _root_.streaming.dsl.MLSQLExecuteContext
+import org.apache.hadoop.conf.Configuration
 import org.apache.spark.sql._
 
 /**
@@ -48,15 +49,35 @@ trait MLSQLSourceConfig {
   def skipDynamicEvaluation = false
 }
 
-trait RewriteableSource {
+trait RewritableSource {
   def rewrite(df: DataFrame,
               config: DataSourceConfig,
               sourceInfo: Option[SourceInfo],
               context: MLSQLExecuteContext): DataFrame
 }
 
+trait RewritableSourceConfig {
+  def rewrite_conf(config: DataSourceConfig, format: String,
+                   context: MLSQLExecuteContext): DataSourceConfig
+
+  def rewrite_source(sourceInfo: SourceInfo, format: String,
+                     context: MLSQLExecuteContext): SourceInfo
+}
+
 trait MLSQLSink extends MLSQLDataSource {
   def save(writer: DataFrameWriter[Row], config: DataSinkConfig): Any
+}
+
+trait RewritableSinkConfig {
+  def rewrite(config: DataSinkConfig, format: String,
+              context: MLSQLExecuteContext): DataSinkConfig
+}
+
+case class FSConfig(conf: Configuration, path: String, params: Map[String, String])
+
+trait RewritableFSConfig {
+  def rewrite(config: FSConfig,
+              context: MLSQLExecuteContext): FSConfig
 }
 
 trait MLSQLDirectSource extends MLSQLDataSource {

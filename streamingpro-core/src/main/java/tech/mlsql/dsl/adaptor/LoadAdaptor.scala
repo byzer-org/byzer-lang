@@ -88,7 +88,7 @@ case class LoadStatement(raw: String, format: String, path: String, option: Map[
 
 class LoadProcessing(scriptSQLExecListener: ScriptSQLExecListener,
                      _option: Map[String, String],
-                     var path: String,
+                     var _path: String,
                      tableName: String,
                      format: String
                     ) extends DslTool {
@@ -98,7 +98,7 @@ class LoadProcessing(scriptSQLExecListener: ScriptSQLExecListener,
     var option = _option
     val tempDS = DataSourceRegistry.fetch(format, option)
 
-    if (tempDS.isDefined ) {
+    if (tempDS.isDefined) {
       // DataSource who is not MLSQLSourceConfig or if it's MLSQLSourceConfig then  skipDynamicEvaluation is false
       // should evaluate the v with dynamic expression
       if (tempDS.isInstanceOf[MLSQLSourceConfig] && !tempDS.asInstanceOf[MLSQLSourceConfig].skipDynamicEvaluation) {
@@ -110,15 +110,22 @@ class LoadProcessing(scriptSQLExecListener: ScriptSQLExecListener,
     }
 
     val reader = scriptSQLExecListener.sparkSession.read
-    reader.options(option)
-    path = TemplateMerge.merge(path, scriptSQLExecListener.env().toMap)
+    val tempPath = TemplateMerge.merge(_path, scriptSQLExecListener.env().toMap)
 
     def emptyDataFrame = {
       import sparkSession.implicits._
       Seq.empty[String].toDF("name")
     }
 
-    val dsConf = DataSourceConfig(cleanStr(path), option, Option(emptyDataFrame))
+    val dsConf = optionsRewrite(
+      AppRuntimeStore.LOAD_BEFORE_CONFIG_KEY,
+      DataSourceConfig(cleanStr(tempPath), option, Option(emptyDataFrame)),
+      format,
+      ScriptSQLExec.context())
+
+    val path = dsConf.path
+
+    reader.options(dsConf.config)
     var sourceInfo: Option[SourceInfo] = None
 
     DataSourceRegistry.fetch(format, option).map { datasource =>
@@ -128,7 +135,11 @@ class LoadProcessing(scriptSQLExecListener: ScriptSQLExecListener,
       // extract source info if the datasource is  MLSQLSourceInfo
       if (datasource.isInstanceOf[MLSQLSourceInfo]) {
         val authConf = DataAuthConfig(dsConf.path, dsConf.config)
-        sourceInfo = Option(datasource.asInstanceOf[MLSQLSourceInfo].sourceInfo(authConf))
+        sourceInfo = Option(sourceInfoRewrite(
+          AppRuntimeStore.LOAD_BEFORE_CONFIG_KEY,
+          datasource.asInstanceOf[MLSQLSourceInfo].sourceInfo(authConf),
+          format,
+          ScriptSQLExec.context()))
       }
       if (datasource.isInstanceOf[DatasourceAuth]) {
         datasource.asInstanceOf[DatasourceAuth].auth(dsConf.path, dsConf.config)
@@ -151,7 +162,7 @@ class LoadProcessing(scriptSQLExecListener: ScriptSQLExecListener,
     }
 
     table = customRewrite(AppRuntimeStore.LOAD_BEFORE_KEY, table, dsConf, sourceInfo, ScriptSQLExec.context())
-    // In order to control the access of columns, we should rewrite the final sql (conver * to specify column names)
+    // In order to control the access of columns, we should rewrite the final sql (convert * to specify column names)
     table = authRewrite(table, dsConf, sourceInfo, ScriptSQLExec.context())
     // finally use the  build-in or third-party plugins to rewrite the table.
     table = customRewrite(AppRuntimeStore.LOAD_AFTER_KEY, table, dsConf, sourceInfo, ScriptSQLExec.context())
@@ -220,7 +231,7 @@ class LoadProcessing(scriptSQLExecListener: ScriptSQLExecListener,
       }
 
 
-      path = TemplateMerge.merge(path, scriptSQLExecListener.env().toMap)
+      //path = TemplateMerge.merge(path, scriptSQLExecListener.env().toMap)
     }
 
     table.createOrReplaceTempView(tableName)
@@ -237,11 +248,41 @@ class LoadProcessing(scriptSQLExecListener: ScriptSQLExecListener,
     if (rewrite && implClass != "") {
       val instance = Class.forName(implClass)
       instance.newInstance()
-        .asInstanceOf[RewriteableSource]
+        .asInstanceOf[RewritableSource]
         .rewrite(df, config, sourceInfo, context)
 
     } else {
       df
+    }
+  }
+
+  def optionsRewrite(orderKey: String,
+                     config: DataSourceConfig,
+                     format: String,
+                     context: MLSQLExecuteContext) = {
+    AppRuntimeStore.store.getLoadSave(orderKey) match {
+      case Some(item) =>
+        item.customClassItems.classNames.map { className =>
+          val instance = Class.forName(className).newInstance().asInstanceOf[RewritableSourceConfig]
+          instance.rewrite_conf(config, format, context)
+        }.headOption.getOrElse(config)
+      case None =>
+        config
+    }
+  }
+
+  def sourceInfoRewrite(orderKey: String,
+                        sourceInfo: SourceInfo,
+                        format: String,
+                        context: MLSQLExecuteContext) = {
+    AppRuntimeStore.store.getLoadSave(orderKey) match {
+      case Some(item) =>
+        item.customClassItems.classNames.map { className =>
+          val instance = Class.forName(className).newInstance().asInstanceOf[RewritableSourceConfig]
+          instance.rewrite_source(sourceInfo, format, context)
+        }.headOption.getOrElse(sourceInfo)
+      case None =>
+        sourceInfo
     }
   }
 
@@ -256,7 +297,7 @@ class LoadProcessing(scriptSQLExecListener: ScriptSQLExecListener,
         item.customClassItems.classNames.foreach { className =>
           val instance = Class.forName(className)
           newDF = instance.newInstance()
-            .asInstanceOf[RewriteableSource]
+            .asInstanceOf[RewritableSource]
             .rewrite(df, config, sourceInfo, context)
         }
       case None =>
