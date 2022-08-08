@@ -102,7 +102,7 @@ class ByzerScriptTestSuite extends LocalBaseTestSuite with Logging {
     val cluster: ByzerCluster = setupCluster()
     val hadoopContainer = cluster.hadoopContainer
     val byzerLangContainer = cluster.byzerLangContainer
-    val javaContainer = cluster.byzerLangContainer.container
+    val javaContainer = byzerLangContainer.container
     url = s"http://${javaContainer.getHost}:${javaContainer.getMappedPort(9003)}/run/script"
 
     test("javaContainer") {
@@ -129,8 +129,9 @@ class ByzerScriptTestSuite extends LocalBaseTestSuite with Logging {
         assert(_result === "[{\"a\":1,\"b\":\"jack\"}]")
       } catch {
         case _: Exception =>
-          logError(s"callbackHeader should be returned normally in the byzer callback!")
-          System.exit(1)
+          val res = "callbackHeader should be returned normally in the byzer callback!"
+          logError(res)
+          throw new RuntimeException(res)
       }
 
       TestManager.testCases.foreach(testCase => {

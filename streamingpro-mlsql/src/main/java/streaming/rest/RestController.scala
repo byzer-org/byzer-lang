@@ -188,7 +188,7 @@ class RestController extends ApplicationController with WowLog with Logging {
                     Map("stat" -> s"""failed""",
                       "msg" -> (e.getMessage + "\n" + msgBuffer.mkString("\n")),
                       "jobInfo" -> JSONTool.toJsonStr(jobInfo)),
-                    Map()),
+                    callbackHeader),
                   HttpStatus.SC_OK == _.getStatusLine.getStatusCode,
                   response => logger.error(s"Fail SQL callback request failed after ${maxTries} attempts, " +
                     s"the last response status is: ${response.getStatusLine.getStatusCode}.")
