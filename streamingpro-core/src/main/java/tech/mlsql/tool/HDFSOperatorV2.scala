@@ -1,8 +1,8 @@
 package tech.mlsql.tool
 
 import java.io.{BufferedReader, ByteArrayOutputStream, File, InputStream, InputStreamReader}
-
 import org.apache.commons.io.FileUtils
+import org.apache.commons.lang3.StringUtils
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FSDataInputStream, FSDataOutputStream, FileStatus, FileSystem, Path}
 import org.apache.hadoop.io.IOUtils
@@ -17,8 +17,8 @@ import scala.collection.mutable.ArrayBuffer
  */
 object HDFSOperatorV2 {
 
-  def hadoopConfiguration:Configuration = {
-    if(MLSQLSparkUtils.sparkHadoopUtil != null){
+  def hadoopConfiguration: Configuration = {
+    if (MLSQLSparkUtils.sparkHadoopUtil != null) {
       MLSQLSparkUtils.sparkHadoopUtil.conf
     } else new Configuration()
 
@@ -264,5 +264,50 @@ object HDFSOperatorV2 {
         }
       }
     }
+  }
+
+  def saveWithoutTopNLines(inPath: String, skipFirstNLines: Int, header: Boolean): String = {
+    val fs = FileSystem.get(hadoopConfiguration)
+    val src: Path = new Path(inPath)
+    var br: BufferedReader = null
+    var line: String = null
+    var dos: FSDataOutputStream = null
+    val pathElements = inPath.split(PathFun.pathSeparator)
+    val writePathParts = pathElements.take(pathElements.length - 1) :+ String.format("skipFirstNLines_%s_%s", String.valueOf(skipFirstNLines), pathElements(pathElements.length - 1))
+    val outPath = writePathParts.mkString(PathFun.pathSeparator)
+    if (!fileExists(outPath)) {
+      try {
+        dos = fs.create(new Path(new java.io.File(outPath).getPath), true)
+        br = new BufferedReader(new InputStreamReader(fs.open(src)))
+        line = br.readLine()
+
+        var count = 1
+        while (line != null) {
+
+          if (header && count == 1) {
+            dos.writeBytes(line + "\n")
+            line = br.readLine()
+          }
+
+          if (count >= skipFirstNLines) {
+            dos.writeBytes(line + "\n")
+          }
+          count += 1
+          line = br.readLine()
+        }
+      } finally {
+        if (br != null) br.close()
+        if (null != dos) {
+          try {
+            dos.close()
+          } catch {
+            case ex: Exception =>
+              println("close exception")
+          }
+          dos.close()
+        }
+      }
+    }
+    outPath
   }
 }

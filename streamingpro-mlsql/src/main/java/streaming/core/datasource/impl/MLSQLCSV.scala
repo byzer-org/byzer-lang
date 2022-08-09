@@ -1,10 +1,12 @@
 package streaming.core.datasource.impl
 
 import _root_.streaming.core.datasource._
+import _root_.streaming.dsl.ScriptSQLExec
 import _root_.streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
 import org.apache.spark.ml.param.{BooleanParam, Param}
 import org.apache.spark.sql._
 import tech.mlsql.common.form._
+import tech.mlsql.tool.HDFSOperatorV2
 
 /**
  * 2019-02-25 WilliamZhu(allwefantasy@gmail.com)
@@ -12,8 +14,44 @@ import tech.mlsql.common.form._
 class MLSQLCSV(override val uid: String) extends MLSQLBaseFileSource with WowParams {
   def this() = this(BaseParams.randomUID())
 
+  def handleDFWithOption(originPath: String, config: DataSourceConfig): String = {
+    val skipFirstNLines = config.config.get("skipFirstNLines")
+    skipFirstNLines match {
+      case None => originPath
+      case Some(_) => {
+        var numsToSkip = skipFirstNLines.get.toInt
+        val header = config.config.get("header") match {
+          case Some("true") => {
+            numsToSkip += 1
+            true
+          }
+          case _ => false
+        }
+        val path = originPath
+        val newPath = HDFSOperatorV2.saveWithoutTopNLines(path, numsToSkip, header)
+        newPath
+      }
+    }
+  }
+
+  def deleteTmpFiles(config: DataSourceConfig, newPath: String): Unit = {
+    if (!newPath.equals(config.path) && HDFSOperatorV2.fileExists(newPath)) {
+      HDFSOperatorV2.deleteDir(newPath)
+    }
+  }
+
   override def explainParams(spark: SparkSession) = {
     _explainParams(spark)
+  }
+
+  override def load(reader: DataFrameReader, config: DataSourceConfig): DataFrame = {
+    val context = ScriptSQLExec.contextGetOrForTest()
+    val format = config.config.getOrElse("implClass", fullFormat)
+    val owner = config.config.get("owner").getOrElse(context.owner)
+    val originPath = resourceRealPath(context.execListener, Option(owner), config.path);
+    val newPath = handleDFWithOption(originPath, config)
+    val df = reader.options(rewriteConfig(config.config)).format(format).load(newPath)
+    df
   }
 
   override def register(): Unit = {
@@ -36,7 +74,7 @@ class MLSQLCSV(override val uid: String) extends MLSQLBaseFileSource with WowPar
           |All types will be assumed string.
           |Default value is false.
           |""".stripMargin, label = "", options = Map(
-          "valueType"->"boolean"
+          "valueType" -> "boolean"
         )), valueProvider = Option(() => {
         List(
           KV(Option("header"), Option("true")),
@@ -58,7 +96,7 @@ class MLSQLCSV(override val uid: String) extends MLSQLBaseFileSource with WowPar
           |automatically infers column types.
           |It requires one extra pass over the data and is false by default
           |""".stripMargin, label = "", options = Map(
-          "valueType"->"boolean"
+          "valueType" -> "boolean"
         )), valueProvider = Option(() => {
         List(
           KV(Option("inferSchema"), Option("true")),
