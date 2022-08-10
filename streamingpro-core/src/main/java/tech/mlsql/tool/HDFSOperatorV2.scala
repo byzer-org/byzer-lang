@@ -266,7 +266,7 @@ object HDFSOperatorV2 {
     }
   }
 
-  def saveWithoutTopNLines(inPath: String, skipFirstNLines: Int, header: Boolean): String = {
+  def saveWithoutTopNLines(inPath: String, skipFirstNLines: Int): String = {
     val fs = FileSystem.get(hadoopConfiguration)
     val src: Path = new Path(inPath)
     var br: BufferedReader = null
@@ -275,39 +275,33 @@ object HDFSOperatorV2 {
     val pathElements = inPath.split(PathFun.pathSeparator)
     val writePathParts = pathElements.take(pathElements.length - 1) :+ String.format("skipFirstNLines_%s_%s", String.valueOf(skipFirstNLines), pathElements(pathElements.length - 1))
     val outPath = writePathParts.mkString(PathFun.pathSeparator)
-    if (!fileExists(outPath)) {
-      try {
-        dos = fs.create(new Path(new java.io.File(outPath).getPath), true)
-        br = new BufferedReader(new InputStreamReader(fs.open(src)))
+
+    try {
+      dos = fs.create(new Path(new java.io.File(outPath).getPath), true)
+      br = new BufferedReader(new InputStreamReader(fs.open(src)))
+      line = br.readLine()
+
+      var count = 1
+      while (line != null) {
+        if (count > skipFirstNLines) {
+          dos.writeBytes(line + "\n")
+        }
+        count += 1
         line = br.readLine()
-
-        var count = 1
-        while (line != null) {
-
-          if (header && count == 1) {
-            dos.writeBytes(line + "\n")
-            line = br.readLine()
-          }
-
-          if (count >= skipFirstNLines) {
-            dos.writeBytes(line + "\n")
-          }
-          count += 1
-          line = br.readLine()
-        }
-      } finally {
-        if (br != null) br.close()
-        if (null != dos) {
-          try {
-            dos.close()
-          } catch {
-            case ex: Exception =>
-              println("close exception")
-          }
+      }
+    } finally {
+      if (br != null) br.close()
+      if (null != dos) {
+        try {
           dos.close()
+        } catch {
+          case ex: Exception =>
+            println("close exception")
         }
+        dos.close()
       }
     }
+
     outPath
   }
 }
