@@ -10,7 +10,7 @@ import streaming.dsl.mmlib.algs.Functions
 import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
 import streaming.dsl.{MLSQLExecuteContext, ScriptSQLExec}
 import tech.mlsql.common.utils.serder.json.JSONTool
-import tech.mlsql.ets.hdfs.WowFsShell
+import tech.mlsql.ets.hdfs.{FSGetmerge, WowFsShell}
 import tech.mlsql.runtime.AppRuntimeStore
 
 /**
@@ -27,25 +27,42 @@ class HDFSCommand(override val uid: String) extends SQLAlg with Functions with W
       FSConfig(df.sparkSession.sessionState.newHadoopConf(), path, params), ScriptSQLExec.context())
     val args = JSONTool.parseJson[List[String]](params("parameters"))
     fsConf.conf.setQuietMode(false)
-    var output = ""
-    val fsShell = new WowFsShell(fsConf.conf, fsConf.path)
-    try {
-      ToolRunner.run(fsShell, args.toArray)
-      output = fsShell.getError
-
-      if (output == null || output.isEmpty) {
-        output = fsShell.getOut
-      }
-    }
-    finally {
-      fsShell.close()
-    }
     import spark.implicits._
-    if (args.contains("-F")) {
-      val ds = spark.createDataset(output.split("\n").toSeq)
-      spark.read.json(ds)
-    } else {
-      spark.createDataset[String](Seq(output)).toDF("fileSystem")
+
+    args.headOption match {
+      case Some("utils") =>
+
+        args.drop(1).headOption match {
+          case Some("getmerge") =>
+            // !fs utils getmerge "/tmp/*.csv" "/tmp/a.csv" 1;
+            // !fs utils getmerge _  -source "/tmp/*.csv"  -target "/tmp/a.csv"  -skipNLines 1;
+            val getmerge = new FSGetmerge(fsConf, args.drop(2))
+            val (err, msg) = getmerge.run
+            spark.createDataset[String](Seq(msg)).toDF("message")
+          case _ =>
+            spark.createDataset[String](Seq(s"Error: unknown utils command")).toDF("message")
+        }
+
+      case _ =>
+        var output = ""
+        val fsShell = new WowFsShell(fsConf.conf, fsConf.path)
+        try {
+          ToolRunner.run(fsShell, args.toArray)
+          output = fsShell.getError
+
+          if (output == null || output.isEmpty) {
+            output = fsShell.getOut
+          }
+        }
+        finally {
+          fsShell.close()
+        }
+        if (args.contains("-F")) {
+          val ds = spark.createDataset(output.split("\n").toSeq)
+          spark.read.json(ds)
+        } else {
+          spark.createDataset[String](Seq(output)).toDF("fileSystem")
+        }
     }
   }
 
