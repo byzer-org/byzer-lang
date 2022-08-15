@@ -178,23 +178,19 @@ class RestController extends ApplicationController with WowLog with Logging {
             } catch {
               case e: Exception =>
                 e.printStackTrace()
-                val msgBuffer = ArrayBuffer[String]()
-                if (paramAsBoolean("show_stack", false)) {
-                  format_full_exception(msgBuffer, e)
-                }
+
+                val msg = ExceptionRenderManager.call(e).str.getOrElse( e.getMessage )
 
                 executeWithRetrying[HttpResponse](maxTries)(
                   RestUtils.httpClientPost(urlString,
                     Map("stat" -> s"""failed""",
-                      "msg" -> (e.getMessage + "\n" + msgBuffer.mkString("\n")),
+                      "msg" -> msg ,
                       "jobInfo" -> JSONTool.toJsonStr(jobInfo)),
                     callbackHeader),
                   HttpStatus.SC_OK == _.getStatusLine.getStatusCode,
                   response => logger.error(s"Fail SQL callback request failed after ${maxTries} attempts, " +
                     s"the last response status is: ${response.getStatusLine.getStatusCode}.")
                 )
-
-
             }
           })
         } else {
@@ -239,8 +235,8 @@ class RestController extends ApplicationController with WowLog with Logging {
     } catch {
       case e: Exception =>
         logError("An error occurred while the job manager was executing the task, ", e)
-        val msg = ExceptionRenderManager.call(e)
-        render(500, msg.str.get)
+        val msg = ExceptionRenderManager.call(e).str.getOrElse(e.getMessage)
+        render(500, msg)
     } finally {
       RequestCleanerManager.call()
       cleanActiveSessionInSpark
