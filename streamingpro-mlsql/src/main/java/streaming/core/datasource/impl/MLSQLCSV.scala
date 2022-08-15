@@ -20,15 +20,8 @@ class MLSQLCSV(override val uid: String) extends MLSQLBaseFileSource with WowPar
       case None => originPath
       case Some(_) => {
         var numsToSkip = skipFirstNLines.get.toInt
-        val header = config.config.get("header") match {
-          case Some("true") => {
-            numsToSkip += 1
-            true
-          }
-          case _ => false
-        }
         val path = originPath
-        val newPath = HDFSOperatorV2.saveWithoutTopNLines(path, numsToSkip, header)
+        val newPath = HDFSOperatorV2.saveWithoutTopNLines(path, numsToSkip)
         newPath
       }
     }
