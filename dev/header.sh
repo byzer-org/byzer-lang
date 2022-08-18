@@ -106,21 +106,21 @@ then
        if [[ -z "$JAVA_HOME" ]]; then
            # if $JAVA_HOME is not found
            if [[ $MACHINE_OS == "Mac" ]]; then
-               if java -version 2>&1 >/dev/null | grep -q "java version" ; then
+               if  command -v java &> /dev/null ; then
                # try to use jdk in system
                    JAVA_HOME=$(dirname $(dirname $(readlink $(which java))))
                elif [[ -d "${BYZER_HOME}/jdk8/Contents/Home/" ]]; then
-                   # No Java found，try to use embedded open jdk (only works on byzer-all-in-one)
+                   # No Java found, try to use embedded open jdk (only works on byzer-all-in-one)
                    JAVA_HOME=${BYZER_HOME}/jdk8/Contents/Home
                else
                    quit "Java environment not found, Java 1.8 or above is required."
                fi
            elif [[ $MACHINE_OS == "Linux" ]]; then
-               if java -version 2>&1 >/dev/null | grep -q "java version" ; then
+               if command -v java &> /dev/null ; then
                # try to use jdk in system
                    JAVA_HOME=$(dirname $(dirname $(readlink -f $(which java))))
                elif [[ -d "${BYZER_HOME}/jdk8/" ]]; then
-                   # No Java found，try to use embedded open jdk (only works on byzer-all-in-one)
+                   # No Java found, try to use embedded open jdk (only works on byzer-all-in-one)
                    JAVA_HOME="${BYZER_HOME}"/jdk8
                else
                    quit "Java environment not found, Java 1.8 or above is required."
