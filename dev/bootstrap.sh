@@ -125,6 +125,11 @@ function start(){
 
     cd $BYZER_HOME/
 
+        echo ""
+        echo "[Java Env]"
+        echo "JAVA_HOME: ${JAVA_HOME}"
+        echo "JAVA: ${JAVA}"
+
     if [[ $BYZER_SERVER_MODE = "all-in-one" ]]; then
         echo ""
         echo "[All Config]"
