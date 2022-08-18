@@ -106,7 +106,7 @@ then
        if [[ -z "$JAVA_HOME" ]]; then
            # if $JAVA_HOME is not found
            if [[ $MACHINE_OS == "Mac" ]]; then
-               if [ -n $(java -version 2>&1 >/dev/null | grep -q "java version") ]; then
+               if java -version 2>&1 >/dev/null | grep -q "java version" ; then
                # try to use jdk in system
                    JAVA_HOME=$(dirname $(dirname $(readlink $(which java))))
                elif [[ -d "${BYZER_HOME}/jdk8/Contents/Home/" ]]; then
@@ -116,7 +116,7 @@ then
                    quit "Java environment not found, Java 1.8 or above is required."
                fi
            elif [[ $MACHINE_OS == "Linux" ]]; then
-               if [ -n $(java -version 2>&1 >/dev/null | grep -q "java version") ]; then
+               if java -version 2>&1 >/dev/null | grep -q "java version" ; then
                # try to use jdk in system
                    JAVA_HOME=$(dirname $(dirname $(readlink -f $(which java))))
                elif [[ -d "${BYZER_HOME}/jdk8/" ]]; then
