@@ -24,11 +24,11 @@ function isValidJavaVersion() {
     version_first_part="$(echo ${version} | cut -d '.' -f1)"
     version_second_part="$(echo ${version} | cut -d '.' -f2)"
     if [[ "$version_first_part" -eq "1" ]] && [[ "$version_second_part" -eq "8" ]]; then
-        # jdk version： 1.8.0-332
+        # jdk version: 1.8.0-332
         echo "true"
         exit 0
     elif [[ "$version_first_part" -ge "8" ]]; then
-        # jdk version：11.0.15 / 17.0.3
+        # jdk version: 11.0.15 / 17.0.3
         echo "true"
         exit 0
     else
