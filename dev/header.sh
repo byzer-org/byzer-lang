@@ -20,18 +20,21 @@
 # source me
 
 function isValidJavaVersion() {
-    version=$(java -version 2>&1 | awk -F\" '/version/ {print $2}')
+    version=$(${JAVA} -version 2>&1 | awk -F\" '/version/ {print $2}')
     version_first_part="$(echo ${version} | cut -d '.' -f1)"
     version_second_part="$(echo ${version} | cut -d '.' -f2)"
     if [[ "$version_first_part" -eq "1" ]] && [[ "$version_second_part" -eq "8" ]]; then
+        # jdk version： 1.8.0-332
         echo "true"
         exit 0
     elif [[ "$version_first_part" -ge "8" ]]; then
+        # jdk version：11.0.15 / 17.0.3
         echo "true"
         exit 0
+    else
+        echo "false"
+        exit 0
     fi
-    echo "false"
-    exit 0
 }
 
 # avoid re-entering
@@ -82,10 +85,60 @@ then
         esac
     done
 
+    # check Machine
+    unameOut="$(uname -s)"
+    case "${unameOut}" in
+        Linux*)     os=Linux;;
+        Darwin*)    os=Mac;;
+        CYGWIN*)    os=Cygwin;;
+        MINGW*)     os=MinGw;;
+        *)          os="UNKNOWN:${unameOut}"
+    esac
+    export MACHINE_OS=$os
+
     # set BYZER_HOME
     if [ -z $BYZER_HOME ];then
-    export BYZER_HOME=$(cd -P -- "$(dirname -- "$0")"/../ && pwd -P)
+        export BYZER_HOME=$(cd -P -- "$(dirname -- "$0")"/../ && pwd -P)
     fi
+
+   # set JAVA
+   if [[ "${JAVA}" == "" ]]; then
+       if [[ -z "$JAVA_HOME" ]]; then
+           # if $JAVA_HOME is not found
+           if [[ $MACHINE_OS == "Mac" ]]; then
+               if [ -n $(java -version 2>&1 >/dev/null | grep -q "java version") ]; then
+               # try to use jdk in system
+                   JAVA_HOME=$(dirname $(dirname $(readlink $(which java))))
+               elif [[ -d "${BYZER_HOME}/jdk8/Contents/Home/" ]]; then
+                   # No Java found，try to use embedded open jdk (only works on byzer-all-in-one)
+                   JAVA_HOME=${BYZER_HOME}/jdk8/Contents/Home
+               else
+                   quit "Java environment not found, Java 1.8 or above is required."
+               fi
+           elif [[ $MACHINE_OS == "Linux" ]]; then
+               if [ -n $(java -version 2>&1 >/dev/null | grep -q "java version") ]; then
+               # try to use jdk in system
+                   JAVA_HOME=$(dirname $(dirname $(readlink -f $(which java))))
+               elif [[ -d "${BYZER_HOME}/jdk8/" ]]; then
+                   # No Java found，try to use embedded open jdk (only works on byzer-all-in-one)
+                   JAVA_HOME="${BYZER_HOME}"/jdk8
+               else
+                   quit "Java environment not found, Java 1.8 or above is required."
+               fi
+           else
+               quit "Not suppported operating system:  $MACHINE_OS"
+           fi
+
+           [[ -z "$JAVA_HOME" ]] && quit "JAVA_HOME is not found, please set JAVA_HOME"
+           export JAVA_HOME
+       fi
+
+       # check java command is found
+       export JAVA=$JAVA_HOME/bin/java
+       [[ -e "${JAVA}" ]] || quit "${JAVA} does not exist. Please set JAVA_HOME correctly."
+       verbose "java is ${JAVA}"
+   fi
+
 
     # set BYZER_IP
     if [ -z $BYZER_IP ];then
@@ -99,44 +152,9 @@ then
         export BYZER_LANG_PORT=9003
     fi
 
-
     # set ServerMode
     export BYZER_SERVER_MODE=$($BYZER_HOME/bin/get-properties.sh byzer.server.mode)
     if [[ -z ${BYZER_SERVER_MODE} ]]; then
         export BYZER_SERVER_MODE="server"
     fi
-
-   # check Machine
-   unameOut="$(uname -s)"
-   case "${unameOut}" in
-       Linux*)     os=Linux;;
-       Darwin*)    os=Mac;;
-       CYGWIN*)    os=Cygwin;;
-       MINGW*)     os=MinGw;;
-       *)          os="UNKNOWN:${unameOut}"
-   esac
-   export MACHINE_OS=$os
-   # set JAVA
-   if [[ "${JAVA}" == "" ]]; then
-       if [[ -z "$JAVA_HOME" ]]; then
-           if [[ ${BYZER_SERVER_MODE} == "all-in-one" ]]; then
-               if [[ "Mac" == "${MACHINE_OS}" ]]
-               then
-                  # use embedded open jdk 8 in all-in-one
-                  JAVA_HOME=${BYZER_HOME}/jdk8/Contents/Home/
-               else
-                  JAVA_HOME="${BYZER_HOME}"/jdk8
-               fi
-           elif [[ $(isValidJavaVersion) == "true" ]]; then
-               JAVA_HOME=$(dirname $(dirname $(readlink -f $(which java))))
-           else
-               quit "Java 1.8 or above is required."
-           fi
-           [[ -z "$JAVA_HOME" ]] && quit "Please set JAVA_HOME"
-           export JAVA_HOME
-       fi
-       export JAVA=$JAVA_HOME/bin/java
-       [[ -e "${JAVA}" ]] || quit "${JAVA} does not exist. Please set JAVA_HOME correctly."
-       verbose "java is ${JAVA}"
-   fi
 fi
