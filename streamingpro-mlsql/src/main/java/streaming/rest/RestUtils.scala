@@ -12,13 +12,19 @@ import org.apache.http.util.EntityUtils
 import scala.collection.JavaConverters._
 
 object RestUtils {
-  def httpClientPost(urlString: String, data: Map[String, String]): HttpResponse = {
+  def httpClientPost(urlString: String, data: Map[String, String], headers: Map[String, String]): HttpResponse = {
      val nameValuePairs = data
        .map{ case (name, value) => new BasicNameValuePair(name, value) }.toSeq
 
     Request.Post(urlString)
+    val req = Request.Post(urlString)
       .addHeader("Content-Type", "application/x-www-form-urlencoded")
-      .body(new UrlEncodedFormEntity(nameValuePairs.asJava, DefaultHttpTransportService.charset))
+
+    headers foreach { case (name, value) =>
+      req.setHeader(name, value)
+    }
+
+    req.body(new UrlEncodedFormEntity(nameValuePairs.asJava, DefaultHttpTransportService.charset))
       .execute()
       .returnResponse()
   }
