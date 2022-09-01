@@ -1,9 +1,9 @@
 package streaming.core.datasource
 
 import java.sql.ResultSet
-
 import org.apache.spark.sql.mlsql.session.MLSQLException
 
+import java.util.Properties
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
@@ -34,11 +34,19 @@ object JDBCUtils {
     item.toMap
   }
 
+  def formatOptions(options: Map[String, String]) = {
+    val infos = new Properties()
+    options.foreach(item => {
+      infos.put(item._1, item._2)
+    })
+    infos
+  }
+
   def executeQueryInDriver(options: Map[String, String]) = {
     val driver = options("driver")
     val url = options("url")
     Class.forName(driver)
-    val connection = java.sql.DriverManager.getConnection(url, options("user"), options("password"))
+    val connection = java.sql.DriverManager.getConnection(url, formatOptions(options))
     try {
       options.get("driver-statement-query").map { sql =>
         val stat = connection.prepareStatement(sql)
@@ -61,7 +69,7 @@ object JDBCUtils {
     val driver = options("driver")
     val url = options("url")
     Class.forName(driver)
-    val connection = java.sql.DriverManager.getConnection(url, options("user"), options("password"))
+    val connection = java.sql.DriverManager.getConnection(url, formatOptions(options))
     try {
       val dbMetaData = connection.getMetaData()
       tableList.foreach(table => {
