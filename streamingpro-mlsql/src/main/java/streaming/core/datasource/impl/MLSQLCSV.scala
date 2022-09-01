@@ -27,8 +27,9 @@ class MLSQLCSV(override val uid: String) extends MLSQLBaseFileSource with WowPar
           }
           case _ => false
         }
+        val encoding = config.config.getOrElse("encoding", "utf-8")
         val path = originPath
-        val newPath = HDFSOperatorV2.saveWithoutTopNLines(path, numsToSkip, header)
+        val newPath = HDFSOperatorV2.saveWithoutTopNLines(path, numsToSkip, header, encoding)
         newPath
       }
     }
