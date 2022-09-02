@@ -49,7 +49,7 @@ $ ./bin/byzer.sh start
 ```
 
 
-And for **production** purpose, we recommend to use [Byzer Server Pacakge](https://docs.byzer.org/#/byzer-lang/zh-cn/installation/server/binary-installation) and deploy it on Hadoop.
+And for **production** purpose, we recommend to use [Byzer Server Package](https://docs.byzer.org/#/byzer-lang/zh-cn/installation/server/binary-installation) and deploy it on Hadoop.
 
 
 You can also install [Byzer VSCode Extension](https://docs.byzer.org/#/byzer-lang/zh-cn/installation/vscode/byzer-vscode-extension-installation) to use Byzer-lang. 
@@ -116,7 +116,7 @@ git clone https://github.com/{YOUR_GITHUB}/byzer-lang.git
 
 ### Build
 
-You can refer to the project [byzer-org/byzer-build](https://github.com/byzer-org/byzer-build) to check how to build the Byzer engine binary pacakges and images
+You can refer to the project [byzer-org/byzer-build](https://github.com/byzer-org/byzer-build) to check how to build the Byzer engine binary packages and images
 
 ### How to contribute to Byzer-Lang
 
