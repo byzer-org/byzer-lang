@@ -266,6 +266,48 @@ object HDFSOperatorV2 {
     }
   }
 
+  def saveWithoutLastNLines(inPath: String, skipLastNLines: Int): String = {
+    val fs = FileSystem.get(hadoopConfiguration)
+    val src: Path = new Path(inPath)
+    var line: String = null
+    var dos: FSDataOutputStream = null
+    var br1: BufferedReader = null
+    var br2: BufferedReader = null
+    val pathElements = inPath.split(PathFun.pathSeparator)
+    val writePathParts = pathElements.take(pathElements.length - 1) :+ String.format("skipLastNLines_%s_%s", String.valueOf(skipLastNLines), pathElements(pathElements.length - 1))
+    val outPath = writePathParts.mkString(PathFun.pathSeparator)
+
+    try {
+      dos = fs.create(new Path(new java.io.File(outPath).getPath), true)
+      br1 = new BufferedReader(new InputStreamReader(fs.open(src)))
+      var totalLinesCount = 0
+      while (br1.readLine() != null) totalLinesCount += 1
+
+      br2 = new BufferedReader(new InputStreamReader(fs.open(src)))
+      line = br2.readLine()
+      var count = 1
+
+      while (line != null) {
+        if (count <= totalLinesCount - skipLastNLines) {
+          dos.writeBytes(line + "\n")
+        }
+        count += 1
+        line = br2.readLine()
+      }
+    } finally {
+      if (br1 != null) br1.close()
+      if (null != dos) {
+        try {
+          dos.close()
+        } catch {
+          case ex: Exception => throw ex
+        }
+        dos.close()
+      }
+    }
+    outPath
+  }
+
   def saveWithoutTopNLines(inPath: String, skipFirstNLines: Int): String = {
     val fs = FileSystem.get(hadoopConfiguration)
     val src: Path = new Path(inPath)
@@ -280,7 +322,6 @@ object HDFSOperatorV2 {
       dos = fs.create(new Path(new java.io.File(outPath).getPath), true)
       br = new BufferedReader(new InputStreamReader(fs.open(src)))
       line = br.readLine()
-
       var count = 1
       while (line != null) {
         if (count > skipFirstNLines) {
@@ -295,8 +336,7 @@ object HDFSOperatorV2 {
         try {
           dos.close()
         } catch {
-          case ex: Exception =>
-            println("close exception")
+          case ex: Exception => throw ex
         }
         dos.close()
       }

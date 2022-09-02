@@ -16,7 +16,8 @@ class MLSQLCSV(override val uid: String) extends MLSQLBaseFileSource with WowPar
 
   def handleDFWithOption(originPath: String, config: DataSourceConfig): String = {
     val skipFirstNLines = config.config.get("skipFirstNLines")
-    skipFirstNLines match {
+    val skipLastNLines = config.config.get("skipLastNLines")
+    val pathAfterSkipTopLines = skipFirstNLines match {
       case None => originPath
       case Some(_) => {
         var numsToSkip = skipFirstNLines.get.toInt
@@ -25,6 +26,16 @@ class MLSQLCSV(override val uid: String) extends MLSQLBaseFileSource with WowPar
         newPath
       }
     }
+    val res = skipLastNLines match {
+      case None=> pathAfterSkipTopLines
+      case Some(_) => {
+        var numsToSkip = skipLastNLines.get.toInt
+        val path = pathAfterSkipTopLines
+        val newPath = HDFSOperatorV2.saveWithoutLastNLines(path, numsToSkip)
+        newPath
+      }
+    }
+    res
   }
 
   def deleteTmpFiles(config: DataSourceConfig, newPath: String): Unit = {
