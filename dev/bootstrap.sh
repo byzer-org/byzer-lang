@@ -136,7 +136,7 @@ function start(){
         echo "${ALL_PROP}"
         echo ""
         
-        nohup ${BYZER_HOME}/jdk8/bin/java -cp ${BYZER_HOME}/main/${MAIN_JAR}:${BYZER_HOME}/spark/*:${BYZER_HOME}/libs/*:${BYZER_HOME}/plugin/* \
+        nohup $JAVA -cp ${BYZER_HOME}/main/${MAIN_JAR}:${BYZER_HOME}/spark/*:${BYZER_HOME}/libs/*:${BYZER_HOME}/plugin/* \
             tech.mlsql.example.app.LocalSparkServiceApp \
             $ALL_PROP >> ${BYZER_HOME}/logs/byzer.out &
         echo $! >> ${BYZER_HOME}/pid
