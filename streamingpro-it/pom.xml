@@ -18,11 +18,20 @@
         <!-- spark 2.4 end -->
 
         <!-- spark 3.0 start -->
-        <scala.version>2.12.10</scala.version> 
-        <scala.binary.version>2.12</scala.binary.version> 
-        <spark.version>3.1.1</spark.version> 
-        <spark.bigversion>3.0</spark.bigversion> 
+        <!--        <scala.version>2.12.10</scala.version> -->
+        <!--        <scala.binary.version>2.12</scala.binary.version> -->
+        <!--        <spark.version>3.1.1</spark.version> -->
+        <!--        <spark.bigversion>3.0</spark.bigversion> -->
+        <!--        <scalatest.version>3.0.3</scalatest.version> -->
         <!-- spark 3.0 end -->
+
+        <!-- spark 3.3 start -->
+        <scala.version>2.12.10</scala.version>
+        <scala.binary.version>2.12</scala.binary.version>
+        <spark.version>3.3.0</spark.version>
+        <spark.bigversion>3.3</spark.bigversion>
+        <scalatest.version>3.0.3</scalatest.version>
+        <!-- spark 3.3 end -->
 
     </properties>
 
