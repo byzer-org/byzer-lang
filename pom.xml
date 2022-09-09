@@ -39,12 +39,15 @@
     </issueManagement>
 
     <modules>
-        <module>streamingpro-commons</module>
-        <module>streamingpro-spark-common</module>
-        <module>streamingpro-core</module>
-        <module>streamingpro-cluster</module>
-        <module>external/mlsql-ets</module>
-        <module>external/mlsql-healthy</module>
+        <module>streamingpro-spark-3.3.0-adaptor</module>
+        <module>streamingpro-dsl</module>
+        <module>streamingpro-mlsql</module>
+        <module>streamingpro-it</module>
+        <module>external/python-controller</module>
+        <module>external/mlsql-watcher</module>
+        <module>external/mlsql-mysql-store</module>
+        <module>external/mlsql-sql-profiler-30</module>
+        <module>external/mlsql-autosuggest</module>
     </modules>
 
     <properties>
@@ -53,22 +56,6 @@
         <java.version>1.8</java.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
-
-        <!-- spark 2.4 start -->
-<!--         <scala.version>2.11.12</scala.version> -->
-<!--         <scala.binary.version>2.12</scala.binary.version> -->
-<!--         <spark.version>2.4.3</spark.version> -->
-<!--         <spark.bigversion>2.4</spark.bigversion> -->
-<!--         <scalatest.version>3.0.3</scalatest.version> -->
-        <!-- spark 2.4 end -->
-
-        <!-- spark 3.0 start -->
-<!--        <scala.version>2.12.10</scala.version> -->
-<!--        <scala.binary.version>2.12</scala.binary.version> -->
-<!--        <spark.version>3.1.1</spark.version> -->
-<!--        <spark.bigversion>3.0</spark.bigversion> -->
-<!--        <scalatest.version>3.0.3</scalatest.version> -->
-        <!-- spark 3.0 end -->
 
         <!-- spark 3.3 start -->
         <scala.version>2.12.10</scala.version>
@@ -110,7 +97,6 @@
         <log4j.version>1.2.17</log4j.version>
         <logback.version>1.2.9</logback.version>
 
-        
 
         <scope>provided</scope>
         <hadoop-client-version>2.6.5</hadoop-client-version>
@@ -190,412 +176,7 @@
                 <doclint>none</doclint>
             </properties>
         </profile>
-        <profile>
-            <id>scala-2.11</id>
-            <properties>
-                <scala.version>2.11.12</scala.version>
-                <scala.binary.version>2.11</scala.binary.version>
-            </properties>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-enforcer-plugin</artifactId>
-                        <version>3.0.0-M1</version>
-                        <executions>
-                            <execution>
-                                <id>enforce-versions</id>
-                                <goals>
-                                    <goal>enforce</goal>
-                                </goals>
-                                <configuration>
-                                    <rules>
-                                        <bannedDependencies>
-                                            <excludes combine.children="append">
-                                                <exclude>*:*_2.12</exclude>
-                                            </excludes>
-                                        </bannedDependencies>
-                                    </rules>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
 
-        <profile>
-            <id>scala-2.12</id>
-
-                <activation>
-                    <activeByDefault>true</activeByDefault>
-                </activation>
-            <properties>
-                <scala.version>2.12.10</scala.version>
-                <scala.binary.version>2.12</scala.binary.version>
-            </properties>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-enforcer-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>enforce-versions</id>
-                                <goals>
-                                    <goal>enforce</goal>
-                                </goals>
-                                <configuration>
-                                    <rules>
-                                        <bannedDependencies>
-                                            <excludes combine.children="append">
-                                                <exclude>*:*_2.11</exclude>
-                                            </excludes>
-                                        </bannedDependencies>
-                                    </rules>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-
-        </profile>
-
-        <profile>
-            <id>spark-2.4.0</id>
-            <properties>
-                <spark.streaming.kafka.artifactId>spark-streaming-kafka-0-8_${scala.binary.version}
-                </spark.streaming.kafka.artifactId>
-                <spark.sql.kafka.artifactId>spark-sql-kafka-0-10_${scala.binary.version}</spark.sql.kafka.artifactId>
-                <spark.version>2.4.3</spark.version>
-                <spark.bigversion>2.4</spark.bigversion>
-                <bigdl.spark.version.minor>2.4.0</bigdl.spark.version.minor>
-            </properties>
-            <modules>
-                <module>streamingpro-spark-2.4.0-adaptor</module>
-                <module>streamingpro-dsl</module>
-                <module>streamingpro-mlsql</module>
-                <module>streamingpro-it</module>
-                <module>external/python-controller</module>
-                <module>external/mlsql-watcher</module>
-                <module>external/mlsql-mysql-store</module>
-                <module>external/mlsql-sql-profiler</module>
-                <module>external/mlsql-autosuggest</module>
-            </modules>
-            <dependencies>
-                <dependency>
-                    <groupId>javax.servlet</groupId>
-                    <artifactId>javax.servlet-api</artifactId>
-                    <version>3.1.0</version>
-                </dependency>
-
-                <dependency>
-                    <groupId>net.csdn</groupId>
-                    <artifactId>serviceframework-jetty-9-server_${scala.binary.version}</artifactId>
-                    <version>${serviceframework.version}</version>
-                    <exclusions>
-                        <exclusion>
-                            <groupId>tech.mlsql</groupId>
-                            <artifactId>common-utils_${scala.binary.version}</artifactId>
-                        </exclusion>
-                        <exclusion>
-                            <groupId>org.scala-lang</groupId>
-                            <artifactId>jline</artifactId>
-                        </exclusion>
-                        <exclusion>
-                            <groupId>org.scala-lang</groupId>
-                            <artifactId>scala-compiler</artifactId>
-                        </exclusion>
-                        <exclusion>
-                            <groupId>org.scala-lang</groupId>
-                            <artifactId>scala-library</artifactId>
-                        </exclusion>
-                        <!--<exclusion>-->
-                        <!--<groupId>org.eclipse.jetty</groupId>-->
-                        <!--<artifactId>jetty-server</artifactId>-->
-                        <!--</exclusion>-->
-                        <!--<exclusion>-->
-                        <!--<groupId>org.eclipse.jetty</groupId>-->
-                        <!--<artifactId>jetty-http</artifactId>-->
-                        <!--</exclusion>-->
-                        <!--<exclusion>-->
-                        <!--<groupId>org.eclipse.jetty</groupId>-->
-                        <!--<artifactId>jetty-io</artifactId>-->
-                        <!--</exclusion>-->
-                        <!--<exclusion>-->
-                        <!--<groupId>org.eclipse.jetty</groupId>-->
-                        <!--<artifactId>jetty-continuation</artifactId>-->
-                        <!--</exclusion>-->
-                        <!--<exclusion>-->
-                        <!--<groupId>org.eclipse.jetty</groupId>-->
-                        <!--<artifactId>jetty-util</artifactId>-->
-                        <!--</exclusion>-->
-                        <exclusion>
-                            <groupId>org.eclipse.jetty</groupId>
-                            <artifactId>jetty-servlet</artifactId>
-                        </exclusion>
-                        <exclusion>
-                            <groupId>junit</groupId>
-                            <artifactId>junit</artifactId>
-                        </exclusion>
-                        <exclusion>
-                            <groupId>org.scala-lang</groupId>
-                            <artifactId>jline</artifactId>
-                        </exclusion>
-                        <exclusion>
-                            <groupId>com.alibaba</groupId>
-                            <artifactId>dubbo</artifactId>
-                        </exclusion>
-                    </exclusions>
-                </dependency>
-                <dependency>
-                    <groupId>org.apache.spark</groupId>
-                    <artifactId>spark-streaming-kafka-0-8_${scala.binary.version}</artifactId>
-                    <version>${spark.version}</version>
-                    <scope>provided</scope>
-                </dependency>
-                <dependency>
-                    <groupId>tech.mlsql</groupId>
-                    <artifactId>delta-plus_${scala.binary.version}</artifactId>
-                    <version>${delta-plus-version}</version>
-                    <exclusions>
-                        <exclusion>
-                            <groupId>tech.mlsql</groupId>
-                            <artifactId>streamingpro-common</artifactId>
-                        </exclusion>
-                        <exclusion>
-                            <groupId>tech.mlsql</groupId>
-                            <artifactId>common-utils_${scala.binary.version}</artifactId>
-                        </exclusion>
-                    </exclusions>
-                </dependency>
-            </dependencies>
-        </profile>
-
-
-        <profile>
-            <id>spark-3.0.0</id>
-
-                <activation>
-                    <activeByDefault>true</activeByDefault>
-                </activation>
-            <properties>
-                <spark.streaming.kafka.artifactId>spark-streaming-kafka-0-8_${scala.binary.version}
-                </spark.streaming.kafka.artifactId>
-                <spark.sql.kafka.artifactId>spark-sql-kafka-0-10_${scala.binary.version}</spark.sql.kafka.artifactId>
-                <spark.version>3.1.1</spark.version>
-                <spark.bigversion>3.0</spark.bigversion>
-            </properties>
-            <modules>
-                <module>streamingpro-spark-3.0.0-adaptor</module>
-                <module>streamingpro-dsl</module>
-                <module>streamingpro-mlsql</module>
-                <module>streamingpro-it</module>
-                <module>external/python-controller</module>
-                <module>external/mlsql-watcher</module>
-                <module>external/mlsql-mysql-store</module>
-                <module>external/mlsql-sql-profiler-30</module>
-                <module>external/mlsql-autosuggest</module>
-            </modules>
-            <dependencies>
-                <dependency>
-                    <groupId>javax.servlet</groupId>
-                    <artifactId>javax.servlet-api</artifactId>
-                    <version>3.1.0</version>
-                </dependency>
-
-                <dependency>
-                    <groupId>net.csdn</groupId>
-                    <artifactId>serviceframework-jetty-9-server_${scala.binary.version}</artifactId>
-                    <version>${serviceframework.version}</version>
-                    <exclusions>
-                        <!--<exclusion>-->
-                        <!--<groupId>org.eclipse.jetty</groupId>-->
-                        <!--<artifactId>jetty-server</artifactId>-->
-                        <!--</exclusion>-->
-                        <!--<exclusion>-->
-                        <!--<groupId>org.eclipse.jetty</groupId>-->
-                        <!--<artifactId>jetty-http</artifactId>-->
-                        <!--</exclusion>-->
-                        <!--<exclusion>-->
-                        <!--<groupId>org.eclipse.jetty</groupId>-->
-                        <!--<artifactId>jetty-io</artifactId>-->
-                        <!--</exclusion>-->
-                        <!--<exclusion>-->
-                        <!--<groupId>org.eclipse.jetty</groupId>-->
-                        <!--<artifactId>jetty-continuation</artifactId>-->
-                        <!--</exclusion>-->
-                        <!--<exclusion>-->
-                        <!--<groupId>org.eclipse.jetty</groupId>-->
-                        <!--<artifactId>jetty-util</artifactId>-->
-                        <!--</exclusion>-->
-                        <exclusion>
-                            <groupId>tech.mlsql</groupId>
-                            <artifactId>common-utils_${scala.binary.version}</artifactId>
-                        </exclusion>
-                        <exclusion>
-                            <groupId>org.eclipse.jetty</groupId>
-                            <artifactId>jetty-servlet</artifactId>
-                        </exclusion>
-                        <exclusion>
-                            <groupId>junit</groupId>
-                            <artifactId>junit</artifactId>
-                        </exclusion>
-                        <exclusion>
-                            <groupId>org.scala-lang</groupId>
-                            <artifactId>jline</artifactId>
-                        </exclusion>
-                        <exclusion>
-                            <groupId>com.alibaba</groupId>
-                            <artifactId>dubbo</artifactId>
-                        </exclusion>
-                    </exclusions>
-                </dependency>
-                <dependency>
-                    <groupId>tech.mlsql</groupId>
-                    <artifactId>delta-plus_${scala.binary.version}</artifactId>
-                    <version>${delta-plus-version}</version>
-                    <exclusions>
-                        <exclusion>
-                            <groupId>tech.mlsql</groupId>
-                            <artifactId>streamingpro-common</artifactId>
-                        </exclusion>
-                        <exclusion>
-                            <groupId>tech.mlsql</groupId>
-                            <artifactId>common-utils_${scala.binary.version}</artifactId>
-                        </exclusion>
-                    </exclusions>
-                </dependency>
-            </dependencies>
-        </profile>
-
-
-        <profile>
-            <id>spark-3.3.0</id>
-
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
-            <properties>
-                <spark.streaming.kafka.artifactId>spark-streaming-kafka-0-8_${scala.binary.version}
-                </spark.streaming.kafka.artifactId>
-                <spark.sql.kafka.artifactId>spark-sql-kafka-0-10_${scala.binary.version}</spark.sql.kafka.artifactId>
-                <spark.version>3.3.0</spark.version>
-                <spark.bigversion>3.3</spark.bigversion>
-            </properties>
-            <modules>
-                <module>streamingpro-spark-3.3.0-adaptor</module>
-                <module>streamingpro-dsl</module>
-                <module>streamingpro-mlsql</module>
-                <module>streamingpro-it</module>
-                <module>external/python-controller</module>
-                <module>external/mlsql-watcher</module>
-                <module>external/mlsql-mysql-store</module>
-                <module>external/mlsql-sql-profiler-30</module>
-                <module>external/mlsql-autosuggest</module>
-            </modules>
-            <dependencies>
-                <dependency>
-                    <groupId>javax.servlet</groupId>
-                    <artifactId>javax.servlet-api</artifactId>
-                    <version>3.1.0</version>
-                </dependency>
-
-                <dependency>
-                    <groupId>net.csdn</groupId>
-                    <artifactId>serviceframework-jetty-9-server_${scala.binary.version}</artifactId>
-                    <version>${serviceframework.version}</version>
-                    <exclusions>
-                        <!--<exclusion>-->
-                        <!--<groupId>org.eclipse.jetty</groupId>-->
-                        <!--<artifactId>jetty-server</artifactId>-->
-                        <!--</exclusion>-->
-                        <!--<exclusion>-->
-                        <!--<groupId>org.eclipse.jetty</groupId>-->
-                        <!--<artifactId>jetty-http</artifactId>-->
-                        <!--</exclusion>-->
-                        <!--<exclusion>-->
-                        <!--<groupId>org.eclipse.jetty</groupId>-->
-                        <!--<artifactId>jetty-io</artifactId>-->
-                        <!--</exclusion>-->
-                        <!--<exclusion>-->
-                        <!--<groupId>org.eclipse.jetty</groupId>-->
-                        <!--<artifactId>jetty-continuation</artifactId>-->
-                        <!--</exclusion>-->
-                        <!--<exclusion>-->
-                        <!--<groupId>org.eclipse.jetty</groupId>-->
-                        <!--<artifactId>jetty-util</artifactId>-->
-                        <!--</exclusion>-->
-                        <exclusion>
-                            <groupId>tech.mlsql</groupId>
-                            <artifactId>common-utils_${scala.binary.version}</artifactId>
-                        </exclusion>
-                        <exclusion>
-                            <groupId>org.eclipse.jetty</groupId>
-                            <artifactId>jetty-servlet</artifactId>
-                        </exclusion>
-                        <exclusion>
-                            <groupId>junit</groupId>
-                            <artifactId>junit</artifactId>
-                        </exclusion>
-                        <exclusion>
-                            <groupId>org.scala-lang</groupId>
-                            <artifactId>jline</artifactId>
-                        </exclusion>
-                        <exclusion>
-                            <groupId>com.alibaba</groupId>
-                            <artifactId>dubbo</artifactId>
-                        </exclusion>
-                    </exclusions>
-                </dependency>
-                <dependency>
-                    <groupId>tech.mlsql</groupId>
-                    <artifactId>delta-plus_${scala.binary.version}</artifactId>
-                    <version>${delta-plus-version}</version>
-                    <exclusions>
-                        <exclusion>
-                            <groupId>tech.mlsql</groupId>
-                            <artifactId>streamingpro-common</artifactId>
-                        </exclusion>
-                        <exclusion>
-                            <groupId>tech.mlsql</groupId>
-                            <artifactId>common-utils_${scala.binary.version}</artifactId>
-                        </exclusion>
-                    </exclusions>
-                </dependency>
-            </dependencies>
-        </profile>
-        
-        <profile>
-            <id>antlr4.7.1-maven</id>
-            <modules>
-                <module>streamingpro-dsl</module>
-            </modules>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.antlr</groupId>
-                        <artifactId>antlr4-maven-plugin</artifactId>
-                        <version>4.7.1</version>
-                        <executions>
-                            <execution>
-                                <goals>
-                                    <goal>antlr4</goal>
-                                </goals>
-                                <!--<phase>generate-sources</phase>-->
-                            </execution>
-                        </executions>
-                        <configuration>
-                            <visitor>false</visitor>
-                            <sourceDirectory>src/main/resources</sourceDirectory>
-                            <outputDirectory>src/main/java/streaming/dsl/parser</outputDirectory>
-                        </configuration>
-                    </plugin>
-
-                </plugins>
-            </build>
-        </profile>
         <profile>
             <id>assembly</id>
             <modules>
@@ -604,6 +185,74 @@
         </profile>
     </profiles>
     <dependencies>
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+            <version>3.1.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>net.csdn</groupId>
+            <artifactId>serviceframework-jetty-9-server_${scala.binary.version}</artifactId>
+            <version>${serviceframework.version}</version>
+            <exclusions>
+                <!--<exclusion>-->
+                <!--<groupId>org.eclipse.jetty</groupId>-->
+                <!--<artifactId>jetty-server</artifactId>-->
+                <!--</exclusion>-->
+                <!--<exclusion>-->
+                <!--<groupId>org.eclipse.jetty</groupId>-->
+                <!--<artifactId>jetty-http</artifactId>-->
+                <!--</exclusion>-->
+                <!--<exclusion>-->
+                <!--<groupId>org.eclipse.jetty</groupId>-->
+                <!--<artifactId>jetty-io</artifactId>-->
+                <!--</exclusion>-->
+                <!--<exclusion>-->
+                <!--<groupId>org.eclipse.jetty</groupId>-->
+                <!--<artifactId>jetty-continuation</artifactId>-->
+                <!--</exclusion>-->
+                <!--<exclusion>-->
+                <!--<groupId>org.eclipse.jetty</groupId>-->
+                <!--<artifactId>jetty-util</artifactId>-->
+                <!--</exclusion>-->
+                <exclusion>
+                    <groupId>tech.mlsql</groupId>
+                    <artifactId>common-utils_${scala.binary.version}</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.eclipse.jetty</groupId>
+                    <artifactId>jetty-servlet</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>junit</groupId>
+                    <artifactId>junit</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.scala-lang</groupId>
+                    <artifactId>jline</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.alibaba</groupId>
+                    <artifactId>dubbo</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>tech.mlsql</groupId>
+            <artifactId>delta-plus_${scala.binary.version}</artifactId>
+            <version>${delta-plus-version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>tech.mlsql</groupId>
+                    <artifactId>streamingpro-common</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>tech.mlsql</groupId>
+                    <artifactId>common-utils_${scala.binary.version}</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
         <dependency>
             <groupId>net.java.dev.jna</groupId>
             <artifactId>jna</artifactId>
