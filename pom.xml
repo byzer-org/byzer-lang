@@ -39,6 +39,9 @@
     </issueManagement>
 
     <modules>
+        <module>streamingpro-commons</module>
+        <module>streamingpro-core</module>
+        <module>streamingpro-spark-common</module>
         <module>streamingpro-spark-3.3.0-adaptor</module>
         <module>streamingpro-dsl</module>
         <module>streamingpro-mlsql</module>
@@ -58,11 +61,11 @@
         <maven.compiler.target>${java.version}</maven.compiler.target>
 
         <!-- spark 3.3 start -->
-        <scala.version>2.12.10</scala.version>
+        <scala.version>2.12.15</scala.version>
         <scala.binary.version>2.12</scala.binary.version>
         <spark.version>3.3.0</spark.version>
         <spark.bigversion>3.3</spark.bigversion>
-        <scalatest.version>3.0.3</scalatest.version>
+        <scalatest.version>3.2.13</scalatest.version>
         <!-- spark 3.3 end -->
 
         <spark.streaming.kafka.artifactId>spark-streaming-kafka-0-8_${scala.binary.version}
