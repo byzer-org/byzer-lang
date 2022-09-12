@@ -8,7 +8,7 @@ import org.apache.parquet.hadoop.metadata.CompressionCodecName
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.execution.datasources.OutputWriter
 
-class ParquetOutputWriter(path: String, conf: Configuration)
+class ParquetOutputWriter(_path: String, conf: Configuration)
   extends OutputWriter {
 
   private val recordWriter: RecordWriter[Void, InternalRow] = {
@@ -18,4 +18,6 @@ class ParquetOutputWriter(path: String, conf: Configuration)
   override def write(row: InternalRow): Unit = recordWriter.write(null, row)
 
   override def close(): Unit = recordWriter.close(null)
+
+  override def path(): String = _path
 }
