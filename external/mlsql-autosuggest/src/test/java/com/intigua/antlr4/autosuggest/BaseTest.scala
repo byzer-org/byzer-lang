@@ -3,7 +3,8 @@ package com.intigua.antlr4.autosuggest
 import org.antlr.v4.runtime.Token
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.parser.{SqlBaseLexer, SqlBaseParser}
-import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, FunSuite}
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 import streaming.dsl.parser.{DSLSQLLexer, DSLSQLParser}
 import tech.mlsql.autosuggest.{AutoSuggestContext, MLSQLSQLFunction}
 
@@ -12,7 +13,7 @@ import scala.collection.JavaConverters._
 /**
  * 2/6/2020 WilliamZhu(allwefantasy@gmail.com)
  */
-class BaseTest extends FunSuite with BeforeAndAfterAll with BeforeAndAfterEach {
+class BaseTest extends AnyFunSuite with BeforeAndAfterAll with BeforeAndAfterEach {
   val lexerAndParserfactory = new ReflectionLexerAndParserFactory(classOf[DSLSQLLexer], classOf[DSLSQLParser]);
   val loadLexer = new LexerWrapper(lexerAndParserfactory, new DefaultToCharStream)
 
