@@ -12,7 +12,7 @@ class ParquetOutputWriter(path: String, conf: Configuration)
   extends OutputWriter {
 
   private val recordWriter: RecordWriter[Void, InternalRow] = {
-    new ParquetOutputFormat[InternalRow]().getRecordWriter(conf, new Path(path), CompressionCodecName.SNAPPY)
+    new ParquetOutputFormat().getRecordWriter(conf, new Path(path), CompressionCodecName.SNAPPY)
   }
 
   override def write(row: InternalRow): Unit = recordWriter.write(null, row)
