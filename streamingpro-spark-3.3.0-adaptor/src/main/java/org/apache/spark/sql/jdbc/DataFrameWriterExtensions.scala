@@ -34,7 +34,8 @@ object DataFrameWriterExtensions {
       val modeF = w.getClass.getDeclaredField("mode")
       modeF.setAccessible(true)
       val mode = modeF.get(w).asInstanceOf[SaveMode]
-      val conn = JdbcUtils.createConnectionFactory(jdbcOptions)()
+      val dialect = JdbcDialects.get(jdbcOptions.url)
+      val conn = dialect.createConnectionFactory(jdbcOptions)(0)
       val isCaseSensitive = df.sqlContext.conf.caseSensitiveAnalysis
       val writeOption = new JdbcOptionsInWrite(url, table, jdbcOptions.parameters)
       try {

@@ -27,6 +27,6 @@ import org.apache.spark.sql.catalyst.expressions.{Expression, ScalaUDF}
   */
 object UDFManager {
   def register(sparkSession: SparkSession, name: String, udf: (Seq[Expression]) => ScalaUDF) = {
-    sparkSession.sessionState.functionRegistry.registerFunction(FunctionIdentifier(name), udf)
+    sparkSession.sessionState.functionRegistry.registerFunction(FunctionIdentifier(name), udf,"scala_udf")
   }
 }

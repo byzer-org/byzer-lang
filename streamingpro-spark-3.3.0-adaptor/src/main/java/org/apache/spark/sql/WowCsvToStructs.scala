@@ -98,5 +98,5 @@ case class WowCsvToStructs(schema: DataType,
     }
   }
 
-
+  override protected def withNewChildInternal(newChild: Expression): WowCsvToStructs = copy(child = newChild)
 }

@@ -27,13 +27,13 @@
         </dependency>
         <dependency>
             <groupId>tech.mlsql</groupId>
-            <artifactId>streamingpro-spark-common-3.0_${scala.binary.version}</artifactId>
+            <artifactId>streamingpro-spark-common-${spark.bigversion}_${scala.binary.version}</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
 
         <dependency>
             <groupId>tech.mlsql</groupId>
-            <artifactId>streamingpro-common-3.0_${scala.binary.version}</artifactId>
+            <artifactId>streamingpro-common-${spark.bigversion}_${scala.binary.version}</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
 
