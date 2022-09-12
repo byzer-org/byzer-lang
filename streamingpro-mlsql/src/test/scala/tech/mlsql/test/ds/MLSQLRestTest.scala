@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.mockito.ArgumentMatchers.{anyList, anyString, argThat, endsWith}
 import org.mockito.Mockito.{mock, mockStatic, when}
 import org.mockito.{ArgumentMatcher, ArgumentMatchers, MockedStatic}
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import streaming.core.BasicMLSQLConfig
 import streaming.core.datasource.DataSourceConfig
 import streaming.core.strategy.platform.SparkRuntime
@@ -26,7 +26,7 @@ import java.io.ByteArrayInputStream
 /**
  * 26/2/2022 WilliamZhu(allwefantasy@gmail.com)
  */
-class MLSQLRestTest extends FunSuite with SparkOperationUtil with BasicMLSQLConfig with Logging {
+class MLSQLRestTest extends AnyFunSuite with SparkOperationUtil with BasicMLSQLConfig with Logging {
 
   def buildResp(str: String, status: Int = 200) = {
     val httpResp: HttpResponse = new BasicHttpResponse(new BasicStatusLine(

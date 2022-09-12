@@ -18,9 +18,10 @@
 
 package streaming.dsl.template
 
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
-class TemplateMergeSpec extends FlatSpec with Matchers {
+class TemplateMergeSpec extends AnyFlatSpec with Matchers {
 
 
   "template merge" should "work" in {
