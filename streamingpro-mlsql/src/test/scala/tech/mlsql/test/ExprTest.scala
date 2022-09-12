@@ -1,23 +1,21 @@
 package tech.mlsql.test
 
-import org.apache.spark.sql.{Row, SparkSession}
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
-import org.scalatest.{BeforeAndAfterAll, FunSuite}
+import org.apache.spark.sql.{Row, SparkSession}
+import org.scalatest.BeforeAndAfterAll
+import org.scalatest.funsuite.AnyFunSuite
 import tech.mlsql.lang.cmd.compile.internal.gc._
-import tech.mlsql.nativelib.runtime.NativeFuncRule
 
 import scala.collection.mutable
 
 /**
  * 6/10/2020 WilliamZhu(allwefantasy@gmail.com)
  */
-class ExprTest extends FunSuite with BeforeAndAfterAll {
+class ExprTest extends AnyFunSuite with BeforeAndAfterAll {
   var session: SparkSession = null
 
   override def beforeAll(): Unit = {
-    session = SparkSession.builder().withExtensions(extensions => {
-      extensions.injectResolutionRule(session => NativeFuncRule)
-    }).
+    session = SparkSession.builder().
       master("local[*]").
       appName("test").
       getOrCreate()
@@ -34,8 +32,8 @@ class ExprTest extends FunSuite with BeforeAndAfterAll {
     //
     // TODO(qwang): We now didn't handle the non-ascii chars.
     val rdd = session.sparkContext.parallelize(Seq(Row.fromSeq(Seq("中国DD"))))
-    session.createDataFrame(rdd,StructType(Seq(StructField("value", StringType)))).createOrReplaceTempView("jack")
-//    ssession.createDataset[String](Seq("DD"))(ssession.implicits.newStringEncoder).createOrReplaceTempView("jack")
+    session.createDataFrame(rdd, StructType(Seq(StructField("value", StringType)))).createOrReplaceTempView("jack")
+    //    ssession.createDataset[String](Seq("DD"))(ssession.implicits.newStringEncoder).createOrReplaceTempView("jack")
     import org.apache.spark.sql.execution.debug._
     session.sql(""" select lower(value) from jack""").debugCodegen()
     session.sql(""" select lower(value) from jack""").show(false)

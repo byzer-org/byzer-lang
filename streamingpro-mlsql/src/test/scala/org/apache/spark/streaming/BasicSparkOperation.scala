@@ -18,12 +18,13 @@
 
 package org.apache.spark.streaming
 
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 /**
-  * Created by allwefantasy on 30/3/2017.
-  */
-trait BasicSparkOperation extends FlatSpec with SparkOperationUtil with Matchers {
+ * Created by allwefantasy on 30/3/2017.
+ */
+trait BasicSparkOperation extends AnyFlatSpec with SparkOperationUtil with Matchers {
 
 
 }
