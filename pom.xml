@@ -298,7 +298,7 @@
         </dependency>
         <dependency>
             <groupId>tech.mlsql</groupId>
-            <artifactId>delta-plus_${scala.binary.version}</artifactId>
+            <artifactId>delta-plus-${spark.bigversion}_${scala.binary.version}</artifactId>
             <version>${delta-plus-version}</version>
             <exclusions>
                 <exclusion>

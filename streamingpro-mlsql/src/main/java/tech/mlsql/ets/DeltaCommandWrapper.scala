@@ -1,14 +1,14 @@
 package tech.mlsql.ets
 
 import org.apache.spark.SparkCoreVersion
-import org.apache.spark.sql.delta.DeltaLog
+import org.apache.spark.sql.delta.{DeltaHistory, DeltaLog}
 import org.apache.spark.sql.delta.actions.CommitInfo
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.mlsql.session.MLSQLException
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import streaming.dsl.mmlib.algs.Functions
 import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
-import streaming.dsl.mmlib.{ SQLAlg}
+import streaming.dsl.mmlib.SQLAlg
 import tech.mlsql.common.utils.path.PathFun
 import tech.mlsql.common.utils.serder.json.JSONTool
 import tech.mlsql.datalake.DataLake
@@ -72,7 +72,7 @@ class DeltaCommandWrapper(override val uid: String) extends SQLAlg with Function
 
         val deltaLog = DeltaLog.forTable(spark, resolveRealPath(dataPath))
         val history = deltaLog.history.getHistory(Option(1000))
-        spark.createDataset[CommitInfo](history).toDF()
+        spark.createDataset[DeltaHistory](history).toDF()
 
 
       case Seq("info", dataPath, _*) =>
