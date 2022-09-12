@@ -21,12 +21,14 @@ package org.apache.spark.sql.jdbc
 /**
  * Created by allwefantasy on 26/4/2018.
  */
-import java.sql.{Connection, PreparedStatement}
+
+import org.apache.spark.TaskContext
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.execution.datasources.jdbc.{JDBCOptions, JdbcUtils}
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Row}
 
+import java.sql.{Connection, PreparedStatement}
 import scala.util.control.NonFatal
 
 object UpsertUtils extends Logging {
@@ -38,10 +40,12 @@ object UpsertUtils extends Logging {
     }
 
     val rddSchema = df.schema
-    val getConnection: () => Connection = JdbcUtils.createConnectionFactory(jdbcOptions)
+
+    val getConnection: (Int) => Connection = dialect.createConnectionFactory(jdbcOptions)
     df.rdd.foreachPartition {
       (iterator: Iterator[Row]) =>
-        upsertPartition(getConnection, jdbcOptions.tableOrQuery, iterator, idCol, rddSchema, nullTypes, jdbcOptions.batchSize,
+        val partitionId = TaskContext.getPartitionId()
+        upsertPartition(partitionId, getConnection, jdbcOptions.tableOrQuery, iterator, idCol, rddSchema, nullTypes, jdbcOptions.batchSize,
           dialect, isCaseSensitive)
     }
   }
@@ -67,7 +71,8 @@ object UpsertUtils extends Logging {
    * are used.
    */
   def upsertPartition(
-                       getConnection: () => Connection,
+                       partitionId: Int,
+                       getConnection: (Int) => Connection,
                        table: String,
                        iterator: Iterator[Row],
                        idColumn: Option[Seq[StructField]],
@@ -77,7 +82,7 @@ object UpsertUtils extends Logging {
                        dialect: JdbcDialect,
                        isCaseSensitive: Boolean
                      ): Iterator[Byte] = {
-    val conn = getConnection()
+    val conn = getConnection(partitionId)
     var committed = false
     val supportsTransactions = try {
       conn.getMetaData().supportsDataManipulationTransactionsOnly() ||
@@ -204,7 +209,7 @@ object UpsertBuilder {
 
 object MysqlUpsertBuilder extends UpsertBuilder with Logging {
   def generateStatement(table: String, dialect: JdbcDialect, id: Seq[StructField],
-                        schema: StructType) : (String, StructType) = {
+                        schema: StructType): (String, StructType) = {
     val columns = schema.fields.map(f => dialect.quoteIdentifier(f.name)).mkString(",")
     val placeholders = schema.fields.map(_ => "?").mkString(",")
     val updateSchema = StructType(schema.fields.filterNot(k => id.map(f => f.name).toSet.contains(k.name)))
@@ -219,13 +224,14 @@ object MysqlUpsertBuilder extends UpsertBuilder with Logging {
 
     val schemaFields = schema.fields ++ updateSchema.fields
     val upsertSchema = StructType(schemaFields)
-    (sql, upsertSchema )
+    (sql, upsertSchema)
   }
+
   def upsertStatement(conn: Connection, table: String, dialect: JdbcDialect, idField: Option[Seq[StructField]],
                       schema: StructType, isCaseSensitive: Boolean) = {
     idField match {
       case Some(id) => {
-        val (sql , upsertSchema) = generateStatement(table, dialect, id, schema)
+        val (sql, upsertSchema) = generateStatement(table, dialect, id, schema)
         log.info(s"Using sql $sql")
         UpsertInfo(conn.prepareStatement(sql), upsertSchema)
       }
@@ -240,42 +246,44 @@ object MysqlUpsertBuilder extends UpsertBuilder with Logging {
  * Oracle has Merge INTO statement since oracle 9i
  * The following Merge statement updates employee.address column if id column equals to given value
  * inserts a record if not.
-  MERGE INTO employees
-    USING dual h
-    ON ( id = ? )
-  WHEN MATCHED THEN
-    UPDATE SET address = ?
-  WHEN NOT MATCHED THEN
-    INSERT (id, address)
-    VALUES (?, ?);
+ * MERGE INTO employees
+ * USING dual h
+ * ON ( id = ? )
+ * WHEN MATCHED THEN
+ * UPDATE SET address = ?
+ * WHEN NOT MATCHED THEN
+ * INSERT (id, address)
+ * VALUES (?, ?);
  */
 object OracleUpsertBuilder extends UpsertBuilder with Logging {
   def generateStatement(table: String, idF: Seq[StructField], schema: StructType): (String, StructType) = {
     // generate merge into statement with placeholders.
-    val onClause = idF.map( f =>   s"${f.name} = ?" ).mkString(" AND ")
+    val onClause = idF.map(f => s"${f.name} = ?").mkString(" AND ")
     // Column names are not quoted. Because quoting  makes them case sensitive,
     // this could result in "invalid identifier" error in Oracle.
-    val updateFields = schema.filterNot( s =>  idF.map( _.name).contains(s.name))
-    val setClause = updateFields.map( f => s"${f.name} = ?").mkString(" , ")
-    val schemaColumnNames = schema.map( _.name ).mkString(",")
-    val insertClause = schema.fields.indices.map(_ => "?" ).mkString(" , ")
-    val statement = s"""MERGE INTO ${table} USING dual ON ( ${onClause} )
+    val updateFields = schema.filterNot(s => idF.map(_.name).contains(s.name))
+    val setClause = updateFields.map(f => s"${f.name} = ?").mkString(" , ")
+    val schemaColumnNames = schema.map(_.name).mkString(",")
+    val insertClause = schema.fields.indices.map(_ => "?").mkString(" , ")
+    val statement =
+      s"""MERGE INTO ${table} USING dual ON ( ${onClause} )
                         WHEN MATCHED THEN UPDATE
                           SET ${setClause}
                         WHEN NOT MATCHED THEN
                           INSERT ( ${schemaColumnNames} ) VALUES( ${insertClause})
                       """.stripMargin
-    logInfo(s"Using sql $statement" )
+    logInfo(s"Using sql $statement")
     // Number of placeholders is doubled, so as the schema
-    (statement, StructType(schema ++ schema ) )
+    (statement, StructType(schema ++ schema))
   }
+
   override def upsertStatement(conn: Connection, table: String, dialect: JdbcDialect, idField: Option[Seq[StructField]],
-                               schema: StructType, isCaseSensitive: Boolean ): UpsertInfo = {
+                               schema: StructType, isCaseSensitive: Boolean): UpsertInfo = {
 
     idField match {
       case Some(idF) =>
         val (stmt, upsertSchema) = generateStatement(table, idF, schema)
-        UpsertInfo( conn.prepareStatement( stmt ), upsertSchema  )
+        UpsertInfo(conn.prepareStatement(stmt), upsertSchema)
       case None =>
         // Revert back to insert
         UpsertInfo(conn.prepareStatement(JdbcUtils.getInsertStatement(table, schema, None, isCaseSensitive, dialect)), schema)

@@ -21,10 +21,9 @@ package org.apache.spark.util
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 import java.lang.invoke.SerializedLambda
 import java.util
-
 import org.apache.spark.internal.Logging
 import org.apache.spark.{SparkEnv, SparkException}
-import org.apache.xbean.asm7.ClassReader
+import org.apache.xbean.asm9.ClassReader
 
 import scala.collection.mutable.{Map, Set, Stack}
 import scala.language.existentials
