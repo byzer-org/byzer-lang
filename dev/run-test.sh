@@ -62,7 +62,7 @@ fi
 if [ -n "$1" ]; then
   export MLSQL_SPARK_VERSION=${1}
 else
-  export MLSQL_SPARK_VERSION=${MLSQL_SPARK_VERSION:-3.0}
+  export MLSQL_SPARK_VERSION=${MLSQL_SPARK_VERSION:-3.3}
 fi
 BYZER_SPARK_VERSION=$MLSQL_SPARK_VERSION
 
@@ -70,7 +70,7 @@ TEST_MODULES_FLAG=${2:-it}
 MATCHES=${3:-.*}
 echo "Current parameters: $*"
 
-if [ "${BYZER_SPARK_VERSION}" == "3.0" ]; then
+if [ "${BYZER_SPARK_VERSION}" == "3.0" ] || [ "${BYZER_SPARK_VERSION}" == "3.3" ]; then
   SCALA_BINARY_VERSION=2.12
   if [ ! -f "${DEV_DIR}"/ansj_seg-5.1.6.jar ]; then
     wget --no-check-certificate --no-verbose "http://download.mlsql.tech/nlp/ansj_seg-5.1.6.jar" --directory-prefix "${DEV_DIR}/"
@@ -96,7 +96,7 @@ elif [ "${BYZER_SPARK_VERSION}" == "2.4" ]; then
   ./dev/change-scala-version.sh 2.11
   python ./dev/python/convert_pom.py 2.4
 else
-  echo "Only accept 2.4|3.0"
+  echo "Only accept 2.4|3.0|3.3"
   exit 1
 fi
 
@@ -113,4 +113,4 @@ if [ "${SKIP_INSTALL:-}" != "skipInstall" ]; then
 else
   mvn clean
 fi
-mvn test $TEST_MODULES
+mvn test "$TEST_MODULES"
