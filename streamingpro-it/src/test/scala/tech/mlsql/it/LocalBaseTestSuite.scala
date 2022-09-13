@@ -1,17 +1,18 @@
 package tech.mlsql.it
 
-import java.io.File
-
 import org.apache.commons.io.FileUtils
 import org.apache.spark.streaming.SparkOperationUtil
-import org.scalatest.{BeforeAndAfterAll, FunSuite}
+import org.scalatest.BeforeAndAfterAll
+import org.scalatest.funsuite.AnyFunSuite
 import serviceframework.dispatcher.StrategyDispatcher
 import streaming.core.StreamingApp
 import streaming.core.strategy.platform.{PlatformManager, SparkRuntime}
 import tech.mlsql.job.JobManager
 
+import java.io.File
 
-trait LocalBaseTestSuite extends FunSuite with SparkOperationUtil with BeforeAndAfterAll {
+
+trait LocalBaseTestSuite extends AnyFunSuite with SparkOperationUtil with BeforeAndAfterAll {
 
   var runtime: SparkRuntime = _
   var runParams: Array[String] = Array()
