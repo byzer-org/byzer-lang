@@ -260,6 +260,9 @@
 
         <profile>
             <id>buildin-plugins</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
             <dependencies>
                 <dependency>
                     <groupId>tech.mlsql</groupId>
