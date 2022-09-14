@@ -51,6 +51,8 @@
         <module>external/mlsql-mysql-store</module>
         <module>external/mlsql-sql-profiler-30</module>
         <module>external/mlsql-autosuggest</module>
+        <module>external/mlsql-ets</module>
+        <module>external/mlsql-healthy</module>
     </modules>
 
     <properties>
