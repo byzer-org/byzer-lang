@@ -79,16 +79,18 @@ else
  exit 0
 fi
 #---------------------
+BASE_PROFILES="-Ponline"
 
 if [[ ${DISTRIBUTION} == "true" ]];then
-  BASE_PROFILES=" -Passembly"
+  BASE_PROFILES="${BASE_PROFILES} -Passembly"
 else
-  BASE_PROFILES=" -pl streamingpro-mlsql -am"
+  BASE_PROFILES="${BASE_PROFILES} -pl streamingpro-mlsql -am"
 fi
 export MAVEN_OPTS="-Xmx6000m"
 
 SKIPTEST=""
 TESTPROFILE=""
+
 
 if [[ "${COMMAND}" == "package" ]];then
   BASE_PROFILES="$BASE_PROFILES -Pshade"
@@ -126,5 +128,5 @@ else
 cat << EOF
 mvn clean ${COMMAND} ${SKIPTEST} ${BASE_PROFILES}  ${TESTPROFILE}
 EOF
-mvn clean ${COMMAND} ${SKIPTEST} ${BASE_PROFILES} ${TESTPROFILE} -U
+mvn clean ${COMMAND} ${SKIPTEST} ${BASE_PROFILES} ${TESTPROFILE}
 fi
