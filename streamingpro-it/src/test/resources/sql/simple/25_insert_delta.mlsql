@@ -1,0 +1,16 @@
+--%comparator=tech.mlsql.it.IgnoreResultComparator
+
+-- Insert
+
+select 1 as id, "zjc" as name AS result;
+
+save overwrite result as delta.`default.append_test`;
+
+select 1 as id , "zjc_1" as name as result_1;
+
+save append result_1 as delta.`default.append_test`;
+
+load delta.`default.append_test` as result_1;
+
+select count(1) as cnt from result_1 as result_cnt;
+!assert result_cnt ''':cnt==2''' "row count should be 2";
