@@ -7,9 +7,6 @@ import tech.mlsql.common.utils.lang.sc.ScalaReflect
 
 import scala.collection.JavaConverters._
 
-/**
- * 13/1/2021 WilliamZhu(allwefantasy@gmail.com)
- */
 object CleanerUtils {
   def listenerBus(sparkContext: SparkContext) = {
     sparkContext.listenerBus
