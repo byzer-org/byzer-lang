@@ -43,6 +43,10 @@
             <scope>test</scope>
             <exclusions>
                 <exclusion>
+                    <groupId>org.scala-lang</groupId>
+                    <artifactId>scala-library</artifactId>
+                </exclusion>
+                <exclusion>
                     <artifactId>junit</artifactId>
                     <groupId>junit</groupId>
                 </exclusion>
@@ -87,12 +91,21 @@
 
 
         <!--lombok dependencies-->
+<!--        <dependency>-->
+<!--            <groupId>org.projectlombok</groupId>-->
+<!--            <artifactId>lombok</artifactId>-->
+<!--            <version>1.16.20</version>-->
+<!--        </dependency>-->
+        <!-- This is a workaround; to avoid error -->
+        <!-- [ERROR] /work/code/upgrade/byzer-lang/streamingpro-it/src/test/scala/tech/mlsql/it/LocalBaseTestSuite.scala:27:
+        error: Symbol 'type org.apache.spark.sql.SparkSession' is missing from the classpath.
+        [INFO] This symbol is required by 'variable streaming.core.strategy.platform.SparkRuntime.sparkSession'.-->
         <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <version>1.16.20</version>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-sql_2.12</artifactId>
+            <version>${spark.version}</version>
+            <scope>test</scope>
         </dependency>
-
 
     </dependencies>
 
