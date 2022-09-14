@@ -1,13 +1,18 @@
 package tech.mlsql.tool
 
-import java.io.InputStream
-
+import com.alibaba.druid.DbType
 import org.apache.spark.sql.Row
+
+import java.io.InputStream
 
 /**
  * 2019-05-20 WilliamZhu(allwefantasy@gmail.com)
  */
 object SparkTarfileUtil {
+  def main(args: Array[String]): Unit = {
+    println(DbType.of("mysql") == DbType.mysql)
+  }
+
   def buildInputStreamFromIterator(iter: Iterator[Row]) = {
     var currentBlockRow = iter.next()
     var currentBuf = currentBlockRow.getAs[Array[Byte]]("value")
