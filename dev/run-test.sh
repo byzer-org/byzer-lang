@@ -70,6 +70,7 @@ TEST_MODULES_FLAG=${2:-it}
 MATCHES=${3:-.*}
 echo "Current parameters: $*"
 
+echo "BYZER_SPARK_VERSION ${BYZER_SPARK_VERSION}"
 if [ "${BYZER_SPARK_VERSION}" == "3.0" ] || [ "${BYZER_SPARK_VERSION}" == "3.3" ]; then
   SCALA_BINARY_VERSION=2.12
   if [ ! -f "${DEV_DIR}"/ansj_seg-5.1.6.jar ]; then
@@ -113,4 +114,4 @@ if [ "${SKIP_INSTALL:-}" != "skipInstall" ]; then
 else
   mvn clean
 fi
-mvn test "$TEST_MODULES"
+mvn test $TEST_MODULES
