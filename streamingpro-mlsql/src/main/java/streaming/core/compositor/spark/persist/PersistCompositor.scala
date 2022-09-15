@@ -19,18 +19,16 @@
 package streaming.core.compositor.spark.persist
 
 import java.util
-
-import org.apache.log4j.Logger
 import org.apache.spark.storage.StorageLevel
 import serviceframework.dispatcher.{Compositor, Processor, Strategy}
 import streaming.core.CompositorHelper
+import tech.mlsql.common.utils.log.Logging
 
 import scala.collection.JavaConversions._
 
-class PersistCompositor[T] extends Compositor[T] with CompositorHelper {
+class PersistCompositor[T] extends Compositor[T] with CompositorHelper with Logging {
 
   private var _configParams: util.List[util.Map[Any, Any]] = _
-  val logger = Logger.getLogger(classOf[PersistCompositor[T]].getName)
 
   override def initialize(typeFilters: util.List[String], configParams: util.List[util.Map[Any, Any]]): Unit = {
     this._configParams = configParams

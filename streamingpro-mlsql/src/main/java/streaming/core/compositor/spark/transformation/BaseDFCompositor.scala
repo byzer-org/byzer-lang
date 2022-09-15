@@ -20,7 +20,6 @@ package streaming.core.compositor.spark.transformation
 
 import java.util
 
-import org.apache.log4j.Logger
 import org.apache.spark.sql.{DataFrame, SQLContext}
 import serviceframework.dispatcher.{Compositor, Processor, Strategy}
 import streaming.core.CompositorHelper
@@ -30,7 +29,6 @@ import streaming.core.CompositorHelper
   */
 abstract class BaseDFCompositor[T] extends Compositor[T] with CompositorHelper {
   protected var _configParams: util.List[util.Map[Any, Any]] = _
-  val logger = Logger.getLogger(classOf[SQLCompositor[T]].getName)
 
   override def initialize(typeFilters: util.List[String], configParams: util.List[util.Map[Any, Any]]): Unit = {
     this._configParams = configParams
