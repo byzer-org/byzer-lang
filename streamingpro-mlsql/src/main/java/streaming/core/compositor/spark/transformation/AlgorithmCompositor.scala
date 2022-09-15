@@ -20,8 +20,6 @@ package streaming.core.compositor.spark.transformation
 
 import java.util
 
-
-import org.apache.log4j.Logger
 import org.apache.spark.ml.BaseAlgorithmTransformer
 import org.apache.spark.sql.DataFrame
 import serviceframework.dispatcher.{Processor, Strategy}
@@ -32,9 +30,6 @@ import scala.collection.JavaConversions._
   * 7/27/16 WilliamZhu(allwefantasy@gmail.com)
   */
 class AlgorithmCompositor[T] extends BaseAlgorithmCompositor[T] {
-
-
-  val logger = Logger.getLogger(classOf[SQLCompositor[T]].getName)
 
   override def mapping = Map(
     "als" -> "org.apache.spark.ml.algs.ALSTransformer",

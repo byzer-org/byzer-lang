@@ -21,7 +21,6 @@ package streaming.core.compositor.spark.ss.source
 import java.util
 
 import net.sf.json.JSONArray
-import org.apache.log4j.Logger
 import org.apache.spark.sql.execution.streaming.MemoryStream
 import serviceframework.dispatcher.{Compositor, Processor, Strategy}
 import streaming.core.CompositorHelper
@@ -34,8 +33,6 @@ import scala.collection.JavaConversions._
   */
 class MultiSQLSourceCompositor[T] extends Compositor[T] with CompositorHelper {
   private var _configParams: util.List[util.Map[Any, Any]] = _
-
-  val logger = Logger.getLogger(classOf[MultiSQLSourceCompositor[T]].getName)
 
   override def initialize(typeFilters: util.List[String], configParams: util.List[util.Map[Any, Any]]): Unit = {
     this._configParams = configParams

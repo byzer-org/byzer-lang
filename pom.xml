@@ -75,7 +75,6 @@
         <spark.sql.kafka.artifactId>spark-sql-kafka-0-10_${scala.binary.version}</spark.sql.kafka.artifactId>
 
 
-        <flink.version>1.4.2</flink.version>
         <guava.version>16.0</guava.version>
         <jetty.version>9.2.16.v20160414</jetty.version>
 
@@ -99,14 +98,14 @@
         <json-path.version>2.2.0</json-path.version>
 
         <slf4j.version>1.7.32</slf4j.version>
-        <log4j.version>1.2.17</log4j.version>
+        <log4j.version>2.17.2</log4j.version>
         <logback.version>1.2.9</logback.version>
 
 
         <scope>provided</scope>
         <hadoop-client-version>2.6.5</hadoop-client-version>
 
-        <common-utils-version>0.3.9.4</common-utils-version>
+        <common-utils-version>0.3.9.5-SNAPSHOT</common-utils-version>
         <serviceframework.version>2.0.7</serviceframework.version>
 
         <pyjava-version>0.3.2</pyjava-version>
@@ -494,6 +493,10 @@
                     <artifactId>slf4j-log4j12</artifactId>
                 </exclusion>
                 <exclusion>
+                    <groupId>log4j</groupId>
+                    <artifactId>log4j</artifactId>
+                </exclusion>
+                <exclusion>
                     <groupId>org.slf4j</groupId>
                     <artifactId>jcl-over-slf4j</artifactId>
                 </exclusion>
@@ -599,17 +602,28 @@
             <artifactId>slf4j-api</artifactId>
             <version>${slf4j.version}</version>
         </dependency>
-
         <dependency>
             <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
+            <artifactId>jcl-over-slf4j</artifactId>
             <version>${slf4j.version}</version>
         </dependency>
+
         <dependency>
-            <groupId>log4j</groupId>
-            <artifactId>apache-log4j-extras</artifactId>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-api</artifactId>
             <version>${log4j.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-core</artifactId>
+            <version>${log4j.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-slf4j-impl</artifactId>
+            <version>${log4j.version}</version>
+        </dependency>
+
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>

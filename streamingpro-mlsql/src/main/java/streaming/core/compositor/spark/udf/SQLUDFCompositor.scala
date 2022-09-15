@@ -20,20 +20,18 @@ package streaming.core.compositor.spark.udf
 
 import java.lang.reflect.Modifier
 import java.util
-
-import org.apache.log4j.Logger
 import serviceframework.dispatcher.{Compositor, Processor, Strategy}
 import streaming.core.CompositorHelper
+import tech.mlsql.common.utils.log.Logging
 
 import scala.collection.JavaConversions._
 
 /**
   * 7/4/16 WilliamZhu(allwefantasy@gmail.com)
   */
-class SQLUDFCompositor[T] extends Compositor[T] with CompositorHelper {
+class SQLUDFCompositor[T] extends Compositor[T] with CompositorHelper with Logging {
   private var _configParams: util.List[util.Map[Any, Any]] = _
 
-  val logger = Logger.getLogger(classOf[SQLUDFCompositor[T]].getName)
 
   override def initialize(typeFilters: util.List[String], configParams: util.List[util.Map[Any, Any]]): Unit = {
     this._configParams = configParams
@@ -51,7 +49,7 @@ class SQLUDFCompositor[T] extends Compositor[T] with CompositorHelper {
           }
         } catch {
           case e: Exception =>
-            logger.info(s"${f.getName} missing",e)
+            logInfo(s"${f.getName} missing",e)
         }
       }
     }

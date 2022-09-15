@@ -5,10 +5,11 @@ import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.log4j.Logger;
 import org.kamranzafar.jtar.TarEntry;
 import org.kamranzafar.jtar.TarInputStream;
 import org.kamranzafar.jtar.TarOutputStream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import streaming.core.HDFSTarEntry;
 
 import java.io.*;
@@ -19,7 +20,7 @@ import java.util.List;
  * 24/5/2021 WilliamZhu(allwefantasy@gmail.com)
  */
 public class TarfileUtil {
-    private static Logger logger = Logger.getLogger(TarfileUtil.class);
+    private static Logger logger = LoggerFactory.getLogger(TarfileUtil.class);
 
     public static void walk(FileSystem fs, List<FileStatus> files, Path p) throws IOException {
         if (fs.isFile(p)) {

@@ -21,7 +21,6 @@ package streaming.core.compositor.spark.ss.output
 import java.util
 import java.util.concurrent.TimeUnit
 
-import org.apache.log4j.Logger
 import org.apache.spark.sql.streaming.Trigger
 import serviceframework.dispatcher.{Compositor, Processor, Strategy}
 import streaming.core.CompositorHelper
@@ -35,8 +34,6 @@ import scala.collection.JavaConversions._
 class MultiSQLOutputCompositor[T] extends Compositor[T] with CompositorHelper with ParamsValidator {
 
   private var _configParams: util.List[util.Map[Any, Any]] = _
-  val logger = Logger.getLogger(classOf[MultiSQLOutputCompositor[T]].getName)
-
 
   override def initialize(typeFilters: util.List[String], configParams: util.List[util.Map[Any, Any]]): Unit = {
     this._configParams = configParams
