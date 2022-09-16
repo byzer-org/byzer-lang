@@ -259,58 +259,6 @@
         </profile>
 
         <profile>
-            <id>buildin-plugins</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
-            <dependencies>
-                <dependency>
-                    <groupId>tech.mlsql</groupId>
-                    <artifactId>mlsql-ets-${spark.bigversion}_${scala.binary.version}</artifactId>
-                    <version>${project.parent.version}</version>
-                </dependency>
-
-                <dependency>
-                    <groupId>tech.mlsql</groupId>
-                    <artifactId>python-controller-${spark.bigversion}_${scala.binary.version}</artifactId>
-                    <version>${project.parent.version}</version>
-                </dependency>
-
-                <dependency>
-                    <groupId>tech.mlsql</groupId>
-                    <artifactId>mlsql-sql-profiler-30-${spark.bigversion}_${scala.binary.version}</artifactId>
-                    <version>${project.parent.version}</version>
-                </dependency>
-
-
-                <dependency>
-                    <groupId>tech.mlsql</groupId>
-                    <artifactId>mlsql-mysql-store-${spark.bigversion}_${scala.binary.version}</artifactId>
-                    <version>${project.parent.version}</version>
-                </dependency>
-
-                <dependency>
-                    <groupId>tech.mlsql</groupId>
-                    <artifactId>mlsql-watcher-${spark.bigversion}_${scala.binary.version}</artifactId>
-                    <version>${project.parent.version}</version>
-                </dependency>
-
-                <dependency>
-                    <groupId>tech.mlsql</groupId>
-                    <artifactId>mlsql-healthy-${spark.bigversion}_${scala.binary.version}</artifactId>
-                    <version>${project.parent.version}</version>
-                </dependency>
-
-                <dependency>
-                    <groupId>tech.mlsql</groupId>
-                    <artifactId>mlsql-autosuggest-${spark.bigversion}_${scala.binary.version}</artifactId>
-                    <version>${project.parent.version}</version>
-                </dependency>
-            </dependencies>
-        </profile>
-
-
-        <profile>
             <id>online</id>
             <properties>
                 <mode>online</mode>
@@ -357,6 +305,48 @@
     </profiles>
 
     <dependencies>
+        <dependency>
+            <groupId>tech.mlsql</groupId>
+            <artifactId>mlsql-ets-${spark.bigversion}_${scala.binary.version}</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>tech.mlsql</groupId>
+            <artifactId>python-controller-${spark.bigversion}_${scala.binary.version}</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>tech.mlsql</groupId>
+            <artifactId>mlsql-sql-profiler-30-${spark.bigversion}_${scala.binary.version}</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+
+
+        <dependency>
+            <groupId>tech.mlsql</groupId>
+            <artifactId>mlsql-mysql-store-${spark.bigversion}_${scala.binary.version}</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>tech.mlsql</groupId>
+            <artifactId>mlsql-watcher-${spark.bigversion}_${scala.binary.version}</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>tech.mlsql</groupId>
+            <artifactId>mlsql-healthy-${spark.bigversion}_${scala.binary.version}</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>tech.mlsql</groupId>
+            <artifactId>mlsql-autosuggest-${spark.bigversion}_${scala.binary.version}</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
         <dependency>
             <groupId>tech.mlsql</groupId>
             <artifactId>streamingpro-spark-3.3.0-adaptor_${scala.binary.version}</artifactId>
