@@ -18,18 +18,18 @@
 
 package streaming.dsl.mmlib.algs
 
-import org.apache.spark.ml.feature.{HashingTF, IDF, IDFModel, IntTF}
+import org.apache.spark.ml.feature.{IDF, IDFModel, IntTF}
 import org.apache.spark.ml.linalg.SQLDataTypes._
-import org.apache.spark.mllib.linalg.{Vectors => OldVectors}
 import org.apache.spark.sql.expressions.UserDefinedFunction
-import org.apache.spark.sql.types.{ArrayType, IntegerType, StringType}
+import org.apache.spark.sql.types.{ArrayType, IntegerType}
 import streaming.dsl.mmlib.SQLAlg
-import org.apache.spark.sql.{SparkSession, _}
+import org.apache.spark.sql._
+import tech.mlsql.common.utils.lang.sc.ScalaReflect
 
 
 /**
-  * Created by allwefantasy on 17/1/2018.
-  */
+ * Created by allwefantasy on 17/1/2018.
+ */
 class SQLTfIdf extends SQLAlg with Functions {
 
 
@@ -39,7 +39,7 @@ class SQLTfIdf extends SQLAlg with Functions {
     configureModel(rfc, params)
     rfc.setOutputCol("__SQLTfIdf__")
     val featurizedData = rfc.transform(df)
-    
+
     val idf = new IDF()
     configureModel(idf, params)
     idf.setInputCol("__SQLTfIdf__")
@@ -62,9 +62,9 @@ class SQLTfIdf extends SQLAlg with Functions {
     val model = sparkSession.sparkContext.broadcast(_model.asInstanceOf[IDFModel])
     val intTF = new org.apache.spark.mllib.feature.IntTF(model.value.idf.size).setBinary(false)
     val idf = (words: Seq[Int]) => {
-      val idfModelField = model.value.getClass.getDeclaredField("idfModel")
-      idfModelField.setAccessible(true)
-      val idfModel = idfModelField.get(model.value).asInstanceOf[org.apache.spark.mllib.feature.IDFModel]
+      //  model.value.getClass.getDeclaredField("idfModel")
+      val idfModel = ScalaReflect.fromInstance(model.value).field("idfModel").
+        invoke().asInstanceOf[org.apache.spark.mllib.feature.IDFModel]
       val vec = intTF.transform(words)
       idfModel.transform(vec).asML
     }
