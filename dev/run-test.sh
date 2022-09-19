@@ -109,7 +109,7 @@ fi
 case "${TEST_MODULES_FLAG}" in
     all)     TEST_MODULES=-DargLine='"'-Dmatches=${MATCHES}'"';;
     it)
-      BYZER_TEST_FILTER=${BYZER_TEST_FILTER:-"-Dit.test=SimpleQueryTestSuite"}
+      BYZER_TEST_FILTER=${BYZER_TEST_FILTER:-"-Dsuites="tech.mlsql.it.SimpleQueryTestSuite""}
       TEST_MODULES="-pl streamingpro-it ${BYZER_TEST_FILTER} -DargLine=-Dmatches=${MATCHES}";;
     ut)      args=(-Dtest.regex='"(streamingpro-it-'"${BYZER_SPARK_VERSION}""_""${SCALA_BINARY_VERSION}"')"') && TEST_MODULES=${args[@]};;
     *)       echo "Only support all|it|ut" && exit 1
