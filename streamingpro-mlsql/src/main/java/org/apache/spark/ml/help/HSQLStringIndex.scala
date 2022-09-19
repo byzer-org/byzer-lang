@@ -18,16 +18,15 @@
 
 package org.apache.spark.ml.help
 
-import org.apache.spark.{MLSQLSparkConst, SparkException}
-import org.apache.spark.ml.feature.{StringIndexer, StringIndexerModel}
+import org.apache.spark.SparkException
+import org.apache.spark.ml.feature.StringIndexerModel
+import org.apache.spark.sql.types.{IntegerType, StringType}
 import org.apache.spark.sql.{MLSQLUtils, SparkSession}
-import org.apache.spark.sql.expressions.UserDefinedFunction
-import org.apache.spark.sql.types.{DoubleType, IntegerType, StringType}
 import org.apache.spark.util.collection.OpenHashMap
 
 /**
-  * Created by allwefantasy on 15/1/2018.
-  */
+ * Created by allwefantasy on 15/1/2018.
+ */
 object HSQLStringIndex {
   def predict(sparkSession: SparkSession, _model: Any, name: String) = {
 
@@ -42,9 +41,11 @@ object HSQLStringIndex {
 
   def wordToIndex(sparkSession: SparkSession, _model: Any) = {
     val model = _model.asInstanceOf[StringIndexerModel]
-    val labelToIndexField = model.getClass.getDeclaredField("org$apache$spark$ml$feature$StringIndexerModel$$labelToIndex")
+    val labelToIndexField = model.getClass.getDeclaredMethod("labelsToIndexArray")
     labelToIndexField.setAccessible(true)
-    labelToIndexField.get(model).asInstanceOf[OpenHashMap[String, Double]]
+    val labelToIndexArray = labelToIndexField.invoke(model).asInstanceOf[Array[OpenHashMap[String, Double]]]
+    require(labelToIndexArray.length == 1, "StringIndex only support one columns")
+    labelToIndexArray(0)
   }
 
   def internal_predict(sparkSession: SparkSession, _model: Any, name: String) = {
@@ -53,9 +54,11 @@ object HSQLStringIndex {
 
     val f = (label: String) => {
 
-      val labelToIndexField = model.value.getClass.getDeclaredField("org$apache$spark$ml$feature$StringIndexerModel$$labelToIndex")
+      val labelToIndexField = model.value.getClass.getDeclaredMethod("labelsToIndexArray")
       labelToIndexField.setAccessible(true)
-      val labelToIndex = labelToIndexField.get(model.value).asInstanceOf[OpenHashMap[String, Double]]
+      val labelToIndexArray = labelToIndexField.invoke(model.value).asInstanceOf[Array[OpenHashMap[String, Double]]]
+      require(labelToIndexArray.length == 1, "StringIndex only support one columns")
+      val labelToIndex = labelToIndexArray(0)
 
       if (label == null) {
         if (model.value.getHandleInvalid == "keep" || model.value.getHandleInvalid == "skip") {

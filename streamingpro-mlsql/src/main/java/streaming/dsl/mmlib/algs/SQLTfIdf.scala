@@ -62,7 +62,7 @@ class SQLTfIdf extends SQLAlg with Functions {
     val model = sparkSession.sparkContext.broadcast(_model.asInstanceOf[IDFModel])
     val intTF = new org.apache.spark.mllib.feature.IntTF(model.value.idf.size).setBinary(false)
     val idf = (words: Seq[Int]) => {
-      val idfModelField = model.value.getClass.getField("org$apache$spark$ml$feature$IDFModel$$idfModel")
+      val idfModelField = model.value.getClass.getDeclaredField("idfModel")
       idfModelField.setAccessible(true)
       val idfModel = idfModelField.get(model.value).asInstanceOf[org.apache.spark.mllib.feature.IDFModel]
       val vec = intTF.transform(words)
