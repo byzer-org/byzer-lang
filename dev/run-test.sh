@@ -84,12 +84,15 @@ if [ "${BYZER_SPARK_VERSION}" == "3.0" ] || [ "${BYZER_SPARK_VERSION}" == "3.3" 
   # When we try to test the spark3 version, build a tar package through `make-distribution.sh`, which is mounted to
   # docker for integration testing. If the spark2 version is tested, it is not supported for now, so there is no need
   # to package it.
-  case "${TEST_MODULES_FLAG}" in
-      all)     ./dev/make-distribution.sh;;
-      it)      ./dev/make-distribution.sh;;
-      ut)      echo "Current spark version is ${BYZER_SPARK_VERSION}. No need to pack, skip it.";;
-      *)       echo "Only support all|it|ut" && exit 1
-  esac
+  if [ "${SKIP_INSTALL:-}" != "skipInstall" ]
+  then
+    case "${TEST_MODULES_FLAG}" in
+        all)     ./dev/make-distribution.sh;;
+        it)      ./dev/make-distribution.sh;;
+        ut)      echo "Current spark version is ${BYZER_SPARK_VERSION}. No need to pack, skip it.";;
+        *)       echo "Only support all|it|ut" && exit 1
+    esac
+  fi
 
 
 elif [ "${BYZER_SPARK_VERSION}" == "2.4" ]; then
@@ -101,9 +104,13 @@ else
   exit 1
 fi
 
+
+
 case "${TEST_MODULES_FLAG}" in
     all)     TEST_MODULES=-DargLine='"'-Dmatches=${MATCHES}'"';;
-    it)      TEST_MODULES="-pl streamingpro-it -DargLine=-Dmatches=${MATCHES}";;
+    it)
+      BYZER_TEST_FILTER=${BYZER_TEST_FILTER:-"-Dit.test=SimpleQueryTestSuite"}
+      TEST_MODULES="-pl streamingpro-it ${BYZER_TEST_FILTER} -DargLine=-Dmatches=${MATCHES}";;
     ut)      args=(-Dtest.regex='"(streamingpro-it-'"${BYZER_SPARK_VERSION}""_""${SCALA_BINARY_VERSION}"')"') && TEST_MODULES=${args[@]};;
     *)       echo "Only support all|it|ut" && exit 1
 esac
