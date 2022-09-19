@@ -25,14 +25,10 @@ trait LocalBaseTestSuite extends AnyFunSuite with SparkOperationUtil with Before
 
   def initPlugins(): Unit = {
     // 3.1.1 => v1=3 v2=1 v3=1
-    val Array(v1, _, _) = runtime.sparkSession.version.split("\\.")
+    val Array(v1, v2, _) = runtime.sparkSession.version.split("\\.")
 
     def convert_plugin_name(name: String) = {
-      val suffix = v1 match {
-        case "2" => "2.4"
-        case "3" => "3.0"
-      }
-      s"${name}-${suffix}"
+      s"${name}-${v1}.${v2}"
     }
     // set plugin context loader
     Thread.currentThread().setContextClassLoader(ClassLoader.getSystemClassLoader)

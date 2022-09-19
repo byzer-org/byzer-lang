@@ -1,6 +1,7 @@
 package org.apache.spark
 
 import org.apache.spark.deploy.SparkHadoopUtil
+import org.apache.spark.mllib.linalg.Vector
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.types.BinaryType
 
@@ -18,6 +19,33 @@ object MLSQLSparkUtils {
 
   def sparkHadoopUtil = {
     SparkHadoopUtil.get
+  }
+
+  def transformDense(
+                      idf: Vector,
+                      values: Array[Double]): Array[Double] = {
+    val n = values.length
+    val newValues = new Array[Double](n)
+    var j = 0
+    while (j < n) {
+      newValues(j) = values(j) * idf(j)
+      j += 1
+    }
+    newValues
+  }
+
+  def transformSparse(
+                       idf: Vector,
+                       indices: Array[Int],
+                       values: Array[Double]): (Array[Int], Array[Double]) = {
+    val nnz = indices.length
+    val newValues = new Array[Double](nnz)
+    var k = 0
+    while (k < nnz) {
+      newValues(k) = values(k) * idf(indices(k))
+      k += 1
+    }
+    (indices, newValues)
   }
 
 

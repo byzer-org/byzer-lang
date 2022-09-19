@@ -81,7 +81,7 @@
         <httpclient.version>4.5.3</httpclient.version>
         <lift-json.version>3.4.1</lift-json.version>
         <jsoup.version>1.14.2</jsoup.version>
-        <druid.version>1.2.3</druid.version>
+        <druid.version>1.2.12</druid.version>
         <xsoup.version>0.3.1</xsoup.version>
         <WebCollector.version>2.71</WebCollector.version>
         <simpleschema.version>0.2.0</simpleschema.version>
@@ -123,6 +123,11 @@
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-lang3</artifactId>
                 <version>3.10</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jsoup</groupId>
+                <artifactId>jsoup</artifactId>
+                <version>${jsoup.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
