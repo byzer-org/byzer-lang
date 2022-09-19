@@ -1,7 +1,8 @@
 package tech.mlsql.autosuggest.app
 
-import java.sql.{JDBCType, SQLException}
+import com.alibaba.druid.DbType
 
+import java.sql.{JDBCType, SQLException}
 import com.alibaba.druid.sql.SQLUtils
 import com.alibaba.druid.sql.ast.SQLDataType
 import com.alibaba.druid.sql.ast.statement.{SQLColumnDefinition, SQLCreateTableStatement}
@@ -18,7 +19,7 @@ import scala.math.min
   */
 class RDSchema(dbType: String) {
 
-  private val repository = new SchemaRepository(dbType)
+  private val repository = new SchemaRepository(DbType.of(dbType))
 
   def createTable(sql: String) = {
     repository.console(sql)

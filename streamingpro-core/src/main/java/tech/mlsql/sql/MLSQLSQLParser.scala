@@ -1,5 +1,6 @@
 package tech.mlsql.sql
 
+import com.alibaba.druid.DbType
 import com.alibaba.druid.sql.SQLUtils
 import com.alibaba.druid.sql.ast.statement.SQLSelectStatement
 import com.alibaba.druid.sql.repository.SchemaRepository
@@ -12,8 +13,7 @@ import scala.collection.mutable
 object MLSQLSQLParser {
   def extractTableWithColumns(dbType :String ,sql :String ,createSchemaList :List[String]) = {
     val tableAndCols = mutable.HashMap.empty[String, mutable.HashSet[String]]
-
-    val repository = new SchemaRepository(dbType)
+    val repository = new SchemaRepository(DbType.of(dbType))
 
     createSchemaList.foreach(repository.console(_))
 
@@ -21,7 +21,7 @@ object MLSQLSQLParser {
     val stmt = stmtList.get(0).asInstanceOf[SQLSelectStatement]
     repository.resolve(stmt)
 
-    val statVisitor = SQLUtils.createSchemaStatVisitor(dbType)
+    val statVisitor = SQLUtils.createSchemaStatVisitor(DbType.of(dbType))
     stmt.accept(statVisitor)
 
     val iter = statVisitor.getColumns().iterator()
