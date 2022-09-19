@@ -27,7 +27,7 @@ import com.github.dockerjava.api.model.{Frame, StreamType}
 import org.apache.commons.compress.archivers.tar.{TarArchiveEntry, TarArchiveInputStream}
 import org.apache.commons.io.IOUtils
 import org.apache.commons.lang3.StringUtils
-import org.apache.spark.{MLSQLSparkConst, SparkCoreVersion}
+import org.apache.spark.SparkCoreVersion
 import org.slf4j.{Logger, LoggerFactory}
 import tech.mlsql.core.version.MLSQLVersion
 import tech.mlsql.it.docker.beans.{ContainerExecException, ContainerExecResult, ContainerExecResultBytes}
@@ -76,31 +76,13 @@ object DockerUtils {
       } else {
         "2.12"
       }
-      base = String.format("byzer-lang-%s-%s-%s.jar", getSparkLongVersion, scalaVersion, byzerVersion)
+      base = String.format("byzer-lang-%s-%s-%s.jar", getSparkVersion, scalaVersion, byzerVersion)
     }
     base
   }
 
-  def getSparkShortVersion: String = {
-    var sparkVersion: String = null
-    if (MLSQLSparkConst.majorVersion(SparkCoreVersion.exactVersion) == 2) {
-      sparkVersion = MLSQLSparkConst.majorVersion(SparkCoreVersion.exactVersion) +
-        "." + MLSQLSparkConst.minorVersion(SparkCoreVersion.exactVersion)
-    } else {
-      sparkVersion = MLSQLSparkConst.majorVersion(SparkCoreVersion.exactVersion) + ".0"
-    }
-    sparkVersion
-  }
-
-  def getSparkLongVersion: String = {
-    var sparkVersion: String = null
-    if (MLSQLSparkConst.majorVersion(SparkCoreVersion.exactVersion) == 2) {
-      sparkVersion = MLSQLSparkConst.majorVersion(SparkCoreVersion.exactVersion) +
-        ".4.3"
-    } else {
-      sparkVersion = MLSQLSparkConst.majorVersion(SparkCoreVersion.exactVersion) + ".1.1"
-    }
-    sparkVersion
+  def getSparkVersion: String = {
+    SparkCoreVersion.exactVersion
   }
 
   def getLibPath: String = {
@@ -130,6 +112,7 @@ object DockerUtils {
 
   /**
    * Get the byzer streamingpro-it absolute path. e.g.: /opt/project/byzer-lang/streamingpro-it/
+   *
    * @return
    */
   def getCurProjectRootPath: String = {
@@ -152,7 +135,7 @@ object DockerUtils {
     var base: String = System.getProperty("maven.finalName")
     if (base == null) {
       val byzerVersion = getByzerVersion
-      val sparkVersion: String = getSparkLongVersion
+      val sparkVersion: String = getSparkVersion
       base = String.format("byzer-lang-%s-%s", sparkVersion, byzerVersion)
     }
     base

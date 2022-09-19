@@ -8,6 +8,7 @@ import tech.mlsql.crawler.RestUtils
 import tech.mlsql.it.contiainer.ByzerCluster
 import tech.mlsql.it.utils.DockerUtils
 import tech.mlsql.it.utils.DockerUtils.getCurProjectRootPath
+import tech.mlsql.runtime.VersionRangeChecker
 
 import java.io.File
 import java.util.UUID
@@ -17,7 +18,7 @@ import scala.collection.mutable
  * 23/02/2022 hellozepp(lisheng.zhanglin@163.com)
  */
 class ByzerScriptTestSuite extends LocalBaseTestSuite with Logging {
-  val version: String = DockerUtils.getSparkShortVersion
+  val version: String = DockerUtils.getSparkVersion
   var url: String = ""
   var initialByzerPlugins: Seq[String] = Seq()
   private var cluster: ByzerCluster = _
@@ -96,7 +97,7 @@ class ByzerScriptTestSuite extends LocalBaseTestSuite with Logging {
     // no-op
   }
 
-  if ("3.0".equals(version)) {
+  if (VersionRangeChecker.isVersionCompatible(">=3.0.0", version)) {
     before()
     println("Current spark version is 3.0, step to javaContainer test...")
     val cluster: ByzerCluster = setupCluster()
