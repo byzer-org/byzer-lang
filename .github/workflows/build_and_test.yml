@@ -33,7 +33,7 @@ jobs:
         include:
           - spark: 3.3.0
             java: 8
-            hadoop: 3.2
+            hadoop: 3
             spark-major: "3.3"
 
     steps:
