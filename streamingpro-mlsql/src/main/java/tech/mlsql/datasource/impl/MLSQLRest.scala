@@ -75,11 +75,12 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
     val skipParams = config.config.getOrElse("config.page.skip-params", "false").toBoolean
     val retryInterval = JavaUtils.timeStringAsMs(config.config.getOrElse("config.retry.interval", "1s"))
     val debug = config.config.getOrElse("config.debug", "false").toBoolean
+    val strategy = config.config.getOrElse("config.page.error.strategy", "abort")
     val enableRequestCleaner = config.config.getOrElse(configEnableRequestCleaner.name, "false")
     ScriptSQLExec.context().execListener.addEnv("enableRestDataSourceRequestCleaner", enableRequestCleaner)
 
-    def _error2DataFrame(errMsg: String, statusCode: Int, session: SparkSession) : DataFrame = {
-      session.createDataFrame(session.sparkContext.makeRDD(Seq(Row.fromSeq(Seq( errMsg.getBytes(UTF_8), statusCode))))
+    def _error2DataFrame(errMsg: String, statusCode: Int, session: SparkSession): DataFrame = {
+      session.createDataFrame(session.sparkContext.makeRDD(Seq(Row.fromSeq(Seq(errMsg.getBytes(UTF_8), statusCode))))
         , StructType(fields = Seq(
           StructField("content", BinaryType), StructField("status", IntegerType)
         )))
@@ -87,10 +88,11 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
 
     /**
      * Calling http rest endpoints with retrying
-     * @param url               http url
-     * @param skipParams        if true, not adding parameters to http get urls
-     * @maxTries                The max number of attempts
-     * @return                  http status code along with DataFrame
+     *
+     * @param url        http url
+     * @param skipParams if true, not adding parameters to http get urls
+     * @maxTries The max number of attempts
+     * @return http status code along with DataFrame
      */
     def _httpWithRetrying(url: String, skipParams: Boolean, maxTries: Int): (Int, DataFrame) = {
       executeWithRetrying[(Int, DataFrame)](maxTries)((() => {
@@ -105,10 +107,10 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
         } catch {
           // According to _http function, it throws MLSQLException if any request parameter is invalid
           case me: MLSQLException =>
-            if( me.getMessage.startsWith("content-type"))
+            if (me.getMessage.startsWith("content-type"))
               (415, _error2DataFrame(me.getMessage, 415, config.df.get.sparkSession))
-            else if(me.getMessage.startsWith("HTTP method"))
-              (405, _error2DataFrame(me.getMessage,405, config.df.get.sparkSession))
+            else if (me.getMessage.startsWith("HTTP method"))
+              (405, _error2DataFrame(me.getMessage, 405, config.df.get.sparkSession))
             else
               (500, _error2DataFrame(me.getMessage, 500, config.df.get.sparkSession))
           case e: Exception => (0, _error2DataFrame(e.getMessage, 0, config.df.get.sparkSession))
@@ -116,7 +118,7 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
       }) (),
         tempResp => {
           val succeed = tempResp._1 == 200
-          if (! succeed) {
+          if (!succeed) {
             Thread.sleep(retryInterval)
           }
           succeed
@@ -147,8 +149,8 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
 
         // If a user runs multiple Load Rest.`` statements in a single thread, we need to save all temp dirs
         context.execListener.env().get(classOf[MLSQLRest].getName) match {
-          case Some(dirs) => context.execListener.addEnv( classOf[MLSQLRest].getName, s"${dirs},${tmpTablePath}" )
-          case None => context.execListener.addEnv( classOf[MLSQLRest].getName, tmpTablePath )
+          case Some(dirs) => context.execListener.addEnv(classOf[MLSQLRest].getName, s"${dirs},${tmpTablePath}")
+          case None => context.execListener.addEnv(classOf[MLSQLRest].getName, tmpTablePath)
         }
 
         var count = 0
@@ -157,28 +159,37 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
         var url = config.path
         do {
           val pageFetchTime = System.currentTimeMillis()
-          val _skipParams = if( count == 0 ) false else skipParams
+          val _skipParams = if (count == 0) false else skipParams
           val (_, dataFrame) = _httpWithRetrying(url, _skipParams, maxTries)
           val row = dataFrame.select(F.col("content").cast(StringType), F.col("status")).head
           val content = row.getString(0)
           // Reset status
           status = row.getInt(1)
           pageStrategy.nexPage(Option(content))
-          url = pageStrategy.pageUrl( Option(content) )
+          url = pageStrategy.pageUrl(Option(content))
           hasNextPage = pageStrategy.hasNextPage(Option(content))
+          val exceptionMsg = s"URL:${url},with response status ${status}, Have retried ${maxTries} times!\n ${content}"
+          if (status != 200) {
+            // if strategy is abort, then the raise error, else if the strategy is skip, just log warn the exception
+            strategy match {
+              case "abort" => throw new RuntimeException(exceptionMsg)
+              case "skip" =>
+                // First page request failed, return immediately, otherwise return saved DataFrame
+                logWarning(exceptionMsg)
+                if (count == 0) return dataFrame else return context.execListener.sparkSession.read.parquet(tmpTablePath)
+            }
 
-          if( status != 200  ) {
-            // First page request failed, return immediately, otherwise return saved DataFrame
-            if( count == 0 ) return dataFrame else return context.execListener.sparkSession.read.parquet(tmpTablePath)
           }
           dataFrame.write.format("parquet").mode(SaveMode.Append).save(tmpTablePath)
+          logInfo(s"Data from url:${url} from start:${count * maxSize} to end:${(count + 1) * maxSize - 1} " +
+            s"is done! and dump to ${tmpTablePath}")
           if (debug) {
             logInfo(format(s"Getting Page ${count} ${url} Consume:${System.currentTimeMillis() - pageFetchTime}ms"))
           }
-          if( count > 0 ) Thread.sleep( pageInterval)
+          if (count > 0) Thread.sleep(pageInterval)
           count += 1
         }
-        while( count < maxSize && hasNextPage && status == 200 )
+        while (count < maxSize && hasNextPage && status == 200)
         context.execListener.sparkSession.read.parquet(tmpTablePath)
 
       case (None, None) =>
@@ -192,11 +203,12 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
 
   /**
    * Send http request and return the result as a DataFrame
-   * @param url           http url
-   * @param params        http parameters, including content-type http method and others
-   * @param skipParams    if true, not adding parameters to http get url
-   * @param session       The Spark Session
-   * @return  DataFrame , is guaranteed to be not null, with 2 columns content: Array[String] status: Int
+   *
+   * @param url        http url
+   * @param params     http parameters, including content-type http method and others
+   * @param skipParams if true, not adding parameters to http get url
+   * @param session    The Spark Session
+   * @return DataFrame , is guaranteed to be not null, with 2 columns content: Array[String] status: Int
    */
   private def _http(url: String, params: Map[String, String], skipParams: Boolean, session: SparkSession): DataFrame = {
     val httpMethod = params.getOrElse(configMethod.name, "get").toLowerCase
@@ -354,11 +366,11 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
 
         val filePathBuf = ArrayBuffer[(String, String)]()
         HDFSOperatorV2.isFile(finalPath) match {
-          case true  =>
+          case true =>
             filePathBuf.append((finalPath, fileName))
           case false if HDFSOperatorV2.isDir(finalPath) =>
             val listFiles = HDFSOperatorV2.listFiles(finalPath)
-            if(listFiles.filter(_.isDirectory).size > 0) throw new MLSQLException(s"Including subdirectories is not supported")
+            if (listFiles.filter(_.isDirectory).size > 0) throw new MLSQLException(s"Including subdirectories is not supported")
 
             listFiles.filterNot(_.getPath.getName.equals("_SUCCESS"))
               .foreach(file => filePathBuf.append((file.getPath.toString, file.getPath.getName)))
