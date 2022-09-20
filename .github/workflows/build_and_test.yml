@@ -31,14 +31,10 @@ jobs:
       fail-fast: true
       matrix:
         include:
-          - spark: 3.1.1
+          - spark: 3.3.0
             java: 8
             hadoop: 3.2
-            spark-major: "3.0"
-          - spark: 2.4.3
-            java: 8
-            hadoop: 2.7
-            spark-major: "2.4"
+            spark-major: "3.3"
 
     steps:
       - name: Checkout repository
