@@ -276,39 +276,72 @@ object HDFSOperatorV2 {
     val writePathParts = pathElements.take(pathElements.length - 1) :+
       s"skipFirstNLines_${skipFirstNLines}_${charset}_${pathElements(pathElements.length - 1)}"
     val outPath = writePathParts.mkString(PathFun.pathSeparator)
-    if (!fileExists(outPath)) {
-      try {
-        dos = fs.create(new Path(new java.io.File(outPath).getPath), true)
-        br = new BufferedReader(new InputStreamReader(fs.open(src), charset))
+    try {
+      dos = fs.create(new Path(new java.io.File(outPath).getPath), true)
+      br = new BufferedReader(new InputStreamReader(fs.open(src)))
+      line = br.readLine()
+      var count = 1
+      while (line != null) {
+        if (count > skipFirstNLines) {
+          dos.writeBytes(line + "\n")
+        }
+        count += 1
         line = br.readLine()
-
-        var count = 1
-        while (line != null) {
-
-          if (header && count == 1) {
-            dos.write((line + "\n").getBytes(charset))
-            line = br.readLine()
-          }
-
-          if (count >= skipFirstNLines) {
-            dos.write((line + "\n").getBytes(charset))
-          }
-          count += 1
-          line = br.readLine()
-        }
-      } finally {
-        if (br != null) br.close()
-        if (null != dos) {
-          try {
-            dos.close()
-          } catch {
-            case ex: Exception =>
-              println("close exception")
-          }
+      }
+    } finally {
+      if (br != null) br.close()
+      if (null != dos) {
+        try {
           dos.close()
+        } catch {
+          case ex: Exception => throw ex
         }
+        dos.close()
       }
     }
     outPath
   }
+
+  def saveWithoutLastNLines(inPath: String, skipLastNLines: Int): String = {
+    val fs = FileSystem.get(hadoopConfiguration)
+    val src: Path = new Path(inPath)
+    var line: String = null
+    var dos: FSDataOutputStream = null
+    var br1: BufferedReader = null
+    var br2: BufferedReader = null
+    val pathElements = inPath.split(PathFun.pathSeparator)
+    val writePathParts = pathElements.take(pathElements.length - 1) :+ String.format("skipLastNLines_%s_%s", String.valueOf(skipLastNLines), pathElements(pathElements.length - 1))
+    val outPath = writePathParts.mkString(PathFun.pathSeparator)
+
+    try {
+      dos = fs.create(new Path(new java.io.File(outPath).getPath), true)
+      br1 = new BufferedReader(new InputStreamReader(fs.open(src)))
+      var totalLinesCount = 0
+      while (br1.readLine() != null) totalLinesCount += 1
+
+      br2 = new BufferedReader(new InputStreamReader(fs.open(src)))
+      line = br2.readLine()
+      var count = 1
+
+      while (line != null) {
+        if (count <= totalLinesCount - skipLastNLines) {
+          dos.writeBytes(line + "\n")
+        }
+        count += 1
+        line = br2.readLine()
+      }
+    } finally {
+      if (br1 != null) br1.close()
+      if (null != dos) {
+        try {
+          dos.close()
+        } catch {
+          case ex: Exception => throw ex
+        }
+        dos.close()
+      }
+    }
+    outPath
+  }
+
 }
