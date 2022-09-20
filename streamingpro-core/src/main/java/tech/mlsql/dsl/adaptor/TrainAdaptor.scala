@@ -195,7 +195,8 @@ object MLMapping extends Logging with WowLog {
     "Word2ArrayInPlace" -> "streaming.dsl.mmlib.algs.SQLWord2ArrayInPlace",
     "AutoML" -> "tech.mlsql.ets.algs.SQLAutoML",
     "ShowTableExt" -> "streaming.dsl.mmlib.algs.SQLShowTableExt",
-    "PredictionEva" -> "streaming.dsl.mmlib.algs.SQLPredictionEva"
+    "PredictionEva" -> "streaming.dsl.mmlib.algs.SQLPredictionEva",
+    "XGBoostClassifier" -> "streaming.dsl.mmlib.algs.SQLXGBoostClassifier",
   )
 
   /**

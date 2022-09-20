@@ -734,6 +734,16 @@
             <scope>test</scope>
         </dependency>
 
+        <dependency>
+            <groupId>ml.dmlc</groupId>
+            <artifactId>xgboost4j_${scala.binary.version}</artifactId>
+            <version>1.6.2</version>
+        </dependency>
+        <dependency>
+            <groupId>ml.dmlc</groupId>
+            <artifactId>xgboost4j-spark_${scala.binary.version}</artifactId>
+            <version>1.6.2</version>
+        </dependency>
 
     </dependencies>
 
