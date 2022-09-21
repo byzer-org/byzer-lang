@@ -35,7 +35,7 @@ DESCRIPTION
 
       positional arguments:
 
-      BYZER_SPARK_VERSION [2.4 | 3.0]          - Specify the spark version supported by the test, default 3.0.
+      BYZER_SPARK_VERSION [3.0 | 3.3]          - Specify the spark version supported by the test, default 3.3.
       TEST_MODULES_FLAG [all | it | ut]        - The parameter `all` here means to execute all tests; `ut` means to
                                                 execute only unit tests excluding integration test cases; `it` means
                                                 to execute only integration tests under the streamingpro-it module,
@@ -46,11 +46,11 @@ EXAMPLE
       If you need to execute integration tests of the spark3 version (which is the default behavior), you can use the
       following command:
 
-      $ sh dev/run-test.sh 3.0 it
+      $ sh dev/run-test.sh 3.3 it
 
       Or if you want to execute spark2 version of unit tests, you can use the command:
 
-      $ sh dev/run-test.sh 2.4 ut
+      $ sh dev/run-test.sh 3.3 ut
 EOF
   exit 1
 }
@@ -93,14 +93,8 @@ if [ "${BYZER_SPARK_VERSION}" == "3.0" ] || [ "${BYZER_SPARK_VERSION}" == "3.3" 
         *)       echo "Only support all|it|ut" && exit 1
     esac
   fi
-
-
-elif [ "${BYZER_SPARK_VERSION}" == "2.4" ]; then
-  SCALA_BINARY_VERSION=2.11
-  ./dev/change-scala-version.sh 2.11
-  python ./dev/python/convert_pom.py 2.4
 else
-  echo "Only accept 2.4|3.0|3.3"
+  echo "Only accept 3.0|3.3"
   exit 1
 fi
 

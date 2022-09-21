@@ -99,7 +99,7 @@ class ByzerScriptTestSuite extends LocalBaseTestSuite with Logging {
 
   if (VersionRangeChecker.isVersionCompatible(">=3.0.0", version)) {
     before()
-    println("Current spark version is 3.0, step to javaContainer test...")
+    println("Current spark version is 3.X, step to javaContainer test...")
     val cluster: ByzerCluster = setupCluster()
     val hadoopContainer = cluster.hadoopContainer
     val byzerLangContainer = cluster.byzerLangContainer
