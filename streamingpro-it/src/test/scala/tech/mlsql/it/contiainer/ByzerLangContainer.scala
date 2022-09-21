@@ -45,5 +45,5 @@ class ByzerLangContainer(clusterName: String, image: String) extends ChaosContai
 
 object ByzerLangContainer {
   val DEFAULT_BYZER_IMAGE_NAME: String = System.getenv.getOrDefault("DEFAULT_BYZER_IMAGE_NAME",
-    "byzer/byzer-lang:3.1.1-latest")
+    "byzer/byzer-lang:3.3.0-latest")
 }
