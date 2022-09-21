@@ -1,0 +1,9 @@
+--%comparator=tech.mlsql.it.IgnoreResultComparator
+
+save overwrite customer as parquet.`/tmp/parquet/customer`;
+
+load parquet.`/tmp/parquet/customer` as customer_sv_parquet;
+
+select count(1) as total_account from customer_sv_parquet as customer_sv_parquet_account;
+
+!assert customer_sv_parquet_account ''':total_account == 300''' "Failed to save parquet!";

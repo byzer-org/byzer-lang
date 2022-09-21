@@ -1,3 +1,5 @@
+--%comparator=tech.mlsql.it.IgnoreResultComparator
+
 select aes_decrypt( aes_encrypt("hello world") ) as original as result;
 
 -- make sure status of  all models are success.
