@@ -20,7 +20,7 @@ trait LocalBaseTestSuite extends AnyFunSuite with SparkOperationUtil with Before
   var dataDirPath: String = _
   var home: String = _
   val user = "admin"
-  var initialPlugins: Seq[String] = Seq("mlsql-assert", "mlsql-shell")
+  var initialPlugins: Seq[String] = Seq("mlsql-assert", "mlsql-shell", "mlsql-mllib")
   var originClassLoader = Thread.currentThread().getContextClassLoader
 
   def initPlugins(): Unit = {

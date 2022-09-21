@@ -1,0 +1,15 @@
+--%comparator=tech.mlsql.it.IgnoreResultComparator
+
+set rawData='''
+  {"jack":3,"jack2":4}
+  {"jack":4,"jack2":5}
+''';
+load jsonStr.`rawData` as table_1;
+
+save append table_1 as json.`/tmp/jack`;
+
+load json.`/tmp/jack` as table_2;
+
+select count(1) as total_account from table_2 as table_3;
+
+!assert table_3 ''':total_account == 4''' "Failed to append json!";

@@ -3,8 +3,8 @@ package tech.mlsql.it
 class SimpleQueryTestSuite extends LocalBaseTestSuite {
 
   override def setupRunParams(): Unit = {
-    testCaseDirPath = "src/test/resources/sql/simple"
-    dataDirPath = "src/test/resources/data/simple"
+    testCaseDirPath = "src/test/resources/sql"
+    dataDirPath = "src/test/resources/data"
     runParams = Array(
       "-streaming.master", "local[*]",
       "-streaming.name", "unit-test",

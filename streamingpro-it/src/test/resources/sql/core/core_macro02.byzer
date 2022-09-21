@@ -1,0 +1,5 @@
+--%comparator=tech.mlsql.it.IgnoreResultComparator
+!hdfs -count /simple/tmp;
+
+!lastCommand named hdfs_count;
+!assert hdfs_count ''':fileSystem != ""''' "Failed to execute !hdfs";
