@@ -1,0 +1,8 @@
+--%comparator=tech.mlsql.it.IgnoreResultComparator
+
+select C_ADDRESS from customer limit 1 as customer_default;
+
+select upper(C_ADDRESS) as C_ADDRESS_UPPER from customer limit 1 as customer_upper;
+
+!assert customer_default ''':C_ADDRESS == "j5JsirBM9P"''' "Default case of letters is wrong!";
+!assert customer_upper ''':C_ADDRESS_UPPER == "J5JSIRBM9P"''' "Failed to change case of letters!";

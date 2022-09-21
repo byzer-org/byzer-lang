@@ -1,0 +1,18 @@
+--%comparator=tech.mlsql.it.IgnoreResultComparator
+
+select split(C_NAME,"#") as C_NAME_SPLIT from customer as customer_split;
+
+select
+    C_NAME_SPLIT[0] as C_NAME_1,
+    C_NAME_SPLIT[1] as C_NAME_2
+from customer_split
+as customer_split_format;
+
+select
+    count(C_NAME_1) as total_account_1,
+    count(C_NAME_2) as total_account_2
+from customer_split_format
+as customer_split_account;
+
+!assert customer_split_account ''':total_account_1 == 300''' "Failed to split column!";
+!assert customer_split_account ''':total_account_2 == 300''' "Failed to split column!";

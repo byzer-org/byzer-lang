@@ -1,9 +1,0 @@
---%comparator=tech.mlsql.it.IgnoreResultComparator
-run command as SyntaxAnalyzeExt.`` where
-sql='''
-select * from table9 as table09
-''' as extractedTables;
-
-select tableName from extractedTables as output9;
--- The result should be table9
-!assert output9 ''':tableName=="table9"'''  "The result should be table9";
