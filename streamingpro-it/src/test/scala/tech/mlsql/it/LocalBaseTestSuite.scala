@@ -1,6 +1,8 @@
 package tech.mlsql.it
 
 import org.apache.commons.io.FileUtils
+import org.apache.logging.log4j.LogManager
+import org.apache.logging.log4j.core.LoggerContext
 import org.apache.spark.streaming.SparkOperationUtil
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.funsuite.AnyFunSuite
@@ -57,6 +59,12 @@ trait LocalBaseTestSuite extends AnyFunSuite with SparkOperationUtil with Before
   }
 
   override def beforeAll(): Unit = {
+    
+    val ctx = LogManager.getContext(false).asInstanceOf[LoggerContext]
+    val config = ctx.getConfiguration
+    val loggerConfig = config.getLoggerConfig(LogManager.ROOT_LOGGER_NAME)
+    loggerConfig.setLevel(org.apache.logging.log4j.Level.WARN)
+
     setupWorkingDirectory()
     setupRunParams()
     copyDataToUserHome(user)
