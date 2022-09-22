@@ -27,8 +27,8 @@ object TestManager extends Logging {
     if (testCaseDir.exists() && testCaseDir.isDirectory) {
       testCaseDir.listFiles().sortBy(_.getName).foreach(file => {
         if (file.isFile &&
-          file.getName.endsWith("mlsql") &&
-          file.getName.stripSuffix(".mlsql").matches(matchesReg)
+          (file.getName.endsWith("mlsql") || file.getName.endsWith("byzer")) &&
+          (file.getName.stripSuffix(".mlsql").matches(matchesReg) || file.getName.stripSuffix(".byzer").matches(matchesReg))
         ) {
           logInfo(s"collect test file: ${file.getName}; matches=${matchesReg}")
           val expectedFileName = s"""${file.getName}.expected"""

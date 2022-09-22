@@ -137,6 +137,8 @@ streamingpro-cluster/logs
 
 dev/create-release/do-release.sh
 dev/mlsqltestssupport/__pycache__/
+dev/ansj_seg-5.1.6.jar
+dev/nlp-lang-1.7.8.jar
 dev/create-release/streamingpro*
 __pycache__
 streamingpro-mlsql/logs/template

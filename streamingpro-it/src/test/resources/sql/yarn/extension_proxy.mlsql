@@ -1,3 +1,5 @@
+--%comparator=tech.mlsql.it.IgnoreResultComparator
+
 !plugin proxy "http://market.byzer.org/run";
 !plugin show proxy;
 !lastCommand named proxies;

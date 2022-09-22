@@ -1,0 +1,13 @@
+--%comparator=tech.mlsql.it.IgnoreResultComparator
+
+load parquet.`/ssb/customer/part-00000-7505a64d-b4bf-4186-874a-a9898502a51e-c000.snappy.parquet` as customer_parquet;
+
+select * from customer_parquet as customer;
+
+save overwrite customer as csv.`/tmp/csv/customer` where header="true";
+
+load csv.`/tmp/csv/customer` where header="true" as overwrite_csv;
+
+select count(1) as total_account from overwrite_csv as overwrite_csv_account;
+
+!assert overwrite_csv_account ''':total_account == 300''' "Failed to save csv!";
