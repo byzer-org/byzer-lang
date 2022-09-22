@@ -58,10 +58,6 @@ trait LocalBaseTestSuite extends AnyFunSuite with SparkOperationUtil with Before
   }
 
   override def beforeAll(): Unit = {
-
-    import org.apache.logging.log4j.core.config.Configurator
-    Configurator.setAllLevels(LogManager.getRootLogger.getName, org.apache.logging.log4j.Level.WARN)
-
     setupWorkingDirectory()
     setupRunParams()
     copyDataToUserHome(user)
