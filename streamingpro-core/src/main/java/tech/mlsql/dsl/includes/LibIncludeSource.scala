@@ -36,7 +36,7 @@ class LibIncludeSource extends IncludeSource with Logging {
     val force = options.getOrElse("force", "false")
 
     //"./__mlsql__/deps/"
-    val targetPath = PathFun.tmp.add("__mlsql__").add("deps").toPath
+    val targetPath = PathFun.current.add("__mlsql__").add("deps").toPath
     val targetFile = new File(targetPath)
     if (!targetFile.exists()) {
       targetFile.mkdirs()
