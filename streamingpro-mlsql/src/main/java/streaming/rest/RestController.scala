@@ -38,7 +38,7 @@ import org.apache.spark.sql.mlsql.session.{MLSQLSparkSession, SparkSessionCacheM
 import org.apache.spark.{MLSQLConf, SparkInstanceService}
 import tech.mlsql.MLSQLEnvKey
 import tech.mlsql.app.{CustomController, ResultResp}
-import tech.mlsql.common.JsonUtils
+import tech.mlsql.common.utils.serder.json.JsonUtils
 import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.common.utils.serder.json.JSONTool
 import tech.mlsql.crawler.RestUtils
@@ -50,7 +50,6 @@ import tech.mlsql.runtime.plugins.request_cleaner.RequestCleanerManager
 import tech.mlsql.runtime.plugins.result_render.ResultRenderManager
 
 import scala.collection.JavaConversions._
-import scala.collection.mutable.ArrayBuffer
 import scala.util.control.NonFatal
 
 /**
