@@ -1,17 +1,18 @@
 package tech.mlsql.it.contiainer
 
 import com.github.dockerjava.api.command.CreateContainerCmd
+import org.apache.commons.lang3.StringUtils
 import org.testcontainers.containers.BindMode
 import org.testcontainers.containers.Network.NetworkImpl
 import org.testcontainers.containers.wait.strategy.HttpWaitStrategy
 import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.it.utils.DockerUtils
+
 import java.io.File
 import java.time.Duration
 import java.time.temporal.ChronoUnit.SECONDS
 import java.util.function.Consumer
 import scala.util.Random
-
 import scala.sys.process._
 
 /**
@@ -52,7 +53,11 @@ object ByzerCluster extends Logging {
       c.setWaitStrategy(new HttpWaitStrategy()
         .forPort(8088).forPath("/cluster").forStatusCode(200)
         .withStartupTimeout(Duration.of(1500, SECONDS)))
-      c.withFileSystemBind(dataDirPath, "/home/hadoop/data/")
+      if (StringUtils.isNoneBlank(dataDirPath)){
+        c.withFileSystemBind(dataDirPath, "/home/hadoop/data/")
+      } else {
+        logWarning("The data directory is empty, failed to initialize data!")
+      }
       c.withCreateContainerCmdModifier(new Consumer[CreateContainerCmd]() {
         def accept(cmd: CreateContainerCmd): Unit = {
           cmd.withName("hadoop3")
