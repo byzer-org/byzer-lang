@@ -1,0 +1,8 @@
+--%comparator=tech.mlsql.it.IgnoreResultComparator
+
+load excel.`/excel/test-excel.xlsx` where header="true" and dataAddress="'Sheet2'!A20:B21" and addColorColumns="true" as excel_demo;
+
+!assert excel_demo ''':id == 1''' "Failed to load excel!";
+!assert excel_demo ''':title == 10''' "Failed to load excel!";
+!assert excel_demo ''':id_color == "FFC6EFCE"''' "Failed to load excel!";
+!assert excel_demo ''':title_color == "FFFFC7CE"''' "Failed to load excel!";
