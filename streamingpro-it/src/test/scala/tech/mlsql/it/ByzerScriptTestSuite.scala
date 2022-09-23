@@ -23,8 +23,8 @@ class ByzerScriptTestSuite extends LocalBaseTestSuite with Logging {
   var initialByzerPlugins: Seq[String] = Seq()
   private var cluster: ByzerCluster = _
 
-  def setupCluster(): ByzerCluster = {
-    cluster = ByzerCluster.forSpec()
+  def setupCluster(dataDirPath: String): ByzerCluster = {
+    cluster = ByzerCluster.forSpec(dataDirPath)
     cluster.start()
     cluster
   }
@@ -93,12 +93,7 @@ class ByzerScriptTestSuite extends LocalBaseTestSuite with Logging {
     dataDirPath = path + "/src/test/resources/data"
   }
 
-  def before(): Unit = {
-    // no-op
-  }
-
   if (VersionRangeChecker.isVersionCompatible(">=3.0.0", version)) {
-    before()
     println("Current spark version is 3.X, step to javaContainer test...")
     val cluster: ByzerCluster = setupCluster()
     val hadoopContainer = cluster.hadoopContainer

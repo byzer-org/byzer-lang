@@ -13,9 +13,9 @@ import org.apache.http.util.EntityUtils
 import org.apache.http.{HttpEntity, HttpResponse}
 import streaming.dsl.ScriptSQLExec
 import streaming.log.WowLog
-import tech.mlsql.common.JsonUtils
 import tech.mlsql.common.utils.distribute.socket.server.JavaUtils
 import tech.mlsql.common.utils.log.Logging
+import tech.mlsql.common.utils.serder.json.JsonUtils
 import tech.mlsql.dsl.adaptor.DslTool
 import tech.mlsql.tool.{HDFSOperatorV2, Templates2}
 

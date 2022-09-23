@@ -43,7 +43,7 @@ object ByzerCluster extends Logging {
   private val clusterName = "byzer-it"
   private val networkAliases = "byzer-network"
 
-  def forSpec(): ByzerCluster = {
+  def forSpec(dataDirPath: String): ByzerCluster = {
     beforeAll()
     lazy val hadoopContainer: HadoopContainer = new HadoopContainer(clusterName).configure { c =>
       c.addExposedPorts(9870, 8088, 19888, 10002, 8042)
@@ -52,6 +52,7 @@ object ByzerCluster extends Logging {
       c.setWaitStrategy(new HttpWaitStrategy()
         .forPort(8088).forPath("/cluster").forStatusCode(200)
         .withStartupTimeout(Duration.of(1500, SECONDS)))
+      c.withFileSystemBind(dataDirPath, "/home/hadoop/data/")
       c.withCreateContainerCmdModifier(new Consumer[CreateContainerCmd]() {
         def accept(cmd: CreateContainerCmd): Unit = {
           cmd.withName("hadoop3")
