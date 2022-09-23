@@ -648,6 +648,13 @@
         <resources>
             <resource>
                 <directory>src/main/resources-${mode}</directory>
+                <excludes>
+                    <exclude>mlsql-version-info.properties</exclude>
+                </excludes>
+                <filtering>false</filtering>
+            </resource>
+            <resource>
+                <directory>src/main/resources-${mode}</directory>
                 <includes>
                     <include>mlsql-version-info.properties</include>
                 </includes>

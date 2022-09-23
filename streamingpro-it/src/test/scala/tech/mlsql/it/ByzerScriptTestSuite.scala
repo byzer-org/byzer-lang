@@ -77,7 +77,7 @@ class ByzerScriptTestSuite extends LocalBaseTestSuite with Logging {
 
   override def setupRunParams(): Unit = {
     val path = getCurProjectRootPath
-    testCaseDirPath = path + "src/test/resources/sql/yarn"
+    testCaseDirPath = path + "src/test/resources/sql"
     dataDirPath = path + "src/test/resources/data"
   }
 

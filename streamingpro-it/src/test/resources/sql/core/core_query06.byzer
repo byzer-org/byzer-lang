@@ -1,7 +1,0 @@
---%comparator=tech.mlsql.it.IgnoreResultComparator
-
-select '    test text      ' as text_col as test_text;
-
-select trim(text_col) as new_text_col from test_text as test_text_trim;
-
-!assert test_text_trim ''':new_text_col == "test text"''' "Failed to trim field!";
