@@ -1,0 +1,12 @@
+--%comparator=tech.mlsql.it.IgnoreResultComparator
+
+set hello="world";
+
+select "hello William" as title
+as `${hello}`;
+
+!assert world ''':title == "hello William"''' "Failed to set variable!";
+
+set jack='''
+ hello today is:${date.toString("yyyyMMdd")}
+''';
