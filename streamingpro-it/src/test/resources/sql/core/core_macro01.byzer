@@ -1,0 +1,12 @@
+--%comparator=tech.mlsql.it.IgnoreResultComparator
+
+!desc customer;
+
+!lastCommand named customer_desc;
+
+select data_type from customer_desc where col_name = "C_CUSTKEY" as customer_desc_type_1;
+
+select distinct data_type from customer_desc where col_name in ("C_NAME", "C_ADDRESS", "C_CITY", "C_NATION", "C_REGION", "C_PHONE", "C_MKTSEGMENT") as customer_desc_type_2;
+
+!assert customer_desc_type_1 ''':data_type == "int"''' "Failed to run macro function: !desc !";
+!assert customer_desc_type_2 ''':data_type == "string"''' "Failed to run macro function: !desc !";

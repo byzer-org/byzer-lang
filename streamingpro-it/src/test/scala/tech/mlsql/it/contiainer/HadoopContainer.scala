@@ -9,16 +9,9 @@ class HadoopContainer(clusterName: String, image: String) extends ChaosContainer
     this(clusterName, HadoopContainer.DEFAULT_HADOOP_IMAGE_NAME)
   }
 
-
-  override def beforeStart(): Unit = {
-  }
-
   override def start(): Unit = {
+    super.beforeStart()
     super.start()
-    afterStart()
-  }
-
-  def afterStart(): Unit = {
   }
 
   override def beforeStop(): Unit = {
