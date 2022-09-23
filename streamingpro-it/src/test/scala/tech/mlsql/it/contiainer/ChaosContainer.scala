@@ -23,6 +23,7 @@ class ChaosContainer[SelfT <: ChaosContainer[SelfT]](clusterName: String, image:
   override def start(): Unit = {
     beforeStart()
     super.start()
+    afterStart()
   }
 
   def beforeStart(): Unit = {
@@ -30,6 +31,14 @@ class ChaosContainer[SelfT <: ChaosContainer[SelfT]](clusterName: String, image:
     tailContainerLog(this)
   }
 
+  def afterStart(): Unit = {
+    // no-op
+  }
+
+  /**
+   * Use this function to delete the container for which the test is done
+   * @param container GenericContainer
+   */
   def configureLeaveContainerRunning(container: GenericContainer): Unit = {
     // use Testcontainers reuse containers feature to leave the container running
     if (CONTAINERS_LEAVE_RUNNING) {
