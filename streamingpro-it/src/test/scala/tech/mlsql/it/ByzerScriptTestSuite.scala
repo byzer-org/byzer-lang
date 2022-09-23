@@ -23,8 +23,8 @@ class ByzerScriptTestSuite extends LocalBaseTestSuite with Logging {
   var initialByzerPlugins: Seq[String] = Seq()
   private var cluster: ByzerCluster = _
 
-  def setupCluster(): ByzerCluster = {
-    cluster = ByzerCluster.forSpec()
+  def setupCluster(dataDirPath: String): ByzerCluster = {
+    cluster = ByzerCluster.forSpec(dataDirPath)
     cluster.start()
     cluster
   }
@@ -39,24 +39,12 @@ class ByzerScriptTestSuite extends LocalBaseTestSuite with Logging {
 
   override def beforeAll(): Unit = {
     println("Initialize configuration before integration test execution...")
-    setupWorkingDirectory()
-    setupRunParams()
-    copyDataToUserHome(user)
     TestManager.loadTestCase(new File(testCaseDirPath))
     initPlugins()
   }
 
-  override def copyDataToUserHome(user: String): Unit = {
-    // no-op
-  }
-
   override def initPlugins(): Unit = {
-    // set plugin context loader
-    Thread.currentThread().setContextClassLoader(ClassLoader.getSystemClassLoader)
-    initialByzerPlugins.foreach(name => {
-      runScript(url, user, s"""!plugin app remove "$name-$version";""")
-      runScript(url, user, s"""!plugin app add - "$name-$version";""")
-    })
+    // no-op
   }
 
   def runScript(url: String, user: String, code: String, callbackHeader: String = ""): (Int, String) = {
@@ -89,18 +77,20 @@ class ByzerScriptTestSuite extends LocalBaseTestSuite with Logging {
 
   override def setupRunParams(): Unit = {
     val path = getCurProjectRootPath
-    testCaseDirPath = path + "/src/test/resources/sql/yarn"
-    dataDirPath = path + "/src/test/resources/data"
+    testCaseDirPath = path + "src/test/resources/sql/yarn"
+    dataDirPath = path + "src/test/resources/data"
   }
 
-  def before(): Unit = {
-    // no-op
+  def beforeInitContainers(): Unit = {
+    setupRunParams()
   }
+
+  beforeInitContainers()
 
   if (VersionRangeChecker.isVersionCompatible(">=3.0.0", version)) {
-    before()
+
     println("Current spark version is 3.X, step to javaContainer test...")
-    val cluster: ByzerCluster = setupCluster()
+    val cluster: ByzerCluster = setupCluster(dataDirPath)
     val hadoopContainer = cluster.hadoopContainer
     val byzerLangContainer = cluster.byzerLangContainer
     val javaContainer = byzerLangContainer.container
