@@ -19,13 +19,14 @@
 package tech.mlsql.tool;
 
 import com.google.common.base.Preconditions;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Map;
 import java.util.Properties;
 
@@ -85,7 +86,7 @@ public class ByzerConfig {
         }
     }
 
-    private static void loadAndTrimProperties(@Nonnull InputStream inputStream, @Nonnull OrderedProperties properties) {
+    private static void loadAndTrimProperties(InputStream inputStream, OrderedProperties properties) {
         Preconditions.checkNotNull(inputStream);
         Preconditions.checkNotNull(properties);
         try {

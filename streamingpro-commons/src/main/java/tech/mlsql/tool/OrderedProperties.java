@@ -22,7 +22,6 @@ import com.google.common.base.Preconditions;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 
-import javax.annotation.Nonnull;
 import java.io.*;
 import java.util.*;
 
@@ -110,7 +109,7 @@ public final class OrderedProperties implements Serializable {
      * @param source
      * @return
      */
-    public static OrderedProperties copyAndTrim(@Nonnull OrderedProperties source) {
+    public static OrderedProperties copyAndTrim(OrderedProperties source) {
         Preconditions.checkNotNull(source, "source cannot be null");
         // create a copy that has the same behaviour
         OrderedPropertiesBuilder builder = new OrderedPropertiesBuilder();

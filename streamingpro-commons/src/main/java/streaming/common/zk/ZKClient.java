@@ -21,13 +21,11 @@ package streaming.common.zk;
 import com.google.inject.Inject;
 import net.csdn.common.settings.Settings;
 import org.I0Itec.zkclient.IZkDataListener;
-import org.apache.log4j.Logger;
 
 /**
  * 7/7/16 WilliamZhu(allwefantasy@gmail.com)
  */
 public class ZKClient {
-    private Logger logger = Logger.getLogger(ZKClient.class);
     private ZKConfUtil zkConfUtil;
 
     @Inject
@@ -171,7 +169,6 @@ public class ZKClient {
             @Override
             public void setConf(String conf) {
                 System.out.println(conf);
-                logger.info("test" + conf);
 
             }
         });
