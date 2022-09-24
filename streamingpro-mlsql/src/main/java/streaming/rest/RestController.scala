@@ -28,7 +28,7 @@ import net.csdn.annotation.rest.{At, _}
 import net.csdn.common.collections.WowCollections
 import net.csdn.modules.http.ApplicationController
 import net.csdn.modules.http.RestRequest.Method._
-import org.apache.commons.httpclient.HttpStatus
+import org.apache.http.HttpStatus
 import org.apache.http.HttpResponse
 import org.apache.spark.ps.cluster.Message
 import org.apache.spark.ps.cluster.Message.Pong
