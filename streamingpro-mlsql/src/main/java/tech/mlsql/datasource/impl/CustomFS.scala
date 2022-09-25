@@ -30,7 +30,7 @@ class CustomFS(override val uid: String) extends MLSQLSource
     val extraObjectStoreConf = mutable.HashMap[String, String]()
 
     ConnectMeta.presentThenCall(DBMappingKey("FS", schema), kvs => {
-      kvs.foreach(kv => extraObjectStoreConf.put(kv._1, kv._2))
+      kvs.filter(_._1 != "format").foreach(kv => extraObjectStoreConf.put(kv._1, kv._2))
     })
 
     // Object store config starts with spark.hadoop or fs
@@ -40,7 +40,9 @@ class CustomFS(override val uid: String) extends MLSQLSource
       if (item._1.startsWith("fs.")) {
         ("spark.hadoop." + item._1, item._2)
       } else item
-    }.foreach(item => session.conf.set(item._1, item._2))
+    }.foreach { item =>
+      session.conf.set(item._1, item._2)
+    }
     // To load azure blob data, spark.hadoop prefix should be removed. Because NativeAzureFileSystem - azure blob's HDFS
     // compatible API, looks up Azure blob credentials by fs.azure.account.key.<account>.blob.core.chinacloudapi.cn.
     objectStoreConf.filter(_._1.startsWith("spark.hadoop.fs.azure")).foreach { conf =>
@@ -48,7 +50,7 @@ class CustomFS(override val uid: String) extends MLSQLSource
     }
 
     val format = config.config.getOrElse("implClass", fullFormat)
-    reader.options(loadFileConf).format(format).load(config.path)
+    reader.options(loadFileConf-"implClass").format(format).load(config.path)
   }
 
   override def save(writer: DataFrameWriter[Row], config: DataSinkConfig): Any = {
@@ -60,7 +62,7 @@ class CustomFS(override val uid: String) extends MLSQLSource
     val extraObjectStoreConf = mutable.HashMap[String, String]()
 
     ConnectMeta.presentThenCall(DBMappingKey("FS", schema), kvs => {
-      kvs.foreach(kv => extraObjectStoreConf.put(kv._1, kv._2))
+      kvs.filter(_._1 != "format").foreach(kv => extraObjectStoreConf.put(kv._1, kv._2))
     })
 
 
@@ -71,14 +73,16 @@ class CustomFS(override val uid: String) extends MLSQLSource
       if (item._1.startsWith("fs.")) {
         ("spark.hadoop." + item._1, item._2)
       } else item
-    }.foreach(item => session.conf.set(item._1, item._2))
+    }.foreach { item =>
+      session.conf.set(item._1, item._2)
+    }
     // See comments in load method
     objectStoreConf.filter(_._1.startsWith("spark.hadoop.fs.azure")).foreach { conf =>
       session.conf.set(conf._1.replace("spark.hadoop.fs.azure", "fs.azure"), conf._2)
     }
 
     val format = config.config.getOrElse("implClass", fullFormat)
-    writer.options(loadFileConf).mode(config.mode).format(format).save(config.path)
+    writer.options(loadFileConf-"implClass").mode(config.mode).format(format).save(config.path)
   }
 
 
