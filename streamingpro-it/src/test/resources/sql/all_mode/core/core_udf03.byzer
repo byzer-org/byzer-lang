@@ -5,30 +5,30 @@ SET plusFun='''
 import org.apache.spark.sql.expressions.{MutableAggregationBuffer, UserDefinedAggregateFunction}
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.Row
-class SumAggregation extends UserDefinedAggregateFunction with Serializable{
-    def inputSchema: StructType = new StructType().add("a", LongType)
-    def bufferSchema: StructType =  new StructType().add("total", LongType)
-    def dataType: DataType = LongType
-    def deterministic: Boolean = true
+class SumAggregation extends UserDefinedAggregateFunction with Serializable {
+  def inputSchema: StructType = new StructType().add("a", LongType)
+  def bufferSchema: StructType =  new StructType().add("total", LongType)
+  def dataType: DataType = LongType
+  def deterministic: Boolean = true
 
-    def initialize(buffer: MutableAggregationBuffer): Unit = {
-      // Compile error here
-      buffer.update(0, 0l
-    }
+  def initialize(buffer: MutableAggregationBuffer): Unit = {
+    // Compile error here
+    buffer.update(0, 0l)
+  }
 
-    def update(buffer: MutableAggregationBuffer, input: Row): Unit = {
-      val sum   = buffer.getLong(0)
-      val newitem = input.getLong(0)
-      buffer.update(0, sum + newitem)
-    }
+  def update(buffer: MutableAggregationBuffer, input: Row): Unit = {
+    val sum   = buffer.getLong(0)
+    val newitem = input.getLong(0)
+    buffer.update(0, sum + newitem)
+  }
 
-    def merge(buffer1: MutableAggregationBuffer, buffer2: Row): Unit = {
-      buffer1.update(0, buffer1.getLong(0) + buffer2.getLong(0))
-    }
+  def merge(buffer1: MutableAggregationBuffer, buffer2: Row): Unit = {
+    buffer1.update(0, buffer1.getLong(0) + buffer2.getLong(0))
+  }
 
-    def evaluate(buffer: Row): Any = {
-      buffer.getLong(0)
-    }
+  def evaluate(buffer: Row): Any = {
+    buffer.getLong(0)
+  }
 }
 ''';
 
