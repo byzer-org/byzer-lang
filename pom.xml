@@ -103,7 +103,7 @@
 
 
         <scope>provided</scope>
-        <hadoop-client-version>2.6.5</hadoop-client-version>
+        <hadoop-client-version>3.3.2</hadoop-client-version>
 
         <common-utils-version>0.3.9.5</common-utils-version>
         <serviceframework.version>2.0.9</serviceframework.version>
@@ -201,7 +201,7 @@
         </dependency>
         <dependency>
             <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-client</artifactId>
+            <artifactId>hadoop-client-api</artifactId>
             <version>${hadoop-client-version}</version>
             <scope>${scope}</scope>
             <exclusions>
@@ -646,6 +646,13 @@
     <build>
         <sourceDirectory>src/main/java/</sourceDirectory>
         <resources>
+            <resource>
+                <directory>src/main/resources-${mode}</directory>
+                <excludes>
+                    <exclude>mlsql-version-info.properties</exclude>
+                </excludes>
+                <filtering>false</filtering>
+            </resource>
             <resource>
                 <directory>src/main/resources-${mode}</directory>
                 <includes>

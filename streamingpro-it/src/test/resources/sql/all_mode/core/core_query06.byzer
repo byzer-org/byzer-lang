@@ -1,0 +1,33 @@
+--%comparator=tech.mlsql.it.IgnoreResultComparator
+
+select '    test text      ' as text_col as test_text;
+
+select trim(text_col) as new_text_col from test_text as test_text_trim;
+
+!assert test_text_trim ''':new_text_col == "test text"''' "Failed to trim field!";
+
+select 1 as col1 as table1;
+
+!assert table1 ''':col1 == 1''' "Failed to select!";
+
+select "" as features, 1 as label as mockData;
+select
+#set($colums=["features","label"])
+#foreach( $column in $colums )
+    SUM( case when `$column` is null or `$column`='' then 1 else 0 end ) as $column,
+#end
+ 1 as a from mockData as table2;
+
+ !assert table2 ''':features == 1''' "Something wrong with template syntax!";
+ !assert table2 ''':label == 0''' "Something wrong with template syntax!";
+ !assert table2 ''':a == 1''' "Something wrong with template syntax!";
+
+set sum_tpl = '''
+SUM( case when `{0}` is null or `{0}`='' then 1 else 0 end ) as {0}
+''';
+
+select ${template.get("sum_tpl","label")},
+${template.get("sum_tpl","label")}
+from mockData as table3;
+
+!assert table3 ''':label == 0''' "Something wrong with template syntax!";

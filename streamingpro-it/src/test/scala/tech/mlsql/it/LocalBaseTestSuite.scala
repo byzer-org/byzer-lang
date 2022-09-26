@@ -37,6 +37,9 @@ trait LocalBaseTestSuite extends AnyFunSuite with SparkOperationUtil with Before
       executeCode2(home, user, runtime, s"""!plugin app remove "${convert_plugin_name(name)}";""")
       executeCode2(home, user, runtime, s"""!plugin app add - "${convert_plugin_name(name)}";""")
     })
+
+    executeCode2(home, user, runtime, s"""!plugin app remove "${convert_plugin_name("mlsql-excel")}";""")
+    executeCode2(home, user, runtime, s"""!plugin app add "tech.mlsql.plugins.ds.MLSQLExcelApp" "${convert_plugin_name("mlsql-excel")}";""")
   }
 
   def setupWorkingDirectory(): Unit = {
