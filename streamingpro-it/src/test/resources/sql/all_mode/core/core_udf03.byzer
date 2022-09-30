@@ -13,7 +13,7 @@ class SumAggregation extends UserDefinedAggregateFunction with Serializable {
 
   def initialize(buffer: MutableAggregationBuffer): Unit = {
     // Compile error here
-    buffer.update(0, 0l)
+    buffer.update(0, 0l
   }
 
   def update(buffer: MutableAggregationBuffer, input: Row): Unit = {
