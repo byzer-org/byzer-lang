@@ -1,5 +1,3 @@
---%comparator=tech.mlsql.it.IgnoreResultComparator
-
 load parquet.`/ssb/customer/part-00000-7505a64d-b4bf-4186-874a-a9898502a51e-c000.snappy.parquet` as customer_parquet;
 
 select * from customer_parquet as customer;
@@ -8,6 +6,4 @@ save overwrite customer as parquet.`/tmp/parquet/customer`;
 
 load parquet.`/tmp/parquet/customer` as customer_sv_parquet;
 
-select count(1) as total_account from customer_sv_parquet as customer_sv_parquet_account;
-
-!assert customer_sv_parquet_account ''':total_account == 300''' "Failed to save parquet!";
+select * from customer_sv_parquet limit 5 as customer_sv_parquet_limit;

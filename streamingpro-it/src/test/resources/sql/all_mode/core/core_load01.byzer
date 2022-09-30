@@ -1,9 +1,3 @@
---%comparator=tech.mlsql.it.IgnoreResultComparator
-
 load parquet.`/ssb/customer/part-00000-7505a64d-b4bf-4186-874a-a9898502a51e-c000.snappy.parquet` as customer_parquet;
 
-select * from customer_parquet as customer;
-
-select count(*) as total_num from customer as account;
-
-!assert account ''':total_num == 300''' "Failed to load parquet file";
+select * from customer_parquet limit 5 as customer;

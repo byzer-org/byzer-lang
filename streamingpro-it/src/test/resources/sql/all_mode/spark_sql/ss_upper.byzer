@@ -1,0 +1,5 @@
+--%comparator=tech.mlsql.it.IgnoreResultComparator
+
+select upper('SparkSql') as fun_return as result;
+
+!assert result ''':fun_return == "SPARKSQL"''' "Something wrong about upper";
