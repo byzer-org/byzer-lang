@@ -1,12 +1,7 @@
---%comparator=tech.mlsql.it.IgnoreResultComparator
-
 load parquet.`/ssb/customer/part-00000-7505a64d-b4bf-4186-874a-a9898502a51e-c000.snappy.parquet` as customer_parquet;
 
 select * from customer_parquet as customer;
 
-select C_ADDRESS from customer limit 1 as customer_default;
+select C_ADDRESS from customer limit 5 as customer_default;
 
-select upper(C_ADDRESS) as C_ADDRESS_UPPER from customer limit 1 as customer_upper;
-
-!assert customer_default ''':C_ADDRESS == "j5JsirBM9P"''' "Default case of letters is wrong!";
-!assert customer_upper ''':C_ADDRESS_UPPER == "J5JSIRBM9P"''' "Failed to change case of letters!";
+select upper(C_ADDRESS) as C_ADDRESS_UPPER from customer_default as customer_upper;

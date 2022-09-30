@@ -1,5 +1,3 @@
---%comparator=tech.mlsql.it.IgnoreResultComparator
-
 load parquet.`/ssb/lineorder/part-00000-ee6e5c31-5f7f-4297-a666-902609272ba3-c000.snappy.parquet` as lineorder_parquet;
 select * from lineorder_parquet as lineorder;
 
@@ -26,7 +24,3 @@ and (D_YEAR = 1997 or D_YEAR = 1998)
 and (P_MFGR = 'MFGR#1' or P_MFGR = 'MFGR#2')
 group by D_YEAR, S_NATION, P_CATEGORY
 order by D_YEAR, S_NATION, P_CATEGORY as ssb_query12;
-
-select count(*) as total_account from ssb_query12 as ssb_query12_account;
-
-!assert ssb_query12_account ''':total_account == 76''' "File ssb_query12.byzer running error!";

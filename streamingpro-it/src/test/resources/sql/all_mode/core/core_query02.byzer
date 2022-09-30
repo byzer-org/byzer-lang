@@ -1,11 +1,5 @@
---%comparator=tech.mlsql.it.IgnoreResultComparator
-
 load parquet.`/ssb/customer/part-00000-7505a64d-b4bf-4186-874a-a9898502a51e-c000.snappy.parquet` as customer_parquet;
 
 select * from customer_parquet as customer;
 
-select * from customer where C_CUSTKEY > 200 as customer_filter;
-
-select count(1) as total_account from customer_filter as customer_filter_account;
-
-!assert customer_filter_account ''':total_account == 100''' "Failed to filter field!";
+select * from customer where C_CUSTKEY > 202 and C_CUSTKEY < 206 as customer_filter;

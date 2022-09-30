@@ -1,10 +1,4 @@
---%comparator=tech.mlsql.it.IgnoreResultComparator
-
 load parquet.`/ssb/customer/part-00000-7505a64d-b4bf-4186-874a-a9898502a51e-c000.snappy.parquet` as customer_parquet;
 select * from customer_parquet as customer;
 
 run customer as DataSummary.`` as customer_sumary;
-
-select count(1) as account from customer_sumary as customer_sumary_account;
-
-!assert customer_sumary_account ''':account == 8''' "Failed to run DataSummary!";

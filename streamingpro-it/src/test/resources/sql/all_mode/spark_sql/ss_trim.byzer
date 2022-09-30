@@ -1,0 +1,25 @@
+--%comparator=tech.mlsql.it.IgnoreResultComparator
+
+SELECT trim('    SparkSQL   ') as fun_return_1 as result_1;
+!assert result_1 ''':fun_return_1 == "SparkSQL"''' "Something wrong about trim";
+
+SELECT trim(BOTH FROM '    SparkSQL   ') as fun_return_2 as result_2;
+!assert result_2 ''':fun_return_2 == "SparkSQL"''' "Something wrong about trim";
+
+SELECT trim(LEADING FROM '    SparkSQL   ') as fun_return_3 as result_3;
+!assert result_3 ''':fun_return_3 == "SparkSQL   "''' "Something wrong about trim";
+
+SELECT trim(TRAILING FROM '    SparkSQL   ') as fun_return_4 as result_4;
+!assert result_4 ''':fun_return_4 == "    SparkSQL"''' "Something wrong about trim";
+
+SELECT trim('SL' FROM 'SSparkSQLS') as fun_return_5 as result_5;
+!assert result_5 ''':fun_return_5 == "parkSQ"''' "Something wrong about trim";
+
+SELECT trim(BOTH 'SL' FROM 'SSparkSQLS') as fun_return_6 as result_6;
+!assert result_6 ''':fun_return_6 == "parkSQ"''' "Something wrong about trim";
+
+SELECT trim(LEADING 'SL' FROM 'SSparkSQLS') as fun_return_7 as result_7;
+!assert result_7 ''':fun_return_7 == "parkSQLS"''' "Something wrong about trim";
+
+SELECT trim(TRAILING 'SL' FROM 'SSparkSQLS') as fun_return_8 as result_8;
+!assert result_8 ''':fun_return_8 == "SSparkSQ"''' "Something wrong about trim";
