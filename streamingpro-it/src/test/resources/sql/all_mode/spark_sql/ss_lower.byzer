@@ -1,0 +1,5 @@
+--%comparator=tech.mlsql.it.IgnoreResultComparator
+
+select lower('SparkSql') as fun_return as result;
+
+!assert result ''':fun_return == "sparksql"''' "Something wrong about lower";

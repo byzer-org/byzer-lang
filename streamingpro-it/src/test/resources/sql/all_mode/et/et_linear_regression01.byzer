@@ -1,7 +1,5 @@
 --%comparator=tech.mlsql.it.IgnoreResultComparator
 
---%comparator=tech.mlsql.it.IgnoreResultComparator
-
 -- create test data
 set jsonStr='''
 {"features":[5.1,3.5,1.4,0.2],"label":0.0},

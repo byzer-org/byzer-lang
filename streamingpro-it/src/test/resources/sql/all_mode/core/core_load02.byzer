@@ -1,5 +1,3 @@
---%comparator=tech.mlsql.it.IgnoreResultComparator
-
 set rawData='''
     { "jack": 1, "jack2": 2 }
     { "jack": 2, "jack2": 3 }
@@ -9,6 +7,3 @@ load jsonStr.`rawData` as json_tb_1;
 
 select * from json_tb_1 as json_tb_2;
 
-select count(*) as total_account from json_tb_2 as json_tb_3;
-
-!assert json_tb_3 ''':total_account == 2''' "Failed to load json string!";

@@ -1,5 +1,3 @@
---%comparator=tech.mlsql.it.IgnoreResultComparator
-
 load parquet.`/ssb/lineorder/part-00000-ee6e5c31-5f7f-4297-a666-902609272ba3-c000.snappy.parquet` as lineorder_parquet;
 select * from lineorder_parquet as lineorder;
 
@@ -19,8 +17,5 @@ left join part on LO_PARTKEY = P_PARTKEY
 left join supplier on LO_SUPPKEY = S_SUPPKEY
 where P_CATEGORY = 'MFGR#12' and S_REGION = 'AMERICA'
 group by D_YEAR, P_BRAND
-order by D_YEAR, P_BRAND as ssb_query04;
-
-select count(*) as total_account from ssb_query04 as ssb_query04_account;
-
-!assert ssb_query04_account ''':total_account == 185''' "File ssb_query04.byzer running error!";
+order by D_YEAR, P_BRAND
+limit 5 as ssb_query04;

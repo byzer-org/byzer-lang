@@ -1,9 +1,3 @@
---%comparator=tech.mlsql.it.IgnoreResultComparator
-
 load csv.`/simple/tmp/employee.csv` where header="true" as employee_csv;
 
-select * from employee_csv as employee;
-
-select count(1) as total_account from employee as account;
-
-!assert account ''':total_account == 104''' "Failed to load csv!";
+select * from employee_csv limit 5 as employee;

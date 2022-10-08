@@ -1,5 +1,3 @@
---%comparator=tech.mlsql.it.IgnoreResultComparator
-
 load parquet.`/ssb/customer/part-00000-7505a64d-b4bf-4186-874a-a9898502a51e-c000.snappy.parquet` as customer_parquet;
 
 select * from customer_parquet as customer;
@@ -10,13 +8,5 @@ select
     C_NAME_SPLIT[0] as C_NAME_1,
     C_NAME_SPLIT[1] as C_NAME_2
 from customer_split
+limit 100
 as customer_split_format;
-
-select
-    count(C_NAME_1) as total_account_1,
-    count(C_NAME_2) as total_account_2
-from customer_split_format
-as customer_split_account;
-
-!assert customer_split_account ''':total_account_1 == 300''' "Failed to split column!";
-!assert customer_split_account ''':total_account_2 == 300''' "Failed to split column!";

@@ -1,5 +1,3 @@
---%comparator=tech.mlsql.it.IgnoreResultComparator
-
 select 1 as a as b;
 set wow=`select count(*) from b ` where type="sql" and mode="runtime";
 
@@ -13,5 +11,3 @@ set wow=`select count(*) from b ` where type="sql" and mode="runtime";
 !fi;
 
 select * from final_table as result;
-
-!assert result ''':a == 2''' "Failed to execute if-else statement!";

@@ -1,0 +1,29 @@
+set jsonStr='''
+    {"subject":"数学","name":"张三","score":88},
+    {"subject":"语文","name":"张三","score":92}
+    {"subject":"英语","name":"张三","score":77}
+    {"subject":"数学","name":"王五","score":65}
+    {"subject":"语文","name":"王五","score":87}
+    {"subject":"英语","name":"王五","score":90}
+    {"subject":"数学","name":"李雷","score":67}
+    {"subject":"语文","name":"李雷","score":33}
+    {"subject":"英语","name":"李雷","score":24}
+    {"subject":"数学","name":"宫九","score":77}
+    {"subject":"语文","name":"宫九","score":87}
+    {"subject":"英语","name":"宫九","score":90}
+''';
+
+load jsonStr.`jsonStr` as data;
+run data as DataTranspose.`` where method='pivot'
+and indexCols='name'
+and inputCol='subject'
+and aggCol='score'
+as data1;
+
+-- try to unpivot
+run data1 as DataTranspose.`` where method='unpivot'
+and indexCols='name'
+and mergedCol='sbject'
+and unPivotCols='数学,英语,语文'
+and aggCol='score'
+as res;
