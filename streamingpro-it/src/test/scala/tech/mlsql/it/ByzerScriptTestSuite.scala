@@ -22,6 +22,15 @@ class ByzerScriptTestSuite extends LocalBaseTestSuite with Logging {
   var url: String = ""
   var initialByzerPlugins: Seq[String] = Seq()
   private var cluster: ByzerCluster = _
+  val curTestManager = new TestManager()
+  var curTestCaseDirPath: Seq[String] = _
+  var curDataDirPath: String = _
+
+  override def getTestManager: TestManager = curTestManager
+
+  override def getTestCaseDirPath: Seq[String] = curTestCaseDirPath
+
+  override def getDataDirPath: String = curDataDirPath
 
   def setupCluster(dataDirPath: String): ByzerCluster = {
     cluster = ByzerCluster.forSpec(dataDirPath)
@@ -30,7 +39,7 @@ class ByzerScriptTestSuite extends LocalBaseTestSuite with Logging {
   }
 
   override def afterAll(): Unit = {
-    println("The integration test is complete, and a graceful shutdown is performed...")
+    println("The ByzerScriptTestSuite integration test is complete, and a graceful shutdown is performed...")
     if (cluster != null) {
       cluster.stop()
       cluster = null
@@ -38,8 +47,10 @@ class ByzerScriptTestSuite extends LocalBaseTestSuite with Logging {
   }
 
   override def beforeAll(): Unit = {
-    println("Initialize configuration before integration test execution...")
-    TestManager.loadTestCase(new File(testCaseDirPath))
+    println("Initialize ByzerScriptTestSuite configuration before integration test execution...")
+    curTestCaseDirPath.foreach(dirPath => {
+      curTestManager.loadTestCase(new File(dirPath))
+    })
     initPlugins()
   }
 
@@ -77,8 +88,8 @@ class ByzerScriptTestSuite extends LocalBaseTestSuite with Logging {
 
   override def setupRunParams(): Unit = {
     val path = getCurProjectRootPath
-    testCaseDirPath = path + "src/test/resources/sql/yarn_mode"
-    dataDirPath = path + "src/test/resources/data"
+    curTestCaseDirPath = Seq(path + "src/test/resources/sql/yarn_mode")
+    curDataDirPath = path + "src/test/resources/data"
   }
 
   def beforeInitContainers(): Unit = {
@@ -90,7 +101,7 @@ class ByzerScriptTestSuite extends LocalBaseTestSuite with Logging {
   if (VersionRangeChecker.isVersionCompatible(">=3.0.0", version)) {
 
     println("Current spark version is 3.X, step to javaContainer test...")
-    val cluster: ByzerCluster = setupCluster(dataDirPath)
+    val cluster: ByzerCluster = setupCluster(curDataDirPath)
     val hadoopContainer = cluster.hadoopContainer
     val byzerLangContainer = cluster.byzerLangContainer
     val javaContainer = byzerLangContainer.container
@@ -125,16 +136,16 @@ class ByzerScriptTestSuite extends LocalBaseTestSuite with Logging {
           throw new RuntimeException(res)
       }
 
-      TestManager.testCases.foreach(testCase => {
+      curTestManager.testCases.foreach(testCase => {
         try {
           val (status, result) = runScript(url, user, testCase.sql)
-          TestManager.acceptRest(testCase, status, result, null)
+          curTestManager.acceptRest(testCase, status, result, null)
         } catch {
           case e: Exception =>
-            TestManager.acceptRest(testCase, 500, null, e)
+            curTestManager.acceptRest(testCase, 500, null, e)
         }
       })
-      TestManager.report()
+      curTestManager.report()
     }
 
   } else {
