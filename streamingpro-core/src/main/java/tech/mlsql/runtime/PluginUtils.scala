@@ -91,7 +91,7 @@ object PluginUtils extends Logging with WowLog {
     val response = ReflectHelper.field(wrapperResponse, "response").asInstanceOf[HttpResponse]
 
     if (response.getStatusLine.getStatusCode != 200 || response.getFirstHeader("Content-Disposition") == null) {
-      throw new MLSQLException(s"Fail to download ${pluginName} from http://store.mlsql.tech/api/repo/plugins/download")
+      throw new MLSQLException(s"Fail to download ${pluginName} from ${PLUGIN_STORE_URL}")
     }
 
 
@@ -108,6 +108,7 @@ object PluginUtils extends Logging with WowLog {
     val dataLake = new DataLake(spark)
 
     val hdfsPath = PathFun(dataLake.identifyToPath(TABLE_FILES)).add("store").add("plugins")
+    logInfo(format(s"Download ${pluginName} to ${hdfsPath.toPath}"))
     saveStream(pluginName, fileLen, hdfsPath.toPath, fieldValue, inputStream, spark.sparkContext.hadoopConfiguration)
     HDFSOperatorV2.deleteDir("." + hdfsPath.toPath + ".crc")
     (fieldValue, PathFun(hdfsPath.toPath).add(fieldValue).toPath)
@@ -209,6 +210,8 @@ object PluginUtils extends Logging with WowLog {
     if (jarFile.exists()) {
       jarFile.delete()
     }
+    logInfo(format(s"Download [local]${jarFile.toPath} from [remote]${pluginPath}"))
+
     Files.copy(inputStream, jarFile.toPath, StandardCopyOption.REPLACE_EXISTING)
     inputStream.close()
     val localPath = jarFile.getPath
@@ -271,12 +274,15 @@ object PluginUtils extends Logging with WowLog {
 
 
   def appCallBack(pluginName: String, className: String, params: Seq[String]) = {
+    logInfo(format(s"register ${className} for ${pluginName}  with app callback"))
     val app = ClassLoaderTool.classForName(className).newInstance().asInstanceOf[tech.mlsql.app.App]
     app.run(params)
   }
 
   def registerET(pluginName: String, className: String, commandName: Option[String], callback: () => Unit) = {
     val etName = className.split("\\.").last
+
+    logInfo(format(s"register ${className}/${etName} for ${pluginName}  with et callback"))
     ETRegister.register(etName, className)
     commandName match {
       case Some(alisName) =>
@@ -307,6 +313,7 @@ object PluginUtils extends Logging with WowLog {
   }
 
   def registerDS(pluginName: String, className: String, commandName: Option[String], callback: () => Unit) = {
+    logInfo(format(s"register ${className} for ${pluginName}  with ds callback"))
     val dataSource = ClassLoaderTool.classForName(className).newInstance()
     if (dataSource.isInstanceOf[MLSQLRegistry]) {
       dataSource.asInstanceOf[MLSQLRegistry].register()

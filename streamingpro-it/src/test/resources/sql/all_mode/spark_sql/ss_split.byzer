@@ -1,0 +1,8 @@
+--%comparator=tech.mlsql.it.IgnoreResultComparator
+
+select split('oneAtwoBthreeC', '[ABC]', 2) as split_arr as table_1;
+
+select split_arr[0] as col_1, split_arr[1] as col_2 from table_1 as result;
+
+!assert result ''':col_1 == "one"''' "Something wrong about split";
+!assert result ''':col_2 == "twoBthreeC"''' "Something wrong about split";

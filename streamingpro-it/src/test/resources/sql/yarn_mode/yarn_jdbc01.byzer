@@ -1,0 +1,22 @@
+--%comparator=tech.mlsql.it.IgnoreResultComparator
+
+-- MySQL
+set user = "root";
+set password = "root";
+set jdbc_url = "jdbc:mysql://byzer-it-mysql:3306/mysql?characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&tinyInt1isBit=false&useSSL=false";
+
+connect jdbc
+where
+    url="${jdbc_url}"
+    and driver="com.mysql.jdbc.Driver"
+    and user="${user}"
+    and password="${password}"
+as db_mysql;
+
+load jdbc.`db_mysql.db` as db_mysql_db;
+
+select count(1) as total_account from db_mysql_db as db_mysql_db_count;
+
+!assert db_mysql_db_count ''':total_account != 0''' "Failed to load jdbc!";
+
+

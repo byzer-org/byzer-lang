@@ -28,8 +28,7 @@ and `fitParam.0.maxDepth`="2"
 
 and `fitParam.1.featuresCol`="features"
 and `fitParam.1.labelCol`="label"
-and `fitParam.1.maxDepth`="10"
-;
+and `fitParam.1.maxDepth`="10";
 
 load modelExplain.`/tmp/model/_model_0/` where alg="RandomForest" as output_1;
 

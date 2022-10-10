@@ -9,6 +9,7 @@ import streaming.dsl.auth._
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
 import tech.mlsql.common.utils.base.TryTool
+import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.common.utils.serder.json.JSONTool
 import tech.mlsql.datalake.DataLake
 import tech.mlsql.dsl.auth.ETAuth
@@ -22,7 +23,7 @@ import tech.mlsql.store.{DBStore, DictType, WDictStore}
 /**
  * 2019-09-11 WilliamZhu(allwefantasy@gmail.com)
  */
-class PluginCommand(override val uid: String) extends SQLAlg with ETAuth with WowParams {
+class PluginCommand(override val uid: String) extends SQLAlg with ETAuth with WowParams with Logging {
   def this() = this(BaseParams.randomUID())
 
   import tech.mlsql.runtime.PluginUtils._
@@ -106,7 +107,7 @@ class PluginCommand(override val uid: String) extends SQLAlg with ETAuth with Wo
 
         val (pluginName, pluginVersion) = PluginUtils.getPluginNameAndVersion(_pluginName)
         val plugin = PluginUtils.getPluginInfo(pluginName).filter(f => f.version == pluginVersion).headOption match {
-          case Some(item)=> item
+          case Some(item) => item
           case None => throw new MLSQLException(s"Plugin name:${pluginName} version:${pluginVersion} is not found in market")
         }
         val className = if (_className == "-") {
@@ -131,8 +132,13 @@ class PluginCommand(override val uid: String) extends SQLAlg with ETAuth with Wo
         val localPath = downloadFromHDFSToLocal(fileName, pluginPath, spark.sparkContext.hadoopConfiguration)
 
         if (pluginType == PluginType.DS || pluginType == PluginType.ET || pluginType == PluginType.APP) {
+          logInfo(format(s"Load [jar] ${localPath} to Driver"))
           loadJarInDriver(localPath)
+
+          logInfo(format(s"Load [jar] ${localPath} to Executor"))
           spark.sparkContext.addJar(localPath)
+
+          logInfo(format(s"Check ${pluginName} ${className} version compatibility"))
           checkVersionCompatibility(pluginName, className)
         }
 

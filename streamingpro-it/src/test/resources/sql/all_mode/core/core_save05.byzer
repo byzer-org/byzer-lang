@@ -1,10 +1,6 @@
---%comparator=tech.mlsql.it.IgnoreResultComparator
-
 load csv.`/simple/tmp/employee.csv` where header='true' as employee;
 
 save overwrite employee as delta.`public.employee`;
 load delta.`public.employee` as employee_delta;
 
-select count(1) as total_account from employee_delta as employee_delta_account;
-
-!assert employee_delta_account ''':total_account == 104''' "";
+select * from employee_delta limit 5 as employee_delta_ot;

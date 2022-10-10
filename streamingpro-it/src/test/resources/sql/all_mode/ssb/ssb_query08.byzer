@@ -1,5 +1,3 @@
---%comparator=tech.mlsql.it.IgnoreResultComparator
-
 load parquet.`/ssb/lineorder/part-00000-ee6e5c31-5f7f-4297-a666-902609272ba3-c000.snappy.parquet` as lineorder_parquet;
 select * from lineorder_parquet as lineorder;
 
@@ -17,11 +15,7 @@ from lineorder
 left join dates on LO_ORDERDATE = D_DATEKEY
 left join customer on LO_CUSTKEY = C_CUSTKEY
 left join supplier on LO_SUPPKEY = S_SUPPKEY
-where C_NATION = 'UNITED STATES' and s_nation = 'UNITED STATES'
+where C_NATION = 'ARGENTINA' and s_nation = 'IRAQ'
 and D_YEAR >= 1992 and D_YEAR <= 1997
 group by C_CITY, S_CITY, D_YEAR
 order by D_YEAR asc, LO_REVENUE desc as ssb_query08;
-
-select count(*) as total_account from ssb_query08 as ssb_query08_account;
-
-!assert ssb_query08_account ''':total_account == 0''' "File ssb_query08.byzer running error!";
