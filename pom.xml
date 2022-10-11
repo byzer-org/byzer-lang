@@ -68,6 +68,7 @@
         <spark.version>3.3.0</spark.version>
         <spark.bigversion>3.3</spark.bigversion>
         <scalatest.version>3.2.13</scalatest.version>
+        <commons-codec.version>1.15</commons-codec.version>
         <!-- spark 3.3 end -->
 
         <spark.streaming.kafka.artifactId>spark-streaming-kafka-0-8_${scala.binary.version}
@@ -78,7 +79,7 @@
         <guava.version>16.0</guava.version>
         <jetty.version>9.2.16.v20160414</jetty.version>
 
-        <httpclient.version>4.5.3</httpclient.version>
+        <httpclient.version>4.5.13</httpclient.version>
         <lift-json.version>3.4.1</lift-json.version>
         <jsoup.version>1.14.2</jsoup.version>
         <druid.version>1.2.12</druid.version>
@@ -365,6 +366,12 @@
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
             <version>${httpclient.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>commons-codec</groupId>
+                    <artifactId>commons-codec</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
@@ -375,6 +382,11 @@
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-exec</artifactId>
             <version>${commons-exec.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>commons-codec</groupId>
+            <artifactId>commons-codec</artifactId>
+            <version>${commons-codec.version}</version>
         </dependency>
 
         <dependency>
