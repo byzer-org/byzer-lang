@@ -2,11 +2,22 @@ package tech.mlsql.it
 
 class SimpleQueryTestSuite extends LocalBaseTestSuite {
 
-  override def getTestManager = new TestManager()
+  private var testManager = new TestManager()
+  private var dataDirPath = "src/test/resources/data"
+  private var testCaseDirPath: Seq[String] = Seq("src/test/resources/sql/all_mode")
 
-  override def getTestCaseDirPath: Seq[String] = Seq("src/test/resources/sql/all_mode")
+  override def getTestManager: TestManager = testManager
 
-  override def getDataDirPath = "src/test/resources/data"
+  override def getTestCaseDirPath: Seq[String] = testCaseDirPath
+
+  override def getDataDirPath: String = dataDirPath
+
+  override def setTestManager(_testManager: TestManager): Unit = testManager = _testManager
+
+  override def setTestCaseDirPath(_testCaseDirPath: Seq[String]): Unit =
+    testCaseDirPath = _testCaseDirPath
+
+  override def setDataDirPath(_dataDirPath: String): Unit = dataDirPath = _dataDirPath
 
   override def setupRunParams(): Unit = {
     runParams = Array(
