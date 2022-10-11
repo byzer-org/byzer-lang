@@ -43,11 +43,14 @@ class DefaultComparator extends Comparator {
     }
 
     val exceptionClassName = hints("exception")
+    val exceptionClassNameHelper = exceptionClassName.r
     val msg = hints("msg")
+    val msgHelper = msg.r
     try {
       val clazz = Class.forName(exceptionClassName)
-      if (exception == null){
-        if (errorMsg.contains(exceptionClassName) && errorMsg.contains(msg)) {
+      //exception class is null, use errorMessage for matching. This method acts on the result returned by rest in yarn mode.
+      if (exception == null) {
+        if ((exceptionClassNameHelper findFirstIn errorMsg).isDefined && (msgHelper findFirstIn errorMsg).isDefined) {
           return (true, "")
         }
         return (false, s"\nExpected exception and message: $exceptionClassName, $msg\nActual exception name and message: " +
