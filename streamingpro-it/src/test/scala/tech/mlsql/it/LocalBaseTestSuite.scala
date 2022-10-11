@@ -80,7 +80,6 @@ trait LocalBaseTestSuite extends AnyFunSuite with SparkOperationUtil with Before
     StreamingApp.main(runParams)
     runtime = PlatformManager.getRuntime.asInstanceOf[SparkRuntime]
     JobManager.init(runtime.sparkSession)
-
     initPlugins()
   }
 
