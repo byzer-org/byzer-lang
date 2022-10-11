@@ -1,0 +1,3 @@
+--%comparator=tech.mlsql.it.IgnoreResultComparator
+include hdfs.`/script_file/script01.byzer`;
+!assert result ''' :a==2 ''' "a should be 2";
