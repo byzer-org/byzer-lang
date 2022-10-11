@@ -16,25 +16,22 @@ trait LocalBaseTestSuite extends AnyFunSuite with SparkOperationUtil with Before
 
   var runtime: SparkRuntime = _
   var runParams: Array[String] = Array()
-  private var testCaseDirPath: Seq[String] = _
-  private var dataDirPath: String = _
-  private var testManager: TestManager = _
   var home: String = _
   val user = "admin"
   var initialPlugins: Seq[String] = Seq("mlsql-assert", "mlsql-shell", "mlsql-mllib")
-  var originClassLoader = Thread.currentThread().getContextClassLoader
+  var originClassLoader: ClassLoader = Thread.currentThread().getContextClassLoader
 
-  def getTestManager: TestManager = {
-    testManager
-  }
+  def getTestManager: TestManager = ???
 
-  def getTestCaseDirPath: Seq[String] = {
-    testCaseDirPath
-  }
+  def setTestManager(_testManager: TestManager): Unit = ???
 
-  def getDataDirPath: String = {
-    dataDirPath
-  }
+  def getTestCaseDirPath: Seq[String] = ???
+
+  def setTestCaseDirPath(_testCaseDirPath: Seq[String]): Unit = ???
+
+  def getDataDirPath: String = ???
+
+  def setDataDirPath(_dataDirPath: String): Unit = ???
 
   def initPlugins(): Unit = {
     // 3.1.1 => v1=3 v2=1 v3=1
@@ -83,7 +80,6 @@ trait LocalBaseTestSuite extends AnyFunSuite with SparkOperationUtil with Before
     StreamingApp.main(runParams)
     runtime = PlatformManager.getRuntime.asInstanceOf[SparkRuntime]
     JobManager.init(runtime.sparkSession)
-
     initPlugins()
   }
 
@@ -111,8 +107,9 @@ trait LocalBaseTestSuite extends AnyFunSuite with SparkOperationUtil with Before
   }
 
   def setupRunParams(): Unit = {
-    testCaseDirPath = Seq("src/test/resources/sql")
-    dataDirPath = "src/test/resources/data"
+    setTestCaseDirPath(Seq("src/test/resources/sql"))
+    setDataDirPath("src/test/resources/data")
+    setTestManager(new TestManager())
     runParams = Array(
       "-streaming.master", "local[*]",
       "-streaming.name", "unit-test",
