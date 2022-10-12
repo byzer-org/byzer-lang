@@ -4,7 +4,7 @@ class SimpleQueryTestSuite extends LocalBaseTestSuite {
 
   private var testManager = new TestManager()
   private var dataDirPath = "src/test/resources/data"
-  private var testCaseDirPath: Seq[String] = Seq("src/test/resources/sql/all_mode")
+  private var testCaseDirPath: Seq[String] = Seq("src/test/resources/sql/all_mode", "src/test/resources/sql/local_mode")
 
   override def getTestManager: TestManager = testManager
 
