@@ -81,7 +81,7 @@
 
         <httpclient.version>4.5.13</httpclient.version>
         <lift-json.version>3.4.1</lift-json.version>
-        <jsoup.version>1.14.2</jsoup.version>
+        <jsoup.version>1.15.3</jsoup.version>
         <druid.version>1.2.12</druid.version>
         <xsoup.version>0.3.1</xsoup.version>
         <WebCollector.version>2.71</WebCollector.version>
