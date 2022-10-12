@@ -1,0 +1,11 @@
+set rawData='''
+  {"jack":1,"jack2":2}
+  {"jack":2,"jack2":3}
+''';
+load jsonStr.`rawData` as table_1;
+
+save overwrite table_1 as json.`/tmp/jack`;
+
+load json.`/tmp/jack` as table_2;
+
+select * from table_2 order by jack asc as table_3;

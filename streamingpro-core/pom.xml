@@ -5,23 +5,17 @@
     <parent>
         <artifactId>streamingpro_2.12</artifactId>
         <groupId>tech.mlsql</groupId>
-        <version>2.3.0-SNAPSHOT</version>
+        <version>2.4.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <properties>
-        <!-- spark 2.4 start -->
-<!--         <scala.version>2.11.12</scala.version> -->
-<!--         <scala.binary.version>2.11</scala.binary.version> -->
-<!--         <spark.version>2.4.3</spark.version> -->
-<!--         <spark.bigversion>2.4</spark.bigversion> -->
-        <!-- spark 2.4 end -->
-
-        <!-- spark 3.0 start -->
-        <scala.version>2.12.10</scala.version> 
-        <scala.binary.version>2.12</scala.binary.version> 
-        <spark.version>3.1.1</spark.version> 
-        <spark.bigversion>3.0</spark.bigversion> 
-        <!-- spark 3.0 end -->
+        <!-- spark 3.3 start -->
+        <scala.version>2.12.15</scala.version>
+        <scala.binary.version>2.12</scala.binary.version>
+        <spark.version>3.3.0</spark.version>
+        <spark.bigversion>3.3</spark.bigversion>
+        <scalatest.version>3.2.13</scalatest.version>
+        <!-- spark 3.3 end -->
     </properties>
     <artifactId>streamingpro-core-${spark.bigversion}_${scala.binary.version}</artifactId>
     <dependencies>
@@ -30,7 +24,7 @@
             <artifactId>org.eclipse.jgit</artifactId>
             <version>5.11.0.202103091610-r</version>
         </dependency>
-        
+
         <dependency>
             <groupId>org.python</groupId>
             <artifactId>jython-standalone</artifactId>
@@ -126,6 +120,10 @@
                     <groupId>org.apache.avro</groupId>
                     <artifactId>avro</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-log4j12</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
         <dependency>
@@ -163,7 +161,7 @@
         <dependency>
             <groupId>org.scalatest</groupId>
             <artifactId>scalatest_${scala.binary.version}</artifactId>
-            <version>3.2.11</version>
+            <version>${scalatest.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>

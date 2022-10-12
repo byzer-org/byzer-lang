@@ -86,7 +86,7 @@ function prepareProp() {
     ## Put 3rd-third plugin jars in classpath
     EXT_JARS=$(echo ${BYZER_HOME}/plugin/*.jar | tr ' ' ':')":$EXT_JARS"
 
-    BYZER_LOG_PATH="file:${BYZER_HOME}/conf/byzer-server-log4j.properties"
+    BYZER_LOG_PATH="file:${BYZER_HOME}/conf/byzer-server-log4j2.properties"
 
     BYZER_PROP=$($BYZER_HOME/bin/get-properties.sh -byzer)
     SPARK_PROP=$($BYZER_HOME/bin/get-properties.sh -spark)
@@ -157,7 +157,7 @@ function start(){
             --jars ${JARS} \
             --conf "spark.driver.extraClassPath=${EXT_JARS}" \
             --conf "spark.executor.extraClassPath=${EXT_JARS}" \
-            --driver-java-options "-Dlog4j.configuration=${BYZER_LOG_PATH}" \
+            --driver-java-options "-Dlog4j.configurationFile=${BYZER_LOG_PATH}" \
             $SPARK_PROP \
             $MAIN_JAR_PATH  \
             $BYZER_PROP >> ${BYZER_HOME}/logs/byzer.out & 

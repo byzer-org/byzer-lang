@@ -1,0 +1,15 @@
+--%comparator=tech.mlsql.it.IgnoreResultComparator
+
+select 1 as id, "zjc" as name AS result;
+
+save overwrite result as delta.`default.upsert_test`;
+
+select 1 as id , "zjc_1" as name as result_1;
+
+save append result_1 as delta.`default.upsert_test`
+where idCols="id";
+
+load delta.`default.upsert_test` as result_1;
+
+!assert result_1 ''':id == 1''' "Failed to save overwrite delta";
+!assert result_1 ''':name == "zjc_1"''' "Failed to save overwrite delta";

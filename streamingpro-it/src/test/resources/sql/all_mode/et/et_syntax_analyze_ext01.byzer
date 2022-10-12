@@ -1,0 +1,12 @@
+--%comparator=tech.mlsql.it.IgnoreResultComparator
+
+select "stub" as table1;
+
+run command as SyntaxAnalyzeExt.``
+where action = "extractTables" and sql='''
+    select * from table1
+''' as extractedTables;
+
+select * from extractedTables as result;
+
+!assert result ''':tableName == "table1"''' "Failed to execute SyntaxAnalyzeExt!";

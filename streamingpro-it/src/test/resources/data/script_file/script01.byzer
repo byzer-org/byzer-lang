@@ -1,0 +1,13 @@
+select 1 as a as b;
+set wow=`select count(*) from b ` where type="sql" and mode="runtime";
+
+!if '''select :wow as :newwow; :newwow > 11 ''';
+
+    !println "yes";
+    select * from b as final_table;
+!else;
+    !println "no";
+    select 2 as a from b as final_table;
+!fi;
+
+select * from final_table as result;

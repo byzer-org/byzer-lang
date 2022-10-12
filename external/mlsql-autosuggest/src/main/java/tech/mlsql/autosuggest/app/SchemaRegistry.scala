@@ -14,7 +14,7 @@ class SchemaRegistry(_spark: SparkSession) {
   val spark = _spark
 
   def createTableFromDBSQL(prefix: Option[String], db: Option[String], tableName: String, createSQL: String) = {
-    val rd = new RDSchema(JdbcConstants.MYSQL)
+    val rd = new RDSchema("mysql")
     val tableName = rd.createTable(createSQL)
     val schema = rd.getTableSchema(tableName)
     val table = MetaTableKey(prefix, db, tableName)

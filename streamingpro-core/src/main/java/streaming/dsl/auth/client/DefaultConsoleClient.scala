@@ -19,7 +19,6 @@
 package streaming.dsl.auth.client
 
 import java.util.concurrent.atomic.AtomicReference
-
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.auth.{MLSQLTable, TableAuth, TableAuthResult}
 import streaming.log.WowLog

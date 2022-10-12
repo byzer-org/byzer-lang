@@ -19,6 +19,7 @@ class PluginHook extends MLSQLPlatformLifecycle with Logging {
   override def afterRuntime(runtime: StreamingRuntime, params: Map[String, String]): Unit = {}
 
   override def beforeDispatcher(runtime: StreamingRuntime, params: Map[String, String]): Unit = {
+    logInfo("Load build-in plugins....")
     // build-in plugins
     params.getOrElse("streaming.plugin.buildin.loads.before", "").
       split(",").filterNot(_.isEmpty).

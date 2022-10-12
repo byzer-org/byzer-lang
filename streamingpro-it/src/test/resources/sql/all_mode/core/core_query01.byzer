@@ -1,0 +1,11 @@
+--%comparator=tech.mlsql.it.IgnoreResultComparator
+
+load parquet.`/ssb/customer/part-00000-7505a64d-b4bf-4186-874a-a9898502a51e-c000.snappy.parquet` as customer_parquet;
+
+select * from customer_parquet as customer;
+
+select * from customer order by rand() limit 100 as customer_rand;
+
+select count(1) as total_account from customer_rand as customer_rand_account;
+
+!assert customer_rand_account ''':total_account == 100''' "Failed to random sort table!";

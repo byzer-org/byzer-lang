@@ -1,0 +1,7 @@
+--%exception=java.lang.RuntimeException
+--%msg=Corrupted JSON in column col_1
+
+-- Corrupted JSON
+SELECT '{"key","value"}' AS col_1 AS table_1;
+run table_1 AS JsonExpandExt .`` where inputCol="col_1" AS result;
+!assert result ''':key=="value"'''  "Corrupted JSON in column col_1";

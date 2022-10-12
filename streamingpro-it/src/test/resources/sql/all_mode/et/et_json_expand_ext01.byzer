@@ -1,0 +1,7 @@
+--%comparator=tech.mlsql.it.IgnoreResultComparator
+
+SELECT '{"key": "value", "key_2":"value_2"}' AS col_1 AS table_1;
+run table_1 as JsonExpandExt.`` where inputCol="col_1" as table_2;
+
+!assert table_2 ''':key == "value"''' "Failed to execute JsonExpandExt!";
+!assert table_2 ''':key_2 == "value_2"''' "Failed to execute JsonExpandExt!";

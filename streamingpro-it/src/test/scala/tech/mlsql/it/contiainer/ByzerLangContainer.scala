@@ -14,9 +14,6 @@ class ByzerLangContainer(clusterName: String, image: String) extends ChaosContai
     this(clusterName, ByzerLangContainer.DEFAULT_BYZER_IMAGE_NAME)
   }
 
-  override def beforeStart(): Unit = {
-  }
-
   override def stop(): Unit = {
     if (CONTAINERS_LEAVE_RUNNING) {
       logWarning("Ignoring stop due to CONTAINERS_LEAVE_RUNNING=true.")
@@ -26,11 +23,12 @@ class ByzerLangContainer(clusterName: String, image: String) extends ChaosContai
   }
 
   override def start(): Unit = {
+    beforeStart()
     super.start()
     afterStart()
   }
 
-  def afterStart(): Unit = {
+  override def afterStart(): Unit = {
     DockerUtils.runCommandAsyncWithLogging(container.getDockerClient, container.getContainerId,
       Seq("tail", "-f", BYZER_CONTAINER_HOME + "logs/byzer-lang.log"))
   }
@@ -45,5 +43,5 @@ class ByzerLangContainer(clusterName: String, image: String) extends ChaosContai
 
 object ByzerLangContainer {
   val DEFAULT_BYZER_IMAGE_NAME: String = System.getenv.getOrDefault("DEFAULT_BYZER_IMAGE_NAME",
-    "byzer/byzer-lang:3.1.1-latest")
+    "byzer/byzer-lang:3.3.0-latest")
 }

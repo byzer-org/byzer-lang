@@ -1,29 +1,34 @@
 package tech.mlsql.it.contiainer
 
 import com.github.dockerjava.api.command.CreateContainerCmd
+import org.apache.commons.lang3.StringUtils
 import org.testcontainers.containers.BindMode
 import org.testcontainers.containers.Network.NetworkImpl
-import org.testcontainers.containers.wait.strategy.HttpWaitStrategy
+import org.testcontainers.containers.wait.strategy.{HostPortWaitStrategy, HttpWaitStrategy, Wait}
 import tech.mlsql.common.utils.log.Logging
+import tech.mlsql.it.contiainer.MySQLContainer.{DEFAULT_MYSQL_CONTAINER_PORT, DEFAULT_MYSQL_PORT}
 import tech.mlsql.it.utils.DockerUtils
+
 import java.io.File
 import java.time.Duration
 import java.time.temporal.ChronoUnit.SECONDS
 import java.util.function.Consumer
 import scala.util.Random
-
 import scala.sys.process._
 
 /**
  * 24/02/2022 hellozepp(lisheng.zhanglin@163.com)
  */
-class ByzerCluster(val byzerLangContainer: ByzerLangContainer, val hadoopContainer: HadoopContainer) extends Logging {
+class ByzerCluster(val byzerLangContainer: ByzerLangContainer, val hadoopContainer: HadoopContainer,
+                   val mySQLContainer: MySQLContainer) extends Logging {
 
   def start(): Unit = {
     hadoopContainer.start()
     logInfo("Successfully started local hadoop container.")
     byzerLangContainer.start()
     logInfo("Successfully started local byzer-lang container.")
+    mySQLContainer.start()
+    logInfo("Successfully started local mysql container.")
   }
 
   def stop(): Unit = {
@@ -34,6 +39,8 @@ class ByzerCluster(val byzerLangContainer: ByzerLangContainer, val hadoopContain
     }
     hadoopContainer.stop()
     logInfo("Successfully stop local hadoop container.")
+    mySQLContainer.stop()
+    logInfo("Successfully stop mysql container.")
   }
 
 }
@@ -43,7 +50,7 @@ object ByzerCluster extends Logging {
   private val clusterName = "byzer-it"
   private val networkAliases = "byzer-network"
 
-  def forSpec(): ByzerCluster = {
+  def forSpec(dataDirPath: String): ByzerCluster = {
     beforeAll()
     lazy val hadoopContainer: HadoopContainer = new HadoopContainer(clusterName).configure { c =>
       c.addExposedPorts(9870, 8088, 19888, 10002, 8042)
@@ -52,6 +59,11 @@ object ByzerCluster extends Logging {
       c.setWaitStrategy(new HttpWaitStrategy()
         .forPort(8088).forPath("/cluster").forStatusCode(200)
         .withStartupTimeout(Duration.of(1500, SECONDS)))
+      if (StringUtils.isNoneBlank(dataDirPath)) {
+        c.withFileSystemBind(dataDirPath, "/home/hadoop/data/")
+      } else {
+        logWarning("The data directory is empty, failed to initialize data!")
+      }
       c.withCreateContainerCmdModifier(new Consumer[CreateContainerCmd]() {
         def accept(cmd: CreateContainerCmd): Unit = {
           cmd.withName("hadoop3")
@@ -75,10 +87,28 @@ object ByzerCluster extends Logging {
           cmd.withName(clusterName + (Random.nextInt & Integer.MAX_VALUE))
         }
       })
-
     }
 
-    new ByzerCluster(byzerLangContainer, hadoopContainer)
+    lazy val mySQLContainer = new MySQLContainer("mysql:5.7",
+      exposedHostPort = DEFAULT_MYSQL_PORT,
+      exposedContainerPort = DEFAULT_MYSQL_CONTAINER_PORT,
+      clusterName = clusterName,
+    ).configure { c =>
+      c.withNetworkAliases(ByzerCluster.appendClusterName(networkAliases))
+      c.withNetwork(network)
+      c.addExposedPorts(3306)
+      c.addEnv("MYSQL_ROOT_PASSWORD", "root")
+      c.addEnv("MYSQL_ROOT_HOST", "%")
+      c.setWaitStrategy(new HostPortWaitStrategy()
+        .withStartupTimeout(Duration.of(3000, SECONDS)))
+      c.withCreateContainerCmdModifier(new Consumer[CreateContainerCmd]() {
+        def accept(cmd: CreateContainerCmd): Unit = {
+          cmd.withName(clusterName + "-mysql")
+        }
+      })
+    }
+
+    new ByzerCluster(byzerLangContainer, hadoopContainer, mySQLContainer)
   }
 
   def beforeAll(): Unit = {
@@ -93,5 +123,5 @@ object ByzerCluster extends Logging {
     }
   }
 
-  private def appendClusterName(name: String) = ByzerCluster.clusterName + "-" + name
+  private def appendClusterName(name: String): String = ByzerCluster.clusterName + "-" + name
 }

@@ -1,5 +1,6 @@
 package tech.mlsql.dsl.adaptor
 
+import com.alibaba.druid.DbType
 import com.alibaba.druid.sql.repository.SchemaRepository
 import com.alibaba.druid.util.JdbcConstants
 import streaming.dsl.parser.DSLSQLParser._
@@ -14,7 +15,7 @@ class LoadGrammarAdaptor(grammarProcessListener: GrammarProcessListener) extends
   override def parse(ctx: DSLSQLParser.SqlContext): Unit = {
     val loadStatement = new LoadAdaptor(grammarProcessListener).analyze(ctx)
     if(loadStatement.format.toUpperCase == "JDBC" && loadStatement.option.getOrElse("directQuery","") != ""){
-      val repository = new SchemaRepository(loadStatement.option.getOrElse("dbType",JdbcConstants.MYSQL))
+      val repository = new SchemaRepository(DbType.of(loadStatement.option.getOrElse("dbType","mysql")))
       val directQuery = evaluate(loadStatement.option.getOrElse("directQuery",""))
       try {
         repository.console(directQuery)

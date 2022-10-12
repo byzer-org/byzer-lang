@@ -1,0 +1,5 @@
+--%comparator=tech.mlsql.it.IgnoreResultComparator
+
+select base64("Spark SQL") as encode_str as result;
+
+!assert result ''':encode_str == "U3BhcmsgU1FM"''' "Something wrong about base64";

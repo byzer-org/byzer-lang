@@ -1,37 +1,44 @@
 package tech.mlsql.it
 
-import java.io.File
-
 import org.apache.commons.io.FileUtils
 import org.apache.spark.streaming.SparkOperationUtil
-import org.scalatest.{BeforeAndAfterAll, FunSuite}
+import org.scalatest.BeforeAndAfterAll
+import org.scalatest.funsuite.AnyFunSuite
 import serviceframework.dispatcher.StrategyDispatcher
 import streaming.core.StreamingApp
 import streaming.core.strategy.platform.{PlatformManager, SparkRuntime}
 import tech.mlsql.job.JobManager
 
+import java.io.File
 
-trait LocalBaseTestSuite extends FunSuite with SparkOperationUtil with BeforeAndAfterAll {
+
+trait LocalBaseTestSuite extends AnyFunSuite with SparkOperationUtil with BeforeAndAfterAll {
 
   var runtime: SparkRuntime = _
   var runParams: Array[String] = Array()
-  var testCaseDirPath: String = _
-  var dataDirPath: String = _
   var home: String = _
   val user = "admin"
-  var initialPlugins: Seq[String] = Seq("mlsql-assert", "mlsql-shell")
-  var originClassLoader = Thread.currentThread().getContextClassLoader
+  var initialPlugins: Seq[String] = Seq("mlsql-assert", "mlsql-shell", "mlsql-mllib")
+  var originClassLoader: ClassLoader = Thread.currentThread().getContextClassLoader
+
+  def getTestManager: TestManager = ???
+
+  def setTestManager(_testManager: TestManager): Unit = ???
+
+  def getTestCaseDirPath: Seq[String] = ???
+
+  def setTestCaseDirPath(_testCaseDirPath: Seq[String]): Unit = ???
+
+  def getDataDirPath: String = ???
+
+  def setDataDirPath(_dataDirPath: String): Unit = ???
 
   def initPlugins(): Unit = {
     // 3.1.1 => v1=3 v2=1 v3=1
-    val Array(v1, _, _) = runtime.sparkSession.version.split("\\.")
+    val Array(v1, v2, _) = runtime.sparkSession.version.split("\\.")
 
     def convert_plugin_name(name: String) = {
-      val suffix = v1 match {
-        case "2" => "2.4"
-        case "3" => "3.0"
-      }
-      s"${name}-${suffix}"
+      s"${name}-${v1}.${v2}"
     }
     // set plugin context loader
     Thread.currentThread().setContextClassLoader(ClassLoader.getSystemClassLoader)
@@ -39,6 +46,15 @@ trait LocalBaseTestSuite extends FunSuite with SparkOperationUtil with BeforeAnd
       executeCode2(home, user, runtime, s"""!plugin app remove "${convert_plugin_name(name)}";""")
       executeCode2(home, user, runtime, s"""!plugin app add - "${convert_plugin_name(name)}";""")
     })
+
+    executeCode2(
+      home, user, runtime,
+      s"""!plugin app remove "${convert_plugin_name("mlsql-excel")}";"""
+    )
+    executeCode2(
+      home, user, runtime,
+      s"""!plugin app add "tech.mlsql.plugins.ds.MLSQLExcelApp" "${convert_plugin_name("mlsql-excel")}";"""
+    )
   }
 
   def setupWorkingDirectory(): Unit = {
@@ -51,7 +67,7 @@ trait LocalBaseTestSuite extends FunSuite with SparkOperationUtil with BeforeAnd
 
   def copyDataToUserHome(user: String): Unit = {
     val userHomeDir = new File(home, user)
-    val dataDir = new File(dataDirPath)
+    val dataDir = new File(getDataDirPath)
 
     if (!userHomeDir.exists()) {
       userHomeDir.mkdirs()
@@ -63,12 +79,13 @@ trait LocalBaseTestSuite extends FunSuite with SparkOperationUtil with BeforeAnd
     setupWorkingDirectory()
     setupRunParams()
     copyDataToUserHome(user)
-    TestManager.loadTestCase(new File(testCaseDirPath))
+    getTestCaseDirPath.foreach(dirPath => {
+      getTestManager.loadTestCase(new File(dirPath))
+    })
     // Load built-in and external plug-ins and start PlatformManager
     StreamingApp.main(runParams)
     runtime = PlatformManager.getRuntime.asInstanceOf[SparkRuntime]
     JobManager.init(runtime.sparkSession)
-
     initPlugins()
   }
 
@@ -77,7 +94,7 @@ trait LocalBaseTestSuite extends FunSuite with SparkOperationUtil with BeforeAnd
       JobManager.shutdown
       StrategyDispatcher.clear
       PlatformManager.clear
-      TestManager.clear()
+      getTestManager.clear()
       Thread.currentThread().setContextClassLoader(originClassLoader)
       runtime.destroyRuntime(false, true)
       val db = new File("./metastore_db")
@@ -96,8 +113,9 @@ trait LocalBaseTestSuite extends FunSuite with SparkOperationUtil with BeforeAnd
   }
 
   def setupRunParams(): Unit = {
-    testCaseDirPath = "src/test/resources/sql"
-    dataDirPath = "src/test/resources/data"
+    setTestCaseDirPath(Seq("src/test/resources/sql"))
+    setDataDirPath("src/test/resources/data")
+    setTestManager(new TestManager())
     runParams = Array(
       "-streaming.master", "local[*]",
       "-streaming.name", "unit-test",
@@ -111,17 +129,17 @@ trait LocalBaseTestSuite extends FunSuite with SparkOperationUtil with BeforeAnd
   }
 
   def runTestCases(): Unit = {
-    TestManager.testCases.foreach(testCase => {
+    getTestManager.testCases.foreach(testCase => {
       try {
         val result: Seq[Seq[String]] = executeCode2(home, user, runtime, testCase.sql)
-        TestManager.accept(testCase, result, null)
+        getTestManager.accept(testCase, result, null)
       } catch {
         case e: Exception =>
-          TestManager.accept(testCase, null, e)
+          getTestManager.accept(testCase, null, e)
       }
     })
 
-    TestManager.report()
+    getTestManager.report()
   }
 
 }

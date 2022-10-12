@@ -1,0 +1,4 @@
+load parquet.`/ssb/customer/part-00000-7505a64d-b4bf-4186-874a-a9898502a51e-c000.snappy.parquet` as customer_parquet;
+select * from customer_parquet as customer;
+
+run customer as DataSummary.`` as customer_sumary;

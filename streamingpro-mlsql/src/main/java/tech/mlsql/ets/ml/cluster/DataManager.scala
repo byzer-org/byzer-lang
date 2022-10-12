@@ -1,13 +1,9 @@
 package tech.mlsql.ets.ml.cluster
 
-import java.io.File
-import java.util.UUID
-
 import org.apache.commons.io.FileUtils
 import org.apache.hadoop.conf.Configuration
 import org.apache.spark.WowRowEncoder
 import org.apache.spark.sql.Row
-import org.apache.spark.sql.catalyst.encoders.RowEncoder
 import org.apache.spark.sql.types.StructType
 import streaming.dsl.mmlib.algs.python.LocalPathConfig
 import tech.mlsql.common.utils.log.Logging
@@ -15,9 +11,12 @@ import tech.mlsql.common.utils.path.PathFun
 import tech.mlsql.ets.tensorflow.files.{JsonOutputWriter, ParquetOutputWriter}
 import tech.mlsql.log.LogUtils
 
+import java.io.File
+import java.util.UUID
+
 /**
-  * 2019-08-26 WilliamZhu(allwefantasy@gmail.com)
-  */
+ * 2019-08-26 WilliamZhu(allwefantasy@gmail.com)
+ */
 object DataManager extends Logging {
   def setupData(iter: Iterator[Row],
                 sourceSchema: StructType,

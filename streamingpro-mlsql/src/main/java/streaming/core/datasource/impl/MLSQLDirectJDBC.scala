@@ -1,10 +1,9 @@
 package streaming.core.datasource.impl
 
-import java.util.Properties
-
+import com.alibaba.druid.DbType
 import com.alibaba.druid.sql.SQLUtils
-import com.alibaba.druid.sql.repository.SchemaRepository
 import com.alibaba.druid.sql.visitor.SchemaStatVisitor
+import com.alibaba.druid.sql.repository.SchemaRepository
 import com.alibaba.druid.util.{JdbcConstants, JdbcUtils}
 import org.apache.spark.sql.catalyst.plans.logical.MLSQLDFParser
 import org.apache.spark.sql.execution.WowTableIdentifier
@@ -20,6 +19,7 @@ import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.dsl.auth.DatasourceAuth
 import tech.mlsql.sql.{MLSQLSQLParser, MLSQLSparkConf}
 
+import java.util.Properties
 import scala.collection.JavaConverters._
 
 /**
@@ -148,8 +148,8 @@ class MLSQLDirectJDBC extends MLSQLDirectSource with MLSQLDirectSink with MLSQLS
   // this function depends on druid, so we can
   // fix chinese tablename since in spark parser it's not supported
   //MLSQLAuthParser.filterTables(sql, context.execListener.sparkSession)
-  def extractTablesFromSQL(sql: String, dbType: String = JdbcConstants.MYSQL) = {
-    val repository = new SchemaRepository(dbType)
+  def extractTablesFromSQL(sql: String, dbType: String = "mysql") = {
+    val repository = new SchemaRepository(DbType.of(dbType))
     repository.console(sql)
     val stmt = SQLUtils.parseSingleStatement(sql, dbType)
     val visitor = new SchemaStatVisitor()
@@ -178,7 +178,7 @@ class MLSQLDirectJDBC extends MLSQLDirectSource with MLSQLDirectSink with MLSQLS
 
     // we should auth all tables in direct query
     val sql = params("directQuery")
-    val dbType = params.getOrElse("dbType", JdbcConstants.MYSQL)
+    val dbType = params.getOrElse("dbType", "mysql")
     // first, only select supports
     if (!sql.trim.toLowerCase.startsWith("select")) {
       throw new MLSQLException("JDBC direct query only support select statement")

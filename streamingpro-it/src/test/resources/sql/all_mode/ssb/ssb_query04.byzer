@@ -1,0 +1,21 @@
+load parquet.`/ssb/lineorder/part-00000-ee6e5c31-5f7f-4297-a666-902609272ba3-c000.snappy.parquet` as lineorder_parquet;
+select * from lineorder_parquet as lineorder;
+
+load parquet.`/ssb/dates/part-00000-b6e546cf-abb1-4d7a-a16a-eb830e3e0996-c000.snappy.parquet` as dates_parquet;
+select * from dates_parquet as dates;
+
+load parquet.`/ssb/part/part-00000-5f7824df-0fba-4456-8d58-68e45ebf4848-c000.snappy.parquet` as part_parquet;
+select * from part_parquet as part;
+
+load parquet.`/ssb/supplier/part-00000-4ce61878-9646-42dd-91de-7a42a01f5ec9-c000.snappy.parquet` as supplier_parquet;
+select * from supplier_parquet as supplier;
+
+select sum(LO_REVENUE) as LO_REVENUE, D_YEAR, P_BRAND
+from lineorder
+left join dates on LO_ORDERDATE = D_DATEKEY
+left join part on LO_PARTKEY = P_PARTKEY
+left join supplier on LO_SUPPKEY = S_SUPPKEY
+where P_CATEGORY = 'MFGR#12' and S_REGION = 'AMERICA'
+group by D_YEAR, P_BRAND
+order by D_YEAR, P_BRAND
+limit 5 as ssb_query04;

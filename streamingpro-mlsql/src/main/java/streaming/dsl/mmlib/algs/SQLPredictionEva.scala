@@ -20,19 +20,13 @@ package streaming.dsl.mmlib.algs
 
 
 import org.apache.spark.ml.param.Param
+import org.apache.spark.mllib.evaluation.BinaryClassificationMetrics
 import org.apache.spark.sql.expressions.UserDefinedFunction
-import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession}
-import streaming.dsl.mmlib.{Code, Doc, HtmlDoc, SQLAlg, SQLCode}
-import streaming.dsl.mmlib.algs.param.BaseParams
-import tech.mlsql.common.form.{Extra, FormParams, KV, Select, Text}
-import org.apache.spark.mllib.evaluation.{BinaryClassificationMetrics, MulticlassMetrics}
-import org.apache.spark.mllib.rdd.RDDFunctions.fromRDD
-import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.catalyst.util.StringUtils
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
-import tech.mlsql.autosuggest.app.Standalone.sparkSession
-
-import scala.Array.ofDim
+import org.apache.spark.sql.{DataFrame, Row, SparkSession}
+import streaming.dsl.mmlib.algs.param.BaseParams
+import streaming.dsl.mmlib._
+import tech.mlsql.common.form.{Extra, FormParams, Text}
 
 /**
  * Created by allwefantasy on 24/7/2018.

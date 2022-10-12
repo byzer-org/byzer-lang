@@ -1,0 +1,16 @@
+--%comparator=tech.mlsql.it.IgnoreResultComparator
+
+load parquet.`/ssb/customer/part-00000-7505a64d-b4bf-4186-874a-a9898502a51e-c000.snappy.parquet` as customer_parquet;
+
+select * from customer_parquet as customer;
+
+!desc customer;
+
+!lastCommand named customer_desc;
+
+select data_type from customer_desc where col_name = "C_CUSTKEY" as customer_desc_type_1;
+
+select distinct data_type from customer_desc where col_name in ("C_NAME", "C_ADDRESS", "C_CITY", "C_NATION", "C_REGION", "C_PHONE", "C_MKTSEGMENT") as customer_desc_type_2;
+
+!assert customer_desc_type_1 ''':data_type == "int"''' "Failed to run macro function: !desc !";
+!assert customer_desc_type_2 ''':data_type == "string"''' "Failed to run macro function: !desc !";

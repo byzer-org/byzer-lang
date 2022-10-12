@@ -1,0 +1,12 @@
+load parquet.`/ssb/customer/part-00000-7505a64d-b4bf-4186-874a-a9898502a51e-c000.snappy.parquet` as customer_parquet;
+
+select * from customer_parquet as customer;
+
+select split(C_NAME,"#") as C_NAME_SPLIT from customer as customer_split;
+
+select
+    C_NAME_SPLIT[0] as C_NAME_1,
+    C_NAME_SPLIT[1] as C_NAME_2
+from customer_split
+limit 100
+as customer_split_format;

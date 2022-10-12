@@ -1,0 +1,1 @@
+load csv.`/csv/skipNLines.csv` where skipFirstNLines="3" and skipLastNLines="4" and header="true" as skip_n_lines;

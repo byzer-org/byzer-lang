@@ -20,7 +20,6 @@ package streaming.core.compositor.spark.transformation
 
 import java.util
 
-import org.apache.log4j.Logger
 import serviceframework.dispatcher.{Compositor, Processor, Strategy}
 import streaming.core.CompositorHelper
 import streaming.dsl.{ScriptSQLExec, ScriptSQLExecListener}
@@ -33,7 +32,6 @@ import scala.collection.JavaConversions._
   */
 class MLSQLCompositor[T] extends Compositor[T] with CompositorHelper {
   private var _configParams: util.List[util.Map[Any, Any]] = _
-  val logger = Logger.getLogger(classOf[SQLCompositor[T]].getName)
 
   override def initialize(typeFilters: util.List[String], configParams: util.List[util.Map[Any, Any]]): Unit = {
     this._configParams = configParams

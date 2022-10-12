@@ -8,7 +8,7 @@ import org.apache.spark.sql.execution.datasources.OutputWriter
 import org.apache.spark.sql.execution.datasources.json.WowJsonInferSchema
 import org.apache.spark.sql.types.StructType
 
-class JsonOutputWriter(path: String, schema: StructType, sessionLocalTimeZone: String)
+class JsonOutputWriter(_path: String, schema: StructType, sessionLocalTimeZone: String)
   extends OutputWriter {
 
 
@@ -35,4 +35,6 @@ class JsonOutputWriter(path: String, schema: StructType, sessionLocalTimeZone: S
   override def write(row: InternalRow): Unit = recordWriter.write(null, row)
 
   override def close(): Unit = recordWriter.close(null)
+
+  override def path(): String = _path
 }

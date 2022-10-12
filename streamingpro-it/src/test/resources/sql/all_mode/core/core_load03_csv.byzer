@@ -1,0 +1,3 @@
+load csv.`/simple/tmp/employee.csv` where header="true" as employee_csv;
+
+select * from employee_csv limit 5 as employee;

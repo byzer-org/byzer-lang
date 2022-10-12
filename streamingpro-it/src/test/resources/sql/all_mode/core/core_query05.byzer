@@ -1,0 +1,13 @@
+--%comparator=tech.mlsql.it.IgnoreResultComparator
+
+load parquet.`/ssb/customer/part-00000-7505a64d-b4bf-4186-874a-a9898502a51e-c000.snappy.parquet` as customer_parquet;
+
+select * from customer_parquet as customer;
+
+select cast(C_CUSTKEY as double) as C_CUSTKEY_DOUBLE from customer as customer_cast;
+
+!desc customer_cast;
+
+!lastCommand named customer_cast_desc;
+
+!assert customer_cast_desc ''':data_type == "double"''' "Failed to cast field!";

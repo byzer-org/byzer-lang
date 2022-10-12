@@ -1,0 +1,7 @@
+load parquet.`/ssb/customer/part-00000-7505a64d-b4bf-4186-874a-a9898502a51e-c000.snappy.parquet` as customer_parquet;
+
+select * from customer_parquet as customer;
+
+select C_ADDRESS from customer limit 5 as customer_default;
+
+select upper(C_ADDRESS) as C_ADDRESS_UPPER from customer_default as customer_upper;

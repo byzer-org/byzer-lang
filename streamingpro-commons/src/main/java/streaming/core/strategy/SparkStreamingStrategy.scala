@@ -19,21 +19,19 @@
 package streaming.core.strategy
 
 import java.util
-
-import org.apache.log4j.Logger
 import serviceframework.dispatcher.{Compositor, Processor, Strategy}
+import tech.mlsql.common.utils.log.Logging
 
 import scala.collection.JavaConversions._
 
-class SparkStreamingStrategy[T] extends Strategy[T] with DebugTrait with JobStrategy {
+class SparkStreamingStrategy[T] extends Strategy[T] with DebugTrait with JobStrategy with Logging {
 
   var _name: String = _
   var _ref: util.List[Strategy[T]] = _
   var _compositor: util.List[Compositor[T]] = _
   var _processor: util.List[Processor[T]] = _
   var _configParams: util.Map[Any, Any] = _
-
-  val logger = Logger.getLogger(getClass.getName)
+  
 
   def processor: util.List[Processor[T]] = _processor
 

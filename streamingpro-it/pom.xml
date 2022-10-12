@@ -5,24 +5,18 @@
     <parent>
         <artifactId>streamingpro_2.12</artifactId>
         <groupId>tech.mlsql</groupId>
-        <version>2.3.0-SNAPSHOT</version>
+        <version>2.4.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <properties>
         <breeze-version>0.13.2</breeze-version>
-        <!-- spark 2.4 start -->
-<!--         <scala.version>2.11.12</scala.version> -->
-<!--         <scala.binary.version>2.11</scala.binary.version> -->
-<!--         <spark.version>2.4.3</spark.version> -->
-<!--         <spark.bigversion>2.4</spark.bigversion> -->
-        <!-- spark 2.4 end -->
-
-        <!-- spark 3.0 start -->
-        <scala.version>2.12.10</scala.version> 
-        <scala.binary.version>2.12</scala.binary.version> 
-        <spark.version>3.1.1</spark.version> 
-        <spark.bigversion>3.0</spark.bigversion> 
-        <!-- spark 3.0 end -->
+        <!-- spark 3.3 start -->
+        <scala.version>2.12.15</scala.version>
+        <scala.binary.version>2.12</scala.binary.version>
+        <spark.version>3.3.0</spark.version>
+        <spark.bigversion>3.3</spark.bigversion>
+        <scalatest.version>3.2.13</scalatest.version>
+        <!-- spark 3.3 end -->
 
     </properties>
 
@@ -49,6 +43,10 @@
             <scope>test</scope>
             <exclusions>
                 <exclusion>
+                    <groupId>org.scala-lang</groupId>
+                    <artifactId>scala-library</artifactId>
+                </exclusion>
+                <exclusion>
                     <artifactId>junit</artifactId>
                     <groupId>junit</groupId>
                 </exclusion>
@@ -69,7 +67,7 @@
         <dependency>
             <groupId>com.dimafeng</groupId>
             <artifactId>testcontainers-scala_${scala.binary.version}</artifactId>
-            <version>0.40.2</version>
+            <version>0.40.10</version>
             <scope>test</scope>
             <exclusions>
                 <exclusion>
@@ -93,12 +91,21 @@
 
 
         <!--lombok dependencies-->
+<!--        <dependency>-->
+<!--            <groupId>org.projectlombok</groupId>-->
+<!--            <artifactId>lombok</artifactId>-->
+<!--            <version>1.16.20</version>-->
+<!--        </dependency>-->
+        <!-- This is a workaround; to avoid error -->
+        <!-- [ERROR] /work/code/upgrade/byzer-lang/streamingpro-it/src/test/scala/tech/mlsql/it/LocalBaseTestSuite.scala:27:
+        error: Symbol 'type org.apache.spark.sql.SparkSession' is missing from the classpath.
+        [INFO] This symbol is required by 'variable streaming.core.strategy.platform.SparkRuntime.sparkSession'.-->
         <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <version>1.16.20</version>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-sql_2.12</artifactId>
+            <version>${spark.version}</version>
+            <scope>test</scope>
         </dependency>
-
 
     </dependencies>
 

@@ -18,8 +18,6 @@
 
 package streaming.dsl.mmlib.algs
 
-import java.io.ByteArrayOutputStream
-import java.util.Properties
 import net.csdn.common.reflect.ReflectHelper
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
 import org.apache.spark.ml.linalg.SQLDataTypes._
@@ -28,7 +26,6 @@ import org.apache.spark.ml.param.Params
 import org.apache.spark.ml.util.MLWritable
 import org.apache.spark.ml.{Estimator, Model}
 import org.apache.spark.ps.cluster.Message
-import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.mlsql.session.MLSQLException
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, MLSQLUtils, Row, SaveMode, SparkSession, functions => F}
@@ -37,10 +34,13 @@ import org.apache.spark.{MLSQLConf, Partitioner, SparkConf}
 import streaming.core.message.MLSQLMessage
 import streaming.core.strategy.platform.{PlatformManager, SparkRuntime}
 import streaming.log.WowLog
+import tech.mlsql.common.utils.lang.sc.ScalaReflect
 import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.common.utils.serder.json.JSONTool
 import tech.mlsql.tool.HDFSOperatorV2
 
+import java.io.ByteArrayOutputStream
+import java.util.Properties
 import scala.collection.mutable.ArrayBuffer
 
 /**
@@ -205,9 +205,9 @@ trait Functions extends SQlBaseFunc with Logging with WowLog with Serializable {
   }
 
   def getModelConstructField(model: Any, modelName: String, fieldName: String) = {
-    val modelField = model.getClass.getDeclaredField("org$apache$spark$ml$feature$" + modelName + "$$" + fieldName)
-    modelField.setAccessible(true)
-    modelField.get(model)
+    val idfModel = ScalaReflect.fromInstance(model).field("idfModel").
+      invoke().asInstanceOf[org.apache.spark.mllib.feature.IDFModel]
+    idfModel
   }
 
   def getModelField(model: Any, fieldName: String) = {

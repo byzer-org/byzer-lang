@@ -9,15 +9,16 @@ import scala.compat.Platform.EOL
 
 trait Comparator {
 
-  def compare(testCase: TestCase, result: Seq[Seq[String]], exception: Exception): (Boolean, String) = {
-    if (exception != null) {
-      compareException(testCase, exception)
+  def compare(testCase: TestCase, result: Seq[Seq[String]], exception: Exception, status: Int = 200, errorMsg: String = "{}"):
+  (Boolean, String) = {
+    if (exception != null || status != 200) {
+      compareException(testCase, exception, errorMsg)
     } else {
       compareResult(testCase, result)
     }
   }
 
-  def compareException(testCase: TestCase, exception: Exception): (Boolean, String) = ???
+  def compareException(testCase: TestCase, exception: Exception, errorMsg: String): (Boolean, String) = ???
 
   def compareResult(testCase: TestCase, result: Seq[Seq[String]]): (Boolean, String) = ???
 }
@@ -32,23 +33,38 @@ class DefaultComparator extends Comparator {
     sw.toString
   }
 
-  override def compareException(testCase: TestCase, exception: Exception): (Boolean, String) = {
+  override def compareException(testCase: TestCase, exception: Exception, errorMsg: String): (Boolean, String) = {
     val hints: Map[String, String] = testCase.getHintList
     if (!hints.contains("exception") || !hints.contains("msg")) {
+      if (exception == null) {
+        return (false, "\n" + errorMsg)
+      }
       return (false, "\n" + getExceptionStackAsString(exception))
     }
 
-    val name = hints("exception")
+    val exceptionClassName = hints("exception")
+    val exceptionClassNameHelper = exceptionClassName.r
     val msg = hints("msg")
+    val msgHelper = msg.r
     try {
-      val clazz = Class.forName(name)
+      val clazz = Class.forName(exceptionClassName)
+      //exception class is null, use errorMessage for matching. This method acts on the result returned by rest in yarn mode.
+      if (exception == null) {
+        if ((exceptionClassNameHelper findFirstIn errorMsg).isDefined && (msgHelper findFirstIn errorMsg).isDefined) {
+          return (true, "")
+        }
+        return (false, s"\nExpected exception and message: $exceptionClassName, $msg\nActual exception name and message: " +
+          errorMsg)
+      }
+
       if (clazz.isInstance(exception) && exception.getMessage.matches(msg)) {
         return (true, "")
       }
-      (false, s"\nExpected exception and message: $name, $msg\nActual exception and message: ${exception.getClass.getName}, ${exception.getMessage}")
+      (false, s"\nExpected exception and message: $exceptionClassName, $msg\nActual exception name and message: " +
+        s"${exception.getClass.getName}, ${exception.getMessage}")
     } catch {
       case cnfe: ClassNotFoundException =>
-        (false, s"Exception class not found: $name")
+        (false, s"Exception class not found: $exceptionClassName")
       case e: Exception =>
         (false, "\n" + getExceptionStackAsString(e))
     }

@@ -1,0 +1,8 @@
+--%comparator=tech.mlsql.it.IgnoreResultComparator
+
+!plugin proxy "http://market.byzer.org/run";
+!plugin show proxy;
+!lastCommand named proxies;
+!assert proxies ''':value=="http://market.byzer.org/run"'''  "the proxy value should be http://market.byzer.org/run";
+-- set back
+!plugin proxy "http://store.mlsql.tech/run";

@@ -1,0 +1,21 @@
+load parquet.`/ssb/lineorder/part-00000-ee6e5c31-5f7f-4297-a666-902609272ba3-c000.snappy.parquet` as lineorder_parquet;
+select * from lineorder_parquet as lineorder;
+
+load parquet.`/ssb/dates/part-00000-b6e546cf-abb1-4d7a-a16a-eb830e3e0996-c000.snappy.parquet` as dates_parquet;
+select * from dates_parquet as dates;
+
+load parquet.`/ssb/customer/part-00000-7505a64d-b4bf-4186-874a-a9898502a51e-c000.snappy.parquet` as customer_parquet;
+select * from customer_parquet as customer;
+
+load parquet.`/ssb/supplier/part-00000-4ce61878-9646-42dd-91de-7a42a01f5ec9-c000.snappy.parquet` as supplier_parquet;
+select * from supplier_parquet as supplier;
+
+select C_CITY, S_CITY, D_YEAR, sum(LO_REVENUE) as LO_REVENUE
+from lineorder
+left join dates on LO_ORDERDATE = D_DATEKEY
+left join customer on LO_CUSTKEY = C_CUSTKEY
+left join supplier on LO_SUPPKEY = S_SUPPKEY
+where C_NATION = 'ARGENTINA' and s_nation = 'IRAQ'
+and D_YEAR >= 1992 and D_YEAR <= 1997
+group by C_CITY, S_CITY, D_YEAR
+order by D_YEAR asc, LO_REVENUE desc as ssb_query08;

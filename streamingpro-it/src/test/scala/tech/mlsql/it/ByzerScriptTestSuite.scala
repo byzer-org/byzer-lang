@@ -8,6 +8,7 @@ import tech.mlsql.crawler.RestUtils
 import tech.mlsql.it.contiainer.ByzerCluster
 import tech.mlsql.it.utils.DockerUtils
 import tech.mlsql.it.utils.DockerUtils.getCurProjectRootPath
+import tech.mlsql.runtime.VersionRangeChecker
 
 import java.io.File
 import java.util.UUID
@@ -17,19 +18,28 @@ import scala.collection.mutable
  * 23/02/2022 hellozepp(lisheng.zhanglin@163.com)
  */
 class ByzerScriptTestSuite extends LocalBaseTestSuite with Logging {
-  val version: String = DockerUtils.getSparkShortVersion
+  val version: String = DockerUtils.getSparkVersion
   var url: String = ""
   var initialByzerPlugins: Seq[String] = Seq()
   private var cluster: ByzerCluster = _
+  val curTestManager = new TestManager()
+  var curTestCaseDirPath: Seq[String] = _
+  var curDataDirPath: String = _
 
-  def setupCluster(): ByzerCluster = {
-    cluster = ByzerCluster.forSpec()
+  override def getTestManager: TestManager = curTestManager
+
+  override def getTestCaseDirPath: Seq[String] = curTestCaseDirPath
+
+  override def getDataDirPath: String = curDataDirPath
+
+  def setupCluster(dataDirPath: String): ByzerCluster = {
+    cluster = ByzerCluster.forSpec(dataDirPath)
     cluster.start()
     cluster
   }
 
   override def afterAll(): Unit = {
-    println("The integration test is complete, and a graceful shutdown is performed...")
+    println("The ByzerScriptTestSuite integration test is complete, and a graceful shutdown is performed...")
     if (cluster != null) {
       cluster.stop()
       cluster = null
@@ -37,25 +47,15 @@ class ByzerScriptTestSuite extends LocalBaseTestSuite with Logging {
   }
 
   override def beforeAll(): Unit = {
-    println("Initialize configuration before integration test execution...")
-    setupWorkingDirectory()
-    setupRunParams()
-    copyDataToUserHome(user)
-    TestManager.loadTestCase(new File(testCaseDirPath))
+    println("Initialize ByzerScriptTestSuite configuration before integration test execution...")
+    curTestCaseDirPath.foreach(dirPath => {
+      curTestManager.loadTestCase(new File(dirPath))
+    })
     initPlugins()
   }
 
-  override def copyDataToUserHome(user: String): Unit = {
-    // no-op
-  }
-
   override def initPlugins(): Unit = {
-    // set plugin context loader
-    Thread.currentThread().setContextClassLoader(ClassLoader.getSystemClassLoader)
-    initialByzerPlugins.foreach(name => {
-      runScript(url, user, s"""!plugin app remove "$name-$version";""")
-      runScript(url, user, s"""!plugin app add - "$name-$version";""")
-    })
+    // no-op
   }
 
   def runScript(url: String, user: String, code: String, callbackHeader: String = ""): (Int, String) = {
@@ -88,18 +88,23 @@ class ByzerScriptTestSuite extends LocalBaseTestSuite with Logging {
 
   override def setupRunParams(): Unit = {
     val path = getCurProjectRootPath
-    testCaseDirPath = path + "/src/test/resources/sql/yarn"
-    dataDirPath = path + "/src/test/resources/data"
+    curTestCaseDirPath = Seq(
+      path + "src/test/resources/sql/yarn_mode",
+      path + "src/test/resources/sql/all_mode"
+    )
+    curDataDirPath = path + "src/test/resources/data"
   }
 
-  def before(): Unit = {
-    // no-op
+  def beforeInitContainers(): Unit = {
+    setupRunParams()
   }
 
-  if ("3.0".equals(version)) {
-    before()
-    println("Current spark version is 3.0, step to javaContainer test...")
-    val cluster: ByzerCluster = setupCluster()
+  beforeInitContainers()
+
+  if (VersionRangeChecker.isVersionCompatible(">=3.0.0", version)) {
+
+    println("Current spark version is 3.X, step to javaContainer test...")
+    val cluster: ByzerCluster = setupCluster(curDataDirPath)
     val hadoopContainer = cluster.hadoopContainer
     val byzerLangContainer = cluster.byzerLangContainer
     val javaContainer = byzerLangContainer.container
@@ -134,16 +139,16 @@ class ByzerScriptTestSuite extends LocalBaseTestSuite with Logging {
           throw new RuntimeException(res)
       }
 
-      TestManager.testCases.foreach(testCase => {
+      curTestManager.testCases.foreach(testCase => {
         try {
           val (status, result) = runScript(url, user, testCase.sql)
-          TestManager.acceptRest(testCase, status, result, null)
+          curTestManager.acceptRest(testCase, status, result, null)
         } catch {
           case e: Exception =>
-            TestManager.acceptRest(testCase, 500, null, e)
+            curTestManager.acceptRest(testCase, 500, null, e)
         }
       })
-      TestManager.report()
+      curTestManager.report()
     }
 
   } else {

@@ -1,0 +1,1 @@
+load excel.`/excel/test-excel.xlsx` where header="true" and dataAddress="'Sheet2'!A20:D34" and addColorColumns="true" as excel_demo;

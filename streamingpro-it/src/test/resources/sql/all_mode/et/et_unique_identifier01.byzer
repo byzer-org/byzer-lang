@@ -1,0 +1,10 @@
+--%comparator=tech.mlsql.it.IgnoreResultComparator
+
+load parquet.`/ssb/customer/part-00000-7505a64d-b4bf-4186-874a-a9898502a51e-c000.snappy.parquet` as customer_parquet;
+select * from customer_parquet as customer;
+
+run customer as UniqueIdentifier.`` where soure='new' and columnName='UniqueID' as customer_unique;
+
+select count(1) as account from customer_unique where UniqueID = C_CUSTKEY as customer_unique_account;
+
+!assert customer_unique_account ''':account == 300''' "Failed to run UniqueIdentifier!";

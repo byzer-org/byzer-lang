@@ -1,6 +1,7 @@
 package tech.mlsql.test
 
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 import tech.mlsql.common.utils.lang.sc.ScalaReflect
 
 trait A1 {
@@ -23,7 +24,7 @@ object A {
 
 }
 
-class ScalaReflectSpec extends FlatSpec with Matchers {
+class ScalaReflectSpec extends AnyFlatSpec with Matchers {
   it should " reflect method or filed correct" in {
     val a = new A()
 

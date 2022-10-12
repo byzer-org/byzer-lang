@@ -9,7 +9,7 @@ import tech.mlsql.core.version.MLSQLVersion
 import java.io.File
 import scala.collection.mutable.ListBuffer
 
-object TestManager extends Logging {
+class TestManager extends Logging {
 
   val nl: String = System.lineSeparator()
 
@@ -27,8 +27,8 @@ object TestManager extends Logging {
     if (testCaseDir.exists() && testCaseDir.isDirectory) {
       testCaseDir.listFiles().sortBy(_.getName).foreach(file => {
         if (file.isFile &&
-          file.getName.endsWith("mlsql") &&
-          file.getName.stripSuffix(".mlsql").matches(matchesReg)
+          (file.getName.endsWith("mlsql") || file.getName.endsWith("byzer")) &&
+          (file.getName.stripSuffix(".mlsql").matches(matchesReg) || file.getName.stripSuffix(".byzer").matches(matchesReg))
         ) {
           logInfo(s"collect test file: ${file.getName}; matches=${matchesReg}")
           val expectedFileName = s"""${file.getName}.expected"""
@@ -84,10 +84,19 @@ object TestManager extends Logging {
 
   def acceptRest(testCase: TestCase, status: Int, result: String, exception: Exception): Unit = {
     if (status != 200) {
-      if (exception != null) {
-        recordError(testCase, result + "\n" + ExceptionUtils.getMessage(exception))
-      } else {
-        recordError(testCase, result)
+      val hints = testCase.getHintList
+      var comparator: Comparator = DefaultComparator
+      if (hints.contains("comparator")) {
+        val clazzName = hints("comparator")
+        try {
+          comparator = Class.forName(clazzName).newInstance().asInstanceOf[Comparator]
+        } catch {
+          case _: ClassNotFoundException => logInfo(s"Warn: can not load comparator $clazzName, use default.")
+        }
+      }
+      val compareResult: (Boolean, String) = comparator.compare(testCase,null, exception, status, result)
+      if (!compareResult._1) {
+        recordError(testCase, compareResult._2)
       }
     }
   }

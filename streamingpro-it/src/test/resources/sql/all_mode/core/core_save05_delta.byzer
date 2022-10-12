@@ -1,0 +1,6 @@
+load csv.`/simple/tmp/employee.csv` where header='true' as employee;
+
+save overwrite employee as delta.`public.employee`;
+load delta.`public.employee` as employee_delta;
+
+select * from employee_delta limit 5 as employee_delta_ot;

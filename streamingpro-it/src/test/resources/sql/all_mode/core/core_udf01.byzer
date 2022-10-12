@@ -1,0 +1,16 @@
+register ScriptUDF.`` as populate_null where
+and lang="scala"
+and udfType="udf"
+and code='''
+def apply(leave_date: String) = {
+   var rs = leave_date
+   if (leave_date == null || leave_date.length == 0) {
+       rs = "2099-01-01"
+   }
+   rs
+}
+''';
+
+load csv.`/simple/tmp/employee.csv` where header='true' as employee;
+
+select owner, join_date, populate_null(leave_date) as leave_date2 from employee limit 5 as employee_populate;

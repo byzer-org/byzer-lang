@@ -19,13 +19,11 @@
 package streaming.core.compositor.spark.output
 
 import java.util
-
-import org.apache.log4j.Logger
 import org.apache.spark.ml.BaseAlgorithmEstimator
 import org.apache.spark.ml.tuning.TrainValidationSplitModel
 import org.apache.spark.sql.DataFrame
 import serviceframework.dispatcher.{Processor, Strategy}
-import streaming.core.compositor.spark.transformation.{BaseAlgorithmCompositor, SQLCompositor}
+import streaming.core.compositor.spark.transformation.BaseAlgorithmCompositor
 
 import scala.collection.JavaConversions._
 
@@ -33,9 +31,6 @@ import scala.collection.JavaConversions._
   * 7/27/16 WilliamZhu(allwefantasy@gmail.com)
   */
 class AlgorithmOutputCompositor[T] extends BaseAlgorithmCompositor[T] {
-
-
-  val logger = Logger.getLogger(classOf[SQLCompositor[T]].getName)
 
   val mapping = Map(
     "als" -> "org.apache.spark.ml.algs.ALSEstimator",

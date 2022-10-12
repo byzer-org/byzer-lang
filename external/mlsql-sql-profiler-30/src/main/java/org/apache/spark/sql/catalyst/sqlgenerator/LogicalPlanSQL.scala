@@ -162,7 +162,7 @@ class LogicalPlanSQL(plan: LogicalPlan, dialect: SQLDialect) {
     /*case a@Alias(array@GetArrayStructFields(child, field, _, _, _), name) =>
       val colName = expressionToSQL(array)
       s"$colName AS ${dialect.quote(colName)}"*/
-    case toDate@ParseToDate(_, _, child) =>
+    case toDate@ParseToDate(child, _, _) =>
       s"${dialect.expressionToSQL(toDate)}(${expressionToSQL(child)})"
     case year@Year(child) =>
       s"${dialect.expressionToSQL(year)}(${expressionToSQL(child)})"
@@ -185,7 +185,7 @@ class LogicalPlanSQL(plan: LogicalPlan, dialect: SQLDialect) {
       dialect.quote(s"${expressionToSQL(child)}.${field.name}")
     case a: AttributeReference =>
       dialect.getAttributeName(a)
-    case c@Cast(child, dataType, _) => dataType match {
+    case c@Cast(child, dataType, _,_) => dataType match {
       case _: ArrayType | _: MapType | _: StructType => expressionToSQL(child)
       case _ => s"CAST(${expressionToSQL(child)} AS ${dialect.dataTypeToSQL(dataType)})"
       //      case _: DecimalType => s"CAST(${expressionToSQL(child)} AS ${dialect.dataTypeToSQL(dataType)})"
@@ -304,11 +304,11 @@ class LogicalPlanSQL(plan: LogicalPlan, dialect: SQLDialect) {
   }
 
   def subqueryExpressionToSQL(subquery: Expression): String = subquery match {
-    case Exists(plan, children, _) =>
+    case Exists(plan, children, _,_) =>
       s"EXISTS (${logicalPlanToSQL(finalPlan(plan))})"
-    case ScalarSubquery(plan, children, _) =>
+    case ScalarSubquery(plan, children, _,_) =>
       s"(${logicalPlanToSQL(finalPlan(plan))})"
-    case ListQuery(plan, children, _, _) =>
+    case ListQuery(plan, children, _, _,_) =>
       s"IN (${logicalPlanToSQL(finalPlan(plan))})"
   }
 
@@ -382,9 +382,9 @@ class LogicalPlanSQL(plan: LogicalPlan, dialect: SQLDialect) {
 
       def traverseExpression(expr: Expression): Unit = {
         expr.foreach {
-          case ScalarSubquery(plan, _, _) => findLogicalRelation(plan, logicalRelations)
-          case Exists(plan, _, _) => findLogicalRelation(plan, logicalRelations)
-          case ListQuery(plan, _, _, _) => findLogicalRelation(plan, logicalRelations)
+          case ScalarSubquery(plan, _, _,_) => findLogicalRelation(plan, logicalRelations)
+          case Exists(plan, _, _,_) => findLogicalRelation(plan, logicalRelations)
+          case ListQuery(plan, _, _, _,_) => findLogicalRelation(plan, logicalRelations)
           case _ =>
         }
       }

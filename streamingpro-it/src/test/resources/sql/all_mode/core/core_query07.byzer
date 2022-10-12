@@ -1,0 +1,27 @@
+set t1 = '''
+    { "id": 1, "name": "carl" }
+    { "id": 2, "name": "paul" }
+    { "id": 3, "name": "jack" }
+    { "id": 4, "name": "rose" }
+    { "id": 5, "name": "helen" }
+''';
+
+set t2 = '''
+    { "id": 1, "age": 18 }
+    { "id": 2, "age": 20 }
+    { "id": 3, "age": 50 }
+    { "id": 4, "age": 23 }
+    { "id": 5, "age": 43 }
+''';
+
+load jsonStr.`t1` as t1;
+load jsonStr.`t2` as t2;
+
+select
+    t1.id as id,
+    t1.name as name,
+    t2.age as age
+from t1
+join t2 on t1.id = t2.id
+order by id asc
+as t3;

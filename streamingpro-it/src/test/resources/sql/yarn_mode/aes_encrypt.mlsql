@@ -1,0 +1,6 @@
+--%comparator=tech.mlsql.it.IgnoreResultComparator
+
+select aes_decrypt( aes_encrypt("hello world") ) as original as result;
+
+-- make sure status of  all models are success.
+!assert result ''':original=="hello world"'''  "all aes_decrypt should be success";
