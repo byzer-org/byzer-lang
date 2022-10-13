@@ -271,7 +271,7 @@ class MLSQLRestTest extends AnyFunSuite with SparkOperationUtil with BasicMLSQLC
             ), Option(session.emptyDataFrame)
           ))
           val rows = res.collect()
-          rows.foreach(println(_))
+          rows.foreach(i => log.info(i.toString()))
           // the last one will also been append in the result with empty value
           assertEquals(3, rows.length)
         }
@@ -321,7 +321,7 @@ class MLSQLRestTest extends AnyFunSuite with SparkOperationUtil with BasicMLSQLC
             ), Option(session.emptyDataFrame)
           ))
           val rows = res.collect()
-          rows.foreach(println(_))
+          rows.foreach(i => log.info(i.toString()))
           // the last one will also been append in the result with empty value
           assertEquals(3, rows.length)
         }

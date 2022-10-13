@@ -1,6 +1,7 @@
 package tech.mlsql.store
 
 import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
+import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.datalake.DataLake
 import tech.mlsql.scheduler.client.SchedulerUtils.DELTA_FORMAT
 import tech.mlsql.store.DictType.DictType
@@ -8,7 +9,7 @@ import tech.mlsql.store.DictType.DictType
 /**
  * 16/3/2020 WilliamZhu(allwefantasy@gmail.com)
  */
-class DeltaLakeDBStore extends DBStore {
+class DeltaLakeDBStore extends DBStore with Logging {
   private val configTableName = "__mlsql__.config"
 
   override def saveConfig(spark: SparkSession, appPrefix: String, name: String, value: String, dictType: DictType): Unit = this.synchronized {
@@ -46,8 +47,7 @@ class DeltaLakeDBStore extends DBStore {
     try {
       writer.mode(SaveMode.Append).save(finalPath)
     } catch {
-      case e: Exception =>
-        e.printStackTrace()
+      case e: Exception => log.error("SaveTable Error: {}", e)
     }
 
   }

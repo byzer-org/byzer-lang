@@ -5,6 +5,7 @@ import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs._
 import org.apache.hadoop.io.IOUtils
 import org.apache.spark.MLSQLSparkUtils
+import org.slf4j.{Logger, LoggerFactory}
 import tech.mlsql.common.utils.Md5
 import tech.mlsql.common.utils.path.PathFun
 
@@ -16,6 +17,7 @@ import scala.collection.mutable.ArrayBuffer
  */
 object HDFSOperatorV2 {
 
+  private val log: Logger = LoggerFactory.getLogger(HDFSOperatorV2.getClass)
   def hadoopConfiguration: Configuration = {
     if (MLSQLSparkUtils.sparkHadoopUtil != null) {
       MLSQLSparkUtils.sparkHadoopUtil.conf
@@ -99,15 +101,13 @@ object HDFSOperatorV2 {
       dos = fs.create(new Path(new java.io.File(path, fileName).getPath), true)
       dos.write(bytes)
     } catch {
-      case ex: Exception =>
-        println("file save exception")
+      case ex: Exception => log.error("File Save Exception: {}", ex)
     } finally {
       if (null != dos) {
         try {
           dos.close()
         } catch {
-          case ex: Exception =>
-            println("close exception")
+          case ex: Exception => log.error("Close Exception: {}", ex)
         }
         dos.close()
       }
@@ -127,16 +127,13 @@ object HDFSOperatorV2 {
       dos = fs.create(new Path(new java.io.File(path, fileName).getPath), true)
       IOUtils.copyBytes(inputStream, dos, 4 * 1024 * 1024)
     } catch {
-      case ex: Exception =>
-        ex.printStackTrace()
-        println("file save exception")
+      case ex: Exception => log.error("File Save Exception: {}", ex)
     } finally {
       if (null != dos) {
         try {
           dos.close()
         } catch {
-          case ex: Exception =>
-            println("close exception")
+          case ex: Exception => log.error("Close Exception: {}", ex)
         }
         dos.close()
       }
@@ -164,15 +161,13 @@ object HDFSOperatorV2 {
         dos.writeBytes(x._2 + "\n")
       }
     } catch {
-      case ex: Exception =>
-        println("file save exception")
+      case ex: Exception => log.error("File Save Exception: {}", ex)
     } finally {
       if (null != dos) {
         try {
           dos.close()
         } catch {
-          case ex: Exception =>
-            println("close exception")
+          case ex: Exception => log.error("Close Exception: {}", ex)
         }
         dos.close()
       }

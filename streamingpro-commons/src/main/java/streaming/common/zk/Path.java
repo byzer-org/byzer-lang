@@ -18,6 +18,9 @@
 
 package streaming.common.zk;
 
+import net.csdn.common.logging.CSLogger;
+import net.csdn.common.logging.Loggers;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,6 +28,8 @@ import java.util.List;
  * 7/7/16 WilliamZhu(allwefantasy@gmail.com)
  */
 public class Path {
+
+    private static CSLogger logger = Loggers.getLogger(Path.class);
 
     private List<String> detail ;
 
@@ -119,6 +124,13 @@ public class Path {
         System.out.println(p.getPathString());
         System.out.println(p.getParentPath().getPathString());
         System.out.println(p.getPathString());
+        if (logger.isInfoEnabled()) {
+            logger.info(
+                    "Path: {} \n ParentPath: {} \n ",
+                    p.getPathString(),
+                    p.getParentPath().getPathString()
+            );
+        }
 
     }
 }

@@ -123,7 +123,7 @@ class JDBCSink(_options: Map[String, String]) extends Sink with Logging {
             connection.commit()
           } catch {
             case e: Exception =>
-              e.printStackTrace()
+              log.error("Close Error: {}", e)
               connection.rollback()
           } finally {
             sqlArray.map(_.close())

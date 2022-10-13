@@ -10,6 +10,7 @@ import com.alibaba.druid.sql.repository.SchemaRepository
 import org.apache.spark.sql.jdbc.JdbcDialects
 import org.apache.spark.sql.types.DecimalType.{MAX_PRECISION, MAX_SCALE}
 import org.apache.spark.sql.types._
+import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.JavaConverters._
 import scala.math.min
@@ -20,6 +21,7 @@ import scala.math.min
 class RDSchema(dbType: String) {
 
   private val repository = new SchemaRepository(DbType.of(dbType))
+  private val log: Logger = LoggerFactory.getLogger(this.getClass)
 
   def createTable(sql: String) = {
     repository.console(sql)
@@ -37,7 +39,9 @@ class RDSchema(dbType: String) {
         try {
           f.toString.toInt
         } catch {
-          case e: Exception => 0
+          case e: Exception =>
+            log.error("ExtractfieldSize Error: {}", e)
+            0
         }
 
       }.headOption

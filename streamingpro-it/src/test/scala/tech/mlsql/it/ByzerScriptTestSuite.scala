@@ -3,7 +3,6 @@ package tech.mlsql.it
 import net.csdn.modules.transport.DefaultHttpTransportService
 import org.apache.http.HttpEntity
 import org.apache.http.util.EntityUtils
-import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.crawler.RestUtils
 import tech.mlsql.it.contiainer.ByzerCluster
 import tech.mlsql.it.utils.DockerUtils
@@ -17,7 +16,7 @@ import scala.collection.mutable
 /**
  * 23/02/2022 hellozepp(lisheng.zhanglin@163.com)
  */
-class ByzerScriptTestSuite extends LocalBaseTestSuite with Logging {
+class ByzerScriptTestSuite extends LocalBaseTestSuite {
   val version: String = DockerUtils.getSparkVersion
   var url: String = ""
   var initialByzerPlugins: Seq[String] = Seq()
@@ -111,17 +110,6 @@ class ByzerScriptTestSuite extends LocalBaseTestSuite with Logging {
     url = s"http://${javaContainer.getHost}:${javaContainer.getMappedPort(9003)}/run/script"
 
     test("javaContainer") {
-      // 9870, 8088, 19888, 10002, 8042
-      println("Current hadoop ui port(8088) is :" + hadoopContainer.container.getMappedPort(8088))
-      println("Current containerlogs ui port(8042) is :" + hadoopContainer.container.getMappedPort(8042))
-      println("Current hdfs ui port is :" + hadoopContainer.container.getMappedPort(9870))
-      println("Current jobhistory ui port is :" + hadoopContainer.container.getMappedPort(19888))
-      println("Current spark xdebug(10002) port is :" + hadoopContainer.container.getMappedPort(10002))
-      // 9003, 4040, 8265, 10002
-      println("Current byzer ui port is :" + javaContainer.getMappedPort(9003))
-      println("Current spark ui port is :" + javaContainer.getMappedPort(4040))
-      println("Current ray dashboard port is :" + javaContainer.getMappedPort(8265))
-      println("Current ray head port is :" + javaContainer.getMappedPort(10002))
       runScript(url, user, "select 1 as a,'jack' as b as bbc;")
     }
 

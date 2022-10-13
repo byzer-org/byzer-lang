@@ -7,12 +7,13 @@ import org.scalatest.funsuite.AnyFunSuite
 import serviceframework.dispatcher.StrategyDispatcher
 import streaming.core.StreamingApp
 import streaming.core.strategy.platform.{PlatformManager, SparkRuntime}
+import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.job.JobManager
 
 import java.io.File
 
 
-trait LocalBaseTestSuite extends AnyFunSuite with SparkOperationUtil with BeforeAndAfterAll {
+trait LocalBaseTestSuite extends AnyFunSuite with SparkOperationUtil with BeforeAndAfterAll with Logging {
 
   var runtime: SparkRuntime = _
   var runParams: Array[String] = Array()
@@ -107,8 +108,7 @@ trait LocalBaseTestSuite extends AnyFunSuite with SparkOperationUtil with Before
       }
     }
     catch {
-      case e: Exception =>
-        e.printStackTrace()
+      case e: Exception => log.error("Error: {}", e)
     }
   }
 

@@ -1,5 +1,7 @@
 package tech.mlsql.tool;
 
+import net.csdn.common.logging.CSLogger;
+import net.csdn.common.logging.Loggers;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileStatus;
@@ -20,7 +22,8 @@ import java.util.List;
  * 24/5/2021 WilliamZhu(allwefantasy@gmail.com)
  */
 public class TarfileUtil {
-    private static Logger logger = LoggerFactory.getLogger(TarfileUtil.class);
+
+    private static CSLogger logger = Loggers.getLogger(TarfileUtil.class);
 
     public static void walk(FileSystem fs, List<FileStatus> files, Path p) throws IOException {
         if (fs.isFile(p)) {
@@ -88,7 +91,11 @@ public class TarfileUtil {
             } else return 400;
 
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error(
+                    "Error!!!\n pathStr: {} \n exception: {}",
+                    pathStr,
+                    e
+            );
             return 500;
 
         }

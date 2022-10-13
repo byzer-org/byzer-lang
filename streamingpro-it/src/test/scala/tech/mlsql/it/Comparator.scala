@@ -1,9 +1,9 @@
 package tech.mlsql.it
 
 import java.io.{FileReader, PrintWriter, StringWriter}
-
 import breeze.io.CSVReader
 import org.apache.commons.io.FileUtils
+import tech.mlsql.common.utils.log.Logging
 
 import scala.compat.Platform.EOL
 
@@ -24,12 +24,12 @@ trait Comparator {
 }
 
 
-class DefaultComparator extends Comparator {
+class DefaultComparator extends Comparator with Logging{
 
   def getExceptionStackAsString(exception: Exception): String = {
     val sw = new StringWriter()
     val pw = new PrintWriter(sw)
-    exception.printStackTrace(pw)
+    log.error("Error: {}\n PrintWriter: {}", exception: Any, pw.toString)
     sw.toString
   }
 

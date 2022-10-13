@@ -17,7 +17,6 @@ class Test2 extends BasicSparkOperation with SpecFunctions with BasicMLSQLConfig
       session.sparkContext.
         parallelize(Seq(10), 2).
         mapPartitions { iter =>
-        iter.foreach(item => println(item))
         iter
       }.
         collect()

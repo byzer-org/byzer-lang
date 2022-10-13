@@ -23,9 +23,10 @@ import org.scalatest.BeforeAndAfterAll
 import streaming.core.strategy.platform.SparkRuntime
 import streaming.core.{BasicMLSQLConfig, SpecFunctions}
 import streaming.dsl.ScriptSQLExec
+import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.common.utils.shell.ShellCommand
 
-class Stream2Spec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConfig with BeforeAndAfterAll {
+class Stream2Spec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConfig with BeforeAndAfterAll with Logging {
 
   val topic_name = "test_cool"
 
@@ -47,8 +48,7 @@ class Stream2Spec extends BasicSparkOperation with SpecFunctions with BasicMLSQL
                   |as kafka.`test_cool` where kafka.bootstrap.servers="127.0.0.1:9092";
                 """.stripMargin, ssel)
             } catch {
-              case e: Exception =>
-                print(e.getMessage)
+              case e: Exception => log.error("Error: {}", e)
             }
             Thread.sleep(1000)
             count -= 1
@@ -111,8 +111,7 @@ class Stream2Spec extends BasicSparkOperation with SpecFunctions with BasicMLSQL
                   |as kafka.`test_cool` where kafka.bootstrap.servers="127.0.0.1:9092";
                 """.stripMargin, ssel)
             } catch {
-              case e: Exception =>
-                print(e.getMessage)
+              case e: Exception => log.error("Error: {}", e)
             }
             Thread.sleep(1000)
             count -= 1

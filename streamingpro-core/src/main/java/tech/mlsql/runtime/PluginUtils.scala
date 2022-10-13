@@ -170,15 +170,13 @@ object PluginUtils extends Logging with WowLog {
       dos = fs.create(new Path(new java.io.File(path, fileName).getPath), true)
       copyBytes(inputStream, dos, 4 * 1024 * 1024)
     } catch {
-      case ex: Exception =>
-        println("file save exception")
+      case ex: Exception => log.error("File Save Exception: {}", ex)
     } finally {
       if (null != dos) {
         try {
           dos.close()
         } catch {
-          case ex: Exception =>
-            println("close exception")
+          case ex: Exception => log.error("Close Exception: {}", ex)
         }
         dos.close()
       }

@@ -240,8 +240,7 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
           f.invoke(null, sparkSession.udf)
         }
       } catch {
-        case e: Exception =>
-          e.printStackTrace()
+        case e: Exception => log.error("RegisterUDF Error: {}", e)
       }
     }
   }

@@ -30,6 +30,7 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, MLSQLUtils, Row, SaveMode, SparkSession, functions => F}
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.types.{ArrayType, DoubleType}
+import org.slf4j.{Logger, LoggerFactory}
 import streaming.dsl.mmlib.algs.MetaConst._
 import streaming.dsl.mmlib.algs.meta.{MinMaxValueMeta, OutlierValueMeta, StandardScalerValueMeta}
 
@@ -37,6 +38,8 @@ import streaming.dsl.mmlib.algs.meta.{MinMaxValueMeta, OutlierValueMeta, Standar
   * Created by allwefantasy on 15/5/2018.
   */
 object DoubleFeature extends BaseFeatureFunctions {
+
+  private val log: Logger = LoggerFactory.getLogger(DoubleFeature.getClass)
 
   def killOutlierValue(df: DataFrame, metaPath: String, fields: Seq[String]): DataFrame = {
     var newDF = df
@@ -97,7 +100,9 @@ object DoubleFeature extends BaseFeatureFunctions {
     val min = trainParams.getOrElse("min", "0").toDouble
     val max = trainParams.getOrElse("max", "1").toDouble
     val scaleRange = max - min
-    println(s"predict: ${originalRange.mkString(",")} ${minArray.mkString(",")} ${scaleRange} $min")
+    if (log.isInfoEnabled()) {
+      log.info(s"predict: ${originalRange.mkString(",")} ${minArray.mkString(",")} ${scaleRange} ${min}")
+    }
     minMaxFunc(originalRange, minArray, scaleRange, min)
 
   }
@@ -180,7 +185,9 @@ object DoubleFeature extends BaseFeatureFunctions {
         val max = params.getOrElse("max", "1").toDouble
         val scaleRange = max - min
 
-        println(s"train: ${originalRange.mkString(",")} ${minArray.mkString(",")} ${scaleRange} $min")
+        if (log.isInfoEnabled()) {
+          log.info(s"train: ${originalRange.mkString(",")} ${minArray.mkString(",")} ${scaleRange} ${min}")
+        }
         minMaxFunc(originalRange, minArray, scaleRange, min)
 
       case "log2" =>

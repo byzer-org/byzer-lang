@@ -22,8 +22,8 @@ import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.{functions => F}
 import org.apache.spark.sql.types.{ArrayType, StringType, StructField, StructType}
 import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession}
+import org.slf4j.{Logger, LoggerFactory}
 import streaming.dsl.mmlib.SQLAlg
-
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable
@@ -88,6 +88,8 @@ class SQLTokenAnalysis extends SQLAlg with Functions {
 }
 
 object SQLTokenAnalysis {
+  private val log: Logger = LoggerFactory.getLogger(SQLTokenAnalysis.getClass)
+
   def parseStr(parser: Any, content: String, params: Map[String, String]) = {
 
     val ignoreNature = params.getOrElse("ignoreNature", "true").toBoolean
@@ -98,7 +100,7 @@ object SQLTokenAnalysis {
       parser.getClass.getMethod("parseStr", classOf[String]).invoke(parser, content)
     } catch {
       case e: Exception =>
-        println(s"parser invoke error:${content}")
+        log.error("Parser Invoke Error: {}\n Exception: {}", content, e: Any)
         throw e
     }
 

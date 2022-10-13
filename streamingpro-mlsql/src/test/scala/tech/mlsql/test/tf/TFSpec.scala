@@ -28,7 +28,6 @@ class TFSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConfi
       val source = Source.fromFile(new File(getExampleProject + "/tf_demo.py")).getLines().mkString("\n")
       writeStringToFile("/tmp/william/tmp/tf/tf_demo.py", source)
       executeCode(runtime, TFExmaple.code("/tmp/tf/tf_demo/model", "/tmp/william/tmp/tf/tf_demo.py"))
-      println()
     }
   }
 

@@ -74,6 +74,7 @@ object ByzerCluster extends Logging {
     lazy val byzerLangContainer = new ByzerLangContainer(clusterName).configure { c =>
       c.withNetworkAliases(ByzerCluster.appendClusterName(networkAliases))
       c.withNetwork(network)
+
       c.addExposedPorts(9003, 4040, 8265, 10002)
       c.setWaitStrategy(new HttpWaitStrategy()
         .forPort(9003).forStatusCode(200)
@@ -82,8 +83,10 @@ object ByzerCluster extends Logging {
         "/home/deploy/byzer-lang/main/" + DockerUtils.getJarName, BindMode.READ_WRITE)
       c.dependsOn(hadoopContainer)
       c.withStartupAttempts(3)
+      val memoryInBytes = 8 * 1024 * 1024
       c.withCreateContainerCmdModifier(new Consumer[CreateContainerCmd]() {
         def accept(cmd: CreateContainerCmd): Unit = {
+          cmd.withMemory(memoryInBytes)
           cmd.withName(clusterName + (Random.nextInt & Integer.MAX_VALUE))
         }
       })

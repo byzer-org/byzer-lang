@@ -20,6 +20,7 @@ package org.apache.hadoop.fs.shell;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.ContentSummary;
+import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.io.PrintStream;
@@ -30,6 +31,8 @@ import java.util.LinkedList;
  */
 
 public class WowCount extends WowFsCommand {
+
+    private Logger log = Logger.getLogger(WowCount.class);
     public WowCount(Configuration conf, String basePath, PrintStream out, PrintStream error) {
         super(conf, basePath, out, error);
     }
@@ -75,7 +78,11 @@ public class WowCount extends WowFsCommand {
     @Override
     protected void processPath(PathData src) throws IOException {
         ContentSummary summary = src.fs.getContentSummary(src.path);
-        out.println(summary.toString(showQuotas, isHumanReadable()) + cleanPath(src.toString()));
+        String msg = summary.toString(showQuotas, isHumanReadable()) + cleanPath(src.toString());
+        out.println(msg);
+        if (log.isInfoEnabled()) {
+            log.info(msg);
+        }
     }
 
     /**

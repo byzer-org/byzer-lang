@@ -33,10 +33,5 @@ class WowXORShiftRandom {
 }
 
 object WowXORShiftRandom {
-  def main(args: Array[String]): Unit = {
-    val random = new WowXORShiftRandom()
-    (0 until 1000).foreach { f =>
-      println(random.nextDouble)
-    }
-  }
+
 }

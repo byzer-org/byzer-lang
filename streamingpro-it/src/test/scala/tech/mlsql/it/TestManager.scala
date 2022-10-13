@@ -55,14 +55,14 @@ class TestManager extends Logging {
 
   def recordError(testCase: TestCase, msg: String): Unit = {
     failedCases += Tuple2(testCase, msg)
-    logInfo("========================= Error Test Case =========================")
-    logInfo(s"Error: TestCase ${testCase.name} failed, error msg is: $msg")
+    log.error("========================= Error Test Case =========================")
+    log.error(s"Error: TestCase ${testCase.name} failed, error msg is: ${msg}")
   }
 
 
   def recordError(testCase: TestCase, t: Throwable): Unit = {
     recordError(testCase, ExceptionUtils.getRootCause(t))
-    t.printStackTrace()
+    log.error("RecordError Error: {}", t)
   }
 
   def accept(testCase: TestCase, result: Seq[Seq[String]], exception: Exception): Unit = {

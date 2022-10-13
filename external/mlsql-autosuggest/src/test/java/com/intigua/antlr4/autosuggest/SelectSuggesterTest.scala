@@ -3,13 +3,14 @@ package com.intigua.antlr4.autosuggest
 import tech.mlsql.autosuggest.meta.{MetaProvider, MetaTable, MetaTableColumn, MetaTableKey}
 import tech.mlsql.autosuggest.statement.SelectSuggester
 import tech.mlsql.autosuggest.{DataType, MLSQLSQLFunction, TokenPos, TokenPosType}
+import tech.mlsql.common.utils.log.Logging
 
 import scala.collection.JavaConverters._
 
 /**
  * 2/6/2020 WilliamZhu(allwefantasy@gmail.com)
  */
-class SelectSuggesterTest extends BaseTest {
+class SelectSuggesterTest extends BaseTest with Logging {
 
   def buildMetaProvider = {
     context.setUserDefinedMetaProvider(new MetaProvider {
@@ -185,10 +186,14 @@ class SelectSuggesterTest extends BaseTest {
         |""".stripMargin).tokens.asScala.toList
 
     val suggester = new SelectSuggester(context, wow2, TokenPos(0, TokenPosType.NEXT, 0))
-    println(suggester.sqlAST.printAsStr(suggester.tokens, 0))
+    if (log.isInfoEnabled()) {
+      log.info(suggester.sqlAST.printAsStr(suggester.tokens, 0))
+    }
     suggester.table_info.foreach { case (level, item) =>
-      println(level + ":")
-      println(item.map(_._1).toList)
+      if (log.isInfoEnabled()) {
+        log.info(level + ":")
+        log.info(item.map(_._1).toList.toString())
+      }
     }
     assert(suggester.suggest().map(_.name) == List(("b"), ("keywords"), ("search_num"), ("rank")))
 
@@ -203,8 +208,10 @@ class SelectSuggesterTest extends BaseTest {
     val tokens = getMLSQLTokens(sql)
 
     val suggester = new SelectSuggester(context, tokens, TokenPos(0, TokenPosType.NEXT, 0))
-    println("=======")
-    println(suggester.suggest())
+    log.info("=======")
+    if (log.isInfoEnabled()) {
+      log.info(suggester.suggest().toString())
+    }
     assert(suggester.suggest().head.name=="b")
   }
 
@@ -250,7 +257,9 @@ class SelectSuggesterTest extends BaseTest {
         |""".stripMargin).tokens.asScala.toList
 
     val suggester = new SelectSuggester(context, wow, TokenPos(1, TokenPosType.CURRENT, 3))
-    println(suggester.suggest())
+    if (log.isInfoEnabled()) {
+      log.info(suggester.suggest().toString())
+    }
     assert(suggester.suggest().map(_.name) == List(("split")))
   }
 

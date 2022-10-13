@@ -2,13 +2,14 @@ package com.intigua.antlr4.autosuggest
 
 import tech.mlsql.autosuggest.statement.LoadSuggester
 import tech.mlsql.autosuggest.{TokenPos, TokenPosType}
+import tech.mlsql.common.utils.log.Logging
 
 import scala.collection.JavaConverters._
 
 /**
  * 2/6/2020 WilliamZhu(allwefantasy@gmail.com)
  */
-class LoadSuggesterTest extends BaseTest {
+class LoadSuggesterTest extends BaseTest with Logging {
   test("load hiv[cursor]") {
     val wow = context.lexer.tokenizeNonDefaultChannel(
       """
@@ -26,7 +27,13 @@ class LoadSuggesterTest extends BaseTest {
         | load 
         |""".stripMargin).tokens.asScala.toList
     val loadSuggester = new LoadSuggester(context, wow, TokenPos(0, TokenPosType.NEXT, 0)).suggest()
-    println(loadSuggester)
+    if (log.isInfoEnabled()) {
+      var loadSuggesterToString = "";
+      loadSuggester.foreach(i =>
+        loadSuggesterToString += ("name: " + i.name + ",")
+      )
+      log.info(loadSuggesterToString)
+    }
     assert(loadSuggester.size > 1)
   }
 
@@ -37,7 +44,9 @@ class LoadSuggesterTest extends BaseTest {
         | load csv.`` where
         |""".stripMargin).tokens.asScala.toList
     val result = new LoadSuggester(context, wow, TokenPos(4, TokenPosType.NEXT, 0)).suggest()
-    println(result)
+    if (log.isInfoEnabled()) {
+      log.info(result.toString())
+    }
 
   }
 

@@ -10,6 +10,7 @@ import org.apache.spark.internal.config._
 import org.apache.spark.rpc.{RpcCallContext, RpcEnv, ThreadSafeRpcEndpoint}
 import org.apache.spark.security.CryptoStreamUtils
 import org.apache.spark.util.ThreadUtils
+import org.slf4j.{Logger, LoggerFactory}
 import tech.mlsql.common.utils.exception.ExceptionTool
 import tech.mlsql.nativelib.runtime.MLSQLNativeRuntime
 import tech.mlsql.python.BasicCondaEnvManager
@@ -101,6 +102,8 @@ class PSExecutorBackend(env: SparkEnv, override val rpcEnv: RpcEnv, psDriverUrl:
 
 object PSExecutorBackend {
 
+  private val log: Logger = LoggerFactory.getLogger(PSExecutorBackend.getClass)
+
   def isLocalMaster(conf: SparkConf): Boolean = {
     //      val master = MLSQLConf.MLSQL_MASTER.readFrom(configReader).getOrElse("")
     val master = conf.get("spark.master", "")
@@ -161,12 +164,16 @@ object PSExecutorBackend {
             userClassPath += new URL(value)
             argv = tail
           case item::value::tail if item.startsWith("--")=>
-            System.out.println(s"ignore options: ${item} ${value}--")
+            if (log.isInfoEnabled()) {
+              log.info(s"ignore options: ${item} ${value}--")
+            }
             argv = tail
 
           case Nil =>
           case tail =>
-            System.err.println(s"Unrecognized options: ${tail.mkString(" ")}")
+            if (log.isInfoEnabled()) {
+              log.info("Unrecognized options: {}", tail.mkString(" "))
+            }
         }
       }
       if (psDriverUrl.contains("@")) {

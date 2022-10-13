@@ -123,6 +123,9 @@ public class ZKConfUtil {
 
                 checkAndAddPath(path.getParentPath());
                 System.out.println("add path " + p);
+                if (logger.isInfoEnabled()) {
+                    logger.info("Add path {}", p);
+                }
                 client.createPersistent(p);
             }
         }
@@ -220,8 +223,7 @@ public class ZKConfUtil {
         String dir = "/lock/127.0.0.1";
 
         if (!ifExist(dir)) {
-            System.out.println("create dir");
-
+            logger.info("create dir");
 
             if (!ifExist("/lock")) {
 
@@ -232,11 +234,14 @@ public class ZKConfUtil {
         }
         String path = client.createEphemeralSequential(dir, null);
 
-        System.out.println("path " + path);
+        if (logger.isInfoEnabled()) {
+            logger.info("Path: {}", path);
+        }
 
         for (String l : client.getChildren(dir)) {
-
-            System.out.println(l);
+            if (logger.isInfoEnabled()) {
+                logger.info(l);
+            }
         }
 
         Thread.sleep(50000);

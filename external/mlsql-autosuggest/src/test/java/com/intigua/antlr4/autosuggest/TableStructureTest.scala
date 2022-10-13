@@ -23,7 +23,9 @@ class TableStructureTest extends BaseTest with Logging {
     val tokens = getMLSQLTokens(sql)
 
     val suggester = new SelectSuggester(context, tokens, TokenPos(0, TokenPosType.NEXT, 0))
-    println(suggester.sqlAST)
+    if (log.isInfoEnabled()) {
+      log.info(suggester.toString)
+    }
   }
 
   test("s2") {
@@ -82,7 +84,9 @@ class TableStructureTest extends BaseTest with Logging {
     val suggester = new SelectSuggester(context, wow, TokenPos(3, TokenPosType.CURRENT, 1))
     val root = suggester.sqlAST
     root.visitDown(0) { case (ast, level) =>
-      println(s"${ast.name(suggester.tokens)} ${ast.output(suggester.tokens)}")
+      if (log.isInfoEnabled()) {
+        log.info(s"${ast.name(suggester.tokens)} ${ast.output(suggester.tokens)}")
+      }
     }
 
     assert(suggester.suggest().map(_.name) == List("keywords"))
@@ -99,7 +103,9 @@ class TableStructureTest extends BaseTest with Logging {
     val suggester = new SelectSuggester(context, wow, TokenPos(3, TokenPosType.CURRENT, 1))
     val root = suggester.sqlAST
     root.visitDown(0) { case (ast, level) =>
-      println(s"${ast.name(suggester.tokens)} ${ast.output(suggester.tokens)}")
+      if (log.isInfoEnabled()) {
+        log.info(s"${ast.name(suggester.tokens)} ${ast.output(suggester.tokens)}")
+      }
     }
 
     assert(suggester.suggest().map(_.name) == List("keywords"))

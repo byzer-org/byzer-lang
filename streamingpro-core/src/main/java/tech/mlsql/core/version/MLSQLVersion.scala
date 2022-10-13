@@ -1,5 +1,7 @@
 package tech.mlsql.core.version
 
+import org.slf4j.{Logger, LoggerFactory}
+
 import java.io.{IOException, InputStream}
 import java.util.Properties
 
@@ -7,6 +9,8 @@ import java.util.Properties
  * 2019-04-07 WilliamZhu(allwefantasy@gmail.com)
  */
 object MLSQLVersion {
+
+  private val log: Logger = LoggerFactory.getLogger(MLSQLVersion.getClass)
 
   private val versionFile: String = "mlsql-version-info.properties"
 
@@ -44,7 +48,9 @@ object MLSQLVersion {
         is.close()
       catch {
         case e: IOException =>
-          e.printStackTrace()
+          if (log.isDebugEnabled()) {
+            log.debug("Load Error: {}", e)
+          }
       }
     }
     info

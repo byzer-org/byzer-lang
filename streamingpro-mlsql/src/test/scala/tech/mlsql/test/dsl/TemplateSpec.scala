@@ -10,7 +10,5 @@ import tech.mlsql.common.utils.base.Templates
 class TemplateSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConfig {
   "named template" should "work" in {
     println(Templates.evaluate(" hello {} ",Seq("jack")))
-    println(Templates.evaluate(" hello {0} {1} {0}",Seq("jack","wow")))
-    println(Templates.evaluate(" hello {0} {1} {2:uuid()}",Seq("jack","wow")))
   }
 }

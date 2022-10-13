@@ -56,7 +56,7 @@ class StreamKafka1_xSpec extends BasicSparkOperation with SpecFunctions with Bas
                    |as kafka.`${topic_name}` where metadata.broker.list="127.0.0.1:9092";
                   """.stripMargin, ssel)
             } catch {
-              case e: Exception => print(e.getMessage)
+              case e: Exception => log.error("Error: {}", e)
             }
 
             Thread.sleep(1000)
@@ -105,7 +105,7 @@ class StreamKafka1_xSpec extends BasicSparkOperation with SpecFunctions with Bas
                    |as kafka.`${topic_name}` where metadata.broker.list="127.0.0.1:9092";
                   """.stripMargin, ssel)
             } catch {
-              case e: Exception => print(e.getMessage)
+              case e: Exception => log.error("Error: {}", e)
             }
 
             Thread.sleep(1000)
@@ -159,7 +159,7 @@ class StreamKafka1_xSpec extends BasicSparkOperation with SpecFunctions with Bas
                    |as kafka.`${topic_name}` where metadata.broker.list="127.0.0.1:9092";
                   """.stripMargin)
             } catch {
-              case e: Exception => print(e.getMessage)
+              case e: Exception => log.error("Error: {}", e)
             }
 
             Thread.sleep(1000)

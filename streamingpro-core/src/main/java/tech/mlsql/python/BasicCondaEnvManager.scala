@@ -76,7 +76,9 @@ class BasicCondaEnvManager(user: String, groupId: String, executorHostAndPort: S
           try {
             FileUtils.write(new File(tempFile), getCondaYamlContent(condaEnvPath), Charset.forName("utf-8"))
             val cr = ShellCommand.execCmdV2WithProcessing((s) => {
-              println(s"Creating conda env:${projectEnvName}: " + s)
+              if (log.isInfoEnabled()) {
+                log.info(s"Creating conda env: ${projectEnvName}: ${s}")
+              }
               WriteLog.write(List(s"Creating conda env in ${executorHostAndPort}: ${s}").iterator, Map("PY_EXECUTE_USER" -> user, "groupId" -> groupId))
             },
               condaPath, "env", "create", "-n", projectEnvName, "--file", tempFile)

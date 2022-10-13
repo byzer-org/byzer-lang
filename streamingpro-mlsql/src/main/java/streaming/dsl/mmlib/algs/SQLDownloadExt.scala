@@ -135,7 +135,12 @@ class SQLDownloadExt(override val uid: String) extends SQLAlg with DslTool with 
       logInfo(s"Downloaded to ${to}")
     }
     catch {
-      case e: Exception => e.printStackTrace()
+      case e: Exception =>
+        log.error(
+            "Error: {}\n getUrl: {}",
+            e: Any,
+            getUrl
+        )
     }
     finally {
       if( tarIS != null )  tarIS.close()

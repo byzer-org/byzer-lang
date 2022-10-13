@@ -9,12 +9,13 @@ import org.apache.spark.sql.{DataFrame, Row}
 import serviceframework.dispatcher.{Compositor, StrategyDispatcher}
 import streaming.core.strategy.platform.{PlatformManager, SparkRuntime}
 import streaming.dsl.{MLSQLExecuteContext, ScriptSQLExec, ScriptSQLExecListener}
+import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.common.utils.shell.command.ParamsUtil
 import tech.mlsql.ets.ScriptRunner
 import tech.mlsql.job.{JobManager, MLSQLJobInfo, MLSQLJobProgress, MLSQLJobType}
 import tech.mlsql.runtime.MLSQLPlatformLifecycle
 
-trait SparkOperationUtil {
+trait SparkOperationUtil extends Logging {
 
   def waitJobStarted(groupId: String, timeoutSec: Long = 10) = {
     var count = timeoutSec
@@ -177,8 +178,7 @@ trait SparkOperationUtil {
           FileUtils.deleteDirectory(db)
         }
       } catch {
-        case e: Exception =>
-          e.printStackTrace()
+        case e: Exception => log.error("WithContext Error: {}", e)
       }
     }
   }
@@ -196,8 +196,7 @@ trait SparkOperationUtil {
           FileUtils.deleteDirectory(db)
         }
       } catch {
-        case e: Exception =>
-          e.printStackTrace()
+        case e: Exception => log.error("WithBatchContext Error: {}", e)
       }
     }
   }
@@ -243,8 +242,7 @@ trait SparkOperationUtil {
         }
         FileUtils.deleteDirectory(new File("./metastore_db"))
       } catch {
-        case e: Exception =>
-          e.printStackTrace()
+        case e: Exception => log.error("AppWithBatchContext Error: {}", e)
       }
     }
   }

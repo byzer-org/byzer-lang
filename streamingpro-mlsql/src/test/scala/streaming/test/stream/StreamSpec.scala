@@ -50,7 +50,7 @@ class StreamSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
                    |as kafka8.`${topic_name}` where metadata.broker.list="127.0.0.1:9092";
                   """.stripMargin, ssel)
             } catch {
-              case e: Exception => print(e.getMessage)
+              case e: Exception => log.error("Error: {}", e)
             }
 
             Thread.sleep(1000)
@@ -100,7 +100,7 @@ class StreamSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLC
                    |as kafka8.`${topic_name}` where metadata.broker.list="127.0.0.1:9092";
                   """.stripMargin, ssel)
             } catch {
-              case e: Exception => print(e.getMessage)
+              case e: Exception => log.error("Error: {}", e)
             }
 
             Thread.sleep(1000)

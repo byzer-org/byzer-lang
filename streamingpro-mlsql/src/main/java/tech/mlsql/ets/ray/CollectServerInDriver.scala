@@ -45,7 +45,9 @@ class CollectServerInDriver[T](context: AtomicReference[ArrayBuffer[ReportHostAn
     val dOut = new DataOutputStream(socket.getOutputStream)
     client.readRequest(dIn) match {
       case rha: ReportHostAndPort =>
-        println(rha)
+        if (log.isInfoEnabled()) (
+          log.info(rha.toString)
+        )
         context.get() += rha
         client.sendRequest(dOut, rha)
     }

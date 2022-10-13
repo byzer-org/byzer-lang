@@ -665,7 +665,9 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
                |
               |${command};
             """.stripMargin, ssel)
-          println(ssel.preProcessListener.get.toScript)
+          if (log.isInfoEnabled()) {
+            log.info(ssel.preProcessListener.get.toScript)
+          }
           assert(ssel.preProcessListener.get.toScript == targetStr)
         }
 
@@ -697,7 +699,9 @@ class DslSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLConf
         def compareDSL(command: String, targetStr: String) = {
           val ssel = createSSEL
           executeScript(command, ssel)
-          println(ssel.preProcessListener.get.toScript)
+          if (log.isInfoEnabled()) {
+            log.info(ssel.preProcessListener.get.toScript)
+          }
           assert(ssel.preProcessListener.get.toScript contains targetStr)
         }
 

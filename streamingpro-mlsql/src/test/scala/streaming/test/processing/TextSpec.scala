@@ -92,7 +92,9 @@ class TextSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLCon
           v(3) != 0
         }
         assume(res2.size == 2)
-        println(newDF.toJSON.collect().mkString("\n"))
+        if (log.isInfoEnabled()) {
+          log.info(newDF.toJSON.collect().mkString("\n"))
+        }
 
         newDF = StringFeature.tfidf(df, "/tmp/tfidf/mapping", "", "content", "", null, 100000.0, Seq(), null, true)
         res = newDF.collect()
@@ -174,7 +176,9 @@ class TextSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLCon
         val df = spark.createDataFrame(dataRDD,
           StructType(Seq(StructField("content", StringType))))
         val newDF = StringFeature.word2vec(df, "/tmp/word2vec/mapping", "", "", "content", null, "", null)
-        println(newDF.toJSON.collect().mkString("\n"))
+        if (log.isInfoEnabled()) {
+          log.info(newDF.toJSON.collect().mkString("\n"))
+        }
       })
 
 
@@ -280,7 +284,7 @@ class TextSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLCon
         // we should make sure train vector and predict vector the same
         val trainVector = newSession.sql("select * from parquet.`/tmp/william/tmp/tfidfinplace/data`").toJSON.collect()
         trainVector.foreach {
-          f => println(f)
+          f => log.info(f)
         }
         val predictVector = newSession.sql("select jack(content) as content from orginal_text_corpus").toJSON.collect()
         predictVector.foreach { f =>
@@ -463,8 +467,8 @@ class TextSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLCon
       // we should make sure train vector and predict vector the same
       val trainVector = newSession.sql("select * from parquet.`/tmp/william/tmp/scaler/data`").toJSON.collect()
       val predictVector = newSession.sql("select jack(array(a,b))[0] a,jack(array(a,b))[1] b, c from orginal_text_corpus").toJSON.collect()
-      predictVector.foreach(println(_))
-      trainVector.foreach(println(_))
+      predictVector.foreach(log.info(_))
+      trainVector.foreach(log.info(_))
       predictVector.foreach { f =>
         assume(trainVector.contains(f))
       }
@@ -495,8 +499,8 @@ class TextSpec extends BasicSparkOperation with SpecFunctions with BasicMLSQLCon
       def validate(spark:SparkSession) = {
         val trainVector = spark.sql("select * from parquet.`/tmp/william/tmp/scaler2/data`").toJSON.collect()
         val predictVector = spark.sql("select jack(array(a,b))[0] a,jack(array(a,b))[1] b, c from orginal_text_corpus").toJSON.collect()
-        predictVector.foreach(println(_))
-        trainVector.foreach(println(_))
+        predictVector.foreach(log.info(_))
+        trainVector.foreach(log.info(_))
         predictVector.foreach { f =>
           assume(trainVector.contains(f))
         }

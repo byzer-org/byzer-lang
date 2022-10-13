@@ -223,7 +223,6 @@ class ScannerAndParserTest extends AnyFlatSpec with should.Matchers {
     val str = "select :{:jack} as :name as b;"
     val textTemplate = new TextTemplate(Map("jack" -> "wow"), str)
     val tokens = textTemplate.parse
-    println(tokens.map(_.chars.mkString("")))
 
   }
 

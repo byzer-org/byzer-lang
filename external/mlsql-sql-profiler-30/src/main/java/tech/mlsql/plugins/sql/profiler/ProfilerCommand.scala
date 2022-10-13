@@ -6,6 +6,7 @@ import streaming.dsl.ScriptSQLExec
 import streaming.dsl.auth._
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.param.WowParams
+import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.common.utils.serder.json.JSONTool
 import tech.mlsql.dsl.auth.ETAuth
 import tech.mlsql.dsl.auth.dsl.mmlib.ETMethod.ETMethod
@@ -13,7 +14,7 @@ import tech.mlsql.dsl.auth.dsl.mmlib.ETMethod.ETMethod
 /**
  * 27/3/2020 WilliamZhu(allwefantasy@gmail.com)
  */
-class ProfilerCommand(override val uid: String) extends SQLAlg with ETAuth with WowParams {
+class ProfilerCommand(override val uid: String) extends SQLAlg with ETAuth with WowParams with Logging {
   def this() = this(WowParams.randomUID())
 
   override def train(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
@@ -48,7 +49,9 @@ class ProfilerCommand(override val uid: String) extends SQLAlg with ETAuth with 
     val explain = MLSQLUtils.createExplainCommand(df.queryExecution.logical, extended = extended)
     val items = df.sparkSession.sessionState.executePlan(explain).executedPlan.executeCollect().
       map(_.getString(0)).mkString("\n")
-    println(items)
+    if (log.isInfoEnabled()) {
+      log.info(items)
+    }
     df.sparkSession.createDataset[Plan](Seq(Plan("doc", items))).toDF()
   }
 

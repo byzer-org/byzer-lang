@@ -66,7 +66,9 @@ class TextModuleSpec extends BasicSparkOperation with SpecFunctions with BasicML
         sq = createSSEL
         ScriptSQLExec.parse(loadSQLScriptStr("token-extract"), sq)
         val res = spark.sql("select * from tb").toJSON.collect().mkString("\n")
-        println(res)
+        if (log.isInfoEnabled()) {
+          log.info(res)
+        }
         import scala.collection.JavaConversions._
         assume(JSONObject.fromObject(res).getJSONArray("keywords").
           filter(f => f.asInstanceOf[String].

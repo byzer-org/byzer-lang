@@ -2,7 +2,6 @@ package tech.mlsql.ets.tensorflow
 
 import java.io.File
 import java.util.concurrent.atomic.AtomicReference
-
 import org.apache.commons.io.FileUtils
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.mlsql.session.MLSQLException
@@ -20,12 +19,13 @@ import tech.mlsql.arrow.python.PythonWorkerFactory
 import tech.mlsql.arrow.python.runner.{PythonConf, PythonProjectRunner}
 import tech.mlsql.common.utils.cluster.ml._
 import tech.mlsql.common.utils.lang.sc.ScalaMethodMacros
+import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.common.utils.network.NetUtils
 import tech.mlsql.ets.ml.cluster._
 import tech.mlsql.log.WriteLog
 import tech.mlsql.tool.HDFSOperatorV2
 
-class DistributedTensorflow(override val uid: String) extends SQLAlg with SQLPythonAlgParams with Functions {
+class DistributedTensorflow(override val uid: String) extends SQLAlg with SQLPythonAlgParams with Functions with Logging {
   def this() = this(BaseParams.randomUID())
 
   override def train(df: DataFrame, path: String, _params: Map[String, String]): DataFrame = {
@@ -258,7 +258,7 @@ class DistributedTensorflow(override val uid: String) extends SQLAlg with SQLPyt
 
       val modelHDFSPath = SQLPythonFunc.getAlgModelPath(path, keepVersion) + "/" + algIndex
       try {
-        //模型保存到hdfs上
+        // 模型保存到hdfs上
         if (!keepVersion) {
           HDFSOperatorV2.deleteDir(modelHDFSPath)
         }
@@ -266,8 +266,7 @@ class DistributedTensorflow(override val uid: String) extends SQLAlg with SQLPyt
           HDFSOperatorV2.copyToHDFS(tempModelLocalPath, modelHDFSPath, true, false)
         }
       } catch {
-        case e: Exception =>
-          e.printStackTrace()
+        case e: Exception => log.error("Error: {}", e)
       } finally {
         // delete local model
         FileUtils.deleteDirectory(new File(tempModelLocalPath))

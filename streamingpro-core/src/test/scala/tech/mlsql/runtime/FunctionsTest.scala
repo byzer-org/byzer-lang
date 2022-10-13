@@ -30,6 +30,7 @@ import org.mockito.Mockito.{mock, mockStatic, when}
 import org.mockito.{ArgumentMatchers, MockedStatic}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should
+import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.crawler.RestUtils
 import tech.mlsql.tool.CipherUtils
 
@@ -40,7 +41,7 @@ import scala.language.reflectiveCalls
  * 22/01/2022 hellozepp(lisheng.zhanglin@163.com)
  */
 
-class FunctionsTest extends AnyFlatSpec with should.Matchers {
+class FunctionsTest extends AnyFlatSpec with should.Matchers with Logging {
 
   /**
    * This function mocks a Request. For any request url, get & post, bodyForm & bodyString,
@@ -86,8 +87,9 @@ class FunctionsTest extends AnyFlatSpec with should.Matchers {
       reqStatic => {
         val (status, content) = RestUtils.rest_request_string("http://www.byzer.org/home", "get",
           params = Map("foo" -> "bar", "foo1" -> "bar"), headers = Map("Content-Type" -> "application/x-www-form-urlencoded"), Map())
-
-        println(s"status:$status, content:$content")
+        if (log.isInfoEnabled()) {
+          log.info(s"status:$status, content:$content")
+        }
         assertEquals(200, status)
         assertEquals("{\"code\":\"200\",\"content\":\"ok\"}", content)
         // verify url concat is legal.
@@ -102,7 +104,7 @@ class FunctionsTest extends AnyFlatSpec with should.Matchers {
             params = Map("foo" -> "bar", "foo1" -> "bar"), Map(), config = Map("socket-timeout" -> "a"))
           throw new MLSQLException("The configuration is illegal, but no exception is displayed!")
         } catch {
-          case e: Exception => println("success! e:" + e.getMessage)
+          case e: Exception => log.error("Success! Exception: {}", e)
         }
         // verify config set illegal of connect-timeout.
         try {
@@ -110,7 +112,7 @@ class FunctionsTest extends AnyFlatSpec with should.Matchers {
             params = Map("foo" -> "bar", "foo1" -> "bar"), Map(), config = Map("connect-timeout" -> "a"))
           throw new MLSQLException("The configuration is illegal, but no exception is displayed!")
         } catch {
-          case e: Exception => println("success! e:" + e.getMessage)
+          case e: Exception => log.error("Success! Exception: {}", e)
         }
       }
     }
@@ -124,7 +126,9 @@ class FunctionsTest extends AnyFlatSpec with should.Matchers {
         val (status, content) = RestUtils.rest_request_string("http://www.byzer.org/home", "post",
           params = Map("body" -> "{\"a\":1,\"b\":2}"), headers = Map("Content-Type" -> "application/json"), Map())
 
-        println(s"status:$status, content:$content")
+        if (log.isInfoEnabled()) {
+          log.info(s"status:$status, content:$content")
+        }
         assertEquals(200, status )
         assertEquals(content, "{\"code\":\"200\",\"content\":\"ok\"}")
         // verify url concat is legal.
@@ -137,7 +141,6 @@ class FunctionsTest extends AnyFlatSpec with should.Matchers {
         {
           val (status, content) = RestUtils.rest_request_string("http://www.byzer.org/home", "post",
             params = Map("foo" -> "bar", "foo1" -> "bar"), headers = Map("Content-Type" -> "application/x-www-form-urlencoded"), Map())
-          println(s"status:$status, content:$content")
         }
 
       }

@@ -19,20 +19,20 @@
 package tech.mlsql.cluster.test
 
 import java.util
-
 import net.csdn.ServiceFramwork
 import net.csdn.bootstrap.Bootstrap
 import org.scalatest.{FlatSpec, Matchers}
 import tech.mlsql.cluster.model.{Backend, EcsResourcePool, ElasticMonitor}
 import tech.mlsql.cluster.service.elastic_resource.local.LocalDeployInstance
 import tech.mlsql.cluster.service.elastic_resource.{BaseResource, JobNumAwareAllocateStrategy, LocalResourceAllocation, LocalResourceDeAllocation}
+import tech.mlsql.common.utils.log.Logging
 
 import scala.collection.JavaConverters._
 
 /**
   * 2018-12-07 WilliamZhu(allwefantasy@gmail.com)
   */
-class DeploySpec extends FlatSpec with Matchers {
+class DeploySpec extends FlatSpec with Matchers with Logging{
 
   def mockServer = {
     try {
@@ -117,7 +117,9 @@ class DeploySpec extends FlatSpec with Matchers {
     planRes = allocate.plan(monitor.getTag.split(",").toSeq, monitor)
     assume(planRes.isDefined)
 
-    print(planRes)
+    if (log.isInfoEnabled()) {
+      log.info(planRes.toString)
+    }
 
     planRes.get match {
       case LocalResourceAllocation(tags) => assume(tags == "jack")
@@ -186,7 +188,9 @@ class DeploySpec extends FlatSpec with Matchers {
     planRes = allocate.plan(monitor.getTag.split(",").toSeq, monitor)
     assume(planRes.isDefined)
 
-    print(planRes)
+    if (log.isInfoEnabled()) {
+      log.info(planRes.toString)
+    }
 
     planRes.get match {
       case LocalResourceDeAllocation(tags) => assume(tags == "jack")
