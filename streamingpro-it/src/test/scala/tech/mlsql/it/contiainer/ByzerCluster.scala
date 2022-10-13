@@ -82,8 +82,12 @@ object ByzerCluster extends Logging {
         "/home/deploy/byzer-lang/main/" + DockerUtils.getJarName, BindMode.READ_WRITE)
       c.dependsOn(hadoopContainer)
       c.withStartupAttempts(3)
+      val memoryInBytes = 16 * 1024 * 1024 * 1024
+      val memorySwapInBytes = 16 * 1024 * 1024 * 1024 * 2
       c.withCreateContainerCmdModifier(new Consumer[CreateContainerCmd]() {
         def accept(cmd: CreateContainerCmd): Unit = {
+          cmd.withMemory(memoryInBytes)
+          cmd.withMemorySwap(memorySwapInBytes)
           cmd.withName(clusterName + (Random.nextInt & Integer.MAX_VALUE))
         }
       })

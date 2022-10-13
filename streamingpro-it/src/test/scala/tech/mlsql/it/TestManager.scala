@@ -72,32 +72,34 @@ class TestManager extends Logging {
       val clazzName = hints("comparator")
       try {
         comparator = Class.forName(clazzName).newInstance().asInstanceOf[Comparator]
+        comparator.of(DefaultComparator)
       } catch {
         case _: ClassNotFoundException => logInfo(s"Warn: can not load comparator $clazzName, use default.")
       }
     }
-    val compareResult: (Boolean, String) = comparator.compare(testCase, result, exception)
+
+    val compareResult: (Boolean, String) = comparator.compare(testCase, DefaultTestResult(result, exception))
     if (!compareResult._1) {
       recordError(testCase, compareResult._2)
     }
   }
 
   def acceptRest(testCase: TestCase, status: Int, result: String, exception: Exception): Unit = {
-    if (status != 200) {
-      val hints = testCase.getHintList
-      var comparator: Comparator = DefaultComparator
-      if (hints.contains("comparator")) {
-        val clazzName = hints("comparator")
-        try {
-          comparator = Class.forName(clazzName).newInstance().asInstanceOf[Comparator]
-        } catch {
-          case _: ClassNotFoundException => logInfo(s"Warn: can not load comparator $clazzName, use default.")
-        }
+    val hints = testCase.getHintList
+    var comparator: Comparator = RestComparator
+    var testResult: TestResult = RestTestResult(exception, result, status)
+    if (hints.contains("comparator")) {
+      val clazzName = hints("comparator")
+      try {
+        comparator = Class.forName(clazzName).newInstance().asInstanceOf[Comparator]
+        comparator.of(RestComparator)
+      } catch {
+        case _: ClassNotFoundException => logInfo(s"Warn: can not load comparator $clazzName, use default.")
       }
-      val compareResult: (Boolean, String) = comparator.compare(testCase,null, exception, status, result)
-      if (!compareResult._1) {
-        recordError(testCase, compareResult._2)
-      }
+    }
+    val compareResult: (Boolean, String) = comparator.compare(testCase, testResult)
+    if (!compareResult._1) {
+      recordError(testCase, compareResult._2)
     }
   }
 
@@ -149,5 +151,21 @@ case class TestCase(name: String, sql: String, expected: File) {
         val Array(k, v) = item.stripMargin.stripPrefix("--%").split("=", 2)
         k -> v
       }.toMap
+  }
+}
+
+trait TestResult{
+  def hasException: Boolean
+}
+
+case class DefaultTestResult(result: Seq[Seq[String]], exception: Exception) extends TestResult {
+  override def hasException: Boolean = {
+    exception != null
+  }
+}
+
+case class RestTestResult(exception: Exception, result: String, status: Int) extends TestResult {
+  override def hasException: Boolean = {
+    status != 200 || exception != null
   }
 }
