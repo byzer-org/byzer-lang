@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.util.StringUtils;
+import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.io.PrintStream;
@@ -45,6 +46,8 @@ public class WowLs extends WowFsCommand {
 
     protected boolean format = false;
 
+    private Logger log = Logger.getLogger(WowLs.class);
+
     public WowLs(Configuration conf, String basePath, PrintStream out, PrintStream error) {
         super(conf, basePath, out, error);
     }
@@ -83,7 +86,9 @@ public class WowLs extends WowFsCommand {
     protected void processPaths(PathData parent, PathData... items)
             throws IOException {
         if (!format && parent != null && !isRecursive() && items.length != 0) {
-            out.println("Found " + items.length + " items");
+            String msg = "Found " + items.length + " items";
+            out.println(msg);
+            log.info(msg);
         }
         adjustColumnWidths(items);
         super.processPaths(parent, items);
@@ -121,6 +126,9 @@ public class WowLs extends WowFsCommand {
             line = new Gson().toJson(lineMap);
         }
         out.println(line);
+        if (log.isInfoEnabled()) {
+            log.info(line);
+        }
     }
 
     /**

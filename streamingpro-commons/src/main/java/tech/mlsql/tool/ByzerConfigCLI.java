@@ -19,6 +19,7 @@
 package tech.mlsql.tool;
 
 import com.google.common.collect.Maps;
+import org.apache.log4j.Logger;
 
 import java.util.Map;
 import java.util.Objects;
@@ -26,6 +27,7 @@ import java.util.Properties;
 
 public class ByzerConfigCLI {
 
+    private static Logger log = Logger.getLogger(ByzerConfigCLI.class);
     private final static String SPARK_CONF_TEMP = "--conf %s=%s";
 
     private final static String BYZER_CONF_TEMP = "-%s %s";
@@ -41,8 +43,11 @@ public class ByzerConfigCLI {
         boolean needDec = false;
         if (args.length != 1) {
             if (args.length < 2 || !Objects.equals(EncryptUtil.DEC_FLAG, args[1])) {
-                System.out.println("Usage: ByzerConfigCLI conf_name");
-                System.out.println("Example: ByzerConfigCLI byzer.server.mode");
+                String message = "Usage: ByzerConfigCLI conf_name\nExample: ByzerConfigCLI byzer.server.mode";
+                System.out.println(message);
+                if (log.isInfoEnabled()) {
+                    log.info(message);
+                }
                 Unsafe.systemExit(1);
             } else {
                 needDec = true;
@@ -59,6 +64,7 @@ public class ByzerConfigCLI {
                 if (entryKey.startsWith("streaming") || entryKey.startsWith("spark.mlsql")) {
                     String prop = String.format(BYZER_CONF_TEMP, entryKey, entry.getValue());
                     System.out.println(prop);
+                    log.info(prop);
                 }
             }
         } else if (key.equals("-spark")) {
@@ -68,6 +74,7 @@ public class ByzerConfigCLI {
                 if (entryKey.startsWith("spark") && !entryKey.startsWith("spark.mlsql")) {
                     String prop = String.format(SPARK_CONF_TEMP, entryKey, entry.getValue());
                     System.out.println(prop);
+                    log.info(prop);
                 }
             }
         } else if ("-args".equals(key)) {
@@ -78,6 +85,9 @@ public class ByzerConfigCLI {
                 prop.append(String.format(ARGS_CONF_TEMP, entryKey, entry.getValue()));
             }
             System.out.println(prop);
+            if (log.isInfoEnabled()) {
+                log.info(prop);
+            }
         }
         else if (!key.endsWith(".")) {
             String value = config.getProperty(key);
@@ -86,13 +96,19 @@ public class ByzerConfigCLI {
             }
             if (needDec && EncryptUtil.isEncrypted(value)) {
                 System.out.println(EncryptUtil.decryptPassInKylin(value));
+                log.info(EncryptUtil.decryptPassInKylin(value));
             } else {
                 System.out.println(value.trim());
+                log.info(value.trim());
             }
         } else {
             Map<String, String> props = getPropertiesByPrefix(config, key);
             for (Map.Entry<String, String> prop : props.entrySet()) {
-                System.out.println(prop.getKey() + "=" + prop.getValue().trim());
+                String msg = prop.getKey() + "=" + prop.getValue().trim();
+                System.out.println(msg);
+                if (log.isInfoEnabled()) {
+                    log.info(msg);
+                }
             }
         }
     }

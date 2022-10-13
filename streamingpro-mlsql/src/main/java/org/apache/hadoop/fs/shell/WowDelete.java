@@ -20,6 +20,7 @@ package org.apache.hadoop.fs.shell;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.*;
+import org.apache.log4j.Logger;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -51,6 +52,8 @@ public class WowDelete {
         private boolean skipTrash = false;
         private boolean deleteDirs = false;
         private boolean ignoreFNF = false;
+
+        private Logger log = Logger.getLogger(this.getClass());
 
         public Rm(Configuration conf, String basePath, PrintStream out, PrintStream error) {
             super(conf, basePath, out, error);
@@ -102,7 +105,11 @@ public class WowDelete {
             if (!item.fs.delete(item.path, deleteDirs)) {
                 throw new PathIOException(item.toString());
             }
-            out.println("Deleted " + cleanPath(item.toString()));
+            String msg = "Deleted " + cleanPath(item.toString());
+            out.println(msg);
+            if (log.isInfoEnabled()) {
+                log.info(msg);
+            }
         }
 
         private boolean moveToTrash(PathData item) throws IOException {

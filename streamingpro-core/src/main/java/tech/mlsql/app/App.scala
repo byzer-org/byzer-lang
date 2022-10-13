@@ -1,6 +1,7 @@
 package tech.mlsql.app
 
 import org.apache.spark.sql.DataFrame
+import tech.mlsql.common.utils.log.Logging
 
 
 trait App {
@@ -11,20 +12,20 @@ trait CustomController {
   def run(params: Map[String, String]): String
 }
 
-trait RequestCleaner {
+trait RequestCleaner extends Logging {
   def run(): Unit
 
   final def call() = {
     try {
       run()
     } catch {
-      case e: Exception => e.printStackTrace()
+      case e: Exception => log.error("RequestCleaner Error: {}", e)
     }
 
   }
 }
 
-trait ExceptionRender {
+trait ExceptionRender extends Logging {
   def format(e: Exception): String
 
   def is_match(e: Exception): Boolean
@@ -38,7 +39,8 @@ trait ExceptionRender {
       }
 
     } catch {
-      case e1: Exception => e1.printStackTrace()
+      case e1: Exception =>
+        log.debug("ExceptionRender Error: {}", e1)
         ExceptionResult(e, None)
     }
 

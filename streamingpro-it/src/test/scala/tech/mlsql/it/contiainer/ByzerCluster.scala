@@ -74,6 +74,7 @@ object ByzerCluster extends Logging {
     lazy val byzerLangContainer = new ByzerLangContainer(clusterName).configure { c =>
       c.withNetworkAliases(ByzerCluster.appendClusterName(networkAliases))
       c.withNetwork(network)
+
       c.addExposedPorts(9003, 4040, 8265, 10002)
       c.setWaitStrategy(new HttpWaitStrategy()
         .forPort(9003).forStatusCode(200)

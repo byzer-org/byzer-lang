@@ -20,18 +20,19 @@ package streaming.core.compositor.spark.ss.output
 
 import java.util
 import java.util.concurrent.TimeUnit
-
+import org.apache.log4j.Logger
 import org.apache.spark.sql.streaming.Trigger
 import serviceframework.dispatcher.{Compositor, Processor, Strategy}
 import streaming.core.CompositorHelper
 import streaming.core.strategy.ParamsValidator
+import tech.mlsql.common.utils.log.Logging
 
 import scala.collection.JavaConversions._
 
 /**
   * 5/11/16 WilliamZhu(allwefantasy@gmail.com)
   */
-class MultiSQLOutputCompositor[T] extends Compositor[T] with CompositorHelper with ParamsValidator {
+class MultiSQLOutputCompositor[T] extends Compositor[T] with CompositorHelper with ParamsValidator with Logging {
 
   private var _configParams: util.List[util.Map[Any, Any]] = _
 
@@ -95,7 +96,7 @@ class MultiSQLOutputCompositor[T] extends Compositor[T] with CompositorHelper wi
         query.trigger(Trigger.ProcessingTime(_cfg.getOrElse("duration", "10").toInt, TimeUnit.SECONDS)).start()
 
       } catch {
-        case e: Exception => e.printStackTrace()
+        case e: Exception => log.error("Error: {}", e)
       }
 
     }

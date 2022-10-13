@@ -8,7 +8,6 @@ import scala.collection.mutable.ArrayBuffer
 
 class DefaultExceptionRender extends ExceptionRender with WowLog {
   override def format(e: Exception): String = {
-    e.printStackTrace()
     val msgBuffer = ArrayBuffer[String]()
     format_full_exception(msgBuffer, e)
     e.getMessage + "\n" + msgBuffer.mkString("\n")

@@ -23,7 +23,6 @@ import java.nio.charset.Charset
 import java.nio.file.{Files, Paths}
 import java.util
 import java.util.UUID
-
 import org.apache.commons.io.FileUtils
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
@@ -34,6 +33,7 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.util.ExternalCommandRunner
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.SQLPythonFunc._
+import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.tool.HDFSOperatorV2
 
 import scala.collection.JavaConverters._
@@ -42,7 +42,7 @@ import scala.collection.JavaConverters._
   * Created by allwefantasy on 5/2/2018.
   * This Module support training or predicting with user-defined python script
   */
-class SQLPythonAlgBatchPrediction extends SQLAlg with Functions {
+class SQLPythonAlgBatchPrediction extends SQLAlg with Functions with Logging {
   override def train(df: DataFrame, wowPath: String, params: Map[String, String]): DataFrame = {
 
     val kafkaParam = mapParams("kafkaParam", params)
@@ -151,7 +151,7 @@ class SQLPythonAlgBatchPrediction extends SQLAlg with Functions {
         score = recordUserLog(algIndex, pythonScript, kafkaParam, res)
       } catch {
         case e: Exception =>
-          e.printStackTrace()
+          log.error("Error: {}", e)
           trainFailFlag = true
       }
 
@@ -162,7 +162,7 @@ class SQLPythonAlgBatchPrediction extends SQLAlg with Functions {
           new Path(resultHDFSPath))
       } catch {
         case e: Exception =>
-          e.printStackTrace()
+          log.error("Error: {}", e)
           trainFailFlag = true
       } finally {
         // delete local model

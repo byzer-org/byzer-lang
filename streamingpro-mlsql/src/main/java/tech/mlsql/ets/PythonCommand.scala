@@ -4,7 +4,6 @@ import java.io.{DataInputStream, DataOutputStream}
 import java.net.Socket
 import java.util
 import java.util.concurrent.atomic.AtomicReference
-
 import org.apache.spark.ml.param.Param
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.mlsql.session.MLSQLException
@@ -21,6 +20,7 @@ import tech.mlsql.arrow.python.ispark.SparkContextImp
 import tech.mlsql.arrow.python.runner.{ArrowPythonRunner, ChainedPythonFunctions, PythonConf, PythonFunction}
 import tech.mlsql.common.utils.distribute.socket.server.{ReportHostAndPort, SocketServerInExecutor, SocketServerSerDer, TempSocketServerInDriver}
 import tech.mlsql.common.utils.lang.sc.ScalaMethodMacros
+import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.common.utils.net.NetTool
 import tech.mlsql.common.utils.serder.json.JSONTool
 import tech.mlsql.ets.python._
@@ -33,7 +33,7 @@ import scala.collection.mutable.ArrayBuffer
 /**
  * 2019-08-16 WilliamZhu(allwefantasy@gmail.com)
  */
-class PythonCommand(override val uid: String) extends SQLAlg with Functions with WowParams {
+class PythonCommand(override val uid: String) extends SQLAlg with Functions with WowParams with Logging {
   def this() = this(BaseParams.randomUID())
 
   final val inputTable: Param[String] = new Param[String](this, "inputTable", " ")
@@ -112,7 +112,8 @@ class PythonCommand(override val uid: String) extends SQLAlg with Functions with
       try {
         tempServer._server.close()
       } catch {
-        case e: Exception => e.printStackTrace()
+        case e: Exception =>
+          log.error("LaunchPythonServer Error: {}", e)
       }
 
     }

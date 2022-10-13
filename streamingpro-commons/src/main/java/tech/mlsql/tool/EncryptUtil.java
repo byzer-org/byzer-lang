@@ -20,6 +20,7 @@ package tech.mlsql.tool;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.StringUtils;
+import org.apache.log4j.Logger;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
@@ -31,6 +32,8 @@ public class EncryptUtil {
      */
     private static final byte[] key = { 0x74, 0x68, 0x69, 0x73, 0x49, 0x73, 0x41, 0x53, 0x65, 0x63, 0x72, 0x65, 0x74,
             0x4b, 0x65, 0x79 };
+
+    private static Logger log = Logger.getLogger(EncryptUtil.class);
 
     public static final String ENC_PREFIX = "ENC('";
     public static final String ENC_SUBFIX = "')";
@@ -73,6 +76,9 @@ public class EncryptUtil {
 
     private static void printUsage() {
         System.out.println("Usage: java org.apache.kylin.common.util <your_password>");
+        if (log.isInfoEnabled()) {
+            log.info("Usage: java org.apache.kylin.common.util <your_password>");
+        }
     }
 
     public static String getDecryptedValue(String value) {
@@ -91,5 +97,8 @@ public class EncryptUtil {
         String passwordTxt = args[0];
         // for encrypt password like LDAP password
         System.out.println(EncryptUtil.encrypt(passwordTxt));
+        if (log.isInfoEnabled()) {
+            log.info(EncryptUtil.encrypt(passwordTxt));
+        }
     }
 }

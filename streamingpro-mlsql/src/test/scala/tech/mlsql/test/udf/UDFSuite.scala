@@ -174,7 +174,7 @@ class UDFSuite extends BasicSparkOperation with SpecFunctions with BasicMLSQLCon
 
 
       assert(result.size == 1)
-      result.foreach(println)
+      result.foreach(i => log.info(i.toString()))
       assert(result.head.getAs[Map[String, WrappedArray[Int]]]("res")("a")(0) == 1)
     }
   }

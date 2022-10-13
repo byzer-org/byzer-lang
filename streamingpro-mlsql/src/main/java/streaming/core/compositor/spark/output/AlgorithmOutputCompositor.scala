@@ -19,18 +19,20 @@
 package streaming.core.compositor.spark.output
 
 import java.util
+import org.apache.log4j.Logger
 import org.apache.spark.ml.BaseAlgorithmEstimator
 import org.apache.spark.ml.tuning.TrainValidationSplitModel
 import org.apache.spark.sql.DataFrame
 import serviceframework.dispatcher.{Processor, Strategy}
 import streaming.core.compositor.spark.transformation.BaseAlgorithmCompositor
+import tech.mlsql.common.utils.log.Logging
 
 import scala.collection.JavaConversions._
 
 /**
   * 7/27/16 WilliamZhu(allwefantasy@gmail.com)
   */
-class AlgorithmOutputCompositor[T] extends BaseAlgorithmCompositor[T] {
+class AlgorithmOutputCompositor[T] extends BaseAlgorithmCompositor[T] with Logging {
 
   val mapping = Map(
     "als" -> "org.apache.spark.ml.algs.ALSEstimator",
@@ -67,7 +69,7 @@ class AlgorithmOutputCompositor[T] extends BaseAlgorithmCompositor[T] {
 
 
       } catch {
-        case e: Exception => e.printStackTrace()
+        case e: Exception => log.error("Error: {}", e)
       }
 
 
@@ -85,7 +87,7 @@ class AlgorithmOutputCompositor[T] extends BaseAlgorithmCompositor[T] {
         val model = bae.fit
         model.getClass.getMethod("save", classOf[String]).invoke(model, path)
       } catch {
-        case e: Exception => e.printStackTrace()
+        case e: Exception => log.error("Error: {}", e)
       }
 
 

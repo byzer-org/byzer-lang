@@ -338,7 +338,9 @@ object StringFeature extends BaseFeatureFunctions with Logging with WowLog {
     if (outputWordAndIndex) {
       val wordToIndex = HSQLStringIndex.wordToIndex(df.sparkSession, siModel)
       val res = wordToIndex.toSeq.sortBy(f => f._2).map(f => s"${f._1}:${f._2}").mkString("\n")
-      println(res)
+      if (log.isInfoEnabled()) {
+        log.info(res)
+      }
     }
     val funcMap = si.internal_predict(df.sparkSession, siModel, "wow")
     val predictSingleWordFunc = funcMap("wow").asInstanceOf[(String) => Int]

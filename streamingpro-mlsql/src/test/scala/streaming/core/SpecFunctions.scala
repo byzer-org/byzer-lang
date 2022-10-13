@@ -20,7 +20,6 @@ package streaming.core
 
 import java.io.{File, FileNotFoundException}
 import java.sql.{DriverManager, Statement}
-
 import net.csdn.ServiceFramwork
 import net.csdn.bootstrap.Bootstrap
 import org.apache.commons.io.FileUtils
@@ -29,12 +28,13 @@ import org.apache.http.client.fluent.{Form, Request}
 import org.apache.http.util.EntityUtils
 import org.apache.spark.sql.SparkSession
 import streaming.dsl.{MLSQLExecuteContext, ScriptSQLExec, ScriptSQLExecListener}
+import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.job.{JobManager, MLSQLJobInfo, MLSQLJobProgress, MLSQLJobType}
 
 /**
   * Created by allwefantasy on 28/4/2018.
   */
-trait SpecFunctions {
+trait SpecFunctions extends Logging{
 
   def password = "mlsql"
 
@@ -164,7 +164,7 @@ trait SpecFunctions {
       FileUtils.forceDelete(new File(file))
     }
     catch {
-      case ex: FileNotFoundException => println(ex)
+      case ex: FileNotFoundException => log.error("DelDir Error: {}", ex)
     }
   }
 

@@ -18,9 +18,9 @@
 
 package tech.mlsql.cluster.service.elastic_resource
 
-import java.util.concurrent.{Executors, TimeUnit}
-import java.util.logging.Logger
+import org.slf4j.LoggerFactory
 
+import java.util.concurrent.{Executors, TimeUnit}
 import tech.mlsql.cluster.ProxyApplication
 import tech.mlsql.cluster.model.ElasticMonitor
 import tech.mlsql.common.utils.log.Logging
@@ -31,7 +31,6 @@ import scala.collection.JavaConverters._
   * 2018-12-05 WilliamZhu(allwefantasy@gmail.com)
   */
 object AllocateService extends Logging {
-  val logger = Logger.getLogger("AllocateService")
   private[this] val _executor = Executors.newFixedThreadPool(100)
   private[this] val scheduler = Executors.newSingleThreadScheduledExecutor()
 
@@ -65,7 +64,7 @@ object AllocateService extends Logging {
             }
           } catch {
             case e: Exception =>
-              e.printStackTrace()
+              log.error("Running Error: {}", e)
             //catch all ,so the scheduler will not been stopped by  exception
           }
         }

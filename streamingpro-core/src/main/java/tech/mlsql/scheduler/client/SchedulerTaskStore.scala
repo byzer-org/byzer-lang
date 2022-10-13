@@ -111,7 +111,7 @@ class SchedulerTaskStore(spark: SparkSession, _consoleUrl: String, _consoleToken
           } catch {
             case e: Exception =>
               //design how to  handle the exception
-              e.printStackTrace()
+              log.error("Execute Error: {}", e)
           }
         }
       })

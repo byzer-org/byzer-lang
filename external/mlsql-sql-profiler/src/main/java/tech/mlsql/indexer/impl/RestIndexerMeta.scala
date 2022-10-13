@@ -1,15 +1,15 @@
 package tech.mlsql.indexer.impl
 
 import java.nio.charset.Charset
-
 import org.apache.http.client.fluent.{Form, Request}
+import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.common.utils.serder.json.JSONTool
 import tech.mlsql.indexer.{MLSQLIndexerMeta, MlsqlIndexerItem, MlsqlOriTable}
 
 /**
  * 21/12/2020 WilliamZhu(allwefantasy@gmail.com)
  */
-class RestIndexerMeta(url: String, token: String,timeout:Int=2000) extends MLSQLIndexerMeta {
+class RestIndexerMeta(url: String, token: String,timeout:Int=2000) extends MLSQLIndexerMeta with Logging {
   override def fetchIndexers(tableNames: List[MlsqlOriTable], options: Map[String, String]): Map[MlsqlOriTable, List[MlsqlIndexerItem]] = {
     val form = Form.form()
     form.add("data", JSONTool.toJsonStr(tableNames))
@@ -23,7 +23,7 @@ class RestIndexerMeta(url: String, token: String,timeout:Int=2000) extends MLSQL
       JSONTool.parseJson[Map[MlsqlOriTable, List[MlsqlIndexerItem]]](value)
     } catch {
       case e: Exception =>
-        e.printStackTrace()
+        log.error("FetchIndexers Error: {}", e)
         Map()
     }
 

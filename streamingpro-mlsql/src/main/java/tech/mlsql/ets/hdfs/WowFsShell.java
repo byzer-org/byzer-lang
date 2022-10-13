@@ -42,7 +42,7 @@ import java.util.LinkedList;
  */
 public class WowFsShell extends Configured implements Tool {
 
-    static final Log LOG = LogFactory.getLog(WowFsShell.class);
+    static final Log logger = LogFactory.getLog(WowFsShell.class);
 
     private static final int MAX_LINE_WIDTH = 80;
 
@@ -66,7 +66,7 @@ public class WowFsShell extends Configured implements Tool {
             wow.reset();
             return temp;
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Error: {}",e);
         }
         return null;
     }
@@ -225,14 +225,19 @@ public class WowFsShell extends Configured implements Tool {
         } else {
             // display help or usage for all commands
             out.println(usagePrefix);
+            if (logger.isInfoEnabled()) {
+                logger.info(usagePrefix);
+            }
 
             // display list of short usages
             ArrayList<Command> instances = new ArrayList<Command>();
             for (String name : commandFactory.getNames()) {
                 Command instance = commandFactory.getInstance(name);
                 if (!instance.isDeprecated()) {
-                    out.println("\t[" + instance.getUsage() + "]");
+                    String msg = "\t[" + instance.getUsage() + "]";
+                    out.println(msg);
                     instances.add(instance);
+                    logger.info(msg);
                 }
             }
             // display long descriptions for each command
@@ -248,11 +253,19 @@ public class WowFsShell extends Configured implements Tool {
     }
 
     private void printInstanceUsage(PrintStream out, Command instance) {
-        out.println(usagePrefix + " " + instance.getUsage());
+        String msg = usagePrefix + " " + instance.getUsage();
+        out.println(msg);
+        if (logger.isInfoEnabled()) {
+            logger.info(msg);
+        }
     }
 
     private void printInstanceHelp(PrintStream out, Command instance) {
-        out.println(instance.getUsage() + " :");
+        String msg = instance.getUsage() + " :";
+        out.println(msg);
+        if (logger.isInfoEnabled()) {
+            logger.info(msg);
+        }
         TableListing listing = null;
         final String prefix = "  ";
         for (String line : instance.getDescription().split("\n")) {
@@ -270,20 +283,32 @@ public class WowFsShell extends Configured implements Tool {
             // Normal literal description.
             if (listing != null) {
                 for (String listingLine : listing.toString().split("\n")) {
-                    out.println(prefix + listingLine);
+                    String listingMsg = prefix + listingLine;
+                    out.println(listingMsg);
+                    if (logger.isInfoEnabled()) {
+                        logger.info(listingMsg);
+                    }
                 }
                 listing = null;
             }
 
             for (String descLine : WordUtils.wrap(
                     line, MAX_LINE_WIDTH, "\n", true).split("\n")) {
-                out.println(prefix + descLine);
+                String descMsg = prefix + descLine;
+                out.println(descMsg);
+                if (logger.isInfoEnabled()) {
+                    logger.info(descMsg);
+                }
             }
         }
 
         if (listing != null) {
             for (String listingLine : listing.toString().split("\n")) {
-                out.println(prefix + listingLine);
+                String listingLineMsg = prefix + listingLine;
+                out.println(listingLineMsg);
+                if (logger.isInfoEnabled()) {
+                    logger.info(listingLineMsg);
+                }
             }
         }
     }
@@ -322,9 +347,8 @@ public class WowFsShell extends Configured implements Tool {
                 }
             } catch (Exception e) {
                 // instance.run catches IOE, so something is REALLY wrong if here
-                LOG.debug("Error", e);
+                logger.error(String.format("Run Error: \n cmd: %s \n Exception: %s", cmd, e));
                 displayError(cmd, "Fatal internal error");
-                e.printStackTrace(error);
             }
         }
         return exitCode;
@@ -333,12 +357,15 @@ public class WowFsShell extends Configured implements Tool {
     private void displayError(String cmd, String message) {
         for (String line : message.split("\n")) {
             error.println(cmd + ": " + line);
+            logger.error(cmd + ": " + line);
             if (cmd.charAt(0) != '-') {
                 Command instance = null;
                 instance = commandFactory.getInstance("-" + cmd);
+                String msg = "Did you mean -" + cmd + "?  This command " +
+                        "begins with a dash.";
+                error.println(msg);
                 if (instance != null) {
-                    error.println("Did you mean -" + cmd + "?  This command " +
-                            "begins with a dash.");
+                    logger.error(msg);
                 }
             }
         }

@@ -89,7 +89,7 @@ public class DownloadRunner {
             } else return 400;
 
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error(String.format("Error!!!\n pathStr: %s \n exception: %s", pathStr, e));
             return 500;
 
         }
@@ -99,7 +99,7 @@ public class DownloadRunner {
         try {
             return createTarFileStream(res.getOutputStream(), pathStr);
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error(String.format("Error!!!\n res: %s \n pathStr: %s \n exception: %s", res, pathStr, e));
             return 500;
         }
     }
@@ -178,8 +178,7 @@ public class DownloadRunner {
 
 
         } catch (Exception e) {
-            e.printStackTrace();
-
+            logger.error(String.format("Error!!!\n res: %s \n path: %s \n position: %s \n exception: %s", res, path, position, e));
         }
 
         return 500;

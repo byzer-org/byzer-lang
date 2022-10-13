@@ -5,13 +5,14 @@ import org.scalatest.BeforeAndAfterEach
 import tech.mlsql.autosuggest.meta.{MetaProvider, MetaTable, MetaTableColumn, MetaTableKey}
 import tech.mlsql.autosuggest.statement.{LexerUtils, SuggestItem}
 import tech.mlsql.autosuggest.{DataType, SpecialTableConst, TokenPos, TokenPosType}
+import tech.mlsql.common.utils.log.Logging
 
 import scala.collection.JavaConverters._
 
 /**
  * 2/6/2020 WilliamZhu(allwefantasy@gmail.com)
  */
-class AutoSuggestContextTest extends BaseTest with BeforeAndAfterEach {
+class AutoSuggestContextTest extends BaseTest with BeforeAndAfterEach with Logging {
   override def afterEach(): Unit = {
     // context.statements.clear()
   }
@@ -44,8 +45,9 @@ class AutoSuggestContextTest extends BaseTest with BeforeAndAfterEach {
 
   def printStatements(items: List[List[Token]]) = {
     items.foreach { item =>
-      println(item.map(_.getText).mkString(" "))
-      println()
+      if (log.isInfoEnabled()) {
+        log.info(item.map(_.getText).mkString(" "))
+      }
     }
   }
 
@@ -84,7 +86,7 @@ class AutoSuggestContextTest extends BaseTest with BeforeAndAfterEach {
         |SELECT CAST(25.65 AS int) from jack;
         |""".stripMargin).tokens.asScala.toList
 
-    wow.foreach(item => println(s"${item.getText} ${item.getType}"))
+    wow.foreach(item => log.info(s"${item.getText} ${item.getType}"))
   }
 
   test("load/select 4/10 select ke[cursor] from") {
@@ -150,7 +152,9 @@ class AutoSuggestContextTest extends BaseTest with BeforeAndAfterEach {
         | select  from table3
         |""".stripMargin).tokens.asScala.toList
     val items = context.build(wow).suggest(5, 8)
-    println(items)
+    if (log.isInfoEnabled()) {
+      log.info(items.toString())
+    }
 
   }
 
@@ -178,7 +182,9 @@ class AutoSuggestContextTest extends BaseTest with BeforeAndAfterEach {
         | select sum() from table3
         |""".stripMargin
     val items = context.buildFromString(sql).suggest(5, 12)
-    println(items)
+    if (log.isInfoEnabled()) {
+      log.info(items.toString())
+    }
 
   }
   test("table alias with temp table") {

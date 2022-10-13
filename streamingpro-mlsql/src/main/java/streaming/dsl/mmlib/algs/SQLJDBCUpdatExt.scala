@@ -19,7 +19,6 @@
 package streaming.dsl.mmlib.algs
 
 import java.sql.{Connection, SQLException}
-
 import org.apache.spark.ml.param.Param
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.mlsql.session.MLSQLException
@@ -28,9 +27,10 @@ import streaming.dsl.{ConnectMeta, DBMappingKey, ScriptSQLExec}
 import org.apache.spark.sql.types._
 import streaming.dsl.mmlib.SQLAlg
 import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
+import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.job.JobManager
 
-class SQLJDBCUpdatExt(override val uid: String) extends SQLAlg with WowParams{
+class SQLJDBCUpdatExt(override val uid: String) extends SQLAlg with WowParams with Logging {
   def this() = this(BaseParams.randomUID())
 
   override def train(df: DataFrame, path: String, params: Map[String, String]):DataFrame={
@@ -139,7 +139,7 @@ class SQLJDBCUpdatExt(override val uid: String) extends SQLAlg with WowParams{
       }catch{
         case ex: SQLException => {
           connection.rollback()
-          ex.printStackTrace()
+          log.error("Error: {}", ex)
           throw new SQLException("Update Exception")
         }
       } finally {

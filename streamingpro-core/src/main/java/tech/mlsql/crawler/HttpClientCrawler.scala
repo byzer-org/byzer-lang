@@ -3,7 +3,6 @@ package tech.mlsql.crawler
 import java.nio.charset.Charset
 import java.security.cert.X509Certificate
 import java.util
-
 import org.apache.http.client.entity.UrlEncodedFormEntity
 import org.apache.http.client.methods.{CloseableHttpResponse, HttpGet, HttpPost}
 import org.apache.http.client.utils.URIBuilder
@@ -15,12 +14,15 @@ import org.apache.http.protocol.HttpContext
 import org.apache.http.ssl.{SSLContextBuilder, TrustStrategy}
 import org.apache.http.util.EntityUtils
 import org.apache.http.{HttpHost, HttpRequest}
+import org.slf4j.{Logger, LoggerFactory}
 import tech.mlsql.crawler.beans.WebPage
 
 /**
   * Created by allwefantasy on 2/4/2018.
   */
 object HttpClientCrawler {
+
+  private val log: Logger = LoggerFactory.getLogger(HttpClientCrawler.getClass)
 
   private def client(useProxy: Boolean) = {
 
@@ -70,7 +72,11 @@ object HttpClientCrawler {
       } else null
     } catch {
       case e: Exception =>
-        e.printStackTrace()
+        log.error(
+            "Request Error: {}\n url: {}",
+            e: Any,
+            url
+        )
         null
     } finally {
       if (response != null) {
@@ -107,7 +113,17 @@ object HttpClientCrawler {
     }
     catch {
       case e: Exception =>
-        e.printStackTrace()
+        var paramToString = "["
+        params.keys.foreach(i => paramToString += String.format("{ %s, %s }", i, params(i)))
+        paramToString += "]"
+
+        log.error(
+            "Error: {}\n url: {}\n method: {}\n params: {}",
+            e,
+            url,
+            method,
+            paramToString
+        )
         null
     } finally {
       if (response != null) {
@@ -131,7 +147,11 @@ object HttpClientCrawler {
       } else null
     } catch {
       case e: Exception =>
-        e.printStackTrace()
+        log.error(
+            "Error: {}\n url: {}",
+            e: Any,
+            url
+        )
         null
     } finally {
       if (response != null) {
@@ -144,6 +164,8 @@ object HttpClientCrawler {
 
   def main(args: Array[String]): Unit = {
     //println(request("https://www.baidu.com"))
-    println(request("http://www.javaroots.com/2017/02/how-to-use-apache-httpclient-45-https.html"))
+    if (log.isInfoEnabled()) {
+      log.info(request("http://www.javaroots.com/2017/02/how-to-use-apache-httpclient-45-https.html").toString)
+    }
   }
 }

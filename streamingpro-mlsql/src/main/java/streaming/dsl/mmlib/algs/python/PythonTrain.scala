@@ -21,7 +21,6 @@ package streaming.dsl.mmlib.algs.python
 import java.io.{File, FileWriter}
 import java.util
 import java.util.UUID
-
 import org.apache.commons.io.FileUtils
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
@@ -34,13 +33,14 @@ import streaming.dsl.mmlib.algs.SQLPythonFunc._
 import streaming.dsl.mmlib.algs.{Functions, SQLPythonAlg, SQLPythonFunc}
 import tech.mlsql.common.utils.env.python.BasicCondaEnvManager
 import tech.mlsql.common.utils.lang.sc.ScalaMethodMacros._
+import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.common.utils.network.NetUtils
 import tech.mlsql.common.utils.path.PathFun
 import tech.mlsql.tool.HDFSOperatorV2
 
 import scala.collection.JavaConverters._
 
-class PythonTrain extends Functions with Serializable {
+class PythonTrain extends Functions with Serializable with Logging{
   def train_per_partition(df: DataFrame, path: String, params: Map[String, String]): DataFrame = {
     val keepVersion = params.getOrElse("keepVersion", "false").toBoolean
     val keepLocalDirectory = params.getOrElse("keepLocalDirectory", "false").toBoolean
@@ -267,7 +267,7 @@ class PythonTrain extends Functions with Serializable {
         }
       } catch {
         case e: Exception =>
-          e.printStackTrace()
+          log.error("Error: {}", e)
           trainFailFlag = true
       } finally {
         // delete resource
@@ -516,7 +516,7 @@ class PythonTrain extends Functions with Serializable {
         }
       } catch {
         case e: Exception =>
-          e.printStackTrace()
+          log.error("Copy File Exception: {}", e)
           trainFailFlag = true
       } finally {
         // delete local model
