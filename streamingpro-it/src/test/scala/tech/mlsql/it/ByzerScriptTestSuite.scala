@@ -60,13 +60,27 @@ class ByzerScriptTestSuite extends LocalBaseTestSuite with Logging {
 
   def runScript(url: String, user: String, code: String, callbackHeader: String = ""): (Int, String) = {
     val jobName = UUID.randomUUID().toString
-    val params = mutable.Map("sql" -> code, "owner" -> user,
-      "jobName" -> jobName, "sessionPerUser" -> "true", "sessionPerRequest" -> "true")
-    if (callbackHeader != "") params.put("callbackHeader", callbackHeader)
+    val inputParams = mutable.Map(
+      "sql" -> code,
+      "owner" -> user,
+      "jobName" -> jobName,
+      "sessionPerUser" -> "true",
+      "sessionPerRequest" -> "true",
+      "show_stack" -> "true",
+      "skipGrammarValidate" -> "false",
+      "timeout" -> "2880",
+      "async" -> "false",
+      "includeSchema" -> "true")
+    if (callbackHeader != "") inputParams.put("callbackHeader", callbackHeader)
     logInfo(s"The test submits a script to the container through Rest, url:$url, sql:$code")
-    val (status, result) = RestUtils.rest_request_string(url, "post", params.toMap,
-      Map("Content-Type" -> "application/x-www-form-urlencoded"), Map("socket-timeout" -> "1800s",
-        "connect-timeout" -> "1800s", "retry" -> "1")
+    val (status, result) = RestUtils.rest_request_string(
+      url,
+      method = "post",
+      params = inputParams.toMap,
+      headers = Map("Content-Type" -> "application/x-www-form-urlencoded"),
+      config = Map("socket-timeout" -> "1800s",
+        "connect-timeout" -> "1800s",
+        "retry" -> "1")
     )
     logInfo(s"status:$status,result:$result")
     (status, result)

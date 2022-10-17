@@ -9,20 +9,21 @@ import scala.compat.Platform.EOL
 
 trait Comparator {
 
-  def compare(testCase: TestCase, result: Seq[Seq[String]], exception: Exception, status: Int = 200, errorMsg: String = "{}"):
-  (Boolean, String) = {
-    if (exception != null || status != 200) {
-      compareException(testCase, exception, errorMsg)
+  def of(_baseComparator: Comparator): Unit = {
+  }
+
+  def compare(testCase: TestCase, testResult: TestResult): (Boolean, String) = {
+    if (testResult.hasException) {
+      compareException(testCase, testResult)
     } else {
-      compareResult(testCase, result)
+      compareResult(testCase, testResult)
     }
   }
 
-  def compareException(testCase: TestCase, exception: Exception, errorMsg: String): (Boolean, String) = ???
+  def compareException(testCase: TestCase, testResult: TestResult): (Boolean, String) = ???
 
-  def compareResult(testCase: TestCase, result: Seq[Seq[String]]): (Boolean, String) = ???
+  def compareResult(testCase: TestCase, testResult: TestResult): (Boolean, String) = ???
 }
-
 
 class DefaultComparator extends Comparator {
 
@@ -33,54 +34,43 @@ class DefaultComparator extends Comparator {
     sw.toString
   }
 
-  override def compareException(testCase: TestCase, exception: Exception, errorMsg: String): (Boolean, String) = {
+  override def compareException(testCase: TestCase, testResult: TestResult): (Boolean, String) = {
     val hints: Map[String, String] = testCase.getHintList
+    val curTestResult = testResult.asInstanceOf[DefaultTestResult]
     if (!hints.contains("exception") || !hints.contains("msg")) {
-      if (exception == null) {
-        return (false, "\n" + errorMsg)
-      }
-      return (false, "\n" + getExceptionStackAsString(exception))
+      return (false, "\n" + getExceptionStackAsString(curTestResult.exception))
     }
 
-    val exceptionClassName = hints("exception")
-    val exceptionClassNameHelper = exceptionClassName.r
+    val name = hints("exception")
     val msg = hints("msg")
-    val msgHelper = msg.r
     try {
-      val clazz = Class.forName(exceptionClassName)
-      //exception class is null, use errorMessage for matching. This method acts on the result returned by rest in yarn mode.
-      if (exception == null) {
-        if ((exceptionClassNameHelper findFirstIn errorMsg).isDefined && (msgHelper findFirstIn errorMsg).isDefined) {
-          return (true, "")
-        }
-        return (false, s"\nExpected exception and message: $exceptionClassName, $msg\nActual exception name and message: " +
-          errorMsg)
-      }
-
-      if (clazz.isInstance(exception) && exception.getMessage.matches(msg)) {
+      val clazz = Class.forName(name)
+      if (clazz.isInstance(curTestResult.exception) && curTestResult.exception.getMessage.matches(msg)) {
         return (true, "")
       }
-      (false, s"\nExpected exception and message: $exceptionClassName, $msg\nActual exception name and message: " +
-        s"${exception.getClass.getName}, ${exception.getMessage}")
+      (false, s"\nExpected exception and message: $name, $msg\nActual exception and message: " +
+        s"${curTestResult.exception.getClass.getName}, ${curTestResult.exception.getMessage}")
     } catch {
       case cnfe: ClassNotFoundException =>
-        (false, s"Exception class not found: $exceptionClassName")
+        (false, s"Exception class not found: $name")
       case e: Exception =>
         (false, "\n" + getExceptionStackAsString(e))
     }
   }
 
-  override def compareResult(testCase: TestCase, result: Seq[Seq[String]]): (Boolean, String) = {
+  override def compareResult(testCase: TestCase, testResult: TestResult): (Boolean, String) = {
     if (testCase.expected == null) {
       return (false, "")
     }
+    val curTestResult = testResult.asInstanceOf[DefaultTestResult]
+    val result = curTestResult.result
     val expectContent = FileUtils.readFileToString(testCase.expected)
     val expected: Seq[Seq[String]] = CSVReader.read(new FileReader(testCase.expected), ',')
     val sb = new StringBuilder
 
-    result.foreach(_.addString(sb, "", ",", "\n"))
+    result.foreach(r => sb.append(r.mkString(",") + "\n"))
     val actualContent = sb.substring(0, sb.length - 1)
-    val msg = s"${EOL}expect result is: ${EOL}${expectContent}${EOL}but actual result is ${EOL}${actualContent}"
+    val msg = s"${EOL}expect result is: ${EOL}${expectContent}${EOL}\nbut actual result is: ${EOL}${actualContent}"
 
     if (expected.length != result.length) {
       return (false, msg)
