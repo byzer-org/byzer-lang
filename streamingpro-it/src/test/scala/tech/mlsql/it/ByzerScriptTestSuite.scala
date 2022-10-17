@@ -68,7 +68,7 @@ class ByzerScriptTestSuite extends LocalBaseTestSuite with Logging {
       "sessionPerRequest" -> "true",
       "show_stack" -> "true",
       "skipGrammarValidate" -> "false",
-      "timeout" -> "2880",
+      "timeout" -> "28800",
       "async" -> "false",
       "includeSchema" -> "true")
     if (callbackHeader != "") inputParams.put("callbackHeader", callbackHeader)
@@ -78,9 +78,9 @@ class ByzerScriptTestSuite extends LocalBaseTestSuite with Logging {
       method = "post",
       params = inputParams.toMap,
       headers = Map("Content-Type" -> "application/x-www-form-urlencoded"),
-      config = Map("socket-timeout" -> "1800s",
-        "connect-timeout" -> "1800s",
-        "retry" -> "1")
+      config = Map("socket-timeout" -> "28800s",
+        "connect-timeout" -> "28800s",
+        "retry" -> "2")
     )
     logInfo(s"status:$status,result:$result")
     (status, result)
