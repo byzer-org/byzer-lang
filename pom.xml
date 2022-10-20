@@ -69,6 +69,7 @@
         <spark.bigversion>3.3</spark.bigversion>
         <scalatest.version>3.2.13</scalatest.version>
         <commons-codec.version>1.15</commons-codec.version>
+        <commons-text.version>1.10.0</commons-text.version>
         <!-- spark 3.3 end -->
 
         <spark.streaming.kafka.artifactId>spark-streaming-kafka-0-8_${scala.binary.version}
@@ -130,6 +131,13 @@
                 <artifactId>jsoup</artifactId>
                 <version>${jsoup.version}</version>
             </dependency>
+
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-text</artifactId>
+                <version>${commons-text.version}</version>
+            </dependency>
+
         </dependencies>
     </dependencyManagement>
 
@@ -373,6 +381,7 @@
                 </exclusion>
             </exclusions>
         </dependency>
+
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpmime</artifactId>
@@ -388,7 +397,6 @@
             <artifactId>commons-codec</artifactId>
             <version>${commons-codec.version}</version>
         </dependency>
-
         <dependency>
             <groupId>joda-time</groupId>
             <artifactId>joda-time</artifactId>
