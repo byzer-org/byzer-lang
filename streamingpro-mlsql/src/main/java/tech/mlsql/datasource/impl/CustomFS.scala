@@ -22,35 +22,43 @@ class CustomFS(override val uid: String) extends MLSQLSource
   def this() = this(BaseParams.randomUID())
 
   override def load(reader: DataFrameReader, config: DataSourceConfig): DataFrame = {
-    val schema = URI.create(config.path).getScheme
-    require(schema != null, "path should be with schema specified")
-
     val session = config.df.get.sparkSession
-
     val extraObjectStoreConf = mutable.HashMap[String, String]()
 
-    ConnectMeta.presentThenCall(DBMappingKey("FS", schema), kvs => {
-      kvs.filter(_._1 != "format").foreach(kv => extraObjectStoreConf.put(kv._1, kv._2))
-    })
+    val realLoad = !config.path.isEmpty
+
+    if (realLoad) {
+      val schema = URI.create(config.path).getScheme
+      require(schema != null, "path should be with schema specified")
+
+      ConnectMeta.presentThenCall(DBMappingKey("FS", schema), kvs => {
+        kvs.filter(_._1 != "format").foreach(kv => extraObjectStoreConf.put(kv._1, kv._2))
+      })
+    }
 
     // Object store config starts with spark.hadoop or fs
     val (objectStoreConf, loadFileConf) = (extraObjectStoreConf ++ config.config).partition(item => item._1.startsWith("spark.hadoop") || item._1.startsWith("fs."))
 
     objectStoreConf.map { item =>
-      if (item._1.startsWith("fs.")) {
-        ("spark.hadoop." + item._1, item._2)
+      if (item._1.startsWith("spark.hadoop")) {
+        (item._1.replaceAll("spark.hadoop.", ""), item._2)
       } else item
     }.foreach { item =>
-      session.conf.set(item._1, item._2)
+      session.sparkContext.hadoopConfiguration.set(item._1, item._2)
     }
     // To load azure blob data, spark.hadoop prefix should be removed. Because NativeAzureFileSystem - azure blob's HDFS
     // compatible API, looks up Azure blob credentials by fs.azure.account.key.<account>.blob.core.chinacloudapi.cn.
-    objectStoreConf.filter(_._1.startsWith("spark.hadoop.fs.azure")).foreach { conf =>
-      session.conf.set(conf._1.replace("spark.hadoop.fs.azure", "fs.azure"), conf._2)
+    //    objectStoreConf.filter(_._1.startsWith("spark.hadoop.fs.azure")).foreach { conf =>
+    //      session.sparkContext.hadoopConfiguration.set(conf._1.replace("spark.hadoop.fs.azure", "fs.azure"), conf._2)
+    //    }
+
+    if (realLoad) {
+      val format = config.config.getOrElse("implClass", fullFormat)
+      reader.options(loadFileConf - "implClass").format(format).load(config.path)
+    } else {
+      session.emptyDataFrame
     }
 
-    val format = config.config.getOrElse("implClass", fullFormat)
-    reader.options(loadFileConf-"implClass").format(format).load(config.path)
   }
 
   override def save(writer: DataFrameWriter[Row], config: DataSinkConfig): Any = {
@@ -70,19 +78,19 @@ class CustomFS(override val uid: String) extends MLSQLSource
 
 
     objectStoreConf.map { item =>
-      if (item._1.startsWith("fs.")) {
-        ("spark.hadoop." + item._1, item._2)
+      if (item._1.startsWith("spark.hadoop")) {
+        (item._1.replaceAll("spark.hadoop.", ""), item._2)
       } else item
     }.foreach { item =>
-      session.conf.set(item._1, item._2)
+      session.sparkContext.hadoopConfiguration.set(item._1, item._2)
     }
     // See comments in load method
-    objectStoreConf.filter(_._1.startsWith("spark.hadoop.fs.azure")).foreach { conf =>
-      session.conf.set(conf._1.replace("spark.hadoop.fs.azure", "fs.azure"), conf._2)
-    }
+    //    objectStoreConf.filter(_._1.startsWith("spark.hadoop.fs.azure")).foreach { conf =>
+    //      session.conf.set(conf._1.replace("spark.hadoop.fs.azure", "fs.azure"), conf._2)
+    //    }
 
     val format = config.config.getOrElse("implClass", fullFormat)
-    writer.options(loadFileConf-"implClass").mode(config.mode).format(format).save(config.path)
+    writer.options(loadFileConf - "implClass").mode(config.mode).format(format).save(config.path)
   }
 
 
