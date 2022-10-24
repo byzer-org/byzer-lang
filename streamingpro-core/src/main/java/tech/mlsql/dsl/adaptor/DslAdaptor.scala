@@ -19,13 +19,15 @@
 package tech.mlsql.dsl.adaptor
 
 import org.antlr.v4.runtime.misc.Interval
+import streaming.dsl._
 import streaming.dsl.parser.DSLSQLLexer
 import streaming.dsl.parser.DSLSQLParser.{ExpressionContext, SqlContext}
-import streaming.dsl.{ConnectMeta, DBMappingKey, ForContext, IfContext, MLSQLExecuteContext, ScriptSQLExec, ScriptSQLExecListener}
+
+import java.net.URI
 
 /**
-  * Created by allwefantasy on 27/8/2017.
-  */
+ * Created by allwefantasy on 27/8/2017.
+ */
 trait DslAdaptor extends DslTool {
   def parse(ctx: SqlContext): Unit
 }
@@ -67,6 +69,18 @@ trait DslTool {
   }
 
   def withPathPrefix(prefix: String, path: String): String = {
+    var filePathSchemas = Array[String]()
+
+    if (ScriptSQLExec.context() != null) {
+      val session = ScriptSQLExec.context().execListener.sparkSession
+      filePathSchemas = session.conf.get("spark.mlsql.path.schemas", "").
+        split(",").map(_.trim).filterNot(_.isEmpty)
+    }
+
+    val currentSchema = new URI(path).getScheme
+    if (filePathSchemas.contains(currentSchema)) {
+      return path
+    }
 
     val newPath = cleanStr(path)
     if (prefix.isEmpty) return newPath
@@ -99,14 +113,14 @@ trait DslTool {
   }
 
   /**
-    * we need calculate the real absolute path of resource.
-    * resource path = owner path prefix + input path
-    *
-    * @param scriptSQLExecListener script sql execute listener, which contains owner and owner path prefix relationship.
-    * @param resourceOwner         resource owner
-    * @param path                  resource relative path
-    * @return
-    */
+   * we need calculate the real absolute path of resource.
+   * resource path = owner path prefix + input path
+   *
+   * @param scriptSQLExecListener script sql execute listener, which contains owner and owner path prefix relationship.
+   * @param resourceOwner         resource owner
+   * @param path                  resource relative path
+   * @return
+   */
   def resourceRealPath(scriptSQLExecListener: ScriptSQLExecListener,
                        resourceOwner: Option[String],
                        path: String): String = {

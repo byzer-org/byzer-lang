@@ -18,9 +18,6 @@
 
 package streaming.dsl
 
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.atomic.AtomicReference
-
 import _root_.streaming.core.Dispatcher
 import _root_.streaming.dsl.auth._
 import _root_.streaming.dsl.parser.DSLSQLParser.SqlContext
@@ -44,6 +41,8 @@ import tech.mlsql.lang.cmd.compile.internal.gc.VariableTable
 import tech.mlsql.session.SetSession
 import tech.mlsql.{Stage, session}
 
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicReference
 import scala.collection.JavaConverters._
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
@@ -221,7 +220,7 @@ class ScriptSQLExecListener(val _sparkSession: SparkSession, val _defaultPathPre
       case Some(items) =>
         items.collect().foreach { item =>
           addEnv(item.k, item.v)
-          addEnvVisibility(item.k, SetVisibilityParameter(item.v, getVisibility(item.config.getOrElse("visibility","all"))))
+          addEnvVisibility(item.k, SetVisibilityParameter(item.v, getVisibility(item.config.getOrElse("visibility", "all"))))
         }
       case None =>
     }
@@ -309,7 +308,6 @@ class ScriptSQLExecListener(val _sparkSession: SparkSession, val _defaultPathPre
   def sparkSession = _sparkSession
 
   def pathPrefix(owner: Option[String]): String = {
-
     if (_allPathPrefix != null && _allPathPrefix.nonEmpty && owner.isDefined) {
       val pathPrefix = _allPathPrefix.get(owner.get)
       if (pathPrefix.isDefined && pathPrefix.get.endsWith("/")) {
