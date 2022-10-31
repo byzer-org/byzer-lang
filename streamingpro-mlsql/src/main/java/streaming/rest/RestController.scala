@@ -265,7 +265,7 @@ class RestController extends ApplicationController with WowLog with Logging {
   private def getScriptResult(context: ScriptSQLExecListener, sparkSession: SparkSession): String = {
     val result = new StringBuffer()
     val includeSchema = param("includeSchema", "false").toBoolean
-    val fetchType = param("fetchType", "collect")
+    val fetchType = param("fetchType", "take")
     if (includeSchema) {
       result.append("{")
     }
