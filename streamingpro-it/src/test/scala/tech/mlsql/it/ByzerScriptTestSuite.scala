@@ -129,6 +129,7 @@ class ByzerScriptTestSuite extends LocalBaseTestSuite with Logging {
       println("Current hadoop ui port(8088) is :" + hadoopContainer.container.getMappedPort(8088))
       println("Current containerlogs ui port(8042) is :" + hadoopContainer.container.getMappedPort(8042))
       println("Current hdfs ui port is :" + hadoopContainer.container.getMappedPort(9870))
+      println("Current hdfs port is :" + hadoopContainer.container.getMappedPort(9000))
       println("Current jobhistory ui port is :" + hadoopContainer.container.getMappedPort(19888))
       println("Current spark xdebug(10002) port is :" + hadoopContainer.container.getMappedPort(10002))
       // 9003, 4040, 8265, 10002

@@ -1,5 +1,7 @@
 package tech.mlsql.it
 
+import scala.io.Source
+
 class SimpleQueryTestSuite extends LocalBaseTestSuite {
 
   private var testManager = new TestManager()
