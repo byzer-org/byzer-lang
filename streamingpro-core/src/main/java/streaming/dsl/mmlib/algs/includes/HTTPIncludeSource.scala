@@ -62,7 +62,8 @@ class HTTPIncludeSource extends IncludeSource with Logging {
        form.add(k,v)
     }}
 
-    val res =  req.bodyForm(form.build()).execute().returnContent().asString(Charset.forName("utf-8"))
+    val res =  req.bodyForm(form.build(), Charset.forName("utf-8"))
+      .execute().returnContent().asString(Charset.forName("utf-8"))
     if (res == null) {
       throw new MLSQLException(
         s"""
