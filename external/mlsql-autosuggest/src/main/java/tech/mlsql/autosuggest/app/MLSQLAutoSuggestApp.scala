@@ -35,7 +35,6 @@ object AutoSuggestController {
   val sqlLexer = new LexerWrapper(lexerAndParserfactory2, new RawSQLToCharStream)
 
   def getSchemaRegistry = {
-
     new SchemaRegistry(getSession)
   }
 
@@ -84,20 +83,20 @@ class AutoSuggestController extends CustomController {
     val isDebug = params.getOrElse("isDebug", "false").toBoolean
     val size = params.getOrElse("size", "100").toInt
     val includeTableMeta = params.getOrElse("includeTableMeta", "false").toBoolean
-
+    
     val schemaInferUrl = params.getOrElse("schemaInferUrl", "")
 
     val enableMemoryProvider = params.getOrElse("enableMemoryProvider", "true").toBoolean
     val session = AutoSuggestController.getSession
     val context = new AutoSuggestContext(session,
       AutoSuggestController.mlsqlLexer,
-      AutoSuggestController.sqlLexer,Map("schemaInferUrl"->schemaInferUrl,"params"->JSONTool.toJsonStr(params)))
+      AutoSuggestController.sqlLexer, Map("schemaInferUrl" -> schemaInferUrl, "params" -> JSONTool.toJsonStr(params)))
     context.setDebugMode(isDebug)
     if (enableMemoryProvider) {
       context.setUserDefinedMetaProvider(AutoSuggestContext.memoryMetaProvider)
     }
 
-    if(!schemaInferUrl.isEmpty){
+    if (!schemaInferUrl.isEmpty) {
       context.setUserDefinedMetaProvider(new MLSQLEngineMetaProvider())
     }
 
@@ -108,7 +107,6 @@ class AutoSuggestController extends CustomController {
         context.setUserDefinedMetaProvider(new RestMetaProvider(searchUrl, listUrl))
       case (None, None) =>
     }
-
 
 
     var resItems = context.buildFromString(sql).suggest(lineNum, columnNum).take(size)
