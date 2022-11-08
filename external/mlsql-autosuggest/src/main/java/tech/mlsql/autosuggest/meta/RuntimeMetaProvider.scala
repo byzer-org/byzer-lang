@@ -1,6 +1,6 @@
 package tech.mlsql.autosuggest.meta
 
-import tech.mlsql.autosuggest.AutoSuggestContext
+import tech.mlsql.autosuggest.{AutoSuggestContext, SpecialTableConst}
 
 
 /**
@@ -20,7 +20,12 @@ class RuntimeMetaProvider extends MetaProvider {
     val metaTableColumns = columns.map { col =>
       MetaTableColumn(col.name, col.dataType, col.nullable, Map())
     }
-    Some(MetaTable(MetaTableKey(None, None, table.name), metaTableColumns))
+
+    val dbType = if(table.isTemporary) {
+      Some(SpecialTableConst.TEMP_TABLE_DB_KEY)
+    }else None
+
+    Some(MetaTable(MetaTableKey(None, dbType, table.name), metaTableColumns))
   }
 
   def register(name: String, metaTable: MetaTable) = {
@@ -31,13 +36,18 @@ class RuntimeMetaProvider extends MetaProvider {
     val context = AutoSuggestContext.context()
     val catalog = context.session.catalog
     val tables = catalog.listTables().collect().toList
-    tables.map { _table =>
+    tables.filter(item=> !item.name.matches("[a-z0-9]{32}") ).map { _table =>
       val table = catalog.getTable(_table.name)
       val columns = catalog.listColumns(table.name).collect().toList
       val metaTableColumns = columns.map { col =>
         MetaTableColumn(col.name, col.dataType, col.nullable, Map())
       }
-      MetaTable(MetaTableKey(None, None, table.name), metaTableColumns)
+
+      val dbType = if(table.isTemporary) {
+        Some(SpecialTableConst.TEMP_TABLE_DB_KEY)
+      }else None
+
+      MetaTable(MetaTableKey(None, dbType, table.name), metaTableColumns)
     }
   }
 }
