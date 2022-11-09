@@ -17,10 +17,9 @@
  */
 package tech.mlsql.autosuggest.dsl
 
-import org.antlr.v4.runtime.{Lexer, Token}
+import org.antlr.v4.runtime.Token
 import org.apache.spark.sql.catalyst.parser.SqlBaseLexer
 import streaming.dsl.parser.DSLSQLLexer
-import tech.mlsql.autosuggest.dsl.TokenTypeWrapper.getValues
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -296,7 +295,8 @@ object TokenTypeWrapper {
   def tokenType(value: String): Int = {
     values.indexOf(value)
   }
-    def getList: List[Int] = List(LEFT_BRACKET, RIGHT_BRACKET, COMMA, DOT, LEFT_SQUARE_BRACKET, RIGHT_SQUARE_BRACKET, COLON, SEMICOLON)
+
+  def getList: List[Int] = List(LEFT_BRACKET, RIGHT_BRACKET, COMMA, DOT, LEFT_SQUARE_BRACKET, RIGHT_SQUARE_BRACKET, COLON, SEMICOLON)
 
   val COMMA: Int = tokenType("','") // spark-catalyst_2.11-2.4.3.jar:SqlBaseLexer.T__2 //,
   val DOT: Int = tokenType("'.'") // spark-catalyst_2.11-2.4.3.jar:SqlBaseLexer.T__3 //.
@@ -323,13 +323,14 @@ object DSLWrapper {
     values.indexOf(value)
   }
 
-  def getList: List[Int] = List(COMMA, DOT, COLON, SEMICOLON, EQUAL)
+  def getList: List[Int] = List(COMMA, DOT, COLON, SEMICOLON, EQUAL,AND)
 
   val COMMA: Int = tokenType("','")
   val DOT: Int = tokenType("'.'")
   val COLON: Int = tokenType("':'")
   val SEMICOLON: Int = tokenType("';'")
   val EQUAL: Int = tokenType("'='")
+  val AND: Int = tokenType("'and'")
 
   val MAP: Map[Int, Int] = getList.map((_, 1)).toMap
 

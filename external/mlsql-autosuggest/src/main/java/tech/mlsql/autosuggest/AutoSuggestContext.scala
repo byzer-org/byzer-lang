@@ -212,13 +212,16 @@ class AutoSuggestContext(val session: SparkSession,
       case Some("register") =>
         val suggester = new RegisterSuggester(this, _statements(index), relativeTokenPos)
         suggester.suggest()
+      case Some("connect") =>
+        val suggester = new ConnectSuggester(this, _statements(index), relativeTokenPos)
+        suggester.suggest()
       case Some(value) => firstWords.filter(_.name.startsWith(value))
       case None => firstWords
     }
     items.distinct
   }
 
-  private val firstWords = List("load", "select", "include", "register", "run", "train", "predict", "save", "set").map(SuggestItem(_, SpecialTableConst.KEY_WORD_TABLE, Map())).toList
+  private val firstWords = List("load", "select", "include", "register", "run", "train", "predict", "save", "set", "connect").map(SuggestItem(_, SpecialTableConst.KEY_WORD_TABLE, Map())).toList
 }
 
 class UpperCaseCharStream(wrapped: CodePointCharStream) extends CharStream {

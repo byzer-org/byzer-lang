@@ -8,7 +8,6 @@ import tech.mlsql.autosuggest.dsl.{DSLWrapper, MLSQLTokenTypeWrapper, TokenTypeW
 import tech.mlsql.autosuggest.{AutoSuggestContext, TokenPos, TokenPosType}
 
 import scala.collection.JavaConverters._
-import scala.collection.mutable.ListBuffer
 
 /**
  * 1/6/2020 WilliamZhu(allwefantasy@gmail.com)
@@ -34,6 +33,12 @@ object LexerUtils {
   def filterPrefixIfNeeded(candidates: List[SuggestItem], tokens: List[Token], tokenPos: TokenPos) = {
     if (tokenPos.offsetInToken != 0) {
       candidates.filter(s => s.name.startsWith(tokens(tokenPos.pos).getText.substring(0, tokenPos.offsetInToken)))
+    } else candidates
+  }
+
+  def filterPrefixIfNeededWithStart(candidates: List[SuggestItem], tokens: List[Token], tokenPos: TokenPos, start: Int) = {
+    if (tokenPos.offsetInToken != 0) {
+      candidates.filter(s => s.name.startsWith(tokens(tokenPos.pos).getText.substring(start, tokenPos.offsetInToken)))
     } else candidates
   }
 
@@ -73,17 +78,17 @@ object LexerUtils {
     var notEndCodeFlag: Boolean = false
     var _lastToken: Token = tokens.last
     // Determine if there is code after the line where the cursor is located
-    if(_lastToken.getLine > lineNum){
+    if (_lastToken.getLine > lineNum) {
       notEndCodeFlag = true
     }
     var _lastTokenIndex = 0
     val oneLineTokens = tokens.zipWithIndex.filter { case (token, index) =>
       //A block of code that records the last word of the line before the cursor
-      if(token.getLine < lineNum && notEndCodeFlag){
+      if (token.getLine < lineNum && notEndCodeFlag) {
         _lastToken = token
         _lastTokenIndex = index
       }
-      if(!notEndCodeFlag){
+      if (!notEndCodeFlag) {
         _lastTokenIndex = index
       }
       token.getLine == lineNum
@@ -92,9 +97,9 @@ object LexerUtils {
       case Some(last) => last
       case None => (_lastToken, _lastTokenIndex)
     }
-     if(oneLineTokens.isEmpty && lastToken._1.getType == DSLWrapper.SEMICOLON) {
-        return TokenPos(-1, TokenPosType.NEXT, -1)
-     }
+    if (oneLineTokens.isEmpty && lastToken._1.getType == DSLWrapper.SEMICOLON) {
+      return TokenPos(-1, TokenPosType.NEXT, -1)
+    }
     val firstToken = oneLineTokens.headOption match {
       case Some(head) => head
       case None => (_lastToken, _lastTokenIndex)
@@ -143,9 +148,10 @@ object LexerUtils {
     }
     poses.head
   }
+
   /**
-  * Consistent with [[tech.mlsql.autosuggest.statement.LexerUtils.toTokenPos()]]
-  */
+   * Consistent with [[tech.mlsql.autosuggest.statement.LexerUtils.toTokenPos()]]
+   */
   def toTokenPosForSparkSQL(tokens: List[Token], lineNum: Int, colNum: Int): TokenPos = {
     /**
      * load hi[cursor]...   in token
@@ -160,17 +166,17 @@ object LexerUtils {
     var notEndCodeFlag: Boolean = false
     var _lastToken: Token = tokens.last
     // Determine if there is code after the line where the cursor is located
-    if(_lastToken.getLine > lineNum){
+    if (_lastToken.getLine > lineNum) {
       notEndCodeFlag = true
     }
     var _lastTokenIndex = 0
     val oneLineTokens = tokens.zipWithIndex.filter { case (token, index) =>
       /* A block of code that records the last word of the line before the cursor */
-      if(token.getLine < lineNum && notEndCodeFlag){
+      if (token.getLine < lineNum && notEndCodeFlag) {
         _lastToken = token
         _lastTokenIndex = index
       }
-      if(!notEndCodeFlag){
+      if (!notEndCodeFlag) {
         _lastTokenIndex = index
       }
       token.getLine == lineNum
@@ -179,7 +185,7 @@ object LexerUtils {
       case Some(last) => last
       case None => (_lastToken, _lastTokenIndex)
     }
-    if(oneLineTokens.isEmpty && lastToken._1.getType == DSLWrapper.SEMICOLON) {
+    if (oneLineTokens.isEmpty && lastToken._1.getType == DSLWrapper.SEMICOLON) {
       return TokenPos(-1, TokenPosType.NEXT, -1)
     }
     val firstToken = oneLineTokens.headOption match {
@@ -194,7 +200,7 @@ object LexerUtils {
       return TokenPos(lastToken._2, TokenPosType.NEXT, 0)
     }
 
-    if (colNum >=lastToken._1.getCharPositionInLine
+    if (colNum >= lastToken._1.getCharPositionInLine
       && colNum <= lastToken._1.getCharPositionInLine + lastToken._1.getText.size
       && !TokenTypeWrapper.MAP.contains(lastToken._1.getType)
 
@@ -260,7 +266,7 @@ object LexerUtils {
     }
     if (str.startsWith("`") || str.startsWith("\"") || (str.startsWith("'") && !str.startsWith("'''")))
       str.substring(1, str.length - 1)
-    else if(str.startsWith("'''")){
+    else if (str.startsWith("'''")) {
       str.substring(3, str.length - 3)
     } else str
   }
