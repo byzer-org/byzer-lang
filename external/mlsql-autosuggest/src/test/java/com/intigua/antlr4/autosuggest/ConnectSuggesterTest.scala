@@ -92,4 +92,15 @@ class ConnectSuggesterTest extends BaseTest {
     println(suggester.suggest())
     println(suggester.tokens.toList)
   }
+
+  test("connect jdbc where driver=\"${driver}\"") {
+    val statement = context.lexer.tokenizeNonDefaultChannel(
+      """
+        |connect jdbc where driver=${dri}
+        |""".stripMargin).tokens.asScala.toList
+
+    val suggester = new ConnectSuggester(context, statement, TokenPos(5, TokenPosType.CURRENT, 5))
+    println(suggester.suggest())
+    println(suggester.tokens.toList)
+  }
 }

@@ -67,6 +67,26 @@ class SelectSuggesterTest extends BaseTest {
 
   }
 
+  test("project: casewhen") {
+
+    buildMetaProvider
+
+    lazy val wow2 = context.lexer.tokenizeNonDefaultChannel(
+      """
+        |select CASE
+        |    WHEN  THEN <value>
+        |    WHEN <condition> THEN <value>
+        |    ELSE <value>
+        |END AS <column>
+        |from jack.drugs_bad_case_di
+        |""".stripMargin).tokens.asScala.toList
+
+    val suggester = new SelectSuggester(context, wow2, TokenPos(2, TokenPosType.NEXT, 0))
+    println(suggester.suggest())
+    println(suggester.tokens)
+
+  }
+
   test("project: complex attribute suggest") {
 
     buildMetaProvider
@@ -205,10 +225,9 @@ class SelectSuggesterTest extends BaseTest {
     val suggester = new SelectSuggester(context, tokens, TokenPos(0, TokenPosType.NEXT, 0))
     println("=======")
     println(suggester.suggest())
-    assert(suggester.suggest().head.name=="b")
+    assert(suggester.suggest().head.name == "b")
   }
 
-  
 
   test("project: function suggester") {
 
@@ -253,8 +272,6 @@ class SelectSuggesterTest extends BaseTest {
     println(suggester.suggest())
     assert(suggester.suggest().map(_.name) == List(("split")))
   }
-
-
 
 
 }

@@ -2,8 +2,9 @@ package tech.mlsql.autosuggest.statement
 
 import org.antlr.v4.runtime.Token
 import org.apache.spark.sql.catalyst.parser.SqlBaseLexer
-import tech.mlsql.autosuggest.dsl.{Food, TokenMatcher, TokenTypeWrapper}
+import streaming.dsl.parser.DSLSQLLexer
 import tech.mlsql.autosuggest._
+import tech.mlsql.autosuggest.dsl.{Food, TokenMatcher, TokenTypeWrapper}
 import tech.mlsql.common.utils.log.Logging
 
 /**
@@ -39,6 +40,23 @@ trait SelectStatementUtils extends Logging {
     selectSuggester.table_info.get(levelFromTokenPos)
   }
 
+  def getAllTables = {
+    val tokenPrefix = LexerUtils.tableTokenPrefix(tokens, tokenPos)
+    val owner = AutoSuggestContext.context().reqParams.getOrElse("owner", "")
+    val extraParam = Map("searchPrefix" -> tokenPrefix, "owner" -> owner)
+
+    val allTables = selectSuggester.context.metaProvider.list(extraParam).map { item =>
+      val prefix = (item.key.prefix, item.key.db) match {
+        case (Some(prefix), Some(db)) => prefix
+        case (Some(prefix), None) => prefix
+        case (None, Some(SpecialTableConst.TEMP_TABLE_DB_KEY)) => "temp table"
+        case (None, Some(db)) => db
+      }
+      SuggestItem(item.key.table, item, Map("desc" -> prefix))
+    }
+    LexerUtils.filterPrefixIfNeeded(tableSuggest() ++ allTables, tokens, tokenPos)
+  }
+
 
   def tableSuggest(): List[SuggestItem] = {
     val tempStart = tokenPos.currentOrNext match {
@@ -67,11 +85,12 @@ trait SelectStatementUtils extends Logging {
     if (temp.isSuccess) return List()
 
     table_info match {
-      case Some(tb) => tb.map { case (key, value) =>
-        (key.aliasName.getOrElse(key.metaTableKey.table), value)
-      }.map { case (name, table) =>
-        SuggestItem(name, table, Map())
-      }.toList
+      case Some(tb) =>
+        tb.map { case (key, value) =>
+          (key.aliasName.getOrElse(key.metaTableKey.table), value)
+        }.map { case (name, table) =>
+          SuggestItem(name, table, Map())
+        }.toList
       case None =>
         val tokenPrefix = LexerUtils.tableTokenPrefix(tokens, tokenPos)
         val owner = AutoSuggestContext.context().reqParams.getOrElse("owner", "")
@@ -79,6 +98,31 @@ trait SelectStatementUtils extends Logging {
         selectSuggester.context.metaProvider.list(extraParam).map { item =>
           SuggestItem(item.key.table, item, Map())
         }
+    }
+  }
+
+  def sqlTemplates = {
+    casewhen()
+  }
+
+  def casewhen(): List[SuggestItem] = {
+    // select case[cursor]
+    if (tokenPos.currentOrNext != TokenPosType.CURRENT) return List()
+    val matchedTokens = TokenMatcher(tokens, tokenPos.pos).back.eat(Food(None, DSLSQLLexer.IDENTIFIER)).getMatchTokens
+    matchedTokens.lastOption match {
+      case Some(item) if item.getText.toLowerCase == "case" =>
+        List(SuggestItem(
+          """
+            |CASE
+            |    WHEN <condition> THEN <value>
+            |    WHEN <condition> THEN <value>
+            |    ELSE <value>
+            |END AS <column>
+            |""".stripMargin, SpecialTableConst.OPTION_TABLE, Map("desc" -> "template")
+        ))
+      case Some(_) => List()
+
+      case None => List()
     }
   }
 

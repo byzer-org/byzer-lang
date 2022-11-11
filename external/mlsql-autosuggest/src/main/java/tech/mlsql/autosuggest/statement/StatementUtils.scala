@@ -20,7 +20,7 @@ package tech.mlsql.autosuggest.statement
 import org.antlr.v4.runtime.Token
 import streaming.dsl.parser.DSLSQLLexer
 import tech.mlsql.autosuggest.dsl.{DSLWrapper, Food, TokenMatcher}
-import tech.mlsql.autosuggest.{TokenPos, TokenPosType}
+import tech.mlsql.autosuggest.{SpecialTableConst, TokenPos, TokenPosType}
 
 /**
  * 9/6/2020 WilliamZhu(allwefantasy@gmail.com)
@@ -80,6 +80,39 @@ trait StatementUtils {
 
     }
 
+  }
+
+  def isQuoteShouldPromb: Boolean = {
+    isOptionValue && !isInQuote
+  }
+
+  def getQuotes = {
+    List(
+      SuggestItem("\"\"", SpecialTableConst.OPTION_TABLE, Map("desc" -> "")),
+      SuggestItem("''''''", SpecialTableConst.OPTION_TABLE, Map("desc" -> ""))
+    )
+  }
+
+  def getOptionsKeywords = {
+    List(
+      SuggestItem("where", SpecialTableConst.OPTION_TABLE, Map()),
+      SuggestItem("options", SpecialTableConst.OPTION_TABLE, Map())
+    )
+  }
+
+  def isOptionKeywordShouldPromp(food: Food*): Boolean = {
+    if (backAndFirstIs(DSLSQLLexer.OPTIONS) || backAndFirstIs(DSLSQLLexer.WHERE)) {
+      return false
+    }
+    val promp = tokenPos.currentOrNext match {
+      // load jdbc.`` w[cursor]
+      case TokenPosType.CURRENT =>
+        TokenMatcher(tokens, tokenPos.pos).back.eatOneAny.eat(food: _*).isSuccess
+      // load jdbc.`` [cursor]
+      case TokenPosType.NEXT =>
+        TokenMatcher(tokens, tokenPos.pos).back.eat(food: _*).isSuccess
+    }
+    promp
   }
 
   // where key=[cursor]

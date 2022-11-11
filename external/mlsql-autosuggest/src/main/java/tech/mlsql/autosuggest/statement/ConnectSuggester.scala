@@ -76,7 +76,7 @@ private class ConnectFormatSuggester(connectSuggester: ConnectSuggester) extends
    */
   override def isMatch(): Boolean = {
 
-    if (backAndFirstIs(DSLSQLLexer.OPTIONS)) {
+    if (backAndFirstIs(DSLSQLLexer.OPTIONS) || backAndFirstIs(DSLSQLLexer.WHERE)) {
       return false
     }
 
@@ -95,16 +95,8 @@ private class ConnectFormatSuggester(connectSuggester: ConnectSuggester) extends
     /**
      * connect jdbc [cursor]
      */
-    if ((tokenPos.currentOrNext == TokenPosType.NEXT &&
-      TokenMatcher(tokens, tokenPos.pos).back.eat(
-        Food(None, DSLSQLLexer.IDENTIFIER), Food(None, DSLSQLLexer.CONNECT)).isSuccess) ||
-      (tokenPos.currentOrNext == TokenPosType.CURRENT && TokenMatcher(tokens, tokenPos.pos).back.eat(
-        Food(None, DSLSQLLexer.IDENTIFIER), Food(None, DSLSQLLexer.IDENTIFIER), Food(None, DSLSQLLexer.CONNECT)).isSuccess)
-    ) {
-      return LexerUtils.filterPrefixIfNeeded(List(
-        SuggestItem("where", SpecialTableConst.OPTION_TABLE, Map()),
-        SuggestItem("options", SpecialTableConst.OPTION_TABLE, Map())
-      ), tokens, tokenPos)
+    if (isOptionKeywordShouldPromp(Food(None, DSLSQLLexer.IDENTIFIER))) {
+      return LexerUtils.filterPrefixIfNeeded(getOptionsKeywords, tokens, tokenPos)
     }
 
     val items = connectSuggester.formatMapping.map { item =>
@@ -131,9 +123,9 @@ private class ConnectOptionsSuggester(connectSuggester: ConnectSuggester) extend
   }
 
 
-  register(classOf[OptionKeySuggester])
-  register(classOf[DriverValueSuggester])
-  register(classOf[UrlValueSuggester])
+  register(classOf[ConnectOptionKeySuggester])
+  register(classOf[ConnectDriverValueSuggester])
+  register(classOf[ConnectUrlValueSuggester])
 
   override def isMatch(): Boolean = {
     backAndFirstIs(DSLSQLLexer.OPTIONS) || backAndFirstIs(DSLSQLLexer.WHERE)
@@ -148,7 +140,7 @@ private class ConnectOptionsSuggester(connectSuggester: ConnectSuggester) extend
   override def tokenPos: TokenPos = connectSuggester.tokenPos
 }
 
-private class OptionKeySuggester(connectSuggester: ConnectSuggester) extends StatementSuggester with StatementUtils {
+private class ConnectOptionKeySuggester(connectSuggester: ConnectSuggester) extends StatementSuggester with StatementUtils {
 
   override def name: String = "options_key"
 
@@ -178,7 +170,7 @@ private class OptionKeySuggester(connectSuggester: ConnectSuggester) extends Sta
   override def tokenPos: TokenPos = connectSuggester.tokenPos
 }
 
-private class UrlValueSuggester(connectSuggester: ConnectSuggester) extends StatementSuggester with StatementUtils {
+private class ConnectUrlValueSuggester(connectSuggester: ConnectSuggester) extends StatementSuggester with StatementUtils {
 
   override def name: String = "url"
 
@@ -195,14 +187,16 @@ private class UrlValueSuggester(connectSuggester: ConnectSuggester) extends Stat
   }
 
   override def suggest(): List[SuggestItem] = {
-    val items =
-      if (isInQuote && isOptionKeyEqual(name)) {
-        List(
-          SuggestItem("jdbc:mysql://<host>:<port>/<dbName>?useSSL=false&haracterEncoding=utf8&zeroDateTimeBehavior=convertToNull&tinyInt1isBit=false", SpecialTableConst.OPTION_TABLE, Map("desc" -> "MySQL")),
-          SuggestItem("jdbc:oracle:thin:@<host>:<port>:<dbName>", SpecialTableConst.OPTION_TABLE, Map("desc" -> "Oracle")),
-          SuggestItem("dbc:hive2://<host>:<port>/<dbName>;<sessionConfs>?<hiveConfs>#<hiveVars>", SpecialTableConst.OPTION_TABLE, Map("desc" -> "Hive"))
-        )
-      } else List(SuggestItem("\"\"", SpecialTableConst.OPTION_TABLE, Map("desc" -> "")))
+
+    if (isQuoteShouldPromb) {
+      LexerUtils.filterPrefixIfNeeded(getQuotes, tokens, tokenPos)
+    }
+
+    val items = List(
+      SuggestItem("jdbc:mysql://<host>:<port>/<dbName>?useSSL=false&haracterEncoding=utf8&zeroDateTimeBehavior=convertToNull&tinyInt1isBit=false", SpecialTableConst.OPTION_TABLE, Map("desc" -> "MySQL")),
+      SuggestItem("jdbc:oracle:thin:@<host>:<port>:<dbName>", SpecialTableConst.OPTION_TABLE, Map("desc" -> "Oracle")),
+      SuggestItem("dbc:hive2://<host>:<port>/<dbName>;<sessionConfs>?<hiveConfs>#<hiveVars>", SpecialTableConst.OPTION_TABLE, Map("desc" -> "Hive"))
+    )
     LexerUtils.filterPrefixIfNeededWithStart(items, tokens, tokenPos, 1)
   }
 
@@ -211,7 +205,7 @@ private class UrlValueSuggester(connectSuggester: ConnectSuggester) extends Stat
   override def tokenPos: TokenPos = connectSuggester.tokenPos
 }
 
-private class DriverValueSuggester(connectSuggester: ConnectSuggester) extends StatementSuggester with StatementUtils {
+private class ConnectDriverValueSuggester(connectSuggester: ConnectSuggester) extends StatementSuggester with StatementUtils {
 
   override def name: String = "driver"
 

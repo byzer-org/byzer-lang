@@ -93,18 +93,58 @@ class LoadFormatSuggester(loadSuggester: LoadSuggester) extends StatementSuggest
 
 class LoadOptionsSuggester(loadSuggester: LoadSuggester) extends StatementSuggester with StatementUtils {
   override def isMatch(): Boolean = {
-    backAndFirstIs(DSLSQLLexer.OPTIONS) || backAndFirstIs(DSLSQLLexer.WHERE)
+    if (backAndFirstIs(DSLSQLLexer.OPTIONS) || backAndFirstIs(DSLSQLLexer.WHERE)) {
+      return true
+    }
+
+    if (isOptionKeywordShouldPromp(Food(None, DSLSQLLexer.BACKQUOTED_IDENTIFIER))) {
+      return true
+    }
+
+    return false
+
   }
 
   override def suggest(): List[SuggestItem] = {
+
+    if (isOptionKeywordShouldPromp(Food(None, DSLSQLLexer.BACKQUOTED_IDENTIFIER))) {
+      return LexerUtils.filterPrefixIfNeeded(getOptionsKeywords, tokens, tokenPos)
+    }
+
+    if (isQuoteShouldPromb) {
+      return getQuotes
+    }
+
+    if (isInQuote) {
+      return LexerUtils.filterPrefixIfNeeded(List(), tokens, tokenPos)
+    }
+
     val source = tokens(1)
-    val datasources = DataSourceRegistry.fetch(source.getText, Map[String, String]()) match {
+
+    val isJDBC = source.getText == "jdbc"
+
+    var datasources = DataSourceRegistry.fetch(source.getText, Map[String, String]()) match {
       case Some(ds) => ds.asInstanceOf[MLSQLSourceInfo].
         explainParams(loadSuggester.context.session).collect().
         map(row => (row.getString(0), row.getString(1))).
         toList
       case None => List()
     }
+
+    if (isJDBC) {
+      val datasources2 = DataSourceRegistry.fetch(source.getText, Map[String, String](
+        "directQuery" -> ""
+      )) match {
+        case Some(ds) => ds.asInstanceOf[MLSQLSourceInfo].
+          explainParams(loadSuggester.context.session).collect().
+          map(row => (row.getString(0), row.getString(1))).
+          toList
+        case None => List()
+      }
+      datasources ++= datasources2
+      datasources = datasources.reverse
+    }
+
     LexerUtils.filterPrefixIfNeeded(datasources.map(tuple =>
       SuggestItem(tuple._1, SpecialTableConst.OPTION_TABLE, Map("desc" -> tuple._2))),
       tokens, tokenPos)

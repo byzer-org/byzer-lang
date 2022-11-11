@@ -12,6 +12,7 @@ class SaveSuggester(val context: AutoSuggestContext, val _tokens: List[Token], v
   private val subSuggesters = mutable.HashMap[String, StatementSuggester]()
 
   register(classOf[SaveModeSuggester])
+  register(classOf[SaveTableSuggester])
   register(classOf[SaveFormatSuggester])
   register(classOf[SaveOptionsSuggester])
   register(classOf[SavePathQuoteSuggester])
@@ -33,6 +34,21 @@ class SaveSuggester(val context: AutoSuggestContext, val _tokens: List[Token], v
 
   override def suggest(): List[SuggestItem] = {
     defaultSuggest(subSuggesters.toMap)
+  }
+}
+
+
+private class SaveTableSuggester(saveSuggester: SaveSuggester) extends SaveSuggesterBase(saveSuggester) {
+  override def name: String = "table"
+
+  override def isMatch(): Boolean = {
+    firstAhead(SaveModeSuggester.SAVE_MODE_TOKENS: _*).contains(tokenPos.pos)
+  }
+
+  override def suggest(): List[SuggestItem] = {
+    saveSuggester.context.metaProvider.list(Map()).map { item =>
+      SuggestItem(item.key.table, SpecialTableConst.tempTable(item.key.table), Map())
+    }
   }
 }
 
