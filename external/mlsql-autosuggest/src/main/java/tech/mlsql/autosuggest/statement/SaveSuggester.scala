@@ -13,6 +13,7 @@ class SaveSuggester(val context: AutoSuggestContext, val _tokens: List[Token], v
 
   register(classOf[SaveModeSuggester])
   register(classOf[SaveTableSuggester])
+  register(classOf[SaveAsSuggester])
   register(classOf[SaveFormatSuggester])
   register(classOf[SaveOptionsSuggester])
   register(classOf[SavePathQuoteSuggester])
@@ -33,6 +34,7 @@ class SaveSuggester(val context: AutoSuggestContext, val _tokens: List[Token], v
   }
 
   override def suggest(): List[SuggestItem] = {
+    // save overwrite tt as
     defaultSuggest(subSuggesters.toMap)
   }
 }
@@ -42,13 +44,39 @@ private class SaveTableSuggester(saveSuggester: SaveSuggester) extends SaveSugge
   override def name: String = "table"
 
   override def isMatch(): Boolean = {
-    firstAhead(SaveModeSuggester.SAVE_MODE_TOKENS: _*).contains(tokenPos.pos)
+    val matchSize = SaveModeSuggester.SAVE_MODE_TOKENS.map { item =>
+      TokenMatcher(tokens, tokenPos.pos).back.eat(Food(None, item)).isSuccess
+    }.filter(item => item).length
+    matchSize > 0
   }
 
   override def suggest(): List[SuggestItem] = {
+
+    if (isOptionKeywordShouldPromp(Food(None, DSLSQLLexer.IDENTIFIER))) {
+      return List(
+        SuggestItem("as", SpecialTableConst.KEY_WORD_TABLE, Map())
+      )
+    }
+
     saveSuggester.context.metaProvider.list(Map()).map { item =>
       SuggestItem(item.key.table, SpecialTableConst.tempTable(item.key.table), Map())
     }
+  }
+}
+
+private class SaveAsSuggester(saveSuggester: SaveSuggester) extends SaveSuggesterBase(saveSuggester) {
+  override def name: String = "as_format"
+
+  override def isMatch(): Boolean = {
+    val matchSize = SaveModeSuggester.SAVE_MODE_TOKENS.map { item =>
+      backTwoStepIs(item)
+    }.filter(item => item).length
+
+    backOneStepIs(DSLSQLLexer.IDENTIFIER) && matchSize > 0
+  }
+
+  override def suggest(): List[SuggestItem] = {
+    LexerUtils.filterPrefixIfNeeded(List(SuggestItem("as", SpecialTableConst.KEY_WORD_TABLE, Map())), tokens, tokenPos)
   }
 }
 
@@ -59,7 +87,7 @@ private class SaveModeSuggester(saveSuggester: SaveSuggester) extends SaveSugges
   override def name: String = "mode"
 
   override def isMatch(): Boolean = {
-    firstAhead(SaveModeSuggester.SAVE_MODE_TOKENS: _*).contains(tokenPos.pos - 1)
+    backOneStepIs(DSLSQLLexer.SAVE)
   }
 
   override def suggest(): List[SuggestItem] = {
@@ -89,7 +117,7 @@ private class SaveFormatSuggester(saveSuggester: SaveSuggester) extends SaveSugg
   override def name: String = "format"
 
   override def isMatch(): Boolean = {
-    backAndFirstIs(DSLSQLLexer.AS)
+    backOneStepIs(DSLSQLLexer.AS)
   }
 
   override def suggest(): List[SuggestItem] = {
@@ -111,34 +139,56 @@ private class SaveFormatSuggester(saveSuggester: SaveSuggester) extends SaveSugg
 private class SaveOptionsSuggester(saveSuggester: SaveSuggester) extends SaveSuggesterBase(saveSuggester) {
   override def name: String = "options"
 
+  // save overwrite command as parquet.`/tmp`
   override def isMatch(): Boolean = {
+    if (backOneStepIs(DSLSQLLexer.BACKQUOTED_IDENTIFIER)) {
+      return true
+    }
     backAndFirstIs(DSLSQLLexer.OPTIONS) || backAndFirstIs(DSLSQLLexer.WHERE)
   }
 
   override def suggest(): List[SuggestItem] = {
-    val asToken = firstAhead(DSLSQLLexer.AS)
-    asToken match {
-      case Some(pos) =>
-        // Fetch the saving format.
-        val formatToken = tokens(pos + 1)
 
-        // Fetch the names and descriptions of all data sources which will be suggested.
-        val dataSources = DataSourceRegistry.fetch(formatToken.getText, Map.empty) match {
-          case Some(sourceInfo: MLSQLSourceInfo) =>
-            sourceInfo.explainParams(saveSuggester.context.session)
-              .collect()
-              .map(row => (row.getString(0), row.getString(1)))
-              .toList
-          case None => List.empty
-        }
-
-        val suggestions = dataSources.map(tuple =>
-          SuggestItem(tuple._1, SpecialTableConst.OPTION_TABLE, Map("desc" -> tuple._2)))
-        LexerUtils.filterPrefixIfNeeded(suggestions, tokens, tokenPos)
-      case None => List.empty
+    if (backOneStepIs(DSLSQLLexer.BACKQUOTED_IDENTIFIER)) {
+      return LexerUtils.filterPrefixIfNeeded(getOptionsKeywords, tokens, tokenPos)
     }
+
+    if (isOptionKey) {
+      val asToken = firstAhead(DSLSQLLexer.AS)
+      return asToken match {
+        case Some(pos) =>
+          // Fetch the saving format.
+          val formatToken = tokens(pos + 1)
+
+          // Fetch the names and descriptions of all data sources which will be suggested.
+          val dataSources = DataSourceRegistry.fetch(formatToken.getText, Map.empty) match {
+            case Some(sourceInfo: MLSQLSourceInfo) =>
+              sourceInfo.explainParams(saveSuggester.context.session)
+                .collect()
+                .map(row => (row.getString(0), row.getString(1)))
+                .toList
+            case None => List.empty
+          }
+
+          val suggestions = dataSources.map(tuple =>
+            SuggestItem(tuple._1, SpecialTableConst.OPTION_TABLE, Map("desc" -> tuple._2)))
+          LexerUtils.filterPrefixIfNeeded(suggestions, tokens, tokenPos)
+        case None => List.empty
+      }
+    }
+
+    if (isQuoteShouldPromb) {
+      return getQuotes
+    }
+
+    if (isInQuote) {
+      return List()
+    }
+
+    List()
   }
 }
+
 
 /**
  * Suggests "&#96;&#96;" after entering the saving format.
@@ -158,6 +208,7 @@ private class SavePathQuoteSuggester(saveSuggester: SaveSuggester) extends SaveS
   }
 
   override def suggest(): List[SuggestItem] = {
+
     val quoteSuggestion = SuggestItem("``", SpecialTableConst.OTHER_TABLE, Map("desc" -> "path or table"))
     LexerUtils.filterPrefixIfNeeded(List(quoteSuggestion), tokens, tokenPos)
   }

@@ -45,6 +45,40 @@ trait StatementUtils {
     return false
   }
 
+  def currentTokenIs(t: Int): Boolean = {
+    tokens(tokenPos.pos).getType == t
+  }
+
+  def outOfToken: Boolean = {
+    tokenPos.currentOrNext == TokenPosType.NEXT
+  }
+
+  // a [cursor]  then target is a
+  // a b[cursor] the target is also is a
+  def backOneStepIs(t: Int): Boolean = {
+    tokenPos.currentOrNext match {
+      case TokenPosType.NEXT =>
+        tokens(tokenPos.pos).getType == t
+      case TokenPosType.CURRENT =>
+        TokenMatcher(tokens, tokenPos.pos).back.eatOneAny.eat(Food(None, t)).isSuccess
+    }
+  }
+
+  // a b [cursor]  then target is a
+  // a b c[cursor] the target is also is a
+  def backTwoStepIs(t: Int): Boolean = {
+    tokenPos.currentOrNext match {
+      case TokenPosType.NEXT =>
+        TokenMatcher(tokens, tokenPos.pos).back.eatOneAny.eat(Food(None,t)).isSuccess
+      case TokenPosType.CURRENT =>
+        TokenMatcher(tokens, tokenPos.pos).back.eatOneAny.eatOneAny.eat(Food(None, t)).isSuccess
+    }
+  }
+
+  def aheadOneStepIs(t: Int): Boolean = {
+    TokenMatcher(tokens, tokenPos.pos).forward.eat(Food(None, t)).isSuccess
+  }
+
   def firstAhead(targetType: Int*): Option[Int] = {
     val targetFoods = targetType.map(Food(None, _)).toArray
     val matchingResult = TokenMatcher(tokens, tokenPos.pos)
