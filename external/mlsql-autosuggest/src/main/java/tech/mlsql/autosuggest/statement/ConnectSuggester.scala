@@ -2,8 +2,7 @@ package tech.mlsql.autosuggest.statement
 
 import org.antlr.v4.runtime.Token
 import streaming.dsl.parser.DSLSQLLexer
-import tech.mlsql.autosuggest.dsl.{Food, TokenMatcher}
-import tech.mlsql.autosuggest.{AutoSuggestContext, SpecialTableConst, TokenPos, TokenPosType}
+import tech.mlsql.autosuggest.{AutoSuggestContext, SpecialTableConst, TokenPos}
 
 import scala.collection.mutable
 
@@ -75,30 +74,10 @@ private class ConnectFormatSuggester(connectSuggester: ConnectSuggester) extends
    * connect [cursor]
    */
   override def isMatch(): Boolean = {
-
-    if (backAndFirstIs(DSLSQLLexer.OPTIONS) || backAndFirstIs(DSLSQLLexer.WHERE)) {
-      return false
-    }
-
-    if (tokenPos.currentOrNext == TokenPosType.CURRENT) {
-      return TokenMatcher(tokens, tokenPos.pos).back.eatOneAny.eat(Food(None, DSLSQLLexer.CONNECT)).isSuccess
-    }
-
-    if (tokenPos.currentOrNext == TokenPosType.NEXT) {
-      return TokenMatcher(tokens, tokenPos.pos).back.eat(Food(None, DSLSQLLexer.CONNECT)).isSuccess
-    }
-    return false
-
+    backOneStepIs(DSLSQLLexer.CONNECT)
   }
 
   override def suggest(): List[SuggestItem] = {
-    /**
-     * connect jdbc [cursor]
-     */
-    if (isOptionKeywordShouldPromp(Food(None, DSLSQLLexer.IDENTIFIER))) {
-      return LexerUtils.filterPrefixIfNeeded(getOptionsKeywords, tokens, tokenPos)
-    }
-
     val items = connectSuggester.formatMapping.map { item =>
       SuggestItem(item._1, SpecialTableConst.OPTION_TABLE, Map())
     }.toList
@@ -128,10 +107,15 @@ private class ConnectOptionsSuggester(connectSuggester: ConnectSuggester) extend
   register(classOf[ConnectUrlValueSuggester])
 
   override def isMatch(): Boolean = {
-    backAndFirstIs(DSLSQLLexer.OPTIONS) || backAndFirstIs(DSLSQLLexer.WHERE)
+    // connect jdbc where
+    (backOneStepIs(DSLSQLLexer.IDENTIFIER) && backTwoStepIs(DSLSQLLexer.CONNECT)) ||
+      (backAndFirstIs(DSLSQLLexer.OPTIONS) || backAndFirstIs(DSLSQLLexer.WHERE))
   }
 
   override def suggest(): List[SuggestItem] = {
+    if (backOneStepIs(DSLSQLLexer.IDENTIFIER) && backTwoStepIs(DSLSQLLexer.CONNECT)) {
+      return LexerUtils.filterPrefixIfNeeded(getOptionsKeywords, tokens, tokenPos)
+    }
     defaultSuggest(subSuggesters.toMap)
   }
 
