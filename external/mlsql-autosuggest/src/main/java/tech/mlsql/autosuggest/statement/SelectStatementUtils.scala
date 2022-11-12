@@ -203,7 +203,13 @@ trait SelectStatementUtils extends Logging {
     }
 
     def allOutput = {
-      MLSQLSQLFunction.funcMetaProvider.list(Map()).map(item => SuggestItem(item.key.table, item, Map()))
+      MLSQLSQLFunction.funcMetaProvider.list(Map()).map { item =>
+        val desc = item.columns.filter(_.name == MLSQLSQLFunction.DB_KEY).headOption match {
+          case Some(v) => v.extra.getOrElse("zhDoc", "")
+          case None => ""
+        }
+        SuggestItem(item.key.table, item, Map("desc" -> desc))
+      }
     }
 
     val tempStart = tokenPos.currentOrNext match {
