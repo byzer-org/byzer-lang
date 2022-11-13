@@ -5,13 +5,15 @@ import com.alibaba.druid.sql.SQLUtils
 import com.alibaba.druid.sql.visitor.SchemaStatVisitor
 import com.alibaba.druid.sql.repository.SchemaRepository
 import com.alibaba.druid.util.{JdbcConstants, JdbcUtils}
+import org.apache.spark.ml.param.Param
 import org.apache.spark.sql.catalyst.plans.logical.MLSQLDFParser
 import org.apache.spark.sql.execution.WowTableIdentifier
 import org.apache.spark.sql.mlsql.session.{MLSQLException, MLSQLSparkSession}
-import org.apache.spark.sql.{DataFrame, DataFrameReader, DataFrameWriter, Row}
+import org.apache.spark.sql.{DataFrame, DataFrameReader, DataFrameWriter, Row, SparkSession}
 import org.apache.spark.{MLSQLSparkConst, SparkCoreVersion}
 import streaming.core.datasource._
 import streaming.dsl.auth.{MLSQLTable, OperateType, TableType}
+import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
 import streaming.dsl.{ConnectMeta, DBMappingKey, ScriptSQLExec}
 import streaming.log.WowLog
 import tech.mlsql.Stage
@@ -25,8 +27,10 @@ import scala.collection.JavaConverters._
 /**
  * 2018-12-21 WilliamZhu(allwefantasy@gmail.com)
  */
-class MLSQLDirectJDBC extends MLSQLDirectSource with MLSQLDirectSink with MLSQLSourceInfo with MLSQLRegistry
-  with DatasourceAuth with Logging with WowLog {
+class MLSQLDirectJDBC(override val uid: String) extends MLSQLDirectSource with MLSQLDirectSink with MLSQLSourceInfo with MLSQLRegistry
+  with DatasourceAuth with WowParams  with Logging with WowLog {
+  def this() = this(BaseParams.randomUID())
+  final val directQuery: Param[String] = new Param[String](this, "directQuery", "")
 
   override def fullFormat: String = "jdbc"
 
@@ -145,6 +149,10 @@ class MLSQLDirectJDBC extends MLSQLDirectSource with MLSQLDirectSink with MLSQLS
     si
   }
 
+  override def explainParams(spark: SparkSession) = {
+    _explainParams(spark)
+  }
+
   // this function depends on druid, so we can
   // fix chinese tablename since in spark parser it's not supported
   //MLSQLAuthParser.filterTables(sql, context.execListener.sparkSession)
@@ -252,4 +260,5 @@ class MLSQLDirectJDBC extends MLSQLDirectSource with MLSQLDirectSink with MLSQLS
     }
     List()
   }
+
 }

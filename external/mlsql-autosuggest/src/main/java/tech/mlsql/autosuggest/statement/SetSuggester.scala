@@ -18,7 +18,6 @@
 package tech.mlsql.autosuggest.statement
 
 import org.antlr.v4.runtime.Token
-import org.apache.commons.lang3.StringUtils
 import streaming.dsl.parser.DSLSQLLexer
 import tech.mlsql.autosuggest.dsl.{Food, TokenMatcher}
 import tech.mlsql.autosuggest.{AutoSuggestContext, SpecialTableConst, TokenPos, TokenPosType}
@@ -62,7 +61,7 @@ class SetSuggester(val context: AutoSuggestContext, val _tokens: List[Token], va
         // The current pos is IDENTIFIER, and is the where prefix
         if ("where".startsWith(_tokens(pos).getText)) {
           items = List(SuggestItem("where ", SpecialTableConst.KEY_WORD_TABLE, Map()))
-        }else if( "options".startsWith(_tokens(pos).getText)){
+        } else if ("options".startsWith(_tokens(pos).getText)) {
           items = List(SuggestItem("options ", SpecialTableConst.KEY_WORD_TABLE, Map()))
         }
         items
@@ -85,8 +84,10 @@ class SetSuggester(val context: AutoSuggestContext, val _tokens: List[Token], va
           .build
 
         if (temp.isSuccess) {
-          items = List(SuggestItem("where ", SpecialTableConst.KEY_WORD_TABLE, Map()),
-            SuggestItem("options ", SpecialTableConst.KEY_WORD_TABLE, Map()))
+          items = List(
+            SuggestItem("where ", SpecialTableConst.KEY_WORD_TABLE, Map()),
+            SuggestItem("options ", SpecialTableConst.KEY_WORD_TABLE, Map())
+          )
         }
         items
 
@@ -110,6 +111,7 @@ private class SetOptionsSuggester(setSuggester: SetSuggester) extends SetSuggest
   val SET_OPTION_SUGGESTIONS = List(
     SuggestItem(SetOptionEnum.TYPE.toString, SpecialTableConst.OPTION_TABLE, Map.empty),
     SuggestItem(SetOptionEnum.MODE.toString, SpecialTableConst.OPTION_TABLE, Map.empty),
+    SuggestItem(SetOptionEnum.SCOPE.toString, SpecialTableConst.OPTION_TABLE, Map.empty),
     SuggestItem("and ", SpecialTableConst.KEY_WORD_TABLE, Map.empty)
   )
 
@@ -141,6 +143,7 @@ private object SetOptionEnum extends Enumeration {
   type SetOptionEnum = Value
   val TYPE: Value = Value("type")
   val MODE: Value = Value("mode")
+  val SCOPE: Value = Value("scope")
 
   def checkExists(optionValues: String): Boolean = this.values.exists(_.toString == optionValues)
 }
@@ -196,7 +199,10 @@ private class SetOptionValuesSuggester(setSuggester: SetSuggester) extends SetSu
     var suggestItems: List[SuggestItem] = List()
     if (tokens(startIndex - skipSize).getText == SetOptionEnum.TYPE.toString) {
       if (firstAhead(DSLSQLLexer.BACKQUOTED_IDENTIFIER).isDefined) {
-        suggestItems = List(SuggestItem("\"shell\"", SpecialTableConst.OPTION_TABLE, Map()))
+        suggestItems = List(
+          SuggestItem("\"sql\"", SpecialTableConst.OPTION_TABLE, Map()),
+          SuggestItem("\"shell\"", SpecialTableConst.OPTION_TABLE, Map())
+        )
       } else {
         suggestItems = List(
           SuggestItem("\"text\"", SpecialTableConst.OPTION_TABLE, Map()),
@@ -211,7 +217,13 @@ private class SetOptionValuesSuggester(setSuggester: SetSuggester) extends SetSu
         SuggestItem("\"runtime\"", SpecialTableConst.OPTION_TABLE, Map()),
         SuggestItem("\"compile\"", SpecialTableConst.OPTION_TABLE, Map())
       )
-    } else {
+    } else if (tokens(startIndex - skipSize).getText == SetOptionEnum.SCOPE.toString) {
+      suggestItems = List(
+        SuggestItem("\"request\"", SpecialTableConst.OPTION_TABLE, Map()),
+        SuggestItem("\"session\"", SpecialTableConst.OPTION_TABLE, Map())
+      )
+    }
+    else {
       //  corner case, shouldn't happen
       return suggestItems
     }

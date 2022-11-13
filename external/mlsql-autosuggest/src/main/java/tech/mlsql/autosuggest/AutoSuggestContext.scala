@@ -18,6 +18,7 @@ object AutoSuggestContext {
   private[this] val autoSuggestContext: ThreadLocal[AutoSuggestContext] = new ThreadLocal[AutoSuggestContext]
 
   def context(): AutoSuggestContext = autoSuggestContext.get
+
   def setContext(ec: AutoSuggestContext): Unit = autoSuggestContext.set(ec)
 
   val memoryMetaProvider = new MemoryMetaProvider()
@@ -52,6 +53,7 @@ class AutoSuggestContext(val session: SparkSession,
   private var _rawTokens: List[Token] = List()
   private var _statements = List[List[Token]]()
   private val _tempTableProvider: StatementTempTableProvider = new StatementTempTableProvider()
+  private val _runtimeTableProvider: RuntimeMetaProvider = new RuntimeMetaProvider()
   private val _modelProvider: ModelProvider = new ModelProvider()
   private var _rawLineNum = 0
   private var _rawColumnNum = 0
@@ -60,7 +62,7 @@ class AutoSuggestContext(val session: SparkSession,
 
     override def list(extra: Map[String, String] = Map()): List[MetaTable] = List()
   }
-  private var _metaProvider: MetaProvider = new LayeredMetaProvider(tempTableProvider, userDefinedProvider)
+  private var _metaProvider: MetaProvider = new LayeredMetaProvider(tempTableProvider, _runtimeTableProvider, userDefinedProvider)
 
   private val _statementProcessors = ArrayBuffer[PreProcessStatement]()
   addStatementProcessor(new TablePreprocessor(this))
@@ -72,7 +74,7 @@ class AutoSuggestContext(val session: SparkSession,
   }
 
   def isSchemaInferEnabled = {
-    !options.getOrElse("schemaInferUrl","").isEmpty && session != null
+    !options.getOrElse("schemaInferUrl", "").isEmpty && session != null
   }
 
   def isInDebugMode = _debugMode
@@ -84,7 +86,7 @@ class AutoSuggestContext(val session: SparkSession,
   }
 
   def reqParams = {
-    JSONTool.parseJson[Map[String,String]](AutoSuggestContext.context().options("params"))
+    JSONTool.parseJson[Map[String, String]](AutoSuggestContext.context().options("params"))
   }
 
   def rawTokens = _rawTokens
@@ -104,7 +106,7 @@ class AutoSuggestContext(val session: SparkSession,
 
   def setUserDefinedMetaProvider(_metaProvider: MetaProvider) = {
     userDefinedProvider = _metaProvider
-    this._metaProvider = new LayeredMetaProvider(tempTableProvider, userDefinedProvider)
+    this._metaProvider = new LayeredMetaProvider(tempTableProvider, _runtimeTableProvider, userDefinedProvider)
     this
   }
 
@@ -167,7 +169,7 @@ class AutoSuggestContext(val session: SparkSession,
   private[autosuggest] def _suggest(tokenPos: TokenPos): List[SuggestItem] = {
     assert(_rawColumnNum != 0 || _rawLineNum != 0, "lineNum and columnNum should be set")
     if (isInDebugMode) {
-      logInfo("Global Pos::" + tokenPos.str + s"::${if(tokenPos.pos == -1) null else rawTokens(tokenPos.pos)}")
+      logInfo("Global Pos::" + tokenPos.str + s"::${if (tokenPos.pos == -1) null else rawTokens(tokenPos.pos)}")
     }
     if (tokenPos.pos == -1) {
       return firstWords
@@ -204,11 +206,14 @@ class AutoSuggestContext(val session: SparkSession,
       case Some("set") =>
         val suggester = new SetSuggester(this, _statements(index), relativeTokenPos)
         suggester.suggest()
-      case Some("run") | Some("train")| Some("predict") =>
+      case Some("run") | Some("train") | Some("predict") =>
         val suggester = new TrainSuggester(this, _statements(index), relativeTokenPos)
         suggester.suggest()
       case Some("register") =>
         val suggester = new RegisterSuggester(this, _statements(index), relativeTokenPos)
+        suggester.suggest()
+      case Some("connect") =>
+        val suggester = new ConnectSuggester(this, _statements(index), relativeTokenPos)
         suggester.suggest()
       case Some(value) => firstWords.filter(_.name.startsWith(value))
       case None => firstWords
@@ -216,7 +221,7 @@ class AutoSuggestContext(val session: SparkSession,
     items.distinct
   }
 
-  private val firstWords = List("load", "select", "include", "register", "run", "train", "predict", "save", "set").map(SuggestItem(_, SpecialTableConst.KEY_WORD_TABLE, Map())).toList
+  private val firstWords = List("load", "select", "include", "register", "run", "train", "predict", "save", "set", "connect").map(SuggestItem(_, SpecialTableConst.KEY_WORD_TABLE, Map())).toList
 }
 
 class UpperCaseCharStream(wrapped: CodePointCharStream) extends CharStream {

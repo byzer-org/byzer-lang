@@ -19,8 +19,8 @@ package tech.mlsql.autosuggest.statement
 
 import org.antlr.v4.runtime.Token
 import streaming.dsl.parser.DSLSQLLexer
-import tech.mlsql.autosuggest.{TokenPos, TokenPosType}
 import tech.mlsql.autosuggest.dsl.{DSLWrapper, Food, TokenMatcher}
+import tech.mlsql.autosuggest.{SpecialTableConst, TokenPos, TokenPosType}
 
 /**
  * 9/6/2020 WilliamZhu(allwefantasy@gmail.com)
@@ -35,6 +35,7 @@ trait StatementUtils {
     List(DSLSQLLexer.OPTIONS, DSLSQLLexer.WHERE, DSLSQLLexer.AS)
   }
 
+
   def backAndFirstIs(t: Int, keywords: List[Int] = SPLIT_KEY_WORDS): Boolean = {
     // 从光标位置去找第一个核心词
     val temp = TokenMatcher(tokens, tokenPos.pos).back.orIndex(keywords.map(Food(None, _)).toArray)
@@ -42,6 +43,40 @@ trait StatementUtils {
     //第一个核心词必须是指定的词
     if (tokens(temp).getType == t) return true
     return false
+  }
+
+  def currentTokenIs(t: Int): Boolean = {
+    tokens(tokenPos.pos).getType == t
+  }
+
+  def outOfToken: Boolean = {
+    tokenPos.currentOrNext == TokenPosType.NEXT
+  }
+
+  // a [cursor]  then target is a
+  // a b[cursor] the target is also is a
+  def backOneStepIs(t: Int): Boolean = {
+    tokenPos.currentOrNext match {
+      case TokenPosType.NEXT =>
+        tokens(tokenPos.pos).getType == t
+      case TokenPosType.CURRENT =>
+        TokenMatcher(tokens, tokenPos.pos).back.eatOneAny.eat(Food(None, t)).isSuccess
+    }
+  }
+
+  // a b [cursor]  then target is a
+  // a b c[cursor] the target is also is a
+  def backTwoStepIs(t: Int): Boolean = {
+    tokenPos.currentOrNext match {
+      case TokenPosType.NEXT =>
+        TokenMatcher(tokens, tokenPos.pos).back.eatOneAny.eat(Food(None,t)).isSuccess
+      case TokenPosType.CURRENT =>
+        TokenMatcher(tokens, tokenPos.pos).back.eatOneAny.eatOneAny.eat(Food(None, t)).isSuccess
+    }
+  }
+
+  def aheadOneStepIs(t: Int): Boolean = {
+    TokenMatcher(tokens, tokenPos.pos).forward.eat(Food(None, t)).isSuccess
   }
 
   def firstAhead(targetType: Int*): Option[Int] = {
@@ -60,6 +95,96 @@ trait StatementUtils {
     TokenMatcher(tokens, tokenPos.pos).back.orIndex(List(Food(None, DSLSQLLexer.WHERE),
       Food(None, DSLSQLLexer.OPTIONS)).toArray)
   }
+
+  // where key[cursor]
+  // where key="" and key[cursor]
+  // where `key[cursor]
+  def isOptionKey = {
+    tokenPos.currentOrNext match {
+      case TokenPosType.CURRENT =>
+        TokenMatcher(tokens, tokenPos.pos).back.eatOneAny.eat(Food(None, DSLWrapper.AND)).isSuccess ||
+          TokenMatcher(tokens, tokenPos.pos).back.eatOneAny.eat(Food(None, DSLSQLLexer.WHERE)).isSuccess ||
+          TokenMatcher(tokens, tokenPos.pos).back.eatOneAny.eat(Food(None, DSLSQLLexer.OPTIONS)).isSuccess ||
+          TokenMatcher(tokens, tokenPos.pos).back.eatOneAny.eat(Food(Some("`"), DSLSQLLexer.UNRECOGNIZED)).isSuccess
+      case TokenPosType.NEXT =>
+        TokenMatcher(tokens, tokenPos.pos).back.eat(Food(None, DSLWrapper.AND)).isSuccess ||
+          TokenMatcher(tokens, tokenPos.pos).back.eat(Food(None, DSLSQLLexer.WHERE)).isSuccess ||
+          TokenMatcher(tokens, tokenPos.pos).back.eat(Food(None, DSLSQLLexer.OPTIONS)).isSuccess ||
+          TokenMatcher(tokens, tokenPos.pos).back.eat(Food(Some("`"), DSLSQLLexer.UNRECOGNIZED)).isSuccess
+
+    }
+
+  }
+
+  def isQuoteShouldPromb: Boolean = {
+    isOptionValue && !isInQuote
+  }
+
+  def getQuotes = {
+    List(
+      SuggestItem("\"\"", SpecialTableConst.OPTION_TABLE, Map("desc" -> "")),
+      SuggestItem("''''''", SpecialTableConst.OPTION_TABLE, Map("desc" -> ""))
+    )
+  }
+
+  def getOptionsKeywords = {
+    List(
+      SuggestItem("where", SpecialTableConst.OPTION_TABLE, Map()),
+      SuggestItem("options", SpecialTableConst.OPTION_TABLE, Map())
+    )
+  }
+
+  def isOptionKeywordShouldPromp(food: Food*): Boolean = {
+    if (backAndFirstIs(DSLSQLLexer.OPTIONS) || backAndFirstIs(DSLSQLLexer.WHERE)) {
+      return false
+    }
+    val promp = tokenPos.currentOrNext match {
+      // load jdbc.`` w[cursor]
+      case TokenPosType.CURRENT =>
+        TokenMatcher(tokens, tokenPos.pos).back.eatOneAny.eat(food: _*).isSuccess
+      // load jdbc.`` [cursor]
+      case TokenPosType.NEXT =>
+        TokenMatcher(tokens, tokenPos.pos).back.eat(food: _*).isSuccess
+    }
+    promp
+  }
+
+  // where key=[cursor]
+  // where key="" and key1=[cursor]
+  // where `key`=[cursor]
+  def isOptionValue = {
+    tokenPos.currentOrNext match {
+      case TokenPosType.CURRENT =>
+        TokenMatcher(tokens, tokenPos.pos).back.eat(Food(None, DSLWrapper.EQUAL)).isSuccess ||
+          TokenMatcher(tokens, tokenPos.pos).back.eatOneAny.eat(Food(None, DSLWrapper.EQUAL)).isSuccess
+      case TokenPosType.NEXT =>
+        TokenMatcher(tokens, tokenPos.pos).back.eat(Food(None, DSLWrapper.EQUAL)).isSuccess
+    }
+  }
+
+  // where key="" and key1="[cursor]"
+  def isOptionKeyEqual(name: String): Boolean = {
+    if (isOptionValue) {
+      if (isInQuote) {
+        return tokens(tokenPos.pos - 2).getText == name
+      } else {
+        return tokens(tokenPos.pos - 1).getText == name
+      }
+    }
+    return false
+
+  }
+
+  def isInQuote = {
+    tokenPos.currentOrNext match {
+      case TokenPosType.CURRENT =>
+        TokenMatcher(tokens, tokenPos.pos).back.eat(Food(None, DSLSQLLexer.STRING)).isSuccess ||
+          TokenMatcher(tokens, tokenPos.pos).back.eat(Food(None, DSLSQLLexer.BLOCK_STRING)).isSuccess
+      case TokenPosType.NEXT =>
+        TokenMatcher(tokens, tokenPos.pos).back.eat(Food(None, DSLWrapper.EQUAL)).isSuccess
+    }
+  }
+
 
 }
 

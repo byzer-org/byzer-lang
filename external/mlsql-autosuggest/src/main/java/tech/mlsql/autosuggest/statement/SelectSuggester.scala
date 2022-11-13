@@ -3,7 +3,7 @@ package tech.mlsql.autosuggest.statement
 import org.antlr.v4.runtime.Token
 import org.apache.spark.sql.catalyst.parser.SqlBaseLexer
 import streaming.dsl.parser.DSLSQLLexer
-import tech.mlsql.autosuggest.dsl.{Food, TokenMatcher, TokenTypeWrapper}
+import tech.mlsql.autosuggest.dsl.{Food, TokenMatcher}
 import tech.mlsql.autosuggest.meta.{MetaTable, MetaTableColumn, MetaTableKey}
 import tech.mlsql.autosuggest.{AutoSuggestContext, SpecialTableConst, TokenPos}
 
@@ -146,7 +146,7 @@ class ProjectSuggester(_selectSuggester: SelectSuggester) extends StatementSugge
   }
 
   override def suggest(): List[SuggestItem] = {
-    LexerUtils.filterPrefixIfNeeded(tableSuggest() ++ attributeSuggest() ++ functionSuggest(), tokens, tokenPos)
+    sqlTemplates ++ LexerUtils.filterPrefixIfNeeded(tableSuggest() ++ attributeSuggest() ++ functionSuggest(), tokens, tokenPos)
   }
 
   override def register(clzz: Class[_ <: StatementSuggester]): SuggesterRegister = ???
@@ -189,7 +189,7 @@ class JoinSuggester(_selectSuggester: SelectSuggester) extends ProjectSuggester(
   }
 
   override def suggest(): List[SuggestItem] = {
-    LexerUtils.filterPrefixIfNeeded(tableSuggest(), tokens, tokenPos)
+    getAllTables
   }
 }
 
@@ -201,21 +201,7 @@ class FromSuggester(_selectSuggester: SelectSuggester) extends ProjectSuggester(
   }
 
   override def suggest(): List[SuggestItem] = {
-
-    val tokenPrefix = LexerUtils.tableTokenPrefix(tokens, tokenPos)
-    val owner = AutoSuggestContext.context().reqParams.getOrElse("owner", "")
-    val extraParam = Map("searchPrefix" -> tokenPrefix, "owner" -> owner)
-
-    val allTables = _selectSuggester.context.metaProvider.list(extraParam).map { item =>
-      val prefix = (item.key.prefix, item.key.db) match {
-        case (Some(prefix), Some(db)) => prefix
-        case (Some(prefix), None) => prefix
-        case (None, Some(SpecialTableConst.TEMP_TABLE_DB_KEY)) => "temp table"
-        case (None, Some(db)) => db
-      }
-      SuggestItem(item.key.table, item, Map("desc" -> prefix))
-    }
-    LexerUtils.filterPrefixIfNeeded(tableSuggest() ++ allTables, tokens, tokenPos)
+    getAllTables
   }
 }
 
@@ -230,6 +216,8 @@ class OrderSuggester(_selectSuggester: SelectSuggester) extends ProjectSuggester
     LexerUtils.filterPrefixIfNeeded(attributeSuggest() ++ functionSuggest(), tokens, tokenPos)
   }
 }
+
+
 
 
 

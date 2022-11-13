@@ -75,14 +75,23 @@ class MLSQLFuncParam(_func: MLSQLSQLFunction) {
 }
 
 class FuncMetaProvider extends MetaProvider {
+  private def buildInFuncs = {
+    AutoSuggestContext.context().session.catalog.listFunctions().collect().toList.map { item =>
+      val funcMeta = MLSQLSQLFunction.apply(item.name).desc(Map(
+        "zhDoc" -> item.description
+      )).build
+      (funcMeta.key, funcMeta)
+    }.toMap
+  }
+
   private val funcs = scala.collection.mutable.HashMap[MetaTableKey, MetaTable]()
 
   override def search(key: MetaTableKey, extra: Map[String, String] = Map()): Option[MetaTable] = {
-    funcs.get(key)
+    (buildInFuncs ++ funcs).get(key)
   }
 
   override def list(extra: Map[String, String] = Map()): List[MetaTable] = {
-    funcs.map(_._2).toList
+    (buildInFuncs ++ funcs).map(_._2).toList
   }
 
   def register(func: MetaTable) = {

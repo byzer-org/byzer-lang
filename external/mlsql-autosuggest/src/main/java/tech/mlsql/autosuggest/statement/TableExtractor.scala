@@ -27,7 +27,7 @@ class TableExtractor(autoSuggestContext: AutoSuggestContext, ast: SingleStatemen
     val dbTable = dbTableTokens.length match {
       case 2 =>
         val List(tableToken, aliasToken) = dbTableTokens
-        if(aliasToken.getText.toLowerCase() == "as"){
+        if(aliasToken.getText.toLowerCase() != "as"){
           MetaTableKeyWrapper(MetaTableKey(None, None, tableToken.getText), Option(aliasToken.getText))
         }else {
           MetaTableKeyWrapper(MetaTableKey(None, None, tableToken.getText), None)
