@@ -83,10 +83,13 @@ object MLSQLMultiBucket {
     val (objectStoreConf, _) = config.partition(item => item._1.startsWith("spark.hadoop") || item._1.startsWith("fs."))
 
     objectStoreConf.map { item =>
-      if (item._1.startsWith("fs.")) {
-        ("spark.hadoop." + item._1, item._2)
+      if (item._1.startsWith("spark.hadoop")) {
+        (item._1.replaceAll("spark.hadoop.", ""), item._2)
       } else item
-    }.foreach(item => session.conf.set(item._1, item._2))
+    }.foreach { item =>
+      session.sparkContext.hadoopConfiguration.set(item._1, item._2)
+    }
+
     // To load azure blob data, spark.hadoop prefix should be removed. Because NativeAzureFileSystem - azure blob's HDFS
     // compatible API, looks up Azure blob credentials by fs.azure.account.key.<account>.blob.core.chinacloudapi.cn.
     objectStoreConf.filter(_._1.startsWith("spark.hadoop.fs.azure")).foreach { conf =>
