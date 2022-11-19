@@ -144,7 +144,9 @@ object UpsertUtils extends Logging {
           rowCount += 1
           if (rowCount % batchSize == 0) {
             stmt.executeBatch()
-            conn.commit()
+            if (supportsTransactions) {
+              conn.commit()
+            }
             rowCount = 0
           }
         }
