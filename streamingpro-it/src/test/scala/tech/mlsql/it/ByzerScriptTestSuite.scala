@@ -167,7 +167,7 @@ class ByzerScriptTestSuite extends LocalBaseTestSuite with Logging {
     }
 
   } else {
-    logInfo(s"Can not support current version:$version, skip it.")
+    logInfo(s"Can not support current version:$version,  skip it.")
   }
 
 }

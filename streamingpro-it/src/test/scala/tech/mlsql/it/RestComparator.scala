@@ -131,7 +131,10 @@ class RestComparator extends Comparator {
       val actualRow = resultSeq(i)
       val expectedRow = expected(i)
       if (actualRow.length != expectedRow.length) {
-        return (false, msg)
+        // Compare empty lines separately
+        if (!(actualRow.isEmpty && expectedRow.length == 1 && expectedRow.head.isEmpty)) {
+          return (false, msg)
+        }
       }
       for (j <- actualRow.indices) {
         val actualVal = actualRow(j)
