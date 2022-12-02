@@ -6,7 +6,6 @@ import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
 import streaming.dsl.{ConnectMeta, DBMappingKey}
 import tech.mlsql.dsl.adaptor.DslTool
 
-import java.net.URI
 import scala.collection.mutable
 
 /**
@@ -28,10 +27,10 @@ class CustomFS(override val uid: String) extends MLSQLSource
     val realLoad = !config.path.isEmpty
 
     if (realLoad) {
-      val schema = URI.create(config.path).getScheme
-      require(schema != null, "path should be with schema specified")
-
-      ConnectMeta.presentThenCall(DBMappingKey("FS", schema), kvs => {
+      require(!config.path.startsWith("/") && !config.path.startsWith(".."), "path should be with schema specified")
+      val schema = extractSchema(config.path)
+      require(schema.isDefined, "path should be with schema specified")
+      ConnectMeta.presentThenCall(DBMappingKey("FS", schema.get), kvs => {
         kvs.filter(_._1 != "format").foreach(kv => extraObjectStoreConf.put(kv._1, kv._2))
       })
     }
@@ -62,14 +61,14 @@ class CustomFS(override val uid: String) extends MLSQLSource
   }
 
   override def save(writer: DataFrameWriter[Row], config: DataSinkConfig): Any = {
-    val schema = URI.create(config.path).getScheme
-    require(URI.create(config.path).getScheme != null, "path should be with schema specified")
+    val schema = extractSchema(config.path)
+    require(schema.isDefined, "path should be with schema specified")
 
     val session = config.df.get.sparkSession
 
     val extraObjectStoreConf = mutable.HashMap[String, String]()
 
-    ConnectMeta.presentThenCall(DBMappingKey("FS", schema), kvs => {
+    ConnectMeta.presentThenCall(DBMappingKey("FS", schema.get), kvs => {
       kvs.filter(_._1 != "format").foreach(kv => extraObjectStoreConf.put(kv._1, kv._2))
     })
 

@@ -53,7 +53,7 @@ object ByzerCluster extends Logging {
   def forSpec(dataDirPath: String): ByzerCluster = {
     beforeAll()
     lazy val hadoopContainer: HadoopContainer = new HadoopContainer(clusterName).configure { c =>
-      c.addExposedPorts(9870, 8088, 19888, 10002, 8042)
+      c.addExposedPorts(9870, 8088, 19888, 10002, 8042, 8020, 9866)
       c.withNetwork(network)
       c.withNetworkAliases(ByzerCluster.appendClusterName(networkAliases))
       c.setWaitStrategy(new HttpWaitStrategy()
