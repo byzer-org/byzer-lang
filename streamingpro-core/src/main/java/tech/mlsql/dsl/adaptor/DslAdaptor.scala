@@ -19,11 +19,12 @@
 package tech.mlsql.dsl.adaptor
 
 import org.antlr.v4.runtime.misc.Interval
+import org.apache.commons.lang3.StringUtils
 import streaming.dsl._
 import streaming.dsl.parser.DSLSQLLexer
 import streaming.dsl.parser.DSLSQLParser.{ExpressionContext, SqlContext}
 
-import java.net.URI
+import java.net.{URI, URL}
 
 /**
  * Created by allwefantasy on 27/8/2017.
@@ -70,29 +71,28 @@ trait DslTool {
 
   def withPathPrefix(prefix: String, path: String): String = {
     var filePathSchemas = Array[String]()
-
     if (ScriptSQLExec.context() != null) {
       val session = ScriptSQLExec.context().execListener.sparkSession
       filePathSchemas = session.conf.get("spark.mlsql.path.schemas", "").
         split(",").map(_.trim).filterNot(_.isEmpty)
     }
 
-    val currentSchema = new URI(path).getScheme
-    if (filePathSchemas.contains(currentSchema)) {
-      return path
-    }
-
     val newPath = cleanStr(path)
     if (prefix.isEmpty) return newPath
 
-    if (path.contains("..")) {
+    if (newPath.contains("..")) {
       throw new RuntimeException("path should not contains ..")
     }
-    if (path.startsWith("/")) {
-      return prefix + path.substring(1, path.length)
-    }
-    return prefix + newPath
 
+    if (newPath.startsWith("/")) {
+      return prefix + newPath.substring(1, newPath.length)
+    }
+
+    val currentSchema = extractSchema(path)
+    if (currentSchema.isDefined && filePathSchemas.contains(currentSchema.get)) {
+      return path
+    }
+    prefix + newPath
   }
 
   def withPathPrefix(context: MLSQLExecuteContext, path: String): String = {
@@ -110,6 +110,37 @@ trait DslTool {
       (cleanedStr, cleanedStr)
     }
 
+  }
+
+  def extractSchema(path: String): Option[String] = {
+
+    if (StringUtils.isBlank(path)){
+      return None
+    }
+
+    if (path.toLowerCase.startsWith("file:/")) {
+      return Some("file")
+    }
+
+    var c = 0
+    val l = path.length
+    var index = -1
+
+    while (c < l && index == -1) {
+      if (path(c) == ':' && (
+        (c + 1 < l
+          && path(c + 1) == '/'
+          && c + 2 < l && path(c + 2) == '/') ||
+          (c + 1 < l
+            && path(c + 1) == '\\'
+            && c + 2 < l && path(c + 2) == '\\')
+        )) {
+        index = c
+      }
+      c += 1
+    }
+    if (index != -1) Some(path.substring(0, index))
+    else None
   }
 
   /**
