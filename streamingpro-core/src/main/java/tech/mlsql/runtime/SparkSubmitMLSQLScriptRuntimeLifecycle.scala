@@ -29,12 +29,7 @@ class SparkSubmitMLSQLScriptRuntimeLifecycle extends MLSQLPlatformLifecycle with
     JobManager.init(rootSparkSession)
     try {
       val sql = new StringBuffer()
-      if (mlsql_path.startsWith("file://")) {
-        val file = Source.fromFile(mlsql_path)
-        for (line <- file.getLines()) {
-          sql.append(line).append("\n")
-        }
-      } else if (mlsql_path.startsWith("http://")) {
+      if (mlsql_path.startsWith("http") || mlsql_path.startsWith("file")) {
         val file = Source.fromURL(mlsql_path)
         for (line <- file.getLines()) {
           sql.append(line).append("\n")
