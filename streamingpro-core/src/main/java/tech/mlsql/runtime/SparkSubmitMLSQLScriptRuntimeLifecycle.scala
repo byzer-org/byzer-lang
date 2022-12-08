@@ -22,6 +22,11 @@ class SparkSubmitMLSQLScriptRuntimeLifecycle extends MLSQLPlatformLifecycle with
   override def afterDispatcher(runtime: StreamingRuntime, params: Map[String, String]): Unit = {
     val rootSparkSession = runtime.asInstanceOf[SparkRuntime].sparkSession
     val mlsql_path = params.getOrElse("streaming.mlsql.script.path", "")
+
+    val extraQueryParams = params.filter { case (k, _) => k.startsWith("streaming.mlsql.script.query") }.map { case (k, v) =>
+      (k.stripPrefix("streaming.mlsql.script.query."), v)
+    }.toMap
+
     if (StringUtils.isEmpty(mlsql_path)) {
       logWarning(s"The value of parameter 'streaming.mlsql.script.path' is empty.")
       return
@@ -49,7 +54,7 @@ class SparkSubmitMLSQLScriptRuntimeLifecycle extends MLSQLPlatformLifecycle with
       }
 
       val executor = new RunScriptExecutor(
-        params ++ Map("sql" -> sql.toString,
+        params ++ extraQueryParams ++ Map("sql" -> sql.toString,
           "outputSize" -> "200",
           "fetchType" -> "take",
           "owner" -> params.getOrElse("streaming.mlsql.script.owner", "admin"),
