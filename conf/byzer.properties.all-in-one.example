@@ -1,6 +1,7 @@
 # override example for all-in-one package
 
 byzer.server.mode=all-in-one
+byzer.server.extraJavaOptions=-Xmx4g -Xms512m -Xloggc:/tmp/byzer-gc-%p.log -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=10 -XX:GCLogFileSize=200M -XX:+PrintGCDateStamps -XX:+PrintGCDetails -XX:+PrintClassHistogramBeforeFullGC -XX:+PrintClassHistogramAfterFullGC -XX:+PrintGCApplicationStoppedTime
 
 streaming.master=local[*]
 streaming.name=Byzer-lang-desktop

@@ -135,8 +135,10 @@ function start(){
         echo "[All Config]"
         echo "${ALL_PROP}"
         echo ""
-        
-        nohup $JAVA -cp ${BYZER_HOME}/main/${MAIN_JAR}:${BYZER_HOME}/spark/*:${BYZER_HOME}/libs/*:${BYZER_HOME}/plugin/* \
+        java_options=$($BYZER_HOME/bin/get-properties.sh byzer.server.extraJavaOptions)
+
+        nohup $JAVA ${java_options} \
+            -cp ${BYZER_HOME}/main/${MAIN_JAR}:${BYZER_HOME}/spark/*:${BYZER_HOME}/libs/*:${BYZER_HOME}/plugin/* \
             tech.mlsql.example.app.LocalSparkServiceApp \
             $ALL_PROP >> ${BYZER_HOME}/logs/byzer.out &
         echo $! >> ${BYZER_HOME}/pid
@@ -152,13 +154,13 @@ function start(){
         echo "[Extra Config]"
         echo "${EXT_JARS}"
         echo ""
-
+        driver_java_options=$($BYZER_HOME/bin/get-properties.sh spark.driver.extraJavaOptions)
         nohup $SPARK_HOME/bin/spark-submit --class streaming.core.StreamingApp \
             --jars ${JARS} \
             --conf "spark.driver.extraClassPath=${EXT_JARS}" \
             --conf "spark.executor.extraClassPath=${EXT_JARS}" \
-            --driver-java-options "-Dlog4j.configurationFile=${BYZER_LOG_PATH}" \
             $SPARK_PROP \
+            --conf "spark.driver.extraJavaOptions=-Dlog4j2.configurationFile=${BYZER_LOG_PATH} ${driver_java_options}" \
             $MAIN_JAR_PATH  \
             $BYZER_PROP >> ${BYZER_HOME}/logs/byzer.out & 
         echo $! >> ${BYZER_HOME}/pid
