@@ -17,14 +17,14 @@
 # limitations under the License.
 #
 
-if [ $# != 1 ]
-then
-    if [[ $# -lt 2 || $2 != 'DEC' ]]
-        then
-            echo 'invalid input'
-            exit 1
-    fi
-fi
+#if [ $# != 1 ]
+#then
+#    if [[ $# -lt 2 || $2 != 'DEC' ]]
+#        then
+#            echo 'invalid input'
+#            exit 1
+#    fi
+#fi
 
 if [ -z $BYZER_HOME ];then
     export BYZER_HOME=$(cd -P -- "$(dirname -- "$0")"/../ && pwd -P)
@@ -35,6 +35,7 @@ export SPARK_HOME=$BYZER_HOME/spark
 byzer_tools_log4j="${BYZER_HOME}/conf/byzer-tools-log4j2.properties"
 
 mkdir -p ${BYZER_HOME}/logs
-result=$(${JAVA} -Dlog4j.configurationFile=$byzer_tools_log4j -cp "${BYZER_HOME}/main/*" tech.mlsql.tool.ByzerConfigCLI $@ 2>>${BYZER_HOME}/logs/shell.stderr)
+
+result=$(${JAVA} -Dlog4j2.configurationFile=$byzer_tools_log4j -cp "${BYZER_HOME}/main/*" tech.mlsql.tool.ByzerConfigCLI $@ 2>>${BYZER_HOME}/logs/shell.stderr)
 
 echo "$result"
