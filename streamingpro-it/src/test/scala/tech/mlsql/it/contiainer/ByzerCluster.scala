@@ -80,6 +80,10 @@ object ByzerCluster extends Logging {
         .withStartupTimeout(Duration.of(3000, SECONDS)))
       c.withFileSystemBind(DockerUtils.getLibPath + DockerUtils.getJarName,
         "/home/deploy/byzer-lang/main/" + DockerUtils.getJarName, BindMode.READ_WRITE)
+      c.withFileSystemBind(DockerUtils.getCurProjectRootPath + "src/test/resources/byzer.properties",
+        "/home/deploy/byzer-lang/conf/byzer.properties", BindMode.READ_WRITE)
+      c.withFileSystemBind(DockerUtils.getCurProjectRootPath + "src/test/resources/byzer.properties.override",
+        "/home/deploy/byzer-lang/conf/byzer.properties.override", BindMode.READ_WRITE)
       c.dependsOn(hadoopContainer)
       c.withStartupAttempts(3)
       val memoryInBytes = 16 * 1024 * 1024 * 1024

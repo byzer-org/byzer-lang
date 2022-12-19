@@ -1,0 +1,5 @@
+spark.master=yarn
+streaming.name=byzer-on-yarn
+streaming.rest=true
+streaming.platform=spark
+streaming.spark.service=true
