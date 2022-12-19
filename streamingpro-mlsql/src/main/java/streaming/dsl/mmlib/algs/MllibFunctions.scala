@@ -20,10 +20,12 @@ package streaming.dsl.mmlib.algs
 
 import java.io.File
 
+import org.apache.hadoop.conf.Configuration
 import org.apache.spark.sql.mlsql.session.MLSQLException
 import org.apache.spark.sql.types.{MapType, StringType, StructField, StructType}
 import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession, functions => F}
 import org.joda.time.DateTime
+
 import streaming.log.WowLog
 import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.common.utils.path.PathFun
@@ -215,6 +217,22 @@ trait MllibFunctions extends BaseAlg with Logging with WowLog with Serializable 
       mode(SaveMode.Overwrite).
       parquet(metaPath + "/1")
   }
+
+  def rewriteHadoopConfiguration(hadoopConfiguration: Configuration, config: Map[String, String]): Unit = {
+    config.filter(item => item._1.startsWith("spark.hadoop") || item._1.startsWith("fs."))
+      .foreach { item =>
+        if (item._1.endsWith("fs.defaultFS")) {
+          throw new RuntimeException("fs.defaultFS is not allowed to be modified at runtime! " +
+            "Avoid causing the file system used by the system to be altered.")
+        }
+        if (item._1.startsWith("spark.hadoop")) {
+          hadoopConfiguration.set(item._1.replaceAll("spark.hadoop.", ""), item._2)
+        } else {
+          hadoopConfiguration.set(item._1, item._2)
+        }
+      }
+  }
+
 }
 
 case class MetricValue(name: String, value: Double)
