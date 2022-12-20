@@ -218,21 +218,6 @@ trait MllibFunctions extends BaseAlg with Logging with WowLog with Serializable 
       parquet(metaPath + "/1")
   }
 
-  def rewriteHadoopConfiguration(hadoopConfiguration: Configuration, config: Map[String, String]): Unit = {
-    config.filter(item => item._1.startsWith("spark.hadoop") || item._1.startsWith("fs."))
-      .foreach { item =>
-        if (item._1.endsWith("fs.defaultFS")) {
-          throw new RuntimeException("fs.defaultFS is not allowed to be modified at runtime! " +
-            "Avoid causing the file system used by the system to be altered.")
-        }
-        if (item._1.startsWith("spark.hadoop")) {
-          hadoopConfiguration.set(item._1.replaceAll("spark.hadoop.", ""), item._2)
-        } else {
-          hadoopConfiguration.set(item._1, item._2)
-        }
-      }
-  }
-
 }
 
 case class MetricValue(name: String, value: Double)
