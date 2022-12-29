@@ -1,12 +1,11 @@
 package tech.mlsql.datasource.impl
 
-import org.apache.spark.SparkEnv
 import org.apache.spark.sql.{DataFrame, DataFrameReader, DataFrameWriter, Row}
-
 import streaming.core.datasource._
 import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
 import streaming.dsl.{ConnectMeta, DBMappingKey}
 import tech.mlsql.dsl.adaptor.DslTool
+
 import scala.collection.mutable
 
 /**
@@ -54,10 +53,6 @@ class CustomFS(override val uid: String) extends MLSQLSource
 
     if (realLoad) {
       val format = config.config.getOrElse("implClass", fullFormat)
-      if (loadFileConf.contains("user") || objectStoreConf.contains("spark.hadoop.user")) {
-        SparkEnv.get.conf.setExecutorEnv("HADOOP_USER_NAME", config.config.getOrElse("user",
-          objectStoreConf("spark.hadoop.user")))
-      }
       reader.options(loadFileConf - "implClass").format(format).load(config.path)
     } else {
       session.emptyDataFrame
@@ -92,10 +87,6 @@ class CustomFS(override val uid: String) extends MLSQLSource
     //    objectStoreConf.filter(_._1.startsWith("spark.hadoop.fs.azure")).foreach { conf =>
     //      session.conf.set(conf._1.replace("spark.hadoop.fs.azure", "fs.azure"), conf._2)
     //    }
-    if (loadFileConf.contains("user") || objectStoreConf.contains("spark.hadoop.user")) {
-      SparkEnv.get.conf.setExecutorEnv("HADOOP_USER_NAME", config.config.getOrElse("user",
-        objectStoreConf("spark.hadoop.user")))
-    }
 
     val format = config.config.getOrElse("implClass", fullFormat)
     writer.options(loadFileConf - "implClass").mode(config.mode).format(format).save(config.path)
