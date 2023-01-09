@@ -32,9 +32,11 @@ trait BaseHttpLogClient extends Logging with WowLog {
   var _conf: Map[String, String] = _
 
   def write(iter: Iterator[String], params: Map[String, String]): Unit = {
-    synchronized {
-      if (_conf == null) {
-        _conf = SparkEnv.get.conf.getAll.toMap
+    if (_conf == null) {
+      synchronized {
+        if (_conf == null) {
+          _conf = SparkEnv.get.conf.getAll.toMap
+        }
       }
     }
     val owner = params.getOrElse(ScalaMethodMacros.str(PythonConf.PY_EXECUTE_USER), "")

@@ -11,7 +11,7 @@ import tech.mlsql.common.utils.path.PathFun
  */
 class MLSQLMultiBucketSource extends RewritableSourceConfig with Logging {
 
-  private val supportedFormats = Set("csv", "json", "excel", "xml", "parquet")
+  private val supportedFormats = Set("csv", "csvStr", "json", "jsonStr", "excel", "xml", "parquet", "text")
 
   override def rewrite_conf(config: DataSourceConfig, format: String, context: MLSQLExecuteContext): DataSourceConfig = {
     if (context.execListener.env().getOrElse("fileSystemMode", "default") != "multiBucket") {
