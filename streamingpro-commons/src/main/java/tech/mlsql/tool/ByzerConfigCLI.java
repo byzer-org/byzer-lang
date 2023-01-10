@@ -95,7 +95,7 @@ public class ByzerConfigCLI {
             // get byzer properties
             for (Map.Entry<Object, Object> entry : config.entrySet()) {
                 String entryKey = (String) entry.getKey();
-                if (entryKey.startsWith("streaming") || entryKey.startsWith("spark.mlsql")) {
+                if (entryKey.startsWith("streaming")) {
                     String prop = String.format(BYZER_CONF_TEMP, entryKey, entry.getValue());
                     System.out.println(prop);
                 }
@@ -104,7 +104,7 @@ public class ByzerConfigCLI {
             // get spark properties
             for (Map.Entry<Object, Object> entry : config.entrySet()) {
                 String entryKey = (String) entry.getKey();
-                if (entryKey.startsWith("spark") && !entryKey.startsWith("spark.mlsql")) {
+                if (entryKey.startsWith("spark")) {
                     String prop = String.format(SPARK_CONF_TEMP, entryKey, entry.getValue());
                     System.out.println(prop);
                 }
