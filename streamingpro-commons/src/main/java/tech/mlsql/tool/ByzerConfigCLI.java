@@ -19,6 +19,7 @@
 package tech.mlsql.tool;
 
 import com.google.common.collect.Maps;
+import tech.mlsql.common.utils.shell.command.ParamsUtil;
 
 import java.util.Map;
 import java.util.Objects;
@@ -37,26 +38,64 @@ public class ByzerConfigCLI {
         Unsafe.systemExit(0);
     }
 
+    public static void failOutput() {
+        System.out.println("Usage: ByzerConfigCLI conf_name");
+        System.out.println("Example: ByzerConfigCLI byzer.server.mode");
+        Unsafe.systemExit(1);
+    }
+
     public static void execute(String[] args) {
+
+        if (args.length == 0) {
+            failOutput();
+        }
+
+        Properties config = ByzerConfig.getInstance().getProperties();
+
+        if (args[0].trim().equals("_")) {
+            // copy a new array from old array except the first element
+            String[] newArgs = new String[args.length - 1];
+            for (int i = 1; i < args.length; i++) {
+                newArgs[i - 1] = args[i];
+            }
+            // BYZER_RUNTIME_PARAMS=$($BYZER_HOME/bin/get-properties.sh _ -prefix byzer.server.runtime. -type runtime)
+            ParamsUtil params = new ParamsUtil(newArgs);
+            String prefix = params.getParam("prefix");
+            String tpe = params.getParam("type", "runtime");
+
+            if (prefix != null) {
+                Map<String, String> props = getPropertiesByPrefix(config, prefix);
+                for (Map.Entry<String, String> prop : props.entrySet()) {
+                    if (tpe.equals("runtime")) {
+                        String[] keyArray = prop.getKey().split("\\.");
+                        String lastElement = keyArray[keyArray.length - 1];
+                        System.out.println("--" + lastElement + " " + prop.getValue().trim());
+                    } else {
+                        System.out.println(prop.getKey() + "=" + prop.getValue().trim());
+                    }
+
+                }
+                return;
+            }
+        }
+
         boolean needDec = false;
         if (args.length != 1) {
             if (args.length < 2 || !Objects.equals(EncryptUtil.DEC_FLAG, args[1])) {
-                System.out.println("Usage: ByzerConfigCLI conf_name");
-                System.out.println("Example: ByzerConfigCLI byzer.server.mode");
-                Unsafe.systemExit(1);
+                failOutput();
             } else {
                 needDec = true;
             }
         }
 
-        Properties config = ByzerConfig.getInstance().getProperties();
 
         String key = args[0].trim();
+
         if (key.equals("-byzer")) {
             // get byzer properties
             for (Map.Entry<Object, Object> entry : config.entrySet()) {
                 String entryKey = (String) entry.getKey();
-                if (entryKey.startsWith("streaming") || entryKey.startsWith("spark.mlsql")) {
+                if (entryKey.startsWith("streaming")) {
                     String prop = String.format(BYZER_CONF_TEMP, entryKey, entry.getValue());
                     System.out.println(prop);
                 }
@@ -65,7 +104,7 @@ public class ByzerConfigCLI {
             // get spark properties
             for (Map.Entry<Object, Object> entry : config.entrySet()) {
                 String entryKey = (String) entry.getKey();
-                if (entryKey.startsWith("spark") && !entryKey.startsWith("spark.mlsql")) {
+                if (entryKey.startsWith("spark")) {
                     String prop = String.format(SPARK_CONF_TEMP, entryKey, entry.getValue());
                     System.out.println(prop);
                 }
@@ -78,8 +117,7 @@ public class ByzerConfigCLI {
                 prop.append(String.format(ARGS_CONF_TEMP, entryKey, entry.getValue()));
             }
             System.out.println(prop);
-        }
-        else if (!key.endsWith(".")) {
+        } else if (!key.endsWith(".")) {
             String value = config.getProperty(key);
             if (value == null) {
                 value = "";

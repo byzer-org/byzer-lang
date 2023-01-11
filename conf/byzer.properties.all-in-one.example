@@ -1,8 +1,11 @@
 # override example for all-in-one package
 
 byzer.server.mode=all-in-one
+byzer.server.dryrun=false
 
-streaming.master=local[*]
+## define Byzer Engine memory size
+byzer.server.runtime.driver-memory=6g
+
 streaming.name=Byzer-lang-desktop
 streaming.rest=true
 streaming.thrift=false

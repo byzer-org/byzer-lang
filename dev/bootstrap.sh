@@ -82,6 +82,8 @@ function prepareProp() {
     MAIN_JAR_PATH="${BYZER_HOME}/main/${MAIN_JAR}"
 
     JARS=$(echo ${BYZER_HOME}/libs/*.jar | tr ' ' ',')",$MAIN_JAR_PATH"
+    FULL_JARS=$(echo ${BYZER_HOME}/plugin/*.jar | tr ' ' ',')",$JARS"
+
     EXT_JARS=$(echo ${BYZER_HOME}/libs/*.jar | tr ' ' ':')":$MAIN_JAR_PATH"
     ## Put 3rd-third plugin jars in classpath
     EXT_JARS=$(echo ${BYZER_HOME}/plugin/*.jar | tr ' ' ':')":$EXT_JARS"
@@ -130,16 +132,37 @@ function start(){
         echo "JAVA_HOME: ${JAVA_HOME}"
         echo "JAVA: ${JAVA}"
 
+    DRY_RUN=$($BYZER_HOME/bin/get-properties.sh byzer.server.dryrun)
+
+
+
     if [[ $BYZER_SERVER_MODE = "all-in-one" ]]; then
         echo ""
         echo "[All Config]"
         echo "${ALL_PROP}"
         echo ""
+
+        BYZER_SERVER_MEMORY=$($BYZER_HOME/bin/get-properties.sh byzer.server.runtime.driver-memory)
         
-        nohup $JAVA -cp ${BYZER_HOME}/main/${MAIN_JAR}:${BYZER_HOME}/spark/*:${BYZER_HOME}/libs/*:${BYZER_HOME}/plugin/* \
-            tech.mlsql.example.app.LocalSparkServiceApp \
-            $ALL_PROP >> ${BYZER_HOME}/logs/byzer.out &
-        echo $! >> ${BYZER_HOME}/pid
+        if [[ "${BYZER_SERVER_MEMORY}" != "" ]];then
+           BYZER_SERVER_MEMORY="-Xmx${BYZER_SERVER_MEMORY}"
+        else
+           BYZER_SERVER_MEMORY="-Xmx4g"
+        fi
+
+        echo "Final command:"
+        echo "nohup $JAVA ${BYZER_SERVER_MEMORY}"
+        echo "-cp ${BYZER_HOME}/main/${MAIN_JAR}:${BYZER_HOME}/spark/*:${BYZER_HOME}/libs/*:${BYZER_HOME}/plugin/*"
+        echo "tech.mlsql.example.app.LocalSparkServiceApp $ALL_PROP >> ${BYZER_HOME}/logs/byzer.out &"
+        
+        if [[ "${DRY_RUN}" != "true" ]];then
+          nohup $JAVA ${java_options} \
+                      -cp ${BYZER_HOME}/main/${MAIN_JAR}:${BYZER_HOME}/spark/*:${BYZER_HOME}/libs/*:${BYZER_HOME}/plugin/* \
+                      tech.mlsql.example.app.LocalSparkServiceApp \
+                      $ALL_PROP >> ${BYZER_HOME}/logs/byzer.out &
+          echo $! >> ${BYZER_HOME}/pid
+        fi
+
 
     elif [[ $BYZER_SERVER_MODE = "server" ]]; then
         echo ""
@@ -153,15 +176,30 @@ function start(){
         echo "${EXT_JARS}"
         echo ""
 
-        nohup $SPARK_HOME/bin/spark-submit --class streaming.core.StreamingApp \
-            --jars ${JARS} \
-            --conf "spark.driver.extraClassPath=${EXT_JARS}" \
-            --conf "spark.executor.extraClassPath=${EXT_JARS}" \
-            --driver-java-options "-Dlog4j.configurationFile=${BYZER_LOG_PATH}" \
-            $SPARK_PROP \
-            $MAIN_JAR_PATH  \
-            $BYZER_PROP >> ${BYZER_HOME}/logs/byzer.out & 
-        echo $! >> ${BYZER_HOME}/pid
+        driver_java_options=$($BYZER_HOME/bin/get-properties.sh spark.driver.extraJavaOptions)
+
+        BYZER_RUNTIME_PARAMS=$($BYZER_HOME/bin/get-properties.sh _ -prefix byzer.server.runtime. -type runtime)
+        BYZER_RUNTIME_PARAMS=$(echo "$BYZER_RUNTIME_PARAMS" | tr '\n' ' ')
+        
+        echo "Final command:"
+        echo "nohup $SPARK_HOME/bin/spark-submit --class streaming.core.StreamingApp "
+        echo "$BYZER_RUNTIME_PARAMS --jars ${FULL_JARS}"
+        echo "--conf spark.driver.extraClassPath=${EXT_JARS}"
+        echo "--conf \"spark.driver.extraJavaOptions=-Dlog4j2.configurationFile=${BYZER_LOG_PATH}\" ${driver_java_options}"
+        echo "$SPARK_PROP"
+        echo "$MAIN_JAR_PATH"
+        echo "$BYZER_PROP >> ${BYZER_HOME}/logs/byzer.out &"
+
+        if [[ "${DRY_RUN}" != "true" ]];then
+          nohup $SPARK_HOME/bin/spark-submit $BYZER_RUNTIME_PARAMS --class streaming.core.StreamingApp \
+                      --jars ${FULL_JARS} \
+                      --conf "spark.driver.extraClassPath=${EXT_JARS}" \
+                      --conf "spark.driver.extraJavaOptions=-Dlog4j2.configurationFile=${BYZER_LOG_PATH} ${driver_java_options}" \
+                      $SPARK_PROP \
+                      $MAIN_JAR_PATH  \
+                      $BYZER_PROP >> ${BYZER_HOME}/logs/byzer.out &
+          echo $! >> ${BYZER_HOME}/pid
+        fi
     fi
 
     sleep 3
