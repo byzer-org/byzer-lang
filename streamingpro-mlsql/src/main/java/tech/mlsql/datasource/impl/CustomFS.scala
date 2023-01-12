@@ -24,12 +24,12 @@ class CustomFS(override val uid: String) extends MLSQLSource
     val session = config.df.get.sparkSession
     val extraObjectStoreConf = mutable.HashMap[String, String]()
 
-    val realLoad = !config.path.isEmpty
+    val realLoad = config.path.nonEmpty
 
     if (realLoad) {
-      require(!config.path.startsWith("/") && !config.path.startsWith(".."), "path should be with schema specified")
       val schema = extractSchema(config.path)
       require(schema.isDefined, "path should be with schema specified")
+      require(config.config.contains("implClass"), "implClass should be specified!")
       ConnectMeta.presentThenCall(DBMappingKey("FS", schema.get), kvs => {
         kvs.filter(_._1 != "format").foreach(kv => extraObjectStoreConf.put(kv._1, kv._2))
       })
@@ -52,7 +52,7 @@ class CustomFS(override val uid: String) extends MLSQLSource
     //    }
 
     if (realLoad) {
-      val format = config.config.getOrElse("implClass", fullFormat)
+      val format = config.config("implClass")
       reader.options(loadFileConf - "implClass").format(format).load(config.path)
     } else {
       session.emptyDataFrame
@@ -61,20 +61,21 @@ class CustomFS(override val uid: String) extends MLSQLSource
   }
 
   override def save(writer: DataFrameWriter[Row], config: DataSinkConfig): Any = {
-    val schema = extractSchema(config.path)
-    require(schema.isDefined, "path should be with schema specified")
-
     val session = config.df.get.sparkSession
-
     val extraObjectStoreConf = mutable.HashMap[String, String]()
 
-    ConnectMeta.presentThenCall(DBMappingKey("FS", schema.get), kvs => {
-      kvs.filter(_._1 != "format").foreach(kv => extraObjectStoreConf.put(kv._1, kv._2))
-    })
+    val realSave = config.path.nonEmpty
 
+    if (realSave) {
+      val schema = extractSchema(config.path)
+      require(schema.isDefined, "path should be with schema specified")
+      require(config.config.contains("implClass"), "implClass should be specified!")
+      ConnectMeta.presentThenCall(DBMappingKey("FS", schema.get), kvs => {
+        kvs.filter(_._1 != "format").foreach(kv => extraObjectStoreConf.put(kv._1, kv._2))
+      })
+    }
 
     val (objectStoreConf, loadFileConf) = (extraObjectStoreConf ++ config.config).partition(item => item._1.startsWith("spark.hadoop") || item._1.startsWith("fs."))
-
 
     objectStoreConf.map { item =>
       if (item._1.startsWith("spark.hadoop")) {
@@ -88,8 +89,12 @@ class CustomFS(override val uid: String) extends MLSQLSource
     //      session.conf.set(conf._1.replace("spark.hadoop.fs.azure", "fs.azure"), conf._2)
     //    }
 
-    val format = config.config.getOrElse("implClass", fullFormat)
-    writer.options(loadFileConf - "implClass").mode(config.mode).format(format).save(config.path)
+    if (realSave) {
+      val format = config.config("implClass")
+      writer.options(loadFileConf - "implClass").mode(config.mode).format(format).save(config.path)
+    } else {
+      session.emptyDataFrame
+    }
   }
 
 
