@@ -173,4 +173,15 @@ trait DslTool {
 
     Array(dbName, finalPath)
   }
+
+  /**
+   * The `runtime.hadoop` prefix is used to set spark multiple options, and the prefix is removed globally and set to options.
+   * @param runtimeOptions the runtime hadoop options
+   * @return
+   */
+  def cleanRuntimeOptionsPrefix(runtimeOptions: Map[String, String]): Map[String, String] = {
+    runtimeOptions.map { item =>
+      (item._1.replace("runtime.hadoop.", ""), item._2)
+    }
+  }
 }

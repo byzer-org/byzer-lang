@@ -124,17 +124,18 @@ class LoadProcessing(scriptSQLExecListener: ScriptSQLExecListener,
       ScriptSQLExec.context())
 
     val path = dsConf.path
-
-    reader.options(dsConf.config)
     var sourceInfo: Option[SourceInfo] = None
+    val (runtimeOptions, loadOptions) = dsConf.config.partition(item => item._1.startsWith("runtime.hadoop."))
+    val prefixCleanRuntimeOptions = cleanRuntimeOptionsPrefix(runtimeOptions)
+    reader.options(prefixCleanRuntimeOptions).options(loadOptions)
 
-    DataSourceRegistry.fetch(format, option).map { datasource =>
+    DataSourceRegistry.fetch(format, loadOptions).map { datasource =>
       val ds = datasource.asInstanceOf[ {def load(reader: DataFrameReader, config: DataSourceConfig): DataFrame}]
       table = ds.load(reader, dsConf)
 
       // extract source info if the datasource is  MLSQLSourceInfo
       if (datasource.isInstanceOf[MLSQLSourceInfo]) {
-        val authConf = DataAuthConfig(dsConf.path, dsConf.config)
+        val authConf = DataAuthConfig(dsConf.path, loadOptions)
         sourceInfo = Option(sourceInfoRewrite(
           AppRuntimeStore.LOAD_BEFORE_CONFIG_KEY,
           datasource.asInstanceOf[MLSQLSourceInfo].sourceInfo(authConf),
@@ -142,7 +143,7 @@ class LoadProcessing(scriptSQLExecListener: ScriptSQLExecListener,
           ScriptSQLExec.context()))
       }
       if (datasource.isInstanceOf[DatasourceAuth]) {
-        datasource.asInstanceOf[DatasourceAuth].auth(dsConf.path, dsConf.config)
+        datasource.asInstanceOf[DatasourceAuth].auth(dsConf.path, loadOptions)
       }
       // return the load table
       table

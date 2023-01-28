@@ -98,8 +98,7 @@ class SaveAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
 
     val dsc = optionsRewrite(AppRuntimeStore.SAVE_BEFORE_CONFIG_KEY, DataSinkConfig(_path, _option,
       mode, Option(oldDF)), format, context)
-
-    val option = dsc.config
+    val (runtimeOptions, option) = dsc.config.partition(item => item._1.startsWith("runtime.hadoop."))
     val owner = option.get("owner")
     val path = dsc.path
     
@@ -121,10 +120,16 @@ class SaveAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
     if (option.contains("fileNum")) {
       oldDF = oldDF.repartition(option.getOrElse("fileNum", "").toString.toInt)
     }
-    val writer = if (isStream) null else oldDF.write
+
+    val prefixCleanRuntimeOptions = cleanRuntimeOptionsPrefix(runtimeOptions)
+    val writer = if (isStream) {
+      null
+    } else {
+      oldDF.write.options(prefixCleanRuntimeOptions)
+    }
 
     val saveRes = DataSourceRegistry.fetch(format, option).map { datasource =>
-      val newOption = if (partitionByCol.size > 0) {
+      val newOption = if (partitionByCol.nonEmpty) {
         option ++ Map("partitionByCol" -> partitionByCol.mkString(","))
       } else option
 
@@ -135,20 +140,19 @@ class SaveAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
           mode, Option(oldDF)))
       res
     }.getOrElse {
-
       if (isStream) {
         throw new RuntimeException(s"save is not support with ${format}  in stream mode")
       }
-      if (partitionByCol.size != 0) {
+      if (partitionByCol.nonEmpty) {
         writer.partitionBy(partitionByCol: _*)
       }
 
       writer.mode(mode)
-
+      val saveFormat = option.getOrElse("implClass", format)
       if (path == "-" || path.isEmpty) {
-        writer.format(option.getOrElse("implClass", format)).save()
+        writer.format(saveFormat).save()
       } else {
-        writer.format(option.getOrElse("implClass", format)).save( resourceRealPath(context.execListener, owner, path) )
+        writer.format(saveFormat).save( resourceRealPath(context.execListener, owner, path) )
       }
     }
 
