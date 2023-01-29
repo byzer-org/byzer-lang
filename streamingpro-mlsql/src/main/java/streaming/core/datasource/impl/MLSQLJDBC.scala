@@ -211,11 +211,13 @@ class MLSQLJDBC(override val uid: String) extends MLSQLSource with MLSQLSink wit
     // otherwize we will do nothing since elasticsearch use something like index/type
     // it will do no harm.
     val format = config.config.getOrElse("implClass", fullFormat)
+    var url = config.config.get("url")
     if (config.path.contains(dbSplitter)) {
       val Array(_dbname, _dbtable) = config.path.split(toSplit, 2)
       ConnectMeta.presentThenCall(DBMappingKey(format, _dbname), options => {
         dbtable = _dbtable
         writer.options(options)
+        url = options.get("url")
       })
     }
     writer.mode(config.mode)
@@ -234,7 +236,16 @@ class MLSQLJDBC(override val uid: String) extends MLSQLSource with MLSQLSink wit
       writer.upsert(Option(item), jdbcOptions, config.df.get)
     }.getOrElse {
       writer.option("dbtable", dbtable)
-      writer.format(format).save(dbtable)
+      try {
+        writer.format(format).save(dbtable)
+      } catch {
+        case e: Exception ⇒
+          if (url.isDefined && url.get.startsWith("jdbc:hive2")) {
+            logError("hive jdbc does not support writing! ")
+          } else {
+            throw e
+          }
+      }
     }
   }
 
