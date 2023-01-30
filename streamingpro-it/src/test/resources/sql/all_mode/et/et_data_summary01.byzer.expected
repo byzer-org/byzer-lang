@@ -1,9 +1,9 @@
-columnName,ordinalPosition,median,blankValueRatio,dataLength,dataType,max,maximumLength,mean,min,minimumLength,nonNullCount,nullValueRatio,standardDeviation,standardError,uniqueValueRatio,primaryKeyCandidate,mode
-C_CUSTKEY,1,150.5,0.0,4,integer,300.0,,150.5,1.0,,300,0.0,86.75,5.01,1.0,1,
-C_NAME,2,,0.0,18,string,Customer#000000300,18,,Customer#000000001,18,300,0.0,,,1.0,1,
-C_ADDRESS,3,,0.0,24,string,zwrDoaY2gxCk,24,, 6I1TTaoG7bbiogC,6,300,0.0,,,1.0,1,
-C_CITY,4,,0.0,10,string,VIETNAM  9,10,,ALGERIA  1,10,300,0.0,,,0.56,0,JAPAN    2
-C_NATION,5,,0.0,14,string,VIETNAM,14,,ALGERIA,4,300,0.0,,,0.0833,0,
-C_REGION,6,,0.0,11,string,MIDDLE EAST,11,,AFRICA,4,300,0.0,,,0.0167,0,ASIA
-C_PHONE,7,,0.0,15,string,34-700-976-1809,15,,10-172-710-1650,15,300,0.0,,,1.0,1,
-C_MKTSEGMENT,8,,0.0,10,string,MACHINERY,10,,AUTOMOBILE,8,300,0.0,,,0.0167,0,AUTOMOBILE
+columnName,ordinalPosition,median,blankValueRatio,dataLength,dataType,max,maximumLength,mean,min,minimumLength,nonNullCount,nullValueRatio,skewness,standardDeviation,standardError,uniqueValueRatio,categoryCount,primaryKeyCandidate,mode
+C_CUSTKEY,1,150.5,0.0,4,integer,300.0,,150.5,1.0,,300,0.0,0.0,86.75,5.01,1.0,,1,
+C_NAME,2,,0.0,18,string,Customer#000000300,18,,Customer#000000001,18,300,0.0,,,,1.0,300,1,
+C_ADDRESS,3,,0.0,24,string,zwrDoaY2gxCk,24,, 6I1TTaoG7bbiogC,6,300,0.0,,,,1.0,300,1,
+C_CITY,4,,0.0,10,string,VIETNAM  9,10,,ALGERIA  1,10,300,0.0,,,,0.56,168,0,JAPAN    2
+C_NATION,5,,0.0,14,string,VIETNAM,14,,ALGERIA,4,300,0.0,,,,0.0833,25,0,
+C_REGION,6,,0.0,11,string,MIDDLE EAST,11,,AFRICA,4,300,0.0,,,,0.0167,5,0,ASIA
+C_PHONE,7,,0.0,15,string,34-700-976-1809,15,,10-172-710-1650,15,300,0.0,,,,1.0,300,1,
+C_MKTSEGMENT,8,,0.0,10,string,MACHINERY,10,,AUTOMOBILE,8,300,0.0,,,,0.0167,5,0,AUTOMOBILE

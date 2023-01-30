@@ -48,6 +48,10 @@ object HDFSOperatorV2 {
     file
   }
 
+  def getContentSummary(path: String): ContentSummary = {
+    val fs = new Path(path).getFileSystem(hadoopConfiguration)
+    fs.getContentSummary(new Path(path))
+  }
 
   def readAsInputStream(fileName: String): InputStream = {
     val src: Path = new Path(fileName)
