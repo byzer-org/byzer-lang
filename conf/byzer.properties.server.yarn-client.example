@@ -1,0 +1,22 @@
+# override example for server package
+
+byzer.server.mode=server
+byzer.server.dryrun=false
+
+# submit byzer server as yarn-client mode
+byzer.server.runtime.master=yarn
+byzer.server.runtime.deploy-mode=client
+
+# configure resource for yarn mode
+byzer.server.runtime.driver-memory=6g
+byzer.server.runtime.executor-memory=4g
+byzer.server.runtime.executor-cores=4
+byzer.server.runtime.num-executors=2
+
+streaming.name=Byzer-lang-server
+streaming.rest=true
+streaming.thrift=false
+streaming.platform=spark
+streaming.spark.service=true
+streaming.driver.port=9003
+streaming.enableHiveSupport=false
