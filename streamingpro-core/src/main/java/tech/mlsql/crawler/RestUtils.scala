@@ -131,7 +131,7 @@ object RestUtils extends Logging with WowLog {
     val response = (httpMethod, contentTypeValue) match {
       case ("get", _) => request.execute()
 
-      case ("post", contentType) if contentType.trim.startsWith("application/json") =>
+      case ("post" | "put", contentType) if contentType.trim.startsWith("application/json") =>
         if (params.contains("body")) {
           // The key here is body, and the value is a json string
           request.bodyString(params("body"), ContentType.APPLICATION_JSON).execute()
@@ -151,14 +151,14 @@ object RestUtils extends Logging with WowLog {
           request.execute()
         }
 
-      case ("post", contentType) if contentType.trim.startsWith("application/x-www-form-urlencoded") =>
+      case ("post" | "put", contentType) if contentType.trim.startsWith("application/x-www-form-urlencoded") =>
         val form = Form.form()
         params.foreach { case (k, v) =>
           form.add(k, Templates2.dynamicEvaluateExpression(v, ScriptSQLExec.context().execListener.env().toMap))
         }
         request.bodyForm(form.build(), Charset.forName("utf-8")).execute()
 
-      case ("post", contentType) if contentType.trim.startsWith("multipart/form-data") =>
+      case ("post" | "put", contentType) if contentType.trim.startsWith("multipart/form-data") =>
         val _filePath = config("file-path")
         val finalPath = new DslTool() {}.resourceRealPath(context.execListener, Option(context.owner), _filePath)
 

@@ -1,0 +1,22 @@
+{
+  "initialization-job": {
+    "desc": "initialization-job",
+    "strategy": "spark",
+    "algorithm": [],
+    "ref": [],
+    "compositor": [
+      {
+        "name": "init",
+        "params": [
+          {
+            "mlsql": "select 1 as a as output;",
+            "owner": "admin",
+            "home": "/tmp"
+          }
+        ],
+        "configParams": {
+        }
+      }
+    ]
+  }
+}
