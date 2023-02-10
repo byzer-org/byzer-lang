@@ -115,7 +115,7 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
               (500, _error2DataFrame(me.getMessage, 500, config.df.get.sparkSession))
           case e: Exception => (0, _error2DataFrame(e.getMessage, 0, config.df.get.sparkSession))
         }
-      }) (),
+      })(),
         tempResp => {
           val succeed = tempResp._1 == 200
           if (!succeed) {
@@ -254,14 +254,14 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
       case ("get", _) =>
         request.execute()
 
-      case ("post", contentType) if contentType.trim.startsWith("application/json") =>
+      case ("post" | "put", contentType) if contentType.trim.startsWith("application/json") =>
         if (params.contains(body.name)) {
           request.bodyString(params(body.name), ContentType.APPLICATION_JSON).execute()
         } else {
           request.execute()
         }
 
-      case ("post", contentType) if contentType.trim.startsWith("application/x-www-form-urlencoded") =>
+      case ("post" | "put", contentType) if contentType.trim.startsWith("application/x-www-form-urlencoded") =>
         val form = Form.form()
         params.filter(_._1.startsWith("form.")).foreach { case (k, v) =>
           form.add(k.stripPrefix("form."), Templates2.dynamicEvaluateExpression(v, ScriptSQLExec.context().execListener.env().toMap))
