@@ -9,7 +9,7 @@
         "name": "init",
         "params": [
           {
-            "mlsql": "select 1 as a as output;",
+            "mlsql": "load FS.``\nWhere `fs.s3a.endpoint`=\"s3.cn-northwest-1.amazonaws.com.cn\"\nand `fs.s3a.bucket.gtma.access.key`=\"AKIAW36DVI3VRR4Z4QCQ\"\nand `fs.s3a.bucket.gtma.secret.key`=\"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\"\nand `fs.s3a.impl`=\"org.apache.hadoop.fs.s3a.S3AFileSystem\"\nand `fs.AbstractFileSystem.s3a.impl`=\"org.apache.hadoop.fs.s3a.S3A\"\nas output;",
             "owner": "admin",
             "home": "/tmp"
           }
