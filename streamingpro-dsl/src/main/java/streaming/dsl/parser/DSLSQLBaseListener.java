@@ -1,4 +1,4 @@
-// Generated from DSLSQL.g4 by ANTLR 4.7.1
+// Generated from /opt/projects/kyligence/byzerCP/byzer-lang/streamingpro-dsl/src/main/resources/DSLSQL.g4 by ANTLR 4.7
 
 package streaming.dsl.parser;
 

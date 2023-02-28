@@ -14,7 +14,7 @@ statement
 
 sql
     : LOAD format '.' path where? expression? booleanExpression* as tableName
-    | SAVE (overwrite | append | errorIfExists |ignore)* tableName as format '.' path where? expression? booleanExpression* (PARTITIONBY col? colGroup*)?
+    | SAVE (overwrite|append|errorIfExists|ignore)* tableName as format '.' path where? expression? booleanExpression* (PARTITIONBY col? colGroup*)?
     | SELECT ~(';')* as tableName
     | INSERT ~(';')*
     | CREATE ~(';')*
@@ -53,7 +53,7 @@ WHERE:'where';
 PARTITIONBY:'partitionBy'|'partitionby';
 OVERWRITE:'overwrite';
 APPEND:'append';
-ERRORIfExists:'errorIfExists';
+ERRORIfExists:'errorifexists';
 IGNORE:'ignore';
 
 
@@ -68,19 +68,19 @@ whereExpressions: where expression? booleanExpression*;
 
 
 overwrite
-    : 'overwrite'
+    : OVERWRITE
     ;
 
 append
-    : 'append'
+    : APPEND
     ;
 
 errorIfExists
-    : 'errorIfExists'
+    : ERRORIfExists
     ;
 
 ignore
-    : 'ignore'
+    : IGNORE
     ;
 
 booleanExpression
