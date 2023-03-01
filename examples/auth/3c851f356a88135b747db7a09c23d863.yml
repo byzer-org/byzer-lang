@@ -1,0 +1,20 @@
+---
+apiVersion: "auth.byzer.org/v1"
+kind: "Auth"
+userView: []
+resourceView:
+- metadata:
+    users: null
+    resources:
+    - name: "delta"
+      path: "demo.table1"
+  rules:
+  - rule:
+      users:
+        allows: []
+        denies:
+        - name: "allwefantasy"
+          role: ""
+      verbs:
+      - "*"
+

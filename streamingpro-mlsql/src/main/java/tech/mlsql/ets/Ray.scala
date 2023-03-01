@@ -360,21 +360,13 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
     session.udf.register(name, (vectors: Seq[Seq[Double]]) => {
       val startTime = System.currentTimeMillis()
       val rows = vectors.map(vector => Row.fromSeq(Seq(vector)))
-      try {
-        val newRows = executePythonCode(predictCode, envs4j,
-          rows.toIterator, sourceSchema, outputSchema, runnerConf, timezoneID, pythonVersion)
-        val res = newRows.map(_.getAs[Seq[Seq[Double]]](0)).head
-        if (debug.isDefined) {
-          logInfo(s"Execute predict code time:${System.currentTimeMillis() - startTime}")
-        }
-        res
-      } catch {
-        case e: Exception =>
-          if (debug.isDefined) {
-            logError("Fail to execute predict code", e)
-          }
-          null
+      val newRows = executePythonCode(predictCode, envs4j,
+        rows.toIterator, sourceSchema, outputSchema, runnerConf, timezoneID, pythonVersion)
+      val res = newRows.map(_.getAs[Seq[Seq[Double]]](0)).head
+      if (debug.isDefined) {
+        logInfo(s"Execute predict code time:${System.currentTimeMillis() - startTime}")
       }
+      res
 
     })
     null
