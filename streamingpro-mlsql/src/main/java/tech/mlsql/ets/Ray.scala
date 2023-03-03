@@ -80,16 +80,10 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
     val context = ScriptSQLExec.context()
     val envSession = new SetSession(session, context.owner)
     val envs = Map(
-      ScalaMethodMacros.str(PythonConf.PY_EXECUTE_USER) -> context.owner,
-      ScalaMethodMacros.str(PythonConf.PYTHON_ENV) -> "export ARROW_PRE_0_15_IPC_FORMAT=1"
+      ScalaMethodMacros.str(PythonConf.PY_EXECUTE_USER) -> context.owner
     ) ++
       envSession.fetchPythonEnv.get.collect().map { f =>
-        if (f.k == ScalaMethodMacros.str(PythonConf.PYTHON_ENV)) {
-          (f.k, f.v + " && export ARROW_PRE_0_15_IPC_FORMAT=1")
-        } else {
-          (f.k, f.v)
-        }
-
+        (f.k, f.v)
       }.toMap
 
 
@@ -315,15 +309,9 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
     envSession.set("pythonMode", "ray", Map(SetSession.__MLSQL_CL__ -> SetSession.PYTHON_RUNNER_CONF_CL))
     val envs = Map(
       ScalaMethodMacros.str(PythonConf.PY_EXECUTE_USER) -> context.owner,
-      ScalaMethodMacros.str(PythonConf.PYTHON_ENV) -> "export ARROW_PRE_0_15_IPC_FORMAT=1"
     ) ++
       envSession.fetchPythonEnv.get.collect().map { f =>
-        if (f.k == ScalaMethodMacros.str(PythonConf.PYTHON_ENV)) {
-          (f.k, f.v + " && export ARROW_PRE_0_15_IPC_FORMAT=1")
-        } else {
-          (f.k, f.v)
-        }
-
+        (f.k, f.v)
       }.toMap
 
     val envs4j = new util.HashMap[String, String]()
