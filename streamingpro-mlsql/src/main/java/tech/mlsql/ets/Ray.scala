@@ -348,7 +348,7 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
     session.udf.register(name, (vectors: Seq[Seq[Double]]) => {
       val startTime = System.currentTimeMillis()
       val rows = vectors.map(vector => Row.fromSeq(Seq(vector)))
-      val newRows = executePythonCode(predictCode, envs4j,
+      val newRows = Ray.executePythonCode(predictCode, envs4j,
         rows.toIterator, sourceSchema, outputSchema, runnerConf, timezoneID, pythonVersion)
       val res = newRows.map(_.getAs[Seq[Seq[Double]]](0)).head
       if (debug.isDefined) {
@@ -360,6 +360,12 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
     null
   }
 
+
+
+  override def skipPathPrefix: Boolean = true
+}
+
+object Ray {
   def executePythonCode(code: String, envs: util.HashMap[String, String],
                         input: Iterator[Row], inputSchema: StructType,
                         outputSchema: StructType, conf: Map[String, String], timezoneID: String, pythonVersion: String): List[Row] = {
@@ -389,8 +395,6 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
     javaConext.close
     return items
   }
-
-  override def skipPathPrefix: Boolean = true
 }
 
 
