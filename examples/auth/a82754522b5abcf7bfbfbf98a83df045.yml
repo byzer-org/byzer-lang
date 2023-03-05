@@ -1,0 +1,20 @@
+---
+apiVersion: "auth.byzer.org/v1"
+kind: "Auth"
+userView: []
+resourceView:
+- metadata:
+    users: null
+    resources:
+    - name: "jdbc"
+      path: "wow.vega_datasets"
+  rules:
+  - rule:
+      users:
+        allows: []
+        denies:
+        - name: "allwefantasy"
+          role: ""
+      verbs:
+      - "*"
+

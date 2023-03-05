@@ -80,16 +80,10 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
     val context = ScriptSQLExec.context()
     val envSession = new SetSession(session, context.owner)
     val envs = Map(
-      ScalaMethodMacros.str(PythonConf.PY_EXECUTE_USER) -> context.owner,
-      ScalaMethodMacros.str(PythonConf.PYTHON_ENV) -> "export ARROW_PRE_0_15_IPC_FORMAT=1"
+      ScalaMethodMacros.str(PythonConf.PY_EXECUTE_USER) -> context.owner
     ) ++
       envSession.fetchPythonEnv.get.collect().map { f =>
-        if (f.k == ScalaMethodMacros.str(PythonConf.PYTHON_ENV)) {
-          (f.k, f.v + " && export ARROW_PRE_0_15_IPC_FORMAT=1")
-        } else {
-          (f.k, f.v)
-        }
-
+        (f.k, f.v)
       }.toMap
 
 
@@ -309,21 +303,23 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
 
     _load
 
-    val predictCode = params.getOrElse("predictCode", "")
+    val predictCode = params.getOrElse("predictCode",
+      """
+        |import ray
+        |from pyjava.api.mlsql import RayContext
+        |from pyjava.udf import UDFMaster,UDFWorker,UDFBuilder,UDFBuildInFunc
+        |
+        |ray_context = RayContext.connect(globals(), context.conf["rayAddress"])
+        |UDFBuilder.apply(ray_context)
+        |""".stripMargin)
     val context = ScriptSQLExec.context()
     val envSession = new SetSession(session, context.owner)
     envSession.set("pythonMode", "ray", Map(SetSession.__MLSQL_CL__ -> SetSession.PYTHON_RUNNER_CONF_CL))
     val envs = Map(
       ScalaMethodMacros.str(PythonConf.PY_EXECUTE_USER) -> context.owner,
-      ScalaMethodMacros.str(PythonConf.PYTHON_ENV) -> "export ARROW_PRE_0_15_IPC_FORMAT=1"
     ) ++
       envSession.fetchPythonEnv.get.collect().map { f =>
-        if (f.k == ScalaMethodMacros.str(PythonConf.PYTHON_ENV)) {
-          (f.k, f.v + " && export ARROW_PRE_0_15_IPC_FORMAT=1")
-        } else {
-          (f.k, f.v)
-        }
-
+        (f.k, f.v)
       }.toMap
 
     val envs4j = new util.HashMap[String, String]()
@@ -360,26 +356,24 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
     session.udf.register(name, (vectors: Seq[Seq[Double]]) => {
       val startTime = System.currentTimeMillis()
       val rows = vectors.map(vector => Row.fromSeq(Seq(vector)))
-      try {
-        val newRows = executePythonCode(predictCode, envs4j,
-          rows.toIterator, sourceSchema, outputSchema, runnerConf, timezoneID, pythonVersion)
-        val res = newRows.map(_.getAs[Seq[Seq[Double]]](0)).head
-        if (debug.isDefined) {
-          logInfo(s"Execute predict code time:${System.currentTimeMillis() - startTime}")
-        }
-        res
-      } catch {
-        case e: Exception =>
-          if (debug.isDefined) {
-            logError("Fail to execute predict code", e)
-          }
-          null
+      val newRows = Ray.executePythonCode(predictCode, envs4j,
+        rows.toIterator, sourceSchema, outputSchema, runnerConf, timezoneID, pythonVersion)
+      val res = newRows.map(_.getAs[Seq[Seq[Double]]](0)).head
+      if (debug.isDefined) {
+        logInfo(s"Execute predict code time:${System.currentTimeMillis() - startTime}")
       }
+      res
 
     })
     null
   }
 
+
+
+  override def skipPathPrefix: Boolean = true
+}
+
+object Ray {
   def executePythonCode(code: String, envs: util.HashMap[String, String],
                         input: Iterator[Row], inputSchema: StructType,
                         outputSchema: StructType, conf: Map[String, String], timezoneID: String, pythonVersion: String): List[Row] = {
@@ -409,8 +403,6 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
     javaConext.close
     return items
   }
-
-  override def skipPathPrefix: Boolean = true
 }
 
 

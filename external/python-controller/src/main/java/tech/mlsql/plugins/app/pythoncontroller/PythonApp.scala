@@ -63,7 +63,7 @@ class RegisterCodeController extends CustomController with Logging {
 
 class PredictController extends CustomController with Logging {
   override def run(params: Map[String, String]): String = {
-    val env = params.getOrElse("env", ":") + " && export ARROW_PRE_0_15_IPC_FORMAT=1 "
+    val env = params.getOrElse("env", ":") 
     val codeName = params.getOrElse("codeName", "")
     val code = RegisterCodeController.CODE_CACHE.get(codeName)
     if (code == null) {
@@ -114,19 +114,13 @@ class PythonController extends CustomController {
     val pythonEnvs = envSession.fetchPythonEnv match {
       case Some(ds) =>
         ds.collect().map { f =>
-          if (f.k == ScalaMethodMacros.str(PythonConf.PYTHON_ENV)) {
-            (f.k, f.v + " && export ARROW_PRE_0_15_IPC_FORMAT=1")
-          } else {
-            (f.k, f.v)
-          }
-
+          (f.k, f.v)
         }.toMap
       case None => Map()
     }
 
     val envs = Map(
-      ScalaMethodMacros.str(PythonConf.PY_EXECUTE_USER) -> context.owner,
-      ScalaMethodMacros.str(PythonConf.PYTHON_ENV) -> "export ARROW_PRE_0_15_IPC_FORMAT=1"
+      ScalaMethodMacros.str(PythonConf.PY_EXECUTE_USER) -> context.owner
     ) ++ pythonEnvs
 
     val scriptId = params("scriptId").toInt

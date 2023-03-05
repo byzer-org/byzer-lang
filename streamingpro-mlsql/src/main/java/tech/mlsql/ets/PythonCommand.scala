@@ -128,16 +128,10 @@ class PythonCommand(override val uid: String) extends SQLAlg with Functions with
       // 2. make sure the user is configured so every one has his own python worker
       val envs = Map(
         ScalaMethodMacros.str(PythonConf.PY_EXECUTE_USER) -> context.owner,
-        ScalaMethodMacros.str(PythonConf.PY_INTERACTIVE) -> "yes",
-        ScalaMethodMacros.str(PythonConf.PYTHON_ENV) -> "export ARROW_PRE_0_15_IPC_FORMAT=1"
+        ScalaMethodMacros.str(PythonConf.PY_INTERACTIVE) -> "yes"
       ) ++
         envSession.fetchPythonEnv.get.collect().map { f =>
-          if (f.k == ScalaMethodMacros.str(PythonConf.PYTHON_ENV)) {
-            (f.k, f.v + " && export ARROW_PRE_0_15_IPC_FORMAT=1")
-          } else {
-            (f.k, f.v)
-          }
-
+          (f.k, f.v)
         }.toMap
 
 
@@ -257,16 +251,10 @@ class PythonCommand(override val uid: String) extends SQLAlg with Functions with
     val context = ScriptSQLExec.context()
     val envSession = new SetSession(session, context.owner)
     val envs = Map(
-      ScalaMethodMacros.str(PythonConf.PY_EXECUTE_USER) -> context.owner,
-      ScalaMethodMacros.str(PythonConf.PYTHON_ENV) -> "export ARROW_PRE_0_15_IPC_FORMAT=1"
+      ScalaMethodMacros.str(PythonConf.PY_EXECUTE_USER) -> context.owner
     ) ++
       envSession.fetchPythonEnv.get.collect().map { f =>
-        if (f.k == ScalaMethodMacros.str(PythonConf.PYTHON_ENV)) {
-          (f.k, f.v + " && export ARROW_PRE_0_15_IPC_FORMAT=1")
-        } else {
-          (f.k, f.v)
-        }
-
+        (f.k, f.v)
       }.toMap
 
     val runnerConf = getSchemaAndConf(envSession) ++ configureLogConf
