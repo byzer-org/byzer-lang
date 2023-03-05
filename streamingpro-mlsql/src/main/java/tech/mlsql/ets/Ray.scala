@@ -303,7 +303,15 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
 
     _load
 
-    val predictCode = params.getOrElse("predictCode", "")
+    val predictCode = params.getOrElse("predictCode",
+      """
+        |import ray
+        |from pyjava.api.mlsql import RayContext
+        |from pyjava.udf import UDFMaster,UDFWorker,UDFBuilder,UDFBuildInFunc
+        |
+        |ray_context = RayContext.connect(globals(), context.conf["rayAddress"])
+        |UDFBuilder.apply(ray_context)
+        |""".stripMargin)
     val context = ScriptSQLExec.context()
     val envSession = new SetSession(session, context.owner)
     envSession.set("pythonMode", "ray", Map(SetSession.__MLSQL_CL__ -> SetSession.PYTHON_RUNNER_CONF_CL))
