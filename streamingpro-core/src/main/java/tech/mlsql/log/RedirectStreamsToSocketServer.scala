@@ -51,7 +51,8 @@ class RedirectLogThread(
   setDaemon(true)
 
   override def run(): Unit = {
-    WriteLog.write(scala.io.Source.fromInputStream(in).getLines(), conf)
+    val pythonOutputEncoding = conf.getOrElse("pythonOutputEncoding","utf-8")
+    WriteLog.write(scala.io.Source.fromInputStream(in,pythonOutputEncoding).getLines(), conf)
   }
 }
 

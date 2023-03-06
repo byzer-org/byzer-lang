@@ -125,6 +125,7 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
     val stage2_schema = targetSchema
     val runIn = runnerConf.getOrElse("runIn", "executor")
     val pythonVersion = runnerConf.getOrElse("pythonVersion", "3.6")
+    val pythonExec = runnerConf.getOrElse("pythonExec","python")
     import session.implicits._
     val newdf = session.createDataset[DataServer](masterSlaveInSpark.dataServers.get().map(f => DataServer(f.host, f.port, timezoneID))).repartition(1)
     val sourceSchema = newdf.schema
@@ -137,7 +138,7 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
 
           val batch = new ArrowPythonRunner(
             Seq(ChainedPythonFunctions(Seq(PythonFunction(
-              code, envs4j, "python", pythonVersion)))), sourceSchema,
+              code, envs4j, pythonExec, pythonVersion)))), sourceSchema,
             timezoneID, runnerConf
           )
 
@@ -161,7 +162,7 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
 
         val batch = new ArrowPythonRunner(
           Seq(ChainedPythonFunctions(Seq(PythonFunction(
-            code, envs4j, "python", pythonVersion)))), sourceSchema,
+            code, envs4j, pythonExec, pythonVersion)))), sourceSchema,
           timezoneID, runnerConf
         )
 
@@ -230,6 +231,7 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
       Map[String, String]()
     } else {
       Map(PythonWorkerFactory.Tool.REDIRECT_IMPL -> "tech.mlsql.log.RedirectStreamsToSocketServer")
+      //      Map[String,String]()
     }
     conf.filter(f => f._1.startsWith("spark.mlsql.log.driver")) ++
       Map(
@@ -369,7 +371,6 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
   }
 
 
-
   override def skipPathPrefix: Boolean = true
 }
 
@@ -378,8 +379,11 @@ object Ray {
                         input: Iterator[Row], inputSchema: StructType,
                         outputSchema: StructType, conf: Map[String, String], timezoneID: String, pythonVersion: String): List[Row] = {
     import scala.collection.JavaConverters._
+
+    val pythonExec = conf.getOrElse("pythonExec","python")
+
     val batch = new ArrowPythonRunner(
-      Seq(ChainedPythonFunctions(Seq(PythonFunction(code, envs, "python", pythonVersion)))), inputSchema,
+      Seq(ChainedPythonFunctions(Seq(PythonFunction(code, envs, pythonExec, pythonVersion)))), inputSchema,
       timezoneID, conf
     )
 

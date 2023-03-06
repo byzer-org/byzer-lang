@@ -9,6 +9,8 @@ import tech.mlsql.dsl.includes.PluginIncludeSource
 import tech.mlsql.runtime.plugins._
 import tech.mlsql.store.DBStore
 
+import java.util.regex.Pattern
+
 /**
  * 2019-09-12 WilliamZhu(allwefantasy@gmail.com)
  */
@@ -50,7 +52,7 @@ class PluginHook extends MLSQLPlatformLifecycle with Logging {
 
     plugins.as[AddPlugin].collect().foreach { plugin =>
       logInfo(s"Plugin ${plugin.pluginName} in ${plugin.path}")
-      val localPath = downloadFromHDFSToLocal(plugin.path.split(PathFun.pathSeparator).last, plugin.path, spark.sparkContext.hadoopConfiguration)
+      val localPath = downloadFromHDFSToLocal(plugin.path.split(Pattern.quote(PathFun.pathSeparator+"")).last, plugin.path, spark.sparkContext.hadoopConfiguration)
 
       if (plugin.pluginType == PluginType.DS
         || plugin.pluginType == PluginType.ET
