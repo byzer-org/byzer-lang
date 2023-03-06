@@ -51,8 +51,8 @@ class RedirectLogThread(
   setDaemon(true)
 
   override def run(): Unit = {
-    val conf.getOrElse("spark.mlsql.python.charset","utf-8")
-    WriteLog.write(scala.io.Source.fromInputStream(in,"GBK").getLines(), conf)
+    val pythonOutputEncoding = conf.getOrElse("pythonOutputEncoding","utf-8")
+    WriteLog.write(scala.io.Source.fromInputStream(in,pythonOutputEncoding).getLines(), conf)
   }
 }
 
