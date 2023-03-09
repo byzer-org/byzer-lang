@@ -62,6 +62,19 @@ class LoadAuth(authProcessListener: AuthProcessListener) extends MLSQLAuth with 
       }
     }
 
+    val mLSQLTables = getAuthTables(format, path, option)
+
+    mLSQLTables.foreach { tables =>
+      tables.foreach(authProcessListener.addTable(_))
+    }
+
+    authProcessListener.addTable(MLSQLTable(None, Some(cleanStr(tableName)), OperateType.LOAD, None, TableType.TEMP))
+    TableAuthResult.empty()
+    //Class.forName(env.getOrElse("auth_client", "streaming.dsl.auth.meta.client.DefaultClient")).newInstance().asInstanceOf[TableAuth].auth(mLSQLTable)
+  }
+
+  def getAuthTables(format: String, path: String, option: Map[String, String]) = {
+
     val tableType = TableType.from(format) match {
       case Some(tt) => tt
       case None =>
@@ -90,13 +103,6 @@ class LoadAuth(authProcessListener: AuthProcessListener) extends MLSQLAuth with 
       } else cleanStr(path)
       Option(List(MLSQLTable(None, Some(cleanStr(finalPath)), OperateType.LOAD, Some(format), tableType)))
     }
-
-    mLSQLTables.foreach { tables =>
-      tables.foreach(authProcessListener.addTable(_))
-    }
-
-    authProcessListener.addTable(MLSQLTable(None, Some(cleanStr(tableName)), OperateType.LOAD, None, TableType.TEMP))
-    TableAuthResult.empty()
-    //Class.forName(env.getOrElse("auth_client", "streaming.dsl.auth.meta.client.DefaultClient")).newInstance().asInstanceOf[TableAuth].auth(mLSQLTable)
+    mLSQLTables
   }
 }

@@ -22,6 +22,7 @@ import org.apache.spark.sql.streaming.StreamingQuery
 import org.apache.spark.sql.{DataFrame, DataFrameWriter, Row, SaveMode}
 import streaming.core.datasource.{DataSinkConfig, DataSourceRegistry, RewritableSinkConfig}
 import streaming.core.stream.MLSQLStreamManager
+import streaming.dsl.auth.{SaveAuth, TableAuthResult}
 import streaming.dsl.parser.DSLSQLParser._
 import streaming.dsl.template.TemplateMerge
 import streaming.dsl.{MLSQLExecuteContext, ScriptSQLExec, ScriptSQLExecListener}
@@ -102,7 +103,7 @@ class SaveAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
     val option = dsc.config
     val owner = option.get("owner")
     val path = dsc.path
-    
+
     def isStream = {
       MLSQLStreamManager.isStream
     }
@@ -122,6 +123,17 @@ class SaveAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
       oldDF = oldDF.repartition(option.getOrElse("fileNum", "").toString.toInt)
     }
     val writer = if (isStream) null else oldDF.write
+
+    if (scriptSQLExecListener.authProcessListner.isDefined) {
+      val auth = new SaveAuth(scriptSQLExecListener.authProcessListner.get)
+      val table = auth.getAuthTables(format, path, option)
+      val context = ScriptSQLExec.contextGetOrForTest()
+      context.execListener.getTableAuth match {
+        case Some(tableAuth) =>
+          tableAuth.auth(List(table))
+        case None => List(TableAuthResult(true, ""))
+      }
+    }
 
     val saveRes = DataSourceRegistry.fetch(format, option).map { datasource =>
       val newOption = if (partitionByCol.size > 0) {
@@ -148,7 +160,7 @@ class SaveAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
       if (path == "-" || path.isEmpty) {
         writer.format(option.getOrElse("implClass", format)).save()
       } else {
-        writer.format(option.getOrElse("implClass", format)).save( resourceRealPath(context.execListener, owner, path) )
+        writer.format(option.getOrElse("implClass", format)).save(resourceRealPath(context.execListener, owner, path))
       }
     }
 
@@ -178,7 +190,7 @@ class SaveAdaptor(scriptSQLExecListener: ScriptSQLExecListener) extends DslAdapt
   def optionsRewrite(orderKey: String,
                      config: DataSinkConfig,
                      format: String,
-                     context: MLSQLExecuteContext):DataSinkConfig = {
+                     context: MLSQLExecuteContext): DataSinkConfig = {
     AppRuntimeStore.store.getLoadSave(orderKey) match {
       case Some(item) =>
         item.customClassItems.classNames.map { className =>

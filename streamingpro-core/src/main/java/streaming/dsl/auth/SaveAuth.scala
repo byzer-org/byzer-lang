@@ -29,8 +29,8 @@ import tech.mlsql.dsl.processor.AuthProcessListener
 
 
 /**
-  * Created by allwefantasy on 11/9/2018.
-  */
+ * Created by allwefantasy on 11/9/2018.
+ */
 class SaveAuth(authProcessListener: AuthProcessListener) extends MLSQLAuth with DslTool with Logging with WowLog {
   val env = authProcessListener.listener.env().toMap
 
@@ -45,7 +45,7 @@ class SaveAuth(authProcessListener: AuthProcessListener) extends MLSQLAuth with 
     var option = Map[String, String]()
     var tableName = ""
     var partitionByCol = Array[String]()
-    
+
     var path = ""
 
     (0 to ctx.getChildCount() - 1).foreach { tokenIndex =>
@@ -70,6 +70,15 @@ class SaveAuth(authProcessListener: AuthProcessListener) extends MLSQLAuth with 
 
     val owner = option.get("owner")
 
+    val mLSQLTable = getAuthTables(format, path, option)
+    authProcessListener.addTable(mLSQLTable)
+    TableAuthResult.empty()
+
+  }
+
+  def getAuthTables(format: String, path: String, option: Map[String, String]) = {
+    val owner = option.get("owner")
+
     val tableType = TableType.from(format) match {
       case Some(tt) => tt
       case None =>
@@ -77,7 +86,6 @@ class SaveAuth(authProcessListener: AuthProcessListener) extends MLSQLAuth with 
         TableType.UNKNOW
 
     }
-
     val mLSQLTable = DataSourceRegistry.fetch(format, option).map { datasource =>
       val sourceInfo = datasource.asInstanceOf[ {def sourceInfo(config: DataAuthConfig): SourceInfo}].
         sourceInfo(DataAuthConfig(path, option))
@@ -85,7 +93,7 @@ class SaveAuth(authProcessListener: AuthProcessListener) extends MLSQLAuth with 
     } getOrElse {
       format match {
         case "hive" =>
-          val Array(db, table) = final_path.split("\\.") match {
+          val Array(db, table) = path.split("\\.") match {
             case Array(db, table) => Array(db, table)
             case Array(table) => Array("default", table)
           }
@@ -95,9 +103,8 @@ class SaveAuth(authProcessListener: AuthProcessListener) extends MLSQLAuth with 
           MLSQLTable(None, Some(resourceRealPath(context.execListener, owner, path)), OperateType.SAVE, Some(format), tableType)
       }
     }
-
-    authProcessListener.addTable(mLSQLTable)
-    TableAuthResult.empty()
-
+    mLSQLTable
   }
+
+
 }

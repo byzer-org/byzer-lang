@@ -21,7 +21,7 @@ package tech.mlsql.dsl.adaptor
 import org.apache.spark.sql.types.{DataType, StructType}
 import org.apache.spark.sql.{DataFrame, DataFrameReader, functions => F}
 import streaming.core.datasource._
-import streaming.dsl.auth.TableType
+import streaming.dsl.auth.{LoadAuth, TableAuthResult, TableType}
 import streaming.dsl.load.batch.ModelSelfExplain
 import streaming.dsl.parser.DSLSQLParser._
 import streaming.dsl.template.TemplateMerge
@@ -127,6 +127,19 @@ class LoadProcessing(scriptSQLExecListener: ScriptSQLExecListener,
 
     reader.options(dsConf.config)
     var sourceInfo: Option[SourceInfo] = None
+
+
+    if (scriptSQLExecListener.authProcessListner.isDefined) {
+      val auth = new LoadAuth(scriptSQLExecListener.authProcessListner.get)
+      val tables = auth.getAuthTables(format, path, option)
+      val context = ScriptSQLExec.contextGetOrForTest()
+      context.execListener.getTableAuth match {
+        case Some(tableAuth) =>
+          tableAuth.auth(tables.get)
+        case None => List(TableAuthResult(true, ""))
+      }
+    }
+
 
     DataSourceRegistry.fetch(format, option).map { datasource =>
       val ds = datasource.asInstanceOf[ {def load(reader: DataFrameReader, config: DataSourceConfig): DataFrame}]
