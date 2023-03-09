@@ -1,17 +1,16 @@
 package tech.mlsql.autosuggest.meta
 
-import tech.mlsql.autosuggest.{AutoSuggestContext, SpecialTableConst}
+import tech.mlsql.autosuggest.{AutoSuggestContext, CatalogWrap, SpecialTableConst}
 
 
 /**
  * 8/11/2022 WilliamZhu(allwefantasy@gmail.com)
  */
 class RuntimeMetaProvider extends MetaProvider {
-
-
+  
   override def search(key: MetaTableKey, extra: Map[String, String] = Map()): Option[MetaTable] = {
     val context = AutoSuggestContext.context()
-    val catalog = context.session.catalog
+    val catalog = new CatalogWrap(context.session.catalog)
     if (!catalog.tableExists(key.table)) {
       return None
     }
