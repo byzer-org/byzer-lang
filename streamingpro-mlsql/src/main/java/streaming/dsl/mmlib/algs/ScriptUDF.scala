@@ -26,11 +26,12 @@ import org.apache.spark.udf.UDFManager
 import streaming.dsl.mmlib._
 import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
 import streaming.udf.RuntimeCompileScriptFactory
+import tech.mlsql.dsl.auth.BaseETAuth
 
 /**
  * Created by allwefantasy on 27/8/2018.
  */
-class ScriptUDF(override val uid: String) extends SQLAlg with WowParams {
+class ScriptUDF(override val uid: String) extends SQLAlg with WowParams with BaseETAuth{
 
   def this() = this(BaseParams.randomUID())
 
@@ -413,6 +414,8 @@ class ScriptUDF(override val uid: String) extends SQLAlg with WowParams {
   final val dataType: Param[String] = new Param[String](this, "dataType",
     s"""when you use python udf, you should define return type.""")
   setDefault(dataType, "")
+
+  override def etName: String = "__script_udf__"
 }
 
 
