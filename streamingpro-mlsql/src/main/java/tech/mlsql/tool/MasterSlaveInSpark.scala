@@ -81,13 +81,17 @@ class MasterSlaveInSpark(name: String, session: SparkSession, _owner: String) ex
         TryTool.tryOrElse {
           val resource = new SparkInstanceService(session).resources
           val jobInfo = new MLSQLJobCollect(session, context.owner)
-          val leftResource = resource.totalCores - jobInfo.resourceSummary(null).activeTasks
-          logInfo(s"RayMode: Resource:[${leftResource}(${resource.totalCores}-${jobInfo.resourceSummary(null).activeTasks})] TargetLen:[${targetLen}]")
-          if (leftResource / 2 <= targetLen) {
-            targetLen = Math.max(Math.floor(leftResource / 2) - 1, 1).toInt
+          val totalCores = resource.totalCores
+          val activeCores = jobInfo.resourceSummary(null).activeTasks
+          val freeCores = totalCores - activeCores
+          logInfo(s"Detect resources: totalCores:${totalCores} activeCores:${activeCores} freeCores:${freeCores}")
+          logInfo("Compute formula: freeCores / 2 <= targetLen ? targetLen = Math.max(Math.floor(freeCores / 2) - 1, 1).toInt : targetLen = targetLen")
+          if (freeCores / 2 <= targetLen) {
+            targetLen = Math.max(Math.floor(freeCores / 2) - 1, 1).toInt
           }
+          logInfo(s"Setup [${targetLen}] data refs in Python side.")
         } {
-          logWarning("Warning: Fail to detect instance resource. Setup 4 data server for Python.")
+          logWarning("Fail to detect instance resource. Setup 4 data refs for Python side")
           if (targetLen > 4) targetLen = 4
         }
     }
