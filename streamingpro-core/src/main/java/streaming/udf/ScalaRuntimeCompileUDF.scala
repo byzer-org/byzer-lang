@@ -26,7 +26,7 @@ import tech.mlsql.common.utils.lang.sc.SourceCodeCompiler
 import tech.mlsql.common.utils.log.Logging
 
 import scala.reflect.runtime.universe._
-import scala.tools.reflect.ToolBox
+import scala.tools.reflect.{ToolBox, ToolBoxError}
 
 /**
   * Created by fchen on 2018/11/14.
@@ -52,11 +52,20 @@ object ScalaRuntimeCompileUDF extends RuntimeCompileUDF with ScalaCompileUtils w
     * validate the source code
     */
   override def check(sourceCode: String): Boolean = {
-    val tree = tb.parse(sourceCode)
-    val typeCheckResult = tb.typecheck(tree)
-    val checkResult = typeCheckResult.isInstanceOf[DefDef] || typeCheckResult.isInstanceOf[ClassDef]
+    var checkResult = false
+    try {
+      val tree = tb.parse(sourceCode)
+      val typeCheckResult = tb.typecheck(tree)
+      checkResult = typeCheckResult.isInstanceOf[DefDef] || typeCheckResult.isInstanceOf[ClassDef]
+    }
+    catch {
+      // tb.parse and tb.typecheck could throw ToolBoxError, which is a sub-class of Throwable
+      case err: ToolBoxError =>
+        logError("ToolBoxError: ", err )
+        throw new IllegalArgumentException("UDF Compilation error: " + err.message)
+    }
     if (!checkResult) {
-      throw new IllegalArgumentException(s"${sourceCode} isn't a function or class define.")
+      throw new IllegalArgumentException(s"${sourceCode} isn't a function or class definition.")
     }
     checkResult
   }

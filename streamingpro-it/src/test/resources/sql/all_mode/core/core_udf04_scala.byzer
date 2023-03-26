@@ -1,0 +1,12 @@
+--%exception=java.lang.IllegalArgumentException
+--%msg=UDF Compilation error: reflective typecheck has failed: object a is not a member of package hhhh
+Register ScriptUDF.`` AS plusFun
+WHERE lang='scala'
+AND udfType="udf"
+AND code='''
+  def apply(a: Double, b: Double) = {
+      hhhh a + b
+  }
+''';
+
+select plusFun(1.0,2.0) as a;
