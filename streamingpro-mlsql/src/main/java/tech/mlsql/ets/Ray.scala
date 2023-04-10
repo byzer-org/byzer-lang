@@ -98,20 +98,23 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
     val timezoneID = session.sessionState.conf.sessionLocalTimeZone
     val df = session.table(sourceTable)
 
+    val modelWaitServerReadyTimeout = etParams.getOrElse("modelWaitServerReadyTimeout","60")
+    val dataWaitServerReadyTimeout = etParams.getOrElse("dataWaitServerReadyTimeout","60")
+
     // start spark data servers for model if user configure model table in et params.
     val modelTableOpt = etParams.get("model")
     if (modelTableOpt.isDefined) {
       val modelDf = session.table(modelTableOpt.get)
       val modelServer = new MasterSlaveInSpark("temp-model-server-in-spark", session, context.owner)
       modelServer.build(modelDf, MasterSlaveInSpark.defaultDataServerImpl)
-      modelServer.waitWithTimeout(60)
+      modelServer.waitWithTimeout(modelWaitServerReadyTimeout)
       runnerConf ++= Map("modelServers" -> modelServer.dataServers.get().map(item => s"${item.host}:${item.port}").mkString(","))
     }
 
     // start spark data servers for dataset
     val masterSlaveInSpark = new MasterSlaveInSpark("temp-data-server-in-spark", session, context.owner)
     masterSlaveInSpark.build(df, MasterSlaveInSpark.defaultDataServerImpl)
-    masterSlaveInSpark.waitWithTimeout(60)
+    masterSlaveInSpark.waitWithTimeout(dataWaitServerReadyTimeout)
 
 
     val targetSchema = schemaFromStr(runnerConf("schema"))
