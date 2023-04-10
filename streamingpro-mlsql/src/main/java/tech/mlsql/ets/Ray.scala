@@ -2,7 +2,6 @@ package tech.mlsql.ets
 
 
 import java.util
-
 import org.apache.spark.ml.param.Param
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.mlsql.session.MLSQLException
@@ -20,7 +19,7 @@ import tech.mlsql.arrow.python.runner._
 import tech.mlsql.common.utils.lang.sc.ScalaMethodMacros
 import tech.mlsql.common.utils.network.NetUtils
 import tech.mlsql.common.utils.serder.json.JSONTool
-import tech.mlsql.ets.ray.DataServer
+import tech.mlsql.ets.ray.{DataServer, IteratorRDD}
 import tech.mlsql.schema.parser.SparkSimpleSchemaParser
 import tech.mlsql.session.SetSession
 import tech.mlsql.tool.MasterSlaveInSpark
@@ -177,8 +176,8 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
             batch.rowIterator.asScala.map(f =>
               stage1_schema_encoder(f)
             )
-          }.toList
-          val rdd = session.sparkContext.makeRDD[Row](data)
+          }
+          val rdd = new IteratorRDD[Row](session.sparkContext,data)
           session.createDataFrame(rdd, stage1_schema)
         } catch {
           case e: Exception =>

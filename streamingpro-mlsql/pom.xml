@@ -305,6 +305,7 @@
     </profiles>
 
     <dependencies>
+
         <dependency>
             <groupId>tech.mlsql</groupId>
             <artifactId>mlsql-ets-${spark.bigversion}_${scala.binary.version}</artifactId>
