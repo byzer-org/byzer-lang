@@ -98,8 +98,8 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
     val timezoneID = session.sessionState.conf.sessionLocalTimeZone
     val df = session.table(sourceTable)
 
-    val modelWaitServerReadyTimeout = etParams.getOrElse("modelWaitServerReadyTimeout","60").toInt
-    val dataWaitServerReadyTimeout = etParams.getOrElse("dataWaitServerReadyTimeout","60").toInt
+    val modelWaitServerReadyTimeout = etParams.getOrElse("modelWaitServerReadyTimeout", "60").toInt
+    val dataWaitServerReadyTimeout = etParams.getOrElse("dataWaitServerReadyTimeout", "60").toInt
 
     // start spark data servers for model if user configure model table in et params.
     val modelTableOpt = etParams.get("model")
@@ -127,7 +127,7 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
     val stage2_schema = targetSchema
     val runIn = runnerConf.getOrElse("runIn", "executor")
     val pythonVersion = runnerConf.getOrElse("pythonVersion", "3.6")
-    val pythonExec = runnerConf.getOrElse("pythonExec","python")
+    val pythonExec = runnerConf.getOrElse("pythonExec", "python")
     import session.implicits._
     val newdf = session.createDataset[DataServer](masterSlaveInSpark.dataServers.get().map(f => DataServer(f.host, f.port, timezoneID))).repartition(1)
     val sourceSchema = newdf.schema
@@ -180,7 +180,7 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
               stage1_schema_encoder(f)
             )
           }
-          val rdd = new IteratorRDD[Row](session.sparkContext,data)
+          val rdd = new IteratorRDD[Row](session.sparkContext, data)
           session.createDataFrame(rdd, stage1_schema)
         } catch {
           case e: Exception =>
@@ -347,28 +347,48 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
 
     val sourceSchema = params.get("sourceSchema") match {
       case Some(schemaStr) => schemaFromStr(schemaStr)
-      case None => StructType(Seq(StructField("value", ArrayType(DoubleType))))
+      case None => StructType(Array(StructField("value", ArrayType(DoubleType))))
     }
 
     val outputSchema = params.get("outputSchema") match {
       case Some(schemaStr) => schemaFromStr(schemaStr)
-      case None => StructType(Seq(StructField("value", ArrayType(ArrayType(DoubleType)))))
+      case None => StructType(Array(StructField("value", ArrayType(ArrayType(DoubleType)))))
     }
 
     val debug = params.get("debugMode")
 
-    session.udf.register(name, (vectors: Seq[Seq[Double]]) => {
-      val startTime = System.currentTimeMillis()
-      val rows = vectors.map(vector => Row.fromSeq(Seq(vector)))
-      val newRows = Ray.executePythonCode(predictCode, envs4j,
-        rows.toIterator, sourceSchema, outputSchema, runnerConf, timezoneID, pythonVersion)
-      val res = newRows.map(_.getAs[Seq[Seq[Double]]](0)).head
-      if (debug.isDefined) {
-        logInfo(s"Execute predict code time:${System.currentTimeMillis() - startTime}")
-      }
-      res
+    sourceSchema match {
+      case StructType(Array(StructField("value", StringType, _, _))) =>
+        
+        session.udf.register(name, (inputs: Seq[String]) => {
+          val startTime = System.currentTimeMillis()
+          val rows = inputs.map(input => Row.fromSeq(Seq(input)))
+          val newRows = Ray.executePythonCode(predictCode, envs4j,
+            rows.toIterator, sourceSchema, outputSchema, runnerConf, timezoneID, pythonVersion)
+          val res = newRows.map(_.getAs[Seq[String]](0)).head
+          if (debug.isDefined) {
+            logInfo(s"Execute predict code time:${System.currentTimeMillis() - startTime}")
+          }
+          res
 
-    })
+        })
+
+      case StructType(Array(StructField("value", ArrayType(DoubleType, _), _, _))) =>
+        session.udf.register(name, (vectors: Seq[Seq[Double]]) => {
+          val startTime = System.currentTimeMillis()
+          val rows = vectors.map(vector => Row.fromSeq(Seq(vector)))
+          val newRows = Ray.executePythonCode(predictCode, envs4j,
+            rows.toIterator, sourceSchema, outputSchema, runnerConf, timezoneID, pythonVersion)
+          val res = newRows.map(_.getAs[Seq[Seq[Double]]](0)).head
+          if (debug.isDefined) {
+            logInfo(s"Execute predict code time:${System.currentTimeMillis() - startTime}")
+          }
+          res
+
+        })
+    }
+
+
     null
   }
 
@@ -382,7 +402,7 @@ object Ray {
                         outputSchema: StructType, conf: Map[String, String], timezoneID: String, pythonVersion: String): List[Row] = {
     import scala.collection.JavaConverters._
 
-    val pythonExec = conf.getOrElse("pythonExec","python")
+    val pythonExec = conf.getOrElse("pythonExec", "python")
 
     val batch = new ArrowPythonRunner(
       Seq(ChainedPythonFunctions(Seq(PythonFunction(code, envs, pythonExec, pythonVersion)))), inputSchema,
