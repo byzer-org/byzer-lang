@@ -20,6 +20,8 @@ package org.apache.spark.sql
 
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.catalyst.InternalRow
+import org.apache.spark.sql.catalyst.expressions.AttributeReference
+import org.apache.spark.sql.catalyst.plans.logical.LocalRelation
 import org.apache.spark.sql.types.StructType
 
 class SessionWrapper(sparkSession: SparkSession) {
@@ -27,5 +29,12 @@ class SessionWrapper(sparkSession: SparkSession) {
                               schema: StructType,
                               isStreaming: Boolean = false) = {
     sparkSession.sqlContext.internalCreateDataFrame(catalystRows, schema, isStreaming = true)
+  }
+
+  def createDataFrame(data: Iterator[Row], schema: StructType) = {
+    val localRelation = LocalRelation.fromExternalRows(
+      schema.fields.map(f => AttributeReference(f.name, f.dataType, f.nullable, f.metadata)()),
+      data.toSeq)
+    Dataset.ofRows(sparkSession, localRelation)
   }
 }

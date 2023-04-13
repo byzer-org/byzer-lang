@@ -3,10 +3,12 @@ package tech.mlsql.ets
 
 import java.util
 import org.apache.spark.ml.param.Param
+import org.apache.spark.sql.catalyst.expressions.AttributeReference
+import org.apache.spark.sql.catalyst.plans.logical.LocalRelation
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.mlsql.session.MLSQLException
 import org.apache.spark.sql.types._
-import org.apache.spark.sql.{DataFrame, Row, SparkSession, SparkUtils}
+import org.apache.spark.sql.{DataFrame, Dataset, Row, SessionWrapper, SparkSession, SparkUtils}
 import org.apache.spark.{TaskContext, WowRowEncoder}
 import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib._
@@ -180,8 +182,8 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
               stage1_schema_encoder(f)
             )
           }
-          val rdd = new IteratorRDD[Row](session.sparkContext, data)
-          session.createDataFrame(rdd, stage1_schema)
+          val wrapper = new SessionWrapper(session)
+          wrapper.createDataFrame(data, stage1_schema)
         } catch {
           case e: Exception =>
             throw new MLSQLException("An exception was encountered in the execution of this python task! " +
@@ -302,7 +304,7 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
         session,
         genCode(session, registerCode),
         "command",
-        params ++ Map("model" -> _model.toString), extraConf = Map("UDF_CLIENT" -> name))
+        params ++ Map("model" -> _model.toString), extraConf = Map("UDF_CLIENT" -> name)).collect()
     }
 
     _load
@@ -359,7 +361,7 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
 
     sourceSchema match {
       case StructType(Array(StructField("value", StringType, _, _))) =>
-        
+
         session.udf.register(name, (inputs: Seq[String]) => {
           val startTime = System.currentTimeMillis()
           val rows = inputs.map(input => Row.fromSeq(Seq(input)))
