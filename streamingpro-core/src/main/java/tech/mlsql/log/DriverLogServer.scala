@@ -21,8 +21,8 @@ package tech.mlsql.log
 import net.csdn.common.io.Streams
 
 import java.util.concurrent.atomic.AtomicBoolean
-import org.eclipse.jetty.server.{Request => JettyRequest}
-import org.eclipse.jetty.server.Server
+import org.eclipse.jetty.server.{HttpConnectionFactory, Server, ServerConnector, Request => JettyRequest}
+import org.eclipse.jetty.util.thread.QueuedThreadPool
 import tech.mlsql.common.utils.base.TryTool
 import tech.mlsql.common.utils.distribute.socket.server.Request
 import tech.mlsql.common.utils.log.Logging
@@ -41,10 +41,17 @@ class DriverLogServer(accessToken: String) extends BaseHttpLogServer with Loggin
   override var requestMapping: String = "/v2/writelog"
   @volatile private var markClose: AtomicBoolean = new AtomicBoolean(false)
 
+  val threadPool = new QueuedThreadPool(100, 10, 60000)
+
   def init(host: String, port: Int): (Server, String, String, Int) = {
 
     val startService = (_port: Int) => {
-      val server = new Server(new InetSocketAddress(host, _port))
+      val server = new Server(threadPool)
+      val connector = new ServerConnector(server, new HttpConnectionFactory())
+      connector.setHost(host)
+      connector.setPort(_port)
+      connector.setAcceptQueueSize(100)
+      server.addConnector(connector)
       server.setHandler(this)
       server.start()
       (server, server.getURI.getPort)
@@ -90,6 +97,8 @@ class DriverLogServer(accessToken: String) extends BaseHttpLogServer with Loggin
     url match {
       case x: String if url.contains(requestMapping) =>
         try {
+          response.setStatus(HttpServletResponse.SC_OK)
+          response.setContentType("application/json")
           val context = Streams.copyToString(new InputStreamReader(request.getInputStream, "UTF-8"))
 
           var logRequest: Any = null
@@ -111,6 +120,8 @@ class DriverLogServer(accessToken: String) extends BaseHttpLogServer with Loggin
         } catch {
           case e: Exception =>
             logError("DriverLogServer caught an exception when executing a handle. ", e)
+        } finally {
+          baseRequest.setHandled(true)
         }
 
       case _ =>
