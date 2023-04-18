@@ -49,11 +49,12 @@ trait BaseHttpLogClient extends Logging with WowLog {
         val logItem = LogUtils.formatWithOwner(line, owner, groupId)
         if (enablePrint) {
           println(logItem)
+        }else {
+          val body = SendLog(token, logItem).json
+          Request.Post(url).addHeader("Content-Type", "application/json")
+            .bodyString(body, ContentType.APPLICATION_JSON.withCharset("utf8"))
+            .execute()
         }
-        val body = SendLog(token, logItem).json
-        Request.Post(url).addHeader("Content-Type", "application/json")
-          .bodyString(body, ContentType.APPLICATION_JSON.withCharset("utf8"))
-          .execute()
       }
 
     } catch {
