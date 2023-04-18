@@ -44,8 +44,13 @@ trait BaseHttpLogClient extends Logging with WowLog {
     try {
       val url = _conf.getOrElse("spark.mlsql.log.driver.url", NetTool.localHostNameForURI())
       val token = _conf.getOrElse("spark.mlsql.log.driver.token", "mlsql")
+      val enablePrint = _conf.getOrElse("spark.mlsql.log.driver.enablePrint", "false").toBoolean
       iter.foreach { line =>
-        val body = SendLog(token, LogUtils.formatWithOwner(line, owner, groupId)).json
+        val logItem = LogUtils.formatWithOwner(line, owner, groupId)
+        if (enablePrint) {
+          println(logItem)
+        }
+        val body = SendLog(token, logItem).json
         Request.Post(url).addHeader("Content-Type", "application/json")
           .bodyString(body, ContentType.APPLICATION_JSON.withCharset("utf8"))
           .execute()
