@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import streaming.core.HDFSTarEntry;
 
 import java.io.*;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -74,9 +75,15 @@ public class TarfileUtil {
                 int len = files.size();
                 int i = 1;
                 for (FileStatus cur : files) {
-                    logger.info("[" + i++ + "/" + len + "]" + ",读取文件" + cur);
                     inputStream = fs.open(cur.getPath());
-                    String entryName = StringUtils.stripStart(cur.getPath().toUri().getPath(),pathStr);
+                    URI tempUri = cur.getPath().toUri();
+                    String prefix = "";
+                    if(tempUri.getScheme()!=null){
+                        prefix = tempUri.getScheme()+"://";
+                    }
+                    prefix = prefix + tempUri.getPath();
+                    String entryName = StringUtils.removeStart(prefix, pathStr);
+                    logger.info("[" + i++ + "/" + len + "]" + ",读取文件" + cur);
                     tarOutputStream.putNextEntry(new HDFSTarEntry(cur, entryName));
                     org.apache.commons.io.IOUtils.copyLarge(inputStream, tarOutputStream);
                     inputStream.close();

@@ -28,7 +28,10 @@ public class HDFSTarEntry extends TarEntry {
     public HDFSTarEntry(FileStatus hdfsFileStatus, String entryName) {
         super(null, entryName);
         this.hdfsFileStatus = hdfsFileStatus;
-        header = TarHeader.createHeader(entryName, hdfsFileStatus.getLen(), hdfsFileStatus.getModificationTime() / 1000, hdfsFileStatus.isDirectory());
+        header = TarHeader.createHeader(entryName, hdfsFileStatus.getLen(),
+                hdfsFileStatus.getModificationTime() / 1000,
+                hdfsFileStatus.isDirectory(),
+                hdfsFileStatus.getPermission().toShort());
     }
 
     @Override
