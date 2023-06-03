@@ -23,9 +23,10 @@ import java.util.concurrent.atomic.AtomicReference
 import java.util.{UUID, Map => JMap}
 import _root_.streaming.core.stream.MLSQLStreamManager
 import net.csdn.common.reflect.ReflectHelper
+import org.apache.spark.network.util.JavaUtils
 import org.apache.spark.ps.cluster.PSDriverBackend
 import org.apache.spark.sql.jdbc.{JdbcDialect, JdbcDialects}
-import org.apache.spark.sql.mlsql.session.{SessionIdentifier, SessionManager}
+import org.apache.spark.sql.mlsql.session.{SessionIdentifier, SessionManager, SparkSessionCacheManager}
 import org.apache.spark.sql.{MLSQLUtils, SQLContext, SparkSession}
 import org.apache.spark.{MLSQLConf, MLSQLSparkConst, SparkConf, SparkCoreVersion, SparkRuntimeOperator, WowFastSparkContext}
 import tech.mlsql.common.utils.classloader.ClassLoaderTool
@@ -209,6 +210,13 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
       }
     }
     MLSQLStreamManager.start(sparkSession)
+
+    // configure session expire time
+    val expireTime = sparkSession.conf.getOption("spark.mlsql.session.expireTime")
+    if (expireTime.isDefined) {
+      SparkSessionCacheManager.setExpireTimeout(JavaUtils.timeStringAsMs(expireTime.get))
+    }
+
     createTables
   }
 
