@@ -53,7 +53,7 @@ class MasterSlaveInSpark(name: String, session: SparkSession, _owner: String) ex
     refs
   }
 
-  def waitWithTimeout(seconds: Int = 60) = {
+  def waitWithTimeout(seconds: Int = 60,msg:String="") = {
     assert(tempSocketServerInDriver != null, "invoke build first")
     var clockTimes = seconds * 2
     while (targetLen != refs.get().length && clockTimes >= 0) {
@@ -62,7 +62,22 @@ class MasterSlaveInSpark(name: String, session: SparkSession, _owner: String) ex
     }
     if (clockTimes < 0) {
       tempSocketServerInDriver.shutdown
-      throw new RuntimeException(s"fail to start data socket server. targetLen:${targetLen} actualLen:${refs.get().length}")
+
+      val resource = new SparkInstanceService(session).resources
+      val context = ScriptSQLExec.context()
+      val jobInfo = new MLSQLJobCollect(session, context.owner)
+      val totalCores = resource.totalCores
+
+      val suggestMsg = if(totalCores <= targetLen ) {
+         s"The total cores is ${totalCores}, but we try to start ${targetLen} servers, please try to increase the Byzer CPU resource."
+      } else ""
+
+      throw new RuntimeException(
+        s"""
+           |Fail to start socket server(${msg}) within ${seconds} seconds.
+           |The system try to start [${targetLen}] servers, but only ${refs.get().length} is started.
+           |${suggestMsg}
+           |""".stripMargin)
     }
     tempSocketServerInDriver.shutdown
     this

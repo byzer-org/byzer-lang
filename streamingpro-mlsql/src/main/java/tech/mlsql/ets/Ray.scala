@@ -98,8 +98,8 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
     val timezoneID = session.sessionState.conf.sessionLocalTimeZone
     val df = session.table(sourceTable)
 
-    val modelWaitServerReadyTimeout = etParams.getOrElse("modelWaitServerReadyTimeout", "60").toInt
-    val dataWaitServerReadyTimeout = etParams.getOrElse("dataWaitServerReadyTimeout", "60").toInt
+    val modelWaitServerReadyTimeout = etParams.getOrElse("modelWaitServerReadyTimeout", "300").toInt
+    val dataWaitServerReadyTimeout = etParams.getOrElse("dataWaitServerReadyTimeout", "300").toInt
 
     // start spark data servers for model if user configure model table in et params.
     val modelTableOpt = etParams.get("model")
@@ -107,14 +107,14 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
       val modelDf = session.table(modelTableOpt.get)
       val modelServer = new MasterSlaveInSpark("temp-model-server-in-spark", session, context.owner)
       modelServer.build(modelDf, MasterSlaveInSpark.defaultDataServerImpl)
-      modelServer.waitWithTimeout(modelWaitServerReadyTimeout)
+      modelServer.waitWithTimeout(modelWaitServerReadyTimeout,"model server")
       runnerConf ++= Map("modelServers" -> modelServer.dataServers.get().map(item => s"${item.host}:${item.port}").mkString(","))
     }
 
     // start spark data servers for dataset
     val masterSlaveInSpark = new MasterSlaveInSpark("temp-data-server-in-spark", session, context.owner)
     masterSlaveInSpark.build(df, MasterSlaveInSpark.defaultDataServerImpl)
-    masterSlaveInSpark.waitWithTimeout(dataWaitServerReadyTimeout)
+    masterSlaveInSpark.waitWithTimeout(dataWaitServerReadyTimeout,"data server")
 
 
     val targetSchema = schemaFromStr(runnerConf("schema"))
@@ -305,7 +305,12 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
         params ++ Map("model" -> _model.toString), extraConf = Map("UDF_CLIENT" -> name)).collect()
     }
 
-    _load
+    // if the user try to reconnect to udf cluster in ray
+    // there is no need to execute the registerCode since we
+    // only need to register the udf in Byzer.
+    if (!params.getOrElse("reconnect","false").toBoolean){
+      _load
+    }
 
     val predictCode = params.getOrElse("predictCode",
       """
