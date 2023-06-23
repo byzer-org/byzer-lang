@@ -31,7 +31,6 @@ import tech.mlsql.common.utils.serder.json.JSONTool
 class DefaultConsoleClient extends TableAuth with Logging with WowLog {
   override def auth(tables: List[MLSQLTable]): List[TableAuthResult] = {
     val owner = ScriptSQLExec.contextGetOrForTest().owner
-    logInfo(format(s"auth ${owner}  want access tables: ${JSONTool.toJsonStr(tables)}"))
     DefaultConsoleClient.set(tables)
     List(TableAuthResult(true, ""))
   }
