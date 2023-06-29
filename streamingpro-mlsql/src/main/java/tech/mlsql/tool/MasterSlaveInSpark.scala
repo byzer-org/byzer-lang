@@ -31,7 +31,7 @@ class MasterSlaveInSpark(name: String, session: SparkSession, _owner: String) ex
   private var refs: AtomicReference[ArrayBuffer[ReportHostAndPort]] = null
   private var targetLen: Int = 0
 
-  def build(df: DataFrame, job: (String,
+  def build(df: DataFrame,config:Map[String,String], job: (String,
     String,
     StructType,
     Iterator[Row],

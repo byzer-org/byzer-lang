@@ -22,7 +22,7 @@ import tech.mlsql.common.utils.serder.json.JSONTool
 import tech.mlsql.ets.ray.DataServer
 import tech.mlsql.schema.parser.SparkSimpleSchemaParser
 import tech.mlsql.session.SetSession
-import tech.mlsql.tool.MasterSlaveInSpark
+import tech.mlsql.tool.{MasterSlaveInSpark, MasterSlaveInSparkConfig}
 import tech.mlsql.version.VersionCompatibility
 
 /**
@@ -106,14 +106,14 @@ class Ray(override val uid: String) extends SQLAlg with VersionCompatibility wit
     if (modelTableOpt.isDefined) {
       val modelDf = session.table(modelTableOpt.get)
       val modelServer = new MasterSlaveInSpark("temp-model-server-in-spark", session, context.owner)
-      modelServer.build(modelDf, MasterSlaveInSpark.defaultDataServerImpl)
+      modelServer.build(modelDf,etParams, MasterSlaveInSpark.defaultDataServerImpl)
       modelServer.waitWithTimeout(modelWaitServerReadyTimeout,"model server")
       runnerConf ++= Map("modelServers" -> modelServer.dataServers.get().map(item => s"${item.host}:${item.port}").mkString(","))
     }
 
     // start spark data servers for dataset
     val masterSlaveInSpark = new MasterSlaveInSpark("temp-data-server-in-spark", session, context.owner)
-    masterSlaveInSpark.build(df, MasterSlaveInSpark.defaultDataServerImpl)
+    masterSlaveInSpark.build(df,etParams, MasterSlaveInSpark.defaultDataServerImpl)
     masterSlaveInSpark.waitWithTimeout(dataWaitServerReadyTimeout,"data server")
 
 
