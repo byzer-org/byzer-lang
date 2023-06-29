@@ -22,7 +22,7 @@ import tech.mlsql.common.utils.serder.json.JSONTool
 import tech.mlsql.ets.ray.DataServer
 import tech.mlsql.schema.parser.SparkSimpleSchemaParser
 import tech.mlsql.session.SetSession
-import tech.mlsql.tool.{MasterSlaveInSpark, MasterSlaveInSparkConfig}
+import tech.mlsql.tool.MasterSlaveInSpark
 import tech.mlsql.version.VersionCompatibility
 
 /**
