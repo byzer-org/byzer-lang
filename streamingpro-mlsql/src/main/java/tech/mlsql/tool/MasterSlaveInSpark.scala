@@ -31,7 +31,7 @@ class MasterSlaveInSpark(name: String, session: SparkSession, _owner: String) ex
   private var refs: AtomicReference[ArrayBuffer[ReportHostAndPort]] = null
   private var targetLen: Int = 0
 
-  def build(df: DataFrame,config:Map[String,String], job: (String,
+  def build(df: DataFrame, config: Map[String, String], job: (String,
     String,
     StructType,
     Iterator[Row],
@@ -39,9 +39,11 @@ class MasterSlaveInSpark(name: String, session: SparkSession, _owner: String) ex
     Int) => Unit) = {
     val (_targetLen, shouldSort) = computeSplits(df)
     targetLen = _targetLen
-
+    val keepPartitionNum = config.getOrElse("keepPartitionNum", "false").toBoolean
     val tempdf = if (!shouldSort) {
-      df.repartition(targetLen)
+      if (!keepPartitionNum) {
+        df.repartition(targetLen)
+      } else df
     } else df.repartition(1).sortWithinPartitions(f.col("start").asc)
 
     buildDataSocketServers(tempdf, job)
@@ -53,7 +55,7 @@ class MasterSlaveInSpark(name: String, session: SparkSession, _owner: String) ex
     refs
   }
 
-  def waitWithTimeout(seconds: Int = 60,msg:String="") = {
+  def waitWithTimeout(seconds: Int = 60, msg: String = "") = {
     assert(tempSocketServerInDriver != null, "invoke build first")
     var clockTimes = seconds * 2
     while (targetLen != refs.get().length && clockTimes >= 0) {
@@ -68,8 +70,8 @@ class MasterSlaveInSpark(name: String, session: SparkSession, _owner: String) ex
       val jobInfo = new MLSQLJobCollect(session, context.owner)
       val totalCores = resource.totalCores
 
-      val suggestMsg = if(totalCores <= targetLen ) {
-         s"The total cores is ${totalCores}, but we try to start ${targetLen} servers, please try to increase the Byzer CPU resource."
+      val suggestMsg = if (totalCores <= targetLen) {
+        s"The total cores is ${totalCores}, but we try to start ${targetLen} servers, please try to increase the Byzer CPU resource."
       } else ""
 
       throw new RuntimeException(
