@@ -38,8 +38,14 @@ class MasterSlaveInSpark(name: String, session: SparkSession, _owner: String) ex
     String,
     Int) => Unit) = {
     val (_targetLen, shouldSort) = computeSplits(df)
-    targetLen = _targetLen
+
     val keepPartitionNum = config.getOrElse("keepPartitionNum", "false").toBoolean
+    if (!keepPartitionNum) {
+      targetLen = _targetLen
+    }else{
+      targetLen = df.rdd.partitions.length
+    }
+
     val tempdf = if (!shouldSort) {
       if (!keepPartitionNum) {
         df.repartition(targetLen)
