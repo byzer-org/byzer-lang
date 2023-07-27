@@ -85,6 +85,6 @@ class MLSQLText(override val uid: String) extends MLSQLBaseFileSource with WowPa
   final val wholetext: Param[Boolean] = new Param[Boolean](this, "wholetext", "`wholetext` (default `false`): If true, read a file as a single row and not split by \"\\n\".")
   final val lineSep: Param[String] = new Param[String](this, "lineSep", "`(default covers all `\\r`, `\\r\\n` and `\\n`): defines the line separator\n   * that should be used for parsing.")
 
-  final val contentColumn: Param[String] = new Param[String](this, "imageColumn", "for save mode")
+  final val contentColumn: Param[String] = new Param[String](this, "contentColumn", "for save mode")
   final val fileName: Param[String] = new Param[String](this, "fileName", "for save mode")
 }
