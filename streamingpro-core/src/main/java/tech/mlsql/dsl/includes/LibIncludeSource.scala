@@ -34,9 +34,14 @@ class LibIncludeSource extends IncludeSource with Logging {
     val commitValue = options.getOrElse("commit", "")
     val aliasValue = options.getOrElse("alias", "")
     val force = options.getOrElse("force", "false")
+    val onlyForCurrentInstance = options.getOrElse("onlyForCurrentInstance", "false").toBoolean
 
     //"./__mlsql__/deps/"
-    val targetPath = PathFun.current.add("__mlsql__").add("deps").toPath
+    val homeDir = System.getProperty("user.home")
+    var targetPath = PathFun(homeDir).add(".mlsql").add("deps").toPath
+    if(onlyForCurrentInstance) {
+      targetPath = PathFun.current.add(".mlsql").add("deps").toPath
+    }
     val targetFile = new File(targetPath)
     if (!targetFile.exists()) {
       targetFile.mkdirs()
