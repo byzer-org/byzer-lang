@@ -37,8 +37,7 @@ class LibIncludeSource extends IncludeSource with Logging {
     val onlyForCurrentInstance = options.getOrElse("onlyForCurrentInstance", "false").toBoolean
 
     //"./__mlsql__/deps/"
-    val homeDir = System.getProperty("user.home")
-    var targetPath = PathFun(homeDir).add(".mlsql").add("deps").toPath
+    var targetPath = PathFun.home.add(".mlsql").add("deps").toPath
     if(onlyForCurrentInstance) {
       targetPath = PathFun.current.add(".mlsql").add("deps").toPath
     }

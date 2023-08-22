@@ -12,6 +12,8 @@ import scala.io.Source
 
 /**
  * 6/5/2021 WilliamZhu(allwefantasy@gmail.com)
+ * This is work with LibIncludeSource
+ * It will try to load the lib from local which is downloaded by LibIncludeSource
  */
 class ScriptIncludeSource extends IncludeSource with Logging {
   override def fetchSource(sparkSession: SparkSession, path: String, options: Map[String, String]): String = {
@@ -33,9 +35,15 @@ class ScriptIncludeSource extends IncludeSource with Logging {
       libPath = libPathOpt.get.map(item => item.v)
     }
 
+    /**
+     * if we can not find the lib name from session, we will try to find it from local.
+     * however, this require the libAlias is a full name.
+     * for example:
+     * include local.`gitee.com/allwefantasy/lib-core.udf.hello`
+     */
     if (!libPath.isDefined) {
       val Array(website, user, repo) = libAlias.split("/")
-      val projectPath = PathFun.tmp.add("__mlsql__").add("deps").add(website).add(user).add(repo).toPath
+      val projectPath = PathFun.home.add(".mlsql").add("deps").add(website).add(user).add(repo).toPath
       val dep = new File(projectPath)
       if (dep.exists()) {
         libPath = Option(projectPath)
