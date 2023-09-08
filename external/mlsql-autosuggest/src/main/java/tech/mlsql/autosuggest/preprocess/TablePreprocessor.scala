@@ -30,27 +30,29 @@ class TablePreprocessor(context: AutoSuggestContext) extends PreProcessStatement
       val defaultTable = SpecialTableConst.tempTable(tableName)
       val table = statement(0).getText.toLowerCase match {
         case "load" =>
-          val formatMatcher = TokenMatcher(statement, 1).
-            eat(Food(None, DSLSQLLexer.IDENTIFIER),
-              Food(None, MLSQLTokenTypeWrapper.DOT),
-              Food(None, DSLSQLLexer.BACKQUOTED_IDENTIFIER)).build
-          if (formatMatcher.isSuccess) {
-
-            formatMatcher.getMatchTokens.map(_.getText) match {
-              case List(format, _, path) =>
-                LexerUtils.cleanStr(path).split("\\.", 2) match {
-                  case Array(db, table) =>
-//                    if(context.isSchemaInferEnabled){
-//
-//                    }
-                    context.metaProvider.search(MetaTableKey(Option(format), Option(db), table)).getOrElse(defaultTable)
-                  case Array(table) =>
-                    context.metaProvider.search(MetaTableKey(Option(format), None, table)).getOrElse(defaultTable)
-                }
-            }
-          } else {
-            defaultTable
-          }
+          // This code will cause huge performance issue since we should
+          // infer the table schema from the data source.
+          // The user should use execute the load statement first, and then the meta will
+          // store in session catalog and we can get the meta in the next time.
+          //          val formatMatcher = TokenMatcher(statement, 1).
+          //            eat(Food(None, DSLSQLLexer.IDENTIFIER),
+          //              Food(None, MLSQLTokenTypeWrapper.DOT),
+          //              Food(None, DSLSQLLexer.BACKQUOTED_IDENTIFIER)).build
+          //          if (formatMatcher.isSuccess) {
+          //
+          //            formatMatcher.getMatchTokens.map(_.getText) match {
+          //              case List(format, _, path) =>
+          //                LexerUtils.cleanStr(path).split("\\.", 2) match {
+          //                  case Array(db, table) =>
+          //                    context.metaProvider.search(MetaTableKey(Option(format), Option(db), table)).getOrElse(defaultTable)
+          //                  case Array(table) =>
+          //                    context.metaProvider.search(MetaTableKey(Option(format), None, table)).getOrElse(defaultTable)
+          //                }
+          //            }
+          //          } else {
+          //            defaultTable
+          //          }
+          defaultTable
         case "select" =>
           //statement.size - 3 是为了移除 最后的as table语句
           val selectSuggester = new SelectSuggester(context, statement.slice(0, statement.size - 3), TokenPos(0, TokenPosType.NEXT, -1))
