@@ -6,6 +6,7 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.execution.WowTableIdentifier
 import org.apache.spark.sql.mlsql.session.MLSQLException
 import tech.mlsql.common.utils.path.PathFun
+import tech.mlsql.tool.HDFSOperatorV2
 
 /**
  * 2019-08-31 WilliamZhu(allwefantasy@gmail.com)
@@ -55,7 +56,7 @@ class DataLake(sparkSession: SparkSession) {
   }
 
   private def listPath(path: Path) = {
-    val fs = FileSystem.get(new Configuration())
+    val fs = FileSystem.get(HDFSOperatorV2.hadoopConfiguration)
     fs.listStatus(path)
   }
 }
