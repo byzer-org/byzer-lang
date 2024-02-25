@@ -8,7 +8,7 @@ byzer.server.runtime.master=yarn
 byzer.server.runtime.deploy-mode=client
 
 # configure resource for yarn mode
-byzer.server.runtime.dirver-memory=6g
+byzer.server.runtime.driver-memory=6g
 byzer.server.runtime.executor-memory=4g
 byzer.server.runtime.executor-cores=4
 byzer.server.runtime.num-executors=4
