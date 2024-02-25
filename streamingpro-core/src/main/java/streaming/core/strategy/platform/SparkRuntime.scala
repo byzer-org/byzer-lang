@@ -110,10 +110,14 @@ class SparkRuntime(_params: JMap[Any, Any]) extends StreamingRuntime with Platfo
       // In spark3, The org.apache.spark.ExecutorPlugin interface and related configuration has been
       // replaced with org.apache.spark.api.plugin.SparkPlugin.
       MLSQLSparkConst.majorVersion(SparkCoreVersion.exactVersion) match {
-        case 2 =>
-          conf.set("spark.executor.plugins", "org.apache.spark.ps.cluster.PSExecutorPlugin")
-        case _ =>
-          conf.set("spark.plugins", "org.apache.spark.ps.cluster.PSExecutorPlugin")
+        case 2 => {
+          val plugins = conf.get("spark.executor.plugins", "").split(",").toSet
+          conf.set("spark.executor.plugins", (plugins + "org.apache.spark.ps.cluster.PSExecutorPlugin").mkString(","))
+        }
+        case _ => {
+          val plugins = conf.get("spark.plugins", "").split(",").toSet
+          conf.set("spark.plugins", (plugins + "org.apache.spark.ps.cluster.PSExecutorPlugin").mkString(","))
+        }
       }
 
 
