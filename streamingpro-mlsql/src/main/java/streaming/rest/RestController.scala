@@ -405,11 +405,13 @@ class RestController extends ApplicationController with WowLog with Logging {
       runtime.asInstanceOf[SparkRuntime].sparkSession
     }
 
-    if (paramAsBoolean("sessionPerRequest", false)) {
+    val _session = if (paramAsBoolean("sessionPerRequest", false)) {
       MLSQLSparkSession.cloneSession(session)
     } else {
       session
     }
+    SparkSession.setActiveSession(_session)
+    _session
   }
 
   def getSessionByOwner(owner: String) = {
