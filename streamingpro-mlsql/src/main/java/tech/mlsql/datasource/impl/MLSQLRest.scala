@@ -1,5 +1,6 @@
 package tech.mlsql.datasource.impl
 
+import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.http.client.fluent.{Form, Request}
 import org.apache.http.entity.ContentType
 import org.apache.http.entity.mime.{HttpMultipartMode, MultipartEntityBuilder}
@@ -13,6 +14,7 @@ import streaming.dsl.ScriptSQLExec
 import streaming.dsl.mmlib.algs.param.{BaseParams, WowParams}
 import streaming.log.WowLog
 import tech.mlsql.common.form._
+import tech.mlsql.common.utils.cache.{CacheBuilder, RemovalListener, RemovalNotification}
 import tech.mlsql.common.utils.distribute.socket.server.JavaUtils
 import tech.mlsql.common.utils.log.Logging
 import tech.mlsql.common.utils.path.PathFun
@@ -24,8 +26,34 @@ import tech.mlsql.tool.{HDFSOperatorV2, Templates2}
 import java.net.URLEncoder
 import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets.UTF_8
+import java.util
 import java.util.UUID
+import java.util.concurrent.TimeUnit
 import scala.collection.mutable.ArrayBuffer
+import scala.collection.JavaConverters._
+
+object MLSQLRestCache extends Logging {
+  val cacheFiles = CacheBuilder.newBuilder().
+    maximumSize(100000).removalListener(new RemovalListener[String, java.util.List[String]]() {
+      override def onRemoval(notification: RemovalNotification[String, util.List[String]]): Unit = {
+        val files = notification.getValue
+        if (files != null) {
+          val fs = FileSystem.get(HDFSOperatorV2.hadoopConfiguration)
+          files.asScala.foreach { file =>
+            try {
+              logInfo(s"remove cache file ${file}")
+              fs.delete(new Path(file), true)
+            } catch {
+              case e: Exception =>
+                logError(s"remove cache file ${file} failed", e)
+            }
+          }
+        }
+      }
+    }).
+    expireAfterWrite(1, TimeUnit.DAYS).
+    build[String, java.util.List[String]]()
+}
 
 class MLSQLRest(override val uid: String) extends MLSQLSource
   with MLSQLSink
@@ -146,6 +174,13 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
         // each page's result is saved in tmpTablePath
         val tmpTablePath = resourceRealPath(context.execListener, Option(context.owner),
           PathFun("__tmp__").add("rest").add(uuid).toPath)
+
+        val cachedFiles = MLSQLRestCache.cacheFiles.get(config.path, new java.util.concurrent.Callable[java.util.List[String]] {
+          override def call(): java.util.List[String] = {
+            new util.LinkedList[String]()
+          }
+        })
+        cachedFiles.add(tmpTablePath)
 
         // If a user runs multiple Load Rest.`` statements in a single thread, we need to save all temp dirs
         context.execListener.env().get(classOf[MLSQLRest].getName) match {
@@ -389,8 +424,8 @@ class MLSQLRest(override val uid: String) extends MLSQLSource
 
         params.filter(_._1.startsWith("form.")).
           filter(v => v._1 != "form.file-path" && v._1 != "form.file-name").foreach { case (k, v) =>
-          entity.addTextBody(k.stripPrefix("form."), Templates2.dynamicEvaluateExpression(v, ScriptSQLExec.context().execListener.env().toMap))
-        }
+            entity.addTextBody(k.stripPrefix("form."), Templates2.dynamicEvaluateExpression(v, ScriptSQLExec.context().execListener.env().toMap))
+          }
         request.body(entity.build()).execute()
 
       case (_, v) =>

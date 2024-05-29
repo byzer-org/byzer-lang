@@ -183,7 +183,7 @@ function start(){
         
         echo "Final command:"
         echo "nohup $SPARK_HOME/bin/spark-submit --class streaming.core.StreamingApp "
-        echo "$BYZER_RUNTIME_PARAMS --jars ${FULL_JARS}"
+        echo "$BYZER_RUNTIME_PARAMS  --jars ${FULL_JARS}"
         echo "--conf spark.driver.extraClassPath=${EXT_JARS}"
         echo "--conf \"spark.driver.extraJavaOptions=-Dlog4j2.configurationFile=${BYZER_LOG_PATH}\" ${driver_java_options}"
         echo "$SPARK_PROP"

@@ -107,7 +107,6 @@ class SQLJDBC(override val uid: String) extends SQLAlg with ETAuth with Function
         val res = JDBCUtils.executeQueryInDriver(_params)
         val rdd = df.sparkSession.sparkContext.parallelize(res.map(item => JSONObject.fromObject(item.asJava).toString()))
         df.sparkSession.read.json(rdd)
-
     }
 
 

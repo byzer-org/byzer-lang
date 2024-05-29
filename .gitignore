@@ -185,3 +185,5 @@ dev/ansj_seg-5.1.6.jar
 dev/nlp-lang-1.7.8.jar
 
 ./examples/auth
+
+./.auto-coder/metadata.db
