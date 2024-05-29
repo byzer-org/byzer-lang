@@ -186,5 +186,5 @@ dev/nlp-lang-1.7.8.jar
 
 ./examples/auth
 
-./.auto-coder/metadata.db
-./output.txt
+/.auto-coder/metadata.db
+/output.txt

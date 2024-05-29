@@ -2,4 +2,4 @@ include_file:
   - ./common/local.yml
 
 query: |
-  这个项目是干什么的？
+  分析下 SparkRuntime 这个类。
