@@ -1,0 +1,18 @@
+source_dir: /Users/allwefantasy/projects/byzer-lang
+target_file: /Users/allwefantasy/projects/byzer-lang/output.txt
+
+project_type: .java,.scala
+
+model: deepseek_chat
+skip_build_index: false
+
+index_filter_level: 0
+index_model_max_input_length: 30000
+
+index_filter_workers: 4
+index_build_workers: 6
+
+execute: true
+enable_multi_round_generate: false
+auto_merge: true
+human_as_model: true
