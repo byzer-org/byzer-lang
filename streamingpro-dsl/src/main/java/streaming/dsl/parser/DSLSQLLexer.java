@@ -1,4 +1,4 @@
-// Generated from DSLSQL.g4 by ANTLR 4.7.1
+// Generated from /opt/projects/kyligence/byzerCP/byzer-lang/streamingpro-dsl/src/main/resources/DSLSQL.g4 by ANTLR 4.7
 
 package streaming.dsl.parser;
 
@@ -13,7 +13,7 @@ import org.antlr.v4.runtime.misc.*;
 
 @SuppressWarnings({"all", "warnings", "unchecked", "unused", "cast"})
 public class DSLSQLLexer extends Lexer {
-	static { RuntimeMetaData.checkVersion("4.7.1", RuntimeMetaData.VERSION); }
+	static { RuntimeMetaData.checkVersion("4.7", RuntimeMetaData.VERSION); }
 
 	protected static final DFA[] _decisionToDFA;
 	protected static final PredictionContextCache _sharedContextCache =
@@ -50,7 +50,7 @@ public class DSLSQLLexer extends Lexer {
 		"','", "'as'", "'into'", "'load'", "'save'", "'select'", "'insert'", "'create'", 
 		"'drop'", "'refresh'", "'set'", "'connect'", "'train'", "'run'", "'predict'", 
 		"'register'", "'unregister'", "'include'", "'options'", "'where'", null, 
-		"'overwrite'", "'append'", "'errorIfExists'", "'ignore'", null, null, 
+		"'overwrite'", "'append'", "'errorifexists'", "'ignore'", null, null, 
 		null, null, null, "'!'", null, "'/**/'"
 	};
 	private static final String[] _SYMBOLIC_NAMES = {
@@ -216,7 +216,7 @@ public class DSLSQLLexer extends Lexer {
 		"\7c\2\2\u0116\u0117\7r\2\2\u0117\u0118\7r\2\2\u0118\u0119\7g\2\2\u0119"+
 		"\u011a\7p\2\2\u011a\u011b\7f\2\2\u011bB\3\2\2\2\u011c\u011d\7g\2\2\u011d"+
 		"\u011e\7t\2\2\u011e\u011f\7t\2\2\u011f\u0120\7q\2\2\u0120\u0121\7t\2\2"+
-		"\u0121\u0122\7K\2\2\u0122\u0123\7h\2\2\u0123\u0124\7G\2\2\u0124\u0125"+
+		"\u0121\u0122\7k\2\2\u0122\u0123\7h\2\2\u0123\u0124\7g\2\2\u0124\u0125"+
 		"\7z\2\2\u0125\u0126\7k\2\2\u0126\u0127\7u\2\2\u0127\u0128\7v\2\2\u0128"+
 		"\u0129\7u\2\2\u0129D\3\2\2\2\u012a\u012b\7k\2\2\u012b\u012c\7i\2\2\u012c"+
 		"\u012d\7p\2\2\u012d\u012e\7q\2\2\u012e\u012f\7t\2\2\u012f\u0130\7g\2\2"+
